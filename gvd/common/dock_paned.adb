@@ -28,9 +28,9 @@ package body Dock_Paned is
    -- Add --
    ---------
 
-   procedure Add (Paned : access Dock_Paned_Record;
-                  Child : access Gtk_Widget_Record'Class)
-   is
+   procedure Add
+     (Paned : access Dock_Paned_Record;
+      Child : access Gtk_Widget_Record'Class) is
    begin
       if not Paned.Is_Child1 then
          Add1 (Paned, Child);
@@ -45,8 +45,7 @@ package body Dock_Paned is
 
    procedure Add1
      (Paned : access Dock_Paned_Record;
-      Child : access Gtk_Widget_Record'Class)
-   is
+      Child : access Gtk_Widget_Record'Class) is
    begin
       if Paned.Is_Child1 then
          return;
@@ -81,8 +80,7 @@ package body Dock_Paned is
 
    procedure Add2
      (Paned : access Dock_Paned_Record;
-      Child : access Gtk_Widget_Record'Class)
-   is
+      Child : access Gtk_Widget_Record'Class) is
    begin
       if Paned.Is_Child2 then
          return;
@@ -178,8 +176,9 @@ package body Dock_Paned is
    -- Dock_Remove --
    -----------------
 
-   procedure Dock_Remove (Paned : access Dock_Paned_Record'Class;
-                          Child : access Gtk_Widget_Record'Class)
+   procedure Dock_Remove
+     (Paned : access Dock_Paned_Record'Class;
+      Child : access Gtk_Widget_Record'Class)
    is
       Other_Child : Gtk_Widget;
    begin
@@ -214,8 +213,8 @@ package body Dock_Paned is
    -- Set_Position --
    ------------------
 
-   procedure Set_Position (Paned    : access Dock_Paned_Record;
-                           Position : Gint) is
+   procedure Set_Position
+     (Paned : access Dock_Paned_Record; Position : Gint) is
    begin
       Set_Position (Paned.Paned, Position);
    end Set_Position;
@@ -224,8 +223,9 @@ package body Dock_Paned is
    -- Set_Handle_Size --
    ---------------------
 
-   procedure Set_Handle_Size (Paned : access Dock_Paned_Record;
-                              Size  : Guint16) is
+   procedure Set_Handle_Size
+     (Paned : access Dock_Paned_Record;
+      Size  : Guint16) is
    begin
       Set_Handle_Size (Paned.Paned, Size);
    end Set_Handle_Size;
@@ -234,8 +234,8 @@ package body Dock_Paned is
    -- Get_Handle_Size --
    ---------------------
 
-   function Get_Handle_Size (Paned : access Dock_Paned_Record) return Guint16
-   is
+   function Get_Handle_Size
+     (Paned : access Dock_Paned_Record) return Guint16 is
    begin
       return Get_Handle_Size (Paned.Paned);
    end Get_Handle_Size;
@@ -244,9 +244,9 @@ package body Dock_Paned is
    -- Set_Gutter_Size --
    ---------------------
 
-   procedure Set_Gutter_Size (Paned : access Dock_Paned_Record;
-                              Size  : in Guint16)
-   is
+   procedure Set_Gutter_Size
+     (Paned : access Dock_Paned_Record;
+      Size  : in Guint16) is
    begin
       Set_Gutter_Size (Paned.Paned, Size);
    end Set_Gutter_Size;
@@ -255,8 +255,8 @@ package body Dock_Paned is
    -- Get_Gutter_Size --
    ---------------------
 
-   function Get_Gutter_Size (Paned : access Dock_Paned_Record) return Guint16
-   is
+   function Get_Gutter_Size
+     (Paned : access Dock_Paned_Record) return Guint16 is
    begin
       return Get_Gutter_Size (Paned.Paned);
    end Get_Gutter_Size;

@@ -222,8 +222,7 @@ package body GVD.Preferences is
    ---------
 
    procedure Set
-     (Var : String_Gint; Value : Gint; Override : Boolean := False)
-   is
+     (Var : String_Gint; Value : Gint; Override : Boolean := False) is
    begin
       Set (String (Var), Gint'Image (Value), Override);
    end Set;
@@ -268,16 +267,20 @@ package body GVD.Preferences is
      (Var : String_Color; Value : Gdk_Color; Override : Boolean := False)
    is
       function Normalize (V : Gushort) return String;
+
       function Normalize (V : Gushort) return String is
          S : String (1 .. 8);  --  "16#....#" or "16#.#", ....
          O : String (1 .. 4) := "0000";
          Index : Natural := S'Last;
          O_Index : Natural := O'Last;
+
       begin
          Put (S, Integer (V), 16);
+
          while S (Index) /= '#' loop
             Index := Index - 1;
          end loop;
+
          Index := Index - 1;
 
          while S (Index) /= '#' loop
@@ -285,6 +288,7 @@ package body GVD.Preferences is
             Index := Index - 1;
             O_Index := O_Index - 1;
          end loop;
+
          return O;
       end Normalize;
 

@@ -53,34 +53,37 @@ package Dock_Paned is
    --  Internal initialization function.
    --  See the section "Creating your own widgets" in the documentation.
 
-   procedure Add1 (Paned : access Dock_Paned_Record;
-                   Child : access Gtk_Widget_Record'Class);
+   procedure Add1
+     (Paned : access Dock_Paned_Record;
+      Child : access Gtk_Widget_Record'Class);
    --  Add the first child of the container.
    --  The child will be displayed either in the top or in the left pane,
    --  depending on the orientation of the container.
 
-   procedure Add2 (Paned : access Dock_Paned_Record;
-                   Child : access Gtk_Widget_Record'Class);
+   procedure Add2
+     (Paned : access Dock_Paned_Record;
+      Child : access Gtk_Widget_Record'Class);
    --  Add the second child of the container.
    --  It will be displayed in the bottom or right pane, depending on the
    --  container's orientation.
 
-   procedure Add (Paned : access Dock_Paned_Record;
-                  Child : access Gtk_Widget_Record'Class);
+   procedure Add
+     (Paned : access Dock_Paned_Record;
+      Child : access Gtk_Widget_Record'Class);
    --  If there is a child 1 and no child 2, then acts as Add2.
    --  If there is a child 2 and no child 1, then acts as Add1.
    --  Otherwise, does nothing.
 
-   procedure Dock_Remove (Paned : access Dock_Paned_Record'Class;
-                          Child : access Gtk_Widget_Record'Class);
+   procedure Dock_Remove
+     (Paned : access Dock_Paned_Record'Class;
+      Child : access Gtk_Widget_Record'Class);
    --  Remove the child from the paned;
 
-   function Get_Paned (Paned : access Dock_Paned_Record)
-                      return Gtk.Paned.Gtk_Paned;
+   function Get_Paned
+     (Paned : access Dock_Paned_Record) return Gtk.Paned.Gtk_Paned;
    --  Return the paned within the Dock_Paned.
 
-   procedure Set_Position (Paned    : access Dock_Paned_Record;
-                           Position : Gint);
+   procedure Set_Position (Paned : access Dock_Paned_Record; Position : Gint);
    --  Change the position of the separator.
    --  If position is negative, the remembered position is forgotten,
    --  and the division is recomputed from the requisitions of the
@@ -88,8 +91,9 @@ package Dock_Paned is
    --  Position is in fact the size (either vertically or horizontally,
    --  depending on the container) set for the first child.
 
-   procedure Set_Handle_Size (Paned : access Dock_Paned_Record;
-                              Size  : Guint16);
+   procedure Set_Handle_Size
+     (Paned : access Dock_Paned_Record;
+      Size  : Guint16);
    --  Set the handle size to Size x Size pixels.
    --  This is the small handle that the user has to drag to resize the
    --  panes.
@@ -97,8 +101,9 @@ package Dock_Paned is
    function Get_Handle_Size (Paned : access Dock_Paned_Record) return Guint16;
    --  Return the current size in pixels of the handle.
 
-   procedure Set_Gutter_Size (Paned : access Dock_Paned_Record;
-                              Size  : in Guint16);
+   procedure Set_Gutter_Size
+     (Paned : access Dock_Paned_Record;
+      Size  : in Guint16);
    --  Set the width in pixels of the gutter.
    --  This is the area between the two panes.
 

@@ -33,10 +33,12 @@ package body GVD.Histories is
       Element : Hlist_Link;
    begin
       if History.First = null then
-         History.First := new Hlist' (Data        => new Data_Type' (Data),
-                                      Previous    => null,
-                                      Next        => null,
-                                      Num_Repeats => 1);
+         History.First :=
+           new Hlist'
+             (Data        => new Data_Type' (Data),
+              Previous    => null,
+              Next        => null,
+              Num_Repeats => 1);
          History.Last := History.First;
          History.Current := History.First;
          History.Position := After_End;
@@ -45,10 +47,12 @@ package body GVD.Histories is
       elsif History.Last.Data.all = Data then
          History.Last.Num_Repeats := History.Last.Num_Repeats + 1;
       else
-         Element := new Hlist' (Data        => new Data_Type' (Data),
-                                Previous    => History.Last,
-                                Next        => null,
-                                Num_Repeats => 1);
+         Element :=
+           new Hlist'
+             (Data        => new Data_Type' (Data),
+              Previous    => History.Last,
+              Next        => null,
+              Num_Repeats => 1);
          History.Last.Next := Element;
          History.Last := Element;
          History.Length := History.Length + 1;
@@ -191,12 +195,14 @@ package body GVD.Histories is
       if History.First /= null then
          History.Current := History.First;
          History.Position := Inside_History;
+
          loop
             Free_Data_Pointer (History.Current.Data);
             exit when History.Current.Next = null;
             History.Current := History.Current.Next;
             Free_Hlist (History.Current.Previous);
          end loop;
+
          Free_Hlist (History.Current);
          History.Current := null;
          History.Last := null;
