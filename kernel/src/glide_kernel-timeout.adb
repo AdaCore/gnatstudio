@@ -179,6 +179,7 @@ package body Glide_Kernel.Timeout is
      (Kernel    : Kernel_Handle;
       Command   : String;
       Arguments : GNAT.OS_Lib.Argument_List;
+      Title     : String := "";
       Callback  : Process_Callback := null;
       Exit_Cb   : Exit_Callback := null;
       Name      : String;
@@ -244,7 +245,7 @@ package body Glide_Kernel.Timeout is
 
          Initialize
            (Console, "", Data_Handler'Access,
-            GObject (Console), Get_Pref (Kernel, Keyword_Font));
+            GObject (Console), Get_Pref (Kernel, Default_Font));
 
          Console.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
 
@@ -257,7 +258,7 @@ package body Glide_Kernel.Timeout is
          Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
-         Set_Title (Child, Command);
+         Set_Title (Child, Command, Title);
 
          Id := Console_Process_Timeout.Add
            (Timeout,
