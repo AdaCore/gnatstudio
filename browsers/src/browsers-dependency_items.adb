@@ -1059,7 +1059,7 @@ package body Browsers.Dependency_Items is
       Register_Command
         (Kernel,
          Command      => "uses",
-         Usage        => "(file_name) -> None",
+         Usage        => "() -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
              & " file_name depends on."),
@@ -1070,7 +1070,7 @@ package body Browsers.Dependency_Items is
       Register_Command
         (Kernel,
          Command      => "used_by",
-         Usage        => "(file_name) -> None",
+         Usage        => "() -> None",
          Description  =>
            -("Display in the dependency browser the list of files that"
              & " depends on file_name."),
