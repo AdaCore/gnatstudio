@@ -140,7 +140,9 @@ package body Src_Info.Debug is
 
    procedure Dump_LI_File_Ptr (LIFP : LI_File_Ptr) is
    begin
-      Dump_LI_File (LIFP.LI);
+      if LIFP /= null then
+         Dump_LI_File (LIFP.LI);
+      end if;
    end Dump_LI_File_Ptr;
 
    ----------------------------
