@@ -111,5 +111,6 @@ package Shell is
       Highlight          : Boolean := True);
    --  Highlight the line with the corresponding category.
    --  If Highlight is set to False, remove the highlighting.
+   --  If Line = 0, highlight / unhighlight all lines in file.
 
 end Shell;

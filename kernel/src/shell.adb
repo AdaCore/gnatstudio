@@ -519,21 +519,31 @@ package body Shell is
       Highlight_Category : String;
       Highlight          : Boolean := True)
    is
-      Args : Argument_List (1 .. 3);
+      Args    : Argument_List (1 .. 3);
+      Command : String_Access;
    begin
       Args (1) := new String'(Filename);
       Args (2) := new String'(Line'Img);
       Args (3) := new String'(Highlight_Category);
 
       if Highlight then
-         Interpret_Command (Kernel, "src.highlight", Args);
+         Command := new String'("src.highlight");
+
       else
-         Interpret_Command (Kernel, "src.unhighlight", Args);
+         Command := new String'("src.unhighlight");
+      end if;
+
+      if Line = 0 then
+         Interpret_Command (Kernel, Command.all, Args (1) & Args (3));
+      else
+         Interpret_Command (Kernel, Command.all, Args);
       end if;
 
       for J in Args'Range loop
          Free (Args (J));
       end loop;
+
+      Free (Command);
    end Highlight_Line;
 
 end Shell;
