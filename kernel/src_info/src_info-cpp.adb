@@ -191,6 +191,7 @@ package body Src_Info.CPP is
    procedure Fu_To_Con_Handler (Ref : TO_Table);
    procedure Fu_To_E_Handler   (Ref : TO_Table);
    procedure Fu_To_Ec_Handler  (Ref : TO_Table);
+   procedure Fu_To_Ma_Handler  (Ref : TO_Table);
    procedure Fu_To_Mi_Handler  (Ref : TO_Table);
 
    -------------------
@@ -203,6 +204,7 @@ package body Src_Info.CPP is
       CON    => Fu_To_Con_Handler'Access,
       E      => Fu_To_E_Handler'Access,
       EC     => Fu_To_Ec_Handler'Access,
+      MA     => Fu_To_Ma_Handler'Access,
       MI     => Fu_To_Mi_Handler'Access,
       others => null);
 
@@ -981,6 +983,7 @@ package body Src_Info.CPP is
    procedure Fu_To_Con_Handler   (Ref : TO_Table) is separate;
    procedure Fu_To_E_Handler     (Ref : TO_Table) is separate;
    procedure Fu_To_Ec_Handler    (Ref : TO_Table) is separate;
+   procedure Fu_To_Ma_Handler    (Ref : TO_Table) is separate;
    procedure Fu_To_Mi_Handler    (Ref : TO_Table) is separate;
 
 end Src_Info.CPP;
