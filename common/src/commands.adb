@@ -338,7 +338,7 @@ package body Commands is
    begin
       if not Is_Empty (Queue.Undo_Queue) then
          Action := Head (Queue.Undo_Queue);
-         Next (Queue.Undo_Queue);
+         Next (Queue.Undo_Queue, Free_Data => False);
          Enqueue (Queue, Action);
       end if;
    end Undo;
@@ -352,7 +352,7 @@ package body Commands is
    begin
       if not Is_Empty (Queue.Redo_Queue) then
          Action := Head (Queue.Redo_Queue);
-         Next (Queue.Redo_Queue);
+         Next (Queue.Redo_Queue, Free_Data => False);
          Enqueue (Queue, Action);
       end if;
    end Redo;
