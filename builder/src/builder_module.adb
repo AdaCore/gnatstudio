@@ -30,6 +30,7 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Intl;                use Glide_Intl;
 
@@ -77,6 +78,7 @@ with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with Ada.Tags;                  use Ada.Tags;
 
 with Commands;                  use Commands;
 with Commands.Builder;          use Commands.Builder;
@@ -112,6 +114,15 @@ package body Builder_Module is
    Syntax_Check   : aliased String := "-gnats";
 
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
+
+   type Dynamic_Menu_Item_Record is new Gtk_Menu_Item_Record with null record;
+   type Dynamic_Menu_Item is access all Dynamic_Menu_Item_Record'Class;
+   --  So that items created for the dynamic Make and Run menus have a special
+   --  type, and we only remove these when refreshing the menu
+
+   function Is_Dynamic_Menu_Item
+     (W : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+   --  Return True if W is a Dynamic menu item
 
    type Compute_Xref_Data is record
       Kernel : Kernel_Handle;
@@ -300,6 +311,16 @@ package body Builder_Module is
      (Kernel : Kernel_Handle;
       Shadow : Boolean);
    --  Clear the compiler output, the console, and the result view.
+
+   --------------------------
+   -- Is_Dynamic_Menu_Item --
+   --------------------------
+
+   function Is_Dynamic_Menu_Item
+     (W : access Gtk_Widget_Record'Class) return Boolean is
+   begin
+      return W'Tag = Dynamic_Menu_Item_Record'Tag;
+   end Is_Dynamic_Menu_Item;
 
    ------------------------------
    -- Clear_Compilation_Output --
@@ -1495,7 +1516,7 @@ package body Builder_Module is
       Set_Shortcut : Boolean;
       Mains        : Argument_List)
    is
-      Mitem        : Gtk_Menu_Item;
+      Mitem        : Dynamic_Menu_Item;
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
@@ -1511,7 +1532,8 @@ package body Builder_Module is
       Builder_Module.Build_Item := null;
 
       for M in Mains'Range loop
-         Gtk_New (Mitem, Mains (M).all);
+         Mitem := new Dynamic_Menu_Item_Record;
+         Gtk.Menu_Item.Initialize (Mitem, Mains (M).all);
          Append (Menu, Mitem);
 
          --  If the name of the main is not a source file, we might not be
@@ -1555,12 +1577,13 @@ package body Builder_Module is
                      Replace    => False);
                end if;
 
-               Builder_Module.Build_Item := Mitem;
+               Builder_Module.Build_Item := Gtk_Menu_Item (Mitem);
             end if;
          end;
       end loop;
 
-      Gtk_New (Mitem, -Project_Make_Suffix);
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, -Project_Make_Suffix);
       Append (Menu, Mitem);
 
       if Set_Shortcut then
@@ -1576,7 +1599,8 @@ package body Builder_Module is
            (Project => Get_Project (Kernel),
             File    => VFS.No_File));
 
-      Gtk_New (Mitem, -All_Make_Suffix);
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, -All_Make_Suffix);
       Append (Menu, Mitem);
 
       if Set_Shortcut then
@@ -1603,7 +1627,7 @@ package body Builder_Module is
       Kernel       : access Kernel_Handle_Record'Class;
       Mains        : Argument_List)
    is
-      Mitem : Gtk_Menu_Item;
+      Mitem : Dynamic_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
    begin
       if Menu = null then
@@ -1619,7 +1643,8 @@ package body Builder_Module is
             Exec : constant String :=
               Get_Executable_Name (Project, Mains (M).all);
          begin
-            Gtk_New (Mitem, Exec);
+            Mitem := new Dynamic_Menu_Item_Record;
+            Gtk.Menu_Item.Initialize (Mitem, Exec);
             Append (Menu, Mitem);
             Set_Accel_Path (Mitem, -Run_Menu_Prefix & Exec, Group);
             File_Project_Cb.Object_Connect
@@ -1719,11 +1744,13 @@ package body Builder_Module is
          P : Project_Type := Get_Project (Kernel);
       begin
          if Builder_Module.Make_Menu /= null then
-            Remove_All_Children (Builder_Module.Make_Menu);
+            Remove_All_Children (Builder_Module.Make_Menu,
+                                 Is_Dynamic_Menu_Item'Access);
          end if;
 
          if Builder_Module.Run_Menu /= null then
-            Remove_All_Children (Builder_Module.Run_Menu);
+            Remove_All_Children (Builder_Module.Run_Menu,
+                                 Is_Dynamic_Menu_Item'Access);
          end if;
 
          while P /= No_Project loop
