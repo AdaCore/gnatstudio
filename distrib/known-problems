@@ -180,3 +180,8 @@ Known Problems fixed in GPS 2.1.0
               font dialog that pops up always has "sans 10" selected initially,
               instead of the current font
   Workaround: Select manually the font you want to use
+
+- CB30-002 Wrong behavior when double-clicking on the tab.
+  Problem:    When double-clicking on the tab the windows get properly resized
+              only if there is more than 2 files opened.
+  Workaround: Use "Window" -> "Unmaximize All" instead.
