@@ -36,6 +36,7 @@ with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
 with Factory_Data;            use Factory_Data;
 
+with GVD.Dialogs;             use GVD.Dialogs;
 with GVD.Menu;                use GVD.Menu;
 with GVD.Types;               use GVD.Types;
 with GVD.Toolbar;             use GVD.Toolbar;
@@ -115,9 +116,9 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Initialize
 
-   procedure On_Connect_To_Board is new
-     Generic_Debug_Command (GVD.Menu.On_Add_Symbols);
-   --  ??? Debug->Debug->Connect to Board
+   procedure On_Connect_To_Board
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Connect to Board
 
    procedure On_Debug_Executable is new
      Generic_Debug_Command (GVD.Menu.On_Open_Program);
@@ -287,6 +288,62 @@ package body GVD_Module is
 
    procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal to clean up the debugger.
+
+   -------------------------
+   -- On_Connect_To_Board --
+   -------------------------
+
+   procedure On_Connect_To_Board
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      --  ??? Should open a single dialog to set both target and protocol
+
+      declare
+         Target : constant String := Simple_Entry_Dialog
+           (Top, -"Selection", -"Enter target name:",
+            Win_Pos_Mouse, "Debug_Target");
+
+      begin
+         if Target = ASCII.NUL & "" then
+            return;
+         end if;
+
+         declare
+            Protocol : constant String := Simple_Entry_Dialog
+              (Top, -"Selection", -"Enter protocol:",
+               Win_Pos_Mouse, "Debug_Protocol");
+
+         begin
+            if Protocol = ASCII.NUL & "" then
+               return;
+            end if;
+
+            Page.Descriptor.Remote_Target := new String' (Target);
+            Page.Descriptor.Protocol := new String' (Protocol);
+            Connect_To_Target
+              (Page.Debugger,
+               Page.Descriptor.Remote_Target.all,
+               Page.Descriptor.Protocol.all,
+               GVD.Types.Visible);
+         end;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Connect_To_Board;
 
    --------------------
    -- GVD_Contextual --
