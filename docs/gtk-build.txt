@@ -1,7 +1,8 @@
-Here is the complete procedure to build Gtk+ 1.3.15 from scratch
+Here is the complete procedure to build Gtk+ 2.0.0 from scratch
 (systems tested are Redhat 7.1 & Solaris 2.8).
 
-On linux systems, you can skip the steps from libiconv to libjpeg.
+On linux systems, you can skip the steps from libiconv to libjpeg, and
+ignore the special comments.
 
 Once all these steps have been done successfully, only glib, atk, pango and gtk
 need to be rebuilt when their version change.
@@ -75,8 +76,8 @@ cd ..
 ########
 # glib #
 ########
-tar xzvf glib-1.3.15.tar.gz
-cd glib-1.3.15
+tar xzvf glib-2.0.0.tar.gz
+cd glib-2.0.0
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
 # --enable-gc-friendly --disable-mem-pools --with-threads=posix
 make
@@ -86,11 +87,9 @@ cd ..
 #######
 # atk #
 #######
-tar xzvf atk-0.13.tar.gz
-cd atk-0.13
+tar xzvf atk-1.0.0.tar.gz
+cd atk-1.0.0
 ./configure --prefix=$prefix
-# Note for Gtk+ 1.3.15:
-# add `gcc -print-libgcc-file-name` to atk/Makefile:libatk_la_LDFLAGS
 make
 make install
 cd ..
@@ -98,8 +97,8 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-0.26.tar.gz
-cd pango-0.26
+tar xzvf pango-1.0.0.tar.gz
+cd pango-1.0.0
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. Other modules are:
@@ -115,9 +114,9 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-1.3.15.tar.gz
-cd gtk+-1.3.15
-./configure --disable-modules --without-libtiff \
+tar xzvf gtk+-2.0.0.tar.gz
+cd gtk+-2.0.0
+./configure --disable-modules \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix
 # --enable-debug=minimum
 
