@@ -268,6 +268,8 @@ package body VCS_View_Pkg is
       Get_Cell_Area (Data.Tree, Path, Column, Area);
       Iter := Get_Iter (Data.Model, Path);
 
+      Path_Free (Path);
+
       if Column = Data.Status_Column then
          Status := File_Status'Val
            (Get_Int (Data.Model, Iter, Status_Description_Column));
@@ -283,8 +285,6 @@ package body VCS_View_Pkg is
       elsif Column = Data.File_Column then
          Text := new String'(Get_String (Data.Model, Iter, Name_Column));
       end if;
-
-      Path_Free (Path);
 
       if Text /= null then
          Create_Pixmap_From_Text
