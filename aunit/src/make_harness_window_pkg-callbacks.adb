@@ -106,10 +106,11 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Harness_Window : constant Make_Harness_Window_Access :=
         Make_Harness_Window_Access (Get_Toplevel (Object));
 
-      S              : String := Get_Selection (Harness_Window.Explorer);
+      S              : constant String :=
+        Get_Selection (Harness_Window.Explorer);
       Suite_Name     : String_Access;
       Package_Name   : String_Access;
-      Id             : Context_Id :=
+      Id             : constant Context_Id :=
         Get_Context_Id (Harness_Window.Statusbar, "messages");
       Message        : Message_Id;
 
@@ -125,7 +126,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       if Suite_Name /= null
         and then Package_Name /= null
       then
-         Harness_Window.Suite_Name := GNAT.OS_Lib.String_Access (Suite_Name);
+         Harness_Window.Suite_Name := Suite_Name;
          Message := Push
            (Harness_Window.Statusbar, Id,
             -"Found suite: " & Harness_Window.Suite_Name.all);
