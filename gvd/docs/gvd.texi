@@ -450,6 +450,14 @@ Command to be used to copy files remotely
 @anchor{HTML browser}
 Command to be used to browse HTML files, in particular the HTML version of this
 help file.
+
+By default, GVD will reuse an existing netscape browser. You can force
+the use of a new netscape by changing the "HTML browser" helper to
+@smallexample
+netscape -no-session-management
+@end smallexample
+
+
 @end table
 
 @end table
