@@ -1,4 +1,4 @@
-Here is the complete procedure to build Gtk+ 1.3.12 from scratch on a non
+Here is the complete procedure to build Gtk+ 1.3.15 from scratch on a non
 linux system (system tested is Solaris 2.8).
 Once all these steps have been done successfully, only glib, atk, pango and gtk
 need to be rebuilt when their version change.
@@ -72,8 +72,8 @@ cd ..
 ########
 # glib #
 ########
-tar xzvf glib-1.3.13.tar.gz
-cd glib-1.3.13
+tar xzvf glib-1.3.15.tar.gz
+cd glib-1.3.15
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
 # --enable-gc-friendly --disable-mem-pools --with-threads=posix
 make
@@ -83,8 +83,8 @@ cd ..
 #######
 # atk #
 #######
-tar xzvf atk-0.10.tar.gz
-cd atk-0.10
+tar xzvf atk-0.13.tar.gz
+cd atk-0.13
 ./configure --prefix=$prefix
 make
 make install
@@ -93,8 +93,8 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-0.24.tar.gz
-cd pango-0.24
+tar xzvf pango-0.26.tar.gz
+cd pango-0.26
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. Other modules are:
@@ -110,8 +110,8 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-1.3.13.tar.gz
-cd gtk+-1.3.13
+tar xzvf gtk+-1.3.15.tar.gz
+cd gtk+-1.3.15
 ./configure --enable-debug=minimum --disable-modules \
  --without-libtiff --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix
 
