@@ -63,6 +63,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
          Page_Num := Page_Num + 1;
          Tab := Process_User_Data.Get (Page);
+         Free (Tab.Command_History);
          Close (Tab.Debugger);
       end loop;
    end Cleanup_Debuggers;
@@ -192,7 +193,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Page         : Gtk_Widget;
       Page_Num     : Gint;
    begin
+
       if S /= "" then
+
+         Open (File, In_File, S);
+         Get_Line (File, Buffer, Last);
+
+         if Buffer (1 .. Last) /= "[Session_File Header]" then
+            Close (File);
+            return;
+         end if;
+
          Page_Num := Gint (Page_List.Length
                            (Get_Children (Top.Process_Notebook)));
 
@@ -202,20 +213,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
             if Page /= null then
                Tab := Process_User_Data.Get (Page);
+               Free (Tab.Command_History);
                Close (Tab.Debugger);
             end if;
 
             Remove_Page (Top.Process_Notebook, Page_Num);
             Page_Num := Page_Num - 1;
          end loop;
-
-         Open (File, In_File, S);
-         Get_Line (File, Buffer, Last);
-
-         if Buffer (1 .. Last) /= "[Session_File Header]" then
-            Close (File);
-            return;
-         end if;
 
          Get_Line (File, Buffer, Last);
          Num_Pages := Gint'Value (Buffer (1 ..  Last));
@@ -259,7 +263,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    exception
       when Name_Error =>
          null;
-
+      when Device_Error =>
+         null;
    end On_Open_Session1_Activate;
 
    ----------------------------------
@@ -301,7 +306,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Put_Line (File, Tab.Descriptor.Remote_Target.all);
                Put_Line (File, Tab.Descriptor.Protocol.all);
                Put_Line (File, "[History]");
-               Rewind (Tab.Command_History);
+               Wind (Tab.Command_History, Backward);
 
                for J in reverse 1 .. Length (Tab.Command_History) loop
                   for Count in 1
@@ -324,6 +329,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    exception
       when No_Such_Item =>
          Close (File);
+      when Use_Error =>
+         null;
    end On_Save_Session_As1_Activate;
 
    ------------------------------------
