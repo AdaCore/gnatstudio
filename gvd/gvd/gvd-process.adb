@@ -2045,7 +2045,9 @@ package body GVD.Process is
          --  since the command might actually be an input for the program being
          --  debugged.
 
-         if Command_In_Process (Get_Process (Debugger.Debugger))
+         if (Command_In_Process (Get_Process (Debugger.Debugger))
+             and then
+               Get_Command_Mode (Get_Process (Debugger.Debugger)) /= Internal)
            or else Debugger.Registered_Dialog /= null
          then
             Send
