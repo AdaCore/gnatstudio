@@ -1135,4 +1135,42 @@ package body Vdiff2_Module.Utils is
       Process_Differences (Id.Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
+   ------------------
+   -- Visual_Patch --
+   ------------------
+
+   function Visual_Patch
+     (Orig_File : VFS.Virtual_File;
+      New_File  : VFS.Virtual_File;
+      Diff_File : VFS.Virtual_File;
+      Revert : Boolean := False) return Boolean is
+      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
+      Result : Diff_List;
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Item   : Diff_Head;
+   begin
+      Result :=
+        Diff (Id.Kernel, Orig_File, New_File, Diff_File, Revert);
+
+      if Result = Diff_Chunk_List.Null_List then
+         Button := Message_Dialog
+           (Msg         => -"No differences found.",
+            Buttons     => Button_OK,
+            Parent      => Get_Main_Window (Id.Kernel));
+         return false;
+      end if;
+
+      Item :=
+        (List => Result,
+         File1 => Orig_File,
+         File2 => New_File,
+         File3 => VFS.No_File,
+         Current_Node => First (Result),
+         Ref_File => 2);
+      Process_Differences (Id.Kernel, Item, Id.List_Diff);
+      --  Delete_File (Ref_File, Success);
+      return true;
+   end Visual_Patch;
+
 end Vdiff2_Module.Utils;

@@ -79,6 +79,16 @@ package Vdiff2_Module.Utils is
       File3 : Virtual_File := VFS.No_File);
    --  Execute Diff and display the result in the editor
 
+   function Visual_Patch
+     (Orig_File : VFS.Virtual_File;
+      New_File  : VFS.Virtual_File;
+      Diff_File : VFS.Virtual_File;
+      Revert : Boolean := False) return Boolean;
+   --  Compute the differences from Diff_File.
+   --  If Revert is False, create New_File from Orig_File and Diff_File.
+   --  If Revert is True, create Orig_File from New_File and Diff_File.
+   --  Display the result in the editor
+
    procedure Move_Block
      (Kernel       : Kernel_Handle;
       Source_File  : Virtual_File;
