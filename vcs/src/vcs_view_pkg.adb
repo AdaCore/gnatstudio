@@ -188,14 +188,14 @@ package body VCS_View_Pkg is
    --  Callback for toggling of "Hide not registered files".
 
    function Button_Press
-     (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event)
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event)
       return Boolean;
    --  Callback for the "button_press" event.
 
    function On_Delete
-     (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event)
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event)
      return Boolean;
    --  Callback for the "delete_event" signal
 
@@ -985,14 +985,13 @@ package body VCS_View_Pkg is
    ------------------
 
    function Button_Press
-     (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean
    is
       Menu     : Gtk_Menu;
       Check    : Gtk_Check_Menu_Item;
       Mitem    : Gtk_Menu_Item;
-      Context  : File_Selection_Context_Access :=
-        new File_Selection_Context;
+      Context  : File_Selection_Context_Access := new File_Selection_Context;
 
       Files    : String_List.List;
       Explorer : constant VCS_View_Access := VCS_View_Access (View);
@@ -1132,11 +1131,11 @@ package body VCS_View_Pkg is
    -------------
 
    procedure Execute
-     (Hook   : File_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      File_Data   : Hooks_Data'Class)
+     (Hook      : File_Hook_Record;
+      Kernel    : access Kernel_Handle_Record'Class;
+      File_Data : Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (File_Data);
+      D        : constant File_Hooks_Args := File_Hooks_Args (File_Data);
       Log_Name : constant String := Full_Name (D.File).all;
    begin
       if Log_Name'Length > 4
@@ -1307,8 +1306,7 @@ package body VCS_View_Pkg is
       Gtkada.Handlers.Return_Callback.Object_Connect
         (Page.Tree,
          "button_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Button_Press'Access),
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Explorer,
          After => False);
 
@@ -1414,9 +1412,9 @@ package body VCS_View_Pkg is
    begin
       if Explorer.Context = null then
          declare
-            Context  : File_Selection_Context_Access;
-            Files    : String_List.List;
-            First    : VFS.Virtual_File;
+            Context : File_Selection_Context_Access;
+            Files   : String_List.List;
+            First   : VFS.Virtual_File;
          begin
             Files := Get_Selected_Files (VCS_View_Access (Explorer));
 
