@@ -32,6 +32,7 @@ with Prj.Part;    use Prj.Part;
 with Prj.Proc;    use Prj.Proc;
 with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
+with Prj.PP;      use Prj.PP;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
 with Errout;      use Errout;
@@ -90,7 +91,8 @@ package body Glide_Kernel.Project is
    function Get_Project_File_Name
      (Kernel : access Kernel_Handle_Record'Class) return String is
    begin
-      return Get_Name_String (Name_Of (Kernel.Project));
+      return Get_Name_String (Directory_Of (Kernel.Project))
+        & Get_Name_String (Name_Of (Kernel.Project));
    end Get_Project_File_Name;
 
    ------------------
@@ -179,6 +181,8 @@ package body Glide_Kernel.Project is
 
       --  Evaluate the current project
 
+      Pretty_Print (Handle.Project);
+
       Prj.Reset;
       Prj.Proc.Process
         (Handle.Project_View, Handle.Project,
@@ -254,6 +258,38 @@ package body Glide_Kernel.Project is
       Child := Put (MDI, Viewer);
       Set_Title (Child, Project_Editor_Window_Name);
    end Open_Project_Editor;
+
+   ----------------------
+   -- Get_Source_Files --
+   ----------------------
+
+   function Get_Source_Files (Handle : access Kernel_Handle_Record)
+      return GNAT.OS_Lib.Argument_List
+   is
+      Src : String_List_Id;
+      Count : Natural := 0;
+   begin
+      Src := Projects.Table (Handle.Project_View).Sources;
+      while Src /= Nil_String loop
+         Count := Count + 1;
+         Src := String_Elements.Table (Src).Next;
+      end loop;
+
+      declare
+         Sources : Argument_List (1 .. Count);
+         Index   : Natural := Sources'First;
+      begin
+         Src := Projects.Table (Handle.Project_View).Sources;
+         while Src /= Nil_String loop
+            String_To_Name_Buffer (String_Elements.Table (Src).Value);
+            Sources (Index) := new String'
+              (Name_Buffer (Name_Buffer'First .. Name_Len));
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         return Sources;
+      end;
+   end Get_Source_Files;
 
 end Glide_Kernel.Project;
 

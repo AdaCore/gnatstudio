@@ -61,6 +61,7 @@ package Glide_Kernel.Project is
      (Kernel : access Kernel_Handle_Record'Class) return String;
    --  Return the name of the current project, as should be used on the command
    --  line for all the tools that support projects
+   --  The returned string includes the directory name for the project
 
    function Find_Source_File
      (Kernel : access Kernel_Handle_Record'Class; Short_File_Name : String)
@@ -94,5 +95,12 @@ package Glide_Kernel.Project is
    --  Open a project editor for the current project.
    --  Depending on the preferences, this might open a new view of the project
    --  editor, or simply select the existing one.
+
+   function Get_Source_Files (Handle : access Kernel_Handle_Record)
+      return GNAT.OS_Lib.Argument_List;
+   --  Return the list of source files belonging to the project described in
+   --  Handle. Only the direct sources of the project are currently return, ie
+   --  not those found in subprojects.
+   --  It is the caller's responsability to free the list
 
 end Glide_Kernel.Project;
