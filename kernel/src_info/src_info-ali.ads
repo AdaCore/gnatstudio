@@ -33,6 +33,9 @@ package Src_Info.ALI is
    --  Parse the given ALI file and update the Unit Info list. Also returns
    --  a handle to the Unit Info corresponding to this ALI file to avoid
    --  searching right-back for this handle for immediate queries.
+   --
+   --  Note that it is allowed to pass No_Project as the project. In this
+   --  case, only the Predefined_Source/Object_Path will be used.
 
    function ALI_Filename_From_Source
      (Source_Filename        : String;
