@@ -1142,6 +1142,7 @@ package body Glide_Kernel is
         Glide_Window (Handle.Main_Window);
       Desktop_Loaded       : constant Boolean :=
         Main_Window.Desktop_Loaded;
+      Success_Loading_Desktop : Boolean;
       Err                  : String_Access;
 
    begin
@@ -1201,17 +1202,21 @@ package body Glide_Kernel is
 
          Present_On_Child_Focus (MDI, False);
 
+         Success_Loading_Desktop := False;
+
          if Desktop_Node /= null then
             Trace (Me, "loading desktop for " & Project_Name);
-            Kernel_Desktop.Restore_Desktop
+            Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
               (MDI, Desktop_Node, Kernel_Handle (Handle));
          elsif Default_Desktop_Node /= null then
             Trace (Me, "loading default desktop (from file)");
-            Kernel_Desktop.Restore_Desktop
+            Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
               (MDI, Default_Desktop_Node, Kernel_Handle (Handle));
-         else
+         end if;
+
+         if not Success_Loading_Desktop then
             Trace (Me, "loading default desktop");
-            Kernel_Desktop.Restore_Desktop
+            Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
               (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
          end if;
 
@@ -1231,7 +1236,7 @@ package body Glide_Kernel is
 
          Present_On_Child_Focus (MDI, False);
 
-         Kernel_Desktop.Restore_Desktop
+         Success_Loading_Desktop := Kernel_Desktop.Restore_Desktop
            (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
 
          Present_On_Child_Focus (MDI, True);
@@ -1849,6 +1854,7 @@ package body Glide_Kernel is
      (Handle              : access Kernel_Handle_Record;
       Child               : access Gtk.Widget.Gtk_Widget_Record'Class;
       Flags               : Child_Flags := All_Buttons;
+      Position            : Child_Position := Position_Default;
       Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Gint := -1;
       Module              : access Module_ID_Record'Class;
@@ -1859,18 +1865,19 @@ package body Glide_Kernel is
       if Child.all in GPS_MDI_Child_Record'Class then
          C := GPS_MDI_Child (Child);
       elsif Child.all in MDI_Child_Record'Class then
-         return Put (Get_MDI (Handle), Child, Flags, Focus_Widget,
-                     Default_Width, Default_Height);
+         return Put (Get_MDI (Handle), Child, Position, Flags, Focus_Widget);
       else
          C := new GPS_MDI_Child_Record;
          Initialize (C, Child, Flags);
       end if;
 
+      if Default_Width /= -1 or else Default_Height /= -1 then
+         Set_Size_Request (Child, Default_Width, Default_Height);
+      end if;
+
       C.Module := Module_ID (Module);
       C.Desktop_Independent := Desktop_Independent;
-      return Put
-        (Get_MDI (Handle),
-         C, Flags, Focus_Widget, Default_Width, Default_Height);
+      return Put (Get_MDI (Handle), C, Position, Flags, Focus_Widget);
    end Put;
 
    ----------------------

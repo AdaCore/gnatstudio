@@ -614,12 +614,13 @@ package Glide_Kernel is
    --  associated a widget with a GPS module
 
    function Put
-     (Handle              : access Kernel_Handle_Record;
-      Child               : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Flags               : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
-      Focus_Widget        : Gtk.Widget.Gtk_Widget := null;
+     (Handle        : access Kernel_Handle_Record;
+      Child         : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags         : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
+      Position      : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
+      Focus_Widget  : Gtk.Widget.Gtk_Widget := null;
       Default_Width, Default_Height : Glib.Gint := -1;
-      Module              : access Module_ID_Record'Class;
+      Module        : access Module_ID_Record'Class;
       Desktop_Independent : Boolean := False) return Gtkada.MDI.MDI_Child;
    --  Recommended version of Put to use, instead of the one in
    --  GtkAda.MDI. This version has several new parameters:
