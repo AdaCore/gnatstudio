@@ -371,8 +371,8 @@ Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @code{References->Sdc calls...}: this will open a new window titled
 @i{Call graph browser}.
 
-Double click on the right arrow of @code{Process} (one the first items on the
-right). Also double click on the right arrow of @code{error_msg}.
+Double click on the right arrow of @code{Process} (one of the first items on
+the right). Also double click on the right arrow of @code{error_msg}.
 
 Select @code{Orthogonal links} in contextual menu of the graph to change the
 way links are displayed in the graph.
@@ -382,7 +382,7 @@ Now, if you select @code{Hide links} from @code{error_msg} contextual menu, this
 will hide all the links that are related to this item: the link between the
 callers and callees of @code{error_msg} are no longer displayed. This can
 be useful when the graph becomes complex, to hide some parts. If you go back to
-the contextualmenu, you can now select @code{Show links} to show the links
+the contextual menu, you can now select @code{Show links} to show the links
 again.
 
 Double click on right arrow of @code{process} (@file{instructions.ads:12},
@@ -487,8 +487,8 @@ check box.
 
 Click on @code{Forward}: we are now on the @code{VCS page}. @i{VCS} stands
 for @i{Version Control System}.
-GPS has a generic support for @i{VCS}, and adding support
-for new systems isn't very hard. Currently GPS supports CVS and ClearCase.
+GPS has a generic support for @i{VCS} which allows it to easily support
+new systems. Currently GPS supports CVS and ClearCase.
 
 Select @code{CVS}.
 
@@ -582,7 +582,8 @@ Select the menu item @code{Project->Edit switches}: a global
 switch editor is displayed in the working area.
 This editor lists the switches associated with each file,
 the gray area shows the default (global) switches; you will also notice
-that output.adb has specific switches, which are highlighted.
+that output.adb has specific switches, which are highlighted using a
+different font.
 
 Switch between @code{Debug} and @code{Production} mode in the @code{Build}
 combo box: the switches are updated at the same time.
@@ -613,7 +614,7 @@ You can see the new dependencies added in the project explorer, as a tree of
 projects. In particular, project dependencies are duplicated: if you open
 the @code{prj1} icon by clicking on the @code{[+]} sign, and then
 similarly open the @code{prj2} icon, you will notice that the project
-@file{prj4} is displayed twice: one as as depenency of @code{prj2}, and
+@file{prj4} is displayed twice: once as a dependency of @code{prj2}, and
 once as a dependency of @file{prj1}.
 
 GPS can also display the graph of dependencies between projects: on @i{sdc}
