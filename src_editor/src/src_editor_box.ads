@@ -269,6 +269,9 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record);
    --  Clear the subprogram name label (set to empty string)
 
+   procedure Show_Subprogram_Name (Box : Source_Editor_Box);
+   --  Show the name of the current subprogram.
+
    function Create_Mark
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type;
@@ -435,6 +438,9 @@ private
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
 
       Label_Box            : Gtk.Box.Gtk_Hbox;
+
+      Current_Line         : Editable_Line_Type;
+      --  Cache for the current line.
 
       --  The status bar
       Function_Label       : Gtk.Label.Gtk_Label;
