@@ -828,9 +828,8 @@ package body Projects.Registry is
             end if;
 
          exception
-            when E : Directory_Error =>
-               Trace (Me, "Unexpected exception while opening "
-                      & Curr & ' ' & Exception_Information (E));
+            when Directory_Error =>
+               Trace (Me, "Unexpected exception while opening " & Curr);
          end;
 
          Iter := Next (Path, Iter);
