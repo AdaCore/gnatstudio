@@ -26,14 +26,9 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with GNAT.Regpat;       use GNAT.Regpat;
 with Glide_Main_Window; use Glide_Main_Window;
 with Glide_Page;        use Glide_Page;
 with Glide_Consoles;    use Glide_Consoles;
-with Gdk.Color;         use Gdk.Color;
-with Gtk.Text;          use Gtk.Text;
-with Gtk.Widget;        use Gtk.Widget;
 with GVD.Process;       use GVD.Process;
 
 package body Glide_Kernel.Console is
