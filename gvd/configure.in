@@ -57,13 +57,6 @@ case "${host}" in
     machine=iris4d opsys=irix6-0
   ;;
 
-  ## Windows
-  *-mingw32msv* )
-    machine=intel386 opsys=windows
-    STRIP_CR=True
-    ASYNC_COMMANDS=False
-  ;;
-
   ## IBM, AIX machines
   rs6000-ibm-aix3.1* | powerpc-ibm-aix3.1*  )
     machine=ibmrs6000 opsys=aix3-1
@@ -150,6 +143,11 @@ case "${host}" in
       *-386bsd* )               opsys=386bsd ;;
       *-freebsd* )              opsys=freebsd ;;
       *-nextstep* )             opsys=nextstep ;;
+      *win32* )
+	machine=intel386 opsys=windows
+	STRIP_CR=True
+	ASYNC_COMMANDS=False
+	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
   ;;
