@@ -1,2 +1,0 @@
-clean:
-	rm *.ali *.o
