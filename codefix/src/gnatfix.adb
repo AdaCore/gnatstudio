@@ -90,7 +90,7 @@ begin
       Errors_Found,
       Corrections_Proposed'Access);
 
-   Update (Errors_List, Successful_Update, Current_Text, Ambiguity'Access);
+   Commit (Errors_List, Successful_Update, Current_Text, Ambiguity'Access);
 
    if Visible then
       if Successful_Update then

@@ -35,7 +35,7 @@ package body Final_Window_Pkg.Callbacks is
         Final_Window_Access (Object);
       Success      : Boolean;
    begin
-      Update
+      Commit
         (Final_Window.Graphic_Codefix.Corrector,
          Success,
          Final_Window.Graphic_Codefix.Current_Text,

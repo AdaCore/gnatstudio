@@ -126,7 +126,7 @@ package body Codefix_Window_Pkg.Callbacks is
         Graphic_Codefix_Access (Object);
       Success : Boolean;
    begin
-      Update
+      Commit
         (Graphic_Codefix.Corrector,
          Success,
          Graphic_Codefix.Current_Text,
