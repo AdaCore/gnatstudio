@@ -236,6 +236,7 @@ begin
    Add (Hyper_Grep_Base.Hbuttonbox, Hyper_Grep_Base.Start_Button);
 
    Gtk_New (Hyper_Grep_Base.Stop_Button, "Stop");
+   Set_Sensitive (Hyper_Grep_Base.Stop_Button, False);
    Set_Flags (Hyper_Grep_Base.Stop_Button, Can_Default);
    Button_Callback.Connect
      (Hyper_Grep_Base.Stop_Button, "clicked",

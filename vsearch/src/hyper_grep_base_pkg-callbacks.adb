@@ -214,7 +214,13 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
       end if;
 
       Reset_Search;
+
+      Set_Sensitive (Hyper_Grep_Window.Stop_Button,  True);
+      Set_Sensitive (Hyper_Grep_Window.Start_Button, False);
       Do_Search (S, Callback'Access);
+      Set_Sensitive (Hyper_Grep_Window.Stop_Button,  False);
+      Set_Sensitive (Hyper_Grep_Window.Start_Button, True);
+
       Put_Line ("====== End of search");
       Free (S);
 
