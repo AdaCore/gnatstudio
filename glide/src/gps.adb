@@ -112,6 +112,7 @@ with Action_Editor;
 procedure GPS is
    use Glide_Main_Window;
 
+   --
    Me        : constant Debug_Handle := Create ("GPS");
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
@@ -170,6 +171,7 @@ procedure GPS is
    Dir                    : String_Access;
    Batch_File             : String_Access;
    Batch_Script           : String_Access;
+   Tools_Host             : String_Access;
    Target                 : String_Access;
    Protocol               : String_Access;
    Debugger_Name          : String_Access;
@@ -588,7 +590,7 @@ procedure GPS is
       Initialize_Option_Scan;
       loop
          case Getopt ("-version -help P: -log-level= " &
-                      "-debug? -debugger= -target= -load= -eval= " &
+                      "-debug? -debugger= -host= -target= -load= -eval= " &
                       "-traceoff= -traceon= -tracefile= -tracelist")
          is
             -- long option names --
@@ -613,11 +615,16 @@ procedure GPS is
                      OS_Exit (0);
 
                   when 'h' =>
-                     -- --help --
                      if Full_Switch = "-help" then
+                        -- --help --
                         Help;
                         OS_Exit (0);
+                     else
+                        -- --host --
+                        Free (Tools_Host);
+                        Tools_Host := new String'(Parameter);
                      end if;
+
 
                   -- --log-level --
                   when 'l' =>
@@ -650,6 +657,7 @@ procedure GPS is
                      Batch_Script := new String'(Parameter);
 
                   -- --target --
+
                   when 't' =>
                      if Full_Switch = "-target" then
                         declare
@@ -749,6 +757,8 @@ procedure GPS is
          Put_Line (-"   --debug[=program]   Start a debug session");
          Put_Line
            (-"   --debugger debugger Specify the debugger's command line");
+         Put_Line ((-"   --host=tools_host  ") &
+                     (-"Use tools_host to launch tools (e.g. gdb)"));
          Put_Line ((-"   --target=TARG:PRO   ") &
                      (-"Load program on machine TARG using protocol PRO"));
          Put_Line
@@ -786,6 +796,9 @@ procedure GPS is
             (-"                        before the --load command") & LF &
             (-"   --debug[=program]   Start a debug session") & LF &
             (-"   --debugger debugger Specify the debugger's command line") &
+            LF &
+            (-"   --host=tools_host   ") &
+            (-"Use tools_host to launch tools (e.g. gdb)") &
             LF &
             (-"   --target=TARG:PRO   ") &
             (-"Load program on machine TARG using protocol PRO"),
@@ -1199,6 +1212,14 @@ procedure GPS is
                Scenario_Variables => No_Scenario,
                Attribute          => Debugger_Command_Attribute,
                Value              => Debugger_Name.all);
+         end if;
+
+         if Tools_Host /= null then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Remote_Host_Attribute,
+               Value              => Tools_Host.all);
          end if;
 
          if Target /= null then
