@@ -10,7 +10,7 @@ all:
 
 install: 
 	for subdir in $(subdirs); do \
-	   $(MAKE) CFLAGS="$(CFLAGS)" -C $$subdir $@; \
+	   $(MAKE) -C $$subdir $@; \
 	done
 
 clean-generic:
@@ -18,14 +18,14 @@ clean-generic:
 	-$(RM) .\#*
 clean: clean-generic
 	for subdir in $(subdirs); do \
-	   $(MAKE) CFLAGS="$(CFLAGS)" -C $$subdir $@; \
+	   $(MAKE) -C $$subdir $@; \
 	done
 
 mostlyclean-generic: clean-generic
 
 mostlyclean: mostlyclean-generic
 	for subdir in $(subdirs); do \
-	   $(MAKE) CFLAGS="$(CFLAGS)" -C $$subdir $@; \
+	   $(MAKE) -C $$subdir $@; \
 	done
 
 distclean-generic: mostlyclean-generic
@@ -33,11 +33,11 @@ distclean-generic: mostlyclean-generic
 
 distclean: distclean-generic
 	for subdir in $(subdirs); do \
-	   $(MAKE) CFLAGS="$(CFLAGS)" -C $$subdir $@; \
+	   $(MAKE) -C $$subdir $@; \
 	done
 	
 maintainer-clean: distclean-generic
 	-$(RM) configure
 	for subdir in $(subdirs); do \
-	   $(MAKE) CFLAGS="$(CFLAGS)" -C $$subdir $@; \
+	   $(MAKE) -C $$subdir $@; \
 	done
