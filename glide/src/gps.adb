@@ -85,6 +85,7 @@ with Metrics_Module;
 with Project_Explorers;
 with Project_Explorers_Files;
 with Project_Viewers;
+with Project_Properties;
 with Shell_Script;
 with Src_Editor_Module;
 with VCS_Module;
@@ -972,6 +973,7 @@ procedure GPS is
       Browsers.Projects.Register_Module (GPS.Kernel);
       Browsers.Entities.Register_Module (GPS.Kernel);
       Project_Viewers.Register_Module (GPS.Kernel);
+      Project_Properties.Register_Module (GPS.Kernel);
       Aliases_Module.Register_Module (GPS.Kernel);
       Src_Editor_Module.Register_Module (GPS.Kernel);
       Project_Explorers.Register_Module (GPS.Kernel);
