@@ -149,4 +149,8 @@ Known Problems fixed in GPS 3.0.0
               if the search window was already open
   Workaround: Copy the text first, open the search dialog, and paste
 
+- D408-009 GPS frozen when closing debug data while gdb busy
+  Problem:    While the underlying debugger (gdb) is busy, trying to close
+              a graphical item in the data window will freeze GPS.
+  Workaround: Interrupt the debugger before closing the item
 
