@@ -2011,7 +2011,8 @@ package body Glide_Kernel is
       Tool_Name : String;
       Tool      : Tool_Properties_Record)
    is
-      Pkg : Package_Node_Id;
+      Pkg  : Package_Node_Id;
+      Attr : Attribute_Node_Id;
    begin
       Name_Len := Tool.Project_Package'Length;
       Name_Buffer (1 .. Name_Len) := To_Lower (Tool.Project_Package.all);
@@ -2020,18 +2021,25 @@ package body Glide_Kernel is
          Register_New_Package (Tool.Project_Package.all, Pkg);
       end if;
 
-      if Tool.Project_Index.all = "" then
-         Register_New_Attribute
-           (Name       => Tool.Project_Attribute.all,
-            In_Package => Pkg,
-            Attr_Kind  => Prj.Attr.Single,
-            Var_Kind   => Prj.List);
-      else
-         Register_New_Attribute
-           (Name       => Tool.Project_Attribute.all,
-            In_Package => Pkg,
-            Attr_Kind  => Prj.Attr.Associative_Array,
-            Var_Kind   => Prj.List);
+      Name_Len := Tool.Project_Attribute'Length;
+      Name_Buffer (1 .. Name_Len) := To_Lower (Tool.Project_Attribute.all);
+      Attr := Attribute_Node_Id_Of
+        (Name  => Name_Find, Starting_At => First_Attribute_Of (Pkg));
+
+      if Attr = Empty_Attribute then
+         if Tool.Project_Index.all = "" then
+            Register_New_Attribute
+              (Name       => To_Lower (Tool.Project_Attribute.all),
+               In_Package => Pkg,
+               Attr_Kind  => Prj.Attr.Single,
+               Var_Kind   => Prj.List);
+         else
+            Register_New_Attribute
+              (Name       => To_Lower (Tool.Project_Attribute.all),
+               In_Package => Pkg,
+               Attr_Kind  => Prj.Attr.Associative_Array,
+               Var_Kind   => Prj.List);
+         end if;
       end if;
 
       Tools_Htable.String_Hash_Table.Set (Kernel.Tools, Tool_Name, Tool);
