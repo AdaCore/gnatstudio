@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;       use Ada.Exceptions;
+
 with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Font;             use Gdk.Font;
@@ -130,6 +132,11 @@ package body Browsers.Dependency_Items is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Edit the ancestor dependencies for a specific file.
+
+   procedure On_Examine_Other_File
+     (Browser : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Insert a new item for the file described in Context.
 
    procedure Browser_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -983,6 +990,47 @@ package body Browsers.Dependency_Items is
       return Get_Project_View_From_Name (Item.Project_Name);
    end Project_Of;
 
+   ---------------------------
+   -- On_Examine_Other_File --
+   ---------------------------
+
+   procedure On_Examine_Other_File
+     (Browser : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      B : Dependency_Browser := Dependency_Browser (Browser);
+      C : File_Name_Selection_Context_Access :=
+        File_Name_Selection_Context_Access (Context);
+      Item : File_Item;
+      Other_File : constant String := Get_Other_File_Of
+        (Get_Kernel (Context), File_Information (C), False);
+   begin
+      if Other_File /= "" then
+         Item := File_Item (Find_File (B, Other_File));
+         if Item = null then
+            Set_Auto_Layout (Get_Canvas (B), False);
+
+            Gtk_New (Item, Get_Window (B), B,  Get_Kernel (Context),
+                     Other_File);
+            Put (Get_Canvas (B), Item);
+
+            Set_Auto_Layout (Get_Canvas (B), True);
+            Layout (Get_Canvas (B),
+                    Force => False,
+                    Vertical_Layout =>
+                      Get_Pref (Get_Kernel (B), Browsers_Vertical_Layout));
+            Refresh_Canvas (Get_Canvas (B));
+
+         end if;
+         Select_Item (B, Item, True);
+      end if;
+   exception
+      when E : others =>
+         Trace (Me,
+                "Unexpected exception in On_Examine_Other_File "
+                & Exception_Information (E));
+   end On_Examine_Other_File;
+
    ------------------------
    -- Contextual_Factory --
    ------------------------
@@ -993,12 +1041,13 @@ package body Browsers.Dependency_Items is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Event, Menu);
+      pragma Unreferenced (Event);
       Context : Selection_Context_Access := new File_Selection_Context;
       Src     : Src_Info.Internal_File := Get_Source (Item);
       Filename : constant String := Get_Source_Filename (Src);
       Full_Name : constant String := Find_Source_File
         (Get_Kernel (Browser), Filename, True);
+      Mitem : Gtk_Menu_Item;
    begin
       Set_File_Name_Information
         (File_Name_Selection_Context_Access (Context),
@@ -1007,6 +1056,15 @@ package body Browsers.Dependency_Items is
       Set_File_Information
         (File_Selection_Context_Access (Context),
          Project_View => Project_Of (Get_Kernel (Browser), Item));
+
+      Gtk_New (Mitem, -"Analyze other file (spec or body)");
+      Add (Menu, Mitem);
+      Context_Callback.Object_Connect
+        (Mitem, "activate",
+         Context_Callback.To_Marshaller (On_Examine_Other_File'Access),
+         User_Data   => Selection_Context_Access (Context),
+         Slot_Object => Browser);
+
       return Context;
    end Contextual_Factory;
 
