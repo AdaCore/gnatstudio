@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -493,10 +493,18 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data (Instance : Class_Instance) return File_Info is
-      Script : constant Scripting_Language := Get_Script (Instance);
-      Value  : constant System.Address := Get_Data (Instance);
-      Ent    : constant File_Info_Access := Convert (Value);
+      Script : Scripting_Language;
+      Value  : System.Address;
+      Ent    : File_Info_Access;
    begin
+      if Instance = null then
+         return No_File;
+      end if;
+
+      Script := Get_Script (Instance);
+      Value  := Get_Data (Instance);
+      Ent    := Convert (Value);
+
       if not Is_Subclass
         (Script, Get_Class (Instance), Get_File_Class (Get_Kernel (Script)))
       then
