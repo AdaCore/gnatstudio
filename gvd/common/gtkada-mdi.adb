@@ -27,9 +27,6 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
---  ??? The following is needed in GtkAda2.0 until we have put
---  Get_User_Data in some common package with GtkAda1.2
-with Glib.Object;      use Glib.Object;
 with Gdk;              use Gdk;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Cursor;       use Gdk.Cursor;
