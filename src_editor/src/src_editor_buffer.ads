@@ -427,6 +427,11 @@ package Src_Editor_Buffer is
       Status : Status_Type);
    --  Set the last calculated status.
 
+   function Needs_To_Be_Saved
+     (Buffer : access Source_Buffer_Record'Class)
+      return Boolean;
+   --  Return True if the buffer needs to be saved.
+
    ----------------------
    -- Line Information --
    ----------------------
@@ -610,6 +615,9 @@ private
 
       Saved_Position         : Integer := 0;
       --  The saved position in the command queue.
+
+      Last_Saved_Position : Integer := 0;
+      --  The position the last time the user requested a save.
 
       Current_Command : Command_Access := null;
       --  The current editor command. Belongs to Queue, defined above.
