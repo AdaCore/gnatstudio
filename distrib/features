@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 2.1.0
 
+- Customability enhancements: New project attributes and new preferences can
+  now be defined in XML files
+
 - Minor updates in python support: GPS.Hook.add now takes a subprogram as a
   parameter, instead of a string. This is the more usual syntax for python
   users
@@ -45,5 +48,5 @@ New features in GPS 2.1.0
 
 - Better error messages when parsing customization XML files.
 
-- Full support of XML features in XML customization files
+- Full support of XML features in XML customization files (entities,...)
 
