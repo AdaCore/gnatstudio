@@ -59,9 +59,9 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
-with Pango.Font;                  use Pango.Font;
-with Pango.Layout;                use Pango.Layout;
-with Gdk.Pixbuf;                  use Gdk.Pixbuf;
+with Pango.Font;                use Pango.Font;
+with Pango.Layout;              use Pango.Layout;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with String_List_Utils;         use String_List_Utils;
 with Ada.Unchecked_Deallocation;
@@ -210,7 +210,8 @@ package body Src_Editor_Buffer is
 
    procedure Strip_Ending_Line_Terminator
      (Buffer : access Source_Buffer_Record'Class);
-   --  Delete the last character of the buffer if it is an ASCII.LF.
+   --  Delete the last characters of the buffer if they represent an
+   --  EOL sequence. Also store in Buffer the line termination style.
 
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class);
    --  Free memory associated to Buffer.
@@ -1325,6 +1326,7 @@ package body Src_Editor_Buffer is
 
          if Get_Slice (Iter, End_Iter) = ASCII.CR & ASCII.LF then
             Delete (Buffer, Iter, End_Iter);
+            Buffer.Line_Terminator := CR_LF;
             return;
          end if;
       end if;
@@ -1336,9 +1338,16 @@ package body Src_Editor_Buffer is
          Backward_Char (Iter, Ignored);
 
          case Character'(Get_Char (Iter)) is
-            when ASCII.LF | ASCII.CR =>
+            when ASCII.LF =>
                Get_End_Iter (Buffer, End_Iter);
                Delete (Buffer, Iter, End_Iter);
+               Buffer.Line_Terminator := LF;
+
+            when ASCII.CR =>
+               Get_End_Iter (Buffer, End_Iter);
+               Delete (Buffer, Iter, End_Iter);
+               Buffer.Line_Terminator := CR;
+
             when others =>
                null;
          end case;
@@ -1552,6 +1561,7 @@ package body Src_Editor_Buffer is
 
       if UTF8 = Gtkada.Types.Null_Ptr then
          --  In case conversion failed
+
          Insert_At_Cursor (Buffer, Contents.all);
       else
          Insert_At_Cursor (Buffer, UTF8, Gint (Length));
@@ -1587,22 +1597,25 @@ package body Src_Editor_Buffer is
       FD         : File_Descriptor := Invalid_FD;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
-      CR_Found   : Boolean := False;
+      Terminator : Line_Terminator_Style := Buffer.Line_Terminator;
 
       procedure New_Line (FD : File_Descriptor);
       --  Write a new line on FD.
 
       procedure New_Line (FD : File_Descriptor) is
-         NL            : constant String := ASCII.CR & ASCII.LF;
+         NL            : aliased constant String := ASCII.CR & ASCII.LF;
          Bytes_Written : Integer;
          pragma Unreferenced (Bytes_Written);
 
       begin
-         if CR_Found then
-            Bytes_Written := Write (FD, NL (1)'Address, 2);
-         else
-            Bytes_Written := Write (FD, NL (2)'Address, 1);
-         end if;
+         case Terminator is
+            when CR_LF =>
+               Bytes_Written := Write (FD, NL (1)'Address, 2);
+            when CR =>
+               Bytes_Written := Write (FD, NL (1)'Address, 1);
+            when Unknown | LF =>
+               Bytes_Written := Write (FD, NL (2)'Address, 1);
+         end case;
       end New_Line;
 
    begin
@@ -1618,15 +1631,17 @@ package body Src_Editor_Buffer is
       Get_Bounds (Buffer, Start_Iter, End_Iter);
 
       declare
-         UTF8           : constant Gtkada.Types.Chars_Ptr :=
+         Terminator_Pref : constant Line_Terminators :=
+           Line_Terminators'Val (Get_Pref (Buffer.Kernel, Line_Terminator));
+         UTF8            : constant Gtkada.Types.Chars_Ptr :=
            Get_Text (Buffer, Start_Iter, End_Iter, True);
-         Contents       : GNAT.OS_Lib.String_Access;
-         Bytes_Written  : Integer;
+         Contents        : GNAT.OS_Lib.String_Access;
+         Bytes_Written   : Integer;
          pragma Unreferenced (Bytes_Written);
 
-         First, Current : Natural := 1;
-         Blanks         : Natural := 0;
-         Ignore, Length : Natural;
+         First, Current  : Natural := 1;
+         Blanks          : Natural := 0;
+         Ignore, Length  : Natural;
 
       begin
          Length := Integer (Strlen (UTF8));
@@ -1636,49 +1651,63 @@ package body Src_Editor_Buffer is
             Ignore, Length, Result => Contents.all);
          g_free (UTF8);
 
-         if not Get_Pref (Buffer.Kernel, Strip_Blanks) then
-            Current := Length + 1;
-
-            --  Check whether first line terminator is LF or CR/LF and set
-            --  CR_Found accordingly.
+         if Terminator = Unknown then
+            --  Check value of first line terminator and set Terminator
+            --  accordingly.
 
             for J in 1 .. Length loop
                if Contents (J) = ASCII.CR then
-                  CR_Found := True;
+                  if J < Length and then Contents (J + 1) = ASCII.LF then
+                     Terminator := CR_LF;
+                  else
+                     Terminator := CR;
+                  end if;
+
                   exit;
 
                elsif Contents (J) = ASCII.LF then
-                  exit;
+                  Terminator := LF;
                end if;
             end loop;
 
-         else
-            while Current <= Length loop
-               case Contents (Current) is
-                  when ASCII.CR =>
-                     CR_Found := True;
-
-                  when ASCII.LF =>
-                     if Blanks /= 0 then
-                        Bytes_Written := Write
-                          (FD, Contents (First)'Address, Blanks - First);
-                        New_Line (FD);
-                        Blanks := 0;
-                        First := Current + 1;
-                     end if;
-
-                  when ' ' | ASCII.HT =>
-                     if Blanks = 0 then
-                        Blanks := Current;
-                     end if;
-
-                  when others =>
-                     Blanks := 0;
-               end case;
-
-               Current := Current + 1;
-            end loop;
+            Buffer.Line_Terminator := Terminator;
          end if;
+
+         case Terminator_Pref is
+            when Unix =>
+               Terminator := LF;
+            when Windows =>
+               Terminator := CR_LF;
+            when Unchanged =>
+               null;
+         end case;
+
+         if not Get_Pref (Buffer.Kernel, Strip_Blanks) then
+            Current := Length + 1;
+         end if;
+
+         while Current <= Length loop
+            case Contents (Current) is
+               when ASCII.LF =>
+                  if Blanks /= 0 then
+                     Bytes_Written := Write
+                       (FD, Contents (First)'Address, Blanks - First);
+                     New_Line (FD);
+                     Blanks := 0;
+                     First := Current + 1;
+                  end if;
+
+               when ' ' | ASCII.HT =>
+                  if Blanks = 0 then
+                     Blanks := Current;
+                  end if;
+
+               when others =>
+                  Blanks := 0;
+            end case;
+
+            Current := Current + 1;
+         end loop;
 
          if First < Length then
             if Blanks /= 0 then
