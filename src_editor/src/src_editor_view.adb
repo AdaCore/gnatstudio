@@ -151,12 +151,6 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
 
---  ??? Why is the following code and related code in this unit commented out
---     function Key_Release_Event_Cb
---       (Widget : access Gtk_Widget_Record'Class;
---        Event  : Gdk_Event) return Boolean;
-   --  Callback for the "key_press_event" signal.
-
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is mapped.
    --  It performs various operations that can not be done before the widget
@@ -1266,10 +1260,6 @@ package body Src_Editor_View is
         (View, "key_press_event",
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
---        Return_Callback.Connect
---          (View, "key_release_event",
---        Marsh => Return_Callback.To_Marshaller (Key_Release_Event_Cb'Access),
---           After => False);
       Widget_Callback.Connect
         (View, "size_allocate",
          Widget_Callback.To_Marshaller (Size_Allocated'Access),
@@ -1837,21 +1827,6 @@ package body Src_Editor_View is
          return False;
    end Button_Press_Event_Cb;
 
-   --------------------------
-   -- Key_Release_Event_Cb --
-   --------------------------
-
---     function Key_Release_Event_Cb
---       (Widget : access Gtk_Widget_Record'Class;
---        Event  : Gdk_Event) return Boolean
---     is
---        pragma Unreferenced (Widget, Event);
---     begin
---      Pointer_Ungrab (0);
---      Grab_Remove (Widget);
---        return True;
---     end Key_Release_Event_Cb;
-
    ------------------------
    -- Key_Press_Event_Cb --
    ------------------------
@@ -1864,8 +1839,6 @@ package body Src_Editor_View is
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Start, Last : Gtk_Text_Iter;
       Result : Boolean;
---        Tmp : Gdk_Grab_Status;
---        pragma Unreferenced (Tmp);
 
    begin
       if Realized_Is_Set (View)
@@ -1878,16 +1851,6 @@ package body Src_Editor_View is
       if not Get_Editable (View) then
          return False;
       end if;
-
-      --      Grab_Add (Widget);
---        if Realized_Is_Set (Widget) then
---           Tmp := Pointer_Grab
---             (Get_Window (Widget),
---              Time       => 0,
---              Event_Mask => Button_Press_Mask
---              or Button_Release_Mask
---              or Button_Motion_Mask);
---        end if;
 
       case Get_Key_Val (Event) is
          when GDK_Return =>
