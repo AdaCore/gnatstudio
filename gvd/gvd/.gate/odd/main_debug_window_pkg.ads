@@ -17,8 +17,6 @@ with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Arrow; use Gtk.Arrow;
 with Gtk.Status_Bar; use Gtk.Status_Bar;
-with Gtk.Event_Box; use Gtk.Event_Box;
-with Gtk.Check_Button; use Gtk.Check_Button;
 package Main_Debug_Window_Pkg is
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
@@ -190,8 +188,6 @@ package Main_Debug_Window_Pkg is
       Button1 : Gtk_Button;
       Arrow1 : Gtk_Arrow;
       Statusbar1 : Gtk_Statusbar;
-      Eventbox1 : Gtk_Event_Box;
-      Checkbutton1 : Gtk_Check_Button;
    end record;
    type Main_Debug_Window_Access is access all Main_Debug_Window_Record'Class;
 
