@@ -467,30 +467,27 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Set_State (Mitem, State_Insensitive);
       end if;
 
-      declare
-         Dereferenced_Name : constant String :=
-           Dereference_Name (Get_Language (Data.Process.Debugger),
-                             Name => Entity);
-      begin
-         Gtk_New (Mitem, Label => -"Print " & Dereferenced_Name);
-      end;
-      Append (Source.Editor.Contextual_Menu, Mitem);
-      Widget_Breakpoint_Handler.Connect
-        (Mitem, "activate",
-         Widget_Breakpoint_Handler.To_Marshaller
-           (Print_Dereferenced_Variable'Access),
-         Data);
-
-      if Entity'Length = 0 then
-         Set_State (Mitem, State_Insensitive);
-      end if;
-
       Gtk_New (Mitem, Label => -"Display " & Entity);
       Append (Source.Editor.Contextual_Menu, Mitem);
       Data.Auto_Refresh := True;
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Graph_Print_Variable'Access),
+         Data);
+
+      if Entity'Length = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
+
+      Gtk_New (Mitem, Label => -"Print " &
+        Dereference_Name (Get_Language (Data.Process.Debugger), Entity));
+
+      Append (Source.Editor.Contextual_Menu, Mitem);
+      Data.Auto_Refresh := False;
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller
+           (Print_Dereferenced_Variable'Access),
          Data);
 
       if Entity'Length = 0 then
