@@ -18,18 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Box;        use Gtk.Box;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
 
-with Gtk.Tree_View;  use Gtk.Tree_View;
-with Gtk.Tree_Store; use Gtk.Tree_Store;
-
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Console;    use Glide_Kernel.Console;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 
 with Prj.Tree;                 use Prj.Tree;
 
-with String_List;
-with VCS; use VCS;
+with String_List_Utils;        use String_List_Utils;
+
+with VCS;                      use VCS;
 
 package VCS_View_Pkg is
 

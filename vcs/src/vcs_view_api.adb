@@ -33,7 +33,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 
 with Prj_API;                   use Prj_API;
 
-with String_List;
+with String_List_Utils;         use String_List_Utils;
 
 package body VCS_View_API is
 

@@ -35,7 +35,7 @@ with VCS_View_API;              use VCS_View_API;
 
 with VCS;                       use VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
-with String_List;
+with String_List_Utils;         use String_List_Utils;
 
 package body VCS_Module is
 

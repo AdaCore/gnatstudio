@@ -21,7 +21,7 @@
 with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
 with Gtk.Main;             use Gtk.Main;
 with Glide_Kernel;         use Glide_Kernel;
-with String_List;
+with String_List_Utils;    use String_List_Utils;
 
 package Commands.External is
 
