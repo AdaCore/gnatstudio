@@ -1873,6 +1873,11 @@ package body VCS_View_API is
       else
          return null;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return null;
    end Context_Factory;
 
 end VCS_View_API;
