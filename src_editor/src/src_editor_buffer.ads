@@ -145,6 +145,13 @@ package Src_Editor_Buffer is
    --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
    --  available when only the Line number needs to be checked.
 
+   function Is_In_Comment
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
+      return Boolean;
+   --  Retruns true if Iter is in a comment. This is only supported for non
+   --  case sensitive languages that have one-line comment construct only.
+
    procedure Set_Cursor_Position
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
@@ -165,7 +172,19 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Line   : out Editable_Line_Type;
       Column : out Positive);
-   --  Return the current editable cursor position.
+   --  Return the current editable cursor position
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
+   --  Return the current editable cursor position
+
+   procedure Get_Cursor_Position
+     (Buffer : Source_Buffer;
+      Iter   : Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : out Editable_Line_Type;
+      Column : out Positive);
+   --  Return the current editable cursor position for Iter
 
    procedure Get_Screen_Position
      (Buffer : access Source_Buffer_Record;
@@ -307,10 +326,10 @@ package Src_Editor_Buffer is
    --  to another window, cursor moved, etc.
 
    procedure Undo (Buffer : access Source_Buffer_Record);
-   --  Undo last user command.
+   --  Undo last user command
 
    procedure Redo (Buffer : access Source_Buffer_Record);
-   --  Redo last undone command.
+   --  Redo last undone command
 
    function Do_Indentation
      (Buffer   : Source_Buffer;
@@ -345,24 +364,24 @@ package Src_Editor_Buffer is
    procedure Enqueue
      (Buffer  : access Source_Buffer_Record;
       Command : Command_Access);
-   --  Enqueue an action in the Buffer queue.
+   --  Enqueue an action in the Buffer queue
 
    function Get_Kernel
      (Buffer : access Source_Buffer_Record) return Glide_Kernel.Kernel_Handle;
-   --  Return the kernel associated to Buffer.
+   --  Return the kernel associated to Buffer
 
    function Get_Filename
      (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
-   --  Return the name of the file associated with Buffer.
+   --  Return the name of the file associated with Buffer
 
    procedure Set_Filename
      (Buffer : access Source_Buffer_Record;
       Name   : VFS.Virtual_File);
-   --  Set the name of the file associated with Buffer to Name.
+   --  Set the name of the file associated with Buffer to Name
 
    function Get_File_Identifier
      (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
-   --  Return the identifier of the file associated with Buffer.
+   --  Return the identifier of the file associated with Buffer
 
    procedure Set_File_Identifier
      (Buffer : access Source_Buffer_Record;
@@ -393,10 +412,10 @@ package Src_Editor_Buffer is
 
    function Check_Timestamp
      (Buffer : access Source_Buffer_Record) return Boolean;
-   --  Check whether the timestamp changed on the disk.
+   --  Check whether the timestamp changed on the disk
 
    procedure Ref (Buffer : access Source_Buffer_Record);
-   --  Should be called every time that a view is showing Buffer.
+   --  Should be called every time that a view is showing Buffer
 
    procedure Unref (Buffer : access Source_Buffer_Record);
    --  Should be called whenever a view showing Buffer is about to be deleted.
@@ -611,7 +630,7 @@ package Src_Editor_Buffer is
      (Context : access Src_Editor_Action_Context;
       Ctxt    : Glide_Kernel.Selection_Context_Access;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-     return Boolean;
+      return Boolean;
    --  A key context that matches if the current widget is a source editor
 
    --------------
