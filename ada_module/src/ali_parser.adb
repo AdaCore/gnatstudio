@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Basic_Types;
 with Entities;          use Entities;
 with Entities.Queries;  use Entities.Queries;
 with VFS;               use VFS;
@@ -659,23 +660,36 @@ package body ALI_Parser is
       File_Num      : constant Sdep_Id :=
         Xref_Section.Table (Xref_Sect).File_Num;
       Has_Completion : Boolean := False;
+
+      procedure Unchecked_Free (S : Basic_Types.Unchecked_String_Access);
+      pragma Import (C, Unchecked_Free, "free");
+
    begin
       Get_Name_String (Xref_Entity.Table (Xref_Ent).Entity);
-      if Name_Buffer (1) = '"' then
-         To_Lower (Name_Buffer (2 .. Name_Len - 1));
+
+      declare
+         Buffer : Basic_Types.Unchecked_String_Access;
+         Read, Written : aliased Natural;
+      begin
+         if Name_Buffer (1) = '"' then
+            To_Lower (Name_Buffer (2 .. Name_Len - 1));
+            Buffer := Basic_Types.To_Unchecked_String (Locale_To_UTF8
+              (Name_Buffer (2 .. Name_Len - 1),
+               Read'Unchecked_Access, Written'Unchecked_Access));
+         else
+            To_Lower (Name_Buffer (1 .. Name_Len));
+            Buffer := Basic_Types.To_Unchecked_String (Locale_To_UTF8
+              (Name_Buffer (1 .. Name_Len),
+               Read'Unchecked_Access, Written'Unchecked_Access));
+         end if;
+
          Entity := Get_Or_Create
-           (Name   => Locale_To_UTF8 (Name_Buffer (2 .. Name_Len - 1)),
+           (Name   => Buffer (1 .. Written),
             File   => Sfiles (File_Num).File,
             Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
             Column => Integer (Xref_Entity.Table (Xref_Ent).Col));
-      else
-         To_Lower (Name_Buffer (1 .. Name_Len));
-         Entity := Get_Or_Create
-           (Name   => Locale_To_UTF8 (Name_Buffer (1 .. Name_Len)),
-            File   => Sfiles (File_Num).File,
-            Line   => Integer (Xref_Entity.Table (Xref_Ent).Line),
-            Column => Integer (Xref_Entity.Table (Xref_Ent).Col));
-      end if;
+         Unchecked_Free (Buffer);
+      end;
 
       Set_Kind
         (Entity, Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype));
@@ -863,9 +877,12 @@ package body ALI_Parser is
          end loop;
       end loop;
 
-      Trace (Assert_Me, "Need to resolve closure: parsing "
-             & Base_Name (Get_Filename (Sfiles (File_Num).File))
-             & " at " & Line'Img & Column'Img);
+      if Active (Assert_Me) then
+         Trace (Assert_Me,
+                "Need to resolve closure: parsing "
+                & Base_Name (Get_Filename (Sfiles (File_Num).File))
+                & " at " & Line'Img & Column'Img);
+      end if;
 
       S := Get_Source_Info_Internal
         (Handler               => Handler,
@@ -1062,7 +1079,10 @@ package body ALI_Parser is
          Result := No_ALI_Id;
 
       else
-         Trace (Assert_Me, "Parsing " & Full & " Reset=" & Reset_First'Img);
+         if Active (Assert_Me) then
+            Trace (Assert_Me, "Parsing " & Full & " Reset=" & Reset_First'Img);
+         end if;
+
          --  Replace the last char by an EOF. Scan_ALI uses this character
          --  to detect the end of the buffer.
          Buffer (Buffer'Last) := EOF;
@@ -1392,8 +1412,10 @@ package body ALI_Parser is
 
          return Source;
       else
-         Trace (Assert_Me, "LI for " & Full_Name (Source_Filename).all
-                & " is " & Full_Name (LI_Name).all);
+         if Active (Assert_Me) then
+            Trace (Assert_Me, "LI for " & Full_Name (Source_Filename).all
+                   & " is " & Full_Name (LI_Name).all);
+         end if;
       end if;
 
       LI := Get_Or_Create
