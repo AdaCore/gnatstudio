@@ -20,7 +20,6 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
 
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -95,15 +94,6 @@ package body Navigation_Module is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
 
-   function Mime_Action
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
-   --  Process, if possible, the data sent by the kernel
-
-   pragma Unreferenced (Mime_Action);
-
    procedure On_Other_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Open the spec if a body or separate is currently selected, and the spec
@@ -137,7 +127,7 @@ package body Navigation_Module is
         Navigation_Module (Navigation_Module_ID);
    begin
       if Command = "add_location_command" then
-         Create (The_Command, Kernel_Handle (Kernel), Args (Args'First).all);
+         Create (The_Command, Kernel_Handle (Kernel), Args);
 
          if N_Data.Current_Location /= null then
             Prepend (N_Data.Back, N_Data.Current_Location);
@@ -151,152 +141,6 @@ package body Navigation_Module is
 
       return "";
    end Command_Handler;
-
-   -----------------
-   -- Mime_Action --
-   -----------------
-
-   function Mime_Action
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
-   is
-      N_Data : constant Navigation_Module :=
-        Navigation_Module (Navigation_Module_ID);
-      Success : Boolean;
-      pragma Unreferenced (Mode, Success);
-
-   begin
-      if Mime_Type = Mime_Source_File then
-         declare
-            File       : constant String  := Get_String (Data (Data'First));
-            Line       : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column     : constant Gint    := Get_Int (Data (Data'First + 2));
-            Column_End : constant Gint    := Get_Int (Data (Data'First + 3));
-            Navigate   : constant Boolean :=
-              Get_Boolean (Data (Data'First + 4));
-
-            Context    : Selection_Context_Access;
-            Entity     : Entity_Selection_Context_Access;
-            Entity_Col : Natural := 0;
-            Location_Command : Source_Location_Command;
-
-         begin
-            if not Navigate then
-               return False;
-            end if;
-
-            --  If the current location is a source location,
-            --  try to update the line/column from the context.
-
-            Context := Get_Current_Context (Kernel);
-
-            if Context /= null
-              and then Context.all in Entity_Selection_Context'Class
-            then
-               Entity := Entity_Selection_Context_Access (Context);
-
-               if Has_File_Information (Entity)
-                 and then Has_Line_Information (Entity)
-               then
-                  if Has_Column_Information (Entity) then
-                     Entity_Col := Column_Information (Entity);
-                  end if;
-
-                  --  If the entity location is not the current location,
-                  --  save the current location.
-
-                  if N_Data.Current_Location = null
-                    or else N_Data.Current_Location.all
-                       not in Source_Location_Command_Type'Class
-                    or else Get_File
-                      (Source_Location_Command (N_Data.Current_Location))
-                         /= Directory_Information (Entity)
-                            & File_Information (Entity)
-                    or else
-                      (Get_Line
-                           (Source_Location_Command (N_Data.Current_Location))
-                         /= Line_Information (Entity)
-                       and then
-                         Get_Line
-                           (Source_Location_Command (N_Data.Current_Location))
-                         /= 0)
-                  then
-                     Create (Location_Command,
-                             Kernel_Handle (Kernel),
-                             Directory_Information (Entity)
-                               & File_Information (Entity),
-                             Line_Information (Entity),
-                             Entity_Col,
-                             0);
-
-                     if N_Data.Current_Location /= null then
-                        Prepend (N_Data.Back, N_Data.Current_Location);
-                     end if;
-
-                     N_Data.Current_Location
-                       := Command_Access (Location_Command);
-                  end if;
-               end if;
-            end if;
-
-            Create (Location_Command,
-                    Kernel_Handle (Kernel),
-                    File,
-                    Integer (Line),
-                    Integer (Column),
-                    Integer (Column_End));
-
-            if N_Data.Current_Location /= null then
-               Prepend (N_Data.Back, N_Data.Current_Location);
-            end if;
-
-            N_Data.Current_Location := Command_Access (Location_Command);
-            Success := Execute (N_Data.Current_Location);
-            Free (N_Data.Forward);
-
-            Refresh_Location_Buttons (Kernel);
-
-            return True;
-         end;
-
-      elsif Mime_Type = Mime_Html_File then
-         --  ??? This should be done by the help module itself
-         declare
-            File       : constant String := Get_String (Data (Data'First));
-            Anchor     : constant String := Get_String (Data (Data'First + 2));
-            Navigate   : constant Boolean :=
-              Get_Boolean (Data (Data'First + 1));
-            Html_Command : Html_Location_Command;
-         begin
-            if not Navigate then
-               return False;
-            end if;
-
-            if Anchor = "" then
-               Create (Html_Command, Kernel_Handle (Kernel), File);
-            else
-               Create
-                 (Html_Command, Kernel_Handle (Kernel), File & '#' & Anchor);
-            end if;
-
-            if N_Data.Current_Location /= null then
-               Prepend (N_Data.Back, N_Data.Current_Location);
-            end if;
-
-            N_Data.Current_Location := Command_Access (Html_Command);
-            Success := Execute (N_Data.Current_Location);
-            Free (N_Data.Forward);
-
-            Refresh_Location_Buttons (Kernel);
-
-            return True;
-         end;
-      end if;
-
-      return False;
-   end Mime_Action;
 
    -------------
    -- On_Back --
@@ -488,11 +332,11 @@ package body Navigation_Module is
       Register_Command
         (Kernel,
          Command      => "add_location_command",
-         Usage        => "add_location_command ""command arguments""",
+         Usage        => "add_location_command command arg1 arg2 (...) argN",
          Description  => -("Register a command to be associated with"
                            &" navigation buttons."),
          Minimum_Args => 1,
-         Maximum_Args => 1,
+         Maximum_Args => Natural'Last,
          Handler      => Command_Handler'Access);
 
       Register_Menu (Kernel, Navigate, -"Goto _File Spec<->Body",
