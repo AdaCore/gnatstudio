@@ -750,7 +750,7 @@ package Codefix.Errors_Parser is
    --  Fix case problems with keywords.
 
    type Object_Not_Referenced is new Error_Parser
-     (new String'("Unit_Not_Referenced"), 6)
+     (new String'("Unit_Not_Referenced"), 2)
    with null record;
 
    procedure Initialize (This : in out Object_Not_Referenced);
