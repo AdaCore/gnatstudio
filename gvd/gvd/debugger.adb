@@ -352,10 +352,10 @@ package body Debugger is
       Cmd              : String;
       Empty_Buffer     : Boolean := True;
       Wait_For_Prompt  : Boolean := True;
-      Mode             : Command_Type := Hidden)
-   is
+      Mode             : Command_Type := Hidden) is
    begin
       Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+
       if Wait_For_Prompt then
          Wait_Prompt (Debugger);
          Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
@@ -371,12 +371,13 @@ package body Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Command_Type := Hidden) return String
-   is
+      Mode            : Command_Type := Hidden) return String is
    begin
       Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+
       if Wait_For_Prompt then
          Wait_Prompt (Debugger);
+
          declare
             S : String := Expect_Out (Get_Process (Debugger));
          begin
@@ -384,6 +385,7 @@ package body Debugger is
             return S;
          end;
       end if;
+
       return "";
    end Send_Full;
 
