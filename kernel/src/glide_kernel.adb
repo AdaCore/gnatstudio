@@ -42,6 +42,7 @@ with GVD.Process;               use GVD.Process;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 with OS_Utils;                  use OS_Utils;
+with Src_Info;                  use Src_Info;
 with Src_Info.ALI;
 
 with Namet;                     use Namet;
@@ -410,5 +411,23 @@ package body Glide_Kernel is
          return False;
       end if;
    end Load_Desktop;
+
+   -------------------
+   -- Get_Unit_Name --
+   -------------------
+
+   procedure Get_Unit_Name
+     (Handle    : access Kernel_Handle_Record;
+      File      : in out Internal_File;
+      Unit_Name : out String_Access) is
+   begin
+      Get_Unit_Name
+        (File              => File,
+         Source_Info_List  => Handle.Source_Info_List,
+         Project           => Get_Project_View (Handle),
+         Extra_Source_Path => Get_Source_Path (Handle),
+         Extra_Object_Path => Get_Object_Path (Handle),
+         Unit_Name         => Unit_Name);
+   end Get_Unit_Name;
 
 end Glide_Kernel;
