@@ -64,6 +64,7 @@ package body Odd.Dialogs.Callbacks is
 
    begin
       Stack_Frame (Process.Debugger, Positive (Frame), Odd.Types.Visible);
+      Context_Changed (Process);
    end On_Backtrace_List_Select_Row;
 
    ----------------------------------
