@@ -78,15 +78,17 @@ package body Src_Info.Type_Utils is
    begin
       Desc.Parent_Point    := Invalid_Point;
       Desc.Parent_Filename := null;
+
       if Type_Name = "char"          or Type_Name = "signed char"
          or Type_Name = "int"        or Type_Name = "signed int"
          or Type_Name = "long"       or Type_Name = "signed long"
          or Type_Name = "long long"  or Type_Name = "signed long long"
-        or Type_Name = "short"      or Type_Name = "signed short"
+         or Type_Name = "short"      or Type_Name = "signed short"
       then
          Desc.Kind := Signed_Integer_Entity;
          Desc.Builtin_Name := new String'(Type_Name);
          Success := True;
+
       elsif Type_Name = "unsigned char"
          or Type_Name = "unsigned int"
          or Type_Name = "unsigned long"
