@@ -121,8 +121,8 @@ package body Task_Manager is
       Result  : Command_Return_Type;
       First   : Integer;
       Last    : Integer;
-
       Command : Command_Access;
+      Previous_Prio : Integer;
 
    begin
       if Manager.Queues = null then
@@ -135,9 +135,11 @@ package body Task_Manager is
          if Active then
             First := Manager.Queues'First;
             Last  := Manager.Passive_Index - 1;
+            Previous_Prio := Manager.Minimal_Active_Priority;
          else
             First := Manager.Passive_Index;
             Last  := Manager.Queues'Last;
+            Previous_Prio := Manager.Minimal_Passive_Priority;
          end if;
 
          if First > Last then
@@ -148,98 +150,103 @@ package body Task_Manager is
             if Manager.Queues (Q).Current_Priority < Lowest then
                Lowest := Manager.Queues (Q).Current_Priority;
                Current := Q;
-
-               --  ??? Remove a value to each Task_Queue to avoid
-               --  Current_Priority > Integer'Last !
             end if;
 
             Manager.Queues (Q).Current_Priority :=
-              Manager.Queues (Q).Current_Priority
-              + Manager.Queues (Q).Priority;
-
-            if Manager.Queues (Current).Status = Paused then
-               exit;
-            end if;
-
-            if Command_Queues.Is_Empty (Manager.Queues (Current).Queue) then
-               return False;
-            end if;
-
-            Command := Command_Queues.Head (Manager.Queues (Current).Queue);
-
-            Result := Execute (Command);
-
-            Manager.Queues (Q).Need_Refresh := True;
-
-            case Result is
-               when Success | Failure =>
-                  --  ??? add the command to the list of done commands or
-                  --  ??? add the command to the list of failed commands.
-
-                  if Result = Success then
-                     Command_Queues.Concat
-                       (Manager.Queues (Current).Queue,
-                        Get_Consequence_Actions (Command));
-                  else
-                     Command_Queues.Concat
-                       (Manager.Queues (Current).Queue,
-                        Get_Alternate_Actions (Command));
-                  end if;
-
-                  Command_Queues.Next (Manager.Queues (Current).Queue);
-
-                  --  If it was the last command in the queue, free the queue.
-
-                  if Command_Queues.Is_Empty
-                    (Manager.Queues (Current).Queue)
-                  then
-                     Free (Manager.Queues (Current).Id);
-                     Manager.Need_Global_Refresh := True;
-
-                     if Manager.Queues'Length = 1 then
-                        Unchecked_Free (Manager.Queues);
-                        return False;
-
-                     else
-                        declare
-                           New_Queues : Task_Queue_Array
-                             (Manager.Queues'First .. Manager.Queues'Last - 1);
-                        begin
-                           New_Queues
-                             (Manager.Queues'First .. Current - 1) :=
-                             Manager.Queues
-                               (Manager.Queues'First .. Current - 1);
-
-                           New_Queues
-                             (Current .. Manager.Queues'Last - 1) :=
-                             Manager.Queues
-                               (Current + 1 .. Manager.Queues'Last);
-
-                           if Active then
-                              Manager.Passive_Index
-                                := Manager.Passive_Index - 1;
-                           end if;
-                        end;
-                     end if;
-                  end if;
-
-               when Raise_Priority =>
-                  if Manager.Queues (Q).Priority > 1 then
-                     Manager.Queues (Q).Priority :=
-                       Manager.Queues (Q).Priority - 1;
-                  end if;
-
-               when Lower_Priority =>
-                  if Manager.Queues (Q).Priority < 3 then
-                     Manager.Queues (Q).Priority :=
-                       Manager.Queues (Q).Priority + 1;
-                  end if;
-
-               when Execute_Again =>
-                  null;
-
-            end case;
+              Manager.Queues (Q).Current_Priority - Previous_Prio;
          end loop;
+
+         Manager.Queues (Current).Current_Priority :=
+           Manager.Queues (Current).Current_Priority
+           + Manager.Queues (Current).Priority;
+
+         if Active then
+            Manager.Minimal_Active_Priority := Lowest;
+         else
+            Manager.Minimal_Passive_Priority := Lowest;
+         end if;
+
+         if Manager.Queues (Current).Status = Paused then
+            return False;
+         end if;
+
+         Command := Command_Queues.Head (Manager.Queues (Current).Queue);
+
+         Result := Execute (Command);
+
+         Manager.Queues (Current).Need_Refresh := True;
+
+         case Result is
+            when Success | Failure =>
+               --  ??? add the command to the list of done commands or
+               --  ??? add the command to the list of failed commands.
+
+               if Result = Success then
+                  Command_Queues.Concat
+                    (Manager.Queues (Current).Queue,
+                     Get_Consequence_Actions (Command));
+               else
+                  Command_Queues.Concat
+                    (Manager.Queues (Current).Queue,
+                     Get_Alternate_Actions (Command));
+               end if;
+
+               Command_Queues.Next (Manager.Queues (Current).Queue);
+
+               --  If it was the last command in the queue, free the queue.
+
+               if Command_Queues.Is_Empty
+                 (Manager.Queues (Current).Queue)
+               then
+                  Free (Manager.Queues (Current).Id);
+                  Manager.Need_Global_Refresh := True;
+
+                  if Manager.Queues'Length = 1 then
+                     Unchecked_Free (Manager.Queues);
+                     return False;
+
+                  else
+                     declare
+                        New_Queues : Task_Queue_Array
+                          (Manager.Queues'First .. Manager.Queues'Last - 1);
+                     begin
+                        New_Queues
+                          (Manager.Queues'First .. Current - 1) :=
+                          Manager.Queues
+                            (Manager.Queues'First .. Current - 1);
+
+                        New_Queues
+                          (Current .. Manager.Queues'Last - 1) :=
+                          Manager.Queues
+                            (Current + 1 .. Manager.Queues'Last);
+
+                        if Active then
+                           Manager.Passive_Index
+                             := Manager.Passive_Index - 1;
+                        end if;
+
+                        Unchecked_Free (Manager.Queues);
+                        Manager.Queues := new Task_Queue_Array'(New_Queues);
+                     end;
+                  end if;
+               end if;
+
+            when Raise_Priority =>
+               if Manager.Queues (Current).Priority > 1 then
+                  Manager.Queues (Current).Priority :=
+                    Manager.Queues (Current).Priority - 1;
+               end if;
+
+            when Lower_Priority =>
+               if Manager.Queues (Current).Priority < 3 then
+                  Manager.Queues (Current).Priority :=
+                    Manager.Queues (Current).Priority + 1;
+               end if;
+
+            when Execute_Again =>
+               null;
+
+         end case;
 
          return True;
       end if;
@@ -299,6 +306,8 @@ package body Task_Manager is
             Manager.Passive_Index := 1;
          end if;
 
+         Manager.Need_Global_Refresh := True;
+
          return 1;
 
       else
@@ -311,6 +320,8 @@ package body Task_Manager is
                end if;
             end loop;
          end if;
+
+         Manager.Need_Global_Refresh := True;
 
          declare
             New_Queues : Task_Queue_Array
