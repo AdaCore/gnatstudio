@@ -648,8 +648,17 @@ package body Debugger.Gdb is
          --
          --  Note that we need to send the "list" command first, otherwise
          --  info line will not work.
+         --
+         --  Since "list" with no arguments has undefined behavior, take
+         --  advantage of the adainit symbol in case of Ada executables.
+         --  This is particularly important in case of cross environments.
 
-         Send (Debugger, "list", Mode => Internal);
+         if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
+            Send (Debugger, "list adainit", Mode => Internal);
+         else
+            Send (Debugger, "list", Mode => Internal);
+         end if;
+
          Send (Debugger, "info line", Mode => Internal);
       end if;
 
@@ -680,8 +689,9 @@ package body Debugger.Gdb is
    begin
       --  In case the debugger was waiting for some input, or was busy
       --  processing a command.
-      --  ??? Problem here if we were waiting on a user question (for instance
-      --  in Start)
+      --  Try to handle case were gdb is waiting on a user question.
+
+      Send (Debugger, "n", Wait_For_Prompt => False, Mode => Internal);
       Interrupt (Debugger);
 
       --  Make sure gdb will not complain if the file is being run
@@ -694,7 +704,7 @@ package body Debugger.Gdb is
       --  kill it abruptly.
 
       begin
-         Wait (Get_Process (Debugger), Result, ".*", Timeout => 2);
+         Wait (Get_Process (Debugger), Result, ".+", Timeout => 5);
       exception
          when Process_Died =>
             --  This is somewhat expected... RIP.
@@ -797,7 +807,12 @@ package body Debugger.Gdb is
       --  initial file.
 
       Send (Debugger, "show lang", Mode => Internal);
-      Send (Debugger, "list", Mode => Internal);
+
+      if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
+         Send (Debugger, "list adainit", Mode => Internal);
+      else
+         Send (Debugger, "list", Mode => Internal);
+      end if;
 
       if Get_Pref (Break_On_Exception) then
          Num := Break_Exception (Debugger);
@@ -857,13 +872,41 @@ package body Debugger.Gdb is
       Set_Is_Started (Debugger, False);
       Send (Debugger, "core " & Core, Mode => Mode);
 
+      if Mode in Visible_Command then
+         Wait_User_Command (Debugger);
+      end if;
+
       --  Detect the current language, and get the name and line of the
       --  current file.
 
       Send (Debugger, "show lang", Mode => Internal);
-      Send (Debugger, "list", Mode => Internal);
+
+      if Get_Language (Debugger).all in Gdb_Ada_Language'Class then
+         Send (Debugger, "list adainit", Mode => Internal);
+      else
+         Send (Debugger, "list", Mode => Internal);
+      end if;
+
       Send (Debugger, "info line", Mode => Internal);
    end Load_Core_File;
+
+   -----------------
+   -- Add_Symbols --
+   -----------------
+
+   procedure Add_Symbols
+     (Debugger : access Gdb_Debugger;
+      Module   : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "add-symbol-file " & Module, Mode => Mode);
+
+      if Mode in Visible_Command then
+         Wait_User_Command (Debugger);
+      end if;
+
+      Send (Debugger, "show lang", Mode => Internal);
+   end Add_Symbols;
 
    --------------------
    -- Attach_Process --
@@ -884,6 +927,10 @@ package body Debugger.Gdb is
    begin
       Send (Debugger, "attach " & Process, Mode => Mode);
       Set_Is_Started (Debugger, True);
+
+      if Mode in Visible_Command then
+         Wait_User_Command (Debugger);
+      end if;
 
       --  Find the first frame containing source information to be as user
       --  friendly as possible, and also check whether attach was successful
@@ -995,9 +1042,11 @@ package body Debugger.Gdb is
       if Arguments = "" and then Debugger.Remote_Target /= null
         and then Debugger.Executable /= null
       then
-         Send
-           (Debugger,
-            "run " & Get_Module (Debugger.Executable.all), Mode => Mode);
+         declare
+            Module : constant String := Get_Module (Debugger.Executable.all);
+         begin
+            Send (Debugger, "run " & Module, Mode => Mode);
+         end;
       else
          Send (Debugger, "run " & Arguments, Mode => Mode);
       end if;
@@ -1017,10 +1066,14 @@ package body Debugger.Gdb is
       if Arguments = "" and then Debugger.Remote_Target /= null
         and then Debugger.Executable /= null
       then
-         Send
-           (Debugger,
-            Start (Language_Debugger_Access (Get_Language (Debugger))) &
-              " " & Get_Module (Debugger.Executable.all), Mode => Mode);
+         declare
+            Module : constant String := Get_Module (Debugger.Executable.all);
+         begin
+            Send
+              (Debugger,
+               Start (Language_Debugger_Access (Get_Language (Debugger))) &
+                 " " & Module, Mode => Mode);
+         end;
       else
          Send
            (Debugger,
