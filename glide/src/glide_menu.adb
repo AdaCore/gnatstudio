@@ -233,43 +233,42 @@ package body Glide_Menu is
          when Welcome_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all &
-                 "/doc/glide2/html/glide-welcome.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/gps-welcome.html"));
 
          when GVD_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/glide2/html/gvd.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/gvd.html"));
 
          when GPS_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/glide2/html/glide2.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/gps.html"));
 
          when GNAT_UG_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/glide2/html/gnat_ug.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/gnat_ug.html"));
 
          when GNAT_RM_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/glide2/html/gnat_rm.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/gnat_rm.html"));
 
          when ARM95_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/glide2/html/arm95.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/arm95.html"));
 
          when GDB_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/glide2/html/gdb.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/gdb.html"));
 
          when GCC_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
-                (Top.Prefix_Directory.all & "/doc/glide2/html/gcc.html"));
+                (Top.Prefix_Directory.all & "/doc/gps/html/gcc.html"));
       end case;
 
    exception
