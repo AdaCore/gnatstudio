@@ -72,6 +72,7 @@ package body String_Utils is
       Index    : in out Natural) is
    begin
       --  skips initial 0x if present
+
       if Index + 1 <= Type_Str'Last
         and then Type_Str (Index) = '0'
         and then Type_Str (Index + 1) = 'x'
@@ -173,9 +174,9 @@ package body String_Utils is
    ----------------------
 
    procedure Parse_Cst_String
-     (Type_Str : String;
-      Index    : in out Natural;
-      Str      : out String;
+     (Type_Str          : String;
+      Index             : in out Natural;
+      Str               : out String;
       Backslash_Special : Boolean := True)
    is
       procedure Parse_Next_Char
@@ -425,6 +426,7 @@ package body String_Utils is
       end loop;
 
       --  Move at least one character
+
       if Index = Initial then
          Index := Index + Step;
       end if;
@@ -569,8 +571,8 @@ package body String_Utils is
      (Text     : String;
       Tab_Size : Integer) return String
    is
-      Num_Tabs   : Natural := 0;
-      Col        : Integer := 1;
+      Num_Tabs : Natural := 0;
+      Col      : Integer := 1;
 
    begin
       --  Count the number of tabs in the string
@@ -757,8 +759,7 @@ package body String_Utils is
    --------------------
 
    function Suffix_Matches
-     (File_Name : String; Suffix : String) return Boolean
-   is
+     (File_Name : String; Suffix : String) return Boolean is
    begin
       return Tail (File_Name, Suffix'Length) = Suffix;
    end Suffix_Matches;
@@ -768,12 +769,12 @@ package body String_Utils is
    -----------------------
 
    function Name_As_Directory
-     (Name : String;
-      Style : Path_Style := System_Default)
-      return String
+     (Name  : String;
+      Style : Path_Style := System_Default) return String
    is
-      Dir : constant String := GNAT.Directory_Operations.Normalize_Pathname
-        (Name, Style);
+      Dir : constant String :=
+        GNAT.Directory_Operations.Normalize_Pathname (Name, Style);
+
    begin
       if Dir = "" then
          return "";

@@ -170,7 +170,7 @@ package String_Utils is
    --  with 3.14p only.
 
    function Name_As_Directory
-     (Name : String;
+     (Name  : String;
       Style : GNAT.Directory_Operations.Path_Style :=
         GNAT.Directory_Operations.System_Default) return String;
    --  Add a directory separator at the end of Name if there is none.
