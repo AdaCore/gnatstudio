@@ -276,6 +276,11 @@ package body Glide_Kernel.Project is
 
       Reset_Normalized_Flag (Kernel.Project);
       Output.Set_Special_Output (null);
+
+   exception
+      when others =>
+         Output.Set_Special_Output (null);
+         raise;
    end Load_Project;
 
    -----------------
