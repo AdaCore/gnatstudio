@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -37,7 +37,6 @@ package New_Variable_Editor_Pkg is
 
    type New_Variable_Editor_Record is new Gtk_Dialog_Record with record
       Dialog_Vbox1 : Gtk_Vbox;
-      Dialog_Action_Area1 : Gtk_Hbox;
       Table1 : Gtk_Table;
       Label58 : Gtk_Label;
       Variable_Name : Gtk_Combo;
@@ -53,6 +52,7 @@ package New_Variable_Editor_Pkg is
       Delete_Variable : Gtk_Button;
       New_Variable : Gtk_Button;
       Rename_Variable : Gtk_Button;
+      Dialog_Action_Area1 : Gtk_Hbox;
    end record;
    type New_Variable_Editor_Access is access all New_Variable_Editor_Record'Class;
 
