@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 2.0.0
 
+- [9022-014] Tab key does not work with long names
+  Problem:    When using the tab key in the debugger console to complete
+              a long identifier (longer than 100 characters), a bug box is
+              displayed.
+  Workaround: Type the long identifier entirely or use copy/paste.
+
 - [9014-013] Run button under VxWorks may raise Constraint_Error
   Problem:    When using the Run button under VxWorks and no module has been
               loaded from GVD, a bug box is displayed.
