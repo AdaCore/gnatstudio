@@ -131,9 +131,20 @@ package body Glide_Kernel.Help is
 
    generic
       HTML_File : String;
-   procedure On_Load_HTML
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Load HMTL_File in the HTML/Help widget
+   package HTML_Loader is
+      procedure On_Load_HTML
+        (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+      --  Load HMTL_File in the HTML/Help widget
+
+      function File_Name (Kernel : access Kernel_Handle_Record'Class)
+         return String;
+      --  Return the full file name for the help file
+
+      procedure Register_Menu
+        (Kernel : access Kernel_Handle_Record'Class;
+         Name   : String);
+      --  Register the menu in the GPS menubar
+   end HTML_Loader;
 
    procedure On_Open_HTML
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -141,48 +152,79 @@ package body Glide_Kernel.Help is
    --  Display a file selection dialog, and then open the HTML file in the
    --  help widget.
 
-   ------------------
-   -- On_Load_HTML --
-   ------------------
+   -----------------
+   -- HTML_Loader --
+   -----------------
 
-   procedure On_Load_HTML
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
-   begin
-      Display_Help
-        (Kernel,
-         Format_Pathname
-           (Top.Prefix_Directory.all & "/doc/gps/html/" & HTML_File));
+   package body HTML_Loader is
+      ------------------
+      -- On_Load_HTML --
+      ------------------
 
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Load_HTML;
+      procedure On_Load_HTML
+        (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+      is
+         pragma Unreferenced (Widget);
+      begin
+         Display_Help (Kernel, File_Name (Kernel));
 
-   procedure On_Welcome is new On_Load_HTML ("gps-welcome.html");
+      exception
+         when E : others =>
+            Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      end On_Load_HTML;
+
+      ---------------
+      -- File_Name --
+      ---------------
+
+      function File_Name (Kernel : access Kernel_Handle_Record'Class)
+         return String
+      is
+         Top  : constant Glide_Window := Glide_Window
+           (Get_Main_Window (Kernel));
+      begin
+         return Format_Pathname
+           (Top.Prefix_Directory.all & "/doc/gps/html/" & HTML_File);
+      end File_Name;
+
+      -------------------
+      -- Register_Menu --
+      -------------------
+
+      procedure Register_Menu
+        (Kernel : access Kernel_Handle_Record'Class;
+         Name   : String)
+      is
+         Help : constant String := "/_" & (-"Help") & '/';
+      begin
+         Register_Menu
+           (Kernel, Help, Name, "", On_Load_HTML'Access,
+            Sensitive => Is_Regular_File (File_Name (Kernel)));
+      end Register_Menu;
+   end HTML_Loader;
+
+   package On_Welcome is new HTML_Loader ("gps-welcome.html");
    --  Menu Help->Welcome
 
-   procedure On_GPS_Help is new On_Load_HTML ("gps.html");
+   package On_GPS_Help is new HTML_Loader ("gps.html");
    --  Menu Help->Using GPS
 
-   procedure On_GVD_Help is new On_Load_HTML ("gvd.html");
+   package On_GVD_Help is new HTML_Loader ("gvd.html");
    --  Menu Help->Using the GNU Visual Debugger
 
-   procedure On_GNAT_UG_Help is new On_Load_HTML ("gnat_ug.html");
+   package On_GNAT_UG_Help is new HTML_Loader ("gnat_ug.html");
    --  Menu Help->GNAT User's Guide
 
-   procedure On_GNAT_RM_Help is new On_Load_HTML ("gnat_rm.html");
+   package On_GNAT_RM_Help is new HTML_Loader ("gnat_rm.html");
    --  Menu Help->GNAT Reference Manual
 
-   procedure On_ARM95_Help is new On_Load_HTML ("arm95.html");
+   package On_ARM95_Help is new HTML_Loader ("arm95.html");
    --  Menu Help->Ada 95 Reference Manual
 
-   procedure On_GDB_Help is new On_Load_HTML ("gdb.html");
+   package On_GDB_Help is new HTML_Loader ("gdb.html");
    --  Menu Help->Using the GNU Debugger
 
-   procedure On_GCC_Help is new On_Load_HTML ("gcc.html");
+   package On_GCC_Help is new HTML_Loader ("gcc.html");
    --  Menu Help->Using GCC
 
    procedure On_About
@@ -748,28 +790,15 @@ package body Glide_Kernel.Help is
 
       Register_Menu
         (Kernel, Help, -"Open HTML File...", "", On_Open_HTML'Access);
-      Register_Menu (Kernel, Help, -"Welcome", "", On_Welcome'Access);
-      Register_Menu
-        (Kernel, Help, -"Using the GNAT Programming System", "",
-         On_GPS_Help'Access);
-      Register_Menu
-        (Kernel, Help, -"Using the GNU Visual Debugger", "",
-         On_GVD_Help'Access, Sensitive => False);
-      Register_Menu
-        (Kernel, Help, -"GNAT User's Guide", "",
-         On_GNAT_UG_Help'Access, Sensitive => False);
-      Register_Menu
-        (Kernel, Help, -"GNAT Reference Manual", "",
-         On_GNAT_RM_Help'Access, Sensitive => False);
-      Register_Menu
-        (Kernel, Help, -"Ada 95 Reference Manual", "",
-         On_ARM95_Help'Access, Sensitive => False);
-      Register_Menu
-        (Kernel, Help, -"Using the GNU Debugger", "",
-         On_GDB_Help'Access, Sensitive => False);
-      Register_Menu
-        (Kernel, Help, -"Using GCC", "",
-         On_GCC_Help'Access, Sensitive => False);
+
+      On_Welcome.Register_Menu (Kernel, -"Welcome");
+      On_GPS_Help.Register_Menu (Kernel, -"Using the GNAT Programming System");
+      On_GVD_Help.Register_Menu (Kernel, -"Using the GNU Visual Debugger");
+      On_GNAT_UG_Help.Register_Menu (Kernel, -"GNAT User's Guide");
+      On_GNAT_RM_Help.Register_Menu (Kernel, -"GNAT Reference Manual");
+      On_ARM95_Help.Register_Menu (Kernel, -"Ada 95 Reference Manual");
+      On_GDB_Help.Register_Menu (Kernel, -"Using the GNU Debugger");
+      On_GCC_Help.Register_Menu (Kernel, -"Using GCC");
       Register_Menu (Kernel, Help, -"About...", "", On_About'Access);
    end Register_Module;
 
