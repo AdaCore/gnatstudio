@@ -1,4 +1,5 @@
 with Ada.Calendar; use Ada.Calendar;
+with GNAT.Calendar; use GNAT.Calendar;
 with GNAT.IO;      use GNAT.IO;
 with String_Utils; use String_Utils;
 with VFS;          use VFS;
@@ -6,12 +7,15 @@ with GNAT.Strings; use GNAT.Strings;
 
 package body Entities.Debug is
 
+   Dump_Full_File_Names : constant Boolean := False;
+
    use Entities_Tries;
    use Files_HTable;
    use LI_HTable;
    use Source_File_Arrays;
-   use File_Location_Arrays;
+   use Entity_Reference_Arrays;
    use Entity_Information_Arrays;
+   use Dependency_Arrays;
 
    procedure Dump (LIs       : in out LI_HTable.HTable);
    procedure Dump (Files     : in out Files_HTable.HTable);
@@ -21,17 +25,68 @@ package body Entities.Debug is
    procedure Dump (Timestamp : Ada.Calendar.Time);
    procedure Dump (Loc       : File_Location);
    procedure Dump (Files     : Source_File_List; Name : String);
+   procedure Dump (Files     : Dependency_List; Name : String);
    procedure Dump (E         : Entity_Information_List_Access);
+   procedure Dump (Dep       : File_Dependency);
    procedure Dump
      (Entities  : Entity_Information_List;
       Full      : Boolean;
       Name      : String);
-   procedure Dump (Locs : File_Location_List; Name : String);
+   procedure Dump (Locs : Entity_Reference_List; Name : String);
    procedure Dump (Kind : E_Kind);
+   procedure Dump (Ref  : Entity_Reference);
+   procedure Dump (File : Virtual_File);
    --  Dump various parts of the system
 
    procedure Low_Level_Dump is new Entities_Tries.Dump (GNAT.IO.Put, Dump);
    pragma Unreferenced (Low_Level_Dump);
+
+   Reference_Kind_To_Char : constant array (Reference_Kind) of Character :=
+     (Reference                                => 'r',
+      Instantiation_Reference                  => ' ',
+      Modification                             => 'm',
+      Body_Entity                              => 'b',
+      Completion_Of_Private_Or_Incomplete_Type => 'c',
+      Type_Extension                           => 'x',
+      Implicit                                 => 'i',
+      Discriminant                             => 'd',
+      Label                                    => 'l',
+      Primitive_Operation                      => 'p',
+      Overriding_Primitive_Operation           => 'p',
+      With_Line                                => 'w',
+      Subprogram_In_Parameter                  => '>',
+      Subprogram_In_Out_Parameter              => '=',
+      Subprogram_Out_Parameter                 => '<',
+      Subprogram_Access_Parameter              => '^',
+      Formal_Generic_Parameter                 => 'z',
+      Parent_Package                           => 'k',
+      End_Of_Spec                              => 'e',
+      End_Of_Body                              => 't');
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump (File : Virtual_File) is
+   begin
+      if Dump_Full_File_Names then
+         Put (Full_Name (File).all);
+      else
+         Put (Base_Name (File));
+      end if;
+   end Dump;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump (Dep : File_Dependency) is
+   begin
+      Dump (Get_Filename (Dep.File));
+      if Dep.Explicit then
+         Put (":W");
+      end if;
+   end Dump;
 
    ----------
    -- Dump --
@@ -93,11 +148,20 @@ package body Entities.Debug is
    -- Dump --
    ----------
 
-   procedure Dump (Locs : File_Location_List; Name : String) is
+   procedure Dump (Ref : Entity_Reference) is
+   begin
+      Dump (Ref.Location); Put (':' & Reference_Kind_To_Char (Ref.Kind));
+   end Dump;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump (Locs : Entity_Reference_List; Name : String) is
    begin
       if Length (Locs) /= 0 then
          Put ("   " & Name & "= ");
-         for L in File_Location_Arrays.First .. Last (Locs) loop
+         for L in Entity_Reference_Arrays.First .. Last (Locs) loop
             Dump (Locs.Table (L)); Put (' ');
          end loop;
          New_Line;
@@ -113,8 +177,8 @@ package body Entities.Debug is
       if Loc = No_File_Location then
          Put ("<no_location>");
       else
-         Put (Full_Name (Get_Filename (Loc.File)).all & ':' & Image (Loc.Line)
-              & ':' & Image (Loc.Column));
+         Dump (Get_Filename (Loc.File));
+         Put (':' & Image (Loc.Line) & ':' & Image (Loc.Column));
       end if;
    end Dump;
 
@@ -126,25 +190,37 @@ package body Entities.Debug is
       Year    : Year_Number;
       Month   : Month_Number;
       Day     : Day_Number;
-      Seconds : Day_Duration;
-      Hour    : Integer;
-      Minutes : Integer;
+      Hour    : Hour_Number;
+      Minutes : Minute_Number;
+      Seconds : Second_Number;
+      Sub     : Second_Duration;
    begin
       if Timestamp = No_Time then
          Put ("@<no_time>");
       else
-         Split (Timestamp, Year, Month, Day, Seconds);
-         Hour    := Integer (Seconds / 3600.0);
-         Minutes := Integer ((Seconds - Day_Duration (Hour) * 3600.0) / 60.0);
-         Seconds := Seconds - Day_Duration (Hour) * 3600.0
-         - Day_Duration (Minutes) * 60.0;
-
+         Split (Timestamp, Year, Month, Day, Hour, Minutes, Seconds, Sub);
          Put ("@" & Image (Integer (Year)) & ':'
               & Image (Integer (Month)) & ':'
               & Image (Integer (Day)) & '-'
-              & Image (Hour) & ':'
-              & Image (Minutes) & ':'
+              & Image (Integer (Hour)) & ':'
+              & Image (Integer (Minutes)) & ':'
               & Image (Integer (Seconds)));
+      end if;
+   end Dump;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump (Files : Dependency_List; Name : String) is
+   begin
+      if Length (Files) /= 0 then
+         Put ("   " & Name & "= ");
+         for L in Dependency_Arrays.First .. Last (Files) loop
+            Dump (Files.Table (L));
+            Put (' ');
+         end loop;
+         New_Line;
       end if;
    end Dump;
 
@@ -157,7 +233,8 @@ package body Entities.Debug is
       if Length (Files) /= 0 then
          Put ("   " & Name & "= ");
          for L in Source_File_Arrays.First .. Last (Files) loop
-            Put (Full_Name (Get_Filename (Files.Table (L))).all & ' ');
+            Dump (Get_Filename (Files.Table (L)));
+            Put (' ');
          end loop;
          New_Line;
       end if;
@@ -169,7 +246,8 @@ package body Entities.Debug is
 
    procedure Dump (LI : LI_File) is
    begin
-      Put (Full_Name (Get_LI_Filename (LI)).all & ' ');
+      Dump (Get_LI_Filename (LI));
+      Put (' ');
       Dump (LI.Timestamp);
       Put_Line (" ref_count=" & Image (LI.Ref_Count));
 
@@ -200,14 +278,17 @@ package body Entities.Debug is
 
    procedure Dump (File : Source_File) is
    begin
-      Put (Full_Name (Get_Filename (File)).all & ' ');
+      Dump (Get_Filename (File));
+      Put (' ');
       Dump (File.Timestamp);
       Put_Line (" ref_count=" & Image (File.Ref_Count)
                 & " is_valid=" & Boolean'Image (File.Is_Valid)
                 & " has_scope_tree=" & Boolean'Image (File.Scope /= null));
 
       if File.LI /= null then
-         Put_Line ("   li=" & Full_Name (Get_LI_Filename (File.LI)).all);
+         Put ("   li=");
+         Dump (Get_LI_Filename (File.LI));
+         New_Line;
       end if;
 
       Dump (File.Depends_On,  "depends_on");
@@ -240,7 +321,7 @@ package body Entities.Debug is
             if Entity.Kind /= Unresolved_Entity_Kind then
                Put ("   kind="); Dump (Entity.Kind); New_Line;
             end if;
-            if Entity.End_Of_Scope /= No_File_Location then
+            if Entity.End_Of_Scope.Location /= No_File_Location then
                Put ("   end_of_scope="); Dump (Entity.End_Of_Scope); New_Line;
             end if;
             Dump (Entity.Rename, False, "renames");
