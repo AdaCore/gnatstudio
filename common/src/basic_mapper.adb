@@ -44,23 +44,18 @@ package body Basic_Mapper is
       Text   : String) return String
    is
       Element : String_Access;
-      Key     : String_Access := new String'(Text);
    begin
       if Mapper = null then
-         Free (Key);
          return "";
       end if;
 
-      Element := Get (Mapper.Table_1, Key);
+      Element := Get (Mapper.Table_1, Text);
 
       if Element = No_Element then
-         Free (Key);
-         Key := new String'(Text);
-         Element := Get (Mapper.Table_2, Key);
+         Element := Get (Mapper.Table_2, Text);
       end if;
 
       if Element = No_Element then
-         Free (Key);
          return "";
       else
          return Element.all;
@@ -73,14 +68,10 @@ package body Basic_Mapper is
 
    procedure Remove_Entry
      (Mapper : in out File_Mapper_Access;
-      Text   : String)
-   is
-      Key_1 : String_Access := new String'(Text);
+      Text   : String) is
    begin
-      Remove (Mapper.Table_1, Key_1);
-      Remove (Mapper.Table_2, Key_1);
-
-      Free (Key_1);
+      Remove (Mapper.Table_1, Text);
+      Remove (Mapper.Table_2, Text);
    end Remove_Entry;
 
    ---------------
@@ -90,17 +81,14 @@ package body Basic_Mapper is
    procedure Add_Entry
      (Mapper : in out File_Mapper_Access;
       Text_1 : String;
-      Text_2 : String)
-   is
-      Key_1 : constant String_Access := new String'(Text_1);
-      Key_2 : constant String_Access := new String'(Text_2);
+      Text_2 : String) is
    begin
       if Mapper = null then
          Mapper := new File_Mapper;
       end if;
 
-      Set (Mapper.Table_1, Key_1, Key_2);
-      Set (Mapper.Table_2, Key_2, Key_1);
+      Set (Mapper.Table_1, Text_1, new String'(Text_2));
+      Set (Mapper.Table_2, Text_2, new String'(Text_1));
    end Add_Entry;
 
    -----------------
@@ -112,7 +100,7 @@ package body Basic_Mapper is
       File_Name : String)
    is
       File    : Ada.Text_IO.File_Type;
-      Element : String_Access;
+      Element : Iterator;
    begin
       if Mapper = null then
          return;
@@ -126,9 +114,10 @@ package body Basic_Mapper is
 
       Get_First (Mapper.Table_1, Element);
 
-      while Element /= No_Element loop
-         Ada.Text_IO.Put_Line (File, Element.all);
-         Ada.Text_IO.Put_Line (File, Get_Other_Text (Mapper, Element.all));
+      while Get_Element (Element) /= No_Element loop
+         Ada.Text_IO.Put_Line (File, Get_Element (Element).all);
+         Ada.Text_IO.Put_Line
+           (File, Get_Other_Text (Mapper, Get_Element (Element).all));
          Get_Next (Mapper.Table_1, Element);
       end loop;
 
