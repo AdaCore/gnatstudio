@@ -2293,6 +2293,28 @@ package body Gtkada.MDI is
       return Get (Iter);
    end Find_MDI_Child_By_Tag;
 
+   ---------------------------
+   -- Find_MDI_Child_By_Name --
+   ---------------------------
+
+   function Find_MDI_Child_By_Name
+     (MDI    : access MDI_Window_Record;
+      Name   : String)
+     return MDI_Child
+   is
+      Child : MDI_Child;
+      Iter  : Child_Iterator := First_Child (MDI);
+   begin
+      loop
+         Child := Get (Iter);
+         exit when Child = null
+           or else Child.Title.all = Name;
+         Next (Iter);
+      end loop;
+
+      return Get (Iter);
+   end Find_MDI_Child_By_Name;
+
    -----------------
    -- Lower_Child --
    -----------------

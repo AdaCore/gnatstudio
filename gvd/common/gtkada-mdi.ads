@@ -238,6 +238,11 @@ package Gtkada.MDI is
       Tag : Ada.Tags.Tag) return MDI_Child;
    --  Return the first child matching Tag
 
+   function Find_MDI_Child_By_Name
+     (MDI    : access MDI_Window_Record;
+      Name   : String) return MDI_Child;
+   --  Return the first child matching Name.
+
    type Child_Iterator is private;
 
    function First_Child (MDI : access MDI_Window_Record) return Child_Iterator;
