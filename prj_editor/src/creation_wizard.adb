@@ -180,8 +180,10 @@ package body Creation_Wizard is
    ------------------
 
    procedure Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
-      W      : constant Prj_Wizard := Prj_Wizard (Wiz);
-      Result : Message_Dialog_Buttons;
+      W       : constant Prj_Wizard := Prj_Wizard (Wiz);
+      Ignored : Message_Dialog_Buttons;
+      pragma Unreferenced (Ignored);
+
    begin
       if Get_Current_Page (W) = 1 then
          declare
@@ -192,7 +194,7 @@ package body Creation_Wizard is
 
          begin
             if not Is_Valid_Project_Name (Project) then
-               Result := Message_Dialog
+               Ignored := Message_Dialog
                  (Msg =>
                     (-"Invalid name for the project ") &
                     (-"(only letters, digits and underscores)"),
@@ -207,16 +209,27 @@ package body Creation_Wizard is
             if Is_Regular_File
               (Location & Prj_File & Project_File_Extension)
             then
-               Result := Message_Dialog
+               if Message_Dialog
                  (Msg => Location
                   & Prj_File & Project_File_Extension
                   & (-" already exists. Do you want to overwrite ?"),
                   Title => -"File exists",
                   Dialog_Type => Error,
-                  Buttons => Button_Yes or Button_No);
-
-               if Result = Button_No then
+                  Buttons => Button_Yes or Button_No) = Button_No
+               then
                   Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
+               end if;
+            end if;
+
+            if not Is_Directory (Location) then
+               if Message_Dialog
+                 (Msg => Location
+                  & (-" is not a directory, would you like to create it ?"),
+                  Title => -"Directory not found",
+                  Dialog_Type => Information,
+                  Buttons => Button_Yes or Button_No) = Button_Yes
+               then
+                  Make_Dir (Location);
                end if;
             end if;
          end;
