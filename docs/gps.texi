@@ -532,6 +532,14 @@ binding "custombind" @{
 class "*GtkTextView*" binding : highest "custombind"
 @end smallexample
 
+Enabling key bindings similar to the popular Emacs editor is even
+easier, since you only have to add the following line to the
+configuration file:
+
+@smallexample
+gtk-key-theme-name = "Emacs"
+@end smallexample
+
 @c --------------------------------------------------------------------
 @node Environment
 @chapter Environment
