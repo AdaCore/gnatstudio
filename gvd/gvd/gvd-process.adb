@@ -1295,6 +1295,7 @@ package body GVD.Process is
       Set_Title (Child, "Debugger Console");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
+      Raise_Child (Child);
    end Setup_Command_Window;
 
    ----------------
