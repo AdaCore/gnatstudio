@@ -1,0 +1,211 @@
+
+ADA Documentation Generator 
+(How should it look like?)
+
+
+Summary
+
+General considerations
+Documentation procedure
+The output frame structure
+Possible extensions
+
+
+General considerations
+
+The main function of a documentation generator is to automatically create a documentation, which is mostly done by creating cross-referenced and syntax-colored HTML pages. The program will look within the code files for subprograms headers, definitions and defined tags within the comments. The output is easy to read  and guaranties a easy navigation, often using HTML frames for a better overview.
+
+Like most of the others documentation generators our tool should be command-line orientated, using options and configuration files for the control. Using the options you can influence the tool behavior, but it should for example also be possible to chose which configurations files shall be used (one for avoiding typing all the options at each start of the program, another for formatting the output and (re)defining the tags: see options!)
+
+Sometimes it could be helpful not only to extract the comments from the .ads files, but also to look at the .adb file, if for example any information is missing in the first one. (It is still to decide, if this is necessary and which information could be used.) To create most of the more complex documentation pages the tool will have to use the information created by the compiler and stored in the .ali file, either using the ASIS library or other interfaces.
+
+(LATER: a list of the options!)
+
+
+Documentation procedure
+
+The information used in the documentation will have different sources. First the tool has to know of which components the file consists. The elements to find are the different types, exceptions, constants and subprogram headers. For that part all the files available can be used. After this is done, we will have information about all elements in the file, but for each of them, the tool has still to extract their descriptions from the comments in the code file(s). The comments containing information relevant for the documentation are called documentation comments.
+
+The documentation comments are normally included in the source code, ahead of declarations of types, exceptions, constants and subprogram. A parameter from the config file, which defines for each possible element his position, whether his description is placed over or under his header, like done in AdaBrowse, can be useful, but is not necessary. The Ada comment prefix "--" can be used directly to signify a documentation comment, however, sometimes the programmer wishes to define comments which will not be part of the documentation. For this reason the prefix "--!" could be used to introduce a doc comment, while simple "--" comments would remain ignored.
+
+In general users like having a predefined set of tags (like in Javadoc: @author or @since), which will allow the generator to treat the following comment in their particular ways. They will be formatted and placed in the right place. Later, the predefined set could be extended by the programmer with new user-defined tags, which should be defined in the config file. Here the programmer can define the formatting and also the position of the information in the documentation. Normally, it is possible to use the usual HTML tags in your doc comments, which the generator will let unchanged in his output. It could also be useful to allow the definition of variables, corresponding to often used expressions or simply complicated HTML code. Every variable will begin with the prefix "#" followed by its name.  Using variables the programmer can avoid the writing of long HTML code in his comments, as his variables will be replaced as defined in the config file. In this context Adabrowse distinguishes between several mechanisms (like user-defined tags, user-defined variables and user-definded mark-up) and offers also a waste possibilities for executing other formatting programs and pipelining.
+
+For each element found the generator would search for the first line of the doc comment which can be found directly above the header or the definition of this element. The first part of the doc comment is a general description of the element, followed by a list of tags. Both the description and the tags can use variables. Non-documentation comment between the lines will be ignored. A typical comment could look like this:
+
+      --! This is a <b>doc</b> comment using a #variable 
+      --! It can take several lines.
+      --  This line is not a doc comment, it will be ignored!
+      --! @author Heinz Peter    		
+      --! @since 1.4
+      package XYZ is ...
+
+
+(LATER: how to use the config file, define tags and variables!)
+
+
+This part describes the basic possibilities, which should be guarantee by a Ada doc generator. This simple solution uses some ideas of Javadoc and AdaBrowse, however, the configuration possibilities of these tools are much more complex than described above. Which of these ideas can be of use is still to discuss.
+
+
+The output frame structure
+
+The created HTML pages should guarantee a good overview over the whole documentation structure and offer good navigation possibilities. For this purpose the created documentation will consist of a navigation page and the main page with the information wished. A 3rd frame, like in the documents created by Javadoc, is not really needed. The main page will show the package descriptions, normally one standard page per package  (in Adabrowse the author does create one page per "unit", he talks about "units", creating pages not only for packages but also for individual generic procedures, function instantiations... i still have not figured out, if this is really necessary!), but sometimes also show different information, like dependency trees and graphs. A comfortable navigation system using cross-references should be possible. The three types of pages are described here:
+
+
+Navigation page:
+
+The navigation page will allow the user to find the packages (units) needed, by offering him an index of all the known packages (units) of the project in alphabetical order, linked to the corresponding main pages. However, sometimes an index of the procedures/functions and another one for the types can be useful. All the 3 of them:
+
+        Package/Unit Index
+        Subprogram Index
+        Type Index
+
+All 3 of them can be in fact used on one page only, par example by showing just one index at a time, but by giving the possibility to skip to another. This is also the solution used in AdaBrowse. The top of the page looks like this:
+
+
+***********************************
+UNIT INDEX
+Subprogram Index,   Type Indes
+
+Util
+Util.Calendar
+Util.Pathes
+...
+***********************************
+
+
+Package (/Unit) information page:
+
+The main pages of the packages (units) are cross-referenced, offering direct access to the definitions of the elements linked. The pages are divided in the 3 parts: the Header, the Body and the Footer, each giving the information described below. In this description not all the tags are placed, especially no user-defined tags can be shown.
+
+
+Header:
+
+The header starts with a very visible full name of the package. What follows is the name of the author (taken from @author), followed by the description of the package found in the doc comment above the package definition in the source code file. At the end of the Header there are the information of the tags @see and @since.
+
+
+***********************************
+
+Package: Util.Pipes
+
+Author: Thomas Wolf
+
+This is a thick binding to the popen and pclose routines available on both Unix and Win32. It gives a convenient way to execute an external program and pass it some input, or read its output. 
+
+See also:
+	Util.Pipe_Stream
+Since:
+	1.4
+
+***********************************
+
+
+Body:
+
+The Body starts with a small textual picture showing the Derivation Hierarchy, like known from the Gktada-doc pages. This one can be directly completed with a list of the Known Child Derivats:
+
+
+
+***********************************
+
+Gtk_Object                                     (see section Package Gtk.Object)
+           \___ Gtk_Widget                 (see section Package Gtk.Widget)
+              \___ Gtk_Container          (see section Package Gtk.Container)
+                 \___ Gtk_Notebook       (see section Package Gtk.Notebook)
+                                 |___Gtk_MyNotebook          (see...)
+                                 |___Gtk_MyNewNotebook  (see...)
+                                 |___Gtk_YourNotebook       (see...)
+
+***********************************
+
+
+What follows is the complete header of the package, formatted as <code> and colored, followed directly by the Pragma defined, and the list of the dependencies:
+
+
+***********************************
+
+package Util.Environment is
+        pragma Elaborate_Body;
+
+with Ada.Finalization;
+with Ada.IO_Exceptions;
+with Ada.Streams;
+with Interfaces.C.Strings;
+
+***********************************
+
+What follows are the lists of the Exceptions, the Types/Subtypes and Constants, each with the description found in the source code file above its definition. A short summery of all the subprograms/operations of the package (? I have to think about this!), devided into the new, the inherited and the overridden operations, could be useful. They are all linked to their descriptions in  this page further below.
+
+
+***********************************
+
+EXCEPTIONS:
+
+  Device_Error renames Ada.IO_Exceptions.Device_Error
+                        Raised by the Put or Get operations (and also by Write and Read) if the underlying 
+                        system operations indicate any reading or writing error. 
+  End_Error renames Ada.IO_Exceptions.End_Error
+                       Stream operations on an In_Stream will raise End_Error if EOF is encountered. 
+
+TYPES / SUBTYPES:
+
+  Pipe_Stream derived from Root_Stream_Type
+                       Used for something useful.
+
+CONSTANTS:   ---
+
+OPERATIONS:
+
+New Operations:             Close, End_Of_Stream, Get, Get, Get_Line, 
+Inherited Operations:       Get_Line, Is_Open, Open, Put, Put, Put_Line 
+Overridden Operations:   Read, Write, Date 
+
+
+***********************************
+
+
+This is the part of the documentation, where the procedures and functions of the package are described. For each of them the colored and linked header is shown, followed by its description found in the doc comments in the source code file. If the subprogram overrides another subprogram, the corresponding link is created. Example:
+
+
+***********************************
+
+Procedure Date			(Date overrides: Util.Date() )
+    (Base       : in     Calendar;
+     Julian_Day : in     Util.Times.Julian_Day_Number;
+     Year       :    out Year_Number;
+     Month      :    out Util.Calendars.Western.Month_Number;
+     Day        :    out Util.Calendars.Western.Day_Number);
+
+  Raises Date_Error if the date is before 15-OCT-1582. 
+
+
+  function Day_In_Year
+    (Base : in Calendar;
+     Date : in Util.Times.Time)
+    return Util.Calendars.Western.Day_Count;
+
+  This function does something...
+
+***********************************
+
+
+Footer:
+
+The footer contains the rest of the general information needed, like the copyright or the name and the version of the doc generation tool.
+
+
+Special information page:
+
+These pages will show different graphics and tress, using the information we can get either from ASIS or another  interface. (I still haven't found out, which are the possibilities offered here...) The important question will be, which pages should be created and how many of them (if for each individual package/subprogram or for groups of them). There is also a comfortable navigation system to be found for each of them.
+
+
+Possible Extensions
+
+...
+
+
+
+
+
+
+
+
