@@ -582,7 +582,8 @@ package body Debugger is
          First := Last;
          Skip_To_Char (Cmd, Last, ASCII.LF);
 
-         if Wait_For_Prompt
+         if Mode not in Invisible_Command
+           and then Wait_For_Prompt
            and then Command_In_Process (Get_Process (Debugger))
          then
             Queue_Command
@@ -593,7 +594,7 @@ package body Debugger is
 
             case Mode is
                when Invisible_Command =>
-                  if Wait_For_Prompt then
+                  if Last > Cmd'Last and then Wait_For_Prompt then
                      Wait_Prompt (Debugger);
                      Send_Internal_Post
                        (Debugger, Cmd (First .. Last - 1), Mode);
