@@ -1,6 +1,8 @@
 package body Sdefault is
-   S1 : aliased constant String := "@EXEC_PREFIX@/adainclude/";
-   S2 : aliased constant String := "@EXEC_PREFIX@/adalib/";
+   S1 : aliased constant String :=
+     "@EXEC_PREFIX@/lib/gcc-lib/@TARGET@/adainclude/";
+   S2 : aliased constant String :=
+     "@EXEC_PREFIX@/lib/gcc-lib/@TARGET@/adalib/";
    S3 : aliased constant String := "@TARGET@/";
    S4 : aliased constant String := "@EXEC_PREFIX@/";
    function Include_Dir_Default_Name return String_Ptr is
