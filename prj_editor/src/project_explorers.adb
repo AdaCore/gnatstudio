@@ -480,13 +480,17 @@ package body Project_Explorers is
    procedure Update_Node
      (Explorer         : access Project_Explorer_Record'Class;
       Node             : Gtk_Ctree_Node;
-      Files_In_Project : String_Array_Access);
+      Files_In_Project : String_Array_Access;
+      Force_Expanded   : Boolean := False);
    --  Refresh the contents of the Node after the Project_View has
    --  changed. This means that possibly the list of directories has
    --  changed. However, the hierarchy of projects can not change, nor the list
    --  of modified projects.
    --  Files_In_Project should contain the list of sources in the project to
    --  which Node belongs. If it is null, it will be computed automatically.
+   --
+   --  If Force_Expanded is true, then the node is considered as currently
+   --  expanded.
 
    procedure Select_Directory
      (Explorer     : access Project_Explorer_Record'Class;
@@ -2376,9 +2380,9 @@ package body Project_Explorers is
    begin
       --  If the node is not already up-to-date
 
-      if not Data.Up_To_Date then
-         Freeze (Explorer.Tree);
+      Freeze (Explorer.Tree);
 
+      if not Data.Up_To_Date then
          --  Remove the dummy node, and report that the node is up-to-date
          Remove_Node (Explorer.Tree, Row_Get_Children (Node_Get_Row (Node)));
          Data.Up_To_Date := True;
@@ -2407,8 +2411,12 @@ package body Project_Explorers is
          end case;
 
          Sort_Recursive (Explorer.Tree, Node);
-         Thaw (Explorer.Tree);
+
+      else
+         Update_Node (Explorer, Node, null, Force_Expanded => True);
       end if;
+
+      Thaw (Explorer.Tree);
    end Compute_Children;
 
    --------------------
@@ -2831,7 +2839,8 @@ package body Project_Explorers is
    procedure Update_Node
      (Explorer         : access Project_Explorer_Record'Class;
       Node             : Gtk_Ctree_Node;
-      Files_In_Project : String_Array_Access)
+      Files_In_Project : String_Array_Access;
+      Force_Expanded   : Boolean := False)
    is
       Data   : User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
       N, N2  : Gtk_Ctree_Node;
@@ -2888,7 +2897,16 @@ package body Project_Explorers is
          --  Likewise, if a node is not expanded, we simply remove all
          --  underlying information.
 
-         if not Expanded then
+         if Force_Expanded or else Expanded then
+            case Data.Node_Type is
+               when Project_Node   =>
+                  Update_Project_Node (Explorer, Files, Node);
+               when Directory_Node =>
+                  Update_Directory_Node (Explorer, Files, Node, Data);
+               when others         => null;
+            end case;
+
+         else
             Data.Up_To_Date := False;
             Node_Set_Row_Data (Explorer.Tree, Node, Data);
 
@@ -2900,15 +2918,6 @@ package body Project_Explorers is
             end loop;
 
             Add_Dummy_Node (Explorer, Node);
-
-         else
-            case Data.Node_Type is
-               when Project_Node   =>
-                  Update_Project_Node (Explorer, Files, Node);
-               when Directory_Node =>
-                  Update_Directory_Node (Explorer, Files, Node, Data);
-               when others         => null;
-            end case;
          end if;
       end if;
 
