@@ -85,6 +85,7 @@ package body GVD.Status_Bar is
       Add (Status.Arrow_Button, Status.Arrow);
 
       Gtk_New (Status.Status);
+      Set_Has_Resize_Grip (Status.Status, False);
       Pack_Start (Status, Status.Status, True, True, 0);
 
       Gtk_New (Status.Progress);
