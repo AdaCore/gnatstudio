@@ -1,7 +1,8 @@
 ## This module implements high level actions related to text editing
 
 import GPS
-import re, string
+import string
+import navigation_utils
 
 ##  Variable scope
 
@@ -111,29 +112,16 @@ GPS.parse_xml ("""
       <shell lang="python">text_utils.kill_ring_save()</shell>
    </action>
 
+   <action name="center cursor on screen"  output="none">
+      <filter id="Source editor" />
+      <shell lang="python">text_utils.center_cursor()</shell>
+   </action>
 """)
-
-subprograms_re=re.compile ("^([ \t]*)(procedure|function) ([a-zA-Z0-9_]+)", re.IGNORECASE)
-
-##  ??? At the moment, this is ada-specific, and ad-hoc. We should use
-##  the GPS engine to get that sort of functionality with any language.
-
-def __find_subprogram_decl():
-   """ Return the subprogram declaration closest to the cursor. This returns
-       a (MatchObject, line) tuple for the regexp subprograms_re """
-   f = GPS.current_context().file().name ()
-   line = GPS.current_context().location().line()
-   while line > 0 :
-      match = re.search (subprograms_re, GPS.Editor.get_chars (f, line, 1))
-      if match != None:
-         return (match, line)
-      line = line - 1
-   return (None, 0)
 
 def add_subprogram_box():
    """ Insert in the current editor a box just before the current subprogram
        starts """
-   match = __find_subprogram_decl()
+   match = navigation_utils.__find_subprogram_decl()
    if match[0] != None:
       prefix = ' ' * len (match[0].group (1))
       box = prefix + ('-' * (6 + len (match[0].group (3)))) + "\n"
@@ -290,3 +278,9 @@ def kill_ring_save():
         GPS.Editor.select_text (line, mark_line, col, mark_col)
         GPS.Editor.copy()
         GPS.Editor.cursor_set_position (file, line, col)
+
+def center_cursor():
+   """ Insert a newline and leave cursor before it."""
+   file = GPS.current_context().file().name()
+   line = GPS.current_context().location().line()
+   GPS.Editor.edit (file, line)
