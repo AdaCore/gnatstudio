@@ -53,7 +53,8 @@ with Commands.Controls;         use Commands.Controls;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -236,8 +237,12 @@ package body Src_Editor_Buffer is
    --  If Internal is True, do not emit kernel signals. This is used notably
    --  for automatic saves.
 
-   procedure Preferences_Changed
-     (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle);
+   type Preferences_Changed_Hook_Record is new Hook_No_Args_Record with record
+      Buffer : Source_Buffer;
+   end record;
+   type Preferences_Hook is access all Preferences_Changed_Hook_Record'Class;
+   procedure Execute (Hook : Preferences_Changed_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
@@ -1893,6 +1898,7 @@ package body Src_Editor_Buffer is
    is
       Tags    : Gtk_Text_Tag_Table;
       Command : Check_Modified_State;
+      Hook    : Preferences_Hook;
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
 
@@ -1908,7 +1914,12 @@ package body Src_Editor_Buffer is
 
       Tags := Get_Tag_Table (Buffer);
 
-      Preferences_Changed (Buffer, Kernel);
+      Hook := new Preferences_Changed_Hook_Record'
+        (Hook_No_Args_Record with Buffer => Source_Buffer (Buffer));
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, Hook, Watch => GObject (Buffer));
+      Execute (Hook.all, Kernel);
+
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
@@ -1955,12 +1966,6 @@ package body Src_Editor_Buffer is
          Cb => Delete_Range_Before_Handler'Access,
          After => False);
 
-      Kernel_Callback.Object_Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
-         Slot_Object => Buffer,
-         User_Data   => Kernel);
-
       Initialize_Hook (Buffer);
 
       --  Create the queue change hook that will be called every
@@ -1981,14 +1986,14 @@ package body Src_Editor_Buffer is
         (null);
    end Initialize;
 
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Preferences_Changed
-     (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle)
+   procedure Execute (Hook : Preferences_Changed_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class)
    is
-      B       : Source_Buffer := Source_Buffer (Buffer);
+      B       : Source_Buffer := Hook.Buffer;
       Timeout : Gint;
       Prev    : Boolean;
    begin
@@ -2053,7 +2058,7 @@ package body Src_Editor_Buffer is
       if not Prev and then B.Parse_Blocks then
          Register_Edit_Timeout (B);
       end if;
-   end Preferences_Changed;
+   end Execute;
 
    ---------------
    -- Load_File --
