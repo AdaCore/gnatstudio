@@ -252,7 +252,8 @@ package body GVD.Menu.Standalone is
    begin
       Change_Dir (Dir_Name (File_Name));
       Load_File (Tab.Editor_Text, File_Name, Set_Current => False);
-      Set_Line (Tab.Editor_Text, 1, Set_Current => False);
+      Set_Line (Tab.Editor_Text, 1, Set_Current => False,
+                Process => Gtk_Widget (Tab));
    end On_Open_Source;
 
    -----------------------
