@@ -281,7 +281,7 @@ package body Glide_Kernel.Task_Manager is
       Register_Menu
         (Kernel,
          Tools,
-           -"Task Manager",
+         -"Task Manager",
          Callback => On_Task_Manager'Access,
          Ref_Item => Shell);
    end Register_Module;
