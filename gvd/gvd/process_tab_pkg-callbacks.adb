@@ -30,6 +30,7 @@ with Gtk.Editable;          use Gtk.Editable;
 with Gtk.Notebook;          use Gtk.Notebook;
 with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
 with Gdk.Event;             use Gdk.Event;
+with Gdk.Color;             use Gdk.Color;
 with Gtk.Menu;              use Gtk.Menu;
 
 with GVD.Preferences;       use GVD.Preferences;
@@ -38,6 +39,7 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
 with GVD.Types;             use GVD.Types;
+with GVD.Strings;           use GVD.Strings;
 
 package body Process_Tab_Pkg.Callbacks is
 
@@ -283,47 +285,173 @@ package body Process_Tab_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Arg1  : Gdk_Event := To_Event (Params, 1);
-      D     : Direction;
       Top   : Debugger_Process_Tab := Debugger_Process_Tab (Object);
       use type Gdk.Types.Gdk_Key_Type;
 
    begin
-      if Get_Key_Val (Arg1) = GDK_Up
-        or else Get_Key_Val (Arg1) = GDK_Down
-      then
-         Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
+      case Get_Key_Val (Arg1) is
+         when GDK_Up | GDK_Down =>
+            Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
 
-         if Get_Key_Val (Arg1) = GDK_Up then
-            D := Backward;
-         else
-            D := Forward;
-         end if;
+            declare
+               D : Direction;
+            begin
+               if Get_Key_Val (Arg1) = GDK_Up then
+                  D := Backward;
+               else
+                  D := Forward;
+               end if;
 
-         Find_Match (Top.Window.Command_History, Integer (Get_Num (Top)), D);
+               Find_Match (Top.Window.Command_History,
+                           Integer (Get_Num (Top)), D);
 
-         Delete_Text
-           (Top.Debugger_Text,
-            Gint (Top.Edit_Pos),
-            Gint (Get_Length (Top.Debugger_Text)));
-         Output_Text
-           (Top, Get_Current (Top.Window.Command_History).Command.all,
-            Is_Command => True);
-         Set_Position
-           (Gtk_Editable (Top.Debugger_Text),
-            Gint (Get_Length (Top.Debugger_Text)));
-      end if;
+               Delete_Text
+                 (Top.Debugger_Text,
+                  Gint (Top.Edit_Pos),
+                  Gint (Get_Length (Top.Debugger_Text)));
+               Output_Text
+                 (Top, Get_Current (Top.Window.Command_History).Command.all,
+                  Is_Command => True);
+               Set_Position
+                 (Gtk_Editable (Top.Debugger_Text),
+                  Gint (Get_Length (Top.Debugger_Text)));
+
+            exception
+               when No_Such_Item =>
+                  if D = Forward then
+                     Delete_Text
+                       (Top.Debugger_Text,
+                        Gint (Top.Edit_Pos),
+                        Gint (Get_Length (Top.Debugger_Text)));
+                  end if;
+                  return True;
+            end;
+         when GDK_Tab =>
+            Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
+            declare
+               C      : String :=
+                 Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos));
+               S      : GVD.Types.String_Array := Complete (Top.Debugger, C);
+               Max    : Integer := 0;
+               Min    : Integer := 0;
+               Prefix : Integer;
+               Width  : constant Integer := 100;
+               --  Width of the console window, in number of characters;
+               Num   : Integer;
+
+               procedure Output (Text : in String);
+               --  Commodity procedure.
+
+               procedure Output (Text : in String) is
+               begin
+                  Insert (Top.Debugger_Text,
+                          Top.Debugger_Text_Font,
+                          Black (Get_System),
+                          Null_Color,
+                          Text);
+               end Output;
+            begin
+               if S'First > S'Last then
+                  null;
+               elsif S'First = S'Last then
+                  declare
+                     New_Command : String := S (S'First).all;
+                     Dummy       : Boolean;
+                  begin
+                     Dummy := Backward_Delete (Top.Debugger_Text,
+                                               Guint (C'Length));
+                     Output_Text (Top, New_Command & " ", Is_Command => True);
+                     Set_Position (Top.Debugger_Text,
+                                   Get_Position (Top.Debugger_Text)
+                                   + New_Command'Length + 1);
+                  end;
+               else
+                  --  Find the lengths of the longest and shortest
+                  --  words in the list;
+                  Min := S (S'First)'Length;
+                  for J in S'Range loop
+                     if S (J)'Length > Max then
+                        Max := S (J)'Length;
+                     end if;
+                     if S (J)'Length < Min then
+                        Min := S (J)'Length;
+                     end if;
+                  end loop;
+
+                  --  Compute number of words to display per line.
+                  Num := Width / (Max + 2);
+
+                  --  Find the common prefix in all the words.
+                  Prefix := 0;
+                  declare
+                     Prefix_Found : Boolean := True;
+                     J            : Integer;
+                  begin
+                     while Prefix <= Min
+                       and then Prefix_Found
+                     loop
+                        Prefix := Prefix + 1;
+                        J := S'First;
+                        while J <= S'Last and then Prefix_Found
+                        loop
+                           if S (J) (S (J)'First + Prefix - 1)
+                             = S (S'First) (S (S'First)'First + Prefix - 1)
+                           then
+                              J := J + 1;
+                           else
+                              Prefix := Prefix - 1;
+                              Prefix_Found := False;
+                           end if;
+                        end loop;
+                     end loop;
+                  end;
+
+                  --  Print the list of possibilities.
+                  Freeze (Top.Debugger_Text);
+                  Output ("" & ASCII.LF);
+                  for J in S'Range loop
+                     if (J mod Num) = 0 then
+                        Output ("" & ASCII.LF);
+                     end if;
+                     Output (S (J).all);
+
+                     for K in S (J)'Length .. Max + 2 loop
+                        Output (" ");
+                     end loop;
+                  end loop;
+                  Output ("" & ASCII.LF);
+                  Thaw (Top.Debugger_Text);
+
+                  --  Display the prompt and the common prefix.
+                  Display_Prompt (Top.Debugger);
+
+                  declare
+                     Common_Pref : Integer := C'Last;
+                  begin
+                     Skip_To_Char (C, Common_Pref, ' ', -1);
+                     Common_Pref := Common_Pref - C'First;
+                     Output_Text (Top,
+                                  C (C'First .. C'First + Common_Pref),
+                                  Is_Command => True);
+                     Set_Position (Top.Debugger_Text,
+                                   Get_Position (Top.Debugger_Text)
+                                   + Gint (Common_Pref) + 1);
+                  end;
+                  Output_Text (Top,
+                               S (S'First)
+                               (S (S'First)'First ..
+                                S (S'First)'First + Prefix - 1),
+                               Is_Command => True);
+                  Set_Position (Top.Debugger_Text,
+                                Get_Position (Top.Debugger_Text)
+                                + Gint (Prefix));
+               end if;
+            end;
+         when others =>
+            null;
+      end case;
 
       return True;
-
-   exception
-      when No_Such_Item =>
-         if D = Forward then
-            Delete_Text
-              (Top.Debugger_Text,
-               Gint (Top.Edit_Pos),
-               Gint (Get_Length (Top.Debugger_Text)));
-         end if;
-         return True;
    end On_Debugger_Text_Key_Press_Event;
 
    ---------------------------------
