@@ -81,6 +81,7 @@
 with Gdk.Event;
 with Glib.Object;
 with Gdk.Types;
+with Gdk.Pixbuf;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Widget;
@@ -282,7 +283,10 @@ package Glide_Kernel.Modules is
    Mime_File_Line_Info : constant String := "gps/file_info";
    --  There are multiple data associated with this type:
    --     first  : full name of the source file to open (use Get_String)
-   --     second : source_line_info data (use Get_Address)
+   --     second : identifier of the emitter (use Get_String)
+   --     third  : source_line_info data (use Get_Address)
+   --     fourth : line info sticks to data (instead of sticking to
+   --              line numbers (use Get_Boolean)
 
    Mime_Html_File : constant String := "gps/html";
    --  Request to display a html file
@@ -339,8 +343,7 @@ package Glide_Kernel.Modules is
    type Line_Information_Record is record
       Line               : Integer;
       Text               : String_Access := null;
-      --  ??? we need to add the possibility of displaying a pixbuf.
-      --  Associated_Queue   : Command_Queue := Null_Command_Queue;
+      Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
       Associated_Command : Command_Access := null;
    end record;
 
@@ -362,7 +365,6 @@ package Glide_Kernel.Modules is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String;
       Identifier     : String;
-      Width          : Integer;
       Info           : Line_Information_Data;
       Stick_To_Data  : Boolean := True);
 
