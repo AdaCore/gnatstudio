@@ -347,16 +347,16 @@ procedure GPS is
       --  PATH to point to the right libraries
 
       Tmp := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
-      if Tmp /= null then
+      if Tmp.all /= "" then
          Setenv ("LD_LIBRARY_PATH", Tmp.all);
-         Free (Tmp);
       end if;
+      Free (Tmp);
 
       Tmp := Getenv ("GPS_STARTUP_PATH");
-      if Tmp /= null then
+      if Tmp.all /= "" then
          Setenv ("PATH", Tmp.all);
-         Free (Tmp);
       end if;
+      Free (Tmp);
 
       --  Reset any artificial memory limit
 
