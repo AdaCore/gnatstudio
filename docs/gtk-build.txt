@@ -1,6 +1,6 @@
-Here are the complete procedures to build Gtk+ 2.0.6 from scratch
+Here are the complete procedures to build Gtk+ 2.0.9 from scratch
 (systems tested are Redhat 7.1, Solaris 2.5.1, Solaris 2.8, Tru64 5.1a,
- HP-UX 11.00, IRIX 6.5).
+ HP-UX 11.00, IRIX 6.5 and AiX 5.1).
 
 Note that these instructions are provided as is, and do not represent a
 100% guaranteed method. This is merely an empirical list of steps that
@@ -15,7 +15,7 @@ ignore the special comments.
 Under HP-UX, a recent version of GCC (e.g 3.1), or the HP ansi C compiler
 should be used.
 
-Under IRIX, the SGI C compiler should be used.
+Under IRIX and AiX, the vendor C compiler have been used.
 
 Once all these steps have been done successfully, only glib, atk, pango and gtk
 need to be rebuilt when their version change.
@@ -59,11 +59,10 @@ make install
 # zlib #
 ########
 
-# Not needed on Tru64 5.1
-# Not needed on IRIX 6.5
+# Not needed on Tru64 5.1 nor IRIX 6.5
 
-# Although this library seems to be provided by the system, this is
-# still needed on AiX 5.1, as the headers were not installed.
+# AiX 5.1: although this library seems to be provided by the system, building
+# it is still needed, as the headers were not installed.
 
 tar xzvf zlib-1.1.4.tar.gz
 ln -s zlib-* zlib
@@ -129,7 +128,7 @@ cd ..
 ###########
 
 # This step is not needed under Solaris & Linux
-# It is needed under HP-UX, Tru64 5.1, IRIX 6.5
+# It is needed under HP-UX, Tru64 5.1, IRIX 6.5, AiX 5.1
 
 tar xzvf gettext-0.11.5.tar.gz
 cd gettext-0.11.5
@@ -141,7 +140,7 @@ make install
 
 # On AiX 5.1, the AiX C compiler does not seem to like the _Bool
 # name for the {true, false} enum name. This causes a compilation error
-# in stdboolh. So before doing a make, update stdbool.h.in around line
+# in stdbool.h. So before doing a make, update stdbool.h.in around line
 # 34, and replace all instances of _Bool by BOOL .
 
 ########
@@ -160,8 +159,7 @@ cd glib-2.0.7
 # to locate the extra C include files...
 CPPFLAGS="-I$C_INCLUDE_PATH" ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
 
-# on AiX 5.1, where we use the AiX C compiler, cc does not use C_INCLUDE_PATH
-# either to locate the extra C inclide files...
+# similarly on AiX 5.1 using IBM cc:
 CPPFLAGS="-I$C_INCLUDE_PATH" ./configure --prefix=$prefix --enable-debug=minimum
 
 # on other systems:
@@ -188,8 +186,8 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-1.0.4.tar.gz
-cd pango-1.0.4
+tar xzvf pango-1.0.5.tar.gz
+cd pango-1.0.5
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. Other modules are:
@@ -208,16 +206,16 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-2.0.6.tar.gz
-cd gtk+-2.0.6
+tar xzvf gtk+-2.0.9.tar.gz
+cd gtk+-2.0.9
 
 # Under certain platforms such as AiX or NT, a very recent version of
 # libtool may be needed. To install the most recent version of libtool,
 # do the following:
-rm -f config.cache
-libtoolize --force --copy
-aclocal -I $GNUTOOLS_DIR/share/addon -I $INSTALL_DIR/share/aclocal
-autoconf
+# rm -f config.cache
+# libtoolize --force --copy
+# aclocal
+# autoconf
 
 # Under HP-UX, make sure that libX11.sl, libXt.sl and libXext.sl can be found
 # under e.g /usr/lib
@@ -227,9 +225,8 @@ autoconf
 # used for XIM support:
 # patch -p0 < .../gtk+-2.0.5-solaris2.5.1.diff
 
-# Under IRIX 6.5, we need to tell SGI cc where to find the png
-# include files, so prepend the configure command with 
-# ``CFLAGS="..."'' like so:
+# Under IRIX 6.5 and AiX 5.1, we need to tell cc where to find the png
+# include files, so prepend the configure command with CFLAGS setting:
 # CFLAGS="-I$C_INCLUDE_PATH -O2" ./configure ....
 
 ./configure --disable-modules --without-libtiff \
