@@ -158,6 +158,7 @@ package body Task_Manager is
       Command : Command_Access;
       Previous_Prio : Integer;
 
+      This_Running_Queue : constant Integer := Manager.Running_Queue;
    begin
       if Manager.Queues = null then
          return False;
@@ -210,12 +211,7 @@ package body Task_Manager is
          if Manager.Queues (Manager.Running_Queue).Status = Interrupted then
             Result := Success;
          else
-            declare
-               This_Running_Queue : constant Integer := Manager.Running_Queue;
-            begin
-               Result := Safe_Execute (Command);
-               Manager.Running_Queue := This_Running_Queue;
-            end;
+            Result := Safe_Execute (Command);
          end if;
 
          Manager.Queues (Manager.Running_Queue).Need_Refresh := True;
@@ -285,7 +281,7 @@ package body Task_Manager is
                   if Manager.Queues'Length = 1 then
                      Unchecked_Free (Manager.Queues);
                      Manager.Referenced_Command := -1;
-                     Manager.Running_Queue := -1;
+                     Manager.Running_Queue := This_Running_Queue;
                      return False;
 
                   else
@@ -345,7 +341,7 @@ package body Task_Manager is
 
          end case;
 
-         Manager.Running_Queue := -1;
+         Manager.Running_Queue := This_Running_Queue;
          return True;
       end if;
    end Execute_Incremental;
