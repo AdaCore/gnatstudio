@@ -24,10 +24,11 @@
 --  </description>
 
 with Glib; use Glib;
-with Pango.Font;
 with Gdk.GC;
 with Gdk.Event;
 with Gdk.Font;
+
+with Pango.Font;
 
 with Gtk.Text_View;
 
@@ -47,7 +48,7 @@ package Src_Editor_View is
    procedure Gtk_New
      (View   : out Source_View;
       Buffer : Src_Editor_Buffer.Source_Buffer := null;
-      Font   : Pango.Font.Pango_Font_Description);
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new Source_View from the given parameters.
    --  If no Buffer is given, then a new one will be created. For tasks such
    --  as source code edition, it is recommended to specify a fixed-width font,
@@ -60,7 +61,7 @@ package Src_Editor_View is
    procedure Initialize
      (View   : access Source_View_Record;
       Buffer : Src_Editor_Buffer.Source_Buffer;
-      Font   : Pango.Font.Pango_Font_Description);
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
 

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
 with Glib.Values;                 use Glib.Values;
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
@@ -51,6 +52,7 @@ with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Basic_Types;                 use Basic_Types;
 with Commands;                    use Commands;
+with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 
@@ -200,6 +202,11 @@ package body Src_Editor_View is
    --  If supported by the language and if the preferences are activated,
    --  automatically indent at the current cursor position.
    --  If New_Line is True, insert a new line and insert spaces on the new line
+
+   procedure Preferences_Changed
+     (View : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the preferences have changed, to refresh the editor
+   --  appropriately.
 
    --------------------------
    -- Save_Cursor_Position --
@@ -572,10 +579,10 @@ package body Src_Editor_View is
    procedure Gtk_New
      (View   : out Source_View;
       Buffer : Src_Editor_Buffer.Source_Buffer := null;
-      Font   : Pango.Font.Pango_Font_Description) is
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       View := new Source_View_Record;
-      Initialize (View, Buffer, Font);
+      Initialize (View, Buffer, Kernel);
    end Gtk_New;
 
    ----------------
@@ -583,9 +590,9 @@ package body Src_Editor_View is
    ----------------
 
    procedure Initialize
-     (View              : access Source_View_Record;
-      Buffer            : Src_Editor_Buffer.Source_Buffer;
-      Font              : Pango.Font.Pango_Font_Description)
+     (View   : access Source_View_Record;
+      Buffer : Src_Editor_Buffer.Source_Buffer;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Insert_Iter : Gtk_Text_Iter;
    begin
@@ -605,7 +612,7 @@ package body Src_Editor_View is
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
 
-      Set_Font (View, Font);
+      Set_Font (View, Get_Pref (Kernel, Default_Source_Editor_Font));
 
       Widget_Callback.Connect
         (View, "realize",
@@ -666,7 +673,24 @@ package body Src_Editor_View is
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
          View,
          After => False);
+
+      Kernel_Callback.Object_Connect
+        (Kernel, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         Slot_Object => View,
+         User_Data   => Kernel_Handle (Kernel));
    end Initialize;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (View : access GObject_Record'Class; Kernel : Kernel_Handle) is
+   begin
+      Set_Font
+        (Source_View (View), Get_Pref (Kernel, Default_Source_Editor_Font));
+   end Preferences_Changed;
 
    --------------
    -- Set_Font --
@@ -677,21 +701,24 @@ package body Src_Editor_View is
       Font : Pango.Font.Pango_Font_Description)
    is
       use type Gdk.Gdk_Font;
+      F : Gdk.Gdk_Font;
    begin
       View.Pango_Font := Font;
-      View.Font := Gdk.Font.From_Description (Font);
-      Assert (Me, View.Font /= null,
-              "Font could not be allocated " & To_String (Font));
+      F := Gdk.Font.From_Description (Font);
 
-      --  Make sure the widget is already realized. Otherwise, the
-      --  layout and style are not created yet.
-      if not Realized_Is_Set (View) then
-         return;
+      if F = null then
+         View.Font := F;
+
+         --  Make sure the widget is already realized. Otherwise, the
+         --  layout and style are not created yet.
+         if not Realized_Is_Set (View) then
+            return;
+         end if;
+
+         Modify_Font (View, Font);
+
+         --  ??? Should recompute the width of the column on the side.
       end if;
-
-      Modify_Font (View, Font);
-
-      --  ??? Should recompute the width of the column on the side.
    end Set_Font;
 
    -------------------------------
