@@ -336,12 +336,7 @@ csc_html_handle_key_event (CscHTML *html,
 			}
 		}
 
-		if (event->length == 0)
-			return FALSE;
-
-		html_engine_insert (html->engine, event->string, event->length);
-		*update_styles = FALSE;
-		retval = TRUE;
+		return FALSE;
 	}
 
 	if (retval)
