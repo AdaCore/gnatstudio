@@ -38,11 +38,27 @@ with Ada.Text_IO;      use Ada.Text_IO;
 
 package body Display_Items is
 
+   --  The items are drawn with the following spacings:
+   --
+   --   _______________________
+   --  |<->TITLE<->| |<->| |<->|
+   --   -----------------------
+   --  |                       |
+   --  |                       |
+   --   -----------------------
+   --
+   --  <->: Spacing
+   --  Each of the two Buttons has a width and height of Buttons_Size.
+
+
    Spacing : constant Gint := 2;
    --  Space on each sides of the title.
 
-   Refresh_Button_Size : constant Gint := 8;
-   --  Size of the auto-refresh button on the right of the title bar.
+   Buttons_Size : constant Gint := 8;
+   --  Size of the buttons in the title bar of the items
+
+   Border_Spacing : constant Gint := 2;
+   --  Space left on each side of the value
 
    Xref_Color : constant String := "blue";
    --  Color to use for the items that are clickable.
@@ -50,6 +66,33 @@ package body Display_Items is
    Title_Color : constant String := "grey";
    --  Color to use for the background of the title.
 
+   Look_3d : constant Boolean := True;
+   --  Should the items have a 3d look ?
+
+   Title_Font_Name : constant String := "Helvetica-Bold";
+   --  Font used for the name of the item.
+
+   Title_Font_Size : constant Gint := 8;
+   --  Size of the font used for the name of the item.
+
+   Value_Font_Name : constant String := "Helvetica";
+   --  Font used to display the value of the item.
+
+   Value_Font_Size : constant Gint := 8;
+   --  Size of the font used to display the value of the item.
+
+   Num_Buttons : constant := 2;
+   --  Number of buttons in the title bar.
+   --  This is not user-configurable.
+
+   Detect_Aliases : constant Boolean := True;
+   --  If True, do not create new items when a matching item is already
+   --  present in the canvas.
+
+
+   --  ??? Should get rid of these global variables.
+   --  This could be done in a global initialization file, for all the
+   --  graphic contexts we use in Odd.
    White_GC   : Gdk.GC.Gdk_GC;
    Grey_GC    : Gdk.GC.Gdk_GC;
    Black_GC   : Gdk.GC.Gdk_GC;
@@ -57,6 +100,29 @@ package body Display_Items is
    Font       : Gdk.Font.Gdk_Font;
    Title_Font : Gdk.Font.Gdk_Font;
    Refresh_Button_Gc : Gdk.GC.Gdk_GC;
+
+   procedure Initialize
+     (Item          : access Display_Item_Record'Class;
+      Win           : Gdk.Window.Gdk_Window;
+      Variable_Name : String;
+      Auto_Refresh  : Boolean := True);
+   --  Item.Entity must have been parsed already.
+
+   procedure Update_Display (Item : access Display_Item_Record'Class);
+   --  Recompute the size of an item, and redraw its contents.
+   --  It also warns the canvas that the item has changed
+
+   procedure Dereference_Item (Item : access Display_Item_Record;
+                               X    : Gint;
+                               Y    : Gint);
+   --  Create a new item (or reference an existing one) that dereference
+   --  the field pointed to by (X, Y) in Item.
+   --  (X, Y) are relative to the top-left corner of item.
+
+   function Search_Item (Canvas : access Interactive_Canvas_Record'Class;
+                         Id     : String)
+                        return Display_Item;
+   --  Search for an item whose Id is Id in the canvas.
 
    -------------
    -- Gtk_New --
@@ -69,10 +135,57 @@ package body Display_Items is
       Debugger      : Debugger_Process_Tab;
       Auto_Refresh  : Boolean := True)
    is
+      Entity : Generic_Type_Access;
    begin
-      Item := new Display_Item_Record;
-      Display_Items.Initialize
-        (Item, Win, Variable_Name, Debugger, Auto_Refresh);
+      Set_Internal_Command (Get_Process (Debugger.Debugger), True);
+
+      declare
+         Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
+      begin
+
+         --  Do not create a new item if the Id is the same, and Detect_Aliases
+         --  is True.
+         Item := null;
+
+         if Search_Item (Debugger.Data_Canvas, Id) /= null then
+            Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+            return;
+         end if;
+
+         --  Parse the type and value of the variable. If we have an error at
+         --  this level, this means that the variable is unknown, and we don't
+         --  create an item in that case.
+
+         begin
+            Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+            if Entity = null then
+               Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+               return;
+            else
+               Parse_Value (Debugger.Debugger, Variable_Name, Entity);
+            end if;
+
+            Item := new Display_Item_Record;
+            Item.Entity := Entity;
+
+            --  If we got an exception while parsing the value, we create the
+            --  item, but indicate there was a parse error. Hopefully, this
+            --  should not happen, but at least the user knows why the variable
+            --  is not displayed correctly.
+         exception
+            when Language.Unexpected_Type =>
+               Item := new Display_Item_Record;
+               Item.Entity := New_Simple_Type;
+               Set_Value (Simple_Type (Item.Entity.all), "<parse_error>");
+         end;
+
+         if Id /= "" then
+            Item.Id       := new String'(Id);
+         end if;
+         Item.Debugger := Debugger;
+         Set_Internal_Command (Get_Process (Debugger.Debugger), False);
+         Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
+      end;
    end Gtk_New;
 
    ----------------
@@ -83,38 +196,14 @@ package body Display_Items is
      (Item          : access Display_Item_Record'Class;
       Win           : Gdk.Window.Gdk_Window;
       Variable_Name : String;
-      Debugger      : Debugger_Process_Tab;
       Auto_Refresh  : Boolean := True)
    is
       use type Gdk.GC.Gdk_GC;
-      Alloc_Width  : Gint;
-      Alloc_Height : Gint;
-      Height : Gint;
       Color  : Gdk_Color;
 
    begin
-      Set_Internal_Command (Get_Process (Debugger.Debugger), True);
-
-      begin
-         Item.Entity := Parse_Type (Debugger.Debugger, Variable_Name);
-         if Item.Entity = null then
-            Item.Entity := New_Simple_Type;
-            Set_Value (Simple_Type (Item.Entity.all), "<???>");
-         else
-            Parse_Value (Debugger.Debugger, Variable_Name, Item.Entity);
-         end if;
-
-      exception
-         when Language.Unexpected_Type =>
-            Item.Entity := New_Simple_Type;
-            Set_Value (Simple_Type (Item.Entity.all), "<parse_error>");
-      end;
-
-      Set_Internal_Command (Get_Process (Debugger.Debugger), False);
-
       Item.Name         := new String'(Variable_Name);
       Item.Auto_Refresh := Auto_Refresh;
-      Item.Debugger     := Debugger;
 
       if White_GC = null then
          Gdk_New (White_GC, Win);
@@ -135,45 +224,68 @@ package body Display_Items is
 
          Gdk_New (Refresh_Button_Gc, Win);
 
-         Font := Get_Gdkfont ("Helvetica", 8);
-         if Font = Null_Font then
-            null;  --  ??  Should use a default font
-         end if;
-
-         Title_Font := Get_Gdkfont ("Helvetica-Bold", 8);
-         if Title_Font = Null_Font then
-            null;  --  ??  Should use a default font
-         end if;
-
+         Font := Get_Gdkfont (Value_Font_Name, Value_Font_Size);
+         Title_Font := Get_Gdkfont (Title_Font_Name, Title_Font_Size);
       end if;
 
+      Update_Display (Item);
+   end Initialize;
+
+   --------------------
+   -- Update_Display --
+   --------------------
+
+   procedure Update_Display (Item : access Display_Item_Record'Class) is
+      Alloc_Width  : Gint;
+      Alloc_Height : Gint;
+      Title_Height, Title_Width : Gint;
+   begin
+      --  Compute the required size for the value itself.
+
       Size_Request (Item.Entity.all, Font);
-      Propagate_Width (Item.Entity.all, Get_Width (Item.Entity.all));
-      Alloc_Width := Get_Width (Item.Entity.all);
-      Alloc_Height := Get_Height (Item.Entity.all);
-      Height := Gint'Max (String_Height (Title_Font, Item.Name.all) + 6,
-                          Refresh_Button_Size + 2 * Spacing);
+      Alloc_Width := Get_Width (Item.Entity.all) + 2 * Border_Spacing;
+      Alloc_Height := Get_Height (Item.Entity.all) + 2 * Border_Spacing;
 
-      --  +2 so that there are blank lines on top and below the value.
-      Alloc_Height := Height + (Alloc_Height + 2) + Spacing;
+      --  Compute the width and height of the title bar
 
-      Alloc_Width :=
-        Gint'Max (Alloc_Width,
-                  String_Width (Font, Item.Name.all) + Refresh_Button_Size)
-        + Spacing * 2;
+      Title_Width := (2 + Num_Buttons) * Spacing
+        + String_Width (Font, Item.Name.all)
+        + Num_Buttons * Buttons_Size;
+      Title_Height := Gint'Max
+        (Get_Ascent (Title_Font) + Get_Descent (Title_Font), Buttons_Size)
+        + 2 * Spacing;
+      Item.Title_Height := Title_Height;
+
+      --  Finally, we can find the total size for the display item.
+
+      Alloc_Width := Gint'Max (Alloc_Width, Title_Width);
+      Alloc_Height := Title_Height + Alloc_Height;
       if Alloc_Width < 40 then
          Alloc_Width := 40;
       end if;
 
-      Gtkada.Canvas.Initialize (Item, Win, Alloc_Width, Alloc_Height);
+      Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
+
+      --  3D Look ? If yes, keep some space for the shadow.
+      if Look_3d then
+         Gtkada.Canvas.Initialize
+           (Item,
+            Get_Window (Item.Debugger.Data_Canvas),
+            Alloc_Width + 1, Alloc_Height + 1);
+      else
+         Gtkada.Canvas.Initialize
+           (Item, Get_Window (Item.Debugger.Data_Canvas),
+            Alloc_Width, Alloc_Height);
+      end if;
+
 
       Draw_Rectangle (Pixmap (Item),
                       GC     => White_GC,
                       Filled => True,
                       X      => 0,
-                      Y      => Height,
+                      Y      => Title_Height,
                       Width  => Alloc_Width - 1,
-                      Height => Alloc_Height - Height - 1);
+                      Height => Alloc_Height - Title_Height - 1);
 
       Draw_Rectangle (Pixmap (Item),
                       GC     => Grey_GC,
@@ -181,7 +293,7 @@ package body Display_Items is
                       X      => 0,
                       Y      => 0,
                       Width  => Alloc_Width - 1,
-                      Height => Height);
+                      Height => Title_Height);
 
       Draw_Rectangle (Pixmap (Item),
                       GC     => Black_GC,
@@ -190,33 +302,158 @@ package body Display_Items is
                       Y      => 0,
                       Width  => Alloc_Width - 1,
                       Height => Alloc_Height - 1);
+      if Look_3d then
+         Draw_Line (Pixmap (Item),
+                    GC   => Black_GC,
+                    X1   => Alloc_Width - 1,
+                    Y1   => 2,
+                    X2   => Alloc_Width - 1,
+                    Y2   => Alloc_Height - 1);
+         Draw_Line (Pixmap (Item),
+                    GC   => Black_GC,
+                    X1   => 1,
+                    Y1   => Alloc_Height - 1,
+                    X2   => Alloc_Width - 1,
+                    Y2   => Alloc_Height - 1);
+      end if;
 
       Draw_Line (Pixmap (Item),
                  GC     => Black_GC,
                  X1     => 0,
-                 Y1     => Height,
+                 Y1     => Title_Height,
                  X2     => Alloc_Width - 1,
-                 Y2     => Height);
+                 Y2     => Title_Height);
 
       Draw_Text (Pixmap (Item),
                  Font   => Title_Font,
                  GC     => Black_GC,
                  X      => Spacing,
-                 Y      => Height - 4,
+                 Y      => Spacing + Get_Ascent (Title_Font),
                  Text   => Item.Name.all);
 
-      Set_Auto_Refresh (Item, Win, Auto_Refresh);
+      --  First button
+
+      Set_Auto_Refresh (Item, Get_Window (Item.Debugger.Data_Canvas),
+                        Item.Auto_Refresh);
+
+      --  Second button
+
+      Draw_Rectangle (Pixmap (Item),
+                      GC     => Black_GC,
+                      Filled => False,
+                      X      => Alloc_Width - Buttons_Size - Spacing,
+                      Y      => Spacing,
+                      Width  => Buttons_Size - 1,
+                      Height => Buttons_Size - 1);
+      Draw_Line (Pixmap (Item),
+                 GC   => Black_GC,
+                 X1   => Alloc_Width - Buttons_Size - Spacing,
+                 Y1   => Spacing,
+                 X2   => Alloc_Width - Spacing - 1,
+                 Y2   => Spacing + Buttons_Size - 1);
+      Draw_Line (Pixmap (Item),
+                 GC   => Black_GC,
+                 X1   => Alloc_Width - Buttons_Size - Spacing,
+                 Y1   => Spacing + Buttons_Size - 1,
+                 X2   => Alloc_Width - Spacing - 1,
+                 Y2   => Spacing);
 
       if Item.Entity /= null then
-
-         --  Y is Height + 2 so that there is a blank line between the title
-         --  and the value.
          Paint (Item.Entity.all, Black_GC, Xref_Gc, Font,
                 Pixmap (Item),
-                X => 2,
-                Y => Height + 2);
+                X => Border_Spacing,
+                Y => Title_Height + Border_Spacing);
       end if;
-   end Initialize;
+
+      Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
+   end Update_Display;
+
+   -----------------
+   -- Search_Item --
+   -----------------
+
+   function Search_Item (Canvas : access Interactive_Canvas_Record'Class;
+                         Id     : String)
+                        return Display_Item
+   is
+      Alias_Item : Display_Item := null;
+
+      procedure Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
+                             Item   : access Canvas_Item_Record'Class);
+      --  Set New_Item to a non-null value if an alias was found for
+
+      -----------------
+      -- Alias_Found --
+      -----------------
+
+      procedure Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
+                             Item   : access Canvas_Item_Record'Class)
+      is
+      begin
+         if Display_Item (Item).Id /= null
+           and then Alias_Item = null
+           and then Display_Item (Item).Id.all = Id
+         then
+            Alias_Item := Display_Item (Item);
+         end if;
+      end Alias_Found;
+
+   begin
+      if Detect_Aliases then
+         For_Each_Item (Canvas, Alias_Found'Unrestricted_Access);
+      end if;
+      return Alias_Item;
+   end Search_Item;
+
+   ----------------------
+   -- Dereference_Item --
+   ----------------------
+
+   procedure Dereference_Item (Item : access Display_Item_Record;
+                               X    : Gint;
+                               Y    : Gint)
+   is
+      Name : constant String := Get_Component_Name
+        (Item.Entity,
+         Get_Language (Item.Debugger.Debugger),
+         Item.Name.all,
+         X, Y);
+      Component : constant Generic_Type_Access := Get_Component
+        (Item.Entity, X, Y);
+      New_Name : constant String := Dereference_Name
+        (Get_Language (Item.Debugger.Debugger), Name);
+      Link_Name : constant String := Dereference_Name
+        (Get_Language (Item.Debugger.Debugger),
+         Get_Component_Name (Item.Entity,
+                             Get_Language (Item.Debugger.Debugger),
+                             "@", X, Y));
+      New_Item : Display_Item;
+
+   begin
+      --  Do we have an existing item that matches this ?
+      New_Item := Search_Item (Item.Debugger.Data_Canvas,
+                               Get_Value (Access_Type (Component.all)).all);
+
+      if New_Item = null then
+         Gtk_New (New_Item,
+                  Get_Window (Item.Debugger.Data_Canvas),
+                  Variable_Name => New_Name,
+                  Debugger      => Item.Debugger,
+                  Auto_Refresh  => Item.Auto_Refresh);
+         Add_Link (Item.Debugger.Data_Canvas,
+                   Src   => Item,
+                   Dest  => New_Item,
+                   Arrow => End_Arrow,
+                   Descr => Link_Name);
+         Put (Item.Debugger.Data_Canvas, New_Item);
+      else
+         Add_Link (Item.Debugger.Data_Canvas,
+                   Src   => Item,
+                   Dest  => New_Item,
+                   Arrow => End_Arrow,
+                   Descr => Link_Name);
+      end if;
+   end Dereference_Item;
 
    ---------------------
    -- On_Button_Click --
@@ -225,47 +462,100 @@ package body Display_Items is
    procedure On_Button_Click (Item   : access Display_Item_Record;
                               Event  : Gdk.Event.Gdk_Event_Button)
    is
-      New_Item : Display_Item;
-      Button_X : Gint :=
-        Gint (Display_Items.Get_Coord (Item).Width) - Refresh_Button_Size -
-          Spacing + 1;
-      --  ??? GNAT is apparently not finding Get_Coord if we don't use the
-      --  dotted notation.
-
+      Buttons_Start : Gint :=
+        Gint (Get_Coord (Item).Width) - Num_Buttons * Buttons_Size
+        - Num_Buttons * Spacing + 1;
    begin
 
+      --  Click in a button ?
+
       if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-        and then Gint (Get_X (Event)) >= Button_X
-        and then Gint (Get_X (Event)) <= Button_X + Refresh_Button_Size - 1
-        and then Gint (Get_Y (Event)) >= Spacing + 1
-        and then Gint (Get_Y (Event)) <= Spacing + Refresh_Button_Size
+        and then Get_Event_Type (Event) = Button_Release
+        and then Gint (Get_Y (Event)) > Spacing
+        and then Gint (Get_Y (Event)) <= Spacing + Buttons_Size
       then
-         Set_Auto_Refresh (Item, Get_Window (Item.Debugger.Data_Canvas),
-                           not Item.Auto_Refresh);
+         for B in 0 .. Num_Buttons - 1 loop
+            if Gint (Get_X (Event)) >= Buttons_Start
+              and then Gint (Get_X (Event))
+              <= Buttons_Start + Buttons_Size + Spacing
+            then
+               case B is
+                  when 0 =>
+                     Set_Auto_Refresh
+                       (Item, Get_Window (Item.Debugger.Data_Canvas),
+                        not Item.Auto_Refresh);
+
+                  when 1 =>
+                     Free (Item);
+
+               end case;
+               return;
+            end if;
+            Buttons_Start := Buttons_Start + Buttons_Size + Spacing;
+         end loop;
+      end if;
 
       --  Dereferencing access types.
 
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+        and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
+        and then Get_Component
+        (Item.Entity,
+         Gint (Get_X (Event)),
+         Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing).all
+        in Access_Type'Class
+      then
+         Dereference_Item
+           (Item,
+            Gint (Get_X (Event)),
+            Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
+
+
+      --  Hiding a component
+
       elsif Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
-        and then Item.Entity.all in Access_Type'Class
+        and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
       then
-         Gtk_New
-           (New_Item,
-            Get_Window (Item.Debugger.Data_Canvas),
-            Variable_Name =>
-              Dereference
-                (Get_Language (Item.Debugger.Debugger), Item.Name.all),
-            Debugger      => Item.Debugger,
-            Auto_Refresh  => Item.Auto_Refresh);
-         Add_Link
-           (Item.Debugger.Data_Canvas,
-            Src   => Item,
-            Dest  => New_Item,
-            Arrow => End_Arrow,
-            Descr =>
-              Dereference (Get_Language (Item.Debugger.Debugger), "()"));
-         Put (Item.Debugger.Data_Canvas, New_Item);
+         declare
+            Component : Generic_Type_Access := Get_Component
+              (Item.Entity, Gint (Get_X (Event)),
+               Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
+         begin
+            Set_Visibility (Component.all, not Get_Visibility (Component.all));
+            Update_Display (Item);
+         end;
+
+      --  Selecting a component
+
+      elsif Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Release
+        and then Gint (Get_Y (Event)) > Spacing + Buttons_Size
+      then
+         declare
+            Component : Generic_Type_Access := Get_Component
+              (Item.Entity, Gint (Get_X (Event)),
+               Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
+
+            Value : Boolean := not Get_Selected (Component);
+            --  Have to memorize it first, since its state might be changed
+            --  when we unselect the current one.
+         begin
+            if Item.Debugger.Selected_Item /= null then
+               Set_Selected
+                 (Display_Item (Item.Debugger.Selected_Item).Entity, False);
+               Update_Display (Display_Item (Item.Debugger.Selected_Item));
+            end if;
+
+            Set_Selected (Component, Value);
+            Update_Display (Item);
+            if Get_Selected (Component) then
+               Item.Debugger.Selected_Item := Canvas_Item (Item);
+            else
+               Item.Debugger.Selected_Item := null;
+            end if;
+         end;
       end if;
    end On_Button_Click;
 
@@ -285,10 +575,10 @@ package body Display_Items is
       Draw_Rectangle (Pixmap (Item),
                       GC     => Black_GC,
                       Filled => False,
-                      X      => Width - Refresh_Button_Size - Spacing,
+                      X      => Width - 2 * Buttons_Size - 2 * Spacing,
                       Y      => Spacing,
-                      Width  => Refresh_Button_Size - 1,
-                      Height => Refresh_Button_Size - 1);
+                      Width  => Buttons_Size - 1,
+                      Height => Buttons_Size - 1);
 
       if Item.Auto_Refresh then
          Color := Parse ("green");
@@ -301,11 +591,22 @@ package body Display_Items is
       Draw_Rectangle (Pixmap (Item),
                       GC     => Refresh_Button_Gc,
                       Filled => True,
-                      X      => Width - Refresh_Button_Size -
-                                Spacing + 1,
+                      X      => Width - 2 * Buttons_Size - 2 * Spacing + 1,
                       Y      => Spacing + 1,
-                      Width  => Refresh_Button_Size - 2,
-                      Height => Refresh_Button_Size - 2);
+                      Width  => Buttons_Size - 2,
+                      Height => Buttons_Size - 2);
    end Set_Auto_Refresh;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Item : access Display_Item_Record) is
+   begin
+      Remove (Item.Debugger.Data_Canvas, Item);
+      Free (Item.Name);
+      Free (Item.Entity);
+      Free (Item.Id);
+   end Free;
 
 end Display_Items;

@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;
 with Gtkada.Canvas;
 with Gdk.Window;
 with Generic_Values;
@@ -41,12 +42,9 @@ package Display_Items is
    --  be parsed again whenever the debugger stops. This is the default
    --  behavior, that can be changed by the user.
 
-   procedure Initialize
-     (Item          : access Display_Item_Record'Class;
-      Win           : Gdk.Window.Gdk_Window;
-      Variable_Name : String;
-      Debugger      : Odd.Process.Debugger_Process_Tab;
-      Auto_Refresh  : Boolean := True);
+   procedure Free (Item : access Display_Item_Record);
+   --  Remove the item from the canvas and free the memory occupied by it,
+   --  including its type description.
 
    procedure On_Button_Click (Item   : access Display_Item_Record;
                               Event  : Gdk.Event.Gdk_Event_Button);
@@ -63,5 +61,14 @@ private
          Entity       : Generic_Values.Generic_Type_Access := null;
          Auto_Refresh : Boolean := True;
          Debugger     : Odd.Process.Debugger_Process_Tab;
+
+         Title_Height : Glib.Gint;
+
+         Id           : Generic_Values.String_Access := null;
+         --  Uniq ID used for the variable.
+         --  This Id is returned by the debugger, and can be the address of a
+         --  variable (in Ada or C), or simply the name of the variable (in
+         --  Java) when no overloading exists and addresses don't have any
+         --  meaning.  This is used to detect aliases.
       end record;
 end Display_Items;
