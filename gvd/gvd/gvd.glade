@@ -1430,7 +1430,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>print_1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_=</key>
@@ -1438,8 +1437,9 @@
 	    </accelerator>
 	    <signal>
 	      <name>activate</name>
-	      <handler>on_print_1_activate</handler>
-	      <last_modification_time>Tue, 18 Apr 2000 21:19:28 GMT</last_modification_time>
+	      <handler>on_print1_activate</handler>
+	      <object>main_debug_window</object>
+	      <last_modification_time>Sat, 08 Jul 2000 05:11:31 GMT</last_modification_time>
 	    </signal>
 	    <label>Print ()</label>
 	    <right_justify>False</right_justify>
@@ -1448,7 +1448,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>display_1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_-</key>
@@ -1456,8 +1455,9 @@
 	    </accelerator>
 	    <signal>
 	      <name>activate</name>
-	      <handler>on_display_1_activate</handler>
-	      <last_modification_time>Tue, 18 Apr 2000 21:19:34 GMT</last_modification_time>
+	      <handler>on_display1_activate</handler>
+	      <object>main_debug_window</object>
+	      <last_modification_time>Sat, 08 Jul 2000 05:11:55 GMT</last_modification_time>
 	    </signal>
 	    <label>Display ()</label>
 	    <right_justify>False</right_justify>
@@ -1484,8 +1484,7 @@
 	      <last_modification_time>Tue, 28 Mar 2000 02:43:40 GMT</last_modification_time>
 	    </signal>
 	    <label>Display Local Variables</label>
-	    <active>False</active>
-	    <always_show_toggle>False</always_show_toggle>
+	    <right_justify>False</right_justify>
 	  </widget>
 
 	  <widget>
@@ -1898,9 +1897,9 @@
 	<tooltip>Print ()</tooltip>
 	<signal>
 	  <name>clicked</name>
-	  <handler>on_print1_activate</handler>
+	  <handler>on_print1_clicked</handler>
 	  <object>main_debug_window</object>
-	  <last_modification_time>Wed, 31 May 2000 06:24:56 GMT</last_modification_time>
+	  <last_modification_time>Sat, 08 Jul 2000 05:25:18 GMT</last_modification_time>
 	</signal>
 	<label></label>
 	<icon>print_xpm</icon>
@@ -1911,6 +1910,12 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button67</name>
 	<tooltip>Display ()</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_display1_clicked</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Sat, 08 Jul 2000 05:10:47 GMT</last_modification_time>
+	</signal>
 	<label></label>
 	<icon>display_xpm</icon>
       </widget>
