@@ -45,9 +45,10 @@ package Src_Highlighting is
    --  inside such record, and using Strings access types or chars_ptr types is
    --  not very simple...
 
-   Keyword_Color_Tag_Name : constant String := "keyword_tag";
-   Comment_Color_Tag_Name : constant String := "comment_tag";
-   String_Color_Tag_Name  : constant String := "string_tag";
+   Keyword_Color_Tag_Name   : constant String := "keyword_tag";
+   Comment_Color_Tag_Name   : constant String := "comment_tag";
+   String_Color_Tag_Name    : constant String := "string_tag";
+   Character_Color_Tag_Name : constant String := "character_tag";
    --  Respectively, the name of the tags use to highlight keywords, comments,
    --  and strings. Declared as public so that one can retrieve them from
    --  the source buffer using their names.
@@ -65,17 +66,19 @@ package Src_Highlighting is
    function To_Font_Attributes
      (Style  : Pango.Enums.Style  := Pango.Enums.Pango_Style_Normal;
       Weight : Pango.Enums.Weight := Pango.Enums.Pango_Weight_Normal)
-     return Font_Attributes;
+      return Font_Attributes;
    --  Convenience function to create a Font_Attributes structure.
 
    function Create_Syntax_Tags
-     (Keyword_Color     : String;
-      Keyword_Font_Attr : Font_Attributes := To_Font_Attributes;
-      Comment_Color     : String;
-      Comment_Font_Attr : Font_Attributes := To_Font_Attributes;
-      String_Color      : String;
-      String_Font_Attr  : Font_Attributes := To_Font_Attributes)
-     return Highlighting_Tags;
+     (Keyword_Color       : String;
+      Keyword_Font_Attr   : Font_Attributes := To_Font_Attributes;
+      Comment_Color       : String;
+      Comment_Font_Attr   : Font_Attributes := To_Font_Attributes;
+      Character_Color     : String;
+      Character_Font_Attr : Font_Attributes := To_Font_Attributes;
+      String_Color        : String;
+      String_Font_Attr    : Font_Attributes := To_Font_Attributes)
+      return Highlighting_Tags;
    --  Create a Highlighting_Tags object using the given color names.
    --  If some colors name can not be parsed, then no special color will
    --  be used to highlight the associated source parts.

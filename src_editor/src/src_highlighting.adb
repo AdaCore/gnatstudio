@@ -167,22 +167,26 @@ package body Src_Highlighting is
    -----------------
 
    function Create_Syntax_Tags
-     (Keyword_Color     : String;
-      Keyword_Font_Attr : Font_Attributes := To_Font_Attributes;
-      Comment_Color     : String;
-      Comment_Font_Attr : Font_Attributes := To_Font_Attributes;
-      String_Color      : String;
-      String_Font_Attr  : Font_Attributes := To_Font_Attributes)
-     return Highlighting_Tags
+     (Keyword_Color       : String;
+      Keyword_Font_Attr   : Font_Attributes := To_Font_Attributes;
+      Comment_Color       : String;
+      Comment_Font_Attr   : Font_Attributes := To_Font_Attributes;
+      Character_Color     : String;
+      Character_Font_Attr : Font_Attributes := To_Font_Attributes;
+      String_Color        : String;
+      String_Font_Attr    : Font_Attributes := To_Font_Attributes)
+      return Highlighting_Tags
    is
       Result : Highlighting_Tags;
    begin
-      Result (Keyword_Text) :=
-        New_Tag (Keyword_Color_Tag_Name, Keyword_Color, Keyword_Font_Attr);
-      Result (Comment_Text) :=
-        New_Tag (Comment_Color_Tag_Name, Comment_Color, Comment_Font_Attr);
-      Result (String_Text) :=
-        New_Tag (String_Color_Tag_Name, String_Color, String_Font_Attr);
+      Result (Keyword_Text) := New_Tag
+        (Keyword_Color_Tag_Name, Keyword_Color, Keyword_Font_Attr);
+      Result (Comment_Text) := New_Tag
+        (Comment_Color_Tag_Name, Comment_Color, Comment_Font_Attr);
+      Result (String_Text) := New_Tag
+        (String_Color_Tag_Name, String_Color, String_Font_Attr);
+      Result (Character_Text) := New_Tag
+        (Character_Color_Tag_Name, Character_Color, Character_Font_Attr);
       --  ??? Set the tags priority...
       return Result;
    end Create_Syntax_Tags;
