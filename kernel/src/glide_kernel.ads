@@ -271,6 +271,11 @@ package Glide_Kernel is
    function Kind_To_String (Kind : Src_Info.E_Kind) return String;
    --  Return a printable string for the entity kind.
 
+   function Is_Open
+     (Kernel   : access Kernel_Handle_Record;
+      Filename : String) return Boolean;
+   --  Whether Filename is currently opened in an editor.
+
    --------------
    -- Contexts --
    --------------
@@ -538,6 +543,11 @@ package Glide_Kernel is
       File    : String);
    --  Emits the "file_saved" signal
 
+   procedure File_Closed
+     (Handle  : access Kernel_Handle_Record;
+      File    : String);
+   --  Emits the "file_closed" signal
+
    procedure Preferences_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "preferences_changed" signal.
 
@@ -604,7 +614,14 @@ package Glide_Kernel is
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
    --                       File   : String);
    --
-   --    ????
+   --    Emitted when a file editor has been opened for a file that wasn't
+   --    already open before.
+   --
+   --  - "file_closed"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
+   --                       File   : String);
+   --
+   --    Emitted when the last editor for File has been closed.
    --
    --  - "search_regexps_changed"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
@@ -633,6 +650,7 @@ package Glide_Kernel is
    Source_Lines_Revealed_Signal  : constant String := "source_lines_revealed";
    File_Edited_Signal            : constant String := "file_edited";
    File_Saved_Signal             : constant String := "file_saved";
+   File_Closed_Signal             : constant String := "file_closed";
    Preferences_Changed_Signal    : constant String := "preferences_changed";
    Search_Regexps_Changed_Signal : constant String := "search_regexps_changed";
    Search_Reset_Signal           : constant String := "search_reset";
@@ -771,6 +789,9 @@ private
       Modules_Data : Kernel_Module_Data;
       --  The user data associated with glide_kernel-modules.ads.
       --  This is really of type Glide_Kernel.Modules.Real_Module_Data.
+
+      Open_Files : String_List_Utils.String_List.List;
+      --  The list of currently open files.
    end record;
 
 end Glide_Kernel;
