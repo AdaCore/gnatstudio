@@ -95,9 +95,6 @@ class Help_Wrapper:
       except:
          return __oldgetdoc__(object)
 
-   def __del__(self):
-      self.doc.reset()
-
 def writedoc(thing, forceload=0):
    """Wrapper around pydoc.writedoc to limit the number of times an XML file
       is parsed"""
