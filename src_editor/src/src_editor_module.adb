@@ -2490,6 +2490,8 @@ package body Src_Editor_Module is
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module         => Src_Editor_Module_Id);
+         Set_Child (Get_View (Editor), Child);
+
          Widget_Callback.Connect
            (Child, "selected", Update_Cache_On_Focus'Access);
 
@@ -2668,6 +2670,7 @@ package body Src_Editor_Module is
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module         => Src_Editor_Module_Id,
             Position       => Position);
+         Set_Child (Get_View (Editor), Child);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
          Widget_Callback.Connect
            (Child, "selected", Update_Cache_On_Focus'Access);
