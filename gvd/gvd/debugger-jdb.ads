@@ -62,6 +62,8 @@ package Debugger.Jdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String;
 
+   function Info_Locals (Debugger : access Jdb_Debugger) return String;
+
    procedure Set_Executable
      (Debugger   : access Jdb_Debugger;
       Executable : String);

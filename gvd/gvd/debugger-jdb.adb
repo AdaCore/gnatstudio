@@ -520,6 +520,15 @@ package body Debugger.Jdb is
         (Get_Language (Debugger), S (S'First .. Matches (0).First - 1));
    end Info_Threads;
 
+   -----------------
+   -- Info_Locals --
+   -----------------
+
+   function Info_Locals (Debugger : access Jdb_Debugger) return String is
+   begin
+      return "locals";
+   end Info_Locals;
+
    --------------------------
    -- Highlighting_Pattern --
    --------------------------

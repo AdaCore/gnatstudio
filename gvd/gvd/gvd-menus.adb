@@ -185,6 +185,20 @@ package body Odd.Menus is
       end if;
    end Print_Variable;
 
+   ------------------
+   -- Print_Locals --
+   ------------------
+
+   procedure Print_Locals (Widget : access Gtk_Widget_Record'Class;
+                           Var    : Variable_Record)
+   is
+      S : String := "graph display `" & Info_Locals (Var.Process.Debugger)
+        & '`';
+   begin
+      Text_Output_Handler (Var.Process, S, Is_Command => True);
+      Process_User_Command (Var.Process, S);
+   end Print_Locals;
+
    --------------------------------
    -- Contextual_Background_Menu --
    --------------------------------
@@ -313,6 +327,16 @@ package body Odd.Menus is
       if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
+
+      Gtk_New (Mitem, Label => -"Display Locals");
+      Append (Menu, Mitem);
+      Widget_Variable_Handler.Connect
+        (Mitem, "activate",
+         Widget_Variable_Handler.To_Marshaller (Print_Locals'Access),
+         Variable_Record'(Name_Length  => 0,
+                          Name         => "",
+                          Auto_Refresh => True,
+                          Process      => Convert (Editor)));
 
       --  Display a separator
 

@@ -279,6 +279,15 @@ package body Debugger.Gdb is
       end if;
    end Type_Of;
 
+   -----------------
+   -- Info_Locals --
+   -----------------
+
+   function Info_Locals (Debugger : access Gdb_Debugger) return String is
+   begin
+      return "info locals";
+   end Info_Locals;
+
    --------------
    -- Value_Of --
    --------------

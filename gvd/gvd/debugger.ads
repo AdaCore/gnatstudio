@@ -199,6 +199,10 @@ package Debugger is
    --  current context.
    --  GDB_COMMAND: "ptype"
 
+   function Info_Locals (Debugger : access Debugger_Root) return String
+      is abstract;
+   --  Return the command to be used to display local variables
+
    type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
 
    function Value_Of

@@ -74,6 +74,8 @@ package Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String;
 
+   function Info_Locals (Debugger : access Gdb_Debugger) return String;
+
    function Get_Uniq_Id
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;
