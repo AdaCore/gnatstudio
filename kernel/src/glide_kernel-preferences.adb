@@ -548,7 +548,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Src-Editor-Default-Style",
          Nick    => -"Default",
          Blurb   => -"Default style used in the source editors",
-         Default_Font => "Courier Bold 10",
+         Default_Font => "Courier 10",
          Default_Fg   => "black",
          Default_Bg   => "white");
       Register_Property
