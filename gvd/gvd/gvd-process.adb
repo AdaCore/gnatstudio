@@ -78,6 +78,9 @@ package body Odd.Process is
    --  User data string.
    --  ??? Should use some quarks, which would be just a little bit faster.
 
+   Display_Grid        : constant Boolean := True;
+   --  Whether the grid should be displayed in the canvas.
+
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
      (Debugger_Process_Tab_Record, Boolean);
 
@@ -612,6 +615,11 @@ package body Odd.Process is
                  Strings_Color     => Strings_Color,
                  Keywords_Color    => Keywords_Color);
 
+      --  Initialize the canvas
+      if not Display_Grid then
+         Configure (Process.Data_Canvas, Grid_Size => 0);
+      end if;
+
       --  Set the user data, so that we can easily convert afterwards.
 
       Process_User_Data.Set
@@ -698,6 +706,7 @@ package body Odd.Process is
       Link_Name : Odd.Types.String_Access;
       Link_From : Display_Item;
    begin
+
       --  graph (print|display) expression [dependent on display_num]
       --        [link_name name]
       --  graph (print|display) `command`
