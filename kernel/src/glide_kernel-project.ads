@@ -104,13 +104,6 @@ package Glide_Kernel.Project is
      (Handle : access Kernel_Handle_Record'Class) return Prj.Project_Id;
    --  Return the current project view
 
-   function Get_Current_Explorer_Context
-     (Handle : access Kernel_Handle_Record'Class)
-      return Selection_Context_Access;
-   --  Return the currently selected project/directory/file in the
-   --  explorer. This value is cached, and not computed directly from the
-   --  explorer.
-
    procedure Recompute_View
      (Handle  : access Kernel_Handle_Record'Class);
    --  Recompute the view of the project, based on the current value of all

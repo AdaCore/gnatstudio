@@ -508,6 +508,17 @@ package body Glide_Kernel is
       Internal (Context);
    end Free;
 
+   ----------------------------------
+   -- Get_Current_Explorer_Context --
+   ----------------------------------
+
+   function Get_Current_Explorer_Context
+     (Handle : access Kernel_Handle_Record'Class)
+      return Selection_Context_Access is
+   begin
+      return Handle.Explorer_Context;
+   end Get_Current_Explorer_Context;
+
    ----------------
    -- Get_Kernel --
    ----------------

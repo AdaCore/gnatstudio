@@ -168,6 +168,13 @@ package Glide_Kernel is
       Creator : Module_ID);
    --  Set the information in the context
 
+   function Get_Current_Explorer_Context
+     (Handle : access Kernel_Handle_Record'Class)
+      return Selection_Context_Access;
+   --  Return the currently selected project/directory/file in the
+   --  explorer. This value is cached, and not computed directly from the
+   --  explorer.
+
    function Get_Kernel (Context : access Selection_Context)
       return Kernel_Handle;
    --  Return the kernel associated with the context
