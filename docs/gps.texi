@@ -5718,17 +5718,17 @@ not taken into account by other components.
 This nodes has two attributes:
 
    @table @code
-   @item name
+   @item Name
    Name of the attribute in the project file. Currently, only
    @code{"compiler_command"} can be specified.
 
-   @item index
+   @item Index
    If present, this attributes indicates the index to use for the
    attribute in the project file. The line defining this attribute
-   would therefore look like
+   would therefore look like:
 
    @smallexample
-      for name ("index") use "value";
+      for Name ("Index") use "value";
    @end smallexample
 
    The value of the index should be either the empty string or the
