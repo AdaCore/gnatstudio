@@ -31,15 +31,19 @@ package Gtkada.Entry_Completion is
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 
    procedure Gtk_New
-     (The_Entry : out Gtkada_Entry;
-      Use_Combo : Boolean := True);
+     (The_Entry      : out Gtkada_Entry;
+      Use_Combo      : Boolean := True;
+      Case_Sensitive : Boolean := True);
    --  Create a new entry. If Use_Combo is true, then the top field will be
    --  a combo box, to which you can associate a history. Otherwise, it will
    --  be a simple entry field.
+   --  If Case_Sensitive is False, then the matching of what the user typed
+   --  with the completion list is done in a case insensitive manner
 
    procedure Initialize
-     (The_Entry : access Gtkada_Entry_Record'Class;
-      Use_Combo : Boolean := True);
+     (The_Entry      : access Gtkada_Entry_Record'Class;
+      Use_Combo      : Boolean := True;
+      Case_Sensitive : Boolean := True);
    --  Internal procedure
 
    function Get_Combo (The_Entry : access Gtkada_Entry_Record)
@@ -66,6 +70,7 @@ private
       Combo            : Gtk.Combo.Gtk_Combo;
       GEntry           : Gtk.GEntry.Gtk_Entry;
          --  null if a combo was created.
+      Case_Sensitive   : Boolean;
       Completions      : Basic_Types.String_Array_Access;
       Last_Position    : Integer;
       Completion_Index : Integer := Integer'First;

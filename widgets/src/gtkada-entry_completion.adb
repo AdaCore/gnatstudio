@@ -38,6 +38,7 @@ with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Glide_Intl;             use Glide_Intl;
+with String_Utils;           use String_Utils;
 
 package body Gtkada.Entry_Completion is
 
@@ -58,10 +59,13 @@ package body Gtkada.Entry_Completion is
    -------------
 
    procedure Gtk_New
-     (The_Entry : out Gtkada_Entry; Use_Combo : Boolean := True) is
+     (The_Entry : out Gtkada_Entry;
+      Use_Combo : Boolean := True;
+      Case_Sensitive : Boolean := True) is
    begin
       The_Entry := new Gtkada_Entry_Record;
-      Gtkada.Entry_Completion.Initialize (The_Entry, Use_Combo);
+      Gtkada.Entry_Completion.Initialize
+        (The_Entry, Use_Combo, Case_Sensitive);
    end Gtk_New;
 
    ----------------
@@ -70,7 +74,8 @@ package body Gtkada.Entry_Completion is
 
    procedure Initialize
      (The_Entry : access Gtkada_Entry_Record'Class;
-      Use_Combo : Boolean := True)
+      Use_Combo : Boolean := True;
+      Case_Sensitive : Boolean := True)
    is
       Renderer : Gtk_Cell_Renderer_Text;
       Col      : Gtk_Tree_View_Column;
@@ -83,6 +88,7 @@ package body Gtkada.Entry_Completion is
 
    begin
       Initialize_Vbox (The_Entry, Homogeneous => False, Spacing => 5);
+      The_Entry.Case_Sensitive := Case_Sensitive;
 
       if Use_Combo then
          Gtk_New (The_Entry.Combo);
@@ -236,12 +242,22 @@ package body Gtkada.Entry_Completion is
         (T : String; Start_At, End_At : Integer) return Integer is
       begin
          for S in Start_At .. End_At loop
-            if GEntry.Completions (S)'Length >= T'Length
-              and then GEntry.Completions (S)
-              (GEntry.Completions (S)'First
-                 .. GEntry.Completions (S)'First + T'Length - 1) = T
-            then
-               return S;
+            if GEntry.Completions (S)'Length >= T'Length then
+               if GEntry.Case_Sensitive
+                 and then GEntry.Completions (S)
+                 (GEntry.Completions (S)'First
+                  .. GEntry.Completions (S)'First + T'Length - 1) = T
+               then
+                  return S;
+
+               elsif not GEntry.Case_Sensitive
+                 and then Case_Insensitive_Equal
+                   (GEntry.Completions (S)
+                      (GEntry.Completions (S)'First
+                       .. GEntry.Completions (S)'First + T'Length - 1), T)
+               then
+                  return S;
+               end if;
             end if;
          end loop;
 
