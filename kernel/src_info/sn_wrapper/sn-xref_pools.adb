@@ -234,18 +234,16 @@ package body SN.Xref_Pools is
    is
       Data  : Xref_Elmt_Ptr;
       N     : Integer := 0;
-      Key   : String_Access := new String' (Source_Filename);
    begin
       --  get hashed value
-      Data := STable.Get (Pool.all, Key);
+      Data := STable.Get (Pool.all, Source_Filename'Unrestricted_Access);
       if Data /= null then
-         Free (Key);
          return Data.Xref_Filename;
       end if;
 
       --  generate new xref file name
       Data := new Xref_Elmt_Record; -- new hashtable value
-      Data.Source_Filename := Key;
+      Data.Source_Filename := new String' (Source_Filename);
       loop
          declare
             Name : constant String := Generate_Filename (Source_Filename, N);
@@ -316,14 +314,10 @@ package body SN.Xref_Pools is
      (Source_Filename : String;
       Pool            : Xref_Pool) return Boolean
    is
-      Key       : String_Access := new String' (Source_Filename);
-      Xref_Elmt : Xref_Elmt_Ptr := STable.Get (Pool.all, Key);
+      Xref_Elmt : constant Xref_Elmt_Ptr :=
+        STable.Get (Pool.all, Source_Filename'Unrestricted_Access);
    begin
-      Free (Key);
-      if Xref_Elmt = null then
-         return False;
-      end if;
-      return Xref_Elmt.Valid;
+      return Xref_Elmt /= null and then Xref_Elmt.Valid;
    end Is_Xref_Valid;
 
    ---------------
@@ -335,14 +329,12 @@ package body SN.Xref_Pools is
       Valid           : Boolean;
       Pool            : Xref_Pool)
    is
-      Key       : String_Access := new String' (Source_Filename);
-      Xref_Elmt : Xref_Elmt_Ptr := STable.Get (Pool.all, Key);
+      Xref_Elmt : Xref_Elmt_Ptr :=
+        STable.Get (Pool.all, Source_Filename'Unrestricted_Access);
    begin
-      Free (Key);
-      if Xref_Elmt = null then
-         return;
+      if Xref_Elmt /= null then
+         Xref_Elmt.Valid := Valid;
       end if;
-      Xref_Elmt.Valid := Valid;
    end Set_Valid;
 
 end SN.Xref_Pools;
