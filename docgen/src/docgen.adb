@@ -163,7 +163,7 @@ package body Docgen is
       pragma Unreferenced (X);
    begin
       null;
-      --  Memory accessed by the field Entity is free separately: those
+      --  Memory accessed by the field Entity is freed separately: those
       --  records are saved in a list. When we destroy this list, it calls
       --  subprogram Free (Entity_Information).
    end Free;
