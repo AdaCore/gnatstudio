@@ -21,6 +21,8 @@
 --  This package defines the module for code fixing.
 
 with Ada.Exceptions;         use Ada.Exceptions;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
@@ -31,8 +33,11 @@ with Glib.Object;            use Glib.Object;
 with Glib.Values;            use Glib.Values;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
+with Glide_Kernel.Project;   use Glide_Kernel.Project;
 with Glide_Kernel.Console;   use Glide_Kernel.Console;
 with Glide_Intl;             use Glide_Intl;
+with Prj;                    use Prj;
+with Prj_API;                use Prj_API;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
@@ -84,18 +89,34 @@ package body Codefix_Module is
       Kernel : Kernel_Handle;
    end record;
 
+   function Get_Body_Or_Spec
+     (Text : GPS_Navigator; File_Name : String) return String;
+   --  See inherited documentation
+
    function New_Text_Interface (This : GPS_Navigator) return Ptr_Text;
    --  Create and initialise a new Text_Interface used by the text navigator.
-
-   function Get_Body_Or_Spec
-     (This : GPS_Navigator; File_Name : String) return String;
-   --  Return the spec name if File_Name is a body, or the body name if
-   --  File_Name is a spec
 
    procedure Initialize
      (This : GPS_Navigator;
       File : in out Text_Interface'Class);
    --  Set the value of the Text_Interface's kernel
+
+   ----------------------
+   -- Get_Body_Or_Spec --
+   ----------------------
+
+   function Get_Body_Or_Spec
+     (Text : GPS_Navigator; File_Name : String) return String
+   is
+      Project : constant Project_Id := Get_Project_From_File
+        (Get_Project_View (Text.Kernel), File_Name);
+   begin
+      return Find_On_Path
+        (Project   => Get_Project_From_View (Project),
+         View      => Project,
+         Filename  => Other_File_Name (Project, Base_Name (File_Name)),
+         Recursive => False);
+   end Get_Body_Or_Spec;
 
    ------------
    -- On_Fix --
@@ -222,7 +243,7 @@ package body Codefix_Module is
 
       Location      : File_Location_Context_Access;
       Error         : Error_Id;
-      Error_Caption : Dynamic_String := null;
+      Error_Caption : GNAT.OS_Lib.String_Access;
       Menu_Item     : Gtk_Menu_Item;
 
    begin
@@ -370,26 +391,6 @@ package body Codefix_Module is
       return new Console_Interface;
    end New_Text_Interface;
 
-   ----------------------
-   -- Get_Body_Or_Spec --
-   ----------------------
-
-   function Get_Body_Or_Spec
-     (This : GPS_Navigator; File_Name : String) return String
-   is
-      pragma Unreferenced (This);
-   begin
-      --  ??? Should ask the project for the body file instead
-      case File_Name (File_Name'Last) is
-         when 'b' =>
-            return File_Name (File_Name'First .. File_Name'Last - 1) & 's';
-         when 's' =>
-            return File_Name (File_Name'First .. File_Name'Last - 1) & 'b';
-         when others =>
-            raise Codefix_Panic;
-      end case;
-   end Get_Body_Or_Spec;
-
    ----------------
    -- Initialize --
    ----------------
@@ -444,13 +445,13 @@ package body Codefix_Module is
       while Solution_Node /= Command_List.Null_Node loop
          declare
             Mitem : Codefix_Menu_Item;
-            Str   : Dynamic_String;
+            Str   : GNAT.OS_Lib.String_Access;
          begin
             Gtk_New (Mitem, Get_Caption (Data (Solution_Node)));
             Assign (Str, Get_Caption (Data (Solution_Node)));
             Mitem.Fix_Command := new Text_Command'Class'
               (Data (Solution_Node));
-            Codefix.Free (Str);
+            Free (Str);
             Mitem.Error := Error;
             Context_Callback.Connect
               (Mitem,
