@@ -563,7 +563,8 @@ package body Custom_Module is
                if Before /= "" then
                   Register_Menu
                     (Kernel,
-                     Dir_Name (Name_As_Directory (Parent_Path) & Title.all),
+                     Dir_Name
+                       (Name_As_Directory (Parent_Path, UNIX) & Title.all),
                      Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
@@ -573,7 +574,8 @@ package body Custom_Module is
                elsif After /= "" then
                   Register_Menu
                     (Kernel,
-                     Dir_Name (Name_As_Directory (Parent_Path) & Title.all),
+                     Dir_Name
+                       (Name_As_Directory (Parent_Path, UNIX) & Title.all),
                      Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
@@ -584,7 +586,8 @@ package body Custom_Module is
                else
                   Register_Menu
                     (Kernel,
-                     Dir_Name (Name_As_Directory (Parent_Path) & Title.all),
+                     Dir_Name
+                       (Name_As_Directory (Parent_Path, UNIX) & Title.all),
                      Text        => Base_Name (Title.all),
                      Stock_Image => "",
                      Callback    => null,
