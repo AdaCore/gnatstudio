@@ -9,6 +9,8 @@ package Codefix.Text_Manager is
 
    Text_Manager_Error : exception;
 
+   type Step_Way is (Normal_Step, Reverse_Step);
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -17,9 +19,14 @@ package Codefix.Text_Manager is
       Line, Col : Natural;
    end record;
 
+   function "<" (Left, Right : Text_Cursor) return Boolean;
+   function ">" (Left, Right : Text_Cursor) return Boolean;
+
    type File_Cursor is new Text_Cursor with record
       File_Name : Dynamic_String;
    end record;
+
+   Null_File_Cursor : constant File_Cursor;
 
    procedure Free (This : in out File_Cursor);
    --  Frees the memory used by fields of File_Cursor.
@@ -95,6 +102,16 @@ package Codefix.Text_Manager is
    procedure Update (This : Text_Interface) is abstract;
    --  Update the changes previously made in the real text.
 
+   function Search_String
+     (This         : Text_Interface'Class;
+      Cursor       : File_Cursor'Class;
+      Searched     : String;
+      Step         : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+   return File_Cursor'Class;
+   --  Search a string in the text and returns a cursor at the beginning. If
+   --  noting is found, then the cursor is Null_Cursor.
+
    ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
@@ -103,11 +120,15 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Text_Navigator_Abstr);
 
+   type Relative_Position is (Before, After, Specified);
+
    function Get_Unit
-     (Current_Text : Text_Navigator_Abstr;
-      Cursor       : File_Cursor'Class)
+     (Current_Text      : Text_Navigator_Abstr;
+      Cursor            : File_Cursor'Class)
      return Construct_Information;
-   --  Get the Construct_Information found at the specified position.
+   --  Get the Construct_Information found at the specified position, or the
+   --  nearest before or after the position (depends on the value of
+   --  Position_Expected.
 
    function Search_Body
      (Current_Text : Text_Navigator_Abstr;
@@ -161,13 +182,23 @@ package Codefix.Text_Manager is
      (This   : Text_Navigator_Abstr;
       Cursor : File_Cursor'Class)
      return Natural;
-   --  Returns le length of a line from the position of the cursor.
+   --  Return le length of a line from the position of the cursor.
 
    procedure Update (This : Text_Navigator_Abstr);
    --  Update the changes previously made in the real text.
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
       return Ptr_Text is abstract;
+
+   function Search_String
+     (This         : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Searched     : String;
+      Step         : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+   return File_Cursor'Class;
+   --  Search a string in the text and returns a cursor at the beginning. If
+   --  noting is found, then the cursor is Null_Cursor.
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -182,9 +213,10 @@ package Codefix.Text_Manager is
    function Get_Cursor (This : Extract_Line) return File_Cursor'Class;
    --  Return the cursor memorized in an Extract_Line.
 
-   procedure Update (This         : Extract_Line;
-                     Current_Text : in out Text_Navigator_Abstr'Class;
-                     Offset_Line  : in out Integer);
+   procedure Update
+     (This         : Extract_Line;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Offset_Line  : in out Integer);
    --  Upate changes of the Extract_Line in the representation of the text,
 
    procedure Free (This : in out Extract_Line);
@@ -196,6 +228,16 @@ package Codefix.Text_Manager is
      return Extract_Line;
    --  Clone an Extract_Line. Recursive True means that all the lines of the
    --  extract that record this line are cloned.
+
+   function Search_String
+     (This         : Extract_Line;
+      Cursor       : File_Cursor'Class;
+      Searched     : String;
+      Step         : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+   return File_Cursor'Class;
+   --  Search a string in the text and returns a cursor at the beginning. If
+   --  noting is found, then the cursor is Null_Cursor.
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -310,6 +352,16 @@ package Codefix.Text_Manager is
    --  Add in the Extract lines of the Entity witch begins at the position
    --  specified by the cursor (if it is a spec, the body is also got).
 
+   function Search_String
+     (This         : Extract;
+      Cursor       : File_Cursor'Class;
+      Searched     : String;
+      Step         : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+   return File_Cursor'Class;
+   --  Search a string in the text and returns a cursor at the beginning. If
+   --  noting is found, then the cursor is Null_Cursor.
+
 private
 
    ----------------------------------------------------------------------------
@@ -348,14 +400,18 @@ private
    end record;
 
    function Get_Unit
-     (Current_Text : Text_Interface;
-      Cursor       : Text_Cursor'Class)
+     (Current_Text      : Text_Interface;
+      Cursor            : Text_Cursor'Class)
    return Construct_Information;
 
    function Search_Body
      (Current_Text : Text_Interface;
       Spec         : Construct_Information)
    return Construct_Information;
+
+   ----------------------------------------------------------------------------
+   --  type Extract_Line
+   ----------------------------------------------------------------------------
 
    type Line_Context is
      (Original_Line,
@@ -388,6 +444,10 @@ private
      (This         : Extract_Line;
       Current_Text : Text_Navigator_Abstr'Class);
 
+   ----------------------------------------------------------------------------
+   --  type Extract
+   ----------------------------------------------------------------------------
+
    type Extract is record
       First : Ptr_Extract_Line;
    end record;
@@ -401,5 +461,14 @@ private
      return Natural;
 
    function Length (This : Extract_Line) return Natural;
+
+   function Previous (Container : Extract; Node : Ptr_Extract_Line)
+     return Ptr_Extract_Line;
+
+   ----------------------------------------------------------------------------
+   --  Others
+   ----------------------------------------------------------------------------
+
+   Null_File_Cursor : constant File_Cursor := (0, 0, null);
 
 end Codefix.Text_Manager;
