@@ -163,7 +163,14 @@ package body Debugger.Jdb is
       --  Ensure that jdb is terminated before closing the pipes and trying to
       --  kill it abruptly.
 
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 2);
+      begin
+         Wait (Get_Process (Debugger), Result, ".*", Timeout => 2);
+      exception
+         when Process_Died =>
+            --  This is somewhat expected... RIP.
+            null;
+      end;
+
       Close (Get_Descriptor (Get_Process (Debugger)).all);
       Free (Debugger.Process);
    end Close;
