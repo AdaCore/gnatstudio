@@ -68,7 +68,6 @@ with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GVD.Preferences;             use GVD.Preferences;
 with GPS.Main_Window;             use GPS.Main_Window;
 with GUI_Utils;                   use GUI_Utils;
 with String_Utils;                use String_Utils;
@@ -221,7 +220,6 @@ package body GPS.Kernel is
       --  We need to load now so that for instance the splash screen is
       --  correctly taken into account.
       Handle.Preferences := new GPS_Preferences_Record;
-      GVD.Preferences.GVD_Prefs := GVD_Preferences (Handle.Preferences);
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle);
 
@@ -278,6 +276,17 @@ package body GPS.Kernel is
    begin
       return GPS_Window (Handle.Main_Window).Main_Accel_Group;
    end Get_Default_Accelerators;
+
+   ---------------------
+   -- Get_Preferences --
+   ---------------------
+
+   function Get_Preferences
+     (Handle : access Kernel_Handle_Record)
+      return Default_Preferences.Preferences_Manager is
+   begin
+      return Handle.Preferences;
+   end Get_Preferences;
 
    -----------
    -- Setup --

@@ -23,13 +23,12 @@ with Default_Preferences;      use Default_Preferences;
 with Gdk.Color;
 with Gdk.Types;
 with Pango.Font;
-with GVD.Preferences;
 with Language;
 with Glib.Generic_Properties;
 
 package GPS.Kernel.Preferences is
 
-   type GPS_Preferences_Record is new GVD.Preferences.GVD_Preferences_Manager
+   type GPS_Preferences_Record is new Preferences_Manager_Record
      with private;
    type GPS_Preferences is access GPS_Preferences_Record'Class;
 
@@ -254,8 +253,7 @@ package GPS.Kernel.Preferences is
    Parent_Linked_Item_Color  : Param_Spec_Color;
    Child_Linked_Item_Color   : Param_Spec_Color;
    Browsers_Vertical_Layout  : Param_Spec_Boolean;
-   Selected_Item_Color       : Param_Spec_Color
-     renames GVD.Preferences.Selected_Item_Color;
+   Selected_Item_Color       : Param_Spec_Color;
 
    -- VCS --
    Hide_Up_To_Date     : Param_Spec_Boolean;
@@ -270,6 +268,6 @@ package GPS.Kernel.Preferences is
      ("Indentation_Kind", Language.Indentation_Kind);
 
 private
-   type GPS_Preferences_Record is new GVD.Preferences.GVD_Preferences_Manager
+   type GPS_Preferences_Record is new Preferences_Manager_Record
      with null record;
 end GPS.Kernel.Preferences;

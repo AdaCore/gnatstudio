@@ -647,70 +647,6 @@ package body GPS.Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Search_Results_Color),
          -"Editor:Fonts & Colors");
 
-      -- Debugger --
-
-      GVD.Preferences.Register_Default_Preferences (Kernel.Preferences);
-
-      -- External Commands --
-      List_Processes := Param_Spec_String (Gnew_String
-        (Name     => "Helpers-List-Processes",
-         Nick     => -"List processes",
-         Blurb    => -"Command used to list processes running on the machine",
-         Default  => Config.Default_Ps));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (List_Processes), -"External Command");
-
-      Remote_Protocol := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Remote-Protocol",
-          Nick    => -"Remote shell",
-          Blurb   => -"Program used to run a process on a remote machine",
-          Default => "rsh"));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Remote_Protocol), -"External Command");
-
-      Remote_Copy := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Remote-Copy",
-          Nick    => -"Remote copy",
-          Blurb   => -"Program used to copy a file from a remote machine",
-          Default => "rcp"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Remote_Copy), -"External Command");
-
-      Execute_Command := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Execute-Command",
-          Nick    => -"Execute command",
-          Blurb   => -"Program used to execute commands externally",
-          Default => Config.Exec_Command));
-      Register_Property
-        (Kernel.Preferences,
-         Param_Spec (Execute_Command), -"External Command");
-
-      if Config.Host /= Config.Windows then
-         --  Preference not used under Windows
-
-         Html_Browser := Param_Spec_String (Gnew_String
-           (Name  => "Helpers-HTML-Browser",
-            Nick  => -"HTML browser",
-            Blurb => -("Program used to browse HTML pages. " &
-                       "No value means automatically try to find a suitable " &
-                       "browser"),
-            Default => ""));
-         Register_Property
-           (Kernel.Preferences,
-            Param_Spec (Html_Browser), -"External Command");
-      end if;
-
-      Print_Command := Param_Spec_String (Gnew_String
-         (Name    => "Helpers-Print-Command",
-          Nick    => -"Print command",
-          Blurb   => -("Program used to print files. No value means use " &
-                       "the built-in printing capability (available under " &
-                       "Windows only)"),
-          Default => Config.Default_Print_Cmd));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Print_Command), -"External Command");
-
       -- Browsers --
 
       Browsers_Bg_Color := Param_Spec_Color (Gnew_Color
@@ -801,6 +737,14 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
          -"Browsers");
+
+      Selected_Item_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Selected-Item-Color",
+         Default => "#888888",
+         Blurb   => -"Color to use to draw the selected item",
+         Nick    => -"Selected item color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Selected_Item_Color),  -"Browsers");
 
       -- Diff_Utils --
 
@@ -1022,7 +966,6 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Trusted_Mode), -"Project");
 
-
       -- Wizards --
 
       Wizard_Title_Font := Param_Spec_Font (Gnew_Font
@@ -1076,6 +1019,67 @@ package body GPS.Kernel.Preferences is
          Nick    => -"ClearCase command"));
       Register_Property
         (Kernel.Preferences, Param_Spec (ClearCase_Command), -"VCS:ClearCase");
+
+      -- External Commands --
+
+      List_Processes := Param_Spec_String (Gnew_String
+        (Name     => "Helpers-List-Processes",
+         Nick     => -"List processes",
+         Blurb    => -"Command used to list processes running on the machine",
+         Default  => Config.Default_Ps));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (List_Processes), -"External Command");
+
+      Remote_Protocol := Param_Spec_String (Gnew_String
+         (Name    => "Helpers-Remote-Protocol",
+          Nick    => -"Remote shell",
+          Blurb   => -"Program used to run a process on a remote machine",
+          Default => "rsh"));
+      Register_Property
+        (Kernel.Preferences,
+         Param_Spec (Remote_Protocol), -"External Command");
+
+      Remote_Copy := Param_Spec_String (Gnew_String
+         (Name    => "Helpers-Remote-Copy",
+          Nick    => -"Remote copy",
+          Blurb   => -"Program used to copy a file from a remote machine",
+          Default => "rcp"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Remote_Copy), -"External Command");
+
+      Execute_Command := Param_Spec_String (Gnew_String
+         (Name    => "Helpers-Execute-Command",
+          Nick    => -"Execute command",
+          Blurb   => -"Program used to execute commands externally",
+          Default => Config.Exec_Command));
+      Register_Property
+        (Kernel.Preferences,
+         Param_Spec (Execute_Command), -"External Command");
+
+      if Config.Host /= Config.Windows then
+         --  Preference not used under Windows
+
+         Html_Browser := Param_Spec_String (Gnew_String
+           (Name  => "Helpers-HTML-Browser",
+            Nick  => -"HTML browser",
+            Blurb => -("Program used to browse HTML pages. " &
+                       "No value means automatically try to find a suitable " &
+                       "browser"),
+            Default => ""));
+         Register_Property
+           (Kernel.Preferences,
+            Param_Spec (Html_Browser), -"External Command");
+      end if;
+
+      Print_Command := Param_Spec_String (Gnew_String
+         (Name    => "Helpers-Print-Command",
+          Nick    => -"Print command",
+          Blurb   => -("Program used to print files. No value means use " &
+                       "the built-in printing capability (available under " &
+                       "Windows only)"),
+          Default => Config.Default_Print_Cmd));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Print_Command), -"External Command");
    end Register_Global_Preferences;
 
    ---------------

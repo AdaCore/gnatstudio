@@ -76,6 +76,11 @@ package GPS.Kernel is
       return Gtk.Accel_Group.Gtk_Accel_Group;
    --  Returns the defauls accelerators group for the main window
 
+   function Get_Preferences
+     (Handle : access Kernel_Handle_Record)
+      return Default_Preferences.Preferences_Manager;
+   --  Return the preference manager associated with Handle
+
    function Has_User_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean;
    --  Return True if an user-defined desktop is present, and False
