@@ -1437,11 +1437,12 @@ package body Browsers.Call_Graph is
       Child       : MDI_Child;
       pragma Unreferenced (Widget, Child);
 
-      Context     : constant Selection_Context_Access :=
+      Context     : Selection_Context_Access :=
         Get_Current_Context (Kernel);
       Entity      : Entity_Selection_Context_Access;
       Node_Entity : Entity_Information;
    begin
+      Ref (Context);
       Child := Open_Call_Graph_Browser (Kernel);
 
       if Context /= null
@@ -1454,6 +1455,8 @@ package body Browsers.Call_Graph is
             Examine_Entity_Call_Graph (Kernel, Node_Entity);
          end if;
       end if;
+
+      Unref (Context);
 
    exception
       when E : others =>
