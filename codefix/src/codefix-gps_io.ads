@@ -159,6 +159,7 @@ private
    type Compilation_Output is new Errors_Interface with record
       Errors_Buffer : Dynamic_String := null;
       Current_Index : Natural := 1;
+      Kernel        : Kernel_Handle;
    end record;
 
 end Codefix.GPS_Io;
