@@ -111,6 +111,16 @@ package Src_Editor_Module is
       return Gtkada.MDI.MDI_Child;
    --  Return the MDI child containing Editor
 
+   ---------------------
+   -- Automatic saves --
+   ---------------------
+
+   function Autosaved_File (File : VFS.Virtual_File) return VFS.Virtual_File;
+   --  Return the autosaved file corresponding to File.
+
+   function Is_Auto_Save (File : VFS.Virtual_File) return Boolean;
+   --  Return True if File is an autosave file.
+
 private
 
    type Source_Box_Record is new Gtk_Hbox_Record with record
