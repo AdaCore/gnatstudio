@@ -245,10 +245,7 @@ void ada_db_free_cursor(DB_File * file)
     file->dbi = -1;
 }
 
-DB_Pair *ada_db_get_pair(DB_File * file, int move)
-{
-
-    DB_Pair *pair;
+void ada_db_get_pair (DB_File * file, int move, DB_Pair * output) {
     DBT key, data;
     int len, matched;
     int flag;
@@ -260,7 +257,8 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
     if (move == MOVE_BY_KEY
 	&& !(file->pos == POS_BY_KEY || file->pos == MOVE_BY_KEY)) {
 	/* key matching requested, but key pattern was not set */
-	return 0;
+	output->key = 0;
+	return;
     }
 
     switch (file->pos) {
@@ -275,7 +273,8 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
     case POS_BY_KEY:
         if (!file->key_p) {
 	    file->last_errno = EINPROGRESS;
-	    return 0;
+	    output->key = 0;
+	    return;
         }
 	flag = R_CURSOR;
 	file->saved_pos = R_CURSOR;
@@ -353,41 +352,24 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
     } while (next_file);
     
     if (result == 1) {		/* no more key/data pairs */
-	return 0;
+	output->key = 0;
+	return;
     } else if (result == -1) {	/* error, errno is set    */
 	file->last_errno = errno;
-	return 0;
+	output->key = 0;
+	return;
     }
 
     /* here result == 0 */
 
-    pair = (DB_Pair *) malloc(sizeof(DB_Pair));
+    output->key = csf_init((char *) key.data);
+    output->data = csf_init((char *) data.data);
+    output->dbi = file->dbi;
 
-    pair->key = csf_init((char *) key.data);
-    pair->data = csf_init((char *) data.data);
-    pair->dbi = file->dbi;
-
-    if (pair->key == 0 || pair->data == 0) {
-	csf_free(pair->key);
-	csf_free(pair->data);
-	free(pair);
-	return 0;
+    if (output->key == 0 || output->data == 0) {
+	csf_free(output->key);
+	csf_free(output->data);
+	output->key = 0;
     }
-
-    return pair;
 }
 
-CSF *ada_get_key(const DB_Pair * pair)
-{
-    return pair->key;
-}
-
-CSF *ada_get_data(const DB_Pair * pair)
-{
-    return pair->data;
-}
-
-int ada_get_dbi(const DB_Pair * pair)
-{
-    return pair->dbi;
-}
