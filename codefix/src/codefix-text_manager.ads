@@ -36,6 +36,9 @@ package Codefix.Text_Manager is
    function Is_Blank (Str : String) return Boolean;
    --  Return true if Str is only composed by white characters.
 
+   function Is_Blank (Char : Character) return Boolean;
+   --  Return true if Str is a white characters.
+
    function Is_In_Comment (Str : String; J : Natural) return Boolean;
    --  Return true if the position J in a comment line.
 
@@ -67,6 +70,10 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out File_Cursor);
    --  Frees the memory used by fields of File_Cursor.
+
+   procedure Unchecked_Free (This : in out File_Cursor);
+   --  Disconnect all fiels of File_Cursor, but without freeing anything in
+   --  the Pool
 
    function Clone (This : File_Cursor) return File_Cursor;
    --  Duplicate all informations of a File_Cursor, specially informations
@@ -173,6 +180,12 @@ package Codefix.Text_Manager is
       Category : Language_Category := Cat_Unknown)
      return String;
    --  Return the entire prefix of the first unit of category after the cursor.
+
+   function Get_Right_Paren
+     (This   : Text_Interface'Class;
+      Cursor : Text_Cursor'Class)
+     return Text_Cursor'Class;
+   --  Return the right paren corresponding to the one in the cursor.
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -285,6 +298,12 @@ package Codefix.Text_Manager is
       Category : Language_Category := Cat_Unknown)
      return String;
    --  Return the entire prefix of the first unit of category after the cursor.
+
+   function Get_Right_Paren
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class)
+     return File_Cursor'Class;
+   --  Return the right paren corresponding to the one in the cursor.
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
