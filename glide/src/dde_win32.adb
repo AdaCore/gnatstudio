@@ -186,7 +186,7 @@ package body DDE is
 
    procedure Register_DDE_Server (Kernel : Glide_Kernel.Kernel_Handle) is
       hszAppName : HSZ;
-      szAppName  : String := "GPS" & ASCII.NUL;
+      szAppName  : aliased String := "GPS" & ASCII.NUL;
       Res1       : UINT;
       Res2       : HDDEDATA;
       pragma Unreferenced (Res1, Res2);
@@ -203,7 +203,7 @@ package body DDE is
          0);
 
       hszAppName := DdeCreateStringHandleA
-        (idInst, szAppName (1)'Unrestricted_Access, 0);
+        (idInst, szAppName (1)'Unchecked_Access, 0);
 
       Res2 := DdeNameService
         (idInst,   --  instance identifier
