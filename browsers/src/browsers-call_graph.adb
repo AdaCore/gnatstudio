@@ -43,6 +43,8 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Commands.Generic_Asynchronous; use Commands;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
@@ -289,8 +291,10 @@ package body Browsers.Call_Graph is
    --  Internal implementation for Find_All_References_From_Contextual,
    --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
 
-   function Find_Next_Reference (D : Entity_Idle_Data)
-      return Boolean;
+   procedure Find_Next_Reference
+     (Data    : in out Entity_Idle_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
    --  Find the next reference to the entity in D.
 
    function Add_Entity_If_Not_Present
@@ -313,6 +317,9 @@ package body Browsers.Call_Graph is
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
+
+   package Xref_Commands is new Commands.Generic_Asynchronous
+     (Entity_Idle_Data, Destroy_Idle);
 
    procedure On_Call_Graph
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1088,27 +1095,37 @@ package body Browsers.Call_Graph is
    -- Find_Next_Reference --
    -------------------------
 
-   function Find_Next_Reference (D : Entity_Idle_Data) return Boolean is
+   procedure Find_Next_Reference
+     (Data    : in out Entity_Idle_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type)
+   is
       Location : File_Location;
    begin
-      if Get (D.Iter.all) = No_Reference then
-         return False;
+      if Get (Data.Iter.all) = No_Reference then
+         Result := Success;
       else
-         if (D.Include_Writes and then Is_Write_Reference (Get (D.Iter.all)))
+         if (Data.Include_Writes
+             and then Is_Write_Reference (Get (Data.Iter.all)))
            or else
-           (D.Include_Reads and then Is_Read_Reference (Get (D.Iter.all)))
+             (Data.Include_Reads
+              and then Is_Read_Reference (Get (Data.Iter.all)))
          then
-            Location := Get_Location (Get (D.Iter.all));
+            Location := Get_Location (Get (Data.Iter.all));
             Print_Ref
-              (D.Kernel, Get_File (Location),
+              (Data.Kernel, Get_File (Location),
                Get_Line (Location), Get_Column (Location),
-               Get_Name (D.Entity),
-               D.Category.all & Get_Name (D.Entity));
+               Get_Name (Data.Entity),
+               Data.Category.all & Get_Name (Data.Entity));
          end if;
-         Next (Get_Language_Handler (D.Kernel), D.Iter.all,
-               Get_LI_File_List (D.Kernel));
+         Next (Get_Language_Handler (Data.Kernel), Data.Iter.all,
+               Get_LI_File_List (Data.Kernel));
 
-         return True;
+         Set_Progress (Command,
+                       (Running,
+                        Get_Current_Progress (Data.Iter.all),
+                        Get_Total_Progress (Data.Iter.all)));
+         Result := Execute_Again;
       end if;
    end Find_Next_Reference;
 
@@ -1124,8 +1141,7 @@ package body Browsers.Call_Graph is
       Include_Reads  : Boolean)
    is
       Data     : Entity_Idle_Data;
-      Idle_Id  : Idle_Handler_Id;
-      pragma Unreferenced (Idle_Id);
+      C        : Xref_Commands.Generic_Asynchronous_Command_Access;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -1154,12 +1170,15 @@ package body Browsers.Call_Graph is
               (Get_Project (Kernel),
                Get_Language_Handler (Kernel),
                Info, Get_LI_File_List (Kernel), Data.Iter.all);
+            Xref_Commands.Create
+              (C, -"Find all refs", Data, Find_Next_Reference'Access);
+            Set_Progress (Command_Access (C),
+                          (Running,
+                           Get_Current_Progress (Data.Iter.all),
+                           Get_Total_Progress (Data.Iter.all)));
+            Launch_Background_Command
+              (Kernel, Command_Access (C), True, "xrefs");
 
-            Idle_Id := Entity_Iterator_Idle.Add
-              (Cb       => Find_Next_Reference'Access,
-               D        => Data,
-               Priority => Priority_Low_Idle,
-               Destroy  => Destroy_Idle'Access);
          exception
             when others =>
                Destroy (Data.Iter);
