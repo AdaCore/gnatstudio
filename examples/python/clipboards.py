@@ -49,12 +49,12 @@ clipboard={}
 
 def copy_to_clipboard (suffix):
    try:
-     clipboard[suffix]=GPS.get_chars (GPS.current_context().file().name())
+     clipboard[suffix]=GPS.Editor.get_chars (GPS.current_context().file().name())
    except:
      pass
 
 def paste_from_clipboard (suffix):
    context=GPS.current_context()
-   GPS.replace_text (context.file().name(), context.location().line(), \
+   GPS.Editor.replace_text (context.file().name(), context.location().line(), \
        context.location().column(), clipboard[suffix], 0, 0)
   

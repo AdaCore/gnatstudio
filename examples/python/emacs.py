@@ -37,6 +37,18 @@ GPS.parse_xml ("""
       <shell lang="python">emacs.kill_line()</shell>
    </action>
    <key action="kill-line">control-k</key>
+
+   <action name="clone-and-split-horizontally">
+      <shell>MDI.clone_window</shell>
+      <shell>MDI.split_horizontally</shell>
+   </action>
+   <key action="clone-and-split-horizontally">control-x 3</key>
+
+   <action name="clone-and-split-vertically">
+      <shell>MDI.clone_window</shell>
+      <shell>MDI.split_vertically</shell>
+   </action>
+   <key action="clone-and-split-vertically">control-x 2</key>
 """)
 
 subprograms_re=re.compile ("^([ \t]*)(procedure|function) ([a-zA-Z0-9_]+)", re.IGNORECASE)
@@ -47,7 +59,7 @@ def __find_subprogram_decl():
    f = GPS.current_context().file().name ()
    line = GPS.current_context().location().line()
    while line > 0 :
-      match = re.search (subprograms_re, GPS.get_chars (f, line, 1))
+      match = re.search (subprograms_re, GPS.Editor.get_chars (f, line, 1))
       if match != None:
          return (match, line)
       line = line - 1
@@ -60,7 +72,7 @@ def add_subprogram_box():
    if match[0] != None:
       prefix = ' ' * len (match[0].group (1))
       box = prefix + ('-' * (6 + len (match[0].group (3)))) + "\n"
-      GPS.replace_text (GPS.current_context().file().name(), match[1], 1,
+      GPS.editor.replace_text (GPS.current_context().file().name(), match[1], 1,
                     box + prefix + "-- " + match[0].group (3) + " --\n" + box + "\n",
                     0, 0)
   
@@ -77,17 +89,17 @@ def goto_other_file():
          if entity.decl_file() == current_file:
             body = entity.body()
             if body.file() != current_file:
-	       GPS.edit (body.file().name(), line=body.line(), column=body.column())
+	       GPS.Editor.edit (body.file().name(), line=body.line(), column=body.column())
             else:
-               GPS.edit (current_file.other_file().name())
+               GPS.Editor.edit (current_file.other_file().name())
          else:
-            GPS.edit (entity.decl_file().name(), line=entity.decl_line(),
+            GPS.Editor.edit (entity.decl_file().name(), line=entity.decl_line(),
                   column=entity.decl_column())
       except:
          print "Not found " + name + ":" + current_file.name() + ":" + `line`
-         GPS.edit (current_file.other_file().name())
+         GPS.Editor.edit (current_file.other_file().name())
    else:
-      GPS.edit (current_file.other_file().name())
+      GPS.Editor.edit (current_file.other_file().name())
 
 def kill_line():
    """ Kills the end-of-line, or the whole line if it is empty or contains
@@ -100,11 +112,11 @@ def kill_line():
    file = GPS.current_context().file().name()
    line = GPS.current_context().location().line()
    col  = GPS.current_context().location().column()
-   str = GPS.get_chars (file, line, col, 0)
+   str = GPS.Editor.get_chars (file, line, col, 0)
    if string.rstrip (str) == "":
-	GPS.replace_text (file, line, col, "", 0, len (str))
+	GPS.Editor.replace_text (file, line, col, "", 0, len (str))
    else:
-        GPS.replace_text (file, line, col, "", 0, len (str) - 1)
+        GPS.Editor.replace_text (file, line, col, "", 0, len (str) - 1)
    
    
 
