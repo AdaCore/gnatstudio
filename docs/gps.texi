@@ -6397,6 +6397,44 @@ This tag accepts the following attributes:
    This attribute specifies the shell language in which the above attribute is
    written. By default, this is the GPS shell.
 
+   @item progress-regexp (optional)
+   This attribute specifies a regular expression that the output of the
+   command will be checked against. Every time the regular expression matches,
+   it should provide two numeric values that are used to display the usual
+   progress indicators at the bottom-right corner of the GPS window, as
+   happens during regular compilations.
+
+   The name of the action is printed in the progress bar while the action is
+   executing.
+
+   @smallexample
+<action name="progress" >
+   <external progress-regexp="(\d+) out of (\d+).*$"
+             progress-current="1"
+             progress-final="2"
+             progress-hide="true">gnatmake foo.adb
+   </external>
+</action>
+   @end smallexample
+
+   @item progress-current (optional)
+   This is the number of the opening parenthesis in @code{progress-regexp}
+   that contains the current step.
+
+   @item progress-final   (optional)
+   This is the number of the opening parenthesis in @code{progress-regexp}
+   that contains the index of the last step. This last index can grow as
+   needed. For instance, the GNAT compiler itself will output the number of
+   the file is it currently examining, and the total number of files to be
+   examined. However, that last number will grow up, since parsing a new file
+   might generate a list of additional files to parse later on.
+
+   @item progress-hide    (optional)
+   If this attribute is set to the value "true", then all the lines that
+   match @code{progress-regexp} and are used to compute the progress will
+   not be displayed in the output console. For any other value of this
+   attribute, these lines are displayed along will the rest of the output.
+
    @end table
 
 
