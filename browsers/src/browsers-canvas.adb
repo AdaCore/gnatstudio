@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -243,6 +243,7 @@ package body Browsers.Canvas is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
+      pragma Unreferenced (Item, Browser, Event, Menu);
    begin
       return null;
    end Contextual_Factory;
@@ -259,6 +260,7 @@ package body Browsers.Canvas is
       Menu         : Gtk.Menu.Gtk_Menu)
       return Glide_Kernel.Selection_Context_Access
    is
+      pragma Unreferenced (Event_Widget);
       B          : Glide_Browser := Glide_Browser (Object);
       Context    : Selection_Context_Access;
       Mitem      : Gtk_Menu_Item;
@@ -369,6 +371,7 @@ package body Browsers.Canvas is
    procedure Toggle_Links
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data)
    is
+      pragma Unreferenced (Mitem);
       It : Glide_Browser_Item := Glide_Browser_Item (Data.Item);
    begin
       It.Hide_Links := not It.Hide_Links;
@@ -437,7 +440,9 @@ package body Browsers.Canvas is
    ----------------
 
    procedure Zoom_Level
-     (Browser : access Gtk_Widget_Record'Class; Data : Cb_Data) is
+     (Browser : access Gtk_Widget_Record'Class; Data : Cb_Data)
+   is
+      pragma Unreferenced (Browser);
    begin
       Zoom (Data.Browser.Canvas, Data.Zoom, 1);
    end Zoom_Level;
@@ -536,7 +541,9 @@ package body Browsers.Canvas is
 
       function Refresh_Item
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
       begin
          Refresh (Browser, Glide_Browser_Item (Item));
          return True;
