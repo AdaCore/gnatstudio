@@ -32,6 +32,7 @@ with Gtk.List;        use Gtk.List;
 with Gtk.List_Item;   use Gtk.List_Item;
 with Gtk.Pixmap;      use Gtk.Pixmap;
 with Gtk.Table;       use Gtk.Table;
+with Gtk.Tooltips;    use Gtk.Tooltips;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
 
@@ -41,6 +42,7 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Variable_Editors; use Variable_Editors;
 with Pixmaps_Prj;   use Pixmaps_Prj;
 with Pixmaps_IDE;   use Pixmaps_IDE;
+with Glide_Intl;    use Glide_Intl;
 
 with Prj;      use Prj;
 with Prj.Ext;  use Prj.Ext;
@@ -248,13 +250,16 @@ package body Scenario_Views is
                  (Button, "clicked",
                   View_Callback.To_Marshaller (Edit_Variable'Access),
                   (View => V, Var => Scenar_Var (J)));
+               Set_Tip (Get_Tooltips (V.Kernel), Button,
+                        -"Edit variable properties");
 
                Gtk_New (Button);
                Gtk_New (Pix, V.Delete_Pixmap, V.Delete_Mask);
                Add (Button, Pix);
                Attach
                  (V, Button, 1, 2, Row, Row + 1, Xoptions => 0, Yoptions => 0);
-
+               Set_Tip
+                 (Get_Tooltips (V.Kernel), Button, -"Delete variable");
 
                Str := External_Reference_Of (Scenar_Var (J));
                String_To_Name_Buffer (Str);
