@@ -1039,7 +1039,7 @@ procedure GPS is
          " (" & GVD.Source_Date &
          (-") hosted on ") & GVD.Target & ASCII.LF &
          (-"the GNAT Programming System") & ASCII.LF & About_Contents.all &
-         "(c) 2001-2003 ACT-Europe" & ASCII.LF);
+         "(c) 2001-2004 ACT-Europe" & ASCII.LF);
       Free (About_Contents);
 
       --  We now make sure we have a project loaded, so that opening editors
