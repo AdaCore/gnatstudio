@@ -1,7 +1,7 @@
 with "../common/common";
 with "../gtkada/gtkada";
-with "../gvd/gvd";
 with "../kernel/kernel";
+with "../gvd/gvd_common";
 
 project Src_Editor is
 
