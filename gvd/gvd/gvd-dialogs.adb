@@ -43,6 +43,7 @@ with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
 with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with Odd.Utils;             use Odd.Utils;
 
 package body Odd.Dialogs is
 
@@ -659,12 +660,9 @@ package body Odd.Dialogs is
       else
          declare
             S : constant String := Get_Text (Get_Entry (Dialog.Entry_Field));
-            Item : Gtk_List_Item;
          begin
             if S /= "" then
-               Gtk_New (Item, S);
-               Show (Item);
-               Add (Get_List (Dialog.Entry_Field), Item);
+               Add_Unique_Combo_Entry (Dialog.Entry_Field, S);
             end if;
 
             if Key = "" then
