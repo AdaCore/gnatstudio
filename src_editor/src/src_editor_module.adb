@@ -2415,6 +2415,7 @@ package body Src_Editor_Module is
                  (Kernel,
                   Command   => Cmd (Cmd'First).all,
                   Arguments => Cmd (Cmd'First + 1 .. Cmd'Last),
+                  Console   => Get_Console (Kernel),
                   Success   => Success);
                Free (Cmd);
             end;
@@ -2641,6 +2642,7 @@ package body Src_Editor_Module is
                Command   => "gnat",
                Arguments => Args (1 .. 2) & Scenar.all & Args (3 .. 4),
                Exit_Cb   => Generate_Body_Cb'Access,
+               Console   => Get_Console (Kernel),
                Success   => Success);
             Free (Args);
             Free (Scenar);
@@ -2949,6 +2951,7 @@ package body Src_Editor_Module is
             Command   => "gnat",
             Arguments => Args.all,
             Exit_Cb   => Pretty_Print_Cb'Access,
+            Console   => Get_Console (Kernel),
 --            Name      => Full_Name (File).all,
             Success   => Success);
          Free (Args);
