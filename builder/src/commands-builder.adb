@@ -23,6 +23,7 @@ with GVD.Status_Bar;            use GVD.Status_Bar;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Glide_Result_View;         use Glide_Result_View;
 
 with Glide_Intl;                use Glide_Intl;
 with GNAT.Expect;               use GNAT.Expect;
