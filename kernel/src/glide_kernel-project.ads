@@ -124,16 +124,12 @@ package Glide_Kernel.Project is
    --  ??? This should be independent from any actual node, since the nodes
    --  might be freed at some point.
 
-   type Command_Syntax is (GNAT_Syntax, Make_Syntax);
-   --  Type used in Scenario_Variables_Cmd_Line to determine the command line
-   --  syntax used when setting variables.
-   --  GNAT_Syntax means use the GNAT project file syntax (-XVAR=value)
-   --  Make_Syntax means use the GNU make syntax (VAR=value)
-
    function Scenario_Variables_Cmd_Line
      (Handle : access Kernel_Handle_Record'Class;
-      Syntax : Command_Syntax) return String;
+      Prefix : String) return String;
    --  Return the command line to use to set up the scenario variables when
    --  calling an external tool that handles project files.
+   --  For a Makefile, set Prefix to "", for gnatmake set prefix to "-X".
+   --  This function returns a concatenation of Prefix & "VAR=VALUE".
 
 end Glide_Kernel.Project;

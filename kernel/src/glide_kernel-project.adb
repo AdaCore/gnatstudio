@@ -293,7 +293,7 @@ package body Glide_Kernel.Project is
 
    function Scenario_Variables_Cmd_Line
      (Handle : access Kernel_Handle_Record'Class;
-      Syntax : Command_Syntax) return String
+      Prefix : String) return String
    is
       Scenario_Vars : constant Scenario_Variable_Array :=
         Scenario_Variables (Handle);
@@ -322,13 +322,7 @@ package body Glide_Kernel.Project is
       --  A recursive function is probably not the most efficient way, but this
       --  prevents limits on the command line lengths. This also avoids the use
       --  of unbounded strings.
-
-      case Syntax is
-         when GNAT_Syntax =>
-            return Concat ("", Scenario_Vars'First, "-X");
-         when Make_Syntax =>
-            return Concat ("", Scenario_Vars'First, "");
-      end case;
+      return Concat ("", Scenario_Vars'First, Prefix);
    end Scenario_Variables_Cmd_Line;
 
    ------------------------
