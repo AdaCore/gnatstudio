@@ -642,6 +642,12 @@ package body Src_Editor_Box is
             Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
             Set_Entity_Information
               (Context, Get_Text (Start_Iter, End_Iter), L, C);
+
+            --  Get the focus now. If we let the contextual menu handler in the
+            --  kernel do the grab focus, then the source window will be
+            --  scrolled up.
+            Grab_Focus (Editor.Source_View);
+            Place_Cursor (Editor.Source_Buffer, Start_Iter);
          end if;
 
          Gtk_New (Item, -"Go to previous reference");
