@@ -1311,13 +1311,17 @@ package body Browsers.Dependency_Items is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
+      Child : MDI_Child;
    begin
       if Node.Tag.all = "Dependency_Browser" then
-         return Put
+         Child := Put
            (User, Gtk_Widget (Create_Dependency_Browser (User)),
             Default_Width  => Get_Pref (User, Default_Widget_Width),
             Default_Height => Get_Pref (User, Default_Widget_Height),
             Module => Dependency_Browser_Module_ID);
+         Set_Title (Child, -"Dependency Browser");
+
+         return Child;
       end if;
 
       return null;
