@@ -28,7 +28,8 @@ package Log_Utils is
    --  from this package.
 
    function Get_ChangeLog_From_File
-     (File_Name : VFS.Virtual_File) return VFS.Virtual_File;
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : VFS.Virtual_File) return VFS.Virtual_File;
    --  Returns the global ChangeLog file given a File_Name. A global ChangeLog
    --  is named ChangeLog and is placed into the same directory as File_Name.
 
