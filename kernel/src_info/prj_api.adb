@@ -170,6 +170,20 @@ package body Prj_API is
       Index          : String := "") return Variable_Value;
    --  Internal version of Get_Attribute_Value
 
+   type External_Variable_Callback is access function
+     (Variable : Project_Node_Id; Prj : Project_Node_Id) return Boolean;
+   --  Called for a typed variable declaration that references an external
+   --  variable in Prj.
+   --  Stops iterating if this subprogram returns False.
+
+   procedure For_Each_External_Variable_Declaration
+     (Iterator : in out Imported_Project_Iterator;
+      Callback : External_Variable_Callback);
+   --  Iterate other all the typed variable declarations that reference
+   --  external variables in the projects referenced by Iterator (which is
+   --  reset first).
+   --  Callback is called for each of them.
+
    ----------------
    -- Get_String --
    ----------------
@@ -895,6 +909,56 @@ package body Prj_API is
         = N_External_Value;
    end Is_External_Variable;
 
+   --------------------------------------------
+   -- For_Each_External_Variable_Declaration --
+   --------------------------------------------
+
+   procedure For_Each_External_Variable_Declaration
+     (Iterator : in out Imported_Project_Iterator;
+      Callback : External_Variable_Callback)
+   is
+      procedure Process_Prj (Prj : Project_Node_Id);
+      --  Process all the declarations in a single project
+
+      -----------------
+      -- Process_Prj --
+      -----------------
+
+      procedure Process_Prj (Prj : Project_Node_Id) is
+         Pkg : Project_Node_Id := Prj;
+         Var : Project_Node_Id;
+      begin
+         --  For all the packages and the common section
+         while Pkg /= Empty_Node loop
+            Var := First_Variable_Of (Pkg);
+            while Var /= Empty_Node loop
+               if Kind_Of (Var) = N_Typed_Variable_Declaration
+                 and then Is_External_Variable (Var)
+                 and then not Callback (Var, Prj)
+               then
+                  exit;
+               end if;
+
+               Var := Next_Variable (Var);
+            end loop;
+
+            if Pkg = Prj then
+               Pkg := First_Package_Of (Prj);
+            else
+               Pkg := Next_Package_In_Project (Pkg);
+            end if;
+         end loop;
+      end Process_Prj;
+
+   begin
+      Reset (Iterator);
+
+      while Current (Iterator) /= Empty_Node loop
+         Process_Prj (Current (Iterator));
+         Next (Iterator);
+      end loop;
+   end For_Each_External_Variable_Declaration;
+
    -----------------------------
    -- Find_Scenario_Variables --
    -----------------------------
@@ -903,13 +967,14 @@ package body Prj_API is
      (Project : Project_Node_Id;
       Parse_Imported : Boolean := True) return Project_Node_Array
    is
-      function Count_Vars (In_Project : Project_Node_Id) return Natural;
+      Iter  : Imported_Project_Iterator := Start (Project, Parse_Imported);
+
+      function Count_Vars return Natural;
       --  Return the number of scenario variables in In_Project, its packages
 
       procedure Register_Vars
-        (In_Project : Project_Node_Id;
-         List       : in out Project_Node_Array;
-         Current    : in out Positive);
+        (List    : in out Project_Node_Array;
+         Current : in out Positive);
       --  Register all the scenario variables from In_Projects, its packages
 
       procedure Add_If_Not_In_List
@@ -924,31 +989,24 @@ package body Prj_API is
       -- Count_Vars --
       ----------------
 
-      function Count_Vars (In_Project : Project_Node_Id) return Natural is
+      function Count_Vars return Natural is
          Count : Natural := 0;
-         Pkg : Project_Node_Id := In_Project;
-         Var : Project_Node_Id;
+
+         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
+            return Boolean;
+         --  Increment the total number of variables
+
+         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
+            return Boolean
+         is
+            pragma Unreferenced (Variable, Prj);
+         begin
+            Count := Count + 1;
+            return True;
+         end Cb;
+
       begin
-         --  For all the packages and the common section
-         while Pkg /= Empty_Node loop
-            Var := First_Variable_Of (Pkg);
-            while Var /= Empty_Node loop
-               if Kind_Of (Var) = N_Typed_Variable_Declaration
-                 and then Is_External_Variable (Var)
-               then
-                  Count := Count + 1;
-               end if;
-
-               Var := Next_Variable (Var);
-            end loop;
-
-            if Pkg = In_Project then
-               Pkg := First_Package_Of (In_Project);
-            else
-               Pkg := Next_Package_In_Project (Pkg);
-            end if;
-         end loop;
-
+         For_Each_External_Variable_Declaration (Iter, Cb'Unrestricted_Access);
          return Count;
       end Count_Vars;
 
@@ -978,57 +1036,32 @@ package body Prj_API is
       -------------------
 
       procedure Register_Vars
-        (In_Project : Project_Node_Id;
-         List : in out Project_Node_Array;
+        (List    : in out Project_Node_Array;
          Current : in out Positive)
       is
-         Pkg : Project_Node_Id := In_Project;
-         Var : Project_Node_Id;
+         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
+            return Boolean;
+         --  Add the new variable in the list if needed
+
+         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
+            return Boolean
+         is
+            pragma Unreferenced (Prj);
+         begin
+            Add_If_Not_In_List (Variable, List, Current);
+            return True;
+         end Cb;
+
       begin
-         --  For all the packages and the common section
-         while Pkg /= Empty_Node loop
-            Var := First_Variable_Of (Pkg);
-
-            while Var /= Empty_Node loop
-               if Kind_Of (Var) = N_Typed_Variable_Declaration
-                 and then Is_External_Variable (Var)
-               then
-                  Add_If_Not_In_List (Var, List, Current);
-               end if;
-
-               Var := Next_Variable (Var);
-            end loop;
-
-            if Pkg = In_Project then
-               Pkg := First_Package_Of (In_Project);
-            else
-               Pkg := Next_Package_In_Project (Pkg);
-            end if;
-         end loop;
+         For_Each_External_Variable_Declaration (Iter, Cb'Unrestricted_Access);
       end Register_Vars;
 
-      Count : Natural := 0;
-      Curr  : Positive := 1;
-      Iter : Imported_Project_Iterator := Start (Project, Parse_Imported);
-
+      Count : constant Natural := Count_Vars;
+      List : Project_Node_Array (1 .. Count);
+      Curr  : Positive := List'First;
    begin
-      while Current (Iter) /= Empty_Node loop
-         Count := Count + Count_Vars (Current (Iter));
-         Next (Iter);
-      end loop;
-
-      Reset (Iter);
-
-      declare
-         List : Project_Node_Array (1 .. Count);
-      begin
-         while Current (Iter) /= Empty_Node loop
-            Register_Vars (Current (Iter), List, Curr);
-            Next (Iter);
-         end loop;
-
-         return List (1 .. Curr - 1);
-      end;
+      Register_Vars (List, Curr);
+      return List (1 .. Curr - 1);
    end Find_Scenario_Variables;
 
    ---------------------------
@@ -1067,6 +1100,74 @@ package body Prj_API is
          return Empty_Node;
       end if;
    end External_Default;
+
+   ---------------------------
+   -- Ensure_External_Value --
+   ---------------------------
+
+   procedure Ensure_External_Value
+     (Root_Project : Project_Node_Id;
+      Var          : Project_Node_Id)
+   is
+      Ext_Ref : String_Id;
+      Decl_Prj : Project_Node_Id := Empty_Node;
+
+   begin
+      Ext_Ref := External_Reference_Of (Var);
+      String_To_Name_Buffer (Ext_Ref);
+
+      declare
+         Name : constant String := Name_Buffer (Name_Buffer'First .. Name_Len);
+         N    : constant Name_Id := Name_Find;
+         Value : Variable_Value;
+
+         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
+            return Boolean;
+         --  Called when a variable declaration is encountered
+
+         function Cb (Variable : Project_Node_Id; Prj : Project_Node_Id)
+            return Boolean is
+         begin
+            if Decl_Prj = Empty_Node
+              and then Get_String (External_Reference_Of (Variable)) = Name
+            then
+               Decl_Prj := Prj;
+               return False;
+            end if;
+            return True;
+         end Cb;
+
+      begin
+         if Prj.Ext.Value_Of (N) = No_String then
+
+            --  Find the project in which the variable is defined. We need to
+            --  find the computed version of the default value, and this is
+            --  only available in the tables for this project.
+
+            declare
+               Iter : Imported_Project_Iterator := Start (Root_Project, True);
+            begin
+               For_Each_External_Variable_Declaration
+                 (Iter, Cb'Unrestricted_Access);
+            end;
+
+            Assert
+              (Me, Decl_Prj /= Empty_Node,
+               "Couldn't find declaration project for variable " & Name);
+
+            Value := Prj.Util.Value_Of
+              (Variable_Name => Prj.Tree.Name_Of (Var),
+               In_Variables  => Projects.Table
+                 (Get_Project_View_From_Project (Decl_Prj)).Decl.Variables);
+            Assert
+              (Me, Value.Kind = Single,
+               "Scenario variables can only be strings");
+            String_To_Name_Buffer (Value.Value);
+
+            Prj.Ext.Add (Name, Name_Buffer (Name_Buffer'First .. Name_Len));
+         end if;
+      end;
+   end Ensure_External_Value;
 
    --------------------------------
    -- Get_Project_View_From_Name --

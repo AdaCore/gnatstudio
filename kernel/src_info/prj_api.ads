@@ -793,6 +793,11 @@ package Prj_API is
    --  external reference. Var must be a variable declaration.
    --  Empty_Node is returned if there is no default value
 
+   procedure Ensure_External_Value
+     (Root_Project : Project_Node_Id; Var : Project_Node_Id);
+   --  Make sure that an external value is defined for the variable Var. If
+   --  none exists, the default value defined in the project hierarchy is used.
+
    function External_Variable_Name
      (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
       return Types.String_Id;
