@@ -26,9 +26,14 @@ with GVD.Strings;           use GVD.Strings;
 with Gtkada.Intl;           use Gtkada.Intl;
 pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
+with GNAT.Expect.TTY;       use GNAT.Expect.TTY;
 pragma Warnings (On);
+with Ada.Unchecked_Deallocation;
 
 package body GVD.Files is
+
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Process_Descriptor'Class, Process_Descriptor_Access);
 
    -------------------
    -- Find_In_Cache --
@@ -74,7 +79,7 @@ package body GVD.Files is
       Tmp_File      : GNAT.OS_Lib.Temp_File_Name;
       Args          : Argument_List (1 .. 2);
       Result        : Expect_Match;
-      Descriptor    : GNAT.Expect.Process_Descriptor;
+      Descriptor    : Process_Descriptor_Access;
       Should_Delete : Boolean := False;
       Num_Tries     : constant Integer := 5;
 
@@ -109,20 +114,28 @@ package body GVD.Files is
          Args (2) := new String'
            (Tmp_File (Tmp_File'First .. Tmp_File'Last - 1));
 
-         GNAT.Expect.Non_Blocking_Spawn
-           (Descriptor,
+         if Use_Ptys then
+            Descriptor := new TTY_Process_Descriptor;
+         else
+            Descriptor := new Process_Descriptor;
+         end if;
+
+         Non_Blocking_Spawn
+           (Descriptor.all,
             Command     => Get_Pref (Remote_Copy),
             Args        => Args,
             Buffer_Size => 0,
             Err_To_Out  => True);
 
          begin
-            Expect (Descriptor, Result, ".+", Timeout => -1);
+            Expect (Descriptor.all, Result, ".+", Timeout => -1);
 
             if Result /= Expect_Timeout then
                --  File was not found
-               Error_Msg := new String' (Expect_Out (Descriptor));
+               Error_Msg := new String' (Expect_Out (Descriptor.all));
                Delete_File (Tmp_File'Address, Should_Delete);
+               Close (Descriptor.all);
+               Free (Descriptor);
                return;
             end if;
 
@@ -131,6 +144,8 @@ package body GVD.Files is
                null;
          end;
 
+         Close (Descriptor.all);
+         Free (Descriptor);
          Free (Args (1));
          Free (Args (2));
 
