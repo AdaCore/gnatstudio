@@ -1256,6 +1256,8 @@ package body VCS_View_Pkg is
          VCS_View,
          Kernel);
 
+      --  Can't do this through the Focus_Widget parameter to Gtkada.MDI.Put,
+      --  since the focus child is dynamic.
       Widget_Callback.Connect
         (VCS_View, "grab_focus",
          Widget_Callback.To_Marshaller (On_Selected'Access),
