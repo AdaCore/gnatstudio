@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@
 with Glide_Kernel;
 with Find_Utils;
 with Gtk.Widget;
+with GNAT.OS_Lib;
 
 package Help_Module is
 
@@ -55,11 +56,30 @@ package Help_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Open the help window and display the tutorial
 
+   ------------------
+   -- URL contexts --
+   ------------------
+
+   type URL_Context is new Glide_Kernel.Selection_Context with private;
+   type URL_Context_Access is access all URL_Context'Class;
+
+   procedure Set_URL_Information
+     (Context : access URL_Context;
+      URL     : String := "");
+   --  Set the information in this context.
+
+   procedure Destroy (Context : in out URL_Context);
+   --  Free the memory associated with the context
+
 private
 
    type Help_Context is new Find_Utils.Search_Context with record
       First_Search : Boolean;
       --  true if the next search will be the first for this context
+   end record;
+
+   type URL_Context is new Glide_Kernel.Selection_Context with record
+      URL : GNAT.OS_Lib.String_Access := null;
    end record;
 
 end Help_Module;

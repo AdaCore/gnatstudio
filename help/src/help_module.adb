@@ -1005,6 +1005,27 @@ package body Help_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Show_Tutorial;
 
+   -------------------------
+   -- Set_URL_Information --
+   -------------------------
+
+   procedure Set_URL_Information
+     (Context : access URL_Context;
+      URL     : String := "") is
+   begin
+      Free (Context.URL);
+      Context.URL := new String'(URL);
+   end Set_URL_Information;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Context : in out URL_Context) is
+   begin
+      Free (Context.URL);
+   end Destroy;
+
    -----------------------
    -- Parse_Index_Files --
    -----------------------
