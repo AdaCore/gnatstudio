@@ -483,7 +483,7 @@ keeping the left button pressed, drop it anywhere else inside GPS.
 Selecting an item so that it can be dragged is done simply by clicking
 with the left mouse button in its title bar, and keep the button
 pressed while moving the mouse. Although this is the general scheme,
-this would work for unmaximized items, since the title bar in then
+this would work for unmaximized items, since the title bar is then
 used to move them around. In that case, you need to press the
 @key{control} key in addition to the left mouse button.
 
@@ -517,14 +517,15 @@ currently visible (for instance, it is often useful to put an editor
 in the right docking area, so that two editors can be seen
 side-by-side, one in this area, and one in the central one).
 
-To execute this, drop the window on the small handle that surrounds
+To achieve this, drop the window on the small handle that surrounds
 the whole GPS window (a black rectangle will appear on the screen when
 your mouse is over that area). If you then drop the item, a new
 docking area will be created.
 
 @item System window
-If you drop a window outside of GPS (for instance, on the background
-of your screen), the window will be floated.
+Under systems that support it, if you drop a window outside of GPS (for
+instance, on the background of your screen), the window will be floated.
+This is currently only supported under Linux, when using the GNOME 2 desktop.
 
 @end table
 
