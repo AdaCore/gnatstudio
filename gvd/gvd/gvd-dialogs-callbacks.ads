@@ -47,4 +47,14 @@ package Odd.Dialogs.Callbacks is
 
    procedure On_Question_Close_Clicked
      (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Replay_Selection_Clicked
+     (Object : access Gtk_Button_Record'Class);
+
+   procedure On_History_Cancel_Clicked
+     (Object : access Gtk_Button_Record'Class);
+
+   procedure On_History_Help_Clicked
+     (Object : access Gtk_Button_Record'Class);
+
 end Odd.Dialogs.Callbacks;
