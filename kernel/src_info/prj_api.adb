@@ -114,9 +114,6 @@ package body Prj_API is
       Previous_Decl : Project_Node_Id := Empty_Node;
       N : Name_Id;
    begin
-      --  ??? Should insert the attribute or the variable in the list
-      --  Prj_Or_Pkg.Variables if needed
-
       pragma Assert
         (Kind_Of (Prj_Or_Pkg) = N_Package_Declaration
          or else Kind_Of (Prj_Or_Pkg) = N_Project);
@@ -177,6 +174,19 @@ package body Prj_API is
       if Item_Kind = N_Attribute_Declaration then
          Set_Associative_Array_Index_Of (Var, Array_Index);
       end if;
+
+      --  Insert the attribute or the variable in the list Prj_Or_Pkg.Variables
+      --  if needed
+      --  If the variable is already there, do not add it to the list. But
+      --  then, if it already existed we have exited this function already.
+
+      if Item_Kind = N_Typed_Variable_Declaration
+        or else Item_Kind = N_Variable_Declaration
+      then
+         Set_Next_Variable (Var, First_Variable_Of (Prj_Or_Pkg));
+         Set_First_Variable_Of (Prj_Or_Pkg, Var);
+      end if;
+
       return Var;
    end Internal_Get_Or_Create_Attribute;
 
@@ -443,7 +453,9 @@ package body Prj_API is
       if Default /= "" then
          Start_String;
          Store_String_Chars (Default);
-         Set_External_Default_Of (Ext, String_As_Expression (End_String));
+         Str := Default_Project_Node (N_Literal_String, Single);
+         Set_String_Value_Of (Str, End_String);
+         Set_External_Default_Of (Ext, Str);
       end if;
    end Set_Value_As_External;
 
@@ -873,9 +885,8 @@ package body Prj_API is
    ---------------------------
 
    function External_Reference_Of (Var : Project_Node_Id) return String_Id is
-      Expr : Project_Node_Id;
+      Expr : Project_Node_Id := Expression_Of (Var);
    begin
-      Expr := Expression_Of (Var);
       Expr := First_Term   (Expr);
       Expr := Current_Term (Expr);
 
