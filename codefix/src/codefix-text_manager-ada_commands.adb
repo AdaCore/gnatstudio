@@ -790,7 +790,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       procedure Initialize_Profile
         (Position                 : File_Cursor;
          Begin_Cursor, End_Cursor : out File_Cursor);
-      --  ???
+      --  Set Begin_Cursor and End_Cursor at the begining and at the end of the
+      --  profile's function starting at position.
 
       procedure Initialize_Profile
         (Position                 : File_Cursor;
