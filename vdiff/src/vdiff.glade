@@ -106,24 +106,6 @@
 	</child>
 
 	<widget>
-	  <class>GtkFrame</class>
-	  <name>frame_draw1</name>
-	  <label_xalign>0</label_xalign>
-	  <shadow_type>GTK_SHADOW_IN</shadow_type>
-	  <child>
-	    <padding>0</padding>
-	    <expand>False</expand>
-	    <fill>True</fill>
-	  </child>
-
-	  <widget>
-	    <class>GtkDrawingArea</class>
-	    <name>drawingarea1</name>
-	    <width>40</width>
-	  </widget>
-	</widget>
-
-	<widget>
 	  <class>GtkScrolledWindow</class>
 	  <name>scrolledwindow1</name>
 	  <hscrollbar_policy>GTK_POLICY_ALWAYS</hscrollbar_policy>
@@ -251,24 +233,6 @@
 	  <expand>True</expand>
 	  <fill>True</fill>
 	</child>
-
-	<widget>
-	  <class>GtkFrame</class>
-	  <name>frame_draw2</name>
-	  <label_xalign>0</label_xalign>
-	  <shadow_type>GTK_SHADOW_IN</shadow_type>
-	  <child>
-	    <padding>0</padding>
-	    <expand>False</expand>
-	    <fill>True</fill>
-	  </child>
-
-	  <widget>
-	    <class>GtkDrawingArea</class>
-	    <name>drawingarea2</name>
-	    <width>40</width>
-	  </widget>
-	</widget>
 
 	<widget>
 	  <class>GtkScrolledWindow</class>
