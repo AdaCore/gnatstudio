@@ -51,6 +51,7 @@ with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Pixmaps_IDE;              use Pixmaps_IDE;
+with Glide_Intl;               use Glide_Intl;
 
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -767,7 +768,7 @@ package body Glide_Result_View is
          Iter := Get_Iter (Explorer.Model, Path);
 
          if Get_Depth (Path) = 1 then
-            Gtk_New (Mitem, "Remove category");
+            Gtk_New (Mitem, -"Remove category");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Mitem, "activate",
                Gtkada.Handlers.Widget_Callback.To_Marshaller
@@ -777,7 +778,7 @@ package body Glide_Result_View is
             Append (Menu, Mitem);
 
          elsif Get_Depth (Path) = 2 then
-            Gtk_New (Mitem, "Remove File");
+            Gtk_New (Mitem, -"Remove File");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Mitem, "activate",
                Gtkada.Handlers.Widget_Callback.To_Marshaller
@@ -787,7 +788,7 @@ package body Glide_Result_View is
             Append (Menu, Mitem);
 
          elsif Get_Depth (Path) = 3 then
-            Gtk_New (Mitem, "Jump to location");
+            Gtk_New (Mitem, -"Jump to location");
             Gtkada.Handlers.Widget_Callback.Object_Connect
               (Mitem, "activate",
                Gtkada.Handlers.Widget_Callback.To_Marshaller
