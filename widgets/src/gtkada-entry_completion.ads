@@ -44,7 +44,7 @@ private
       Completions      : Basic_Types.String_Array_Access;
       Last_Position    : Integer;
       Completion_Index : Integer := Integer'First;
-      --  The index, in Completions, of the last string inserted. -1 if no
+      --  The index, in Completions, of the last string inserted. 0 if no
       --  completion has been attempted yet.
    end record;
 

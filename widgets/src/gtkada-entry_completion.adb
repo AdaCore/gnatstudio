@@ -82,7 +82,7 @@ package body Gtkada.Entry_Completion is
    begin
       Free (The_Entry.Completions);
       The_Entry.Completions := Completions;
-      The_Entry.Completion_Index := -1;
+      The_Entry.Completion_Index := Completions'First - 1;
    end Set_Completions;
 
    ------------------
@@ -117,6 +117,7 @@ package body Gtkada.Entry_Completion is
                return S;
             end if;
          end loop;
+
          return Integer'First;
       end Next_Matching;
 
@@ -185,16 +186,23 @@ package body Gtkada.Entry_Completion is
             end if;
 
             GEntry.Completion_Index := First_Index;
+
             if First_Index >= GEntry.Completions'First then
                Set_Text (GEntry, GEntry.Completions (First_Index).all);
                Set_Position (GEntry, -1);
             end if;
          end;
+
          return True;
       end if;
 
       GEntry.Completion_Index := Integer'First;
       return False;
+
+   exception
+      when others =>
+         GEntry.Completion_Index := Integer'First;
+         return False;
    end On_Entry_Tab;
 
 end Gtkada.Entry_Completion;
