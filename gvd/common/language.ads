@@ -309,14 +309,14 @@ package Language is
 
       Cat_Package,
       Cat_Namespace,
-      Cat_Procedure,
-      Cat_Function,
-      Cat_Task,
-      Cat_Protected,
-      Cat_Entry,
-      Cat_Constructor,
-      Cat_Destructor,
-      Cat_Method,
+      Cat_Task,        --  Subprogram
+      Cat_Procedure,   --  Subprogram, Subprogram_Explorer
+      Cat_Function,    --  Subprogram, Subprogram_Explorer
+      Cat_Method,      --  Subprogram, Subprogram_Explorer
+      Cat_Constructor, --  Subprogram, Subprogram_Explorer
+      Cat_Destructor,  --  Subprogram, Subprogram_Explorer
+      Cat_Protected,   --  Subprogram
+      Cat_Entry,       --  Subprogram
 
       ----------------
       -- Data/Types --
@@ -362,10 +362,14 @@ package Language is
       Cat_Comment);
 
    subtype Enclosing_Entity_Category is Language_Category
-     range Cat_Package .. Cat_Method;
+     range Cat_Package .. Cat_Entry;
 
    subtype Subprogram_Category is Enclosing_Entity_Category
-     range Cat_Procedure .. Cat_Method;
+     range Cat_Task .. Cat_Entry;
+
+   subtype Subprogram_Explorer_Category is Subprogram_Category
+     range Cat_Procedure .. Cat_Destructor;
+   --  Subprograms, as displayed in the explorer
 
    subtype Data_Type_Category is Language_Category
      range Cat_Class .. Cat_Variable;
@@ -378,6 +382,9 @@ package Language is
 
    subtype Construct_Category is Language_Category
      range Cat_Loop_Statement .. Cat_Exception_Handler;
+
+   subtype Token_Category is Language_Category
+     range Cat_Reserved_Word .. Cat_Comment;
 
    type Source_Entity_Kind is
      (Ent_Reserved_Word,
