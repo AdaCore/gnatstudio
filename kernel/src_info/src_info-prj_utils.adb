@@ -32,7 +32,10 @@ with Namet;                   use Namet;
 with Prj.Com;                 use Prj.Com;
 with Stringt;                 use Stringt;
 with Types;                   use Types;
+with Snames;
 with Prj.Env;                 use Prj.Env;
+with Prj.Util;                use Prj.Util;
+with Prj_API;                 use Prj_API;
 
 package body Src_Info.Prj_Utils is
 
@@ -278,10 +281,12 @@ package body Src_Info.Prj_Utils is
       Naming    : Prj.Naming_Data)
       return File_Name_Type is
    begin
+      --  ??? This currently assumes we are using Ada
       return
         Get_Filename
           (Unit_Name, Naming.Dot_Replacement,
-           Naming.Casing, Naming.Specification_Append);
+           Naming.Casing,
+           Value_Of (Snames.Name_Ada, Naming.Specification_Suffix));
    end Get_Spec_Filename;
 
    -----------------------
@@ -293,10 +298,12 @@ package body Src_Info.Prj_Utils is
       Naming    : Prj.Naming_Data)
       return File_Name_Type is
    begin
+      --  ??? This currently assumes we are using Ada
       return
         Get_Filename
           (Unit_Name, Naming.Dot_Replacement,
-           Naming.Casing, Naming.Body_Append);
+           Naming.Casing,
+           Value_Of (Snames.Name_Ada, Naming.Implementation_Suffix));
    end Get_Body_Filename;
 
    -------------------
@@ -305,27 +312,23 @@ package body Src_Info.Prj_Utils is
 
    function Get_Unit_Name
      (Filename : File_Name_Type;
-      Naming   : Prj.Naming_Data)
+      Project  : Prj.Project_Id)
       return Name_Id
    is
       Fname    : constant String := Get_Name_String (Filename);
-      Dot_Repl : constant String := Get_Name_String (Naming.Dot_Replacement);
-      Body_Ext : constant String := Get_Name_String (Naming.Body_Append);
-      Spec_Ext : constant String :=
-        Get_Name_String (Naming.Specification_Append);
+      Dot_Repl : constant String := Get_Name_String
+        (Projects.Table (Project).Naming.Dot_Replacement);
       Dot      : constant Character := '.';
 
       Index       : Integer;
       Namet_Index : Natural;
       Last        : Integer;
    begin
-      if Extension_Matches (Filename, Naming.Body_Append) then
-         Last := Fname'Last - Body_Ext'Length;
-      elsif Extension_Matches (Filename, Naming.Specification_Append) then
-         Last := Fname'Last - Spec_Ext'Length;
-      else
-         --  According to the naming scheme, this file is neither a body,
-         --  nor a spec. So we can not extract a Unit Name from it.
+      Last := Delete_File_Suffix (Fname, Project);
+
+      --  According to the naming scheme, this file is neither a body, nor a
+      --  spec. So we can not extract a Unit Name from it.
+      if Last = Fname'Last then
          return No_Name;
       end if;
 
@@ -348,22 +351,6 @@ package body Src_Info.Prj_Utils is
       Namet.Name_Len := Namet_Index - 1;
       return Namet.Name_Find;
    end Get_Unit_Name;
-
-   -----------------------
-   -- Extension_Matches --
-   -----------------------
-
-   function Extension_Matches
-     (Filename  : File_Name_Type;
-      Extension : Name_Id)
-      return Boolean
-   is
-      Fname : constant String := Get_Name_String (Filename);
-      Ext   : constant String := Get_Name_String (Extension);
-   begin
-      return Fname'Length > Ext'Length
-        and then Fname (Fname'Last - Ext'Length + 1 .. Fname'Last) = Ext;
-   end Extension_Matches;
 
    ----------------------
    -- Find_Object_File --
