@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- Color reset when changing the size of a font
+  Problem:    When changing the size of a font in the preferences dialog,
+              the foreground and background colors are reset to the default
+              value (black/white).
+  Workaround: Change again the color after having set the font size.
+
 - D526-007 GPS hangs or crashes under Windows NT4 when loading some Ada file
   Problem:    Under Windows NT4, a memory corruption occurs when parsing
               some Ada constructs which hangs or crashes GPS.
