@@ -27,19 +27,16 @@
 -----------------------------------------------------------------------
 
 with Prj;         use Prj;
-with Prj.Com;     use Prj.Com;
 with Prj.Part;    use Prj.Part;
 with Prj.Proc;    use Prj.Proc;
 with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
-with Errout;      use Errout;
 with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Text_IO;     use Text_IO;
 
 with Project_Viewers;   use Project_Viewers;
 with Glide_Main_Window; use Glide_Main_Window;
