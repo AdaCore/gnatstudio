@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  ??? Add comments explaining how the conversion is done
+
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -128,9 +130,10 @@ procedure GPS2Custom_1_3 is
    -------------------
 
    procedure Process_Child (Node : Node_Ptr) is
-      Current_Child, Current_Child_Child,
-         Action_Child, Next, Previous : Node_Ptr;
-      Action : String_Access;
+      Current_Child, Current_Child_Child, Action_Child : Node_Ptr;
+      Previous, Next : Node_Ptr;
+      Action         : String_Access;
+
    begin
       if To_Lower (Node.Tag.all) = "language" then
          null;
@@ -179,9 +182,22 @@ procedure GPS2Custom_1_3 is
                Free (Action);
                Action := new String'(Current_Child.Value.all);
                Set_Attribute (Actions, "name", Action.all);
+
+               if Previous /= null then
+                  Previous.Next := Current_Child;
+               end if;
+
                Previous := Current_Child;
                Previous.Next := null;
                Set_Attribute (Node, "action", Action.all);
+
+            elsif To_Lower (Current_Child.Tag.all) = "pixmap" then
+               if Previous /= null then
+                  Previous.Next := Current_Child;
+               end if;
+
+               Previous      := Current_Child;
+               Previous.Next := null;
 
             elsif To_Lower (Current_Child.Tag.all) = "action"
               or else To_Lower (Current_Child.Tag.all) = "gps_action"
@@ -194,6 +210,8 @@ procedure GPS2Custom_1_3 is
                   Current_Child.Tag := new String'("shell");
                end if;
 
+               Current_Child.Next := null;
+
                if Action_Child = null then
                   Actions.Child := Current_Child;
                else
@@ -201,6 +219,10 @@ procedure GPS2Custom_1_3 is
                end if;
 
                Action_Child := Current_Child;
+
+               if Current_Child = Node.Child then
+                  Node.Child := Next;
+               end if;
             end if;
 
             Current_Child := Next;
