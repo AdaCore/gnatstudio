@@ -41,6 +41,7 @@ with Odd.Strings;     use Odd.Strings;
 with Process_Proxies; use Process_Proxies;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
+with GNAT.Regpat;     use GNAT.Regpat;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 
@@ -68,6 +69,9 @@ package body Odd.Process is
 
    Keywords_Color : constant String := "blue";
    --  Color used for keywords.
+
+   Debugger_Highlight_Color : constant String := "blue";
+   --  Color used for highlighting in the debugger window.
 
    Debugger_Font_Size : constant Gint := 10;
    --  Size of the font used in the debugger text window.
@@ -138,13 +142,40 @@ package body Odd.Process is
      (Process : Debugger_Process_Tab;
       Str     : String)
    is
+      Matched : GNAT.Regpat.Match_Array (0 .. 0);
+      Start   : Positive := Str'First;
    begin
       Freeze (Process.Debugger_Text);
-      Insert (Process.Debugger_Text,
-              Get_Gdkfont (Debugger_Font, Debugger_Font_Size),
-              Black (Get_System),
-              White (Get_System),
-              Str);
+
+      while Start <= Str'Last loop
+         Match (Highlighting_Pattern (Process.Debugger),
+                Str (Start .. Str'Last),
+                Matched);
+         if Matched (0) /= No_Match then
+            if Matched (0).First - 1 >= Start then
+               Insert (Process.Debugger_Text,
+                       Process.Debugger_Text_Font,
+                       Black (Get_System),
+                       Null_Color,
+                       Str (Start .. Matched (0).First - 1));
+            end if;
+
+            Insert (Process.Debugger_Text,
+                    Process.Debugger_Text_Font,
+                    Process.Debugger_Text_Highlight_Color,
+                    Null_Color,
+                    Str (Matched (0).First .. Matched (0).Last));
+            Start := Matched (0).Last + 1;
+         else
+            Insert (Process.Debugger_Text,
+                    Process.Debugger_Text_Font,
+                    Black (Get_System),
+                    Null_Color,
+                    Str (Start .. Str'Last));
+            Start := Str'Last + 1;
+         end if;
+      end loop;
+
       Thaw (Process.Debugger_Text);
    end Text_Output_Handler;
 
@@ -157,12 +188,42 @@ package body Odd.Process is
       Str        : String)
    is
       Process : Debugger_Process_Tab := Convert (Descriptor);
+      Matched : Match_Array (0 .. 2);
    begin
       --  Do not show the output if we have an internal command
       if not Is_Internal_Command (Get_Process (Process.Debugger)) then
          Text_Output_Handler (Process, Str);
          Process.Edit_Pos := Get_Length (Process.Debugger_Text);
          Set_Point (Process.Debugger_Text, Process.Edit_Pos);
+      end if;
+
+      --  ??? This is specific to gdb...
+
+      Match (Compile (ASCII.SUB & ASCII.SUB
+                      & "([^:]+):(\d+):\d+:beg:", Multiple_Lines),
+             Str, Matched);
+
+      --  End of gdb specific section
+
+      Put_Line (Str);
+      if Matched (0) /= No_Match then
+         --  Get everything in the buffer (since the following command
+         --  needs to interact with the debugger, and we want to hide its
+         --  output).
+
+         --  Empty_Buffer (Get_Process (Process.Debugger));
+         Wait_Prompt (Process.Debugger);
+
+         --  Display the file
+
+         Set_Internal_Command (Get_Process (Process.Debugger), True);
+         Load_File (Process.Editor_Text,
+                    Str (Matched (1).First .. Matched (1).Last),
+                    Process.Debugger);
+
+         --  ??? Should also display the correct line
+
+         Set_Internal_Command (Get_Process (Process.Debugger), False);
       end if;
    end Text_Output_Handler;
 
@@ -175,7 +236,6 @@ package body Odd.Process is
       Source    : Gint;
       Condition : Gdk.Types.Gdk_Input_Condition)
    is
-      Result : Expect_Match;
    begin
       --  Get everything that is available (and transparently call the
       --  output filters set for Pid).
@@ -186,8 +246,8 @@ package body Odd.Process is
       --  indirectly call the output filter.
 
       if not Command_In_Process (Get_Process (Debugger.Debugger)) then
-         Wait (Get_Process (Debugger.Debugger), Result, ".+",
-               Timeout => 0);
+         Empty_Buffer (Get_Process (Debugger.Debugger),
+                       At_Least_One => True);
       end if;
    end Output_Available;
 
@@ -211,7 +271,6 @@ package body Odd.Process is
 
       --  Spawn the debugger
       --  ??? This should be a parameter
-      --  ??? Params should be passed on to the debugger
 
       Process.Debugger := new Gdb_Debugger;
       --  Process.Debugger := new Jdb_Debugger;
@@ -238,6 +297,20 @@ package body Odd.Process is
 
       Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
+      --  Allocate the colors for highlighting. This needs to be done before
+      --  Initializing the debugger, since some output will be output at that
+      --  time.
+
+      Process.Debugger_Text_Highlight_Color :=
+        Parse (Debugger_Highlight_Color);
+      Alloc (Get_System, Process.Debugger_Text_Highlight_Color);
+
+      Process.Debugger_Text_Font :=
+        Get_Gdkfont (Debugger_Font, Debugger_Font_Size);
+
+      --  Set the output filter, so that we output everything in the Gtk_Text
+      --  window.
+
       Add_Output_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
          Text_Output_Handler'Access);
@@ -249,6 +322,8 @@ package body Odd.Process is
          Output_Available'Access,
          My_Input.Data_Access (Process));
 
+      --  Initialize the debugger.
+
       Initialize (Process.Debugger);
 
       Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size, stop_xpm,
@@ -257,8 +332,6 @@ package body Odd.Process is
                  Keywords_Color => Keywords_Color);
       Set_Current_Language (Process.Editor_Text,
                             Get_Language (Process.Debugger));
-      Load_File (Process.Editor_Text, "odd_main.adb", Process.Debugger);
-
       return Process;
    end Create_Debugger;
 
@@ -273,8 +346,6 @@ package body Odd.Process is
       Item     : Display_Item;
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
-
-      Result   : Expect_Match;
    begin
 
       Set_Internal_Command (Get_Process (Debugger.Debugger), False);
@@ -335,9 +406,7 @@ package body Odd.Process is
          --  Regular debugger command, send it.
          Send (Get_Process (Debugger.Debugger), Command);
 
-         --  ??? We should have a function for this in debugger.ads
-         Wait (Get_Process (Debugger.Debugger), Result, "\(gdb\)",
-               Timeout => -1);
+         Wait_Prompt (Debugger.Debugger);
       end if;
 
       Set_Internal_Command (Get_Process (Debugger.Debugger), True);

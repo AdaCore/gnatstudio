@@ -24,6 +24,8 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Expect; use GNAT.Expect;
 
 with Gtk.Object; use Gtk.Object;
+with Gdk.Color;
+with Gdk.Font;
 
 with Debugger; use Debugger;
 with Process_Tab_Pkg;
@@ -51,6 +53,12 @@ package Odd.Process is
       Edit_Pos : Glib.Guint;
        --  The last position in the text window of the debugger where text
        --  was inserted. This is used to find what was typed by the user.
+
+      Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
+       --  Color used for highlighting in the debugger window.
+
+      Debugger_Text_Font : Gdk.Font.Gdk_Font := Gdk.Font.Null_Font;
+       --  Font used in the debugger window.
 
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
@@ -93,5 +101,7 @@ package Odd.Process is
    --  Insert Str in the debugger window.
    --  Note that this function does not change the Edit_Pos for the record,
    --  so this should be used only for temporary output.
+   --  This also does some highlighting if the debugger has been defined to
+   --  support highlighting.
 
 end Odd.Process;
