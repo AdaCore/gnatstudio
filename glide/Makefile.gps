@@ -3,7 +3,6 @@ GLIDE_PROJECT=True
 
 ifeq ($(BASE_DIR),)
    include ../Makefile.common
-   include ../Makefile.gnat
    BASE_DIR=$(shell pwd)
    GLIDE_ROOT=True
 endif
@@ -66,6 +65,7 @@ ifeq ($(GLIDE_ROOT),True)
 	-@$(foreach f,$(GNAT_SOURCES), \
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 
+   include ../Makefile.gnat
    include ../builder/src/Makefile.generic
 
 else
