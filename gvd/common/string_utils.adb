@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with OS_Utils;                use OS_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.OS_Lib;
 
@@ -373,11 +374,7 @@ package body String_Utils is
       --  Maybe we should also ignore drive letters
 
       while Last >= File_Name'First loop
-         if File_Name (Last) = GNAT.OS_Lib.Directory_Separator
-           or else File_Name (Last) = '/'
-         then
-            exit;
-         end if;
+         exit when Is_Directory_Separator (File_Name (Last));
 
          Last := Last - 1;
       end loop;

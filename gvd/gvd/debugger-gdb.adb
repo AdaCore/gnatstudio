@@ -33,7 +33,7 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Gtk.Window;        use Gtk.Window;
 
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-
+with OS_Utils;          use OS_Utils;
 with Odd_Intl;          use Odd_Intl;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
@@ -939,8 +939,7 @@ package body Debugger.Gdb is
       Dir_Sep := Executable'Last;
 
       while Dir_Sep > Executable'First
-        and then Executable (Dir_Sep - 1) /= '/'
-        and then Executable (Dir_Sep - 1) /= Directory_Separator
+        and then not Is_Directory_Separator (Executable (Dir_Sep - 1))
       loop
          Dir_Sep := Dir_Sep - 1;
       end loop;
