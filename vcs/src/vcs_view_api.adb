@@ -678,7 +678,7 @@ package body VCS_View_API is
             Get_Log_From_File (Kernel, Head (Files)));
 
          if Child /= null then
-            Success := Save_Child (Kernel, Child, True);
+            Success := Save_Child (Kernel, Child, True) /= Cancel;
          end if;
 
          Append (Logs, Get_Log (Kernel, Head (Files)));
