@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- New tool to interactively fix Ada compilation errors/warnings
+
 - New menus Project->Project View and Project->Files View to replace
   Project->Explorer
 
