@@ -465,8 +465,6 @@ package Language is
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
 
-   --  ??? Should accept a UTF8-encoded string in Buffer.
-
    --  These functions are provided as a support for the source code explorer.
 
    type Make_Entry_Func is access function
