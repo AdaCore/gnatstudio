@@ -127,6 +127,7 @@ package body Vdiff2_Module.Utils is
       Pos      : Natural;
       VRange   : T_VRange;
       VFile    : T_VFile;
+      VStyle   : T_VStr;
       Action   : Handler_Action_Line := null);
    --  Put an icon on the column information
 
@@ -214,10 +215,10 @@ package body Vdiff2_Module.Utils is
       end loop;
 
       for J in 1 .. 3 loop
-         if VOffset (J) > 0 then
+         if VOffset (J) > 0 and then J /= Ref then
             Put_Button
               (Kernel, Info, Conflict, J,
-               VRange, VFile, Move_On_Ref_File'Access);
+               VRange, VFile, VStyle, Move_On_Ref_File'Access);
          end if;
 
          Highlight_Line
@@ -799,6 +800,7 @@ package body Vdiff2_Module.Utils is
       Pos      : Natural;
       VRange   : T_VRange;
       VFile    : T_VFile;
+      VStyle   : T_VStr;
       Action   : Handler_Action_Line := null)
    is
       Cmd : Diff_Command_Line_Access;
@@ -808,20 +810,21 @@ package body Vdiff2_Module.Utils is
         Gdk_New_From_Xpm_Data (red_button_xpm);
 
    begin
-      Create
-        (Cmd, Kernel_Handle (Kernel),
-         VDiff2_Module (Vdiff_Module_ID).List_Diff,
-         VFile (Pos), VRange (Pos).First,
-         Action);
+      if VStyle (Pos).all /= Default_Style then
+         Create
+           (Cmd, Kernel_Handle (Kernel),
+            VDiff2_Module (Vdiff_Module_ID).List_Diff,
+            VFile (Pos), VRange (Pos).First,
+            Action);
+         if not Conflict then
+            Info (Pos)(VRange (Pos).First).Image := Green_Button_Pixbuf;
+         else
+            Info (Pos)(VRange (Pos).First).Image := Red_Button_Pixbuf;
+         end if;
 
-      if not Conflict then
-         Info (Pos)(VRange (Pos).First).Image := Green_Button_Pixbuf;
-      else
-         Info (Pos)(VRange (Pos).First).Image := Red_Button_Pixbuf;
+         Info (Pos)
+          (VRange (Pos).First).Associated_Command := Command_Access (Cmd);
       end if;
-
-      Info (Pos)
-        (VRange (Pos).First).Associated_Command := Command_Access (Cmd);
    end Put_Button;
 
    ---------------------------
