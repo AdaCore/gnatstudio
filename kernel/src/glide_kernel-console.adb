@@ -435,7 +435,14 @@ package body Glide_Kernel.Console is
          end if;
 
          Contents := Read_File (File);
-         Insert (Console, Strip_CR (Contents.all));
+
+         declare
+            S : String := Strip_CR (Contents.all);
+         begin
+            Insert (Console, S);
+            Parse_File_Locations (Kernel, S, -"Loaded contents");
+         end;
+
          Free (Contents);
       end;
 
