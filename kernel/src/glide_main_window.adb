@@ -602,7 +602,9 @@ package body Glide_Main_Window is
          Description  =>
            -("Display a modal dialog and request some input from the user."
              & " The message is displayed at the top, and one input field"
-             & " is displayed for each remaining argument. The return value"
+             & " is displayed for each remaining argument. The arguments"
+             & " can take the form ""label=value"", in which case ""value"" is"
+             & " used as default for this entry. The return value"
              & " is the value that the user has input for each of these"
              & " parameters." & ASCII.LF
              & "An empty list is returned if the user presses Cancel"),
@@ -726,38 +728,65 @@ package body Glide_Main_Window is
             Dialog : Gtk_Dialog;
             Label  : Gtk_Label;
             Group  : Gtk_Size_Group;
-            Hbox   : Gtk_Hbox;
             Button : Gtk_Widget;
 
             type Ent_Array
                is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
             Ent : Ent_Array;
 
+            procedure Create_Entry (N : Natural);
+            --  Create the Nth entry. N must be in Ent_Array'Range.
+
+            ------------------
+            -- Create_Entry --
+            ------------------
+
+            procedure Create_Entry (N : Natural) is
+               Arg   : constant String := Nth_Arg (Data, N);
+               Index : Natural := Arg'First;
+               Hbox  : Gtk_Hbox;
+            begin
+               Gtk_New_Hbox (Hbox, Homogeneous => False);
+               Pack_Start (Get_Vbox (Dialog), Hbox, Padding => 3);
+
+               while Index <= Arg'Last loop
+                  exit when Arg (Index) = '=';
+
+                  Index := Index + 1;
+               end loop;
+
+               Gtk_New (Label, Arg (Arg'First .. Index - 1) & ':');
+               Set_Alignment (Label, 0.0, 0.5);
+               Add_Widget (Group, Label);
+               Pack_Start (Hbox, Label, Expand => False, Padding => 3);
+
+               Gtk_New (Ent (N));
+               Set_Text (Ent (N), Arg (Index + 1 .. Arg'Last));
+
+               Set_Activates_Default (Ent (N),  True);
+               Pack_Start (Hbox, Ent (N), Padding => 10);
+            end Create_Entry;
+
          begin
             Name_Parameters (Data, Input_Dialog_Cmd_Parameters);
-            Gtk_New (Dialog,
-                     Title  => Nth_Arg (Data, 1),
-                     Parent => Get_Main_Window (Kernel),
-                     Flags  => Modal);
 
-            Gtk_New (Label, Nth_Arg (Data, 1));
+            Gtk_New (Label);
+            Set_Markup (Label, Nth_Arg (Data, 1));
+
+            Gtk_New
+              (Dialog,
+               Title  => Get_Text (Label),
+               Parent => Get_Main_Window (Kernel),
+               Flags  => Modal);
+
             Set_Alignment (Label, 0.0, 0.5);
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+            Pack_Start
+              (Get_Vbox (Dialog), Label, Expand => True, Padding => 10);
 
             Gtk_New (Group);
 
             for Num in Ent'Range loop
-               Gtk_New_Hbox (Hbox, Homogeneous => False);
-               Pack_Start (Get_Vbox (Dialog), Hbox);
-
-               Gtk_New (Label, Nth_Arg (Data, Num) & ':');
-               Set_Alignment (Label, 0.0, 0.5);
-               Add_Widget (Group, Label);
-               Pack_Start (Hbox, Label, Expand => False);
-
-               Gtk_New (Ent (Num));
-               Set_Activates_Default (Ent (Num),  True);
-               Pack_Start (Hbox, Ent (Num));
+               Create_Entry (Num);
             end loop;
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
