@@ -178,45 +178,46 @@ ident (pos := pos1, env := env1, ident := ident, object := noobject (...)) :-
    put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
       PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      "?", GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      "?", GetCStr (ident), null, current_file, (int) pos1.Line, (int) posl.Column, acc);
    .
 ident (pos := pos1, env := env1, ident := ident, object :=
    object (object := parameter (env := env2, pos := pos2))) :-
    put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, (int) posl.Column, acc);
    .
 ident (pos := pos1, ident := ident, object :=
    object (object := variable (env := e, pos := pos2))) :-
    e->Kind == kenv2 && Tree_IsType (e->env2.env1->env.object, ktype_decl);
    put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      get_class_name (e), GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      get_class_name (e), GetCStr (ident), null, current_file, (int) pos1.Line, (int) posl.Column, acc);
    .
 ident (pos := pos1, env := env1, ident := ident, object :=
    object (object := variable (env := env2, pos := pos2))) :-
    put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, (int)posl.Column, acc);
    .
 ident (pos := pos1, env := env1, ident := ident, object :=
    object (object := labeled_stmt (env := env2, pos := pos2))) :-
    put_cross_ref (PAF_REF_TO_CONSTANT, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, GetCStr (ident), null, current_file, (int) pos1.Line, PAF_REF_READ);
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, (int)posl.Column, PAF_REF_READ);
    .
 ident (pos := pos1, env := env1, ident := ident, object :=
    object (object := function (env := env2, decl_list := decl_list))) :-
    to_types  (decl_list, ref_arg_types);
    put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      get_class_name (env2), GetCStr (ident), ref_arg_types, current_file, (int) pos1.Line, acc);
+      get_class_name (env2), GetCStr (ident), ref_arg_types, current_file, (int) pos1.Line, (int) posl.Column, acc);
    .
 ident (pos := pos1, env := env1, ident := ident, object :=
    object (object := type_decl (env := env2, pos := pos2))) :-
    put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, 
+      (int) posl.Column, acc);
    .
 ident (pos := pos1, env := env1, ident := ident, object :=
    object (object := ident (env := env2, pos := pos2))) ;
@@ -224,7 +225,8 @@ ident (pos := pos1, env := env1, ident := ident, object :=
    object (object := qualification (env := env2, pos := pos2))) :-
    put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, GetCStr (ident), null, current_file, (int) pos1.Line, PAF_REF_READ);
+      null, GetCStr (ident), null, current_file, (int) pos1.Line,
+      (int) posl.Column,  PAF_REF_READ);
    .
 qualification (pos := pos1, env := env1, qualified_symbol :=
    qualified_symbol (object := object (object := type_decl (ident := i))),
@@ -232,7 +234,8 @@ qualification (pos := pos1, env := env1, qualified_symbol :=
    put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
      PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      GetCStr (i), GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      GetCStr (i), GetCStr (ident), null, current_file, (int) pos1.Line, 
+      (int) posl.Column, acc);
    .
 qualification (pos := pos1, env := env1, qualified_symbol :=
    qualified_symbol (object := object (object :=
@@ -242,7 +245,8 @@ qualification (pos := pos1, env := env1, qualified_symbol :=
    put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
      PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      ref_class, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      ref_class, GetCStr (ident), null, current_file, (int) pos1.Line, 
+      (int) posl.Column, acc);
    .
 qualification (pos := pos1, env := env1, qualified_symbol :=
    qualified_symbol, ident := ident, object := noobject (...)) :-
@@ -250,14 +254,15 @@ qualification (pos := pos1, env := env1, qualified_symbol :=
    put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
    PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      ref_class, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      ref_class, GetCStr (ident), null, current_file, (int) pos1.Line, 
+      (int) posl.Column, acc);
    .
 qualification (pos := pos1, env := env1, qualified_symbol :=
    qualified_symbol, ident := ident, object :=
    object (object := variable (env := env2, pos := pos2))) :-
    put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      get_class_name (env2), GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+      get_class_name (env2), GetCStr (ident), null, current_file, (int) pos1.Line, (int) posl.Column, acc);
    .
 qualification (pos := pos1, env := env1, qualified_symbol :=
    qualified_symbol, ident := ident, object :=
@@ -265,7 +270,7 @@ qualification (pos := pos1, env := env1, qualified_symbol :=
    to_types (decl_list, ref_arg_types);
    put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      get_class_name (env2), GetCStr (ident), ref_arg_types, current_file, (int) pos1.Line, acc);
+      get_class_name (env2), GetCStr (ident), ref_arg_types, current_file, (int) pos1.Line, (int) posl.Column, acc);
    .
 
 FUNCTION get_class_name (envs) tString
@@ -410,14 +415,15 @@ variable (env := env2 (env1 := e), next := next, ident := i, pos := pos, express
    put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
       get_class_name_2 (e->env.object), GetCStr (i), null, current_file,
-      (int) pos.Line, PAF_REF_WRITE);
+      (int) pos.Line, (int) pos.Column, PAF_REF_WRITE);
    Traverse (expression);
    Traverse (next);
    .
 variable (next := next, ident := ident, pos := pos, expression := expression) :-
    put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, GetCStr (ident), null, current_file, (int) pos.Line, PAF_REF_WRITE);
+      null, GetCStr (ident), null, current_file, (int) pos.Line, 
+      (int) pos.Column, PAF_REF_WRITE);
    Traverse (expression);
    Traverse (next);
    .
@@ -515,11 +521,13 @@ q: qualification (qualified_symbol := qualified_symbol, ident := ident, pos := p
    to_types (qualified_symbol, ref_class);
    put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, ref_class, null, current_file, (int) qualified_symbol::pos.Line, acc);
+      null, ref_class, null, current_file, (int) qualified_symbol::pos.Line, 
+      (int) qualified_symbol::pos.Column, acc);
    put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
       PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      ref_class, GetCStr (ident), null, current_file, (int) pos.Line, acc);
+      ref_class, GetCStr (ident), null, current_file, (int) pos.Line, 
+      (int) pos.Column, acc);
    .
 q: qualification (...) :-
    Tqualification (q);
@@ -595,7 +603,8 @@ select (pos := pos, env := env, expression := expression: expression_c, ident :=
    put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
       PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      "?", GetCStr (ident), null, current_file, (int) pos.Line, acc);
+      "?", GetCStr (ident), null, current_file, (int) pos.Line, 
+      (int) pos.Column, acc);
    .
 get_class_of_expr (pos := pos, env := env, expression := expression: expression_c) :-
    no_of_args_save: short; no_of_args_save := no_of_args; no_of_args := -1;
@@ -656,13 +665,15 @@ ident (env := env, ident := ident, pos := pos, object := object) :-
    object := IdentifyWhole (ident, env);
    put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, GetCStr (ident), null, current_file, (int) pos.Line, PAF_REF_READ);
+      null, GetCStr (ident), null, current_file, (int) pos.Line,
+      (int) pos.Column, PAF_REF_READ);
    .
 q: qualification (pos := pos) :-
    to_types (q, ref_sym);
    put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, ref_sym, null, current_file, (int) pos.Line, PAF_REF_READ);
+      null, ref_sym, null, current_file, (int) pos.Line,
+      (int) pos.Column, PAF_REF_READ);
    .
 type_name (next := next, named_type := named_type (qualified_symbol := qualified_symbol)) :-
    Tclass (qualified_symbol);
@@ -684,7 +695,8 @@ q: qualified_symbol (pos := pos) :-
    to_types (q, ref_sym);
    put_cross_ref (PAF_REF_TO_EXCEPTION, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
       cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
-      null, ref_sym, null, current_file, (int) pos.Line, acc);
+      null, ref_sym, null, current_file, (int) pos.Line,
+      (int) pos.Column, acc);
    .
 type_name (next := next, named_type := named_type) :-
    Texception (named_type);

@@ -597,7 +597,7 @@ static void use_object
 /* line 177 "java.puma" */
   {
 /* line 178 "java.puma" */
-   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, "?", GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, acc);
+   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, "?", /*what*/ GetCStr (yyP11->ident.ident), /*arg_types*/null, /*file*/current_file, /*lineno*/(int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, /*acc*/acc);
   }
    return;
 
@@ -609,7 +609,7 @@ static void use_object
 /* line 183 "java.puma" */
   {
 /* line 185 "java.puma" */
-   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -620,7 +620,7 @@ static void use_object
    if (! (yyP11->ident.object->object.object->variable.env -> Kind == kenv2 && Tree_IsType (yyP11->ident.object->object.object->variable.env -> env2 . env1 -> env . object, ktype_decl))) goto yyL3;
   {
 /* line 192 "java.puma" */
-   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->ident.object->object.object->variable.env), GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->ident.object->object.object->variable.env), GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
   }
    return;
@@ -629,7 +629,7 @@ yyL3:;
 /* line 196 "java.puma" */
   {
 /* line 198 "java.puma" */
-   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -637,7 +637,7 @@ yyL3:;
 /* line 202 "java.puma" */
   {
 /* line 204 "java.puma" */
-   put_cross_ref (PAF_REF_TO_CONSTANT, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, PAF_REF_READ);
+   put_cross_ref (PAF_REF_TO_CONSTANT, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, PAF_REF_READ);
   }
    return;
 
@@ -649,7 +649,7 @@ yyL3:;
 /* line 210 "java.puma" */
    to_types (yyP11->ident.object->object.object->function.decl_list, ref_arg_types);
 /* line 211 "java.puma" */
-   put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->ident.object->object.object->function.env), GetCStr (yyP11->ident.ident), ref_arg_types, current_file, (int)  yyP11->ident.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->ident.object->object.object->function.env), GetCStr (yyP11->ident.ident), ref_arg_types, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -659,7 +659,7 @@ yyL3:;
 /* line 215 "java.puma" */
   {
 /* line 217 "java.puma" */
-   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -667,7 +667,7 @@ yyL3:;
 /* line 221 "java.puma" */
   {
 /* line 225 "java.puma" */
-   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, PAF_REF_READ);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, PAF_REF_READ);
   }
    return;
 
@@ -675,7 +675,7 @@ yyL3:;
 /* line 221 "java.puma" */
   {
 /* line 225 "java.puma" */
-   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, PAF_REF_READ);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP11->ident.ident), null, current_file, (int)  yyP11->ident.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, PAF_REF_READ);
   }
    return;
 
@@ -690,7 +690,7 @@ yyL3:;
 /* line 229 "java.puma" */
   {
 /* line 232 "java.puma" */
-   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, GetCStr (yyP11->qualification.qualified_symbol->qualified_symbol.object->object.object->type_decl.ident), GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, acc);
+   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, GetCStr (yyP11->qualification.qualified_symbol->qualified_symbol.object->object.object->type_decl.ident), GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -702,7 +702,7 @@ yyL3:;
 /* line 241 "java.puma" */
    to_types (yyP11->qualification.qualified_symbol->qualified_symbol.object->object.object->decl.type->named_type.qualified_symbol, ref_class);
 /* line 242 "java.puma" */
-   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, ref_class, GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, acc);
+   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, ref_class, GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -714,7 +714,7 @@ yyL3:;
 /* line 249 "java.puma" */
    to_types (yyP11->qualification.qualified_symbol, ref_class);
 /* line 250 "java.puma" */
-   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, ref_class, GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, acc);
+   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, ref_class, GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -724,7 +724,7 @@ yyL3:;
 /* line 255 "java.puma" */
   {
 /* line 258 "java.puma" */
-   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->qualification.object->object.object->variable.env), GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->qualification.object->object.object->variable.env), GetCStr (yyP11->qualification.ident), null, current_file, (int)  yyP11->qualification.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -735,7 +735,7 @@ yyL3:;
 /* line 265 "java.puma" */
    to_types (yyP11->qualification.object->object.object->function.decl_list, ref_arg_types);
 /* line 266 "java.puma" */
-   put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->qualification.object->object.object->function.env), GetCStr (yyP11->qualification.ident), ref_arg_types, current_file, (int)  yyP11->qualification.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name (yyP11->qualification.object->object.object->function.env), GetCStr (yyP11->qualification.ident), ref_arg_types, current_file, (int)  yyP11->qualification.pos . Line, /*charno*/(int) yyP11->ident.pos.Column, acc);
   }
    return;
 
@@ -1117,7 +1117,7 @@ void Traverse
 /* line 409 "java.puma" */
   {
 /* line 410 "java.puma" */
-   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name_2 (yyP16->variable.env->env2.env1 -> env . object), GetCStr (yyP16->variable.ident), null, current_file, (int)  yyP16->variable.pos . Line, PAF_REF_WRITE);
+   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, get_class_name_2 (yyP16->variable.env->env2.env1 -> env . object), GetCStr (yyP16->variable.ident), null, current_file, (int)  yyP16->variable.pos . Line, /*charno*/(int) yyP16->ident.pos.Column, PAF_REF_WRITE);
 /* line 414 "java.puma" */
    Traverse (yyP16->variable.expression);
 /* line 415 "java.puma" */
@@ -1129,7 +1129,7 @@ void Traverse
 /* line 417 "java.puma" */
   {
 /* line 418 "java.puma" */
-   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP16->variable.ident), null, current_file, (int)  yyP16->variable.pos . Line, PAF_REF_WRITE);
+   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP16->variable.ident), null, current_file, (int)  yyP16->variable.pos . Line, /*charno*/(int) yyP16->ident.pos.Column, PAF_REF_WRITE);
 /* line 421 "java.puma" */
    Traverse (yyP16->variable.expression);
 /* line 422 "java.puma" */
@@ -1377,9 +1377,9 @@ void Traverse
 /* line 515 "java.puma" */
    to_types (yyP16->qualification.qualified_symbol, ref_class);
 /* line 516 "java.puma" */
-   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, ref_class, null, current_file, (int)  yyP16->qualification.qualified_symbol->qualified_symbol.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, ref_class, null, current_file, (int)  yyP16->qualification.qualified_symbol->qualified_symbol.pos . Line, /*charno*/(int) yyP16->ident.pos.Column, acc);
 /* line 519 "java.puma" */
-   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, ref_class, GetCStr (yyP16->qualification.ident), null, current_file, (int)  yyP16->qualification.pos . Line, acc);
+   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, ref_class, GetCStr (yyP16->qualification.ident), null, current_file, (int)  yyP16->qualification.pos . Line, /*charno*/(int) yyP16->ident.pos.Column, acc);
   }
   }
    return;
@@ -1616,7 +1616,7 @@ yyL46:;
 /* line 594 "java.puma" */
    no_of_args = no_of_args_save;
 /* line 595 "java.puma" */
-   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, "?", GetCStr (yyP16->select.ident), null, current_file, (int)  yyP16->select.pos . Line, acc);
+   put_cross_ref (no_of_args >= 0 ? PAF_REF_TO_MBR_FUNC : PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, "?", GetCStr (yyP16->select.ident), null, current_file, (int)  yyP16->select.pos . Line, /*charno*/(int) yyP16->ident.pos.Column, acc);
   }
    return;
  }
@@ -1798,7 +1798,7 @@ static void Tclass
 /* line 656 "java.puma" */
    yyP18->ident.object = IdentifyWhole (yyP18->ident.ident, yyP18->ident.env);
 /* line 657 "java.puma" */
-   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP18->ident.ident), null, current_file, (int)  yyP18->ident.pos . Line, PAF_REF_READ);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, GetCStr (yyP18->ident.ident), null, current_file, (int)  yyP18->ident.pos . Line, /*charno*/(int) yyP18->ident.pos.Column, PAF_REF_READ);
   }
    return;
 
@@ -1809,7 +1809,7 @@ static void Tclass
 /* line 662 "java.puma" */
    to_types (yyP18, ref_sym);
 /* line 663 "java.puma" */
-   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, ref_sym, null, current_file, (int)  yyP18->qualification.pos . Line, PAF_REF_READ);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, ref_sym, null, current_file, (int)  yyP18->qualification.pos . Line, /*charno*/(int) yyP18->ident.pos.Column, PAF_REF_READ);
   }
    return;
 
@@ -1861,7 +1861,7 @@ static void Texception
 /* line 684 "java.puma" */
    to_types (yyP19, ref_sym);
 /* line 685 "java.puma" */
-   put_cross_ref (PAF_REF_TO_EXCEPTION, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, ref_sym, null, current_file, (int)  yyP19->qualified_symbol.pos . Line, acc);
+   put_cross_ref (PAF_REF_TO_EXCEPTION, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_method_ptr, cur_arg_types_ptr, null, ref_sym, null, current_file, (int)  yyP19->qualified_symbol.pos . Line, /*charno*/(int) yyP19->ident.pos.Column, acc);
   }
    return;
 

@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 			   sn_host,sn_pid);
 		}
 		else
-			Paf_db_init_tables(db_prefix,cachesize, NULL);
+			Paf_db_init_tables(db_prefix,cachesize, NULL, 0);
 
 		if (list_fp)
 		{
