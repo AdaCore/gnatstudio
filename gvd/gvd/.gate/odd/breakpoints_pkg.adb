@@ -232,7 +232,7 @@ begin
       Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox2, Breakpoints.Add_Location);
 
-   Gtk_New (Breakpoints.Update_Location, -"Update");
+   Gtk_New (Breakpoints.Update_Location, -"Apply");
    Set_Relief (Breakpoints.Update_Location, Relief_Normal);
    Set_Sensitive (Breakpoints.Update_Location, False);
    Set_Flags (Breakpoints.Update_Location, Can_Default);
@@ -319,7 +319,7 @@ begin
       Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox3, Breakpoints.Add_Watchpoint);
 
-   Gtk_New (Breakpoints.Update_Watchpoint, -"Update");
+   Gtk_New (Breakpoints.Update_Watchpoint, -"Apply");
    Set_Relief (Breakpoints.Update_Watchpoint, Relief_Normal);
    Set_Sensitive (Breakpoints.Update_Watchpoint, False);
    Set_Flags (Breakpoints.Update_Watchpoint, Can_Default);
@@ -422,7 +422,7 @@ begin
       Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox4, Breakpoints.Add_Exception);
 
-   Gtk_New (Breakpoints.Update_Exception, -"Update");
+   Gtk_New (Breakpoints.Update_Exception, -"Apply");
    Set_Relief (Breakpoints.Update_Exception, Relief_Normal);
    Set_Sensitive (Breakpoints.Update_Exception, False);
    Set_Flags (Breakpoints.Update_Exception, Can_Default);
