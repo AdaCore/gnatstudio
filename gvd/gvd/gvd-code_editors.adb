@@ -152,7 +152,11 @@ package body GVD.Code_Editors is
    procedure Set_Line
      (Editor      : access Code_Editor_Record;
       Line        : Natural;
-      Set_Current : Boolean := True) is
+      Set_Current : Boolean := True)
+   is
+      Top : constant GVD_Main_Window :=
+        GVD_Main_Window (Debugger_Process_Tab (Editor.Process).Window);
+
    begin
       Editor.Source_Line := Line;
 
@@ -166,7 +170,9 @@ package body GVD.Code_Editors is
             Highlight_Address_Range (Editor.Asm, Line);
          end if;
 
-         Set_Current_Line (Editor.Explorer, Line);
+         if Top.Standalone then
+            Set_Current_Line (Editor.Explorer, Line);
+         end if;
 
          --  Highlight the background of the current source line
          Highlight_Current_Line (Editor.Source);
@@ -254,20 +260,26 @@ package body GVD.Code_Editors is
      (Editor      : access Code_Editor_Record;
       File_Name   : String;
       Set_Current : Boolean := True;
-      Force       : Boolean := False) is
+      Force       : Boolean := False)
+   is
+      Top : constant GVD_Main_Window :=
+        GVD_Main_Window (Debugger_Process_Tab (Editor.Process).Window);
+
    begin
       Load_File (Editor.Source, File_Name, Set_Current, Force);
 
-      --  Create the explorer tree.
-      if Set_Current then
-         Set_Current_File (Editor.Explorer, File_Name);
-      end if;
+      --  Create the explorer tree
 
-      if not Get_Pref (Display_Explorer) then
-         Hide (Editor.Explorer_Scroll);
+      if Top.Standalone and then Set_Current then
+         Set_Current_File (Editor.Explorer, File_Name);
+
+         if not Get_Pref (Display_Explorer) then
+            Hide (Editor.Explorer_Scroll);
+         end if;
       end if;
 
       --  Update the name of the source file in the frame.
+
       Update_Editor_Frame (Process => Debugger_Process_Tab (Editor.Process));
    end Load_File;
 
