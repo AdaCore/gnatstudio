@@ -203,6 +203,16 @@ package Entities is
    --  Whether Kind represents a reference that indicates the end of scope for
    --  an entity (either for its spec or its body)
 
+   function Is_Real_Reference (Kind : Reference_Kind) return Boolean;
+   pragma Inline (Is_Real_Reference);
+   --  Whether the reference corresponds to the entity itself. Some of the
+   --  references might in fact reference other entities, like the parameters
+   --  for a subprogram for instance.
+
+   function Is_Parameter_Reference (Kind : Reference_Kind) return Boolean;
+   pragma Inline (Is_Parameter_Reference);
+   --  Whether Kind represents a parameter to a subprogram
+
    -------------
    -- LI_File --
    -------------

@@ -89,6 +89,34 @@ package body Entities is
    --  True if the matching entity indicates an end-of-scope (end of subprogram
    --  declaration, end of record definition, ...)
 
+   Is_Real_Reference_Array : constant array (Reference_Kind) of Boolean :=
+     (Reference                                => True,
+      Instantiation_Reference                  => True,
+      Modification                             => True,
+      Body_Entity                              => True,
+      Completion_Of_Private_Or_Incomplete_Type => True,
+      Type_Extension                           => True,
+      Label                                    => True,
+      With_Line                                => True,
+      others                                   => False);
+   --  See Is_Real_Reference
+
+   Is_Parameter_Array : constant array (Reference_Kind) of Boolean :=
+     (Subprogram_In_Parameter                  => True,
+      Subprogram_In_Out_Parameter              => True,
+      Subprogram_Out_Parameter                 => True,
+      Subprogram_Access_Parameter              => True,
+      others                                   => False);
+
+   ----------------------------
+   -- Is_Parameter_Reference --
+   ----------------------------
+
+   function Is_Parameter_Reference (Kind : Reference_Kind) return Boolean is
+   begin
+      return Is_Parameter_Array (Kind);
+   end Is_Parameter_Reference;
+
    ----------------------
    -- Is_End_Reference --
    ----------------------
@@ -97,6 +125,15 @@ package body Entities is
    begin
       return Is_End_Reference_Array (Kind);
    end Is_End_Reference;
+
+   -----------------------
+   -- Is_Real_Reference --
+   -----------------------
+
+   function Is_Real_Reference (Kind : Reference_Kind) return Boolean is
+   begin
+      return Is_Real_Reference_Array (Kind);
+   end Is_Real_Reference;
 
    --------------
    -- Get_Name --
