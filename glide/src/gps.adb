@@ -62,6 +62,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Welcome;                   use Welcome;
 with DDE;
 with GUI_Utils;                 use GUI_Utils;
+with Remote_Connections;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -97,6 +98,7 @@ with Codefix_Module;
 with Python_Module;
 with KeyManager_Module;
 --  with Docgen_Module;
+with SSH_Protocol;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -870,6 +872,10 @@ procedure GPS is
 
       Glide_Kernel.Console.Register_Module (GPS.Kernel);
 
+      --  Register the remote protcols early so that other modules can access
+      --  remote files.
+      SSH_Protocol.Register_Protocol;
+
       --  Register all modules (scripting languages must be registered first)
 
       Shell_Script.Register_Module (GPS.Kernel);
@@ -1241,6 +1247,8 @@ procedure GPS is
 
       Projects.Registry.Finalize;
       Traces.Finalize;
+
+      Remote_Connections.Close_All_Connections;
 
       --  In case of a normal exit, rename log.<pid> as log to avoid
       --  generating a new log file for each session; this way we still
