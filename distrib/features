@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- Better handling of long contextual menus
+
 - C213-012 Ability to launch any external editor
 
 - C109-012 Ability to force saving of a read-only file
