@@ -33,7 +33,6 @@ with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Types;              use Gtkada.Types;
-with Pango.Enums;
 
 with Basic_Types;               use Basic_Types;
 with Language;                  use Language;
@@ -65,19 +64,6 @@ package body Src_Editor_Buffer is
    Me : constant Debug_Handle := Create ("Source_Editor_Buffer");
 
    package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
-
-   -----------------
-   -- Preferences --
-   -----------------
-
-   Default_Keyword_Font_Attr : constant Font_Attributes :=
-     To_Font_Attributes (Weight => Pango.Enums.Pango_Weight_Bold);
-   Default_Comment_Font_Attr : constant Font_Attributes :=
-     To_Font_Attributes (Style => Pango.Enums.Pango_Style_Italic);
-   Default_String_Font_Attr  : constant Font_Attributes := To_Font_Attributes;
-   Default_Character_Font_Attr : constant Font_Attributes :=
-     To_Font_Attributes;
-   --  <preferences>
 
    --------------------
    -- Signal Support --
@@ -925,18 +911,17 @@ package body Src_Editor_Buffer is
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
+
       Create_Syntax_Tags
         (B.Syntax_Tags,
          Keyword_Color       => Get_Pref (Kernel, Default_Keyword_Color),
-         Keyword_Font_Attr   => Default_Keyword_Font_Attr,
+         Keyword_Font_Desc   => Get_Pref (Kernel, Keyword_Font),
          Comment_Color       => Get_Pref (Kernel, Default_Comment_Color),
-         Comment_Font_Attr   => Default_Comment_Font_Attr,
+         Comment_Font_Desc   => Get_Pref (Kernel, Comment_Font),
          Character_Color     => Get_Pref (Kernel, Default_Character_Color),
-         Character_Font_Attr => Default_Character_Font_Attr,
+         Character_Font_Desc => Get_Pref (Kernel, Character_Font),
          String_Color        => Get_Pref (Kernel, Default_String_Color),
-         String_Font_Attr    => Default_String_Font_Attr);
-      --  ??? Use preferences for the font attributes...
-
+         String_Font_Desc    => Get_Pref (Kernel, String_Font));
 
       --  Connect timeout, to handle automatic saving of buffer
 
