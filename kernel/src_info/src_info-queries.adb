@@ -162,6 +162,26 @@ package body Src_Info.Queries is
       return E_Declaration_Info_List;
    --  Return the list of declarations for a specific source file.
 
+   function Find_Declaration
+     (List : E_Declaration_Info_List;
+      Entity : Entity_Information) return E_Declaration_Info_List;
+   --  Return the specific declaration for Entity in List, or null if no such
+   --  declaration was found.
+
+   function Find_Declaration_In_LI
+     (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
+      return E_Declaration_Info_List;
+   --  Same as above, but search in all the source files associated with
+   --  Lib_Info.
+
+   function Create
+     (Lib_Info : LI_File_Ptr; Ref : E_Reference) return Entity_Information;
+   --  Create an entity information from Ref.
+   --  Lib_Info should be the file in which the declaration associated with Ref
+   --  is found. Most of the time, this will be the LI file that used to
+   --  compute Ref in the first place.
+   --  The returned entity must be freed by the user.
+
    -------------------------
    -- Search_Is_Completed --
    -------------------------
@@ -1420,7 +1440,9 @@ package body Src_Info.Queries is
                Find_Entity_References (L.Contents, Entity, Callback);
 
             when Reference =>
-               if Is_Same_Entity (L.Decl.all, Entity) then
+               if Is_Same_Entity (L.Decl.all, Entity)
+                 and then Is_Real_Reference (L.Ref.Kind)
+               then
                   Callback (Scope_Tree_Node (L), Is_Renaming => False);
                end if;
          end case;
@@ -1731,6 +1753,63 @@ package body Src_Info.Queries is
       return Get (Iterator.Decl_Iter);
    end Get_LI;
 
+   ----------------------
+   -- Find_Declaration --
+   ----------------------
+
+   function Find_Declaration
+     (List   : E_Declaration_Info_List;
+      Entity : Entity_Information) return E_Declaration_Info_List
+   is
+      D : E_Declaration_Info_List := List;
+   begin
+      while D /= null loop
+         if Is_Same_Entity (D.Value.Declaration, Entity) then
+            return D;
+         end if;
+
+         D := D.Next;
+      end loop;
+      return null;
+   end Find_Declaration;
+
+   ----------------------------
+   -- Find_Declaration_In_LI --
+   ----------------------------
+
+   function Find_Declaration_In_LI
+     (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
+      return E_Declaration_Info_List
+   is
+      D : E_Declaration_Info_List;
+      S : File_Info_Ptr_List;
+   begin
+      if Lib_Info.LI.Spec_Info /= null then
+         D := Find_Declaration (Lib_Info.LI.Spec_Info.Declarations, Entity);
+         if D /= null then
+            return D;
+         end if;
+      end if;
+
+      if Lib_Info.LI.Body_Info /= null then
+         D := Find_Declaration (Lib_Info.LI.Body_Info.Declarations, Entity);
+         if D /= null then
+            return D;
+         end if;
+      end if;
+
+      S := Lib_Info.LI.Separate_Info;
+      while S /= null loop
+         D := Find_Declaration (S.Value.Declarations, Entity);
+         if D /= null then
+            return D;
+         end if;
+         S := S.Next;
+      end loop;
+
+      return null;
+   end Find_Declaration_In_LI;
+
    ----------
    -- Next --
    ----------
@@ -1779,17 +1858,12 @@ package body Src_Info.Queries is
       function Check_Declarations (Declarations : E_Declaration_Info_List)
          return E_Reference_List
       is
-         D : E_Declaration_Info_List := Declarations;
+         D : constant E_Declaration_Info_List :=
+           Find_Declaration (Declarations, Iterator.Entity);
       begin
-         while D /= null loop
-            if Is_Same_Entity
-              (D.Value.Declaration, Iterator.Entity)
-            then
-               return Next_Reference (D.Value.References);
-            end if;
-
-            D := D.Next;
-         end loop;
+         if D /= null then
+            return Next_Reference (D.Value.References);
+         end if;
          return null;
       end Check_Declarations;
 
@@ -2646,9 +2720,9 @@ package body Src_Info.Queries is
          Iter.Uniq_List := True;
       else
          Iter.Uniq_List := False;
+         Next (Iter);
       end if;
 
-      Next (Iter);
       return Iter;
    end Find_All_Possible_Declarations;
 
@@ -2832,30 +2906,7 @@ package body Src_Info.Queries is
          Ref := Decl.References;
          while Ref /= null loop
             if Ref.Value.Kind = Parent_Package then
-
-               Internal_Find_Declaration_Or_Body
-                 (Lib_Info         => Lib_Info,
-                  File_Name        => Get_File (Ref.Value.Location),
-                  Entity_Name      => "",
-                  Line             => Get_Line (Ref.Value.Location),
-                  Column           => Get_Column (Ref.Value.Location),
-                  Check_References => False,
-                  Decl             => Decl,
-                  Ref              => Ref,
-                  Status           => Status);
-
-               if Status /= Success then
-                  return No_Entity_Information;
-
-               else
-                  return Create
-                    (File   => Get_File (Decl.Declaration.Location),
-                     Line   => Get_Line (Decl.Declaration.Location),
-                     Column => Get_Column (Decl.Declaration.Location),
-                     Name   => Decl.Declaration.Name.all,
-                     Scope  => Decl.Declaration.Scope,
-                     Kind   => Decl.Declaration.Kind);
-               end if;
+               return Create (Lib_Info, Ref.Value);
             end if;
 
             Ref := Ref.Next;
@@ -2864,5 +2915,108 @@ package body Src_Info.Queries is
 
       return No_Entity_Information;
    end Get_Parent_Package;
+
+   -------------------------------
+   -- Get_Subprogram_Parameters --
+   -------------------------------
+
+   function Get_Subprogram_Parameters
+     (Lib_Info : LI_File_Ptr; Subprogram : Entity_Information)
+      return Subprogram_Iterator
+   is
+      Iter : Subprogram_Iterator;
+      D    : E_Declaration_Info_List;
+   begin
+      Assert (Me, Lib_Info /= null, "Get_Subprogram_Parameters: null LI");
+
+      Iter.Lib_Info := Lib_Info;
+      D := Find_Declaration_In_LI (Lib_Info, Subprogram);
+
+      if D /= null then
+         Iter.Current  := D.Value.References;
+      end if;
+
+      if Iter.Current /= null
+        and then Iter.Current.Value.Kind /= Subprogram_In_Parameter
+        and then Iter.Current.Value.Kind /= Subprogram_In_Out_Parameter
+        and then Iter.Current.Value.Kind /= Subprogram_Out_Parameter
+        and then Iter.Current.Value.Kind /= Subprogram_Access_Parameter
+      then
+         Next (Iter);
+      end if;
+
+      return Iter;
+   end Get_Subprogram_Parameters;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iterator : in out Subprogram_Iterator) is
+   begin
+      if Iterator.Current /= null then
+         loop
+            Iterator.Current := Iterator.Current.Next;
+
+            exit when Iterator.Current = null;
+
+            exit when Iterator.Current.Value.Kind = Subprogram_In_Parameter
+              or else Iterator.Current.Value.Kind = Subprogram_In_Out_Parameter
+              or else Iterator.Current.Value.Kind = Subprogram_Out_Parameter
+              or else Iterator.Current.Value.Kind =
+                Subprogram_Access_Parameter;
+         end loop;
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Subprogram_Iterator) return Entity_Information is
+   begin
+      if Iterator.Current = null then
+         return No_Entity_Information;
+      else
+         return Create (Iterator.Lib_Info, Iterator.Current.Value);
+      end if;
+   end Get;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Lib_Info : LI_File_Ptr;
+      Ref      : E_Reference) return Entity_Information
+   is
+      Decl   : E_Declaration_Info;
+      R      : E_Reference_List;
+      Status : Find_Decl_Or_Body_Query_Status;
+   begin
+      Internal_Find_Declaration_Or_Body
+        (Lib_Info         => Lib_Info,
+         File_Name        => Get_File (Ref.Location),
+         Entity_Name      => "",
+         Line             => Get_Line (Ref.Location),
+         Column           => Get_Column (Ref.Location),
+         Check_References => False,
+         Decl             => Decl,
+         Ref              => R,
+         Status           => Status);
+
+      if Status /= Success then
+         return No_Entity_Information;
+
+      else
+         return Create
+           (File   => Get_File (Decl.Declaration.Location),
+            Line   => Get_Line (Decl.Declaration.Location),
+            Column => Get_Column (Decl.Declaration.Location),
+            Name   => Decl.Declaration.Name.all,
+            Scope  => Decl.Declaration.Scope,
+            Kind   => Decl.Declaration.Kind);
+      end if;
+   end Create;
 
 end Src_Info.Queries;

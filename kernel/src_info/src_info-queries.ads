@@ -304,6 +304,8 @@ package Src_Info.Queries is
    --  No_Entity_Information is returned if Entity is not a package or doesn't
    --  have a parent package.
    --
+   --  Lib_Info must already have been parsed.
+   --
    --  The returned entity must be freed by the user.
 
    ---------------------------
@@ -429,6 +431,31 @@ package Src_Info.Queries is
    procedure Destroy (Iterator : in out Dependency_Iterator);
    procedure Destroy (Iterator : in out Dependency_Iterator_Access);
    --  Free the memory occupied by the iterator.
+
+   -----------------
+   -- Subprograms --
+   -----------------
+
+   type Subprogram_Iterator is private;
+
+   function Get_Subprogram_Parameters
+     (Lib_Info   : LI_File_Ptr;
+      Subprogram : Entity_Information)
+      return Subprogram_Iterator;
+   --  Return an iterator that will get all the parameters associated with the
+   --  subprogram.
+   --  If Subprogram doesn't have any, or isn't a subprogram, the iterator will
+   --  not return any value.
+   --
+   --  Lib_Info must already have been parsed (through Create_Or_Complete_LI)
+
+   procedure Next (Iterator : in out Subprogram_Iterator);
+   --  Move to the next parameter
+
+   function Get (Iterator : Subprogram_Iterator) return Entity_Information;
+   --  Return the current parameter.
+   --  The returned value must be freed by the user
+   --  No_Entity_Information is returned if there are no more parameters
 
    ----------------
    -- Scope tree --
@@ -724,6 +751,11 @@ private
       Uniq_List   : Boolean;
       --  If True, the search will stop as soon as Current becomes null. No
       --  search will be done in other files
+   end record;
+
+   type Subprogram_Iterator is record
+      Lib_Info    : LI_File_Ptr;
+      Current     : E_Reference_List;
    end record;
 
    pragma Inline (File_Information);
