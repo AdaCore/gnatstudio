@@ -1150,7 +1150,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Button := Message_Dialog
         (-("ODD: The Other Display Debugger" & ASCII.LF & ASCII.LF &
-           "(c) 2000 by Arnaud Charlet"),
+           "(c) 2000 by Emmanuel Briot & Arnaud Charlet"),
          Help_Msg =>
            -("This is the About information box." & ASCII.LF & ASCII.LF &
              "Click on the OK button to close this window."),
