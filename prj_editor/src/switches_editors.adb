@@ -48,7 +48,6 @@ with String_Utils;         use String_Utils;
 with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
 with Basic_Types;          use Basic_Types;
 
-with Namet;                use Namet;
 with Types;                use Types;
 with Prj;                  use Prj;
 with Prj.Tree;             use Prj.Tree;
@@ -1307,7 +1306,7 @@ package body Switches_Editors is
                      Pkg_Name           => Pkg_Name,
                      Scenario_Variables =>
                        Scenario_Variables (Kernel),
-                     Attribute_Name     => Get_Name_String (Name_Switches),
+                     Attribute_Name     => Get_String (Name_Switches),
                      Values             => Args,
                      Attribute_Index    => File_Name,
                      Prepend            => False);
@@ -1317,7 +1316,7 @@ package body Switches_Editors is
                      Pkg_Name           => Pkg_Name,
                      Scenario_Variables =>
                        Scenario_Variables (Kernel),
-                     Attribute_Name     => Get_Name_String (Name_Switches),
+                     Attribute_Name     => Get_String (Name_Switches),
                      Attribute_Index    => File_Name);
                end if;
 
@@ -1327,9 +1326,9 @@ package body Switches_Editors is
                   Pkg_Name          => Pkg_Name,
                   Scenario_Variables =>
                     Scenario_Variables (Kernel),
-                  Attribute_Name    => Get_Name_String (Name_Default_Switches),
+                  Attribute_Name    => Get_String (Name_Default_Switches),
                   Values            => Args,
-                  Attribute_Index   => Get_Name_String (Language),
+                  Attribute_Index   => Get_String (Language),
                   Prepend           => False);
 
             else
@@ -1338,8 +1337,8 @@ package body Switches_Editors is
                   Pkg_Name          => Pkg_Name,
                   Scenario_Variables =>
                     Scenario_Variables (Kernel),
-                  Attribute_Name    => Get_Name_String (Name_Default_Switches),
-                  Attribute_Index   => Get_Name_String (Language));
+                  Attribute_Name    => Get_String (Name_Default_Switches),
+                  Attribute_Index   => Get_String (Language));
             end if;
          end if;
          Free (Args);

@@ -1200,7 +1200,7 @@ package body Project_Viewers is
       Prj : constant Project_Node_Id :=
         Get_Project_From_View (Project_Information (File));
 
-      Dir : constant String := Get_Name_String (Path_Name_Of (Prj));
+      Dir : constant String := Get_String (Path_Name_Of (Prj));
    begin
       if Has_Project_Information (File) then
          Gtk_New (Selector,
@@ -1211,7 +1211,7 @@ package body Project_Viewers is
 
          declare
             Name : constant String := Select_File (Selector);
-            Base : constant String := Get_Name_String (Directory_Of (Prj));
+            Base : constant String := Get_String (Directory_Of (Prj));
             Changed : Boolean;
          begin
             if Name /= "" then
@@ -1811,7 +1811,7 @@ package body Project_Viewers is
               (Project            => Project,
                Pkg_Name           => "",
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Get_Name_String (Name_Source_Dirs),
+               Attribute_Name     => Get_String (Name_Source_Dirs),
                Values             => Dirs,
                Attribute_Index    => "",
                Prepend            => False);
@@ -1823,7 +1823,7 @@ package body Project_Viewers is
            (Project            => Project,
             Pkg_Name           => "",
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Get_Name_String (Name_Source_Dirs),
+            Attribute_Name     => Get_String (Name_Source_Dirs),
             Values             => Dirs,
             Attribute_Index    => "",
             Prepend            => False);
@@ -1890,7 +1890,7 @@ package body Project_Viewers is
       if Project_View /= No_Project then
          Set_Text (Obj_Dir.Obj_Dir,
                    Name_As_Directory (GNAT.OS_Lib.Normalize_Pathname
-                    (Get_Name_String
+                    (Get_String
                      (Prj.Projects.Table (Project_View).Object_Directory))));
       else
          Set_Text (Obj_Dir.Obj_Dir, Dir_Name (Full_Project));
@@ -2003,20 +2003,20 @@ package body Project_Viewers is
 
       if Project_View = No_Project
         or else New_Dir.all /= Name_As_Directory
-        (Normalize_Pathname (Get_Name_String
+        (Normalize_Pathname (Get_String
           (Prj.Projects.Table (Project_View).Object_Directory)))
       then
          if New_Dir.all = "" then
             Delete_Attribute
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Get_Name_String (Name_Object_Dir));
+               Attribute_Name     => Get_String (Name_Object_Dir));
 
          else
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Get_Name_String (Name_Object_Dir),
+               Attribute_Name     => Get_String (Name_Object_Dir),
                Value              => New_Dir.all);
          end if;
 
@@ -2025,7 +2025,7 @@ package body Project_Viewers is
 
       if Project_View = No_Project
         or else Exec_Dir.all /= Name_As_Directory
-        (Normalize_Pathname (Get_Name_String
+        (Normalize_Pathname (Get_String
           (Prj.Projects.Table (Project_View).Exec_Directory)))
       then
          if Exec_Dir.all = "" then
@@ -2166,7 +2166,7 @@ package body Project_Viewers is
          Scenario_Variables => Scenario_Variables)
       then
          return (1 => Find_Project_Of_Package
-                 (Project, Get_Name_String (Name_Naming)));
+                 (Project, Get_String (Name_Naming)));
       else
          return (1 .. 0 => Empty_Node);
       end if;

@@ -149,7 +149,7 @@ package body Language_Handlers.Glide is
       if Lang = No_Name then
          return "";
       else
-         return Get_Name_String (Lang);
+         return Get_String (Lang);
       end if;
    end Get_Language_From_File;
 

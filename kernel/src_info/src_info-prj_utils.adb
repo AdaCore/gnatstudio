@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is  free software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -51,7 +51,7 @@ package body Src_Info.Prj_Utils is
       Extension       : String)
       return File_Name_Type
    is
-      Unit_Name : constant String := Get_Name_String (Unit_Name_Id);
+      Unit_Name : constant String := Get_String (Unit_Name_Id);
       Dot       : constant Character := '.';
 
       Index : Positive;
@@ -231,7 +231,7 @@ package body Src_Info.Prj_Utils is
          end if;
 
          if Candidate /= No_Name
-           and then Is_Direct_Source (Get_Name_String (Candidate), View)
+           and then Is_Direct_Source (Get_String (Candidate), View)
          then
             Result := Candidate;
          end if;
@@ -275,14 +275,14 @@ package body Src_Info.Prj_Utils is
          --  ??? Could be simplified if we have direct access to the default
          --  ??? naming scheme.
          if Part = Unit_Body then
-            return Get_Name_String
+            return Get_String
               (Get_Filename (Short_Uname, "-", All_Lower_Case, ".adb"));
          else
-            return Get_Name_String
+            return Get_String
               (Get_Filename (Short_Uname, "-", All_Lower_Case, ".ads"));
          end if;
       else
-         return Get_Name_String (Result);
+         return Get_String (Result);
       end if;
    end Get_Source_Filename;
 
@@ -297,9 +297,9 @@ package body Src_Info.Prj_Utils is
    begin
       --  ??? This currently assumes we are using Ada
       return Get_Filename
-        (Unit_Name, Get_Name_String (Naming.Dot_Replacement),
+        (Unit_Name, Get_String (Naming.Dot_Replacement),
          Naming.Casing,
-         Get_Name_String
+         Get_String
            (Value_Of (Snames.Name_Ada, Naming.Specification_Suffix)));
    end Get_Spec_Filename;
 
@@ -314,9 +314,9 @@ package body Src_Info.Prj_Utils is
    begin
       --  ??? This currently assumes we are using Ada
       return Get_Filename
-        (Unit_Name, Get_Name_String (Naming.Dot_Replacement),
+        (Unit_Name, Get_String (Naming.Dot_Replacement),
          Naming.Casing,
-         Get_Name_String
+         Get_String
            (Value_Of (Snames.Name_Ada, Naming.Implementation_Suffix)));
    end Get_Body_Filename;
 
@@ -329,8 +329,8 @@ package body Src_Info.Prj_Utils is
       Project  : Prj.Project_Id)
       return Name_Id
    is
-      Fname    : constant String := Get_Name_String (Filename);
-      Dot_Repl : constant String := Get_Name_String
+      Fname    : constant String := Get_String (Filename);
+      Dot_Repl : constant String := Get_String
         (Projects.Table (Project).Naming.Dot_Replacement);
       Dot      : constant Character := '.';
 

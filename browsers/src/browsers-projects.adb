@@ -35,7 +35,6 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
-with Namet;                    use Namet;
 with Prj.Tree;                 use Prj.Tree;
 with Prj_API;                  use Prj_API;
 with Project_Browsers;         use Project_Browsers;
@@ -112,7 +111,7 @@ package body Browsers.Projects is
          Get_Text_GC (Browser),
          Margin,
          Get_Ascent (Get_Text_Font (Browser)) + Margin,
-         Get_Name_String (Item.Name) & Prj.Project_File_Extension);
+         Get_String (Item.Name) & Prj.Project_File_Extension);
    end Refresh;
 
    -------------------------------
@@ -160,7 +159,7 @@ package body Browsers.Projects is
          Width, Height : Gint;
       begin
          Height := Get_Ascent (Font) + Get_Descent (Font) + 2 * Margin;
-         Width := String_Width (Font, Get_Name_String (Project_Name)
+         Width := String_Width (Font, Get_String (Project_Name)
                                 & Prj.Project_File_Extension) + 2 * Margin;
          V.Name := Project_Name;
          V.Browser := Glide_Browser (In_Browser);

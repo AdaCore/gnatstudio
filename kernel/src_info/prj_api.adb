@@ -369,7 +369,7 @@ package body Prj_API is
       Node := First_Package_Of (Project);
 
       if Node /= Empty_Node then
-         if Get_Name_String (Prj.Tree.Name_Of (Node)) = Pkg_Name then
+         if Get_String (Prj.Tree.Name_Of (Node)) = Pkg_Name then
             Current := First_Package_Of (Project);
             Set_First_Package_Of (Project, Next_Package_In_Project (Node));
          else
@@ -377,7 +377,7 @@ package body Prj_API is
                Next := Next_Package_In_Project (Node);
                exit when Next = Empty_Node;
 
-               if Get_Name_String (Prj.Tree.Name_Of (Next)) = Pkg_Name then
+               if Get_String (Prj.Tree.Name_Of (Next)) = Pkg_Name then
                   Current := Next;
                   Set_Next_Package_In_Project
                     (Node, Next_Package_In_Project (Next));
@@ -807,7 +807,7 @@ package body Prj_API is
       if File /= "" then
          Value := Get_Attribute_Value
            (Project_View   => Project,
-            Attribute_Name => Get_Name_String (Name_Switches),
+            Attribute_Name => Get_String (Name_Switches),
             Package_Name   => In_Pkg,
             Index          => File);
 
@@ -819,9 +819,9 @@ package body Prj_API is
 
       Value := Get_Attribute_Value
         (Project_View   => Project,
-         Attribute_Name => Get_Name_String (Name_Default_Switches),
+         Attribute_Name => Get_String (Name_Default_Switches),
          Package_Name   => In_Pkg,
-         Index          => Get_Name_String (Language));
+         Index          => Get_String (Language));
 
       Is_Default_Value := True;
    end Get_Switches;
@@ -1322,7 +1322,7 @@ package body Prj_API is
       Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
 
       if Dep_Name /= No_Project_Name_And_Node then
-         if Get_Name_String (Path_Name_Of (Dep_Name.Node)) /=
+         if Get_String (Path_Name_Of (Dep_Name.Node)) /=
            Format_Pathname (Imported_Project_Location)
          then
             Report_Errors
@@ -1384,10 +1384,10 @@ package body Prj_API is
          Store_String_Chars
            (Relative_Path_Name
             (Imported_Project_Location,
-             Dir_Name (Get_Name_String (Path_Name_Of (Project)))));
+             Dir_Name (Get_String (Path_Name_Of (Project)))));
       else
          Store_String_Chars
-           (Get_Name_String (Path_Name_Of (Imported_Project)));
+           (Get_String (Path_Name_Of (Imported_Project)));
       end if;
 
       Set_String_Value_Of (With_Clause, End_String);
@@ -2554,7 +2554,7 @@ package body Prj_API is
         and then Old /= Project
       then
          Report_Errors
-           (-"Couldn't rename the project to " & Get_Name_String (Name)
+           (-"Couldn't rename the project to " & Get_String (Name)
             & ASCII.LF & (-"Project already exists in the project graph"));
          return;
       end if;
@@ -3251,7 +3251,7 @@ package body Prj_API is
 
    function Project_Name (Project_View : Project_Id) return String is
    begin
-      return Get_Name_String (Projects.Table (Project_View).Name);
+      return Get_String (Projects.Table (Project_View).Name);
    end Project_Name;
 
    ------------------
@@ -3260,7 +3260,7 @@ package body Prj_API is
 
    function Project_Path (Project_View : Project_Id) return String is
    begin
-      return Get_Name_String (Projects.Table (Project_View).Path_Name);
+      return Get_String (Projects.Table (Project_View).Path_Name);
    end Project_Path;
 
    ------------------
@@ -3269,7 +3269,7 @@ package body Prj_API is
 
    function Project_Path (Project : Project_Node_Id) return String is
    begin
-      return Get_Name_String (Directory_Of (Project));
+      return Get_String (Directory_Of (Project));
    end Project_Path;
 
    ----------------------------
@@ -3389,13 +3389,13 @@ package body Prj_API is
       Iter : Imported_Project_Iterator := Start (Project, Recursive);
    begin
       while Current (Iter) /= Empty_Node loop
-         if not Is_Regular_File (Get_Name_String
+         if not Is_Regular_File (Get_String
               (Prj.Tree.Path_Name_Of (Current (Iter))))
            or else Project_Modified (Projects_Data, Current (Iter))
          then
             Create (File, Mode => Out_File,
-                    Name => Get_Name_String
-                    (Prj.Tree.Path_Name_Of (Current (Iter))));
+                    Name => Get_String
+                      (Prj.Tree.Path_Name_Of (Current (Iter))));
             Pretty_Print
               (Project => Current (Iter),
                Eliminate_Empty_Case_Constructions => True,
@@ -3577,7 +3577,7 @@ package body Prj_API is
       if Recursive then
          return Prj.Env.Ada_Objects_Path (Project_View).all;
       elsif Projects.Table (Project_View).Object_Directory /= No_Name then
-         return Get_Name_String
+         return Get_String
            (Projects.Table (Project_View).Object_Directory);
       else
          return "";
@@ -3827,7 +3827,7 @@ package body Prj_API is
       procedure Convert_In_Section (Node : Project_Node_Id);
       --  Convert the paths found under Node
 
-      Base : constant String := Get_Name_String (Directory_Of (Project));
+      Base : constant String := Get_String (Directory_Of (Project));
       Changed : Boolean := False;
 
       ------------------
@@ -4108,7 +4108,7 @@ package body Prj_API is
 
       --  Test the separate suffix (for Ada files)
       if Suffix_Matches
-        (Source_Filename, Get_Name_String (Naming.Separate_Suffix))
+        (Source_Filename, Get_String (Naming.Separate_Suffix))
       then
          return Name_Ada;
       end if;

@@ -1773,7 +1773,7 @@ package body Project_Explorers is
       end if;
 
       Text := Create_Line_Text
-        (Get_Name_String (Projects.Table (Project).Name));
+        (Get_String (Projects.Table (Project).Name));
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
@@ -2103,12 +2103,12 @@ package body Project_Explorers is
 
          Start_String;
          Store_String_Chars
-           (Get_Name_String (Projects.Table (Project).Object_Directory));
+           (Get_String (Projects.Table (Project).Object_Directory));
 
          N := Add_Directory_Node
            (Explorer         => Explorer,
             Directory        =>
-              Get_Name_String (Projects.Table (Project).Object_Directory),
+              Get_String (Projects.Table (Project).Object_Directory),
             Parent_Node      => Node,
             Directory_String => End_String,
             Files_In_Project => null,
@@ -2550,13 +2550,13 @@ package body Project_Explorers is
                   Remove_Node (Explorer.Tree, N);
                   Start_String;
                   Store_String_Chars
-                    (Get_Name_String (Projects.Table
-                                        (Project).Object_Directory));
+                    (Get_String (Projects.Table
+                                   (Project).Object_Directory));
                   Obj := End_String;
                   Tmp := Add_Directory_Node
                     (Explorer,
-                     Directory   => Get_Name_String
-                     (Projects.Table (Prj).Object_Directory),
+                     Directory   => Get_String
+                       (Projects.Table (Prj).Object_Directory),
                      Parent_Node => Node,
                      Directory_String => Obj,
                      Files_In_Project => null,
@@ -2566,7 +2566,7 @@ package body Project_Explorers is
                   --  The list of imported project files cannot change with
                   --  the scenario, so there is nothing to be done here
                   declare
-                     Prj_Name : constant String := Get_Name_String (User.Name);
+                     Prj_Name : constant String := Get_String (User.Name);
                   begin
                      Index := Imported'First;
                      while Index <= Imported'Last loop

@@ -34,7 +34,6 @@ with Prj.Util;                 use Prj.Util;
 with Prj_API;                  use Prj_API;
 with Prj;                      use Prj;
 with Types;                    use Types;
-with Namet;                    use Namet;
 with Snames;                   use Snames;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with GUI_Utils;                use GUI_Utils;
@@ -199,7 +198,7 @@ package body Ada_Naming_Editors is
       Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
-      Naming   : constant String := Get_Name_String (Name_Naming);
+      Naming   : constant String := Get_String (Name_Naming);
       Changed  : Boolean := False;
       Ada_Scheme : constant Boolean :=
         Get_Index_In_List (Editor.Standard_Scheme) = 0;
@@ -229,7 +228,7 @@ package body Ada_Naming_Editors is
             declare
                Old : constant String := Get_Attribute_Value
                  (Project_View   => Project_View,
-                  Attribute_Name => Get_Name_String (Name),
+                  Attribute_Name => Get_String (Name),
                   Package_Name   => Naming,
                   Index          => Index);
             begin
@@ -245,14 +244,14 @@ package body Ada_Naming_Editors is
                  (Project            => Project,
                   Pkg_Name           => Naming,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Get_Name_String (Name),
+                  Attribute_Name     => Get_String (Name),
                   Attribute_Index    => Index);
             else
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
                   Pkg_Name           => Naming,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Get_Name_String (Name),
+                  Attribute_Name     => Get_String (Name),
                   Value              => Value,
                   Attribute_Index    => Index);
             end if;
@@ -283,7 +282,7 @@ package body Ada_Naming_Editors is
             Elem := List;
             while Elem /= No_Array_Element loop
                Old_Names (Current) := new String'
-                 (Get_Name_String (Prj.Array_Elements.Table (Elem).Index));
+                 (Get_String (Prj.Array_Elements.Table (Elem).Index));
                Old_Values (Current) := new String'
                  (Get_String (Prj.Array_Elements.Table (Elem).Value.Value));
                Current := Current + 1;
@@ -358,13 +357,13 @@ package body Ada_Naming_Editors is
         (Project            => Project,
          Pkg_Name           => Naming,
          Scenario_Variables => Scenario_Variables,
-         Attribute_Name     => Get_Name_String (Name_Specification),
+         Attribute_Name     => Get_String (Name_Specification),
          Attribute_Index    => Any_Attribute);
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
          Scenario_Variables => Scenario_Variables,
-         Attribute_Name     => Get_Name_String (Name_Implementation),
+         Attribute_Name     => Get_String (Name_Implementation),
          Attribute_Index    => Any_Attribute);
 
       Changed := Changed
@@ -388,7 +387,7 @@ package body Ada_Naming_Editors is
                     (Project            => Project,
                      Pkg_Name           => Naming,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute_Name    => Get_Name_String (Name_Specification),
+                     Attribute_Name     => Get_String (Name_Specification),
                      Value              => Spec,
                      Attribute_Index    => U);
                end if;
@@ -397,7 +396,7 @@ package body Ada_Naming_Editors is
                     (Project            => Project,
                      Pkg_Name           => Naming,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute_Name   => Get_Name_String (Name_Implementation),
+                     Attribute_Name     => Get_String (Name_Implementation),
                      Value              => Bod,
                      Attribute_Index    => U);
                end if;
@@ -424,7 +423,7 @@ package body Ada_Naming_Editors is
    begin
       if Data.Dot_Replacement /= No_Name then
          Set_Text (Editor.Dot_Replacement,
-                   Get_Name_String (Data.Dot_Replacement));
+                   Get_String (Data.Dot_Replacement));
       else
          Set_Text (Editor.Dot_Replacement, Default_Gnat_Dot_Replacement);
       end if;
@@ -454,7 +453,7 @@ package body Ada_Naming_Editors is
       if Data.Separate_Suffix /= No_Name then
          Set_Text
            (Get_Entry (Editor.Separate_Extension),
-            Get_Name_String (Data.Separate_Suffix));
+            Get_String (Data.Separate_Suffix));
       else
          Set_Text
            (Get_Entry (Editor.Separate_Extension),
@@ -470,8 +469,10 @@ package body Ada_Naming_Editors is
             Value := Prj.Array_Elements.Table (Elem).Value;
             Row := Prepend
               (Editor.Exception_List,
-               Get_Name_String (Prj.Array_Elements.Table (Elem).Index)
+               Get_String (Prj.Array_Elements.Table (Elem).Index)
                  + Get_String (Value.Value) + "");
+            --  ??? There is a memory leak above
+
             Elem := Prj.Array_Elements.Table (Elem).Next;
          end loop;
 
@@ -481,12 +482,14 @@ package body Ada_Naming_Editors is
             Row := Find_First_Row_Matching
               (Editor.Exception_List,
                0,
-               Get_Name_String (Prj.Array_Elements.Table (Elem).Index));
+               Get_String (Prj.Array_Elements.Table (Elem).Index));
+
             if Row = -1 then
                Row := Prepend
                  (Editor.Exception_List,
-                  Get_Name_String (Prj.Array_Elements.Table (Elem).Index)
-                    + "" + Get_String (Value.Value));
+                  Get_String (Prj.Array_Elements.Table (Elem).Index)
+                  + "" + Get_String (Value.Value));
+               --  ??? There is a memory leak here
             else
                Set_Text (Editor.Exception_List, Row, 2,
                          Get_String (Value.Value));

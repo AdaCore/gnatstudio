@@ -30,7 +30,6 @@ with Gtk.GEntry;                       use Gtk.GEntry;
 with Gtk.Widget;                       use Gtk.Widget;
 with Gtkada.Types;                     use Gtkada.Types;
 with Interfaces.C.Strings;             use Interfaces.C.Strings;
-with Namet;                            use Namet;
 with Prj;                              use Prj;
 with Prj.Util;                         use Prj.Util;
 with Prj.Tree;                         use Prj.Tree;
@@ -83,8 +82,8 @@ package body Foreign_Naming_Editors is
       Project_View : Prj.Project_Id;
       Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
    is
-      Naming   : constant String := Get_Name_String (Name_Naming);
-      Lang     : constant String := Get_Name_String (Editor.Language);
+      Naming   : constant String := Get_String (Name_Naming);
+      Lang     : constant String := Get_String (Editor.Language);
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
       Bodies   : Argument_List (1 .. Integer (Num_Rows));
       Changed  : Boolean := False;
@@ -102,7 +101,7 @@ package body Foreign_Naming_Editors is
             Old_Exceptions : Argument_List := Get_Attribute_Value
               (Project_View   => Project_View,
                Attribute_Name =>
-                 Get_Name_String (Name_Implementation_Exceptions),
+                 Get_String (Name_Implementation_Exceptions),
                Package_Name   => Naming,
                Index          => Lang);
          begin
@@ -118,7 +117,7 @@ package body Foreign_Naming_Editors is
                Pkg_Name          => Naming,
                Scenario_Variables => Scenario_Variables,
                Attribute_Name    =>
-                 Get_Name_String (Name_Implementation_Exceptions),
+                 Get_String (Name_Implementation_Exceptions),
                Values            => Bodies,
                Attribute_Index   => Lang);
          else
@@ -127,7 +126,7 @@ package body Foreign_Naming_Editors is
                Pkg_Name           => Naming,
                Scenario_Variables => Scenario_Variables,
                Attribute_Name     =>
-                 Get_Name_String (Name_Implementation_Exceptions),
+                 Get_String (Name_Implementation_Exceptions),
                Attribute_Index    => Lang);
          end if;
          Changed := True;
@@ -136,7 +135,7 @@ package body Foreign_Naming_Editors is
       if Project_View = No_Project
         or else Get_Attribute_Value
         (Project_View   => Project_View,
-         Attribute_Name => Get_Name_String (Name_Specification_Suffix),
+         Attribute_Name => Get_String (Name_Specification_Suffix),
          Package_Name   => Naming,
          Index          => Lang) /=
         Get_Text (Get_Entry (Editor.Header_File_Extension))
@@ -145,7 +144,7 @@ package body Foreign_Naming_Editors is
            (Project            => Project,
             Pkg_Name           => Naming,
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
+            Attribute_Name     => Get_String (Name_Specification_Suffix),
             Value  => Get_Text (Get_Entry (Editor.Header_File_Extension)),
             Attribute_Index    => Lang);
          Changed := True;
@@ -154,7 +153,7 @@ package body Foreign_Naming_Editors is
       if Project_View = No_Project
         or else Get_Attribute_Value
         (Project_View   => Project_View,
-         Attribute_Name => Get_Name_String (Name_Implementation_Suffix),
+         Attribute_Name => Get_String (Name_Implementation_Suffix),
          Package_Name   => Naming,
          Index          => Lang) /=
         Get_Text (Get_Entry (Editor.Implementation_Extension))
@@ -163,7 +162,7 @@ package body Foreign_Naming_Editors is
            (Project            => Project,
             Pkg_Name           => Naming,
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
+            Attribute_Name     => Get_String (Name_Implementation_Suffix),
             Value    => Get_Text (Get_Entry (Editor.Implementation_Extension)),
             Attribute_Index    => Lang);
          Changed := True;
@@ -183,11 +182,11 @@ package body Foreign_Naming_Editors is
       Project_View       : Prj.Project_Id;
       Display_Exceptions : Boolean := True)
    is
-      Naming : constant String := Get_Name_String (Name_Naming);
-      Lang   : constant String := Get_Name_String (Editor.Language);
+      Naming : constant String := Get_String (Name_Naming);
+      Lang   : constant String := Get_String (Editor.Language);
       Bodies : Argument_List := Get_Attribute_Value
         (Project_View,
-         Attribute_Name => Get_Name_String (Name_Implementation_Exceptions),
+         Attribute_Name => Get_String (Name_Implementation_Exceptions),
          Package_Name   => Naming,
          Index          => Lang);
       Row  : Gint;
@@ -204,7 +203,7 @@ package body Foreign_Naming_Editors is
            (Project_View).Naming.Specification_Suffix);
       if Ext /= No_Name then
          Set_Text
-           (Get_Entry (Editor.Header_File_Extension), Get_Name_String (Ext));
+           (Get_Entry (Editor.Header_File_Extension), Get_String (Ext));
       else
          Set_Text (Get_Entry (Editor.Header_File_Extension), "");
       end if;
@@ -217,7 +216,7 @@ package body Foreign_Naming_Editors is
       if Ext /= No_Name then
          Set_Text
            (Get_Entry (Editor.Implementation_Extension),
-            Get_Name_String (Ext));
+            Get_String (Ext));
       else
          Set_Text (Get_Entry (Editor.Implementation_Extension), "");
       end if;

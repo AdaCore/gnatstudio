@@ -112,8 +112,8 @@ package body Glide_Kernel.Project is
       if Kernel.Project_Is_Default then
          return "";
       else
-         return Get_Name_String (Directory_Of (Kernel.Project))
-           & Get_Name_String (Prj.Tree.Name_Of (Kernel.Project));
+         return Get_String (Directory_Of (Kernel.Project))
+           & Get_String (Prj.Tree.Name_Of (Kernel.Project));
       end if;
    end Get_Project_File_Name;
 
@@ -135,8 +135,8 @@ package body Glide_Kernel.Project is
          if Project = Empty_Node then
             return "";
          else
-            return Get_Name_String (Directory_Of (Project))
-              & Get_Name_String (Prj.Tree.Name_Of (Project));
+            return Get_String (Directory_Of (Project))
+              & Get_String (Prj.Tree.Name_Of (Project));
          end if;
       end if;
    end Get_Subproject_Name;

@@ -341,7 +341,7 @@ package body Scenario_Selectors is
    begin
       Internal
         (Get_Object (Selector.Model), Iter'Address,
-         Project_Name_Column, Get_Name_String (Name_Of (Project)) & ASCII.NUL,
+         Project_Name_Column, Get_String (Name_Of (Project)) & ASCII.NUL,
          Selected_Column,     Boolean'Pos (Selected),
          Project_Id_Column,   Gint (Project));
    end Project_Set;

@@ -478,7 +478,7 @@ package body Src_Info.ALI is
 
       if Subunit_Name = No_Name then
          Prj := Get_Project_From_File
-           (Project, Get_Name_String (Source_Filename));
+           (Project, Get_String (Source_Filename));
 
          if Prj = No_Project then
             --  ??? We have a file that doesn't belong the an project.
@@ -573,7 +573,7 @@ package body Src_Info.ALI is
          --  Search in the Source path
 
          Filename := Get_Body_Filename (Get_Unit_Name (Spec_Id), Naming);
-         Dir := Locate_Regular_File (Get_Name_String (Filename), Source_Path);
+         Dir := Locate_Regular_File (Get_String (Filename), Source_Path);
 
          if Dir /= null then
             Free (Dir);
@@ -599,7 +599,7 @@ package body Src_Info.ALI is
       --  Else if both Spec_Id and Body_Id were null
 
       case Get_Unit_Part_From_Filename
-        (Get_Name_String (Source_Filename), Project)
+        (Get_String (Source_Filename), Project)
       is
 
          --  Is this a body, according to the naming scheme?
@@ -652,7 +652,7 @@ package body Src_Info.ALI is
                --  Search the source path
                Filename := Get_Body_Filename (Unit_Name, Naming);
                Dir :=
-                 Locate_Regular_File (Get_Name_String (Filename), Source_Path);
+                 Locate_Regular_File (Get_String (Filename), Source_Path);
 
                if Dir /= null then
                   if Filename = Source_Filename then
@@ -678,9 +678,9 @@ package body Src_Info.ALI is
 
          when Unit_Separate =>
             Trace (Me, "Get_Unit_Source_File: reached the end unexpectedly "
-                   & Get_Name_String (Source_Filename)
+                   & Get_String (Source_Filename)
                    & " in project "
-                   & Get_Name_String (Projects.Table (Project).Name));
+                   & Get_String (Projects.Table (Project).Name));
             raise ALI_Internal_Error;
       end case;
    end Get_Unit_Source_File;
@@ -693,7 +693,7 @@ package body Src_Info.ALI is
       Part             : Unit_Part;
       File             : out Source_File)
    is
-      Sname        : constant String := Get_Name_String (Source_Filename);
+      Sname        : constant String := Get_String (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
 
    begin
@@ -747,7 +747,7 @@ package body Src_Info.ALI is
       Subunit_Name     : Name_Id;
       File             : out Source_File)
    is
-      Sname        : constant String := Get_Name_String (Source_Filename);
+      Sname        : constant String := Get_String (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Filename);
       Sep          : File_Info_Ptr_List;
 
@@ -786,7 +786,7 @@ package body Src_Info.ALI is
            (Value => null, Next => File.LI.LI.Separate_Info);
          Create_File_Info
            (File.LI.LI.Separate_Info.Value, Sname,
-            Unit_Name => Get_Name_String (Subunit_Name));
+            Unit_Name => Get_String (Subunit_Name));
       end if;
 
    exception
@@ -878,8 +878,8 @@ package body Src_Info.ALI is
    begin
       Create_File_Info
         (Fi_Ptr         => New_File_Info,
-         Full_Filename  => Get_Name_String (Current_Unit.Sfile),
-         Unit_Name  => Strip_Unit_Part (Get_Name_String (Current_Unit.Uname)),
+         Full_Filename  => Get_String (Current_Unit.Sfile),
+         Unit_Name  => Strip_Unit_Part (Get_String (Current_Unit.Uname)),
          Set_Time_Stamp => False);
 
       --  Now save it in the proper place in New_LI_File
@@ -933,14 +933,14 @@ package body Src_Info.ALI is
 
       elsif New_LI_File.LI.Spec_Info /= null
         and then New_LI_File.LI.Spec_Info.Source_Filename.all =
-                   Get_Name_String (Dep.Sfile)
+                   Get_String (Dep.Sfile)
       then
          Process_Sdep_As_Self
            (New_LI_File, Id, New_LI_File.LI.Spec_Info, Sfiles);
 
       elsif New_LI_File.LI.Body_Info /= null
         and then New_LI_File.LI.Body_Info.Source_Filename.all =
-                   Get_Name_String (Dep.Sfile)
+                   Get_String (Dep.Sfile)
       then
          Process_Sdep_As_Self
            (New_LI_File, Id, New_LI_File.LI.Body_Info, Sfiles);
@@ -969,7 +969,7 @@ package body Src_Info.ALI is
       Finfo.File_Timestamp := To_Timestamp (Dep.Stamp);
 
       if Dep.Rfile /= Dep.Sfile then
-         Finfo.Original_Filename := new String'(Get_Name_String (Dep.Rfile));
+         Finfo.Original_Filename := new String'(Get_String (Dep.Rfile));
          Finfo.Original_Line := Integer (Dep.Start_Line);
       end if;
 
@@ -1016,7 +1016,7 @@ package body Src_Info.ALI is
                                Depends_From_Body => False),
          Declarations      => null);
       pragma Assert
-        (Get_Source_Filename (Sfile) = Get_Name_String (Dep.Sfile));
+        (Get_Source_Filename (Sfile) = Get_String (Dep.Sfile));
 
       New_LI_File.LI.Dependencies_Info :=
         new Dependency_File_Info_Node'
@@ -1111,7 +1111,7 @@ package body Src_Info.ALI is
 
             if Finfo.Unit_Name = null then
                Finfo.Unit_Name :=
-                 new String' (Strip_Unit_Part (Get_Name_String (W.Uname)));
+                 new String' (Strip_Unit_Part (Get_String (W.Uname)));
             end if;
 
             --  Update the Depends_From_Spec/Body flags
@@ -1134,7 +1134,7 @@ package body Src_Info.ALI is
 
       Trace (Me, "Process_With: unexpected end " & Withed_File_Name
              & " in project "
-             & Get_Name_String (Projects.Table (Project).Name));
+             & Get_String (Projects.Table (Project).Name));
       raise ALI_Internal_Error;
    end Process_With;
 
@@ -1236,7 +1236,7 @@ package body Src_Info.ALI is
 
    begin
       Decl.Name := new String'
-        (To_Lower (Get_Name_String (Xref_Ent.Entity)));
+        (To_Lower (Get_String (Xref_Ent.Entity)));
       Decl.Location :=
         (File   => Sfile,
          Line   => Positive (Xref_Ent.Line),
@@ -1434,7 +1434,7 @@ package body Src_Info.ALI is
       Sfiles         : Sdep_To_Sfile_Table
         (New_ALI.First_Sdep ..  New_ALI.Last_Sdep) :=
           (others => No_Source_File);
-      ALI_Filename   : constant String := Get_Name_String (New_ALI.Afile);
+      ALI_Filename   : constant String := Get_String (New_ALI.Afile);
 
       LI_File_Is_New : Boolean;
       LI_File_Copy   : LI_File_Constrained;
@@ -1447,7 +1447,7 @@ package body Src_Info.ALI is
          Create_LI_File
            (File               => Tmp,
             List               => List,
-            LI_Filename        => Get_Name_String (New_ALI.Afile),
+            LI_Filename        => Get_String (New_ALI.Afile),
             Handler            => LI_Handler (Handler));
          if Tmp = null then
             raise ALI_Internal_Error;
@@ -1469,12 +1469,12 @@ package body Src_Info.ALI is
            (Handler                  => LI_Handler (Handler),
             Parsed                   => True,
             LI_Filename              => new String'
-              (Base_Name (Get_Name_String (New_ALI.Afile))),
+              (Base_Name (Get_String (New_ALI.Afile))),
             Spec_Info                => null,
             Body_Info                => null,
             Separate_Info            => null,
             LI_Timestamp             => To_Timestamp
-              (File_Time_Stamp (Get_Name_String (New_ALI.Afile))),
+              (File_Time_Stamp (Get_String (New_ALI.Afile))),
             Compilation_Errors_Found => New_ALI.Compile_Errors,
             Dependencies_Info        => null);
       end if;
@@ -1536,7 +1536,7 @@ package body Src_Info.ALI is
       Extension : constant String := File_Extension (Short_ALI_Filename);
       Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
       Dot_Replacement : constant String :=
-        Get_Name_String (Projects.Table (Project).Naming.Dot_Replacement);
+        Get_String (Projects.Table (Project).Naming.Dot_Replacement);
 
    begin
       --  Compute the search path. If the objects path of the project is
@@ -1734,7 +1734,7 @@ package body Src_Info.ALI is
 
          Filename := Get_Body_Filename (Get_Unit_Name (Spec_Id), Naming);
          Dir := Locate_Regular_File
-           (Get_Name_String (Filename), Predefined_Source_Path);
+           (Get_String (Filename), Predefined_Source_Path);
 
          if Dir /= null then
             declare
@@ -1763,7 +1763,7 @@ package body Src_Info.ALI is
       --  Is this a body, according to the naming scheme?
 
       Part := Get_Unit_Part_From_Filename
-        (Get_Name_String (Source_Name_Id), Project);
+        (Get_String (Source_Name_Id), Project);
 
       if Part = Unit_Body then
          declare
@@ -1834,7 +1834,7 @@ package body Src_Info.ALI is
          Filename := Get_Body_Filename (Unit_Name, Naming);
          Dir :=
            Locate_Regular_File
-             (Get_Name_String (Filename), Predefined_Source_Path);
+             (Get_String (Filename), Predefined_Source_Path);
 
          if Dir /= null then
             declare
