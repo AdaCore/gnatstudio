@@ -593,7 +593,8 @@ available at @url{http://keithp.com/~keithp/truetype.tar.gz}
 
 @table @file
    @item $HOME/.gps
-GVD state directory
+GPS state directory
+
    @item $HOME/.gps/log
 @anchor{log file}
 Log file created automatically by GPS
@@ -612,17 +613,40 @@ remove this file.
 Directory containing the debugging sessions.
 
    @item $HOME/.gps/gtkrc
-The theme use by the gtk+ library on which gps is based. It allows you
+The theme used by the gtk+ library on which gps is based. It allows you
 to configure the colors and fonts used in your
 application. @xref{Changing Colors Fonts and Pixmaps}.
+See also @file{<prefix>/bin/gtkrc}.
 
    @item $HOME/.gps/sessions/@i{session}
 Each file in the @code{sessions} directory represents a particular session
 saved by the user.
 
-   @item $HOME/.gps/traces_conf
+   @item $HOME/.gps/traces.cfg
 Default configuration for the system traces. This traces are used to analyse
 problems with GPS. By default, they are sent to the file @file{$HOME/.gps/log}.
+
+   @item @i{prefix}
+The prefix directory where GPS is installed, e.g @file{/opt/gps}
+
+   @item @i{prefix}/bin
+The directory containing the GPS executables
+
+   @item @i{prefix}/bin/gtkrc
+The global theme used by the gtk+ library. See also @file{$HOME/.gps/gtkrc}
+
+   @item @i{prefix}/lib
+This directory contains the shared libraries used by GPS.
+
+   @item @i{prefix}/doc/gps/html
+GPS will look for all the documentation under this directory.
+
+   @item @i{prefix}/share/gps/gps-animation.gif
+Animated image displayed in the top right corner of GPS to indicate that
+actions (e.g compilation) are on going.
+
+   @item @i{prefix}/share/locale
+Directory used to retrieve the translation files, when relevant.
 
 @end table
 
