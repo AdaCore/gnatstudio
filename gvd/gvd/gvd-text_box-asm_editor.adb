@@ -352,6 +352,10 @@ package body GVD.Text_Box.Asm_Editor is
         (Editor, Editor.Current_Range.Data, Clear_Previous => False);
       Update_Child (Editor);
       Set_Busy (Process, False);
+
+   exception
+      when others =>
+         Set_Busy (Process, False);
    end On_Frame_Changed;
 
    -----------------------
