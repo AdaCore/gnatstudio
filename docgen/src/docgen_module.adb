@@ -29,7 +29,6 @@ with GPS.Intl;                  use GPS.Intl;
 with Glib.Object;               use Glib.Object;
 with VFS;                       use VFS;
 with Docgen.Work_On_File;       use Docgen.Work_On_File;
-with Docgen;                    use Docgen;
 with Entities;                  use Entities;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -38,13 +37,12 @@ with Projects;                  use Projects;
 with Glib;                      use Glib;
 with Glib.Generic_Properties;
 with Glib.Properties.Creation;  use Glib.Properties.Creation;
-with Docgen;                    use Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Docgen_Registry;           use Docgen_Registry;
 with Commands.Interactive;      use Commands, Commands.Interactive;
 with Docgen.Backend.Text;       use Docgen.Backend.Text;
+with Docgen_Registry;           use Docgen_Registry;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
 package body Docgen_Module is
