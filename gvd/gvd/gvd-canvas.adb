@@ -68,11 +68,11 @@ package body GVD.Canvas is
    type Item_Record (Name_Length : Natural) is record
       Canvas         : GVD_Canvas;
       Item           : Display_Item;
-      Component      : Items.Generic_Type_Access;
-      Component_Name : String (1 .. Name_Length);
       Mode           : Display_Mode;
       Format         : Value_Format;
       Zoom           : Guint;
+      Component      : Items.Generic_Type_Access;
+      Component_Name : String (1 .. Name_Length);
    end record;
 
    Zoom_Levels : constant array (Positive range <>) of Guint :=
