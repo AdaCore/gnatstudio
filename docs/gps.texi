@@ -12755,13 +12755,7 @@ Contains the definition of all the actions that were defined through the
 graphical interface. This is loaded last, and overrides all actions defined
 elsewhere.
 
-   @item $HOME/.gps/debugger.log
-@cindex log
-@cindex debugger
-Log file created by the integrated debugger to trace of communication between
-GPS and gdb.
-
-   @item $HOME/.gps/desktop
+   @item $HOME/.gps/desktop.xml
 Desktop file in XML format (using the menu @code{File->Save More->Desktop}),
 loaded automatically if found.
 
@@ -12774,13 +12768,6 @@ Contains the state and history of combo boxes (e.g. the
 @cindex preferences
 Contains all the preferences in XML format, as specified in the
 preferences menu.
-
-   @item $HOME/.gps/sessions
-Directory containing the debugging sessions.
-
-   @item $HOME/.gps/sessions/@i{session}
-Each file in the @code{sessions} directory represents a particular session
-saved by the user.
 
    @item $HOME/.gps/traces.cfg
 Default configuration for the system traces. These traces are used to analyze
