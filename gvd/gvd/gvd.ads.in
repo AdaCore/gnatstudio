@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2000                        --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2001                      --
+--                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -36,8 +36,10 @@ package GVD is
 
    Prefix : constant String := "@prefix@";
    --  Default prefix used e.g for finding support files like po files.
-   --  Note that this prefix can be overriden by using the GVD_ROOT
-   --  environment variable.
+   --  Note that this prefix can be overriden by using the GVD_ROOT or
+   --  GNAT_ROOT environment variables.
+
+   Source_Date : constant String := "unknown date";
 
    Max_Frame : constant := 500;
    --  Maximum number of frames displayed in the backtrace window.
