@@ -1247,14 +1247,6 @@ package body Browsers.Call_Graph is
             Remove_Result_Category
               (Kernel, Category_Title & Get_Name (Info));
 
-            if Include_Reads then
-               Print_Ref
-                 (Kernel,
-                  Get_Declaration_Of (Info),
-                  Get_Name (Info),
-                  Category_Title & Get_Name (Info));
-            end if;
-
             Ref (Info);
             Data := (Kernel         => Kernel_Handle (Kernel),
                      Iter           => new Entity_Reference_Iterator,
