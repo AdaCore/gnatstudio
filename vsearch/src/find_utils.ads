@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -186,6 +186,14 @@ package Find_Utils is
    --
    --  On exit, Was_Partial is set to True if the search was interrupted
    --  because the callback returned False.
+
+   procedure To_Line_Column
+     (Buffer       : Glib.UTF8_String;
+      Pos          : Natural;
+      Line, Column : in out Natural;
+      Line_Start   : in out Natural);
+   --  Set Line and Column to the appropriate for the Pos-th character in
+   --  Buffer.
 
    Invalid_Context : exception;
    --  Raised when trying to access the components in Search_Context
