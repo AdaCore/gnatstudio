@@ -995,7 +995,7 @@ package body Projects is
 
       Get_Name_String (Name);
       declare
-         File : constant String := Name_Buffer (1 .. Name_Len);
+         Unit : constant String := Name_Buffer (1 .. Name_Len);
       begin
          --  Search in all extended projects as well, since the other file
          --  might not be redefined in Project itself. Start from the lowest
@@ -1003,7 +1003,7 @@ package body Projects is
          P := Extending_Project (Project, Recurse => True);
          while P /= No_Project loop
             declare
-               N : constant String := Get_Filename_From_Unit (P, File, Part);
+               N : constant String := Get_Filename_From_Unit (P, Unit, Part);
             begin
                if N /= "" then
                   return N;
@@ -1012,6 +1012,22 @@ package body Projects is
 
             P := Parent_Project (P);
          end loop;
+
+         --  Default to the GNAT naming scheme (for runtime files)
+         --  ??? This isn't language independent, what if other languages have
+         --  similar requirements
+
+         declare
+            Standard : constant String := Get_Full_Path_From_File
+              (Project_Registry (Get_Registry (Project)),
+               Get_Filename_From_Unit (No_Project, Unit, Part),
+               Use_Source_Path => True,
+               Use_Object_Path => False);
+         begin
+            if Standard /= "" then
+               return Standard;
+            end if;
+         end;
 
          return File;
       end;
