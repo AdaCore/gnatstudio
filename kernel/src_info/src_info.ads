@@ -35,6 +35,8 @@ package Src_Info is
       return LI_File_Ptr;
    --  Return a pointer to the LI_File which has a source file named
    --  Source_Filename. Return No_LI_File if not found.
+   --  Note that the path to the file is ignored during the search, only
+   --  the basename is taken into account.
 
 private
 
