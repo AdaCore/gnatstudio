@@ -100,8 +100,7 @@ package body Custom_Module is
 
                if Current_Child.Tag.all = "Action" then
                   declare
-                     --  ??? where is Args freed
-                     Args : constant Argument_List_Access :=
+                     Args : Argument_List_Access :=
                        Argument_String_To_List (Current_Child.Value.all);
                      A : Argument_List_Access;
                      C : Custom_Command_Access;
@@ -117,6 +116,8 @@ package body Custom_Module is
                         Kernel_Handle (Kernel),
                         Args (Args'First).all,
                         A);
+
+                     Free (Args);
 
                      if Command = null then
                         Command := Command_Access (C);
