@@ -236,6 +236,15 @@ package Glide_Kernel.Scripts is
    --  It isn't possible to retrieve the result of that command, this command
    --  is only used for its side effect.
 
+   function Execute_Command
+     (Script  : access Scripting_Language_Record;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
+   --  Execute a command, and return its result as a displayable string.
+   --  Note: some languages might simply return an empty string if they cannot
+   --  capture the output of their interpreter. This command is mostly useful
+   --  for the GPS shell.
+
    function Get_Name (Script : access Scripting_Language_Record)
       return String is abstract;
    --  The name of the scripting language
@@ -243,6 +252,8 @@ package Glide_Kernel.Scripts is
    --------------------------
    -- Commands and methods --
    --------------------------
+
+   GPS_Shell_Name : constant String := "GPS Shell";
 
    procedure Initialize
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -283,12 +294,14 @@ package Glide_Kernel.Scripts is
       Name    : String) return Scripting_Language;
    --  Lookup one of the registered languages by name.
 
-   --  function Interpret_Command
-   --    (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-   --     Command : String;
-   --     Args    : GNAT.OS_Lib.Argument_List) return String;
-   --  Execute a command in the GPS shell, and return its result.
-
+   function Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
+   --  Execute the command in the GPS shell.
+   --  This is only intended as a simpler form of
+   --     Execute_GPS_Shell_Command
+   --       (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args)
 
    -------------------
    -- Misc services --

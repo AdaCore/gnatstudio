@@ -24,10 +24,10 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
---  with Shell_Script;         use Shell_Script;
 with Src_Info.Queries;     use Src_Info.Queries;
 with String_Hash;
 with System;               use System;
+with String_Utils;         use String_Utils;
 
 package body Glide_Kernel.Scripts is
 
@@ -137,18 +137,6 @@ package body Glide_Kernel.Scripts is
          Tmp := Tmp.Next;
       end loop;
    end Register_Command;
-
-   -----------------------
-   -- Interpret_Command --
-   -----------------------
-
-   --  function Interpret_Command
-   --    (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-   --     Command : String;
-   --     Args    : GNAT.OS_Lib.Argument_List) return String is
-   --  begin
-   --     return Execute_GPS_Shell_Command (Kernel, Command, Args);
-   --  end Interpret_Command;
 
    ---------------
    -- New_Class --
@@ -395,5 +383,35 @@ package body Glide_Kernel.Scripts is
       end if;
       return Scripting_Data (Kernel.Scripts).Entity_Class;
    end Get_Entity_Class;
+
+   -------------------------------
+   -- Execute_GPS_Shell_Command --
+   -------------------------------
+
+   function Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String is
+   begin
+      return Execute_Command
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args);
+   end Execute_GPS_Shell_Command;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Scripting_Language_Record;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String
+   is
+      Cmd : constant String := Command & ' '
+        & Argument_List_To_String (Args);
+   begin
+      Execute_Command
+        (Scripting_Language (Script), Cmd, Display_In_Console => False);
+      return "";
+   end Execute_Command;
 
 end Glide_Kernel.Scripts;
