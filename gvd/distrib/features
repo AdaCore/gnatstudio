@@ -12,6 +12,8 @@ New features in GVD 2.0.0
   while the underlying debugger is busy.
 - [9130-004] Explorer displays return type for functions.
 - A new multiple document interface (MDI) is provided.
+- The question dialogs now detects if the choices are "Yes/No" and changes
+  its display accordingly.
 
 New features in GVD 1.2.1
 
