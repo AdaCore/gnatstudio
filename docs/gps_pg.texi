@@ -167,7 +167,7 @@ new shell or python commands.
 
 Generally speaking, a module provides a limited set of features, and adds
 new GUI features in the GPS interface, like menus, toolbar buttons, contextual
-menu entries, new windows,@dots As much as possible, a menu shouldn't directly
+menu entries, new windows,@dots{} As much as possible, a menu shouldn't directly
 depend on any other module, only on the GPS kernel itself.
 
 See the file @file{glide_kernel-modules.ads} for more information on modules.
@@ -401,7 +401,7 @@ the explorer.
 Hooks are similar to the usual gtk+ signals.
 Each hook is a named collection of subprograms to be called when the hook is
 executed. Such hooks are executed by various parts of GPS when some actions
-take place, like reloading the project, loading a file,@dots
+take place, like reloading the project, loading a file,@dots{}
 
 These are the most powerful way for a module to react to actions taking place
 in other parts of GPS, and to act appropriately.
