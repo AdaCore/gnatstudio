@@ -150,6 +150,7 @@ package body Project_Explorers_Common is
       Iter : Gtk_Tree_Iter;
    begin
       Append (Model, Iter, Base);
+      Set_Node_Type (Model, Iter, Entity_Node, Expanded => False);
    end Append_Dummy_Iter;
 
    --------------------------
