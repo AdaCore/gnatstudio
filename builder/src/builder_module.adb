@@ -1122,8 +1122,7 @@ package body Builder_Module is
 
       elsif Command = "compute_xref" then
          Xref_Commands.Create
-           (C,
-            -"Computing cross-references information",
+           (C, -"Computing C/C++ xref info",
             new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
             Xref_Iterate'Access);
 
@@ -1306,7 +1305,7 @@ package body Builder_Module is
       C : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       Xref_Commands.Create
-        (C, -"Computing cross-references information",
+        (C, -"Computing C/C++ xref info",
          new Compute_Xref_Data'(Kernel, new LI_Handler_Iterator_Access, 0),
          Xref_Iterate'Access);
 
