@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,14 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  with System; use System;
 with Glib; use Glib;
 with Gdk.Event; use Gdk.Event;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gdk.Types; use Gdk.Types;
---  with Gtk.Accel_Group; use Gtk.Accel_Group;
---  with Gtk.Object; use Gtk.Object;
---  with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Combo;  use Gtk.Combo;
 with Gtk.List;   use Gtk.List;
@@ -57,7 +53,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
 
       E     : constant Naming_Scheme_Editor_Access :=
         Naming_Scheme_Editor_Access (Object);
-      List  : constant Gtk_List      := Get_List (E.Standard_Scheme);
+      List  : constant Gtk_List := Get_List (E.Standard_Scheme);
       Value : Gint;
 
    begin
@@ -102,6 +98,7 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
         Naming_Scheme_Editor_Access (Object);
       Model : Gtk_Tree_Model;
       Iter  : Gtk_Tree_Iter;
+
    begin
       Get_Selected (Get_Selection (E.Exception_List), Model, Iter);
 
