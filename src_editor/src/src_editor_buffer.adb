@@ -1286,7 +1286,7 @@ package body Src_Editor_Buffer is
             Delete_Mark (Buffer, Buffer.Start_Delimiters_Highlight);
             Delete_Mark (Buffer, Buffer.End_Delimiters_Highlight);
 
-            Remove_Tag (Buffer, Buffer.HL_Line_Tag, From, To);
+            Remove_Tag (Buffer, Buffer.Delimiter_Tag, From, To);
          end;
 
          Buffer.Has_Delimiters_Highlight := False;
@@ -1469,7 +1469,7 @@ package body Src_Editor_Buffer is
             Forward_Char (Current, Success);
             Apply_Tag
               (Buffer,
-               Buffer.HL_Line_Tag,
+               Buffer.Delimiter_Tag,
                First_Highlight_Iter,
                Current);
 
@@ -1477,7 +1477,7 @@ package body Src_Editor_Buffer is
             Backward_Char (Current, Success);
             Apply_Tag
               (Buffer,
-               Buffer.HL_Line_Tag,
+               Buffer.Delimiter_Tag,
                Current,
                Last_Highlight_Iter);
 
@@ -1487,7 +1487,7 @@ package body Src_Editor_Buffer is
                Forward_Char (On_Cursor_Iter, Success);
                Apply_Tag
                  (Buffer,
-                  Buffer.HL_Line_Tag,
+                  Buffer.Delimiter_Tag,
                   Current,
                   On_Cursor_Iter);
             end if;
@@ -1792,15 +1792,10 @@ package body Src_Editor_Buffer is
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
       end loop;
 
-      --  Create HL_Line_Tag and save it into the source buffer tag table.
+      --  Create Delimiter_Tag and save it into the source buffer tag table.
       Create_Highlight_Line_Tag
-        (Buffer.HL_Line_Tag, Get_Pref (Kernel, Default_HL_Line_Color));
-      Text_Tag_Table.Add (Tags, Buffer.HL_Line_Tag);
-
-      --  Create HL_Region_Tag and save it into the source buffer tag table.
-      Create_Highlight_Region_Tag
-        (Buffer.HL_Region_Tag, Get_Pref (Kernel, Default_HL_Region_Color));
-      Text_Tag_Table.Add (Tags, Buffer.HL_Region_Tag);
+        (Buffer.Delimiter_Tag, Get_Pref (Kernel, Delimiter_Color));
+      Text_Tag_Table.Add (Tags, Buffer.Delimiter_Tag);
 
       Gtk_New (Buffer.Non_Editable_Tag);
       Set_Property (Buffer.Non_Editable_Tag, Editable_Property, False);
@@ -2929,71 +2924,6 @@ package body Src_Editor_Buffer is
       Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
       Move_Mark_By_Name (Buffer, "insert", End_Iter);
    end Select_Region;
-
-   ----------------------
-   -- Highlight_Region --
-   ----------------------
-
-   procedure Highlight_Region
-     (Buffer : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      if not Is_Valid_Position (Buffer, Start_Line, Start_Column)
-        or else not Is_Valid_Position (Buffer, End_Line, End_Column)
-      then
-         Trace (Me, "invalid position in Highlight_Region, aborting.");
-         return;
-      end if;
-
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
-      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
-      Apply_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
-   end Highlight_Region;
-
-   ------------------------
-   -- Unhighlight_Region --
-   ------------------------
-
-   procedure Unhighlight_Region
-     (Buffer : access Source_Buffer_Record;
-      Start_Line   : Gint;
-      Start_Column : Gint;
-      End_Line     : Gint;
-      End_Column   : Gint)
-   is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      if not Is_Valid_Position (Buffer, Start_Line, Start_Column)
-        or else not Is_Valid_Position (Buffer, End_Line, End_Column)
-      then
-         Trace (Me, "invalid position in Unhighlight_Region, aborting.");
-         return;
-      end if;
-
-      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
-      Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
-      Remove_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
-   end Unhighlight_Region;
-
-   ---------------------
-   -- Unhighlight_All --
-   ---------------------
-
-   procedure Unhighlight_All (Buffer : access Source_Buffer_Record) is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-   begin
-      Get_Start_Iter (Buffer, Start_Iter);
-      Get_End_Iter (Buffer, End_Iter);
-      Remove_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
-   end Unhighlight_All;
 
    --------------------
    -- Lines_Add_Hook --
