@@ -2900,8 +2900,7 @@ package body Src_Editor_Module is
    begin
       if Mime_Type = Mime_Source_File then
          declare
-            File        : constant Virtual_File :=
-              Create (Full_Filename => Get_String (Data (Data'First)));
+            File       : constant Virtual_File := Get_File (Data (Data'First));
             Line        : constant Gint    := Get_Int (Data (Data'First + 1));
             Column      : Gint             := Get_Int (Data (Data'First + 2));
             Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
