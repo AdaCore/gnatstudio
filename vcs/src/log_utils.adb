@@ -120,7 +120,12 @@ package body Log_Utils is
       --  Add ChangeLog headers at position POS in the file buffer content.
       --  If Date_Header is True, adds also the ISO date tag.
 
-      ChangeLog   : aliased String := Dir_Name (File_Name).all & "ChangeLog";
+      function Get_GPS_User return String;
+      --  Returns the global ChangeLog user name and e-mail to use. It returns
+      --  GPS_CHANGELOG_USER environement variable value or "name  <e-mail>"
+      --  if not found or "name  <user@>" if USER environment variable is set.
+
+      ChangeLog   : aliased String  := Dir_Name (File_Name).all & "ChangeLog";
       Date_Tag    : constant String := Image (Clock, ISO_Date);
       Base_Name   : constant String := VFS.Base_Name (File_Name);
       CL_File     : Virtual_File;   -- ChangeLog file
@@ -129,9 +134,30 @@ package body Log_Utils is
       First, Last : Natural;
       F           : Natural;
 
+      function Get_GPS_User return String is
+         User : constant String := Getenv ("USER").all;
+         GCU  : constant String := Getenv ("GPS_CHANGELOG_USER").all;
+      begin
+         if GCU = "" then
+            if User = "" then
+               return "name  <e-mail>";
+            else
+               return "name  <" & User & "@>";
+            end if;
+         else
+            if GCU (GCU'First) = '"' and then GCU (GCU'Last) = '"' then
+               --  If this is quoted, remove the quotes. On Windows this will
+               --  be quoted to avoid < and > to be interpreted.
+               return GCU (GCU'First + 1 .. GCU'Last - 1);
+            else
+               return GCU;
+            end if;
+         end if;
+      end Get_GPS_User;
+
       procedure Add_Header (Pos : Positive; Date_Header : Boolean) is
          Header   : constant String :=
-           Date_Tag & "  name  <e-mail>" & ASCII.LF;
+           Date_Tag & "  " & Get_GPS_User & ASCII.LF;
          F_Header : constant String :=
            ASCII.HT & "* " & Base_Name & ':' & ASCII.LF & ASCII.HT & ASCII.LF;
 
