@@ -101,6 +101,7 @@ package body Glide_Result_View is
    Button_Column        : constant := 11;
    Action_Column        : constant := 12;
    Highlight_Column     : constant := 13;
+   Highlight_Category_Column : constant := 14;
 
    -----------------------
    -- Local subprograms --
@@ -112,6 +113,7 @@ package body Glide_Result_View is
    procedure Get_Category_File
      (View          : access Result_View_Record'Class;
       Category      : String;
+      H_Category    : String;
       File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
@@ -123,30 +125,32 @@ package body Glide_Result_View is
    --  If the category was created, New_Category is set to True.
 
    procedure Fill_Iter
-     (View          : access Result_View_Record'Class;
-      Iter          : Gtk_Tree_Iter;
-      Base_Name     : String;
-      Absolute_Name : VFS.Virtual_File;
-      Message       : String;
-      Mark          : String;
-      Line          : String;
-      Column        : String;
-      Length        : String;
-      Highlighting  : Boolean;
-      Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
+     (View               : access Result_View_Record'Class;
+      Iter               : Gtk_Tree_Iter;
+      Base_Name          : String;
+      Absolute_Name      : VFS.Virtual_File;
+      Message            : String;
+      Mark               : String;
+      Line               : String;
+      Column             : String;
+      Length             : String;
+      Highlighting       : Boolean;
+      Highlight_Category : String;
+      Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
    --  Fill information in Iter.
    --  Base_Name can be left to the empty string, it will then be computed
    --  automatically from Absolute_Name.
 
    procedure Add_Location
-     (View      : access Result_View_Record'Class;
-      Category  : String;
-      File      : VFS.Virtual_File;
-      Line      : Positive;
-      Column    : Positive;
-      Length    : Natural;
-      Highlight : Boolean;
-      Message   : String);
+     (View               : access Result_View_Record'Class;
+      Category           : String;
+      File               : VFS.Virtual_File;
+      Line               : Positive;
+      Column             : Positive;
+      Length             : Natural;
+      Highlight          : Boolean;
+      Message            : String;
+      Highlight_Category : String);
    --  Add a file locaton in Category.
    --  File is an absolute file name. If File is not currently open, do not
    --  create marks for File, but add it to the list of unresolved files
@@ -349,13 +353,6 @@ package body Glide_Result_View is
       Path_Free (File_Path);
 
       while File_Iter /= Null_Iter loop
-         Highlight_Line
-           (View.Kernel,
-            Create
-              (Full_Filename => Get_String
-                 (View.Tree.Model, File_Iter, Absolute_Name_Column)),
-            0, Category.all, False);
-
          --  Delete the marks corresponding to all locations in this file.
          Loc_Iter := Children (View.Tree.Model, File_Iter);
 
@@ -370,6 +367,16 @@ package body Glide_Result_View is
                if Mark /= "" then
                   Execute_GPS_Shell_Command (View.Kernel, "delete_mark", Args);
                end if;
+
+               Highlight_Line
+                 (View.Kernel,
+                  Create
+                    (Full_Filename => Get_String
+                       (View.Tree.Model, File_Iter, Absolute_Name_Column)),
+                  0,
+                  Get_String
+                    (View.Tree.Model, Loc_Iter, Highlight_Category_Column),
+                  False);
             end;
 
             Next (View.Tree.Model, Loc_Iter);
@@ -403,17 +410,18 @@ package body Glide_Result_View is
    ---------------
 
    procedure Fill_Iter
-     (View          : access Result_View_Record'Class;
-      Iter          : Gtk_Tree_Iter;
-      Base_Name     : String;
-      Absolute_Name : VFS.Virtual_File;
-      Message       : String;
-      Mark          : String;
-      Line          : String;
-      Column        : String;
-      Length        : String;
-      Highlighting  : Boolean;
-      Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
+     (View               : access Result_View_Record'Class;
+      Iter               : Gtk_Tree_Iter;
+      Base_Name          : String;
+      Absolute_Name      : VFS.Virtual_File;
+      Message            : String;
+      Mark               : String;
+      Line               : String;
+      Column             : String;
+      Length             : String;
+      Highlighting       : Boolean;
+      Highlight_Category : String;
+      Pixbuf             : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
    is
       function To_Proxy is new
         Ada.Unchecked_Conversion (System.Address, C_Proxy);
@@ -436,6 +444,7 @@ package body Glide_Result_View is
       Set (Model, Iter, Length_Column, Length);
       Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
       Set (Model, Iter, Highlight_Column, Highlighting);
+      Set (Model, Iter, Highlight_Category_Column, Highlight_Category);
 
       if Line = "" then
          Set (Model, Iter, Weight_Column, 400);
@@ -552,6 +561,7 @@ package body Glide_Result_View is
    procedure Get_Category_File
      (View          : access Result_View_Record'Class;
       Category      : String;
+      H_Category    : String;
       File          : VFS.Virtual_File;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
@@ -579,7 +589,8 @@ package body Glide_Result_View is
          if Create then
             Append (View.Tree.Model, Category_Iter, Null_Iter);
             Fill_Iter (View, Category_Iter, Category_UTF8, VFS.No_File,
-                       "", "", "", "", "", False, View.Category_Pixbuf);
+                       "", "", "", "", "", False,
+                       H_Category, View.Category_Pixbuf);
             New_Category := True;
          else
             return;
@@ -608,7 +619,7 @@ package body Glide_Result_View is
          Append (View.Tree.Model, File_Iter, Category_Iter);
          Fill_Iter
            (View, File_Iter, "", File, "", "", "", "", "",
-            False, View.File_Pixbuf);
+            False, H_Category, View.File_Pixbuf);
       end if;
 
       return;
@@ -619,14 +630,15 @@ package body Glide_Result_View is
    ------------------
 
    procedure Add_Location
-     (View      : access Result_View_Record'Class;
-      Category  : String;
-      File      : VFS.Virtual_File;
-      Line      : Positive;
-      Column    : Positive;
-      Length    : Natural;
-      Highlight : Boolean;
-      Message   : String)
+     (View               : access Result_View_Record'Class;
+      Category           : String;
+      File               : VFS.Virtual_File;
+      Line               : Positive;
+      Column             : Positive;
+      Length             : Natural;
+      Highlight          : Boolean;
+      Message            : String;
+      Highlight_Category : String)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
@@ -638,7 +650,8 @@ package body Glide_Result_View is
       Path               : Gtk_Tree_Path;
    begin
       Get_Category_File
-        (View, Category, File, Category_Iter, File_Iter, Category_Created);
+        (View, Category, Highlight_Category,
+         File, Category_Iter, File_Iter, Category_Created);
 
       --  Check whether the same item already exists.
 
@@ -664,7 +677,7 @@ package body Glide_Result_View is
       Append (View.Tree.Model, Iter, File_Iter);
 
       if Highlight then
-         Highlight_Line (View.Kernel, File, Line, Category);
+         Highlight_Line (View.Kernel, File, Line, Highlight_Category);
       end if;
 
       declare
@@ -675,7 +688,8 @@ package body Glide_Result_View is
            (View, Iter,
             Image (Line) & ":" & Image (Column), File,
             Message, Output,
-            Image (Line), Image (Column), Image (Length), Highlight);
+            Image (Line), Image (Column), Image (Length), Highlight,
+            Highlight_Category);
       end;
 
       if Category_Created then
@@ -773,7 +787,8 @@ package body Glide_Result_View is
          Color_Column              => Gdk_Color_Type,
          Button_Column             => Gdk.Pixbuf.Get_Type,
          Action_Column             => GType_Pointer,
-         Highlight_Column          => GType_Boolean);
+         Highlight_Column          => GType_Boolean,
+         Highlight_Category_Column => GType_String);
    end Columns_Types;
 
    ----------------
@@ -996,21 +1011,23 @@ package body Glide_Result_View is
    ------------
 
    procedure Insert
-     (View          : access Result_View_Record'Class;
-      Identifier    : String;
-      Source_File   : VFS.Virtual_File;
-      Source_Line   : Positive;
-      Source_Column : Positive;
-      Message       : String;
-      Length        : Natural;
-      Highlight     : Boolean := False) is
+     (View               : access Result_View_Record'Class;
+      Identifier         : String;
+      Source_File        : VFS.Virtual_File;
+      Source_Line        : Positive;
+      Source_Column      : Positive;
+      Message            : String;
+      Length             : Natural;
+      Highlight          : Boolean := False;
+      Highlight_Category : String := "") is
    begin
       --  Transform Source_File in an absolute file name if needed.
 
       if Is_Absolute_Path (Source_File) then
          Add_Location
            (View, Identifier, Source_File,
-            Source_Line, Source_Column, Length, Highlight, Message);
+            Source_Line, Source_Column, Length, Highlight, Message,
+            Highlight_Category);
       end if;
    end Insert;
 
@@ -1027,7 +1044,7 @@ package body Glide_Result_View is
       Dummy      : Boolean;
    begin
       Get_Category_File
-        (View, Identifier, VFS.No_File, Iter, Dummy_Iter, Dummy);
+        (View, Identifier, "", VFS.No_File, Iter, Dummy_Iter, Dummy);
       Remove_Category_Or_File_Iter (Result_View (View), Iter);
    end Remove_Category;
 
@@ -1138,6 +1155,7 @@ package body Glide_Result_View is
      (View          : access Result_View_Record'Class;
       Identifier    : String;
       Category      : String;
+      H_Category    : String;
       File          : VFS.Virtual_File;
       Line          : Natural;
       Column        : Natural;
@@ -1155,7 +1173,8 @@ package body Glide_Result_View is
       pragma Unreferenced (Identifier);
    begin
       Get_Category_File
-        (View, Category, File, Category_Iter, File_Iter, Created, False);
+        (View, Category, H_Category,
+         File, Category_Iter, File_Iter, Created, False);
 
       if Category_Iter /= Null_Iter
         and then File_Iter /= Null_Iter
