@@ -1306,7 +1306,11 @@ package body Src_Editor_View is
 
       --  If some of the data was in the display range, draw it.
 
-      Redraw_Columns (View);
+      if not (Info'Last < View.Top_Line
+                or else Info'First > View.Bottom_Line)
+      then
+         Redraw_Columns (View);
+      end if;
    end Add_File_Information;
 
    ------------------------------------
