@@ -746,6 +746,53 @@ package body Codefix_Module is
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
 
+      Add_Parser (new Agregate_Misspelling);
+      Add_Parser (new Double_Misspelling);
+      Add_Parser (new Light_Misspelling);
+      Add_Parser (new Goto_Misspelling);
+      Add_Parser (new Library_Misspelling);
+      Add_Parser (new Sth_Should_Be_Sth);
+      Add_Parser (new Should_Be_Semicolon);
+      Add_Parser (new And_Meant);
+      Add_Parser (new Or_Meant);
+      Add_Parser (new Bad_End_Block);
+      Add_Parser (new Unqualified_Expression);
+      Add_Parser (new Goes_Before);
+      Add_Parser (new Sth_Expected_3);
+      Add_Parser (new Sth_Expected_2);
+      Add_Parser (new Sth_Expected);
+      Add_Parser (new Missing_Kw);
+      Add_Parser (new Missing_Sep);
+      Add_Parser (new Missing_All);
+      Add_Parser (new Statement_Missing);
+      Add_Parser (new Space_Missing);
+      Add_Parser (new Name_Missing);
+      Add_Parser (new Double_Keyword);
+      Add_Parser (new Extra_Paren);
+      Add_Parser (new Redundant_Keyword);
+      Add_Parser (new Unexpected_Sep);
+      Add_Parser (new Unexpected_Word);
+      Add_Parser (new Kw_Not_Allowed);
+      Add_Parser (new Sep_Not_Allowed);
+      Add_Parser (new Should_Be_In);
+      Add_Parser (new Bad_Column);
+      Add_Parser (new Main_With_Missing);
+      Add_Parser (new Bad_Casing_Standard);
+      Add_Parser (new Bad_Casing_Declared);
+      Add_Parser (new Bad_Casing_Keyword);
+      Add_Parser (new Object_Not_Referenced);
+      Add_Parser (new Pkg_Not_Referenced);
+      Add_Parser (new Pragma_Missplaced);
+      Add_Parser (new Constant_Expected);
+      Add_Parser (new Possible_Interpretation);
+      Add_Parser (new Hidden_Declaration);
+      Add_Parser (new Redundant_Conversion);
+      Add_Parser (new Missplaced_With);
+      Add_Parser (new Not_Fully_Conformant);
+      Add_Parser (new Generic_Use_Unallowed);
+      Add_Parser (new Non_Visible_Declaration);
+      Initialize_Parsers;
+
    exception
       when E : others =>
          Trace (Exception_Handle,
