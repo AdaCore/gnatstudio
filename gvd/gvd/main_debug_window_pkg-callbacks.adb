@@ -487,17 +487,15 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       declare
-         Arguments : constant String := Simple_Entry_Dialog
-           (Parent  => Tab.Window,
-            Title   => -"Directory Selection",
-            Message => -"Enter the directory you want to change to:",
-            Key     => "odd_directory");
-      begin
-         if Arguments = ""
-           or else Arguments (Arguments'First) /= ASCII.NUL
-         then
+         Dir : constant String := File_Selection_Dialog
+           (Title       => "Directory Selection",
+            Dir_Only    => True,
+            Must_Exist  => True);
+
+      begin 
+         if Dir /= "" then
             Set_Busy_Cursor (Tab, True);
-            Change_Directory (Tab.Debugger, Arguments, Mode => User);
+            Change_Directory (Tab.Debugger, Dir, Mode => User);
             Set_Busy_Cursor (Tab, False);
          end if;
       end;
