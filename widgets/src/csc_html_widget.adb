@@ -282,7 +282,6 @@ package body Csc_HTML_Widget is
 
    begin
       Set_Object (HTML, Internal);
-      Initialize_User_Data (HTML);
    end Initialize;
 
    --------------------
