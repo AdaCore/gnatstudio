@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C429-010 Automatic Uncomment Lines operations sometimes fail.
+  Problem:    When uncommenting Ada lines that only contain "--", or lines
+              starting with spaces, with less than two spaces after "--",
+              the line is not uncommented.
+  Workaround: Uncomment those lines manually.
+
 - C425-019 Handling of projects with no supported language
   Problem:    If you create a project with no supported language (either through
               the project properties editor or manually by setting the
