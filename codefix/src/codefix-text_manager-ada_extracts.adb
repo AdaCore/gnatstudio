@@ -283,7 +283,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Start, Stop : Integer := Col;
 
    begin
-      Token.Content := null; --  Without this line, we're getting a SEGV ???
+      Token.Content := null;
 
       Skip_Blanks (Buffer, Start);
 
