@@ -653,6 +653,11 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
+      --  Only relevant to Windows, but does not really matter if we do it
+      --  systematically.
+
+      Send (Debugger, "set new-console", Mode => Internal);
+
       --  Make sure gdb will not ask too much interactive questions.
       --  Interactive questions are better left to the GUI itself.
       Send (Debugger, "set confirm off", Mode => Internal);
