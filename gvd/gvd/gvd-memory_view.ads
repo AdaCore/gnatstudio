@@ -46,7 +46,7 @@ package GVD.Memory_View is
       Data : Data_Size := Byte;
       --  The size of data to display;
 
-      Starting_Address : Long_Long_Integer;
+      Starting_Address : Long_Long_Integer := 0;
       --  The first address that is being explored.
 
       Values : String_Access;
@@ -56,11 +56,14 @@ package GVD.Memory_View is
       Flags : String_Access;
       --  A string the same size as Values used to set markers on the values.
 
-      Number_Of_Bytes : Integer := 256;
+      Number_Of_Bytes : Integer := 4096;
       --  The size of the pages that are currently stored.
 
       Number_Of_Columns : Integer := 16;
       --  The number of columns that are to be displayed.
+
+      Number_Of_Lines : Integer := 16;
+      --  The number of lines that are to be displayed.
 
       Selection_Start : Integer;
       Selection_End   : Integer;
@@ -120,12 +123,6 @@ package GVD.Memory_View is
    procedure Update_Display (View : access GVD_Memory_View_Record'Class);
    --  Refreshes the view.
 
-   function Position_To_Index
-     (View     : access GVD_Memory_View_Record'Class;
-      Position : in Gint) return Integer;
-   --  Returns the position of a value in View.Values from a position in
-   --  View.View.
-
    type Dir is (Up, Down, Left, Right);
    procedure Move_Cursor
      (View  : access GVD_Memory_View_Record'Class;
@@ -137,4 +134,7 @@ package GVD.Memory_View is
       Char : String);
    --  Inserts string at the current location.
 
+   procedure Watch_Cursor_Location
+     (View     : access GVD_Memory_View_Record'Class);
+   --  Makes sure the cursor is within the editable area.
 end GVD.Memory_View;

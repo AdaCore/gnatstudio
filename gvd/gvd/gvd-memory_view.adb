@@ -31,6 +31,7 @@ with Gdk.Font;         use Gdk.Font;
 with Gdk.Window;       use Gdk.Window;
 
 with Gtk;              use Gtk;
+with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Gtk.Text;         use Gtk.Text;
 with Gtk.GEntry;       use Gtk.GEntry;
@@ -63,14 +64,20 @@ package body GVD.Memory_View is
    -- Local constants --
    ---------------------
 
-   Address_Length    : constant Integer := 16;
-   Address_Separator : constant String := ": ";
-   Data_Separator    : constant String := " ";
-   End_Of_Line       : constant String := ASCII.CR & ASCII.LF;
+   Address_Length       : constant Integer := 16;
+   Address_Separator    : constant String := ": ";
+   Data_Separator       : constant String := " ";
+   ASCII_Separator      : constant String := " ";
+   Data_ASCII_Separator : constant String := " -  ";
+
+   Non_Valid_Character  : constant String := "-";
+
+   End_Of_Line       : constant String :=  ASCII.LF;
    Hex_Header        : constant String := "16#";
    Hex_Footer        : constant String := "#";
-   Scrollbar_Size    : constant Integer := 25;
-   Column_Base_Num   : constant Integer := 16;
+
+   Line_Base_Size   : constant Integer := 16;
+   --  Number of bytes per line.
 
    View_Font      : Gdk_Font;
    View_Color     : Gdk_Color;
@@ -82,11 +89,6 @@ package body GVD.Memory_View is
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   function Is_Highlighted
-     (View     : access GVD_Memory_View_Record'Class;
-      Position : Gint) return Boolean;
-   --  Tells whether a given position in the view should be highlighted or not.
 
    function Conversion
      (S        : in String;
@@ -106,68 +108,90 @@ package body GVD.Memory_View is
    procedure Clear_View (View : access GVD_Memory_View_Record'Class);
    --  Removes everything from the view.
 
-   --------------------
-   -- Is_Highlighted --
-   --------------------
+   procedure Get_Coordinates (View     : access GVD_Memory_View_Record'Class;
+                              Position : in Gint;
+                              Row      : out Integer;
+                              Column   : out Integer);
+   --  Gives the bloc coordinates from a given position.
 
-   function Is_Highlighted
-     (View     : access GVD_Memory_View_Record'Class;
-      Position : Gint) return Boolean
+   function Position_To_Bloc (View     : access GVD_Memory_View_Record'Class;
+                              Position : in Gint) return Integer;
+   --  Gives the bloc number at the given position.
+
+   ---------------------
+   -- Get_Coordinates --
+   ---------------------
+
+   procedure Get_Coordinates (View     : access GVD_Memory_View_Record'Class;
+                              Position : in Gint;
+                              Row      : out Integer;
+                              Column   : out Integer)
    is
       Row_Length : Integer;
-      Row        : Integer;
-      Column     : Integer;
+      ASCII_Size : Integer := 0;
    begin
+      if Get_Active (View.Show_Ascii) then
+         ASCII_Size :=
+           Data_ASCII_Separator'Length
+           + Line_Base_Size
+           + ASCII_Separator'Length * View.Number_Of_Columns;
+      end if;
+
       Row_Length := (Address_Length
                      + Address_Separator'Length
                      + (View.Number_Of_Columns
                         * (View.Trunc + Data_Separator'Length))
+                     + ASCII_Size
                      + End_Of_Line'Length);
 
       Row := Integer (Position) / Row_Length;
 
-      Column := Integer (Position)
-        - Row * Row_Length
-        - (Address_Length + Address_Separator'Length);
-
-      if (Column / (View.Trunc + 1) mod 2) = 1 then
-         return True;
-      else
-         return False;
+      Column := ((Integer (Position)
+                  - Row * Row_Length
+                  - (Address_Length + Address_Separator'Length)) + 1);
+      if Column <= 0 then
+         Column := -1;
+         return;
       end if;
-   end Is_Highlighted;
 
-   -----------------------
-   -- Position_To_Index --
-   -----------------------
+      Column := Column / (View.Trunc + Data_Separator'Length);
+   end Get_Coordinates;
 
-   function Position_To_Index
+   ----------------------
+   -- Position_To_Bloc --
+   ----------------------
+
+   function Position_To_Bloc
      (View     : access GVD_Memory_View_Record'Class;
       Position : in Gint) return Integer
    is
-      Row_Length : Integer;
       Row        : Integer;
       Column     : Integer;
-      Unit       : Integer;
-
    begin
-      Row_Length := (Address_Length
-                     + Address_Separator'Length
-                     + (View.Number_Of_Columns
-                        * (View.Trunc + Data_Separator'Length))
-                     + End_Of_Line'Length);
+      Get_Coordinates (View, Position, Row, Column);
+      return Column + Row * View.Number_Of_Columns;
+   end Position_To_Bloc;
 
-      Row := Integer (Position) / Row_Length;
+   ---------------------------
+   -- Watch_Cursor_Location --
+   ---------------------------
 
-      Column := Integer (Position)
-        - Row * Row_Length
-        - (Address_Length + Address_Separator'Length);
+   procedure Watch_Cursor_Location
+     (View     : access GVD_Memory_View_Record'Class)
+   is
+      Row        : Integer;
+      Column     : Integer;
+   begin
+      Get_Coordinates (View, Get_Position (View.View), Row, Column);
 
-      Unit := Column / (View.Trunc + Data_Separator'Length) +
-        Row * View.Number_Of_Columns;
-
-      return Unit * View.Unit_Size + 1;
-   end Position_To_Index;
+      if Column >= View.Number_Of_Columns
+        or else Column < 0
+      then
+         Set_Position (View.View,
+                       Address_Separator'Length
+                       + Guint (Address_Length));
+      end if;
+   end Watch_Cursor_Location;
 
    ----------------
    -- Conversion --
@@ -184,13 +208,13 @@ package body GVD.Memory_View is
       Dummy : constant String := "------------------------";
 
    begin
-      Skip_To_String (S, Test, "-");
+      Skip_To_String (S, Test, Non_Valid_Character);
 
       if Test < S'Last then
          if Trunc_At /= -1 then
             return Dummy (1 .. Trunc_At);
          else
-            return "-";
+            return Non_Valid_Character;
          end if;
       end if;
 
@@ -274,9 +298,15 @@ package body GVD.Memory_View is
       if Trunc_At = -1 then
          return (Translate (Result (1 .. Result'Length - 1), Mapping));
       else
-         return (Translate
-                 (Result (Result'Last - Trunc_At .. Result'Last - 1),
-                  Mapping));
+         if Base = 10 then
+            return (Translate
+                    (Result (Result'Last - Trunc_At + 1 .. Result'Last),
+                     Mapping));
+         else
+            return (Translate
+                    (Result (Result'Last - Trunc_At .. Result'Last - 1),
+                     Mapping));
+         end if;
       end if;
    end To_Standard_Base;
 
@@ -288,7 +318,6 @@ package body GVD.Memory_View is
       Index      : Integer;
       Width      : Gint;
       Height     : Gint;
-      Count      : Integer := 0;
       Background : Gdk_Color := Null_Color;
       Foreground : Gdk_Color := Null_Color;
       Current    : String_Access;
@@ -350,95 +379,106 @@ package body GVD.Memory_View is
 
       Get_Size (Get_Text_Area (View.View), Width, Height);
 
-      View.Number_Of_Columns :=
-        Integer ((Width / Char_Width (View_Font, Character' ('m'))
-                  - Gint (Scrollbar_Size)))
-        / (View.Trunc + Data_Separator'Length);
+      View.Number_Of_Lines := Integer (Height) /
+        Integer (Get_Ascent (View_Font) + Get_Descent (View_Font) + 1);
 
-      if View.Number_Of_Columns < Column_Base_Num * 2 / View.Unit_Size then
-         View.Number_Of_Columns := Column_Base_Num * 2 / View.Unit_Size;
-      else
-         View.Number_Of_Columns := View.Number_Of_Columns
-           - (View.Number_Of_Columns mod (Column_Base_Num * 2
-                                          / View.Unit_Size));
-      end if;
+      View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
       Freeze (View.View);
       Clear_View (View);
       Index := 1;
 
-      Insert
-        (View.View,
-         Fore  => View_Color,
-         Back  => Highlighted,
-         Font  => View_Font,
-         Chars => To_Standard_Base (View.Starting_Address, 16,
-                                    Address_Length) & Address_Separator);
-
-      while Index + View.Unit_Size - 1 <= View.Number_Of_Bytes * 2 loop
-         if Count mod 2 = 0 then
-            Background := Null_Color;
-         else
-            Background := Highlighted;
-         end if;
-
-         if View.Values (Index .. Index + View.Unit_Size - 1) /=
-           View.Flags (Index .. Index + View.Unit_Size - 1)
-         then
-            Foreground := Modified_Color;
-            Current := View.Flags;
-         else
-            Foreground := Null_Color;
-            Current := View.Values;
-         end if;
-
-         if View.Cursor_Index >= Index
-           and then View.Cursor_Index < Index + View.Unit_Size
-         then
-            View.Cursor_Position := Gint (Get_Length (View.View));
-         end if;
-
+      for Line_Index in 1 .. View.Number_Of_Lines loop
          Insert
            (View.View,
+            Fore  => View_Color,
+            Back  => Highlighted,
             Font  => View_Font,
-            Fore  => Foreground,
-            Back  => Background,
-            Chars =>
-              Conversion (Current (Index .. Index + View.Unit_Size - 1),
-                          View.Unit_Size,
-                          View.Display,
-                          View.Trunc));
-         Insert
-           (View.View,
-            Font  => View_Font,
-            Fore  => Foreground,
-            Back  => Background,
-            Chars => Data_Separator);
+            Chars => To_Standard_Base (View.Starting_Address
+                                       + Long_Long_Integer
+                                       ((Line_Index - 1) *
+                                        View.Number_Of_Columns *
+                                        View.Unit_Size / 2),
+                                       16,
+                                       Address_Length) & Address_Separator);
 
-         Count := Count + 1;
+         for Column_Index in 1 .. View.Number_Of_Columns loop
 
-         if ((Index + View.Unit_Size) / View.Unit_Size
-             mod View.Number_Of_Columns) = 0
-           and then Index + View.Unit_Size * 2 - 1 <= View.Number_Of_Bytes * 2
-         then
-            Count := 0;
-            Insert (View.View, Chars => ASCII.CR & ASCII.LF);
+            Index := (Line_Index - 1) *
+              View.Number_Of_Columns * View.Unit_Size
+              + (Column_Index - 1) * View.Unit_Size + 1;
+
+            if View.Values (Index .. Index + View.Unit_Size - 1) /=
+              View.Flags (Index .. Index + View.Unit_Size - 1)
+            then
+               Foreground := Modified_Color;
+               Current := View.Flags;
+            else
+               Foreground := Null_Color;
+               Current := View.Values;
+            end if;
+
             Insert
               (View.View,
-               Fore => View_Color,
-               Back => Highlighted,
-               Font => View_Font,
+               Font  => View_Font,
+               Fore  => Foreground,
+               Back  => Background,
                Chars =>
-                 To_Standard_Base
-               (View.Starting_Address
-                + Long_Long_Integer
-                ((Index + View.Unit_Size) / 2), 16, Address_Length)
-               & Address_Separator);
+                 Conversion (Current (Index .. Index + View.Unit_Size - 1),
+                             View.Unit_Size,
+                             View.Display,
+                             View.Trunc));
+
+            Insert
+              (View.View,
+               Font  => View_Font,
+               Fore  => Foreground,
+               Back  => Background,
+               Chars => Data_Separator);
+         end loop;
+
+         if Get_Active (View.Show_Ascii) then
+            Insert (View.View, Chars => Data_ASCII_Separator);
+
+            for Column_Index in 1 .. View.Number_Of_Columns loop
+
+               Index := (Line_Index - 1) *
+                 (View.Number_Of_Columns * View.Unit_Size)
+                 + (Column_Index - 1) * View.Unit_Size + 1;
+
+               if View.Values (Index .. Index + View.Unit_Size - 1) /=
+                 View.Flags (Index .. Index + View.Unit_Size - 1)
+               then
+                  Foreground := Modified_Color;
+                  Current := View.Flags;
+               else
+                  Foreground := Null_Color;
+                  Current := View.Values;
+               end if;
+
+               Insert
+                 (View.View,
+                  Font  => View_Font,
+                  Fore  => Foreground,
+                  Back  => Background,
+                  Chars =>
+                    Conversion (Current (Index .. Index + View.Unit_Size - 1),
+                                View.Unit_Size,
+                                Text,
+                                View.Unit_Size / 2));
+               Insert
+                 (View.View,
+                  Font  => View_Font,
+                  Fore  => Foreground,
+                  Back  => Background,
+                  Chars => Data_Separator);
+            end loop;
+         end if;
+         if Line_Index /= View.Number_Of_Lines then
+            Insert (View.View, Chars => End_Of_Line);
          end if;
 
-         Index := Index + View.Unit_Size;
       end loop;
-
       Thaw (View.View);
       Set_Position (View.View, Gint (View.Cursor_Position));
    end Update_Display;
@@ -453,8 +493,6 @@ package body GVD.Memory_View is
    is
       Process : constant Debugger_Process_Tab :=
         Get_Current_Process (View.Window);
-      Values  : String (1 .. 2 * View.Number_Of_Bytes);
-
    begin
       if Memory_View_Register.Register_Post_Cmd_If_Needed
            (Get_Process (Process.Debugger),
@@ -465,17 +503,23 @@ package body GVD.Memory_View is
          return;
       end if;
 
-      Values := Get_Memory (Process.Debugger,
-                            View.Number_Of_Bytes,
-                            "0x"
-                            & To_Standard_Base (Address, 16));
+      declare
+         Values  : String (1 .. 2 * View.Number_Of_Bytes);
+      begin
 
-      View.Starting_Address := Address;
-      Free (View.Values);
-      Free (View.Flags);
-      View.Values := new String' (Values);
-      View.Flags  := new String' (Values);
+         Values := Get_Memory (Process.Debugger,
+                               View.Number_Of_Bytes,
+                               "0x"
+                               & To_Standard_Base (Address, 16));
+
+         View.Starting_Address := Address;
+         Free (View.Values);
+         Free (View.Flags);
+         View.Values := new String' (Values);
+         View.Flags  := new String' (Values);
+      end;
       Update_Display (View);
+
    end Display_Memory;
 
    --------------------
@@ -531,16 +575,24 @@ package body GVD.Memory_View is
    procedure Apply_Changes (View : access GVD_Memory_View_Record'Class) is
    begin
       for J in 1 .. View.Number_Of_Bytes loop
-         Put_Memory_Byte
-           (Get_Current_Process (View.Window).Debugger,
-            "0x" &
-              To_Standard_Base
-                (View.Starting_Address + Long_Long_Integer (J - 1), 16),
-            View.Flags (J * 2 - 1 .. J * 2));
+         if View.Flags (J * 2 - 1 .. J * 2)
+           /= View.Values (J * 2 - 1 .. J * 2)
+         then
+            Put_Memory_Byte
+              (Get_Current_Process (View.Window).Debugger,
+               "0x" &
+               To_Standard_Base
+                 (View.Starting_Address + Long_Long_Integer (J - 1),
+                  16),
+               View.Flags (J * 2 - 1 .. J * 2));
+         end if;
       end loop;
 
       Free (View.Values);
       View.Values := new String' (View.Flags.all);
+
+      Display_Memory (View, View.Starting_Address);
+
       Update_Display (View);
       Refresh_Canvas
         (Interactive_Canvas (Get_Current_Process (View.Window).Data_Canvas));
@@ -569,7 +621,7 @@ package body GVD.Memory_View is
    begin
       Display_Memory
         (View, View.Starting_Address -
-          Long_Long_Integer (View.Number_Of_Bytes));
+          Long_Long_Integer (View.Number_Of_Lines * Line_Base_Size));
    end Page_Up;
 
    ---------------
@@ -580,7 +632,7 @@ package body GVD.Memory_View is
    begin
       Display_Memory
         (View, View.Starting_Address +
-          Long_Long_Integer (View.Number_Of_Bytes));
+          Long_Long_Integer (View.Number_Of_Lines * Line_Base_Size));
    end Page_Down;
 
    ------------
@@ -615,48 +667,90 @@ package body GVD.Memory_View is
    is
       Move     : Gint := 0;
       Position : Gint := Get_Position (View.View);
+      ASCII_Size : Integer := 0;
 
    begin
+      if Get_Active (View.Show_Ascii) then
+         ASCII_Size :=
+           Data_ASCII_Separator'Length
+           + Line_Base_Size
+           + ASCII_Separator'Length * View.Number_Of_Columns;
+      end if;
+
       case Where is
          when Right =>
-            if Position > Gint (Get_Length (View.View)) - 3 then
-               Move := -1;
-            else
-               if Get_Chars (View.View, Position + 1, Position + 2)
-                 = Data_Separator
+            if Get_Chars (View.View,
+                          Position + 1,
+                          Position + 1 + Data_Separator'Length)
+              = Data_Separator
+            then
+               --  Are we on the last bloc on the line ?
+
+               if Position_To_Bloc (View, Position)
+                 mod View.Number_Of_Columns = View.Number_Of_Columns - 1
                then
-                  Move := 1;
+                  --  Is it the last bloc in the view ?
+
+                  if Position_To_Bloc (View, Position)
+                    = View.Number_Of_Columns * View.Number_Of_Lines - 1
+                  then
+                     Set_Position (View.View, Position - 1);
+                  else
+                     Set_Position
+                       (View.View,
+                        Position
+                        + Gint (Address_Length)
+                        + Address_Separator'Length
+                        + Data_Separator'Length
+                        + Gint (ASCII_Size)
+                        + End_Of_Line'Length);
+                  end if;
+               else
+                  Set_Position
+                    (View.View, Position + Data_Separator'Length);
                end if;
-               if Get_Chars
-                 (View.View, Position + 2, Position + 3) (1) = ASCII.CR
-               then
-                  Move := 21;
-               end if;
+
+            end if;
+            if Get_Chars
+              (View.View, Position + 2, Position + 3) (1) = ASCII.CR
+            then
+               Move := 21;
             end if;
 
          when Left =>
-            if Get_Chars (View.View, Position - 1, Position)
+
+            if Get_Chars (View.View, Position
+                          - Data_Separator'Length, Position)
               = Data_Separator
             then
-               if Position_To_Index (View, Position)
-                 mod View.Number_Of_Columns = 1
+               --  Are we on the first bloc on the line ?
+
+               if Position_To_Bloc (View, Position)
+                 mod View.Number_Of_Columns = 0
                then
-                  if Position_To_Index (View, Position) = 1 then
-                     Move := 1;
+                  --  Is it the first bloc in the view ?
+
+                  if Position_To_Bloc (View, Position) = 0 then
+                     Set_Position (View.View, Position + 1);
                   else
-                     Move := -21;
+                     Set_Position
+                       (View.View,
+                        Position
+                        - Gint (Address_Length)
+                        - Address_Separator'Length
+                        - Data_Separator'Length
+                        - Gint (ASCII_Size)
+                        - End_Of_Line'Length);
                   end if;
                else
-                  Move := -1;
+                  Set_Position (View.View, Position - Data_Separator'Length);
                end if;
             end if;
          when others =>
             null;
       end case;
 
-      Set_Position (View.View, Position + Move);
    end Move_Cursor;
-
 
    ------------
    -- Insert --
@@ -670,20 +764,12 @@ package body GVD.Memory_View is
       Success     : Boolean;
       Background  : Gdk_Color := Null_Color;
       Value_Index : Integer;
-
+      Position    : Gint := Get_Position (View.View);
+      Bloc_Begin  : Gint := Position;
+      Bloc_End    : Gint := Position;
    begin
-      if View.View = null then
-         return;
-      end if;
-
-      Value_Index := Position_To_Index (View, Get_Position (View.View));
-      View.Cursor_Position := Get_Position (View.View);
-      View.Cursor_Index := Position_To_Index (View, View.Cursor_Position);
-
-      if Get_Position (View.View) > Gint (Get_Length (View.View) - 2)
-        or else Get_Chars (View.View,
-                           Get_Position (View.View),
-                           Get_Position (View.View) + 1) = "-"
+      if View.View = null
+      or else Get_Length (View.View) <= 0
       then
          return;
       end if;
@@ -711,46 +797,86 @@ package body GVD.Memory_View is
             null;
       end case;
 
+      Freeze (View.View);
+      Set_Point (View.View, Guint (Position));
       Success := Forward_Delete (View.View, 1);
+      Insert (View.View,
+              Font => View_Font,
+              Back => Background,
+              Fore => Modified_Color,
+              Chars => Char);
 
-      if Is_Highlighted (View, Get_Position (View.View)) then
-         Background := Highlighted;
+      while Get_Chars (View.View,
+                       Bloc_Begin - 1,
+                       Bloc_Begin)
+        /= Data_Separator (Data_Separator'Last .. Data_Separator'Last)
+      loop
+         Bloc_Begin := Bloc_Begin - 1;
+      end loop;
+
+      while Get_Chars (View.View,
+                       Bloc_End,
+                       Bloc_End + 1)
+        /= Data_Separator (Data_Separator'First .. Data_Separator'First)
+      loop
+         Bloc_End := Bloc_End + 1;
+      end loop;
+
+      if View.Display = Text then
+         declare
+            Row        : Integer;
+            Column     : Integer;
+            ASCII_Size : Integer := 0;
+         begin
+            if Get_Active (View.Show_Ascii) then
+               ASCII_Size :=
+                 Data_ASCII_Separator'Length
+                 + Line_Base_Size
+                 + ASCII_Separator'Length * View.Number_Of_Columns;
+            end if;
+
+            Get_Coordinates (View, Position, Row, Column);
+            Value_Index :=
+              (Integer (Position)
+               - Row *
+               (Address_Length + Address_Separator'Length + ASCII_Size
+                + End_Of_Line'Length
+                + View.Number_Of_Columns * Data_Separator'Length)
+               - Address_Length - Address_Separator'Length
+               - (Column - 1) * (Data_Separator'Length)) * 2 - 1;
+
+            View.Flags (Value_Index .. Value_Index + 1)
+              := To_Standard_Base (Long_Long_Integer
+                                   (Character'Pos (Char (Char'First))),
+                                   16,
+                                   2);
+         end;
+      else
+         Value_Index :=
+           Position_To_Bloc (View, Get_Position (View.View))
+           * Line_Base_Size / View.Number_Of_Columns * 2 + 1;
+
+         declare
+            S : String := Get_Chars (View.View, Bloc_Begin, Bloc_End);
+         begin
+            if View.Flags (Value_Index .. Value_Index)
+              /= Non_Valid_Character
+            then
+               View.Flags (Value_Index .. Value_Index + View.Unit_Size - 1) :=
+                 To_Standard_Base
+                 (Long_Long_Integer'Value (Prefix & S & Hex_Footer),
+                  16,
+                  View.Unit_Size);
+            end if;
+
+         end;
       end if;
 
-      declare
-         Index      : Integer := 1;
-         Next_Index : Integer := 1;
-         Current    : String (1 .. 2 * (View.Trunc + Data_Separator'Length));
+      Update_Display (View);
+      Thaw (View.View);
 
-      begin
-         --  Insert new char.
 
-         Insert (View.View,
-                 Font => View_Font,
-                 Back => Background,
-                 Fore => Modified_Color,
-                 Chars => Char);
-
-         --  Grab the new value
-         Set_Position (View.View, Get_Position (View.View) - 1);
-
-         Current := Get_Chars (View.View,
-                               Get_Position (View.View)
-                               - Gint (View.Trunc) - 2,
-                               Get_Position (View.View)
-                               + Gint (View.Trunc));
-         Skip_To_String (Current, Index, Data_Separator);
-         Next_Index := Index + 1;
-         Skip_To_String (Current, Next_Index, Data_Separator);
-
-         --  Modify flags string to match the new value.
-         View.Flags (Value_Index .. Value_Index + View.Unit_Size - 1) :=
-           (To_Standard_Base
-             (Long_Long_Integer'Value
-               (Prefix & Current (Index + 1 .. Next_Index - 1) & Hex_Footer),
-              16, View.Unit_Size));
-      end;
-
+      Set_Position (View.View, Position);
       Move_Cursor (View, Right);
       Set_Position (View.View, Get_Position (View.View) + 1);
    end Insert;
