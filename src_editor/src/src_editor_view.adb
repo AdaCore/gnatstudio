@@ -537,11 +537,11 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
    begin
-      View.Has_Focus := True;
-
       if not Selection_Exists (Get_Buffer (View)) then
          Restore_Cursor_Position (View);
       end if;
+
+      View.Has_Focus := True;
 
       return False;
 
