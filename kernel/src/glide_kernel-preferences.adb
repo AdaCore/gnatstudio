@@ -360,6 +360,16 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
 
+      Show_Toolbar := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "General-Show-Toolbar",
+         Nick    => -"Display tool bar",
+         Blurb   => -("Enabled if tool bar should be displayed. This also"
+                      & " includes the animated icon on the right of the"
+                      & " tool bar"),
+         Default => True));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Show_Toolbar), -"General");
+
       Auto_Save := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Auto-Save",
          Nick    => -"Auto save",

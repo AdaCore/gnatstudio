@@ -166,6 +166,7 @@ package Glide_Kernel.Preferences is
    Splash_Screen         : Param_Spec_Boolean;
    Display_Welcome       : Param_Spec_Boolean;
    Toolbar_Show_Text     : Param_Spec_Boolean;
+   Show_Toolbar          : Param_Spec_Boolean;
    Auto_Save             : Param_Spec_Boolean;
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
    Multi_Language_Build  : Param_Spec_Boolean;
