@@ -29,6 +29,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
 pragma Warnings (On);
 
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Basic_Types;
 with Generic_List;
@@ -333,8 +334,9 @@ package body Diff_Utils2 is
       Cmd_Args := Argument_String_To_List (Patch_Command);
       Cmd      := Locate_Exec_On_Path (Cmd_Args (Cmd_Args'First).all);
 
-      if Cmd.all = "" then
-         Trace (Me, "command not found: " & Patch_Command);
+      if Cmd = null or else Cmd.all = "" then
+         Console.Insert
+           (Kernel, "command not found: " & Patch_Command, Mode => Error);
          Free (Cmd);
          Free (Cmd_Args);
          return Ret;
@@ -700,7 +702,7 @@ package body Diff_Utils2 is
    begin
       Free_List (Link.List);
       if Link.Tmp_File /= VFS.No_File then
-         Trace (Me, "Delete Temporary File : "
+         Trace (Me, "Delete Temporary File: "
                 & Full_Name (Link.Tmp_File).all);
          Delete_File (Full_Name (Link.Tmp_File).all, Success);
       end if;
