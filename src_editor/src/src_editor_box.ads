@@ -335,7 +335,7 @@ package Src_Editor_Box is
 
    procedure Unhighlight_All (Editor : access Source_Editor_Box_Record);
    --  Restore all highlighted regions to unhighlighted. Only the region
-   --  highlighting is canceled, the other potential highlightings (line,
+   --  highlighting is cancelled, the other potential highlightings (line,
    --  syntax) are preserved.
 
    procedure Goto_Declaration_Or_Body
