@@ -648,30 +648,25 @@ package body Projects.Registry is
 
       procedure Register_Directory (Directory : String) is
          Last : Integer := Directory'Last - 1;
-         Dir  : String := Directory;
       begin
-         if not Filenames_Are_Case_Sensitive then
-            To_Lower (Dir);
-         end if;
-
-         Set (Registry.Data.Directories, K => Dir, E => Direct);
+         Set (Registry.Data.Directories, K => Directory, E => Direct);
 
          loop
-            while Last >= Dir'First
-              and then not OS_Utils.Is_Directory_Separator (Dir (Last))
+            while Last >= Directory'First
+              and then not OS_Utils.Is_Directory_Separator (Directory (Last))
             loop
                Last := Last - 1;
             end loop;
 
             Last := Last - 1;
 
-            exit when Last <= Dir'First;
+            exit when Last <= Directory'First;
 
             if Get (Registry.Data.Directories,
-                    Dir (Dir'First .. Last)) /= Direct
+                    Directory (Directory'First .. Last)) /= Direct
             then
                Set (Registry.Data.Directories,
-                    K => Dir (Dir'First .. Last), E => As_Parent);
+                    K => Directory (Directory'First .. Last), E => As_Parent);
             end if;
          end loop;
       end Register_Directory;
@@ -886,21 +881,17 @@ package body Projects.Registry is
    procedure Canonicalize_File_Names_In_Project
      (Registry : Project_Registry)
    is
-      Iter : Imported_Project_Iterator;
+      Iter : Imported_Project_Iterator := Start (Registry.Data.Root);
       P    : Project_Type;
    begin
-      if True or else not Filenames_Are_Case_Sensitive then
-         Iter := Start (Registry.Data.Root);
+      loop
+         P := Current (Iter);
+         exit when P = No_Project;
 
-         loop
-            P := Current (Iter);
-            exit when P = No_Project;
+         Canonicalize_File_Names_In_Project (P);
 
-            Canonicalize_File_Names_In_Project (P);
-
-            Next (Iter);
-         end loop;
-      end if;
+         Next (Iter);
+      end loop;
    end Canonicalize_File_Names_In_Project;
 
    ----------------------------------
@@ -1833,14 +1824,9 @@ package body Projects.Registry is
       Directory : String;
       Direct_Only : Boolean := True) return Boolean
    is
-      Belong : Directory_Dependency;
+      Belong : constant Directory_Dependency :=
+        Get (Registry.Data.Directories, Directory);
    begin
-      if Filenames_Are_Case_Sensitive then
-         Belong := Get (Registry.Data.Directories, Directory);
-      else
-         Belong := Get (Registry.Data.Directories, To_Lower (Directory));
-      end if;
-
       return Belong = Direct
         or else (not Direct_Only and then Belong = As_Parent);
    end Directory_Belongs_To_Project;
