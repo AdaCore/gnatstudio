@@ -462,7 +462,7 @@ package body Docgen.Work_On_Source is
                File_Text.all,
                Parsed_List);
 
-            --  Find the the main package entity
+            --  Find the main package entity
 
             Found_Main_Package := False;
             Entity_Node := TEL.First (Entity_List);
