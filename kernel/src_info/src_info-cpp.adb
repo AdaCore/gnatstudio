@@ -56,8 +56,15 @@ package body Src_Info.CPP is
    Fail_Stream : constant Debug_Handle := Create ("CPP.Fail");
 
    Enumeration_Kind_Entity : constant E_Kind :=
-     (Enumeration_Kind, True, False, False);
-   Non_Generic_Class : constant E_Kind := (Class, True, False, False);
+     (Enumeration_Kind,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
+   Non_Generic_Class : constant E_Kind :=
+     (Class,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
 
    --------------------
    -- Symbol_Handler --
@@ -1504,7 +1511,10 @@ package body Src_Info.CPP is
          Kind := Function_Or_Operator;
       end if;
 
-      return (Kind, False, Is_Template, False);
+      return (Kind,
+              Is_Type     => False,
+              Is_Generic  => Is_Template,
+              Is_Abstract => False);
    end Get_Function_Kind;
 
    ---------------------
@@ -1526,7 +1536,10 @@ package body Src_Info.CPP is
          Kind := Function_Or_Operator;
       end if;
 
-      return (Kind, False, Is_Template, False);
+      return (Kind,
+              Is_Type     => False,
+              Is_Generic  => Is_Template,
+              Is_Abstract => False);
    end Get_Method_Kind;
 
    ---------------------
