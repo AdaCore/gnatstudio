@@ -473,12 +473,18 @@ private
    end record;
 
    type Entity_Reference_Iterator is record
-      Need_To_Update_Files : Boolean;
-      --  True if we are in the process of parsing all the required files to
-      --  get the full xref information
-
       Decl_Returned : Boolean;
       --  Whether the declaration has already been returned or not
+
+      Returning_Existing_Refs : Boolean;
+      --  Whether we are currently returning references that were already there
+      --  at the call to Find_All_References. This means that we should check
+      --  whether the other files are obsolete.
+
+      Last_Returned_File : Source_File;
+      --  Source file of the last returned entity. This is used to avoid
+      --  checking a second time whether it is up-to-date, since this can be
+      --  long for some languages.
 
       Index   : Entity_Reference_Arrays.Index_Type;
       Entity  : Entity_Information;

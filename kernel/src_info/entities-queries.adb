@@ -507,6 +507,7 @@ package body Entities.Queries is
       F    : Source_File := In_File;
       Loc  : File_Location := No_File_Location;
       Start, Last : Integer;
+      Had_Old_Refs : constant Boolean := Length (Entity.References) /= 0;
    begin
       Assert (Me, Entity /= null,
               "No Entity specified to Find_All_References");
@@ -553,12 +554,13 @@ package body Entities.Queries is
       end if;
 
       Iter :=
-        (Need_To_Update_Files => F = null,
-         Index                => Entity_Reference_Arrays.First,
+        (Index                => Entity_Reference_Arrays.First,
          Decl_Returned        => not Filter (Declaration)
            or else
              (In_Scope /= null
               and then not In_Range (Entity.Declaration, F, Start, Last)),
+         Returning_Existing_Refs => Had_Old_Refs,
+         Last_Returned_File   => null,
          Entity               => Entity,
          Deps                 => Deps,
          In_File              => F,
@@ -566,16 +568,14 @@ package body Entities.Queries is
          Filter               => Filter,
          Last_Line            => Last);
 
-      if At_End (Iter.Deps)
-        and then Iter.Entity.References /= Null_Entity_Reference_List
-        and then Iter.Decl_Returned
+      --  If the first reference in the list is not correct, move to next one
+      if Iter.Decl_Returned
         and then
-          ((In_Scope /= null
-            and then not In_Range
-              (Iter.Entity.References.Table (Iter.Index).Location,
-               Iter.In_File, Iter.Start_Line, Iter.Last_Line))
-           or else not Filter
-             (Iter.Entity.References.Table (Iter.Index).Kind))
+          (Length (Entity.References) = 0
+           or else not Iter.Filter (Entity.References.Table (Iter.Index).Kind)
+           or else not In_Range
+             (Entity.References.Table (Iter.Index).Location,
+              Iter.In_File, Iter.Start_Line, Iter.Last_Line))
       then
          Next (Iter);
       end if;
@@ -608,7 +608,7 @@ package body Entities.Queries is
    function At_End (Iter : Entity_Reference_Iterator) return Boolean is
    begin
       return Iter.Decl_Returned
-        and then not Iter.Need_To_Update_Files
+        and then At_End (Iter.Deps)
         and then Iter.Index > Last (Iter.Entity.References);
    end At_End;
 
@@ -634,35 +634,50 @@ package body Entities.Queries is
 
    procedure Next (Iter : in out Entity_Reference_Iterator) is
    begin
-      if Iter.Need_To_Update_Files then
-         if At_End (Iter.Deps)
-           or else Get (Iter.Deps) /= null
-         then
-            Iter.Need_To_Update_Files := False;
-            if Iter.Decl_Returned then
-               Next (Iter);
-            end if;
-         else
-            Next (Iter.Deps);
-         end if;
-         return;
-      end if;
-
+      --  We always return the declaration first
       if not Iter.Decl_Returned then
          Iter.Decl_Returned := True;
       else
          Iter.Index := Iter.Index + 1;
       end if;
 
-      while Iter.Index <= Last (Iter.Entity.References)
-        and then
-          (not Iter.Filter (Iter.Entity.References.Table (Iter.Index).Kind)
-           or else not In_Range
-             (Iter.Entity.References.Table (Iter.Index).Location,
-              Iter.In_File, Iter.Start_Line, Iter.Last_Line))
-      loop
-         Iter.Index := Iter.Index + 1;
+      while Iter.Index <= Last (Iter.Entity.References) loop
+         if Iter.Returning_Existing_Refs
+           and then Iter.Entity.References.Table (Iter.Index).Location.File /=
+             Iter.Last_Returned_File
+         then
+            --  Are we still parsing the list of references that were there
+            --  before the call to Find_All_References ? If yes, we need to
+            --  check whether the file is still up-to-date
+
+            Iter.Last_Returned_File :=
+              Iter.Entity.References.Table (Iter.Index).Location.File;
+            Update_Xref (Iter.Last_Returned_File);
+            --  Do not move the index forward now, since parsing the file
+            --  might have removed the reference from the list.
+
+         else
+            if Iter.Filter (Iter.Entity.References.Table (Iter.Index).Kind)
+              and then In_Range
+                (Iter.Entity.References.Table (Iter.Index).Location,
+                 Iter.In_File, Iter.Start_Line, Iter.Last_Line)
+            then
+               return;
+            end if;
+
+            Iter.Index := Iter.Index + 1;
+         end if;
       end loop;
+
+      Iter.Returning_Existing_Refs := False;
+
+      --  Parse the current file on the list
+
+      if At_End (Iter.Deps) then
+         return;
+      end if;
+
+      Next (Iter.Deps);
    end Next;
 
    ---------
@@ -671,11 +686,11 @@ package body Entities.Queries is
 
    function Get (Iter : Entity_Reference_Iterator) return Entity_Reference is
    begin
-      if Iter.Need_To_Update_Files then
-         return No_Entity_Reference;
-      elsif not Iter.Decl_Returned then
+      if not Iter.Decl_Returned then
          return (Entity => Iter.Entity,
                  Index  => Entity_Reference_Arrays.Index_Type'Last);
+      elsif Iter.Index > Last (Iter.Entity.References) then
+         return No_Entity_Reference;
       else
          return (Entity => Iter.Entity, Index => Iter.Index);
       end if;
@@ -688,10 +703,10 @@ package body Entities.Queries is
    function Get_Entity
      (Iter : Entity_Reference_Iterator) return Entity_Information is
    begin
-      if Iter.Need_To_Update_Files then
-         return null;
-      elsif not Iter.Decl_Returned then
+      if not Iter.Decl_Returned then
          return Iter.Entity;
+      elsif Iter.Index > Last (Iter.Entity.References) then
+         return null;
       else
          return Get_Entity_From_Ref
            (Iter.Entity,
