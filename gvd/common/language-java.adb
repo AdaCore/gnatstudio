@@ -73,9 +73,8 @@ package body Language.Debugger.Java is
    -- Keywords --
    --------------
 
-   function Keywords (Lang : access Java_Language)
-      return GNAT.Regpat.Pattern_Matcher
-   is
+   function Keywords
+     (Lang : access Java_Language) return GNAT.Regpat.Pattern_Matcher is
    begin
       return Compile ("^@@@@$");
    end Keywords;

@@ -38,20 +38,25 @@ package body GVD.Utils is
       Text  : String)
    is
       use Widget_List;
-      Item : Gtk_List_Item;
-      Children : Widget_List.Glist := Get_Children (List);
-   begin
 
+      Item     : Gtk_List_Item;
+      Children : Widget_List.Glist := Get_Children (List);
+
+   begin
       --  Check whether Text is already in the list
+
       while Children /= Null_List loop
          Item := Gtk_List_Item (Get_Data (Children));
+
          if Get (Gtk_Label (Get_Child (Item))) = Text then
             return;
          end if;
+
          Children := Next (Children);
       end loop;
 
       --  Add the new item in the list
+
       Gtk_New (Item, Text);
       Show (Item);
       Add (List, Item);
@@ -83,6 +88,7 @@ package body GVD.Utils is
       else
          Gdk_New (Cursor, Gdk.Types.Left_Ptr);
       end if;
+
       Set_Cursor (Window, Cursor);
       Destroy (Cursor);
    end Set_Busy_Cursor;
