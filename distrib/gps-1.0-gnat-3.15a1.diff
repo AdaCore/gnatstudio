@@ -24,7 +24,7 @@ Index: common/src/stubs.c
 --- Makefile.gnat	Fri May 31 19:50:04 2002
 ***************
 *** 22,27 ****
---- 22,39 ----
+--- 22,38 ----
     fmap.adb \
     fname.ads \
     fname.adb \
@@ -32,7 +32,6 @@ Index: common/src/stubs.c
 +   g-comlin.adb \
 +   g-dirope.ads \
 +   g-dirope.adb \
-+   g-enblsp.ads \
 +   g-enblsp.adb \
 +   g-expect.ads \
 +   g-expect.adb \
