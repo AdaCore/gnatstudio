@@ -693,9 +693,7 @@ package body Project_Explorers is
       N : Gtk_Ctree_Node;
       Is_Leaf : Boolean;
       Node_Type : Node_Types := Directory_Node;
-      Start_Index : Natural := 1;
-      Buffer : String (1 .. Current_Dir'Length + Directory'Length);
-      Buffer_Len : Natural;
+      Node_Text : String_Access;
    begin
       pragma Assert (Object_Directory or else Directory_String /= No_String);
 
@@ -707,26 +705,20 @@ package body Project_Explorers is
       if not Is_Absolute_Path (Directory)
         and then Get_Pref (Explorer.Kernel, Absolute_Directories)
       then
-         Buffer (1 .. Current_Dir'Length) := Current_Dir;
-         Buffer
-           (Current_Dir'Length + 1 .. Current_Dir'Length + Directory'Length) :=
-           Directory;
-         Buffer_Len := Current_Dir'Length + Directory'Length;
+         Node_Text := new String'
+           (Normalize_Pathname (Current_Dir & Directory));
       else
-         Buffer_Len := Directory'Length;
-         Buffer (1 .. Buffer_Len) := Directory;
+         Node_Text := new String' (Normalize_Pathname (Directory));
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
-        or else not Has_Entries (Buffer (1 .. Buffer_Len));
-
+        or else not Has_Entries (Node_Text.all);
 
       N := Insert_Node
         (Ctree         => Explorer.Tree,
          Parent        => Parent_Node,
          Sibling       => null,
-         Text          =>
-           Create_Line_Text (Buffer (Start_Index .. Buffer_Len)),
+         Text          => Create_Line_Text (Node_Text.all),
          Spacing       => 5,
          Pixmap_Closed => Explorer.Close_Pixmaps (Node_Type),
          Mask_Closed   => Explorer.Close_Masks (Node_Type),
@@ -734,6 +726,8 @@ package body Project_Explorers is
          Mask_Opened   => Explorer.Open_Masks (Node_Type),
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
+
+      Free (Node_Text);
 
       if Object_Directory then
          Node_Set_Row_Data
@@ -1869,7 +1863,6 @@ package body Project_Explorers is
    begin
       --  If a desktop was loaded, we do not want to force an explorer if none
       --  was saved. However, in the default case we want to open an explorer.
-
       if not Desktop_Was_Loaded (Get_MDI (Kernel)) then
          On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
       end if;
