@@ -48,7 +48,6 @@ with Ada.Text_IO;          use Ada.Text_IO;
 
 package body Glide_Interactive_Consoles is
 
-
    package Buffer_Console_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Gtk_Text_Buffer_Record,
       User_Type   => Glide_Interactive_Console);
@@ -58,12 +57,6 @@ package body Glide_Interactive_Consoles is
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   procedure First_Insert_Text
-     (Buffer  : access Gtk_Text_Buffer_Record'Class;
-      Params  : Glib.Values.GValues;
-      Console : Glide_Interactive_Console);
-   --  Called before inserting text;
 
    procedure Mark_Set_Handler
      (Buffer  : access Gtk_Text_Buffer_Record'Class;
@@ -287,6 +280,7 @@ package body Glide_Interactive_Consoles is
       Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
+
    begin
       case Key is
          when GDK_Up =>
@@ -478,8 +472,46 @@ package body Glide_Interactive_Consoles is
 
                Console.Internal_Insert := False;
 
-
                Free (Completions);
+            end;
+
+            return True;
+
+         when GDK_Return =>
+            Get_End_Iter (Console.Buffer, Last_Iter);
+            Get_Iter_At_Mark
+              (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+
+            declare
+               Command : constant String :=
+                 Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
+               Output  : constant String :=
+                 Console.Handler (Command, Console.User_Data);
+            begin
+               Get_End_Iter (Console.Buffer, Last_Iter);
+
+               if Output /= "" then
+                  Insert
+                    (Console.Buffer, Last_Iter, ASCII.LF & Output & ASCII.LF);
+               else
+                  Insert
+                    (Console.Buffer, Last_Iter, "" & ASCII.LF);
+               end if;
+
+               if Command /= "" then
+                  Prepend (Console.History, Command);
+                  Console.Current_Position := Null_Node;
+               end if;
+
+               Get_Iter_At_Mark
+                 (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+               Get_End_Iter (Console.Buffer, Last_Iter);
+
+               Apply_Tag
+                 (Console.Buffer,
+                  Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+
+               Display_Prompt (Console);
             end;
 
             return True;
@@ -528,72 +560,6 @@ package body Glide_Interactive_Consoles is
 
       Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
    end Display_Prompt;
-
-   -----------------------
-   -- First_Insert_Text --
-   -----------------------
-
-   procedure First_Insert_Text
-     (Buffer  : access Gtk_Text_Buffer_Record'Class;
-      Params  : Glib.Values.GValues;
-      Console : Glide_Interactive_Console)
-   is
-      pragma Unreferenced (Buffer);
-      use String_List_Utils.String_List;
-
-      Prompt      : Gtk_Text_Iter;
-      Pos         : Gtk_Text_Iter;
-      Length      : constant Gint := Get_Int (Nth (Params, 3));
-      Text        : constant String :=
-        Get_String (Nth (Params, 2), Length => Length);
-   begin
-      if Console.Internal_Insert then
-         return;
-      end if;
-
-      Console.Internal_Insert := True;
-
-      Get_Text_Iter (Nth (Params, 1), Pos);
-
-      if Text'Length >= 1
-        and then Text (Text'First) = ASCII.LF
-        and then Console.Handler /= null
-      then
-         Get_Iter_At_Mark (Console.Buffer, Prompt, Console.Prompt_Mark);
-
-         declare
-            Text    : constant String :=
-              Get_Slice (Console.Buffer, Prompt, Pos);
-            Command : constant String := Text (Text'First .. Text'Last - 1);
-            Output  : constant String :=
-              Console.Handler (Command, Console.User_Data);
-         begin
-            Get_End_Iter (Console.Buffer, Pos);
-
-            if Output /= "" then
-               Insert (Console.Buffer, Pos, Output & ASCII.LF);
-            end if;
-
-            if Command /= "" then
-               Prepend (Console.History, Command);
-               Console.Current_Position := Null_Node;
-            end if;
-
-            Get_Iter_At_Mark (Console.Buffer, Prompt, Console.Prompt_Mark);
-            Get_End_Iter (Console.Buffer, Pos);
-
-            Apply_Tag
-              (Console.Buffer, Console.Uneditable_Tag, Prompt, Pos);
-
-            Display_Prompt (Console);
-         end;
-      end if;
-
-      Console.Internal_Insert := False;
-   exception
-      when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
-   end First_Insert_Text;
 
    ----------------------------
    -- Place_Cursor_At_Prompt --
@@ -760,12 +726,6 @@ package body Glide_Interactive_Consoles is
       Set_Size_Request (Console, -1, 100);
 
       Modify_Font (Console.View, Font);
-
-      Buffer_Console_Callback.Connect
-        (Console.Buffer, "insert_text",
-         Cb        => First_Insert_Text'Access,
-         After     => True,
-         User_Data => Glide_Interactive_Console (Console));
 
       Buffer_Console_Callback.Connect
         (Console.Buffer, "mark_set",
