@@ -60,6 +60,4 @@ package Make_Test_Window_Pkg is
    procedure Initialize
      (Make_Test_Window : access Make_Test_Window_Record'Class);
 
-   Make_Test_Window : Make_Test_Window_Access;
-
 end Make_Test_Window_Pkg;

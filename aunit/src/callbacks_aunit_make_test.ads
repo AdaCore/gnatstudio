@@ -26,6 +26,7 @@
 ------------------------------------------------------------------------------
 
 with Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Button; use Gtk.Button;
 

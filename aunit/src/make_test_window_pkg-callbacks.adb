@@ -88,8 +88,8 @@ package body Make_Test_Window_Pkg.Callbacks is
    is
       --  Generate "Test_Case" source files.  Exit program if successful
 
-      Window : Make_Test_Window_Access
-        := Make_Test_Window_Access (Get_Toplevel (Object));
+      Window : Make_Test_Window_Access :=
+        Make_Test_Window_Access (Get_Toplevel (Object));
       File   : File_Type;
       Name   : String := Get_Text (Window.Name_Entry);
       Description : String := Get_Text (Window.Description_Entry);
@@ -124,7 +124,7 @@ package body Make_Test_Window_Pkg.Callbacks is
 
          --  Correct the case for Name, if needed.
 
-         Ada_Case (Name);
+         Mixed_Case (Name);
 
          --  Create the file.
 
@@ -242,6 +242,8 @@ package body Make_Test_Window_Pkg.Callbacks is
          Close (File);
          Put (Standard_Output, To_File_Name (Name));
       end if;
+
+      Destroy (Window);
       Main_Quit;
    end On_Ok_Clicked;
 
@@ -253,6 +255,7 @@ package body Make_Test_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
+      Destroy (Get_Toplevel (Object));
       Main_Quit;
    end On_Cancel_Clicked;
 

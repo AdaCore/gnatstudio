@@ -4,6 +4,8 @@ with Gtk.Widget; use Gtk.Widget;
 with Make_Test_Window_Pkg; use Make_Test_Window_Pkg;
 
 procedure Aunit_Make_Test is
+   Make_Test_Window : Make_Test_Window_Access;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
