@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -59,7 +59,8 @@ package body Language.Custom is
       Comment_End_Length            => 0,
       Comment_Start                 => "",
       Comment_End                   => "",
-      New_Line_Comment_Start        => No_Match'Access,
+      New_Line_Comment_Start        => null,
+      New_Line_Comment_Start_Regexp => No_Match'Access,
       String_Delimiter              => ASCII.NUL,
       Quote_Character               => ASCII.NUL,
       Constant_Character            => ASCII.NUL,
@@ -178,6 +179,9 @@ package body Language.Custom is
       Tmp                           : Project_Field_Array_Access;
       Str                           : Unbounded_String;
 
+      function Contains_Special_Characters (S : String) return Boolean;
+      --  Return whether S contains special regexp characters.
+
       function Get_String (S : String_Ptr) return String_Ptr;
       --  Return a deep copy of S, or (1 => ASCII.NUL) if S is null.
 
@@ -199,6 +203,24 @@ package body Language.Custom is
 
       procedure Parse_Shared_Lib (Lib_Name : String);
       --  Parse xml part related to shared library symbols
+
+      ---------------------------------
+      -- Contains_Special_Characters --
+      ---------------------------------
+
+      Special_Char_Set : constant Character_Set := To_Set ("^$| *+?{[.(\-");
+      --  Set of special characters that can be found in a regpat.
+
+      function Contains_Special_Characters (S : String) return Boolean is
+      begin
+         for J in S'Range loop
+            if Is_In (S (J), Special_Char_Set) then
+               return True;
+            end if;
+         end loop;
+
+         return False;
+      end Contains_Special_Characters;
 
       ----------------
       -- Get_String --
@@ -452,11 +474,17 @@ package body Language.Custom is
          end if;
 
          if New_Line_Comment_Start = null then
-            Lang.Context.New_Line_Comment_Start := No_Match'Access;
+            Lang.Context.New_Line_Comment_Start_Regexp := No_Match'Access;
          else
-            Lang.Context.New_Line_Comment_Start :=
-              new Pattern_Matcher'(Compile
-                ("^(" & New_Line_Comment_Start.all & ")"));
+            if Contains_Special_Characters (New_Line_Comment_Start.all) then
+               Lang.Context.New_Line_Comment_Start_Regexp :=
+                 new Pattern_Matcher'
+                   (Compile ("^(" & New_Line_Comment_Start.all & ")"));
+
+            else
+               Lang.Context.New_Line_Comment_Start :=
+                 new String'(New_Line_Comment_Start.all);
+            end if;
          end if;
 
          Parse_Character
