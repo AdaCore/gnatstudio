@@ -933,6 +933,7 @@ package body Project_Explorers is
       Current_Dir : constant String := String (Get_Current_Dir);
 
    begin
+      Push_State (Explorer.Kernel, Busy);
       Freeze (Explorer.Tree);
       --  The modified project, if any, is always first
 
@@ -983,6 +984,7 @@ package body Project_Explorers is
       end if;
 
       Thaw (Explorer.Tree);
+      Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
 
    ---------------------------
@@ -1001,6 +1003,7 @@ package body Project_Explorers is
         Name_As_Directory (Get_String (Data.Directory));
 
    begin
+      Push_State (Explorer.Kernel, Busy);
       Freeze (Explorer.Tree);
       Src := Projects.Table (Project_View).Sources;
       while Src /= Nil_String loop
@@ -1015,6 +1018,7 @@ package body Project_Explorers is
          Src := String_Elements.Table (Src).Next;
       end loop;
       Thaw (Explorer.Tree);
+      Pop_State (Explorer.Kernel);
    end Expand_Directory_Node;
 
    ----------------------
@@ -1039,6 +1043,7 @@ package body Project_Explorers is
       Categories : Ctree_Node_Array := (others => null);
 
    begin
+      Push_State (Explorer.Kernel, Busy);
       F := Open_Read (File_Name, Binary);
 
       if F = Invalid_FD then
@@ -1085,6 +1090,7 @@ package body Project_Explorers is
 
       Free (Buffer);
       Thaw (Explorer.Tree);
+      Pop_State (Explorer.Kernel);
    end Expand_File_Node;
 
    --------------------
