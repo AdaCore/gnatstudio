@@ -238,15 +238,23 @@ package body Projects is
 
    function Source_Dirs (Project : Project_Type) return String_Id_Array is
       View    : constant Project_Id := Get_View (Project);
-      Src     : String_List_Id      := Prj.Projects.Table (View).Source_Dirs;
-      Count   : constant Natural    := Length (Src);
-      Sources : String_Id_Array (1 .. Count);
    begin
-      for C in Sources'Range loop
-         Sources (C) := String_Elements.Table (Src).Value;
-         Src         := String_Elements.Table (Src).Next;
-      end loop;
-      return Sources;
+      if View = Prj.No_Project then
+         return (1 .. 0 => No_String);
+
+      else
+         declare
+            Src     : String_List_Id := Prj.Projects.Table (View).Source_Dirs;
+            Count   : constant Natural    := Length (Src);
+            Sources : String_Id_Array (1 .. Count);
+         begin
+            for C in Sources'Range loop
+               Sources (C) := String_Elements.Table (Src).Value;
+               Src         := String_Elements.Table (Src).Next;
+            end loop;
+            return Sources;
+         end;
+      end if;
    end Source_Dirs;
 
    -----------------
@@ -312,7 +320,10 @@ package body Projects is
    is
       View : constant Project_Id := Get_View (Project);
    begin
-      if Recursive then
+      if View = Prj.No_Project then
+         return "";
+
+      elsif Recursive then
          return Prj.Env.Ada_Objects_Path (View).all;
       elsif Prj.Projects.Table (View).Object_Directory /= No_Name then
          return Get_String (Prj.Projects.Table (View).Object_Directory);
@@ -945,9 +956,10 @@ package body Projects is
       Default        : String := "";
       Index          : String := "") return String
    is
-      Value :  Variable_Value;
+      Value : Variable_Value;
+      View  : constant Project_Id := Get_View (Project);
    begin
-      if Project = No_Project then
+      if Project = No_Project or else View = Prj.No_Project then
          return Default;
       end if;
 
@@ -959,16 +971,14 @@ package body Projects is
          Name_Buffer (1 .. Name_Len) := Index;
          Value := Value_Of
            (Index    => Name_Find,
-            In_Array => Prj.Projects.Table
-              (Get_View (Project)).Naming.Spec_Suffix);
+            In_Array => Prj.Projects.Table (View).Naming.Spec_Suffix);
 
       elsif Attribute_Name = Impl_Suffix_Attribute then
          Name_Len := Index'Length;
          Name_Buffer (1 .. Name_Len) := Index;
          Value := Value_Of
            (Index    => Name_Find,
-            In_Array => Prj.Projects.Table
-              (Get_View (Project)).Naming.Body_Suffix);
+            In_Array => Prj.Projects.Table (View).Naming.Body_Suffix);
 
       else
          Value := Get_Attribute_Value
@@ -1001,6 +1011,10 @@ package body Projects is
       Project_View : constant Project_Id := Get_View (Project);
       Count : Natural := 0;
    begin
+      if Project_View = Prj.No_Project then
+         return (1 .. 0 => (No_Name, Nil_Variable_Value));
+      end if;
+
       if Package_Name /= "" then
          Pkg := Value_Of
            (Get_String (Package_Name),
