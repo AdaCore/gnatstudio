@@ -1,5 +1,6 @@
 with "../gtkada/gtkada";
 with "gnat_gvd";
+with "gvd_common";
 
 project GVD is
 
@@ -8,6 +9,15 @@ project GVD is
 
    package Compiler is
       for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
+      for Switches ("advanced_breakpoint_pkg.adb") use ("-g", "-O2");
+      for Switches ("breakpoints_pkg.adb") use ("-g", "-O2");
+      for Switches ("general_preferences_pkg.adb") use ("-g", "-O2");
+      for Switches ("list_select_pkg.adb") use ("-g", "-O2");
+      for Switches ("main_debug_window_pkg.adb") use ("-g", "-O2");
+      for Switches ("memory_view_pkg.adb") use ("-g", "-O2");
+      for Switches ("open_program_pkg.adb") use ("-g", "-O2");
+      for Switches ("open_session_pkg.adb") use ("-g", "-O2");
+      for Switches ("process_tab_pkg.adb") use ("-g", "-O2");
    end Compiler;
 
 end GVD;
