@@ -3133,10 +3133,11 @@ package body Prj_API is
    function Create_Default_Project (Name, Path : String)
      return Project_Node_Id
    is
-      Project : Project_Node_Id;
+      Project     : Project_Node_Id;
       No_Scenario : constant Project_Node_Array (1 .. 0) :=
         (others => Empty_Node);
-      Values : Argument_List (1 .. 1);
+      Values      : Argument_List (1 .. 1);
+
    begin
       Project := Create_Project (Name, Path);
 
@@ -3475,16 +3476,17 @@ package body Prj_API is
             while Src /= Nil_String loop
 
                --  ??? Probably not the most efficient way to do. If we had a
-               --  ??? single function to check that a file belongs to a
-               --  ??? specific language, it might be more efficient.
+               --  single function to check that a file belongs to a specific
+               --  language, it might be more efficient.
 
                if Matching_Language = No_Name
-                 or else Get_Language_Of
-                 (View, Get_String (String_Elements.Table (Src).Value)) =
-                 Matching_Language
+                 or else Get_Language_Of (View,
+                           Get_String (String_Elements.Table (Src).Value)) =
+                   Matching_Language
                then
                   --  ??? We could avoid calls to Normalize_Pathname here if
-                  --  ??? Include_Path included normalized directory names
+                  --  Include_Path included normalized directory names
+
                   if Full_Path then
                      S := Locate_Regular_File
                        (Get_String (String_Elements.Table (Src).Value), Path);
@@ -3497,14 +3499,17 @@ package body Prj_API is
                      Sources (Index) := new String'
                        (Get_String (String_Elements.Table (Src).Value));
                   end if;
+
                   if Sources (Index) = null then
                      Trace (Me, "File not found "
                               & Get_String (String_Elements.Table (Src).Value)
                               & " " & Path);
+
                   else
                      Index := Index + 1;
                   end if;
                end if;
+
                Src := String_Elements.Table (Src).Next;
             end loop;
          end;
@@ -3515,7 +3520,6 @@ package body Prj_API is
       --  Shrink the array if needed
       if Index > Sources'Last then
          return Sources;
-
       else
          declare
             S : String_Array_Access := new String_Array
