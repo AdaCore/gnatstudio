@@ -87,7 +87,7 @@ package body Docgen.Texi_Output is
                               (Info.Open_File.all,
                                "",
                                   ".info"));
-         if File_Extension (Info.Open_File.all) = ".ads" then
+         if Is_Spec_File (Info.Open_File.all) then
             Ada.Text_IO.Put_Line (File, "@settitle "
                                   & Info.Open_Title.all);
             Ada.Text_IO.Put_Line (File, "@c end of header");
@@ -127,7 +127,7 @@ package body Docgen.Texi_Output is
       begin
          Ada.Text_IO.Put_Line (File, "@c    Node  Next Last  Father");
          --  work on spec files
-         if File_Extension (Info.Open_File.all) = ".ads" then
+         if Is_Spec_File (Info.Open_File.all) then
             --  check if the last spec and no body files processed
             if Info.Open_Package_Next.all /= "" or
             not Info.Doc_Info_Options.Process_Body_Files then
@@ -210,7 +210,7 @@ package body Docgen.Texi_Output is
       --  write "bye" if this doc file not for using in project.texi
       if Info.Doc_Info_Options.One_Doc_File then
          --  check if a body file => if to write the index's
-         if File_Extension (Info.Close_File_Name.all) = ".ads" then
+         if Is_Spec_File (Info.Close_File_Name.all) then
             Ada.Text_IO.New_Line (File);
             Ada.Text_IO.Put_Line (File, "@printindex fn");
             Ada.Text_IO.Put_Line (File, "@printindex tp");
@@ -569,10 +569,17 @@ package body Docgen.Texi_Output is
 
                   --  if a called subprogram => link to spec
                   if Called_Subp then
-                     Suffix := new String'("_adb.htm");
+                     Suffix :=
+                       new String'("_" &
+                                   Body_Suffix (TRL.Data (Node).File_Name.all)
+                                   & ".htm");
                   else
-                     Suffix := new String'("_ads.htm");
+                     Suffix :=
+                       new String'("_" &
+                                   Spec_Suffix (TRL.Data (Node).File_Name.all)
+                                   & ".htm");
                   end if;
+
                   Ada.Text_IO.Put_Line
                     (File,
                      "@code{"
@@ -792,10 +799,10 @@ package body Docgen.Texi_Output is
       Node  : TSFL.List_Node;
 
       procedure Write_List_Of_Files
-        (File   : Ada.Text_IO.File_Type;
-         Suffix : String);
-      --  Writes to the doc file a list of all files from the list having
-      --  the given file suffix.
+        (File      : Ada.Text_IO.File_Type;
+         Doc_Specs : Boolean);
+      --  Writes to the doc file a list of all files from the list being
+      --  either spec or body files, as determined by Doc_Specs.
 
       procedure Create_TEXI_Project_Doc_File;
       --  Create the project.texi file containing the documentation of
@@ -806,12 +813,15 @@ package body Docgen.Texi_Output is
       -------------------------
 
       procedure Write_List_Of_Files
-        (File   : Ada.Text_IO.File_Type;
-         Suffix : String) is
+        (File      : Ada.Text_IO.File_Type;
+         Doc_Specs : Boolean) is
       begin
          Node := TSFL.First (Info.Unit_File_List);
          for J in 1 .. TSFL.Length (Info.Unit_File_List) loop
-            if File_Extension (TSFL.Data (Node).File_Name.all) =  Suffix then
+            if (Is_Spec_File (TSFL.Data (Node).File_Name.all) and
+                  Doc_Specs) or
+              (not Is_Spec_File (TSFL.Data (Node).File_Name.all) and
+               not Doc_Specs) then
                Ada.Text_IO.Put_Line
                  (File,
                   "@include " &
@@ -863,10 +873,11 @@ package body Docgen.Texi_Output is
          Ada.Text_IO.New_Line (Project_Doc_File);
 
          --  include all files wanted
-         Write_List_Of_Files (Project_Doc_File, ".ads");
+         --  ???
+         Write_List_Of_Files (Project_Doc_File, True);
          if Info.Doc_Info_Options.Process_Body_Files then
             Ada.Text_IO.New_Line (Project_Doc_File);
-            Write_List_Of_Files (Project_Doc_File, ".adb");
+            Write_List_Of_Files (Project_Doc_File, False);
          end if;
 
          Ada.Text_IO.New_Line (Project_Doc_File);
@@ -1044,10 +1055,12 @@ package body Docgen.Texi_Output is
    function Get_Texi_File_Name
      (File : String) return String is
    begin
-      if File_Extension (File) = ".ads" then
-         return File (File'First .. File'Last - 4) & "_ads.texi";
+      if Is_Spec_File (File) then
+         return File_Name_Without_Suffix (File) & "_" &
+                Spec_Suffix (File) & ".texi";
       else
-         return File (File'First .. File'Last - 4) & "_adb.texi";
+         return File_Name_Without_Suffix (File) & "_" &
+                Body_Suffix (File) & ".texi";
       end if;
    end Get_Texi_File_Name;
 

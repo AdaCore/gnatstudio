@@ -68,8 +68,8 @@ package body Docgen.Work_On_Source is
                       Process_Body_File,
                       Options);
 
-      --  different ways of process for .ads and .adb files
-      if File_Extension (File_Name (Source_Filename)) = ".ads" then
+      --  different ways of process for spec and body files
+      if Is_Spec_File (Source_Filename) then
 
          Parse_Constructs (Ada_Lang,
                            File_Text.all,
@@ -292,9 +292,8 @@ package body Docgen.Work_On_Source is
          Source_File_Node := TSFL.First (Source_File_List);
          Source_Filename  := TSFL.Data (Source_File_Node).File_Name;
 
-         --  if first file .adb, take the next one, which must be .ads
-
-         if File_Extension (File_Name (Source_Filename.all)) = ".adb" then
+            --  if first body file, take the next one, which must be spec file
+         if not Is_Spec_File (Source_Filename.all) then
             Source_File_Node := TSFL.Next (Source_File_Node);
             Source_Filename := TSFL.Data (Source_File_Node).File_Name;
             One_Ready := 1;
@@ -318,26 +317,23 @@ package body Docgen.Work_On_Source is
             Source_Filename := TSFL.Data (Source_File_Node).File_Name;
 
             --  add unit, but only if from a spec file
-            --  ??? Should not compare with ".ads", since other naming scheme
-            --  may be used
-
-            if File_Extension (File_Name (Source_Filename.all)) = ".ads" then
-               Package_Name := TSFL.Data (Source_File_Node).Package_Name;
-               Data_Item := Doc_Info'
-                 (Index_Item_Info,
-                  Doc_Info_Options => Options,
-                  Doc_LI_Unit => No_LI_File,
-                  Doc_File_List => TSFL.Null_List,
-                  Item_Name => Package_Name,
-                  Item_File =>
-                  new String'(File_Name (Source_Filename.all)),
-                  Item_Line => First_File_Line,
-                  Item_Doc_File =>
-                  new String'(Base_Name
-                                (Get_Doc_File_Name
-                                   (Source_Filename.all,
-                                    Options.Doc_Directory.all,
-                                    Options.Doc_Suffix.all))));
+            if Is_Spec_File (Source_Filename.all) then
+               Package_Name    := TSFL.Data (Source_File_Node).Package_Name;
+               Data_Item :=
+                 Doc_Info'(Index_Item_Info,
+                           Doc_Info_Options => Options,
+                           Doc_LI_Unit => No_LI_File,
+                           Doc_File_List => TSFL.Null_List,
+                           Item_Name => Package_Name,
+                           Item_File =>
+                           new String'(File_Name (Source_Filename.all)),
+                           Item_Line => First_File_Line,
+                           Item_Doc_File =>
+                           new String'(Base_Name
+                                         (Get_Doc_File_Name
+                                            (Source_Filename.all,
+                                             Options.Doc_Directory.all,
+                                             Options.Doc_Suffix.all))));
                Options.Doc_Subprogram (Index_File, Data_Item);
             end if;
 
@@ -1270,9 +1266,12 @@ package body Docgen.Work_On_Source is
 
    function Line_Is_Comment
      (Line : String) return Boolean is
+
+      Min_Comment_Length : constant Natural := 4;
+      Comment_String     : constant String := "--";
    begin
-      if Line'Length > 5 then
-         for J in Line'First .. Line'Last - 3 loop
+      if Line'Length > Min_Comment_Length then
+         for J in Line'First .. Line'Last - (Comment_String'Length + 1) loop
             if Line (J) = '-' and Line (J + 1) = '-' then
                return True;
             elsif Line (J) /= ' '
@@ -1311,9 +1310,12 @@ package body Docgen.Work_On_Source is
 
    function Is_Ignorable_Comment
      (Comment_Line : String) return Boolean is
+      Min_Comment_Length : constant Natural := 4;
+      Comment_String     : constant String := "--";
    begin
-      if Comment_Line'Length > 5 then
-         for J in Comment_Line'First .. Comment_Line'Last - 3 loop
+      if Comment_Line'Length > Min_Comment_Length then
+         for J in Comment_Line'First ..
+           Comment_Line'Last - (Comment_String'Length + 1) loop
             if Comment_Line (J) = '-' and Comment_Line (J + 1) = '-' then
                if Comment_Line (J + 2) = '!' then
                   return True;

@@ -64,13 +64,13 @@ package body Docgen.Work_On_File is
       function Find_Next_Package
         (Package_Nr : Natural) return String;
       --  Returns the name of the next package in the list
-      --  (.adb files with the same package name are ignored)
+      --  (body files with the same package name are ignored)
       --  If next package doesn't exist, a "" ist returned.
 
       function Find_Prev_Package
         (Package_Nr : Natural) return String;
       --  Returns the name of the previous package in the list
-      --  (.adb files with the same package name are ignored)
+      --  (body files with the same package name are ignored)
       --  If next package doesn't exist, a "" ist returned.
 
       -----------------------
@@ -87,8 +87,7 @@ package body Docgen.Work_On_File is
          else
             Local_Node := Source_File_Node;
             Local_Node := Next (Source_File_Node);
-            if File_Extension
-              (Data (Local_Node).File_Name.all) = ".adb" then
+            if not Is_Spec_File (Data (Local_Node).File_Name.all) then
                Local_Node := Next (Local_Node);
             end if;
             if Local_Node = Null_Node then
@@ -111,13 +110,13 @@ package body Docgen.Work_On_File is
          use TSFL;
       begin
          if Package_Nr = 1 or
-           (Package_Nr = 2 and File_Extension
-           (TSFL.Data (Source_File_Node).File_Name.all) = ".adb") then
+           (Package_Nr = 2 and not
+              Is_Spec_File (TSFL.Data (Source_File_Node).File_Name.all)) then
             return "";
          else
             Local_Node := Prev (Source_File_List,
                                 Source_File_Node);
-            if File_Extension (Data (Local_Node).File_Name.all) = ".ads" and
+            if Is_Spec_File (Data (Local_Node).File_Name.all) and
                Options.Process_Body_Files then
                Local_Node := Prev (Source_File_List, Local_Node);
             end if;
@@ -386,12 +385,11 @@ package body Docgen.Work_On_File is
 
             while Child_Node /= Null_Scope_Tree_Node loop
 
-               --  Put_Line (Get_Name (Get_Entity (Child_Node)));for testing!
+            --  Put_Line (Get_Name (Get_Entity (Child_Node)));for testing!
 
                if Is_Subprogram (Child_Node) and
-                 File_Extension
-                   (Get_Declaration_File_Of (Get_Entity (Child_Node)))
-                 = ".ads" then
+                 Is_Spec_File (Get_Declaration_File_Of
+                                 (Get_Entity (Child_Node))) then
                   if Options.Info_Output then
                      Put_Line (-"Reference found: " &
                                Get_Name (Get_Entity (Child_Node)));
@@ -547,9 +545,9 @@ package body Docgen.Work_On_File is
             Entity_Node.Calls_List  := Local_Calls_List;
          end if;
 
-         --  if defined in a .ads file, add entity to the
+         --  if defined in a spec file, add entity to the
          --  Subprogram_Index_List
-         if  File_Extension (File_Name (Source_Filename)) = ".ads"
+         if Is_Spec_File (Source_Filename)
            and Source_Filename = Entity_File then
             Add_Entity_To_Index_List
               (Subprogram_Index_List,
@@ -568,8 +566,8 @@ package body Docgen.Work_On_File is
       begin
          Entity_Node.Kind   := Type_Entity;
 
-         --  if defined in a .ads file => add to the Type_Index_List
-         if File_Extension (File_Name (Source_Filename)) = ".ads"
+         --  if defined in a spec file => add to the Type_Index_List
+         if Is_Spec_File (Source_Filename)
            and Source_Filename = Entity_File then
             Add_Entity_To_Index_List
               (Type_Index_List,
@@ -613,7 +611,7 @@ package body Docgen.Work_On_File is
 
       --  if body file, no need to start working on ALI, the lists of the
       --  spec file can be used.
-      if File_Extension (Source_Filename) = ".adb" then
+      if not Is_Spec_File (Source_Filename) then
          Process_Source (Doc_File,
                          Next_Package,
                          Prev_Package,
