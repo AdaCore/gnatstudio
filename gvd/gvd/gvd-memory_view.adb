@@ -184,7 +184,7 @@ package body Odd.Memory_View is
       Dummy : constant String := "------------------------";
 
    begin
-      Skip_To_String (S, Test, "x");
+      Skip_To_String (S, Test, "-");
 
       if Test < S'Last then
          if Trunc_At /= -1 then
@@ -438,9 +438,9 @@ package body Odd.Memory_View is
      (View    : access Odd_Memory_View_Record'Class;
       Address : Long_Long_Integer)
    is
-      Values : String (1 .. 2 * View.Number_Of_Bytes);
-      Process : constant Debugger_Process_Tab :=
-        Get_Current_Process (View.Window);
+      Process : constant Debugger_Process_Tab
+        := Get_Current_Process (View.Window);
+      Values  : String (1 .. 2 * View.Number_Of_Bytes);
    begin
       if Memory_View_Register.Register_Post_Cmd_If_Needed
         (Get_Process (Process.Debugger),
@@ -451,24 +451,17 @@ package body Odd.Memory_View is
          return;
       end if;
 
-      Set_Busy_Cursor (Get_Window (View), True);
+      Values := Get_Memory (Process.Debugger,
+                            View.Number_Of_Bytes,
+                            "0x"
+                            & To_Standard_Base (Address, 16));
 
+      View.Starting_Address := Address;
       Free (View.Values);
       Free (View.Flags);
-      View.Starting_Address := Address;
-
-      for J in 1 .. View.Number_Of_Bytes loop
-         Values (2 * J - 1 .. 2 * J) :=
-           (Get_Memory_Byte
-            (Process.Debugger,
-             "0x" & To_Standard_Base (Long_Long_Integer (J - 1)
-                                      + View.Starting_Address, 16)));
-      end loop;
-
       View.Values := new String' (Values);
-      View.Flags := new String' (Values);
+      View.Flags  := new String' (Values);
       Update_Display (View);
-      Set_Busy_Cursor (Get_Window (View), False);
    end Display_Memory;
 
    --------------------
@@ -505,7 +498,8 @@ package body Odd.Memory_View is
             New_Address : constant String
               := Get_Variable_Address (Process.Debugger, Address);
          begin
-            if New_Address
+            if New_Address'Length > 2
+              and then New_Address
               (New_Address'First .. New_Address'First + 1) = "0x"
             then
                Display_Memory (View, New_Address);
