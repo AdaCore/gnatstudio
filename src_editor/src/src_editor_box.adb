@@ -92,10 +92,13 @@ package body Src_Editor_Box is
       Nb_Digits_For_Line_Number : constant Positive :=
         Positive'Max (Image (Nb_Lines)'Length, Min_Line_Number_Width);
    begin
+      --  In the source buffer, the Line and Column indexes start from
+      --  0. It is more natural to start from one, so the Line and Column
+      --  number displayed are incremented by 1 to start from 1.
       Set_Text
-        (Box.Cursor_Line_Label, Image (Line, Nb_Digits_For_Line_Number));
+        (Box.Cursor_Line_Label, Image (Line + 1, Nb_Digits_For_Line_Number));
       Set_Text
-        (Box.Cursor_Column_Label, Image (Column, Min_Column_Number_Width));
+        (Box.Cursor_Column_Label, Image (Column + 1, Min_Column_Number_Width));
    end Show_Cursor_Position;
 
    -------------------------------------
@@ -180,7 +183,7 @@ package body Src_Editor_Box is
       Add (Frame, Frame_Hbox);
       Gtk_New (Label, -"Line:");
       Pack_Start (Frame_Hbox, Label, Expand => False, Fill => True);
-      Gtk_New (Box.Cursor_Line_Label, "0");
+      Gtk_New (Box.Cursor_Line_Label, "1");
       Pack_End
         (Frame_Hbox, Box.Cursor_Line_Label, Expand => False, Fill => True);
 
@@ -192,7 +195,7 @@ package body Src_Editor_Box is
       Add (Frame, Frame_Hbox);
       Gtk_New (Label, -"Col:");
       Pack_Start (Frame_Hbox, Label, Expand => False, Fill => True);
-      Gtk_New (Box.Cursor_Column_Label, "0");
+      Gtk_New (Box.Cursor_Column_Label, "1");
       Pack_End
         (Frame_Hbox, Box.Cursor_Column_Label, Expand => False, Fill => True);
 
@@ -203,7 +206,7 @@ package body Src_Editor_Box is
          User_Data => Source_Editor_Box (Box),
          After     => True);
 
-      Show_Cursor_Position (Source_Editor_Box (Box), Line => 1, Column => 0);
+      Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
    end Initialize;
 
