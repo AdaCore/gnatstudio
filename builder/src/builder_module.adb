@@ -902,7 +902,7 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : constant Selection_Context_Access :=
+      Context : Selection_Context_Access :=
         Get_Current_Context (Kernel);
 
    begin
@@ -914,9 +914,11 @@ package body Builder_Module is
          return;
       end if;
 
+      Ref (Context);
       Compile_File
         (Kernel,
          File_Information (File_Selection_Context_Access (Context)));
+      Unref (Context);
 
    exception
       when E : others =>
