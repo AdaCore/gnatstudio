@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,19 +24,17 @@
 --  descriptions.
 
 --  The three procedures Process_Unit_Index, Process_Subprogram_Index,
---  and Process_Type_Index will generate the index doc pages by calling for
---  each entity the subprogram from an output package (like Docgen.Html_Output
---  or Docgen.Texi_Output).
+--  and Process_Type_Index will generate the index doc pages by calling
+--  the appropriate docgen backend.
 
 --  The procedure Process_Source provided with all the list for the current
 --  source file, will call some private procedures of this package to
---  create the documentation of each entity type. It is here, where the
---  order of the entity types in the final documentation is set. The output
---  formats creating one doc file for each source file (like HTML) and
---  the ones creating only one file for all source files must be process
---  differently. There is also a different manner of processing spec files
---  and body files. The private functions used will call the subprogram from
---  an output package (like Docgen.Html_Output or Docgen.Texi_Output).
+--  create the documentation of each entity type. It is here where the
+--  order of the entity types in the final documentation is set. The output can
+--  be made of one doc file per source file (like HTML) or one file for all
+--  source files.
+--  There is also a different manner of processing spec files
+--  and body files. The private functions used will call backend subprograms.
 
 with VFS;
 with Glide_Kernel;
