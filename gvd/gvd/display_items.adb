@@ -1,4 +1,3 @@
-pragma Warnings (Off);
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
@@ -288,7 +287,8 @@ package body Display_Items is
       end if;
 
       if Auto_Refresh then
-         --  Avoid creating the same item twice if it already exists in the canvas
+         --  Avoid creating the same item twice if it already exists in the
+         --  canvas
 
          Alias_Item :=
            Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
