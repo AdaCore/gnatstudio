@@ -2,7 +2,7 @@
 char *placeholder_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "8 8 2 1",
-"  c #bbbbbb",
+"  c #999999",
 ". c #d6d6d6",
 /* pixels */
 " .  .   ",
