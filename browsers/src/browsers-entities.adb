@@ -517,7 +517,10 @@ package body Browsers.Entities is
    is
       Browser : constant Type_Browser := new Type_Browser_Record;
    begin
-      Initialize (Browser, Kernel, Create_Toolbar => False);
+      Initialize (Browser, Kernel,
+                  Create_Toolbar  => False,
+                  Parents_Pixmap  => Stock_Go_Up,
+                  Children_Pixmap => Stock_Go_Down);
 
       --  ??? Should be freed when browser is destroyed.
       Browser.Primitive_Button := Render_Icon
