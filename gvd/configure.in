@@ -3,11 +3,15 @@ AC_INIT(gvd/gvd.ads.in)
 
 GVD_MAJOR_VERSION=1
 GVD_MINOR_VERSION=0
-GVD_MICRO_VERSION=0
+GVD_MICRO_VERSION=1
 GVD_VERSION=$GVD_MAJOR_VERSION.$GVD_MINOR_VERSION.$GVD_MICRO_VERSION
 
 STRIP_CR=False
 ASYNC_COMMANDS=True
+LINK_SIZE=7
+FONT_SIZE=10
+TARGET_CFLAGS=""
+TARGET_LFLAGS=""
 
 AC_CANONICAL_SYSTEM
 
@@ -38,6 +42,7 @@ AC_CHECK_FUNCS(setpgid)
 AC_CHECK_FUNCS(setsid)
 
 opsys=''
+
 case "${host}" in
 
   ## Alpha (DEC) machines.
@@ -50,7 +55,7 @@ case "${host}" in
     machine=hp800 opsys=hpux10
   ;;
 
-  mips-sgi-irix6.5 )
+  mips-sgi-irix6.5* )
     machine=iris4d opsys=irix6-5
   ;;
   mips-sgi-irix6* )
@@ -58,26 +63,17 @@ case "${host}" in
   ;;
 
   ## IBM, AIX machines
-  rs6000-ibm-aix3.1* | powerpc-ibm-aix3.1*  )
-    machine=ibmrs6000 opsys=aix3-1
-  ;;
-  rs6000-ibm-aix3.2.5 | powerpc-ibm-aix3.2.5 )
-    machine=ibmrs6000 opsys=aix3-2-5
-  ;;
   rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
     machine=ibmrs6000 opsys=aix4-1
+    TARGET_LFLAGS="-Wl,-bbigtoc"
   ;;
   rs6000-ibm-aix4.2* | powerpc-ibm-aix4.2*  )
     machine=ibmrs6000 opsys=aix4-2
+    TARGET_LFLAGS="-Wl,-bbigtoc"
   ;;
   rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
     machine=ibmrs6000 opsys=aix4
-  ;;
-  rs6000-ibm-aix4* | powerpc-ibm-aix4*  )
-    machine=ibmrs6000 opsys=aix4-1
-  ;;
-  rs6000-ibm-aix* | powerpc-ibm-aix* )
-    machine=ibmrs6000 opsys=aix3-2
+    TARGET_LFLAGS="-Wl,-bbigtoc"
   ;;
 
   ## Suns
@@ -147,6 +143,9 @@ case "${host}" in
 	machine=intel386 opsys=windows
 	STRIP_CR=True
 	ASYNC_COMMANDS=False
+	LINK_SIZE=11
+	FONT_SIZE=14
+	TARGET_LFLAGS="-mwindows"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -162,8 +161,6 @@ opsysfile="'\"system/${opsys}.h\"'"
 AC_SUBST(opsysfile)
 
 # On AIX machines, we must use -bbigtoc or we won't be able to link
-TARGET_CFLAGS=""
-TARGET_LFLAGS=""
 case "${host}" in
    *aix*) TARGET_CFLAGS=""
           TARGET_LFLAGS="-Wl,-bbigtoc";;
@@ -171,12 +168,14 @@ case "${host}" in
 esac
 
 # checking for gtk
-AM_PATH_GTK(1.2.9,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+AM_PATH_GTK(1.2.10,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 # Set the version number of GVD
 AC_SUBST(STRIP_CR)
 AC_SUBST(USE_PTYS)
 AC_SUBST(ASYNC_COMMANDS)
+AC_SUBST(LINK_SIZE)
+AC_SUBST(FONT_SIZE)
 AC_SUBST(GVD_VERSION)
 AC_SUBST(TARGET_CFLAGS)
 AC_SUBST(TARGET_LFLAGS)
@@ -184,4 +183,4 @@ AC_SUBST(TARGET_LFLAGS)
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
 
-AC_OUTPUT(gvd/Makefile gvd/gvd.ads tests/Makefile gnat/Makefile)
+AC_OUTPUT(gvd/Makefile gvd/gvd.ads tests/Makefile gnat/Makefile po/Makefile)
