@@ -521,22 +521,20 @@ package body Help_Module is
       Help  : Help_Browser;
       Child : constant MDI_Child :=
         Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
+      Success : Boolean;
+      pragma Unreferenced (Success);
 
    begin
       Font_Adjust := Font_Adjust + 2;
+      Set_Pref (Kernel, Help_Font_Adjust, Gint (Font_Adjust));
 
       if Child = null then
          return;
       end if;
 
+      --  Force a reload of the file to show the new font.
       Help := Help_Browser (Get_Widget (Child));
-
-      declare
-         File : constant String := Help.Current_Help_File.all;
-      begin
-         Destroy (Help);
-         Display_Help (Kernel, File);
-      end;
+      Success := Load_File (Kernel, Help, Help.Current_Help_File.all);
    end On_Zoom_In;
 
    -----------------
@@ -551,6 +549,8 @@ package body Help_Module is
       Help  : Help_Browser;
       Child : constant MDI_Child :=
         Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
+      Success : Boolean;
+      pragma Unreferenced (Success);
 
    begin
       if Font_Adjust < -6 then
@@ -558,19 +558,15 @@ package body Help_Module is
       end if;
 
       Font_Adjust := Font_Adjust - 2;
+      Set_Pref (Kernel, Help_Font_Adjust, Gint (Font_Adjust));
 
       if Child = null then
          return;
       end if;
 
+      --  Force a reload of the file to show the new font.
       Help := Help_Browser (Get_Widget (Child));
-
-      declare
-         File : constant String := Help.Current_Help_File.all;
-      begin
-         Destroy (Help);
-         Display_Help (Kernel, File);
-      end;
+      Success := Load_File (Kernel, Help, Help.Current_Help_File.all);
    end On_Zoom_Out;
 
    ------------------------
@@ -615,6 +611,8 @@ package body Help_Module is
       Widget_Callback.Connect
         (Html, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
+
+      Font_Adjust := Integer (Get_Pref (Kernel, Help_Font_Adjust));
 
       Result := Load_File (Kernel, Html, File);
 
