@@ -432,6 +432,8 @@ begin
             exit;
          end if;
       end loop;
+
+      Close (Directory);
    end if;
 
    --  Call Show_All before displaying the help so that the help window will
