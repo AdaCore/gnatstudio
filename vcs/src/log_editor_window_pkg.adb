@@ -38,6 +38,8 @@ package body Log_Editor_Window_Pkg is
    is
       Label : Gtk_Label;
    begin
+      Append (Log_Editor_Window.Files, File_Name);
+
       Gtk_New (Label, File_Name);
       Set_Alignment (Log_Editor_Window.Files_Label, 0.0, 0.5);
       Set_Padding (Label, 0, 0);
@@ -147,5 +149,17 @@ package body Log_Editor_Window_Pkg is
 
       Add (Hbuttonbox1, Log_Editor_Window.Ok_Button);
    end Initialize;
+
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close (Log_Editor_Window : access Log_Editor_Window_Record'Class)
+   is
+   begin
+      Free (Log_Editor_Window.Files);
+      Destroy (Log_Editor_Window);
+   end Close;
+
 
 end Log_Editor_Window_Pkg;
