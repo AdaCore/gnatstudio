@@ -1905,7 +1905,7 @@ package body Project_Viewers is
       Dirs     : Argument_List := Get_Multiple_Selection
         (Directory_Selector (Widget));
       Equal    : Boolean := False;
-      Prj_Dir  : constant String := Project_Path (Project);
+      Prj_Dir  : constant String := Project_Directory (Project);
       Tmp      : GNAT.OS_Lib.String_Access;
       Relative : constant Boolean :=
         Get_Paths_Type (Project) = Projects.Relative;
@@ -1928,7 +1928,7 @@ package body Project_Viewers is
          declare
             Str : constant String := Get_String (Initial_Dirs_Id (J));
          begin
-            --  Initial_Dirs will always containe an unnormalized,
+            --  Initial_Dirs will always contain an unnormalized,
             --  absolute path, therefore we need to trim it first before
             --  comparing the old and new values.
 
@@ -2109,7 +2109,7 @@ package body Project_Viewers is
 
       if Project_Uses_Relative_Paths then
          New_Dir := new String'(Relative_Path_Name
-           (Get_Text (Obj_Dir.Obj_Dir), Project_Path (Project)));
+           (Get_Text (Obj_Dir.Obj_Dir), Project_Directory (Project)));
       else
          New_Dir := new String'(Name_As_Directory
            (Normalize_Pathname (Get_Text (Obj_Dir.Obj_Dir))));
@@ -2119,7 +2119,7 @@ package body Project_Viewers is
          Exec_Dir := new String'(New_Dir.all);
       elsif Project_Uses_Relative_Paths then
          Exec_Dir := new String'(Relative_Path_Name
-           (Get_Text (Obj_Dir.Exec_Dir), Project_Path (Project)));
+           (Get_Text (Obj_Dir.Exec_Dir), Project_Directory (Project)));
       else
          Exec_Dir := new String'(Name_As_Directory
            (Normalize_Pathname (Get_Text (Obj_Dir.Exec_Dir))));
