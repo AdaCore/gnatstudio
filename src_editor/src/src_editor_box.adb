@@ -30,7 +30,10 @@
 with Glib;                       use Glib;
 with Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
+with Glide_Kernel.Editor;
 with Glide_Kernel.Project;       use Glide_Kernel.Project;
+with Gdk;                        use Gdk;
+with Gdk.Event;                  use Gdk.Event;
 with Gtk;                        use Gtk;
 with Gtk.Box;                    use Gtk.Box;
 with Gtk.Container;              use Gtk.Container;
@@ -38,9 +41,13 @@ with Gtk.Enums;                  use Gtk.Enums;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
+with Gtk.Menu;                   use Gtk.Menu;
+with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Text_Layout;            use Gtk.Text_Layout;
+with Gtk.Widget;                 use Gtk.Widget;
+with GUI_Utils;                  use GUI_Utils;
 
 with Language;                   use Language;
 with String_Utils;               use String_Utils;
@@ -58,6 +65,12 @@ package body Src_Editor_Box is
    Min_Column_Number_Width : constant := 3;
    --  The minimum number of digits that the Column Number Area should be
    --  able to display.
+
+   package Widget_Callback is new Gtk.Handlers.User_Callback
+     (Widget_Type => Gtk_Widget_Record,
+      User_Type   => Source_Editor_Box);
+   --  ??? All 3 callback instantiations should probably be merged into
+   --  ??? one single instantiation later on.
 
    package View_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Source_View_Record,
@@ -133,6 +146,26 @@ package body Src_Editor_Box is
       End_Iter     : out Gtk_Text_Iter);
    --  Find the position of the begining and the end of the entity pointed to
    --  by Start_Iter.
+
+   ----------------------------------
+   -- The contextual menu handling --
+   ----------------------------------
+
+   package CMenu is new GUI_Utils.User_Contextual_Menus
+     (User_Data => Source_Editor_Box);
+   --  Used to register contextual menus with a user data.
+
+   function Get_Contextual_Menu
+     (Editor : Source_Editor_Box;
+      Event  : Gdk_Event)
+      return Gtk_Menu;
+   --  Return the contextual menu to use for the source box.
+
+   procedure On_Goto_Declaration_Or_Body
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues;
+      Editor : Source_Editor_Box);
+   --  Callback for the "Goto Declaration<->Body" contextual menu
 
    -----------------
    -- To_Box_Line --
@@ -318,6 +351,9 @@ package body Src_Editor_Box is
 
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
+      --  The Contextual Menu handling
+      CMenu.Register_Contextual_Menu
+        (Box.Source_View, Source_Editor_Box (Box), Get_Contextual_Menu'Access);
    end Initialize_Box;
 
    ----------------------
@@ -362,6 +398,76 @@ package body Src_Editor_Box is
       end loop;
    end Search_Entity_Bounds;
 
+   -------------------------
+   -- Get_Contextual_Menu --
+   -------------------------
+
+   function Get_Contextual_Menu
+     (Editor : Source_Editor_Box;
+      Event  : Gdk_Event)
+      return Gtk_Menu
+   is
+      V : Source_View := Editor.Source_View;
+      Item : Gtk_Menu_Item;
+   begin
+      if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
+         if Editor.Left_Contextual_Menu /= null then
+            Destroy (Editor.Left_Contextual_Menu);
+         end if;
+
+         Gtk_New (Editor.Left_Contextual_Menu);
+         Gtk_New (Item, "Go to line");
+         Add (Editor.Left_Contextual_Menu, Item);
+         Gtk_New (Item, "Go to previous reference");
+         Add (Editor.Left_Contextual_Menu, Item);
+         Gtk_New (Item, "Go to file spec/body");
+         Add (Editor.Left_Contextual_Menu, Item);
+         Gtk_New (Item, "Go to parent unit");
+         Add (Editor.Left_Contextual_Menu, Item);
+
+         return Editor.Left_Contextual_Menu;
+
+      else
+         if Editor.Contextual_Menu /= null then
+            Destroy (Editor.Contextual_Menu);
+         end if;
+
+         Gtk_New (Editor.Contextual_Menu);
+
+         Gtk_New (Item, "Go to declaration/body");
+         Add (Editor.Contextual_Menu, Item);
+         Widget_Callback.Connect
+           (Widget    => Item,
+            Name      => "activate",
+            Cb        => On_Goto_Declaration_Or_Body'Access,
+            User_Data => Editor,
+            After     => True);
+
+         Gtk_New (Item, "Go to previous reference");
+         Add (Editor.Contextual_Menu, Item);
+         Gtk_New (Item, "List references");
+         Add (Editor.Contextual_Menu, Item);
+         Gtk_New (Item);
+         Add (Editor.Contextual_Menu, Item);
+         Gtk_New (Item, "Go to file spec/body");
+         Add (Editor.Contextual_Menu, Item);
+         Gtk_New (Item, "Go to parent unit");
+         Add (Editor.Contextual_Menu, Item);
+         return Editor.Contextual_Menu;
+      end if;
+   end Get_Contextual_Menu;
+
+   ---------------------------------
+   -- On_Goto_Declaration_Or_Body --
+   ---------------------------------
+
+   procedure On_Goto_Declaration_Or_Body
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues;
+      Editor : Source_Editor_Box) is
+   begin
+      Glide_Kernel.Editor.Goto_Declaration_Or_Body (Editor.Kernel);
+   end On_Goto_Declaration_Or_Body;
    -------------
    -- Gtk_New --
    -------------
