@@ -31,11 +31,6 @@ package body Python.Ada is
    function Python_API_Version return Integer;
    pragma Import (C, Python_API_Version, "ada_python_api_version");
 
---   PyInstance_Type_Record : aliased PyTypeObject_Record;
---   pragma Import (C, PyInstance_Type_Record, "PyInstance_Type");
---   PyInstance_Type : constant PyTypeObject := PyInstance_Type_Record'Access;
-   --  The type of instances created by a PyClassObject class, when called.
-
    type Methods_Access is access PyMethodDef_Array;
    type MethodDef_Access is access PyMethodDef;
    pragma Convention (C, MethodDef_Access);
@@ -47,16 +42,6 @@ package body Python.Ada is
    --  the Ada subprogram.
    --  This should be used only for standard functions, not for object methods
    --  Self is the first argument that will be passed to the Ada subprogram.
-
---   function PyDescr_NewMethod
---     (Instance_Class : PyTypeObject;
---      Method         : MethodDef_Access) return PyObject;
---   pragma Import (C, PyDescr_NewMethod, "PyDescr_NewMethod");
-   --  Create a new method, bound to an Ada subprogram.
-   --  This is different from PyCFunction_New since, when called, it is bound
-   --  to a specific class instance, which then acts as the first parameter to
-   --  the function. Instance_Class is the type description for the instance
-   --  that is allowed (or one of its subclasses).
 
    function PyMethod_New
      (Func : PyObject; Self : PyObject := null; Klass : PyObject)
