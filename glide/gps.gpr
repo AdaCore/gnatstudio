@@ -5,6 +5,7 @@ with "../vsearch/vsearch";
 with "../prj_editor/prj_editor";
 with "../src_editor/src_editor";
 with "../aunit/aunit";
+with "../codefix/codefix";
 with "../vdiff/vdiff";
 with "../browsers/browsers";
 with "../vcs/vcs";
@@ -31,9 +32,9 @@ project GPS is
 
    package Builder is
       case Build is
-         when "Debug" => 
+         when "Debug" =>
            for Default_Switches ("Ada") use
-             ("-m", "-a", "-g", "-gnata", "-gnatVa", "-gnatQ", 
+             ("-m", "-a", "-g", "-gnata", "-gnatVa", "-gnatQ",
               "-gnatwk", "-gnatwr");
            for Global_Configuration_Pragmas use "gnat_debug.adc";
 
