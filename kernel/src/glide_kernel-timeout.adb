@@ -58,16 +58,26 @@ package body Glide_Kernel.Timeout is
       begin
          Close (Fd.all, Status);
 
-         if Status = 0 then
-            Console.Insert (Data.Kernel, "process terminated successfully");
+         if Data.Exit_Cb = null then
+            if Status = 0 then
+               Console.Insert
+                 (Data.Kernel, -"process terminated successfully");
+            else
+               Console.Insert
+                 (Data.Kernel, -"process exited with status " &
+                  Image (Status));
+            end if;
+
          else
-            Console.Insert
-              (Data.Kernel, "process exited with status " & Image (Status));
+            Data.Exit_Cb (Data, Status);
          end if;
 
          Free (Fd);
          Free (Name);
-         Pop_State (Data.Kernel);
+
+         if Data.Callback /= null then
+            Pop_State (Data.Kernel);
+         end if;
       end Cleanup;
 
    begin
@@ -103,8 +113,9 @@ package body Glide_Kernel.Timeout is
    procedure Launch_Process
      (Kernel    : Kernel_Handle;
       Command   : String;
-      Arguments : Argument_List;
-      Callback  : Process_Callback;
+      Arguments : GNAT.OS_Lib.Argument_List;
+      Callback  : Process_Callback := null;
+      Exit_Cb   : Exit_Callback := null;
       Name      : String;
       Success   : out Boolean)
    is
@@ -142,6 +153,7 @@ package body Glide_Kernel.Timeout is
          end loop;
 
          --  Add end of line after last argument
+
          Console.Insert (Kernel, "", False);
 
          Fd := new TTY_Process_Descriptor;
@@ -162,7 +174,7 @@ package body Glide_Kernel.Timeout is
       if Success then
          Id := Process_Timeout.Add
            (Timeout, Process_Cb'Access,
-            (Kernel, Fd, new String'(Name), Callback));
+            (Kernel, Fd, new String'(Name), Callback, Exit_Cb));
 
          if Callback = null then
             Pop_State (Kernel);
