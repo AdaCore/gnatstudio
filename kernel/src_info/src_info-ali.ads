@@ -58,6 +58,10 @@ package Src_Info.ALI is
    --  project exception lists and when the extension does not follow the
    --  project naming scheme.
    --
+   --  Source_Filename should be the name of the file as stored in the LI
+   --  structure (ie the base file name for Ada files, possibly including
+   --  directory name for other languages).
+   --
    --  Side_Effects:
    --  This function destroys the contents of the Namet buffer. Save it before
    --  calling this function if it needs to be preserved.

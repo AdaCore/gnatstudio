@@ -1704,7 +1704,6 @@ package body Src_Info.ALI is
       Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
       Naming         : Naming_Data renames Prj_Data.Naming;
 
-      Short_Source_Name : constant String := Base_Name (Source_Filename);
       Source_Name_Id : File_Name_Type;
       Body_Id        : Array_Element_Id;
       Spec_Id        : Array_Element_Id;
@@ -1716,8 +1715,8 @@ package body Src_Info.ALI is
    begin
       --  Store the source filename in the Namet buffer and get its Name ID
 
-      Namet.Name_Buffer (1 .. Short_Source_Name'Length) := Short_Source_Name;
-      Namet.Name_Len := Short_Source_Name'Length;
+      Namet.Name_Buffer (1 .. Source_Filename'Length) := Source_Filename;
+      Namet.Name_Len := Source_Filename'Length;
       Source_Name_Id := Namet.Name_Find;
 
       --  First, check the body filename exception list
@@ -1914,8 +1913,7 @@ package body Src_Info.ALI is
       Predefined_Source_Path : String;
       Predefined_Object_Path : String)
    is
-      Base    : constant String := Base_Name (Source_Filename);
-      F       : File_Info_Ptr_List;
+      F : File_Info_Ptr_List;
    begin
       Create_Or_Complete_LI
         (Handler                => Handler,
@@ -1935,9 +1933,9 @@ package body Src_Info.ALI is
 
       if File /= No_LI_File then
          if (File.LI.Spec_Info /= null
-             and then File.LI.Spec_Info.Source_Filename.all = Base)
+             and then File.LI.Spec_Info.Source_Filename.all = Source_Filename)
            or else (File.LI.Body_Info /= null
-             and then File.LI.Body_Info.Source_Filename.all = Base)
+             and then File.LI.Body_Info.Source_Filename.all = Source_Filename)
          then
             return;
          end if;
@@ -1945,14 +1943,15 @@ package body Src_Info.ALI is
          F := File.LI.Separate_Info;
          while F /= null loop
             if F.Value /= null
-              and then F.Value.Source_Filename.all = Base
+              and then F.Value.Source_Filename.all = Source_Filename
             then
                return;
             end if;
             F := F.Next;
          end loop;
 
-         Trace (Me, "Parsed LI file didn't contain the info for " & Base);
+         Trace (Me, "Parsed LI file didn't contain the info for "
+                & Source_Filename);
          File := No_LI_File;
       end if;
    end Create_Or_Complete_LI;
