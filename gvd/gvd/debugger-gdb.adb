@@ -314,6 +314,7 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger);
       Send (Get_Process (Debugger), "info line");
       Wait_Prompt (Debugger);
+      Set_Internal_Command (Get_Process (Debugger), False);
    end Initialize;
 
    -----------
