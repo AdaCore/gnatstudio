@@ -42,10 +42,9 @@ with Odd.Types;             use Odd.Types;
 with Odd.Process;           use Odd.Process;
 with Debugger;              use Debugger;
 with Odd_Intl;              use Odd_Intl;
-with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
-with Gtk.Object;            use Gtk.Object;
 with Gtk.Tooltips;          use Gtk.Tooltips;
+with Odd.Menus;             use Odd.Menus;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -77,7 +76,6 @@ package body Odd.Explorer is
    package Tree_Cb is new Gtk.Handlers.Callback (Explorer_Record);
    package Boolean_Tree_Cb is new Gtk.Handlers.Return_Callback
      (Explorer_Record, Boolean);
-   package Menu_User_Data is new Gtk.Object.User_Data (Gtk_Menu);
 
    package Row_Data_Explorer is new Gtk.Ctree.Row_Data (Position_Type);
 
@@ -123,6 +121,15 @@ package body Odd.Explorer is
    Explorer_Contextual_Menu_Name : constant String := "odd_debugger_context";
    --  String used to store the explorer menu in the user data of the explorer.
 
+   function Find_Node_From_File
+     (Explorer  : access Explorer_Record'Class;
+      File_Name : String)
+     return Gtk_Ctree_Node;
+   --  Return the Node that contains the file File_Name, or null if there is
+   --  no such node.
+
+   procedure Show_System_Files (Explorer : access Explorer_Record'Class);
+   --  Toggle the display of system files
 
    -------------
    -- Gtk_New --
@@ -193,7 +200,7 @@ package body Odd.Explorer is
          Pixmap_Opened => Explorer.Folder_Open_Pixmap,
          Mask_Opened   => Explorer.Folder_Open_Mask,
          Is_Leaf       => False,
-         Expanded      => True);
+         Expanded      => False);
       Show_All (Explorer);
 
       --  This is a workaround for a horizontal scrollbar problem: When the
@@ -235,13 +242,18 @@ package body Odd.Explorer is
    procedure First_Handler
      (Explorer : access Explorer_Record'Class)
    is
-      Node : Gtk_Ctree_Node := Node_List.Get_Data
+      Node      : Gtk_Ctree_Node := Node_List.Get_Data
         (Node_List.First (Get_Selection (Explorer)));
       File_Node : Gtk_Ctree_Node;
-      Data : Node_Data_Access;
-      Tab  : Debugger_Process_Tab := Convert (Explorer);
-      Lang : Language_Access;
+      Data      : Node_Data_Access;
+      Tab       : Debugger_Process_Tab := Convert (Explorer);
+      Lang      : Language_Access;
+      Line      : Natural := 1;
    begin
+      --  ???  Should set Data.Line to the current line for the current
+      --  selection, so that when the user selects the same file again, we
+      --  show him the line he was on.
+
       --  If an entity was referenced, load the file and display the
       --  correct line.
 
@@ -252,7 +264,8 @@ package body Odd.Explorer is
          Lang := Get_Language_From_File (Data.Extension);
          Set_Current_Language (Code_Editor (Explorer.Code_Editor), Lang);
          Load_File (Code_Editor (Explorer.Code_Editor),
-                    Find_File (Tab.Debugger, Data.Extension));
+                    Find_File (Tab.Debugger, Data.Extension),
+                    Set_Current => False);
          Highlight_Word (Code_Editor (Explorer.Code_Editor),
                          Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node));
 
@@ -263,9 +276,15 @@ package body Odd.Explorer is
          if Data.Is_File_Node then
             Lang := Get_Language_From_File (Data.Extension);
             Set_Current_Language (Code_Editor (Explorer.Code_Editor), Lang);
+            if Node = Explorer.Current_File_Node then
+               Line := Explorer.Current_Line;
+               Put_Line ("Line=" & Line'Img);
+            end if;
             Load_File (Code_Editor (Explorer.Code_Editor),
-                       Find_File (Tab.Debugger, Data.Extension));
-            --  Set_Line (Code_Editor (Explorer.Code_Editor), 1);
+                       Find_File (Tab.Debugger, Data.Extension),
+                       Set_Current => False);
+            Set_Line (Code_Editor (Explorer.Code_Editor), Line,
+                      Set_Current => False);
          end if;
       end if;
    exception
@@ -497,23 +516,39 @@ package body Odd.Explorer is
                exit;
             end if;
 
-            Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
+            Extension_Node :=
+              Row_Get_Sibling (Node_Get_Row (Extension_Node));
          end loop;
       end if;
 
       if not Row_Found then
-         Extension_Node := Insert_Node
-           (Tree,
-            Parent  => Tree.Explorer_Root,
-            Sibling => null,
-            Text    => Null_Array + (Extension & " files"),
-            Spacing => 5,
-            Pixmap_Closed => Tree.Folder_Pixmap,
-            Mask_Closed   => Tree.Folder_Mask,
-            Pixmap_Opened => Tree.Folder_Open_Pixmap,
-            Mask_Opened   => Tree.Folder_Open_Mask,
-            Is_Leaf       => False,
-            Expanded      => False);
+         if Extension /= "" then
+            Extension_Node := Insert_Node
+              (Tree,
+               Parent  => Tree.Explorer_Root,
+               Sibling => null,
+               Text    => Null_Array + (Extension & " files"),
+               Spacing => 5,
+               Pixmap_Closed => Tree.Folder_Pixmap,
+               Mask_Closed   => Tree.Folder_Mask,
+               Pixmap_Opened => Tree.Folder_Open_Pixmap,
+               Mask_Opened   => Tree.Folder_Open_Mask,
+               Is_Leaf       => False,
+               Expanded      => False);
+         else
+            Extension_Node := Insert_Node
+              (Tree,
+               Parent  => Tree.Explorer_Root,
+               Sibling => null,
+               Text    => Null_Array + (-"No extension files"),
+               Spacing => 5,
+               Pixmap_Closed => Tree.Folder_Pixmap,
+               Mask_Closed   => Tree.Folder_Mask,
+               Pixmap_Opened => Tree.Folder_Open_Pixmap,
+               Mask_Opened   => Tree.Folder_Open_Mask,
+               Is_Leaf       => False,
+               Expanded      => False);
+         end if;
          Data := new Node_Data'(Length       => Extension'Length,
                                 Extension    => Extension,
                                 Is_File_Node => False,
@@ -557,7 +592,7 @@ package body Odd.Explorer is
          Pixmap_Opened => Null_Pixmap,
          Mask_Opened   => Null_Bitmap,
          Is_Leaf       => True,
-         Expanded      => False);
+         Expanded      => True);
       Row_Data_Pkg.Node_Set_Row_Data (Tree, Node, Data);
    end Add_File_Node;
 
@@ -581,36 +616,33 @@ package body Odd.Explorer is
       Show_All (Tree);
    end Add_List_Of_Files;
 
-   ----------------------
-   -- Set_Current_File --
-   ----------------------
+   -------------------------
+   -- Find_Node_From_File --
+   -------------------------
 
-   procedure Set_Current_File
-     (Tree : access Explorer_Record;
+   function Find_Node_From_File
+     (Explorer  : access Explorer_Record'Class;
       File_Name : String)
+     return Gtk_Ctree_Node
    is
       use type Row_List.Glist;
       Base_Name       : String := Base_File_Name (File_Name);
       Extension       : String := File_Extension (File_Name);
-      Extension_Nodes : Row_List.Glist := Get_Row_List (Tree);
+      Extension_Nodes : Row_List.Glist := Get_Row_List (Explorer);
       Extension_Node  : Gtk_Ctree_Node;
       Data            : Node_Data_Access;
       Row_Found       : Boolean := False;
       Node            : Gtk_Ctree_Node;
 
    begin
-      --  Get rid of the highlight on the previous current file
-      if Tree.Current_File_Node /= null then
-         Node_Set_Row_Style (Tree, Tree.Current_File_Node, Null_Style);
-         Tree.Current_File_Node := null;
-      end if;
-
       --  Find the extension node for the current file
-      if Extension_Nodes /= Row_List.Null_List then
+      if Explorer.Explorer_Root = null
+        and then Extension_Nodes /= Row_List.Null_List
+      then
          Extension_Node :=
-           Find_Node_Ptr (Tree, Row_List.Get_Data (Extension_Nodes));
+           Find_Node_Ptr (Explorer, Row_List.Get_Data (Extension_Nodes));
          while Extension_Node /= null loop
-            Data := Row_Data_Pkg.Node_Get_Row_Data (Tree, Extension_Node);
+            Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Extension_Node);
             if Data.Extension = Extension then
                Row_Found := True;
                exit;
@@ -621,22 +653,44 @@ package body Odd.Explorer is
 
       --  No extension node found.
       if not Row_Found then
-         return;
+         return null;
       end if;
 
       --  Find the node
       Row_Found := False;
       Node := Row_Get_Children (Node_Get_Row (Extension_Node));
       while Node /= null loop
-         Data := Row_Data_Pkg.Node_Get_Row_Data (Tree, Node);
+         Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
          if Data.Extension = Base_Name then
-            Row_Found := True;
-            exit;
+            return Node;
          end if;
          Node := Row_Get_Sibling (Node_Get_Row (Node));
       end loop;
 
-      if not Row_Found then
+      return null;
+   end Find_Node_From_File;
+
+   ----------------------
+   -- Set_Current_File --
+   ----------------------
+
+   procedure Set_Current_File
+     (Tree : access Explorer_Record;
+      File_Name : String)
+   is
+      use type Row_List.Glist;
+      Node            : Gtk_Ctree_Node :=
+        Find_Node_From_File (Tree, File_Name);
+
+   begin
+
+      --  Get rid of the highlight on the previous current file
+      if Tree.Current_File_Node /= null then
+         Node_Set_Row_Style (Tree, Tree.Current_File_Node, Null_Style);
+         Tree.Current_File_Node := null;
+      end if;
+
+      if Node = null then
          return;
       end if;
 
@@ -649,10 +703,12 @@ package body Odd.Explorer is
          Expand (Tree, Row_Get_Parent (Node_Get_Row (Tree.Current_File_Node)));
       end if;
 
-      --  Scroll to make the node visible
-      if Node_Is_Visible (Tree, Tree.Current_File_Node) /= Visibility_Full then
-         Node_Moveto (Tree, Tree.Current_File_Node, 0, 0.5, 0.0);
-      end if;
+      --  Scroll to make the node visible (??? This does not work, since the
+      --  scrollbar is always displayed at the bottom, even when the current
+      --  file is at the top).
+--   if Node_Is_Visible (Tree, Tree.Current_File_Node) /= Visibility_Full then
+--      Node_Moveto (Tree, Tree.Current_File_Node, 0, 0.5, 0.0);
+--   end if;
    end Set_Current_File;
 
    ---------------------------
@@ -662,8 +718,8 @@ package body Odd.Explorer is
    procedure On_Executable_Changed
      (Explorer : access Gtk_Widget_Record'Class)
    is
-      Exp         : Explorer_Access := Explorer_Access (Explorer);
-      Tab         : Debugger_Process_Tab := Convert (Exp);
+      Exp  : Explorer_Access := Explorer_Access (Explorer);
+      Tab  : Debugger_Process_Tab := Convert (Exp);
       List : Odd.Types.String_Array := Source_Files_List (Tab.Debugger);
    begin
       Add_List_Of_Files (Exp, List);
@@ -702,7 +758,8 @@ package body Odd.Explorer is
      return Gtk.Menu.Gtk_Menu
    is
       Menu  : Gtk_Menu;
-      Check : Gtk_Check_Menu_Item;
+
+      --  Check : Gtk_Check_Menu_Item;
       Mitem : Gtk_Menu_Item;
       Tips  : Gtk_Tooltips;
       Process : Debugger_Process_Tab := Convert (Explorer);
@@ -719,10 +776,18 @@ package body Odd.Explorer is
       Gtk_New (Tips);
       Ref (Tips);
 
-      Gtk_New (Check, Label => -"Show System Files");
-      Set_Always_Show_Toggle (Check, True);
-      Set_Active (Check, False);
-      Append (Menu, Check);
+      --  ???  Currently use a standard item, since it is not possible to
+      --  hide nodes of the tree, only to remove them. Thus showing again the
+      --  system files would require to reparse and recreate the list of
+      --  files.
+      Gtk_New (Mitem, Label => -"Hide System Files");
+      --  Set_Always_Show_Toggle (Check, True);
+      --  Set_Active (Check, False);
+      Tree_Cb.Object_Connect
+        (Mitem, "activate",
+         Tree_Cb.To_Marshaller (Show_System_Files'Access),
+         Explorer);
+      Append (Menu, Mitem);
       --  Set_Tip (Tips, Check, -"Foo", "");
 
       Gtk_New (Mitem, Label => -"Display Files In Shared Libraries");
@@ -788,6 +853,7 @@ package body Odd.Explorer is
       Next            : Gtk_Ctree_Node;
       Process : Debugger_Process_Tab := Convert (Explorer);
    begin
+      Freeze (Explorer);
       Set_Busy_Cursor (Process, True);
       --  Find the extension node for the current file
       if Extension_Nodes /= Row_List.Null_List then
@@ -813,6 +879,87 @@ package body Odd.Explorer is
          end loop;
       end if;
       Set_Busy_Cursor (Process, False);
+      Thaw (Explorer);
    end Delete_Not_Found;
+
+   ----------------------
+   -- Set_Current_Line --
+   ----------------------
+
+   procedure Set_Current_Line
+     (Tree : access Explorer_Record;
+      Line : Natural)
+   is
+   begin
+      Put_Line ("Set_Current_Line=" & Line'Img);
+      Tree.Current_Line := Line;
+   end Set_Current_Line;
+
+   ----------------------
+   -- Get_Current_Line --
+   ----------------------
+
+   function Get_Current_Line (Tree : access Explorer_Record) return Natural is
+   begin
+      return Tree.Current_Line;
+   end Get_Current_Line;
+
+   ----------------------
+   -- Get_Current_File --
+   ----------------------
+
+   function Get_Current_File (Tree : access Explorer_Record) return String is
+      Data : Node_Data_Access;
+   begin
+      if Tree.Current_File_Node = null then
+         return "";
+      end if;
+      Data := Row_Data_Pkg.Node_Get_Row_Data (Tree, Tree.Current_File_Node);
+      return Data.Extension;
+   end Get_Current_File;
+
+   -----------------------
+   -- Show_System_Files --
+   -----------------------
+
+   procedure Show_System_Files (Explorer : access Explorer_Record'Class) is
+      use type Row_List.Glist;
+      Extension_Nodes : Row_List.Glist := Get_Row_List (Explorer);
+      Extension_Node  : Gtk_Ctree_Node;
+      Data            : Node_Data_Access;
+      Node            : Gtk_Ctree_Node;
+      Next            : Gtk_Ctree_Node;
+      Process         : Debugger_Process_Tab := Convert (Explorer);
+      Lang            : Language_Access;
+   begin
+      Freeze (Explorer);
+      Set_Busy_Cursor (Process, True);
+      --  Find the extension node for the current file
+      if Extension_Nodes /= Row_List.Null_List then
+         Extension_Node :=
+           Find_Node_Ptr (Explorer, Row_List.Get_Data (Extension_Nodes));
+         while Extension_Node /= null loop
+
+            Node := Row_Get_Children (Node_Get_Row (Extension_Node));
+            while Node /= null loop
+               Next := Row_Get_Sibling (Node_Get_Row (Node));
+               Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
+
+               Lang := Get_Language_From_File (Data.Extension);
+               if Lang /= null
+                 and then Is_System_File (Lang, Data.Extension)
+               then
+                  Remove_Node (Explorer, Node);
+               end if;
+
+               Node := Next;
+            end loop;
+
+            Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
+         end loop;
+      end if;
+      Set_Busy_Cursor (Process, False);
+      Thaw (Explorer);
+   end Show_System_Files;
 
 end Odd.Explorer;

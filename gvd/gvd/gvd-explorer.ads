@@ -84,6 +84,20 @@ package Odd.Explorer is
    --  Set a new current file.
    --  The entry in the tree for this file is made visible, and highlighted.
 
+   procedure Set_Current_Line
+     (Tree : access Explorer_Record;
+      Line : Natural);
+   --  Set the line in the current file, ie the line on which the debugger
+   --  is stopped.
+
+   function Get_Current_Line (Tree : access Explorer_Record) return Natural;
+   --  Return the current line number.
+   --  This is the line on which the debugger is stopped.
+
+   function Get_Current_File (Tree : access Explorer_Record) return String;
+   --  Return the name of the file on which the debugger is stopped,
+   --  or "" if the current file is not known.
+
 private
    type Explorer_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Explorer_Root      : Gtk.Ctree.Gtk_Ctree_Node;
@@ -91,6 +105,9 @@ private
       Current_File_Style : Gtk.Style.Gtk_Style;
       File_Name_Style    : Gtk.Style.Gtk_Style;
       Current_File_Node  : Gtk.Ctree.Gtk_Ctree_Node;
+
+      Current_Line       : Natural := 1;
+      --  Line to use when displaying the current file.
 
       Folder_Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Mask        : Gdk.Bitmap.Gdk_Bitmap;
