@@ -911,7 +911,7 @@ package body Entities is
    begin
       Assert (Assert_Me, Renaming_Of /= null, "Invalid renamed entity");
       Entity.Rename := Renaming_Of;
-      Add_All_Entities (Entity.Declaration.File, Renaming_Of);
+      Add_All_Entities (Renaming_Of.Declaration.File, Entity);
    end Set_Is_Renaming_Of;
 
    -------------------
@@ -940,7 +940,7 @@ package body Entities is
       Append (Entity.Parent_Types, Is_Of_Type);
 
       if Entity.Kind.Is_Type then
-         Append (Is_Of_Type.Child_Types, Entity);
+         Append (Entity.Child_Types, Is_Of_Type);
       end if;
 
       Add_All_Entities (Entity.Declaration.File, Is_Of_Type);
