@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.1
 
+- DC16-004 Removing an entry from a GPS.Combo fails in python
+  Problem:    If you try to call GPS.Combo().remove(), you get an internal
+              GPS error in the console
+  Workaround: Clear the combo and recreate it instead
+
 - DC06-007 Crash when selecting some fonts under Windows
   Problem:    When selecting some particular fonts (e.g. 'Serif') in the
               font selector under Windows, GPS will crash.
