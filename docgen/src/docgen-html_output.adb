@@ -20,17 +20,12 @@
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Language;                  use Language;
-with Language.Ada;              use Language.Ada;
-with Language.Ada;              use Language.Ada;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with String_Utils;              use String_Utils;
-with VFS;                       use VFS;
 with Glide_Kernel;              use Glide_Kernel;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
-with Traces;                   use Traces;
-with Ada.Exceptions;           use Ada.Exceptions;
+with Traces;                    use Traces;
+with Docgen;
 
 package body Docgen.Html_Output is
 
@@ -54,13 +49,15 @@ package body Docgen.Html_Output is
    --  Add a subtitle for the entity type to the documentation
 
    procedure Doc_HTML_Entry
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add aa entry or entry family to the documentation
 
    procedure Doc_HTML_Subprogram
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add a subprogram to the documentation
@@ -71,54 +68,39 @@ package body Docgen.Html_Output is
    --  Add the package description to the documentation
 
    procedure Doc_HTML_Package
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add the renamed and instantiated package to the documentation
 
    procedure Doc_HTML_With
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add the dependencies to the documentation
 
    procedure Doc_HTML_Var
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add a constant or named number to the documentation
 
    procedure Doc_HTML_Exception
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add an exception to the documentation
 
    procedure Doc_HTML_Type
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add a type to the documentation
-
-   procedure Format_HTML
-     (Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      LI_Unit          : LI_File_Ptr;
-      Text             : String;
-      File_Name        : VFS.Virtual_File;
-      Entity_Line      : Natural;
-      Line_In_Body     : Natural;
-      Source_File_List : Type_Source_File_List.List;
-      Link_All         : Boolean;
-      Is_Body          : Boolean;
-      Process_Body     : Boolean);
-   --  Formatted Text as HTML code and write to the docfile.
-   --  Line_In_Body is used only for subprograms to create not regular
-   --  links (in this case it is not the line number of the declaration
-   --  which is needed, but the line of the definition in the body.
-   --  If Do_Check_Pack is set, the procedure will check if a link
-   --  should be set to First_Package_Line or link it to its declaration
-   --  line.
 
    procedure Doc_HTML_Header
      (Kernel : access Kernel_Handle_Record'Class;
@@ -161,24 +143,26 @@ package body Docgen.Html_Output is
    --  Add the footer to the index, used for all 3 indes files
 
    procedure Doc_HTML_Body
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File : in Ada.Text_IO.File_Type;
       Info : in out Doc_Info);
    --  Format the body by calling Format_HTML for the whole body file
    --  and write it to the doc file
 
-   function Get_Html_File_Name
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : Virtual_File) return String;
-   --  Create a .htm file name from the full path of the source file
-   --  for ex.: from util/src/docgen.adb the name docgen_adb.htm is created
+   procedure Replace_HTML_Tags
+     (Input_Text : String;
+      File : in Ada.Text_IO.File_Type);
+   --  Replaces all "<"  which are by "&lt;" and all ">" by "&gt;"
+   --  and writes the output to the doc file.
 
    ---------------------
    -- Doc_HTML_Create --
    ---------------------
 
    procedure Doc_HTML_Create
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (B             : access Backend_HTML;
+      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       File          : in Ada.Text_IO.File_Type;
       Info          : in out Docgen.Doc_Info;
       Doc_Directory : String;
@@ -191,20 +175,23 @@ package body Docgen.Html_Output is
          when Footer_Info           => Doc_HTML_Footer (File, Info, Kernel);
          when Subtitle_Info         => Doc_HTML_Subtitle (File, Info);
          when Package_Desc_Info     => Doc_HTML_Pack_Desc (File, Info);
-         when With_Info             => Doc_HTML_With (Kernel, File, Info);
-         when Package_Info          => Doc_HTML_Package (Kernel, File, Info);
-         when Var_Info              => Doc_HTML_Var (Kernel, File, Info);
-         when Entry_Info            => Doc_HTML_Entry (Kernel, File, Info);
-         when Subprogram_Info      => Doc_HTML_Subprogram (Kernel, File, Info);
-         when Type_Info             => Doc_HTML_Type (Kernel, File, Info);
-         when Exception_Info        => Doc_HTML_Exception (Kernel, File, Info);
+         when With_Info             => Doc_HTML_With (B, Kernel, File, Info);
+         when Package_Info
+            => Doc_HTML_Package (B, Kernel, File, Info);
+         when Var_Info              => Doc_HTML_Var (B, Kernel, File, Info);
+         when Entry_Info            => Doc_HTML_Entry (B, Kernel, File, Info);
+         when Subprogram_Info
+            => Doc_HTML_Subprogram (B, Kernel, File, Info);
+         when Type_Info             => Doc_HTML_Type (B, Kernel, File, Info);
+         when Exception_Info
+            => Doc_HTML_Exception (B, Kernel, File, Info);
          when Unit_Index_Info       =>
             Doc_HTML_Unit_Index_Header (File, Info, Doc_Directory, Doc_Suffix);
          when Subprogram_Index_Info => Doc_HTML_Sub_Index_Header  (File, Info);
          when Type_Index_Info       => Doc_HTML_Type_Index_Header (File, Info);
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
-         when Body_Line_Info        => Doc_HTML_Body (Kernel, File, Info);
+         when Body_Line_Info        => Doc_HTML_Body (B, Kernel, File, Info);
       end case;
    end Doc_HTML_Create;
 
@@ -269,7 +256,8 @@ package body Docgen.Html_Output is
    ----------------------
 
    procedure Doc_HTML_Package
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
@@ -284,8 +272,9 @@ package body Docgen.Html_Output is
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.Package_Header.all,
@@ -307,15 +296,17 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_With
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
       Put_Line
         (File, "<TABLE  bgcolor=""#DDDDDD"" width=""100%""><TR><TD> <PRE>");
 
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.With_Header.all,
@@ -336,7 +327,8 @@ package body Docgen.Html_Output is
    ------------------
 
    procedure Doc_HTML_Var
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
@@ -352,8 +344,9 @@ package body Docgen.Html_Output is
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.Var_Header.all,
@@ -375,7 +368,8 @@ package body Docgen.Html_Output is
    ------------------------
 
    procedure Doc_HTML_Exception
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
@@ -391,8 +385,9 @@ package body Docgen.Html_Output is
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.Exception_Header.all,
@@ -414,7 +409,8 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Type
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
@@ -430,8 +426,9 @@ package body Docgen.Html_Output is
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.Type_Header.all,
@@ -453,7 +450,8 @@ package body Docgen.Html_Output is
    --------------------
 
    procedure Doc_HTML_Entry
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
@@ -469,8 +467,9 @@ package body Docgen.Html_Output is
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.Entry_Header.all,
@@ -492,7 +491,8 @@ package body Docgen.Html_Output is
    -------------------------
 
    procedure Doc_HTML_Subprogram
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info)
    is
@@ -590,8 +590,9 @@ package body Docgen.Html_Output is
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.Subprogram_Header.all,
@@ -616,365 +617,6 @@ package body Docgen.Html_Output is
       Put_Line (File, "<HR> ");
    end Doc_HTML_Subprogram;
 
-   -----------------
-   -- Format_HTML --
-   -----------------
-
-   procedure Format_HTML
-     (Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      LI_Unit          : LI_File_Ptr;
-      Text             : String;
-      File_Name        : VFS.Virtual_File;
-      Entity_Line      : Natural;
-      Line_In_Body     : Natural;
-      Source_File_List : Type_Source_File_List.List;
-      Link_All         : Boolean;
-      Is_Body          : Boolean;
-      Process_Body     : Boolean)
-   is
-      Last_Index, Last_Line : Natural;
-      Loc_Start, Loc_End    : Natural;
-      Point_In_Column       : Natural;
-
-      procedure Set_Name_Tags (Input_Text : String);
-      --  Sets a "<A name="lind_number"> <A>" in front of each line in the
-      --  given strings (if in body file) and writes it to the doc file.
-
-      function HTML_Callback
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean;
-      --  the callback function to add HTML code to the text being parsed.
-      --  for each possible kind of parsed entity some HTML code will
-      --  be added to the Result_Line and the Already_Added_Chars
-      --  increased by the number of the added chars in order to keep
-      --  track of the current position in the original string.
-
-      -------------------
-      -- Set_Name_Tags --
-      -------------------
-
-      procedure Set_Name_Tags (Input_Text : String) is
-         HTML_Name_Head   : constant String := "<A name=""";
-         HTML_Name_Middle : constant String := """>";
-         HTML_Name_End    : constant String := "</A>";
-         Last_Written     : Natural := Input_Text'First - 1;
-      begin
-         for J in Input_Text'Range loop
-            if Input_Text (J) = ASCII.LF then
-               Last_Line := Last_Line + 1;
-               Put
-                 (File, Input_Text (Last_Written + 1 .. J)
-                  & HTML_Name_Head
-                  & Image (Last_Line + Entity_Line - 1)
-                  & HTML_Name_Middle
-                  & HTML_Name_End);
-               Last_Written := J;
-            end if;
-         end loop;
-
-         Put (File, Input_Text (Last_Written + 1 .. Input_Text'Last));
-      end Set_Name_Tags;
-
-      -------------------
-      -- HTML_Callback --
-      -------------------
-
-      function HTML_Callback
-        (Entity         : Language_Entity;
-         Sloc_Start     : Source_Location;
-         Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean
-      is
-         pragma Unreferenced (Partial_Entity);
-
-         Entity_Info : Entity_Information;
-         Status      : Find_Decl_Or_Body_Query_Status;
-
-         HTML_Comment_Prefix : constant String := "<FONT color=""green"">";
-         HTML_Comment_Suffix : constant String := "</FONT>";
-         HTML_Keyword_Prefix : constant String := "<B>";
-         HTML_Keyword_Suffix : constant String := "</B>";
-         HTML_String_Prefix  : constant String := "<FONT color=""red"">";
-         HTML_String_Suffix  : constant String := "</FONT>";
-         HTML_Char_Prefix    : constant String := "<FONT color=""red"">";
-         HTML_Char_Suffix    : constant String := "</FONT>";
-
-         procedure Callback_Output
-           (Start_Index : Natural;
-            End_Index   : Natural;
-            Prefix     : String;
-            Suffix     : String;
-            Check_Tags : Boolean);
-         --  Write the formatted text since the last output to doc file
-         --  Prefix and Suffix are the HTML code to be put around the
-         --  parsed entity. The both index values are needed, as for comment
-         --  lines the ASCII.LF at the line should be ignored, so you can't
-         --  used always the Sloc_Index values.
-
-         procedure Create_Regular_Link;
-         --  will create a regular link to the entity, links to both spec
-         --  and body files are possible.
-
-         procedure Create_Special_Link_To_Body;
-         --  Create a link to the reference of the entity in the body
-
-         function Link_Should_Be_Set return Boolean;
-         --  Check if a link to that entity should be set
-
-         function Special_Link_Should_Be_Set return Boolean;
-         --  Check if a special link to the body should be set
-         --  (a special link, because it doesn't link to the declaration
-         --  of the entity, but to a reference somewhere in the body)
-
-         function Regular_Link_Should_Be_Set return Boolean;
-         --  Check if a regular link to the body should be set
-         --  (a regular link is a link to the entity's declaration)
-
-         procedure Replace_HTML_Tags (Input_Text : String);
-         --  Replaces all "<"  which are by "&lt;" and all ">" by "&gt;"
-         --  and writes the output to the doc file.
-
-         ---------------------
-         -- Callback_Output --
-         ---------------------
-
-         procedure Callback_Output
-           (Start_Index : Natural;
-            End_Index   : Natural;
-            Prefix      : String;
-            Suffix      : String;
-            Check_Tags  : Boolean) is
-         begin
-            if Sloc_Start.Line > Last_Line then
-               Set_Name_Tags (Text (Last_Index .. Start_Index - 1));
-            else
-               Put (File, Text (Last_Index .. Start_Index - 1));
-            end if;
-
-            if Check_Tags then
-               Put (File, Prefix);
-               Replace_HTML_Tags (Text (Start_Index .. End_Index));
-               Put (File, Suffix);
-            else
-               Put (File,
-                    Prefix & Text (Start_Index .. End_Index) & Suffix);
-            end if;
-            Last_Index := End_Index + 1;
-            Last_Line  := Sloc_End.Line;
-         end Callback_Output;
-
-         ---------------------------------
-         -- Create_Special_Link_To_Body --
-         ---------------------------------
-
-         procedure Create_Special_Link_To_Body is
-         begin
-            if Sloc_Start.Line > Last_Line then
-               Set_Name_Tags (Text (Last_Index .. Loc_Start - 1));
-            else
-               Put (File, Text (Last_Index .. Loc_Start - 1));
-            end if;
-
-            Put (File,
-                 "<A href="""
-                 & Get_Html_File_Name
-                   (Kernel, Get_Declaration_File_Of (Entity_Info))
-                 & '#' & Image (Line_In_Body)
-                 & """>" & Text (Loc_Start .. Loc_End) & "</A>");
-
-            Last_Index := Loc_End + 1;
-         end Create_Special_Link_To_Body;
-
-         -------------------------
-         -- Create_Regular_Link --
-         -------------------------
-
-         procedure Create_Regular_Link is
-            Line_To_Use : Natural;
-         begin
-            if Sloc_Start.Line > Last_Line then
-               Set_Name_Tags (Text (Last_Index .. Loc_Start - 1));
-            else
-               Put (File, Text (Last_Index .. Loc_Start - 1));
-            end if;
-
-            if Get_Kind (Entity_Info).Kind = Package_Kind then
-               Line_To_Use := First_File_Line;
-            else
-               Line_To_Use := Get_Declaration_Line_Of (Entity_Info);
-            end if;
-
-            Put (File,
-                 "<A href="""
-                 & Get_Html_File_Name
-                   (Kernel, Get_Declaration_File_Of (Entity_Info))
-                 & "#" & Image (Line_To_Use) &
-                 """>" & Text (Loc_Start .. Loc_End) & "</A>");
-            Last_Index := Loc_End + 1;
-         end Create_Regular_Link;
-
-         ------------------------
-         -- Link_Should_Be_Set --
-         ------------------------
-
-         function Link_Should_Be_Set return Boolean is
-         begin
-            --  If no links should be set to entities declared in not
-            --  processed source files => filter them out
-            return
-              (Link_All
-               or  else Source_File_In_List
-                 (Source_File_List, Get_Declaration_File_Of (Entity_Info)))
-
-            --  create no links if it is the declaration line itself;
-            --  only if it's a subprogram or entry in a spec sometimes
-            --  a link can be created to it body, so don't filter these ones.
-              and then
-                (Get_Declaration_File_Of (Entity_Info) /= File_Name
-                 or else Get_Declaration_Line_Of (Entity_Info) /=
-                   Sloc_Start.Line + Entity_Line - 1
-                 or else Special_Link_Should_Be_Set);
-         end Link_Should_Be_Set;
-
-         --------------------------------
-         -- Special_Link_Should_Be_Set --
-         --------------------------------
-
-         function Special_Link_Should_Be_Set return Boolean is
-         begin
-            return not Is_Body
-              and then Process_Body
-              and then
-                (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
-                 or else Get_Kind (Entity_Info).Kind = Procedure_Kind
-                 or else Get_Kind (Entity_Info).Kind = Function_Or_Operator);
-         end Special_Link_Should_Be_Set;
-
-         --------------------------------
-         -- Regular_Link_Should_Be_Set --
-         --------------------------------
-
-         function Regular_Link_Should_Be_Set return Boolean is
-         begin
-            --  No subprograms/tasks are processed here, if working on a spec
-            --  file
-            return Is_Body
-              or else not
-                (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
-                 or else Get_Kind (Entity_Info).Kind = Procedure_Kind
-                 or else Get_Kind (Entity_Info).Kind = Function_Or_Operator);
-         end Regular_Link_Should_Be_Set;
-
-         -----------------------
-         -- Replace_HTML_Tags --
-         -----------------------
-
-         procedure Replace_HTML_Tags (Input_Text : String) is
-            Last_Index : Natural := Input_Text'First;
-         begin
-            for J in Input_Text'First .. Input_Text'Last - 1 loop
-               if Input_Text (J) = '<' then
-                  Put (File, Input_Text (Last_Index .. J - 1) & "&lt;");
-                  Last_Index := J + 1;
-               elsif Input_Text (J) = '>' then
-                  Put (File, Input_Text (Last_Index .. J - 1) & "&gt;");
-                  Last_Index := J + 1;
-               elsif Input_Text (J) = '&' then
-                  Put (File, Input_Text (Last_Index .. J - 1) & "&amp;");
-                  Last_Index := J + 1;
-               end if;
-            end loop;
-            Put (File, Input_Text (Last_Index .. Input_Text'Last));
-         end Replace_HTML_Tags;
-
-      begin  -- HTML_Callback
-         case Entity is
-            when Comment_Text =>
-               Callback_Output
-                 (Sloc_Start.Index, Sloc_End.Index - 1,
-                  HTML_Comment_Prefix, HTML_Comment_Suffix, False);
-
-            when Keyword_Text =>
-               Callback_Output
-                 (Sloc_Start.Index, Sloc_End.Index,
-                  HTML_Keyword_Prefix, HTML_Keyword_Suffix, False);
-
-            when String_Text =>
-               Callback_Output
-                 (Sloc_Start.Index, Sloc_End.Index,
-                  HTML_String_Prefix, HTML_String_Suffix, True);
-
-            when Character_Text =>
-               Callback_Output
-                 (Sloc_Start.Index, Sloc_End.Index,
-                  HTML_Char_Prefix, HTML_Char_Suffix, False);
-
-            when Identifier_Text =>   --  perhaps links can be set:
-               Loc_Start := Sloc_Start.Index;
-
-               --  Take apart parsed entites with any "."'s in the middle
-               for J in 1 ..
-                 1 + Count_Points (Text (Sloc_Start.Index .. Sloc_End.Index))
-               loop
-                  Point_In_Column :=
-                    Index (Text (Loc_Start .. Sloc_End.Index), ".");
-
-                  if Point_In_Column > 0 then
-                     Loc_End := Point_In_Column - 1;
-                  else
-                     Loc_End := Sloc_End.Index;
-                  end if;
-
-                  if LI_Unit /= No_LI_File then
-                     Find_Declaration
-                       (LI_Unit,
-                        File_Name,
-                        Text (Loc_Start .. Loc_End),
-                        Sloc_Start.Line + Entity_Line - 1,
-                        Sloc_Start.Column + Loc_Start - Sloc_Start.Index,
-                        Entity_Info,
-                        Status);
-
-                     if Status = Success or Status = Fuzzy_Match then
-                        if Link_Should_Be_Set then
-                           if Special_Link_Should_Be_Set then
-                              Create_Special_Link_To_Body;
-                           elsif Regular_Link_Should_Be_Set then
-                              Create_Regular_Link;
-                           end if;
-                        end if;
-                     end if;
-                  end if;
-
-                  if Point_In_Column > 0 then
-                     Loc_Start := Point_In_Column + 1;
-                  end if;
-               end loop;
-
-            when others =>
-               null;
-         end case;
-
-         return False;
-      end HTML_Callback;
-
-   begin
-      Last_Index := Text'First;
-      Last_Line  := 0;
-      Parse_Entities (Ada_Lang, Text, HTML_Callback'Unrestricted_Access);
-
-      if Last_Index < Text'Last then
-         Set_Name_Tags (Text (Last_Index .. Text'Last));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Format_HTML;
-
    ---------------------
    -- Doc_HTML_Header --
    ---------------------
@@ -989,16 +631,16 @@ package body Docgen.Html_Output is
       Put_Line (File, " <A NAME=""" & Image (Info.Header_Line) & """>");
 
       --  check if should set a link to the body file
-
       if Info.Header_Link then
          Put_Line
            (File, "<A HREF="""
-            & Get_Html_File_Name (Kernel, Info.Header_File)
+            & Get_Html_File_Name (Kernel, Other_File_Name
+                                    (Kernel, Info.Header_File))
             & """> ");
-         Put_Line (File, Info.Header_Package.all & "</A>");
+         Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
+      else
+         Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
       end if;
-
-      Put_Line (File, Info.Header_Package.all & "</A></I></H1>");
       Put_Line (File, "</TD></TR></TABLE>");
       Put_Line (File, "<PRE>");
       Put_Line (File, "<HR>");
@@ -1018,7 +660,7 @@ package body Docgen.Html_Output is
    end Doc_HTML_Footer;
 
    --------------------------------
-   -- Doc_HTML_Unit_Index_Header --
+   --  Doc_HTML_Unit_Index_Header --
    --------------------------------
 
    procedure Doc_HTML_Unit_Index_Header
@@ -1186,12 +828,14 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Body
-     (Kernel : access Kernel_Handle_Record'Class;
+     (B      : access Backend_HTML;
+      Kernel : access Kernel_Handle_Record'Class;
       File : in Ada.Text_IO.File_Type;
       Info : in out Doc_Info) is
    begin
-      Format_HTML
-        (Kernel,
+      Format_File
+        (B,
+         Kernel,
          File,
          Info.Doc_LI_Unit,
          Info.Body_Text.all,
@@ -1221,5 +865,100 @@ package body Docgen.Html_Output is
       Trace (Me, "Get_Html_File_Name: " & Temp);
       return Temp;
    end Get_Html_File_Name;
+
+   -----------------------
+   -- Replace_HTML_Tags --
+   -----------------------
+
+   procedure Replace_HTML_Tags
+     (Input_Text : String;
+      File : in Ada.Text_IO.File_Type)
+   is
+      Last_Index : Natural := Input_Text'First;
+   begin
+      for J in Input_Text'First .. Input_Text'Last - 1 loop
+         if Input_Text (J) = '<' then
+            Put (File, Input_Text (Last_Index .. J - 1) & "&lt;");
+            Last_Index := J + 1;
+         elsif Input_Text (J) = '>' then
+            Put (File, Input_Text (Last_Index .. J - 1) & "&gt;");
+            Last_Index := J + 1;
+         elsif Input_Text (J) = '&' then
+            Put (File, Input_Text (Last_Index .. J - 1) & "&amp;");
+            Last_Index := J + 1;
+         end if;
+      end loop;
+      Put (File, Input_Text (Last_Index .. Input_Text'Last));
+   end Replace_HTML_Tags;
+
+   ---------------------
+   -- Callback_Output --
+   ---------------------
+
+   procedure Callback_Output
+     (B           : access Backend_HTML;
+      File        : Ada.Text_IO.File_Type;
+      Text        : String;
+      Start_Index : Natural;
+      Start_Line  : Natural;
+      End_Index   : Natural;
+      End_Line    : Natural;
+      Prefix      : String;
+      Suffix      : String;
+      Entity_Line : Natural;
+      Check_Tags  : Boolean) is
+   begin
+      if Start_Line > Get_Last_Line (B.all) then
+         Set_Name_Tags
+           (B,
+            File,
+            Text (Get_Last_Index (B.all) .. Start_Index - 1),
+            Entity_Line);
+      else
+         Put (File, Text (Get_Last_Index (B.all) .. Start_Index - 1));
+      end if;
+
+      if Check_Tags then
+         Put (File, Prefix);
+         Replace_HTML_Tags (Text (Start_Index .. End_Index), File);
+         Put (File, Suffix);
+      else
+         Put (File,
+              Prefix & Text (Start_Index .. End_Index) & Suffix);
+      end if;
+      Set_Last_Index (B.all, End_Index + 1);
+      Set_Last_Line (B.all, End_Line);
+   end Callback_Output;
+
+   -------------------
+   -- Set_Name_Tags --
+   -------------------
+
+   procedure Set_Name_Tags
+     (B           : access Backend_HTML;
+      File        : Ada.Text_IO.File_Type;
+      Input_Text  : String;
+      Entity_Line : Natural)
+   is
+      HTML_Name_Head   : constant String := "<A name=""";
+      HTML_Name_Middle : constant String := """>";
+      HTML_Name_End    : constant String := "</A>";
+      Last_Written     : Natural := Input_Text'First - 1;
+   begin
+      for J in Input_Text'Range loop
+         if Input_Text (J) = ASCII.LF then
+            Set_Last_Line (B.all, Get_Last_Line (B.all) + 1);
+            Put
+              (File, Input_Text (Last_Written + 1 .. J)
+               & HTML_Name_Head
+               & Image (Get_Last_Line (B.all) + Entity_Line - 1)
+               & HTML_Name_Middle
+               & HTML_Name_End);
+            Last_Written := J;
+         end if;
+      end loop;
+
+      Put (File, Input_Text (Last_Written + 1 .. Input_Text'Last));
+   end Set_Name_Tags;
 
 end Docgen.Html_Output;
