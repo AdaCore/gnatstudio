@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -208,6 +208,30 @@ package Language is
       Indent_Decl       => 0,
       Tab_Width         => 8,
       Indent_Case_Extra => True);
+
+   type Indentation_Kind is (None, Simple, Extended);
+   for Indentation_Kind'Size use Integer'Size;
+   pragma Convention (C, Indentation_Kind);
+   --  Indentation kinds:
+   --  None: no indentation should be performed
+   --  Simple: use the amount of white spaces from previous line
+   --  Extended: use a language specific parser to compute indentation
+
+   procedure Get_Indentation_Parameters
+     (Lang         : access Language_Root;
+      Use_Tabs     : out Boolean;
+      Params       : out Indent_Parameters;
+      Indent_Style : out Indentation_Kind);
+   --  Return the indentation parameters for this language
+
+   procedure Set_Indentation_Parameters
+     (Lang         : access Language_Root;
+      Use_Tabs     : Boolean;
+      Params       : Indent_Parameters;
+      Indent_Style : Indentation_Kind);
+   --  Set the indentation parameters to use for this language.
+   --  ??? This wouldn't be necessary if we had access to the preferences from
+   --  the language hierarchy.
 
    type Language_Category is
      (Cat_Unknown,
@@ -446,5 +470,9 @@ package Language is
    --  separately in the explorer.
 
 private
-   type Language_Root is abstract tagged null record;
+   type Language_Root is abstract tagged record
+      Use_Tabs      : Boolean           := False;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters;
+      Indent_Style  : Indentation_Kind  := Extended;
+   end record;
 end Language;

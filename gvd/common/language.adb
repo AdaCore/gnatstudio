@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -572,5 +572,35 @@ package body Language is
          when Cat_Exception_Handler     => return "";
       end case;
    end Category_Name;
+
+   --------------------------------
+   -- Get_Indentation_Parameters --
+   --------------------------------
+
+   procedure Get_Indentation_Parameters
+     (Lang         : access Language_Root;
+      Use_Tabs     : out Boolean;
+      Params       : out Indent_Parameters;
+      Indent_Style : out Indentation_Kind) is
+   begin
+      Use_Tabs     := Lang.Use_Tabs;
+      Params       := Lang.Indent_Params;
+      Indent_Style := Lang.Indent_Style;
+   end Get_Indentation_Parameters;
+
+   --------------------------------
+   -- Set_Indentation_Parameters --
+   --------------------------------
+
+   procedure Set_Indentation_Parameters
+     (Lang         : access Language_Root;
+      Use_Tabs     : Boolean;
+      Params       : Indent_Parameters;
+      Indent_Style : Indentation_Kind) is
+   begin
+      Lang.Use_Tabs      := Use_Tabs;
+      Lang.Indent_Params := Params;
+      Lang.Indent_Style  := Indent_Style;
+   end Set_Indentation_Parameters;
 
 end Language;
