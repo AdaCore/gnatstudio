@@ -218,9 +218,6 @@ package body GVD.API is
          Local_Params (J) := new String'(Value (C_Params (size_t (J))));
       end loop;
 
-      Show_All (Window);
-      Set_Busy_Cursor (Get_Window (Window), True);
-
       Debugger := -GVD.Process.Create_Debugger
         (+Window,
          GVD.Types.Debugger_Type'Val (Debugger_Type'Pos (Kind)),
@@ -235,8 +232,6 @@ package body GVD.API is
       for J in Local_Params'Range loop
          Free (Local_Params (J));
       end loop;
-
-      Set_Busy_Cursor (Get_Window (Window), False);
 
       return Debugger;
    end Create_Debugger;
