@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -148,7 +148,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
    begin
       Editor.Line := Line;
 
-      pragma Assert (Editor.Current_File /= null);
+      if Editor.Current_File = null then
+         return;
+      end if;
+
       Open_File_Editor (Kernel, Editor.Current_File.all, Editor.Line, 1);
    end Set_Line;
 
