@@ -23,7 +23,6 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;
---  with Ada.Unchecked_Conversion;
 with Interfaces.C.Strings;
 
 package body DB_API is
@@ -73,29 +72,32 @@ package body DB_API is
    procedure Open
      (DB         : out DB_File;
       File_Names : String_List_Access;
-      Success    : out Boolean) is
-
+      Success    : out Boolean)
+   is
       function Internal_Open
         (Num_Of_Files : Integer;
          File_Names   : System.Address) return DB_File;
       pragma Import (C, Internal_Open, "ada_db_open");
 
       procedure Free (List : in out String_List);
+      --  ???
 
       procedure Free (List : in out String_List) is
       begin
-         for I in List'Range loop
-            Free (List (I));
+         for J in List'Range loop
+            Free (List (J));
          end loop;
       end Free;
 
       C_File_Names : String_List (File_Names'Range);
       C_P_P_Char   : array (File_Names'Range) of System.Address; -- char **
+
    begin
       Success := True;
-      for I in File_Names'Range loop
-         C_File_Names (I) := new String'(File_Names (I).all & ASCII.NUL);
-         C_P_P_Char (I) := C_File_Names (I).all'Address;
+
+      for J in File_Names'Range loop
+         C_File_Names (J) := new String'(File_Names (J).all & ASCII.NUL);
+         C_P_P_Char (J) := C_File_Names (J).all'Address;
       end loop;
 
       DB := Internal_Open (C_File_Names'Length, C_P_P_Char'Address);
@@ -149,13 +151,16 @@ package body DB_API is
       pragma Import (C, Internal_Close, "ada_db_close");
    begin
       Success := True;
+
       if DB /= null then -- ignore uninitialized DB
          Internal_Close (DB);
+
          if Last_ErrNo (DB) /= 0 then
             Success := False;
             DB := null;
             return;
          end if;
+
          Internal_Free (DB);
          DB := null;
       end if;
@@ -242,6 +247,7 @@ package body DB_API is
 
       function I_Get_DBI (I_Pair : System.Address) return Integer;
       pragma Import (C, I_Get_DBI, "ada_get_dbi");
+
    begin
       if DB = null then
          Raise_Exception (DB_Error'Identity,
@@ -254,7 +260,9 @@ package body DB_API is
                Raise_Exception (DB_Error'Identity,
                  Error_Message (DB));
             end if;
+
             return null;
+
          else
             P := new Pair;
             P.Key  := I_Get_Key  (I_Pair);
@@ -263,7 +271,6 @@ package body DB_API is
             I_Free (I_Pair);
             return P;
          end if;
-
       end if;
    end Get_Pair;
 
@@ -274,12 +281,15 @@ package body DB_API is
    procedure Free (The_Pair : in out Pair_Ptr) is
       procedure I_CSF_Free (The_CSF : CSF);
       pragma Import (C, I_CSF_Free, "csf_free");
+
       procedure Pair_Free is
         new Ada.Unchecked_Deallocation (Pair, Pair_Ptr);
+
    begin
-      if (The_Pair = null) then
+      if The_Pair = null then
          return;
       end if;
+
       I_CSF_Free (The_Pair.Key);
       I_CSF_Free (The_Pair.Data);
       Pair_Free  (The_Pair);
