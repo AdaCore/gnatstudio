@@ -3239,7 +3239,8 @@ package body Src_Info.CPP is
          if Desc.Is_Template then
             --  template specialization
             Refer_Type
-              (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+              (Plain_Class_Name
+                 (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last)),
                Desc.Parent_Point,
                File,
                Sym.Start_Position,
@@ -3876,7 +3877,8 @@ package body Src_Info.CPP is
          if Desc.Is_Template then
             --  template specialization
             Refer_Type
-              (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+              (Plain_Class_Name
+                 (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last)),
                Desc.Parent_Point,
                File,
                Sym.Start_Position,
@@ -4550,16 +4552,15 @@ package body Src_Info.CPP is
 
                   --  add reference to the type of this variable
                   if Desc.Is_Template then
-                     --  template specialization
                      Refer_Type
-                       (Var.Buffer
-                         (Var.Value_Type.First .. Var.Value_Type.Last),
+                       (Plain_Class_Name
+                          (Var.Buffer (Var.Value_Type.First ..
+                                       Var.Value_Type.Last)),
                         Desc.Parent_Point,
                         File,
                         Var.Start_Position,
                         Instantiation_Reference);
                   else
-                     --  default reference kind
                      Refer_Type
                        (Var.Buffer
                          (Var.Value_Type.First .. Var.Value_Type.Last),
