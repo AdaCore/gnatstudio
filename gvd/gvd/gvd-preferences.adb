@@ -138,6 +138,15 @@ package body GVD.Preferences is
          Flags     => Source_Flags));
       Register_Property (Prefs, Param_Spec (Cpp_Extensions), General);
 
+      Execution_Window := Param_Spec_Boolean (Gnew_Boolean
+        (Name      => XML_Prefix & "Execution-Window",
+         Nick      => -"Execution window",
+         Blurb     =>
+           -("If False, the debugged program is assumed to require no input. "
+             & "If True, a separate execution window will be created"),
+         Default   => True));
+      Register_Property  (Prefs, Param_Spec (Execution_Window), General);
+
       Display_Explorer := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Display-Explorer",
          Nick      => -"Display explorer tree",
@@ -386,6 +395,14 @@ package body GVD.Preferences is
                        & " the same address already exists"),
          Default  => True));
       Register_Property (Prefs, Param_Spec (Default_Detect_Aliases), Data);
+
+      Show_Call_Stack := Param_Spec_Boolean (Gnew_Boolean
+        (Name     => XML_Prefix & "Show-Call-Stack",
+         Nick     => -"Show call stack",
+         Blurb    => -"True if call stack should be displayed by default",
+         Flags    => Source_Flags,
+         Default  => False));
+      Register_Property (Prefs, Param_Spec (Show_Call_Stack), Data);
 
       Memory_View_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-View-Color",

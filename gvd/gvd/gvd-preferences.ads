@@ -71,6 +71,7 @@ package GVD.Preferences is
    Ada_Extensions                : Param_Spec_String;
    C_Extensions                  : Param_Spec_String;
    Cpp_Extensions                : Param_Spec_String;
+   Execution_Window              : Param_Spec_Boolean;
 
    -- Explorer Window --
    Display_Explorer              : Param_Spec_Boolean;
@@ -108,6 +109,7 @@ package GVD.Preferences is
    Big_Item_Height               : Param_Spec_Int;
    Default_Detect_Aliases        : Param_Spec_Boolean;
    Selected_Item_Color           : Param_Spec_Color;
+   Show_Call_Stack               : Param_Spec_Boolean;
 
    -- Command Window --
    Debugger_Highlight_Color      : Param_Spec_Color;
