@@ -984,8 +984,8 @@ package body Src_Editor_Module is
       Name    : String := "";
       Success : out Boolean)
    is
-      Child    : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source   : Source_Editor_Box;
+      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source : Source_Editor_Box;
 
    begin
       if Child = null then
@@ -999,12 +999,16 @@ package body Src_Editor_Module is
       begin
          Save_To_File (Source, Name, Success);
 
-         --  Update the title, in case "save as..." was used.
-         if Old_Name /= Get_Filename (Source) then
-            Set_Title
-              (Child, Get_Filename (Source),
-               Base_Name (Get_Filename (Source)));
-         end if;
+         declare
+            New_Name : constant String := Get_Filename (Source);
+         begin
+            --  Update the title, in case "save as..." was used.
+
+            if Old_Name /= New_Name then
+               Set_Title (Child, New_Name, Base_Name (New_Name));
+               Change_Dir (Dir_Name (New_Name));
+            end if;
+         end;
       end;
    end Save_To_File;
 
