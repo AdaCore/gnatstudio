@@ -214,8 +214,19 @@ package body Python_Module is
    --  Return the N-th command line parameter, taking into account the keywords
    --  if any.
 
-   procedure Free (Data : in out Python_Callback_Data'Class);
-   --  Free the memory used by Data
+   procedure Free (Data : in out Python_Callback_Data);
+   function Create
+     (Script          : access Python_Scripting_Record;
+      Arguments_Count : Natural) return Callback_Data'Class;
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : String);
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Integer);
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Boolean);
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Class_Instance);
+   --  See inherited documentation
 
    ---------------------------
    -- Python_Class_Instance --
@@ -975,10 +986,75 @@ package body Python_Module is
    -- Free --
    ----------
 
-   procedure Free (Data : in out Python_Callback_Data'Class) is
+   procedure Free (Data : in out Python_Callback_Data) is
    begin
       Unchecked_Free (Data.Kw_Params);
    end Free;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Script          : access Python_Scripting_Record;
+      Arguments_Count : Natural) return Callback_Data'Class
+   is
+      Callback : Python_Callback_Data :=
+        (Callback_Data with
+         Script           => Python_Scripting (Script),
+         Args             => PyTuple_New (Arguments_Count),
+         Kw               => Py_None,
+         Return_Value     => Py_None,
+         Return_Dict      => Py_None,
+         Has_Return_Value => False,
+         Return_As_List   => False,
+         Kw_Params        => null,
+         Is_Method        => False);
+   begin
+      Py_INCREF (Callback.Return_Value);
+      return Callback;
+   end Create;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : String) is
+   begin
+      PyTuple_SetItem (Data.Args, N - 1, PyString_FromString (Value));
+   end Set_Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Integer) is
+   begin
+      PyTuple_SetItem
+        (Data.Args, N - 1, PyInt_FromLong (Interfaces.C.long (Value)));
+   end Set_Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Boolean) is
+   begin
+      PyTuple_SetItem (Data.Args, N - 1, PyInt_FromLong (Boolean'Pos (Value)));
+   end Set_Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Python_Callback_Data; N : Positive; Value : Class_Instance) is
+   begin
+      PyTuple_SetItem (Data.Args, N - 1, Python_Class_Instance (Value).Data);
+   end Set_Nth_Arg;
 
    -----------------
    -- First_Level --

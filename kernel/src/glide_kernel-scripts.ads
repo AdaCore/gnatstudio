@@ -81,6 +81,27 @@ package Glide_Kernel.Scripts is
    --  Data used to communicate with the scripting language engine, to marshall
    --  the parameters and return values.
 
+   function Create
+     (Script          : access Scripting_Language_Record;
+      Arguments_Count : Natural) return Callback_Data'Class is abstract;
+   --  Create a new empty list of arguments. You must call Set_Nth_Arg for
+   --  each of these arguments before using the return value
+
+   procedure Free (Data : in out Callback_Data) is abstract;
+   --  Free the memory occupied by Data. This needs to be called only if Data
+   --  was created through Create
+
+   procedure Set_Nth_Arg
+     (Data : Callback_Data; N : Positive; Value : String) is abstract;
+   procedure Set_Nth_Arg
+     (Data : Callback_Data; N : Positive; Value : Integer) is abstract;
+   procedure Set_Nth_Arg
+     (Data : Callback_Data; N : Positive; Value : Boolean) is abstract;
+   procedure Set_Nth_Arg
+     (Data : Callback_Data; N : Positive; Value : Class_Instance) is abstract;
+   --  Set the nth argument of Data
+
+
    function Number_Of_Arguments
      (Data : Callback_Data) return Natural is abstract;
    --  Return the number of arguments passed to that callback. The number of

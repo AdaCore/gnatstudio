@@ -254,6 +254,18 @@ package body Shell_Script is
      (Data   : in out Shell_Callback_Data;
       Key    : Class_Instance;
       Append : Boolean := False);
+   procedure Free (Data : in out Shell_Callback_Data);
+   function Create
+     (Script          : access Shell_Scripting_Record;
+      Arguments_Count : Natural) return Callback_Data'Class;
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : String);
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Integer);
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Boolean);
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Class_Instance);
    --  See doc from inherited subprogram
 
    -------------------------
@@ -1003,10 +1015,14 @@ package body Shell_Script is
       Result : constant String := Trim
         (Reduce
            (Execute_GPS_Shell_Command
-              (Script.Kernel, Command, Shell_Callback_Data (Args).Args.all,
+              (Script.Kernel, Command & ' ' & Argument_List_To_Quoted_String
+                 (Shell_Callback_Data (Args).Args.all),
                Errors'Unchecked_Access)),
          Ada.Strings.Both);
    begin
+      if Script.Console /= null then
+         Insert (Script.Console, Result);
+      end if;
       return Result = "1" or else Case_Insensitive_Equal (Result, "true");
    end Execute_Command;
 
@@ -1440,6 +1456,76 @@ package body Shell_Script is
    begin
       return Data.Args'Length;
    end Number_Of_Arguments;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Shell_Callback_Data) is
+   begin
+      Free (Data.Args);
+   end Free;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Script          : access Shell_Scripting_Record;
+      Arguments_Count : Natural) return Callback_Data'Class
+   is
+      Data : constant Shell_Callback_Data :=
+        (Callback_Data with
+         Script          => Shell_Scripting (Script),
+         Args            => new Argument_List (1 .. Arguments_Count),
+         Return_Value    => null,
+         Return_Dict     => null,
+         Return_As_List  => False,
+         Return_As_Error => False);
+   begin
+      return Data;
+   end Create;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : String) is
+   begin
+      Free (Data.Args (N - 1 + Data.Args'First));
+      Data.Args (N - 1 + Data.Args'First) := new String'(Value);
+   end Set_Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Integer) is
+   begin
+      Set_Nth_Arg (Data, N, Integer'Image (Value));
+   end Set_Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Boolean) is
+   begin
+      Set_Nth_Arg (Data, N, Boolean'Image (Value));
+   end Set_Nth_Arg;
+
+   -----------------
+   -- Set_Nth_Arg --
+   -----------------
+
+   procedure Set_Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive; Value : Class_Instance) is
+   begin
+      Set_Nth_Arg (Data, N, Name_From_Instance (Value));
+   end Set_Nth_Arg;
 
    -------------
    -- Nth_Arg --
