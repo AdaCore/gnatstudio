@@ -462,6 +462,7 @@ package body Src_Editor_Buffer is
       end loop;
 
       Unchecked_Free (Buffer.Line_Data);
+      Block_List.Free (Buffer.Blocks);
    end Buffer_Destroy;
 
    ---------------------
@@ -3960,7 +3961,11 @@ package body Src_Editor_Buffer is
       if Editor.Line_Data /= null
         and then Line <= Editor.Line_Data'Last
       then
-         return Editor.Line_Data (Line).Block;
+         if Editor.Line_Data (Line).Block = null then
+            return New_Block;
+         else
+            return Editor.Line_Data (Line).Block.all;
+         end if;
       end if;
 
       return New_Block;
