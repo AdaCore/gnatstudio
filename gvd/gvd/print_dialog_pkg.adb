@@ -45,9 +45,9 @@ begin
    Set_Case_Sensitive (Print_Dialog.Combo1, False);
    Set_Use_Arrows (Print_Dialog.Combo1, True);
    Set_Use_Arrows_Always (Print_Dialog.Combo1, False);
-   String_List.Append (Combo1_Items, "");
-   Combo.Set_Popdown_Strings (Print_Dialog.Combo1, Combo1_Items);
-   Free_String_List (Combo1_Items);
+--     String_List.Append (Combo1_Items, "");
+--     Combo.Set_Popdown_Strings (Print_Dialog.Combo1, Combo1_Items);
+--     Free_String_List (Combo1_Items);
 
    Print_Dialog.Combo_Entry1 := Get_Entry (Print_Dialog.Combo1);
    Set_Editable (Print_Dialog.Combo_Entry1, True);
@@ -83,6 +83,12 @@ begin
 
    Gtk_New (Print_Dialog.Help_Button, "Help");
    Add (Print_Dialog.Hbuttonbox1, Print_Dialog.Help_Button);
+
+   Disable_Activate (Print_Dialog.Combo1);
+   Widget_Callback.Object_Connect
+     (Print_Dialog.Combo_Entry1, "activate",
+      Widget_Callback.To_Marshaller (On_Print_Button_Clicked'Access),
+      Print_Dialog);
 
 end Initialize;
 
