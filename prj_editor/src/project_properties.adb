@@ -229,6 +229,7 @@ package body Project_Properties is
                  & " you selected initially"));
 
       Gtk_New (Editor.Name);
+      Set_Width_Chars (Editor.Name, 0);
       Set_Text (Editor.Name, Project_Name (Project_View));
       Pack_Start (Hbox, Editor.Name, Expand => True);
 
@@ -249,6 +250,7 @@ package body Project_Properties is
                  & " the project you selected initially"));
 
       Gtk_New (Editor.Path);
+      Set_Width_Chars (Editor.Path, 0);
       Set_Text (Editor.Path, Dir_Name (Project_Path (Project_View)));
       Pack_Start (Hbox, Editor.Path, Expand => True);
 
@@ -331,6 +333,7 @@ package body Project_Properties is
             Ada_Check := Gtk_Check_Button (Editor.Languages (L));
 
             Gtk_New (Combo);
+            Set_Width_Chars (Get_Entry (Combo), 0);
             Pack_Start (Hbox, Combo);
             Append (Items, "gnatmake");
             Append (Items, "powerpc-wrs-vxworks-gnatmake");
@@ -398,6 +401,7 @@ package body Project_Properties is
                     & " the standard Ada library"));
 
          Gtk_New (Combo);
+         Set_Width_Chars (Get_Entry (Combo), 0);
          Pack_Start (Hbox, Combo, Expand => True);
 
          Append (Items, "gnatls");
@@ -444,6 +448,7 @@ package body Project_Properties is
                -"Name and location of the debugger to use");
 
       Gtk_New (Combo);
+      Set_Width_Chars (Get_Entry (Combo), 0);
       Pack_Start (Hbox, Combo, Expand => True);
 
       Append (Items, "gdb");
@@ -495,6 +500,7 @@ package body Project_Properties is
 
 
       Gtk_New (Editor.Tools_Host);
+      Set_Width_Chars (Editor.Tools_Host, 0);
       Pack_Start (Hbox, Editor.Tools_Host, Expand => True);
       Set_Text
         (Editor.Tools_Host,
@@ -519,6 +525,7 @@ package body Project_Properties is
                  & " embedded application"));
 
       Gtk_New (Editor.Program_Host);
+      Set_Width_Chars (Editor.Tools_Host, 0);
       Pack_Start (Hbox, Editor.Program_Host, Expand => True);
       Set_Text
         (Editor.Program_Host,
@@ -543,6 +550,7 @@ package body Project_Properties is
                  & " on an embedded application"));
 
       Gtk_New (Combo);
+      Set_Width_Chars (Get_Entry (Combo), 0);
       Pack_Start (Hbox, Combo, Expand => True);
       Append (Items, "wtx");
       Append (Items, "vxworks");
