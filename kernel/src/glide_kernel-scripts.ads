@@ -26,7 +26,6 @@
 
 with System;
 with GNAT.OS_Lib;
---  with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Widget;
 with Entities;
