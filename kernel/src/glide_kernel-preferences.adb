@@ -98,7 +98,8 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Native dialogs",
          Blurb   =>
            -"If true use OS native dialogs, otherwise use portable dialogs",
-         Default => True));
+         Default => True,
+         Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Use_Native_Dialogs), -"General");
 
