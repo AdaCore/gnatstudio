@@ -25,6 +25,7 @@ with Gdk.Event;                use Gdk.Event;
 with Gdk.GC;                   use Gdk.GC;
 with Gdk.Keyval;               use Gdk.Keyval;
 with Gdk.Main;                 use Gdk.Main;
+with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.Pixmap;               use Gdk.Pixmap;
 with Gdk.Types;                use Gdk.Types;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
@@ -38,6 +39,7 @@ with Gtk.Accel_Map;            use Gtk.Accel_Map;
 with Gtk.Bin;                  use Gtk.Bin;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Clist;                use Gtk.Clist;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Container;            use Gtk.Container;
@@ -1566,46 +1568,69 @@ package body GUI_Utils is
       Model           : Gtk_Tree_Store;
       Text_Render     : Gtk_Cell_Renderer_Text;
       Toggle_Render   : Gtk_Cell_Renderer_Toggle;
+      Pixbuf_Render   : Gtk_Cell_Renderer_Pixbuf;
+      Previous_Was_Icon : Boolean := False;
       pragma Unreferenced (Col_Number);
    begin
       Gtk_New (Model, Column_Types);
       Gtk_New (View, Model);
       Set_Mode (Get_Selection (View), Selection_Mode);
       Set_Headers_Visible (View, Show_Column_Titles);
+      Set_Enable_Search (View, True);
 
       for N in 0
         .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
       loop
-         Gtk_New           (Col);
-         Set_Resizable     (Col, True);
-         Set_Reorderable   (Col, True);
+         --  Reuse existing column for icons
+         if not Previous_Was_Icon
+           and then (Col = null
+                     or else Column_Types (Column_Types'First + Guint (N)) /=
+                       Gdk.Pixbuf.Get_Type)
+         then
+            Gtk_New           (Col);
+            Set_Resizable     (Col, True);
+            Set_Reorderable   (Col, True);
 
-         Col_Number := Append_Column (View, Col);
-         if Column_Names (Column_Names'First + N) /= null then
-            Set_Title (Col, Column_Names (Column_Names'First + N).all);
+            Col_Number := Append_Column (View, Col);
+            if Column_Names (Column_Names'First + N) /= null then
+               Set_Title (Col, Column_Names (Column_Names'First + N).all);
+            end if;
          end if;
 
-         case Column_Types (Column_Types'First + Guint (N)) is
-            when GType_Boolean =>
-               Gtk_New (Toggle_Render);
-               Set_Radio (Toggle_Render, False);
-               Tree_Model_Callback.Object_Connect
-                 (Toggle_Render, "toggled",
-                  Toggle_Callback'Access, Slot_Object => Model,
-                  User_Data => Gint (N));
-               Pack_Start (Col, Toggle_Render, False);
-               Add_Attribute (Col, Toggle_Render, "active", Gint (N));
+         Previous_Was_Icon := False;
 
-            when GType_String =>
-               if Text_Render = null then
-                  Gtk_New (Text_Render);
-               end if;
-               Pack_Start (Col, Text_Render, False);
-               Add_Attribute (Col, Text_Render, "text", Gint (N));
+         if Column_Types (Column_Types'First + Guint (N)) = GType_Boolean then
+            Gtk_New (Toggle_Render);
+            Set_Radio (Toggle_Render, False);
+            Tree_Model_Callback.Object_Connect
+              (Toggle_Render, "toggled",
+               Toggle_Callback'Access, Slot_Object => Model,
+               User_Data => Gint (N));
+            Pack_Start (Col, Toggle_Render, False);
+            Add_Attribute (Col, Toggle_Render, "active", Gint (N));
 
-            when others =>
+         elsif Column_Types (Column_Types'First + Guint (N)) =
+           GType_String
+         then
+            if Text_Render = null then
+               Gtk_New (Text_Render);
+            end if;
+            Pack_Start (Col, Text_Render, False);
+            Add_Attribute (Col, Text_Render, "text", Gint (N));
+
+         elsif Column_Types (Column_Types'First + Guint (N)) =
+           Gdk.Pixbuf.Get_Type
+         then
+            Previous_Was_Icon := True;
+            if Pixbuf_Render = null then
+               Gtk_New (Pixbuf_Render);
+            end if;
+            Pack_Start (Col, Pixbuf_Render, False);
+            Add_Attribute (Col, Pixbuf_Render, "pixbuf", Gint (N));
+
+         else
                raise Program_Error;
-         end case;
+         end if;
 
          if Sortable_Columns then
             Set_Sort_Column_Id (Col, Gint (N));
