@@ -1875,7 +1875,12 @@ package body Ada_Analyzer is
 
                when '(' =>
                   Prev_Token := Tok_Left_Paren;
-                  Char := Buffer (Prev_Char (P));
+
+                  if P > Buffer'First then
+                     Char := Buffer (Prev_Char (P));
+                  else
+                     Char := ' ';
+                  end if;
 
                   if Indent_Done then
                      if Format_Operators
