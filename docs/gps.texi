@@ -1329,7 +1329,7 @@ keeping the left button pressed, drop it anywhere else inside GPS.
 Selecting an item so that it can be dragged is done simply by clicking
 with the left mouse button in its title bar, and keep the button
 pressed while moving the mouse. Although this is the general scheme,
-this would work for unmaximized items, since the title bar is then
+this would not work for unmaximized items, since the title bar is then
 used to move them around. In that case, you need to press the
 @key{control} key in addition to the left mouse button.
 
@@ -1337,33 +1337,33 @@ A third possibility can be used for maximized or docked windows: click
 with the left mouse button in the notebook tab that contains their
 name. This third option is not available under Windows systems.
 
-It is important to note that some visual objects in GPS have their own
-drag-and-drop support, and will not react when you drop a window on
-them. For instance, editors use drag-and-drop for copy-paste
-operations. Therefore, dropping a window on them will result in a
-failed operation. In that case, it always works to drop the window in
-the title bar of another window to adopt the same state.
+While you keep the mouse button pressed, and move the mouse around, the
+selected drop area is highlighted with a dashed border. This shows precisely
+where the window would be put if you were to release the mouse button at
+that point.
 
 Here are the various places where a window can be dropped:
 
 @table @b
 @item The central area
 @cindex central area
-The window you are dropping will get the same state as the other
-windows already in this area (maximized or unmaximized).
+If the windows in that area are unmaximized, the the window you are dropping
+(the current window) will acquire the same state. However, if the windows are
+currently maximized in the central area, or even if the latter was split
+horizontally, vertically or any combination of these, the location of the
+current window is indicated by the dashed rectangle: either in the pane
+where you released the mouse button, or on one of the sides of that pane
+(splitting as needed).
 
 @item Docking areas
 @cindex docked
 @cindex docking area
 The window will immediately be adopted by this dropping area, and a
-new notebook will be created as needed. Once again, since the message
-window has its own handling of drag-and-drop, you can not drop items
-on it. Instead, drop windows on its title bar.
+new notebook will be created as needed.
 
 In some cases, you might want to create a docking area that is not
-currently visible (for instance, it is often useful to put an editor
-in the right docking area, so that two editors can be seen
-side-by-side, one in this area, and one in the central one).
+currently visible (for instance, it is often useful to put the location window
+in the right docking area).
 
 To achieve this, drop the window on the small handle that surrounds
 the whole GPS window (a black rectangle will appear on the screen when
@@ -1371,22 +1371,17 @@ your mouse is over that area). If you then drop the item, a new
 docking area will be created.
 
 @item System window
-Under systems that support it, if you drop a window outside of GPS (for
+If you drop a window outside of GPS (for
 instance, on the background of your screen), the window will be floated.
 
-@item Sides of the GPS window
-@cindex side
-On each side of the GPS window, a small zone (a few pixels high or
-wide) is set up as a drop-area. If you drop a window on these zone
-(they are briefly highlighted while the mouse stays on them), then the
-window will be added to the dock on that side. If there is no dock
-area on that side, one will be created.
-
-@cindex drag-n-drop
-This is especially useful if you want to put two editor windows side
-by side. Drag one of them on the drop area on the right side.
-
 @end table
+
+
+If you maintain the @key{shift} key pressed while dropping the window,
+this might result in a copy operation instead of a simple move. For instance,
+if you are dropping an editor, a new view of the same editor will be created,
+resulting in two views present in GPS: the original one is left at its initial
+location, and a second view is created at the new location.
 
 
 @c --------------------------------------------------------------------
@@ -1849,6 +1844,12 @@ Create a new view of the current editor. The new view shares the same
 contents: if you modify one of the source views, the other view is updated
 at the same time. This is particularly useful when you want to display two
 separate parts of the same file, for example a function spec and its body.
+
+A new view can also be created by keeping the @key{shift} key pressed while
+drag-and-dropping the editor (@pref{Moving Windows}). This second method is
+preferred, since you can then specify directly where you want to put the new
+view. The default when using the menu is that the new view is put on top of
+the editor itself.
 
 @item Open...
 @cindex open
@@ -3584,7 +3585,7 @@ trailing character. The directory specified where the search starts, and
 the @i{Recursive search} button whether sub directories will be searched
 as well.
 
-The @i{Scope} entry is used to restrict the search to a set of language 
+The @i{Scope} entry is used to restrict the search to a set of language
 constructs, e.g. to avoid matching on comments when you
 are only interested in actual code, or to only search strings and
 comments, and ignore the code.
@@ -6435,8 +6436,8 @@ activation key (by default @key{control-o}, controlled by a
 preference), this name is removed from the source editor, and replaced
 by the text you have associated with it.
 
-Alias names may be composed of any character, but must start with a
-letter. GPS will jump to the start of each word before the current
+Alias names may be composed of any character except newlines, but must start
+with a letter. GPS will jump to the start of each word before the current
 cursor position, and if the characters between this word start and the
 cursor position is an alias name, this alias is expanded.
 
