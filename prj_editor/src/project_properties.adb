@@ -659,12 +659,16 @@ package body Project_Properties is
                   Value              => Value,
                   Attribute_Index    => Lower_Attribute_Index);
             end if;
-            Trace (Me, "Change for attribute "
-                   & Attr.Pkg.all & "'" & Attr.Name.all
-                   & " (" & Lower_Attribute_Index
-                   & ") Old=""" & Old_Value
-                   & """ Default=""" & Default_Value
-                   & """ New=""" & Value & """");
+
+            if Active (Me) then
+               Trace (Me, "Change for attribute "
+                      & Attr.Pkg.all & "'" & Attr.Name.all
+                      & " (" & Lower_Attribute_Index
+                      & ") Old=""" & Old_Value
+                      & """ Default=""" & Default_Value
+                      & """ New=""" & Value & """");
+            end if;
+
             Project_Changed := True;
          end if;
       end;
@@ -729,15 +733,18 @@ package body Project_Properties is
                Attribute          => Attribute,
                Values             => Values,
                Attribute_Index    => Lower_Attribute_Index);
-            Trace (Me, "Change for attribute "
-                   & Attr.Pkg.all & "'" & Attr.Name.all & "("
-                   & Lower_Attribute_Index & ")");
+
+            if Active (Me) then
+               Trace (Me, "Change for attribute "
+                      & Attr.Pkg.all & "'" & Attr.Name.all & "("
+                      & Lower_Attribute_Index & ")");
             --           for V in Old_Values'Range loop
             --              Trace (Me, "MANU Old=" & Old_Values (V).all);
             --           end loop;
             --           for V in Values'Range loop
             --              Trace (Me, "MANU New=" & Values (V).all);
             --           end loop;
+            end if;
 
             Project_Changed := True;
          end if;
@@ -1232,9 +1239,12 @@ package body Project_Properties is
                  & " only in packages"),
                Mode => Error);
          else
-            Trace (Me, "Register_New_Attribute (" & Attr.Name.all
-                   & ", " & Attr.Pkg.all & ", " & Attr_Kind'Img & ", "
-                   & Var_Kind'Img & ")");
+            if Active (Me) then
+               Trace (Me, "Register_New_Attribute (" & Attr.Name.all
+                      & ", " & Attr.Pkg.all & ", " & Attr_Kind'Img & ", "
+                      & Var_Kind'Img & ")");
+            end if;
+
             Register_New_Attribute
               (Name               => Attr.Name.all,
                In_Package         => Pkg_Id,
