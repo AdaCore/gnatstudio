@@ -1596,6 +1596,9 @@ package body Docgen.Work_On_Source is
             end if;
          end loop;
       end if;
+   exception
+      when TEL.List_Empty =>
+         null;
    end Process_Packages;
 
    -------------------------
