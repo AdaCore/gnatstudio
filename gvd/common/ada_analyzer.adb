@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                   GVD - The GNU Visual Debugger                   --
+--                                                                   --
+--                      Copyright (C) 2001-2002                      --
+--                              ACT-Europe                           --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with String_Utils;            use String_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.IO;                 use GNAT.IO;
@@ -636,6 +656,13 @@ package body Ada_Analyzer is
          Info   : Construct_Access;
 
       begin
+         --  Never pop the initial value
+
+         if Top (Stack).Token = No_Token then
+            Value := Top (Stack).all;
+            return;
+         end if;
+
          Token_Stack.Pop (Stack, Value);
 
          --  Tok_Record will be taken into account by Tok_Type if needed.
@@ -724,6 +751,7 @@ package body Ada_Analyzer is
             if Value.Ident_Len > 0 then
                Constructs.Current.Name :=
                  new String' (Value.Identifier (1 .. Value.Ident_Len));
+               Constructs.Current.Sloc_Entity := Value.Sloc_Name;
             end if;
 
             if Value.Profile_Start /= 0 then
@@ -764,7 +792,9 @@ package body Ada_Analyzer is
          if Callback /= null then
             if Callback
               (Keyword_Text,
-               Temp.Sloc, (Line_Count, Current - Start_Of_Line + 1, Current))
+               Temp.Sloc,
+               (Line_Count, Current - Start_Of_Line + 1, Current),
+               False)
             then
                return True;
             end if;
@@ -1247,7 +1277,8 @@ package body Ada_Analyzer is
                      if Callback
                        (Comment_Text,
                         (Prev_Line, First - Prev_Start_Line + 1, First),
-                        (Line_Count - 1, Last - Line_Start (Last) + 1, Last))
+                        (Line_Count - 1, Last - Line_Start (Last) + 1, Last),
+                        False)
                      then
                         Terminated := True;
                         return;
@@ -1300,7 +1331,7 @@ package body Ada_Analyzer is
                when ')' =>
                   Prev_Token := Tok_Right_Paren;
 
-                  if Indents = null then
+                  if Indents = null or else Top (Indents).all = None then
                      --  Syntax error
                      null;
                   else
@@ -1340,6 +1371,10 @@ package body Ada_Analyzer is
                         Len := P - First + 1;
                         Top_Token.Identifier (1 .. Len) := Buffer (First .. P);
                         Top_Token.Ident_Len := Len;
+                        Top_Token.Sloc_Name.Line := Line_Count;
+                        Top_Token.Sloc_Name.Column :=
+                          First - Start_Of_Line + 1;
+                        Top_Token.Sloc_Name.Index := First;
 
                      else
                         Prev_Token := Tok_String_Literal;
@@ -1349,7 +1384,8 @@ package body Ada_Analyzer is
                         if Callback
                           (String_Text,
                            (Line_Count, First - Start_Of_Line + 1, First),
-                           (Line_Count, P - Start_Of_Line + 1, P))
+                           (Line_Count, P - Start_Of_Line + 1, P),
+                           False)
                         then
                            Terminated := True;
                            return;
@@ -1424,7 +1460,8 @@ package body Ada_Analyzer is
                                  Val.Sloc.Index  := Token_Prec;
                                  Val.Identifier (1 .. Str_Len) :=
                                    Str (1 .. Str_Len);
-                                 Val.Ident_Len := Str_Len;
+                                 Val.Ident_Len   := Str_Len;
+                                 Val.Sloc_Name   := Val.Sloc;
                                  Push (Tokens, Val);
                               end;
                            end if;
@@ -1622,7 +1659,8 @@ package body Ada_Analyzer is
                         if Callback
                           (Character_Text,
                            (Line_Count, First - Start_Of_Line + 1, First),
-                           (Line_Count, P - Start_Of_Line + 1, P))
+                           (Line_Count, P - Start_Of_Line + 1, P),
+                           False)
                         then
                            Terminated := True;
                            return;
@@ -1683,6 +1721,7 @@ package body Ada_Analyzer is
             end if;
 
             Top_Token := Top (Tokens);
+            Start_Of_Line := Line_Start (Prec);
 
             if (Top_Token.Token in Token_Class_Declk
                 or else Top_Token.Token = Tok_With)
@@ -1692,17 +1731,19 @@ package body Ada_Analyzer is
 
                Top_Token.Identifier (1 .. Str_Len) := Buffer (Prec .. Current);
                Top_Token.Ident_Len := Str_Len;
+               Top_Token.Sloc_Name.Line   := Line_Count;
+               Top_Token.Sloc_Name.Column := Prec - Start_Of_Line + 1;
+               Top_Token.Sloc_Name.Index  := Prec;
             end if;
 
             Casing := Ident_Casing;
 
             if Callback /= null then
-               Start_Of_Line := Line_Start (Prec);
-
                exit Main_Loop when Callback
                  (Identifier_Text,
                   (Line_Count, Prec - Start_Of_Line + 1, Prec),
-                  (Line_Count, Current - Start_Of_Line + 1, Current));
+                  (Line_Count, Current - Start_Of_Line + 1, Current),
+                  False);
             end if;
 
          elsif Prev_Token = Tok_Apostrophe
@@ -1719,7 +1760,8 @@ package body Ada_Analyzer is
                exit Main_Loop when Callback
                  (Identifier_Text,
                   (Line_Count, Prec - Start_Of_Line + 1, Prec),
-                  (Line_Count, Current - Start_Of_Line + 1, Current));
+                  (Line_Count, Current - Start_Of_Line + 1, Current),
+                  False);
             end if;
 
          else
@@ -1791,9 +1833,9 @@ package body Ada_Analyzer is
             Started := True;
          end if;
 
-         Token_Prec      := Prec;
-         Prec            := Current + 1;
-         Prev_Token      := Token;
+         Token_Prec := Prec;
+         Prec       := Current + 1;
+         Prev_Token := Token;
 
          Next_Word (Prec, Terminated);
 
@@ -1808,7 +1850,7 @@ package body Ada_Analyzer is
          Prev_Indent := Prev_Spaces;
       end if;
 
-      if Top (Indents).all = None then
+      if Indents = null or else Top (Indents).all = None then
          Current_Indent := Num_Spaces;
       else
          Current_Indent := Top (Indents).all;
