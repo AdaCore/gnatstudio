@@ -217,6 +217,14 @@ package GPS.Kernel.Preferences is
    Highlight_Column          : Param_Spec_Int;
    Speed_Column_Policy       : Param_Spec_Enum;
 
+   -- External Commands --
+   List_Processes                : Param_Spec_String;
+   Remote_Protocol               : Param_Spec_String;
+   Remote_Copy                   : Param_Spec_String;
+   Html_Browser                  : Param_Spec_String;
+   Execute_Command               : Param_Spec_String;
+   Print_Command                 : Param_Spec_String;
+
    -- MDI --
    MDI_Opaque            : Param_Spec_Boolean;
    MDI_Destroy_Floats    : Param_Spec_Boolean;

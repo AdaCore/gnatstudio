@@ -43,30 +43,16 @@ package body GVD.Preferences is
    ----------------------------------
 
    procedure Register_Default_Preferences
-     (Prefs       : access Preferences_Manager_Record'Class;
-      Page_Prefix : String := "";
-      XML_Prefix  : String := "")
+     (Prefs : access Preferences_Manager_Record'Class)
    is
-      General        : constant String := Page_Prefix;
-      Assembly       : constant String := Page_Prefix & (-"Assembly");
-      Data           : constant String := Page_Prefix & (-"Data");
-      Memory         : constant String := Page_Prefix & (-"Memory");
-      Helpers        : constant String := -"External Commands";
+      XML_Prefix     : constant String := "Debugger-";
+      General        : constant String := -"Debugger";
+      Assembly       : constant String := -"Debugger:Assembly";
+      Data           : constant String := -"Debugger:Data";
+      Memory         : constant String := -"Debugger:Memory";
       Source_Flags   : constant Param_Flags := Param_Readable;
-      External_Flags : constant Param_Flags :=
-        Param_Readable or Param_Writable;
-      HTML_Flags     : Param_Flags;
 
    begin
-      if Config.Host = Windows then
-         --  This preference is not used under Windows
-
-         HTML_Flags := Source_Flags;
-
-      else
-         HTML_Flags := External_Flags;
-      end if;
-
       Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Debugger-Highlight-Color",
          Nick     => -"Color highlighting",
@@ -239,68 +225,13 @@ package body GVD.Preferences is
       Register_Property
         (Prefs, Param_Spec (Memory_Selected_Color), Memory);
 
-      List_Processes := Param_Spec_String (Gnew_String
-        (Name     => XML_Prefix & "List-Processes",
-         Nick     => -"List processes",
-         Blurb    => -"Command used to list processes running on the machine",
-         Default  => Default_Ps));
-      Register_Property (Prefs, Param_Spec (List_Processes), Helpers);
-
-      Remote_Protocol := Param_Spec_String (Gnew_String
-         (Name    => XML_Prefix & "Remote-Protocol",
-          Nick    => -"Remote shell",
-          Blurb   => -"Program used to run a process on a remote machine",
-          Default => "rsh"));
-      Register_Property (Prefs, Param_Spec (Remote_Protocol), Helpers);
-
-      Remote_Copy := Param_Spec_String (Gnew_String
-         (Name    => XML_Prefix & "Remote-Copy",
-          Nick    => -"Remote copy",
-          Blurb   => -"Program used to copy a file from a remote machine",
-          Default => "rcp"));
-      Register_Property (Prefs, Param_Spec (Remote_Copy), Helpers);
-
-      Execute_Command := Param_Spec_String (Gnew_String
-         (Name    => XML_Prefix & "Execute-Command",
-          Nick    => -"Execute command",
-          Blurb   => -"Program used to execute commands externally",
-          Flags   => External_Flags,
-          Default => Exec_Command));
-      Register_Property (Prefs, Param_Spec (Execute_Command), Helpers);
-
-      Html_Browser := Param_Spec_String (Gnew_String
-        (Name     => XML_Prefix & "HTML-Browser",
-         Nick     => -"HTML browser",
-         Blurb    => -("Program used to browse HTML pages. " &
-                       "No value means automatically try to find a suitable " &
-                       "browser"),
-         Flags    => HTML_Flags,
-         Default  => ""));
-      Register_Property (Prefs, Param_Spec (Html_Browser), Helpers);
-
-      Print_Command := Param_Spec_String (Gnew_String
-         (Name    => XML_Prefix & "Print-Command",
-          Nick    => -"Print command",
-          Blurb   => -("Program used to print files. No value means use " &
-                       "the built-in printing capability (available under " &
-                       "Windows only)"),
-          Flags   => External_Flags,
-          Default => Default_Print_Cmd));
-      Register_Property (Prefs, Param_Spec (Print_Command), Helpers);
-
       Selected_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Selected-Item-Color",
          Default => "#888888",
          Blurb   => -"Color to use to draw the selected item",
          Nick    => -"Selected item color"));
-
-      if Page_Prefix = "" then
-         Register_Property
-           (Prefs, Param_Spec (Selected_Item_Color), Data);
-      else
-         Register_Property
-           (Prefs, Param_Spec (Selected_Item_Color),  -"Browsers");
-      end if;
+      Register_Property
+        (Prefs, Param_Spec (Selected_Item_Color),  -"Browsers");
    end Register_Default_Preferences;
 
 end GVD.Preferences;

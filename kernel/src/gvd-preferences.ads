@@ -30,12 +30,9 @@ package GVD.Preferences is
    GVD_Prefs : GVD_Preferences;
 
    procedure Register_Default_Preferences
-     (Prefs : access Preferences_Manager_Record'Class;
-      Page_Prefix : String := "";
-      XML_Prefix  : String := "");
-   --  Register all the preferences known in GVD, and their default
+     (Prefs : access Preferences_Manager_Record'Class);
+   --  Register all the preferences relative to GVD, and their default
    --  values. This doesn't override existing values of the preferences.
-   --  Page_Prefix is added to all the page descriptions
 
    procedure Set_Pref
      (Manager : access GVD_Preferences_Manager;
@@ -83,14 +80,6 @@ package GVD.Preferences is
    Memory_View_Color             : Param_Spec_Color;
    Memory_Highlighted_Color      : Param_Spec_Color;
    Memory_Selected_Color         : Param_Spec_Color;
-
-   -- Helpers --
-   List_Processes                : Param_Spec_String;
-   Remote_Protocol               : Param_Spec_String;
-   Remote_Copy                   : Param_Spec_String;
-   Html_Browser                  : Param_Spec_String;
-   Execute_Command               : Param_Spec_String;
-   Print_Command                 : Param_Spec_String;
 
 private
    type GVD_Preferences_Manager is new Preferences_Manager_Record with
