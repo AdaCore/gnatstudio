@@ -52,7 +52,6 @@ with Language.Debugger.Ada; use Language.Debugger.Ada;
 with Language.Debugger.C;   use Language.Debugger.C;
 with Language.Debugger.Cpp; use Language.Debugger.Cpp;
 with Language;              use Language;
-with Display_Items;         use Display_Items;
 with GVD.Strings;           use GVD.Strings;
 
 procedure GVD_Main is
@@ -520,7 +519,6 @@ begin
    end if;
 
    Show_All (Main_Debug_Window);
-   Init_Graphics (Get_Window (Main_Debug_Window));
 
    loop
       begin
