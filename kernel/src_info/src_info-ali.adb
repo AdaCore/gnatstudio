@@ -109,8 +109,6 @@ package body Src_Info.ALI is
       Source_Filename  : File_Name_Type;
       Sig_Filename     : File_Name_Type;
       Part             : Unit_Part;
-      Project          : Prj.Project_Id;
-      Source_Path      : String;
       File             : out Source_File);
    --  Perform the job of Get_Unit_Source_File knowing that the Source Filename
    --  from which the ALI filename is derived is Sig_Filename.
@@ -127,11 +125,9 @@ package body Src_Info.ALI is
 
    procedure Get_Subunit_Source_File
      (List             : in out LI_File_List;
-      New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Sig_Filename     : File_Name_Type;
       Subunit_Name     : Name_Id;
-      Project          : Prj.Project_Id;
       File             : out Source_File);
    --  Perform the job of Get_Subunit_Source_File knowing the name of the
    --  Source Filename from which the ALI filename is derived.
@@ -143,7 +139,7 @@ package body Src_Info.ALI is
    --  read or parse the ALI file.
 
    procedure Process_Unit
-     (New_LI_File : LI_File_Ptr; New_ALI : ALIs_Record; Id : Unit_Id);
+     (New_LI_File : LI_File_Ptr; Id : Unit_Id);
    --  Save the information from the given Unit into the LI_File_Ptr.
    --  Note that the with'ed units list is postponed for the moment.
    --  It is more convenient to process it separately after the dependency
@@ -163,20 +159,8 @@ package body Src_Info.ALI is
       List        : in out LI_File_List);
    --  Save the information from the given dependency into the LI_File_Ptr.
 
-   procedure Process_Sdep_As_Separate
-     (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
-      Id          : Sdep_Id;
-      Project     : Prj.Project_Id;
-      Source_Path : String;
-      Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List);
-   --  Save the information from the given dependency into the LI_File_Ptr
-   --  for cases where it is a separate.
-
    procedure Process_Sdep_As_Self
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Finfo       : File_Info_Ptr;
       Sfiles      : in out Sdep_To_Sfile_Table);
@@ -207,7 +191,6 @@ package body Src_Info.ALI is
 
    procedure Process_With
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Project     : Prj.Project_Id;
       UId         : Unit_Id;
       WId         : With_Id);
@@ -238,7 +221,6 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Entity
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Entity_Id   : Nat;
       Sfiles      : Sdep_To_Sfile_Table);
@@ -246,7 +228,6 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Section
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Sfiles      : Sdep_To_Sfile_Table);
    --  Save the Xref information associated to the given With_Record.
@@ -572,8 +553,7 @@ package body Src_Info.ALI is
 
       if Body_Id /= No_Array_Element then
          Get_Unit_Source_File
-           (List, Source_Filename, Get_Filename (Body_Id), Unit_Body,
-            Project, Source_Path, File);
+           (List, Source_Filename, Get_Filename (Body_Id), Unit_Body, File);
          return;
       end if;
 
@@ -593,8 +573,7 @@ package body Src_Info.ALI is
 
          if Body_Id /= No_Array_Element then
             Get_Unit_Source_File
-              (List, Source_Filename, Get_Filename (Body_Id), Unit_Body,
-               Project, Source_Path, File);
+              (List, Source_Filename, Get_Filename (Body_Id), Unit_Body, File);
             return;
          end if;
 
@@ -610,9 +589,7 @@ package body Src_Info.ALI is
                Part := Unit_Spec;
             end if;
 
-            Get_Unit_Source_File
-              (List, Source_Filename, Filename,
-               Part, Project, Source_Path, File);
+            Get_Unit_Source_File (List, Source_Filename, Filename, Part, File);
             return;
          end if;
 
@@ -630,16 +607,13 @@ package body Src_Info.ALI is
                Part := Unit_Spec;
             end if;
 
-            Get_Unit_Source_File
-              (List, Source_Filename, Filename, Part,
-               Project, Source_Path, File);
+            Get_Unit_Source_File (List, Source_Filename, Filename, Part, File);
             return;
          end if;
 
          --  Not found anywhere, so this is a spec only file
          Get_Unit_Source_File
-           (List, Source_Filename, Get_Filename (Spec_Id), Unit_Spec,
-            Project, Source_Path, File);
+           (List, Source_Filename, Get_Filename (Spec_Id), Unit_Spec, File);
          return;
       end if;  --  filename found in spec exception list
 
@@ -653,8 +627,7 @@ package body Src_Info.ALI is
 
          when Unit_Body =>
             Get_Unit_Source_File
-              (List, Source_Filename, Source_Filename, Unit_Body,
-               Project, Source_Path, File);
+              (List, Source_Filename, Source_Filename, Unit_Body, File);
 
          --  Is this a spec, according to the naming scheme?
          --  (it should be, or that would be a bug)
@@ -676,7 +649,7 @@ package body Src_Info.ALI is
                if Body_Id /= No_Array_Element then
                   Get_Unit_Source_File
                     (List, Source_Filename, Get_Filename (Body_Id),
-                     Unit_Body, Project, Source_Path, File);
+                     Unit_Body, File);
                   return;
                end if;
 
@@ -692,8 +665,7 @@ package body Src_Info.ALI is
                   end if;
 
                   Get_Unit_Source_File
-                    (List, Source_Filename, Filename,
-                     Part, Project, Source_Path, File);
+                    (List, Source_Filename, Filename, Part, File);
                   return;
                end if;
 
@@ -711,15 +683,13 @@ package body Src_Info.ALI is
 
                   Free (Dir);
                   Get_Unit_Source_File
-                    (List, Source_Filename, Filename, Part,
-                     Project, Source_Path, File);
+                    (List, Source_Filename, Filename, Part, File);
                   return;
                end if;
 
                --  The body was not found anywhere, so this is a spec only file
                Get_Unit_Source_File
-                 (List, Source_Filename, Source_Filename, Unit_Spec,
-                  Project, Source_Path, File);
+                 (List, Source_Filename, Source_Filename, Unit_Spec, File);
                return;
             end;
 
@@ -739,8 +709,6 @@ package body Src_Info.ALI is
       Source_Filename  : File_Name_Type;
       Sig_Filename     : File_Name_Type;
       Part             : Unit_Part;
-      Project          : Prj.Project_Id;
-      Source_Path      : String;
       File             : out Source_File)
    is
       Sname        : constant String := Get_Name_String (Source_Filename);
@@ -864,8 +832,8 @@ package body Src_Info.ALI is
 
          if Body_Id /= No_Array_Element then
             Get_Subunit_Source_File
-              (List, New_ALI, Source_Filename, Get_Filename (Body_Id),
-               Subunit_Name, Project, File);
+              (List, Source_Filename, Get_Filename (Body_Id),
+               Subunit_Name, File);
             return;
          end if;
 
@@ -876,8 +844,7 @@ package body Src_Info.ALI is
 
          if Dep /= No_Sdep_Id then
             Get_Subunit_Source_File
-              (List, New_ALI, Source_Filename, Filename, Subunit_Name,
-               Project, File);
+              (List, Source_Filename, Filename, Subunit_Name, File);
             return;
          end if;
 
@@ -889,8 +856,8 @@ package body Src_Info.ALI is
 
          if Spec_Id /= No_Array_Element then
             Get_Subunit_Source_File
-              (List, New_ALI, Source_Filename, Get_Filename (Spec_Id),
-               Subunit_Name, Project, File);
+              (List, Source_Filename, Get_Filename (Spec_Id),
+               Subunit_Name, File);
             return;
          end if;
 
@@ -901,8 +868,7 @@ package body Src_Info.ALI is
 
          if Dep /= No_Sdep_Id then
             Get_Subunit_Source_File
-              (List, New_ALI, Source_Filename, Filename, Subunit_Name,
-               Project, File);
+              (List, Source_Filename, Filename, Subunit_Name, File);
             return;
          end if;
 
@@ -921,11 +887,9 @@ package body Src_Info.ALI is
 
    procedure Get_Subunit_Source_File
      (List             : in out LI_File_List;
-      New_ALI          : ALIs_Record;
       Source_Filename  : File_Name_Type;
       Sig_Filename     : File_Name_Type;
       Subunit_Name     : Name_Id;
-      Project          : Prj.Project_Id;
       File             : out Source_File)
    is
       Sname        : constant String := Get_Name_String (Source_Filename);
@@ -1058,7 +1022,7 @@ package body Src_Info.ALI is
    ------------------
 
    procedure Process_Unit
-     (New_LI_File : LI_File_Ptr; New_ALI : ALIs_Record; Id : Unit_Id)
+     (New_LI_File : LI_File_Ptr; Id : Unit_Id)
    is
       Current_Unit  : Unit_Record renames Units.Table (Id);
       New_File_Info : File_Info_Ptr := new File_Info;
@@ -1100,7 +1064,7 @@ package body Src_Info.ALI is
      (New_LI_File : LI_File_Ptr; New_ALI : ALIs_Record) is
    begin
       for Current_Unit_Id in New_ALI.First_Unit .. New_ALI.Last_Unit loop
-         Process_Unit (New_LI_File, New_ALI, Current_Unit_Id);
+         Process_Unit (New_LI_File, Current_Unit_Id);
       end loop;
    end Process_Units;
 
@@ -1128,14 +1092,14 @@ package body Src_Info.ALI is
                    Get_Name_String (Dep.Sfile)
       then
          Process_Sdep_As_Self
-           (New_LI_File, New_ALI, Id, New_LI_File.LI.Spec_Info, Sfiles);
+           (New_LI_File, Id, New_LI_File.LI.Spec_Info, Sfiles);
 
       elsif New_LI_File.LI.Body_Info /= null
         and then New_LI_File.LI.Body_Info.Source_Filename.all =
                    Get_Name_String (Dep.Sfile)
       then
          Process_Sdep_As_Self
-           (New_LI_File, New_ALI, Id, New_LI_File.LI.Body_Info, Sfiles);
+           (New_LI_File, Id, New_LI_File.LI.Body_Info, Sfiles);
 
       else
          Process_Sdep_As_External
@@ -1143,63 +1107,12 @@ package body Src_Info.ALI is
       end if;
    end Process_Sdep;
 
-   ------------------------------
-   -- Process_Sdep_As_Separate --
-   ------------------------------
-
-   procedure Process_Sdep_As_Separate
-     (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
-      Id          : Sdep_Id;
-      Project     : Prj.Project_Id;
-      Source_Path : String;
-      Sfiles      : in out Sdep_To_Sfile_Table;
-      List        : in out LI_File_List)
-   is
-      Dep          : Sdep_Record renames Sdep.Table (Id);
-      Dep_Filename : constant String := Get_Name_String (Dep.Sfile);
-      Sfile        : Source_File;
-      Sep_Info     : File_Info_Ptr_List;
-
-   begin
-      Get_Source_File
-        (List, New_ALI, Dep.Sfile, Dep.Subunit_Name, Project,
-         Source_Path, Sfile);
-
-      --  Search the associated Sep_Info. This search should never fail,
-      --  This is ensured by the semantics of Get_Source_File above. If
-      --  it does fail, Sep_Info will be null and we will have a
-      --  Constraint_Error.
-
-      Sep_Info := Sfile.LI.LI.Separate_Info;
-
-      while Sep_Info /= null loop
-         exit when Sep_Info.Value.Source_Filename.all = Dep_Filename;
-         Sep_Info := Sep_Info.Next;
-      end loop;
-
-      Sep_Info.Value.File_Timestamp := To_Timestamp (Dep.Stamp);
-      Free (Sep_Info.Value.Original_Filename);
-
-      --  Clear the original filename field just in case it has changed.
-
-      if Dep.Rfile /= No_File then
-         Sep_Info.Value.Original_Filename :=
-           new String'(Get_Name_String (Dep.Rfile));
-         Sep_Info.Value.Original_Line := Positive (Dep.Start_Line);
-      end if;
-
-      --  Save the Source_File associated to this Sdep for later use.
-      Sfiles (Id) := Sfile;
-   end Process_Sdep_As_Separate;
-
    --------------------------
    -- Process_Sdep_As_Self --
    --------------------------
 
    procedure Process_Sdep_As_Self
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Finfo       : File_Info_Ptr;
       Sfiles      : in out Sdep_To_Sfile_Table)
@@ -1289,7 +1202,6 @@ package body Src_Info.ALI is
 
    procedure Process_With
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Project     : Prj.Project_Id;
       UId         : Unit_Id;
       WId         : With_Id)
@@ -1393,7 +1305,7 @@ package body Src_Info.ALI is
             for W in Units.Table (Unit).First_With ..
               Units.Table (Unit).Last_With
             loop
-               Process_With (New_LI_File, New_ALI, Project, Unit, W);
+               Process_With (New_LI_File, Project, Unit, W);
             end loop;
          end if;
       end loop;
@@ -1459,7 +1371,6 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Entity
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Entity_Id   : Nat;
       Sfiles      : Sdep_To_Sfile_Table)
@@ -1582,14 +1493,13 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Section
      (New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Sfiles      : Sdep_To_Sfile_Table)
    is
       Xref_Sect : Xref_Section_Record renames Xref_Section.Table (Section_Id);
    begin
       for E in Xref_Sect.First_Entity .. Xref_Sect.Last_Entity loop
-         Process_Xref_Entity (New_LI_File, New_ALI, Section_Id, E, Sfiles);
+         Process_Xref_Entity (New_LI_File, Section_Id, E, Sfiles);
       end loop;
    end Process_Xref_Section;
 
@@ -1606,7 +1516,7 @@ package body Src_Info.ALI is
          if Xref_Section.Table (Xref_Sect).File_Num in
            New_ALI.First_Sdep .. New_ALI.Last_Sdep
          then
-            Process_Xref_Section (New_LI_File, New_ALI, Xref_Sect, Sfiles);
+            Process_Xref_Section (New_LI_File, Xref_Sect, Sfiles);
          end if;
       end loop;
    end Process_Xrefs;
@@ -1805,6 +1715,7 @@ package body Src_Info.ALI is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String) return String
    is
+      pragma Unreferenced (Handler);
       Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
       Naming         : Naming_Data renames Prj_Data.Naming;
 
