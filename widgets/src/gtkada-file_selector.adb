@@ -1041,12 +1041,20 @@ package body Gtkada.File_Selector is
       File_Selector_Window.Back_Button := Insert_Stock
         (Toolbar => Toolbar1,
          Stock_Id => Stock_Go_Back,
-         Position => 0);
+         Position => -1);
       Set_Sensitive (File_Selector_Window.Back_Button, False);
-
       Widget_Callback.Connect
         (File_Selector_Window.Back_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Back_Button_Clicked'Access));
+
+      File_Selector_Window.Forward_Button := Insert_Stock
+        (Toolbar => Toolbar1,
+         Stock_Id => Stock_Go_Forward,
+         Position => -1);
+      Set_Sensitive (File_Selector_Window.Forward_Button, False);
+      Widget_Callback.Connect
+        (File_Selector_Window.Forward_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Forward_Button_Clicked'Access));
 
       Gtk_New (File_Selector_Window.Up_Icon, Stock_Go_Up, Icon_Size_Button);
       File_Selector_Window.Up_Button := Append_Element
@@ -1056,16 +1064,6 @@ package body Gtkada.File_Selector is
       Widget_Callback.Connect
         (File_Selector_Window.Up_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Up_Button_Clicked'Access));
-
-      File_Selector_Window.Forward_Button := Insert_Stock
-        (Toolbar => Toolbar1,
-         Stock_Id => Stock_Go_Forward,
-         Position => 0);
-      Set_Sensitive (File_Selector_Window.Forward_Button, False);
-
-      Widget_Callback.Connect
-        (File_Selector_Window.Forward_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Forward_Button_Clicked'Access));
 
       Gtk_New
         (File_Selector_Window.Refresh_Icon, Stock_Refresh, Icon_Size_Button);
@@ -1080,7 +1078,7 @@ package body Gtkada.File_Selector is
       File_Selector_Window.Home_Button := Insert_Stock
         (Toolbar => Toolbar1,
          Stock_Id => Stock_Home,
-         Position => 0);
+         Position => -1);
       Set_Sensitive (File_Selector_Window.Home_Button, True);
       Widget_Callback.Connect
         (File_Selector_Window.Home_Button, "clicked",
