@@ -1,3 +1,8 @@
+
+- Active MDI windows can now be changed with the keyboard
+
+- New mode in the MDI: all windows can be automatically set as floating
+
 New features in GPS 1.0.2
 
 - Menu File->New View implemented
