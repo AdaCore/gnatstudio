@@ -3561,14 +3561,14 @@ package body Src_Editor_Buffer is
       Unref (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
 
-   ---------------------
-   -- Check_Timestamp --
-   ---------------------
+   --------------------------------
+   -- Check_Timestamp_And_Reload --
+   --------------------------------
 
-   function Check_Timestamp
-     (Buffer   : access Source_Buffer_Record;
-      Ask_User : Boolean := False;
-      Force    : Boolean := False) return Boolean
+   function Check_Timestamp_And_Reload
+     (Buffer        : access Source_Buffer_Record;
+      Interactive   : Boolean;
+      Always_Reload : Boolean) return Boolean
    is
       New_Timestamp : Ada.Calendar.Time;
       Dialog : Gtk_Dialog;
@@ -3582,14 +3582,10 @@ package body Src_Editor_Buffer is
       if Buffer.Filename /= VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
 
-         if Force or else New_Timestamp > Buffer.Timestamp then
-            if Force then
+         if Always_Reload or else New_Timestamp > Buffer.Timestamp then
+            if Always_Reload or else not Interactive then
                Response := Gtk_Response_No;
             else
-               if not Ask_User then
-                  return False;
-               end if;
-
                Dialog := Create_Gtk_Dialog
                  (Msg         => Base_Name (Buffer.Filename)
                   & (-" changed on disk.")
@@ -3634,6 +3630,24 @@ package body Src_Editor_Buffer is
                   null;
             end case;
          end if;
+      end if;
+
+      return True;
+   end Check_Timestamp_And_Reload;
+
+   ---------------------
+   -- Check_Timestamp --
+   ---------------------
+
+   function Check_Timestamp
+     (Buffer : access Source_Buffer_Record) return Boolean
+   is
+      New_Timestamp : Ada.Calendar.Time;
+
+   begin
+      if Buffer.Filename /= VFS.No_File then
+         New_Timestamp := File_Time_Stamp (Buffer.Filename);
+         return New_Timestamp <= Buffer.Timestamp;
       end if;
 
       return True;
