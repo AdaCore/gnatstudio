@@ -18,29 +18,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gtk; use Gtk;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtkada.Types;    use Gtkada.Types;
+with Glib;                  use Glib;
+with Gtk;                   use Gtk;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtkada.Types;          use Gtkada.Types;
 with Odd.Dialogs.Callbacks; use Odd.Dialogs.Callbacks;
-with Callbacks_Odd;   use Callbacks_Odd;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Interfaces.C;    use Interfaces.C;
+with Callbacks_Odd;         use Callbacks_Odd;
+with Gtkada.Handlers;       use Gtkada.Handlers;
+with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
-with Odd.Types;       use Odd.Types;
-with Odd.Process;     use Odd.Process;
-with Odd_Intl;        use Odd_Intl;
-with Gtk.GEntry;      use Gtk.GEntry;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Main;        use Gtk.Main;
-with Gtk.Dialog;      use Gtk.Dialog;
-with Gtk.Label;       use Gtk.Label;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Combo;       use Gtk.Combo;
-with Gtk.List;        use Gtk.List;
-with Gtk.List_Item;   use Gtk.List_Item;
-with Gtk.Object;      use Gtk.Object;
-with Gtk.Check_Button; use Gtk.Check_Button;
+with Odd.Types;             use Odd.Types;
+with Odd.Process;           use Odd.Process;
+with Odd_Intl;              use Odd_Intl;
+with Gtk.GEntry;            use Gtk.GEntry;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Main;              use Gtk.Main;
+with Gtk.Dialog;            use Gtk.Dialog;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Enums;             use Gtk.Enums;
+with Gtk.Combo;             use Gtk.Combo;
+with Gtk.List;              use Gtk.List;
+with Gtk.List_Item;         use Gtk.List_Item;
+with Gtk.Object;            use Gtk.Object;
+with Gtk.Check_Button;      use Gtk.Check_Button;
+with Process_Proxies;       use Process_Proxies;
+with Language;              use Language;
 
 package body Odd.Dialogs is
 
@@ -108,21 +110,27 @@ package body Odd.Dialogs is
 
    procedure Gtk_New
      (Task_Dialog : out Task_Dialog_Access;
-      Main_Window : Gtk_Window;
-      Information : Thread_Information_Array) is
+      Main_Window : Gtk_Window) is
    begin
       Task_Dialog := new Task_Dialog_Record;
-      Initialize (Task_Dialog, Main_Window, Information);
+      Initialize (Task_Dialog, Main_Window);
    end Gtk_New;
+
+   -------------
+   -- Gtk_New --
+   -------------
 
    procedure Gtk_New
      (Backtrace_Dialog : out Backtrace_Dialog_Access;
-      Main_Window      : Gtk_Window;
-      Backtrace        : Backtrace_Array) is
+      Main_Window      : Gtk_Window) is
    begin
       Backtrace_Dialog := new Backtrace_Dialog_Record;
-      Initialize (Backtrace_Dialog, Main_Window, Backtrace);
+      Initialize (Backtrace_Dialog, Main_Window);
    end Gtk_New;
+
+   -------------
+   -- Gtk_New --
+   -------------
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
@@ -142,85 +150,108 @@ package body Odd.Dialogs is
 
    procedure Update
      (Task_Dialog : access Task_Dialog_Record;
-      Information : Thread_Information_Array)
+      Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
+      Process  : Process_Proxy_Access :=
+        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
       Num_Columns : Thread_Fields;
       Row         : Gint;
-
    begin
-      if Task_Dialog.Scrolledwindow1 /= null then
-         Destroy (Task_Dialog.Scrolledwindow1);
-         Task_Dialog.Scrolledwindow1 := null;
+      if Task_Dialog.List /= null then
+         Freeze (Task_Dialog.List);
+         Clear (Task_Dialog.List);
       end if;
 
-      if Information'Length > 0 then
-         Set_Default_Size (Task_Dialog, 400, 200);
-         Gtk_New (Task_Dialog.Scrolledwindow1);
-         Pack_Start
-           (Task_Dialog.Vbox1, Task_Dialog.Scrolledwindow1, True, True, 0);
-         Set_Policy
-           (Task_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
+      --  If the debugger was killed, no need to refresh
 
-         Num_Columns := Information (Information'First).Num_Fields;
-         Gtk_New
-           (Task_Dialog.List,
-            Gint (Num_Columns),
-            Information (Information'First).Information);
-         Widget_Callback.Connect
-           (Task_Dialog.List,
-            "select_row",
-            On_Task_List_Select_Row'Access);
-         Add (Task_Dialog.Scrolledwindow1, Task_Dialog.List);
-
-         for J in Information'First + 1 .. Information'Last loop
-            declare
-               Info : Chars_Ptr_Array := Information (J).Information;
-               --  ??? workaround a bug in GNAT 3.12p that is fixed in 3.13
-            begin
-               Row := Append (Task_Dialog.List, Info);
-            end;
-         end loop;
-
-         Row := Columns_Autosize (Task_Dialog.List);
+      if Process = null then
+         if Task_Dialog.List /= null then
+            Thaw (Task_Dialog.List);
+         end if;
+         return;
       end if;
 
-      Show_All (Task_Dialog);
+      --  Read the information from the debugger
+      Push_Internal_Command_Status (Process, True);
+
+      declare
+         Info : Thread_Information_Array :=
+           Info_Threads (Debugger_Process_Tab (Debugger).Debugger);
+      begin
+         if Task_Dialog.List = null then
+            Num_Columns := Info (Info'First).Num_Fields;
+            Gtk_New
+              (Task_Dialog.List,
+               Gint (Num_Columns),
+               Info (Info'First).Information);
+            Widget_Callback.Connect
+              (Task_Dialog.List,
+               "select_row",
+               On_Task_List_Select_Row'Access);
+            Add (Task_Dialog.Scrolledwindow1, Task_Dialog.List);
+            Freeze (Task_Dialog.List);
+         end if;
+
+         if Info'Length > 0 then
+
+            for J in Info'First + 1 .. Info'Last loop
+               declare
+                  Info2 : Chars_Ptr_Array := Info (J).Information;
+                  --  ??? workaround a bug in GNAT 3.12p that is fixed in 3.13
+               begin
+                  Row := Append (Task_Dialog.List, Info2);
+               end;
+            end loop;
+
+            Row := Columns_Autosize (Task_Dialog.List);
+         end if;
+
+         Free (Info);
+      end;
+
+      Pop_Internal_Command_Status (Process);
+      Thaw (Task_Dialog.List);
    end Update;
+
+   ------------
+   -- Update --
+   ------------
 
    procedure Update
      (Backtrace_Dialog : access Backtrace_Dialog_Record;
-      Backtrace        : Backtrace_Array)
+      Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Temp : Chars_Ptr_Array (0 .. 2);
       Row  : Gint;
-
+      Bt       : Backtrace_Array (1 .. Max_Frame);
+      Len      : Natural;
+      Process  : Process_Proxy_Access :=
+        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
    begin
-      if Backtrace_Dialog.Scrolledwindow1 /= null then
-         Destroy (Backtrace_Dialog.Scrolledwindow1);
-         Backtrace_Dialog.Scrolledwindow1 := null;
+      Freeze (Backtrace_Dialog.List);
+      Clear (Backtrace_Dialog.List);
+
+      --  If the debugger was killed, no need to refresh
+
+      if Process = null then
+         Thaw (Backtrace_Dialog.List);
+         return;
       end if;
 
-      if Backtrace'Length > 0 then
-         Set_Default_Size (Backtrace_Dialog, 400, 200);
-         Gtk_New (Backtrace_Dialog.Scrolledwindow1);
-         Pack_Start
-           (Backtrace_Dialog.Vbox1, Backtrace_Dialog.Scrolledwindow1,
-            True, True, 0);
-         Set_Policy
-           (Backtrace_Dialog.Scrolledwindow1, Policy_Automatic,
-            Policy_Automatic);
+      --  Parse the information from the debugger
 
-         Gtk_New (Backtrace_Dialog.List, 3, Backtrace_Titles);
-         Widget_Callback.Connect
-           (Backtrace_Dialog.List,
-            "select_row",
-            On_Backtrace_List_Select_Row'Access);
-         Add (Backtrace_Dialog.Scrolledwindow1, Backtrace_Dialog.List);
+      Push_Internal_Command_Status (Process, True);
+      Backtrace (Debugger_Process_Tab (Debugger).Debugger, Bt, Len);
+      Pop_Internal_Command_Status (Process);
 
-         for J in Backtrace'Range loop
-            Temp (0) := Strings.New_String (Backtrace (J).Program_Counter.all);
-            Temp (1) := Strings.New_String (Backtrace (J).Subprogram.all);
-            Temp (2) := Strings.New_String (Backtrace (J).Source_Location.all);
+      --  Update the contents of the window
+
+      if Len > 0 then
+
+         for J in 1 .. Len loop
+            Temp (0) := Strings.New_String (Bt (J).Program_Counter.all);
+            Temp (1) := Strings.New_String (Bt (J).Subprogram.all);
+            Temp (2) := Strings.New_String (Bt (J).Source_Location.all);
             Row := Append (Backtrace_Dialog.List, Temp);
             Free (Temp);
          end loop;
@@ -238,7 +269,8 @@ package body Odd.Dialogs is
          end loop;
       end if;
 
-      Show_All (Backtrace_Dialog);
+      Free (Bt (1 .. Len));
+      Thaw (Backtrace_Dialog.List);
    end Update;
 
    ----------------
@@ -277,29 +309,64 @@ package body Odd.Dialogs is
       Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
    end Initialize;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
    procedure Initialize
      (Task_Dialog : access Task_Dialog_Record'Class;
-      Main_Window : Gtk_Window;
-      Information : Thread_Information_Array) is
+      Main_Window : Gtk_Window) is
    begin
       Initialize (Task_Dialog, -"Task Status", Main_Window);
       Button_Callback.Connect
         (Task_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
-      Update (Task_Dialog, Information);
+
+      Set_Default_Size (Task_Dialog, 400, 200);
+      Gtk_New (Task_Dialog.Scrolledwindow1);
+      Pack_Start
+        (Task_Dialog.Vbox1, Task_Dialog.Scrolledwindow1, True, True, 0);
+      Set_Policy
+        (Task_Dialog.Scrolledwindow1,
+         Policy_Automatic,
+         Policy_Automatic);
+
+      --  We can't create the clist here, since we don't know yet how many
+      --  columns there will be. This will be done on the first call to update
    end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (Backtrace_Dialog : access Backtrace_Dialog_Record'Class;
-      Main_Window      : Gtk_Window;
-      Backtrace        : Backtrace_Array) is
+      Main_Window      : Gtk_Window) is
    begin
       Initialize (Backtrace_Dialog, -"Call Stack", Main_Window);
       Button_Callback.Connect
         (Backtrace_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
-      Update (Backtrace_Dialog, Backtrace);
+
+      Set_Default_Size (Backtrace_Dialog, 400, 200);
+      Gtk_New (Backtrace_Dialog.Scrolledwindow1);
+      Pack_Start
+        (Backtrace_Dialog.Vbox1, Backtrace_Dialog.Scrolledwindow1,
+         True, True, 0);
+      Set_Policy
+        (Backtrace_Dialog.Scrolledwindow1, Policy_Automatic,
+         Policy_Automatic);
+
+      Gtk_New (Backtrace_Dialog.List, 3, Backtrace_Titles);
+      Widget_Callback.Connect
+        (Backtrace_Dialog.List, "select_row",
+         On_Backtrace_List_Select_Row'Access);
+      Add (Backtrace_Dialog.Scrolledwindow1, Backtrace_Dialog.List);
    end Initialize;
+
+   ----------------
+   -- Initialize --
+   ----------------
 
    procedure Initialize
      (Question_Dialog            : access Question_Dialog_Record'Class;
@@ -328,12 +395,17 @@ package body Odd.Dialogs is
       Set_Policy
         (Question_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
 
+      --  Make sure the Cancel button is on the right, for homogeneity
+      Ref (Question_Dialog.Close_Button);
+      Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
       Gtk_New (OK_Button, -"OK");
       Add (Question_Dialog.Hbuttonbox1, OK_Button);
       Widget_Callback.Connect
         (OK_Button,
          "clicked",
          On_Question_OK_Clicked'Access);
+      Add (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
+      Unref (Question_Dialog.Close_Button);
 
       Gtk_New (Question_Dialog.List, 2, Question_Titles);
       Add (Question_Dialog.Scrolledwindow1, Question_Dialog.List);
@@ -564,12 +636,13 @@ package body Odd.Dialogs is
    --------------------------
 
    function Display_Entry_Dialog
-     (Parent   : access Gtk.Window.Gtk_Window_Record'Class;
-      Title    : String;
-      Message  : String;
-      Position : Gtk_Window_Position := Win_Pos_Center;
-      Key      : String := "";
-      Is_Func  : access Boolean) return String
+     (Parent        : access Gtk.Window.Gtk_Window_Record'Class;
+      Title         : String;
+      Message       : String;
+      Position      : Gtk_Window_Position := Win_Pos_Center;
+      Check_Msg     : String;
+      Key           : String := "";
+      Button_Active : access Boolean) return String
    is
       Dialog      : Display_Dialog_Access;
       Must_Initialize : Boolean := False;
@@ -587,7 +660,7 @@ package body Odd.Dialogs is
          Dialog := new Display_Dialog_Record;
          Initialize (Dialog);
          Must_Initialize := True;
-         Gtk_New (Dialog.Check, -"Expression is a subprogram call");
+         Gtk_New (Dialog.Check, Check_Msg);
       end if;
 
       declare
@@ -597,7 +670,7 @@ package body Odd.Dialogs is
          R : Boolean;
       begin
          R := Get_Active (Dialog.Check);
-         Is_Func.all := R;
+         Button_Active.all := R;
          return S;
       end;
    end Display_Entry_Dialog;

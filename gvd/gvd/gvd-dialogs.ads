@@ -26,9 +26,9 @@ with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Enums;
-with Language; use Language;
 with Debugger; use Debugger;
 with Odd.Types;
+with Gtk.Widget;
 
 package Odd.Dialogs is
 
@@ -57,31 +57,40 @@ package Odd.Dialogs is
 
    procedure Gtk_New
      (Task_Dialog : out Task_Dialog_Access;
-      Main_Window : Gtk_Window;
-      Information : Thread_Information_Array);
+      Main_Window : Gtk_Window);
+   --  Create an empty task dialog.
+   --  No information will be displayed in it, and you need to add it through
+   --  a call to Update.
 
    procedure Initialize
      (Task_Dialog : access Task_Dialog_Record'Class;
-      Main_Window : Gtk_Window;
-      Information : Thread_Information_Array);
+      Main_Window : Gtk_Window);
+   --  Internal initialization function
 
    procedure Update
      (Task_Dialog : access Task_Dialog_Record;
-      Information : Thread_Information_Array);
+      Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Update the contents of the task dialog.
+   --  The information is read from Debugger (which is in fact a
+   --  Debugger_Process_Tab).
 
    procedure Gtk_New
      (Backtrace_Dialog : out Backtrace_Dialog_Access;
-      Main_Window      : Gtk_Window;
-      Backtrace        : Backtrace_Array);
+      Main_Window      : Gtk_Window);
+   --  Create an empty backtrace dialog.
+   --  No information will be displayed until you call Update.
 
    procedure Initialize
      (Backtrace_Dialog : access Backtrace_Dialog_Record'Class;
-      Main_Window      : Gtk_Window;
-      Backtrace        : Backtrace_Array);
+      Main_Window      : Gtk_Window);
+   --  Internal initialization function
 
    procedure Update
      (Backtrace_Dialog : access Backtrace_Dialog_Record;
-      Backtrace        : Backtrace_Array);
+      Debugger         : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Update the contents of the backtrace dialog.
+   --  The information is read from Debugger (which is in fact a
+   --  Debugger_Process_Tab).
 
    procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
@@ -116,12 +125,13 @@ package Odd.Dialogs is
    --  box has been destroyed).
 
    function Display_Entry_Dialog
-     (Parent   : access Gtk.Window.Gtk_Window_Record'Class;
-      Title    : String;
-      Message  : String;
-      Position : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Center;
-      Key      : String := "";
-      Is_Func  : access Boolean) return String;
+     (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
+      Title        : String;
+      Message      : String;
+      Position     : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Center;
+      Check_Msg    : String;
+      Key          : String := "";
+      Button_Active : access Boolean) return String;
    --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
    --  expressions to display. Is_Func indicates whether the expression is
    --  a variable name or a generic expression (to be displayed with
