@@ -33,7 +33,6 @@ with Projects.Registry;         use Projects.Registry;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
 with VFS;                       use VFS;
-with String_Hash;
 
 package body Docgen.Work_On_File is
 
@@ -42,19 +41,6 @@ package body Docgen.Work_On_File is
    package TSFL renames Type_Source_File_List;
    package TEL  renames Type_Entity_List;
    package TRL  renames Type_Reference_List;
-
-   procedure Free_All_Tree (X : in out Scope_Tree);
-   --  Subprogram called in order to free the memory catched by each element
-   --  of the following hash table.
-
-   package Tree_Htable is new String_Hash
-     (Data_Type => Scope_Tree,
-      Free_Data => Free_All_Tree,
-      Null_Ptr  => Null_Scope_Tree);
-   use Tree_Htable.String_Hash_Table;
-   --  For each ali file, its scope tree is created one time and then it's
-   --  stored in the hash table for all the process. In fact, a scope tree
-   --  can be used by several files.
 
    procedure Process_One_File
      (B                             : Backend_Handle;
@@ -231,7 +217,6 @@ package body Docgen.Work_On_File is
       Still_Warned := False;
 
       --  Sort the list of the files first
-
       Sort_List_Name (Source_File_List);
       Source_File_Node := TSFL.First (Source_File_List);
 
@@ -883,7 +868,8 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory,
                Doc_Suffix,
-               Level);
+               Level,
+               All_Scope_Tree);
          else
             Trace (Me, "LI file not found");  --  later Exception?
          end if;
@@ -1893,7 +1879,8 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory,
                Doc_Suffix,
-               Level);
+               Level,
+               All_Scope_Tree);
          else
             Trace (Me, "LI file not found: "
                    & Base_Name (Source_Filename));  --  later Exception?
