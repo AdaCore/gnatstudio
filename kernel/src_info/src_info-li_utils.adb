@@ -35,12 +35,14 @@ package body Src_Info.LI_Utils is
    begin
       if File = No_LI_File then
          File := new LI_File_Constrained'
-         (LI => (Parsed => False,
+         (LI => (Parsed => True,
                  Handler => LI_Handler (Handler),
                  LI_Filename => new String'(Source_Filename),
                  Body_Info => new File_Info,
                  Spec_Info => null,
                  Separate_Info => null,
+                 Dependencies_Info => null,
+                 Compilation_Errors_Found => False,
                  LI_Timestamp => 0));
          File := new LI_File_Constrained;
          File.LI.LI_Filename := new String'(Source_Filename);
@@ -55,7 +57,6 @@ package body Src_Info.LI_Utils is
          File.LI.Spec_Info := null;
          File.LI.Separate_Info := null;
       else
-         pragma Assert (False, "Ales gute!");
          pragma Assert (File.LI.LI_Filename.all = Source_Filename,
                      "Invalid Source Filename");
          pragma Assert (LI_Handler (Handler) = File.LI.Handler,
