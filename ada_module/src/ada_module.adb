@@ -18,16 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Generic_Properties;
-with Glib.Object;              use Glib, Glib.Object;
+with Glib.Generic_Properties;  use Glib;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Src_Info.ALI;             use Src_Info.ALI;
 with Language.Ada;             use Language.Ada;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Glide_Intl;               use Glide_Intl;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
@@ -53,7 +53,7 @@ package body Ada_Module is
      ("Casing_Type", Language.Casing_Type);
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
    function Naming_Scheme_Editor
@@ -81,31 +81,29 @@ package body Ada_Module is
    ----------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle)
-   is
-      pragma Unreferenced (Kernel);
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Set_Indentation_Parameters
         (Ada_Lang,
          Indent_Style => Indentation_Kind'Val
-            (Get_Pref (K, Ada_Automatic_Indentation)),
+            (Get_Pref (Kernel, Ada_Automatic_Indentation)),
          Params       =>
            (Indent_Level      =>
-              Integer (Get_Pref (K, Ada_Indentation_Level)),
+              Integer (Get_Pref (Kernel, Ada_Indentation_Level)),
             Indent_Continue   =>
-              Integer (Get_Pref (K, Ada_Continuation_Level)),
+              Integer (Get_Pref (Kernel, Ada_Continuation_Level)),
             Indent_Decl       =>
-              Integer (Get_Pref (K, Ada_Declaration_Level)),
-            Tab_Width         => Integer (Get_Pref (K, Tab_Width)),
-            Indent_Case_Extra => Get_Pref (K, Ada_Indent_Case_Extra),
+              Integer (Get_Pref (Kernel, Ada_Declaration_Level)),
+            Tab_Width         => Integer (Get_Pref (Kernel, Tab_Width)),
+            Indent_Case_Extra => Get_Pref (Kernel, Ada_Indent_Case_Extra),
             Reserved_Casing   => Casing_Type'Val
-              (Get_Pref (K, Ada_Reserved_Casing)),
+              (Get_Pref (Kernel, Ada_Reserved_Casing)),
             Ident_Casing      => Casing_Type'Val
-              (Get_Pref (K, Ada_Ident_Casing)),
-            Format_Operators  => Get_Pref (K, Ada_Format_Operators),
-            Use_Tabs          => Get_Pref (K, Ada_Use_Tabs),
-            Align_On_Colons   => Get_Pref (K, Ada_Align_On_Colons),
-            Align_On_Arrows   => Get_Pref (K, Ada_Align_On_Arrows)));
+              (Get_Pref (Kernel, Ada_Ident_Casing)),
+            Format_Operators  => Get_Pref (Kernel, Ada_Format_Operators),
+            Use_Tabs          => Get_Pref (Kernel, Ada_Use_Tabs),
+            Align_On_Colons   => Get_Pref (Kernel, Ada_Align_On_Colons),
+            Align_On_Arrows   => Get_Pref (Kernel, Ada_Align_On_Arrows)));
    end On_Preferences_Changed;
 
    ---------------------
@@ -239,12 +237,9 @@ package body Ada_Module is
       Register_Property
         (Kernel, Param_Spec (Ada_Align_On_Arrows), -"Editor:Ada");
 
-      Kernel_Callback.Connect
-        (Kernel, "preferences_changed",
-         Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),
-         Kernel_Handle (Kernel));
-
-      On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+      On_Preferences_Changed (Kernel);
 
       Register_Naming_Scheme_Editor
         (Kernel, "Ada", Naming_Scheme_Editor'Access);
