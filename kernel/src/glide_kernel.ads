@@ -77,15 +77,6 @@ package Glide_Kernel is
    --  Return the empty string if no object path has been set yet.
    --  ??? Needs more comments.
 
-   procedure Reset_Source_Info_List
-     (Handle : access Kernel_Handle_Record);
-   --  Re-initialize the Source Info structure.
-   --  ??? Needs more comments.
-
-   function Get_Source_Info_List
-     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
-   --  Return the Source Information List for the given Kernel Handle
-
    procedure Parse_ALI_File
      (Handle       : access Kernel_Handle_Record;
       ALI_Filename : String;
@@ -93,6 +84,11 @@ package Glide_Kernel is
       Success      : out Boolean);
    --  Parse the given ALI file and return the new LI_File_Ptr created if
    --  the parsing was successful.
+
+   procedure Complete_ALI_File_If_Needed
+     (Handle      : access Kernel_Handle_Record;
+      LI_File     : in out Src_Info.LI_File_Ptr);
+   --  Parse the ALI file, but only if needed and it hasn't been done yet.
 
    function Locate_From_Source
      (Handle            : access Kernel_Handle_Record;
@@ -154,6 +150,10 @@ package Glide_Kernel is
    --  </signals>
 
 private
+
+   function Get_Source_Info_List
+     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List;
+   --  Return the Source Information List for the given Kernel Handle
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Project : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
