@@ -72,7 +72,6 @@ with Gtk.Main;            use Gtk.Main;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 
-
 with Directory_Tree; use Directory_Tree;
 with Generic_Stack;
 with Generic_List;
@@ -137,6 +136,9 @@ package Gtkada.File_Selector is
    type File_Filter is access all File_Filter_Record'Class;
    --  The basic type for file filters.
 
+   procedure Destroy (Filter : access File_Filter_Record);
+   --  Free memory associated with Filter.
+
    procedure Use_File_Filter
      (Filter    : access File_Filter_Record;
       Win       : access File_Selector_Window_Record'Class;
@@ -188,8 +190,11 @@ package Gtkada.File_Selector is
 
 private
 
+   procedure Free (S : in out String);
    package String_List is new Generic_List (String);
    use String_List;
+
+   procedure Free (Filter : in out File_Filter);
 
    package Filter_List is new Generic_List (File_Filter);
    use Filter_List;
@@ -215,7 +220,7 @@ private
    type Dir_Type_Access is access Dir_Type;
 
    type File_Selector_Window_Record is new Gtk_Window_Record with record
-      Current_Directory    : String_Access := new String'("");
+      Current_Directory    : String_Access := new String' ("");
       Current_Directory_Id : Dir_Type_Access := new Dir_Type;
       --  The directory that is currently being explored.
       --  Current_Directory must always end with a Directory_Separator.

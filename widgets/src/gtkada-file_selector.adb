@@ -1221,4 +1221,34 @@ package body Gtkada.File_Selector is
       --     Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
    end Initialize;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Filter : access File_Filter_Record)
+   is
+   begin
+      null;
+   end Destroy;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (S : in out String)
+   is
+   begin
+      null;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Filter : in out File_Filter)
+   is
+   begin
+      Destroy (Filter);
+   end Free;
+
 end Gtkada.File_Selector;
