@@ -55,6 +55,7 @@ with Gtk.Label;                   use Gtk.Label;
 with Gtk.Main;                    use Gtk.Main;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Gtk.Object;                  use Gtk.Object;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Separator;               use Gtk.Separator;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
@@ -1780,7 +1781,14 @@ package body Src_Editor_Box is
    procedure Destroy (Box : in out Source_Editor_Box) is
    begin
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
-      Unref (Box.Root_Container);
+
+      --  The editor might still be floating if Load_File failed, see
+      --  Create_File_Editor.
+      if Flag_Is_Set (Box.Root_Container, Gtk.Object.Floating) then
+         Sink (Box.Root_Container);
+      else
+         Unref (Box.Root_Container);
+      end if;
       Box := null;
    end Destroy;
 
@@ -1910,9 +1918,9 @@ package body Src_Editor_Box is
       Success         : out Boolean) is
    begin
       Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
-      Set_Cursor_Location (Editor, 1, 1, Force_Focus);
 
       if Success then
+         Set_Cursor_Location (Editor, 1, 1, Force_Focus);
          Set_Filename (Editor.Source_Buffer, Filename);
          Set_Text (Editor.Modified_Label, -"Unmodified");
 
