@@ -271,14 +271,15 @@
       <status label="Needs merge" stock="gps-vcs-needs-merge" />
       <status label="Needs update" stock="gps-vcs-needs-update" />
       <status label="Had conflicts on merge" stock="gps-vcs-merge-conflicts" />
+      <status label="Removed" stock="gps-vcs-removed" />
 
       <status_parser>
-         <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
+         <regexp>File: (no file )?([^\s]*)\s*Status: (.*?)\n\n *Working revision:\s*([^\s]*).*\n *Repository revision:\s*([^\s]*).*</regexp>
 
-         <file_index>1</file_index>
-         <status_index>2</status_index>
-         <local_revision_index>3</local_revision_index>
-         <repository_revision_index>4</repository_revision_index>
+         <file_index>2</file_index>
+         <status_index>3</status_index>
+         <local_revision_index>4</local_revision_index>
+         <repository_revision_index>5</repository_revision_index>
 
          <status_matcher label="Up to date">Up-to-date</status_matcher>
          <status_matcher label="Locally modified">Locally Modified</status_matcher>
@@ -286,6 +287,7 @@
          <status_matcher label="Needs merge">Needs Merge</status_matcher>
          <status_matcher label="Added">Locally Added</status_matcher>
          <status_matcher label="Removed">Locally Removed</status_matcher>
+         <status_matcher label="Removed">Entry Invalid</status_matcher>
       </status_parser>
 
       <local_status_parser>
