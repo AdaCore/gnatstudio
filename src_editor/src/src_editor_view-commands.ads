@@ -56,7 +56,7 @@ package Src_Editor_View.Commands is
      (Command : access Delete_Command;
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
-   --  This command deletes some text.
+   --  This command deletes some text
 
    type Indentation_Command is new Interactive_Command with record
       Kernel : Glide_Kernel.Kernel_Handle;
@@ -66,5 +66,15 @@ package Src_Editor_View.Commands is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    --  This command reindents the current line
+
+   type Control_Type is (As_Is);
+   type Control_Command is new Interactive_Command with record
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Mode   : Control_Type;
+   end record;
+   function Execute
+     (Command : access Control_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type;
 
 end Src_Editor_View.Commands;
