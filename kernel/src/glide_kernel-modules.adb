@@ -193,11 +193,10 @@ package body Glide_Kernel.Modules is
          Child_Tag       => MDI_Child_Tag);
 
       while Current /= Module_List.Null_Node loop
-         if Module_List.Data (Current).Info.Name = Module_Name then
-            Module_List.Set_Data (Current, Module);
-            return;
+         Assert (Me, Module_List.Data (Current).Info.Name /= Module_Name,
+                 "Module already registered: " & Module_Name);
 
-         elsif Module_List.Data (Current).Info.Priority < Priority then
+         if Module_List.Data (Current).Info.Priority < Priority then
             Module_List.Append (Kernel.Modules_List, Prev, Module);
             return;
          end if;
