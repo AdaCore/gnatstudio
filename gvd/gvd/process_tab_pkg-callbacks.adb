@@ -41,7 +41,9 @@ package body Process_Tab_Pkg.Callbacks is
      (H   : in out History_List;
       Num : in Natural;
       D   : in Direction);
-   --  ???
+   --  Moves in the history in the given direction until it finds a non-hidden
+   --  command which was sent to the debugger with number Num.
+   --  No_Such_Item is raised if no matching command is found.
 
    procedure Move_Until_Match
      (History : in out History_List;
@@ -278,13 +280,15 @@ package body Process_Tab_Pkg.Callbacks is
 
       return True;
 
-      exception
-         when No_Such_Item =>
+   exception
+      when No_Such_Item =>
+         if D = Forward then
             Delete_Text
               (Top.Debugger_Text,
                Gint (Top.Edit_Pos),
                Gint (Get_Length (Top.Debugger_Text)));
-            return True;
+         end if;
+         return True;
    end On_Debugger_Text_Key_Press_Event;
 
 end Process_Tab_Pkg.Callbacks;
