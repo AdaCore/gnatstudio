@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1466,7 +1466,6 @@ package body Codefix.Errors_Parser is
       if Length (Solutions) = 0 then
          raise Uncorrectable_Message;
       end if;
-
    end Fix;
 
    ------------------------

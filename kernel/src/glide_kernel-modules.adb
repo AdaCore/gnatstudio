@@ -283,13 +283,13 @@ package body Glide_Kernel.Modules is
    --------------------------
 
    procedure Set_File_Information
-     (Context : access File_Selection_Context;
-      Directory : String := "";
-      File_Name : String := "";
+     (Context           : access File_Selection_Context;
+      Directory         : String := "";
+      File_Name         : String := "";
       Project           : Projects.Project_Type := Projects.No_Project;
       Importing_Project : Projects.Project_Type := Projects.No_Project;
-      Line      : Integer := 0;
-      Column    : Integer := 0) is
+      Line              : Integer := 0;
+      Column            : Integer := 0) is
    begin
       Free (Context.Directory);
       Free (Context.File_Name);
@@ -509,8 +509,8 @@ package body Glide_Kernel.Modules is
    ----------------------------
 
    procedure Set_Entity_Information
-     (Context     : access Entity_Selection_Context;
-      Entity_Name : String := "";
+     (Context       : access Entity_Selection_Context;
+      Entity_Name   : String := "";
       Entity_Column : Integer := 0) is
    begin
       Free (Context.Entity_Name);

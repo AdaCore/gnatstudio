@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -386,13 +386,14 @@ package body Codefix.Formal_Errors is
       New_Command : Insert_Word_Cmd;
       Result      : Solution_List;
    begin
-      Word_With := (Line => 0,
-                    Col => 1,
-                    File_Name => Clone (Cursor.File_Name),
-                    String_Match => new String'
-                      ("with " & Missing_Clause
-                       & "; use " & Missing_Clause & ";"),
-                    Mode => Text_Ascii);
+      Word_With :=
+        (Line => 0,
+         Col => 1,
+         File_Name => Clone (Cursor.File_Name),
+         String_Match => new String'
+           ("with " & Missing_Clause
+            & "; use " & Missing_Clause & ";"),
+         Mode => Text_Ascii);
 
       Initialize (New_Command, Current_Text, Word_With);
       Set_Caption

@@ -1346,7 +1346,6 @@ package body Browsers.Call_Graph is
          Entity_Context := Entity_Selection_Context_Access (Context);
 
          if Has_Entity_Name_Information (Entity_Context) then
-
             Gtk_New (Item, Label => -"References");
             Gtk_New (Submenu);
             Set_Submenu (Item, Gtk_Widget (Submenu));
@@ -1356,6 +1355,7 @@ package body Browsers.Call_Graph is
             --  the entity isn't a subprogram, or we couldn't find the
             --  declaration. In both cases, we wouldn't be able to draw the
             --  callgraph anyway.
+
             if Is_Subprogram (Get_Entity (Entity_Context)) then
                Gtk_New (Item, Label =>
                           Locale_To_UTF8
