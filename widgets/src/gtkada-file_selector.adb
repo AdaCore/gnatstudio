@@ -409,16 +409,6 @@ package body Gtkada.File_Selector is
       Add_Unique_Combo_Entry (Win.Filter_Combo, Filter.Label.all);
    end Register_Filter;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Filter : access Filter_Show_All)
-   is
-   begin
-      Free (Filter.Label);
-   end Destroy;
-
    ---------------------
    -- Use_File_Filter --
    ---------------------
@@ -826,9 +816,9 @@ package body Gtkada.File_Selector is
    begin
       Free (Win.Current_Directory);
       Free (Win.Current_Directory_Id);
-      Free (Win.Filters);
       Free (Win.Files);
       Free (Win.Remaining_Files);
+      Free (Win.Filters);
 
       if Win.Own_Main_Loop then
          Main_Quit;
@@ -1332,8 +1322,11 @@ package body Gtkada.File_Selector is
    ----------
 
    procedure Free (Filter : in out File_Filter) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (File_Filter_Record'Class, File_Filter);
    begin
       Destroy (Filter);
+      Unchecked_Free (Filter);
    end Free;
 
 end Gtkada.File_Selector;

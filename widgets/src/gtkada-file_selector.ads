@@ -135,6 +135,10 @@ package Gtkada.File_Selector is
    --  The callbacks on this button should simply close the dialog, but should
    --  ignore the file selected by the user.
 
+   -------------
+   -- Filters --
+   -------------
+
    type File_Filter_Record is abstract tagged record
       Label : String_Access;
    end record;
@@ -143,6 +147,8 @@ package Gtkada.File_Selector is
 
    procedure Destroy (Filter : access File_Filter_Record);
    --  Free memory associated with Filter.
+   --  You should always call the parent's Destroy operation from this
+   --  procedure.
 
    procedure Use_File_Filter
      (Filter    : access File_Filter_Record;
@@ -168,6 +174,19 @@ package Gtkada.File_Selector is
    --  Register a file filter in the file selector.
    --  The first filter registered will be the default one in the file
    --  selector.
+   --  The filter is automatically freed when the file selector is destroyed.
+
+   ---------------------
+   -- Show_All filter --
+   ---------------------
+
+   type Filter_Show_All is new File_Filter_Record with null record;
+   type Filter_Show_All_Access is access all Filter_Show_All;
+   --  This provides a basic filter that shows all files.
+
+   -------------
+   -- Dialogs --
+   -------------
 
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
@@ -188,13 +207,6 @@ package Gtkada.File_Selector is
       Dialog_Title         : String);
    --  Internal initialization function.
 
-   type Filter_Show_All is new File_Filter_Record with null record;
-   type Filter_Show_All_Access is access all Filter_Show_All;
-   --  This provides a basic filter that shows all files.
-
-   procedure Destroy (Filter : access Filter_Show_All);
-   --  Free memory associated with a Filter_Show_All.
-
 private
 
    procedure Free (S : in out String);
@@ -203,7 +215,7 @@ private
 
    procedure Free (Filter : in out File_Filter);
 
-   package Filter_List is new Generic_List (File_Filter);
+   package Filter_List is new Generic_List (File_Filter, Free);
    use Filter_List;
 
    package File_Selector_Idle is new Idle (File_Selector_Window_Access);
