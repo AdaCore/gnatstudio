@@ -216,7 +216,7 @@ appear (@code{global procedure tokens.process declared at tokens.ads:19}): this
 gives information about the kind of entity and the location (file and line) of
 the declaration of this procedure.
 
-Do the same for @code{Next} (@code{global procedure tokens.next declared at
+Do the same for @code{Next} (@code{global function tokens.next declared at
 tokens.ads:15}).
 
 Keeping the mouse over @code{Next}, display the contextual menu by clicking on
@@ -527,13 +527,13 @@ GPS has a generic support for @i{VCS} which allows it to easily support
 new systems. Currently GPS supports CVS and ClearCase. Select @code{CVS}.
 
 Click on @code{Forward}: this is the source directories selection,
-used to specify the project's sources. Open @file{tutorial}, click on
-@code{struct}, and add it by clicking on the down arrow.
+used to specify the project's sources. Click on
+@code{struct}, and add this directory by clicking on the down arrow.
 
 Click on @code{Forward}: this is the @code{Build} and @code{Exec} directory
 selection, used to store object, ali files, ...
 
-Click on @code{Browse}, open @file{tutorial}, click on @code{obj}, click on
+Click on @code{Browse}, then click on @code{obj}, and finally click on
 @code{OK}.
 
 Click on @code{Forward}: this is the naming scheme editor.
@@ -602,10 +602,8 @@ Now, let's take a look at the switches set in the project.
 @noindent
 
 Select the menu item @code{Project->Edit File Switches}: a global
-switch editor is displayed in the working area.
-
-Now click on the @code{sdc} project in the project explorer: switches
-associated with each file of the project are displayed.
+switch editor is displayed in the working area, showing by default the
+switches associated with each file of the @code{sdc} project.
 
 The editor lists the switches associated with each file in the project and
 the gray area shows the default (global) switches; you will also notice
