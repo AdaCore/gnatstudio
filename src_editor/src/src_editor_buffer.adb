@@ -236,10 +236,17 @@ package body Src_Editor_Buffer is
    --------------------
 
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
+      Result : Boolean;
    begin
       if Buffer.Timeout_Id /= 0 then
          Timeout_Remove (Buffer.Timeout_Id);
          Buffer.Timeout_Id := 0;
+
+         if Buffer.Filename /= null then
+            Delete_File
+              (Dir_Name (Buffer.Filename.all) & ".#" &
+               Base_Name (Buffer.Filename.all), Result);
+         end if;
       end if;
 
       Free_Queue (Buffer.Queue);
