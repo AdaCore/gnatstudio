@@ -1,3 +1,30 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
 
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
@@ -32,16 +59,13 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Prj.PP;   use Prj.PP;
 with Prj.Tree; use Prj.Tree;
-with Namet;    use Namet;
 with Prj;      use Prj;
-with Stringt;  use Stringt;
-with Snames;   use Snames;
-with Csets;    use Csets;
-with Types;    use Types;
 
 with Wizards;          use Wizards;
 with Directory_Tree;   use Directory_Tree;
 with Switches_Editors; use Switches_Editors;
+with Naming_Editors;   use Naming_Editors;
+with Prj_API;          use Prj_API;
 
 package body Creation_Wizard is
 
@@ -55,6 +79,8 @@ package body Creation_Wizard is
    function Third_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget;
    function Fourth_Page (Wiz : access Prj_Wizard_Record'Class)
+      return Gtk_Widget;
+   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget;
    --  Return the widget to use for any of the pages in the wizard
 
@@ -123,10 +149,11 @@ package body Creation_Wizard is
 
    procedure Emit_Switches
      (Wiz : access Prj_Wizard_Record'Class;
-      Pack : Project_Node_Id;
+      Project : Project_Node_Id;
+      Name : String;
       Tool : Tool_Names);
-   --  Create a new variable in Pack to represent the default switches to use
-   --  for this tool
+   --  Create a new variable in a package called Name to represent the default
+   --  switches to use for this tool
 
    -------------
    -- Gtk_New --
@@ -164,6 +191,7 @@ package body Creation_Wizard is
       Add_Page (Wiz, Second_Page (Wiz), "Selecting sources");
       Add_Page (Wiz, Third_Page (Wiz),  "Selecting build directory");
       Add_Page (Wiz, Fourth_Page (Wiz), "Selecting switches");
+      Add_Page (Wiz, Fifth_Page (Wiz),  "Choosing the naming scheme");
 
       Widget_Callback.Object_Connect
         (Finish_Button (Wiz), "clicked",
@@ -353,6 +381,29 @@ package body Creation_Wizard is
 
       return Gtk_Widget (Vbox);
    end Fourth_Page;
+
+   ----------------
+   -- Fifth_Page --
+   ----------------
+
+   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
+      return Gtk_Widget
+   is
+      Vbox : Gtk_Box;
+      Label : Gtk_Label;
+   begin
+      Gtk_New_Vbox (Vbox, Homogeneous => False);
+
+      Gtk_New (Label, "Please select the naming scheme to use");
+      Set_Style (Label, Wiz.Title_Style);
+      Pack_Start (Vbox, Label, Expand => False, Fill => False);
+
+      Gtk_New (Wiz.Naming);
+      Pack_Start
+        (Vbox, Get_Window (Wiz.Naming), Expand => True, Fill => True);
+
+      return Gtk_Widget (Vbox);
+   end Fifth_Page;
 
    -------------------------
    -- Is_Source_Directory --
@@ -695,328 +746,21 @@ package body Creation_Wizard is
       end if;
    end Advanced_Prj_Location;
 
-
-   ----------------------
-   --  Project support --
-   ----------------------
-   --  The following should be moved to prj_api
-
-   function Create_Project (Name, Path : String) return Project_Node_Id;
-   --  Create a new empty project.
-   --  You must have called "Project_Nodes.Set_Last (Empty_Node)" first.
-
-   function Get_Or_Create_Declaration (Project : Project_Node_Id)
-      return Project_Node_Id;
-   --  Create (or get) the declaration associated with project
-   --  This returns a N_Project_Declaration
-
-   function Get_Or_Create_Variable
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Kind : Variable_Kind := List)
-      return Project_Node_Id;
-   --  Create (or get an existing) variable by Name.
-   --  The new variable will be added either to the project (global variable)
-   --  or in one of its packages, both are specified in Prj_Or_Pkg.
-   --
-   --  The variable is added before the others in the list of declarations.
-   --  If the variable is a list, it also creates the associated
-   --  N_Literal_String_List node.
-
-   procedure Append_To_List (Var : Project_Node_Id; Value : String);
-   --  Append a simple string to Var.
-   --  Var must be a list, and contain a N_Literal_String_List, as created
-   --  by Get_Or_Create_Variable above
-
-   procedure Set_Value (Var : Project_Node_Id; Value : String);
-   --  Set the value for a variable. Var mustn't be a list.
-
-   function Get_Or_Create_Package
-     (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
-   --  Create (or get an existing) package in project.
-
-   --------------------
-   -- Create_Project --
-   --------------------
-
-   function Create_Project (Name, Path : String) return Project_Node_Id is
-      Project : Project_Node_Id;
-   begin
-      Project_Nodes.Append (Default_Project_Node (N_Project));
-      Project := Project_Nodes.Last;
-      pragma Assert (Project /= Empty_Node);
-
-      --  Adding the name of the project
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      Project_Nodes.Table (Project).Name := Name_Enter;
-
-      --  Adding the project path
-      Name_Len := Path'Length;
-      Name_Buffer (1 .. Name_Len) := Path;
-      Project_Nodes.Table (Project).Path_Name := Name_Enter;
-      return Project;
-   end Create_Project;
-
-   -------------------------------
-   -- Get_Or_Create_Declaration --
-   -------------------------------
-
-   function Get_Or_Create_Declaration (Project : Project_Node_Id)
-      return Project_Node_Id
-   is
-      Decl : Project_Node_Id := Project_Nodes.Table (Project).Field2;
-   begin
-      if Decl = Empty_Node then
-         Project_Nodes.Append (Default_Project_Node (N_Project_Declaration));
-         Decl := Project_Nodes.Last;
-         Project_Nodes.Table (Project).Field2 := Decl;
-      end if;
-      return Decl;
-   end Get_Or_Create_Declaration;
-
-   ----------------------------
-   -- Get_Or_Create_Variable --
-   ----------------------------
-
-   function Get_Or_Create_Variable
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Kind : Variable_Kind := List)
-      return Project_Node_Id
-   is
-      Decl, Decl_Item, Var : Project_Node_Id;
-      N : Name_Id;
-   begin
-      pragma Assert
-        (Project_Nodes.Table (Prj_Or_Pkg).Kind = N_Package_Declaration
-         or else Project_Nodes.Table (Prj_Or_Pkg).Kind = N_Project);
-
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      N := Name_Find;
-
-      --  First step is to create the declarative item that will contain the
-      --  variable. This is dependent on the kind of node for Prj_Or_Pkg
-
-      case Project_Nodes.Table (Prj_Or_Pkg).Kind is
-         when N_Project =>
-            Decl := Get_Or_Create_Declaration (Prj_Or_Pkg);
-            Decl_Item := Project_Nodes.Table (Decl).Field1;
-
-         when N_Package_Declaration =>
-            Decl := Empty_Node;
-            Decl_Item := Project_Nodes.Table (Prj_Or_Pkg).Field2;
-
-         when others =>
-            null;
-      end case;
-
-      --  Check if the variable already exists.
-      --  If it does, nothing to do, and we just exit.
-
-      while Decl_Item /= Empty_Node loop
-         Var := Project_Nodes.Table (Decl_Item).Field1;
-         if Project_Nodes.Table (Var).Kind = N_Variable_Declaration
-           and then Project_Nodes.Table (Var).Name = N
-         then
-            return Var;
-         end if;
-         Decl_Item := Project_Nodes.Table (Decl_Item).Field2;
-      end loop;
-
-      --  Otherwise create the declarative item
-
-      Project_Nodes.Append (Default_Project_Node (N_Declarative_Item));
-      Decl_Item := Project_Nodes.Last;
-
-      --  Insert it in the appropriate list
-
-      case Project_Nodes.Table (Prj_Or_Pkg).Kind is
-         when N_Project =>
-            Project_Nodes.Table (Decl_Item).Field2 :=
-              Project_Nodes.Table (Decl).Field1;
-            Project_Nodes.Table (Decl).Field1 := Decl_Item;
-
-         when N_Package_Declaration =>
-            Project_Nodes.Table (Decl_Item).Field2 :=
-              Project_Nodes.Table (Prj_Or_Pkg).Field2;
-            Project_Nodes.Table (Prj_Or_Pkg).Field2 := Decl_Item;
-
-         when others =>
-            null;
-      end case;
-
-      --  Create the variable
-
-      Project_Nodes.Append
-        (Default_Project_Node (N_Variable_Declaration, Kind));
-      Var := Project_Nodes.Last;
-      Project_Nodes.Table (Decl_Item).Field1 := Var;
-
-      Project_Nodes.Table (Var).Name := N;
-
-      if Kind = Prj.List then
-         Project_Nodes.Append
-           (Default_Project_Node (N_Literal_String_List, List));
-         Project_Nodes.Table (Var).Field1 := Project_Nodes.Last;
-      end if;
-      return Var;
-   end Get_Or_Create_Variable;
-
-   ---------------------------
-   -- Get_Or_Create_Package --
-   ---------------------------
-
-   function Get_Or_Create_Package
-     (Project : Project_Node_Id; Pkg : String) return Project_Node_Id
-   is
-      Decl : constant Project_Node_Id := Get_Or_Create_Declaration (Project);
-      Decl_Item : Project_Node_Id;
-      Pack : Project_Node_Id;
-      N : Name_Id;
-   begin
-      Name_Len := Pkg'Length;
-      Name_Buffer (1 .. Name_Len) := Pkg;
-      N := Name_Find;
-
-      --  Check if the package already exists
-      --  ??? It seems that packages and variables should be stored in
-      --  different lists
-      Decl_Item := Project_Nodes.Table (Decl).Field1;
-      while Decl_Item /= Empty_Node loop
-         Pack := Project_Nodes.Table (Decl_Item).Field1;
-         if Project_Nodes.Table (Pack).Kind = N_Package_Declaration
-           and then Project_Nodes.Table (Pack).Name = N
-         then
-            return Pack;
-         end if;
-         Decl_Item := Project_Nodes.Table (Decl_Item).Field2;
-      end loop;
-
-      --  Otherwise create the declarative item
-      Project_Nodes.Append (Default_Project_Node (N_Declarative_Item));
-      Decl_Item := Project_Nodes.Last;
-      Project_Nodes.Table (Decl_Item).Field2 :=
-        Project_Nodes.Table (Decl).Field1;
-      Project_Nodes.Table (Decl).Field1 := Decl_Item;
-
-      --  Create the variable
-      Project_Nodes.Append
-        (Default_Project_Node (N_Package_Declaration, Undefined));
-      Pack := Project_Nodes.Last;
-      Project_Nodes.Table (Pack).Field3 := Project_Nodes.Table (Decl).Field1;
-      Project_Nodes.Table (Decl_Item).Field1 := Pack;
-
-      Project_Nodes.Table (Pack).Name := N;
-
-      return Pack;
-   end Get_Or_Create_Package;
-
-   --------------------
-   -- Append_To_List --
-   --------------------
-
-   procedure Append_To_List (Var : Project_Node_Id; Value : String) is
-      List, Expr, Term, Str : Project_Node_Id;
-   begin
-      pragma Assert (Var /= Empty_Node);
-      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.List);
-
-      List := Project_Nodes.Table (Var).Field1;
-
-      pragma Assert (List /= Empty_Node);
-      pragma Assert (Project_Nodes.Table (List).Kind = N_Literal_String_List);
-
-      --  Create a new expression
-      Project_Nodes.Append (Default_Project_Node (N_Expression));
-      Term := Project_Nodes.Last;
-
-      --  Create a new list if required
-      Expr := Project_Nodes.Table (List).Field1;
-      if Expr = Empty_Node then
-         Project_Nodes.Table (List).Field1 := Term;
-
-      --  Else append at the end of list
-      else
-         while Project_Nodes.Table (Expr).Field2 /= Empty_Node loop
-            Expr := Project_Nodes.Table (Expr).Field2;
-         end loop;
-
-         Project_Nodes.Table (Expr).Field2 := Term;
-      end if;
-      Expr := Term;
-
-      Project_Nodes.Append (Default_Project_Node (N_Term));
-      Term := Project_Nodes.Last;
-      Project_Nodes.Table (Expr).Field1 := Term;
-
-      Project_Nodes.Append (Default_Project_Node (N_Literal_String));
-      Str := Project_Nodes.Last;
-      Project_Nodes.Table (Term).Field1 := Str;
-
-      Start_String;
-      Store_String_Chars (Value);
-      Project_Nodes.Table (Str).Value := End_String;
-   end Append_To_List;
-
-   ---------------
-   -- Set_Value --
-   ---------------
-
-   procedure Set_Value (Var : Project_Node_Id; Value : String) is
-      Expr, Term, Str : Project_Node_Id;
-   begin
-      pragma Assert (Var /= Empty_Node);
-      pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.Single);
-
-      --  Create the expression if required
-      Expr := Project_Nodes.Table (Var).Field1;
-      if Expr = Empty_Node then
-         Project_Nodes.Append (Default_Project_Node (N_Expression));
-         Expr := Project_Nodes.Last;
-         Project_Nodes.Table (Var).Field1 := Expr;
-      else
-         pragma Assert (Project_Nodes.Table (Expr).Kind = N_Expression);
-         null;
-      end if;
-
-      Project_Nodes.Table (Expr).Field2 := Empty_Node; --  No next in the list
-
-      --  Create the term
-      Term := Project_Nodes.Table (Expr).Field1;
-      if Term = Empty_Node then
-         Project_Nodes.Append (Default_Project_Node (N_Term));
-         Term := Project_Nodes.Last;
-         Project_Nodes.Table (Expr).Field1 := Term;
-      else
-         pragma Assert (Project_Nodes.Table (Term).Kind = N_Term);
-         null;
-      end if;
-
-      Project_Nodes.Append (Default_Project_Node (N_Literal_String));
-      Str := Project_Nodes.Last;
-      Project_Nodes.Table (Term).Field1 := Str;
-      Project_Nodes.Table (Term).Field2 := Empty_Node;
-
-      Start_String;
-      Store_String_Chars (Value);
-      Project_Nodes.Table (Str).Value := End_String;
-   end Set_Value;
-
    -------------------
    -- Emit_Switches --
    -------------------
 
    procedure Emit_Switches
      (Wiz : access Prj_Wizard_Record'Class;
-      Pack : Project_Node_Id;
+      Project : Project_Node_Id;
+      Name : String;
       Tool : Tool_Names)
    is
-      Var : Project_Node_Id;
+      Pack, Var : Project_Node_Id;
       Arr : Argument_List := Get_Switches (Wiz.Switches, Tool);
    begin
       if Arr'Length /= 0 then
+         Pack := Get_Or_Create_Package (Project, Name);
          Var := Get_Or_Create_Variable (Pack, "switches", List);
          for J in Arr'Range loop
             Append_To_List (Var, Arr (J).all);
@@ -1031,7 +775,7 @@ package body Creation_Wizard is
 
    procedure Generate_Prj (W : access Gtk_Widget_Record'Class) is
       Wiz  : Prj_Wizard := Prj_Wizard (W);
-      Project, Var, Pack : Project_Node_Id;
+      Project, Var : Project_Node_Id;
       Num_Src_Dir : constant Gint := Get_Rows (Wiz.Src_Dir_List);
    begin
       Project := Create_Project
@@ -1049,23 +793,15 @@ package body Creation_Wizard is
       Set_Value (Var, Get_Selection (Wiz.Obj_Dir_Selection));
 
       --  Append the switches
-      Pack := Get_Or_Create_Package (Project, "gnatmake");
-      Emit_Switches (Wiz, Pack, Gnatmake);
-      Pack := Get_Or_Create_Package (Project, "gcc");
-      Emit_Switches (Wiz, Pack, Compiler);
-      Pack := Get_Or_Create_Package (Project, "gnatbind");
-      Emit_Switches (Wiz, Pack, Binder);
-      Pack := Get_Or_Create_Package (Project, "gnatlink");
-      Emit_Switches (Wiz, Pack, Linker);
+      Emit_Switches (Wiz, Project, "gnatmake", Gnatmake);
+      Emit_Switches (Wiz, Project, "gcc", Compiler);
+      Emit_Switches (Wiz, Project, "gnatbind", Binder);
+      Emit_Switches (Wiz, Project, "gnatlink", Linker);
+
+      --  Append the naming scheme
+      Create_Project_Entry (Wiz.Naming, Project);
 
       Pretty_Print (Project);
    end Generate_Prj;
 
-begin
-   Namet.Initialize;
-   Csets.Initialize;
-   Snames.Initialize;
-   Prj.Initialize;
-   --  Prj.Env.Initialize;
-   Project_Nodes.Set_Last (Empty_Node);
 end Creation_Wizard;

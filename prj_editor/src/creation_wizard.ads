@@ -7,6 +7,7 @@ with Gtk.Style;
 with Wizards;
 with Directory_Tree;
 with Switches_Editors;
+with Naming_Editors;
 
 package Creation_Wizard is
 
@@ -28,6 +29,7 @@ private
       Obj_Dir_Selection : Directory_Tree.Dir_Tree;
       Switches          : Switches_Editors.Switches_Edit;
       Title_Style       : Gtk.Style.Gtk_Style;
+      Naming            : Naming_Editors.Naming_Editor;
 
       Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
       Src_Dir_Contextual_Menu : Gtk.Menu.Gtk_Menu;
