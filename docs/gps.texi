@@ -81,6 +81,7 @@ Description of the main windows
 
 Integrated Help
 * The Help Menu::
+* Adding New Help Files::
 
 Multiple Document Interface
 * Selecting Windows::
@@ -716,24 +717,13 @@ such as builds.
 
 @menu
 * The Help Menu::
+* Adding New Help Files::
 @end menu
 
 @noindent
 By default when you start GPS, the working area contains a help window
 displaying HTML help files. On-line help for the GNAT tools is available
 from the @code{Help} menu item.
-
-GPS will search for the help files in the list of directories set in
-the environment variable @code{GPS_DOC_PATH} (a colon-separated list
-of directories on Unix systems, or semicolon-separated list of
-directories on Windows systems). If this variable is not set, the
-default directory @code{<prefix>/doc/gps/html} is searched.  If the
-file cannot be found in any of these directories, the corresponding
-menu item will be disabled.
-
-The environment variable @code{GPS_DOC_PATH} can either be set by each
-user in his own environment, or can be set system-wide by modifying
-the small wrapper script gps itself.
 
 Since HTML pages can contain lots of complex information, resizing the
 help window can take some time, making the user interface less responsive.
@@ -751,6 +741,10 @@ display.
 The Help menu item provides the following entries:
 
 @table @b
+@item Contents
+This opens a special HTML file that contains links for all the
+documentation files currently registered in GPS, @xref{Adding New Help Files}.
+
 @item Zoom in
 Increase the size of the font used to display the help file.
 
@@ -760,38 +754,81 @@ Decrease the size of the font used to display the help file.
 @item Open HTML file...
 Open a file selection dialog to load an HTML file.
 
-@item Welcome
-Load the welcome page and open or raise the help window as needed.
-
-@item GNAT Programming System Tutorial
-Load the GPS tutorial.
-
-@item Using the GNAT Programming System
-Load the GPS documentation.
-
-@item Using the GNU Visual Debugger
-If available, load the GVD documentation.
-
-@item GNAT User's Guide
-If available, load the GNAT user's guide.
-
-@item GNAT Reference Manual
-If available, load the GNAT reference manual.
-
-@item Ada 95 Reference Manual
-If available, load the Ada 95 reference manual.
-
-@item Using the GNU Debugger
-If available, load the GDB documentation.
-
-@item Using GCC
-If available, load the GCC documentation.
-
 @item About
 Display a dialog giving information about the versions of GPS and GNAT used.
 @c ??? add screen shot
 
 @end table
+
+This menu contains a number of additional entries, depending on what
+documentation packages were installed on your system. See the next
+section to see how to add new help files.
+
+@node Adding New Help Files
+@section Adding New Help Files
+@noindent
+
+GPS will search for the help files in the list of directories set in
+the environment variable @code{GPS_DOC_PATH} (a colon-separated list
+of directories on Unix systems, or semicolon-separated list of
+directories on Windows systems). If this variable is not set, the
+default directory @code{<prefix>/doc/gps/html} is searched.  If the
+file cannot be found in any of these directories, the corresponding
+menu item will be disabled.
+
+The environment variable @code{GPS_DOC_PATH} can either be set by each
+user in his own environment, or can be set system-wide by modifying
+the small wrapper script @file{gps} itself.
+
+The specific list of files shown in the menus is set by reading the
+index files in each of the directories in @code{GPS_DOC_PATH}. These
+index files must be called @file{gps_index.xml}, and their format
+can be see in the following example:
+
+@smallexample
+<?xml version="1.0"?>
+<index>
+   <file>
+      <name>file.html</name>
+      <descr>Tooltip text</descr>
+      <category>name</category>
+      <menu>/Help/item</menu>
+   </file>
+</index>
+@end smallexample
+
+There should be one @code{<file>} tag per help file. This tag contains
+four children tags:
+
+@table @b
+@item name
+This is the name of the file. It can be either an absolute file name,
+or a file name relative to one of the directories in
+@code{GPS_DOC_PATH}.
+
+This name can contain a reference to a specific anchor in the html
+file, using the standard HTML syntax.
+
+@smallexample
+  <name>file#anchor</name>
+@smallexample
+
+@item descr
+This is the description for this help file. It appears in a tooltip
+for the menu item.
+
+@item category
+This is used in the @code{Help->Contents} menu to organize all the
+documentation files.
+
+@item menu
+This is the full path to the menu. It behaves like a UNIX path, except
+it reference the various menus, starting from the menu bar itself. The
+first character of this path must be @code{"/"}. The last part of the
+path is the name of the new menu item
+
+@end table
+
 
 @c --------------------------------------------------------------------
 @node Multiple Document Interface

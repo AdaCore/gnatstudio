@@ -183,10 +183,12 @@ document.
 @c glide_kernel.ads
 @c glide_kernel-module.ads
 @c up-to-date documentation found in the sources themselves
-@c adding new preferences
-@c interface to histories
+@c Saving data from one session to the next:
+@c   - adding new preferences
+@c   - interface to histories
+@c   - custom files (XML,...)
 @c interface with projects: projects.ads
-
+@c i18n and utf8
 
 @c --------------------------------------------------------------------
 @node Contexts
