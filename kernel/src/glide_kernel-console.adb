@@ -193,6 +193,7 @@ package body Glide_Kernel.Console is
          Put_Line (Text);
       elsif Text /= "" then
          if Mode = Error then
+            Trace (Me, "Error: " & Text);
             Insert
               (Console, "[" & Image (T, ISO_Date & " %T") & "] " & Text,
                Add_LF, Mode = Error);
