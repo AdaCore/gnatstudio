@@ -501,7 +501,9 @@ package body Project_Explorers is
    --  in that project
 
    function Has_Entries
-     (Directory : String; Files : String_Array_Access) return Boolean;
+     (Project : Project_Id;
+      Directory : String;
+      Files : String_Array_Access) return Boolean;
    --  Return True if Directory contains any file among Files.
 
    procedure Refresh
@@ -1937,15 +1939,19 @@ package body Project_Explorers is
    -----------------
 
    function Has_Entries
-     (Directory : String; Files : String_Array_Access) return Boolean
+     (Project : Project_Id;
+      Directory : String;
+      Files : String_Array_Access) return Boolean
    is
-      --  Dir : constant String := Normalize_Pathname (Directory);
+      Dir : constant String := Name_As_Directory (Normalize_Pathname
+        (Directory, Dir_Name (Project_Path (Project)),
+         Resolve_Links => False));
    begin
       if Files /= null then
          --  We check in the project itself whether there are some files in the
          --  directory.
          for F in Files'Range loop
-            if Dir_Name (Files (F).all) = Directory then
+            if Dir_Name (Files (F).all) = Dir then
                return True;
             end if;
          end loop;
@@ -1997,8 +2003,7 @@ package body Project_Explorers is
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
-        or else not Has_Entries
-          (Name_As_Directory (Directory), Files_In_Project);
+        or else not Has_Entries (Project, Directory, Files_In_Project);
 
       N := Insert_Node
         (Ctree         => Explorer.Tree,
@@ -2686,8 +2691,10 @@ package body Project_Explorers is
                   Index := Sources'First;
                   while Index <= Sources'Last loop
                      if Sources (Index) /= No_String
-                       and then Is_Same_Directory
-                         (Sources (Index), User.Directory)
+                       and then
+                       (String_Equal (Sources (Index), User.Directory)
+                        or else Is_Same_Directory
+                        (Sources (Index), User.Directory))
                      then
                         Sources (Index) := No_String;
                         exit;
@@ -2895,7 +2902,7 @@ package body Project_Explorers is
             Str : constant String := Node_Get_Text (Explorer.Tree, Node, 0);
          begin
             if (Data.Node_Type = Directory_Node
-                  and then Has_Entries (Str, Files))
+                  and then Has_Entries (Prj, Str, Files))
               or else
               (Data.Node_Type = Project_Node
                and then
