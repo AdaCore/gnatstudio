@@ -1149,7 +1149,13 @@ package body Src_Contexts is
       if Context.Begin_Line > 0
         and then Context.Begin_Column > 0
       then
-         if Get_Options (Context).Case_Sensitive then
+         if Get_Options (Context).Regexp then
+            Current_Matches := Match
+              (Context,
+               Get_Slice (Editor, Context.Begin_Line, Context.Begin_Column)) /=
+              -1;
+
+         elsif Get_Options (Context).Case_Sensitive then
             Current_Matches := Get_Slice
               (Editor,
                Context.Begin_Line, Context.Begin_Column,
