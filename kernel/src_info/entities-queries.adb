@@ -1,5 +1,4 @@
 with VFS;      use VFS;
-with Projects; use Projects;
 with Traces;   use Traces;
 
 with Glib.Unicode; use Glib.Unicode;
@@ -131,7 +130,6 @@ package body Entities.Queries is
    procedure Find_Declaration
      (Db              : Entities_Database;
       File_Name       : VFS.Virtual_File;
-      Project_Of_File : Project_Type;
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
@@ -139,8 +137,7 @@ package body Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status)
    is
       Handler  : constant LI_Handler := Get_LI_Handler (Db, File_Name);
-      Source   : constant Source_File := Get_Source_Info
-        (Handler, File_Name, Project_Of_File);
+      Source   : constant Source_File := Get_Source_Info (Handler, File_Name);
 
    begin
       if Source = null then
@@ -149,13 +146,44 @@ package body Entities.Queries is
          Entity := null;
 
       elsif Case_Insensitive_Identifiers (Handler) then
+         Update_Xref (Source);
          Find (Source, UTF8_Strdown (Entity_Name), Line, Column,
                Entity, Status);
       else
+         Update_Xref (Source);
          Find (Source, Entity_Name, Line, Column,
                Entity, Status);
       end if;
    end Find_Declaration;
 
+   --------------------
+   -- Find_Next_Body --
+   --------------------
+
+   procedure Find_Next_Body
+     (Entity           : Entity_Information;
+      Current_Location : File_Location := No_File_Location;
+      Location         : out File_Location)
+   is
+      Ref     : Entity_Reference;
+      Best    : Entity_Reference := No_Entity_Reference;
+   begin
+      Update_Xref (Entity.Declaration.File);
+
+      for R in Entity_Reference_Arrays.First .. Last (Entity.References) loop
+         Ref := Entity.References.Table (R);
+         if Ref.Kind = Body_Entity
+           or else Ref.Kind = Completion_Of_Private_Or_Incomplete_Type
+         then
+            Best := Ref;
+            exit when Current_Location = No_File_Location;
+         else
+            exit when Best /= No_Entity_Reference
+              and then Ref.Location = Current_Location;
+         end if;
+      end loop;
+
+      Location := Best.Location;
+   end Find_Next_Body;
 
 end Entities.Queries;

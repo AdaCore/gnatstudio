@@ -1,5 +1,4 @@
 with VFS;
-with Projects;
 
 package Entities.Queries is
 
@@ -24,7 +23,6 @@ package Entities.Queries is
    procedure Find_Declaration
      (Db              : Entities_Database;
       File_Name       : VFS.Virtual_File;
-      Project_Of_File : Projects.Project_Type;
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
@@ -32,18 +30,15 @@ package Entities.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status);
    --  Find the entity that is referenced at the given location.
 
---     procedure Find_Next_Body
---       (Db                     : Entities_Database;
---        File_Name              : VFS.Virtual_File;
---        Project_Of_File        : Projects.Project_Type;
---        Entity_Name            : String;
---        Line                   : Positive;
---        Column                 : Positive;
---        Location               : out File_Location;
---        Status                 : out Find_Decl_Or_Body_Query_Status);
-   --  Find the location of the body for the entity. If the entity has multiple
-   --  bodies (as is the case for instance for separates in Ada), and
-   --  (Line,Column) is already the location of one of the bodies, then this
-   --  procedure returns the location of the next body.
+   procedure Find_Next_Body
+     (Entity           : Entity_Information;
+      Current_Location : File_Location := No_File_Location;
+      Location         : out File_Location);
+   --  Find the location for one of the bodies of the entities. If the
+   --  current location is not a body, the first body found is returned.
+   --  Otherwise, the first one different from Current_Location is returned.
+   --  Calling this subprogram multiple times will eventually return all the
+   --  bodies.
+   --  This also returns completion for incomplete types.
 
 end Entities.Queries;
