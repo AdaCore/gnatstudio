@@ -21,7 +21,6 @@
 with Gdk.Event;   use Gdk.Event;
 with Glide_Intl;  use Glide_Intl;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Commands.Interactive is
 
@@ -85,20 +84,7 @@ package body Commands.Interactive is
      (Command : access Interactive_Command_Proxy) return Command_Return_Type
    is
    begin
-      if Command.Context.Dir = null then
-         return Execute (Command.Command, Command.Context);
-      else
-         declare
-            Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
-            Result  : Command_Return_Type;
-         begin
-            Change_Dir (Command.Context.Dir.all);
-            Result := Execute (Command.Command, Command.Context);
-            Change_Dir (Old_Dir);
-
-            return Result;
-         end;
-      end if;
+      return Execute (Command.Command, Command.Context);
    end Execute;
 
    ----------
