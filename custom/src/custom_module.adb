@@ -245,6 +245,8 @@ package body Custom_Module is
          Pack  : constant String :=
            Get_Attribute (Node, "package", Projects.Ide_Package);
          Index : constant String := Get_Attribute (Node, "index", Name);
+         Attribute : constant String :=
+           Get_Attribute (Node, "attribute", "default_switches");
          Switches : String_Access;
          N     : Node_Ptr := Node.Child;
       begin
@@ -256,7 +258,7 @@ package body Custom_Module is
          end if;
 
          while N /= null loop
-            if N.Tag.all = "default-switches" then
+            if N.Tag.all = "initial-cmd-line" then
                Free (Switches);
                Switches := new String'(N.Value.all);
             elsif N.Tag.all = "language"
@@ -277,9 +279,9 @@ package body Custom_Module is
            (Kernel,
             Tool_Name => Name,
             Tool      => (Project_Package   => new String'(Pack),
-                          Project_Attribute => new String'("default_switches"),
+                          Project_Attribute => new String'(Attribute),
                           Project_Index     => new String'(Index),
-                          Default_Switches  => null));
+                          Initial_Cmd_Line  => Switches));
       end Parse_Tool_Node;
 
       -----------------------
