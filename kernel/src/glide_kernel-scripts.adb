@@ -63,6 +63,10 @@ package body Glide_Kernel.Scripts is
       Entity_Class        : Class_Type := No_Class;
       File_Class          : Class_Type := No_Class;
       Project_Class       : Class_Type := No_Class;
+      File_Location_Class : Class_Type := No_Class;
+      File_Context_Class  : Class_Type := No_Class;
+      File_Location_Context_Class : Class_Type := No_Class;
+      Entity_Context_Class        : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -82,21 +86,58 @@ package body Glide_Kernel.Scripts is
    procedure On_Destroy_File (Value : System.Address);
    pragma Convention (C, On_Destroy_File);
 
+   type File_Location_Info_Access is access all File_Location_Info;
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, File_Location_Info_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (File_Location_Info, File_Location_Info_Access);
+   procedure On_Destroy_File_Location (Value : System.Address);
+   pragma Convention (C, On_Destroy_File_Location);
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Selection_Context_Access);
+   procedure On_Destroy_Context (Value : System.Address);
+   pragma Convention (C, On_Destroy_Context);
+
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the default commands
 
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for the "create_entity" command
+   --  Handler for the "Entity" command
 
    procedure Create_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for the "create_file" command
+   --  Handler for the "File" command
 
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
-   --  Handler for the "create_project" command
+   --  Handler for the "Project" command
+
+   procedure Create_Location_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the "Location" command
+
+   procedure Context_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for all context-related commands
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class; File : File_Info);
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Project  : Projects.Project_Type);
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Location : File_Location_Info);
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Context  : Selection_Context_Access);
+   --  Set the data for an instance
+
+   procedure Free (File : in out File_Info);
+   --  Free the contents of File_Info
 
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
@@ -118,6 +159,10 @@ package body Glide_Kernel.Scripts is
      (1 => Msg_Cst'Access);
    Open_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access);
+   Location_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Filename_Cst'Access,
+      2 => Line_Cst'Access,
+      3 => Col_Cst'Access);
 
    ----------
    -- Free --
@@ -169,15 +214,16 @@ package body Glide_Kernel.Scripts is
    ----------------------
 
    procedure Register_Command
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command      : String;
-      Params       : String  := "";
-      Return_Value : String  := "";
-      Description  : String;
-      Minimum_Args : Natural := 0;
-      Maximum_Args : Natural := 0;
-      Handler      : Module_Command_Function;
-      Class        : Class_Type := No_Class)
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command       : String;
+      Params        : String  := "";
+      Return_Value  : String  := "";
+      Description   : String;
+      Minimum_Args  : Natural := 0;
+      Maximum_Args  : Natural := 0;
+      Handler       : Module_Command_Function;
+      Class         : Class_Type := No_Class;
+      Static_Method : Boolean := False)
    is
       Tmp : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
@@ -185,6 +231,8 @@ package body Glide_Kernel.Scripts is
       Assert (Me,
               Command /= Constructor_Method or else Class /= No_Class,
               "Constructors can only be specified for classes");
+      Assert (Me, not Static_Method or else Class /= No_Class,
+              "Static method can only be created for classes");
       Assert (Me,
               Params = "" or else Params (Params'First) = '(',
               "Invalid usage string for "
@@ -193,7 +241,7 @@ package body Glide_Kernel.Scripts is
       while Tmp /= null loop
          Register_Command
            (Tmp.Script, Command, Params, Return_Value, Description,
-            Minimum_Args, Maximum_Args, Handler, Class);
+            Minimum_Args, Maximum_Args, Handler, Class, Static_Method);
          Tmp := Tmp.Next;
       end loop;
    end Register_Command;
@@ -206,7 +254,7 @@ package body Glide_Kernel.Scripts is
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name          : String;
       Description   : String := "";
-      As_Dictionary : Boolean := False) return Class_Type
+      Base          : Class_Type := No_Class) return Class_Type
    is
       Tmp   : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
@@ -217,7 +265,7 @@ package body Glide_Kernel.Scripts is
 
       if Class = No_Class then
          while Tmp /= null loop
-            Register_Class (Tmp.Script, Name, Description, As_Dictionary);
+            Register_Class (Tmp.Script, Name, Description, Base);
             Tmp := Tmp.Next;
          end loop;
 
@@ -307,6 +355,42 @@ package body Glide_Kernel.Scripts is
          On_Destroy => On_Destroy_Entity'Access);
    end Set_Data;
 
+   ------------------------------
+   -- On_Destroy_File_Location --
+   ------------------------------
+
+   procedure On_Destroy_File_Location (Value : System.Address) is
+      File : File_Location_Info_Access := Convert (Value);
+   begin
+      --  ??? Do we need to destroy File.File
+      Unchecked_Free (File);
+   end On_Destroy_File_Location;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Location : File_Location_Info)
+   is
+      Loc : constant File_Location_Info_Access :=
+        new File_Location_Info'(Location);
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance),
+         Get_File_Location_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      Set_Data
+        (Instance,
+         Value      => Loc.all'Address,
+         On_Destroy => On_Destroy_File_Location'Access);
+   end Set_Data;
+
    --------------
    -- Get_Data --
    --------------
@@ -328,6 +412,27 @@ package body Glide_Kernel.Scripts is
    end Get_Data;
 
    --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return File_Location_Info
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+      Loc : File_Location_Info_Access;
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance),
+         Get_File_Location_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      Loc := Convert (Get_Data (Instance));
+      return Loc.all;
+   end Get_Data;
+
+   --------------
    -- Set_Data --
    --------------
 
@@ -337,15 +442,37 @@ package body Glide_Kernel.Scripts is
    is
       Ent    : File_Info_Access;
       Script : constant Scripting_Language := Get_Script (Instance);
+      Kernel : constant Kernel_Handle := Get_Kernel (Script);
    begin
       if not Is_Subclass
-        (Script, Get_Class (Instance), Get_File_Class (Get_Kernel (Script)))
+        (Script, Get_Class (Instance), Get_File_Class (Kernel))
       then
          raise Invalid_Data;
       end if;
 
       Ent      := new File_Info;
-      Ent.Name := new String'(Get_Name (File));
+
+      declare
+         Name   : constant String := Get_Name (File);
+      begin
+         if Is_Absolute_Path (Name) then
+            Ent.Name := new String'(Name);
+         else
+            declare
+               Full : constant String := Get_Full_Path_From_File
+                 (Registry => Project_Registry (Get_Registry (Kernel)),
+                  Filename => Name,
+                  Use_Source_Path => True,
+                  Use_Object_Path => True);
+            begin
+               if Full /= "" then
+                  Ent.Name := new String'(Full);
+               else
+                  Ent.Name := new String'(Name);
+               end if;
+            end;
+         end if;
+      end;
 
       Set_Data
         (Instance,
@@ -482,6 +609,31 @@ package body Glide_Kernel.Scripts is
       end if;
    end Default_Command_Handler;
 
+   -------------------------------------
+   -- Create_Location_Command_Handler --
+   -------------------------------------
+
+   procedure Create_Location_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Location_Cmd_Parameters);
+
+         declare
+            File   : constant Class_Instance  :=
+              Nth_Arg (Data, 2, Get_File_Class (Kernel));
+            L      : constant Integer := Nth_Arg (Data, 3);
+            C      : constant Integer := Nth_Arg (Data, 4);
+         begin
+            Set_Data (Instance, File_Location_Info'(File, L, C));
+         end;
+      end if;
+   end Create_Location_Command_Handler;
+
    -----------------------------------
    -- Create_Entity_Command_Handler --
    -----------------------------------
@@ -568,30 +720,9 @@ package body Glide_Kernel.Scripts is
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
-         declare
-            Name : constant String := Nth_Arg (Data, 2);
-         begin
-            if Is_Absolute_Path (Name) then
-               Info := (Name => new String'(Name));
-            else
-               declare
-                  Full : constant String := Get_Full_Path_From_File
-                    (Registry => Project_Registry (Get_Registry (Kernel)),
-                     Filename => Name,
-                     Use_Source_Path => True,
-                     Use_Object_Path => True);
-               begin
-                  if Full /= "" then
-                     Info := (Name => new String'(Full));
-                  else
-                     Info := (Name => new String'(Name));
-                  end if;
-               end;
-            end if;
-
-            Set_Data (Instance, Info);
-            Free (Info);
-         end;
+         Info := (Name => new String'(Nth_Arg (Data, 2)));
+         Set_Data (Instance, Info);
+         Free (Info);
 
       elsif Command = "name" then
          Info     := Get_Data (Instance);
@@ -626,9 +757,13 @@ package body Glide_Kernel.Scripts is
       Instance : Class_Instance;
       Project  : Project_Type;
    begin
-      if Command = "load_project" then
+      if Command = "load" then
          Name_Parameters (Data, Open_Cmd_Parameters);
          Load_Project (Kernel, Nth_Arg (Data, 1));
+         Set_Return_Value
+           (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
+
+      elsif Command = "root" then
          Set_Return_Value
            (Data, Create_Project (Get_Script (Data), Get_Project (Kernel)));
 
@@ -672,6 +807,103 @@ package body Glide_Kernel.Scripts is
          end if;
       end if;
    end Create_Project_Command_Handler;
+
+   -----------------------------
+   -- Context_Command_Handler --
+   -----------------------------
+
+   procedure Context_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Instance : Class_Instance;
+      File     : File_Selection_Context_Access;
+      Loc      : File_Location_Context_Access;
+      Entity   : Entity_Selection_Context_Access;
+      Context  : Selection_Context_Access;
+      L, C     : Integer := -1;
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg (Data, -"Cannot create an instance of this class");
+
+      elsif Command = "file" then
+         Instance := Nth_Arg (Data, 1, Get_File_Context_Class (Kernel));
+         File := File_Selection_Context_Access'(Get_Data (Instance));
+         if Has_File_Information (File) then
+            Set_Return_Value
+              (Data, Create_File (Get_Script (Data), File_Information (File)));
+         else
+            Set_Error_Msg (Data, -"No file information stored in the context");
+         end if;
+
+      elsif Command = "project" then
+         Instance := Nth_Arg (Data, 1, Get_File_Context_Class (Kernel));
+         File := File_Selection_Context_Access'(Get_Data (Instance));
+         if Has_Project_Information (File) then
+            Set_Return_Value
+              (Data,
+               Create_Project (Get_Script (Data), Project_Information (File)));
+         else
+            Set_Error_Msg (Data, -"No project stored in the context");
+         end if;
+
+      elsif Command = "location" then
+         Instance := Nth_Arg
+           (Data, 1, Get_File_Location_Context_Class (Kernel));
+         Loc := File_Location_Context_Access'(Get_Data (Instance));
+
+         if Has_Line_Information (Loc) then
+            L := Line_Information (Loc);
+         end if;
+
+         if Has_Column_Information (Loc) then
+            C := Column_Information (Loc);
+         end if;
+
+         if Has_File_Information (Loc) then
+            Set_Return_Value
+              (Data,
+               Create_File_Location
+                 (Get_Script (Data),
+                   (Create_File (Get_Script (Data), File_Information (Loc))),
+                  L,
+                  C));
+         else
+            Set_Error_Msg (Data, -"No file information stored in the context");
+         end if;
+
+      elsif Command = "entity" then
+         Instance := Nth_Arg
+           (Data, 1, Get_Entity_Context_Class (Kernel));
+         Entity := Entity_Selection_Context_Access'(Get_Data (Instance));
+         Set_Return_Value
+           (Data, Create_Entity (Get_Script (Data), Get_Entity (Entity)));
+
+      elsif Command = "current_context" then
+         Context := Get_Current_Context (Kernel);
+         if Context = null then
+            Set_Error_Msg (Data, -"There is no current context");
+
+         elsif Context.all in Entity_Selection_Context'Class then
+            Set_Return_Value
+             (Data, Create_Entity_Context
+               (Get_Script (Data), Entity_Selection_Context_Access (Context)));
+
+         elsif Context.all in File_Location_Context'Class then
+            Set_Return_Value
+             (Data, Create_File_Location_Context
+               (Get_Script (Data), File_Location_Context_Access (Context)));
+
+         elsif Context.all in File_Selection_Context'Class then
+            Set_Return_Value
+             (Data, Create_File_Context
+              (Get_Script (Data), File_Selection_Context_Access (Context)));
+
+         else
+            Set_Error_Msg (Data, -"Unknown current context");
+         end if;
+      end if;
+   end Context_Command_Handler;
 
    ----------------
    -- Initialize --
@@ -830,6 +1062,17 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
+         Params       => Parameter_Names_To_Usage (Location_Cmd_Parameters),
+         Return_Value => "location",
+         Description  => -"Create a new file location, from its position.",
+         Minimum_Args => 3,
+         Maximum_Args => 3,
+         Class        => Get_File_Location_Class (Kernel),
+         Handler      => Create_Location_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => Constructor_Method,
          Params       => Parameter_Names_To_Usage (Project_Cmd_Parameters),
          Return_Value => "project",
          Description  =>
@@ -841,16 +1084,27 @@ package body Glide_Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "load_project",
+         Command       => "root",
+         Return_Value  => "project",
+         Description   =>
+           -("Return the root project of the currently loaded hierarchy"),
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "load",
          Params       => Parameter_Names_To_Usage (Open_Cmd_Parameters),
          Return_Value => "project",
          Description  =>
-           -("Load a new project, which replaces the current project, and"
+           -("Load a new project, which replaces the current root project, and"
              & " return a handle to it. All imported projects are also"
              & " loaded at the same time. If the project is not found, a"
              & " default project is loaded"),
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Static_Method => True,
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
@@ -870,6 +1124,70 @@ package body Glide_Kernel.Scripts is
              & " itself is included in the list."),
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => Constructor_Method,
+         Return_Value => "FileContext",
+         Description  => -"Prevents creation of FileContext instances",
+         Class        => Get_File_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "file",
+         Return_Value => "File",
+         Description  => -"Return the name of the file in the context",
+         Class        => Get_File_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "project",
+         Return_Value => "Project",
+         Description  =>
+           -("Return the project in the context, or the root project if none"
+             & " was specified in the context"),
+         Class        => Get_File_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => Constructor_Method,
+         Return_Value => "FileLocationContext",
+         Description  => -"Prevents creation of FileLocationContext instances",
+         Class        => Get_File_Location_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "location",
+         Return_Value => "FileLocation",
+         Description  => -"Return the file location stored in the context",
+         Class        => Get_File_Location_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => Constructor_Method,
+         Return_Value => "EntityContext",
+         Description  => -"Prevents creation of EntityContext instances",
+         Class        => Get_Entity_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "entity",
+         Return_Value => "Entity",
+         Description  => -"Return the entity stored in the context",
+         Class        => Get_Entity_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "current_context",
+         Return_Value => "FileContext",
+         Description  =>
+           -("Returns the current context in GPS. This is the currently"
+             & " selected file, line, column, project,... depending on"
+             & " what window is currently active"),
+         Handler      => Context_Command_Handler'Access);
    end Register_Default_Script_Commands;
 
    ----------------------
@@ -919,6 +1237,21 @@ package body Glide_Kernel.Scripts is
       end if;
       return Scripting_Data (Kernel.Scripts).Project_Class;
    end Get_Project_Class;
+
+   -----------------------------
+   -- Get_File_Location_Class --
+   -----------------------------
+
+   function Get_File_Location_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).File_Location_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).File_Location_Class := New_Class
+           (Kernel, "FileLocation", "Represents a location in a file");
+      end if;
+      return Scripting_Data (Kernel.Scripts).File_Location_Class;
+   end Get_File_Location_Class;
 
    -------------------------------
    -- Execute_GPS_Shell_Command --
@@ -1160,5 +1493,252 @@ package body Glide_Kernel.Scripts is
       end if;
       return Instance;
    end Create_Project;
+
+   --------------------------
+   -- Create_File_Location --
+   --------------------------
+
+   function Create_File_Location
+     (Script : access Scripting_Language_Record'Class;
+      File   : Class_Instance;
+      Line   : Natural;
+      Column : Natural) return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, Get_File_Location_Class (Get_Kernel (Script)));
+      Info : constant File_Location_Info := (File, Line, Column);
+   begin
+      Set_Data (Instance, Info);
+      return Instance;
+   end Create_File_Location;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (Location : File_Location_Info) return Class_Instance is
+   begin
+      return Location.File;
+   end Get_File;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (Location : File_Location_Info) return Integer is
+   begin
+      return Location.Line;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column (Location : File_Location_Info) return Integer is
+   begin
+      return Location.Column;
+   end Get_Column;
+
+   ----------------------------
+   -- Get_File_Context_Class --
+   ----------------------------
+
+   function Get_File_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).File_Context_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).File_Context_Class := New_Class
+           (Kernel,
+            "FileContext",
+            "Represents an context that contains file information");
+      end if;
+      return Scripting_Data (Kernel.Scripts).File_Context_Class;
+   end Get_File_Context_Class;
+
+   -------------------------------------
+   -- Get_File_Location_Context_Class --
+   -------------------------------------
+
+   function Get_File_Location_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).File_Location_Context_Class =
+        No_Class
+      then
+         Scripting_Data (Kernel.Scripts).File_Location_Context_Class :=
+           New_Class
+             (Kernel,
+              "FileLocationContext",
+              "Represents an context that contains location information",
+              Base => Get_File_Context_Class (Kernel));
+      end if;
+      return Scripting_Data (Kernel.Scripts).File_Location_Context_Class;
+   end Get_File_Location_Context_Class;
+
+   ------------------------------
+   -- Get_Entity_Context_Class --
+   ------------------------------
+
+   function Get_Entity_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).Entity_Context_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).Entity_Context_Class := New_Class
+           (Kernel,
+            "EntityContext",
+            "Represents an context that contains entity information",
+            Base => Get_File_Context_Class (Kernel));
+      end if;
+      return Scripting_Data (Kernel.Scripts).Entity_Context_Class;
+   end Get_Entity_Context_Class;
+
+   ------------------------
+   -- On_Destroy_Context --
+   ------------------------
+
+   procedure On_Destroy_Context (Value : System.Address) is
+      C : Selection_Context_Access := Convert (Value);
+   begin
+      Unref (C);
+   end On_Destroy_Context;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      Context  : Selection_Context_Access)
+   is
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script,
+         Get_Class (Instance),
+         Get_File_Context_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      Ref (Context);
+      Set_Data
+        (Instance,
+         Value      => Context.all'Address,
+         On_Destroy => On_Destroy_Context'Access);
+   end Set_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Glide_Kernel.Modules.File_Selection_Context_Access
+   is
+      Script  : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script,
+         Get_Class (Instance),
+         Get_File_Context_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      return File_Selection_Context_Access
+        (Selection_Context_Access'(Convert (Get_Data (Instance))));
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Glide_Kernel.Modules.File_Location_Context_Access
+   is
+      Script  : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script,
+         Get_Class (Instance),
+         Get_File_Location_Context_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      return File_Location_Context_Access
+        (Selection_Context_Access'(Convert (Get_Data (Instance))));
+   end Get_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Glide_Kernel.Modules.Entity_Selection_Context_Access
+   is
+      Script  : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script,
+         Get_Class (Instance),
+         Get_Entity_Context_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      return Entity_Selection_Context_Access
+        (Selection_Context_Access'(Convert (Get_Data (Instance))));
+   end Get_Data;
+
+   -------------------------
+   -- Create_File_Context --
+   -------------------------
+
+   function Create_File_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Modules.File_Selection_Context_Access)
+      return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, Get_File_Context_Class (Get_Kernel (Script)));
+   begin
+      Set_Data (Instance, Selection_Context_Access (Context));
+      return Instance;
+   end Create_File_Context;
+
+   ----------------------------------
+   -- Create_File_Location_Context --
+   ----------------------------------
+
+   function Create_File_Location_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Modules.File_Location_Context_Access)
+      return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, Get_File_Location_Context_Class (Get_Kernel (Script)));
+   begin
+      Set_Data (Instance, Selection_Context_Access (Context));
+      return Instance;
+   end Create_File_Location_Context;
+
+   ---------------------------
+   -- Create_Entity_Context --
+   ---------------------------
+
+   function Create_Entity_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Modules.Entity_Selection_Context_Access)
+      return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, Get_Entity_Context_Class (Get_Kernel (Script)));
+   begin
+      Set_Data (Instance, Selection_Context_Access (Context));
+      return Instance;
+   end Create_Entity_Context;
 
 end Glide_Kernel.Scripts;

@@ -29,6 +29,7 @@ with GNAT.OS_Lib;
 with Glib.Object;
 with Src_Info.Queries;
 with Projects;
+with Glide_Kernel.Modules;
 
 package Glide_Kernel.Scripts is
 
@@ -57,14 +58,13 @@ package Glide_Kernel.Scripts is
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name          : String;
       Description   : String := "";
-      As_Dictionary : Boolean := False) return Class_Type;
+      Base          : Class_Type := No_Class) return Class_Type;
    --  For some languages, this notion is not supported, and the class will not
    --  be visible by the user in the shell. Methods create for the class will
    --  then simply be made available directly in the shell.
-   --  If As_Dictionary is true, then the class is setup so that items can be
-   --  extracted from it using.
    --  If a class with the same name was created, it is returned, and no class
    --  is created anew.
+   --  Base is the base class, or parent class
 
    function Get_Name (Class : Class_Type) return String;
    --  Return the name of the class
@@ -309,14 +309,15 @@ package Glide_Kernel.Scripts is
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
       Handler      : Module_Command_Function;
-      Class        : Class_Type := No_Class) is abstract;
+      Class        : Class_Type := No_Class;
+      Class_Method : Boolean := False) is abstract;
    --  See comment for Register_Command in the kernel.
 
    procedure Register_Class
      (Script        : access Scripting_Language_Record;
       Name          : String;
       Description   : String := "";
-      As_Dictionary : Boolean := False) is abstract;
+      Base          : Class_Type := No_Class) is abstract;
    --  Create a new class in the interpreter
 
    procedure Execute_Command
@@ -386,16 +387,18 @@ package Glide_Kernel.Scripts is
    --  optional. These have to be the last entries in Parameters.
 
    procedure Register_Command
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command      : String;
-      Params       : String     := "";
-      Return_Value : String     := "";
-      Description  : String;
-      Minimum_Args : Natural    := 0;
-      Maximum_Args : Natural    := 0;
-      Handler      : Module_Command_Function;
-      Class        : Class_Type := No_Class);
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command       : String;
+      Params        : String     := "";
+      Return_Value  : String     := "";
+      Description   : String;
+      Minimum_Args  : Natural    := 0;
+      Maximum_Args  : Natural    := 0;
+      Handler       : Module_Command_Function;
+      Class         : Class_Type := No_Class;
+      Static_Method : Boolean := False);
    --  Add a new function to all currently registered script languages.
+   --
    --  If Class is not No_Class, then this procedure creates a method for this
    --  class, for the languages for which this is appropriate. An extra
    --  parameter is automatically added to the command, in first position,
@@ -404,6 +407,12 @@ package Glide_Kernel.Scripts is
    --  is not object oriented. This first parameter must not be counted in
    --  Minimum_args and Maximum_Args
    --  Otherwise, it creates a global function in the script language.
+   --
+   --  If Static_Method is True, then Class must be different from No_Class.
+   --  The resulting method doesn't take an instance as its first
+   --  parameter. Instead, it behaves like a global function, except it is in a
+   --  specific namespace corresponding to the class name.
+   --  This is similar to C++'s static methods.
    --
    --  If Command is Constructor_Method, then the function is setup as the
    --  constructor for Class, which must not be No_Class. For compatibility
@@ -492,19 +501,13 @@ package Glide_Kernel.Scripts is
 
    type File_Info is private;
    No_File : constant File_Info;
-   procedure Free (File : in out File_Info);
 
    function Get_Name (File : File_Info) return String;
    --  Return the name of File
 
-   procedure Set_Data
-     (Instance : access Class_Instance_Record'Class;
-      File     : File_Info);
    function Get_Data (Instance : access Class_Instance_Record'Class)
       return File_Info;
-   --  Store some file information with a file entity
-   --  You should free the file passed to Set_Data, but not the value returned
-   --  by Get_Data.
+   --  Retrieve the file information from an instance
 
    function Create_File
      (Script : access Scripting_Language_Record'Class;
@@ -512,6 +515,36 @@ package Glide_Kernel.Scripts is
    --  Return a new file.
    --  ??? How do we handle files with similar names in extended projects ? We
    --  probably need to pass the project in argument as well.
+
+   -------------------------
+   -- File_Location_Class --
+   -------------------------
+
+   function Get_File_Location_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the class used to represent locations in files. This encapsulates
+   --  a File_Location_Info
+
+   type File_Location_Info is private;
+   No_File_Location : constant File_Location_Info;
+
+   function Get_File (Location : File_Location_Info) return Class_Instance;
+   function Get_Line (Location : File_Location_Info) return Integer;
+   function Get_Column (Location : File_Location_Info) return Integer;
+   --  Return the information stored in the file location
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return File_Location_Info;
+   --  Retrieve the file location information from an instance
+
+   function Create_File_Location
+     (Script : access Scripting_Language_Record'Class;
+      File   : Class_Instance;
+      Line   : Natural;
+      Column : Natural) return Class_Instance;
+   --  Return a new file.
+   --  File mustn't be destroyed after this call.
 
    -------------------
    -- Project_Class --
@@ -522,17 +555,67 @@ package Glide_Kernel.Scripts is
       return Class_Type;
    --  Return the class to use for projects. This encapsulates a Project_Type
 
-   procedure Set_Data
-     (Instance : access Class_Instance_Record'Class;
-      Project  : Projects.Project_Type);
    function Get_Data (Instance : access Class_Instance_Record'Class)
       return Projects.Project_Type;
-   --  Store or get some project information in Instance
+   --  Retrieve get some project information in Instance
 
    function Create_Project
      (Script  : access Scripting_Language_Record'Class;
       Project : Projects.Project_Type) return Class_Instance;
    --  Return a new project
+
+   -------------------
+   -- Context_Class --
+   -------------------
+
+   function Get_File_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return a class for a File_Selection_Context
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Glide_Kernel.Modules.File_Selection_Context_Access;
+   --  Retrieve some context information from instance
+
+   function Create_File_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Modules.File_Selection_Context_Access)
+      return Class_Instance;
+   --  Create a new context
+
+
+
+   function Get_File_Location_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return a class for a File_Location_Selection_Context
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Glide_Kernel.Modules.File_Location_Context_Access;
+   --  Retrieve some context information from instance
+
+   function Create_File_Location_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Modules.File_Location_Context_Access)
+      return Class_Instance;
+   --  Create a new context
+
+
+
+   function Get_Entity_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return a class for an Entity_Selection_Context
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return Glide_Kernel.Modules.Entity_Selection_Context_Access;
+   --  Retrieve some context information from instance
+
+   function Create_Entity_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Modules.Entity_Selection_Context_Access)
+      return Class_Instance;
+   --  Create a new context
 
 
 private
@@ -546,8 +629,14 @@ private
       Name : GNAT.OS_Lib.String_Access;
    end record;
 
+   type File_Location_Info is record
+      File : Class_Instance;
+      Line, Column : Natural;
+   end record;
+
    No_File  : constant File_Info := (Name => null);
    No_Class : constant Class_Type := (Name => null);
+   No_File_Location : constant File_Location_Info := (null, 0, 0);
 
    type Class_Instance_Record is abstract tagged null record;
    type Callback_Data is abstract tagged null record;
