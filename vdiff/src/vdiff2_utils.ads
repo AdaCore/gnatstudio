@@ -21,7 +21,7 @@
 --  This package provides visual utilities to handle differences between
 --  files.
 
-with Diff_Utils;  use Diff_Utils;
+with Diff_Utils2; use Diff_Utils2;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Glide_Kernel;
 
@@ -30,23 +30,27 @@ package Vdiff2_Utils is
    procedure Show_Merge
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Merge  : String;
-      Item   : Diff_List_Head);
+      Item   : Diff_Head);
    --  Show a result of a Merge
 
    procedure Show_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_List_Head);
-   --  Show a result of diff Diff
+      Item   : Diff_Head);
+   --  Show a result of diff Item
 
    procedure Show_Differences3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_List_Head);
-   --  ???
+      Item   : Diff_Head);
+   --  Show a result of diff Item
 
    procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_List_Head);
-   --  Hide the hightlighting ??? not very clear
+      Item   : Diff_Head);
+   --  Remove the hightlighting of all file of Diff
+
+   procedure Register_Highlighting
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register color preferences
 
    type Text_Iterator;
 
@@ -70,3 +74,4 @@ package Vdiff2_Utils is
    --  objects linked to this one.
 
 end Vdiff2_Utils;
+
