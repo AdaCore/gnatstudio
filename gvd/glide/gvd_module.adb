@@ -1595,8 +1595,7 @@ package body GVD_Module is
       Top.Step_Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
-         Tooltip_Text =>
-           -"Step program until it reaches a different source line",
+         Tooltip_Text => -"Step",
          Icon => Gtk_Widget (Create_Pixmap (step_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Step_Button, "clicked",
@@ -1606,7 +1605,7 @@ package body GVD_Module is
       Top.Next_Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
-         Tooltip_Text => -"Step program, proceeding through subroutine calls",
+         Tooltip_Text => -"Next",
          Icon => Gtk_Widget (Create_Pixmap (next_xpm, Window)));
       Widget_Callback.Object_Connect
         (Top.Next_Button, "clicked",
