@@ -47,16 +47,12 @@
 --    undefined behavior.
 --  * Allowed chars in a word are found in g-regpat.ads.
 
-with Basic_Types;
 with Boyer_Moore;
-with Generic_List;
-with GNAT.Directory_Operations;
 with GNAT.OS_Lib;
-with GNAT.Regexp;
 with GNAT.Regpat;
 with Glide_Kernel;
+with Glib.Object;
 with Gtk.Widget;
-with Gtkada.MDI;
 
 package Find_Utils is
 
@@ -64,20 +60,7 @@ package Find_Utils is
    -- Options --
    -------------
 
-   type Search_Scope is
-     (Whole,
-      Comments_Only,
-      Comments_And_Strings,
-      Strings_Only,
-      All_But_Comments);
-   --  Scope wanted for the search.
-   --  Whole scope means never use any context (i.e. files are whole scanned).
-   --  This scope mostly applies to source files.
-   --  Warning: do not change the contents or order of this type without
-   --  synchronizing with vsearch.glade and Scan_Buffer.
-
    type Search_Options is record
-      Scope          : Search_Scope := Whole;
       Case_Sensitive : Boolean := False;
       Whole_Word     : Boolean := False;
       Regexp         : Boolean := False;
@@ -91,7 +74,6 @@ package Find_Utils is
    --    regular expression.
 
    type Search_Options_Mask is mod 256;
-   Scope_Mask       : constant Search_Options_Mask := 2 ** 0;
    Case_Sensitive   : constant Search_Options_Mask := 2 ** 1;
    Whole_Word       : constant Search_Options_Mask := 2 ** 2;
    Regexp           : constant Search_Options_Mask := 2 ** 3;
@@ -177,71 +159,38 @@ package Find_Utils is
    --  This automatically uses either a regexp or a faster Boyer Moore methode
    --  for constant strings.
 
+   type Match_Result (Length : Natural) is record
+      Index, Line, Column, End_Column : Natural;
+      Text : String (1 .. Length);
+   end record;
+   --  The result of a match. This is a discriminated type so that we don't
+   --  have to worry who is responsible to free it.
+
+   No_Result : constant Match_Result;
+
+   type Scan_Callback is access
+     function (Match : Match_Result) return Boolean;
+   --  Callback for a match in a buffer.
+   --  If it returns False, no more match will be checked.
+
+   procedure Scan_Buffer_No_Scope
+     (Context    : access Search_Context;
+      Buffer     : String;
+      Callback   : Scan_Callback;
+      Ref_Index  : in out Integer;
+      Ref_Line   : in out Integer;
+      Ref_Column : in out Integer);
+   --  Find matches of Context in Buffer, starting at Buffer'First, and until
+   --  either the end of the buffer or Callback returns False.
+   --  Buffer is assumes to be a single valid scope, and thus no scope handling
+   --  is performed.
+   --  The character at index Ref_Index in Buffer is assumed to correspond to
+   --  position Ref_Line and Ref_Column in the original file. They are
+   --  automatically updated when new positions are computed, so that they can
+   --  be used during the next call to Scan_Buffer_No_Scope.
+
    Invalid_Context : exception;
    --  Raised when trying to access the components in Search_Context
-
-   ------------------
-   -- File context --
-   ------------------
-
-   type Current_File_Context is new Search_Context with private;
-   type Current_File_Context_Access is access all Current_File_Context'Class;
-   --  A special context for searching in the current file
-
-   procedure Free (Context : in out Current_File_Context);
-   --  Free the memory allocated for the context
-
-   function Search
-     (Context         : access Current_File_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
-   --  Search function for "Current File"
-
-   -------------------
-   -- Files context --
-   -------------------
-
-   type Files_Context is new Search_Context with private;
-   type Files_Context_Access is access all Files_Context'Class;
-   --  A special context for searching in a specific list of files
-
-   procedure Set_File_List
-     (Context       : access Files_Context;
-      Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : String  := "";
-      Recurse       : Boolean := False);
-   --  Set the list of files to search
-
-   procedure Free (Context : in out Files_Context);
-   --  Free the memory allocated for the context
-
-   function Search
-     (Context         : access Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
-   --  Search function for "Files..."
-
-   --------------------------------
-   -- Files From Project context --
-   --------------------------------
-
-   type Files_Project_Context is new Search_Context with private;
-   type Files_Project_Context_Access is access all Files_Project_Context'Class;
-
-   procedure Set_File_List
-     (Context : access Files_Project_Context;
-      Files   : Basic_Types.String_Array_Access);
-   --  Set the list of files to search.
-   --  No copy of Files is made, the memory will be freed automatically.
-
-   procedure Free (Context : in out Files_Project_Context);
-   --  Free the memory allocated for the context
-
-   function Search
-     (Context         : access Files_Project_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean;
-   --  Search function for "Files From Project"
 
    ---------------
    -- Searching --
@@ -263,30 +212,61 @@ package Find_Utils is
    --  It shouldn't set the general information like the pattern and the
    --  replacement pattern, since these are set automatically.
 
-   -----------------------------
-   -- Standard search support --
-   -----------------------------
+   --------------------------------
+   -- Registering search modules --
+   --------------------------------
 
-   function Current_File_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access;
-   --  Factory for "Current File"
+   type Search_Module_Data (Length : Natural) is record
+      Label             : String (1 .. Length);
+      Mask              : Search_Options_Mask;
+      Factory           : Module_Search_Context_Factory;
+      Extra_Information : Gtk.Widget.Gtk_Widget;
+   end record;
+   --  If Extra_Information is not null, then it will be displayed every time
+   --  this label is selected. It can be used for instance to ask for more
+   --  information like a list of files to search.
+   --  Whenever the data in Extra_Information changes, or for some reason the
+   --  current status of GPS no longer permits the search, you should raise the
+   --  kernel signal Search_Reset_Signal (or call Reset_Search below).
+   --
+   --  When the user then selects "Find", the function Factory is called to
+   --  create the factory. The options and searched string or regexp will be
+   --  set automatically on return of Factory, so you do not need to handle
+   --  this.
+   --  Mask indicates what options are relevant for that module. Options that
+   --  are not set will be greyed out.
+   --  If Supports_Replace if false, then the button will be greyed out.
 
-   function Files_From_Project_Factory
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access;
-   --  Factory for "Files From Project"
+   No_Search : constant Search_Module_Data;
 
-   function Files_Factory
+   procedure Register_Search_Function
      (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurences    : Boolean;
-      Extra_Information : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access;
-   --  Factory for "Files..."
+      Data              : Search_Module_Data);
+   --  Register a new search function.
+   --  This will be available under the title Label in the search combo box.
+   --  This emits the kernel signal "search_functions_changed".
+
+   function Find_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Label  : String) return Search_Module_Data;
+   --  Search the list of registered search functions for a matching module.
+   --  No_Search is returned if no such module was found.
+
+   function Get_Nth_Search_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Num    : Positive) return Search_Module_Data;
+   --  Return the Num-th registered module, or No_Search if there is no such
+   --  module.
+
+   procedure Reset_Search
+     (Object : access Glib.Object.GObject_Record'Class;
+      Kernel : Glide_Kernel.Kernel_Handle);
+   --  Raises the kernel signal Search_Reset_Signal. This is just a convenience
+   --  callback function. Object is ignored, and can be anything.
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register the module in the list.
 
 private
 
@@ -294,18 +274,14 @@ private
 
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
-   type Match_Result (Length : Natural) is record
-      Index, Line, Column, End_Column : Natural;
-      Text : String (1 .. Length);
-   end record;
-   --  The result of a match. This is a discriminated type so that we don't
-   --  have to worry who is responsible to free it.
-
    No_Result : constant Match_Result := (0, 0, 0, 0, 0, "");
 
-   type Match_Result_Access is access Match_Result;
-   type Match_Result_Array is array (Positive range <>) of Match_Result_Access;
-   type Match_Result_Array_Access is access all Match_Result_Array;
+   No_Search : constant Search_Module_Data :=
+     (Length            => 0,
+      Label             => "",
+      Mask              => 0,
+      Factory           => null,
+      Extra_Information => null);
 
    type Search_Context is abstract tagged limited record
       Options        : Search_Options;
@@ -316,46 +292,6 @@ private
 
       BM_Matcher     : Boyer_Moore.Pattern;
       BM_Initialized : Boolean := False;
-   end record;
-
-   type Dir_Data is record
-      Name : GNAT.OS_Lib.String_Access;
-      Dir  : GNAT.Directory_Operations.Dir_Type;
-   end record;
-   type Dir_Data_Access is access Dir_Data;
-   procedure Free (D : in out Dir_Data_Access);
-   package Directory_List is new Generic_List (Dir_Data_Access);
-
-   type Current_File_Context is new Search_Context with record
-      Child                : Gtkada.MDI.MDI_Child;
-      All_Occurences       : Boolean;
-      Next_Matches_In_File : Match_Result_Array_Access := null;
-      Last_Match_Returned  : Natural := 0;
-      --  These two fields are used to memorize the list of matches in the
-      --  current file. It is always faster to search the whole file at once,
-      --  and memorize the matches so that each call to Search only
-      --  returns one match.
-   end record;
-
-   --  No additional data is needed for searching in the current file.
-
-   type Files_Context is new Search_Context with record
-      Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : GNAT.OS_Lib.String_Access := null;
-      Recurse       : Boolean := False;
-      Dirs          : Directory_List.List;
-
-      Current_File         : GNAT.OS_Lib.String_Access;
-      Next_Matches_In_File : Match_Result_Array_Access := null;
-      Last_Match_Returned  : Natural := 0;
-   end record;
-
-   type Files_Project_Context is new Search_Context with record
-      Files         : Basic_Types.String_Array_Access := null;
-      Current_File  : Natural;
-
-      Next_Matches_In_File : Match_Result_Array_Access := null;
-      Last_Match_Returned  : Natural := 0;
    end record;
 
 end Find_Utils;
