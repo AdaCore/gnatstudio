@@ -98,21 +98,24 @@ package body GVD.Preferences is
         (Name      => XML_Prefix & "Ada-Extensions",
          Nick      => -"Ada files extensions",
          Blurb     => -"Semicolon separated list of extensions for Ada files",
-         Default   => ".ads;.adb;.ada;.a;.dg"));
+         Default   => ".ads;.adb;.ada;.a;.dg",
+         Flags     => Source_Flags));
       Register_Property (Prefs, Param_Spec (Ada_Extensions), General);
 
       C_Extensions := Param_Spec_String (Gnew_String
         (Name      => XML_Prefix & "C-Extensions",
          Nick      => -"C files extensions",
          Blurb     => -"Semicolon separated list of extensions for C files",
-         Default   => ".c;.h"));
+         Default   => ".c;.h",
+         Flags     => Source_Flags));
       Register_Property (Prefs, Param_Spec (C_Extensions), General);
 
       Cpp_Extensions := Param_Spec_String (Gnew_String
         (Name      => XML_Prefix & "Cpp-Extensions",
          Nick      => -"C++ files extensions",
          Blurb     => -"Semicolon separated list of extensions for C++ files",
-         Default   => ".cc;.cpp;.C;.hh;.H"));
+         Default   => ".cc;.cpp;.C;.hh;.H",
+         Flags     => Source_Flags));
       Register_Property (Prefs, Param_Spec (Cpp_Extensions), General);
 
       Display_Explorer := Param_Spec_Boolean (Gnew_Boolean
