@@ -308,7 +308,6 @@ package body Src_Info.CPP is
 
       if not Is_Directory (HI.SN_Dir.all) then
          GNAT.Directory_Operations.Make_Dir (HI.SN_Dir.all);
-         HI.Process_All := True;
       end if;
 
       Load (HI.Xrefs,
@@ -347,7 +346,6 @@ package body Src_Info.CPP is
          when Start
             | Process_Files =>
             loop
-               Next_Source_File (Iterator);
                declare
                   Next_File : String := Current_Source_File (Iterator);
                begin
@@ -360,11 +358,13 @@ package body Src_Info.CPP is
                         Iterator.PD);
                      return;
                   else
-                     --  start processing next file
-                     --  check if we need update DB for this file
-                     if not Up_To_Date
-                            (Next_File, Iterator.SN_Dir.all, Iterator.Xrefs)
-                        or Iterator.Process_All
+                     --  Start processing next file
+                     --  File needs to be processing if:
+                     --  1. Its xref file is invalid (just created)
+                     --  2. Source is newer than xref file
+                     if not Is_Xref_Valid (Next_File, Iterator.Xrefs)
+                       or else not Up_To_Date
+                              (Next_File, Iterator.SN_Dir.all, Iterator.Xrefs)
                      then
                         Trace (Info_Stream, "Updating " & Next_File);
                         Iterator.State := Process_Files;
@@ -373,6 +373,7 @@ package body Src_Info.CPP is
                            Iterator.SN_Dir.all,
                            Iterator.Xrefs,
                            Iterator.PD);
+                        Set_Valid (Next_File, True, Iterator.Xrefs);
                         return;
                      else
                         Next_Source_File (Iterator);
