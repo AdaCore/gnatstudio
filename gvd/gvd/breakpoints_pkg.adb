@@ -438,7 +438,7 @@ begin
    Pack_Start (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
    Set_Policy (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);
 
-   Gtk_New (Breakpoints.Clist1, 7);
+   Gtk_New (Breakpoints.Clist1, 8);
    Add (Breakpoints.Scrolledwindow2, Breakpoints.Clist1);
    Set_Selection_Mode (Breakpoints.Clist1, Selection_Single);
    Set_Shadow_Type (Breakpoints.Clist1, Shadow_In);
@@ -453,7 +453,8 @@ begin
    Set_Column_Title (Breakpoints.Clist1, 4, -"File/Variable");
    Set_Column_Title (Breakpoints.Clist1, 5, -"Line");
    Set_Column_Title (Breakpoints.Clist1, 6, -"Exception");
-   Set_Column_Title (Breakpoints.Clist1, 7, -"Action");
+   Set_Column_Title (Breakpoints.Clist1, 7, -"Subprogram");
+   Set_Column_Title (Breakpoints.Clist1, 8, -"Action");
 
    --  Gtk_New (Breakpoints.Label15, -("label15"));
    --  Set_Alignment (Breakpoints.Label15, 0.5, 0.5);

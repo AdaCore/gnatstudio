@@ -69,6 +69,9 @@ package Odd.Types is
       Except      : String_Access;
       --  Name of the exception on which we break
 
+      Subprogram  : String_Access;
+      --  Name of the subprogram we stop in.
+
       Line        : Integer;
       --  The line that contains the breakpoint
 

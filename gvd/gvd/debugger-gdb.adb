@@ -98,6 +98,10 @@ package body Debugger.Gdb is
 
    Exception_In_Breakpoint : constant Pattern_Matcher := Compile
      ("on ([-\w_:]+)");
+   --  How to detect exception names in the info given by "info breakpoint"
+
+   Subprogram_In_Breakpoint : constant Pattern_Matcher := Compile
+     ("in (\S+)");
    --  How to detect subprogram names in the info given by "info breakpoint"
 
    procedure Language_Filter
@@ -1413,6 +1417,12 @@ package body Debugger.Gdb is
                   Match (Exception_In_Breakpoint, Br (Num).Info.all, Matched);
                   if Matched (0) /= No_Match then
                      Br (Num).Except := new String'
+                       (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+                  end if;
+
+                  Match (Subprogram_In_Breakpoint, Br (Num).Info.all, Matched);
+                  if Matched (0) /= No_Match then
+                     Br (Num).Subprogram := new String'
                        (Br (Num).Info (Matched (1).First .. Matched (1).Last));
                   end if;
 

@@ -439,7 +439,8 @@ package body Breakpoints_Pkg.Callbacks is
          --  Create a new line
          --  WARNING: We must have at least as many elements as there are
          --  columns in the clist.
-         Row := Append (Editor.Clist1, "" + "" + "" + "" + "" + "" + "");
+         Row := Append
+           (Editor.Clist1, "" + "" + "" + "" + "" + "" + "" + "");
 
          Set_Text (Editor.Clist1, Row, 0, Natural'Image (Br.Num));
 
@@ -471,6 +472,11 @@ package body Breakpoints_Pkg.Callbacks is
 
          if String_Access2 (Br.Except) /= null then
             Set_Text (Editor.Clist1, Row, 6, String_Access2 (Br.Except).all);
+         end if;
+
+         if String_Access2 (Br.Subprogram) /= null then
+            Set_Text
+              (Editor.Clist1, Row, 7, String_Access2 (Br.Subprogram).all);
          end if;
       end loop;
 
