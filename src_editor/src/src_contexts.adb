@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,6 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Basic_Types;               use Basic_Types;
 with Glib;                      use Glib;
 with Glib.Unicode;              use Glib.Unicode;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -339,16 +340,32 @@ package body Src_Contexts is
                         exit;
 
                      else
-                        Match (Lang.New_Line_Comment_Start.all,
-                               Buffer, Matches, Pos);
+                        if Lang.New_Line_Comment_Start = null then
+                           Match (Lang.New_Line_Comment_Start_Regexp.all,
+                                  Buffer, Matches, Pos);
 
-                        if Matches (0) /= No_Match then
-                           State := Mono_Comments;
-                           Section_End := Pos - 1;
-                           Pos := Matches (0).Last + 1;
-                           exit;
+                           if Matches (0) /= No_Match then
+                              State := Mono_Comments;
+                              Section_End := Pos - 1;
+                              Pos := Matches (0).Last + 1;
+                              exit;
+                           end if;
+                        else
+                           if Pos <= Buffer'Last -
+                                      Lang.New_Line_Comment_Start'Length + 1
+                             and then
+                               Buffer (Pos .. Pos +
+                                       Lang.New_Line_Comment_Start'Length - 1)
+                                 = Lang.New_Line_Comment_Start.all
+                           then
+                              State := Mono_Comments;
+                              Section_End := Pos - 1;
+                              Pos := Pos + Lang.New_Line_Comment_Start'Length;
+                              exit;
+                           end if;
+                        end if;
 
-                        elsif Buffer (Pos) = Str_Delim
+                        if Buffer (Pos) = Str_Delim
                           and then (Pos = Buffer_First
                                     or else Pos = Buffer'Last
                                     or else Buffer (Pos - 1) /= Char_Delim
