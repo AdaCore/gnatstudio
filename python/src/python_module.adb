@@ -589,6 +589,22 @@ package body Python_Module is
       return null;
    end Save_Desktop;
 
+   -------------------
+   -- Initialize_IO --
+   -------------------
+
+   procedure Initialize_IO is
+   begin
+      if not PyRun_SimpleString
+        ("sys.stdout=sys.stderr=sys.stdin=GPS.Console (""Python"")" & ASCII.LF
+         & "sys.__stdout__=sys.stdout" & ASCII.LF
+         & "sys.__stdin__=sys.stdin" & ASCII.LF
+         & "sys.__stderr__=sys.stderr" & ASCII.LF)
+      then
+         raise Interpreter_Error;
+      end if;
+   end Initialize_IO;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -642,9 +658,6 @@ package body Python_Module is
         (Python_Module_Id.Script.Interpreter,
          "import GPS", Hide_Output => True,
          Errors => Errors'Unrestricted_Access);
-      Initialize_IO (Python_Module_Id.Script.Interpreter,
-                     GPS_Module_Name,
-                     Python_Module_Id.Script.GPS_Module);
 
       Python_Module_Id.Script.GPS_Unexpected_Exception := PyErr_NewException
         (GPS_Module_Name & ".Unexpected_Exception", null, null);

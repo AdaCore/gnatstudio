@@ -26,6 +26,9 @@ package Python_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
+   procedure Initialize_IO;
+   --  Initialize the redirection of stdin, stdout and stderr.
+
    procedure Load_Python_Startup_Files
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Load all the user's startup file of the user.
