@@ -60,6 +60,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_program1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_O</key>
@@ -3394,6 +3395,12 @@
 	  <handler>on_debugger_text_key_press_event</handler>
 	  <object>process_tab</object>
 	  <last_modification_time>Tue, 30 May 2000 15:32:58 GMT</last_modification_time>
+	</signal>
+	<signal>
+	  <name>grab_focus</name>
+	  <handler>on_debugger_text_grab_focus</handler>
+	  <object>process_tab</object>
+	  <last_modification_time>Tue, 03 Oct 2000 14:51:11 GMT</last_modification_time>
 	</signal>
 	<editable>True</editable>
 	<text></text>
