@@ -54,7 +54,10 @@ package DB_API is
    end record;
    --  Type for key/data pair retrieved from database by Get_Pair
    --  operation.
-   type Pair_Ptr is access all Pair;
+   No_Pair : constant Pair;
+
+   function "=" (P1, P2 : Pair) return Boolean;
+   --  Redefine the standard "=" operator for pairs
 
    procedure Open
      (DB         : out DB_File;
@@ -101,9 +104,10 @@ package DB_API is
    --  Releases resources allocated before by Set_Cursor.
    --  Does nothing if cursor was not set.
 
-   function Get_Pair
+   procedure Get_Pair
      (DB       : DB_File;
-      Movement : Cursor_Movement := Next) return Pair_Ptr;
+      Movement : Cursor_Movement := Next;
+      Result   : out Pair);
    --  Gets key/data pair from database from cursor position and
    --  changes cursor position to:
    --    Next key/data pair, if Movement is Next.
@@ -115,7 +119,7 @@ package DB_API is
    --  with Position = By_Key then Get_Pair returns null;
    --  Throws DB_Error if DB was not opened or error occurred.
 
-   procedure Free (The_Pair : in out Pair_Ptr);
+   procedure Free (The_Pair : in out Pair);
    --  Releases specified pair and key/data values.
 
    function Get_Field_Count (The_CSF : CSF) return Natural;
@@ -154,5 +158,7 @@ private
    type CSF_Record is null record;
    type CSF is access CSF_Record;
    pragma Convention (C, CSF);
+
+   No_Pair : constant Pair := (null, null, -1);
 
 end DB_API;

@@ -20,7 +20,6 @@
 
 with Interfaces.C;
 with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 with System;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with String_Utils;
@@ -213,11 +212,11 @@ package body DB_API is
    -- Get_Pair --
    --------------
 
-   function Get_Pair
+   procedure Get_Pair
      (DB       : DB_File;
-      Movement : Cursor_Movement := Next) return Pair_Ptr
+      Movement : Cursor_Movement := Next;
+      Result   : out Pair)
    is
-      P        : Pair_Ptr;
       I_Pair   : System.Address;
 
       function I_Get_Pair
@@ -250,14 +249,13 @@ package body DB_API is
                  Error_Message (DB));
             end if;
 
-            return null;
+            Result := No_Pair;
 
          else
-            P := new Pair'(Key  => I_Get_Key  (I_Pair),
-                           Data => I_Get_Data (I_Pair),
-                           DBI  => I_Get_DBI  (I_Pair));
+            Result := (Key  => I_Get_Key  (I_Pair),
+                       Data => I_Get_Data (I_Pair),
+                       DBI  => I_Get_DBI  (I_Pair));
             I_Free (I_Pair);
-            return P;
          end if;
       end if;
    end Get_Pair;
@@ -266,21 +264,17 @@ package body DB_API is
    -- Free --
    ----------
 
-   procedure Free (The_Pair : in out Pair_Ptr) is
+   procedure Free (The_Pair : in out Pair) is
       procedure I_CSF_Free (The_CSF : CSF);
       pragma Import (C, I_CSF_Free, "csf_free");
-
-      procedure Pair_Free is
-        new Ada.Unchecked_Deallocation (Pair, Pair_Ptr);
-
    begin
-      if The_Pair = null then
-         return;
+      if The_Pair.Key /= null then
+         I_CSF_Free (The_Pair.Key);
       end if;
 
-      I_CSF_Free (The_Pair.Key);
-      I_CSF_Free (The_Pair.Data);
-      Pair_Free  (The_Pair);
+      if The_Pair.Data /= null then
+         I_CSF_Free (The_Pair.Data);
+      end if;
    end Free;
 
    ---------------------
@@ -336,5 +330,16 @@ package body DB_API is
    begin
       return Integer (I_Get_Field_Length (The_CSF, C.int (Index)));
    end Get_Field_Length;
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (P1, P2 : Pair) return Boolean is
+   begin
+      return P1.Key = P2.Key
+        and then P1.Data = P2.Data
+        and then P1.DBI = P2.DBI;
+   end "=";
 
 end DB_API;
