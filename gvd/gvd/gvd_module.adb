@@ -3257,8 +3257,11 @@ package body GVD_Module is
    begin
       GVD_Module_ID := new GVD_Module_Record;
       GVD_Module (GVD_Module_ID).Kernel := Kernel_Handle (Kernel);
-      GVD_Module (GVD_Module_ID).Show_Lines_With_Code
-        := Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
+
+      GVD.Preferences.GVD_Prefs := Get_Preferences (Kernel);
+      GVD.Preferences.Register_Default_Preferences (GVD.Preferences.GVD_Prefs);
+      GVD_Module (GVD_Module_ID).Show_Lines_With_Code :=
+        Get_Pref (Kernel, Editor_Show_Line_With_Code);
 
       Register_Module
         (Module                  => GVD_Module_ID,
@@ -3266,9 +3269,6 @@ package body GVD_Module is
          Module_Name             => GVD_Module_Name,
          Priority                => Default_Priority + 20,
          Tooltip_Handler         => Tooltip_Handler'Access);
-
-      GVD.Preferences.GVD_Prefs := Get_Preferences (Kernel);
-      GVD.Preferences.Register_Default_Preferences (GVD.Preferences.GVD_Prefs);
 
       Debugger_Filter := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger active");
