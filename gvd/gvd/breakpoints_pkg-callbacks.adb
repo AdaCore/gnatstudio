@@ -327,7 +327,7 @@ package body Breakpoints_Pkg.Callbacks is
 
          --  Make sure the row is selected
          Emit_Stop_By_Name (Editor.Clist1, "select_row");
-         UnSelect_Row (Editor.Clist1, Row, -1);
+         Unselect_Row (Editor.Clist1, Row, -1);
 
          Thaw (Editor.Clist1);
 

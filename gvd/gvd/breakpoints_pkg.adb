@@ -19,12 +19,11 @@
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
+with Gtk.Adjustment; use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
-with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
-with Gtk.Main;
 with Gdk.Color;       use Gdk.Color;
 with Gdk.Pixmap;      use Gdk.Pixmap;
 with Odd.Pixmaps;     use Odd.Pixmaps;

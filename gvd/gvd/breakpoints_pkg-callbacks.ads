@@ -1,4 +1,3 @@
-with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
 package Breakpoints_Pkg.Callbacks is
