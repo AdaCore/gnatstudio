@@ -408,6 +408,39 @@ package body GVD.Text_Boxes is
       return Natural (Y / Box.Line_Height + 1);
    end Line_From_Pixels;
 
+   --------------------
+   -- Move_N_Columns --
+   --------------------
+
+   procedure Move_N_Columns
+     (Box     : access Gvd_Text_Box_Record'Class;
+      Index   : in out Natural;
+      Columns : Integer)
+   is
+      J : Integer := 1;
+   begin
+      --  Go to the right column, but make sure we are still on
+      --  the current line.
+      --  Index is the index in the buffer, while J is the current
+      --  column number (after processing horizontal tabs).
+
+      while J <= Columns loop
+         Index := Index + 1;
+
+         exit when Box.Buffer'Last < Index
+           or else Box.Buffer (Index) = ASCII.LF;
+
+         if Box.Buffer (Index) = ASCII.HT
+           and then J mod Tab_Size /= 0
+         then
+            --  Go to the next column that is a multiple of Tab_Size
+            J := (1 + J / Tab_Size) * Tab_Size + 1;
+         else
+            J := J + 1;
+         end if;
+      end loop;
+   end Move_N_Columns;
+
    -----------------------
    -- Pixmap_Clicked_Cb --
    -----------------------
@@ -459,6 +492,15 @@ package body GVD.Text_Boxes is
       Y       : Gint;
       Area    : Gdk.Rectangle.Gdk_Rectangle;
       Entity  : GVD.Types.String_Access;
+      Select_Min : constant Gint := Gint
+        (Guint'Min (Get_Selection_Start_Pos (Box.Child),
+                    Get_Selection_End_Pos (Box.Child)));
+      Select_Max : Gint := Gint
+        (Guint'Max (Get_Selection_Start_Pos (Box.Child),
+                    Get_Selection_End_Pos (Box.Child)));
+      Index   : Natural;
+      X       : Gint;
+
    begin
       case Get_Button (Event) is
          when 3 =>
@@ -467,14 +509,55 @@ package body GVD.Text_Boxes is
                Y := Gint (Get_Y (Event)) - 1
                  + Gint (Get_Value (Get_Vadj (Box.Child)));
                Line := Line_From_Pixels (Box, Y);
-               Get_Entity_Area
-                 (Box, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-                  Area, Entity);
-               if Entity /= null then
-                  Menu := Child_Contextual_Menu (Box, Line, Entity.all);
-                  Free (Entity);
+
+               X := Gint (Get_X (Event))
+                 / Char_Width (Box.Font, Character' ('m')) -
+                 Invisible_Column_Width (Box) + 1;
+               Index := Index_From_Line (Box, Line) - Box.Buffer'First;
+               Move_N_Columns (Box, Index, Integer (X));
+               Index := Index + Line * Natural (Invisible_Column_Width (Box));
+
+               --  Take the selection into account if it is under the
+               --  cursor.
+
+               if Get_Has_Selection (Box.Child)
+                 and then Select_Min <= Gint (Index)
+                 and then Gint (Index) <= Select_Max
+               then
+                  --  Keep only the first line of the selection. This avoids
+                  --  having too long menus, and since the debugger can not
+                  --  handle multiple line commands anyway is not a big
+                  --  problem.
+                  --  We do not use Editor.Buffer directly, so that we don't
+                  --  have to take into account the presence of line numbers.
+
+                  declare
+                     S : constant String :=
+                       Get_Chars (Box.Child, Select_Min, Select_Max);
+                  begin
+                     for J in S'Range loop
+                        if S (J) = ASCII.LF then
+                           Select_Max := Gint (J - S'First) + Select_Min;
+                           exit;
+                        end if;
+                     end loop;
+
+                     --  Use the selection...
+                     Menu := Child_Contextual_Menu
+                       (Box, Line,
+                        Get_Chars (Box.Child, Select_Min,Select_Max));
+                  end;
+
                else
-                  Menu := Child_Contextual_Menu (Box, Line, "");
+                  Get_Entity_Area
+                    (Box, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+                     Area, Entity);
+                  if Entity /= null then
+                     Menu := Child_Contextual_Menu (Box, Line, Entity.all);
+                     Free (Entity);
+                  else
+                     Menu := Child_Contextual_Menu (Box, Line, "");
+                  end if;
                end if;
 
                Popup (Menu,
@@ -654,35 +737,9 @@ package body GVD.Text_Boxes is
          if X2 <= 0 then
             Index := -1;
          else
-            Index := Index_From_Line (Box, Line);
-
-            --  Go to the right column, but make sure we are still on
-            --  the current line.
-            --  Index is the index in the buffer, while J is the current
-            --  column number (after processing horizontal tabs).
-
-            Index := Index - Box.Buffer'First;
+            Index := Index_From_Line (Box, Line) - Box.Buffer'First;
             Line_Index := Index;
-
-            declare
-               J : Integer := 1;
-            begin
-               while J <= Integer (X2) loop
-                  Index := Index + 1;
-
-                  exit when Box.Buffer'Last < Index
-                    or else Box.Buffer (Index) = ASCII.LF;
-
-                  if Box.Buffer (Index) = ASCII.HT
-                    and then J mod Tab_Size /= 0
-                  then
-                     --  Go to the next column that is a multiple of Tab_Size
-                     J := (1 + J / Tab_Size) * Tab_Size + 1;
-                  else
-                     J := J + 1;
-                  end if;
-               end loop;
-            end;
+            Move_N_Columns (Box, Index, Integer (X2));
          end if;
 
          Start_Index := Index +
