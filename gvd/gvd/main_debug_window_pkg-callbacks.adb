@@ -984,7 +984,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
             if Is_Func then
                Process_User_Command
                  (Tab,
-                  "graph display `" & Expression & '`',
+                  "graph print `" & Expression & '`',
                   Output_Command => True);
             else
                Process_User_Command
