@@ -666,10 +666,6 @@ package body Src_Info.Queries is
                   Decl             => Decl,
                   Ref              => Ref,
                   Status           => Status);
-               Destroy (Entity);
-               Location := Decl.Declaration.Location;
-               Status := Success;
-               return;
             end if;
 
             Destroy (Entity);
@@ -694,10 +690,6 @@ package body Src_Info.Queries is
             --  separate body (BA28-004)
             Location := Decl.Declaration.Location;
          end if;
-      else
-         Trace (Me, "Couldn't find a valid xref for " & Entity_Name
-                & " line=" & Line'Img & " Column=" & Column'Img
-                & " file=" & Base_Name (File_Name));
       end if;
 
    exception
