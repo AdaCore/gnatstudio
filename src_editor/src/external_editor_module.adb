@@ -663,7 +663,7 @@ package body External_Editor_Module is
       Column : Integer := 1;
       Current_Client : External_Client_Information_Access;
    begin
-      Push_State (Get_Kernel (File), Processing);
+      Push_State (Get_Kernel (File), Busy);
 
       Trace (Me, "Edit file with external editor " & File_Information (File));
 
