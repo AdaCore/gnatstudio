@@ -1639,7 +1639,7 @@ package body Help_Module is
       Directory : String)
    is
       Full : constant String := Name_As_Directory (Directory) & Index_File;
-      Node : Node_Ptr;
+      Node, N : Node_Ptr;
       Err  : GNAT.OS_Lib.String_Access;
    begin
       if Is_Regular_File (Full) then
@@ -1651,7 +1651,11 @@ package body Help_Module is
             Insert (Kernel, Err.all, Mode => Error);
             Free (Err);
          else
-            Customize (Kernel, Create (Full), Node.Child, System_Wide);
+            N := Node.Child;
+            while N /= null loop
+               Customize (Kernel, Create (Full), N, System_Wide);
+               N := N.Next;
+            end loop;
             Free (Node);
          end if;
       end if;
