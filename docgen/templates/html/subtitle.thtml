@@ -1,0 +1,7 @@
+<TABLE WIDTH="1%" CELLPADDING="0" CELLSPACING="0">
+<TR><TD><PRE>
+@_INDENT_@
+</PRE></TD>
+<TD bgcolor="#9999FF">
+<H@_LEVEL_@><B>@_SUBTITLE_@</B></H@_LEVEL_@>
+</TD></TR></TABLE>

@@ -1,0 +1,8 @@
+<TR><TD><PRE>@_INDENT_@
+@@IF@@ @_REF_FILE_@
+<A HREF="@_REF_FILE_@#@_LINE_@">@_NAME_@</a>
+@@ELSE@@
+@_NAME_@
+@@ENDIF@@
+declared at&nbsp;@_FILE_@&nbsp;@_LINE_@:@_COLUMN_@
+</PRE></TD><TR>

@@ -1,0 +1,11 @@
+<TABLE BGCOLOR="#9999FF" WIDTH="100%">
+<TR><TD>
+<H1>Package
+<I>
+<A NAME="@_FIRST_FILE_LINE_@"></A><A NAME="@_HEADER_LINE_@"></A>
+@@IF@@ @_HEADER_LINK_@
+<A HREF="@_HEADER_LINK_@">
+@@END_IF@@
+@_HEADER_PACKAGE_@</A></I></H1>
+</TD></TR></TABLE>
+<PRE>

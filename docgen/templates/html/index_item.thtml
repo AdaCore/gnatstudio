@@ -1,0 +1,3 @@
+<A HREF="@_DOC_FILE_@#@_LINE_@" TARGET="main">@_NAME_@</A>
+<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; in @_DECL_FILE_@
+<BR>
