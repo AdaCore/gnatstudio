@@ -63,21 +63,6 @@ package body Src_Info.LI_Utils is
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
-   procedure Convert_To_Parsed
-     (File : in out LI_File_Ptr; Update_Timestamp : Boolean := True);
-   --  Set File as parsed, ie indicate that the actual database has been parsed
-   --  and this is no longer only a stub.
-   --  If Update_Timestamp is True, then the timestamp of the LI file is also
-   --  recomputed.
-
-   procedure Create_Stub_For_File
-     (LI            : out LI_File_Ptr;
-      Handler       : CPP_LI_Handler;
-      List          : in out LI_File_List;
-      Full_Filename : String);
-   --  Create a stub LI file for Full_Filename. This function doesn't test
-   --  whether there is already an entry in List for Full_Filename.
-
    --------------------------
    --  Insert_declaration  --
    --------------------------
@@ -98,14 +83,12 @@ package body Src_Info.LI_Utils is
       Declaration_Info        : out E_Declaration_Info_List) is
    begin
       if File = No_LI_File then
-         Create_LI_File
-           (Handler          => LI_Handler (Handler),
-            List             => List,
-            File             => File,
-            LI_Full_Filename => Get_DB_Dir (Handler) &
-              Xref_Filename_For
-              (Source_Filename, Get_DB_Dir (Handler), Get_Xrefs (Handler)).all,
-            Parsed           => True);
+         Create_Stub_For_File
+           (LI            => File,
+            Handler       => Handler,
+            List          => List,
+            Full_Filename => Source_Filename,
+            Parsed        => True);
       else
          --  Check that we parsed the correct file.
          Assert (Me, LI_Handler (Handler) = File.LI.Handler,
@@ -183,29 +166,11 @@ package body Src_Info.LI_Utils is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
       List                 : in out LI_File_List;
-      Source_Filename      : String;
       Referred_Filename    : String)
    is
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
-      --  checking existence of given LI_File and create new one if necessary
-      if File = No_LI_File then
-         Create_LI_File
-           (File             => File,
-            List             => List,
-            LI_Full_Filename => Get_DB_Dir (Handler) & Xref_Filename_For
-              (Source_Filename,
-               Get_DB_Dir (Handler), Get_Xrefs (Handler)).all,
-            Handler          => LI_Handler (Handler),
-            Parsed           => True);
-      else
-         Assert (Me,
-                 LI_Handler (Handler) = File.LI.Handler,
-                 "Invalid Handler");
-         Convert_To_Parsed (File);
-      end if;
-
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
@@ -263,7 +228,6 @@ package body Src_Info.LI_Utils is
    procedure Insert_Dependency_Declaration
      (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                    : in out LI_File_Ptr;
-      LI_Full_Filename        : String;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
       Referred_Filename       : String;
@@ -280,19 +244,6 @@ package body Src_Info.LI_Utils is
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
-      --  checking existance of given LI_File and create new one if necessary
-      if File = No_LI_File then
-         Create_LI_File
-           (File             => File,
-            List             => List,
-            LI_Full_Filename => LI_Full_Filename,
-            Handler          => LI_Handler (Handler),
-            Parsed           => True);
-      else
-         pragma Assert (LI_Handler (Handler) = File.LI.Handler,
-                        "Invalid Handler");
-         Convert_To_Parsed (File);
-      end if;
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
@@ -505,13 +456,9 @@ package body Src_Info.LI_Utils is
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      Source_Filename         : String;
       Location                : Point;
       Kind                    : Reference_Kind)
    is
-      pragma Unreferenced (Source_Filename);
-      --  ??? Parameter could be removed.
-
       R_Ptr : E_Reference_List;
    begin
       if Declaration_Info = null then
@@ -629,9 +576,10 @@ package body Src_Info.LI_Utils is
 
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
-      Handler       : CPP_LI_Handler;
+      Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       List          : in out LI_File_List;
-      Full_Filename : String)
+      Full_Filename : String;
+      Parsed        : Boolean := False)
    is
       Xref_Name : String_Access;
    begin
@@ -642,7 +590,7 @@ package body Src_Info.LI_Utils is
          List             => List,
          LI_Full_Filename => Get_DB_Dir (Handler) & Xref_Name.all,
          Handler          => LI_Handler (Handler),
-         Parsed           => False);
+         Parsed           => Parsed);
       Create_File_Info
         (FI_Ptr           => LI.LI.Body_Info,
          Full_Filename    => Full_Filename);

@@ -54,7 +54,6 @@ private package Src_Info.LI_Utils is
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
       List                 : in out LI_File_List;
-      Source_Filename      : String;
       Referred_Filename    : String);
    --  Create a new dependency, from the files described in File to the source
    --  file Referred_Filename.
@@ -62,7 +61,6 @@ private package Src_Info.LI_Utils is
    procedure Insert_Dependency_Declaration
      (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                    : in out LI_File_Ptr;
-      LI_Full_Filename        : String;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
       Referred_Filename       : String;
@@ -100,7 +98,6 @@ private package Src_Info.LI_Utils is
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
       File                    : LI_File_Ptr;
-      Source_Filename         : String;
       Location                : SN.Point;
       Kind                    : Reference_Kind);
    --  Inserts new reference to declaration. Declaration here is specified
@@ -145,6 +142,17 @@ private package Src_Info.LI_Utils is
    --  If Set_Time_Stamp is True, then the timestamp is computed by reading
    --  Full_Filename.
 
+   procedure Create_Stub_For_File
+     (LI            : out LI_File_Ptr;
+      Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      List          : in out LI_File_List;
+      Full_Filename : String;
+      Parsed        : Boolean := False);
+   --  Create a stub LI file for Full_Filename. This function doesn't test
+   --  whether there is already an entry in List for Full_Filename.
+   --  If Parsed is True, the LI file will be considered as already parsed,
+   --  even though no entity will be declared for it.
+
    procedure Create_LI_File
      (File               : out LI_File_Ptr;
       List               : in out LI_File_List;
@@ -155,5 +163,12 @@ private package Src_Info.LI_Utils is
    --  Creates an empty LI_File structure.
    --  File is set to null if it couldn't be added to the global list of LI
    --  files.
+
+   procedure Convert_To_Parsed
+     (File : in out LI_File_Ptr; Update_Timestamp : Boolean := True);
+   --  Set File as parsed, ie indicate that the actual database has been parsed
+   --  and this is no longer only a stub.
+   --  If Update_Timestamp is True, then the timestamp of the LI file is also
+   --  recomputed.
 
 end Src_Info.LI_Utils;
