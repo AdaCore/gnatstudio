@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;          use Glib.Object;
-with Glide_Consoles;       use Glide_Consoles;
 with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
@@ -39,7 +38,7 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 package body Glide_Kernel.Console is
 
    type Console_Module_Id_Record is new Module_ID_Record with record
-      Console : Glide_Consoles.Glide_Console;
+      Console : Glide_Interactive_Consoles.Glide_Interactive_Console;
       Interactive_Console :
         Glide_Interactive_Consoles.Glide_Interactive_Console;
    end record;
@@ -53,10 +52,6 @@ package body Glide_Kernel.Console is
    Console_Module_Name : constant String := "Glide_Kernel.Console";
 
    Me : constant Debug_Handle := Create (Console_Module_Name);
-
-   function Get_Console
-     (Kernel : access Kernel_Handle_Record'Class) return Glide_Console;
-   --  Return the console associated with the kernel.
 
    function Get_Or_Create_Result_View
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -155,7 +150,7 @@ package body Glide_Kernel.Console is
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class)
-      return Glide_Console
+      return Glide_Interactive_Console
    is
       pragma Unreferenced (Kernel);
    begin
@@ -167,7 +162,7 @@ package body Glide_Kernel.Console is
    -----------
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class) is
-      Console : constant Glide_Console := Get_Console (Kernel);
+      Console : constant Glide_Interactive_Console := Get_Console (Kernel);
    begin
       if Console /= null then
          Clear (Console);
@@ -184,12 +179,12 @@ package body Glide_Kernel.Console is
       Add_LF         : Boolean := True;
       Mode           : Message_Type := Info)
    is
-      Console : constant Glide_Console := Get_Console (Kernel);
+      Console : constant Glide_Interactive_Console := Get_Console (Kernel);
    begin
       if Console = null then
          Put_Line (Text);
       else
-         Insert (Console, Text, Add_LF, Mode);
+         Insert (Console, Text, Add_LF, (Mode = Error));
       end if;
    end Insert;
 
@@ -200,7 +195,7 @@ package body Glide_Kernel.Console is
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class) is
       MDI   : constant MDI_Window := Get_MDI (Kernel);
       Child : constant MDI_Child :=
-        Find_MDI_Child_By_Tag (MDI, Glide_Console_Record'Tag);
+        Find_MDI_Child_By_Name (MDI, -"Messages");
    begin
       if Child /= null then
          Raise_Child (Child);
@@ -289,7 +284,7 @@ package body Glide_Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Console : constant Glide_Console := Get_Console (Kernel);
+      Console : constant Glide_Interactive_Console := Get_Console (Kernel);
       FD      : File_Descriptor;
       Len     : Integer;
 
@@ -326,7 +321,7 @@ package body Glide_Kernel.Console is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Console  : constant Glide_Console := Get_Console (Kernel);
+      Console  : constant Glide_Interactive_Console := Get_Console (Kernel);
       Contents : String_Access;
 
    begin
@@ -389,12 +384,18 @@ package body Glide_Kernel.Console is
    procedure Initialize_Console
      (Kernel         : access Kernel_Handle_Record'Class)
    is
-      Console             : Glide_Console;
+      Console             : Glide_Interactive_Console;
       Interactive_Console : Glide_Interactive_Console;
       Child               : MDI_Child;
 
    begin
-      Gtk_New (Console, Kernel);
+      Gtk_New (Console,
+               "",
+               null,
+               GObject (Kernel),
+               Get_Pref (Kernel, Default_Font));
+      Enable_Prompt_Display (Console, False);
+
       Child := Put
         (Get_MDI (Kernel), Console, Iconify_Button or Maximize_Button);
       Set_Title (Child, -"Messages");
