@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 1.1.0
 
+- Loading a non existant executable generates a bug box
+  Problem:    When using the File->Open Program... menu and specifying
+              a non existant file, GVD generates a bug box instead of
+              reporting the error in the status bar.
+  Workaround: The error can safely be ignored.
+
 - Wrong command line "--log-level" not handled properly
   Problem:    When specifying the --log-level option with no parameter,
               GVD generates a bug box instead of displaying the help
