@@ -110,13 +110,7 @@ private
       --  Buffer for the command, to be added in front of any command before
       --  executing.
 
-      Current_Output : GNAT.OS_Lib.String_Access;
-      Save_Output    : Boolean := False;
-      --  The output of the current command, and whether we should save it,
-      --  or discard it as soon as it has been printed in the console.
-
       Destroy_Id   : Gtk.Handlers.Handler_Id;
-
       Console : Interactive_Consoles.Interactive_Console;
       --  The default python console
 

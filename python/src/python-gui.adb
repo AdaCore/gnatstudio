@@ -105,7 +105,6 @@ package body Python.GUI is
 
    type Output_Class_Data is record
       Console      : Interactive_Console;
-      Capture      : Boolean;
    end record;
    type Output_Class_Data_Access is access Output_Class_Data;
    --  Data stored in the Output class
@@ -214,7 +213,6 @@ package body Python.GUI is
       Stdout      : aliased PyObject;
       Interpreter : Python_Interpreter;
       Data        : PyObject;
-      Old         : String_Access;
       Output_Data : Output_Class_Data_Access;
 
    begin
@@ -231,15 +229,6 @@ package body Python.GUI is
       Data := PyObject_GetAttrString (Stdout, Class_Instance_Data_Key);
       Output_Data := Convert (PyCObject_AsVoidPtr (Data));
       Py_DECREF (Data);
-
-      if Output_Data.Capture
-        and then Interpreter.Save_Output
-      then
-         Old := Interpreter.Current_Output;
-         Interpreter.Current_Output :=
-           new String'(Old.all & Value (S, size_t (N)));
-         Free (Old);
-      end if;
 
       Insert_Text (Interpreter, Value (S, size_t (N)), Output_Data.Console);
       Process_Gtk_Events (Interpreter);
@@ -307,17 +296,12 @@ package body Python.GUI is
       Output_Data : Output_Class_Data_Access;
       User_Data   : PyObject;
       Instance    : aliased PyObject;
-      Capture     : aliased Integer;
    begin
-      if not PyArg_ParseTuple
-        (Args, "Oi", Instance'Address, Capture'Address)
-      then
+      if not PyArg_ParseTuple (Args, "O", Instance'Address) then
          return null;
       end if;
 
-      Output_Data := new Output_Class_Data'
-        (Console      => null,
-         Capture      => Capture /= 0);
+      Output_Data := new Output_Class_Data'(Console => null);
       User_Data := PyCObject_FromVoidPtr
         (Output_Data.all'Address, Destroy_Output_Data'Access);
       PyObject_SetAttrString (Instance, Class_Instance_Data_Key, User_Data);
@@ -424,11 +408,11 @@ package body Python.GUI is
       --  after temporarily modifying sys.stdout in their own programs
       if not PyRun_SimpleString
         ("sys.stdin="
-         & Module_Name & '.' & Console_Class_Name & "(1)" & ASCII.LF
+         & Module_Name & '.' & Console_Class_Name & "()" & ASCII.LF
          & "sys.stdout="
-         & Module_Name & '.' & Console_Class_Name & "(1)" & ASCII.LF
+         & Module_Name & '.' & Console_Class_Name & "()" & ASCII.LF
          & "sys.stderr="
-         & Module_Name & '.' & Console_Class_Name & "(0)" & ASCII.LF
+         & Module_Name & '.' & Console_Class_Name & "()" & ASCII.LF
          & "sys.__stdout__=sys.stdout" & ASCII.LF
          & "sys.__stdin__=sys.stdin" & ASCII.LF
          & "sys.__stderr__=sys.stderr" & ASCII.LF)
@@ -575,22 +559,25 @@ package body Python.GUI is
       Errors      : access Boolean) return String
    is
       Result : PyObject;
-      pragma Unreferenced (Result);
+      Str    : PyObject;
    begin
-      Interpreter.Save_Output := True;
-      Interpreter.Current_Output := new String'("");
-
       Result :=
         Run_Command (Interpreter, Command, Console,
                      Show_Command, Hide_Output, Errors);
 
-      declare
-         Output : constant String := Interpreter.Current_Output.all;
-      begin
-         Free (Interpreter.Current_Output);
-         Interpreter.Save_Output := False;
-         return Output;
-      end;
+      if Result /= null and then not Errors.all then
+         Str := PyObject_Str (Result);
+         Py_DECREF (Result);
+         declare
+            S : constant String := PyString_AsString (Str);
+         begin
+            Py_DECREF (Str);
+            return S;
+         end;
+      else
+         Py_XDECREF (Result);
+         return "";
+      end if;
    end Run_Command;
 
    -----------------
@@ -645,6 +632,10 @@ package body Python.GUI is
          Set_Default_Console (Interpreter, Console);
       end if;
 
+      --  Reset previous output
+      Builtin := PyImport_ImportModule ("__builtin__");
+      PyObject_SetAttrString (Builtin, "_", Py_None);
+
       Interpreter.In_Process := True;
 
       Code := Py_CompileString (Cmd, "<stdin>", Py_Single_Input);
@@ -663,7 +654,6 @@ package body Python.GUI is
             end if;
          end if;
 
-         Builtin := PyImport_ImportModule ("__builtin__");
          Obj := PyEval_EvalCode
            (Code, Interpreter.Globals, Interpreter.Globals);
          Py_DECREF (PyObject (Code));
@@ -678,6 +668,7 @@ package body Python.GUI is
 
          if Obj = null then
             PyErr_Print;
+            Trace (Me, "Got a null result, this is an error");
             Errors.all := True;
          else
             --  No other python command between this one and the previous
@@ -724,6 +715,7 @@ package body Python.GUI is
                   if not Interpreter.Use_Secondary_Prompt then
                      PyErr_Restore (Typ, Occurrence, Traceback);
                      PyErr_Print;
+                     Trace (Me, "Unexpected end of input");
                      Errors.all := True;
                   else
                      PyErr_Clear;
