@@ -1750,9 +1750,13 @@ package body Gtkada.MDI is
 
          if Curs /= MDI.Current_Cursor then
             MDI.Current_Cursor := Curs;
-            Gdk_New (Cursor, MDI.Current_Cursor);
-            Gdk.Window.Set_Cursor (Get_Window (Child), Cursor);
-            Destroy (Cursor);
+            if Curs = Left_Ptr then
+               Gdk.Window.Set_Cursor (Get_Window (Child), null);
+            else
+               Gdk_New (Cursor, MDI.Current_Cursor);
+               Gdk.Window.Set_Cursor (Get_Window (Child), Cursor);
+               Destroy (Cursor);
+            end if;
          end if;
       end if;
       return True;
@@ -1767,15 +1771,12 @@ package body Gtkada.MDI is
       Event : Gdk_Event) return Boolean
    is
       MDI    : MDI_Window := MDI_Child (Child).MDI;
-      Cursor : Gdk_Cursor;
    begin
       if Get_State (Event) = 0
         and then MDI.Current_Cursor /= Left_Ptr
       then
          MDI.Current_Cursor := Left_Ptr;
-         Gdk_New (Cursor, MDI.Current_Cursor);
-         Gdk.Window.Set_Cursor (Get_Window (Child), Cursor);
-         Destroy (Cursor);
+         Gdk.Window.Set_Cursor (Get_Window (Child), null);
       end if;
 
       return False;
@@ -2910,6 +2911,7 @@ package body Gtkada.MDI is
                          Allocation_Int (C.Uniconified_Width),
                          Allocation_Int (C.Uniconified_Height));
                Size_Allocate (C, Alloc);
+
                Unref (C);
             end if;
          end loop;

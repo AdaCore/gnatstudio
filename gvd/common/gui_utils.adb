@@ -191,12 +191,11 @@ package body GUI_Utils is
    begin
       if Busy then
          Gdk_New (Cursor, Watch);
+         Set_Cursor (Window, Cursor);
+         Destroy (Cursor);
       else
-         Gdk_New (Cursor, Left_Ptr);
+         Set_Cursor (Window, null);
       end if;
-
-      Set_Cursor (Window, Cursor);
-      Destroy (Cursor);
 
       if Force_Refresh then
          Gdk.Main.Flush;
