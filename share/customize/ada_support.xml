@@ -96,7 +96,7 @@
            <check label="Size/align warnings for unchecked conversion"
                   switch="-gnatwz" />
            <expansion switch="-gnatw" />
-           <expansion switch="-gnatwa" alias="-gnatwcfijkmopruvz" >
+           <expansion switch="-gnatwa" alias="-gnatwcfijkmopruvz">
                <entry switch="-gnatwc" />
                <entry switch="-gnatwf" />
                <entry switch="-gnatwi" />
@@ -129,7 +129,8 @@
                    tip="All subscripts expressions are checked for validty" />
             <check label="Checking for tests" switch="-gnatVt"
                    tip="Expressions used as conditions in if, while or exit statements are checked, as well as guard expressions in entry calls" />
-            <expansion switch="-gnatV" >
+            <expansion switch="-gnatV" />
+            <expansion switch="-gnatVa" alias="-gnatVcdfimorst">
                <entry switch="-gnatVc" />
                <entry switch="-gnatVd" />
                <entry switch="-gnatVf" />
