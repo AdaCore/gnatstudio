@@ -49,9 +49,7 @@ package body Codefix.Errors_Manager is
 
       Get_Direct_Message (This, Current);
 
-      if Current.File_Name = null or else Current.File_Name.all = "" then
-         Free (Current);
-         Current := Invalid_Error_Message;
+      if Current = Invalid_Error_Message then
          return;
       end if;
 
