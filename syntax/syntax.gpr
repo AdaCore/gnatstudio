@@ -9,4 +9,8 @@ project Syntax is
    package Compiler renames Shared.Compiler;
    package IDE renames Shared.IDE;
 
+   package Builder is
+      for Default_Switches ("Ada") use ("-m", "-a");
+   end Builder;
+
 end Syntax;
