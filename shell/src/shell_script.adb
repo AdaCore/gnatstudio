@@ -159,12 +159,14 @@ package body Shell_Script is
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : out Boolean);
    function Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : access Boolean) return String;
    function Execute_Command_With_Args
      (Script             : access Shell_Scripting_Record;
@@ -940,8 +942,10 @@ package body Shell_Script is
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : out Boolean)
    is
+      pragma Unreferenced (Show_Command);
       Err : aliased Boolean;
       S : constant String := Execute_GPS_Shell_Command
         (Script.Kernel, Command, Err'Unchecked_Access);
@@ -1036,8 +1040,10 @@ package body Shell_Script is
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : access Boolean) return String
    is
+      pragma Unreferenced (Show_Command);
       Err : aliased Boolean;
       Result : constant String := Execute_GPS_Shell_Command
         (Script.Kernel, Command, Err'Unchecked_Access);

@@ -344,6 +344,7 @@ package Glide_Kernel.Scripts is
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : out Boolean) is abstract;
    --  Execute a command in the script language.
    --  It isn't possible to retrieve the result of that command, this command
@@ -355,12 +356,15 @@ package Glide_Kernel.Scripts is
    --  are not visible to the user if Hide_Output is True. Otherwise, the text
    --  is sent to the default Python console if Console is null, or to the
    --  explicit Console specified by the caller.
+   --  If Show_Command is True and Hide_Output is False, then the command
+   --  itself is also printed in the console
 
    function Execute_Command
      (Script             : access Scripting_Language_Record;
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : access Boolean) return String;
    --  Execute a command, and return its result as a displayable string.
    --  Note: some languages might simply return an empty string if they cannot

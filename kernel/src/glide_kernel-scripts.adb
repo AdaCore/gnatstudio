@@ -1900,7 +1900,7 @@ package body Glide_Kernel.Scripts is
    begin
       return Execute_Command
         (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
-         Command, null, True, Errors'Unchecked_Access);
+         Command, null, True, True, Errors'Unchecked_Access);
    end Execute_GPS_Shell_Command;
 
    -------------------------------
@@ -1945,7 +1945,7 @@ package body Glide_Kernel.Scripts is
       Errors : aliased Boolean;
       Str : constant String := Execute_Command
         (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
-         Command, null, True, Errors'Unchecked_Access);
+         Command, null, True, True, Errors'Unchecked_Access);
       pragma Unreferenced (Str);
    begin
       null;
@@ -1960,11 +1960,12 @@ package body Glide_Kernel.Scripts is
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : access Boolean) return String is
    begin
       Execute_Command
         (Scripting_Language (Script),
-         Command, Console, Hide_Output, Errors.all);
+         Command, Console, Hide_Output, Show_Command, Errors.all);
       return "";
    end Execute_Command;
 

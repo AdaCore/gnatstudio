@@ -107,12 +107,14 @@ package body Python_Module is
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : out Boolean);
    function Execute_Command
      (Script             : access Python_Scripting_Record;
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : access Boolean) return String;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
@@ -1171,9 +1173,10 @@ package body Python_Module is
       Command            : String;
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
+      Show_Command       : Boolean := True;
       Errors             : out Boolean) is
    begin
-      if not Hide_Output then
+      if not Hide_Output and then Show_Command then
          Insert_Text (Script.Interpreter, Command & ASCII.LF, Console);
       end if;
 
@@ -1189,11 +1192,14 @@ package body Python_Module is
    ---------------------
 
    function Execute_Command
-     (Script      : access Python_Scripting_Record;
-      Command     : String;
-      Console     : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output : Boolean := False;
-      Errors      : access Boolean) return String is
+     (Script       : access Python_Scripting_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : access Boolean) return String
+   is
+      pragma Unreferenced (Show_Command);
    begin
       return Run_Command
         (Script.Interpreter, Command,
@@ -1215,7 +1221,7 @@ package body Python_Module is
    begin
       Execute_Command
         (Script, "execfile (""" & Filename & """)",
-         Console, Hide_Output, Errors);
+         Console, Hide_Output, True, Errors);
    end Execute_File;
 
    --------------
