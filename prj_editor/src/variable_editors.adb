@@ -35,7 +35,6 @@ with Gtk.List_Item;       use Gtk.List_Item;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Frame;           use Gtk.Frame;
-with Gtk.Editable;        use Gtk.Editable;
 with Gtk.Pixmap;          use Gtk.Pixmap;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Check_Button;    use Gtk.Check_Button;
@@ -532,22 +531,15 @@ package body Variable_Editors is
         (Kind_Of (Var) = N_Typed_Variable_Declaration
          or else Kind_Of (Var) = N_Variable_Declaration);
 
-      if Var = Empty_Node then
-         --  ???  For each variable in the project
-         --  Refresh (Editor, Var);
-         null;
-
-      else
-         if Editor.Data /= null then
-            for J in Editor.Data'Range loop
-               if Editor.Data (J).Var = Var then
-                  Refresh_Row (Editor, J, Var);
-                  return;
-               end if;
-            end loop;
-         end if;
-         Refresh_Row (Editor, Editor.Num_Rows + 1, Var);
+      if Editor.Data /= null then
+         for J in Editor.Data'Range loop
+            if Editor.Data (J).Var = Var then
+               Refresh_Row (Editor, J, Var);
+               return;
+            end if;
+         end loop;
       end if;
+      Refresh_Row (Editor, Editor.Num_Rows + 1, Var);
    end Refresh;
 
    -------------------
