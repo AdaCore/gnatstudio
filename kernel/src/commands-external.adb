@@ -56,6 +56,7 @@ package body Commands.External is
       Free (D.Head);
       Free (D.Command);
       Free (D.Dir);
+      Free (D.Output);
       Free (D_Copy);
    end Destroy;
 
