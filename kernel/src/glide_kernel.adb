@@ -1223,7 +1223,9 @@ package body Glide_Kernel is
       Col_Num   : Gint;
 
    begin
-      Iter := Find_All_Possible_Declarations (Lib_Info, Entity_Name);
+      Iter := Find_All_Possible_Declarations
+        (Lib_Info    => Lib_Info,
+         Entity_Name => Entity_Name);
 
       while not At_End (Iter) loop
          Count := Count + 1;
@@ -1316,7 +1318,9 @@ package body Glide_Kernel is
       end if;
 
    exception
-      when others =>
+      when E : others =>
+         Trace (Me, "Select_Entity_Declaration: Unexpected exception "
+                & Exception_Information (E));
          if Dialog /= null then
             Destroy (Dialog);
          end if;
