@@ -1756,8 +1756,14 @@ package body Src_Editor_Buffer is
       Close (FD);
 
       --  If the file could be saved, emit the corresponding signal.
+      --  Emit the signal only if we are really saving to the buffer's file,
+      --  not to another filename (which happens for example when doing
+      --  automatic saves.
 
-      if Success then
+      if Success
+        and then Buffer.Filename /= null
+        and then Filename = Buffer.Filename.all
+      then
          File_Saved (Buffer.Kernel, Filename);
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
          Buffer.Current_Status := Saved;
