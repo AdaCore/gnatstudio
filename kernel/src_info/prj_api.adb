@@ -51,7 +51,8 @@ package body Prj_API is
       Name : String;
       Array_Index : String_Id := No_String;
       Item_Kind : Project_Node_Kind := N_Attribute_Declaration;
-      Kind : Variable_Kind := List)
+      Kind : Variable_Kind := List;
+      Add_Before_First_Case_Or_Pkg : Boolean := False)
       return Project_Node_Id;
    --  Internal version for Get_Or_Create_Attribute. If Array_Index is not
    --  No_String, then the variable is defined for a specific index.
@@ -63,13 +64,26 @@ package body Prj_API is
    --  references to external environment variables.
 
    function Find_Last_Declaration_Of
-     (Parent  : Project_Node_Id;
-      Attr_Name  : String;
-      Attr_Index : String_Id) return Project_Node_Id;
+     (Parent     : Project_Node_Id;
+      Attr_Name  : Types.Name_Id;
+      Attr_Index : Types.String_Id := Types.No_String) return Project_Node_Id;
    --  Find the last declaration for the attribute Attr_Name, in the
    --  declarative list contained in Parent.
    --  The returned value is the expression_of of the last such declaration, or
    --  Empty_Node if there was none.
+
+   ----------------
+   -- Get_String --
+   ----------------
+
+   function Get_String (Str : Types.String_Id) return String is
+      R : String (1 .. Natural (String_Length (Str)));
+   begin
+      for J in R'Range loop
+         R (J) := Get_Character (Get_String_Char (Str, Int (J)));
+      end loop;
+      return R;
+   end Get_String;
 
    --------------------
    -- Create_Project --
@@ -115,10 +129,11 @@ package body Prj_API is
       Name : String;
       Array_Index : String_Id := No_String;
       Item_Kind : Project_Node_Kind := N_Attribute_Declaration;
-      Kind : Variable_Kind := List)
+      Kind : Variable_Kind := List;
+      Add_Before_First_Case_Or_Pkg : Boolean := False)
       return Project_Node_Id
    is
-      Var : Project_Node_Id;
+      Var, Decl, Item : Project_Node_Id;
    begin
       pragma Assert
         (Kind_Of (Prj_Or_Pkg) = N_Package_Declaration
@@ -127,7 +142,7 @@ package body Prj_API is
 
       --  Create the variable
 
-      Var := Default_Project_Node (Item_Kind, Kind);
+      Var      := Default_Project_Node (Item_Kind, Kind);
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
       Set_Name_Of (Var, Name_Find);
@@ -135,19 +150,26 @@ package body Prj_API is
          Set_Associative_Array_Index_Of (Var, Array_Index);
       end if;
 
+      --  Create a declarative item around the variable
+      Item := Default_Project_Node (N_Declarative_Item);
+      Set_Current_Item_Node (Item, Var);
+
       --  First step is to create the declarative item that will contain the
       --  variable. This is dependent on the kind of node for Prj_Or_Pkg
 
       if Kind_Of (Prj_Or_Pkg) = N_Project then
-         Add_At_End (Get_Or_Create_Declaration (Prj_Or_Pkg), Var);
+         Decl := Get_Or_Create_Declaration (Prj_Or_Pkg);
       else
-         Add_At_End (Prj_Or_Pkg, Var);
+         Decl := Prj_Or_Pkg;
       end if;
 
+      Add_At_End (Decl, Item, Add_Before_First_Case_Or_Pkg);
+
       --  Insert the attribute or the variable in the list Prj_Or_Pkg.Variables
-      --  if needed
-      --  If the variable is already there, do not add it to the list. But
-      --  then, if it already existed we have exited this function already.
+      --  if needed. This might mean that the variable is inserted several
+      --  times. However, since we inserted in front, the first item in the
+      --  list will always contain a reference to the *first* declaration of
+      --  the variable.
 
       if Item_Kind = N_Typed_Variable_Declaration
         or else Item_Kind = N_Variable_Declaration
@@ -208,15 +230,16 @@ package body Prj_API is
    function Get_Or_Create_Typed_Variable
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
-      Typ  : Project_Node_Id)
+      Typ  : Project_Node_Id;
+      Add_Before_First_Case_Or_Pkg : Boolean := False)
       return Project_Node_Id
    is
       V : Project_Node_Id;
    begin
-      --  ??? Shouldn't be needed, Set_String_Type_Of should do it.
       pragma Assert (Kind_Of (Typ) = N_String_Type_Declaration);
       V := Internal_Get_Or_Create_Attribute
-        (Prj_Or_Pkg, Name, No_String, N_Typed_Variable_Declaration, Single);
+        (Prj_Or_Pkg, Name, No_String, N_Typed_Variable_Declaration, Single,
+         Add_Before_First_Case_Or_Pkg);
       Set_String_Type_Of (V, Typ);
       return V;
    end Get_Or_Create_Typed_Variable;
@@ -992,24 +1015,6 @@ package body Prj_API is
       return Ref;
    end Create_Variable_Reference;
 
-   ----------------------
-   -- Create_Case_Item --
-   ----------------------
-
-   procedure Create_Case_Item (In_Case : Project_Node_Id; Value : String_Id) is
-      Item, Choice : Project_Node_Id;
-   begin
-      pragma Assert (Kind_Of (In_Case) = N_Case_Construction);
-
-      Item := Default_Project_Node (N_Case_Item);
-      Set_Next_Case_Item (Item, First_Case_Item_Of (In_Case));
-      Set_First_Case_Item_Of (In_Case, Item);
-
-      Choice := Default_Project_Node (N_Literal_String);
-      Set_String_Value_Of (Choice, Value);
-      Set_First_Choice_Of (Item, Choice);
-   end Create_Case_Item;
-
    ------------------------
    -- Typed_Values_Count --
    ------------------------
@@ -1121,9 +1126,11 @@ package body Prj_API is
    ----------------
 
    procedure Add_At_End
-     (Parent : Project_Node_Id; Expr : Project_Node_Id)
+     (Parent                       : Project_Node_Id;
+      Expr                         : Project_Node_Id;
+      Add_Before_First_Case_Or_Pkg : Boolean := False)
    is
-      New_Decl, Decl : Project_Node_Id;
+      New_Decl, Decl, Next : Project_Node_Id;
    begin
       if Kind_Of (Expr) /= N_Declarative_Item then
          New_Decl := Default_Project_Node (N_Declarative_Item);
@@ -1137,10 +1144,19 @@ package body Prj_API is
       if Decl = Empty_Node then
          Set_First_Declarative_Item_Of (Parent, New_Decl);
       else
-         while Next_Declarative_Item (Decl) /= Empty_Node loop
-            Decl := Next_Declarative_Item (Decl);
+         loop
+            Next := Next_Declarative_Item (Decl);
+            exit when Next = Empty_Node
+              or else
+              (Add_Before_First_Case_Or_Pkg
+               and then (Kind_Of (Current_Item_Node (Next))
+                         = N_Case_Construction
+                         or else Kind_Of (Current_Item_Node (Next))
+                         = N_Package_Declaration));
+            Decl := Next;
          end loop;
 
+         Set_Next_Declarative_Item (New_Decl, Next);
          Set_Next_Declarative_Item (Decl, New_Decl);
       end if;
    end Add_At_End;
@@ -1236,22 +1252,17 @@ package body Prj_API is
 
    function Find_Last_Declaration_Of
      (Parent  : Project_Node_Id;
-      Attr_Name  : String;
-      Attr_Index : String_Id) return Project_Node_Id
+      Attr_Name  : Name_Id;
+      Attr_Index : String_Id := No_String) return Project_Node_Id
    is
       Decl, Expr : Project_Node_Id;
-      Attr_N     : Name_Id;
    begin
-      Name_Len := Attr_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Attr_Name;
-      Attr_N := Name_Find;
-
       Decl := First_Declarative_Item_Of (Parent);
       while Decl /= Empty_Node loop
          Expr := Current_Item_Node (Decl);
 
          if Kind_Of (Expr) = N_Attribute_Declaration
-           and then Prj.Tree.Name_Of (Expr) = Attr_N
+           and then Prj.Tree.Name_Of (Expr) = Attr_Name
          then
             if (Attr_Index = No_String
                 and then Associative_Array_Index_Of (Expr) = No_String)
@@ -1298,7 +1309,7 @@ package body Prj_API is
          Previous_Decl, Decl, Expr : Project_Node_Id;
       begin
          Previous_Decl := Find_Last_Declaration_Of
-           (Case_Item, Attribute_Name, Attribute_Index);
+           (Case_Item, Attribute_N, Attribute_Index);
 
          --  Do we already have some declarations for this attribute ? If yes,
          --  If we found a previous declaration, update it
@@ -1404,7 +1415,7 @@ package body Prj_API is
          Previous_Decl, Decl : Project_Node_Id;
       begin
          Previous_Decl := Find_Last_Declaration_Of
-           (Case_Item, Attribute_Name, Attribute_Index);
+           (Case_Item, Attribute_N, Attribute_Index);
 
          --  If we found a previous declaration, update it
 

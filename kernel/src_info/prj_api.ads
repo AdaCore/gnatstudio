@@ -46,6 +46,10 @@ package Prj_API is
    type Project_Node_Array is array (Positive range <>) of Project_Node_Id;
    type Project_Node_Array_Access is access Project_Node_Array;
 
+   function Get_String (Str : Types.String_Id) return String;
+   --  This functional form returns the value of Str as a string without
+   --  affecting the contents of either Name_Buffer or Name_Len.
+
    procedure Free is new Unchecked_Deallocation
      (Project_Node_Array, Project_Node_Array_Access);
 
@@ -74,6 +78,8 @@ package Prj_API is
       return Project_Node_Id;
    --  Create a variable inside the package or the project Prj_Or_Pkg.
    --  This creates an internal untyped variable.
+   --  The declaration is put first in the project, sp that it appears before
+   --  the case statement in a normalized project
 
    function Get_Or_Create_Type
      (Prj_Or_Pkg : Project_Node_Id;
@@ -81,6 +87,8 @@ package Prj_API is
       return Project_Node_Id;
    --  Create type. By default, there is no possible value, you
    --  must add some with Add_Possible_Value.
+   --  The declaration is put first in the project, sp that it appears before
+   --  the case statement in a normalized project
 
    function Add_Possible_Value (Typ : Project_Node_Id; Choice : String)
       return Types.String_Id;
@@ -89,9 +97,15 @@ package Prj_API is
    function Get_Or_Create_Typed_Variable
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
-      Typ  : Project_Node_Id)
+      Typ  : Project_Node_Id;
+      Add_Before_First_Case_Or_Pkg : Boolean := False)
       return Project_Node_Id;
    --  Create a new variable of a specific type Typ.
+   --  The declaration is appended at the end of the declarative items list in
+   --  the project or the package, unless Add_Before_First_Case is True. In
+   --  this case, it is put just before the first N_Case_Construction node is
+   --  encountered (i.e the last position in the common section of a normalized
+   --  project).
 
    function Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
@@ -108,6 +122,9 @@ package Prj_API is
    --
    --  If the variable is a list, it also creates the associated
    --  N_Literal_String_List node.
+   --
+   --  The declaration is put first in the project, sp that it appears before
+   --  the case statement in a normalized project
 
    function Get_Or_Create_Package
      (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
@@ -118,23 +135,22 @@ package Prj_API is
    --  Create and return a reference to the variable Var.
    --  Var must be a variable declaration
 
-   procedure Create_Case_Item
-     (In_Case : Project_Node_Id; Value : Types.String_Id);
-   --  Create a new case item at the front of the list of items for In_Case.
-   --  This is equivalent to a
-   --        "when " & Value & " => "
-   --  construction.
-   --  The new item can be found by accessing First_Case_Item_Of (In_Case)
-
    procedure Add_Imported_Project
      (Project : Project_Node_Id; Imported_Project : Project_Node_Id);
    --  Add a new with_statement for Imported_Project.
 
    procedure Add_At_End
-     (Parent : Project_Node_Id; Expr : Project_Node_Id);
-   --  Add a new declarative item at the end of the list contained in
-   --  parents. This new declarative item will contain Expr.
-   --  Note that if Expr is already a declarative item, it is added directly.
+     (Parent                       : Project_Node_Id;
+      Expr                         : Project_Node_Id;
+      Add_Before_First_Case_Or_Pkg : Boolean := False);
+   --  Add a new declarative item in the list in Parent.
+   --  This new declarative item will contain Expr (unless Expr is already a
+   --  declarative item, in which case it is added directly to the list).
+   --  The new item is inserted at the end of the list, unless
+   --  Add_Before_First_Case_Or_Pkg is True. In the latter case, it is added
+   --  just before the first case construction is seen (in normalized project
+   --  files, this corresponds to the end of the common section), or before the
+   --  first package
 
    function Enclose_In_Expression (Node : Project_Node_Id)
       return Project_Node_Id;
