@@ -34,6 +34,7 @@ with Ada.Text_IO;  use Ada.Text_IO;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
+   use Odd;
    use Gtk.Arguments;
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access);
@@ -752,8 +753,25 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Backtrace1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Top    : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab    : Debugger_Process_Tab;
+      Bt     : Backtrace_Array (1 .. Max_Frame);
+      Len    : Natural;
+
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Backtrace (Tab.Debugger, Bt, Len);
+
+      if Top.Backtrace_Dialog = null then
+         Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object), Bt (1 .. Len));
+      else
+         null;
+         --  Update (Top.Backtrace_Dialog, Bt (1 .. Len));
+      end if;
+
+      Free (Bt (1 .. Len));
+      Show_All (Top.Backtrace_Dialog);
    end On_Backtrace1_Activate;
 
    ----------------------------
@@ -783,7 +801,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
       if Top.Task_Dialog = null then
          Gtk_New
            (Top.Task_Dialog, Gtk_Window (Object), Info_Threads (Tab.Debugger));
+      else
+         null;
+         --  Update (Top.Task_Dialog, Info_Threads (Tab.Debugger));
       end if;
+
+      --  Should free the memory returned by Info_Threads [MEMORY_LEAK] ???
 
       Show_All (Top.Task_Dialog);
    end On_Threads1_Activate;
@@ -1241,16 +1264,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
 
       if Top.Print_Dialog = null then
-         Gtk_New (Print_Dialog);
+         Gtk_New (Top.Print_Dialog);
       end if;
 
-      Show_All (Print_Dialog);
+      Show_All (Top.Print_Dialog);
       Main;
-      Hide (Print_Dialog);
+      Hide (Top.Print_Dialog);
 
-      if Print_Dialog.Variable /= null then
+      if Top.Print_Dialog.Variable /= null then
          Process_User_Command
-           (Tab, "graph print " & Print_Dialog.Variable.all);
+           (Tab, "graph print " & Top.Print_Dialog.Variable.all);
       end if;
    end On_Print1_Activate;
 
