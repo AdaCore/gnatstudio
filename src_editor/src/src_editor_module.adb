@@ -1621,7 +1621,12 @@ package body Src_Editor_Module is
          case Button is
             when Button_Yes =>
                Save_To_File (Box, Success => Success);
-               return Saved;
+
+               if Success then
+                  return Saved;
+               else
+                  return Cancel;
+               end if;
 
             when Button_No =>
                return Not_Saved;
