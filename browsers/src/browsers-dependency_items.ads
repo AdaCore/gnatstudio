@@ -25,6 +25,7 @@ with Gtk.Menu;
 with Src_Info;
 with Glide_Kernel;
 with Browsers.Canvas;
+with Types;
 
 package Browsers.Dependency_Items is
 
@@ -110,7 +111,8 @@ private
    type File_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
    with record
       Source : Src_Info.Internal_File;
-      Kernel : Glide_Kernel.Kernel_Handle;
+      Project_Name : Types.Name_Id := Types.No_Name;
+      --  Project that the file belongs to. This is only computed on demand
 
       Browser : Browsers.Canvas.Glide_Browser := null;
       --  Pointer to the parent browser. Note that this is initialized lazily

@@ -42,6 +42,11 @@ with Src_Info.ALI;              use Src_Info.ALI;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
+with Prj_API;                   use Prj_API;
+with Basic_Types;               use Basic_Types;
+with Prj;                       use Prj;
+with Prj.Tree;                  use Prj.Tree;
+with Types;                     use Types;
 
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -136,6 +141,13 @@ package body Browsers.Dependency_Items is
    --  Browser_Type.
    --  If there is already a browser in Glide2 that handles all the types
    --  Browser_Type, we re-use this one instead.
+
+   function Project_Of
+     (Kernel : access Kernel_Handle_Record'Class;
+      Item : access File_Item_Record'Class) return Project_Id;
+   --  Return the name of the project that contains Item.
+   --  This is cached for efficiency.
+   --  ??? Needs to be reset when the project or its view changes
 
    -----------------------------
    -- Browser_Context_Factory --
@@ -605,14 +617,13 @@ package body Browsers.Dependency_Items is
    is
       use type Gdk_Window;
       Str : constant String := Get_Source_Filename (File);
-      Str2 : String_Access;
+      Str2 : GNAT.OS_Lib.String_Access;
       Font : Gdk_Font;
       Width, Height : Gint;
 
    begin
       pragma Assert (Win /= null);
       Item.Source := File;
-      Item.Kernel := Kernel_Handle (Kernel);
       Item.Browser := Glide_Browser (Browser);
 
       Font := Get_Text_Font (Item.Browser);
@@ -652,7 +663,7 @@ package body Browsers.Dependency_Items is
    is
       use type Gdk.Gdk_GC;
       Font : Gdk_Font := Get_Text_Font (Browser);
-      Str2 : String_Access;
+      Str2 : GNAT.OS_Lib.String_Access;
    begin
       Draw_Item_Background (Browser, Item);
       Draw_Text
@@ -664,7 +675,7 @@ package body Browsers.Dependency_Items is
          Text  => Get_Source_Filename (Item.Source));
 
       if Display_Unit_Name then
-         Get_Unit_Name (Item.Kernel, Item.Source, Str2);
+         Get_Unit_Name (Get_Kernel (Browser), Item.Source, Str2);
          if Str2 /= null then
             Draw_Text
               (Pixmap (Item),
@@ -697,7 +708,7 @@ package body Browsers.Dependency_Items is
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
          Examine_Dependencies
-           (Item.Kernel, Dependency_Browser (Item.Browser),
+           (Get_Kernel (Item.Browser), Dependency_Browser (Item.Browser),
             Get_Source_Filename (Item.Source));
       elsif Get_Event_Type (Event) = Button_Press then
          Select_Item (Item.Browser, Item, True);
@@ -735,6 +746,45 @@ package body Browsers.Dependency_Items is
       Destroy (Item.Source);
    end Destroy;
 
+   ----------------
+   -- Project_Of --
+   ----------------
+
+   function Project_Of
+     (Kernel : access Kernel_Handle_Record'Class;
+      Item : access File_Item_Record'Class) return Project_Id is
+   begin
+      if Item.Project_Name = No_Name then
+         declare
+            Iter : Imported_Project_Iterator := Start
+              (Get_Project (Kernel), True);
+         begin
+            Project_Loop :
+            while Current (Iter) /= Empty_Node loop
+               declare
+                  Sources : String_Array_Access := Get_Source_Files
+                    (Current (Iter), False);
+               begin
+                  for S in Sources'Range loop
+                     if Base_Name (Sources (S).all) =
+                       Get_Source_Filename (Get_Source (Item))
+                     then
+                        Item.Project_Name := Name_Of (Current (Iter));
+                        exit Project_Loop;
+                     end if;
+                  end loop;
+
+                  Free (Sources);
+               end;
+
+               Next (Iter);
+            end loop Project_Loop;
+         end;
+      end if;
+
+      return Get_Project_View_From_Name (Item.Project_Name);
+   end Project_Of;
+
    ------------------------
    -- Contextual_Factory --
    ------------------------
@@ -751,7 +801,8 @@ package body Browsers.Dependency_Items is
       Src := Get_Source (Item);
       Set_File_Information
         (File_Selection_Context_Access (Context),
-         File_Name => Get_Source_Filename (Src));
+         Project_View => Project_Of (Get_Kernel (Browser), Item),
+         File_Name    => Get_Source_Filename (Src));
       return Context;
    end Contextual_Factory;
 
