@@ -153,6 +153,9 @@ package GVD.Preferences is
    Type_Font_Size : constant Gint := 10;
    --  Size of the font used to display the type of the item.
 
+   Annotation_Font_Size : constant Gint := 7;
+   --  Size of the font used for annotation in the data canvas.
+
    Hide_Big_Items : constant Boolean := True;
    --  If True, items higher than a given limit will start in a hidden state.
 
