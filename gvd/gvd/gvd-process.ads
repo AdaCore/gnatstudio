@@ -379,6 +379,10 @@ package GVD.Process is
    --  False is returned when there is no such breakpoint in the list (or the
    --  list of breakpoints has never been parsed before).
 
+   procedure Update_Editor_Frame
+     (Process : access Debugger_Process_Tab_Record);
+   --  Update the editor frame with the name of the currently edited file.
+
 private
 
    type Pattern_Matcher_Access is access Pattern_Matcher;
