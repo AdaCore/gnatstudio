@@ -131,8 +131,6 @@ package body Browsers.Canvas is
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
 
-      Set_Orthogonal_Links (Browser.Canvas, True);
-
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
          Widget_Callback.To_Marshaller (Realized'Access), Browser);
