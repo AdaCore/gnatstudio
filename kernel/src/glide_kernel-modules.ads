@@ -286,6 +286,8 @@ package Glide_Kernel.Modules is
    --     fourth : True if the line should be highlighted (use Get_Boolean)
    --     fifth  : True if the location should be stored for navigation
    --              with Back/Forward.
+   --     sixth  : True if a new file should be created if needed.
+   --     seventh: True if file should be search from the project source path
    --  See also the function Open_File_Editor.
 
    Mime_File_Line_Info : constant String := "gps/file_info";
@@ -295,6 +297,7 @@ package Glide_Kernel.Modules is
    --     third  : source_line_info data (use Get_Address)
    --     fourth : line info sticks to data (instead of sticking to
    --              line numbers (use Get_Boolean)
+   --     fifth  : True if every line ???
 
    Mime_Html_File : constant String := "gps/html";
    --  Request to display a html file
