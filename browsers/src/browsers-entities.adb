@@ -1167,7 +1167,7 @@ package body Browsers.Entities is
       Add_Line (General_Lines, -Kind_To_String (Get_Kind (Item.Entity)));
 
       if not Get_Kind (Item.Entity).Is_Type then
-         Add_Type (Attr_Lines, Item, Lib_Info, Item.Entity, "Of type: ");
+         Add_Type (Attr_Lines, Item, Lib_Info, Item.Entity, "of type");
 
       else
          case Get_Kind (Item.Entity).Kind is
