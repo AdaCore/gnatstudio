@@ -1285,7 +1285,6 @@ package body Builder_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Build : constant String := '/' & (-"Build") & '/';
-      Make  : constant String := Build & (-"Make") & '/';
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu;
    begin
@@ -1310,9 +1309,6 @@ package body Builder_Module is
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
       Set_Submenu (Mitem, Menu);
-
-      Register_Menu
-        (Kernel, Make, -"C_ustom...", "", On_Custom'Access, null, GDK_F9);
 
       Register_Menu
         (Kernel, Build, -"Recompute C/C++ _Xref info", "",
