@@ -1338,16 +1338,11 @@ package body Switches_Editors is
 
       if File_Name = "" then
          declare
-            Langs : Argument_List :=
-              Get_Attribute_Value (Project, Languages_Attribute);
+            Langs : Argument_List := Get_Languages (Project);
             Pages : Page_Filter :=
               Ada_Page or C_Page or Cpp_Page or Pretty_Printer_Page;
 
          begin
-            if Langs'Length = 0 then
-               Pages := Pages and not (Ada_Page or Pretty_Printer_Page);
-            end if;
-
             for J in Langs'Range loop
                declare
                   Lang : String := Langs (J).all;
@@ -1362,10 +1357,9 @@ package body Switches_Editors is
                      Pages := Pages and not Cpp_Page;
                   end if;
                end;
-
-               Free (Langs (J));
             end loop;
 
+            Free (Langs);
             Destroy_Pages (Switches, Pages);
          end;
 
