@@ -293,6 +293,9 @@ package body Browsers.Dependency_Items is
          return;
       end if;
 
+      --  For efficiency, do not recompute the layout for each item
+      Set_Auto_Layout (Get_Canvas (In_Browser), False);
+
       Initial := File_Item (Find_File (In_Browser, F));
       if Initial = null then
          Gtk_New (Initial, Get_Window (In_Browser), In_Browser, Kernel,  F);
@@ -345,6 +348,7 @@ package body Browsers.Dependency_Items is
          end loop;
 
          Destroy (List);
+         Set_Auto_Layout (Get_Canvas (In_Browser), True);
          Layout (Get_Canvas (In_Browser),
                  Force => False,
                  Vertical_Layout => Vertical_Layout);
