@@ -77,7 +77,7 @@ package VCS is
    --  VCS identifiers are registered using Register_VCS_Identifier.
 
    type VCS_Id_Identifier is access
-     function (Id : in String) return VCS_Access;
+     function (Id : String) return VCS_Access;
 
    procedure Register_VCS_Identifier (Identifier : VCS_Id_Identifier);
    --  Add an identifier to the list of known identifiers.
@@ -97,10 +97,10 @@ package VCS is
    --  Free the VCS pointed to by Ref, and Ref itself
 
    type File_Status is record
-      Label       : String_Access;
+      Label    : String_Access;
       --  The label corresponding to the status
 
-      Stock_Id    : String_Access;
+      Stock_Id : String_Access;
       --  Associated stock icon
    end record;
 
@@ -159,10 +159,10 @@ package VCS is
    package File_Status_List is new Generic_List (File_Status_Record);
 
    procedure Get_Status
-     (Rep         : access VCS_Record;
-      Filenames   : String_List.List;
-      Clear_Logs  : Boolean := False;
-      Local       : Boolean := False) is abstract;
+     (Rep        : access VCS_Record;
+      Filenames  : String_List.List;
+      Clear_Logs : Boolean := False;
+      Local      : Boolean := False) is abstract;
    --  Return the status of a list of files.
    --  The returned File_Status_Record is to be filled only with information
    --  that have the corresponding parameter set to True, all the other fields
@@ -194,8 +194,8 @@ package VCS is
    --  Same as above, but work on directories instead of files.
 
    function Local_Get_Status
-     (Rep         : access VCS_Record;
-      Filenames   : String_List.List) return File_Status_List.List is abstract;
+     (Rep       : access VCS_Record;
+      Filenames : String_List.List) return File_Status_List.List is abstract;
    --  Return the status of a list of files.
    --  This function only attempts to read information from local data, and
    --  does not connect to the repository.
@@ -302,9 +302,9 @@ package VCS is
    --  when the buffer has been modified.
 
    procedure Set_Error
-     (Rep            : access VCS_Record;
-      Message        : String;
-      Add_LF         : Boolean := True);
+     (Rep     : access VCS_Record;
+      Message : String;
+      Add_LF  : Boolean := True);
    --  Display message in the glide console.
 
    --  ??? missing:
@@ -323,9 +323,9 @@ package VCS is
    --  Dir is the directory which contains the status, if relevant.
 
    procedure Parse_Annotations
-     (Rep   : access VCS_Record;
-      File  : VFS.Virtual_File;
-      Text  : String);
+     (Rep  : access VCS_Record;
+      File : VFS.Virtual_File;
+      Text : String);
    --  Parse the annotations and fill the editor if needed.
 
    function Get_Identified_Actions
