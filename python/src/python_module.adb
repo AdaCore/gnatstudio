@@ -570,6 +570,7 @@ package body Python_Module is
       N       : Node_Ptr;
       Errors  : aliased Boolean;
       Klass   : PyClassObject;
+      S       : chars_ptr;
 
    begin
       Python_Module_Id := new Python_Module_Record;
@@ -621,6 +622,11 @@ package body Python_Module is
 
       Klass := Lookup_Class_Object
         (Python_Module_Id.Script.GPS_Module, Console_Class_Name);
+      S := New_String (Console_Class_Name);
+      Ignored := PyModule_AddObject
+        (Python_Module_Id.Script.GPS_Module, S, Klass);
+      Free (S);
+
       Add_Method
         (Klass, Create_Method_Def
            ("set_console", Set_Console'Access,
