@@ -804,17 +804,7 @@ package body Display_Items is
       Size_Request
         (Item.Entity.all,
          Create_Drawing_Context (Item),
-         Hide_Big_Items => Hide_Big);
-
-      --  Make sure we don't hide the item, unless it was already hidden.
-      --  It could have been hidden automatically if it is now too high.
-
-      if not Get_Visibility (Item.Entity.all)
-        and then Was_Visible
-      then
-         Set_Visibility (Item.Entity, True);
-         Size_Request (Item.Entity.all, Create_Drawing_Context (Item));
-      end if;
+         Hide_Big_Items => not Was_Visible and then Hide_Big);
 
       Constraint_Size (Item.Entity.all);
 
