@@ -67,6 +67,7 @@ package body Src_Info.CPP is
    procedure Sym_E_Handler       (Sym : FIL_Table);
    procedure Sym_EC_Handler      (Sym : FIL_Table);
    procedure Sym_CON_Handler     (Sym : FIL_Table);
+   procedure Sym_MA_Handler      (Sym : FIL_Table);
 
    ---------------------
    -- Symbol_Handlers --
@@ -77,6 +78,7 @@ package body Src_Info.CPP is
       FU     => Sym_FU_Handler'Access,
       E      => Sym_E_Handler'Access,
       EC     => Sym_EC_Handler'Access,
+      MA     => Sym_MA_Handler'Access,
       CON    => Sym_CON_Handler'Access,
       others => Sym_Default_Handler'Access);
 
@@ -106,6 +108,7 @@ package body Src_Info.CPP is
       T      => Ext ("t"),
       CL     => Ext ("cl"),
       CON    => Ext ("con"),
+      MA     => Ext ("ma"),
       GV     => Ext ("gv"),
       E      => Ext ("e"),
       EC     => Ext ("ec"),
@@ -532,6 +535,7 @@ package body Src_Info.CPP is
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_CON_Handler     (Sym : FIL_Table) is separate;
+   procedure Sym_MA_Handler      (Sym : FIL_Table) is separate;
 
 end Src_Info.CPP;
 
