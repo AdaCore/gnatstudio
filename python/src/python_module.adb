@@ -43,8 +43,6 @@ package body Python_Module is
 
    Me : constant Debug_Handle := Create ("Python_Module");
 
-   Python_Module_Id : Module_ID;
-
    GPS_Module_Name : constant String := "GPS";
    --  Name of the GPS module in the python interpreter.
 
@@ -65,6 +63,13 @@ package body Python_Module is
       GPS_Unexpected_Exception : PyObject;
    end record;
    type Python_Scripting is access all Python_Scripting_Record'Class;
+
+   type Python_Module_Record is new Module_ID_Record with record
+      Script : Python_Scripting;
+   end record;
+   type Python_Module_Record_Access is access all Python_Module_Record'Class;
+
+   Python_Module_Id : Python_Module_Record_Access;
 
    procedure Register_Command
      (Script       : access Python_Scripting_Record;
@@ -248,6 +253,10 @@ package body Python_Module is
    pragma Unreferenced (Trace_Dump);
    --  Print debug info for Obj
 
+   procedure Open_Python_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open a new python console if none exists
+
    ----------------
    -- Trace_Dump --
    ----------------
@@ -275,9 +284,9 @@ package body Python_Module is
    is
       Child   : MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Interpreter_View_Record'Tag);
-      Console : Interpreter_View;
       Buffer : Gtk_Text_Buffer;
       View   : Gtk_Text_View;
+      Console : Interpreter_View;
    begin
       if Child = null then
          Console := new Interpreter_View_Record;
@@ -290,17 +299,19 @@ package body Python_Module is
          Modify_Font (View, Get_Pref (Kernel, Source_Editor_Font));
          Set_Wrap_Mode (View, Wrap_Char);
 
-         Set_Console (Script.Interpreter, View);
+         Set_Console
+           (Script.Interpreter, View, Grab_Widget => Gtk_Widget (Console));
 
          Child := Put
            (Get_MDI (Kernel), Console,
-            Iconify_Button or Maximize_Button,
             Focus_Widget => Gtk_Widget (View));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Python");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
       else
+         Console := Interpreter_View (Get_Widget (Child));
+         Set_Console (Script.Interpreter, Gtk_Text_View (Get_Child (Console)));
          Raise_Child (Child);
       end if;
    end Create_Python_Console;
@@ -314,39 +325,57 @@ package body Python_Module is
    is
       Ignored      : Integer;
       pragma Unreferenced (Ignored);
-      Script       : Python_Scripting;
-
    begin
+      Python_Module_Id := new Python_Module_Record;
       Register_Module
-        (Module      => Python_Module_Id,
+        (Module      => Module_ID (Python_Module_Id),
          Kernel      => Kernel,
          Module_Name => "Python");
 
-      Script := new Python_Scripting_Record;
-      Script.Kernel := Kernel_Handle (Kernel);
-      Register_Scripting_Language (Kernel, Script);
+      Python_Module_Id.Script := new Python_Scripting_Record;
+      Python_Module_Id.Script.Kernel := Kernel_Handle (Kernel);
+      Register_Scripting_Language (Kernel, Python_Module_Id.Script);
 
-      Script.Interpreter := new Python_Interpreter_Record;
-      Initialize (Script.Interpreter, Get_History (Kernel));
+      Python_Module_Id.Script.Interpreter := new Python_Interpreter_Record;
+      Initialize (Python_Module_Id.Script.Interpreter, Get_History (Kernel));
 
-      Create_Python_Console (Script, Kernel_Handle (Kernel));
+      Create_Python_Console (Python_Module_Id.Script, Kernel_Handle (Kernel));
 
       --  Create the GPS module, in which all functions and classes are
       --  registered
 
-      Script.GPS_Module := Py_InitModule
+      Python_Module_Id.Script.GPS_Module := Py_InitModule
         (GPS_Module_Name, Doc => "Interface with the GPS environment");
-      Run_Command (Script.Interpreter, "import GPS", Hide_Output => True);
+      Run_Command (Python_Module_Id.Script.Interpreter,
+                   "import GPS", Hide_Output => True);
 
-      Script.GPS_Unexpected_Exception := PyErr_NewException
+      Python_Module_Id.Script.GPS_Unexpected_Exception := PyErr_NewException
         (GPS_Module_Name & ".Unexpected_Exception", null, null);
-      Script.GPS_Exception := PyErr_NewException
+      Python_Module_Id.Script.GPS_Exception := PyErr_NewException
         (GPS_Module_Name & ".Exception", null, null);
-      Script.GPS_Missing_Args := PyErr_NewException
+      Python_Module_Id.Script.GPS_Missing_Args := PyErr_NewException
         (GPS_Module_Name & ".Missing_Arguments", null, null);
-      Script.GPS_Invalid_Arg := PyErr_NewException
+      Python_Module_Id.Script.GPS_Invalid_Arg := PyErr_NewException
         (GPS_Module_Name & ".Invalid_Argument", null, null);
+
+      Register_Menu
+        (Kernel,
+         Parent_Path => "/" & (-"Tools"),
+         Text        => -"Python console",
+         Callback    => Open_Python_Console'Access);
    end Register_Module;
+
+   -------------------------
+   -- Open_Python_Console --
+   -------------------------
+
+   procedure Open_Python_Console
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Create_Python_Console (Python_Module_Id.Script, Kernel);
+   end Open_Python_Console;
 
    --------------------------
    -- Destroy_Handler_Data --
