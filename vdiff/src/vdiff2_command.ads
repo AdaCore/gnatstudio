@@ -109,6 +109,10 @@ package Vdiff2_Command is
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head);
 
-end Vdiff2_Command;
+   procedure Save_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head);
+   --  Save all file in Diff
 
+end Vdiff2_Command;
 
