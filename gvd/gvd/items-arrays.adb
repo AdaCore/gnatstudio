@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                                  GPS                              --
+--                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                                AdaCore                            --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -28,6 +28,7 @@ with Pango.Layout; use Pango.Layout;
 
 with Basic_Types;     use Basic_Types;
 with GVD.Preferences; use GVD.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 with Items.Repeats; use Items.Repeats;
 
