@@ -46,27 +46,6 @@ package Debugger.Jdb.Java is
       Result     : in out Generic_Values.Generic_Type_Access;
       Repeat_Num : out Positive);
 
-   procedure Parse_Array_Type
-     (Lang      : access Jdb_Java_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out Generic_Type_Access);
-
-   procedure Parse_Record_Type
-     (Lang      : access Jdb_Java_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out Generic_Type_Access;
-      End_On    : String);
-
-   procedure Parse_Array_Value
-     (Lang     : access Jdb_Java_Language;
-      Type_Str : String;
-      Index    : in out Natural;
-      Result   : in out Array_Type_Access);
-
 private
 
    type Jdb_Java_Language is new

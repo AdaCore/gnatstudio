@@ -51,49 +51,4 @@ package body Debugger.Jdb.Java is
       raise Program_Error;
    end Parse_Value;
 
-   ----------------------
-   -- Parse_Array_Type --
-   ----------------------
-
-   procedure Parse_Array_Type
-     (Lang      : access Jdb_Java_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out Generic_Type_Access)
-   is
-   begin
-      raise Program_Error;
-   end Parse_Array_Type;
-
-   -----------------------
-   -- Parse_Record_Type --
-   -----------------------
-
-   procedure Parse_Record_Type
-     (Lang      : access Jdb_Java_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Result    : out Generic_Type_Access;
-      End_On    : String)
-   is
-   begin
-      raise Program_Error;
-   end Parse_Record_Type;
-
-   -----------------------
-   -- Parse_Array_Value --
-   -----------------------
-
-   procedure Parse_Array_Value
-     (Lang     : access Jdb_Java_Language;
-      Type_Str : String;
-      Index    : in out Natural;
-      Result   : in out Array_Type_Access)
-   is
-   begin
-      raise Program_Error;
-   end Parse_Array_Value;
-
 end Debugger.Jdb.Java;
