@@ -305,8 +305,7 @@ package body GVD.Session_Dialog is
                Get_Line (File, Buffer, Last);
 
                if Get_Active (Current_Button.Button) then
-                  Processes (J) :=
-                    Create_Debugger
+                  Processes (J) := Create_Debugger
                     (GVD_Main_Window (Window),
                      Program.Debugger, "",
                      List, "",
