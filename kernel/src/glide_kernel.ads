@@ -589,6 +589,46 @@ package Glide_Kernel is
    --  Return the current action. The empty string or No_Action is returned if
    --  there are no more actions.
 
+   ------------
+   --  Tools --
+   ------------
+   --  The following subprograms are used to register the properties of the
+   --  various external tools declared by the user in the customization files.
+   --  These are associated with the <tool> tag.
+   --  Not all the information is stored here, since some of the modules have
+   --  their own handling. This is the case for the <switches> attribute, which
+   --  is handled internally by the prj_editor module. This is also the case
+   --  for the <language> tag.
+
+   type Tool_Properties_Record is record
+      Project_Package   : GNAT.OS_Lib.String_Access;
+      Project_Attribute : GNAT.OS_Lib.String_Access;
+      Project_Index     : GNAT.OS_Lib.String_Access;
+      Default_Switches  : GNAT.OS_Lib.String_Access;
+   end record;
+   --  (Project_Package, Project_Attribute, Project_Index) describe where its
+   --  switches are stored in a project.
+   --  Default_Switches are the switches when the user hasn't edited them
+   --  explicitely.
+   --  Any of these field can be left to null if it has no special
+   --  signification for this tool.
+
+   No_Tool : constant Tool_Properties_Record;
+
+   procedure Register_Tool
+     (Kernel    : access Kernel_Handle_Record;
+      Tool_Name : String;
+      Tool      : Tool_Properties_Record);
+   --  Register a new tool.
+   --  No copy is made for Tool, which must therefore not be freed by the
+   --  caller
+
+   function Get_Tool_Properties
+     (Kernel    : access Kernel_Handle_Record;
+      Tool_Name : String) return Tool_Properties_Record;
+   --  Return the properties of the tool.
+   --  The resulting record must not be freed by the caller.
+
    ------------------
    -- Key handlers --
    ------------------
@@ -897,6 +937,12 @@ private
    type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
    --  Derived in Glide_Kernel.Scripts to store internal data
 
+   No_Tool : constant Tool_Properties_Record := (null, null, null, null);
+
+   procedure Free (Tool : in out Tool_Properties_Record);
+   package Tools_Htable is new String_Hash
+     (Tool_Properties_Record, Free, No_Tool);
+
    procedure Free (Action : in out Action_Record);
    --  Free the memory occupied by the action
 
@@ -924,6 +970,9 @@ private
    type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
+      Tools   : Tools_Htable.String_Hash_Table.HTable;
+      --  The tools registered in the kernel
+
       Actions : Actions_Htable.String_Hash_Table.HTable;
       --  The actions registered in the kernel
 

@@ -1773,6 +1773,7 @@ package body Glide_Kernel is
       end if;
 
       Reset (Handle.Actions);
+      Tools_Htable.String_Hash_Table.Reset (Handle.Tools);
       Glide_Kernel.Scripts.Finalize (Handle);
 
       Destroy (Glide_Language_Handler (Handle.Lang_Handler));
@@ -2265,5 +2266,40 @@ package body Glide_Kernel is
               (Normalize_Pathname (Locale_From_UTF8 (Name))));
       end if;
    end Create;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Tool : in out Tool_Properties_Record) is
+   begin
+      Free (Tool.Project_Package);
+      Free (Tool.Project_Attribute);
+      Free (Tool.Project_Index);
+      Free (Tool.Default_Switches);
+   end Free;
+
+   -------------------
+   -- Register_Tool --
+   -------------------
+
+   procedure Register_Tool
+     (Kernel    : access Kernel_Handle_Record;
+      Tool_Name : String;
+      Tool      : Tool_Properties_Record) is
+   begin
+      Tools_Htable.String_Hash_Table.Set (Kernel.Tools, Tool_Name, Tool);
+   end Register_Tool;
+
+   -------------------------
+   -- Get_Tool_Properties --
+   -------------------------
+
+   function Get_Tool_Properties
+     (Kernel    : access Kernel_Handle_Record;
+      Tool_Name : String) return Tool_Properties_Record is
+   begin
+      return Tools_Htable.String_Hash_Table.Get (Kernel.Tools, Tool_Name);
+   end Get_Tool_Properties;
 
 end Glide_Kernel;
