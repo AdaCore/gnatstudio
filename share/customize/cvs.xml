@@ -87,9 +87,16 @@
    <!-- CVS history -->
    <!----------------->
 
-   <!--  ??? Must find a way to query whole history>
-
    <action name="generic_cvs_history" show-command="true" output="none">
+      <shell output="">echo "Querying history for $1"</shell>
+      <external>cvs log "$1"</external>
+      <shell>dump "%1" TRUE</shell>
+      <shell>Editor.edit "%1"</shell>
+      <shell>MDI.split_vertically TRUE</shell>
+      <shell>delete "%2"</shell>
+   </action>
+
+   <action name="generic_cvs_history_rev" show-command="true" output="none">
       <shell output="">echo "Querying history for $2"</shell>
       <external>cvs log -N -r$1 "$2"</external>
       <shell>dump "%1" TRUE</shell>
@@ -193,7 +200,8 @@
       <open               action="generic_cvs_open"         label="Open"/>
       <update             action="generic_cvs_update"       label="Update"/>
       <commit             action="generic_cvs_commit"       label="Commit"/>
-      <history            action="generic_cvs_history"      label="Query revision history"/>
+      <history            action="generic_cvs_history"      label="View entire revision history"/>
+      <history_revision   action="generic_cvs_history_rev"  label="Query revision history"/>
       <annotate           action="generic_cvs_annotate"     label="Annotate"/>
       <add                action="generic_cvs_add"          label="Add"/>
       <remove             action="generic_cvs_remove"       label="Remove"/>
