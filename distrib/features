@@ -2,8 +2,6 @@ New features in GPS 1.0.1
 
 - Windows port
 
-- A mini-shell is now provided to be able to type GPS commands interactively
-
 - A separate execution window is now provided when running a program (both
   stand alone, and under the debugger).
 
@@ -62,3 +60,6 @@ New features in GPS 1.0.1
 
 - It is now possible to edit file-specific binder and linker switches when
   editing the switches for one of the project's main files.
+
+- A mini-shell is now provided to be able to type GPS commands interactively
+
