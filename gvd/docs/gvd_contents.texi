@@ -519,7 +519,7 @@ Specify whether items should be aligned on the grid.
 
 @item Show Call Stack
 @anchor{Show Call Stack}
-Specify whether the Call Stack view should be shown in the data window.
+If enabled, display the Call Stack window by default.
 @end table
 
 @item Command
@@ -642,7 +642,7 @@ the following commands. Failing to do so will result in blank windows.
 @table @b
    @item Call Stack
 @cindex call stack
-      Displays/hides the Call Stack window inside the Data window.
+      Displays the Call Stack window.
       See @ref{The Call Stack Window} for more details.
 
    @item Threads
@@ -847,10 +847,9 @@ of breakpoints is in general preferable to interrupting programs.
       @item File Location: the filename and line number information.
    @end itemize
 
-   By default, the subprogram and parameters are displayed.
-   You can hide the call stack window using the menu Data->Call Stack, and
-   show it again using the same menu (this menu item is a check button that
-   can be enabled/disabled)
+   By default, only the subprogram name is displayed.
+   You can hide the call stack window by closing it, as for other windows, and
+   show it again using the menu @code{Data->Call Stack}.
 
 @c --------------------------------------------------------------------
 @node The Data Window
@@ -941,7 +940,7 @@ Shows all subcomponents of the selected item.
 @cindex clone
 Clones the selected component into a new, independent item.
 
-     @item View memory at &@i{component}
+     @item View memory at address of @i{component}
 @cindex memory view
 Brings up the memory view dialog and explore memory at the address of the 
 component.
@@ -1433,7 +1432,7 @@ prints the value in the debugger console.
 Dereferences the selection (or by default the name under the cursor) and
 displays the value in the data window.
 
-     @item View memory at &@i{selection}
+     @item View memory at address of @i{selection}
 @cindex memory view
 Brings up the memory view dialog and explores memory at the address of the 
 selection.
