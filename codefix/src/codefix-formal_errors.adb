@@ -474,6 +474,8 @@ package body Codefix.Formal_Errors is
          New_Position.Col  := Declaration.Sloc_End.Column;
          Assign (New_Position.File_Name, Cursor.File_Name);
 
+         --  ??? This test is only here because the parser returns sometimes
+         --  a Sloc_End.Col equal to 0.
          if New_Position.Col = 0 then
             New_Position.Col := 1;
          end if;
@@ -514,7 +516,6 @@ package body Codefix.Formal_Errors is
 
          Initialize
            (New_Command, Current_Text, New_Position, "Unreferenced", Name);
-
 
          Free (New_Position);
 
