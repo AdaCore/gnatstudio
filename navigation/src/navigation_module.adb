@@ -508,40 +508,7 @@ package body Navigation_Module is
       Line      : Natural;           -- Current line being processed.
       Last_Line : Natural;           -- Last line in the buffer.
       B_Start   : Natural;           -- Block's first line.
-      B_End     : Natural;           -- Block's last line.
       B_Type    : Language_Category; -- Block's category
-
-      function Get_Next_Block return Language_Category;
-      --  Get next block. Current block is the one enclosing Line. When this
-      --  routine exists, Line is pointing to the block just after the current
-      --  one or to the last line in the buffer if there is no such block.
-      --  Returns the category of block enclosing line.
-
-      --------------------
-      -- Get_Next_Block --
-      --------------------
-
-      function Get_Next_Block return Language_Category is
-      begin
-         while Line < Last_Line loop
-            B_Start := Get_Block_Start (Kernel, File, Line);
-            B_End   := Get_Block_End (Kernel, File, Line);
-            B_Type  := Get_Block_Type (Kernel, File, Line);
-
-            if B_Start = Line and then B_Type in Subprogram_Category then
-               --  We are already at the start of a subprogram, skip it.
-               Line := B_End;
-            end if;
-
-            Line := Line + 1;
-
-            B_Start := Get_Block_Start (Kernel, File, Line);
-            B_Type  := Get_Block_Type (Kernel, File, Line);
-            exit when B_Start = Line and then B_Type in Subprogram_Category;
-         end loop;
-
-         return B_Type;
-      end Get_Next_Block;
 
    begin
       if Context /= null
@@ -557,9 +524,13 @@ package body Navigation_Module is
          Line      := Get_Current_Line (Kernel, File);
          Last_Line := Get_Last_Line (Kernel, File);
 
-         loop
-            B_Type := Get_Next_Block;
-            exit when B_Type in Subprogram_Category or else Line = Last_Line;
+         while Line < Last_Line loop
+            Line := Line + 1;
+
+            B_Start := Get_Block_Start (Kernel, File, Line);
+            B_Type  := Get_Block_Type (Kernel, File, Line);
+
+            exit when B_Start = Line and then B_Type in Subprogram_Category;
          end loop;
 
          if Line < Last_Line then
@@ -614,31 +585,6 @@ package body Navigation_Module is
       B_Start : Natural;           -- Block's first line.
       B_Type  : Language_Category; -- Block's category.
 
-      function Get_Previous_Block return Language_Category;
-      --  Get previous block. Current block is the one enclosing Line. When
-      --  this routine exists, Line is pointing to the block just before the
-      --  current one or to the first line in the buffer if there is no such
-      --  block. Returns the category of block enclosing line.
-
-      ------------------------
-      -- Get_Previous_Block --
-      ------------------------
-
-      function Get_Previous_Block return Language_Category is
-      begin
-         while Line > 1 loop
-            Line := Line - 1;
-            B_Type := Get_Block_Type (Kernel, File, Line);
-
-            if B_Type /= Cat_Unknown then
-               B_Start := Get_Block_Start (Kernel, File, Line);
-               exit when B_Start = Line and then B_Type in Subprogram_Category;
-            end if;
-         end loop;
-
-         return B_Type;
-      end Get_Previous_Block;
-
    begin
       if Context /= null
         and then Context.all in File_Selection_Context'Class
@@ -652,9 +598,13 @@ package body Navigation_Module is
 
          Line := Get_Current_Line (Kernel, File);
 
-         loop
-            B_Type := Get_Previous_Block;
-            exit when B_Type in Subprogram_Category or else Line = 1;
+         while Line > 1 loop
+            Line := Line - 1;
+
+            B_Type  := Get_Block_Type (Kernel, File, Line);
+            B_Start := Get_Block_Start (Kernel, File, Line);
+
+            exit when B_Start = Line and then B_Type in Subprogram_Category;
          end loop;
 
          if Line > 1 then
