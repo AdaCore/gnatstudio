@@ -721,9 +721,15 @@ package body Directory_Tree is
             Set_Busy_Cursor (Data.Busy_Cursor, False);
          end if;
 
+         --  Force a recomputation of the scrollbars, since otherwise they
+         --  won't appear until after the user has explicitly resized the
+         --  widget.
+         Queue_Resize (D.Tree);
+
          D.Tree.Idle := 0;
          Free (D.Dir);
          Free (D);
+
          return False;
 
       else
