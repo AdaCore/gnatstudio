@@ -613,6 +613,7 @@ package Glide_Kernel.Modules is
       Image              : Gdk.Pixbuf.Gdk_Pixbuf := Gdk.Pixbuf.Null_Pixbuf;
       Associated_Command : Command_Access := null;
    end record;
+   --  Text must be a valid Utf8 string.
 
    procedure Free (X : in out Line_Information_Record);
    --  Free memory associated with X.
