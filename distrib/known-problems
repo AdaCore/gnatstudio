@@ -1,5 +1,18 @@
 Known Problems fixed in GPS 1.2.0
 
+- C404-010 Bad indentation of task specs in some cases
+  Problem:    The indentation engine will not properly parse task specs in
+              the following cases: the task spec contains a pragma taking
+              parameters as its first non comment line, e.g:
+
+              task T is
+                 pragma Storage_Size (2000);
+                 entry E;
+              end T;
+
+  Workaround: Move the pragma after other declarations (e.g. after 'entry E'
+              in the example above).
+
 - C318-002 "Find All References" Menu is not working.
   Problem:    The global menu "Navigate->Find All References" does nothing.
   Workaround: Use the contextual menu "References->Find All References to".
