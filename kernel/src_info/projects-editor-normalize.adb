@@ -24,6 +24,7 @@ with Projects.Registry; use Projects.Registry;
 with Traces;            use Traces;
 with String_Utils;      use String_Utils;
 with Glide_Intl;        use Glide_Intl;
+with GNAT.Case_Util;    use GNAT.Case_Util;
 
 with Prj;      use Prj;
 with Prj.Ext;  use Prj.Ext;
@@ -211,6 +212,29 @@ package body Projects.Editor.Normalize is
       --  represent the case where there was a case statement before in the
       --  project file, the second one represents the first case statement).
 
+      procedure Check_Index_Sensitivity (Decl_Item : Project_Node_Id);
+      --  If Decl_Item is the declaration of an attribute the index of which
+      --  is case-insensitive, convert that index to lower-case so that GPS
+      --  properly finds references to it later on.
+
+      -----------------------------
+      -- Check_Index_Sensitivity --
+      -----------------------------
+
+      procedure Check_Index_Sensitivity (Decl_Item : Project_Node_Id) is
+         Current : constant Project_Node_Id :=
+           Current_Item_Node (Decl_Item);
+      begin
+         if Kind_Of (Current) = N_Attribute_Declaration then
+            if Case_Insensitive (Current) then
+               Get_Name_String (Associative_Array_Index_Of (Current));
+               To_Lower (Name_Buffer (1 .. Name_Len));
+
+               Set_Associative_Array_Index_Of (Current, Name_Find);
+            end if;
+         end if;
+      end Check_Index_Sensitivity;
+
       ------------------------------
       -- Process_Declarative_List --
       ------------------------------
@@ -392,6 +416,8 @@ package body Projects.Editor.Normalize is
                   --  up, since we do not have to traverse all the case items
                   --  for all of them.
 
+                  Check_Index_Sensitivity (Decl_Item);
+
                   Decl_Item2 := Decl_Item;
                   while Next_Item /= Empty_Node loop
                      case Kind_Of (Current_Item_Node (Next_Item)) is
@@ -402,7 +428,7 @@ package body Projects.Editor.Normalize is
                            exit;
 
                         when others =>
-                           null;
+                           Check_Index_Sensitivity (Next_Item);
                      end case;
 
                      Set_Next_Declarative_Item (Decl_Item2, Next_Item);
