@@ -8,7 +8,6 @@
 ##    particular, a predefined menu is added for the GPS extensions
 
 import GPS, pydoc, os, inspect, pydoc
-from xml.dom import minidom
 from string import rstrip, lstrip
 
 
@@ -38,100 +37,11 @@ GPS.parse_xml("""
        <category>Scripts</category>
     </documentation_file>""")
 
-
 #####################################################################
 ##  No user-callable function below this point.
 ##  The following functions and classes are called implicitely whenever
 ##  you do a help() command
 #####################################################################
-
-def xml_get_full_string (node):
-  """Concatenate all the text children of node into one single string"""
-  str="" 
-  for c in node.childNodes:
-    if c.nodeType == node.TEXT_NODE:
-        str=str + c.data
-  return lstrip(str, '\n')
-
-class XMLGetDoc:
-  """Gives the possibility to store the help for any Python entity in a
-     separate XML file, which is parsed on the fly whenever the documentation
-     for an entity needs to be printed"""
-  lastclass=""
-  xmldoc=None
-
-  def __init__ (self):
-     self.xmldoc=minidom.parse(GPS.get_system_dir() + "share/gps/shell_commands.xml")
-
-  def getdoc(self, object):
-    """Read the documentation for object in the XML file"""
-    try:
-       module=object.__module__
-    except:
-       module=""
-
-    try:
-       klass=object.im_class.__name__
-    except:
-       klass=XMLGetDoc.lastclass
-
-
-    try:
-      for node in self.xmldoc.getElementsByTagName("shell_doc"):
-         attrs=node.attributes
-         if attrs != None:
-           if attrs.has_key ("module"):
-              matched=attrs["module"].value==module
-           else:
-              matched=module==""
-
-           if attrs.has_key ("class"):
-              matched=matched and attrs["class"].value==klass
-           else:
-              matched=matched and klass==""
-
-           if attrs.has_key ("name"):
-              matched=matched and attrs["name"].value==object.__name__
-           else:
-              matched=matched and object.__name__==""
-
-           if matched:
-              doc=""
-              for child in node.getElementsByTagName("param"):
-                 doc=doc + '\n' + child.attributes["name"].value + ':\t\t';
-                 if child.attributes.has_key("default"):
-                    doc = doc + "(default=\""
-                    if child.attributes.has_key("default"):
-                       doc = doc + child.attributes["default"].value
-                    doc=doc + "\") "
-
-                 doc = doc + xml_get_full_string (child)
-                 
-              for child in node.getElementsByTagName("return"):
-                 doc = doc + '\n' + "returns\t\t" + xml_get_full_string (child)
-       
-              for child in node.getElementsByTagName("description"):
-                 doc = doc + '\n' + xml_get_full_string (child)
-
-              for child in node.getElementsByTagName("see_also"):
-                 doc = doc + '\nSee also: '
-                 if child.attributes.has_key ("module"):
-                    doc = doc + child.attributes["module"].value + "."
-                 if child.attributes.has_key ("class"):
-                    doc = doc + child.attributes["class"].value + "."
-                 doc = doc + child.attributes["name"].value + "()"
-
-              for child in node.getElementsByTagName("example"):
-                 if child.attributes.has_key("lang") \
-                    and child.attributes["lang"].value == "python" :
-                    doc = doc + '\n\nExample:\n' + xml_get_full_string(child)
-
-              return doc
-      return __oldgetdoc__(object)
-    except:
-      return __oldgetdoc__(object)
-
-
 
 ## These two wrappers are used to make sure that the call to getdoc() knows
 ## about the class name of the entity, otherwise it is lost in pydoc functions
@@ -154,7 +64,6 @@ class XMLHtmlDoc (pydoc.HTMLDoc):
        except:
           XMLGetDoc_Wrapper.current_class = ""
        return pydoc.HTMLDoc.docroutine (self, object, name, mod, funcs, classes, methods, cl)
-
 
 class XMLGetDoc_Wrapper:
    current_class = ""
