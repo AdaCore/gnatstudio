@@ -811,4 +811,37 @@ end Initialize;
       end if;
    end Update_External_Dialogs;
 
+   ----------------
+   -- Find_Match --
+   ----------------
+
+   procedure Find_Match
+     (H   : in out History_List;
+      Num : in Natural;
+      D   : in Direction)
+   is
+      Data    : GNAT.OS_Lib.String_Access;
+      Current : History_Data;
+   begin
+      begin
+         Data := Get_Current (H).Command;
+      exception
+         when No_Such_Item =>
+            Data := null;
+      end;
+
+      loop
+         if D = Backward then
+            Move_To_Previous (H);
+         else
+            Move_To_Next (H);
+         end if;
+         Current := Get_Current (H);
+         exit when Current.Debugger_Num = Num
+           and then Current.Mode /= Hidden
+           and then (Data = null
+                     or else Current.Command.all /= Data.all);
+      end loop;
+   end Find_Match;
+
 end Main_Debug_Window_Pkg;

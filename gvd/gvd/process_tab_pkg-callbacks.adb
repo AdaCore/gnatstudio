@@ -32,20 +32,11 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
 with Process_Proxies; use Process_Proxies;
 with Odd.Types; use Odd.Types;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Process_Tab_Pkg.Callbacks is
 
    use Gtk.Arguments;
    use String_History;
-
-   procedure Find_Match
-     (H   : in out History_List;
-      Num : in Natural;
-      D   : in Direction);
-   --  Moves in the history in the given direction until it finds a non-hidden
-   --  command which was sent to the debugger with number Num.
-   --  No_Such_Item is raised if no matching command is found.
 
    procedure Move_Until_Match
      (History : in out History_List;
@@ -209,38 +200,6 @@ package body Process_Tab_Pkg.Callbacks is
          Index := Get_Current (History).Command.all'Length - S'Length;
    end Move_Until_Match;
 
-   ----------------
-   -- Find_Match --
-   ----------------
-
-   procedure Find_Match
-     (H   : in out History_List;
-      Num : in Natural;
-      D   : in Direction)
-   is
-      Data    : GNAT.OS_Lib.String_Access;
-      Current : History_Data;
-   begin
-      begin
-         Data := Get_Current (H).Command;
-      exception
-         when No_Such_Item =>
-            Data := null;
-      end;
-
-      loop
-         if D = Backward then
-            Move_To_Previous (H);
-         else
-            Move_To_Next (H);
-         end if;
-         Current := Get_Current (H);
-         exit when Current.Debugger_Num = Num
-           and then Current.Mode /= Hidden
-           and then (Data = null
-                     or else Current.Command.all /= Data.all);
-      end loop;
-   end Find_Match;
 
    ---------------------------
    -- On_Debugger_Get_Focus --
