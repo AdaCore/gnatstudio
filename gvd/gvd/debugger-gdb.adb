@@ -1863,10 +1863,10 @@ package body Debugger.Gdb is
 
    procedure PD_Switch
      (Debugger : access Gdb_Debugger;
-      PD       : Natural;
+      PD       : String;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
    begin
-      Send (Debugger, "pd" & Natural'Image (PD), Mode => Mode);
+      Send (Debugger, "pd " & PD, Mode => Mode);
    end PD_Switch;
 
    ----------------
@@ -1971,7 +1971,14 @@ package body Debugger.Gdb is
       EOL         : Positive;
       Output      : constant String :=
         Send (Debugger, "info pds", Mode => Internal);
-      Index       : Positive := Output'First;
+      Start       : Positive := Output'First;
+      First       : Positive := Output'First;
+      Second      : Positive := Output'First;
+
+      function Is_Delimitor (C : Character) return Boolean is
+      begin
+         return C = ' ' or else C = ASCII.HT or else C = '*';
+      end Is_Delimitor;
 
    begin
       Len := 0;
@@ -1980,21 +1987,35 @@ package body Debugger.Gdb is
          return;
       end if;
 
-      while Index < Output'Last loop
+      while Start < Output'Last loop
          Len := Len + 1;
-         EOL := Index;
+         EOL := Start;
 
          while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
             EOL := EOL + 1;
          end loop;
 
+         --  Find the end of the first token in the line...
+         First := Start;
+         while First < EOL and then Is_Delimitor (Output (First)) loop
+           First := First + 1;
+         end loop;
+         while First < EOL and then not Is_Delimitor (Output (First)) loop
+           First := First + 1;
+         end loop;
+
+         --  Find the start of the second token...
+         Second := First + 1;
+         while Second < EOL and then Is_Delimitor (Output (Second)) loop
+            Second := Second + 1;
+         end loop;
+
          Info (Len) :=
            (Num_Fields => 2,
             Information =>
-              (New_String       (Output (Index     .. Index + 9)),
-               New_String (Trim (Output (Index + 12  .. EOL - 1), Left))
-               ));
-         Index := EOL + 1;
+              (New_String (Output (Start  .. First)),
+               New_String (Output (Second .. EOL - 1))));
+         Start := EOL + 1;
       end loop;
 
    exception
