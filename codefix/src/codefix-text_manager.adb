@@ -877,31 +877,22 @@ package body Codefix.Text_Manager is
 
    procedure Commit
      (This         : Extract_Line;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Integer)
-   is
-      Real_Cursor : File_Cursor := This.Cursor;
+      Current_Text : in out Text_Navigator_Abstr'Class) is
    begin
-      Real_Cursor.Line := Real_Cursor.Line + Offset_Line;
-
       case This.Context is
          when Line_Created =>
             Add_Line
               (Current_Text,
-               Real_Cursor,
+               This.Cursor,
                This.Content.all);
-            Offset_Line := Offset_Line + 1;
-
          when Line_Deleted =>
             Delete_Line
               (Current_Text,
-               Real_Cursor);
-            Offset_Line := Offset_Line - 1;
-
+               This.Cursor);
          when others =>
             Replace
              (Current_Text,
-              Real_Cursor,
+              This.Cursor,
               This.Original_Length,
               This.Content.all);
       end case;
@@ -1488,13 +1479,12 @@ package body Codefix.Text_Manager is
 
    procedure Commit
      (This         : Extract;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Offset_Line  : in out Integer)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
    begin
       while Current_Extract /= null loop
-         Commit (Current_Extract.all, Current_Text, Offset_Line);
+         Commit (Current_Extract.all, Current_Text);
          Current_Extract := Current_Extract.Next;
       end loop;
    end Commit;

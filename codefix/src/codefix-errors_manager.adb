@@ -221,11 +221,9 @@ package body Codefix.Errors_Manager is
 
    procedure Commit
      (This         : in out Correction_Manager;
-      Current_Text : in out Text_Navigator_Abstr'Class)
-   is
-      Offset_Line : Integer := 0;
+      Current_Text : in out Text_Navigator_Abstr'Class) is
    begin
-      Commit (This.Fix_List, Current_Text, Offset_Line);
+      Commit (This.Fix_List, Current_Text);
       Commit (Current_Text);
       Free (This.Fix_List);
    end Commit;
