@@ -141,8 +141,6 @@ Searching and Replacing
 
 Compilation/Build
 * The Build Menu::
-@c * Multi-language Build::
-* Integrating existing build procedures with the GPS build system::
 
 Source Browsing
 * General Issues::
@@ -216,6 +214,7 @@ Scripting GPS
 * The GPS Shell::
 @ifset python
 * The Python Interpreter::
+* Python FAQ::
 @end ifset
 * Hooks::
 
@@ -2475,7 +2474,7 @@ For now, the support for remote files is only available through the GPS
 shell window. You start editing a remote file by typing a line similar to
 
 @smallexample
-edit protocol://user@@machine/full/path
+Editor.edit protocol://user@@machine/full/path
 @end smallexample
 
 where "protocol" should be replaced by the name of the protocol you want to
@@ -4081,8 +4080,6 @@ errors or warnings (see @ref{Code Fixing}).
 
 @menu
 * The Build Menu::
-@c * Multi-language Build::
-* Integrating existing build procedures with the GPS build system::
 @end menu
 
 @node The Build Menu
@@ -4176,109 +4173,6 @@ Recompute the cross-reference information for C and C++ source files.
 Interrupt the current compilation or build.
 
 @end table
-
-@c @node Multi-language Build
-@c @section Multi-language Build
-@c @noindent
-
-@c ??? missing doc for multi language builds: explain how the generated
-@c make files work, ...
-
-@node Integrating existing build procedures with the GPS build system
-@section Integrating existing build procedures with the GPS build system
-@noindent
-@i{Note that this capability is not fully supported yet.}
-
-Since the multi-language build system provided by GPS is based on makefiles,
-it is possible to integrate existing build scripts and makefiles. In the
-following section, we will call such projects that integrate with existing
-build procedures a @i{foreign project}.
-
-You first need to provide your own @code{Makefile.<project>} file, that will
-provide stubs to the real build commands.
-
-Then to tell GPS that it should not generate automatically the makefile
-corresponding to a given project, set the read-only attribute on the
-makefile, e.g under Unix:
-@cindex Unix
-
-@cindex example
-@smallexample
-$ chmod -w Makefile.<project>
-@end smallexample
-
-@cindex Windows
-or under Windows:
-
-@smallexample
-@cindex example
-> attrib +r Makefile.<project>
-@end smallexample
-
-This way when saving the project, GPS knows that the existing makefile
-should not be overridden.
-
-Depending on your project, you will need to define some or all of the
-following targets in the makefile stub:
-
-@table @b
-@item internal-build
-This is the main rule, used for building all the files for a foreign
-project.
-
-@item internal-clean
-This is an optional rule, used to clean the temporary files, e.g. the
-object files generated during the build.
-
-@item SRC_DIRS
-Blank separated list of source directories.
-
-@item LDFLAGS
-Linker options (e.g. libraries or objects to link with).
-
-@item DEPS_PROJECTS
-List of projects (foreign or non foreign) that this project depends upon.
-
-@end table
-
-For example, suppose we have a foreign project called @code{Foo},
-with an existing makefile, here is how Makefile.foo would look like:
-
-@cindex example
-@smallexample
-ifeq ($(FOO_PROJECT),)
-FOO_PROJECT=True
-
-ifeq ($(BASE_DIR),)
-   BASE_DIR=$(shell pwd)
-   FOO_ROOT=True
-
-# Redirect clean to the real clean rule
-   internal-clean:
-        $(MAKE) clean
-
-# Ditto for the build rule
-   internal-build:
-        $(MAKE) build
-endif
-
-FOO_BASE_DIR := $(BASE_DIR)
-
-# Add our source directories to the default search path
-# so that other projects can reference our include files
-FOO_SRC_DIRS = $(FOO_BASE_DIR)/include $(FOO_BASE_DIR)/include2
-SRC_DIRS += $(FOO_SRC_DIRS)
-
-# Add <build>/libfoo.a, built by the internal-build rule above, to the
-# list of libraries to link with
-LDFLAGS += $(FOO_BASE_DIR)/<build>/libfoo.a
-
-ifneq ($(FOO_ROOT),True)
-   DEPS_PROJECTS += $(FOO_BASE_DIR)/foo
-endif
-
-endif
-@end smallexample
 
 @c --------------------------------------------------------------------
 @node Source Browsing
@@ -6548,7 +6442,7 @@ specific encoding through the standard @code{<?xml encoding="..." ?>}
 declaration, as in the following example:
 
 @smallexample
-<?xml version="1.0" encoding="iso-8859-1">
+<?xml version="1.0" encoding="iso-8859-1"?>
 <submenu>
   <title>encoded text/title>
 </submenu>
@@ -6642,6 +6536,11 @@ with its output.
 This attribute can be overridden for each command.
 @end table
 
+If you are defining the same action multiple times, the last definition will
+be kept. However, existing menus, buttons,@dots that already reference that
+action will keep their existing semantic. The new definition will only be
+used for all new menus created from that point on.
+
 The @code{<action>} can have one or
 several children, all of which define a particular command to execute. All
 of these commands are executed one after the other, unless one of them
@@ -6661,9 +6560,12 @@ from custom menu. In order to do that, you must write your script in a
 Thus, the @code{external} tag would look like:
 
 @smallexample
-<action name="my_command">
-  <external>cmd /c c:\.gps\my_scripts\my_cmd.cmd</external>
-</action>
+<?xml version="1.0" ?>
+<external_example>
+  <action name="my_command">
+    <external>cmd /c c:\.gps\my_scripts\my_cmd.cmd</external>
+  </action>
+</external_example>
 @end smallexample
 
 This tag accepts the following attributes:
@@ -6687,16 +6589,19 @@ This tag accepts the following attributes:
    The name of the action is printed in the progress bar while the action is
    executing.
 
-   @smallexample
-<action name="progress" >
-   <external
-    progress-regexp="(\d+) out of (\d+).*$"
-    progress-current="1"
-    progress-final="2"
-    progress-hide="true">gnatmake foo.adb
-   </external>
-</action>
-   @end smallexample
+@smallexample
+<?xml version="1.0" ?>
+<progress_action>
+  <action name="progress" >
+    <external
+      progress-regexp="(\d+) out of (\d+).*$"
+      progress-current="1"
+      progress-final="2"
+      progress-hide="true">gnatmake foo.adb
+    </external>
+  </action>
+</progress_action>
+@end smallexample
 
    @item progress-current (optional)
    This is the opening parenthesis count index in @code{progress-regexp}
@@ -6734,14 +6639,17 @@ single line in the XML file.
 In this group of commands the %... and $... macros can be used.
 
 @smallexample
-<action name="launch tool to location" >
-  <external>tool-path</external>
-  <on-failure>
-     <shell>Locations.parse "%1" category<shell>
-     <external>echo the error message is "%2"</external>
-  </on-failure>
-  <external>echo the tool succeeded with message %1</external>
-</action>
+<?xml version="1.0" ?>
+<action_launch_to_location>
+  <action name="launch tool to location" >
+    <external>tool-path</external>
+    <on-failure>
+      <shell>Locations.parse "%1" category<shell>
+      <external>echo the error message is "%2"</external>
+    </on-failure>
+    <external>echo the tool succeeded with message %1</external>
+  </action>
+</action_launch_to_location>
 @end smallexample
 
 @cindex shell
@@ -6760,12 +6668,15 @@ create two actions to invoke the @code{help} interactive command and to open
 the file @file{main.c}.
 
 @smallexample
-<action name="help">
-  <shell>help</shell>
-</action>
-<action name="edit">
-  <shell>edit main.c</shell>
-</action>
+<?xml version="1.0" ?>
+<help>
+  <action name="help">
+    <shell>help</shell>
+  </action>
+  <action name="edit">
+    <shell>edit main.c</shell>
+  </action>
+</help>
 @end smallexample
 
 By default, commands are expected to be written in the GPS shell language.
@@ -6782,10 +6693,13 @@ adds a menu which lists all the files used by the current file, in a
 project browser.
 
 @smallexample
-<action name="current file uses">
-  <shell lang="shell">File %f</shell>
-  <shell lang="shell">File.uses %1</shell>
-</action>
+<?xml version="1.0" ?>
+<current_file_uses>
+  <action name="current file uses">
+    <shell lang="shell">File %f</shell>
+    <shell lang="shell">File.uses %1</shell>
+  </action>
+</current_file_uses>
 @end smallexample
 
 
@@ -6806,10 +6720,13 @@ instance, the following command opens an xterm (on Unix systems only)
 in the current directory, which depends on the context.
 
 @smallexample
-<action "xterm in current directory">
-  <shell lang="shell">cd %d</shell>
-  <external>xterm</external>
-</action>
+<?xml version="1.0" ?>
+<xterm_directory>
+  <action "xterm in current directory">
+    <shell lang="shell">cd %d</shell>
+    <external>xterm</external>
+  </action>
+</xterm_directory>
 @end smallexample
 
 As seen in some of the examples above, some special strings are expanded by
@@ -7108,16 +7025,19 @@ If this attribute is specified, all other attributes are ignored. This is used
 to reference a named filter previously defined. Here is for instance how you
 can make an action depend on a named filter:
 
-  @smallexample
+@smallexample
+<?xml version="1.0" ?>
+<test_filter>
   <filter name="Test filter" language="ada" />
   <action name="Test action" >
      <filter id="Test filter" />
      <shell>pwd</shell>
   </action>
-  @end smallexample
+</test_filter>
+@end smallexample
 
-  A number of predefined filters are predefined by GPS itself. The full list
-  appears in the key shortcut editor, and is listed here:
+  A number of filters are predefined by GPS itself. The full list appears in
+  the key shortcut editor, and is listed here:
 
   @table @code
   @item Source editor
@@ -7161,30 +7081,31 @@ When several attributes are specified for a @code{<filter>} node (which is not
 possible with @code{id}), they must all match for the action to be executed.
 
 @smallexample
+<?xml version="1.0" ?>
 <!-- The following filter will only match if the currently selected
      window is a text editor editing an Ada source file -->
-
-<filter_and name="Source editor in Ada" >
+<ada_editor>
+  <filter_and name="Source editor in Ada" >
     <filter language="ada" />
     <filter id="Source editor" />
-</filter_and>
+  </filter_and>
 
-<!-- The following action will only be executed for such an editor -->
+  <!-- The following action will only be executed for such an editor -->
 
-<action name="Test Ada action" >
-    <filter id="Source editor in Ada" />
-    <shell>pwd</shell>
-</action>
+  <action name="Test Ada action" >
+     <filter id="Source editor in Ada" />
+     <shell>pwd</shell>
+  </action>
 
-<!--  An action with an anonymous filter. It will be executed if the
-      selected file is in Ada, even if the file was selected through
-      the project explorer  -->
+  <!--  An action with an anonymous filter. It will be executed if the
+        selected file is in Ada, even if the file was selected through
+        the project explorer  -->
 
-<action name="Test for Ada files" >
-    <filter language="ada" />
-    <shell>pwd</shell>
-</action>
-
+  <action name="Test for Ada files" >
+      <filter language="ada" />
+      <shell>pwd</shell>
+  </action>
+</ada_editor>
 @end smallexample
 
 
@@ -7201,14 +7122,19 @@ possible with @code{id}), they must all match for the action to be executed.
 These commands can be associated with menus, tool bar buttons and keys. All
 of these use similar syntax.
 
-Binding a menu to an action is done through the @code{<menu>} tag.
-This tag takes the following attributes:
+Binding a menu to an action is done through the @code{<menu>} and
+@code{<submenu>} tags.
+
+The @code{<menu>} tag takes the following attributes:
 
 @table @code
 @item action  (mandatory)
 This attribute specifies which action to execute
 when the menu is selected by the user. If no action by this name was defined,
 no new menu is added.
+
+This attribute can be omitted only when no title is specified for the menu
+to make it a separator (see below).
 
 @item before  (optional)
 It specifies the name of another menu item before
@@ -7232,42 +7158,89 @@ You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
 a menu named @code{File}, set its title as @code{_File}.
 
-You can specify which menu this new item is added to by putting the
-@code{<menu>} tag to a @code{<submenu>} tag. The latter also takes a
-@code{<title>} as a child. You can add items or sub menus to existing menus,
-using titles for menus that already exist.
+The tag @code{<submenu>} accepts the following attributes:
+
+@table @code
+@item before  (optional)
+See description above, same as for @code{<menu>}
+
+@item after   (optional)
+See description above, same as for @code{<menu>}
+@end table
+
+It accepts several children, among @code{<title>} (which must be specified
+at most once), @code{<submenu>} (for nested menus), and @code{<menu>}.
+
+Since @code{<submenu>} doesn't accept the @code{action} attribute, you should
+use @code{<menu>} for clickable items that should result in an action, and
+@code{<submenu>} if you want to define several menus with the same path.
+
+You can specify which menu the new item is added to in one of two ways:
+
+@itemize @bullet
+@item Specify a path in the @code{title} attribute of @code{<menu>}
+@item Put the @code{<menu>} as a child of a @code{<submenu>} node
+  This requires slightly more typing, but it allows you to specify the exact
+  location, at each level, of the parent menu (before or after an existing
+  menu).
+@end itemize
 
 For example, this adds an item named @code{mymenu} to the standard
 @code{Edit} menu.
 
 @smallexample
-<submenu>
-  <title>Edit</title>
+<?xml version="1.0" ?>
+<test>
+  <submenu>
+    <title>Edit</title>
+    <menu action="current file uses">
+       <title>mymenu</title>
+    </menu>
+  </submenu>
+</test>
+@end smallexample
+
+The following has exactly the same effect:
+
+@smallexample
+<?xml version="1.0" ?>
+<test>
   <menu action="current file uses">
-     <title>mymenu</title>
+    <title>Edit/mymenu</title>
   </menu>
-</submenu>
+</test>
 @end smallexample
 
-The above has the same result as
+The following adds a new item "stats" to the "unit testing" submenu
+in "my_tools".
 
 @smallexample
-<menu action="current file uses">
-   <title>/Edit/mymenu</title>
-</menu>
-@end smallexample
-
-Use the @code{/} separator to identify the submenu in a menu. For
-example, this adds a new item "stats" to the standard "unit testing" submenu
-in "tools".
-
-@smallexample
-<submenu>
-  <title>Tools/unit testing</title>
+<?xml version="1.0" ?>
+<test>
   <menu action="execute my stats">
-    <title>stats</title>
+     <title>/My_Tools/unit testing/stats</title>
   </menu>
-</submenu>
+</test>
+@end smallexample
+
+The previous syntax is shorter, but less flexible than the following,
+where we also force the My_Tools menu, if it doesn't exist yet, to
+appear after the File menu. This is not doable by using only @code{<menu>}
+tags. We also insert several items in that new menu
+
+@smallexample
+<?xml version="1.0" ?>
+<test>
+  <submenu after="File">
+    <title>My_Tools</title>
+    <menu action="execute my stats">
+       <title>unit testing/stats</title>
+    </menu>
+    <menu action="execute my stats2">
+       <title>unit testing/stats2</title>
+    </menu>
+  </submenu>
+</test>
 @end smallexample
 
 Adding an item with an empty title or no title at all inserts a
@@ -7303,14 +7276,17 @@ the name of the current file in the GPS console. This contextual menu is only
 displayed in source editors.
 
 @smallexample
-<action name="print current file name" >
-   <filter module="Source_Editor" />
-   <shell>echo %f</shell>
-</action>
+<?xml version="1.0" ?>
+<print>
+  <action name="print current file name" >
+    <filter module="Source_Editor" />
+    <shell>echo %f</shell>
+  </action>
 
-<contextual action="print current file name" >
-   <Title>Print Current File Name</Title>
-</contextual>
+  <contextual action="print current file name" >
+    <Title>Print Current File Name</Title>
+  </contextual>
+</print>
 @end smallexample
 
 
@@ -7343,10 +7319,13 @@ if the user choses to see both text and icons in the tool bar.
 The following example defines a new button:
 
 @smallexample
-<button action="execute my stats">
-   <title>stats</title>
-   <pixmap>/my_pixmaps/button.jpg</pixmap>
-</button>
+<?xml version="1.0" ?>
+<stats>
+  <button action="execute my stats">
+    <title>stats</title>
+    <pixmap>/my_pixmaps/button.jpg</pixmap>
+  </button>
+</stats>
 @end smallexample
 
 @c ---------------------------------------------------------------------
@@ -7376,8 +7355,11 @@ preexisting binding. The second example below deactivates the standard binding.
 
 
 @smallexample
-<key action="expand alias">control-o</key>
-<key action="Jump to matching delimiter" />
+<?xml version="1.0" ?>
+<keys>
+  <key action="expand alias">control-o</key>
+  <key action="Jump to matching delimiter" />
+</key>
 @end smallexample
 
 Multiple actions can be bound to the same key binding. The first one with a
@@ -7519,10 +7501,13 @@ Here is a small example on how the "Ada assignment" pattern was
 defined.
 
 @smallexample
-<vsearch-pattern>
-  <name>Ada: assignment</name>
-  <regexp case-sensitive="false">\b(\w+)\s*:=</regexp>
-</vsearch-pattern>
+<?xml version="1.0" ?>
+<search>
+  <vsearch-pattern>
+    <name>Ada: assignment</name>
+    <regexp case-sensitive="false">\b(\w+)\s*:=</regexp>
+  </vsearch-pattern>
+</search>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -7997,10 +7982,13 @@ insensitive languages (except if corresponding case is set to
 Unchanged). @pxref{The Preferences Dialog}.
 
 @smallexample
-<case_exceptions>
-   <word>GNAT</word>
-   <word>OS_Lib</word>
-</case_exceptions>
+<?xml version="1.0" ?>
+<exceptions>
+  <case_exceptions>
+     <word>GNAT</word>
+     <word>OS_Lib</word>
+  </case_exceptions>
+</exceptions>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8053,12 +8041,14 @@ predefined stock icons will not get overridden by your icons.
 @end menu
 
 @noindent
-Support for external tools can be provided through GPS. Typically, this
-would be done to specify different compilers, but it can also apply to a wide
-variety of tools.
+GPS has built-in support for external tools. This feature can be used to
+support a wide variety of tools (in particular, to specify different
+compilers). Regular enhancements are done in this area, so if you are
+planning to use the external tool support in GPS, check for the latest GPS
+version available.
 
-GPS's support for external tools is enhancing with each release. Typically,
-the following things need to be achieved to successfully use a tool:
+Typically, the following things need to be achieved to successfully use a
+tool:
 
 @itemize @bullet
 @item Specify its command line switches
@@ -8087,7 +8077,7 @@ This optional attribute specifies which package should be used in the project
 to store information about this tool, in particular its switches. You cannot
 create new packages as you wish, and must use only existing packages. Most of
 the time the default value should be used, unless you are working with one of
-the predefined packages;
+the predefined packages.
 
 If this attribute is set to "ide", then the switches cannot be set for a
 specific file, only at the project level. Support for file-specific switches
@@ -8133,10 +8123,13 @@ If at least one language is specified, the switches editor page will only be
 displayed if that language is supported by the project.
 
 @smallexample
-<tool name="My Tool" >
-  <language>Ada</language>
-  <language>C</language>
-</tool>
+<?xml version="1.0" ?>
+<my_tool>
+  <tool name="My Tool" >
+    <language>Ada</language>
+    <language>C</language>
+  </tool>
+</my_tool>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8156,9 +8149,12 @@ tool. This command line is parsed as usual, e.g. quotes are taken into account
 to avoid splitting switches each time a space is encountered.
 
 @smallexample
-<tool name="My tool" >
-   <initial-cmd-line>-a -b -c</initial-cmd-line>
-</tool>
+<?xml version="1.0" ?>
+<my_tool>
+  <tool name="My tool" >
+     <initial-cmd-line>-a -b -c</initial-cmd-line>
+  </tool>
+</my_tool>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8218,10 +8214,10 @@ description of @code{lines} above.
 This indicates the column of the frame that should contain the switch. See the
 description of @code{columns} above.
 
-@item label
+@item label (mandatory)
 This is the label which is displayed in the graphical interface
 
-@item switch
+@item switch (mandatory)
 This is the text that should be put on the command line if that switch is
 selected. Depending on its type, a variant of the text might be put instead,
 see the description of @code{combo} and @code{spin} below.
@@ -8317,7 +8313,8 @@ This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
 @code{separator} and @code{tip} attributes. This tag describes a text edition
 field, which can
 contain any text the user types. This text will be prefixed by the value of
-the @code{switch} attribute, and a space. If no text is entered in the field
+the @code{switch} attribute, and the separator (by default nothing). If no text
+is entered in the field
 by the user, nothing is put on the command line.
 
 This tag accepts two extra attributes:
@@ -8520,11 +8517,14 @@ way when calling external commands.
 
 @ifset python
 @smallexample
-<action name="test quotes">
-  <shell lang="python">'-a -b -c'</shell>
-  <external> echo with quotes: "%1"</external>
-  <external> echo without quotes: %2</external/>
-</action>
+<?xml version="1.0" ?>
+<quotes>
+  <action name="test quotes">
+    <shell lang="python">'-a -b -c'</shell>
+    <external> echo with quotes: "%1"</external>
+    <external> echo without quotes: %2</external/>
+  </action>
+</quotes>
 @end smallexample
 @end ifset
 
@@ -8548,10 +8548,13 @@ Since this command aborts when the user presses cancel, you can
 simply put it in its own @code{<shell>} command, as in:
 
 @smallexample
-<action name="test save children">
-  <shell>MDI.save_all 0</shell>
-  <external>echo Run unless Cancel was pressed</external>
-</action>
+<?xml version="1.0" ?>
+<save_children>
+  <action name="test save children">
+    <shell>MDI.save_all 0</shell>
+    <external>echo Run unless Cancel was pressed</external>
+  </action>
+</save_children>
 @end smallexample
 
 
@@ -8586,11 +8589,14 @@ argument of the @code{get_tool_switches_as_string} command. The last external
 command is a simple output of these switches
 
 @smallexample
-<action name="Get switches for Find">
-  <shell>Project %p</shell>
-  <shell>Project.get_tool_switches_as_string %1 Find </shell>
-  <external>echo %1</external>
-</action>
+<?xml version="1.0" ?>
+<find_switches>
+  <action name="Get switches for Find">
+    <shell>Project %p</shell>
+    <shell>Project.get_tool_switches_as_string %1 Find </shell>
+    <external>echo %1</external>
+  </action>
+</find_switches>
 @end smallexample
 
 @ifset python
@@ -8600,13 +8606,16 @@ switches for the current project, and prints them out in the messages
 window. The
 
 @smallexample
-<action name="Query compiler switches">
-  <shell lang="python">GPS.Project("%p").get_attribute_as_list
-    (package="compiler",
-     attribute="default_switches",
-     index="ada")</shell>
-  <external>echo compiler switches= %1</external>
-</action>
+<?xml version="1.0" ?>
+<query_switches>
+  <action name="Query compiler switches">
+    <shell lang="python">GPS.Project("%p").get_attribute_as_list
+      (package="compiler",
+       attribute="default_switches",
+       index="ada")</shell>
+    <external>echo compiler switches= %1</external>
+  </action>
+</query_switches>
 @end smallexample
 @end ifset
 
@@ -8653,12 +8662,15 @@ The following is a short example that queries the name of a directory and a
 file name, and displays each in the Messages window.
 
 @smallexample
-<action name="query file and dir">
-  <shell lang="python">list=GPS.input_dialog (
-     "Please enter directory and file name", "Directory", "File");
-     print ("Dir=" + list[0], "File=" + list[1])
-  </shell>
-</action>
+<?xml version="1.0" ?>
+<query_file>
+  <action name="query file and dir">
+    <shell lang="python">list=GPS.input_dialog (
+       "Please enter directory and file name", "Directory", "File");
+       print ("Dir=" + list[0], "File=" + list[1])
+    </shell>
+  </action>
+</query_file>
 @end smallexample
 
 @end ifset
@@ -8699,10 +8711,13 @@ tags underneath. If it isn't specified for the action itself, its default value
 will always be the empty string, i.e. output is sent to the GPS console.
 
 @smallexample
-<action name="ls current directory" output="default output" >
-   <shell output="Current directory" >pwd</shell>
-   <external output="Current directory contents" >/bin/ls</external>
-</action>
+<?xml version="1.0" ?>
+<ls>
+  <action name="ls current directory" output="default output" >
+     <shell output="Current directory" >pwd</shell>
+     <external output="Current directory contents" >/bin/ls</external>
+  </action>
+</ls>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8749,10 +8764,15 @@ also that you should leave a space at the end, in case the output itself ends
 with a quote.
 
 @smallexample
-<action name="make example" >
-   <external>make</external>
-   <shell>Locations.parse """%1 """ make_example</shell>
-</action>
+<?xml version="1.0" ?>
+<make>
+  <action name="make example" >
+     <external>make</external>
+     <on-failure>
+        <shell>Locations.parse """%1 """ make_example</shell>
+     </on-failure>
+  </action>
+</make>
 @end smallexample
 
 @item Auto-correcting errors
@@ -8907,6 +8927,7 @@ user interactively for the name of the file to search.
 * The GPS Shell::
 @ifset python
 * The Python Interpreter::
+* Python FAQ::
 @end ifset
 * Hooks::
 @end menu
@@ -9241,10 +9262,9 @@ you need to provide several things:
  key shortcuts
 @end itemize
 
-Alternatively, your python script can call the command
-@code{GPS.parse_xml} to specify some inline XML tags to
-interpret. These tag can directly the new menus or key bindings associated
-with your command.
+Alternatively, your python script can call the command @code{GPS.parse_xml}
+to specify some inline XML tags to interpret. These tags can directly create
+the new menus or key bindings associated with your command.
 
 The following example defines a python command that inserts a line full of
 dashes ('-') at the current cursor location. This command is associated with
@@ -9287,11 +9307,77 @@ Modify the file @file{$HOME/.gps/traces.cfg}, and add the following line:
 PYTHON.OUT=yes
 @end smallexample
 
-This will put in the file @file{$HOME/.gps/log} all the output from
-python, among other traces. However, it will also slow down GPS when
-there are a lot of output to process.
+This will include the python traces as part of the general traces available
+in the file @file{$HOME/.gps/log}. Note that it may slow down GPS if there is
+a lot of output to process.
 
 @end ifset
+
+@c ------------------------------------------------------------------------
+@ifset python
+@node Python FAQ
+@subsection Python FAQ
+@cindex python
+@c ------------------------------------------------------------------------
+
+@noindent
+This section lists some of the problems that have been encountered while using
+Python inside GPS. This is not a general Python discussion.
+
+@itemize @bullet
+
+@item The output of spawned processes can't be redirected to a GPS window
+
+In general, it is possible to redirect the output of any Python script to
+any GPS window (either an already existing one, or creating one automatically),
+through the @code{"output"} attribute of XML configuration files.
+
+However, there is a limitation in python that the output of processes spawned
+through os.exec() or os.spawn() is redirected to the standard output, and not
+to the usual python output that GPS has overriden.
+
+There are two solutions for this:
+@itemize -
+@item Execute the external process through a pipe
+
+The output of the pipe is then redirected to Python's output, as in:
+
+@smallexample
+import os, sys
+def my_external():
+   f = os.popen ('ls')
+   for l in f.readlines():
+      sys.stdout.write ('   ' + l)
+@end smallexample
+
+This solution allows you, at the same time, to modify the output, for instance
+to indent it as in the example above.
+
+@item Execute the process through GPS
+
+You can go through the process of defining an XML customization string for
+GPS, and execute your process this way, as in:
+
+@smallexample
+GPS.parse_xml ("""
+   <action name="ls">
+     <external output="output of ls">ls</external>
+   </action>""")
+
+def my_external():
+   GPS.execute_action ("ls")
+@end smallexample
+
+This solution allows you to send the output to a different window than the
+rest of your script. But you can filter or modify the output as in the
+first solution.
+
+@end itemize
+
+@end itemize
+
+@end ifset
+
 
 @c --------------------------------------------------------------------
 @node Hooks
@@ -10022,14 +10108,15 @@ Contains the user and e-mail to use in the global ChangeLog
 files. Note that the common usage is to have two spaces between the
 name and the e-mail. Ex: "John Does  <john.doe@@home.com>"
 
-@c Currently disabled, since this is not well supported yet
-@c    @item GDK_USE_XFT
-@c @cindex GDK_USE_XFT
-@c If this variable is set to 1, then the fonts used in most parts of gps will be
-@c anti-aliased fonts, provided your Xserver supports the Xft extension, and you
-@c have installed anti-aliased fonts on your system, like the true-type fonts
-@c available at @url{http://keithp.com/~keithp/truetype.tar.gz}
-@c @cindex url
+   @item GDK_USE_XFT
+@cindex GDK_USE_XFT
+Only relevant to Linux and Solaris (8 and above) systems.
+If this variable is set to 1, then the fonts used in most parts of gps will be
+anti-aliased fonts.
+
+This option is enabled by default when running GPS locally (@code{DISPLAY} set
+to @code{":0.0"}) and disabled otherwise. Setting this variable explicitely
+overrides the default behavior.
 
 @end table
 
