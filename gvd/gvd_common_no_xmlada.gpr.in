@@ -1,0 +1,28 @@
+with "../gtkada/gtkada";
+with "../shared";
+with "../gnat";
+
+project GVD_Common is
+
+   for Languages use ("C", "Ada");
+
+   --  Better to change the Source_Dirs than have a specific naming scheme,
+   --  since otherwise we'll still have ALI files referencing the old name
+   --  if we just decide to reconfigure with doing a clean
+
+   for Source_Dirs use ("common", "gnat", "common/no_xmlada");
+
+   for Object_Dir use "common/obj";
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-a");
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      for Switches ("g-exptty.adb") use ("-gnatpg", "-g", "-O2");
+   end Compiler;
+
+   package IDE renames Shared.IDE;
+
+end GVD_Common;

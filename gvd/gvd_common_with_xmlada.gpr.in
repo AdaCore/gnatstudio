@@ -1,11 +1,18 @@
 with "../gtkada/gtkada";
 with "../shared";
 with "../gnat";
+with "xmlada";
 
 project GVD_Common is
 
    for Languages use ("C", "Ada");
-   for Source_Dirs use ("common", "gnat");
+
+   --  Better to change the Source_Dirs than have a specific naming scheme,
+   --  since otherwise we'll still have ALI files referencing the old name
+   --  if we just decide to reconfigure with doing a clean
+
+   for Source_Dirs use ("common", "gnat", "common/with_xmlada");
+
    for Object_Dir use "common/obj";
 
    package Builder is
