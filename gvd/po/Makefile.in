@@ -1,0 +1,19 @@
+LANGS = fr
+MKDIR = mkdir -p
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+prefix        = @prefix@
+localedir     = $(prefix)/share/locale
+
+all:
+
+$(LANGS):
+	msgfmt $@.po -o $@.gmo
+	$(MKDIR) $(localedir)/$@/LC_MESSAGES
+	$(INSTALL_DATA) $@.gmo $(localedir)/$@/LC_MESSAGES/gvd.mo
+
+install: $(LANGS)
+
+clean:
+	$(RM) *.gmo skeleton.po.new
