@@ -2995,12 +2995,9 @@ package body Src_Editor_Module is
            Parameter_Names_To_Usage (Edit_Cmd_Parameters, "identifier", 3),
          Description =>
            -("Create a mark for file_name, at position given by line and"
-             & ASCII.LF
-             & "column. Length corresponds to the text length to highlight"
-             & ASCII.LF
-             & "after the mark. The identifier of the mark is returned."
-             & ASCII.LF
-             & "Use the command goto_mark to jump to this mark."),
+             & " column. Length corresponds to the text length to highlight"
+             & " after the mark. The identifier of the mark is returned."
+             & " Use the command goto_mark to jump to this mark."),
          Minimum_Args => 1,
          Maximum_Args => 4,
          Handler => Edit_Command_Handler'Access);
@@ -3011,8 +3008,7 @@ package body Src_Editor_Module is
          Usage        => "(file, category, [line=0]) -> None",
          Description  =>
            -("Marks a line as belonging to a highlighting category."
-             & ASCII.LF
-             & "If line is not specified, mark all lines in file."),
+             & " If line is not specified, mark all lines in file."),
 
          Minimum_Args => 2,
          Maximum_Args => 3,
@@ -3023,9 +3019,8 @@ package body Src_Editor_Module is
          Command      => "unhighlight",
          Usage        => "(file, category, [line=0]) -> None",
          Description  =>
-           -("Unmarks the line for the specified category"
-             & ASCII.LF
-             & "If line is not specified, unmark all lines in file."),
+           -("Unmarks the line for the specified category."
+             & " If line is not specified, unmark all lines in file."),
          Minimum_Args => 2,
          Maximum_Args => 3,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
@@ -3036,7 +3031,7 @@ package body Src_Editor_Module is
          Usage        => "(category, color) -> None",
          Description  =>
            -("Create a new highlighting category with the given color. The"
-             & ASCII.LF & "format for color is ""#RRGGBB""."),
+             & " format for color is ""#RRGGBB""."),
          Minimum_Args => 2,
          Maximum_Args => 2,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
@@ -3058,14 +3053,10 @@ package body Src_Editor_Module is
            "(file, line, column, [before=-1], [after=-1]) -> String",
          Description  =>
            -("Get the characters around a certain position."
-             & ASCII.LF
-             & "Returns string between <before> characters before the mark"
-             & ASCII.LF
-             & "and <after> characters after the position. If <before> or"
-             & ASCII.LF
-             & "<after> is omitted, the bounds will be at the beginning and/or"
-             & ASCII.LF
-             & "the end of the line."),
+             & " Returns string between <before> characters before the mark"
+             & " and <after> characters after the position. If <before> or"
+             & " <after> is omitted, the bounds will be at the beginning and"
+             & "/or the end of the line."),
          Minimum_Args => 3,
          Maximum_Args => 5,
          Handler      => Edit_Command_Handler'Access);
@@ -3122,14 +3113,11 @@ package body Src_Editor_Module is
          Usage        =>
            "(file, line, column, text, [before=-1], [after=-1]) -> None",
          Description  =>
-           -("Replace the characters around a certain position." & ASCII.LF
-             & "<before> characters before (line, column), and up to <after>"
-             & ASCII.LF
-             & "characters after are removed, and the new text is inserted"
-             & ASCII.LF
-             & "instead. If <before> or <after> is omitted, the bounds will"
-             & ASCII.LF
-             & "be at the beginning and/or the end of the line."),
+           -("Replace the characters around a certain position."
+             & " <before> characters before (line, column), and up to <after>"
+             & " characters after are removed, and the new text is inserted"
+             & " instead. If <before> or <after> is omitted, the bounds will"
+             & " be at the beginning and/or the end of the line."),
          Minimum_Args => 4,
          Maximum_Args => 6,
          Handler      => Edit_Command_Handler'Access);
@@ -3165,10 +3153,9 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "save",
          Usage        => "(interactive=true, all=true) -> None",
-         Description  => -("Save current or all files." & ASCII.LF
-           & "  If interactive is true, then prompt before each save."
-           & ASCII.LF
-           & "  If all is true, then all files are saved"),
+         Description  => -("Save current or all files."
+           & " If interactive is true, then prompt before each save."
+           & " If all is true, then all files are saved"),
          Minimum_Args => 0,
          Maximum_Args => 2,
          Handler      => Edit_Command_Handler'Access);
