@@ -83,7 +83,6 @@ with Glide_Intl;                use Glide_Intl;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
 with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
 with Projects.Registry;         use Projects.Registry;
 with Projects.Editor;           use Projects.Editor;
@@ -375,12 +374,9 @@ package body GVD_Module is
      (Command : access Set_Breakpoint_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Var_Name_Label is new Contextual_Menu_Label_Creator_Record with record
-      Command : Interactive_Command_Access;
-   end record;
-   function Get_Label
-     (Creator   : access Var_Name_Label;
-      Context   : access Selection_Context'Class) return String;
+   function Custom_Label_Expansion
+     (Context : access Selection_Context'Class) return String;
+   --  Provide expansion for "$!" in the labels for contextual menus
 
    ----------------------------------
    -- Load_Project_From_Executable --
@@ -1284,24 +1280,15 @@ package body GVD_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Load_Core;
 
-   ---------------
-   -- Get_Label --
-   ---------------
+   ----------------------------
+   -- Custom_Label_Expansion --
+   ----------------------------
 
-   function Get_Label
-     (Creator   : access Var_Name_Label;
-      Context   : access Selection_Context'Class) return String
-   is
-      Name : constant String := Get_Variable_Name
-        (Selection_Context_Access (Context),
-         Print_Variable_Command (Creator.Command.all).Dereference);
+   function Custom_Label_Expansion
+     (Context : access Selection_Context'Class) return String is
    begin
-      if Print_Variable_Command (Creator.Command.all).Display then
-         return -"Debug/Display " & Krunch (Name);
-      else
-         return -"Debug/Print " & Krunch (Name);
-      end if;
-   end Get_Label;
+      return Get_Variable_Name (Selection_Context_Access (Context), True);
+   end Custom_Label_Expansion;
 
    -------------
    -- Execute --
@@ -2361,8 +2348,6 @@ package body GVD_Module is
       Printable_Filter  : Action_Filter;
       Access_Filter     : Action_Filter;
       Subprogram_Filter : Action_Filter;
-      Label             : Contextual_Menu_Label_Creator;
-
    begin
       GVD_Module_ID := new GVD_Module_Record;
       GVD_Module (GVD_Module_ID).Kernel := Kernel_Handle (Kernel);
@@ -2385,19 +2370,17 @@ package body GVD_Module is
 
       Filter := Action_Filter (Debugger_Filter and Printable_Filter);
       Command := new Print_Variable_Command;
-      Label := new Var_Name_Label'(Command => Command);
       Register_Contextual_Menu
         (Kernel, "Debug print variable",
-         Label  => Label,
+         Label  => "Debug/Print %e",
          Action => Command,
          Filter => Filter);
 
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := True;
-      Label := new Var_Name_Label'(Command => Command);
       Register_Contextual_Menu
         (Kernel, "Debug display variable",
-         Label  => Label,
+         Label  => "Debug/Display %e",
          Action => Command,
          Filter => Filter);
 
@@ -2406,21 +2389,21 @@ package body GVD_Module is
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := False;
       Print_Variable_Command (Command.all).Dereference := True;
-      Label := new Var_Name_Label'(Command => Command);
       Register_Contextual_Menu
         (Kernel, "Debug print dereferenced variable",
-         Label  => Label,
+         Label  => "Debug/Print %C",
          Action => Command,
+         Custom => Custom_Label_Expansion'Access,
          Filter => Filter);
 
       Command := new Print_Variable_Command;
       Print_Variable_Command (Command.all).Display := True;
       Print_Variable_Command (Command.all).Dereference := True;
-      Label := new Var_Name_Label'(Command => Command);
       Register_Contextual_Menu
         (Kernel, "Debug display dereferenced variable",
-         Label  => Label,
+         Label  => "Debug/Display %C",
          Action => Command,
+         Custom => Custom_Label_Expansion'Access,
          Filter => Filter);
 
       Command := new Set_Value_Command;
