@@ -440,6 +440,9 @@ package body Src_Editor_Buffer is
 
          Result := new String'(Value (Chars));
          C_Free (Chars);
+         --  We need to use the C function to free Chars, since memory was
+         --  allocated in C code.
+
          return Result;
 
       else
