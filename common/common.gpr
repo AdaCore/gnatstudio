@@ -12,6 +12,12 @@ project Common is
    package Compiler is
       for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
+
+      case Shared.Build is
+          when "Production" =>
+             for Switches ("tries.adb") use ("-O2", "-gnatp", "-gnatn");
+             for Switches ("dynamic_arrays.adb") use ("-O2", "-gnatp", "-gnatn");
+      end case;
    end Compiler;
 
    package IDE renames Shared.IDE;
