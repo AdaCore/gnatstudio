@@ -70,6 +70,10 @@ package Glide_Kernel.Project is
    --
    --  ??? What do we do if the project couldn't be loaded.
 
+   procedure Load_Default_Project
+     (Kernel : access Kernel_Handle_Record'Class; Directory : String);
+   --  Create and load a default project in Directory
+
    procedure Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;
       Project   : Prj.Tree.Project_Node_Id;

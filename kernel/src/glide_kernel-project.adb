@@ -281,6 +281,22 @@ package body Glide_Kernel.Project is
          Close (Fd);
    end Compute_Predefined_Paths;
 
+   --------------------------
+   -- Load_Default_Project --
+   --------------------------
+
+   procedure Load_Default_Project
+     (Kernel : access Kernel_Handle_Record'Class; Directory : String) is
+   begin
+      Kernel.Project := Create_Default_Project
+        ("default", Normalize_Pathname (Directory, Resolve_Links => False));
+      Kernel.Project_Is_Default := True;
+      Kernel.Project_View := No_Project;
+      Project_Changed (Kernel);
+      Recompute_View (Kernel);
+      Reset_Normalized_Flag (Kernel.Project);
+   end Load_Default_Project;
+
    ------------------
    -- Load_Project --
    ------------------
