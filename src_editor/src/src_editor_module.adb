@@ -351,6 +351,10 @@ package body Src_Editor_Module is
       File       : String);
    --  Add an entry for File to the Reopen menu, if needed.
 
+   function Find_Mark (Identifier : String) return Mark_Identifier_Record;
+   --  Find the mark corresponding to Identifier, or return an empty
+   --  record.
+
    ----------
    -- Free --
    ----------
@@ -359,6 +363,39 @@ package body Src_Editor_Module is
    begin
       Free (X.File);
    end Free;
+
+   ---------------
+   -- Find_Mark --
+   ---------------
+
+   function Find_Mark (Identifier : String) return Mark_Identifier_Record is
+      use type Mark_Identifier_List.List_Node;
+
+      Id          : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      Mark_Node   : Mark_Identifier_List.List_Node;
+      Mark_Record : Mark_Identifier_Record;
+   begin
+      Mark_Node := Mark_Identifier_List.First (Id.Stored_Marks);
+
+      while Mark_Node /= Mark_Identifier_List.Null_Node loop
+         Mark_Record := Mark_Identifier_List.Data (Mark_Node);
+
+         if Mark_Record.Id'Img = " " & Identifier then
+            return Mark_Record;
+         end if;
+
+         Mark_Node := Mark_Identifier_List.Next (Mark_Node);
+      end loop;
+
+      return  Mark_Identifier_Record'
+        (Id     => 0,
+         Child  => null,
+         File   => null,
+         Mark   => null,
+         Length => 0);
+
+   end Find_Mark;
 
    --------------------------
    -- Edit_Command_Handler --
@@ -374,74 +411,71 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
 
       Node : List_Node;
-      Filename : Basic_Types.String_Access;
+      Filename      : Basic_Types.String_Access;
+      Error_Message : Basic_Types.String_Access;
+
       Line     : Natural := 1;
       Length   : Natural := 0;
       Column   : Natural := 1;
+
+      function Parse_Argument (Arg : String) return Natural;
+      --  Parse a numerical argument, produce an error message corresponding
+      --  to Arg if parsing fails.
+
+      function Parse_Argument (Arg : String) return Natural is
+      begin
+         Node := Next (Node);
+
+         if Node = Null_Node then
+            Free (Filename);
+            Error_Message := new String'
+              (Command & ": " & (-"option " & Arg & " requires a value"));
+            return 0;
+         end if;
+
+         declare
+         begin
+            return Natural'Value (Data (Node));
+         exception
+            when others =>
+               Free (Filename);
+
+               Error_Message := new String'
+                 (Command
+                  & ": " & (-"option " & Arg & " requires a numerical value"));
+               return 0;
+         end;
+      end Parse_Argument;
+
    begin
       if Command = "edit" or else Command = "create_mark" then
          Node := First (Args);
 
          while Node /= Null_Node loop
             if Data (Node) = "-c" then
-               Node := Next (Node);
-
-               if Node = Null_Node then
-                  Free (Filename);
-                  return Command & ": " & (-"option -c requires a value");
-               end if;
-
-               declare
-               begin
-                  Column := Natural'Value (Data (Node));
-               exception
-                  when others =>
-                     Free (Filename);
-                     return Command
-                     & ": " & (-"option -c requires a numerical value");
-               end;
+               Column := Parse_Argument ("-c");
 
             elsif Data (Node) = "-l" then
-               Node := Next (Node);
-
-               if Node = Null_Node then
-                  Free (Filename);
-                  return Command & ": " & (-"option -l requires a value");
-               end if;
-
-               declare
-               begin
-                  Line  := Natural'Value (Data (Node));
-               exception
-                  when others =>
-                     Free (Filename);
-                     return Command
-                     & ": " & (-"option -l requires a numerical value");
-               end;
+               Line := Parse_Argument ("-l");
 
             elsif Data (Node) = "-L" then
-               Node := Next (Node);
-
-               if Node = Null_Node then
-                  Free (Filename);
-                  return Command & ": " & (-"option -L requires a value");
-               end if;
-
-               declare
-               begin
-                  Length  := Natural'Value (Data (Node));
-               exception
-                  when others =>
-                     Free (Filename);
-                     return Command
-                     & ": " & (-"option -L requires a numerical value");
-               end;
+               Length := Parse_Argument ("-L");
 
             elsif Filename = null then
                Filename := new String'(Data (Node));
             else
                Free (Filename);
                return Command & ": " & (-"too many parameters");
+            end if;
+
+            if Error_Message /= null then
+               declare
+                  Message : constant String := Error_Message.all;
+               begin
+                  Free (Filename);
+                  Free (Error_Message);
+                  return Message;
+               end;
             end if;
 
             Node := Next (Node);
@@ -535,51 +569,110 @@ package body Src_Editor_Module is
 
          if Filename /= null then
             declare
-               use type Mark_Identifier_List.List_Node;
-
-               Mark_Node   : Mark_Identifier_List.List_Node;
-               Mark_Record : Mark_Identifier_Record;
-               Found       : Boolean := False;
+               Mark_Record : constant Mark_Identifier_Record
+                 := Find_Mark (Filename.all);
             begin
-               Mark_Node := Mark_Identifier_List.First (Id.Stored_Marks);
-
-               while Mark_Node /= Mark_Identifier_List.Null_Node loop
-                  Mark_Record := Mark_Identifier_List.Data (Mark_Node);
-
-                  if Mark_Record.Id'Img = " " & Filename.all then
-                     if Mark_Record.Child /= null then
-                        Raise_Child (Mark_Record.Child);
-                        Set_Focus_Child (Mark_Record.Child);
-                        Grab_Focus
-                          (Source_Box
-                             (Get_Widget (Mark_Record.Child)).Editor);
-                     end if;
-
-                     Scroll_To_Mark
-                       (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                        Mark_Record.Mark,
-                        Mark_Record.Length);
-
-                     Found := True;
-                     exit;
-                  end if;
-
-                  Mark_Node := Mark_Identifier_List.Next (Mark_Node);
-               end loop;
-
                Free (Filename);
 
-               if Found then
+               if Mark_Record.Mark /= null
+                 and then Mark_Record.Child /= null
+               then
+                  Raise_Child (Mark_Record.Child);
+                  Set_Focus_Child (Mark_Record.Child);
+                  Grab_Focus
+                    (Source_Box
+                       (Get_Widget (Mark_Record.Child)).Editor);
+
+                  Scroll_To_Mark
+                    (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                     Mark_Record.Mark,
+                     Mark_Record.Length);
+
                   return "";
                else
                   return "Mark not found.";
                end if;
             end;
-
          else
             return -"goto_mark: missing parameter file_name";
          end if;
 
+      elsif Command = "get_chars" then
+         declare
+            Before : Integer := -1;
+            After  : Integer := -1;
+         begin
+            Node := First (Args);
+
+            while Node /= Null_Node loop
+               if Data (Node) = "-c" then
+                  Column := Parse_Argument ("-c");
+
+               elsif Data (Node) = "-l" then
+                  Line := Parse_Argument ("-l");
+
+               elsif Data (Node) = "-b" then
+                  Before := Parse_Argument ("-b");
+
+               elsif Data (Node) = "-a" then
+                  After := Parse_Argument ("-a");
+
+               elsif Filename = null then
+                  Filename := new String'(Data (Node));
+               else
+                  Free (Filename);
+                  Free (Error_Message);
+                  return Command & ": " & (-"too many parameters");
+               end if;
+
+               if Error_Message /= null then
+                  declare
+                     Message : constant String := Error_Message.all;
+                  begin
+                     Free (Filename);
+                     Free (Error_Message);
+                     return Message;
+                  end;
+               end if;
+
+               Node := Next (Node);
+            end loop;
+
+            if Filename /= null then
+               declare
+                  Mark_Record : constant Mark_Identifier_Record
+                    := Find_Mark (Filename.all);
+                  Child       : MDI_Child;
+               begin
+                  if Mark_Record.Mark /= null
+                    and then Mark_Record.Child /= null
+                  then
+                     Free (Filename);
+
+                     return
+                       Get_Chars
+                         (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                          Mark_Record.Mark,
+                          Before, After);
+                  else
+                     Child := Find_Editor (Kernel, Filename.all);
+                     Free (Filename);
+
+                     if Child /= null then
+                        return Get_Chars
+                          (Source_Box (Get_Widget (Child)).Editor,
+                           Line, Column,
+                           Before, After);
+                     end if;
+
+                     return "Mark not found.";
+                  end if;
+               end;
+
+            else
+               return "Invalid position.";
+            end if;
+         end;
       else
          return -"command not recognized: " & Command;
       end if;
@@ -2311,6 +2404,22 @@ package body Src_Editor_Module is
          Help    => -"Usage:" & ASCII.LF
          & "  goto_mark identifier" & ASCII.LF
          & (-"Jump to the location of the mark corresponding to identifier."),
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "get_chars",
+         Help    => -"Usage:" & ASCII.LF
+         & "  get_chars {mark_identifier | -l line -c col} "
+         & (-"[-b before] [-a after]") & ASCII.LF
+         & (-"Get the characters around a certain mark or position.")
+         & ASCII.LF
+         & (-"Returns string between <before> characters before the mark")
+         & ASCII.LF
+         & (-"and <after> characters after the position.") & ASCII.LF
+         & (-"If <before> or <after> is omitted, the bounds will be")
+         & ASCII.LF
+         & (-"at the beginning and/or the end of the line."),
          Handler => Edit_Command_Handler'Access);
 
       Register_Command
