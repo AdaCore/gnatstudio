@@ -76,12 +76,15 @@ package body Builder_Module is
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
    type Builder_Module_ID_Record is new Module_ID_Record with record
-      Make_Menu : Gtk_Menu;
-      Run_Menu  : Gtk_Menu;
+      Make_Menu  : Gtk_Menu;
+      Run_Menu   : Gtk_Menu;
+      Build_Item : Gtk_Menu_Item;
       --  The build menu, updated automatically every time the list of main
       --  units changes.
    end record;
    --  Data stored with the module id.
+
+   type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
 
    function Idle_Build (Data : Process_Data) return Boolean;
    --  Called by the Gtk main loop when idle.
@@ -1006,15 +1009,23 @@ package body Builder_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (K);
-      Mitem : Gtk_Menu_Item;
-      Menu1 : Gtk_Menu renames
-        Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu;
-      Menu2 : Gtk_Menu renames
-        Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu;
-      Iter : Imported_Project_Iterator := Start (Get_Project (Kernel));
+
+      Builder_Module : constant Builder_Module_ID_Access :=
+        Builder_Module_ID_Access (Builder_Module_ID);
+      Mitem     : Gtk_Menu_Item;
+      Menu1     : Gtk_Menu renames Builder_Module.Make_Menu;
+      Menu2     : Gtk_Menu renames Builder_Module.Run_Menu;
+      Iter      : Imported_Project_Iterator := Start (Get_Project (Kernel));
       Has_Child : Boolean := False;
+
    begin
-      --  Remove all existing menus
+      --  Remove all existing menus and dynamic accelerators
+
+      if Builder_Module.Build_Item /= null then
+         Remove_Accelerator
+           (Builder_Module.Build_Item,
+            Get_Default_Accelerators (Kernel), GDK_F4, 0);
+      end if;
 
       Remove_All_Children (Menu1);
       Remove_All_Children (Menu2);
@@ -1039,10 +1050,12 @@ package body Builder_Module is
                      File    => Mains (M).all));
 
                --  The first item in the make menu should have a key binding
+
                if not Has_Child then
                   Add_Accelerator
                     (Mitem, "activate", Get_Default_Accelerators (Kernel),
                      GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
+                  Builder_Module.Build_Item := Mitem;
                end if;
 
                Has_Child := True;
@@ -1088,6 +1101,7 @@ package body Builder_Module is
          Add_Accelerator
            (Mitem, "activate", Get_Default_Accelerators (Kernel),
             GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
+         Builder_Module.Build_Item := Mitem;
       end if;
 
       Gtk_New (Mitem, -"Custom...");
@@ -1166,7 +1180,6 @@ package body Builder_Module is
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Run_Menu := Menu;
       Set_Submenu (Mitem, Menu);
-
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
