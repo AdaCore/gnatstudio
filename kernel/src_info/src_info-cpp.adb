@@ -2796,7 +2796,8 @@ package body Src_Info.CPP is
                      P := Matches (0).Last + 1;
                      PRef := Ref;
                      --  conversion to column
-                     PRef.Position.Column := Matches (0).First - Slice.First;
+                     PRef.Position.Column :=
+                       Matches (0).First - Slice.First + 1;
                      if (Fu_To_Handlers (Ref.Referred_Symbol) /= null) then
                         Fu_To_Handlers (Ref.Referred_Symbol)(PRef, Env);
                      end if;
