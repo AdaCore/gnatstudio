@@ -189,6 +189,7 @@ Customizing the Menu and Tool Bar
 * Full example::
 
 Adding support for new tools
+* Defining supported languages::
 * Defining tool switches::
 * Full tool example::
 
@@ -7056,13 +7057,6 @@ This is the name of the tool. This is purely descriptive, and will appear
 throughout the GPS interface whenever this tool is referenced. This includes
 for instances the tabs of the switches editor.
 
-@item langage (Default value is empty)
-This is the language to which the tool applies. This can be left to its default
-empty value, in which case the tool is independent of any specific language.
-If this language is specified, this acts as a filter so that for instance the
-switches editor doesn't show the tool unless the project has specified it is
-working with this language.
-
 @item package (Default value is ide)
 This optional attribute specifies which package should be used in the project
 to store information about this tool, in particular its switches. You cannot
@@ -7086,13 +7080,41 @@ This tag accepts the following children, described in separate sections:
 @table @code
 @item <switches>
    (@pxref{Defining tool switches})
+@item <language>
+   (@pxref{Defining supported languages})
 @end table
 
 
 @menu
+* Defining supported languages::
 * Defining tool switches::
 * Full tool example::
 @end menu
+
+@c --------------------------------------------------------------------------
+@node Defining supported languages
+@subsection Defining supported languages
+@cindex <language>
+@c --------------------------------------------------------------------------
+
+@noindent
+@item langage (Default value is empty)
+This is the language to which the tool applies.  There can be from no to any
+number of such nodes for one @code{<tool>} tag.
+
+If no language is specified, the tool applies to all languages. In particular,
+the switches editor page will be displayed for all languages, no matter what
+languages they support.
+
+If at least one language is specified, the switches editor page will only be
+displayed if that language is supported by the project.
+
+@smallexample
+<tool name="My Tool" >
+  <language>Ada</language>
+  <language>C</language>
+</tool>
+@end smallexample
 
 @c --------------------------------------------------------------------------
 @node Defining tool switches
