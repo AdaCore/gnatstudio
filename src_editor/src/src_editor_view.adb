@@ -1770,7 +1770,15 @@ package body Src_Editor_View is
          when GDK_Return =>
             External_End_Action (Buffer);
 
-            if Should_Indent (Buffer) then
+            --  If there is a selection, delete it.
+            --  It makes little sense to perforn
+
+            if Selection_Exists (Buffer) then
+               Result := Delete_Selection (Buffer, True, True);
+
+               External_End_Action (Buffer);
+
+            elsif Should_Indent (Buffer) then
                Insert_At_Cursor (Buffer, (1 => ASCII.LF));
 
                --  ??? Could be a key handler as well
