@@ -11,7 +11,27 @@
    <action name="generic_cvs_status" show-command="false" output="none">
       <shell>echo "Querying status for $2-"</shell>
       <external>cvs status $2-</external>
-      <shell>VCS.status_parse "Custom CVS" "%1" $1</shell>
+      <shell>VCS.status_parse "Custom CVS" "%1" $1 FALSE</shell>
+   </action>
+
+   <!------------------>
+   <!-- CVS annotate -->
+   <!------------------>
+
+   <action name="generic_cvs_annotate" show-command="false" output="none">
+      <shell>echo "Querying annotations for $1"</shell>
+      <external>cvs annotate $1</external>
+      <shell>VCS.annotations_parse "Custom CVS" "$1" "%1"</shell>
+   </action>
+
+   <!---------------------->
+   <!-- CVS local status -->
+   <!---------------------->
+
+   <action name="generic_cvs_local_status" show-command="false" output="none">
+      <shell>echo "Querying local status for $1"</shell>
+      <shell>Editor.get_buffer ${1}/CVS/Entries</shell>
+      <shell>VCS.status_parse "Custom CVS" "%1" FALSE TRUE</shell>
    </action>
 
    <!---------------->
@@ -29,17 +49,16 @@
    <!-- CVS history -->
    <!----------------->
 
-   <!--  ??? what happens when the file "CVS revision history" exists ?>
+   <!--  ??? Must find a way to query whole history>
+
+   <!--  ??? We should implement a command to split the current MDI>
 
    <action name="generic_cvs_history" show-command="false" output="">
-      <shell output="">echo "Querying history for $1"</shell>
-      <shell>Editor.edit "CVS revision history"</shell>
-      <shell>Editor.replace_text "CVS revision history" 1 1 "-- History for $1
-" 0 0</shell>
-      <external>cvs log $1</external>
-      <shell>Editor.replace_text "CVS revision history" 2 1 "%1" 0 0</shell>
-      <shell>Editor.save false false</shell>
-      <shell>delete "CVS revision history"</shell>
+      <shell output="">echo "Querying history for $2"</shell>
+      <external>cvs log -N -r$1 $2</external>
+      <shell>dump "%1" TRUE</shell>
+      <shell>Editor.edit "%1"</shell>
+      <shell>delete "%2"</shell>
    </action>
 
    <!---------------->
@@ -57,8 +76,6 @@
    <action name="generic_cvs_diff_head">
       <external>cvs -f diff -rHEAD $1</external>
 
-      <!--  ??? need to find convenient way to dump output to file>
-      <!--  ??? what if file already exists ? >
       <on-failure>
         <shell>dump "%1" TRUE</shell>
         <shell>File %1</shell>
@@ -83,20 +100,21 @@
    <!--------->
 
    <vcs name="Custom CVS" absolute_names="FALSE">
-      <status action="generic_cvs_status"       label="Query status"/>
-      <open action="generic_cvs_open"           label="Open"/>
-      <update action="generic_cvs_update"       label="Update"/>
-      <commit action="generic_cvs_commit"       label="Commit"/>
-      <history action="generic_cvs_history"     label="Query revision history"/>
-      <annotate action="generic_cvs_status"     label="Annotate"/>
-      <add action="generic_cvs_add"             label="Add"/>
-      <remove action="generic_cvs_remove"       label="Remove"/>
-      <diff_head action="generic_cvs_diff_head" label="Compare against head rev."/>
+      <status           action="generic_cvs_status"       label="Query status"/>
+      <local_status_dir action="generic_cvs_local_status" label="Local status"/>
+      <open             action="generic_cvs_open"         label="Open"/>
+      <update           action="generic_cvs_update"       label="Update"/>
+      <commit           action="generic_cvs_commit"       label="Commit"/>
+      <history          action="generic_cvs_history"      label="Query revision history"/>
+      <annotate         action="generic_cvs_annotate"     label="Annotate"/>
+      <add              action="generic_cvs_add"          label="Add"/>
+      <remove           action="generic_cvs_remove"       label="Remove"/>
+      <diff_head        action="generic_cvs_diff_head"    label="Compare against head rev."/>
 
       <status_parser>
          <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\t([^\t]*)\s.*\n *Repository revision:\t([^\t]*)\s.*</regexp>
 
-         <file_name_index>1</file_name_index>
+         <file_index>1</file_index>
          <status_index>2</status_index>
          <local_revision_index>3</local_revision_index>
          <repository_revision_index>4</repository_revision_index>
@@ -109,6 +127,20 @@
          <added>Locally Added</added>
          <modified>Locally Modified</modified>
       </status_parser>
+
+      <local_status_parser>
+         <regexp>/(.*?)/(.*?)/.*//</regexp>
+
+         <file_index>1</file_index>
+         <local_revision_index>2</local_revision_index>
+      </local_status_parser>
+
+      <annotations_parser>
+         <regexp>(\d[^\s]*)[^\:]*\:(.*)(\n|$)</regexp>
+
+         <repository_revision_index>1</repository_revision_index>
+         <file_index>2</file_index>
+      </annotations_parser>
    </vcs>
 
 </cvs_support>
