@@ -500,20 +500,43 @@ package body Interactive_Consoles is
             Backward_Char (Last_Iter, Success);
 
             declare
-               Command : constant String :=
-                 Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
+               Command : GNAT.OS_Lib.String_Access := new String'
+                 (Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter));
 
-               Output  : constant String :=
-                 Console.Handler (Command, Console.User_Data);
+               Output  : GNAT.OS_Lib.String_Access;
             begin
+               if Command.all = ""
+                 and then Console.Empty_Equals_Repeat
+                 and then Console.History /= null
+               then
+                  declare
+                     H : constant String_List_Access :=
+                       Get_History
+                         (Console.History.all, History_Key (Console.Key.all));
+                  begin
+                     if H /= null
+                       and then H (H'First) /= null
+                     then
+                        Free (Command);
+                        Command := new String'
+                          (H (H'First + Console.Current_Position + 1).all);
+                     end if;
+                  end;
+
+                  Insert (Console.Buffer, Last_Iter, Command.all);
+               end if;
+
+               Output := new String'
+                 (Console.Handler (Command.all, Console.User_Data));
+
                Get_End_Iter (Console.Buffer, Last_Iter);
 
-               Insert (Console.Buffer, Last_Iter, Output);
+               Insert (Console.Buffer, Last_Iter, Output.all);
 
-               if Command /= "" and then Console.History /= null then
+               if Command.all /= "" and then Console.History /= null then
                   Add_To_History
                     (Console.History.all,
-                     History_Key (Console.Key.all), Command);
+                     History_Key (Console.Key.all), Command.all);
                   Console.Current_Position := -1;
                end if;
 
@@ -526,6 +549,9 @@ package body Interactive_Consoles is
                   Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
 
                Display_Prompt (Console);
+
+               Free (Command);
+               Free (Output);
             end;
 
             return True;
@@ -689,11 +715,13 @@ package body Interactive_Consoles is
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
-      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None) is
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
+      Empty_Equals_Repeat : Boolean := False) is
    begin
       Console := new Interactive_Console_Record;
       Initialize (Console, Prompt, Handler, User_Data, Font,
-                  History_List, Key, Wrap_Mode);
+                  History_List, Key, Wrap_Mode,
+                  Empty_Equals_Repeat);
    end Gtk_New;
 
    ----------------
@@ -708,7 +736,8 @@ package body Interactive_Consoles is
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
-      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode)
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode;
+      Empty_Equals_Repeat : Boolean := False)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -808,6 +837,7 @@ package body Interactive_Consoles is
       Console.Internal_Insert := False;
 
       Display_Prompt (Console);
+      Console.Empty_Equals_Repeat := Empty_Equals_Repeat;
    end Initialize;
 
    -----------
