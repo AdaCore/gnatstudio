@@ -16,8 +16,8 @@ build:
 distrib:
 	@-mkdir -p gvd gnat > /dev/null 2>&1
 	$(CP) ../../common/src/sdefault.adb common
-	$(CP) ../../common/src/file_utils.ad? common
-	$(CP) ../../common/src/file-utils.c common
+	$(CP) ../../gvd/common/file_utils.ad? common
+	$(CP) ../../gvd/common/file-utils.c common
 	$(CP) ../../gvd/common/htables.ad? common
 	$(CP) ../../gvd/common/string_hash.ad? common
 	$(CP) ../../gvd/common/traces.ad? common
@@ -26,6 +26,7 @@ distrib:
 	$(CP) ../../gtkada/src/gtkada-intl.ad? gtkada
 	$(CP) ../../gvd/common/basic_types.ad? gvd
 	$(CP) ../../gvd/common/os_utils.ad? gvd
+	$(CP) ../../gvd/common/vfs.ad? gvd
 	$(CP) ../../gvd/common/string_utils.ad? gvd
 	$(CP) ../../gvd/common/language_handlers.ad? gvd
 	$(CP) ../../gvd/common/language-unknown.ad? gvd
