@@ -231,8 +231,8 @@ package body Codefix.Errors_Manager is
    -- Undo --
    ----------
 
-   procedure Undo (This : Error_Id; Current_Text : Text_Navigator_Abstr'Class)
-   is
+   procedure Undo
+     (This : Error_Id; Current_Text : Text_Navigator_Abstr'Class) is
    begin
       Undo (Data (This).Solution_Chosen.all, Current_Text);
       Data (This).Fixed.all := False;
