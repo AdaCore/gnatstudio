@@ -1170,10 +1170,10 @@ init (CscHTML* html)
 }
 
 
-guint
+GtkType
 csc_html_get_type (void)
 {
-	static guint html_type = 0;
+	static GtkType html_type = 0;
 
 	if (!html_type) {
 		static const GtkTypeInfo html_info = {
