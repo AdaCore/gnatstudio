@@ -28,6 +28,7 @@
 
 struct _HTMLGdkFontManager {
 	GHashTable	*font_hash;
+	gint            saved_font_adjust;
 };
 typedef struct _HTMLGdkFontManager HTMLGdkFontManager;
 

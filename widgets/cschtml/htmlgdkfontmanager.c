@@ -42,6 +42,7 @@ html_gdk_font_manager_new (void)
 {
   HTMLGdkFontManager * new = g_new (HTMLGdkFontManager, 1);
   new->font_hash = g_hash_table_new(g_str_hash, g_str_equal);
+  new->saved_font_adjust = _gdk_font_adjust;
   return new;
 }
 
@@ -91,6 +92,14 @@ html_gdk_font_manager_get_font
 
   g_return_val_if_fail (manager != NULL, NULL);
   g_return_val_if_fail (style < CSC_HTML_FONT_STYLE_MAX, NULL);
+
+  /* In case the font adjustment has changed */
+  if (manager->saved_font_adjust != _gdk_font_adjust) {
+     g_hash_table_foreach (manager->font_hash, (GHFunc) unref_fonts, NULL);
+     g_hash_table_destroy (manager->font_hash);
+     manager->font_hash = g_hash_table_new(g_str_hash, g_str_equal);
+     manager->saved_font_adjust = _gdk_font_adjust;
+  }
 
   if (face) {
     sprintf (key, "%s%d\n", face, style);
