@@ -3,24 +3,25 @@ details, please see the documentation.
 
 New features in GPS 1.3.0
 
+- Support for preprocessor directives in Ada sources
+
+- Support for current block highlighting and block folding for C/C++
+
+- Enhanced indentation engine for C/C++
+
+- C522-014 Better handling of the current directory
+
+- C526-005 Better handling of the "Auto-Save" preference
+
 - Support for multiple debuggers simultaneously
 
 - Block folding in the source editor
 
+- C514-007 The VCS menu items now work with the visual difference
+
 - C513-007 Support for multiple log files
   GPS now uses separate log files so that it is easier to run multiple
   sessions at the same time.
-
-- Projects can automatically be generated from an executable when using the
-  --debug command line switch
-
-- C306-012 Welcome dialog's default is now to reopen the last opened project
-
-- C514-007 The VCS menu items now work with the visual difference
-
-- Improved support for unicode characters in file names or source files
-
-- C125-006 The edited file name is now displayed in the main window title.
 
 - C511-002 Save As dialog and default file name
   If you are editing an existing file and select Save As, the default file
@@ -29,6 +30,17 @@ New features in GPS 1.3.0
 - C502-012 Named numbers recognized by codefix
   The automatic code correction is now able to recognize and suppress
   unreferenced named numbers.
+
+- C310-006 Improvements and clean ups in the indentation engine
+
+- Projects can automatically be generated from an executable when using the
+  --debug command line switch
+
+- C306-012 Welcome dialog's default is now to reopen the last opened project
+
+- Improved support for unicode characters in file names or source files
+
+- C125-006 The edited file name is now displayed in the main window title.
 
 - Enumeration literals recognized by codefix
   The automatic code correction is now able to recognize and suppress
