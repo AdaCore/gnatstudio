@@ -22,11 +22,29 @@ with System; use System;
 with Glib; use Glib;
 with Gtk.Widget; use Gtk.Widget;
 with Gtk.Handlers; use Gtk.Handlers;
+with Debugger; use Debugger;
 with Unchecked_Conversion;
+with GNAT.IO; use GNAT.IO;
 
 package body Process_Tab_Pkg.Callbacks is
 
    use Gtk.Arguments;
+
+   -----------------------------------
+   -- On_Process_Paned_Delete_Event --
+   -----------------------------------
+
+   function On_Process_Paned_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      --  Arg1 : Gdk_Event := To_Event (Params, 1);
+      Top  : Process_Tab_Access := Process_Tab_Access (Object);
+   begin
+      Put_Line ("Closing debugger");
+      Close (Top.Debugger.Debugger.all);
+      return False;
+   end On_Process_Paned_Delete_Event;
 
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --
