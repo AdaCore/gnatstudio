@@ -59,6 +59,7 @@ with Main_Debug_Window_Pkg;     use Main_Debug_Window_Pkg;
 with Breakpoints_Pkg;           use Breakpoints_Pkg;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Odd.Canvas;                use Odd.Canvas;
+with Odd.Dialogs;               use Odd.Dialogs;
 with Odd.Pixmaps;               use Odd.Pixmaps;
 with Odd.Strings;               use Odd.Strings;
 with Odd.Types;                 use Odd.Types;
@@ -521,10 +522,11 @@ package body Odd.Process is
       Debugger_Name   : String := "") return Debugger_Process_Tab
    is
       Process       : Debugger_Process_Tab;
-      --  Id      : Gint;
+      --  Id            : Gint;
       Label         : Gtk_Label;
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
+
    begin
 
       Process := new Debugger_Process_Tab_Record;
@@ -545,12 +547,24 @@ package body Odd.Process is
         (Process,
          "executable_changed",
          Widget_Callback.To_Marshaller
-         (Odd.Code_Editors.On_Executable_Changed'Access),
+           (Odd.Code_Editors.On_Executable_Changed'Access),
          Process.Editor_Text);
 
       Widget_Callback.Connect
         (Gtk_Widget (Process), "process_stopped",
          Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
+      Widget_Callback.Connect
+        (Gtk_Widget (Process), "context_changed",
+         Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
+      Widget_Callback.Connect
+        (Gtk_Widget (Process), "process_stopped",
+         Widget_Callback.To_Marshaller (On_Backtrace_Process_Stopped'Access));
+      Widget_Callback.Connect
+        (Gtk_Widget (Process), "context_changed",
+         Widget_Callback.To_Marshaller (On_Backtrace_Process_Stopped'Access));
+      Widget_Callback.Connect
+        (Gtk_Widget (Process), "process_stopped",
+         Widget_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
       Canvas_Handler.Connect
         (Process.Data_Canvas, "background_click",
          Canvas_Handler.To_Marshaller (On_Background_Click'Access));
@@ -609,18 +623,20 @@ package body Odd.Process is
       if Page_List.Length (Get_Children (Window.Process_Notebook)) > 0 then
          Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
       end if;
+
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
       --  debugger outputs a file name that should be displayed in the editor.
       --  The language of the editor will automatically be set by the output
       --  filter.
 
-      Configure (Process.Editor_Text,
-                 Editor_Font, Editor_Font_Size,
-                 dot_xpm, arrow_xpm, stop_xpm,
-                 Comments_Color    => Comments_Color,
-                 Strings_Color     => Strings_Color,
-                 Keywords_Color    => Keywords_Color);
+      Configure
+        (Process.Editor_Text,
+         Editor_Font, Editor_Font_Size,
+         dot_xpm, arrow_xpm, stop_xpm,
+         Comments_Color    => Comments_Color,
+         Strings_Color     => Strings_Color,
+         Keywords_Color    => Keywords_Color);
 
       --  Initialize the canvas
 
@@ -654,10 +670,6 @@ package body Odd.Process is
 --           Output_Available'Access,
 --           My_Input.Data_Access (Process));
 
-      --  Initialize the debugger, and possibly get the name of the initial
-      --  file.
-      Initialize (Process.Debugger);
-
       if Window.First_Debugger = null then
          Process.Debugger_Num := Debugger_Num;
          Window.First_Debugger := new Debugger_List_Node'
@@ -666,6 +678,7 @@ package body Odd.Process is
       else
          Debugger_Num := Debugger_Num + 1;
          Debugger_List := Window.First_Debugger;
+
          while Debugger_List.Next /= null loop
             Debugger_Num := Debugger_Num + 1;
             Debugger_List := Debugger_List.Next;
@@ -676,6 +689,10 @@ package body Odd.Process is
            (Next     => null,
             Debugger => Gtk_Widget (Process));
       end if;
+
+      --  Initialize the debugger, and possibly get the name of the initial
+      --  file.
+      Initialize (Process.Debugger);
 
       return Process;
    end Create_Debugger;
@@ -688,7 +705,6 @@ package body Odd.Process is
      (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "context_changed");
-      Process_Stopped (Debugger);
    end Context_Changed;
 
    ------------------------
@@ -726,15 +742,6 @@ package body Odd.Process is
      (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
       Widget_Callback.Emit_By_Name (Gtk_Widget (Debugger), "process_stopped");
-
-      --  Update the backtrace and thread windows as well, if the debugger
-      --  is the current one
-
-      if Debugger_Process_Tab (Debugger) =
-        Get_Current_Process (Debugger.Window)
-      then
-         Update_External_Dialogs (Debugger.Window);
-      end if;
    end Process_Stopped;
 
    -----------------------
