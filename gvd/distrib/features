@@ -1,8 +1,11 @@
-New features in GVD 1.1.1
+New features in GVD 1.2.0
 
 - The --target option now allows multiple ':' characters so that you
   can specify machine:1234 as the the machine (& port number).
   See the documentation for more details.
+- The file corresponding to the main procedure is now displayed
+  when loading an Ada executable (rather than the procedure containing the
+  elaboration calls).
 - The data window is now zoomable
 - The breakpoint editor has been enhanced, and can now set advanced properties
   like ignore_count, commands to execute when reaching the breakpoint, or
