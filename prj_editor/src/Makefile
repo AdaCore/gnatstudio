@@ -16,8 +16,10 @@ NO_STYLE_FILES=${wildcard *_pkg.adb} sdefault.adb
 
 # Including the gnat runtime. This must be found before the gnat sources on the
 # path, or the binder will complain that sources are more recent than objects
-RUNTIME_HEAD=${shell gnatls -v | grep "gcc-lib" | head -1}
-RUNTIME_INC=${RUNTIME_HEAD:%=-aI%}
+# !!! This is not needed if you use the same gnat version to compile this
+# module as the sources of gnat you have !!!
+# RUNTIME_HEAD=${shell gnatls -v | grep "gcc-lib" | head -1}
+# RUNTIME_INC=${RUNTIME_HEAD:%=-aI%}
 
 CFLAGS=-g
 GTKADA_FLAGS=`gtkada-config`
