@@ -398,6 +398,11 @@ package body GVD_Module is
       Context : Selection_Context_Access);
    --  Callback for the "view memory at address of" contextual menu item.
 
+   procedure Set_Value
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "set value of" contextual menu item.
+
    procedure Show_Current_Line_Menu
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -868,7 +873,15 @@ package body GVD_Module is
                         end;
                      end if;
 
-                     Gtk_New (Mitem, -"View memory at &" & Ent);
+                     Gtk_New (Mitem, -"Set value of " & Ent);
+                     Append (Submenu, Mitem);
+                     Context_Callback.Connect
+                       (Mitem, "activate",
+                        Context_Callback.To_Marshaller
+                          (Set_Value'Access),
+                        Selection_Context_Access (Context));
+
+                     Gtk_New (Mitem, -"View memory at address of " & Ent);
                      Append (Submenu, Mitem);
                      Context_Callback.Connect
                        (Mitem, "activate",
@@ -1382,7 +1395,7 @@ package body GVD_Module is
         Glide_Window (Get_Main_Window (Get_Kernel (Context)));
       Name : constant String :=
         Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
-      View : constant String := -"View Memory at &";
+      View : constant String := -"View memory at address of ";
 
    begin
       Show_All (Top.Memory_View);
@@ -1395,6 +1408,43 @@ package body GVD_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end View_Into_Memory;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Process  : constant Debugger_Process_Tab :=
+        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+      Name     : constant String :=
+        Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
+      Val      : constant String := -"Set value of ";
+      Variable : constant String :=
+        Name (Name'First + Val'Length .. Name'Last);
+
+   begin
+      declare
+         S : constant String :=
+           Simple_Entry_Dialog
+             (Parent   => Process.Window,
+              Title    => -"Setting value of " & Variable,
+              Message  => -"Setting value of " & Variable & ':',
+              Position => Win_Pos_Mouse,
+              Key      => "gvd_set_value_dialog");
+
+      begin
+         if S /= "" and then S (S'First) /= ASCII.NUL then
+            Set_Variable (Process.Debugger, Variable, S);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Set_Value;
 
    ----------------------------
    -- Show_Current_Line_Menu --
