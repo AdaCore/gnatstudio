@@ -170,6 +170,20 @@ package Generic_Values is
    --  Indicate whether the value given in Item is valid (ie there was no
    --  error when getting the value from the debugger, ...)
 
+   function Replace
+     (Parent       : access Generic_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access
+     is abstract;
+   --  Substitute a field/value/element in Parent.
+   --  The field that is currently equal to Current is replaced with
+   --  Replace_With. Current is then Freed completly.
+   --  This is used when we discover that a type previously parsed doesn't in
+   --  fact match the value, and should be dynamically changed.
+   --  Replace_With is returned; null is returned if Current did not belong to
+   --  Parent, or if nothing could be done.
+
    -----------------
    -- Simple_Type --
    -----------------
@@ -496,6 +510,12 @@ private
    function Get_Component (Item : access Simple_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
+   function Replace
+     (Parent       : access Simple_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access;
+
 
 
    type Range_Type is new Simple_Type with record
@@ -587,6 +607,12 @@ private
    function Get_Component (Item : access Array_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
+   function Replace
+     (Parent       : access Array_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access;
+
 
    ------------
    -- Repeat --
@@ -624,6 +650,11 @@ private
    function Get_Component (Item : access Repeat_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
+   function Replace
+     (Parent       : access Repeat_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access;
 
    -----------------
    -- Record Type --
@@ -682,6 +713,12 @@ private
    function Get_Component (Item : access Record_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
+   function Replace
+     (Parent       : access Record_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access;
+
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;
@@ -719,4 +756,10 @@ private
    function Get_Component (Item : access Class_Type;
                            X, Y : Glib.Gint)
                           return Generic_Type_Access;
+   function Replace
+     (Parent       : access Class_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access;
+
 end Generic_Values;

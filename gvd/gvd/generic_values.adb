@@ -367,7 +367,7 @@ package body Generic_Values is
    is
       Tmp : Array_Item_Array_Access;
    begin
-      if Item.Values = null  then
+      if Item.Values = null then
          Item.Values := new Array_Item_Array (1 .. 100);
          Item.Last_Value := 1;
       else
@@ -376,7 +376,7 @@ package body Generic_Values is
 
       if Item.Last_Value > Item.Values'Last then
          Tmp := Item.Values;
-         Item.Values := new Array_Item_Array (1 .. 2 * Item.Values'Last);
+         Item.Values := new Array_Item_Array (1 .. 2 * Tmp'Last);
          Item.Values (1 .. Tmp'Last) := Tmp.all;
          Free (Tmp);
       end if;
@@ -481,8 +481,13 @@ package body Generic_Values is
       if Item.Fields (Index).Value /= null then
          Free (Item.Fields (Index).Value, Only_Value => False);
       end if;
+
       if Item.Fields (Index).Variant_Part /= null then
          Free (Item.Fields (Index).Variant_Part);
+      end if;
+
+      if Item.Fields (Index).Name /= null then
+         Free (Item.Fields (Index).Name);
       end if;
 
       if Variant_Parts = 0 then
@@ -521,12 +526,17 @@ package body Generic_Values is
    is
    begin
       if Item.Fields (Index).Variant_Part /= null then
+         if Item.Fields (Index).Variant_Part (Variant_Index) /= null then
+            Free (Item.Fields (Index).Variant_Part (Variant_Index),
+                  Only_Value => False);
+         end if;
+
          Item.Fields (Index).Variant_Part (Variant_Index) :=
            Record_Type_Access (Value);
-      end if;
 
-      --  If there is at least one field, the record is valid.
-      Item.Valid := True;
+         --  If there is at least one field, the record is valid.
+         Item.Valid := True;
+      end if;
    end Set_Variant_Field;
 
    -----------------------
@@ -667,6 +677,9 @@ package body Generic_Values is
    is
    begin
       pragma Assert (Num <= Item.Num_Ancestors);
+      if Item.Ancestors (Num) /= null then
+         Free (Item.Ancestors (Num), Only_Value => False);
+      end if;
       Item.Ancestors (Num) := Ancestor;
       Item.Valid := True;
       Item.Ancestors (Num).Valid := True;
@@ -681,6 +694,9 @@ package body Generic_Values is
    is
    begin
       pragma Assert (Item.Child = null);
+      if Item.Child /= null then
+         Free (Item.Child, Only_Value => False);
+      end if;
       Item.Child := Child;
    end Set_Child;
 
@@ -930,7 +946,9 @@ package body Generic_Values is
    is
       I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      Free (Item.Value);
+      if Item.Value /= null then
+         Free (Item.Value);
+      end if;
       if not Only_Value then
          Free_Internal (I);
       end if;
@@ -946,8 +964,10 @@ package body Generic_Values is
       I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       if Item.Values /= null then
+         --  Free the whole memory for the items, since the type is in fact
+         --  stored in a separate field.
          for J in 1 .. Item.Last_Value loop
-            Free (Item.Values (J).Value, Only_Value);
+            Free (Item.Values (J).Value, Only_Value => False);
          end loop;
          Free (Item.Values);
       end if;
@@ -967,6 +987,7 @@ package body Generic_Values is
       I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       if Item.Value /= null then
+         --  Keep the structure of the item that is repeated, if required.
          Free (Item.Value, Only_Value);
       end if;
       if not Only_Value then
@@ -988,8 +1009,7 @@ package body Generic_Values is
             Free (Item.Fields (J).Value, Only_Value);
             if Item.Fields (J).Variant_Part /= null then
                for V in Item.Fields (J).Variant_Part'Range loop
-                  Free (Item.Fields (J).Variant_Part (V),
-                        Only_Value);
+                  Free (Item.Fields (J).Variant_Part (V), Only_Value);
                end loop;
             end if;
             if not Only_Value then
@@ -1109,6 +1129,10 @@ package body Generic_Values is
    is
       R : Repeat_Type_Access := new Repeat_Type'(Value);
    begin
+      --  duplicate the type of the repeated item.
+      --  The value itself is in fact not duplicated, since the leafs of the
+      --  type tree is a simple_type (or one of its children), that does not
+      --  clone the value.
       R.Value := Clone (Value.Value.all);
       return Generic_Type_Access (R);
    end Clone;
@@ -1123,14 +1147,15 @@ package body Generic_Values is
       R : Record_Type_Access := new Record_Type'(Value);
    begin
       for J in R.Fields'Range loop
-         R.Fields (J).Name := new String'(R.Fields (J).Name.all);
-         R.Fields (J).Value := Clone (R.Fields (J).Value.all);
-         if R.Fields (J).Variant_Part /= null then
-            R.Fields (J).Variant_Part
-              := new Record_Type_Array'(R.Fields (J).Variant_Part.all);
+         R.Fields (J).Name := new String'(Value.Fields (J).Name.all);
+         --  Duplicate the type structure, but not the value itself.
+         R.Fields (J).Value := Clone (Value.Fields (J).Value.all);
+         if Value.Fields (J).Variant_Part /= null then
+            R.Fields (J).Variant_Part :=
+              new Record_Type_Array'(Value.Fields (J).Variant_Part.all);
             for V in R.Fields (J).Variant_Part'Range loop
                R.Fields (J).Variant_Part (V) := Record_Type_Access
-                 (Clone (R.Fields (J).Variant_Part (V).all));
+                 (Clone (Value.Fields (J).Variant_Part (V).all));
             end loop;
          end if;
       end loop;
@@ -1627,19 +1652,21 @@ package body Generic_Values is
 
       if Item.Visible then
          Item.Index_Width := 20;  --  minimal width
-         for V in Item.Values'Range loop
-            Size_Request (Item.Values (V).Value.all, Font, Hide_Big_Items);
-            Total_Width  :=
-              Gint'Max (Total_Width, Item.Values (V).Value.Width);
-            Total_Height := Total_Height + Item.Values (V).Value.Height;
-            Item.Index_Width :=
-              Gint'Max (Item.Index_Width, String_Width
-                        (Font,
-                         Index_String (Item, Item.Values (V).Index,
-                                       Item.Num_Dimensions)));
-         end loop;
-         Total_Height :=
-           Total_Height + (Item.Values'Length - 1) * Line_Spacing;
+         if Item.Values /= null then
+            for V in Item.Values'Range loop
+               Size_Request (Item.Values (V).Value.all, Font, Hide_Big_Items);
+               Total_Width  :=
+                 Gint'Max (Total_Width, Item.Values (V).Value.Width);
+               Total_Height := Total_Height + Item.Values (V).Value.Height;
+               Item.Index_Width :=
+                 Gint'Max (Item.Index_Width, String_Width
+                           (Font,
+                            Index_String (Item, Item.Values (V).Index,
+                                          Item.Num_Dimensions)));
+            end loop;
+            Total_Height :=
+              Total_Height + (Item.Values'Length - 1) * Line_Spacing;
+         end if;
 
          Item.Index_Width :=
            Item.Index_Width + Text_Width (Font, String'(" => "));
@@ -2236,5 +2263,128 @@ package body Generic_Values is
    begin
       return Item.Selected;
    end Get_Selected;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Parent       : access Simple_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access
+   is
+   begin
+      return null;
+   end Replace;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Parent       : access Array_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access
+   is
+   begin
+      --  Since all values should be replaced, do nothing if there is any
+      --  value defined.
+
+      if Parent.Values /= null then
+         return null;
+      end if;
+
+      --  Only the Item_Type can be substituted
+
+      if Parent.Item_Type /= Generic_Type_Access (Current) then
+         return null;
+      end if;
+
+      Free (Parent.Item_Type, Only_Value => False);
+      Parent.Item_Type := Generic_Type_Access (Replace_With);
+      return Generic_Type_Access (Replace_With);
+   end Replace;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Parent       : access Repeat_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access
+   is
+   begin
+      if Parent.Value = Generic_Type_Access (Current) then
+         Free (Parent.Value, Only_Value => False);
+         Parent.Value := Generic_Type_Access (Replace_With);
+         return Generic_Type_Access (Replace_With);
+      end if;
+      return null;
+   end Replace;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Parent       : access Record_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access
+   is
+   begin
+      for F in Parent.Fields'Range loop
+         if Parent.Fields (F).Value = Generic_Type_Access (Current) then
+            Free (Parent.Fields (F).Value, Only_Value => False);
+            Parent.Fields (F).Value := Generic_Type_Access (Replace_With);
+            return Generic_Type_Access (Replace_With);
+         end if;
+
+         if Parent.Fields (F).Variant_Part /= null then
+            for V in Parent.Fields (F).Variant_Part'Range loop
+               if Generic_Type_Access (Parent.Fields (F).Variant_Part (V)) =
+                 Generic_Type_Access (Current)
+               then
+                  Free (Parent.Fields (F).Variant_Part (V),
+                        Only_Value => False);
+                  Parent.Fields (F).Variant_Part (V) :=
+                    Record_Type_Access (Replace_With);
+                  return Generic_Type_Access (Replace_With);
+               end if;
+            end loop;
+         end if;
+      end loop;
+      return null;
+   end Replace;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Parent       : access Class_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access
+   is
+   begin
+      for A in Parent.Ancestors'Range loop
+         if Parent.Ancestors (A) = Class_Type_Access (Current) then
+            Free (Parent.Ancestors (A), Only_Value => False);
+            Parent.Ancestors (A) := Class_Type_Access (Replace_With);
+            return Generic_Type_Access (Replace_With);
+         end if;
+      end loop;
+      if Parent.Child = Record_Type_Access (Current) then
+         Free (Parent.Child, Only_Value => False);
+         Parent.Child := Record_Type_Access (Replace_With);
+         return Generic_Type_Access (Replace_With);
+      end if;
+      return null;
+   end Replace;
 
 end Generic_Values;
