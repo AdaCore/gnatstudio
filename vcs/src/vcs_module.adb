@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -163,7 +163,9 @@ package body VCS_Module is
    begin
       return Context.all in File_Selection_Context'Class
         and then Get_Current_Ref (Selection_Context_Access (Context)) /=
-          Unknown_VCS_Reference;
+        Unknown_VCS_Reference
+        and then (Context.all not in Entity_Selection_Context'Class
+                  or else Get_Name (Get_Creator (Context)) = "Source_Editor");
    end Filter_Matches_Primitive;
 
    -------------------------
@@ -175,40 +177,13 @@ package body VCS_Module is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      use type VCS.VCS_Access;
-      use type Gtk.Widget.Widget_List.Glist;
       pragma Unreferenced (Object);
-
-      Item    : Gtk_Menu_Item;
-      Submenu : Gtk_Menu;
-
    begin
-      if Context.all in File_Selection_Context'Class
-        and then (Context.all not in Entity_Selection_Context'Class
-                  or else Get_Name (Get_Creator (Context)) = "Source_Editor")
-        and then Get_Current_Ref (Selection_Context_Access (Context)) /=
-          Unknown_VCS_Reference
-      then
-         Gtk_New (Submenu);
-
-         VCS_View_API.VCS_Contextual_Menu
-           (Get_Kernel (Context),
-            Selection_Context_Access (Context),
-            Submenu,
-            False);
-
-         --  If the menu is empty, destroy it, otherwise set it in a submenu
-         --  "version control".
-         --  ??? Should the sub-menu be named after the VCS itself ?
-
-         if Get_Children (Submenu) = Gtk.Widget.Widget_List.Null_List then
-            Destroy (Submenu);
-         else
-            Gtk_New (Item, -"Version Control");
-            Set_Submenu (Item, Submenu);
-            Append (Menu, Item);
-         end if;
-      end if;
+      VCS_View_API.VCS_Contextual_Menu
+        (Get_Kernel (Context),
+         Selection_Context_Access (Context),
+         Menu,
+         False);
    end VCS_Contextual_Menu;
 
    ---------------------
@@ -373,7 +348,6 @@ package body VCS_Module is
          Kernel                  => Kernel,
          Module_Name             => VCS_Module_Name,
          Priority                => Default_Priority,
-         Contextual_Menu_Handler => VCS_Contextual_Menu'Access,
          Default_Context_Factory => VCS_View_API.Context_Factory'Access);
 
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
@@ -382,6 +356,11 @@ package body VCS_Module is
       Filter := new Has_VCS_Filter;
       Register_Filter (Kernel, Filter, "VCS");
 
+      Register_Contextual_Submenu
+        (Kernel  => Kernel,
+         Name    => "Version Control",
+         Filter  => Filter,
+         Submenu => VCS_Contextual_Menu'Access);
 
       Log_Utils.Initialize (Kernel);
 
