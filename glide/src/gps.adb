@@ -61,7 +61,7 @@ with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
 with Browsers.Call_Graph;
-with Browsers.Types;
+with Browsers.Entities;
 with Cpp_Module;
 with External_Editor_Module;
 with GVD_Module;
@@ -378,7 +378,7 @@ procedure GPS is
       Browsers.Call_Graph.Register_Module (GPS.Kernel);
       Browsers.Dependency_Items.Register_Module (GPS.Kernel);
       Browsers.Projects.Register_Module (GPS.Kernel);
-      Browsers.Types.Register_Module (GPS.Kernel);
+      Browsers.Entities.Register_Module (GPS.Kernel);
       Project_Viewers.Register_Module (GPS.Kernel);
       Src_Editor_Module.Register_Module (GPS.Kernel);
       Project_Explorers_Files.Register_Module (GPS.Kernel);
