@@ -295,7 +295,7 @@ package body Language.Custom is
          end;
       end Parse_Shared_Lib;
 
-   begin
+   begin  -- Initialize
       Lang.Next   := Custom_Root;
       Custom_Root := Custom_Language_Access (Lang);
 
@@ -337,7 +337,7 @@ package body Language.Custom is
          end;
       end if;
 
-      Tmp_Str := Get_Field (Top, "Library");
+      Tmp_Str := Get_Field (Top, "Engine");
 
       if Tmp_Str /= null then
          Parse_Shared_Lib (Tmp_Str.all);
