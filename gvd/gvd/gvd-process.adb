@@ -1782,7 +1782,7 @@ package body GVD.Process is
          --  prompt, since the prompt won't be displayed before the user
          --  answers the question...
 
-         if Debugger.Continuation_Line
+         if Continuation_Line (Debugger.Debugger)
            or else Debugger.Registered_Dialog /= null
          then
             Send
