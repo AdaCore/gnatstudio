@@ -3,6 +3,14 @@ details, please see the documentation.
 
 New features in GPS 1.3.0
 
+- C502-012 Named numbers recognized by codefix
+  The automatic code correction is now able to recognize and suppress
+  unreferenced named numbers.
+
+- Enumeration literals recognized by codefix
+  The automatic code correction is now able to recognize and suppress
+  unreferenced literals.
+
 - New key shortcuts manager, for easier configuration of keys and multiple
   keymaps a la Emacs. This gives access to usual operations like center
   cursor on screen, word navigation and deletion,...
