@@ -643,6 +643,12 @@ package body Debugger is
                         Process.Timeout_Id := Debugger_Timeout.Add
                           (Timeout, Output_Available'Access, Process);
                      end if;
+
+                  else
+                     if Mode >= Visible then
+                        Set_Busy_Cursor
+                          (Convert (Debugger.Window, Debugger), False);
+                     end if;
                   end if;
             end case;
          end if;
