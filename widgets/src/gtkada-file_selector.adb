@@ -71,8 +71,8 @@ package body Gtkada.File_Selector is
    procedure Refresh_Files
      (Win : access File_Selector_Window_Record'Class);
 
-   function Read_File (Win : File_Selector_Window_Access)
-      return Boolean;
+   function Read_File
+     (Win : File_Selector_Window_Access) return Boolean;
    --  Read one file from the current directory and insert it in Files.
 
    function Display_File
@@ -338,7 +338,7 @@ package body Gtkada.File_Selector is
            (Win.Current_Filter,
             Win,
             Win.Current_Directory.all,
-            Head (Win.Remaining_Files),
+            Data (Win.Remaining_Files),
             State,
             Pixmap,
             Mask,
@@ -369,7 +369,7 @@ package body Gtkada.File_Selector is
       if Style /= null then
          Set_Row_Style (Win.File_List, Current_Row, Style);
 
-         Set_Text (Win.File_List, Current_Row, 1, Head (Win.Remaining_Files));
+         Set_Text (Win.File_List, Current_Row, 1, Data (Win.Remaining_Files));
 
          if Text /= null then
             Set_Text (Win.File_List, Current_Row, 2, Text.all);
@@ -383,7 +383,7 @@ package body Gtkada.File_Selector is
       Free (Text);
       Win.Remaining_Files := Next (Win.Remaining_Files);
 
-      return not Is_Empty (Win.Remaining_Files);
+      return Win.Remaining_Files /= String_List.Null_Node;
    end Display_File;
 
    ---------------
@@ -391,17 +391,13 @@ package body Gtkada.File_Selector is
    ---------------
 
    function Read_File (Win : File_Selector_Window_Access) return Boolean is
-      Buffer : String (1 .. 1024);
+      Buffer : String (1 .. 4096);
       Last   : Natural;
       Id     : Idle_Handler_Id;
+      Prev   : String_List.List_Node;
+      Node   : String_List.List_Node;
 
-      function Compare (Arg1, Arg2 : String) return Boolean;
-      --  Simple string comparison used for sorting the files list.
-
-      function Compare (Arg1, Arg2 : String) return Boolean is
-      begin
-         return Arg1 < Arg2;
-      end Compare;
+      use String_List;
 
    begin
       if Win.Current_Directory = null then
@@ -422,18 +418,30 @@ package body Gtkada.File_Selector is
 
          --  Register the function that will fill the list in the background.
 
-         Sort (Win.Files, Compare'Unrestricted_Access);
-         Win.Remaining_Files := Win.Files;
+         Win.Remaining_Files := First (Win.Files);
          Id := Add (Display_File'Access, File_Selector_Window_Access (Win));
 
          return False;
-      end if;
 
-      if Is_Directory (Win.Current_Directory.all & Buffer (1 .. Last)) then
+      elsif Is_Directory (Win.Current_Directory.all & Buffer (1 .. Last)) then
          null;
          --  ??? or should we display directories in the File_List ?
+
       else
-         Prepend (Win.Files, Buffer (1 .. Last));
+         Node := First (Win.Files);
+         Prev := String_List.Null_Node;
+
+         while Node /= String_List.Null_Node loop
+            if Buffer (1 .. Last) < Data (Node) then
+               Append (Win.Files, Prev, Buffer (1 .. Last));
+               return True;
+            end if;
+
+            Prev := Node;
+            Node := Next (Node);
+         end loop;
+
+         Append (Win.Files, Buffer (1 .. Last));
       end if;
 
       return True;
@@ -492,18 +500,20 @@ package body Gtkada.File_Selector is
       Set_Busy_Cursor (Get_Window (Win), True, True);
       Clear (Win.File_List);
       Free (Win.Files);
-      Win.Remaining_Files := String_List.Null_List;
+      Win.Remaining_Files := String_List.Null_Node;
 
       --  Find out which filter to use.
 
       declare
+         use Filter_List;
+
          S : String := Get_Text (Win.Filter_Combo_Entry);
-         C : Filter_List.List := Win.Filters;
+         C : Filter_List.List_Node := First (Win.Filters);
 
       begin
-         while not Is_Empty (C) loop
-            if Head (C).Label.all = S then
-               Filter := Head (C);
+         while C /= Filter_List.Null_Node loop
+            if Data (C).Label.all = S then
+               Filter := Data (C);
                exit;
             else
                C := Next (C);
@@ -853,7 +863,6 @@ package body Gtkada.File_Selector is
       Free (Win.Current_Directory);
       Free (Win.Current_Directory_Id);
       Free (Win.Files);
-      Free (Win.Remaining_Files);
       Free (Win.Filters);
 
       if Win.Own_Main_Loop then
