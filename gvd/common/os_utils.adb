@@ -112,6 +112,19 @@ package body OS_Utils is
                     and then (C = ']' or else C = ':'));
    end Is_Directory_Separator;
 
+   ------------------
+   -- Max_Path_Len --
+   ------------------
+
+   Max_Path : Integer;
+   pragma Import (C, Max_Path, "max_path_len");
+   --  Take advantage of max_path_len defined in the GNAT run time.
+
+   function Max_Path_Len return Natural is
+   begin
+      return Max_Path;
+   end Max_Path_Len;
+
    ----------------------
    -- Set_OpenVMS_Host --
    ----------------------

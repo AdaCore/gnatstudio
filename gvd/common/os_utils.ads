@@ -36,4 +36,7 @@ package OS_Utils is
    procedure Set_OpenVMS_Host (Setting : Boolean := True);
    --  Set whether the host is an OpenVMS host.
 
+   function Max_Path_Len return Natural;
+   --  Return the maximum length of a pathname for the current host.
+
 end OS_Utils;
