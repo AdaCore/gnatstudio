@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
-with Text_IO; use Text_IO;
 
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
@@ -262,7 +261,6 @@ package body Vdiff2_Utils is
          CurrChunk := Data (CurrNode);
          Show_Diff_Chunk (Kernel, Item, CurrChunk);
          CurrNode := Next (CurrNode);
-         Put_Line ("un tour");
       end loop;
       Free_List (Res);
    end Show_Differences3;
