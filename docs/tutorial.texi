@@ -240,7 +240,7 @@ Click in the @code{Search for:} text entry, type @file{tokens.ads}. Then
 select @code{Project explorer} in the @code{Look in:} area. The search
 area provides an easy way to search for text or regular expressions in
 several contexts including the current file, the project explorer, the help
-window,
+window, ...
 
 Now click on @code{Find}: @file{tokens.ads}, in directory @code{struct}
 is highlighted.
@@ -323,9 +323,9 @@ From this contextual, remove the @code{Parameters} info by clicking on it.
 
 Now select the menu @code{Debug->Run...}, type @code{input.txt} in the
 arguments text entry, click on @code{OK}: the debugger stops on an exception
-(@code{Contraint_Error} in the file @file{stack.adb}, at line 49.
+(@code{Contraint_Error} in the file @file{stack.adb}, at line 49).
 
-Go up two frames by clicking on the (@code{tokens.process}) line in the call
+Go up two frames by clicking on the @code{tokens.process} line in the call
 stack. If needed, use the scrollbar on the right.
 
 If you move the mouse over the parameter @code{T} at line 64, a tooltip is
@@ -404,7 +404,7 @@ so we're now going to remove this procedure.
 @c --------------------------------------------------------------------
 
 @noindent
-From @i{view}, contextual menu @code{Go to spec}; 
+From @i{view}, contextual menu @code{Go to spec};
 then from the source editor (file @file{stack.ads}), @code{Go to body of View}.
 Remove @i{View} body by e.g selecting it, and pressing the @key{Delete} key,
 then save the file (@key{Ctrl-S}).
@@ -642,7 +642,7 @@ On @i{prj1} project, select the contextual menu
 This terminates our tour of GPS, the GNAT Programming System.
 We hope this tutorial gave you a good overview of the general capabilities
 available with GPS. A non exhaustive list of the features not mentioned in
-this document include:
+this document includes:
 
 @itemize @bullet
 @item Automatic generation of body files
@@ -652,11 +652,10 @@ this document include:
 @item Flexible multiple document interface
 @end itemize
 
-For more information, please look at the @i{User's Guide}.
+For more information, please look at the @i{User's Guide} (@url{gps.html}).
 
 @c @printindex cp
 
 @contents
 
 @bye
-
