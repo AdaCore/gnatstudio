@@ -1243,12 +1243,14 @@ package body Ada_Analyzer is
                   while Buffer (P) = '-'
                     and then Buffer (Next_Char (P)) = '-'
                   loop
-                     --  Following line commented because it is too disruptive,
+                     --  If we do not indent here, then automatic indentation
+                     --  won't work for comments right after 'is' and 'begin',
                      --  e.g:
-                     --  procedure F  --  multiline
-                     --               --  comment should be aligned properly
-                     --  ??? Do_Indent (P, Num_Spaces);
+                     --  procedure Foo is
+                     --  begin
+                     --     --  comment
 
+                     Do_Indent (P, Num_Spaces);
                      P := Next_Line (Next_Char (P));
                      New_Line (Line_Count);
                   end loop;
