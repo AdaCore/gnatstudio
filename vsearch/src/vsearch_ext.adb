@@ -1199,7 +1199,6 @@ package body Vsearch_Ext is
                        or Always_Destroy_Float,
                        Focus_Widget =>
                          Gtk_Widget (Vsearch_Module_Id.Search.Pattern_Combo),
-                       Default_Width => 1, Default_Height => 1,
                        Module => Vsearch_Module_Id,
                        Desktop_Independent => True);
          Set_Title (Child, -"Search");
