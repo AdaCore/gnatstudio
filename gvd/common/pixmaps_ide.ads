@@ -29,6 +29,7 @@ package Odd.Pixmaps is
    arrow_xpm         : aliased Chars_Ptr_Array (0 .. 0);
    box_xpm           : aliased Chars_Ptr_Array (0 .. 0);
    breakat_xpm       : aliased Chars_Ptr_Array (0 .. 0);
+   break_xpm         : aliased Chars_Ptr_Array (0 .. 0);
    cancel_xpm        : aliased Chars_Ptr_Array (0 .. 0);
    cont_xpm          : aliased Chars_Ptr_Array (0 .. 0);
    display_xpm       : aliased Chars_Ptr_Array (0 .. 0);
@@ -67,6 +68,7 @@ package Odd.Pixmaps is
 private
    pragma Import (C, arrow_xpm, "arrow_xpm");
    pragma Import (C, box_xpm, "box_xpm");
+   pragma Import (C, break_xpm, "break_xpm");
    pragma Import (C, breakat_xpm, "breakat_xpm");
    pragma Import (C, cancel_xpm, "cancel_xpm");
    pragma Import (C, cont_xpm, "cont_xpm");
