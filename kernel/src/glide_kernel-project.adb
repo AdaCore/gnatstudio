@@ -46,6 +46,7 @@ with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Prj_Normalize;      use Prj_Normalize;
 with Project_Hash;       use Project_Hash;
+with String_Utils;       use String_Utils;
 with Basic_Types;
 
 with Glide_Intl;               use Glide_Intl;
@@ -183,6 +184,10 @@ package body Glide_Kernel.Project is
       --  If Source_Path is True, the source path is modified.
       --  Otherwise, the object path is modified.
 
+      -------------------
+      -- Add_Directory --
+      -------------------
+
       procedure Add_Directory (S : String) is
          Tmp : GNAT.OS_Lib.String_Access;
       begin
@@ -192,7 +197,7 @@ package body Glide_Kernel.Project is
             --  Do not include "." in the default source paths: when the user
             --  is compiling, it would represent the object directory, when the
             --  user is searching file it would represent whatever the current
-            --  directory is at that point,...
+            --  directory is at that point, ...
             return;
 
          elsif Source_Path then
@@ -205,6 +210,7 @@ package body Glide_Kernel.Project is
             Handle.Predefined_Object_Path := new String'
               (Handle.Predefined_Object_Path.all & Path_Separator & S);
          end if;
+
          Free (Tmp);
       end Add_Directory;
 
@@ -254,7 +260,8 @@ package body Glide_Kernel.Project is
             Expect (Fd, Result, "\n", Timeout => -1);
 
             declare
-               S : constant String := Trim (Expect_Out (Fd), Ada.Strings.Left);
+               S : constant String :=
+                 Trim (Strip_CR (Expect_Out (Fd)), Ada.Strings.Left);
             begin
                if S = "Object Search Path:" & ASCII.LF then
                   Source_Path := False;
