@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 1.4.1
+
+- CB14-007 Open file from project fails with extending projects
+  Problem:    If your setup includes extending projects, it is possible that
+              the menu File->Open From Path will open the file from the
+              parent project instead of the extending project.
+  Workaround: Use the File->Open dialog instead
+
 Known Problems fixed in GPS 1.4.0
 
 - CA27-013 Wrong gnatmake command used when building current file
