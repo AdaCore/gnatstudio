@@ -141,6 +141,10 @@ package GVD.Process is
 
       Debuggee_Console        : Glide_Interactive_Console;
 
+      History                 : Histories.History;
+      --  See Glide_Kernel.Get_History. This points to the same one as the GPS
+      --  kernel if we are not in standalone mode
+
       Edit_Pos                : Glib.Guint;
       --  The last position in the text window of the debugger where text
       --  was inserted. This is used to find what was typed by the user.
