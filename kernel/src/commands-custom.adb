@@ -844,7 +844,8 @@ package body Commands.Custom is
               Context.Args'Last
             loop
                if Context.Args (J) /= null then
-                  Length := Length + Context.Args (J).all'Length + Interval;
+                  Length :=
+                    Length + (Context.Args (J).all'Length) * 2 + Interval;
                end if;
             end loop;
 
@@ -860,17 +861,29 @@ package body Commands.Custom is
                         Result
                           (Index .. Index + Context.Args (J).all'Length) :=
                           Context.Args (J).all & ' ';
-                     else
-                        Result
-                          (Index .. Index + Context.Args (J).all'Length + 2) :=
-                          Context.Args (J).all & """ """;
-                     end if;
 
-                     Index := Index + Context.Args (J).all'Length + Interval;
+                        Index := Index +
+                          Context.Args (J).all'Length + 1;
+                     else
+                        declare
+                           Protect : constant String :=
+                             Protect_Quoted (Context.Args (J).all, Quoted);
+                        begin
+                           Result
+                             (Index .. Index + Protect'Length + 2) :=
+                             Protect & """ """;
+
+                           Index := Index + Protect'Length + 3;
+                        end;
+                     end if;
                   end if;
                end loop;
 
-               return Protect_Quoted (Result (1 .. Length - 1), Quoted);
+               if Interval = 1 then
+                  return Protect_Quoted (Result (1 .. Index - 1), Quoted);
+               else
+                  return Result (1 .. Index - 1);
+               end if;
             end;
 
          else
