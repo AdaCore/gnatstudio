@@ -50,13 +50,24 @@ package body Commands.Locations is
      (Command : access Source_Location_Command_Type) return Boolean
    is
    begin
-      Open_File_Editor (Command.Kernel,
-                        Command.Filename.all,
-                        Command.Line,
-                        Command.Column,
-                        Command.Highlight_Line,
-                        False);
+      case Command.Mode is
+         when Normal =>
+            Open_File_Editor (Command.Kernel,
+                              Command.Filename.all,
+                              Command.Line,
+                              Command.Column,
+                              Command.Highlight_Line,
+                              False);
+
+         when Done | Undone =>
+            Open_File_Editor (Command.Kernel,
+                              Command.Filename.all,
+                              Enable_Navigation => False);
+
+      end case;
+
       Command_Finished (Command, True);
+
       return True;
    end Execute;
 
