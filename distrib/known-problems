@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.2.0
 
+- Missing occurrences in search
+  Problem:    In some case, the search algorithm was missing some occurrences
+              of the string in the files.
+  Workaround: Search for a regular expression instead.
+
 - C228-002 Changes in project settings not taken into account immediately
   Problem:    If you modify the compiler name in the project properties editor,
               it isn't taken into account for the following compilation commands
