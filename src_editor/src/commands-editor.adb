@@ -161,7 +161,8 @@ package body Commands.Editor is
             return True;
          end if;
 
-         Editor := Find_Current_Editor (Get_Kernel (Command.Buffer));
+         Editor := Get_Source_Box_From_MDI
+           (Find_Current_Editor (Get_Kernel (Command.Buffer)));
 
          case Command.Edition_Mode is
             when Insertion =>
@@ -283,7 +284,8 @@ package body Commands.Editor is
          Command.End_Column_After := Integer (Get_Line_Offset (Iter));
       end if;
 
-      Editor := Find_Current_Editor (Get_Kernel (Command.Buffer));
+      Editor := Get_Source_Box_From_MDI
+        (Find_Current_Editor (Get_Kernel (Command.Buffer)));
       Set_Cursor_Position
         (Command.Buffer,
          Gint (Command.End_Line_After),
@@ -319,7 +321,8 @@ package body Commands.Editor is
          Command.Text_Before.all,
          False);
 
-      Editor := Find_Current_Editor (Get_Kernel (Command.Buffer));
+      Editor := Get_Source_Box_From_MDI
+        (Find_Current_Editor (Get_Kernel (Command.Buffer)));
 
       Set_Cursor_Position
         (Command.Buffer,
