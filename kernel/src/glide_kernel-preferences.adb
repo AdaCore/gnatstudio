@@ -31,10 +31,11 @@ package body Glide_Kernel.Preferences is
 
    function Get_Node
      (Kernel : access Kernel_Handle_Record'Class; Pref : Property)
-      return Node_Ptr;
-   --  Return the XML node that contains the value for a specific preference.
-   --  Note that the returned node can either be part of the preferences tree
-   --  in the kernel, or be a node in the default_preferences tree.
+      return String;
+   --  Return the value of the XML node that contains the value for a specific
+   --  preference.  Note that the returned node can either be part of the
+   --  preferences tree in the kernel, or be a node in the default_preferences
+   --  tree.
 
    ----------------------
    -- Free_Preferences --
@@ -71,7 +72,7 @@ package body Glide_Kernel.Preferences is
       File_Name : String) is
    begin
       if Kernel.Preferences = null then
-         Print (Get_Default_Preferences, File_Name => File_Name);
+         Save_Default_Preferences (File_Name);
       else
          Print (Kernel.Preferences, File_Name => File_Name);
       end if;
@@ -95,7 +96,7 @@ package body Glide_Kernel.Preferences is
 
    function Get_Node
      (Kernel : access Kernel_Handle_Record'Class; Pref : Property)
-      return Node_Ptr
+      return String
    is
       Node : Node_Ptr;
 
@@ -108,11 +109,10 @@ package body Glide_Kernel.Preferences is
       end if;
 
       if Node = null then
-         Node := Find_Default_Pref (N);
+         return Find_Default_Pref (N);
       end if;
 
-      pragma Assert (Node.Value /= null);
-      return Node;
+      return Node.Value.all;
    end Get_Node;
 
    --------------
@@ -123,7 +123,7 @@ package body Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_Int) return Glib.Gint is
    begin
-      return Gint'Value (Get_Node (Kernel, Property (Pref)).Value.all);
+      return Gint'Value (Get_Node (Kernel, Property (Pref)));
    exception
       when Constraint_Error =>
          return 0;
@@ -133,7 +133,7 @@ package body Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_Uint) return Glib.Guint is
    begin
-      return Guint'Value (Get_Node (Kernel, Property (Pref)).Value.all);
+      return Guint'Value (Get_Node (Kernel, Property (Pref)));
    exception
       when Constraint_Error =>
          return 0;
@@ -143,7 +143,7 @@ package body Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_Boolean) return Boolean is
    begin
-      return Boolean'Value (Get_Node (Kernel, Property (Pref)).Value.all);
+      return Boolean'Value (Get_Node (Kernel, Property (Pref)));
    exception
       when Constraint_Error =>
          return False;
@@ -153,7 +153,7 @@ package body Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_String) return String is
    begin
-      return Get_Node (Kernel, Property (Pref)).Value.all;
+      return Get_Node (Kernel, Property (Pref));
    end Get_Pref;
 
    function Get_Pref
@@ -162,7 +162,7 @@ package body Glide_Kernel.Preferences is
    is
       Color : Gdk_Color;
    begin
-      Color := Parse (Get_Node (Kernel, Property (Pref)).Value.all);
+      Color := Parse (Get_Node (Kernel, Property (Pref)));
       Alloc (Gtk.Widget.Get_Default_Colormap, Color);
       return Color;
 
@@ -175,7 +175,7 @@ package body Glide_Kernel.Preferences is
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Property_Font) return Pango.Font.Pango_Font_Description
    is
-      Name : constant String := Get_Node (Kernel, Property (Pref)).Value.all;
+      Name : constant String := Get_Node (Kernel, Property (Pref));
    begin
       return From_String (Name);
    end Get_Pref;
