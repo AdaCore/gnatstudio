@@ -34,7 +34,7 @@
 #include "htmlcursor.h"
 
 
-#define _HTML_CURSOR_DEBUG
+// #define _HTML_CURSOR_DEBUG
 
 
 #ifdef _HTML_CURSOR_DEBUG

@@ -881,7 +881,7 @@ selection_received (GtkWidget *widget,
 	g_return_if_fail (GTK_IS_CSCHTML (widget));
 	g_return_if_fail (selection_data != NULL);
 	
-	printf("got selection from system\n");
+	// printf("got selection from system\n");
 	
 #if 0
 	/* **** IMPORTANT **** Check to see if retrieval succeeded  */
@@ -908,8 +908,8 @@ selection_received (GtkWidget *widget,
 	}
 	
 	if (selection_data->length) {
-		printf ("selection text \"%.*s\"\n",
-			selection_data->length, selection_data->data); 
+		// printf ("selection text \"%.*s\"\n",
+		//	selection_data->length, selection_data->data); 
 
 		html_engine_disable_selection (CSC_HTML (widget)->engine);
 		html_engine_insert (CSC_HTML (widget)->engine, 
