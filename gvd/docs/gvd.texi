@@ -1026,13 +1026,13 @@ the second click will remove it).
 @image{tooltips, 12.7cm}
 @end iftex
 
-   the second area in the source window is a text window on the right that
+   The second area in the source window is a text window on the right that
    displays the source files with syntax highlighting.
    If you leave the cursor over a variable, a tooltip will
    appear showing the value of this variable. Automatic tooltips can be
    disabled in the @ref{preferences menu}.
 
-   Contextual menu:
+   The contextual menu of the source window contains the following entries:
    @table @b
      @item Print @i{selection}
 Print the selection (or by default the name under the cursor) in the
@@ -1062,7 +1062,7 @@ selection.
 Set a breakpoint on the line under the cursor, in the current file.
 
      @item Set Breakpoint on @i{selection}
-Set a breakpoint at the begining of the subprogram named @i{selection}
+Set a breakpoint at the beginning of the subprogram named @i{selection}
 
      @item Continue Until Line @i{xx}
 Contine execution (the program must have been started previously) until a
