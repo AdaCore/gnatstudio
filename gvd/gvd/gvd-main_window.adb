@@ -20,7 +20,6 @@
 
 with Glib;                use Glib;
 with Gtk;                 use Gtk;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Widget;          use Gtk.Widget;
@@ -181,11 +180,6 @@ package body GVD.Main_Window is
    begin
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Window), "preferences_changed");
-
-      if Get_Active (Window.Call_Stack) /= Get_Pref (Show_Stack) then
-         Set_Active (Window.Call_Stack, Get_Pref (Show_Stack));
-      end if;
-
       Reset_File_Extensions;
       Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
       Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
