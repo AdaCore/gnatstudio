@@ -30,6 +30,7 @@ with Glib.Object;
 with Src_Info.Queries;
 with Projects;
 with Glide_Kernel.Modules;
+with Interactive_Consoles;
 
 package Glide_Kernel.Scripts is
 
@@ -334,7 +335,8 @@ package Glide_Kernel.Scripts is
    procedure Execute_Command
      (Script             : access Scripting_Language_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean) is abstract;
    --  Execute a command in the script language.
    --  It isn't possible to retrieve the result of that command, this command
@@ -342,11 +344,16 @@ package Glide_Kernel.Scripts is
    --  Depending on the language, Command might be a list of commands to
    --  execute, often semicolon or newline separated.
    --  Errors is set to True if there was any error executing the script.
+   --  The output of the command, as well as the text of the command itself,
+   --  are not visible to the user if Hide_Output is True. Otherwise, the text
+   --  is sent to the default Python console if Console is null, or to the
+   --  explicit Console specified by the caller.
 
    function Execute_Command
      (Script             : access Scripting_Language_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : access Boolean) return String;
    --  Execute a command, and return its result as a displayable string.
    --  Note: some languages might simply return an empty string if they cannot
@@ -358,7 +365,8 @@ package Glide_Kernel.Scripts is
    procedure Execute_File
      (Script             : access Scripting_Language_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean) is abstract;
    --  Execute a script contained in an external file.
 
