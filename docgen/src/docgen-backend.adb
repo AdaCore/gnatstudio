@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -349,7 +349,7 @@ package body Docgen.Backend is
          E_I             : in out Entity_Information;
          Line            : Natural;
          Column          : Natural;
-         E_L_I           : in List_Reference_In_File.List_Node;
+         E_L_I           : List_Reference_In_File.List_Node;
          Result          : out Boolean;
          Entity_Abstract : in out Boolean);
       --  Looks if the reference E_L_I is the same as (Text+Line+Column)
@@ -364,7 +364,7 @@ package body Docgen.Backend is
          E_I             : in out Entity_Information;
          Line            : Natural;
          Column          : Natural;
-         E_L_I           : in List_Reference_In_File.List_Node;
+         E_L_I           : List_Reference_In_File.List_Node;
          Result          : out Boolean;
          Entity_Abstract : in out Boolean)
       is
@@ -399,12 +399,11 @@ package body Docgen.Backend is
          --  indentation of the first line and Remove_Indent remove the
          --  indentation of the other lines
       end if;
+
       Loc_Start := Start_Index;
 
       --  Take apart parsed entites with any "."'s in the middle
-      for J in 1 ..
-        1 + Count_Points (Text (Start_Index .. End_Index))
-      loop
+      for J in 1 .. 1 + Count_Points (Text (Start_Index .. End_Index)) loop
          Point_In_Column := Index (Text (Loc_Start .. End_Index), ".");
 
          if Point_In_Column > 0 then
@@ -420,7 +419,7 @@ package body Docgen.Backend is
          Ref_List_Info      := List_Reference_In_File.First (List_Ref_In_File);
          Ref_List_Info_Prec := List_Reference_In_File.Null_Node;
 
-         --  Text(Loc_Start .. Loc_End) is a reference.
+         --  Text (Loc_Start .. Loc_End) is a reference.
          --  We search it in the list we have made before in order to
          --  find its declaration.
          while Ref_List_Info /= List_Reference_In_File.Null_Node loop
@@ -446,7 +445,7 @@ package body Docgen.Backend is
             --  one (for this elements are removed after being met).
 
             Ref_List_Info_Prec := Ref_List_Info;
-            Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
+            Ref_List_Info      := List_Reference_In_File.Next (Ref_List_Info);
          end loop;
 
          --  We create a link on the declaration for this entity
