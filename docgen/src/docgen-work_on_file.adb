@@ -48,6 +48,8 @@ package body Docgen.Work_On_File is
       Options                       : Docgen.All_Options;
       Source_File_List              : Type_Source_File_Table.HTable;
       Source_File_Node              : Type_Source_File_Table.Iterator;
+      Nb_Files                      : Natural;
+      Nb_Processed                  : Natural;
       Subprogram_Index_List         : Type_Entity_List.List;
       Type_Index_List               : Type_Entity_List.List;
       Tagged_Types_List             : List_Entity_Information.List;
@@ -709,8 +711,6 @@ package body Docgen.Work_On_File is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      pragma Unreferenced (Command);
-
       use List_Entity_Information;
       use Type_Source_File_Table;
 
@@ -761,6 +761,14 @@ package body Docgen.Work_On_File is
                Next_Package);
          end;
 
+         Data.Nb_Processed := Data.Nb_Processed + 1;
+
+         Set_Progress
+           (Command,
+            (Running,
+             Data.Nb_Processed,
+             Data.Nb_Files));
+
          Result := Execute_Again;
       else
          Finalize_Files_Processing (Data);
@@ -794,6 +802,7 @@ package body Docgen.Work_On_File is
      (B                : access Docgen.Backend.Backend'Class;
       Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : in out Docgen.Type_Source_File_Table.HTable;
+      Nb_Files         : Natural;
       Options          : Docgen.All_Options)
    is
       use List_Entity_Information;
@@ -820,6 +829,8 @@ package body Docgen.Work_On_File is
           Options                       => Options,
           Source_File_List              => Source_File_List,
           Source_File_Node              => Source_File_Node,
+          Nb_Files                      => Nb_Files,
+          Nb_Processed                  => 0,
           Subprogram_Index_List         => Subprogram_Index_List,
           Type_Index_List               => Type_Index_List,
           Tagged_Types_List             => Tagged_Types_List,
@@ -829,7 +840,7 @@ package body Docgen.Work_On_File is
          Process_One_File_Iterate'Access);
 
       Launch_Background_Command
-        (Kernel, Command_Access (C), True, False, "Documenting");
+        (Kernel, Command_Access (C), True, True, "Documenting");
 
    end Process_Files;
 
