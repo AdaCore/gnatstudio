@@ -55,6 +55,10 @@ package body Vdiff_Utils is
    end record;
    type Vdiff_Info_Access is access all Vdiff_Info'Class;
 
+   Num_Line_Sep : constant := 3;
+   --  Number of empty lines separating each chunk, in Fill_Diff_List
+   --  functions.
+
    --------------------
    -- Local packages --
    --------------------
