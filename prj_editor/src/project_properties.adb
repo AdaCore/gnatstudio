@@ -47,6 +47,7 @@ with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Event_Box;             use Gtk.Event_Box;
 with Gtk.Frame;                 use Gtk.Frame;
 with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Object;                use Gtk.Object;
@@ -158,6 +159,10 @@ package body Project_Properties is
    type Attribute_Description_List is access Attribute_Description_Array;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Attribute_Description_Array, Attribute_Description_List);
+
+   package Attribute_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Attribute_Description_Access);
+
 
    type Attribute_Page_Section is record
       Name       : GNAT.OS_Lib.String_Access;  --  "" for unnamed sections
@@ -423,9 +428,6 @@ package body Project_Properties is
    type Widget_Array is array (Natural range <>) of Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Widget_Array, Widget_Array_Access);
-
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
    record
       Name               : Gtk.GEntry.Gtk_Entry;
@@ -455,8 +457,10 @@ package body Project_Properties is
       Kernel  : access Kernel_Handle_Record'Class);
    --  Internal initialization function
 
-   procedure Destroyed (Editor : access Gtk_Widget_Record'Class);
-   --  Called when the editor is destroyed
+   procedure Editor_Destroyed
+     (Editor : access Gtk_Widget_Record'Class;
+      Attr   : Attribute_Description_Access);
+   --  Called when an editor is destroyed
 
    function Get_Languages
      (Editor : Properties_Editor) return GNAT.OS_Lib.String_List;
@@ -1472,27 +1476,18 @@ package body Project_Properties is
       Initialize (Editor, Project, Kernel);
    end Gtk_New;
 
-   ---------------
-   -- Destroyed --
-   ---------------
+   ----------------------
+   -- Editor_Destroyed --
+   ----------------------
 
-   procedure Destroyed (Editor : access Gtk_Widget_Record'Class) is
-      E : constant Properties_Editor := Properties_Editor (Editor);
-      Pages : Attribute_Page_List renames Properties_Module_ID.Pages;
+   procedure Editor_Destroyed
+     (Editor : access Gtk_Widget_Record'Class;
+      Attr   : Attribute_Description_Access)
+   is
+      pragma Unreferenced (Editor);
    begin
-      Unchecked_Free (E.Pages);
-
-      --  Reset the editors fields, so that we can safely open the properties
-      --  editor again. The widgets themselves have already been destroyed
-      --  anyway.
-      for P in Pages'Range loop
-         for S in Pages (P).Sections'Range loop
-            for A in Pages (P).Sections (S).Attributes'Range loop
-               Pages (P).Sections (S).Attributes (A).Editor := null;
-            end loop;
-         end loop;
-      end loop;
-   end Destroyed;
+      Attr.Editor := null;
+   end Editor_Destroyed;
 
    -------------------------
    -- Create_General_Page --
@@ -3088,9 +3083,10 @@ package body Project_Properties is
       Gtk_New (Ed.View, Ed.Model);
       Add (Scrolled, Ed.View);
 
-      Return_Callback.Object_Connect
+      Gtkada.Handlers.Return_Callback.Object_Connect
         (Ed.View, "button_press_event",
-         Return_Callback.To_Marshaller (Edit_Indexed_Attribute'Access),
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Edit_Indexed_Attribute'Access),
          Slot_Object => Ed);
 
       Gtk_New (Text);
@@ -3174,6 +3170,11 @@ package body Project_Properties is
             Path_Widget => Path_Widget, Is_List => Attr.Is_List);
       end if;
 
+      Attribute_Handler.Connect
+        (Attr.Editor, "destroy",
+         Attribute_Handler.To_Marshaller (Editor_Destroyed'Access),
+         Attr);
+
       if Attr.Editor /= null then
          Pack_Start (Box, Attr.Editor, Expand => True, Fill => True);
          if Attr.Description /= null
@@ -3217,10 +3218,6 @@ package body Project_Properties is
          Allow_Grow   => True,
          Auto_Shrink  => True);
       Realize (Editor);
-
-      Widget_Callback.Connect
-        (Editor, "destroy",
-         Widget_Callback.To_Marshaller (Destroyed'Access));
 
       Gtk_New_Hbox (Main_Box);
       Pack_Start (Get_Vbox (Editor), Main_Box, Expand => True, Fill => True);
