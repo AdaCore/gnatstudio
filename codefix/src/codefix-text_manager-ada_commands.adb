@@ -152,8 +152,7 @@ package body Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Remove_Instruction_Cmd) is
    begin
-      Free (This.Begin_Mark.all);
-      --  Free also the pointer
+      Free (This.Begin_Mark);
    end Free;
 
    -------------------------
@@ -323,26 +322,102 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Remove_Entity_Cmd --
    -----------------------
 
---   procedure Initialize
---     (This         : in out Remove_Entity_Cmd;
---      Current_Text : Text_Navigator_Abstr'Class;
---      Start_Entity : File_Cursor'Class)
---   is
---      Spec_Begin, Spec_End : File_Cursor;
---      Body_Begin, Body_End : File_Cursor;
---   begin
---      Get_Entity
---        (Current_Text,
---         Start_Entity,
---         Spec_Begin, Spec_End,
---         Body_Begin, Body_End);
---   end Initialize;
+   procedure Initialize
+     (This         : in out Remove_Entity_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Start_Entity : File_Cursor'Class)
+   is
+      Spec_Begin, Spec_End : File_Cursor;
+      Body_Begin, Body_End : File_Cursor;
+   begin
 
---   procedure Execute
---     (This         : Remove_Entity_Cmd;
---      Current_Text : Text_Navigator_Abstr'Class;
---      New_Extract  : in out Extract'Class);
+      Get_Entity
+        (Current_Text,
+         Start_Entity,
+         Spec_Begin, Spec_End,
+         Body_Begin, Body_End);
 
---   procedure Free (This : in out Remove_Entity_Cmd);
+      if Spec_Begin /= Null_File_Cursor then
+         This.Spec_Begin := new Mark_Abstr'Class'
+           (Get_New_Mark (Current_Text, Spec_Begin));
+         This.Spec_End := new Mark_Abstr'Class'
+           (Get_New_Mark (Current_Text, Spec_End));
+      end if;
+
+      This.Body_Begin := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Body_Begin));
+      This.Body_End := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Body_End));
+   end Initialize;
+
+   procedure Execute
+     (This         : Remove_Entity_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class)
+   is
+      Spec_Begin, Spec_End       : File_Cursor;
+      Body_Begin, Body_End       : File_Cursor;
+      Line_Cursor                : File_Cursor;
+      Spec_Extract, Body_Extract : Extract;
+      Success_Merge              : Boolean;
+   begin
+
+
+      Body_Begin := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Body_Begin.all));
+      Body_End := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Body_End.all));
+
+      Line_Cursor := Body_Begin;
+      Line_Cursor.Col := 1;
+
+      while Line_Cursor.Line <= Body_End.Line loop
+         Get_Line (Current_Text, Line_Cursor, Body_Extract);
+         Line_Cursor.Line := Line_Cursor.Line + 1;
+      end loop;
+
+      Erase (Body_Extract, Body_Begin, Body_End);
+
+      if This.Spec_Begin /= null then
+         Spec_Begin := File_Cursor
+           (Get_Current_Cursor (Current_Text, This.Spec_Begin.all));
+         Spec_End := File_Cursor
+           (Get_Current_Cursor (Current_Text, This.Spec_End.all));
+
+         Line_Cursor := Spec_Begin;
+         Line_Cursor.Col := 1;
+
+         while Line_Cursor.Line <= Spec_End.Line loop
+            Get_Line (Current_Text, Line_Cursor, Spec_Extract);
+            Line_Cursor.Line := Line_Cursor.Line + 1;
+         end loop;
+
+         Erase (Spec_Extract, Spec_Begin, Spec_End);
+
+         Merge_Extracts
+           (New_Extract,
+            Spec_Extract,
+            Body_Extract,
+            Success_Merge,
+            False);
+
+         if not Success_Merge then
+            raise Codefix_Panic;
+         end if;
+
+         Free (Spec_Extract);
+         Free (Body_Extract);
+      else
+         Unchecked_Assign (New_Extract, Body_Extract);
+      end if;
+   end Execute;
+
+   procedure Free (This : in out Remove_Entity_Cmd) is
+   begin
+      Free (This.Spec_Begin);
+      Free (This.Spec_End);
+      Free (This.Body_Begin);
+      Free (This.Body_End);
+   end Free;
 
 end Codefix.Text_Manager.Ada_Commands;

@@ -188,16 +188,19 @@ package body Codefix.Merge_Utils is
    -- Delete --
    ------------
 
-   procedure Delete (This : in out Mergable_String; Start, Len : Natural) is
+   procedure Delete
+     (This : in out Mergable_String; Start : Natural; Len : Natural := 0) is
+
       Position   : constant Natural := Get_Array_Position (This, Start);
       Offset     : Natural := 0;
       Copy_Infos : constant Merge_Array := This.Infos.all;
-      J          : Natural;
+      J, K       : Natural;
    begin
       J := Position;
+      K := 1;
 
-      for K in 1 .. Len loop
 
+      loop
          while Copy_Infos (J) = Unit_Deleted loop
             J := J + 1;
          end loop;
@@ -213,6 +216,10 @@ package body Codefix.Merge_Utils is
          end if;
 
          J := J + 1;
+
+         exit when K = Len or else J > This.Infos'Last;
+
+         K := K + 1;
 
       end loop;
    end Delete;

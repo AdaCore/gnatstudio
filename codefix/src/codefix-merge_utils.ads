@@ -101,8 +101,10 @@ package Codefix.Merge_Utils is
 
    type Mergable_String is private;
 
-   procedure Delete (This : in out Mergable_String; Start, Len : Natural);
-   --  Delete len characters from Start.
+   procedure Delete
+     (This : in out Mergable_String; Start : Natural; Len : Natural := 0);
+   --  Delete len characters from Start. If Len = 0 then all characters from
+   --  Start will be deleted.
 
    procedure Insert
      (This : in out Mergable_String; Start : Natural; Value : String);
