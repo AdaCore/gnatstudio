@@ -1046,9 +1046,11 @@ package body Vsearch_Ext is
    procedure Search_Next_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget, Kernel);
    begin
-      On_Search (Get_Or_Create_Vsearch (Kernel));
+      if Vsearch_Module_Id.Search /= null then
+         On_Search (Vsearch_Module_Id.Search);
+      end if;
 
    exception
       when E : others =>
@@ -1062,9 +1064,11 @@ package body Vsearch_Ext is
    procedure Search_Previous_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget, Kernel);
    begin
-      On_Search_Previous (Get_Or_Create_Vsearch (Kernel));
+      if Vsearch_Module_Id.Search /= null then
+         On_Search_Previous (Vsearch_Module_Id.Search);
+      end if;
 
    exception
       when E : others =>
