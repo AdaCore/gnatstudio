@@ -2783,14 +2783,14 @@ package body Src_Editor_Module is
 
       File     : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Location : File_Location_Context_Access;
+      Location : Message_Context_Access;
       Line     : Natural;
 
    begin
       Trace (Me, "On_Edit_File: " & File_Information (File));
 
-      if File.all in File_Location_Context'Class then
-         Location := File_Location_Context_Access (File);
+      if File.all in Message_Context'Class then
+         Location := Message_Context_Access (File);
 
          if Has_Line_Information (Location) then
             Line := Line_Information (Location);
