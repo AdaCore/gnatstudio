@@ -493,12 +493,31 @@ package body Browsers.Call_Graph is
       Lib_Info      : LI_File_Ptr;
       Rename        : Entity_Information;
       Is_Renaming   : Boolean;
+      Location      : File_Location;
+      Status        : Find_Decl_Or_Body_Query_Status;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
       Lib_Info := Locate_From_Source_And_Complete
         (Kernel, Get_Declaration_File_Of (Entity));
+
+      if Lib_Info /= No_LI_File then
+         --  We need to find the body of the entity in fact. In Ada, this will
+         --  always be the same LI as the spec, but this is no longer true for
+         --  C or C++.
+         Find_Next_Body
+           (Kernel             => Kernel,
+            Lib_Info           => Lib_Info,
+            File_Name          => Get_Declaration_File_Of (Entity),
+            Entity_Name        => Get_Name (Entity),
+            Line               => Get_Declaration_Line_Of (Entity),
+            Column             => Get_Declaration_Column_Of (Entity),
+            Location           => Location,
+            Status             => Status);
+         Lib_Info := Locate_From_Source_And_Complete
+           (Kernel, Get_File (Location));
+      end if;
 
       if Lib_Info = No_LI_File then
          Insert (Kernel,
