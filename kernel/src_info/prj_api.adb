@@ -1103,6 +1103,7 @@ package body Prj_API is
 
       while Decl /= Empty_Node loop
          Item := Current_Item_Node (Decl);
+
          if (Kind_Of (Item) = N_Variable_Declaration
              or else Kind_Of (Item) = N_Typed_Variable_Declaration)
            and then Prj.Tree.Name_Of (Item) = N
@@ -1125,8 +1126,12 @@ package body Prj_API is
    is
       New_Decl, Decl : Project_Node_Id;
    begin
-      New_Decl := Default_Project_Node (N_Declarative_Item);
-      Set_Current_Item_Node (New_Decl, Expr);
+      if Kind_Of (Expr) /= N_Declarative_Item then
+         New_Decl := Default_Project_Node (N_Declarative_Item);
+         Set_Current_Item_Node (New_Decl, Expr);
+      else
+         New_Decl := Expr;
+      end if;
 
       Decl := First_Declarative_Item_Of (Parent);
 

@@ -134,6 +134,7 @@ package Prj_API is
      (Parent : Project_Node_Id; Expr : Project_Node_Id);
    --  Add a new declarative item at the end of the list contained in
    --  parents. This new declarative item will contain Expr.
+   --  Note that if Expr is already a declarative item, it is added directly.
 
    function Enclose_In_Expression (Node : Project_Node_Id)
       return Project_Node_Id;
