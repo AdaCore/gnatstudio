@@ -2,4 +2,5 @@ test_htables
 test_debug
 test_trie
 test_rbtree
+test_arrays
 .gpssnprj
