@@ -98,11 +98,6 @@ package body Project_Explorers is
    Show_Flat_View : constant History_Key :=
      "explorer-show-flat-view";
 
-   Normalized_Directories : constant Boolean := True;
-   --  <preference> True if directories should be fully normalized, eg links
-   --  should be resolved. False if the explorer should display the name as
-   --  given in the project file"
-
    Projects_Before_Directories : constant Boolean := False;
    --  <preference> True if the projects should be displayed, when sorted,
    --  before the directories in the project view.
@@ -968,14 +963,8 @@ package body Project_Explorers is
       Project          : Project_Type;
       Node_Type        : Directory_Node_Types) is
    begin
-      if Normalized_Directories then
-         Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
-              Locale_To_UTF8 (Name_As_Directory
-                              (Normalize_Pathname (Directory))));
-      else
-         Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
-              Locale_To_UTF8 (Name_As_Directory (Directory)));
-      end if;
+      Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
+           Locale_To_UTF8 (Name_As_Directory (Directory)));
 
       Update_Directory_Node_Text (Explorer, Project, Node);
 
