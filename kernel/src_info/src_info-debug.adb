@@ -285,10 +285,10 @@ package body Src_Info.Debug is
       Put ("X ");
       Dump_Source_File (DFI.File);
       if not ALI_Format then
-         if DFI.Depends_From_Spec then
+         if DFI.Dep_Info.Depends_From_Spec then
             Put (" (Spec)");
          end if;
-         if DFI.Depends_From_Body then
+         if DFI.Dep_Info.Depends_From_Body then
             Put (" (Body)");
          end if;
          if DFI.File_Timestamp /= Types.Empty_Time_Stamp then
@@ -344,10 +344,10 @@ package body Src_Info.Debug is
       --  Now print the 'W' lines
       while Current_Dep_File_Info /= null loop
          if (Part = Unit_Spec
-             and then Current_Dep_File_Info.Value.Depends_From_Spec)
+             and then Current_Dep_File_Info.Value.Dep_Info.Depends_From_Spec)
            or else
             (Part = Unit_Body
-             and then Current_Dep_File_Info.Value.Depends_From_Body)
+             and then Current_Dep_File_Info.Value.Dep_Info.Depends_From_Body)
          then
             Put ("W ");
             Put
