@@ -32,7 +32,6 @@ with Gtk.Button; use Gtk.Button;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
-with Gtk.Object; use Gtk.Object;
 with Gtk.Separator; use Gtk.Separator;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 package Breakpoints_Pkg is

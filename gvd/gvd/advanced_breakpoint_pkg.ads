@@ -24,13 +24,11 @@ with Gtk.Frame; use Gtk.Frame;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Adjustment; use Gtk.Adjustment;
 with Gtk.Spin_Button; use Gtk.Spin_Button;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
-with Gtk.Object; use Gtk.Object;
 package Advanced_Breakpoint_Pkg is
 
    type Advanced_Breakpoint_Record is new Gtk_Window_Record with record
