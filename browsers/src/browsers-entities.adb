@@ -1715,13 +1715,14 @@ package body Browsers.Entities is
    begin
       Context := new Entity_Selection_Context;
       Set_Entity_Information
-        (Context     => Context,
-         Entity_Name => Get_Name (Item.Entity),
-         Line        => Get_Declaration_Line_Of (Item.Entity),
-         Column      => Get_Declaration_Column_Of (Item.Entity));
+        (Context       => Context,
+         Entity_Name   => Get_Name (Item.Entity),
+         Entity_Column => Get_Declaration_Column_Of (Item.Entity));
       Set_File_Information
         (Context     => Context,
-         File_Name   => Get_Declaration_File_Of (Item.Entity));
+         File_Name   => Get_Declaration_File_Of (Item.Entity),
+         Line        => Get_Declaration_Line_Of (Item.Entity),
+         Column      => Get_Declaration_Column_Of (Item.Entity));
       --  We need to set the file information, even though it will also display
       --  some contextual menus (file dependencies,...), otherwise the call
       --  graph will not work.
