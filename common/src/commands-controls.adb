@@ -143,27 +143,32 @@ package body Commands.Controls is
    is
       Command : Queue_Change_Access;
    begin
-      pragma Assert (Queue /= null);
+      if Queue = null then
+         Set_Sensitive (Undo_Button, False);
+         Set_Sensitive (Redo_Button, False);
+         Set_Sensitive (Undo_Menu_Item, False);
+         Set_Sensitive (Redo_Menu_Item, False);
+      else
+         Command := new Queue_Change_Command;
+         Command.The_Queue := Queue;
+         Command.Undo_Button := Undo_Button;
+         Command.Redo_Button := Redo_Button;
+         Command.Undo_Menu_Item := Undo_Menu_Item;
+         Command.Redo_Menu_Item := Redo_Menu_Item;
 
-      Command := new Queue_Change_Command;
-      Command.The_Queue := Queue;
-      Command.Undo_Button := Undo_Button;
-      Command.Redo_Button := Redo_Button;
-      Command.Undo_Menu_Item := Undo_Menu_Item;
-      Command.Redo_Menu_Item := Redo_Menu_Item;
+         Command.Undo_Button_Handler_ID := Command_Callback.Connect
+           (Undo_Button, "clicked", On_Undo'Access, Command, True);
+         Command.Redo_Button_Handler_ID := Command_Callback.Connect
+           (Redo_Button, "clicked", On_Redo'Access, Command, True);
 
-      Command.Undo_Button_Handler_ID := Command_Callback.Connect
-        (Undo_Button, "clicked", On_Undo'Access, Command, True);
-      Command.Redo_Button_Handler_ID := Command_Callback.Connect
-        (Redo_Button, "clicked", On_Redo'Access, Command, True);
+         Command.Undo_Menu_Item_Handler_ID := Command_Callback.Connect
+           (Undo_Menu_Item, "activate", On_Undo'Access, Command, True);
+         Command.Redo_Menu_Item_Handler_ID := Command_Callback.Connect
+           (Redo_Menu_Item, "activate", On_Redo'Access, Command, True);
 
-      Command.Undo_Menu_Item_Handler_ID := Command_Callback.Connect
-        (Undo_Menu_Item, "activate", On_Undo'Access, Command, True);
-      Command.Redo_Menu_Item_Handler_ID := Command_Callback.Connect
-        (Redo_Menu_Item, "activate", On_Redo'Access, Command, True);
-
-      Execute (Command);
-      Add_Queue_Change_Hook (Queue, Command_Access (Command));
+         Execute (Command);
+         Add_Queue_Change_Hook (Queue, Command_Access (Command));
+      end if;
    end Set_Controls;
 
    --------------------
