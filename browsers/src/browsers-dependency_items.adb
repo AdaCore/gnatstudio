@@ -53,6 +53,7 @@ with Prj;                       use Prj;
 with Types;                     use Types;
 with Fname;                     use Fname;
 with Namet;                     use Namet;
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -534,6 +535,9 @@ package body Browsers.Dependency_Items is
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
 
+      --  Check Language.Is_System_File as well, which does it depending on
+      --  the specific language.
+
       return Is_Internal_File_Name (Name_Find, Renamings_Included => True);
    end Is_System_File;
 
@@ -770,12 +774,16 @@ package body Browsers.Dependency_Items is
       Win             : Gdk_Window;
       Browser         : access Glide_Browser_Record'Class;
       Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : String) is
+      Source_Filename : String)
+   is
+      Handler : Glide_Language_Handler := Glide_Language_Handler
+        (Get_Language_Handler (Kernel));
    begin
       Item := new File_Item_Record;
       Initialize
         (Item, Win, Browser,
          Make_Source_File (Source_Filename,
+                           Handler,
                            Get_Project_View (Kernel),
                            Get_Predefined_Source_Path (Kernel)));
    end Gtk_New;
