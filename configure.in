@@ -1,6 +1,5 @@
 ADC_REVISION($Revision$)
 AC_INIT(common/src/sdefault.adb.in)
-AM_CONFIG_HEADER(widgets/cschtml/config.h)
 
 AC_CANONICAL_SYSTEM
 
@@ -22,9 +21,6 @@ ROOT=`pwd`
 TARGET=$host
 EXEC_PREFIX="$prefix"
 
-dnl GNU regex checking
-AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
-
 ######## Command line options ###
 
 AC_ARG_WITH(ptys,
@@ -38,6 +34,8 @@ USE_PTYS=True)
 
 ######## checking for local tools ###
 AC_PROG_CC
+AC_ISC_POSIX
+AC_HEADER_STDC
 AM_PATH_GNAT
 AM_CHECK_PROG_CXX
 AC_PROG_MAKE_SET
@@ -49,6 +47,9 @@ AC_CHECK_PROGS(TEXI2HTML, texi2html)
 AC_CHECK_PROGS(TEX, tex)
 
 GCC_VERSION=`$CC -dumpversion`
+
+######## GNU regex checking
+AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
 
 ######## Support for ptys ###
 AC_CHECK_HEADERS(sys/stropts.h)
@@ -214,4 +215,4 @@ AC_SUBST(MAKEINFO)
 AC_SUBST(TEXI2HTML)
 AC_SUBST(TEX)
 
-AC_OUTPUT(Makefile.common common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads)
+AC_OUTPUT(Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads)
