@@ -2361,10 +2361,12 @@ package body Prj_API is
       if GNAT.Directory_Operations.File_Extension (F) = ".ads" then
          Part      := Unit_Spec;
          Unit_Name := Get_String (Base_Name (Filename, ".ads"));
+         Lang      := Name_Ada;
          return;
       elsif GNAT.Directory_Operations.File_Extension (F) = ".adb" then
          Part      := Unit_Spec;
          Unit_Name := Get_String (Base_Name (Filename, ".ads"));
+         Lang      := Name_Ada;
          return;
       end if;
 
