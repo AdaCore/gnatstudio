@@ -998,34 +998,42 @@ package body Src_Editor_Module is
 
       --  Toolbars
 
-      Button := Insert_Stock (Toolbar, Stock_New, -"Create a New File");
+      Button := Insert_Stock
+        (Toolbar, Stock_New, -"Create a New File", Position => 0);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_New_File'Access),
          Kernel_Handle (Kernel));
 
-      Button := Insert_Stock (Toolbar, Stock_Open, -"Open a File");
+      Button := Insert_Stock
+        (Toolbar, Stock_Open, -"Open a File", Position => 1);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Open_File'Access),
          Kernel_Handle (Kernel));
 
-      Button := Insert_Stock (Toolbar, Stock_Save, -"Save Current File");
+      Button := Insert_Stock
+        (Toolbar, Stock_Save, -"Save Current File", Position => 2);
       Kernel_Callback.Connect
         (Button, "clicked",
          Kernel_Callback.To_Marshaller (On_Save'Access),
          Kernel_Handle (Kernel));
 
-      Append_Space (Toolbar);
-      Button := Insert_Stock (Toolbar, Stock_Undo, -"Undo Previous Action");
+      Insert_Space (Toolbar, Position => 3);
+      Button := Insert_Stock
+        (Toolbar, Stock_Undo, -"Undo Previous Action", Position => 4);
       Set_Sensitive (Button, False);
-      Button := Insert_Stock (Toolbar, Stock_Redo, -"Redo Previous Action");
+      Button := Insert_Stock
+        (Toolbar, Stock_Redo, -"Redo Previous Action", Position => 5);
       Set_Sensitive (Button, False);
 
-      Append_Space (Toolbar);
-      Button := Insert_Stock (Toolbar, Stock_Cut, -"Cut to Clipboard");
-      Button := Insert_Stock (Toolbar, Stock_Copy, -"Copy to Clipboard");
-      Button := Insert_Stock (Toolbar, Stock_Paste, -"Paste from Clipboard");
+      Insert_Space (Toolbar, Position => 6);
+      Button := Insert_Stock
+        (Toolbar, Stock_Cut, -"Cut to Clipboard", Position => 7);
+      Button := Insert_Stock
+        (Toolbar, Stock_Copy, -"Copy to Clipboard", Position => 8);
+      Button := Insert_Stock
+        (Toolbar, Stock_Paste, -"Paste from Clipboard", Position => 9);
    end Initialize_Module;
 
    ---------------------
