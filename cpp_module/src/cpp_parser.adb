@@ -256,6 +256,7 @@ package body CPP_Parser is
    procedure Parse_TO_Table
      (Handler   : access CPP_Handler_Record'Class;
       Sym_Name  : String;
+      Sym_File  : Source_File;
       Sym_Class : String;
       Sym_Arg_Types : String);
    procedure Parse_LV_Table
@@ -1212,6 +1213,7 @@ package body CPP_Parser is
          Parse_TO_Table
            (Handler       => Handler,
             Sym_Name      => Entity_Name,
+            Sym_File      => Source,
             Sym_Class     => Entity_Class,
             Sym_Arg_Types => Arg_Types);
          Class := Lookup_Entity_In_Tables
@@ -1638,6 +1640,7 @@ package body CPP_Parser is
          Parse_TO_Table
            (Handler     => Handler,
             Sym_Name    => C.Key (C.Name.First .. C.Name.Last),
+            Sym_File    => Source,
             Sym_Class   => C.Key (C.Class.First .. C.Class.Last),
             Sym_Arg_Types => C.Data (C.Arg_Types.First .. C.Arg_Types.Last));
       end if;
@@ -1652,6 +1655,7 @@ package body CPP_Parser is
    procedure Parse_TO_Table
      (Handler   : access CPP_Handler_Record'Class;
       Sym_Name  : String;
+      Sym_File  : Source_File;
       Sym_Class : String;
       Sym_Arg_Types : String)
    is
@@ -1662,122 +1666,128 @@ package body CPP_Parser is
       Arr  : Boolean_Table_Array;
       Ref_Source : Source_File;
    begin
-      if Sym_Class'Length = 0 then
-         Set_Cursor
-           (Handler.SN_Table (TO),
-            Position    => By_Key,
-            Key         =>
+      if Is_Open (Handler.SN_Table (TO)) then
+         if Sym_Class'Length = 0 then
+            Set_Cursor
+              (Handler.SN_Table (TO),
+               Position    => By_Key,
+               Key         =>
                '#' & Field_Sep & Sym_Name & Field_Sep & "fu" & Field_Sep,
-            Exact_Match => False);
-      else
-         Set_Cursor
-           (Handler.SN_Table (TO),
-            Position    => By_Key,
-            Key         =>
-              Sym_Class & Field_Sep & Sym_Name & Field_Sep & "mi" & Field_Sep,
-            Exact_Match => False);
-      end if;
+               Exact_Match => False);
+         else
+            Set_Cursor
+              (Handler.SN_Table (TO),
+               Position    => By_Key,
+               Key         => Sym_Class & Field_Sep & Sym_Name & Field_Sep
+               & "mi" & Field_Sep,
+               Exact_Match => False);
+         end if;
 
-      loop
-         Get_Pair (Handler.SN_Table (TO), Next_By_Key, Result => P);
-         exit when P = No_Pair;
+         loop
+            Get_Pair (Handler.SN_Table (TO), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-         Parse_Pair (P, R);
+            Parse_Pair (P, R);
 
-         if Sym_Arg_Types = R.Data
-             (R.Caller_Argument_Types.First .. R.Caller_Argument_Types.Last)
-           and then R.Referred_Symbol /= Undef
-         then
-            case R.Referred_Symbol is
-               when FU | FD => Arr := (FU | FD => True, others => False);
-               when MI | MD => Arr := (MI | MD => True, others => False);
-               when others =>
-                  Arr := (others => False);
-                  Arr (R.Referred_Symbol) := True;
-            end case;
-
-            --  From the standard library ?
-            if R.Referred_Symbol = UD then
-               Ref := Get_Or_Create
-                 (Db           => Handler.Db,
-                  Name         => R.Key
-                    (R.Referred_Symbol_Name.First
-                     .. R.Referred_Symbol_Name.Last),
-                  File         => Get_Predefined_File (Handler.Db),
-                  Line         => Predefined_Line,
-                  Column       => Predefined_Column,
-                  Allow_Create => True);
-               Set_Kind (Ref, Function_Entity);
-
-            elsif R.Referred_Symbol = TA then
-               --  Bug in SN: the class for a TA is left to "#", so we use the
-               --  name of the generic entity instead
-               Ref := Lookup_Entity_In_Tables
-                 (Handler => Handler,
-                  Name    => R.Key
-                    (R.Referred_Symbol_Name.First
-                     .. R.Referred_Symbol_Name.Last),
-                  Current_Source    => Ref_Source,
-                  Class_Or_Function => Sym_Name,
-                  Tables                         => Arr,
-                  Check_Predefined               => False,
-                  Check_Template_Arguments       => False,
-                  Check_Class_Template_Arguments => False);
-
-            else
-               Ref := Lookup_Entity_In_Tables
-                 (Handler => Handler,
-                  Name    => R.Key
-                    (R.Referred_Symbol_Name.First
-                     .. R.Referred_Symbol_Name.Last),
-                  Current_Source    => Ref_Source,
-                  Class_Or_Function => R.Key
-                    (R.Referred_Class.First .. R.Referred_Class.Last),
-                  Tables                         => Arr,
-                  Check_Predefined               => False,
-                  Check_Template_Arguments       => False,
-                  Check_Class_Template_Arguments => False);
-            end if;
-
-            if Ref /= null then
-               case R.Key (R.Access_Type.First) is
-                  when 'w' => Kind := Modification;
-                  when 'p' => Kind := Modification; --  Passed as a parameter
-                  when 'r' => Kind := Reference;
+            if Sym_Arg_Types = R.Data
+              (R.Caller_Argument_Types.First .. R.Caller_Argument_Types.Last)
+              and then R.Referred_Symbol /= Undef
+            then
+               case R.Referred_Symbol is
+                  when FU | FD => Arr := (FU | FD => True, others => False);
+                  when MI | MD => Arr := (MI | MD => True, others => False);
                   when others =>
-                     Trace (Me, "Unknown access_type in TO table: "
-                            & R.Key (R.Access_Type.First));
-                     Kind := Reference;
+                     Arr := (others => False);
+                     Arr (R.Referred_Symbol) := True;
                end case;
 
-               --  Parameters declaration are also visible in the TO table,
-               --  but we shouldn't list these as a reference.
+               --  An undefined entity ?
+               if R.Referred_Symbol = UD then
+                  Ref := Get_Or_Create
+                    (Db           => Handler.Db,
+                     Name         => R.Key
+                       (R.Referred_Symbol_Name.First
+                        .. R.Referred_Symbol_Name.Last),
+                     File         => Sym_File,
+                     Line         => Predefined_Line,
+                     Column       => Predefined_Column,
+                     Allow_Create => True);
+                  Set_Kind (Ref, Function_Entity);
 
-               if R.Key (R.Access_Type.First) /= 'p'
-                 or else Get_Line (Get_Declaration_Of (Ref)) /= R.Position.Line
-                 or else Get_Column (Get_Declaration_Of (Ref)) /=
-                 R.Position.Column
-               then
-                  Ref_Source := Get_Or_Create
-                    (Handler, R.Key (R.File_Name.First .. R.File_Name.Last));
+               elsif R.Referred_Symbol = TA then
+                  --  Bug in SN: the class for a TA is left to "#", so we use
+                  --  the name of the generic entity instead
+                  Ref := Lookup_Entity_In_Tables
+                    (Handler => Handler,
+                     Name    => R.Key
+                       (R.Referred_Symbol_Name.First
+                        .. R.Referred_Symbol_Name.Last),
+                     Current_Source    => Ref_Source,
+                     Class_Or_Function => Sym_Name,
+                     Tables                         => Arr,
+                     Check_Predefined               => False,
+                     Check_Template_Arguments       => False,
+                     Check_Class_Template_Arguments => False);
 
-                  Add_Reference
-                    (Entity   => Ref,
-                     Location => (File   => Ref_Source,
-                                  Line   => R.Position.Line,
-                                  Column => R.Position.Column),
-                     Kind     => Kind);
+               else
+                  Ref := Lookup_Entity_In_Tables
+                    (Handler => Handler,
+                     Name    => R.Key
+                       (R.Referred_Symbol_Name.First
+                        .. R.Referred_Symbol_Name.Last),
+                     Current_Source    => Ref_Source,
+                     Class_Or_Function => R.Key
+                       (R.Referred_Class.First .. R.Referred_Class.Last),
+                     Tables                         => Arr,
+                     Check_Predefined               => False,
+                     Check_Template_Arguments       => False,
+                     Check_Class_Template_Arguments => False);
                end if;
-            else
-               Trace (Me, "Entity not found from TO table: "
-                      & R.Key (R.Referred_Symbol_Name.First
-                               .. R.Referred_Symbol_Name.Last)
-                      & " in " & R.Referred_Symbol'Img);
-            end if;
-         end if;
-      end loop;
 
-      Release_Cursor (Handler.SN_Table (TO));
+               if Ref /= null then
+                  case R.Key (R.Access_Type.First) is
+                     when 'w' => Kind := Modification;
+                     when 'p' =>
+                        --  Passed as a parameter
+                        Kind := Modification;
+                     when 'r' => Kind := Reference;
+                     when others =>
+                        Trace (Me, "Unknown access_type in TO table: "
+                               & R.Key (R.Access_Type.First));
+                        Kind := Reference;
+                  end case;
+
+                  --  Parameters declaration are also visible in the TO table,
+                  --  but we shouldn't list these as a reference.
+
+                  if R.Key (R.Access_Type.First) /= 'p'
+                    or else Get_Line (Get_Declaration_Of (Ref)) /=
+                       R.Position.Line
+                    or else Get_Column (Get_Declaration_Of (Ref)) /=
+                       R.Position.Column
+                  then
+                     Ref_Source := Get_Or_Create
+                       (Handler,
+                        R.Key (R.File_Name.First .. R.File_Name.Last));
+
+                     Add_Reference
+                       (Entity   => Ref,
+                        Location => (File   => Ref_Source,
+                                     Line   => R.Position.Line,
+                                     Column => R.Position.Column),
+                        Kind     => Kind);
+                  end if;
+               else
+                  Trace (Me, "Entity not found from TO table: "
+                         & R.Key (R.Referred_Symbol_Name.First
+                                  .. R.Referred_Symbol_Name.Last)
+                         & " in " & R.Referred_Symbol'Img);
+               end if;
+            end if;
+         end loop;
+
+         Release_Cursor (Handler.SN_Table (TO));
+      end if;
    end Parse_TO_Table;
 
    --------------------
@@ -1800,56 +1810,58 @@ package body CPP_Parser is
       Var    : LV_Table;
       Local  : Entity_Information;
    begin
-      Set_Cursor
-        (Handler.SN_Table (LV),
-         By_Key,
-         Get_Name (Entity) & Field_Sep,
-         Exact_Match => False);
+      if Is_Open (Handler.SN_Table (LV)) then
+         Set_Cursor
+           (Handler.SN_Table (LV),
+            By_Key,
+            Get_Name (Entity) & Field_Sep,
+            Exact_Match => False);
 
-      loop
-         Get_Pair (Handler.SN_Table (LV), Next_By_Key, Result => P);
-         exit when P = No_Pair;
+         loop
+            Get_Pair (Handler.SN_Table (LV), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-         Parse_Pair (P, Var);
+            Parse_Pair (P, Var);
 
-         if Match_With_Joker
-           (Var.Data (Var.Class.First .. Var.Class.Last), Entity_Class)
-           and then Var.Key (Var.File_Name.First .. Var.File_Name.Last) =
-           Entity_File_Name
-           and then Var.Data (Var.Arg_Types.First .. Var.Arg_Types.Last) =
-           Entity_Arg_Types
-         then
-            Local := Get_Or_Create
-              (Db     => Handler.Db,
-               Name   => Var.Key (Var.Name.First .. Var.Name.Last),
-               File   => Source,
-               Line   => Var.Start_Position.Line,
-               Column => Var.Start_Position.Column);
+            if Match_With_Joker
+              (Var.Data (Var.Class.First .. Var.Class.Last), Entity_Class)
+              and then Var.Key (Var.File_Name.First .. Var.File_Name.Last) =
+              Entity_File_Name
+              and then Var.Data (Var.Arg_Types.First .. Var.Arg_Types.Last) =
+              Entity_Arg_Types
+            then
+               Local := Get_Or_Create
+                 (Db     => Handler.Db,
+                  Name   => Var.Key (Var.Name.First .. Var.Name.Last),
+                  File   => Source,
+                  Line   => Var.Start_Position.Line,
+                  Column => Var.Start_Position.Column);
 
-            for P in Parsed_Params'Range loop
-               if Params (Parsed_Params (P).First .. Parsed_Params (P).Last) =
-                 Var.Key (Var.Name.First .. Var.Name.Last)
-               then
-                  Add_Reference
-                    (Entity   => Entity,
-                     Location => (File   => Source,
-                                  Line   => Var.Start_Position.Line,
-                                  Column => Var.Start_Position.Column),
-                     Kind     => Subprogram_In_Parameter);
-               end if;
-            end loop;
+               for P in Parsed_Params'Range loop
+                  if Params (Parsed_Params (P).First .. Parsed_Params (P).Last)
+                    = Var.Key (Var.Name.First .. Var.Name.Last)
+                  then
+                     Add_Reference
+                       (Entity   => Entity,
+                        Location => (File   => Source,
+                                     Line   => Var.Start_Position.Line,
+                                     Column => Var.Start_Position.Column),
+                        Kind     => Subprogram_In_Parameter);
+                  end if;
+               end loop;
 
-            --  Do not store a reference to the parent, since this is also
-            --  mentionned in the TO table, and thus would be duplicated
-            Set_Parent
-              (Handler     => Handler,
-               Entity      => Local,
-               Parent_Name =>
-                 Var.Data (Var.Value_Type.First .. Var.Value_Type.Last));
-         end if;
-      end loop;
+               --  Do not store a reference to the parent, since this is also
+               --  mentionned in the TO table, and thus would be duplicated
+               Set_Parent
+                 (Handler     => Handler,
+                  Entity      => Local,
+                  Parent_Name =>
+                    Var.Data (Var.Value_Type.First .. Var.Value_Type.Last));
+            end if;
+         end loop;
 
-      Release_Cursor (Handler.SN_Table (LV));
+         Release_Cursor (Handler.SN_Table (LV));
+      end if;
    end Parse_LV_Table;
 
    ----------------------
