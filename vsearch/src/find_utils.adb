@@ -49,12 +49,12 @@ package body Find_Utils is
    procedure Register_Search_Function
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Data   : Search_Module_Data)
-     renames Vsearch_Ext.Register_Search_Function;
+      renames Vsearch_Ext.Register_Search_Function;
 
    function Search_Context_From_Module
      (Id : access Glide_Kernel.Module_ID_Record'Class)
       return Find_Utils.Search_Module_Data
-     renames Vsearch_Ext.Search_Context_From_Module;
+      renames Vsearch_Ext.Search_Context_From_Module;
 
    -----------------------
    -- Is_Word_Delimiter --
