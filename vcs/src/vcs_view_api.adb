@@ -172,6 +172,24 @@ package body VCS_View_API is
       One_Rev : Boolean);
    --  Factorize code between On_Menu_Diff_Specific and On_Menu_Diff2.
 
+   function Action_To_Log_Suffix (Action : VCS_Action) return String;
+   --  Return the suffix to be used in log files that correspond to Action.
+
+   --------------------------
+   -- Action_To_Log_Suffix --
+   --------------------------
+
+   function Action_To_Log_Suffix (Action : VCS_Action) return String is
+   begin
+      case Action is
+         when Commit =>
+            return "$log";
+
+         when others =>
+            return "$" & Action'Img & "$log";
+      end case;
+   end Action_To_Log_Suffix;
+
    ---------------------
    -- Get_Current_Ref --
    ---------------------
@@ -1202,7 +1220,7 @@ package body VCS_View_API is
                Log_File  : constant Virtual_File :=
                              Get_Log_From_File
                                (Kernel, File, True,
-                                Suffix => "$" & Action'Img & "$log");
+                                Suffix => Action_To_Log_Suffix (Action));
                File_Args         : String_List.List;
                Log_Args          : String_List.List;
                Head_List         : String_List.List;
@@ -1440,7 +1458,7 @@ package body VCS_View_API is
       Files_Temp     : String_List.List_Node;
       All_Logs_Exist : Boolean := True;
       File           : Virtual_File;
-      Suffix         : constant String := "$" & Action'Img & "$log";
+      Suffix         : constant String := Action_To_Log_Suffix (Action);
 
       use String_List;
       use type String_List.List_Node;
