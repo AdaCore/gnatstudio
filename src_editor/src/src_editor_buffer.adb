@@ -4051,13 +4051,16 @@ package body Src_Editor_Buffer is
    -- Do_Indentation --
    --------------------
 
-   function Do_Indentation (Buffer : Source_Buffer) return Boolean is
+   function Do_Indentation
+     (Buffer            : Source_Buffer;
+      Current_Line_Only : Boolean := False) return Boolean
+   is
       Iter, End_Pos : Gtk_Text_Iter;
       Result : Boolean;
    begin
       Get_Selection_Bounds (Buffer, Iter, End_Pos, Result);
 
-      if Result then
+      if not Current_Line_Only and then Result then
          --  Do not consider a line selected if only the first character
          --  is selected.
 

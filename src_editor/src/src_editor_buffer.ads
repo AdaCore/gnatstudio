@@ -420,9 +420,11 @@ package Src_Editor_Buffer is
    --  Do nothing if the preference is not activated.
    --  Return whether the current range could be indented correctly.
 
-   function Do_Indentation (Buffer : Source_Buffer) return Boolean;
+   function Do_Indentation
+     (Buffer            : Source_Buffer;
+      Current_Line_Only : Boolean := False) return Boolean;
    --  Same as above, but for the current line (or current selection if there
-   --  is one).
+   --  is one and Current_Line_Only is False).
 
    function Should_Indent (Buffer : Source_Buffer) return Boolean;
    --  Return true if auto-indentation is supported for this buffer, and if
