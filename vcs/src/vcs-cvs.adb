@@ -25,6 +25,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
 with GNAT.OS_Lib;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -1172,8 +1173,8 @@ package body VCS.CVS is
       Identifier : String := CVS_Identifier;
 
    begin
-      Lower_Case (Id);
-      Lower_Case (Identifier);
+      To_Lower (Id);
+      To_Lower (Identifier);
 
       if Strip_Quotes (Id) = Identifier then
          return VCS_CVS_Module_ID.CVS_Reference;

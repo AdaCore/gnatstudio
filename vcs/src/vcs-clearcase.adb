@@ -27,6 +27,7 @@ with Glide_Intl;                use Glide_Intl;
 
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Expect;               use GNAT.Expect;
 with Ada.Text_IO;               use Ada.Text_IO;
 
@@ -270,8 +271,8 @@ package body VCS.ClearCase is
       Id         : String := S;
       Identifier : String := ClearCase_Identifier;
    begin
-      Lower_Case (Id);
-      Lower_Case (Identifier);
+      To_Lower (Id);
+      To_Lower (Identifier);
 
       if Strip_Quotes (Id) = Identifier then
          return VCS_ClearCase_Module_ID.ClearCase_Reference;
