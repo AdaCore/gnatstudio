@@ -311,13 +311,14 @@ package body Src_Editor_Buffer.Buffer_Commands is
           (Get_Line (Prev) /= Get_Line (Iter)
            or else Get_Line_Offset (Prev) /= Get_Line_Offset (Iter))
       then
-         Create (Delete,
-                 Deletion,
-                 Buffer,
-                 False,
-                 Integer (Get_Line (Prev)),
-                 Integer (Get_Line_Offset (Prev)),
-                 Forward);
+         Create
+           (Delete,
+            Deletion,
+            Buffer,
+            False,
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
+            Natural (Get_Line_Offset (Prev) + 1),
+            Forward);
 
          Set_Text (Delete, Get_Slice (Prev, Iter));
          Enqueue (Buffer, Command_Access (Delete));
@@ -326,10 +327,10 @@ package body Src_Editor_Buffer.Buffer_Commands is
          Create
            (Shell_Command,
             Buffer,
-            Natural (Get_Line (Prev)),
-            Natural (Get_Line_Offset (Prev)),
-            Natural (Get_Line (Iter)),
-            Natural (Get_Line_Offset (Iter)),
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Prev) + 1)),
+            Natural (Get_Line_Offset (Prev) + 1),
+            Get_Editable_Line (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1)),
+            Natural (Get_Line_Offset (Iter) + 1),
             Text.all,
             True);
          Enqueue (Buffer, Command_Access (Shell_Command));
