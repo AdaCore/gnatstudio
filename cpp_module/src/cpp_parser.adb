@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Entities;          use Entities;
---  with Entities.Queries;  use Entities.Queries;
 with Projects.Registry; use Projects.Registry;
 with SN.Browse;         use SN.Browse;
 with SN.DB_Structures;  use SN.DB_Structures;
@@ -79,6 +78,16 @@ package body CPP_Parser is
       Is_Abstract => False);
    Macro_Entity : constant E_Kind :=
      (Macro,
+      Is_Type     => False,
+      Is_Generic  => False,
+      Is_Abstract => False);
+   Access_Entity : constant E_Kind :=
+     (Access_Kind,
+      Is_Type     => False,
+      Is_Generic  => False,
+      Is_Abstract => False);
+   Array_Entity : constant E_Kind :=
+     (Array_Kind,
       Is_Type     => False,
       Is_Generic  => False,
       Is_Abstract => False);
@@ -270,8 +279,10 @@ package body CPP_Parser is
       Entity_Class : String;
       Arg_Types    : String;
       Arg_Names    : String;
-      Source       : Source_File);
-   --  Insert a method declaration and profile in the database
+      Source       : Source_File;
+      Class        : out Entity_Information);
+   --  Insert a method declaration and profile in the database.
+   --  Return the Class entity
 
    procedure Process_Local_Variables_And_Parameters
      (Handler : access CPP_Handler_Record'Class;
@@ -504,11 +515,14 @@ package body CPP_Parser is
    is
       Volatile_Str : constant String := "volatile ";
       Const_Str    : constant String := "const ";
+      Virtual_Str  : constant String := "virtual ";
    begin
       if Looking_At (Name, Name'First, Substring => Volatile_Str) then
          Name_Start := Name'First + Volatile_Str'Length;
       elsif Looking_At (Name, Name'First, Substring => Const_Str) then
          Name_Start := Name'First + Const_Str'Length;
+      elsif Looking_At (Name, Name'First, Substring => Virtual_Str) then
+         Name_Start := Name'First + Virtual_Str'Length;
       else
          Name_Start := Name'First;
       end if;
@@ -893,7 +907,7 @@ package body CPP_Parser is
       Sym          : FIL_Table;
       Source       : Source_File)
    is
-      Entity   : Entity_Information;
+      Entity, Class : Entity_Information;
       Var      : MD_Table;
       Success  : Boolean;
    begin
@@ -916,7 +930,8 @@ package body CPP_Parser is
             Entity_Class => Var.Key (Var.Class.First .. Var.Class.Last),
             Arg_Types => Var.Data (Var.Arg_Types.First .. Var.Arg_Types.Last),
             Arg_Names => Var.Data (Var.Arg_Names.First .. Var.Arg_Names.Last),
-            Source    => Source);
+            Source    => Source,
+            Class     => Class);
       end if;
    end Parse_MD_Table;
 
@@ -934,9 +949,8 @@ package body CPP_Parser is
       Entity_Class : String;
       Arg_Types    : String;
       Arg_Names    : String;
-      Source       : Source_File)
-   is
-      Class    : Entity_Information;
+      Source       : Source_File;
+      Class        : out Entity_Information) is
    begin
       Entity := Get_Or_Create
         (Db     => Handler.Db,
@@ -988,8 +1002,9 @@ package body CPP_Parser is
       M      : MI_Table;
       SuccessD : Boolean;
       SuccessI : Boolean;
+      Class_Length : Natural;
 
-      Entity : Entity_Information;
+      Entity, Class : Entity_Information;
    begin
       --  Find and parse the corresponding method declaration.
       --  We cannot search the FIL table, since only one cursor can exist
@@ -1008,19 +1023,15 @@ package body CPP_Parser is
             Success  => SuccessI);
 
       if SuccessD then
-         --  Insert the declaration
-         Parse_Method_Table_Internal
-           (Handler,
-            Entity       => Entity,
-            Return_Type  => D.Data (D.Return_Type.First .. D.Return_Type.Last),
-            Entity_Name  => D.Key (D.Name.First .. D.Name.Last),
-            Entity_Start => D.Start_Position,
-            Entity_File  => D.Key (D.File_Name.First .. D.File_Name.Last),
-            Entity_Class => D.Key (D.Class.First .. D.Class.Last),
-            Arg_Types    => D.Data (D.Arg_Types.First .. D.Arg_Types.Last),
-            Arg_Names    => D.Data (D.Arg_Names.First .. D.Arg_Names.Last),
-            Source       => Get_Or_Create
-              (Handler, D.Key (D.File_Name.First .. D.File_Name.Last)));
+         --  Insert the declaration. Extra info will be/has been inserted when
+         --  the MD table is parsed.
+         Entity := Get_Or_Create
+           (Db     => Handler.Db,
+            Name   => D.Key (D.Name.First .. D.Name.Last),
+            File   => Get_Or_Create
+              (Handler, D.Key (D.File_Name.First .. D.File_Name.Last)),
+            Line   => D.Start_Position.Line,
+            Column => D.Start_Position.Column);
 
          if SuccessI then
             Add_Reference
@@ -1051,11 +1062,44 @@ package body CPP_Parser is
                Entity_Class => D.Key (D.Class.First .. D.Class.Last),
                Arg_Types    => D.Data (D.Arg_Types.First .. D.Arg_Types.Last),
                Arg_Names    => D.Data (D.Arg_Names.First .. D.Arg_Names.Last),
-               Source       => Source);
+               Source       => Source,
+               Class        => Class);
          end if;
       end if;
 
       if SuccessI then
+         --  Add a reference for the class name.
+         --  Since SN doesn't give us this information, we'll assume that the
+         --  name of the method is always "class::name", ie no space, and
+         --  then compute the start of "class"
+
+         Class_Length := D.Class.Last - D.Class.First + 1;
+
+         --  The class might not have been computed if the entity was already
+         --  in the class. Compute it now in that case.
+         if Class = null then
+            Class := Lookup_Entity_In_Tables
+              (Handler,
+               D.Key (D.Class.First .. D.Class.Last),
+               Tables                         => (CL => True, others => False),
+               Check_Predefined               => False,
+               Check_Template_Arguments       => False,
+               Check_Class_Template_Arguments => False,
+               Class_Or_Function              => Invalid_String);
+         end if;
+
+         if Class /= null
+           and then M.Start_Position.Column - 2 - Class_Length > 0
+         then
+            Add_Reference
+              (Class,
+               Location =>
+                 (File   => Source,
+                  Line   => M.Start_Position.Line,
+                  Column => M.Start_Position.Column - 2 - Class_Length),
+               Kind     => Reference);
+         end if;
+
          Set_End_Of_Scope
            (Entity,
             Location => (File   => Source,
@@ -1227,12 +1271,16 @@ package body CPP_Parser is
       Return_Type : String)
    is
       Parent : Entity_Information;
+      Start  : Natural;
    begin
-      if Return_Type = "void" then
+      Cleanup_Entity_Name (Return_Type, Start);
+
+      if Return_Type (Start .. Return_Type'Last) = "void" then
          Set_Kind (Entity, Procedure_Entity);
       else
          Set_Kind (Entity, Function_Entity);
-         Parent := Lookup_Entity_In_Tables (Handler, Return_Type);
+         Parent := Lookup_Entity_In_Tables
+           (Handler, Return_Type (Start .. Return_Type'Last));
          Set_Returned_Type (Entity, Parent);
       end if;
    end Set_Subprogram_Return_Type;
@@ -1349,7 +1397,7 @@ package body CPP_Parser is
          exit when P = No_Pair;
 
          Parse_Pair (P, R);
---
+
          if Sym_Arg_Types = R.Data
              (R.Caller_Argument_Types.First .. R.Caller_Argument_Types.Last)
            and then R.Referred_Symbol /= Undef
@@ -1584,25 +1632,55 @@ package body CPP_Parser is
    begin
       Cleanup_Entity_Name (Parent_Name, Name_Start);
 
-      Parent := Lookup_Entity_In_Tables
-        (Handler, Parent_Name (Name_Start .. Parent_Name'Last));
+      --  Do we have a pointer/array/pointer to function ?
 
-      if Parent /= null then
-         Set_Type_Of (Entity, Is_Of_Type => Parent);
+      if Parent_Name (Parent_Name'Last) = '*'
+        or else (Parent_Name'Length > 2
+                 and then Parent_Name
+                   (Parent_Name'Last - 1 .. Parent_Name'Last) = "()")
+      then
+         Set_Kind (Entity, Access_Entity);
 
-         Kind := Get_Kind (Parent);
-         Kind.Is_Type := Entity_Is_A_Type;
-         Set_Kind (Entity, Kind);
-
-         if Parent_Reference /= Invalid_Point then
-            Add_Reference
-              (Entity   => Parent,
-               Location => File_Location'
-                 (File   => Get_File (Get_Declaration_Of (Entity)),
-                  Line   => Parent_Reference.Line,
-                  Column => Parent_Reference.Column),
-               Kind     => Reference);
+         Parent := Lookup_Entity_In_Tables
+           (Handler, Parent_Name (Name_Start .. Parent_Name'Last - 2));
+         if Parent /= null then
+            Set_Pointed_Type (Entity, Points_To => Parent);
          end if;
+
+      elsif (Parent_Name'Length > 2
+             and then Parent_Name
+               (Parent_Name'Last - 1 .. Parent_Name'Last) = "[]")
+      then
+         Set_Kind (Entity, Array_Entity);
+
+         Parent := Lookup_Entity_In_Tables
+           (Handler, Parent_Name (Name_Start .. Parent_Name'Last - 2));
+         if Parent /= null then
+            Set_Pointed_Type (Entity, Points_To => Parent);
+         end if;
+
+
+      else
+         Parent := Lookup_Entity_In_Tables
+           (Handler, Parent_Name (Name_Start .. Parent_Name'Last));
+
+         if Parent /= null then
+            Set_Type_Of (Entity, Is_Of_Type => Parent);
+
+            Kind := Get_Kind (Parent);
+            Kind.Is_Type := Entity_Is_A_Type;
+            Set_Kind (Entity, Kind);
+         end if;
+      end if;
+
+      if Parent /= null and then Parent_Reference /= Invalid_Point then
+         Add_Reference
+           (Entity   => Parent,
+            Location => File_Location'
+              (File   => Get_File (Get_Declaration_Of (Entity)),
+               Line   => Parent_Reference.Line,
+               Column => Parent_Reference.Column),
+            Kind     => Reference);
       end if;
    end Set_Parent;
 
