@@ -319,6 +319,7 @@ package body Commands.Custom is
 
             Project := Project_From_Param (Param);
             if Project = No_Project then
+               Success := False;
                raise Invalid_Substitution;
             end if;
 
@@ -442,10 +443,6 @@ package body Commands.Custom is
                         Last := Last - 1;
                      end loop;
 
-                     Trace (Me, "MANU First, Last, Result="
-                            & Output (Output'First)'Img & ' '
-                            & Output (Last)'Img & ' '
-                            & Output);
                      if Output (Output'First) = '''
                        and then Output (Last) = '''
                      then
