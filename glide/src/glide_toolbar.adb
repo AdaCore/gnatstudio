@@ -24,8 +24,12 @@ with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Toolbar;         use Gtk.Toolbar;
 with Glide_Intl;          use Glide_Intl;
 with Glide_Kernel.Editor; use Glide_Kernel.Editor;
+with Traces;              use Traces;
+with Ada.Exceptions;      use Ada.Exceptions;
 
 package body Glide_Toolbar is
+
+   Me : Debug_Handle := Create ("Toolbar");
 
    procedure On_New_File
      (Object : access GObject_Record'Class;
@@ -43,9 +47,8 @@ package body Glide_Toolbar is
       New_Editor (Kernel);
 
    exception
-      when others =>
-         null;
-         --  ??? Log_Exception (E);
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_New_File;
 
    procedure Register_Default_Toolbar
@@ -69,8 +72,8 @@ package body Glide_Toolbar is
       Button := Insert_Stock (Toolbar, Stock_Redo, -"Redo Previous Action");
       Append_Space (Toolbar);
       Button := Insert_Stock (Toolbar, Stock_Cut, -"Cut to Clipboard");
-      Button := Insert_Stock (Toolbar, Stock_Copy, -"Copy from Clipboard");
-      Button := Insert_Stock (Toolbar, Stock_Paste, -"Paste to Clipboard");
+      Button := Insert_Stock (Toolbar, Stock_Copy, -"Copy to Clipboard");
+      Button := Insert_Stock (Toolbar, Stock_Paste, -"Paste from Clipboard");
    end Register_Default_Toolbar;
 
 end Glide_Toolbar;
