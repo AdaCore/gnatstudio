@@ -1851,7 +1851,7 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
                    , scope_g[0] ? scope_g : 0
                    , sym_name_g
                    , arg_types_g
-                   , 0
+                   , paf_type == PAF_TEMPLATE_ARG_DEF ? sym_name_g : 0
                    , name
                    , 0
                    , filename_g

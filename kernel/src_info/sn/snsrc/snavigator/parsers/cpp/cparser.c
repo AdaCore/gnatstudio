@@ -196,15 +196,9 @@ struct sDeclarator
  *   - template <template parameter list> identifier = id-expr
  * 2. Value parameters, just like function arguments
  */
-enum template_param_kind {
-    TPK_CLASS,
-    TPK_TYPENAME,
-    TPK_TEMPLATE,
-    TPK_VALUE
-};
 
 typedef struct template_param_tag {
-    enum template_param_kind kind;
+    int kind;
 
     LongString type; /* contains either class, typename or template */
     int type_lineno, type_charno; /* the end may be computed */
@@ -1846,7 +1840,7 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
                            , tp->name_charno
                            , tp->type_lineno
                            , tp->type_charno
-                           , 0 /* attrs */
+                           , tp->kind /* attrs */
                            , tp->type.buf
                            , template_args
                            , (char *) 0
@@ -4181,7 +4175,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                            , tp->name_charno
                            , tp->type_lineno
                            , tp->type_charno
-                           , 0 /* attrs */
+                           , tp->kind /* attrs */
                            , tp->type.buf
                            , Declaration->name.buf /* template args */
                            , (char *) 0
@@ -4325,7 +4319,7 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
                            , tp->name_charno
                            , tp->type_lineno
                            , tp->type_charno
-                           , 0 /* attrs */
+                           , tp->kind /* attrs */
                            , tp->type.buf
                            , Declaration->name.buf /* template args */
                            , (char *) 0
@@ -4555,7 +4549,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                    , tp->name_charno
                    , tp->type_lineno
                    , tp->type_charno
-                   , 0 /* attrs */
+                   , tp->kind /* attrs */
                    , tp->type.buf
                    , Declaration->name.buf /* template args */
                    , (char *) 0
@@ -4644,7 +4638,7 @@ extern void class_empty_declarator_list( Class_t Class, Declaration_t Declaratio
 void free_template_param (template_param* tp) {
     template_param* tp1;
     while ( tp ) {
-        if ( tp->kind == TPK_TEMPLATE ) {
+        if ( tp->kind == PAF_TA_TEMPLATE ) {
             free_template_param (tp->params);
         }
 
@@ -4701,7 +4695,7 @@ extern template_param* template_argument_skip( LongString *plstr )
                 abort ();
              }
 
-             tp->kind = TPK_CLASS;
+             tp->kind = PAF_TA_TYPE;
              LongStringInit (&tp->name, -1);
              LongStringMyAppend (&tp->name, StringToText (ident (1)));
              tp->name_lineno = f_lineno (1);
@@ -4733,7 +4727,7 @@ extern template_param* template_argument_skip( LongString *plstr )
                 abort ();
              }
 
-             tp->kind = TPK_TEMPLATE;
+             tp->kind = PAF_TA_TEMPLATE;
              tp->type_lineno = f_lineno (0);
              tp->type_charno = f_charno (0);
              LongStringInit (&tp->name, -1);
@@ -4781,7 +4775,7 @@ extern template_param* template_argument_skip( LongString *plstr )
              abort ();                                                       
          }                                                                  
                                                                             
-         tp->kind = TPK_VALUE;                                              
+         tp->kind = PAF_TA_VALUE;                                              
 
          function_argument_declaration (&type, &name, &arg_pos, &arg_type_pos);
 
