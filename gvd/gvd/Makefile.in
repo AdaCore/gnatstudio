@@ -1,0 +1,18 @@
+@SET_MAKE@
+
+CFLAGS = -g -O2
+ALL_CFLAGS = $(CFLAGS) @GTK_CFLAGS@ -I../gnat
+LINK_FLAGS = ../gnat/gexpect.o @GTK_LIBS@
+
+MAIN = odd_main
+EXEC = odd
+
+all: $(EXEC)
+
+$(EXEC): force
+	gnatmake $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -largs $(LINK_FLAGS)
+
+clean:
+	rm -f *.o *.ali *~ b~*
+
+force:
