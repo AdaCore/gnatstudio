@@ -177,7 +177,8 @@ procedure GVD_Main is
       Output_Line (Win, Exception_Information (E));
 
       Button := Message_Dialog
-        (-"Please report with the contents of the file " &
+        ((-"Please report [see GVD Manual under Reporting Bugs]") & ASCII.LF &
+         (-"with the contents of the file ") &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
          (-"and a description as complete as possible (including sources)") &
          ASCII.LF & (-"to reproduce the bug"),
