@@ -855,6 +855,7 @@ package body Convert.Adp is
       if Build_Dir = "" then
          Put_Line ("Cannot convert project: build_dir must be defined in");
          Put_Line ("the .adp file");
+         Set_Exit_Status (Failure);
          return;
       end if;
 

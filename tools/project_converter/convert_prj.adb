@@ -50,6 +50,7 @@ begin
 
          if Project_Name /= null then
             Help;
+            Set_Exit_Status (Failure);
             return;
          end if;
 
@@ -60,6 +61,7 @@ begin
 
    if Project_Name = null then
       Help;
+      Set_Exit_Status (Failure);
       return;
    end if;
 
@@ -76,6 +78,7 @@ begin
       else
          Put_Line ("Unsupported file extension "
                    & File_Extension (Project_Name.all));
+         Set_Exit_Status (Failure);
       end if;
    end if;
 
@@ -83,4 +86,5 @@ begin
 exception
    when Invalid_Switch | Invalid_Parameter =>
       Help;
+      Set_Exit_Status (Failure);
 end Convert_Prj;

@@ -236,6 +236,8 @@ package body Convert.Gpr is
             Put_Line ("main=" & Output_Single_Attr
                       (Project_View, "main", "${full_current}", ""));
          end;
+      else
+         Set_Exit_Status (Failure);
       end if;
    end Convert_From_Gpr_To_Adp;
 
