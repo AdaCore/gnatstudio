@@ -78,14 +78,14 @@ package body Process_Tab_Pkg.Callbacks is
       Top_Level : constant Gtk_Window := Gtk_Window (Get_Toplevel (Object));
       Process   : Debugger_Process_Tab;
       Notebook  : Gtk_Notebook;
-      Paned     : Gtk_Paned;
+      Box       : Gtk_Box;
       Page      : Gint;
 
    begin
       if Get_Pref (Separate_Data) then
-         Paned    := Process_Tab_Access (Top_Level).Process_Paned;
-         Notebook := Gtk_Notebook (Get_Parent (Paned));
-         Page     := Page_Num (Notebook, Paned);
+         Box      := Process_Tab_Access (Top_Level).Process_Hbox;
+         Notebook := Gtk_Notebook (Get_Parent (Box));
+         Page     := Page_Num (Notebook, Box);
       else
          Notebook := Main_Debug_Window_Access (Top_Level).Process_Notebook;
          Page     := Get_Current_Page (Notebook);
