@@ -95,3 +95,14 @@ Key points and general goals
 * Predefined callbacks
   - for instance for "delete_event" when we should not close the dialog.
 
+* Command line mode
+  - Ability to access to most functionalities from a command line, e.g:
+
+   $ glade-shell some-file.glade
+   Loading from some-file.glade..
+   gladesh> cut menu1                     ###  from menubar1
+   gladesh> select menubar2
+   gladesh> paste menu1
+   gladesh> save some-file2
+   Saving to some-file2.glade..
+
