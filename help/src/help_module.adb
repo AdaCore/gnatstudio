@@ -119,7 +119,8 @@ package body Help_Module is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
       return Node_Ptr;
    --  Support functions for the MDI
 
@@ -695,9 +696,11 @@ package body Help_Module is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
      return Node_Ptr
    is
+      pragma Unreferenced (User);
       N : Node_Ptr;
    begin
       if Widget.all in Welcome_Page_Record'Class then

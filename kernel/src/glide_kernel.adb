@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
@@ -1062,7 +1062,8 @@ package body Glide_Kernel is
 
       --  Add the current content, indexed on the current project
 
-      M := Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI);
+      M := Glide_Kernel.Kernel_Desktop.Save_Desktop
+        (MDI, Kernel_Handle (Handle));
       Set_Attribute (M, "project", Project_Name);
       Add_Child (N, M);
 

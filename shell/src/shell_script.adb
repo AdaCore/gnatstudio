@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -394,7 +394,8 @@ package body Shell_Script is
    --  Command must be a single command (no semicolon-separated list).
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr;
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -699,9 +700,11 @@ package body Shell_Script is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
      return Node_Ptr
    is
+      pragma Unreferenced (User);
       N : Node_Ptr;
    begin
       if Widget.all in Shell_Console_Record'Class then

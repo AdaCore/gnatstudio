@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003 - 2005                     --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -62,7 +62,8 @@ package body Glide_Kernel.Task_Manager is
    --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
@@ -250,9 +251,11 @@ package body Glide_Kernel.Task_Manager is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
      return Node_Ptr
    is
+      pragma Unreferenced (User);
       N : Node_Ptr;
    begin
       if Widget.all in Task_Manager_Interface_Record'Class then

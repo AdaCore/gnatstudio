@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2004                    --
---                            ACT-Europe                             --
+--                        Copyright (C) 2001-2005                    --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -75,7 +75,8 @@ package body Vdiff_Module is
    --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
@@ -152,8 +153,10 @@ package body Vdiff_Module is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
    is
+      pragma Unreferenced (User);
       N, N2 : Node_Ptr;
    begin
       if Widget.all in Vdiff_Record'Class then

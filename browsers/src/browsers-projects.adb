@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2005                      --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -132,7 +132,8 @@ package body Browsers.Projects is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr;
    --  Support functions for the MDI
 
    function Default_Factory
@@ -593,8 +594,10 @@ package body Browsers.Projects is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
    is
+      pragma Unreferenced (User);
       N : Node_Ptr;
    begin
       if Widget.all in Project_Browser_Record'Class then
