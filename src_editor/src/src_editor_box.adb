@@ -474,7 +474,7 @@ package body Src_Editor_Box is
             Get_Start_Iter (Editor.Source_Buffer, End_Iter);
          else
             Get_Iter_At_Line_Offset
-              (Editor.Source_buffer, Start_Iter,
+              (Editor.Source_Buffer, Start_Iter,
                To_Buffer_Line (Editor.Menu_Line_Pos),
                To_Buffer_Column (Editor.Menu_Col_Pos));
             Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
