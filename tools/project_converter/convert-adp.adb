@@ -810,6 +810,21 @@ package body Convert.Adp is
 
       if Omit_Project = 0 then
          Generate_Root_Project_Attributes (Buffer);
+      end if;
+
+      if Spec_Extension.all /= ".ads"
+        or else Body_Extension.all /= ".adb"
+      then
+         New_Line;
+         Put_Line ("   package Naming is");
+         Put_Line ("      for Specification_Suffix (""Ada"") use """
+                   & Spec_Extension.all & """;");
+         Put_Line ("      for Implementation_Suffix (""Ada"") use """
+                   & Body_Extension.all & """;");
+         Put_Line ("   end Naming;");
+      end if;
+
+      if Omit_Project = 0 then
          Put_Line ("end " & Root_Project_Name & ";");
       else
          Put_Line ("end project" & Image (Omit_Project) & ";");
