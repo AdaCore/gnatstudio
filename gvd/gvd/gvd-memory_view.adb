@@ -37,14 +37,15 @@ with Gtk.GEntry;       use Gtk.GEntry;
 with Gtk.Frame;        use Gtk.Frame;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 
-with Debugger;              use Debugger;
-with Memory_View_Pkg;       use Memory_View_Pkg;
+with Debugger;         use Debugger;
+with Memory_View_Pkg;  use Memory_View_Pkg;
 
-with GVD.Strings;     use GVD.Strings;
-with GVD.Types;       use GVD.Types;
-with GVD.Process;     use GVD.Process;
-with GVD.Preferences; use GVD.Preferences;
-with Process_Proxies; use Process_Proxies;
+with Odd_Intl;         use Odd_Intl;
+with GVD.Strings;      use GVD.Strings;
+with GVD.Types;        use GVD.Types;
+with GVD.Process;      use GVD.Process;
+with GVD.Preferences;  use GVD.Preferences;
+with Process_Proxies;  use Process_Proxies;
 
 package body GVD.Memory_View is
 
@@ -242,20 +243,23 @@ package body GVD.Memory_View is
    procedure Init_Graphics (Window : Gdk_Window) is
       Success : Boolean;
    begin
-      View_Font  := Get_Gdkfont (Memory_View_Font_Name, Memory_View_Font_Size);
-      View_Color := Parse (Memory_View_Color);
+      View_Font  :=
+        Get_Gdkfont
+          (Current_Preferences.Memory_View_Font_Name.all,
+           Current_Preferences.Memory_View_Font_Size);
+      View_Color := Parse (Current_Preferences.Memory_View_Color.all);
 
       Alloc_Color (Get_System, View_Color, True, True, Success);
 
-      Highlighted := Parse (Memory_Highlighted_Color);
+      Highlighted := Parse (Current_Preferences.Memory_Highlighted_Color.all);
       Alloc_Color (Get_System, Highlighted, True, True, Success);
 
       White_Color := White (Get_System);
 
-      Selected := Parse (Memory_Selected_Color);
+      Selected := Parse (Current_Preferences.Memory_Selected_Color.all);
       Alloc_Color (Get_System, Selected, True, True, Success);
 
-      Modified_Color := Parse (Memory_Modified_Color);
+      Modified_Color := Parse (Current_Preferences.Memory_Modified_Color.all);
       Alloc_Color (Get_System, Modified_Color, True, True, Success);
    end Init_Graphics;
 
@@ -288,9 +292,9 @@ package body GVD.Memory_View is
       end if;
    end To_Standard_Base;
 
-   ---------------------
-   --  Update_Display --
-   ---------------------
+   --------------------
+   -- Update_Display --
+   --------------------
 
    procedure Update_Display (View : access GVD_Memory_View_Record'Class) is
       Index      : Integer;
@@ -306,13 +310,35 @@ package body GVD.Memory_View is
          return;
       end if;
 
-      View.Data := Data_Size'Value (Get_Text (View.Size_Entry));
+      --  Use if/elsif statements instead of 'Value here to handle
+      --  internationalization of strings properly.
 
-      if Get_Text (View.Data_Entry) = "ASCII" then
-         View.Display := Text;
-      else
-         View.Display := Display_Type'Value (Get_Text (View.Data_Entry));
-      end if;
+      declare
+         Size : constant String := Get_Text (View.Size_Entry);
+         Data : constant String := Get_Text (View.Data_Entry);
+      begin
+         if Size = -"Byte" then
+            View.Data := Byte;
+         elsif Size = -"Halfword" then
+            View.Data := Halfword;
+         elsif Size = -"Word" then
+            View.Data := Word;
+         else
+            raise Program_Error;
+         end if;
+
+         if Data = -"Hex" then
+            View.Display := Hex;
+         elsif Data = -"Decimal" then
+            View.Display := Decimal;
+         elsif Data = -"Octal" then
+            View.Display := Octal;
+         elsif Data = -"ASCII" then
+            View.Display := Text;
+         else
+            raise Program_Error;
+         end if;
+      end;
 
       case View.Data is
          when Byte =>
@@ -437,15 +463,16 @@ package body GVD.Memory_View is
      (View    : access GVD_Memory_View_Record'Class;
       Address : Long_Long_Integer)
    is
-      Process : constant Debugger_Process_Tab
-        := Get_Current_Process (View.Window);
+      Process : constant Debugger_Process_Tab :=
+        Get_Current_Process (View.Window);
       Values  : String (1 .. 2 * View.Number_Of_Bytes);
+
    begin
       if Memory_View_Register.Register_Post_Cmd_If_Needed
-        (Get_Process (Process.Debugger),
-         View,
-         Display_Memory'Access,
-         Address)
+           (Get_Process (Process.Debugger),
+            View,
+            Display_Memory'Access,
+            Address)
       then
          return;
       end if;
