@@ -58,7 +58,7 @@ with Traces;                    use Traces;
 package body Browsers.Canvas is
 
    Zoom_Levels : constant array (Positive range <>) of Guint :=
-     (25, 50, 75, 100, 150, 200, 300, 400);
+     (10, 25, 50, 75, 100, 150, 200, 300, 400);
    --  All the possible zoom levels. We have to use such an array, instead
    --  of doing the computation directly, so as to avoid rounding errors that
    --  would appear in the computation and make zoom_in not the reverse of
@@ -67,10 +67,14 @@ package body Browsers.Canvas is
    Zoom_Steps : constant := 3;
    --  Number of steps while zooming in or out.
 
+   Margin : constant := 2;
+   --  Margin used when drawing the items, to leave space around the arrows and
+   --  the actual contents of the item
+
    Me : constant Debug_Handle := Create ("Browsers.Canvas");
 
    type Cb_Data is record
-      Browser : Glide_Browser;
+      Browser : General_Browser;
       Item    : Canvas_Item;
       Zoom    : Guint;
    end record;
@@ -120,7 +124,7 @@ package body Browsers.Canvas is
    --  Called when the user clicked in the background of the canvas
 
    procedure Internal_Select
-     (Browser : access Glide_Browser_Record'Class;
+     (Browser : access General_Browser_Record'Class;
       Item    : Canvas_Item := null;
       Refresh_Items : Boolean := False);
    --  Internal version of Select_Item, that can also be used to unselect an
@@ -131,7 +135,7 @@ package body Browsers.Canvas is
    ----------------
 
    procedure Initialize
-     (Browser : access Glide_Browser_Record'Class;
+     (Browser : access General_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Create_Toolbar : Boolean)
    is
@@ -190,7 +194,7 @@ package body Browsers.Canvas is
    -- Setup_Default_Toolbar --
    ---------------------------
 
-   procedure Setup_Default_Toolbar (Browser : access Glide_Browser_Record) is
+   procedure Setup_Default_Toolbar (Browser : access General_Browser_Record) is
       Button : Gtk_Button;
       Image  : Gtk_Image;
    begin
@@ -210,7 +214,6 @@ package body Browsers.Canvas is
          Widget_Callback.Object_Connect
            (Button, "clicked",
             Widget_Callback.To_Marshaller (Zoom_In'Access), Browser);
-
       end if;
    end Setup_Default_Toolbar;
 
@@ -218,7 +221,7 @@ package body Browsers.Canvas is
    -- Get_Toolbar --
    -----------------
 
-   function Get_Toolbar (Browser : access Glide_Browser_Record)
+   function Get_Toolbar (Browser : access General_Browser_Record)
       return Gtk.Hbutton_Box.Gtk_Hbutton_Box is
    begin
       return Browser.Toolbar;
@@ -232,7 +235,7 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class;
       Args    : Glib.Values.GValues)
    is
-      B   : constant Glide_Browser := Glide_Browser (Browser);
+      B   : constant General_Browser := General_Browser (Browser);
       Win : constant Gdk_Window := Gdk_Window (To_C_Proxy (Args, 1));
    begin
       --  Redraw the selected links if needed.
@@ -269,7 +272,7 @@ package body Browsers.Canvas is
    procedure Realized (Browser : access Gtk_Widget_Record'Class) is
       use type Gdk_GC;
 
-      B      : Glide_Browser := Glide_Browser (Browser);
+      B      : General_Browser := General_Browser (Browser);
       Color  : Gdk_Color;
       Kernel : constant Kernel_Handle := Get_Kernel (B);
 
@@ -303,7 +306,7 @@ package body Browsers.Canvas is
    -- Get_Canvas --
    ----------------
 
-   function Get_Canvas (Browser : access Glide_Browser_Record)
+   function Get_Canvas (Browser : access General_Browser_Record)
       return Interactive_Canvas is
    begin
       return Browser.Canvas;
@@ -314,8 +317,8 @@ package body Browsers.Canvas is
    ------------------------
 
    function Contextual_Factory
-     (Item  : access Glide_Browser_Item_Record;
-      Browser : access Glide_Browser_Record'Class;
+     (Item  : access Browser_Item_Record;
+      Browser : access General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
    is
@@ -337,7 +340,7 @@ package body Browsers.Canvas is
       return Glide_Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Event_Widget);
-      B          : constant Glide_Browser := Glide_Browser (Object);
+      B          : constant General_Browser := General_Browser (Object);
       Context    : Selection_Context_Access;
       Mitem      : Gtk_Menu_Item;
       Zooms_Menu : Gtk_Menu;
@@ -357,7 +360,7 @@ package body Browsers.Canvas is
       Item := Item_At_Coordinates (B.Canvas, Event);
 
       if Item /= null then
-         if Glide_Browser_Item (Item).Hide_Links then
+         if Browser_Item (Item).Hide_Links then
             Gtk_New (Mitem, Label => -"Show links");
          else
             Gtk_New (Mitem, Label => -"Hide links");
@@ -380,7 +383,7 @@ package body Browsers.Canvas is
          Set_X (Event, Get_X (Event) - Gdouble (Get_Coord (Item).X));
          Set_Y (Event, Get_Y (Event) - Gdouble (Get_Coord (Item).Y));
          Context := Contextual_Factory
-           (Glide_Browser_Item (Item), B, Event, Menu);
+           (Browser_Item (Item), B, Event, Menu);
          Set_X (Event, Xsave);
          Set_Y (Event, Ysave);
       end if;
@@ -451,37 +454,28 @@ package body Browsers.Canvas is
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data)
    is
       pragma Unreferenced (Mitem);
-
-      function Remove_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Remove Item from Canvas, unless it is the item described in Data.
-
-      -----------------
-      -- Remove_Item --
-      -----------------
-
-      function Remove_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
-      begin
-         if Canvas_Item (Item) /= Data.Item then
-            Remove (Canvas, Item);
-         end if;
-         return True;
-      end Remove_Item;
+      Iter : Item_Iterator;
+      Item : Canvas_Item;
 
    begin
       Push_State (Get_Kernel (Data.Browser), Busy);
 
       Set_Auto_Layout (Get_Canvas (Data.Browser), False);
 
-      For_Each_Item (Get_Canvas (Data.Browser),
-                     Remove_Item'Unrestricted_Access);
-      Glide_Browser_Item (Data.Item).Left_Arrow  := True;
-      Glide_Browser_Item (Data.Item).Right_Arrow := True;
-      Reset (Data.Browser, Glide_Browser_Item (Data.Item));
-      Refresh (Data.Browser, Glide_Browser_Item (Data.Item));
+      Iter := Start (Get_Canvas (Data.Browser));
+      loop
+         Item := Get (Iter);
+         exit when Item = null;
+
+         Next (Iter);
+
+         if Item /= Data.Item then
+            Remove (Get_Canvas (Data.Browser), Item);
+         end if;
+      end loop;
+
+      Reset (Data.Browser, Browser_Item (Data.Item));
+      Refresh (Data.Browser, Browser_Item (Data.Item));
 
       Set_Auto_Layout (Get_Canvas (Data.Browser), True);
       Layout
@@ -509,7 +503,7 @@ package body Browsers.Canvas is
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data)
    is
       pragma Unreferenced (Mitem);
-      It : Glide_Browser_Item := Glide_Browser_Item (Data.Item);
+      It : Browser_Item := Browser_Item (Data.Item);
    begin
       It.Hide_Links := not It.Hide_Links;
       Refresh_Canvas (Get_Canvas (Data.Browser));
@@ -520,7 +514,7 @@ package body Browsers.Canvas is
    ----------------
 
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class) is
-      B : constant Glide_Browser := Glide_Browser (Browser);
+      B : constant General_Browser := General_Browser (Browser);
    begin
       Push_State (Get_Kernel (B), Busy);
       Layout (Get_Canvas (B), Force => True, Vertical_Layout => True);
@@ -538,7 +532,7 @@ package body Browsers.Canvas is
    -----------------------
 
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class) is
-      B : constant Glide_Browser := Glide_Browser (Browser);
+      B : constant General_Browser := General_Browser (Browser);
    begin
       Set_Orthogonal_Links
         (Get_Canvas (B), not Get_Orthogonal_Links (Get_Canvas (B)));
@@ -550,7 +544,7 @@ package body Browsers.Canvas is
    -------------
 
    procedure Zoom_In (Browser : access Gtk_Widget_Record'Class) is
-      Canvas : constant Interactive_Canvas := Glide_Browser (Browser).Canvas;
+      Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
       Z : constant Guint := Get_Zoom (Canvas);
    begin
       for J in Zoom_Levels'Range loop
@@ -567,7 +561,7 @@ package body Browsers.Canvas is
    --------------
 
    procedure Zoom_Out (Browser : access Gtk_Widget_Record'Class) is
-      Canvas : constant Interactive_Canvas := Glide_Browser (Browser).Canvas;
+      Canvas : constant Interactive_Canvas := General_Browser (Browser).Canvas;
       Z : constant Guint := Get_Zoom (Canvas);
    begin
       for J in Zoom_Levels'Range loop
@@ -597,159 +591,33 @@ package body Browsers.Canvas is
 
    function To_Brower
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
-      return Glide_Browser is
+      return General_Browser is
    begin
-      return Glide_Browser (Get_Parent (Get_Parent (Canvas)));
+      return General_Browser (Get_Parent (Get_Parent (Canvas)));
    end To_Brower;
 
    -------------------
    -- Selected_Item --
    -------------------
 
-   function Selected_Item (Browser : access Glide_Browser_Record)
+   function Selected_Item (Browser : access General_Browser_Record)
       return Gtkada.Canvas.Canvas_Item is
    begin
       return Browser.Selected_Item;
    end Selected_Item;
-
-   --------------------------
-   -- Draw_Item_Background --
-   --------------------------
-
-   procedure Draw_Item_Background
-     (Browser : access Glide_Browser_Record;
-      Item    : access Gtkada.Canvas.Buffered_Item_Record'Class)
-   is
-      Bg_GC : Gdk_GC;
-      Coord : constant Gdk_Rectangle := Get_Coord (Item);
-   begin
-      if Canvas_Item (Item) = Selected_Item (Browser) then
-         Bg_GC := Browser.Selected_Item_GC;
-
-      elsif Selected_Item (Browser) /= null
-        and then Has_Link (Browser.Canvas,
-                           From => Item, To => Selected_Item (Browser))
-      then
-         Bg_GC := Browser.Parent_Linked_Item_GC;
-
-      elsif Selected_Item (Browser) /= null
-        and then Has_Link (Browser.Canvas,
-                           From => Selected_Item (Browser), To => Item)
-      then
-         Bg_GC := Browser.Child_Linked_Item_GC;
-
-      else
-         Bg_GC := Browser.Default_Item_GC;
-      end if;
-
-      Set_Screen_Size_And_Pixmap
-        (Item, Get_Window (Browser), Gint (Coord.Width), Gint (Coord.Height));
-
-      Draw_Rectangle
-        (Pixmap (Item),
-         GC     => Bg_GC,
-         Filled => True,
-         X      => 0,
-         Y      => 0,
-         Width  => Coord.Width,
-         Height => Coord.Height);
-
-      Draw_Shadow
-        (Style       => Get_Style (Browser.Canvas),
-         Window      => Pixmap (Item),
-         State_Type  => State_Normal,
-         Shadow_Type => Shadow_Out,
-         X           => 0,
-         Y           => 0,
-         Width       => Coord.Width,
-         Height      => Coord.Height);
-
-      if Glide_Browser_Item (Item).Left_Arrow then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => Browser.Left_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Margin,
-            Dest_Y          => Margin,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-
-      if Glide_Browser_Item (Item).Right_Arrow then
-         Render_To_Drawable_Alpha
-           (Pixbuf          => Browser.Right_Arrow,
-            Drawable        => Pixmap (Item),
-            Src_X           => 0,
-            Src_Y           => 0,
-            Dest_X          => Gint (Get_Coord (Item).Width)
-              - Margin - Get_Width (Browser.Right_Arrow),
-            Dest_Y          => Margin,
-            Width           => -1,
-            Height          => -1,
-            Alpha           => Alpha_Full,
-            Alpha_Threshold => 128);
-      end if;
-
-   end Draw_Item_Background;
 
    ---------------------
    -- Internal_Select --
    ---------------------
 
    procedure Internal_Select
-     (Browser : access Glide_Browser_Record'Class;
+     (Browser : access General_Browser_Record'Class;
       Item    : Canvas_Item := null;
       Refresh_Items : Boolean := False)
    is
       Old : constant Canvas_Item := Browser.Selected_Item;
-
-      function Refresh_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         It     : access Canvas_Item_Record'Class) return Boolean;
-      --  Refresh the display of an item.
-
-      function Refresh_Item_Conditional
-        (Canvas : access Interactive_Canvas_Record'Class;
-         It     : access Canvas_Item_Record'Class) return Boolean;
-      --  Same as above, but don't draw items that have already been refreshed.
-
-      ------------------
-      -- Refresh_Item --
-      ------------------
-
-      function Refresh_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         It   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         Refresh (Browser, Glide_Browser_Item (It));
-         return True;
-      end Refresh_Item;
-
-      ------------------------------
-      -- Refresh_Item_Conditional --
-      ------------------------------
-
-      function Refresh_Item_Conditional
-        (Canvas : access Interactive_Canvas_Record'Class;
-         It   : access Canvas_Item_Record'Class) return Boolean is
-      begin
-         if Old = null
-           or else (not Has_Link (Canvas, It, Old)
-                      and then not Has_Link (Canvas, Old, It))
-         then
-            Refresh (Browser, Glide_Browser_Item (It));
-         end if;
-         return True;
-      end Refresh_Item_Conditional;
-
-      Tmp : Boolean;
-      pragma Unreferenced (Tmp);
-
+      Iter : Item_Iterator;
+      It  : Canvas_Item;
    begin
       Browser.Selected_Item := Item;
 
@@ -760,19 +628,36 @@ package body Browsers.Canvas is
          --  that are linked to both Old and item. On the whole, we save some
          --  time
          if Old /= null then
-            Tmp := Refresh_Item (Browser.Canvas, Old);
-            For_Each_Item
-              (Browser.Canvas, Refresh_Item'Unrestricted_Access, Old);
+            Refresh (Browser, Browser_Item (Old));
+
+            Iter := Start (Browser.Canvas, Old);
+            loop
+               It := Get (Iter);
+               exit when It = null;
+               Refresh (Browser, Browser_Item (It));
+               Next (Iter);
+            end loop;
          end if;
 
          if Item /= null then
-            Tmp := Refresh_Item (Browser.Canvas, Item);
-            For_Each_Item
-              (Browser.Canvas, Refresh_Item_Conditional'Unrestricted_Access,
-               Item);
-         end if;
+            Refresh (Browser, Browser_Item (Item));
 
-         --  For_Each_Item (Browser.Canvas, Refresh_Item'Unrestricted_Access);
+            Iter := Start (Browser.Canvas, Item);
+            loop
+               It := Get (Iter);
+               exit when It = null;
+
+               --  Do not refresh items that have already been refreshed
+               if Old = null
+                 or else (not Has_Link (Browser.Canvas, It, Old)
+                          and then not Has_Link (Browser.Canvas, Old, It))
+               then
+                  Refresh (Browser, Browser_Item (It));
+               end if;
+
+               Next (Iter);
+            end loop;
+         end if;
 
          Refresh_Canvas (Browser.Canvas);
       end if;
@@ -783,7 +668,7 @@ package body Browsers.Canvas is
    -----------------
 
    procedure Select_Item
-     (Browser : access Glide_Browser_Record;
+     (Browser : access General_Browser_Record;
       Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
       Refresh_Items : Boolean := False) is
    begin
@@ -797,8 +682,8 @@ package body Browsers.Canvas is
    procedure On_Background_Click
      (Browser : access Gtk_Widget_Record'Class) is
    begin
-      Grab_Focus (Glide_Browser (Browser).Canvas);
-      Internal_Select (Glide_Browser (Browser), null, True);
+      Grab_Focus (General_Browser (Browser).Canvas);
+      Internal_Select (General_Browser (Browser), null, True);
    end On_Background_Click;
 
    -----------------
@@ -806,7 +691,7 @@ package body Browsers.Canvas is
    -----------------
 
    function Get_Text_GC
-     (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC is
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
    begin
       return Browser.Text_GC;
    end Get_Text_GC;
@@ -817,16 +702,16 @@ package body Browsers.Canvas is
 
    procedure Draw_Link
      (Canvas      : access Interactive_Canvas_Record'Class;
-      Link        : access Glide_Browser_Link_Record;
+      Link        : access Browser_Link_Record;
       Window      : Gdk.Window.Gdk_Window;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
       Edge_Number : Glib.Gint)
    is
-      Browser : constant Glide_Browser := To_Brower (Canvas);
+      Browser : constant General_Browser := To_Brower (Canvas);
    begin
-      if not Glide_Browser_Item (Get_Src (Link)).Hide_Links
-        and then not Glide_Browser_Item (Get_Dest (Link)).Hide_Links
+      if not Browser_Item (Get_Src (Link)).Hide_Links
+        and then not Browser_Item (Get_Dest (Link)).Hide_Links
       then
          if Invert_Mode
            or else
@@ -851,17 +736,132 @@ package body Browsers.Canvas is
    -- Refresh --
    -------------
 
-   procedure Refresh (Browser : access Glide_Browser_Record'Class;
-                      Item    : access Glide_Browser_Item_Record) is
+   procedure Refresh
+     (Browser : access General_Browser_Record'Class;
+      Item    : access Browser_Item_Record;
+      Xoffset, Yoffset : Glib.Gint := 0)
+   is
+      pragma Unreferenced (Xoffset, Yoffset);
+      --  Ignore Xoffset, Yoffset, since we want to draw the whole background
+      Bg_GC : Gdk_GC;
+      Coord : Gdk_Rectangle := Get_Coord (Item);
    begin
-      Draw_Item_Background (Browser, Item);
+      if Coord.Width = 1 and then Coord.Height = 1 then
+         Size_Request (Browser_Item (Item), Coord.Width, Coord.Height);
+         Set_Screen_Size (Item, Coord.Width, Coord.Height);
+      end if;
+
+      if Canvas_Item (Item) = Selected_Item (Browser) then
+         Bg_GC := Browser.Selected_Item_GC;
+
+      elsif Selected_Item (Browser) /= null
+        and then Has_Link (Browser.Canvas,
+                           From => Item, To => Selected_Item (Browser))
+      then
+         Bg_GC := Browser.Parent_Linked_Item_GC;
+
+      elsif Selected_Item (Browser) /= null
+        and then Has_Link (Browser.Canvas,
+                           From => Selected_Item (Browser), To => Item)
+      then
+         Bg_GC := Browser.Child_Linked_Item_GC;
+
+      else
+         Bg_GC := Browser.Default_Item_GC;
+      end if;
+
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => Bg_GC,
+         Filled => True,
+         X      => 0,
+         Y      => 0,
+         Width  => Coord.Width,
+         Height => Coord.Height);
+
+      Draw_Shadow
+        (Style       => Get_Style (Browser.Canvas),
+         Window      => Pixmap (Item),
+         State_Type  => State_Normal,
+         Shadow_Type => Shadow_Out,
+         X           => 0,
+         Y           => 0,
+         Width       => Coord.Width,
+         Height      => Coord.Height);
+   end Refresh;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (Browser : access General_Browser_Record'Class;
+      Item    : access Text_Item_Record;
+      Xoffset, Yoffset : Glib.Gint := 0) is
+   begin
+      Refresh
+        (Browser, Browser_Item_Record (Item.all)'Access, Xoffset, Yoffset);
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Text_GC (Browser),
+         X        => Margin + Xoffset,
+         Y        => Margin + Yoffset,
+         Layout   => Item.Layout);
+   end Refresh;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh (Browser : access General_Browser_Record'Class;
+                      Item    : access Text_Item_With_Arrows_Record;
+                      Xoffset, Yoffset : Glib.Gint := 0)
+   is
+      Y : Gint;
+   begin
+      --  Call parent
+      Refresh (Browser, Text_Item_Record (Item.all)'Access,
+               Xoffset => Xoffset + Get_Width (Browser.Left_Arrow),
+               Yoffset => Yoffset);
+
+      --  Only compute this after calling the parent, since otherwise the item
+      --  might not have been resized yet.
+      Y := (Get_Coord (Item).Height - Get_Height (Browser.Left_Arrow)) / 2;
+      if Item.Left_Arrow then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => Browser.Left_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Xoffset,
+            Dest_Y          => Y,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+
+      if Item.Right_Arrow then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => Browser.Right_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Xoffset + Gint (Get_Coord (Item).Width)
+            - Get_Width (Browser.Right_Arrow),
+            Dest_Y          => Y,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
    end Refresh;
 
    ----------------
    -- Get_Kernel --
    ----------------
 
-   function Get_Kernel (Browser : access Glide_Browser_Record)
+   function Get_Kernel (Browser : access General_Browser_Record)
       return Glide_Kernel.Kernel_Handle is
    begin
       return Browser.Kernel;
@@ -871,19 +871,32 @@ package body Browsers.Canvas is
    -- Reset --
    -----------
 
-   procedure Reset (Browser : access Glide_Browser_Record'Class;
-                    Item : access Glide_Browser_Item_Record)
+   procedure Reset (Browser : access General_Browser_Record'Class;
+                    Item : access Browser_Item_Record)
    is
       pragma Unreferenced (Browser, Item);
    begin
       null;
    end Reset;
 
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Browser : access General_Browser_Record'Class;
+                    Item : access Text_Item_With_Arrows_Record)
+   is
+      pragma Unreferenced (Browser);
+   begin
+      Item.Left_Arrow  := True;
+      Item.Right_Arrow := True;
+   end Reset;
+
    --------------------
    -- Get_Left_Arrow --
    --------------------
 
-   function Get_Left_Arrow (Item : access Glide_Browser_Item_Record)
+   function Get_Left_Arrow (Item : access Text_Item_With_Arrows_Record)
       return Boolean is
    begin
       return Item.Left_Arrow;
@@ -893,7 +906,7 @@ package body Browsers.Canvas is
    -- Get_Right_Arrow --
    ---------------------
 
-   function Get_Right_Arrow (Item : access Glide_Browser_Item_Record)
+   function Get_Right_Arrow (Item : access Text_Item_With_Arrows_Record)
       return Boolean is
    begin
       return Item.Right_Arrow;
@@ -904,7 +917,7 @@ package body Browsers.Canvas is
    --------------------
 
    procedure Set_Left_Arrow
-     (Item : access Glide_Browser_Item_Record; Display : Boolean) is
+     (Item : access Text_Item_With_Arrows_Record; Display : Boolean) is
    begin
       Item.Left_Arrow := Display;
    end Set_Left_Arrow;
@@ -914,55 +927,73 @@ package body Browsers.Canvas is
    ---------------------
 
    procedure Set_Right_Arrow
-     (Item : access Glide_Browser_Item_Record; Display : Boolean) is
+     (Item : access Text_Item_With_Arrows_Record; Display : Boolean) is
    begin
       Item.Right_Arrow := Display;
    end Set_Right_Arrow;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request
+     (Item   : access Browser_Item_Record;
+      Width  : out Glib.Gint;
+      Height : out Glib.Gint)
+   is
+      pragma Unreferenced (Item);
+   begin
+      Width  := 0;
+      Height := 0;
+   end Size_Request;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request
+     (Item   : access Text_Item_Record;
+      Width  : out Glib.Gint;
+      Height : out Glib.Gint) is
+   begin
+      Get_Pixel_Size (Item.Layout, Width, Height);
+      Width  := Width + 2 * Margin;
+      Height := Height + 2 * Margin;
+   end Size_Request;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request
+     (Item   : access Text_Item_With_Arrows_Record;
+      Width  : out Glib.Gint;
+      Height : out Glib.Gint) is
+   begin
+      Size_Request (Text_Item_Record (Item.all)'Access, Width, Height);
+      Width := Width + 2 * Get_Width (Get_Browser (Item).Left_Arrow);
+   end Size_Request;
 
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Item    : access Glide_Browser_Text_Item_Record'Class;
-      Browser : access Glide_Browser_Record'Class;
-      Text    : String)
-   is
-      Width, Height : Gint;
+     (Item    : access Text_Item_Record'Class;
+      Browser : access General_Browser_Record'Class;
+      Text    : String) is
    begin
-      Item.Browser := Glide_Browser (Browser);
+      Initialize (Item, Browser);
       Item.Layout := Create_Pango_Layout (Browser, Text);
       Set_Font_Description
         (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
-
-      Get_Pixel_Size (Item.Layout, Width, Height);
-      Width := Width + 2 * Margin + 2 * Get_Width (Browser.Left_Arrow);
-      Set_Screen_Size_And_Pixmap
-        (Item, Get_Window (Browser), Width, Height + 2 * Margin);
    end Initialize;
-
-   -------------
-   -- Refresh --
-   -------------
-
-   procedure Refresh
-     (Browser : access Glide_Browser_Record'Class;
-      Item    : access Glide_Browser_Text_Item_Record) is
-   begin
-      Draw_Item_Background (Browser, Item);
-      Draw_Layout
-        (Drawable => Pixmap (Item),
-         GC       => Get_Text_GC (Browser),
-         X        => Margin + Get_Width (Browser.Left_Arrow),
-         Y        => Margin,
-         Layout   => Item.Layout);
-   end Refresh;
 
    -------------
    -- Destroy --
    -------------
 
-   procedure Destroy (Item : in out Glide_Browser_Text_Item_Record) is
+   procedure Destroy (Item : in out Text_Item_Record) is
    begin
       Unref (Item.Layout);
    end Destroy;
@@ -972,16 +1003,16 @@ package body Browsers.Canvas is
    ---------------------
 
    procedure On_Button_Click
-     (Item  : access Glide_Browser_Item_Record;
+     (Item  : access Text_Item_With_Arrows_Record;
       Event : Gdk.Event.Gdk_Event_Button) is
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
          if Gint (Get_X (Event)) < Get_Coord (Item).Width / 2 then
-            Button_Click_On_Left (Glide_Browser_Item (Item));
+            Button_Click_On_Left (Text_Item_With_Arrows (Item));
          else
-            Button_Click_On_Right (Glide_Browser_Item (Item));
+            Button_Click_On_Right (Text_Item_With_Arrows (Item));
          end if;
 
          --  Make sure that the item we clicked on is still visible
@@ -1000,10 +1031,21 @@ package body Browsers.Canvas is
    -- Get_Browser --
    -----------------
 
-   function Get_Browser (Item : access Glide_Browser_Item_Record'Class)
-      return Glide_Browser is
+   function Get_Browser (Item : access Browser_Item_Record'Class)
+      return General_Browser is
    begin
       return Item.Browser;
    end Get_Browser;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Item    : access Browser_Item_Record'Class;
+      Browser : access General_Browser_Record'Class) is
+   begin
+      Item.Browser := General_Browser (Browser);
+   end Initialize;
 
 end Browsers.Canvas;
