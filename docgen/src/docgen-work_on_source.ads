@@ -88,7 +88,7 @@ private
       LI_Unit            : LI_File_Ptr;
       Source_File_List   : in out Type_Source_File_List.List;
       Options            : All_Options);
-   --  will pass the information about the body file to the output
+   --  Will pass the information about the body file to the output
    --  subprogram. This is the only subprogram working on the contents
    --  of the body source files.
 
