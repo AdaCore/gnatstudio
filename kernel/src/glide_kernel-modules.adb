@@ -65,9 +65,6 @@ package body Glide_Kernel.Modules is
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
 
-   function Has_Lower_Priority (Module1, Module2 : Module_ID) return Boolean;
-   --  Return True if Module1 has a lower priority than module2
-
    function Create_Contextual_Menu
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu;
@@ -86,28 +83,48 @@ package body Glide_Kernel.Modules is
    --  Return the menu item with name Name, either from Menu, or from Menu_Bar
    --  if the latter is null.
 
-   ------------------------
-   -- Has_Lower_Priority --
-   ------------------------
-
-   function Has_Lower_Priority (Module1, Module2 : Module_ID) return Boolean is
-   begin
-      return Module1.Priority > Module2.Priority;
-   end Has_Lower_Priority;
-
    ---------------------
    -- Register_Module --
    ---------------------
 
    function Register_Module
-     (Module_Name             : String;
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Module_Name             : String;
       Priority                : Module_Priority     := Default_Priority;
       Initializer             : Module_Initializer  := null;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
-      Mime_Handler            : Module_Mime_Handler := null)
-      return Module_ID
+      Mime_Handler            : Module_Mime_Handler := null) return Module_ID
    is
-      ID : Module_ID := new Module_ID_Information'
+      ID      : Module_ID;
+      Prev    : Module_List.List_Node := Module_List.Null_Node;
+      Current : Module_List.List_Node :=
+        Module_List.First (Kernel.Modules_List);
+
+      use type Module_List.List_Node;
+   begin
+      while Current /= Module_List.Null_Node loop
+         if Module_List.Data (Current).Name = Module_Name then
+            return Module_List.Data (Current);
+
+         elsif Module_List.Data (Current).Priority < Priority then
+            ID := new Module_ID_Information'
+              (Name_Length     => Module_Name'Length,
+               Name            => Module_Name,
+               Priority        => Priority,
+               Initializer     => Initializer,
+               Contextual_Menu => Contextual_Menu_Handler,
+               Mime_Handler    => Mime_Handler,
+               Was_Initialized => False);
+            Module_List.Append (Kernel.Modules_List, Prev, ID);
+
+            return ID;
+         end if;
+
+         Prev    := Current;
+         Current := Module_List.Next (Current);
+      end loop;
+
+      ID := new Module_ID_Information'
         (Name_Length     => Module_Name'Length,
          Name            => Module_Name,
          Priority        => Priority,
@@ -115,10 +132,7 @@ package body Glide_Kernel.Modules is
          Contextual_Menu => Contextual_Menu_Handler,
          Mime_Handler    => Mime_Handler,
          Was_Initialized => False);
-   begin
-      --  ??? Should check that the module isn't already in the list
-      Module_List.Append (Global_Modules_List, ID);
-      Module_List.Sort (Global_Modules_List, Has_Lower_Priority'Access);
+      Module_List.Append (Kernel.Modules_List, ID);
       return ID;
    end Register_Module;
 
@@ -378,10 +392,12 @@ package body Glide_Kernel.Modules is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu
    is
-      Current : Module_List.List := Global_Modules_List;
+      Current : Module_List.List_Node :=
+        Module_List.First (User.Kernel.Modules_List);
       Context : Selection_Context_Access;
       Menu    : Gtk_Menu := null;
 
+      use type Module_List.List_Node;
    begin
       if User.Kernel.Last_Context_For_Contextual /= null then
          Free (User.Kernel.Last_Context_For_Contextual);
@@ -406,11 +422,11 @@ package body Glide_Kernel.Modules is
             Kernel  => User.Kernel,
             Creator => User.ID);
 
-         while not Module_List.Is_Empty (Current) loop
-            if Module_List.Head (Current) /= User.ID
-              and then Module_List.Head (Current).Contextual_Menu /= null
+         while Current /= Module_List.Null_Node loop
+            if Module_List.Data (Current) /= User.ID
+              and then Module_List.Data (Current).Contextual_Menu /= null
             then
-               Module_List.Head (Current).Contextual_Menu
+               Module_List.Data (Current).Contextual_Menu
                  (Object  => User.Object,
                   Context => Context,
                   Menu    => Menu);
@@ -733,14 +749,17 @@ package body Glide_Kernel.Modules is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      Current : Module_List.List := Global_Modules_List;
+      Current : Module_List.List_Node :=
+        Module_List.First (Kernel.Modules_List);
       Result  : Boolean := False;
+
+      use type Module_List.List_Node;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
-      while not Module_List.Is_Empty (Current) loop
-         if Module_List.Head (Current).Mime_Handler /= null then
-            Result := Module_List.Head (Current).Mime_Handler
+      while Current /= Module_List.Null_Node loop
+         if Module_List.Data (Current).Mime_Handler /= null then
+            Result := Module_List.Data (Current).Mime_Handler
               (Kernel, Mime_Type, Data, Mode);
             exit when Result;
          end if;

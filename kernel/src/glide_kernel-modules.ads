@@ -50,16 +50,15 @@
 --  ===================
 --
 --  All the modules must be registered with the kernel before they can do
---  anything. This is typically in the elaboration part of a package, by
---  calling Register_Module.
+--  anything, by calling Register_Module.
 --
 --  Once the kernel has been created, it will call any initialization
 --  function you have provided. This function might for instance be used to
 --  register new menu for the menu bar, or new icons in the toolbar.
 --
---  This mechanism allows the kernel to be completly independeny of the
---  specific modules, since it doesn't need to do in advance the exact list of
---  modules.
+--  This mechanism allows the kernel to be completely independent of the
+--  specific modules, since it doesn't need to know in advance the exact list
+--  of modules.
 --
 --  Contextual menus
 --  ================
@@ -93,9 +92,6 @@ package Glide_Kernel.Modules is
 
    Explorer_Module_Name           : constant String := "Explorer";
    Project_Editor_Module_Name     : constant String := "Project_Editor";
-   Aunit_Module_Name              : constant String := "Unit_Testing";
-   VCS_Module_Name                : constant String := "VCS_Interface";
-   VCS_CVS_Module_Name            : constant String := "CVS_Connectivity";
    Dependency_Browser_Module_Name : constant String := "Dependency_Browser";
    Project_Browser_Module_Name    : constant String := "Project_Browser";
    --  Names for the internal modules
@@ -113,7 +109,8 @@ package Glide_Kernel.Modules is
    -------------------------
 
    function Register_Module
-     (Module_Name             : String;
+     (Kernel                  : access Kernel_Handle_Record'Class;
+      Module_Name             : String;
       Priority                : Module_Priority := Default_Priority;
       Initializer             : Module_Initializer  := null;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
