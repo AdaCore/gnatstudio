@@ -40,7 +40,6 @@ with Stringt;          use Stringt;
 with Osint;            use Osint;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with String_Utils;     use String_Utils;
-with Ada.Exceptions;   use Ada.Exceptions;
 with Project_Browsers; use Project_Browsers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO; use Ada.Text_IO;
@@ -1268,9 +1267,8 @@ package body Prj_API is
          if Get_Name_String (Path_Name_Of (Dep_Name.Node)) /=
            Format_Pathname (Imported_Project_Location)
          then
-            Raise_Exception
-              (Project_Error'Identity,
-               -"A different project with the same name"
+            Report_Errors
+              (-"A different project with the same name"
                & " already exists in the project tree.");
             return;
          else
@@ -1285,8 +1283,7 @@ package body Prj_API is
       --  would result in an infinite loop when manipulating the project
 
       if Prj.Tree.Name_Of (Project) = Prj.Tree.Name_Of (Imported_Project) then
-         Raise_Exception
-           (Project_Warning'Identity, -"Cannot add dependency to self");
+         Report_Errors (-"Cannot add dependency to self");
          return;
       end if;
 
@@ -1297,8 +1294,7 @@ package body Prj_API is
          if Prj.Tree.Name_Of (Project_Node_Of (With_Clause)) =
            Prj.Tree.Name_Of (Imported_Project)
          then
-            Raise_Exception
-              (Project_Warning'Identity, -"This dependency already exists");
+            Report_Errors (-"This dependency already exists");
             return;
          end if;
          With_Clause := Next_With_Clause_Of (With_Clause);
@@ -1318,9 +1314,9 @@ package body Prj_API is
 
       if Has_Circular_Dependencies (Project) then
          Set_First_With_Clause_Of (Project, Next_With_Clause_Of (With_Clause));
-         Raise_Exception
-           (Project_Error'Identity,
-            -"Circular dependency detected in the project hierarchy");
+         Report_Errors
+           (-"Circular dependency detected in the project hierarchy");
+         return;
       end if;
 
       Output.Set_Special_Output (null);
@@ -2418,10 +2414,11 @@ package body Prj_API is
    ---------------------
 
    procedure Rename_And_Move
-     (Root_Project : Project_Node_Id;
-      Project      : Project_Node_Id;
-      New_Name     : String;
-      New_Path     : String)
+     (Root_Project  : Project_Node_Id;
+      Project       : Project_Node_Id;
+      New_Name      : String;
+      New_Path      : String;
+      Report_Errors : Output.Output_Proc := null)
    is
       D : constant String := New_Path & New_Name & Project_File_Extension;
       Full_Path : String_Id := No_String;
@@ -2439,10 +2436,13 @@ package body Prj_API is
       Name := Name_Find;
 
       Old := Find_Project_In_Hierarchy (Root_Project, Name);
-      if Old /= Empty_Node then
-         Raise_Exception
-           (Project_Error'Identity,
-            -"There is already a project by this name in the project tree.");
+      if Old /= Empty_Node
+        and then Old /= Project
+      then
+         Report_Errors
+           (-"Couldn't rename the project to " & Get_Name_String (Name)
+            & ASCII.LF & (-"Project already exists in the project graph"));
+         return;
       end if;
 
       Set_Name_Of (Project, Name);

@@ -223,10 +223,11 @@ package Prj_API is
    --  Update_With_Statements is False.
 
    procedure Rename_And_Move
-     (Root_Project : Project_Node_Id;
-      Project      : Project_Node_Id;
-      New_Name     : String;
-      New_Path     : String);
+     (Root_Project  : Project_Node_Id;
+      Project       : Project_Node_Id;
+      New_Name      : String;
+      New_Path      : String;
+      Report_Errors : Output.Output_Proc := null);
    --  Rename Project to New_Name. All the nodes in the project tree starting
    --  at Root_Project, that reference Project, are also updated accordingly.
    --  Also sets the path of the project file. Note that Path shouldn't include
@@ -236,8 +237,8 @@ package Prj_API is
    --  relative paths if they were. Consider using Convert_Paths_To_Absolute if
    --  necessary.
    --
-   --  If there is already a project by that name in the project hierarchy,
-   --  Project_Error is raised
+   --  If there is already a project by that name in the project hierarchy, an
+   --  error is reported through Report_Errors.
 
    function Create_Variable
      (Prj_Or_Pkg : Project_Node_Id;
@@ -756,12 +757,6 @@ package Prj_API is
    --  no longer have a default.
 
    Invalid_Value : exception;
-
-   Project_Error   : exception;
-   Project_Warning : exception;
-   --  Two general exceptions that are raised when a subprogram could not
-   --  perform its duty. A warning means that nothing was done, but is not
-   --  critical.
 
 private
    type String_List_Iterator is record
