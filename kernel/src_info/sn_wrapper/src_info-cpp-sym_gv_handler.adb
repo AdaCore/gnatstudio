@@ -6,12 +6,13 @@ separate (Src_Info.CPP)
 
 procedure Sym_GV_Handler (Sym : FIL_Table)
 is
-   Desc       : CType_Description;
-   Var        : GV_Table;
-   Success    : Boolean;
-   tmp_ptr    : E_Declaration_Info_List;
-   Attributes : SN_Attributes;
-   Scope      : E_Scope := Global_Scope;
+   Desc              : CType_Description;
+   Var               : GV_Table;
+   Success           : Boolean;
+   Decl_Info         : E_Declaration_Info_List;
+   Type_Decl_Info    : E_Declaration_Info_List;
+   Attributes        : SN_Attributes;
+   Scope             : E_Scope := Global_Scope;
 begin
    Info ("Sym_GV_Handler: """
          & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -51,7 +52,7 @@ begin
          Location          => Sym.Start_Position,
          Kind              => Type_To_Object (Desc.Kind),
          Scope             => Scope,
-         Declaration_Info  => tmp_ptr);
+         Declaration_Info  => Decl_Info);
    else
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
@@ -65,8 +66,27 @@ begin
          Scope             => Scope,
          Parent_Location   => Desc.Parent_Point,
          Parent_Filename   => Desc.Parent_Filename.all,
-         Declaration_Info  => tmp_ptr);
+         Declaration_Info  => Decl_Info);
    end if;
+
+   --  add reference to the type of this variable
+   begin
+      Type_Decl_Info := Find_Declaration
+        (Global_LI_File,
+         Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+         Var.Start_Position);
+
+      Insert_Reference
+        (Declaration_Info     => Type_Decl_Info,
+         File                 => Global_LI_File,
+         Source_Filename      =>
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Location             => Sym.Start_Position,
+         Kind                 => Reference);
+   exception
+      when Declaration_Not_Found => -- ignore
+         null;
+   end;
 
    Free (Var);
    Free (Desc);
