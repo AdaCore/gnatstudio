@@ -23,7 +23,6 @@ with Gdk.Color;         use Gdk.Color;
 with Gdk.Font;          use Gdk.Font;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gtk.Extra.PsFont;  use Gtk.Extra.PsFont;
 with Gdk.Pixmap;        use Gdk.Pixmap;
 with Gdk.Window;        use Gdk.Window;
 with Glib;              use Glib;
@@ -37,6 +36,7 @@ with Gtk.Widget;        use Gtk.Widget;
 with Gtk.Text;          use Gtk.Text;
 with Gtk.Adjustment;    use Gtk.Adjustment;
 with Gtkada.Types;      use Gtkada.Types;
+with Pango.Font;        use Pango.Font;
 
 with Debugger;          use Debugger;
 
@@ -158,14 +158,13 @@ package body GVD.Text_Box.Asm_Editor is
 
    procedure Configure
      (Editor            : access Asm_Editor_Record;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Strings_Color     : Gdk.Color.Gdk_Color;
       Keyword_Color     : Gdk.Color.Gdk_Color) is
    begin
-      Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
+      Configure (Editor, Font, Current_Line_Icon);
 
       Create_From_Xpm_D
         (Editor.Stop_Pixmap,
@@ -177,7 +176,7 @@ package body GVD.Text_Box.Asm_Editor is
 
       Editor.Strings_Color  := Strings_Color;
       Editor.Keywords_Color := Keyword_Color;
-      Editor.Highlight_Color := Get_Pref (Asm_Highlight_Color);
+      Editor.Highlight_Color := Get_Pref (GVD_Prefs, Asm_Highlight_Color);
    end Configure;
 
    ----------------------
@@ -229,10 +228,9 @@ package body GVD.Text_Box.Asm_Editor is
          Editor.Current_Range.Low := new String' (Pc);
 
          S2 := Editor.Current_Range.Data;
-         Editor.Current_Range.Data :=
-           new String'
-             (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size)) &
-              ASCII.LF & S2.all);
+         Editor.Current_Range.Data := new String'
+           (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size (GVD_Prefs)))
+            & ASCII.LF & S2.all);
          Free (S2);
 
       --  Should we append to the current buffer
@@ -259,14 +257,15 @@ package body GVD.Text_Box.Asm_Editor is
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data := new String'
            (S2.all & ASCII.LF &
-            Do_Tab_Expansion (S (S_First .. S'Last), Integer (Get_Tab_Size)));
+            Do_Tab_Expansion (S (S_First .. S'Last),
+            Integer (Get_Tab_Size (GVD_Prefs))));
          Free (S2);
 
       --  Else get a whole new range (minimum size Assembly_Range_Size)
       else
          Editor.Current_Range := Find_In_Cache (Editor, Pc);
          if Editor.Current_Range = null then
-            if Get_Pref (Assembly_Range_Size) = "0"
+            if Get_Pref (GVD_Prefs, Assembly_Range_Size) = 0
               or else End_Pc = "-1"
             then
                Get_Machine_Code
@@ -286,7 +285,8 @@ package body GVD.Text_Box.Asm_Editor is
                   Code            => S,
                   Start_Address   => Pc,
                   End_Address     =>
-                    Pc & "+" & Get_Pref (Assembly_Range_Size));
+                    Pc & "+" & Image (Integer
+                    (Get_Pref (GVD_Prefs, Assembly_Range_Size))));
             end if;
 
             if Start_End /= 0 then
@@ -339,7 +339,8 @@ package body GVD.Text_Box.Asm_Editor is
                  (Low  => Low_Range,
                   High => High_Range,
                   Data => new String'
-                    (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size))),
+                  (Do_Tab_Expansion
+                   (S.all, Integer (Get_Tab_Size (GVD_Prefs)))),
                   Next => Editor.Cache);
             end if;
             Free (S);
@@ -761,8 +762,8 @@ package body GVD.Text_Box.Asm_Editor is
    procedure Preferences_Changed
      (Editor : access Asm_Editor_Record'Class) is
    begin
-      Editor.Highlight_Color := Get_Pref (Asm_Highlight_Color);
-      Set_Font (Editor, Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
+      Editor.Highlight_Color := Get_Pref (GVD_Prefs, Asm_Highlight_Color);
+      Set_Font (Editor, Get_Pref (GVD_Prefs, Editor_Font));
       Update_Child (Editor);
 
       --  The currently highlighted range is reset in Gvd.Code_Editors.
@@ -785,7 +786,7 @@ package body GVD.Text_Box.Asm_Editor is
 
    begin
       if Box.Current_Range /= null
-        and then Get_Pref (Assembly_Range_Size) /= "0"
+        and then Get_Pref (GVD_Prefs, Assembly_Range_Size) /= 0
       then
          Set_Busy
            (Debugger_Process_Tab (Box.Process), True, Force_Refresh => True);
@@ -798,14 +799,14 @@ package body GVD.Text_Box.Asm_Editor is
                Box.Current_Range.High.all,
                Add_Address
                (Box.Current_Range.High.all,
-                Integer'Value (Get_Pref (Assembly_Range_Size))));
+                Integer (Get_Pref (GVD_Prefs, Assembly_Range_Size))));
 
          else
             declare
                Addr : constant String := Address_From_Line
                  (Box, Get_Line (Box));
-               F : constant Gdk_Font := Get_Gdkfont
-                 (Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
+               F : constant Gdk_Font := From_Description
+                 (Get_Pref (GVD_Prefs, Editor_Font));
                Line : Natural;
             begin
                On_Frame_Changed (Box, "", "-1");

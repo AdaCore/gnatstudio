@@ -129,7 +129,7 @@ package body GVD.Files is
 
          Non_Blocking_Spawn
            (Descriptor.all,
-            Command     => Get_Pref (Remote_Copy),
+            Command     => Get_Pref (GVD_Prefs, Remote_Copy),
             Args        => Args,
             Buffer_Size => 0,
             Err_To_Out  => True);
@@ -177,7 +177,7 @@ package body GVD.Files is
             begin
                Length := Read (F, S'Address, Length);
 
-               Cache.CR_Stripped := Get_Pref (Should_Strip_CR);
+               Cache.CR_Stripped := Get_Pref (GVD_Prefs, Should_Strip_CR);
 
                --  Check whether we should do an automatic strip (since GtkText
                --  is somewhat unreliable and will sometimes put LF, sometimes
@@ -245,7 +245,8 @@ package body GVD.Files is
          --  If the CR was already stripped, no need to free the file
          if Force
            or else
-           (not Tmp.CR_Stripped and then Get_Pref (Should_Strip_CR))
+           (not Tmp.CR_Stripped
+            and then Get_Pref (GVD_Prefs, Should_Strip_CR))
          then
             Free (Tmp.File_Name);
             Free (Tmp.Line_Has_Code);

@@ -29,6 +29,7 @@ with Gtk.Pixmap;
 with Gtk.Text;
 with Gtkada.Types;
 with Basic_Types;
+with Pango.Font;
 
 --  This box is a general box, that can contain any scrollable widget.
 --  It is associated with a vertical scrollbar, and a layout on the left
@@ -62,8 +63,7 @@ private
 
    procedure Configure
      (Box               : access GVD_Text_Box_Record;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango.Font.Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array);
    --  Set the various settings of an editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
@@ -77,8 +77,7 @@ private
 
    procedure Set_Font
      (Box          : access GVD_Text_Box_Record;
-      Ps_Font_Name : String;
-      Font_Size    : Glib.Gint);
+      Font         : Pango.Font.Pango_Font_Description);
    --  Set the font used for the box.
    --  This is called by Configure internally.
 

@@ -35,13 +35,13 @@ with Gtk.Text;            use Gtk.Text;
 with Gdk.Pixmap;          use Gdk.Pixmap;
 with Gdk.Bitmap;          use Gdk.Bitmap;
 with Gdk.Font;            use Gdk.Font;
-with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Basic_Types;         use Basic_Types;
 with GVD.Preferences;     use GVD.Preferences;
 with String_Utils;        use String_Utils;
+with Pango.Font;          use Pango.Font;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body GVD.Text_Box is
@@ -146,15 +146,14 @@ package body GVD.Text_Box is
 
    procedure Configure
      (Box               : access GVD_Text_Box_Record;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array)
    is
       Current_Line_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
 
    begin
-      Set_Font (Box, Ps_Font_Name, Font_Size);
+      Set_Font (Box, Font);
       Create_From_Xpm_D
         (Current_Line_Pixmap,
          Null_Window,
@@ -418,7 +417,7 @@ package body GVD.Text_Box is
       Columns : Integer)
    is
       J        : Integer := 1;
-      Tab_Size : constant Integer := Integer (Get_Tab_Size);
+      Tab_Size : constant Integer := Integer (Get_Tab_Size (GVD_Prefs));
 
    begin
       --  Go to the right column, but make sure we are still on
@@ -433,7 +432,7 @@ package body GVD.Text_Box is
            or else Box.Buffer (Index) = ASCII.LF;
 
          if Box.Buffer (Index) = ASCII.HT
-           and then J mod Integer (Get_Tab_Size) /= 0
+           and then J mod Integer (Get_Tab_Size (GVD_Prefs)) /= 0
          then
             --  Go to the next column that is a multiple of Tab_Size
             J := (1 + J / Tab_Size) * Tab_Size + 1;
@@ -810,7 +809,7 @@ package body GVD.Text_Box is
             S : constant String := Do_Tab_Expansion
               ((Box.Buffer (Integer (Box.Highlight_Start)
                             .. Integer (Box.Highlight_End) - 1)),
-               Integer (Get_Tab_Size));
+               Integer (Get_Tab_Size (GVD_Prefs)));
 
          begin
             pragma Assert
@@ -833,7 +832,7 @@ package body GVD.Text_Box is
          declare
             S : constant String := Do_Tab_Expansion
               (Box.Buffer (Integer (From) .. Integer (To) - 1),
-               Integer (Get_Tab_Size));
+               Integer (Get_Tab_Size (GVD_Prefs)));
 
          begin
             Freeze (Box.Child);
@@ -867,15 +866,14 @@ package body GVD.Text_Box is
 
    procedure Set_Font
      (Box          : access GVD_Text_Box_Record;
-      Ps_Font_Name : String;
-      Font_Size    : Glib.Gint)
+      Font         : Pango_Font_Description)
    is
       F : Gdk_Font;
 
       use Gdk;
 
    begin
-      F := Get_Gdkfont (Ps_Font_Name, Font_Size);
+      F := From_Description (Font);
 
       if F /= Box.Font then
          Box.Font := F;

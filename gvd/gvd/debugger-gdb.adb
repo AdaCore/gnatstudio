@@ -873,7 +873,7 @@ package body Debugger.Gdb is
          Send (Debugger, "list main,main", Mode => Internal);
       end if;
 
-      if Get_Pref (Break_On_Exception) then
+      if Get_Pref (GVD_Prefs, Break_On_Exception) then
          Num := Break_Exception (Debugger);
       end if;
 

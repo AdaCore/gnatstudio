@@ -133,7 +133,7 @@ package body GVD.Status_Bar is
       --  schedule the message to be removed
       Status.Timeout_Id :=
         Status_Timeout.Add
-          (Guint32 (Get_Pref (Hide_Delay)),
+          (Guint32 (Get_Pref (GVD_Prefs, Hide_Delay)),
            Hide_Callback'Access, GVD_Status_Bar (Status));
    end Print_Message;
 

@@ -48,6 +48,7 @@ with GVD.Explorer;
 with GVD.Text_Box.Asm_Editor;
 with GVD.Text_Box.Source_Editor;
 with GVD.Types;
+with Pango.Font;
 with Basic_Types;
 
 package GVD.Code_Editors is
@@ -118,8 +119,7 @@ package GVD.Code_Editors is
    procedure Configure
      (Editor            : access Code_Editor_Record;
       Source            : GVD.Text_Box.Source_Editor.Source_Editor;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango.Font.Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Strings_Color     : Gdk.Color.Gdk_Color;

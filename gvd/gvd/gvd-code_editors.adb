@@ -31,6 +31,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.MDI;          use Gtkada.MDI;
 
+with Pango.Font;          use Pango.Font;
 with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Main_Window;     use GVD.Main_Window;
@@ -266,7 +267,7 @@ package body GVD.Code_Editors is
       if Top.Standalone and then Set_Current then
          Set_Current_File (Editor.Explorer, File_Name);
 
-         if not Get_Pref (Display_Explorer) then
+         if not Get_Pref (GVD_Prefs, Display_Explorer) then
             Hide (Editor.Explorer_Scroll);
          end if;
       end if;
@@ -300,15 +301,14 @@ package body GVD.Code_Editors is
    procedure Configure
      (Editor            : access Code_Editor_Record;
       Source            : GVD.Text_Box.Source_Editor.Source_Editor;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Strings_Color     : Gdk.Color.Gdk_Color;
       Keywords_Color    : Gdk.Color.Gdk_Color) is
    begin
       Configure
-        (Editor.Asm, Ps_Font_Name, Font_Size, Current_Line_Icon,
+        (Editor.Asm, Font, Current_Line_Icon,
          Stop_Icon, Strings_Color, Keywords_Color);
 
       pragma Assert (Editor.Source = null);
@@ -526,7 +526,9 @@ package body GVD.Code_Editors is
         GVD_Main_Window (Debugger_Process_Tab (Edit.Process).Window);
 
    begin
-      if Top.Standalone and then Get_Pref (Display_Explorer) then
+      if Top.Standalone
+        and then Get_Pref (GVD_Prefs, Display_Explorer)
+      then
          GVD.Explorer.On_Executable_Changed (Edit.Explorer);
       end if;
 

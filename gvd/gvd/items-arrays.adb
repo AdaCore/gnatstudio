@@ -749,7 +749,7 @@ package body Items.Arrays is
 
          --  Hide big items for efficiency
          if Hide_Big_Items
-           and then Item.Height > Get_Pref (Big_Item_Height)
+           and then Item.Height > Get_Pref (GVD_Prefs, Big_Item_Height)
          then
             Item.Visible := False;
          end if;

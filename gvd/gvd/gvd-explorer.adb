@@ -188,7 +188,7 @@ package body GVD.Explorer is
       Color : Gdk.Color.Gdk_Color;
    begin
       if Explorer.Current_File_Style = null then
-         Color := Get_Pref (File_Name_Bg_Color);
+         Color := Get_Pref (GVD_Prefs, File_Name_Bg_Color);
          Explorer.Current_File_Style := Copy (Get_Style (Explorer));
          Set_Base (Explorer.Current_File_Style, State_Normal, Color);
          Set_Base (Explorer.Current_File_Style, State_Selected, Color);
@@ -256,7 +256,7 @@ package body GVD.Explorer is
          Expanded      => False);
       Show_All (Explorer);
 
-      Explorer.CR_Stripped := Get_Pref (Should_Strip_CR);
+      Explorer.CR_Stripped := Get_Pref (GVD_Prefs, Should_Strip_CR);
 
       --  See Expand_Explorer_Tree for more explanation on the horizontal
       --  scrolling problem that is not solved by the setting below ???
@@ -1238,7 +1238,7 @@ package body GVD.Explorer is
       --  Change the highlighting color
 
       Create_Current_File_Style (Explorer);
-      Color := Get_Pref (File_Name_Bg_Color);
+      Color := Get_Pref (GVD_Prefs, File_Name_Bg_Color);
       Set_Base (Explorer.Current_File_Style, State_Normal, Color);
       Set_Base (Explorer.Current_File_Style, State_Selected, Color);
       Set_Current_File (Explorer, Get_Current_File (Explorer));
@@ -1257,7 +1257,7 @@ package body GVD.Explorer is
       --  of the cache.
 
       if not Explorer.CR_Stripped
-        and then Get_Pref (Should_Strip_CR)
+        and then Get_Pref (GVD_Prefs, Should_Strip_CR)
       then
          Explorer.CR_Stripped := True;
          Clear_Files_Data (Explorer);

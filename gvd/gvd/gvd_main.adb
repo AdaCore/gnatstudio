@@ -52,6 +52,7 @@ with Language_Handlers.GVD;     use Language_Handlers.GVD;
 with Language.Ada;              use Language.Ada;
 with Language.C;                use Language.C;
 with Language.Cpp;              use Language.Cpp;
+with Default_Preferences;       use Default_Preferences;
 
 with GVD.Open_Program_Dialog;   use GVD.Open_Program_Dialog;
 
@@ -189,9 +190,8 @@ procedure GVD_Main is
       --  Load the preferences, or set the default values
 
       if Is_Regular_File (Dir.all & Directory_Separator & "preferences") then
-         Load_Preferences (Dir.all & Directory_Separator & "preferences");
-      else
-         Set_Default_Preferences;
+         Load_Preferences
+           (GVD_Prefs, Dir.all & Directory_Separator & "preferences");
       end if;
    end Init;
 
@@ -275,19 +275,27 @@ procedure GVD_Main is
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
+
+   GVD_Prefs := new GVD_Preferences_Manager;
+   Register_Default_Preferences (GVD_Prefs, Page_Prefix => -"General:");
+
    Init;
+
    Gtk_New (Main_Debug_Window, "<gvd>", GVD_Menu_Items.all);
 
    Gtk_New (Handler);
    Main_Debug_Window.Lang_Handler := Language_Handler (Handler);
    Register_Language (Handler, "ada", Ada_Lang);
-   Add_File_Extensions (Handler, "ada", Get_Pref (Ada_Extensions));
+   Add_File_Extensions
+     (Handler, "ada", Get_Pref (GVD_Prefs, Ada_Extensions));
 
    Register_Language (Handler, "c", C_Lang);
-   Add_File_Extensions (Handler, "c", Get_Pref (C_Extensions));
+   Add_File_Extensions
+     (Handler, "c", Get_Pref (GVD_Prefs, C_Extensions));
 
    Register_Language (Handler, "c++", Cpp_Lang);
-   Add_File_Extensions (Handler, "c++", Get_Pref (Cpp_Extensions));
+   Add_File_Extensions
+     (Handler, "c++", Get_Pref (GVD_Prefs, Cpp_Extensions));
 
    Set_Toolbar
      (Main_Debug_Window,
@@ -619,7 +627,11 @@ begin
       end;
    end loop;
 
+   Save_Preferences
+     (GVD_Prefs,
+      Main_Debug_Window.Home_Dir.all & Directory_Separator & "preferences");
    Destroy (Main_Debug_Window);
+   Destroy (Default_Preferences.Preferences_Manager (GVD_Prefs));
 
 exception
    when Process_Died =>

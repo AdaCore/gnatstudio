@@ -42,6 +42,7 @@ with Gtk.Text;              use Gtk.Text;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Types;          use Gtkada.Types;
 with Gtkada.Handlers;       use Gtkada.Handlers;
+with Pango.Font;            use Pango.Font;
 
 with Debugger;              use Debugger;
 with Language;              use Language;
@@ -230,8 +231,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Editor            : out Builtin;
       Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
       TTY_Mode          : Boolean;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
@@ -241,7 +241,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    begin
       Editor := new Builtin_Record;
       Text_Box.Source_Editor.Builtin.Initialize
-        (Editor, Process, TTY_Mode, Ps_Font_Name, Font_Size,
+        (Editor, Process, TTY_Mode, Font,
          Default_Icon, Current_Line_Icon, Stop_Icon, Comments_Color,
          Strings_Color, Keywords_Color);
    end Gtk_New;
@@ -254,8 +254,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Editor            : access Builtin_Record'Class;
       Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
       TTY_Mode          : Boolean;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
@@ -275,8 +274,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Box.Editor := Builtin (Editor);
       Editor.Widget := Gtk_Widget (Box);
       Editor.Process := Gtk_Widget (Process);
-      Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
-      Editor.Show_Lines_With_Code := Get_Pref (Editor_Show_Line_With_Code);
+      Editor.Show_Line_Nums := Get_Pref (GVD_Prefs, Editor_Show_Line_Nums);
+      Editor.Show_Lines_With_Code := Get_Pref
+        (GVD_Prefs, Editor_Show_Line_With_Code);
       Widget_Callback.Connect
         (Box, "destroy", Widget_Callback.To_Marshaller (Destroy_Cb'Access));
       Show_All (Box);
@@ -284,7 +284,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Data.Box := Builtin (Editor);
       Editor_Tooltips.New_Tooltip (Get_Child (Box), Data, Editor.Tooltip);
 
-      Editor.Highlight_Color := Get_Pref (Editor_Highlight_Color);
+      Editor.Highlight_Color := Get_Pref
+        (GVD_Prefs, Editor_Highlight_Color);
 
       Widget_Callback.Object_Connect
         (Get_Vadj (Get_Child (Box)), "value_changed",
@@ -295,7 +296,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Widget_Callback.To_Marshaller (Activate_Computation'Access),
          Slot_Object => Editor.Widget);
 
-      Configure (Box, Ps_Font_Name, Font_Size, Current_Line_Icon);
+      Configure (Box, Font, Current_Line_Icon);
       Create_From_Xpm_D
         (Editor.Default_Pixmap,
          Null_Window,
@@ -654,7 +655,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Next_Char, J        : Positive;
       Line_Start_Position : Guint := 0;
       Do_Highlighting     : constant Boolean :=
-        Get_Pref (Do_Color_Highlighting);
+        Get_Pref (GVD_Prefs, Do_Color_Highlighting);
 
    begin
       if Editor.Editor.Show_Line_Nums then
@@ -691,7 +692,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                   Offset : constant Guint :=
                     (Line_Start_Position - Get_Length (Get_Child (Editor))
                      - 1 + Guint (Invisible_Column_Width (Editor)))
-                    mod Guint (Get_Tab_Size);
+                    mod Guint (Get_Tab_Size (GVD_Prefs));
                begin
                   Insert
                     (Editor, Chars => (1 .. Integer (Offset + 1) => ' '));
@@ -750,7 +751,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                              (Line_Start_Position -
                                 Get_Length (Get_Child (Editor)) - 1 +
                                   Guint (Invisible_Column_Width (Editor)))
-                             mod Guint (Get_Tab_Size);
+                             mod Guint (Get_Tab_Size (GVD_Prefs));
                         begin
                            Insert
                              (Editor,
@@ -795,7 +796,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Index    : Gint := Invisible_Column_Width (Edit);
       Col      : Natural := 1;
       Buffer   : constant Basic_Types.String_Access := Get_Buffer (Edit);
-      Tab_Size : constant Integer := Integer (Get_Tab_Size);
+      Tab_Size : constant Integer := Integer (Get_Tab_Size (GVD_Prefs));
 
    begin
       --  Convert from raw file position to visual buffer position (i.e include
@@ -1528,12 +1529,14 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Mask2          : Gdk.Types.Gdk_Modifier_Type;
       Win            : Gdk_Window;
       X, Y           : Gint;
+      Tooltips_Type  : Tooltips_In_Source_Type := Tooltips_In_Source_Type'Val
+        (Get_Pref (GVD_Prefs, Tooltips_In_Source));
 
    begin
       Width := 0;
       Height := 0;
 
-      if Get_Pref (Tooltips_In_Source) = None
+      if Tooltips_Type = None
         or else not Is_Started (Debugger.Debugger)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
@@ -1552,7 +1555,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          return;
       end if;
 
-      if Get_Pref (Tooltips_In_Source) = Full then
+      if Tooltips_Type = Full then
          Entity := Parse_Type (Debugger.Debugger, Variable_Name.all);
 
          if Entity = null then
@@ -1629,7 +1632,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
             Width  => Width - 1,
             Height => Height - 1);
 
-         if Get_Pref (Tooltips_In_Source) = Full then
+         if Tooltips_Type = Full then
             Items.Paint (Entity.all, Context, X => 2, Y => 2);
          else
             Index := Value'First;
@@ -1688,7 +1691,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Text_Pos       : Natural;
       Text_Pos_End   : Natural;
       Line           : constant Natural := Get_Line (Editor);
-      Tab_Size       : constant Integer := Integer (Get_Tab_Size);
+      Tab_Size       : constant Integer :=
+        Integer (Get_Tab_Size (GVD_Prefs));
       Show_Line_Nums : constant Boolean := Editor.Show_Line_Nums;
 
    begin
@@ -1701,7 +1705,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          return;
       end if;
 
-      if Get_Pref (Editor_Highlight_Current_Line)
+      if Get_Pref (GVD_Prefs, Editor_Highlight_Current_Line)
         and then Buffer /= null
       then
          Text_Pos := Buffer'First;
@@ -1766,12 +1770,17 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       File_Name : constant String := Get_Current_File (Editor);
 
    begin
-      Editor.Colors (Comment_Text) := Get_Pref (Comments_Color);
-      Editor.Colors (Character_Text) := Get_Pref (Strings_Color);
-      Editor.Colors (String_Text) := Get_Pref (Strings_Color);
-      Editor.Colors (Keyword_Text) := Get_Pref (Keywords_Color);
-      Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
-      Set_Font (Edit, Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
+      Editor.Colors (Comment_Text) :=
+        Get_Pref (GVD_Prefs, Comments_Color);
+      Editor.Colors (Character_Text) :=
+        Get_Pref (GVD_Prefs, Strings_Color);
+      Editor.Colors (String_Text) :=
+        Get_Pref (GVD_Prefs, Strings_Color);
+      Editor.Colors (Keyword_Text) :=
+        Get_Pref (GVD_Prefs, Keywords_Color);
+      Editor.Show_Line_Nums :=
+        Get_Pref (GVD_Prefs, Editor_Show_Line_Nums);
+      Set_Font (Edit, Get_Pref (GVD_Prefs, Editor_Font));
 
       --  Pretend we have changed the contents of the buffer. This removes
       --  all highlighting of the current line, and reset any marker we
@@ -1798,7 +1807,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       --  Hide or display the lines with code. This needs to be done after we
       --  have redisplayed the editor
-      Set_Show_Lines_With_Code (Editor, Get_Pref (Editor_Show_Line_With_Code));
+      Set_Show_Lines_With_Code
+        (Editor, Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code));
 
       --  Note: We don't need to do anything for the tooltips preference, since
       --  this is checked dynamically before displaying the tooltips.

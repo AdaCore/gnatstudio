@@ -21,11 +21,9 @@
 with Glib;                       use Glib;
 
 with Gdk.Input;
-with Gdk.Color;                  use Gdk.Color;
 with Gdk.Types;                  use Gdk.Types;
 
 with Gtk;                        use Gtk;
-with Gtk.Widget;                 use Gtk.Widget;
 with Gtk.Notebook;               use Gtk.Notebook;
 
 with Ada.Text_IO;                use Ada.Text_IO;
@@ -70,12 +68,11 @@ package body GVD.Process.Standalone is
       if Window.External_XID = 0 then
          Builtin.Gtk_New
            (Builtin_Source, Process, Window.TTY_Mode,
-            Get_Pref (Editor_Font),
-            Get_Pref (Editor_Font_Size),
+            Get_Pref (GVD_Prefs, Editor_Font),
             dot_xpm, arrow_xpm, stop_xpm,
-            Comments_Color => Get_Pref (Comments_Color),
-            Strings_Color  => Get_Pref (Strings_Color),
-            Keywords_Color => Get_Pref (Keywords_Color));
+            Comments_Color => Get_Pref (GVD_Prefs, Comments_Color),
+            Strings_Color  => Get_Pref (GVD_Prefs, Strings_Color),
+            Keywords_Color => Get_Pref (GVD_Prefs, Keywords_Color));
          Source := Source_Editor (Builtin_Source);
 
       else

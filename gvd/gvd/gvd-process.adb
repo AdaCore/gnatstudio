@@ -47,8 +47,7 @@ with Gtk.Object;          use Gtk.Object;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-
-with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
+with Pango.Font;          use Pango.Font;
 
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
@@ -1238,10 +1237,12 @@ package body GVD.Process is
       Show_Call_Stack_Columns (Process);
 
       --  Initialize the canvas
+      --  ??? Should pass the full font for annotations, not only for size.
 
       Configure
         (Process.Data_Canvas,
-         Annotation_Height => Get_Pref (Annotation_Font_Size));
+         Annotation_Height => Get_Size
+         (Get_Pref (GVD_Prefs, Annotation_Font)));
 
       Child := Put (Process.Process_Mdi, Process.Data_Paned);
       Set_Title (Child, "Debugger Data");
@@ -1382,10 +1383,10 @@ package body GVD.Process is
       --  that time.
 
       Process.Debugger_Text_Highlight_Color :=
-        Get_Pref (Debugger_Highlight_Color);
+        Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
 
-      Process.Debugger_Text_Font :=
-        Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
+      Process.Debugger_Text_Font := From_Description
+        (Get_Pref (GVD_Prefs, Debugger_Font));
 
       Process.Separate_Data := False;
       --  ??? Should use MDI.Save/Load_Desktop instead
@@ -1426,11 +1427,10 @@ package body GVD.Process is
       Configure
         (Process.Editor_Text,
          Source,
-         Get_Pref (Editor_Font),
-         Get_Pref (Editor_Font_Size),
+         Get_Pref (GVD_Prefs, Editor_Font),
          arrow_xpm, stop_xpm,
-         Strings_Color  => Get_Pref (Strings_Color),
-         Keywords_Color => Get_Pref (Keywords_Color));
+         Strings_Color  => Get_Pref (GVD_Prefs, Strings_Color),
+         Keywords_Color => Get_Pref (GVD_Prefs, Keywords_Color));
 
       if Window.First_Debugger = null then
          Process.Debugger_Num := Debugger_Num;
@@ -2221,9 +2221,10 @@ package body GVD.Process is
    is
       Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Editor);
       Str     : constant String := Get_Chars (Process.Debugger_Text);
-      F       : constant Gdk_Font :=
-        Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
-      C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
+      F       : constant Gdk_Font := From_Description
+        (Get_Pref (GVD_Prefs, Debugger_Font));
+      C       : constant Gdk_Color :=
+        Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
 
       use Gdk;
    begin

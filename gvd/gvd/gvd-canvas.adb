@@ -31,7 +31,6 @@ with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Handlers;     use Gtk.Handlers;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
-with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
@@ -251,7 +250,8 @@ package body GVD.Canvas is
       Menu : Gtk_Menu;
    begin
       Canvas := new GVD_Canvas_Record;
-      Canvas.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
+      Canvas.Detect_Aliases := Get_Pref
+        (GVD_Prefs, Default_Detect_Aliases);
       Initialize (Canvas);
       Align_On_Grid (Canvas, True);
 
@@ -330,7 +330,7 @@ package body GVD.Canvas is
       pragma Unreferenced (Canvas);
    begin
       Update_Resize_Display
-        (Display_Item (Item), True, Get_Pref (Hide_Big_Items),
+        (Display_Item (Item), True, Get_Pref (GVD_Prefs, Hide_Big_Items),
          Redisplay_Canvas => False);
       return True;
    end Refresh_Item;
@@ -340,7 +340,6 @@ package body GVD.Canvas is
    --------------------
 
    procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class) is
-      Size : Gint;
    begin
       ------------------
       -- Item_Context --
@@ -350,24 +349,22 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Font);
       end if;
 
-      Size := Get_Pref (Value_Font_Size);
-      Canvas.Item_Context.Font := Get_Gdkfont (Get_Pref (Value_Font), Size);
+      Canvas.Item_Context.Font := From_Description
+        (Get_Pref (GVD_Prefs, Value_Font));
 
       if Canvas.Item_Context.Type_Font /= null then
          Unref (Canvas.Item_Context.Type_Font);
       end if;
 
-      Size := Get_Pref (Type_Font_Size);
-      Canvas.Item_Context.Type_Font :=
-        Get_Gdkfont (Get_Pref (Type_Font), Size);
+      Canvas.Item_Context.Type_Font := From_Description
+        (Get_Pref (GVD_Prefs, Type_Font));
 
       if Canvas.Item_Context.Command_Font /= null then
          Unref (Canvas.Item_Context.Command_Font);
       end if;
 
-      Size := Get_Pref (Value_Font_Size);
-      Canvas.Item_Context.Command_Font :=
-        Get_Gdkfont (Get_Pref (Command_Font), Size);
+      Canvas.Item_Context.Command_Font := From_Description
+        (Get_Pref (GVD_Prefs, Command_Font));
 
       ---------------------
       -- Tooltip_Context --
@@ -376,20 +373,20 @@ package body GVD.Canvas is
       if Canvas.Tooltip_Context.Font /= null then
          Unref (Canvas.Tooltip_Context.Font);
       end if;
-      Canvas.Tooltip_Context.Font :=
-        Get_Gdkfont (Get_Pref (Value_Font), Get_Pref (Value_Font_Size));
+      Canvas.Tooltip_Context.Font := From_Description
+        (Get_Pref (GVD_Prefs, Value_Font));
 
       if Canvas.Tooltip_Context.Type_Font /= null then
          Unref (Canvas.Tooltip_Context.Type_Font);
       end if;
-      Canvas.Tooltip_Context.Type_Font :=
-        Get_Gdkfont (Get_Pref (Type_Font), Get_Pref (Type_Font_Size));
+      Canvas.Tooltip_Context.Type_Font := From_Description
+        (Get_Pref (GVD_Prefs, Type_Font));
 
       if Canvas.Tooltip_Context.Command_Font /= null then
          Unref (Canvas.Tooltip_Context.Command_Font);
       end if;
-      Canvas.Tooltip_Context.Command_Font := Get_Gdkfont
-        (Get_Pref (Command_Font), Get_Pref (Value_Font_Size));
+      Canvas.Tooltip_Context.Command_Font := From_Description
+        (Get_Pref (GVD_Prefs, Command_Font));
 
       -----------------
       -- Box_Context --
@@ -399,9 +396,8 @@ package body GVD.Canvas is
          Unref (Canvas.Box_Context.Title_Font);
       end if;
 
-      Size := Get_Pref (Title_Font_Size);
-      Canvas.Box_Context.Title_Font :=
-        Get_Gdkfont (Get_Pref (Title_Font), Size);
+      Canvas.Box_Context.Title_Font := From_Description
+        (Get_Pref (GVD_Prefs, Title_Font));
 
       For_Each_Item (Canvas, Refresh_Item'Unrestricted_Access);
    end Allocate_Fonts;
@@ -419,7 +415,8 @@ package body GVD.Canvas is
    begin
       Realize (C);
       Win := Get_Window (C);
-      Set_Detect_Aliases (C, Get_Pref (Default_Detect_Aliases));
+      Set_Detect_Aliases
+        (C, Get_Pref (GVD_Prefs, Default_Detect_Aliases));
       Recompute_All_Aliases (C);
 
       --  The drawing context for the items
@@ -437,7 +434,8 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (C.Item_Context.Xref_GC, Win);
-      Set_Foreground (C.Item_Context.Xref_GC, Get_Pref (Xref_Color));
+      Set_Foreground
+        (C.Item_Context.Xref_GC, Get_Pref (GVD_Prefs, Xref_Color));
       C.Tooltip_Context.Xref_GC := C.Item_Context.Xref_GC;
 
       if C.Item_Context.Modified_GC /= null then
@@ -445,7 +443,8 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (C.Item_Context.Modified_GC, Win);
-      Set_Foreground (C.Item_Context.Modified_GC, Get_Pref (Change_Color));
+      Set_Foreground
+        (C.Item_Context.Modified_GC, Get_Pref (GVD_Prefs, Change_Color));
       C.Tooltip_Context.Modified_GC := C.Item_Context.Modified_GC;
 
       if C.Item_Context.Selection_GC /= null then
@@ -453,7 +452,8 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (C.Item_Context.Selection_GC, Win);
-      Set_Foreground (C.Item_Context.Selection_GC, Get_Pref (Selection_Color));
+      Set_Foreground (C.Item_Context.Selection_GC,
+                      Get_Pref (GVD_Prefs, Selection_Color));
       C.Tooltip_Context.Selection_GC := C.Item_Context.Selection_GC;
 
       --  The drawing context for the boxes
@@ -463,7 +463,8 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (C.Box_Context.Grey_GC, Win);
-      Set_Foreground (C.Box_Context.Grey_GC, Get_Pref (Title_Color));
+      Set_Foreground
+        (C.Box_Context.Grey_GC, Get_Pref (GVD_Prefs, Title_Color));
 
       if C.Box_Context.Black_GC /= null then
          Destroy (C.Box_Context.Black_GC);
@@ -483,14 +484,17 @@ package body GVD.Canvas is
       end if;
 
       Gdk_New (C.Box_Context.Thaw_Bg_GC, Win);
-      Set_Foreground (C.Box_Context.Thaw_Bg_GC, Get_Pref (Thaw_Bg_Color));
+      Set_Foreground
+        (C.Box_Context.Thaw_Bg_GC, Get_Pref (GVD_Prefs, Thaw_Bg_Color));
 
       if C.Box_Context.Freeze_Bg_GC /= null then
          Destroy (C.Box_Context.Freeze_Bg_GC);
       end if;
 
       Gdk_New (C.Box_Context.Freeze_Bg_GC, Win);
-      Set_Foreground (C.Box_Context.Freeze_Bg_GC, Get_Pref (Freeze_Bg_Color));
+      Set_Foreground
+        (C.Box_Context.Freeze_Bg_GC,
+         Get_Pref (GVD_Prefs, Freeze_Bg_Color));
 
       Allocate_Fonts (C);
 

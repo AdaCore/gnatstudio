@@ -41,9 +41,9 @@ with GVD.Files;               use GVD.Files;
 with GVD.Preferences;         use GVD.Preferences;
 with GVD.Window_Settings;     use GVD.Window_Settings;
 with GVD.Main_Window;         use GVD.Main_Window;
-with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with GVD.Session_Dialog;      use GVD.Session_Dialog;
+with Default_Preferences;     use Default_Preferences;
 
 package body GVD.Menu.Standalone is
 
@@ -204,7 +204,8 @@ package body GVD.Menu.Standalone is
       External_Editor := Getenv ("GVD_EDITOR");
       if External_Editor.all = "" then
          Free (External_Editor);
-         External_Editor := new String' (Get_Pref (Default_External_Editor));
+         External_Editor := new String'
+           (Get_Pref (GVD_Prefs, Default_External_Editor));
       end if;
 
       declare
@@ -470,16 +471,24 @@ package body GVD.Menu.Standalone is
    is
       pragma Unreferenced (Action, Widget);
 
+      procedure Changed (Manager : access Preferences_Manager_Record'Class);
       Top : constant GVD_Main_Window := GVD_Main_Window (Object);
-   begin
-      if Top.GVD_Preferences = null then
-         Gtk_New (Top.GVD_Preferences, Top);
-      end if;
 
-      --  First do a show_all, so that Fill_Dialog can choose to
-      --  hide or deactivate widgets.
-      Show_All (Top.GVD_Preferences);
-      GVD.Preferences.Fill_Dialog (Top.GVD_Preferences);
+      -------------
+      -- Changed --
+      -------------
+
+      procedure Changed (Manager : access Preferences_Manager_Record'Class) is
+         pragma Unreferenced (Manager);
+      begin
+         GVD.Main_Window.Preferences_Changed (Top);
+      end Changed;
+
+   begin
+      Edit_Preferences
+        (Manager           => GVD_Prefs,
+         Parent            => Top,
+         On_Changed        => Changed'Unrestricted_Access);
    end On_Preferences;
 
    ---------------
@@ -494,7 +503,7 @@ package body GVD.Menu.Standalone is
       pragma Unreferenced (Action, Widget);
 
       Browse : constant String :=
-        Get_Pref (HTML_Browser) & " " &
+        Get_Pref (GVD_Prefs, Html_Browser) & " " &
           GVD_Main_Window (Object).Prefix_Directory.all &
           Directory_Separator & "doc" & Directory_Separator & "gvd" &
           Directory_Separator & "gvd.html";

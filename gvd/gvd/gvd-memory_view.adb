@@ -33,7 +33,6 @@ with Gdk.Window;       use Gdk.Window;
 
 with Gtk;              use Gtk;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Gtk.Text;         use Gtk.Text;
 with Gtk.GEntry;       use Gtk.GEntry;
 with Gtk.Frame;        use Gtk.Frame;
@@ -324,13 +323,13 @@ package body GVD.Memory_View is
    is
       pragma Unreferenced (Window);
    begin
-      View.View_Font   := Get_Gdkfont
-        (Get_Pref (Memory_View_Font), Get_Pref (Memory_View_Font_Size));
-      View.View_Color       := Get_Pref (Memory_View_Color);
-      View.Highlighted      := Get_Pref (Memory_Highlighted_Color);
-      View.White_Color      := White (Get_System);
-      View.Selected         := Get_Pref (Memory_Selected_Color);
-      View.Modified_Color   := Get_Pref (Memory_Modified_Color);
+      View.View_Font   := From_Description
+        (Get_Pref (GVD_Prefs, Memory_View_Font));
+      View.View_Color  := Get_Pref (GVD_Prefs, Memory_View_Color);
+      View.Highlighted := Get_Pref (GVD_Prefs, Memory_Highlighted_Color);
+      View.White_Color := White (Get_System);
+      View.Selected    := Get_Pref (GVD_Prefs, Memory_Selected_Color);
+      View.Modified_Color := Get_Pref (GVD_Prefs, Memory_Modified_Color);
    end Init_Graphics;
 
    ----------------------

@@ -314,7 +314,9 @@ package body GVD.Window_Settings is
                        True);
                end if;
 
-               if Top.Standalone and then Get_Pref (Display_Explorer) then
+               if Top.Standalone
+                 and then Get_Pref (GVD_Prefs, Display_Explorer)
+               then
                   Set (String_Gint ("Explorer_Width" & Image),
                        Gint (Get_Allocation_Width
                              (Get_Explorer_Scroll (Process.Editor_Text))),

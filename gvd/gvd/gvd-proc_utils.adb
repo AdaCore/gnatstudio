@@ -125,7 +125,8 @@ package body GVD.Proc_Utils is
          New_Args : Argument_List (Args'First .. Args'Last + 1);
       begin
          New_Args (Args'First .. Args'Last) := Args.all;
-         New_Args (New_Args'Last) := new String' (Get_Pref (List_Processes));
+         New_Args (New_Args'Last) := new String'
+           (Get_Pref (GVD_Prefs, List_Processes));
 
          Non_Blocking_Spawn
            (Handle.Descriptor.all,
@@ -157,10 +158,11 @@ package body GVD.Proc_Utils is
          Handle.Descriptor := new Process_Descriptor;
       end if;
 
-      New_Args (2) := new String' (Get_Pref (List_Processes));
+      New_Args (2) := new String' (Get_Pref (GVD_Prefs, List_Processes));
       New_Args (1) := new String' (Host);
       Non_Blocking_Spawn
-        (Handle.Descriptor.all, Get_Pref (Remote_Protocol), New_Args);
+        (Handle.Descriptor.all,
+         Get_Pref (GVD_Prefs, Remote_Protocol), New_Args);
       Expect (Handle.Descriptor.all, Match, "\n");
       Free (New_Args (1));
       Free (New_Args (2));

@@ -647,7 +647,7 @@ package body Items.Simples is
 
    procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
       S              : constant String :=
-        Do_Tab_Expansion (Value, Integer (Get_Tab_Size));
+        Do_Tab_Expansion (Value, Integer (Get_Tab_Size (GVD_Prefs)));
       V              : String_Access := Item.Value;
 
       Index_New      : Positive := S'First;

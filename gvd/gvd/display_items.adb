@@ -397,7 +397,7 @@ package body Display_Items is
       Size_Request
         (Item.Entity.all,
          Create_Drawing_Context (Item),
-         Hide_Big_Items => Get_Pref (Hide_Big_Items));
+         Hide_Big_Items => Get_Pref (GVD_Prefs, Hide_Big_Items));
 
       if not Get_Visibility (Item.Entity.all) then
          Set_Visibility (Item.Entity, True);
@@ -763,7 +763,7 @@ package body Display_Items is
       end if;
 
       Update_Resize_Display
-        (Item, Was_Visible, Get_Pref (Hide_Big_Items),
+        (Item, Was_Visible, Get_Pref (GVD_Prefs, Hide_Big_Items),
          Redisplay_Canvas => Redisplay_Canvas);
 
       --  If we got an exception while parsing the value, we register the new

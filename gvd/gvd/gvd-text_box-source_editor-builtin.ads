@@ -34,6 +34,7 @@ with GVD.Tooltips;
 pragma Elaborate_All (GVD.Tooltips);
 with Items;
 with Gtk.Text;
+with Pango.Font;
 
 --  This package provides an implementation of Source_Editor built-in
 --  GVD, which means that GVD specific features are used, providing a very
@@ -50,8 +51,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
      (Editor            : out Builtin;
       Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
       TTY_Mode          : Boolean;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
@@ -66,8 +66,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
      (Editor            : access Builtin_Record'Class;
       Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
       TTY_Mode          : Boolean;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;

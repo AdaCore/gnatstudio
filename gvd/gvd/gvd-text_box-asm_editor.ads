@@ -21,7 +21,6 @@
 --  This package implements a text area target to the display of assembly
 --  code.
 
-with Glib;
 with Gdk.Bitmap;
 with Gdk.Color;
 with Gdk.Pixmap;
@@ -30,6 +29,7 @@ with Gtk.Widget;
 with Gtkada.Types;
 with Basic_Types;
 with GVD.Types;
+with Pango.Font;
 
 package GVD.Text_Box.Asm_Editor is
 
@@ -48,8 +48,7 @@ package GVD.Text_Box.Asm_Editor is
 
    procedure Configure
      (Editor            : access Asm_Editor_Record;
-      Ps_Font_Name      : String;
-      Font_Size         : Glib.Gint;
+      Font              : Pango.Font.Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Strings_Color     : Gdk.Color.Gdk_Color;

@@ -25,7 +25,6 @@ with Gtk.Main;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
-with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with GVD.Dialogs; use GVD.Dialogs;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -59,7 +58,6 @@ package GVD.Main_Window is
    type GVD_Main_Window_Record is new Main_Debug_Window_Record with record
       Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
-      GVD_Preferences     : GVD_Preferences_Access;
       Open_Program        : GVD_Open_Program;
       Open_Session        : Gtk.Window.Gtk_Window;
       History_Dialog      : History_Dialog_Access;
