@@ -31,7 +31,6 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 
-with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 with Commands;                  use Commands;
 
@@ -251,7 +250,6 @@ package body Vdiff2_Module.Callback is
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
-            F1, F2, F3 : Virtual_File;
 
          begin
             if File3 = VFS.No_File then
@@ -286,14 +284,11 @@ package body Vdiff2_Module.Callback is
                     Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                     Kind              => Unspecified,
                     History           => Get_History (Kernel));
-               Args_edit : Argument_List := (1 => new String'(Merge));
 
             begin
                if Merge /= VFS.No_File then
                   Show_Merge (Kernel, Full_Name (Merge), Item);
                end if;
-
-               Free (Args_edit);
             end;
          end;
       end;
@@ -371,14 +366,11 @@ package body Vdiff2_Module.Callback is
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
-            Args_edit : Argument_List := (1 => new String'(Merge));
 
          begin
             if Merge /= VFS.No_File then
                Show_Merge (Kernel, Full_Name (Merge), Item);
             end if;
-
-            Free (Args_edit);
          end;
       end;
 
@@ -706,3 +698,4 @@ package body Vdiff2_Module.Callback is
    end On_Close_Difference;
 
 end Vdiff2_Module.Callback;
+
