@@ -32,13 +32,14 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Result_View;         use Glide_Result_View;
 with Glide_Intl;                use Glide_Intl;
 
-with Shell;                     use Shell;
 with Commands;                  use Commands;
 with Commands.Locations;        use Commands.Locations;
 with Traces;                    use Traces;
+with Basic_Types;               use Basic_Types;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
@@ -107,39 +108,41 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Navigate->Previous Result menu.
 
-   function Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+   procedure Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
    --  Interactive command handler for the navigation module.
 
    ---------------------
    -- Command_Handler --
    ---------------------
 
-   function Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
+   procedure Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
    is
+      pragma Unreferenced (Command);
       The_Command : Generic_Location_Command;
       N_Data : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
+      Args : Argument_List (1 .. Number_Of_Arguments (Data) - 1);
+
    begin
-      if Command = "add_location_command" then
-         Create (The_Command, Kernel_Handle (Kernel), Args);
+      for Index in 2 .. Number_Of_Arguments (Data) loop
+         Args (Index - 1) := new String'(Nth_Arg (Data, Index));
+      end loop;
 
-         if N_Data.Current_Location /= null then
-            Prepend (N_Data.Back, N_Data.Current_Location);
-         end if;
+      Create (The_Command, Get_Kernel (Data), Args);
 
-         N_Data.Current_Location := Command_Access (The_Command);
-         Free (N_Data.Forward);
+      Free (Args);
 
-         Refresh_Location_Buttons (Kernel);
+      if N_Data.Current_Location /= null then
+         Prepend (N_Data.Back, N_Data.Current_Location);
       end if;
 
-      return "";
+      N_Data.Current_Location := Command_Access (The_Command);
+      Free (N_Data.Forward);
+
+      Refresh_Location_Buttons (Get_Kernel (Data));
    end Command_Handler;
 
    -------------
@@ -332,7 +335,8 @@ package body Navigation_Module is
       Register_Command
         (Kernel,
          Command      => "add_location_command",
-         Usage        => "add_location_command command arg1 arg2 (...) argN",
+         Usage        => "add_location_command (command, arg1, [arg2...])"
+           & " -> None",
          Description  => -("Register a command to be associated with"
                            &" navigation buttons."),
          Minimum_Args => 1,
