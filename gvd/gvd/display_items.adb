@@ -21,7 +21,7 @@
 with Glib;             use Glib;
 with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
-with Gtkada.Canvas;    use Gtkada.Canvas;
+with Odd.Canvas;       use Odd.Canvas;
 with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Font;         use Gdk.Font;
@@ -39,6 +39,7 @@ with Odd.Pixmaps;      use Odd.Pixmaps;
 with Gtk.Menu;         use Gtk.Menu;
 with Odd.Menus;        use Odd.Menus;
 with Odd.Types;        use Odd.Types;
+with Gtkada.Canvas;    use Gtkada.Canvas;
 
 with Items;            use Items;
 with Items.Simples;    use Items.Simples;
@@ -96,10 +97,6 @@ package body Display_Items is
    Num_Buttons : constant := 2;
    --  Number of buttons in the title bar.
    --  This is not user-configurable.
-
-   Detect_Aliases : constant Boolean := True;
-   --  If True, do not create new items when a matching item is already
-   --  present in the canvas.
 
    Hide_Big_Items : constant Boolean := True;
    --  If True, items higher than a given limit will start in a hidden state.
@@ -163,12 +160,12 @@ package body Display_Items is
    --  (X, Y) are relative to the top-left corner of item.
 
    function Search_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Canvas : access Odd_Canvas_Record'Class;
       Id     : String) return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
 
    procedure Create_Link
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Canvas : access Odd_Canvas_Record'Class;
       From, To : access Display_Item_Record'Class;
       Name : String);
    --  Add a new link between two items.
@@ -345,7 +342,7 @@ package body Display_Items is
       end if;
 
       Update_Display (Item);
-      Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
+      Item_Resized (Item.Debugger.Data_Canvas, Item);
    end Initialize;
 
    --------------------
@@ -524,7 +521,7 @@ package body Display_Items is
    -----------------
 
    function Search_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Canvas : access Odd_Canvas_Record'Class;
       Id     : String) return Display_Item
    is
       Alias_Item : Display_Item := null;
@@ -541,7 +538,9 @@ package body Display_Items is
 
       function Alias_Found
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Warnings (Off, Canvas);
       begin
          if Display_Item (Item).Id /= null
            and then Alias_Item = null
@@ -555,7 +554,7 @@ package body Display_Items is
       end Alias_Found;
 
    begin
-      if Detect_Aliases then
+      if Get_Detect_Aliases (Canvas) then
          For_Each_Item (Canvas, Alias_Found'Unrestricted_Access);
       end if;
       return Alias_Item;
@@ -571,7 +570,7 @@ package body Display_Items is
    is
    begin
       if Display_Item (Item).Auto_Refresh then
-         Update (Canvas, Display_Item (Item));
+         Update (Odd_Canvas (Canvas), Display_Item (Item));
       end if;
 
       return True;
@@ -582,7 +581,7 @@ package body Display_Items is
    ------------
 
    procedure Update
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Canvas : access Odd_Canvas_Record'Class;
       Item   : access Display_Item_Record'Class)
    is
       Value_Found : Boolean;
@@ -606,8 +605,18 @@ package body Display_Items is
 
       end if;
 
-      --  ??? Should we recompute the address ?
-      --  This is part of the bigger picture for aliases detection/update.
+      --  Update the address as well, so that aliases are still correctly
+      --  detected.
+
+      Free (Item.Id);
+
+      declare
+         Id : String := Get_Uniq_Id (Item.Debugger.Debugger, Item.Name.all);
+      begin
+         if Id /= "" then
+            Item.Id := new String'(Id);
+         end if;
+      end;
 
       --  Update graphically.
       --  Note that we should not change the visibility status of item
@@ -656,7 +665,7 @@ package body Display_Items is
    -----------------
 
    procedure Create_Link
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Canvas : access Odd_Canvas_Record'Class;
       From, To : access Display_Item_Record'Class;
       Name : String) is
    begin
@@ -733,7 +742,7 @@ package body Display_Items is
          if Item.Debugger.Selected_Item /= Canvas_Item (Item)
            or else Component = null
          then
-            Gtkada.Canvas.Item_Updated
+            Item_Updated
               (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
          end if;
       end if;
@@ -743,7 +752,7 @@ package body Display_Items is
       if Component /= null then
          Set_Selected (Component, not Get_Selected (Component));
          Update_Component (Item, Component);
-         Gtkada.Canvas.Item_Updated (Item.Debugger.Data_Canvas, Item);
+         Item_Updated (Item.Debugger.Data_Canvas, Item);
          if Get_Selected (Component) then
             Item.Debugger.Selected_Item := Canvas_Item (Item);
             Item.Debugger.Selected_Component := Component;
@@ -861,7 +870,7 @@ package body Display_Items is
                              Modified_GC => Change_GC,
                              Font        => Font));
          Update_Display (Item);
-         Gtkada.Canvas.Item_Resized (Item.Debugger.Data_Canvas, Item);
+         Item_Resized (Item.Debugger.Data_Canvas, Item);
 
       --  Selecting a component
 
@@ -948,7 +957,7 @@ package body Display_Items is
    -------------------------
 
    procedure On_Background_Click
-     (Canvas : access Interactive_Canvas_Record'Class;
+     (Canvas : access Odd_Canvas_Record'Class;
       Event  : Gdk.Event.Gdk_Event)
    is
       --  This is slightly complicated since we need to get a valid item
@@ -990,8 +999,11 @@ package body Display_Items is
    procedure On_Canvas_Process_Stopped
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Canvas : Interactive_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
+      Canvas : Odd_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
    begin
+      --  ??? Should first update all the addresses, and then merge (or
+      --  cross-reference the items at the same coordinates, and avoid to
+      --  update them twice.
       For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
    end On_Canvas_Process_Stopped;
 

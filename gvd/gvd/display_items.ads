@@ -20,12 +20,13 @@
 
 with Glib;
 with Gtk.Widget;
-with Gtkada.Canvas;
+with Odd.Canvas;
 with Gdk.Window;
 with Items;
 with Odd.Process;
 with Gdk.Event;
 with Odd.Types;
+with Gtkada.Canvas;
 
 package Display_Items is
 
@@ -64,7 +65,7 @@ package Display_Items is
    --  Change the auto refresh status of the item, and update its pixmap.
 
    procedure On_Background_Click
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
       Event  : Gdk.Event.Gdk_Event);
    --  Called for clicks in the background of the canvas.
 
@@ -83,7 +84,7 @@ package Display_Items is
    --  Gtkada.Canvas.Item_Processor.
 
    procedure Update
-     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
       Item   : access Display_Item_Record'Class);
    --  Unconditionally update the value of Item after parsing the new value.
 
