@@ -465,8 +465,7 @@ package body Project_Viewers is
    procedure On_Reopen
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Mitem     : constant Full_Path_Menu_Item
-        := Full_Path_Menu_Item (Widget);
+      Mitem    : constant Full_Path_Menu_Item := Full_Path_Menu_Item (Widget);
       Filename : constant String := Get_Path (Mitem);
       Dir      : constant String := Dir_Name (Filename);
 
@@ -1694,7 +1693,9 @@ package body Project_Viewers is
       begin
          if File /= "" then
             if Base_Dir = "" then
-               Change_Dir (Dir_Name (File));
+               if Is_Directory (Dir_Name (File)) then
+                  Change_Dir (Dir_Name (File));
+               end if;
             end if;
 
             Add_Main_File (Ed, Base_Name (File));
