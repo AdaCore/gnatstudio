@@ -329,7 +329,6 @@ package body Gtkada.File_Selector is
          Win.Current_Directory_Is_Open := False;
 
          Clear (Win.File_List);
-         Win.Remaining_Files := Win.Files;
 
          --  Register the function that will fill the list in the background.
          declare
@@ -350,6 +349,8 @@ package body Gtkada.File_Selector is
             Id := Add (Display_File'Access, Win);
             Sort (Win.Files, Comparison'Unrestricted_Access);
          end;
+
+         Win.Remaining_Files := Win.Files;
 
          return False;
       end if;
