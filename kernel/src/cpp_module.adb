@@ -21,6 +21,7 @@
 with Glib.Object;             use Glib.Object;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
+with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 with Language.C;              use Language.C;
@@ -91,6 +92,7 @@ package body Cpp_Module is
       if Msg /= "" then
          --  No parser will be available. However, we still want the
          --  highlighting for C and C++ files
+
          Insert (Kernel, Msg, Mode => Error);
          Unchecked_Free (LI);
       else
@@ -115,6 +117,68 @@ package body Cpp_Module is
          LI                  => LI_Handler (LI),
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cc");
+
+      Register_Search_Pattern
+        (Kernel,
+         "->MEMBER",
+         "->\s*(\w+)\s*[^(]");
+
+      Register_Search_Pattern
+        (Kernel,
+         "->MEMBER(",
+         "->\s*(\w+)\s*(");
+
+      Register_Search_Pattern
+        (Kernel,
+         "C assignment",
+         "(\b(\w+)\s*(([-+*/%&|^]|<<|>>)?=[^=]|\+\+|--))|((\+\+|--)\s*(\w+))");
+
+      Register_Search_Pattern
+        (Kernel,
+         "call",
+         "\b(\w+)\s*(");
+
+      Register_Search_Pattern
+        (Kernel,
+         "CLASS::member",
+         "\b(\w+)\s*::\s*\w+\s*[^(]");
+
+      Register_Search_Pattern
+        (Kernel,
+         "class::MEMBER",
+         "\b\w+\s*::\s*(\w+)\s*[^(]");
+
+      Register_Search_Pattern
+        (Kernel,
+         "CLASS::member(",
+         "\b(\w+)\s*::\s*\w+\s*\(");
+
+      Register_Search_Pattern
+        (Kernel,
+         "class::MEMBER(",
+         "\b\w+\s*::\s*(\w+)\s*\(");
+
+      Register_Search_Pattern
+        (Kernel,
+         "CLASS<...>",
+         "\b(\w+)<[\w,\s]+>");
+
+      Register_Search_Pattern
+        (Kernel,
+         "comparison",
+         "\b(\w+)\s*(==|!=|>=|<=|>[^>]|<[^<])|" &
+         "(==|!=|[^>]>=|[^<]<=|[^->]>|[^<]<)\s*(\w+)");
+
+      Register_Search_Pattern
+        (Kernel,
+         "OBJECT->member",
+         "\b(\w+)\s*->\s*\w+\s*[^(]");
+
+      Register_Search_Pattern
+        (Kernel,
+         "OBJECT->member(",
+         "\b(\w+)\s*->\s*\w+\s*\(");
+
    end Register_Module;
 
 end Cpp_Module;
