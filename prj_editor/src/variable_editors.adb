@@ -421,10 +421,10 @@ package body Variable_Editors is
                      Set_Name_Of (Editor.Var, Name_Find);
                   end if;
 
-                  if Get_Active (Editor.Untyped_Single_Variable) then
-                     Set_Expression_Kind_Of (Editor.Var, Single);
-                  else
+                  if Get_Active (Editor.Untyped_List_Variable) then
                      Set_Expression_Kind_Of (Editor.Var, Prj.List);
+                  else
+                     Set_Expression_Kind_Of (Editor.Var, Single);
                   end if;
                end;
             end if;
