@@ -39,7 +39,7 @@ New features in GPS 1.3.0
   The automatic code correction is now able to recognize and suppress
   unreferenced named numbers.
 
-- C310-006 Improvements and clean ups in the indentation engine
+- C310-006 Improvements and clean ups in the Ada indentation engine
 
 - Projects can automatically be generated from an executable when using the
   --debug command line switch
