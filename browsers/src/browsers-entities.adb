@@ -1110,6 +1110,7 @@ package body Browsers.Entities is
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
       then
+         Push_State (Kernel, Busy);
          Find_All_References
            (Kernel       => Kernel,
             Entity       => Type_Item (Item).Entity,
@@ -1142,7 +1143,15 @@ package body Browsers.Entities is
 
          Type_Item (Item).Children_Computed := True;
          Refresh (Item);  --  ??? Could refresh only the title bar
+
+         Pop_State (Kernel);
       end if;
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Find_Children_Types: unexpected exception "
+                & Exception_Information (E));
    end Find_Children_Types;
 
    -------------------------
@@ -1531,6 +1540,8 @@ package body Browsers.Entities is
       Child_Side : Gtkada.Canvas.Item_Side;
       X2, Y2 : Glib.Gint)
    is
+      Depth : constant := 10;
+      Width : constant := 5;
       pragma Unreferenced (Link, Child_Side);
    begin
       case Parent_Side is
@@ -1540,9 +1551,9 @@ package body Browsers.Entities is
                GC,
                Filled => False,
                Points => ((X => X1, Y => Y1),
-                          (X => X1 - 20, Y => Y1 - 10),
-                          (X => X1 - 20, Y => Y1 + 10)));
-            Draw_Line (Window, GC, X1 - 20, Y1, X2, Y2);
+                          (X => X1 - Depth, Y => Y1 - Width),
+                          (X => X1 - Depth, Y => Y1 + Width)));
+            Draw_Line (Window, GC, X1 - Depth, Y1, X2, Y2);
 
          when East =>
             Draw_Polygon
@@ -1550,9 +1561,9 @@ package body Browsers.Entities is
                GC,
                Filled => False,
                Points => ((X => X1, Y => Y1),
-                          (X => X1 + 20, Y => Y1 - 10),
-                          (X => X1 + 20, Y => Y1 + 10)));
-            Draw_Line (Window, GC, X1 + 20, Y1, X2, Y2);
+                          (X => X1 + Depth, Y => Y1 - Width),
+                          (X => X1 + Depth, Y => Y1 + Width)));
+            Draw_Line (Window, GC, X1 + Depth, Y1, X2, Y2);
 
          when North =>
             Draw_Polygon
@@ -1560,9 +1571,9 @@ package body Browsers.Entities is
                GC,
                Filled => False,
                Points => ((X => X1, Y => Y1),
-                          (X => X1 + 10, Y => Y1 - 20),
-                          (X => X1 - 10, Y => Y1 - 20)));
-            Draw_Line (Window, GC, X1, Y1 - 20, X2, Y2);
+                          (X => X1 + Width, Y => Y1 - Depth),
+                          (X => X1 - Width, Y => Y1 - Depth)));
+            Draw_Line (Window, GC, X1, Y1 - Depth, X2, Y2);
 
          when South =>
             Draw_Polygon
@@ -1570,9 +1581,9 @@ package body Browsers.Entities is
                GC,
                Filled => False,
                Points => ((X => X1, Y => Y1),
-                          (X => X1 + 10, Y => Y1 + 20),
-                          (X => X1 - 10, Y => Y1 + 20)));
-            Draw_Line (Window, GC, X1, Y1 + 20, X2, Y2);
+                          (X => X1 + Width, Y => Y1 + Depth),
+                          (X => X1 - Width, Y => Y1 + Depth)));
+            Draw_Line (Window, GC, X1, Y1 + Depth, X2, Y2);
       end case;
    end Draw_Straight_Line;
 
