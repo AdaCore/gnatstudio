@@ -313,6 +313,14 @@ package Entities is
    end record;
    No_File_Location : constant File_Location := (null, 0, 0);
 
+   function Get_File   (Loc : File_Location) return Source_File;
+   pragma Inline (Get_File);
+   function Get_Line   (Loc : File_Location) return Natural;
+   pragma Inline (Get_Line);
+   function Get_Column (Loc : File_Location) return Natural;
+   pragma Inline (Get_Column);
+   --  Return the various components of the location
+
    ------------------------
    -- Entity_Information --
    ------------------------
@@ -339,6 +347,14 @@ package Entities is
       Location : out File_Location;
       Kind     : out Reference_Kind);
    --  Return the current end of scope for the entity
+
+   function Get_Name (Entity : Entity_Information) return String;
+   --  Return the name of the entity
+
+   function Get_Declaration_Of
+     (Entity : Entity_Information) return File_Location;
+   pragma Inline (Get_Declaration_Of);
+   --  Return the location of the declaration for the entity
 
    ----------------------
    -- Setting entities --

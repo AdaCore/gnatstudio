@@ -1112,4 +1112,50 @@ package body Entities is
       end if;
    end Update_Xref;
 
+   ------------------------
+   -- Get_Declaration_Of --
+   ------------------------
+
+   function Get_Declaration_Of
+     (Entity : Entity_Information) return File_Location is
+   begin
+      return Entity.Declaration;
+   end Get_Declaration_Of;
+
+   --------------
+   -- Get_File --
+   --------------
+
+   function Get_File (Loc : File_Location) return Source_File is
+   begin
+      return Loc.File;
+   end Get_File;
+
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line (Loc : File_Location) return Natural is
+   begin
+      return Loc.Line;
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column (Loc : File_Location) return Natural is
+   begin
+      return Loc.Column;
+   end Get_Column;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Entity : Entity_Information) return String is
+   begin
+      return Entity.Name.all;
+   end Get_Name;
+
 end Entities;
