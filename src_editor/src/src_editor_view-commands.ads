@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                       Copyright (C) 2003                          --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -25,7 +25,7 @@ with Glide_Kernel;
 
 package Src_Editor_View.Commands is
 
-   type Movement_Type is (Word, Paragraph);
+   type Movement_Type is (Word, Paragraph, Line, Char);
    type Move_Command is new Interactive_Command with record
       Kernel : Glide_Kernel.Kernel_Handle;
       Kind   : Movement_Type;
