@@ -18,9 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Bitmap;            use Gdk.Bitmap;
-with Gdk.Color;             use Gdk.Color;
-with Gdk.Pixmap;            use Gdk.Pixmap;
 with Glib;                  use Glib;
 with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Box;               use Gtk.Box;
@@ -48,7 +45,6 @@ with Snames;   use Snames;
 with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
 with Prj_API;          use Prj_API;
-with Pixmaps_Prj;      use Pixmaps_Prj;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -107,18 +103,12 @@ package body Creation_Wizard is
      (Wiz : out Prj_Wizard;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Pix  : Gdk_Pixmap;
-      Mask : Gdk_Bitmap;
       Page : Project_Editor_Page;
       Count : constant Natural := Project_Editor_Pages_Count (Kernel);
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
       Wizards.Initialize
-        (Wiz, Kernel, -"Project setup", "#0e79bd", Num_Pages => 1 + Count);
-
-      Create_From_Xpm_D
-        (Pix, null, Get_Default_Colormap, Mask, Null_Color, logo_xpm);
-      Add_Logo (Wiz, Pix, Mask);
+        (Wiz, Kernel, -"Project setup", Num_Pages => 1 + Count);
 
       Set_Toc (Wiz, 1, -"Naming the project", -"Creating a new project");
 
@@ -337,7 +327,8 @@ package body Creation_Wizard is
       Name : constant String := Select_Directory
         (Title          => -"Select project file location",
          Base_Directory => Name_As_Directory
-           (Get_Text (Prj_Wizard (W).Project_Location)));
+         (Get_Text (Prj_Wizard (W).Project_Location)),
+         History        => Get_History (Prj_Wizard (W).Kernel));
    begin
       if Name /= "" then
          Set_Text (Prj_Wizard (W).Project_Location, Name);
