@@ -1123,6 +1123,11 @@ package body GPS.Kernel.Hooks is
            & " loaded, and all previous settings and caches are now"
            & " obsolete."));
       Register_Hook
+        (Kernel, Project_Saved_Hook,
+         -("Hook called when a project is saved to disk. It is called for each"
+           & " project in the hierarchy"),
+         Type_Name => Project_Hook_Type);
+      Register_Hook
         (Kernel, Context_Changed_Hook,
          -("Hook called when the current context changes in GPS, ie a new file"
            & " is selected, or a new entity, or a new window,..."),
