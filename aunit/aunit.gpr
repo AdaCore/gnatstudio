@@ -1,5 +1,7 @@
 with "../gtkada/gtkada";
 with "../gvd/gvd_common";
+with "../kernel/kernel";
+with "../widgets/widgets";
 
 project Aunit is
 
