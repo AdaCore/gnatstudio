@@ -24,7 +24,6 @@ with Gtk.Window;        use Gtk.Window;
 with Glide_Kernel;      use Glide_Kernel;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;        use Glide_Intl;
-with Traces;            use Traces;
 with VFS;               use VFS;
 
 with Src_Editor_Box;    use Src_Editor_Box;
@@ -33,9 +32,6 @@ with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
 
 package body Src_Editor_Module.Line_Highlighting is
-
-   Me : constant Debug_Handle := Create
-     ("Src_Editor_Module.Line_Highlighting");
 
    --------------------------
    -- Edit_Command_Handler --
@@ -219,7 +215,6 @@ package body Src_Editor_Module.Line_Highlighting is
       if Index > 0 and then Index <= Module_Id.Categories'Last then
          return Module_Id.Categories (Index).GC;
       else
-         Trace (Me, -"Wrong category Id when getting color");
          return null;
       end if;
    end Get_GC;
@@ -235,7 +230,6 @@ package body Src_Editor_Module.Line_Highlighting is
       if Index > 0 and then Index <= Module_Id.Categories'Last then
          return Module_Id.Categories (Index).Color;
       else
-         Trace (Me, -"Wrong category Id when getting color");
          return Null_Color;
       end if;
    end Get_Color;
