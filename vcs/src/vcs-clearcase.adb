@@ -113,6 +113,9 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Parse the output of the command "describe -fmt "%Vn;%f;\n"".
+   --  (-fmt is an option that is used to specify the output format :
+   --   %Vn corresponds to the version name, and %f corresponds to the
+   --   checked-out version, if any).
 
    procedure Parse_Describe
      (Kernel     : Kernel_Handle;
