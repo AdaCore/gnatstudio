@@ -640,6 +640,7 @@ package body Display_Items is
                Item.Debugger.Selected_Item := null;
             end if;
          end;
+         null;
       end if;
    end On_Button_Click;
 
@@ -705,6 +706,9 @@ package body Display_Items is
 
    procedure Free (Item : access Display_Item_Record) is
    begin
+      if Item.Debugger.Selected_Item = Canvas_Item (Item) then
+         Item.Debugger.Selected_Item := null;
+      end if;
       Free (Item.Name);
       Free (Item.Entity);
       Free (Item.Id);
