@@ -55,6 +55,7 @@ package body Prj_Normalize is
 
    procedure Recurse (Mgr              : in out Scenario_Manager;
                       Values           : in out String_Id_Array;
+                      Scenario_Names   : in out String_Id_Array;
                       Converter        : in out Project_Converter;
                       Current_Project  : Project_Node_Id;
                       Internal_Project : Project_Node_Id;
@@ -160,6 +161,7 @@ package body Prj_Normalize is
 
    procedure Recurse (Mgr              : in out Scenario_Manager;
                       Values           : in out String_Id_Array;
+                      Scenario_Names   : in out String_Id_Array;
                       Converter        : in out Project_Converter;
                       Current_Project  : Project_Node_Id;
                       Internal_Project : Project_Node_Id;
@@ -175,11 +177,12 @@ package body Prj_Normalize is
       --  Append Item at the end of the declaration list for all the
       --  Parent_Decl.
 
-      procedure Find_Parent_Decl;
+      procedure Find_Parent_Decl (Names : String_Id_Array);
       --  Find the output declarative item to which statements read in the
       --  initial project should be added. If we have already seen a case
       --  statement, then this sets the appropriate list of case items that
       --  should be appended to.
+      --  Names is the list of scenarios to which we should append
 
       ------------
       -- Append --
@@ -214,27 +217,12 @@ package body Prj_Normalize is
       -- Find_Parent_Decl --
       ----------------------
 
-      procedure Find_Parent_Decl is
-         In_Case : Boolean;
-         J       : Natural;
+      procedure Find_Parent_Decl (Names : String_Id_Array) is
       begin
-         --  First, a quick check to make sure that at least one item in Values
-         --  is not null. Otherwise, we end up appending the same expression to
-         --  all the nodes in the case statement.
+         --  If we need to append to a case statement, create it on the fly,
+         --  and the appropriate case item at the same time.
 
-         J := Values'First;
-         if Converter.Case_Section = Empty_Node then
-            while J <= Values'Last loop
-               exit when Values (J) /= No_String;
-               J := J + 1;
-            end loop;
-         end if;
-
-         In_Case := (J <= Values'Last);
-
-         --  Find the parent in which new declarations will be added
-
-         if In_Case then
+         if Names'Length /= 0 then
             if Converter.Case_Section = Empty_Node then
                Converter.Case_Section := Default_Project_Node
                  (N_Case_Construction);
@@ -242,19 +230,16 @@ package body Prj_Normalize is
                  (Converter.Case_Section,
                   Get_Scenario_Var_Reference (Mgr, Internal_Project));
             end if;
-            declare
-               Names : constant String_Id_Array :=
-                 Get_Scenario_Names (Mgr, Values, Create => True);
-            begin
-               Parent_Decl := new Project_Node_Array (Names'Range);
-               for A in Names'Range loop
-                  Parent_Decl (A) := Get_Or_Create_Case_Item
-                    (Names (A), Converter.Case_Section);
-               end loop;
-            end;
+
+            Parent_Decl := new Project_Node_Array (Names'Range);
+            for A in Names'Range loop
+               Parent_Decl (A) := Get_Or_Create_Case_Item
+                 (Names (A), Converter.Case_Section);
+            end loop;
+
          else
             Parent_Decl := new Project_Node_Array (1 .. 1);
-            Parent_Decl (1) := Converter.Common_Section;
+            Parent_Decl (1) := Empty_Node;  --  to Converter.Common_Section
          end if;
 
          --  Find the last declaration in that parent
@@ -266,6 +251,7 @@ package body Prj_Normalize is
 
          for P in Parent_Decl'Range loop
             if Parent_Decl (P) /= Empty_Node then
+               Put_Line (Kind_Of (Parent_Decl (P))'Img);
                Decl_Item_Out (P) :=
                  First_Declarative_Item_Of (Parent_Decl (P));
                if Decl_Item_Out (P) /= Empty_Node then
@@ -283,7 +269,7 @@ package body Prj_Normalize is
       end Find_Parent_Decl;
 
    begin
-      Find_Parent_Decl;
+      Find_Parent_Decl (Scenario_Names);
 
       --  Add the required nodes
 
@@ -298,32 +284,85 @@ package body Prj_Normalize is
                Var_Index := Variable_Index
                  (Mgr, External_Variable_Name
                   (Current_Project,
-                   Case_Variable_Reference_Of
-                   (Current_Item_Node (Decl_Item))));
+                   Case_Variable_Reference_Of (Current_Item_Node (Decl_Item))));
 
                pragma Assert (Var_Index /= 0,
                               "Cannot import projects that have case "
                               & " statements not associated with"
                               & " typed and external variables");
 
-               Case_Item := First_Case_Item_Of
-                 (Current_Item_Node (Decl_Item));
-               while Case_Item /= Empty_Node loop
-                  --  Do we have a "when others" ?
-                  if First_Choice_Of (Case_Item) = Empty_Node then
-                     Values (Var_Index) := No_String;
-                  else
-                     Values (Var_Index) :=
-                       String_Value_Of (First_Choice_Of (Case_Item));
-                  end if;
+               Values (Var_Index) := No_String;
+               Case_Item := First_Case_Item_Of (Current_Item_Node (Decl_Item));
 
-                  Recurse (Mgr,
-                           Values, Converter,
-                           Current_Project,
-                           Internal_Project,
-                           First_Declarative_Item_Of (Case_Item));
-                  Case_Item := Next_Case_Item (Case_Item);
-               end loop;
+               declare
+                  Processed : String_Id_Array
+                    (1 .. Scenarios_Count (Mgr, Values));
+                  --  Array used to keep track of the scenario names already
+                  --  processed. This is used to eliminate these cases from the
+                  --  "when others" case.
+                  Processed_Index : Natural := Processed'First - 1;
+               begin
+                  while Case_Item /= Empty_Node loop
+
+                     --  Do we have a "when others" ?
+                     if First_Choice_Of (Case_Item) = Empty_Node then
+                        Values (Var_Index) := No_String;
+                     else
+                        Values (Var_Index) :=
+                          String_Value_Of (First_Choice_Of (Case_Item));
+                     end if;
+
+                     declare
+                        Names : String_Id_Array :=
+                          Get_Scenario_Names (Mgr, Values, Create => True);
+                        Names_Last : Natural := Names'Last;
+                        M : Natural;
+                     begin
+                        --  Are we processing a "when others" ? If yes, make
+                        --  sure we do not process a scenario that was already
+                        --  handled.
+                        if Values (Var_Index) = No_String then
+                           for N in Names'Range loop
+                              for J in Processed'First .. Processed_Index loop
+                                 if Processed (J) = Names (N) then
+                                    Names (N) := No_String;
+                                 end if;
+                              end loop;
+                           end loop;
+
+                           M := Names'First;
+                           while M <= Names_Last loop
+                              if Names (M) = No_String then
+                                 Names (M .. Names_Last - 1) :=
+                                   Names (M + 1 .. Names_Last);
+                                 Names_Last := Names_Last - 1;
+                              else
+                                 M := M + 1;
+                              end if;
+                           end loop;
+
+                        --  Else memorize the list of scenario processed, in
+                        --  case there is a "when others" later on.
+                        else
+                           for N in Names'Range loop
+                              Processed_Index := Processed_Index + 1;
+                              Processed (Processed_Index) := Names (N);
+                           end loop;
+                        end if;
+
+                        Recurse (Mgr,
+                                 Values,
+                                 Names (Names'First .. Names_Last),
+                                 Converter,
+                                 Current_Project,
+                                 Internal_Project,
+                                 First_Declarative_Item_Of (Case_Item));
+                     end;
+
+                     Case_Item := Next_Case_Item (Case_Item);
+                  end loop;
+               end;
+
                Values (Var_Index) := No_String;
 
                --  We then need to reevaluate the parent declaration, since all
@@ -333,7 +372,7 @@ package body Prj_Normalize is
 
                Free (Parent_Decl);
                Free (Decl_Item_Out);
-               Find_Parent_Decl;
+               Find_Parent_Decl (Get_Scenario_Names (Mgr, Values, True));
 
             when N_Package_Declaration =>
                declare
@@ -341,9 +380,10 @@ package body Prj_Normalize is
                   Val           : String_Id_Array (Values'Range) :=
                     (others => No_String);
                   Pkg, Decl : Project_Node_Id;
+                  No_Names : String_Id_Array (1 .. 0) := (others => No_String);
                begin
                   Recurse (Mgr,
-                           Val, Pkg_Converter,
+                           Val, No_Names, Pkg_Converter,
                            Current_Project,
                            Internal_Project,
                            First_Declarative_Item_Of
@@ -414,12 +454,14 @@ package body Prj_Normalize is
    is
       Values : String_Id_Array (1 .. Variable_Count (Mgr)) :=
         (others => No_String);
+      No_Names : String_Id_Array (1 .. 0) := (others => No_String);
       Converter : Project_Converter;
       Decl, Item : Project_Node_Id;
    begin
       Add_Imported_Project (Project, Internal_Project);
       Recurse (Mgr,
                Values,
+               No_Names,
                Converter,
                Project,
                Internal_Project,
