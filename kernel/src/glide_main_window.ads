@@ -75,4 +75,7 @@ package Glide_Main_Window is
    --  Ask confirmation before quitting, and then exists GPS.
    --  It will ask the user whether the MDI children should be saved.
 
+   procedure Load_Desktop (Window : access Glide_Window_Record'Class);
+   --  Load a saved desktop, if any, and create the console if needed.
+
 end Glide_Main_Window;
