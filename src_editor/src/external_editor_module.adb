@@ -512,7 +512,8 @@ package body External_Editor_Module is
             D        => Process_Data'
               (Kernel     => Kernel_Handle (Kernel),
                Descriptor => null,
-               Name       => null),
+               Name       => null,
+               Callback   => null),
            Destroy   => External_Timeout_Destroy'Access);
       end if;
 
