@@ -114,10 +114,13 @@ package body Gtkada.Code_Editors is
       Changed (Get_Vadj (Editor.Text));
 
       --  Change the cursor position, and highlight the entity.
+      --  We claim the selection so that the selected entity always has the
+      --  same color (if we don't, the first selection has a different color
+      --  than the following ones).
+      Claim_Selection (Editor.Text, True, 0);
       Set_Position (Editor.Text, Gint (Pos));
       Select_Region
         (Editor.Text, Gint (Pos), Gint (Last + Pos - Buffer'First));
-
       Thaw (Editor.Text);
    end Jump_To;
 
