@@ -116,7 +116,7 @@ package body SN.Find_Fns is
    --------------
 
    procedure Get_Pair
-     (DB : DB_File;
+     (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
