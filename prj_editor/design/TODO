@@ -35,11 +35,14 @@
   * [Manu] Obj_Dir selection should enable directory creation
     There should be a contextual menu to create subdirectories
 
-  * [Manu] Parsing switches: see if we can reuse the front-end
+---------------------
+-- Switches editor --
+---------------------
+
+  * [Manu] Get the strings for the combo boxes (optimization..) from gnatcmd.
 
   * [Manu] Advanced switches editor: should show list at bottom
     In red: unrecognized switches
 
-  * [Manu] One entry field per page in switches editor
+  * [Manu] Parsing switches: see if we can reuse the front-end
 
-  * [Manu] The switches editor should always use a notebook with four pages
