@@ -99,12 +99,13 @@ package Src_Info.Prj_Utils is
    --  ??? enough information to do so).
 
    function Find_Object_File
-     (Project_View    : Prj.Project_Id;
-      Short_File_Name : String;
-      Object_Path     : String)
+     (Project_View           : Prj.Project_Id;
+      Short_File_Name        : String;
+      Predefined_Object_Path : String := "")
       return String;
-   --  Find a file in the object path. Object_Path is the list of directories
-   --  that do not exist in the project, like the runtime location.
+   --  Try to locate the given object file in the project object path. If
+   --  not found, and Predefined_Project_Path is defined, then try to locate
+   --  the object file there.
    --  The empty string is returned if the file was not found.
 
 end Src_Info.Prj_Utils;
