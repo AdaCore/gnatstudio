@@ -59,6 +59,7 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
+with Language_Handlers.Glide;  use Language_Handlers.Glide;
 
 package body Project_Explorers is
 
@@ -1016,7 +1017,9 @@ package body Project_Explorers is
       Length := Read (F, Buffer.all'Address, Buffer'Length);
       Close (F);
 
-      Lang := Get_Language_From_File (File_Name);
+      Lang := Get_Language_From_File
+        (Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel)),
+         File_Name);
 
       if Lang /= null then
          Parse_Constructs (Lang, Buffer (1 .. Length), Constructs);
