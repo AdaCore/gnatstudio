@@ -54,7 +54,6 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 
-with GPS.Intl;                use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
