@@ -204,6 +204,11 @@ package body Directory_Tree is
    procedure On_Destroy (Tree : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
+   procedure On_Map (Tree : access Gtk_Widget_Record'Class);
+   --  Callback for the "map" signal. This is used to scroll the tree to show
+   --  the appropriate node. This can't be done if the tree is not visible,
+   --  since it has no effect otherwise.
+
    function Button_Press_Cb
      (Selector : access Gtk_Widget_Record'Class; Args : Gtk_Args)
       return Boolean;
@@ -255,6 +260,9 @@ package body Directory_Tree is
       Widget_Callback.Connect
         (Tree, "destroy", Widget_Callback.To_Marshaller (On_Destroy'Access));
 
+      Widget_Callback.Connect
+        (Tree, "map", Widget_Callback.To_Marshaller (On_Map'Access));
+
       --  ??? This is a workaround for a horizontal scrollbar problem: When the
       --  ctree is put in a scrolled window, and if this is not called, the
       --  scrollbar does not allow us to scroll as far right as possible...
@@ -271,6 +279,19 @@ package body Directory_Tree is
          Idle_Remove (Dir_Tree (Tree).Idle);
       end if;
    end On_Destroy;
+
+   ------------
+   -- On_Map --
+   ------------
+
+   procedure On_Map (Tree : access Gtk_Widget_Record'Class) is
+      T : Dir_Tree := Dir_Tree (Tree);
+   begin
+      if T.Moveto_Node /= null then
+         Node_Moveto (T, T.Moveto_Node, 0, 0.1, 0.2);
+         T.Moveto_Node := null;
+      end if;
+   end On_Map;
 
    ---------------
    -- Directory --
@@ -772,7 +793,11 @@ package body Directory_Tree is
          Gtk_Select (Data.Tree, Tmp);
          Expand (Data.Tree, Tmp);
 
-         Node_Moveto (Data.Tree, Tmp, 0, 0.1, 0.2);
+         if Mapped_Is_Set (Data.Tree) then
+            Node_Moveto (Data.Tree, Tmp, 0, 0.1, 0.2);
+         else
+            Data.Tree.Moveto_Node := Tmp;
+         end if;
 
          if Data.Busy_Cursor /= null then
             Set_Busy_Cursor (Data.Busy_Cursor, False);

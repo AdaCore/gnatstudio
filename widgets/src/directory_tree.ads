@@ -135,6 +135,10 @@ private
       Folder_Pix, Ofolder_Pix : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Mask, Ofolder_Mask : Gdk.Bitmap.Gdk_Bitmap;
       Idle      : Gtk.Main.Idle_Handler_Id;
+
+      Moveto_Node : Gtk.Ctree.Gtk_Ctree_Node;
+      --  Nove that should be displayed when the tree is made visible. This
+      --  needs to be done only when mapped, since it has no effect otherwise.
    end record;
 
    type Directory_Selector_Record is new Gtk.Paned.Gtk_Paned_Record with record
