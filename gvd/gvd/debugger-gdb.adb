@@ -1806,69 +1806,76 @@ package body Debugger.Gdb is
 
       elsif Result'Tag = Access_Type'Tag then
 
-         --  Skip the parenthesis contents if needed
-         if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
-            declare
-               Num : Natural := 1;
-            begin
-               Index := Index + 1;
-               while Num /= 0
-                 and then Index <= Type_Str'Last
-               loop
-                  if Type_Str (Index) = ')' then
-                     Num := Num - 1;
-                  elsif Type_Str (Index) = '(' then
-                     Num := Num + 1;
-                  end if;
-                  Index := Index + 1;
-               end loop;
-            end;
-            Index := Index + 1;
-         end if;
+         if Looking_At (Type_Str, Index, "(null)") then
+            Set_Value (Simple_Type (Result.all), "0x0");
+            Index := Index + 6;
 
-         --  Access to subprograms are sometimes printed as:
-         --     {void ()} 0x402488e4 <gtk_window_destroy>
-         if Index <= Type_Str'Last and then Type_Str (Index) = '{' then
-            Skip_To_Char (Type_Str, Index, '}');
-            Index := Index + 2;
-         end if;
-
-         if Index <= Type_Str'Last and then Type_Str (Index) = '@' then
-            Index := Index + 1;
-         end if;
-
-         declare
-            Int : constant Natural := Index;
-         begin
-            Skip_Hexa_Digit (Type_Str, Index);
-
-            --  If we have an extra indication like
-            --      <gtk_window_finalize>
-            --  in the value, keep it.
-
-            if Index < Type_Str'Last - 2
-              and then Type_Str (Index + 1) = '<'
-              and then not Looking_At (Type_Str, Index + 2, "repeats ")
-            then
-               Skip_To_Char (Type_Str, Index, '>');
-               Index := Index + 1;
-
-            --  Also keep string indications (for char* in C)
-            elsif Index < Type_Str'Last - 2
-              and then (Type_Str (Index + 1) = '"'
-                        or else Type_Str (Index + 1) = ''')
-            then
+         else
+            --  Skip the parenthesis contents if needed
+            if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
                declare
-                  Str    : String (1 .. 0);
+                  Num : Natural := 1;
                begin
                   Index := Index + 1;
-                  Parse_Cst_String (Type_Str, Index, Str);
-                  Index := Index - 1;
+                  while Num /= 0
+                    and then Index <= Type_Str'Last
+                  loop
+                     if Type_Str (Index) = ')' then
+                        Num := Num - 1;
+                     elsif Type_Str (Index) = '(' then
+                        Num := Num + 1;
+                     end if;
+                     Index := Index + 1;
+                  end loop;
                end;
+               Index := Index + 1;
             end if;
 
-            Set_Value (Simple_Type (Result.all), Type_Str (Int .. Index - 1));
-         end;
+            --  Access to subprograms are sometimes printed as:
+            --     {void ()} 0x402488e4 <gtk_window_destroy>
+            if Index <= Type_Str'Last and then Type_Str (Index) = '{' then
+               Skip_To_Char (Type_Str, Index, '}');
+               Index := Index + 2;
+            end if;
+
+            if Index <= Type_Str'Last and then Type_Str (Index) = '@' then
+               Index := Index + 1;
+            end if;
+
+            declare
+               Int : constant Natural := Index;
+            begin
+               Skip_Hexa_Digit (Type_Str, Index);
+
+               --  If we have an extra indication like
+               --      <gtk_window_finalize>
+               --  in the value, keep it.
+
+               if Index < Type_Str'Last - 2
+                 and then Type_Str (Index + 1) = '<'
+                 and then not Looking_At (Type_Str, Index + 2, "repeats ")
+               then
+                  Skip_To_Char (Type_Str, Index, '>');
+                  Index := Index + 1;
+
+                  --  Also keep string indications (for char* in C)
+               elsif Index < Type_Str'Last - 2
+                 and then (Type_Str (Index + 1) = '"'
+                           or else Type_Str (Index + 1) = ''')
+               then
+                  declare
+                     Str    : String (1 .. 0);
+                  begin
+                     Index := Index + 1;
+                     Parse_Cst_String (Type_Str, Index, Str);
+                     Index := Index - 1;
+                  end;
+               end if;
+
+               Set_Value
+                 (Simple_Type (Result.all), Type_Str (Int .. Index - 1));
+            end;
+         end if;
 
       -------------------
       -- String values --
