@@ -21,6 +21,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <pwd.h>
+#include <string.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -99,11 +101,11 @@ __gps_ensure_valid_output (void)
   HANDLE handle;
 
   if (!alloc_console_called)
-    { 
+    {
       handle = (HANDLE) _get_osfhandle (fileno (stdout));
 
       if (handle == INVALID_HANDLE_VALUE)
-        { 
+        {
           AllocConsole ();
           alloc_console_called = 1;
           freopen ("CONOUT$", "w", stdout);
@@ -111,4 +113,36 @@ __gps_ensure_valid_output (void)
         }
     }
 #endif
+}
+
+/**********************************************************
+ ** user_login_name ()
+ ** Return the real user name.
+ ** Return value must be freed by caller
+ **********************************************************/
+
+char* user_login_name () {
+   struct passwd* pw;
+   char* result;
+
+   result = (char*) getenv ("LOGNAME");
+   if (result) {
+      return strdup (result);
+   }
+
+  result = (char*) getenv ("USERNAME");  /* mostly windows users */
+  if (result) {
+     return strdup (result);
+  }
+
+  result = (char*) getenv ("USER");
+  if (result) {
+     return strdup (result);
+  }
+
+  pw = (struct passwd*) getpwuid (geteuid());
+  result = strdup (pw ? pw->pw_name : "unknown");
+  free (pw);
+
+  return result;
 }
