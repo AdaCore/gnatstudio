@@ -901,6 +901,7 @@ package body GVD.Source_Editors is
          Editor.Debugger_Current_File := new String' (File_Name);
       end if;
 
+      Set_Line (Editor, 1, False);
    exception
 
       --  File not found
