@@ -43,6 +43,8 @@ with Gtk.Object;          use Gtk.Object;
 with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Adjustment;      use Gtk.Adjustment;
+with Gtk.Container;       use Gtk.Container;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
 with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 
@@ -73,6 +75,7 @@ with GVD.Strings;               use GVD.Strings;
 with GVD.Types;                 use GVD.Types;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Preferences;           use GVD.Preferences;
+with GVD.Window_Settings;       use GVD.Window_Settings;
 with GVD.Status_Bar;            use GVD.Status_Bar;
 with GVD.Utils;                 use GVD.Utils;
 
@@ -711,11 +714,24 @@ package body GVD.Process is
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
       Length        : Guint;
+      Parent        : Gtk_Container;
+      Geometry_Info : Process_Tab_Geometry;
 
    begin
       Process := new Debugger_Process_Tab_Record;
       Initialize (Process);
       Initialize_Class_Record (Process, Signals, Class_Record);
+
+      --  Insert the stack window if needed.
+
+      if Get_Active (Window.Call_Stack) then
+         Parent :=
+           Gtk_Container (Get_Parent (Process.Data_Scrolledwindow));
+         Reparent (Process.Data_Scrolledwindow, Process.Data_Paned);
+         Add (Parent, Process.Data_Paned);
+         Unref (Process.Data_Paned);
+         Show_All (Parent);
+      end if;
 
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String' (Remote_Host);
@@ -807,6 +823,43 @@ package body GVD.Process is
 
       Gtk_New (Label);
       Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
+
+      --  Set the graphical parameters.
+
+      if Is_Regular_File (Window.Gvd_Home_Dir.all
+                          & Directory_Separator
+                          & "window_settings")
+      then
+         Geometry_Info := Get_Process_Tab_Geometry
+           (Page_Num (Window.Process_Notebook, Process.Process_Paned));
+
+         Set_Position (Process.Data_Editor_Paned, Geometry_Info.Data_Height);
+
+         if Get_Pref (Separate_Data) then
+            if Get_Active (Window.Call_Stack) then
+               Set_Default_Size (Process,
+                                 Geometry_Info.Data_Width
+                                 + Geometry_Info.Stack_Width,
+                                 Geometry_Info.Data_Height);
+            else
+               Set_Default_Size (Process,
+                                 Geometry_Info.Data_Width,
+                                 Geometry_Info.Data_Height);
+            end if;
+            Set_Position (Process.Process_Paned,
+                          Geometry_Info.Editor_Height);
+         else
+            Set_Position (Process.Process_Paned,
+                          Geometry_Info.Data_Height
+                          + Geometry_Info.Editor_Height);
+         end if;
+
+         if Get_Active (Window.Call_Stack) then
+            Set_Position (Process.Data_Paned, Geometry_Info.Stack_Width);
+         end if;
+
+      end if;
+
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
 
