@@ -51,4 +51,9 @@ package OS_Utils is
       Success      : out Boolean);
    --  Similar to GNAT.OS_Lib.Spawn, but call Idle periodically while waiting.
 
+   function Read_File (File : String) return String_Access;
+   --  Return the contents of an entire file.
+   --  If the file cannot be found, return null.
+   --  The caller is responsible for freeing the returned memory.
+
 end OS_Utils;

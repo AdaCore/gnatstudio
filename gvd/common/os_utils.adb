@@ -125,6 +125,29 @@ package body OS_Utils is
       return Max_Path;
    end Max_Path_Len;
 
+   ---------------
+   -- Read_File --
+   ---------------
+
+   function Read_File (File : String) return String_Access is
+      FD     : File_Descriptor := Invalid_FD;
+      Buffer : String_Access;
+      Length : Integer;
+
+   begin
+      FD := Open_Read (File, Fmode => Text);
+
+      if FD = Invalid_FD then
+         return null;
+      end if;
+
+      Length := Integer (File_Length (FD));
+      Buffer := new String (1 .. Length);
+      Length := Read (FD, Buffer.all'Address, Length);
+      Close (FD);
+      return Buffer;
+   end Read_File;
+
    ----------------------
    -- Set_OpenVMS_Host --
    ----------------------
