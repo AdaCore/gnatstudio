@@ -1,4 +1,5 @@
 include Makefile.common
+include Makefile.gnat
 
 PROJECT_FILE = glide/glide.gpr
 EXEC         = glide2
