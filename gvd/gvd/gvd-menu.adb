@@ -711,6 +711,40 @@ package body GVD.Menu is
       end if;
    end On_Tasks;
 
+   -----------
+   -- On_PD --
+   -----------
+
+   procedure On_PD
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Action, Widget);
+
+      Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Button : Message_Dialog_Buttons;
+
+   begin
+      if Tab /= null then
+         if Command_In_Process (Get_Process (Tab.Debugger)) then
+            Button := Message_Dialog
+              ((-"Cannot display protection domain list while the " &
+                "debugger is busy.") &
+               ASCII.LF &
+               (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons => Button_OK);
+            return;
+         end if;
+
+         Show_All (Top.PD_Dialog);
+         Gdk_Raise (Get_Window (Top.PD_Dialog));
+         Update (Top.PD_Dialog, Tab);
+      end if;
+   end On_PD;
+
    -------------------------
    -- On_Edit_Breakpoints --
    -------------------------

@@ -148,6 +148,12 @@ package GVD.Menu is
       Widget : Limited_Widget);
    --  Callback for Data->Tasks
 
+   procedure On_PD
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Callback for Data->Protection Domains
+
    procedure On_Edit_Breakpoints
      (Object : Data_Type_Access;
       Action : Guint;
