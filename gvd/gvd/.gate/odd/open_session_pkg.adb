@@ -134,13 +134,6 @@ begin
       Button_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
    Add (Open_Session.Hbuttonbox9, Open_Session.Cancel_Button);
 
-   Gtk_New (Open_Session.Help_Button, -"Help");
-   Set_Flags (Open_Session.Help_Button, Can_Default);
-   Button_Callback.Connect
-     (Open_Session.Help_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
-   Add (Open_Session.Hbuttonbox9, Open_Session.Help_Button);
-
 end Initialize;
 
 end Open_Session_Pkg;

@@ -296,13 +296,6 @@ begin
       Button_Callback.To_Marshaller (On_Cancel_Open_Clicked'Access));
    Add (Open_Program.Hbuttonbox7, Open_Program.Cancel_Button);
 
-   Gtk_New (Open_Program.Help_Button, -"Help");
-   Set_Flags (Open_Program.Help_Button, Can_Default);
-   Button_Callback.Connect
-     (Open_Program.Help_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Help_Open_Clicked'Access));
-   Add (Open_Program.Hbuttonbox7, Open_Program.Help_Button);
-
 end Initialize;
 
 procedure Open_Program

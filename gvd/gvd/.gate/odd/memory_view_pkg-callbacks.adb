@@ -201,15 +201,4 @@ package body Memory_View_Pkg.Callbacks is
       null;
    end On_Cancel_Clicked;
 
-   ---------------------
-   -- On_Help_Clicked --
-   ---------------------
-
-   procedure On_Help_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Help_Clicked;
-
 end Memory_View_Pkg.Callbacks;

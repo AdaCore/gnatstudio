@@ -259,13 +259,6 @@ begin
       Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
    Add (Memory_View.Hbuttonbox11, Memory_View.Cancel);
 
-   Gtk_New (Memory_View.Help, -"Help");
-   Set_Flags (Memory_View.Help, Can_Default);
-   Button_Callback.Connect
-     (Memory_View.Help, "clicked",
-      Button_Callback.To_Marshaller (On_Help_Clicked'Access));
-   Add (Memory_View.Hbuttonbox11, Memory_View.Help);
-
    Gtk_New (Memory_View.Memory_Status_Bar);
    Set_Border_Width (Memory_View.Memory_Status_Bar, 3);
    Pack_Start (Memory_View.Vbox20, Memory_View.Memory_Status_Bar, False, False, 0);

@@ -13,17 +13,17 @@ package body General_Preferences_Pkg.Callbacks is
    use Gtk.Arguments;
 
    -------------------------------------
-   -- On_Odd_Preferences_Delete_Event --
+   -- On_Gvd_Preferences_Delete_Event --
    -------------------------------------
 
-   function On_Odd_Preferences_Delete_Event
+   function On_Gvd_Preferences_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
       return False;
-   end On_Odd_Preferences_Delete_Event;
+   end On_Gvd_Preferences_Delete_Event;
 
    --------------------------
    -- On_Ok_Button_Clicked --

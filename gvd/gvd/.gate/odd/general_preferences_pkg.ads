@@ -128,6 +128,8 @@ package General_Preferences_Pkg is
       Label44 : Gtk_Label;
       Label45 : Gtk_Label;
       Label48 : Gtk_Label;
+      Label211 : Gtk_Label;
+      Html_Entry : Gtk_Entry;
       Label_Helpers : Gtk_Label;
       Hbuttonbox6 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;

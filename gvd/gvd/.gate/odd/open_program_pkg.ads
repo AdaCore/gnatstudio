@@ -41,7 +41,6 @@ package Open_Program_Pkg is
       Hbuttonbox7 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
-      Help_Button : Gtk_Button;
    end record;
    type Open_Program_Access is access all Open_Program_Record'Class;
 

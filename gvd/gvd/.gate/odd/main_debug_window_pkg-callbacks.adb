@@ -575,60 +575,27 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Show1_Activate;
 
+   ------------------------
+   -- On_Manual_Activate --
+   ------------------------
+
+   procedure On_Manual_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Manual_Activate;
+
    ---------------------------
-   -- On_Overview1_Activate --
+   -- On_About_Gvd_Activate --
    ---------------------------
 
-   procedure On_Overview1_Activate
+   procedure On_About_Gvd_Activate
      (Object : access Gtk_Menu_Item_Record'Class)
    is
    begin
       null;
-   end On_Overview1_Activate;
-
-   --------------------------
-   -- On_On_Item1_Activate --
-   --------------------------
-
-   procedure On_On_Item1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_On_Item1_Activate;
-
-   ----------------------------
-   -- On_What_Now_1_Activate --
-   ----------------------------
-
-   procedure On_What_Now_1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_What_Now_1_Activate;
-
-   ---------------------------------
-   -- On_Tip_Of_The_Day1_Activate --
-   ---------------------------------
-
-   procedure On_Tip_Of_The_Day1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Tip_Of_The_Day1_Activate;
-
-   ----------------------------
-   -- On_About_Odd1_Activate --
-   ----------------------------
-
-   procedure On_About_Odd1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_About_Odd1_Activate;
+   end On_About_Gvd_Activate;
 
    ------------------------------
    -- On_Run1_Toolbar_Activate --

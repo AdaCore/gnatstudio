@@ -42,7 +42,7 @@ begin
    Set_Position (General_Preferences, Win_Pos_Center);
    Set_Modal (General_Preferences, False);
    Return_Callback.Connect
-     (General_Preferences, "delete_event", On_Odd_Preferences_Delete_Event'Access);
+     (General_Preferences, "delete_event", On_Gvd_Preferences_Delete_Event'Access);
 
    Gtk_New_Vbox (General_Preferences.Vbox2, False, 0);
    Add (General_Preferences, General_Preferences.Vbox2);
@@ -810,7 +810,7 @@ begin
    Set_Shadow_Type (General_Preferences.Frame6, Shadow_Etched_In);
    Add (General_Preferences.Notebook1, General_Preferences.Frame6);
 
-   Gtk_New (General_Preferences.Table6, 4, 2, False);
+   Gtk_New (General_Preferences.Table6, 5, 2, False);
    Set_Row_Spacings (General_Preferences.Table6, 2);
    Set_Col_Spacings (General_Preferences.Table6, 0);
    Add (General_Preferences.Frame6, General_Preferences.Table6);
@@ -886,6 +886,24 @@ begin
    Attach (General_Preferences.Table6, General_Preferences.Label48, 0, 1, 3, 4,
      Fill, 0,
      0, 0);
+
+   Gtk_New (General_Preferences.Label211, -("HTML Browser"));
+   Set_Alignment (General_Preferences.Label211, 7.45058e-09, 0.5);
+   Set_Padding (General_Preferences.Label211, 3, 0);
+   Set_Justify (General_Preferences.Label211, Justify_Center);
+   Set_Line_Wrap (General_Preferences.Label211, False);
+   Attach (General_Preferences.Table6, General_Preferences.Label211, 0, 1, 4, 5,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Html_Entry);
+   Set_Editable (General_Preferences.Html_Entry, True);
+   Set_Max_Length (General_Preferences.Html_Entry, 0);
+   Set_Text (General_Preferences.Html_Entry, -"");
+   Set_Visibility (General_Preferences.Html_Entry, True);
+   Attach (General_Preferences.Table6, General_Preferences.Html_Entry, 1, 2, 4, 5,
+     Expand or Fill, 0,
+     3, 0);
 
    Gtk_New (General_Preferences.Label_Helpers, -("Helpers"));
    Set_Alignment (General_Preferences.Label_Helpers, 0.5, 0.5);

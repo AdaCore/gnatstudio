@@ -75,7 +75,6 @@ package Memory_View_Pkg is
       Reset : Gtk_Button;
       Submit : Gtk_Button;
       Cancel : Gtk_Button;
-      Help : Gtk_Button;
       Memory_Status_Bar : Gtk_Statusbar;
    end record;
    type Memory_View_Access is access all Memory_View_Record'Class;

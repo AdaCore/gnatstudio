@@ -258,17 +258,6 @@ package body Memory_View_Pkg.Callbacks is
       Hide (Get_Toplevel (Object));
    end On_Cancel_Clicked;
 
-   ---------------------
-   -- On_Help_Clicked --
-   ---------------------
-
-   procedure On_Help_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Help_Clicked;
-
    ---------------------------
    -- On_Show_Ascii_Toggled --
    ---------------------------

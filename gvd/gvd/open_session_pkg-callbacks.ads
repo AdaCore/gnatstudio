@@ -38,7 +38,4 @@ package Open_Session_Pkg.Callbacks is
    procedure On_Cancel_Button_Clicked
      (Object : access Gtk_Button_Record'Class);
 
-   procedure On_Help_Button_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
 end Open_Session_Pkg.Callbacks;

@@ -56,15 +56,4 @@ package body Open_Program_Pkg.Callbacks is
       null;
    end On_Cancel_Open_Clicked;
 
-   --------------------------
-   -- On_Help_Open_Clicked --
-   --------------------------
-
-   procedure On_Help_Open_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Help_Open_Clicked;
-
 end Open_Program_Pkg.Callbacks;

@@ -31,7 +31,4 @@ package Open_Program_Pkg.Callbacks is
    procedure On_Cancel_Open_Clicked
      (Object : access Gtk_Button_Record'Class);
 
-   procedure On_Help_Open_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
 end Open_Program_Pkg.Callbacks;

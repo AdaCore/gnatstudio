@@ -34,7 +34,6 @@ package Open_Session_Pkg is
       Hbuttonbox9 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
-      Help_Button : Gtk_Button;
    end record;
    type Open_Session_Access is access all Open_Session_Record'Class;
 

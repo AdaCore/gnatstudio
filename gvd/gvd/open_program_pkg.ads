@@ -33,6 +33,7 @@ with GVD.Types; use GVD.Types;
 package Open_Program_Pkg is
 
    type Open_Program_Record is new Gtk_Window_Record with record
+      Valid : Boolean;
       Vbox13 : Gtk_Vbox;
       Frame8 : Gtk_Frame;
       Table7 : Gtk_Table;
@@ -62,8 +63,6 @@ package Open_Program_Pkg is
       Hbuttonbox7 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
-      Help_Button : Gtk_Button;
-      Valid : Boolean;
    end record;
    type Open_Program_Access is access all Open_Program_Record'Class;
 

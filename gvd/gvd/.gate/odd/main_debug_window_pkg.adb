@@ -563,56 +563,21 @@ begin
    Gtk_New (Main_Debug_Window.Help1_Menu);
    Set_Submenu (Main_Debug_Window.Help1, Main_Debug_Window.Help1_Menu);
 
-   Gtk_New (Main_Debug_Window.Overview1, -"Overview...");
-   Set_Right_Justify (Main_Debug_Window.Overview1, False);
-   Set_Sensitive (Main_Debug_Window.Overview1, False);
+   Gtk_New (Main_Debug_Window.Manual, -"GVD Manual...");
+   Set_Right_Justify (Main_Debug_Window.Manual, False);
+   Add_Accelerator (Main_Debug_Window.Manual, "activate",
+     The_Accel_Group, GDK_F1, 0, Accel_Visible);
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Manual, "activate",
+      Widget_Callback.To_Marshaller (On_Manual_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Manual);
+
+   Gtk_New (Main_Debug_Window.About_Gvd, -"About GVD...");
+   Set_Right_Justify (Main_Debug_Window.About_Gvd, False);
    Menu_Item_Callback.Connect
-     (Main_Debug_Window.Overview1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Overview1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Overview1);
-
-   Gtk_New (Main_Debug_Window.On_Item1, -"On Item...");
-   Set_Right_Justify (Main_Debug_Window.On_Item1, False);
-   Set_Sensitive (Main_Debug_Window.On_Item1, False);
-   Add_Accelerator (Main_Debug_Window.On_Item1, "activate",
-     The_Accel_Group, GDK_F1, Gdk.Types.Shift_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.On_Item1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_On_Item1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.On_Item1);
-
-   Gtk_New (Main_Debug_Window.Separator29);
-   Set_Right_Justify (Main_Debug_Window.Separator29, False);
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator29);
-
-   Gtk_New (Main_Debug_Window.What_Now_1, -"What Now ... ?");
-   Set_Right_Justify (Main_Debug_Window.What_Now_1, False);
-   Set_Sensitive (Main_Debug_Window.What_Now_1, False);
-   Add_Accelerator (Main_Debug_Window.What_Now_1, "activate",
-     The_Accel_Group, GDK_F1, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.What_Now_1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_What_Now_1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.What_Now_1);
-
-   Gtk_New (Main_Debug_Window.Tip_Of_The_Day1, -"Tip Of The Day...");
-   Set_Right_Justify (Main_Debug_Window.Tip_Of_The_Day1, False);
-   Set_Sensitive (Main_Debug_Window.Tip_Of_The_Day1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Tip_Of_The_Day1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Tip_Of_The_Day1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Tip_Of_The_Day1);
-
-   Gtk_New (Main_Debug_Window.Separator30);
-   Set_Right_Justify (Main_Debug_Window.Separator30, False);
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator30);
-
-   Gtk_New (Main_Debug_Window.About_Odd1, -"About GVD...");
-   Set_Right_Justify (Main_Debug_Window.About_Odd1, False);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.About_Odd1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_About_Odd1_Activate'Access));
-   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.About_Odd1);
+     (Main_Debug_Window.About_Gvd, "activate",
+      Menu_Item_Callback.To_Marshaller (On_About_Gvd_Activate'Access));
+   Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.About_Gvd);
 
    Gtk_New (Main_Debug_Window.Toolbar2, Orientation_Horizontal, Toolbar_Icons);
    Set_Space_Size (Main_Debug_Window.Toolbar2, 5);

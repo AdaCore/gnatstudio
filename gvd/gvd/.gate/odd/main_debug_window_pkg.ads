@@ -96,13 +96,8 @@ package Main_Debug_Window_Pkg is
       Show1 : Gtk_Menu_Item;
       Help1 : Gtk_Menu_Item;
       Help1_Menu : Gtk_Menu;
-      Overview1 : Gtk_Menu_Item;
-      On_Item1 : Gtk_Menu_Item;
-      Separator29 : Gtk_Menu_Item;
-      What_Now_1 : Gtk_Menu_Item;
-      Tip_Of_The_Day1 : Gtk_Menu_Item;
-      Separator30 : Gtk_Menu_Item;
-      About_Odd1 : Gtk_Menu_Item;
+      Manual : Gtk_Menu_Item;
+      About_Gvd : Gtk_Menu_Item;
       Toolbar2 : Gtk_Toolbar;
       Button49 : Gtk_Widget;
       Button50 : Gtk_Widget;
