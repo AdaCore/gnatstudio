@@ -3,13 +3,17 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Krunch;
 with Namet;               use Namet;
 with Prj;                 use Prj;
+with Prj_API;             use Prj_API;
 with Prj.Com;
 with Src_Info.ALI_Maps;   use Src_Info.ALI_Maps;
 with Src_Info.Prj_Utils;  use Src_Info.Prj_Utils;
 with String_Utils;        use String_Utils;
 with Types;               use Types;
+with Traces;              use Traces;
 
 package body Src_Info.ALI is
+
+   Me : Debug_Handle := Create ("Src_Info.Ali");
 
    Maximum_Filename_Length : constant := 8;
    --  ??? The maximum number of characters in a krunched filename (not
@@ -569,7 +573,9 @@ package body Src_Info.ALI is
       end if;  --  filename found in spec exception list
 
       --  Is this a body, according to the naming scheme?
-      if Extension_Matches (Source_Filename, Naming.Body_Append) then
+      if Get_Unit_Part_From_Filename
+        (Get_Name_String (Source_Filename), Project) = Unit_Body
+      then
          Get_Unit_Source_File
            (List, Source_Filename, Source_Filename, Unit_Body,
             Project, Source_Path, File);
@@ -578,10 +584,12 @@ package body Src_Info.ALI is
 
       --  Is this a source, according to the naming scheme?
       --  (it should be, or that would be a bug)
-      if Extension_Matches (Source_Filename, Naming.Specification_Append) then
+      if Get_Unit_Part_From_Filename
+        (Get_Name_String (Source_Filename), Project) = Unit_Spec
+      then
          declare
             Unit_Name : constant Name_Id :=
-               Get_Unit_Name (Source_Filename, Naming);
+               Get_Unit_Name (Source_Filename, Project);
          begin
             if Unit_Name = No_Name then
                --  This is a bug...
@@ -1537,6 +1545,8 @@ package body Src_Info.ALI is
       if New_ALI_Id = No_ALI_Id then
          Unit    := null;
          Success := False;
+         Trace (Me, "Parse_ALI_File: Couldn't load or scan "
+                & ALI_Filename);
          return;
       end if;
 
@@ -1617,15 +1627,17 @@ package body Src_Info.ALI is
       end if; -- Spec_Id /= No_Array_Element
 
       --  Is this a body, according to the naming scheme?
-      if Extension_Matches (Source_Name_Id, Naming.Body_Append) then
+      if Get_Unit_Part_From_Filename
+        (Get_Name_String (Source_Name_Id), Project) = Unit_Body
+      then
          return Get_ALI_Filename (Source_Name_Id);
       end if;
 
       --  At this point, we know that we have a spec, so check the extension
       --  to make sure that it matches the naming scheme. Otherwise, return
       --  the empty string.
-      if not Extension_Matches
-          (Source_Name_Id, Naming.Specification_Append)
+      if Get_Unit_Part_From_Filename
+        (Get_Name_String (Source_Name_Id), Project) /= Unit_Spec
       then
          return "";
       end if;
@@ -1635,7 +1647,7 @@ package body Src_Info.ALI is
 
       declare
          Unit_Name : constant Name_Id :=
-           Get_Unit_Name (Source_Name_Id, Naming);
+           Get_Unit_Name (Source_Name_Id, Project);
       begin
          if Unit_Name = No_Name then
             --  ??? This is a bug, return the empty string for now, but
@@ -1694,6 +1706,9 @@ package body Src_Info.ALI is
             Full_File : constant String := Find_Object_File
               (Project, Ali_File, Extra_Object_Path);
          begin
+            Trace (Me, "Parsing LI file for " & Source_Filename
+                   & " ALI_File=" & Ali_File
+                   & " full_name=" & Full_File);
             Parse_ALI_File (Full_File, Project,
                             Extra_Source_Path,
                             List,
@@ -1701,6 +1716,7 @@ package body Src_Info.ALI is
                             Success);
 
             if not Success then
+               Trace (Me, "Couldn't parse LI file for " & Source_Filename);
                Lib_Info := No_LI_File;
             end if;
          end;
