@@ -10,6 +10,7 @@ build:
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali_twice $(LARGS)
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_scope_tree $(LARGS)
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_ref $(LARGS)
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_local_ref $(LARGS)
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone find_dep $(LARGS)
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone generate_db $(LARGS)
 
