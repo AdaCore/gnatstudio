@@ -20,62 +20,44 @@
 
 --  This package defines the module for code fixing.
 
-with Gtk.Menu_Item;          use Gtk.Menu_Item;
 with Gtk.Menu;               use Gtk.Menu;
-
 with Glide_Kernel;           use Glide_Kernel;
-
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Codefix;                use Codefix;
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Codefix.Text_Manager;
 
 package Codefix_Module is
-
-   type Codefix_Module_ID_Record is new Glide_Kernel.Module_ID_Record with
-   record
-      Current_Text : Ptr_Text_Navigator;
-      Corrector    : Ptr_Correction_Manager;
-      Errors_Found : Ptr_Errors_Interface;
-      Kernel       : Kernel_Handle;
-   end record;
-
-   type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
-
-   Codefix_Module_ID   : Codefix_Module_ID_Access;
-   Codefix_Module_Name : constant String := "Code_Fixing";
-
-   procedure Destroy (Id : in out Codefix_Module_ID_Record);
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   type Codefix_Menu_Item_Record is new Gtk_Menu_Item_Record with record
-      Fix_Command : Ptr_Command;
-      Error       : Error_Id;
+   type Codefix_Session_Record is record
+      Category     : GNAT.OS_Lib.String_Access;
+      Corrector    : Ptr_Correction_Manager;
+      Current_Text : Codefix.Text_Manager.Ptr_Text_Navigator;
    end record;
+   type Codefix_Session is access all Codefix_Session_Record;
 
-   type Codefix_Menu_Item is access all Codefix_Menu_Item_Record;
-
-   procedure Gtk_New (This : out Codefix_Menu_Item; Label : String := "");
-
-   procedure Initialize
-     (Menu_Item : access Codefix_Menu_Item_Record;
-      Label     : String);
-
-   function Create_Submenu (Error : Error_Id) return Gtk_Menu;
-
-   procedure Execute_Corrupted_Cb (Error_Message : String);
-
-   procedure Create_Pixmap (Error : Error_Id);
-   --  Add to the location box a pixmap that will fixes the error.
-
-   procedure Remove_Pixmap (Error : Error_Id);
-   --  Remove from the location box the pixmap of the error.
-
-   Compilation_Category : constant String := "Builder results";
-   --  ??? This is a duplicate from commands-builder.ads (-"Builder results")
+   function Create_Submenu
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Session      : access Codefix_Session_Record;
+      Error        : Error_Id) return Gtk_Menu;
+   --  Return a menu with all the possible fixes for Error
 
    Location_Button_Name : constant String := "Codefix";
+
+   procedure Create_Pixmap_And_Category
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Session      : access Codefix_Session_Record;
+      Error        : Error_Id);
+   --  Add to the location box a pixmap that will fixes the error.
+
+   procedure Remove_Pixmap
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Session      : access Codefix_Session_Record;
+      Error        : Error_Id);
+   --  Remove from the location box the pixmap of the error.
 
 end Codefix_Module;

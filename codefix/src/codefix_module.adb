@@ -21,11 +21,14 @@
 --  This package defines the module for code fixing.
 
 with Ada.Exceptions;         use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with Gtk.Menu;               use Gtk.Menu;
 with Gtk.Menu_Item;          use Gtk.Menu_Item;
+with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.MDI;             use Gtkada.MDI;
+with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
 
 with Glib.Object;            use Glib.Object;
@@ -66,9 +69,46 @@ package body Codefix_Module is
    Parse_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Output_Cst'Access, 2 => Category_Cst'Access);
 
-   procedure On_Fix
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+   type Codefix_Sessions_Array is array (Natural range <>) of Codefix_Session;
+   type Codefix_Sessions is access Codefix_Sessions_Array;
+
+   type Codefix_Module_ID_Record is new Glide_Kernel.Module_ID_Record with
+      record
+         Sessions : Codefix_Sessions;
+      end record;
+   type Codefix_Module_ID_Access is access all Codefix_Module_ID_Record'Class;
+
+   Codefix_Module_ID   : Codefix_Module_ID_Access;
+   Codefix_Module_Name : constant String := "Code_Fixing";
+
+   procedure Destroy (Id : in out Codefix_Module_ID_Record);
+
+   type Codefix_Menu_Item_Record is new Gtk_Menu_Item_Record with record
+      Fix_Command  : Ptr_Command;
+      Error        : Error_Id;
+      Kernel       : Kernel_Handle;
+      Session      : Codefix_Session;
+   end record;
+   type Codefix_Menu_Item is access all Codefix_Menu_Item_Record;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Codefix_Sessions_Array, Codefix_Sessions);
+
+   procedure Destroy (Session : in out Codefix_Session);
+   --  Destroy the contents of the session
+
+   procedure Gtk_New (This : out Codefix_Menu_Item; Label : String := "");
+   procedure Initialize
+     (Menu_Item : access Codefix_Menu_Item_Record'Class;
+      Label     : String);
+   --  Create a new codefix menu item
+
+   procedure Execute_Corrupted_Cb
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Error_Message : String);
+   --  Handles error messages when an error can no longer be corrected.
+
+   procedure On_Fix (Widget : access Gtk_Widget_Record'Class);
    --  Fixes the error that is proposed on a Menu_Item of Codefix.
 
    procedure Codefix_Handler
@@ -88,9 +128,7 @@ package body Codefix_Module is
       Kernel  : Kernel_Handle);
    --  Initializes the fix list of Codefix.
 
-   type GPS_Navigator is new Text_Navigator_Abstr with record
-      Kernel : Kernel_Handle;
-   end record;
+   type GPS_Navigator is new Text_Navigator_Abstr with null record;
 
    function Get_Body_Or_Spec
      (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File;
@@ -107,16 +145,26 @@ package body Codefix_Module is
    procedure Activate_Codefix
      (Kernel   : Kernel_Handle;
       Output   : String;
-      Category : String := -Compilation_Category);
+      Category : String);
    --  Activate postfix for a given compilation output
-
-   procedure Create_Pixmap_And_Category
-     (Error : Error_Id; Category : String := -Compilation_Category);
-   --  Same as Create_Pixmap, but the category is specified
 
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles shell commands for this module
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Session : in out Codefix_Session) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Codefix_Session_Record, Codefix_Session);
+   begin
+      Free (Session.Current_Text);
+      Free (Session.Corrector);
+      Free (Session.Category);
+      Unchecked_Free (Session);
+   end Destroy;
 
    ----------------------
    -- Get_Body_Or_Spec --
@@ -125,37 +173,31 @@ package body Codefix_Module is
    function Get_Body_Or_Spec
      (Text : GPS_Navigator; File_Name : Virtual_File) return Virtual_File is
    begin
-      return Other_File_Name (Text.Kernel, File_Name);
+      return Other_File_Name (Get_Kernel (Text), File_Name);
    end Get_Body_Or_Spec;
 
    ------------
    -- On_Fix --
    ------------
 
-   procedure On_Fix
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
-   is
+   procedure On_Fix (Widget : access Gtk_Widget_Record'Class) is
       Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
-      pragma Unreferenced (Context);
+      Error : constant Error_Message := Get_Error_Message (Mitem.Error);
    begin
       Validate_And_Commit
-        (Codefix_Module_ID.Corrector.all,
-         Codefix_Module_ID.Current_Text.all,
+        (Mitem.Session.Corrector.all,
+         Mitem.Session.Current_Text.all,
          Mitem.Error,
          Mitem.Fix_Command.all);
 
       Remove_Location_Action
-        (Kernel        => Codefix_Module_ID.Kernel,
+        (Kernel        => Mitem.Kernel,
          Identifier    => Location_Button_Name,
-         Category      => -Compilation_Category,
-         File          => Create
-           (Get_Error_Message (Mitem.Error).File_Name.all,
-            Codefix_Module_ID.Kernel),
-         Line          => Get_Error_Message (Mitem.Error).Line,
-         Column        => Get_Error_Message (Mitem.Error).Col,
-         Message       =>
-           Cut_Message (Get_Message (Get_Error_Message (Mitem.Error))));
+         Category      => Mitem.Session.Category.all,
+         File          => Get_File (Error),
+         Line          => Get_Line (Error),
+         Column        => Get_Column (Error),
+         Message       => Cut_Message (Get_Message (Error)));
 
    exception
       when E : others =>
@@ -169,40 +211,63 @@ package body Codefix_Module is
    procedure Activate_Codefix
      (Kernel   : Kernel_Handle;
       Output   : String;
-      Category : String := -Compilation_Category)
+      Category : String)
    is
       Current_Error : Error_Id;
+      Errors_Found : Ptr_Errors_Interface   := new Compilation_Output;
+      Session      : Codefix_Session;
    begin
-      Free (Codefix_Module_ID.Errors_Found);
-      Free (Codefix_Module_ID.Corrector);
-      Free (Codefix_Module_ID.Current_Text);
+      if Codefix_Module_ID.Sessions /= null then
+         for S in Codefix_Module_ID.Sessions'Range loop
+            if Codefix_Module_ID.Sessions (S).Category.all = Category then
+               Session := Codefix_Module_ID.Sessions (S);
+               exit;
+            end if;
+         end loop;
+      end if;
 
-      Codefix_Module_ID.Errors_Found := new Compilation_Output;
-      Codefix_Module_ID.Corrector := new Correction_Manager;
-      Codefix_Module_ID.Current_Text := new GPS_Navigator;
+      if Session = null then
+         declare
+            Tmp : Codefix_Sessions := Codefix_Module_ID.Sessions;
+         begin
+            Session := new Codefix_Session_Record;
+            Session.Category := new String'(Category);
 
-      GPS_Navigator (Codefix_Module_ID.Current_Text.all).Kernel := Kernel;
-      Set_Error_Cb
-        (Codefix_Module_ID.Corrector.all, Execute_Corrupted_Cb'Access);
+            if Tmp = null then
+               Codefix_Module_ID.Sessions := new Codefix_Sessions_Array'
+                 (1 .. 1 => Session);
+            else
+               Codefix_Module_ID.Sessions := new Codefix_Sessions_Array'
+                 (Tmp.all & Session);
+            end if;
 
+            Unchecked_Free (Tmp);
+         end;
+      end if;
+
+      Free (Session.Corrector);
+      Free (Session.Current_Text);
+
+      Session.Corrector    := new Correction_Manager;
+      Session.Current_Text := new GPS_Navigator;
+
+      Set_Kernel   (Session.Current_Text.all, Kernel);
+      Set_Error_Cb (Session.Corrector.all, Execute_Corrupted_Cb'Access);
       Set_Last_Output
-        (Compilation_Output (Codefix_Module_ID.Errors_Found.all),
-         Kernel,
-         Output);
-
+        (Compilation_Output (Errors_Found.all), Kernel, Output);
       Analyze
-        (Codefix_Module_ID.Corrector.all,
-         Codefix_Module_ID.Current_Text.all,
-         Codefix_Module_ID.Errors_Found.all,
-         null);
+        (Session.Corrector.all, Session.Current_Text.all,
+         Errors_Found.all, null);
 
       --  Update the location window to show which errors can be fixed
 
-      Current_Error := Get_First_Error (Codefix_Module_ID.Corrector.all);
+      Current_Error := Get_First_Error (Session.Corrector.all);
       while Current_Error /= Null_Error_Id loop
-         Create_Pixmap_And_Category (Current_Error, Category);
+         Create_Pixmap_And_Category (Kernel, Session, Current_Error);
          Current_Error := Next (Current_Error);
       end loop;
+
+      Free (Errors_Found);
 
    exception
       when E : others =>
@@ -219,9 +284,13 @@ package body Codefix_Module is
       Kernel  : Kernel_Handle)
    is
       pragma Unreferenced (Widget, Args);
+      Compilation_Category : constant String := -"Builder results";
+      --  ??? This is a duplicate from commands-builder.ads
+
    begin
       Activate_Codefix
-        (Kernel, Execute_GPS_Shell_Command (Kernel, "get_build_output"));
+        (Kernel, Execute_GPS_Shell_Command (Kernel, "get_build_output"),
+         Compilation_Category);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -238,8 +307,18 @@ package body Codefix_Module is
 
       Graphic_Codefix : Graphic_Codefix_Access;
       Child           : MDI_Child;
+      Session         : Codefix_Session;
    begin
-      Update_All (Codefix_Module_ID.Current_Text.all);
+      if Codefix_Module_ID.Sessions = null then
+         return;
+      end if;
+
+      --  ??? Should select session interactively
+
+      Session := Codefix_Module_ID.Sessions
+        (Codefix_Module_ID.Sessions'First);
+
+      Update_All (Session.Current_Text.all);
 
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Graphic_Codefix_Record'Tag);
@@ -247,11 +326,9 @@ package body Codefix_Module is
          Gtk_New
            (Graphic_Codefix,
             Kernel,
-            Codefix_Module_ID.Current_Text,
-            Codefix_Module_ID.Corrector,
+            Session,
             Remove_Pixmap'Access,
-            Create_Pixmap'Access);
-
+            Create_Pixmap_And_Category'Access);
          Child := Put (Kernel, Graphic_Codefix, Module => Codefix_Module_ID);
          Set_Title (Child, -"Code fixing", -"Codefix");
       else
@@ -277,41 +354,55 @@ package body Codefix_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-
       Location      : Message_Context_Access;
-      Error         : Error_Id;
-      Error_Caption : GNAT.OS_Lib.String_Access;
       Menu_Item     : Gtk_Menu_Item;
+      Session       : Codefix_Session;
+      Error         : Error_Id;
 
    begin
       if Context.all in Message_Context'Class then
          Location := Message_Context_Access (Context);
 
          if not Has_Category_Information (Location)
-           or else Category_Information (Location) /= -Compilation_Category
+           or else Codefix_Module_ID.Sessions = null
          then
             return;
          end if;
 
-         if Has_Message_Information (Location)
-           and then Has_File_Information (Location)
+         --  Get the session given the name of the category
+
+         for S in Codefix_Module_ID.Sessions'Range loop
+            if Codefix_Module_ID.Sessions (S).Category.all =
+              Category_Information (Location)
+            then
+               Session := Codefix_Module_ID.Sessions (S);
+               exit;
+            end if;
+         end loop;
+
+         if Session = null then
+            return;
+         end if;
+
+         if not Has_Message_Information (Location)
+           or else not Has_File_Information (Location)
          then
-            Assign (Error_Caption,
-                    Base_Name (File_Information (Location)) &
-                    ":" & Message_Information (Location));
-         else
             return;
          end if;
 
          Gtk_New (Menu_Item, -"Code fixing");
 
          Error := Search_Error
-           (Codefix_Module_ID.Corrector.all, Error_Caption.all);
+           (Session.Corrector.all,
+            File    => File_Information (Location),
+            Line    => Line_Information (Location),
+            Column  => Column_Information (Location),
+            Message => Message_Information (Location));
 
          if Error /= Null_Error_Id and then not Is_Fixed (Error) then
             Set_Submenu
               (Menu_Item,
-               Create_Submenu (Error));
+               Create_Submenu (Get_Kernel (Context), Session, Error));
             Append (Menu, Menu_Item);
          end if;
       end if;
@@ -325,38 +416,34 @@ package body Codefix_Module is
    -- Remove_Pixmap --
    -------------------
 
-   procedure Remove_Pixmap (Error : Error_Id) is
+   procedure Remove_Pixmap
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Session      : access Codefix_Session_Record;
+      Error        : Error_Id)
+   is
+      Err : constant Error_Message := Get_Error_Message (Error);
    begin
       Remove_Location_Action
-        (Kernel        => Codefix_Module_ID.Kernel,
-         Identifier    => Location_Button_Name,
-         Category      => -Compilation_Category,
-         File          => Create
-           (Get_Error_Message (Error).File_Name.all,
-            Codefix_Module_ID.Kernel),
-         Line          => Get_Error_Message (Error).Line,
-         Column        => Get_Error_Message (Error).Col,
-         Message       =>
-           Cut_Message (Get_Message (Get_Error_Message (Error))));
+        (Kernel     => Kernel,
+         Identifier => Location_Button_Name,
+         Category   => Session.Category.all,
+         File       => Get_File (Err),
+         Line       => Get_Line (Err),
+         Column     => Get_Column (Err),
+         Message    => Cut_Message (Get_Message (Err)));
    end Remove_Pixmap;
-
-   -------------------
-   -- Create_Pixmap --
-   -------------------
-
-   procedure Create_Pixmap (Error : Error_Id) is
-   begin
-      Create_Pixmap_And_Category (Error, -Compilation_Category);
-   end Create_Pixmap;
 
    --------------------------------
    -- Create_Pixmap_And_Category --
    --------------------------------
 
    procedure Create_Pixmap_And_Category
-     (Error : Error_Id; Category : String := -Compilation_Category)
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Session      : access Codefix_Session_Record;
+      Error        : Error_Id)
    is
       New_Action    : Action_Item;
+      Err : constant Error_Message := Get_Error_Message (Error);
    begin
       New_Action := new Line_Information_Record;
       New_Action.Text := new String'(-"Fix error");
@@ -368,26 +455,20 @@ package body Codefix_Module is
       end if;
 
       New_Action.Associated_Command := new Codefix_Command;
-      Codefix_Command (New_Action.Associated_Command.all).Error :=
-        Error;
-      Codefix_Command (New_Action.Associated_Command.all).Current_Text :=
-        Codefix_Module_ID.Current_Text;
-      Codefix_Command (New_Action.Associated_Command.all).Corrector :=
-        Codefix_Module_ID.Corrector;
+      Codefix_Command (New_Action.Associated_Command.all).Error   := Error;
+      Codefix_Command (New_Action.Associated_Command.all).Session :=
+        Codefix_Session (Session);
       Codefix_Command (New_Action.Associated_Command.all).Kernel :=
-        Codefix_Module_ID.Kernel;
+        Kernel_Handle (Kernel);
 
       Add_Location_Action
-        (Kernel        => Codefix_Module_ID.Kernel,
+        (Kernel        => Kernel,
          Identifier    => Location_Button_Name,
-         Category      => Category,
-         File          => Create
-           (Get_Error_Message (Error).File_Name.all,
-            Codefix_Module_ID.Kernel),
-         Line          => Get_Error_Message (Error).Line,
-         Column        => Get_Error_Message (Error).Col,
-         Message       =>
-           Cut_Message (Get_Message (Get_Error_Message (Error))),
+         Category      => Session.Category.all,
+         File          => Get_File (Err),
+         Line          => Get_Line (Err),
+         Column        => Get_Column (Err),
+         Message       => Cut_Message (Get_Message (Err)),
          Action        => New_Action);
    end Create_Pixmap_And_Category;
 
@@ -399,15 +480,6 @@ package body Codefix_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Codefix_Module_ID := new Codefix_Module_ID_Record;
-
-      Codefix_Module_ID.Current_Text := new GPS_Navigator;
-      Codefix_Module_ID.Errors_Found := new Compilation_Output;
-      Codefix_Module_ID.Corrector := new Correction_Manager;
-      Codefix_Module_ID.Kernel := Kernel_Handle (Kernel);
-
-      GPS_Navigator (Codefix_Module_ID.Current_Text.all).Kernel :=
-        Kernel_Handle (Kernel);
-
       Register_Module
         (Module                  => Module_ID (Codefix_Module_ID),
          Kernel                  => Kernel,
@@ -415,14 +487,14 @@ package body Codefix_Module is
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Codefix_Contextual_Menu'Access);
 
-      --  ??? Disabled for now, as the UI is not quite ready yet.
+--      --  ??? Disabled for now, as the UI is not quite ready yet.
 
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => "/" & (-"Tools"),
          Text        => -"_Code Fixing",
          Callback    => Codefix_Handler'Access,
-         Sensitive   => False);
+         Sensitive   => True);
 
       Kernel_Callback.Connect
         (Kernel,
@@ -481,7 +553,7 @@ package body Codefix_Module is
      (This : GPS_Navigator;
       File : in out Text_Interface'Class) is
    begin
-      Set_Kernel (Console_Interface (File), This.Kernel);
+      Set_Kernel (Console_Interface (File), Get_Kernel (This));
    end Initialize;
 
    -------------
@@ -499,7 +571,7 @@ package body Codefix_Module is
    ----------------
 
    procedure Initialize
-     (Menu_Item : access Codefix_Menu_Item_Record;
+     (Menu_Item : access Codefix_Menu_Item_Record'Class;
       Label     : String) is
    begin
       Gtk.Menu_Item.Initialize (Menu_Item, Label);
@@ -509,39 +581,29 @@ package body Codefix_Module is
    -- Create_Submenu --
    --------------------
 
-   function Create_Submenu (Error : Error_Id) return Gtk_Menu is
+   function Create_Submenu
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Session      : access Codefix_Session_Record;
+      Error        : Error_Id) return Gtk_Menu
+   is
       Menu          : Gtk_Menu;
       Solution_Node : Command_List.List_Node;
-      Context       : Selection_Context_Access;
-      --  ??? Where is this context freed ?
+      Mitem         : Codefix_Menu_Item;
    begin
       Gtk_New (Menu);
-      Context := new Selection_Context;
-      Glide_Kernel.Set_Context_Information
-        (Context,
-         Codefix_Module_ID.Kernel,
-         Module_ID (Codefix_Module_ID));
-
       Solution_Node := First (Get_Solutions (Error));
 
       while Solution_Node /= Command_List.Null_Node loop
-         declare
-            Mitem : Codefix_Menu_Item;
-            Str   : GNAT.OS_Lib.String_Access;
-         begin
-            Gtk_New (Mitem, Get_Caption (Data (Solution_Node)));
-            Assign (Str, Get_Caption (Data (Solution_Node)));
-            Mitem.Fix_Command := new Text_Command'Class'
-              (Data (Solution_Node));
-            Free (Str);
-            Mitem.Error := Error;
-            Context_Callback.Connect
-              (Mitem,
-               "activate",
-               Context_Callback.To_Marshaller (On_Fix'Access),
-               Context);
-            Append (Menu, Mitem);
-         end;
+         Gtk_New (Mitem, Get_Caption (Data (Solution_Node)));
+
+         --  ??? Where is this freed
+         Mitem.Fix_Command  := new Text_Command'Class'(Data (Solution_Node));
+         Mitem.Error        := Error;
+         Mitem.Kernel       := Kernel_Handle (Kernel);
+         Mitem.Session      := Codefix_Session (Session);
+         Widget_Callback.Connect
+           (Mitem, "activate", Widget_Callback.To_Marshaller (On_Fix'Access));
+         Append (Menu, Mitem);
 
          Solution_Node := Next (Solution_Node);
       end loop;
@@ -555,9 +617,11 @@ package body Codefix_Module is
 
    procedure Destroy (Id : in out Codefix_Module_ID_Record) is
    begin
-      Free (Id.Current_Text);
-      Free (Id.Corrector);
-      Free (Id.Errors_Found);
+      for S in Id.Sessions'Range loop
+         Destroy (Id.Sessions (S));
+      end loop;
+      Unchecked_Free (Id.Sessions);
+
       Free_Parsers;
       Destroy (Module_ID_Record (Id));
    end Destroy;
@@ -566,14 +630,14 @@ package body Codefix_Module is
    -- Execute_Corrupted_Cb --
    --------------------------
 
-   procedure Execute_Corrupted_Cb (Error_Message : String) is
+   procedure Execute_Corrupted_Cb
+     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Error_Message : String) is
    begin
-      Trace
-        (Me, "Fix of current error is no longer pertinent");
+      Trace (Me, "Fix of current error is no longer pertinent");
       Trace (Me, "Exception got: " & Error_Message);
       Insert
-        (Codefix_Module_ID.Kernel,
-         -"Fix of current error is no longer relevant");
+        (Kernel, -"Fix of current error is no longer relevant");
    end Execute_Corrupted_Cb;
 
 end Codefix_Module;
