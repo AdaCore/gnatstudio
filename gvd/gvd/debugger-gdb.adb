@@ -3266,7 +3266,7 @@ package body Debugger.Gdb is
       Byte     : in String) is
    begin
       Switch_Language (Debugger, "c");
-      Send (Debugger, "set {short_short_integer}" & Address & " = 0x" & Byte,
+      Send (Debugger, "set {char}" & Address & " = 0x" & Byte,
             Mode => Internal);
       Restore_Language (Debugger);
    end Put_Memory_Byte;
