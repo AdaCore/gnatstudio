@@ -92,27 +92,18 @@ begin
    Free (MD_Tab);
 
    --  create declaration (if it has not been already created)
-   if First_MD_Pos = Sym.Start_Position then
-      Insert_Declaration
-        (Handler           => LI_Handler (Global_CPP_Handler),
-         File              => Global_LI_File,
-         List              => Global_LI_File_List,
-         Symbol_Name       =>
-            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename   =>
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location          => First_MD_Pos,
-         Kind              => Target_Kind,
-         Scope             => Global_Scope,
-         Declaration_Info  => Decl_Info);
-   else
-      Decl_Info := Find_Declaration
-        (Global_LI_File,
+   Insert_Declaration
+     (Handler           => LI_Handler (Global_CPP_Handler),
+      File              => Global_LI_File,
+      List              => Global_LI_File_List,
+      Symbol_Name       =>
          Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-         Target_Kind,
-         First_MD_Pos);
-   end if;
+      Source_Filename   =>
+         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+      Location          => First_MD_Pos,
+      Kind              => Target_Kind,
+      Scope             => Global_Scope,
+      Declaration_Info  => Decl_Info);
 
    --  for all subsequent declarations, add reference to the first decl
    if Sym.Start_Position /= First_MD_Pos then
