@@ -1362,10 +1362,17 @@ package body Src_Editor_Box is
                   Start_Line := To_Box_Line (Get_Line (Start_Iter));
                   End_Line   := To_Box_Line (Get_Line (End_Iter));
 
-                  --  Do not consider the first line selected unless the first
+                  --  Do not consider the last line selected if only the first
                   --  character is selected.
 
-                  if Get_Line_Offset (Start_Iter) /= 0 then
+                  if Get_Line_Offset (End_Iter) = 0 then
+                     End_Line := End_Line - 1;
+                  end if;
+
+                  --  Do not consider the first line selected if only the last
+                  --  character is selected.
+
+                  if Ends_Line (Start_Iter) then
                      Start_Line := Start_Line + 1;
                   end if;
 
@@ -2409,7 +2416,16 @@ package body Src_Editor_Box is
 
          Forward_Chars (Iter, Gint (Length), Success);
 
-         if Success then
+         --  If there is only one character to highlight and that character
+         --  is an ASCII.LF, we do not highlight it, since nothing at all
+         --  would be visible, due to the way the GtkTextView highlights
+         --  line ends.
+
+         if Success
+           and then not
+             (Length = 1
+              and then Get_Char (Mark_Iter) = ASCII.LF)
+         then
             Select_Region
               (Editor.Source_Buffer,
                Get_Line (Mark_Iter),
