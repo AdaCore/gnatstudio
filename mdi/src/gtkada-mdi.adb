@@ -66,6 +66,11 @@ package body Gtkada.MDI is
    Min_Height : constant Gint := 2 * Border_Thickness + Title_Bar_Height;
    --  Minimal size for all windows
 
+   Corner_Size : constant Gint := Border_Thickness * 2;
+   --  Extra tolerance when the user selects a corner for resizing (if the
+   --  pointer is within Corner_Size in both coordinates, then we are clicking
+   --  on the corner)
+
    use Widget_List;
 
    function Button_Pressed
@@ -694,57 +699,68 @@ package body Gtkada.MDI is
    is
       X_Side, Y_Side : Gint;
    begin
-      if X < Border_Thickness then
+      if X <= Border_Thickness then
+         X_Side := -2;
+      elsif X <= Corner_Size then
          X_Side := -1;
-      elsif X > Gint (Get_Allocation_Width (Child)) - Border_Thickness then
+      elsif X >= Gint (Get_Allocation_Width (Child)) - Border_Thickness then
+         X_Side := 2;
+      elsif X >= Gint (Get_Allocation_Width (Child)) - Corner_Size then
          X_Side := 1;
       else
          X_Side := 0;
       end if;
 
-      if Y < Border_Thickness then
+      if Y <= Border_Thickness then
+         Y_Side := -2;
+      elsif Y <= Corner_Size then
          Y_Side := -1;
-      elsif Y > Gint (Get_Allocation_Height (Child)) - Border_Thickness then
+      elsif Y >= Gint (Get_Allocation_Height (Child)) - Border_Thickness then
+         Y_Side := 2;
+      elsif Y >= Gint (Get_Allocation_Height (Child)) - Corner_Size then
          Y_Side := 1;
       else
          Y_Side := 0;
       end if;
 
-      if X_Side = -1 then
-         if Y_Side = -1 then
-            if Child.State /= Docked then
-               return Top_Left_Corner;
-            end if;
-         elsif Y_Side = 0 then
-            if Child.State /= Docked or else Child.Dock = Right then
-               return Left_Side;
-            end if;
-         elsif Child.State /= Docked then
+      if X_Side <= -1 and then Y_Side <= -1 then
+         if Child.State /= Docked then
+            return Top_Left_Corner;
+         end if;
+
+      elsif X_Side <= -1 and then Y_Side >= 1 then
+         if Child.State /= Docked then
             return Bottom_Left_Corner;
          end if;
 
-      elsif X_Side = 0 then
-         if Y_Side = -1 then
-            if Child.State /= Docked or else Child.Dock = Bottom then
-               return Top_Side;
-            end if;
-         elsif Y_Side = 0 then
-            return Left_Ptr;
-         elsif Child.State /= Docked or else Child.Dock = Top then
-            return Bottom_Side;
+      elsif X_Side >= 1 and then Y_Side <= -1 then
+         if Child.State /= Docked then
+            return Top_Right_Corner;
          end if;
 
-      else
-         if Y_Side = -1 then
-            if Child.State /= Docked then
-               return Top_Right_Corner;
-            end if;
-         elsif Y_Side = 0 then
-            if Child.State /= Docked or else Child.Dock = Left then
-               return Right_Side;
-            end if;
-         elsif Child.State /= Docked then
+      elsif X_Side >= 1 and then Y_Side >= 1 then
+         if Child.State /= Docked then
             return Bottom_Right_Corner;
+         end if;
+
+      elsif X_Side = -2 and then Y_Side in -1 .. 1 then
+         if Child.State /= Docked or else Child.Dock = Right then
+            return Left_Side;
+         end if;
+
+      elsif X_Side = 2 and then Y_Side in -1 .. 1 then
+         if Child.State /= Docked or else Child.Dock = Left then
+            return Right_Side;
+         end if;
+
+      elsif Y_Side = -2 and then X_Side in -1 .. 1 then
+         if Child.State /= Docked or else Child.Dock = Bottom then
+            return Top_Side;
+         end if;
+
+      elsif Y_Side = 2 and then X_Side in -1 .. 1 then
+         if Child.State /= Docked or else Child.Dock = Top then
+            return Bottom_Side;
          end if;
       end if;
       return Left_Ptr;
