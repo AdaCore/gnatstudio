@@ -23,6 +23,7 @@ with String_List_Utils;         use String_List_Utils;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Intl;                use Glide_Intl;
 
 with GNAT.OS_Lib;
@@ -46,6 +47,7 @@ with Commands.Locations;        use Commands.Locations;
 with File_Utils;                use File_Utils;
 with Basic_Types;               use Basic_Types;
 with VFS;                       use VFS;
+
 
 package body VCS.ClearCase is
 
@@ -467,7 +469,8 @@ package body VCS.ClearCase is
          Status_Output_Handler'Access,
          -"ClearCase : Querying status");
 
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (C), False, ClearCase_Identifier);
 
       Free (Command_Head);
       Free (Args);
@@ -744,8 +747,17 @@ package body VCS.ClearCase is
               (Checkout_File_Command,
                Fail_Message);
 
-            Enqueue (Rep.Queue, Checkout_File_Command);
-            Enqueue (Rep.Queue, Open_File_Command);
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkout_File_Command),
+               False,
+               ClearCase_Identifier);
+
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Open_File_Command),
+               False,
+               ClearCase_Identifier);
          end;
 
          File_Node := Next (File_Node);
@@ -850,7 +862,11 @@ package body VCS.ClearCase is
               (Checkin_File_Command,
                Fail_Message);
 
-            Enqueue (Rep.Queue, Checkin_File_Command);
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkin_File_Command),
+               False,
+               ClearCase_Identifier);
          end;
 
          File_Node := Next (File_Node);
@@ -909,8 +925,17 @@ package body VCS.ClearCase is
 
             --  Enqueue the actions.
 
-            Enqueue (Rep.Queue, Update_Command);
-            Enqueue (Rep.Queue, Success_Message);
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Update_Command),
+               False,
+               ClearCase_Identifier);
+
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Success_Message),
+               False,
+               ClearCase_Identifier);
          end;
 
          File_Node := Next (File_Node);
@@ -1211,8 +1236,17 @@ package body VCS.ClearCase is
               (Checkin_Dir_Command,
                Success_Message);
 
-            Enqueue (Rep.Queue, Checkout_Dir_Command);
-            Enqueue (Rep.Queue, Checkin_Dir_Command);
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkout_Dir_Command),
+               False,
+               ClearCase_Identifier);
+
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkin_Dir_Command),
+               False,
+               ClearCase_Identifier);
          end;
 
          File_Node := Next (File_Node);
@@ -1350,8 +1384,17 @@ package body VCS.ClearCase is
               (Checkin_Dir_Command,
                Success_Message);
 
-            Enqueue (Rep.Queue, Checkout_Dir_Command);
-            Enqueue (Rep.Queue, Checkin_Dir_Command);
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkout_Dir_Command),
+               False,
+               ClearCase_Identifier);
+
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Checkin_Dir_Command),
+               False,
+               ClearCase_Identifier);
          end;
 
          File_Node := Next (File_Node);
@@ -1396,7 +1439,11 @@ package body VCS.ClearCase is
 
             --  Enqueue the actions.
 
-            Enqueue (Rep.Queue, Revert_Command);
+            Launch_Background_Command
+              (Rep.Kernel,
+               Command_Access (Revert_Command),
+               False,
+               ClearCase_Identifier);
          end;
 
          File_Node := Next (File_Node);
@@ -1488,8 +1535,17 @@ package body VCS.ClearCase is
 
       --  Enqueue the action.
 
-      Enqueue (Rep.Queue, Diff_File_Command);
-      Enqueue (Rep.Queue, Success_Message);
+      Launch_Background_Command
+        (Rep.Kernel,
+         Command_Access (Diff_File_Command),
+         False,
+         ClearCase_Identifier);
+
+      Launch_Background_Command
+        (Rep.Kernel,
+         Command_Access (Success_Message),
+         False,
+         ClearCase_Identifier);
    end Diff;
 
    ---------
@@ -1519,7 +1575,11 @@ package body VCS.ClearCase is
          Text_Output_Handler'Access,
          -"ClearCase: Querying revision history");
 
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel,
+         Command_Access (C),
+         False,
+         ClearCase_Identifier);
 
       Free (Command_Head);
       Free (Args);
@@ -1560,7 +1620,12 @@ package body VCS.ClearCase is
          Annotation_Output_Handler'Access,
          -"ClearCase: Querying annotations");
 
-      Enqueue (Rep.Queue, C);
+
+      Launch_Background_Command
+        (Rep.Kernel,
+         Command_Access (C),
+         False,
+         ClearCase_Identifier);
 
       Free (Command_Head);
       Free (Args);
