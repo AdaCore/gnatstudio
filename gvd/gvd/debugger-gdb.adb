@@ -26,8 +26,6 @@ with GNAT.Regpat;    use GNAT.Regpat;
 with GNAT.Expect;    use GNAT.Expect;
 with GNAT.OS_Lib;    use GNAT.OS_Lib;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Languages;      use Languages;
-
 with Ada.Tags;       use Ada.Tags;
 
 package body Debugger.Gdb is
