@@ -1969,7 +1969,6 @@ package body Projects.Registry is
    exception
       when Process_Died =>
          if Object_Path_Set then
-            --  Is the call below sufficient ???
             Prj.Ext.Set_Project_Path (Current.all);
          else
             Set_Predefined_Object_Path (Registry, Current.all);
