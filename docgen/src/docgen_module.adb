@@ -62,9 +62,6 @@ package body Docgen_Module is
       Ignore_Some_Comments  : Param_Spec_Boolean;
       --  Ignore all comments with "--!"
 
-      Comments_Before       : Param_Spec_Boolean;
-      --  Find doc comments for entities before the entity itself
-
       Show_Private_Entities : Param_Spec_Boolean;
       --  Show also private entities
 
@@ -97,7 +94,6 @@ package body Docgen_Module is
      (Type_Of_File_P         : Type_Api_Doc := HTML;
       Process_Body_Files_P   : Boolean := False;
       Ignorable_Comments_P   : Boolean := False;
-      Comments_Above_P       : Boolean := False;
       Show_Private_P         : Boolean := False;
       References_P           : Boolean := False;
       One_Doc_File_P         : Boolean := False;
@@ -210,23 +206,21 @@ package body Docgen_Module is
    begin
       My_Options :=
         (Type_Of_File       =>
-           Docgen_Module (Docgen_Module_ID).Options.Type_Of_File,
+           Docgen_Module (Docgen_Module_Id).Options.Type_Of_File,
          Process_Body_Files =>
-           Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files,
+           Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files,
          Ignorable_Comments =>
-           Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments,
-         Comments_Above     =>
-           Docgen_Module (Docgen_Module_ID).Options.Comments_Above,
+           Docgen_Module (Docgen_Module_Id).Options.Ignorable_Comments,
          Show_Private       =>
-           Docgen_Module (Docgen_Module_ID).Options.Show_Private,
+           Docgen_Module (Docgen_Module_Id).Options.Show_Private,
          References         =>
-           Docgen_Module (Docgen_Module_ID).Options.References,
+           Docgen_Module (Docgen_Module_Id).Options.References,
          One_Doc_File       =>
-           Docgen_Module (Docgen_Module_ID).Options.One_Doc_File,
+           Docgen_Module (Docgen_Module_Id).Options.One_Doc_File,
          Link_All           =>
-           Docgen_Module (Docgen_Module_ID).Options.Link_All,
+           Docgen_Module (Docgen_Module_Id).Options.Link_All,
          Tagged_Types       =>
-           Docgen_Module (Docgen_Module_ID).Options.Tagged_Types);
+           Docgen_Module (Docgen_Module_Id).Options.Tagged_Types);
    end Get_Options;
 
    -----------------
@@ -237,29 +231,26 @@ package body Docgen_Module is
      (Type_Of_File_P       : Type_Api_Doc := HTML;
       Process_Body_Files_P : Boolean := False;
       Ignorable_Comments_P : Boolean := False;
-      Comments_Above_P     : Boolean := False;
       Show_Private_P       : Boolean := False;
       References_P         : Boolean := False;
       One_Doc_File_P       : Boolean := False;
       Link_All_P           : Boolean := False;
       Tagged_Types_P       : Boolean := False) is
    begin
-      Docgen_Module (Docgen_Module_ID).Options.Type_Of_File := Type_Of_File_P;
-      Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files :=
+      Docgen_Module (Docgen_Module_Id).Options.Type_Of_File := Type_Of_File_P;
+      Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files :=
         Process_Body_Files_P;
-      Docgen_Module (Docgen_Module_ID).Options.Ignorable_Comments :=
+      Docgen_Module (Docgen_Module_Id).Options.Ignorable_Comments :=
         Ignorable_Comments_P;
-      Docgen_Module (Docgen_Module_ID).Options.Comments_Above :=
-        Comments_Above_P;
-      Docgen_Module (Docgen_Module_ID).Options.Show_Private :=
+      Docgen_Module (Docgen_Module_Id).Options.Show_Private :=
         Show_Private_P;
-      Docgen_Module (Docgen_Module_ID).Options.References :=
+      Docgen_Module (Docgen_Module_Id).Options.References :=
         References_P;
-      Docgen_Module (Docgen_Module_ID).Options.One_Doc_File :=
+      Docgen_Module (Docgen_Module_Id).Options.One_Doc_File :=
         One_Doc_File_P;
-      Docgen_Module (Docgen_Module_ID).Options.Link_All :=
+      Docgen_Module (Docgen_Module_Id).Options.Link_All :=
         Link_All_P;
-      Docgen_Module (Docgen_Module_ID).Options.Tagged_Types :=
+      Docgen_Module (Docgen_Module_Id).Options.Tagged_Types :=
         Tagged_Types_P;
    end Set_Options;
 
@@ -282,7 +273,7 @@ package body Docgen_Module is
 
          Is_Spec := Is_Spec_File (Kernel, File);
 
-         if Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
+         if Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files
            or else Is_Spec
          then
             Source := Get_Or_Create
@@ -310,20 +301,18 @@ package body Docgen_Module is
       Set_Options
         (Type_Api_Doc'Val
            (Get_Pref
-              (Kernel, Docgen_Module (Docgen_Module_ID).Type_Generated_File)),
+              (Kernel, Docgen_Module (Docgen_Module_Id).Type_Generated_File)),
          Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_ID).Generate_Body_Files),
+           (Kernel, Docgen_Module (Docgen_Module_Id).Generate_Body_Files),
          Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments),
+           (Kernel, Docgen_Module (Docgen_Module_Id).Ignore_Some_Comments),
          Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_ID).Comments_Before),
+           (Kernel, Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
+         Get_Pref (Kernel, Docgen_Module (Docgen_Module_Id).Show_References),
          Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
-         Get_Pref (Kernel, Docgen_Module (Docgen_Module_ID).Show_References),
+           (Kernel, Docgen_Module (Docgen_Module_Id).Link_All_References),
          Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_ID).Link_All_References),
-         Get_Pref
-           (Kernel, Docgen_Module (Docgen_Module_ID).Process_Tagged_Types));
+           (Kernel, Docgen_Module (Docgen_Module_Id).Process_Tagged_Types));
    end On_Preferences_Changed;
 
    -------------
@@ -491,7 +480,7 @@ package body Docgen_Module is
       Body_File        : Virtual_File;
       Is_Spec          : constant Boolean := Is_Spec_File (Kernel, File);
       Process_Body     : constant Boolean :=
-         Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files;
+         Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files;
       Source           : Source_File;
       B         : constant Docgen.Backend.Backend_Handle := Get_Backend;
       Doc_Suffix       : constant String :=
@@ -554,13 +543,13 @@ package body Docgen_Module is
 
    function Get_Backend return Docgen.Backend.Backend_Handle is
    begin
-      case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
+      case Docgen_Module (Docgen_Module_Id).Options.Type_Of_File is
          when HTML =>
-            return Docgen_Module (Docgen_Module_ID).HTML_Backend;
+            return Docgen_Module (Docgen_Module_Id).HTML_Backend;
 
             --  ???
             --       when TEXI =>
-            --          return Docgen_Module (Docgen_Module_ID).TEXI_Backend
+            --          return Docgen_Module (Docgen_Module_Id).TEXI_Backend
 
          when others =>
             return null;
@@ -594,12 +583,8 @@ package body Docgen_Module is
         (Backend,
          List,
          Kernel,
-         Docgen_Module (Docgen_Module_ID).Options);
+         Docgen_Module (Docgen_Module_Id).Options);
       Type_Source_File_Table.Reset (List);
-
-      --  <frameset> is not supported by internal HTML viewer. Users will
-      --  have to configure GPS so that it uses an external browser if they
-      --  want a smooth docgen integration.
 
       Open_Html
         (Kernel,
@@ -628,11 +613,11 @@ package body Docgen_Module is
       Generate : constant String := '/' & (-"_Documentation");
       Command  : Interactive_Command_Access;
    begin
-      Docgen_Module_ID := new Docgen_Module_Record;
-      Docgen_Module (Docgen_Module_ID).HTML_Backend := new Backend_HTML;
+      Docgen_Module_Id := new Docgen_Module_Record;
+      Docgen_Module (Docgen_Module_Id).HTML_Backend := new Backend_HTML;
 
       Register_Module
-        (Module      => Docgen_Module_ID,
+        (Module      => Docgen_Module_Id,
          Kernel      => Kernel,
          Module_Name => "Docgen",
          Priority    => Default_Priority);
@@ -659,7 +644,7 @@ package body Docgen_Module is
          Action => Command,
          Filter => Lookup_Filter (Kernel, "File"));
 
-      Docgen_Module (Docgen_Module_ID).Type_Generated_File
+      Docgen_Module (Docgen_Module_Id).Type_Generated_File
         := Param_Spec_Enum
         (Type_Api_Doc_Properties.Gnew_Enum
            (Name    => "Doc-Output",
@@ -668,10 +653,10 @@ package body Docgen_Module is
             Nick    => -"Output"));
       Register_Property
         (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Type_Generated_File),
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Type_Generated_File),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Generate_Body_Files
+      Docgen_Module (Docgen_Module_Id).Generate_Body_Files
         := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Process-Body",
@@ -680,10 +665,10 @@ package body Docgen_Module is
            Nick    => -"Process body files"));
       Register_Property
         (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Generate_Body_Files),
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Generate_Body_Files),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments
+      Docgen_Module (Docgen_Module_Id).Ignore_Some_Comments
         := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-Ignore-Special-Comments",
@@ -693,35 +678,22 @@ package body Docgen_Module is
            Nick    => -"Ignore comments with --!"));
       Register_Property
         (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Ignore_Some_Comments),
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Ignore_Some_Comments),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Comments_Before
-        := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Doc-Comments-Before",
-           Default => False,
-           Blurb   =>
-             -("Whether comments are found before corresponding entities"),
-           Nick    => -"Comments before entities"));
+      Docgen_Module (Docgen_Module_Id).Show_Private_Entities :=
+        Param_Spec_Boolean
+          (Gnew_Boolean
+               (Name    => "Doc-Show-Private",
+                Default => False,
+                Blurb   => -"Whether Docgen should show private entities",
+                Nick    => -"Show private entities"));
       Register_Property
         (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Comments_Before),
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Show_Private_Entities),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Show_Private_Entities
-        := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Doc-Show-Private",
-           Default => False,
-           Blurb   => -"Whether Docgen should show private entities",
-           Nick    => -"Show private entities"));
-      Register_Property
-        (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
-         -"Documentation");
-
-      Docgen_Module (Docgen_Module_ID).Show_References := Param_Spec_Boolean
+      Docgen_Module (Docgen_Module_Id).Show_References := Param_Spec_Boolean
         (Gnew_Boolean
           (Name    => "Doc-References",
            Default => False,
@@ -730,10 +702,10 @@ package body Docgen_Module is
            Nick    => -"Compute references"));
       Register_Property
         (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Show_References),
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Show_References),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Link_All_References :=
+      Docgen_Module (Docgen_Module_Id).Link_All_References :=
         Param_Spec_Boolean
           (Gnew_Boolean
             (Name    => "Doc-Xref-All",
@@ -743,10 +715,10 @@ package body Docgen_Module is
              Nick    => -"Create all links"));
       Register_Property
         (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Link_All_References),
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Link_All_References),
          -"Documentation");
 
-      Docgen_Module (Docgen_Module_ID).Process_Tagged_Types :=
+      Docgen_Module (Docgen_Module_Id).Process_Tagged_Types :=
         Param_Spec_Boolean
           (Gnew_Boolean
             (Name    => "Doc-Tagged",
@@ -756,7 +728,7 @@ package body Docgen_Module is
              Nick    => -"List tagged types"));
       Register_Property
         (Kernel,
-         Param_Spec (Docgen_Module (Docgen_Module_ID).Process_Tagged_Types),
+         Param_Spec (Docgen_Module (Docgen_Module_Id).Process_Tagged_Types),
          -"Documentation");
 
       Add_Hook
