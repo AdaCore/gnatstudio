@@ -60,11 +60,13 @@ package body Vdiff2_Utils is
       Ref     : T_Loc;
       Loc     : T_Loc);
    --  Hightlight the Chunk CurrChunk where action is Append
+   --  ??? What is CurrChunk
 
    procedure Show_Diff_Chunk
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_Head; CurrChunk : Diff_Chunk_Access);
    --  Hightlight the Chunk CurrChunk
+   --  ??? What is CurrChunk
 
    function Add_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -148,6 +150,8 @@ package body Vdiff2_Utils is
       List      : constant Diff_List := Item.List;
       CurrNode  : Diff_List_Node := First (List);
       CurrChunk : Diff_Chunk_Access := Data (CurrNode);
+      --  ??? Do not use Pascal style identifier. Use Mixed_Case instead
+
       Offset1   : Natural;
       Offset2   : Natural;
       Args_edit : Argument_List := (1 => new String'(Item.File1.all));
@@ -192,6 +196,7 @@ package body Vdiff2_Utils is
                             CurrChunk.Range2.Last, Old_Style,
                             Offset1 - Offset2);
                end if;
+
                CurrChunk.Range1.Mark := new String'
                  (Mark_Diff_Block (Kernel, Item.File1.all,
                                    CurrChunk.Range1.First));
@@ -256,12 +261,12 @@ package body Vdiff2_Utils is
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
-      while CurrNode /= Diff_Chunk_List.Null_Node
-      loop
+      while CurrNode /= Diff_Chunk_List.Null_Node loop
          CurrChunk := Data (CurrNode);
          Show_Diff_Chunk (Kernel, Item, CurrChunk);
          CurrNode := Next (CurrNode);
       end loop;
+
       Free_List (Res);
    end Show_Differences3;
 
@@ -283,9 +288,8 @@ package body Vdiff2_Utils is
       Tmp : String_Access;
 
    begin
-
       for I in 1 .. 3 loop
-
+      --  ??? Do not use I for loop indexing, use J instead
          if I /= Ref and I /= Loc and Other = 0 then
             Other := I;
             if Loc /= 0 then
@@ -366,9 +370,7 @@ package body Vdiff2_Utils is
       VStyle : T_VStr;
 
    begin
-
       for I in 1 .. 3 loop
-
          if I /= Ref and I /= Loc and Other = 0 then
             Other := I;
             if Loc /= 0 then
@@ -385,7 +387,6 @@ package body Vdiff2_Utils is
 
       if Loc = 0 then
          if CurrChunk.Conflict then
-
             if VRange (Other).Action = Change
               and VRange (Other2).Action = Change then
                VStyle (Other2) := new String'(Change_Style);
@@ -490,7 +491,6 @@ package body Vdiff2_Utils is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_Head) is
    begin
-
       if Item.File1 /= null then
          Unhighlight_Line (Kernel, Item.File1.all, 0, Default_Style);
          Unhighlight_Line (Kernel, Item.File1.all, 0, Old_Style);
@@ -523,11 +523,9 @@ package body Vdiff2_Utils is
 
    procedure Free (V : in out T_VStr) is
    begin
-
       for J in V'Range loop
          Free (V (J));
       end loop;
-
    end Free;
 
    ----------
@@ -562,12 +560,14 @@ package body Vdiff2_Utils is
       Style  : String := "";
       Number : Natural := 1) return String
    is
-      Args_Line : Argument_List := (1 => new String'(File),
-                                    2 => new String'(Image (Pos)),
-                                    3 => new String'(Image (Number)),
-                                    4 => new String'(Style));
+      Args_Line : Argument_List :=
+        (1 => new String'(File),
+         2 => new String'(Image (Pos)),
+         3 => new String'(Image (Number)),
+         4 => new String'(Style));
       Res : constant String :=  Execute_GPS_Shell_Command
         (Kernel, "add_blank_lines", Args_Line);
+
    begin
       Basic_Types.Free (Args_Line);
       return Res;
@@ -596,9 +596,11 @@ package body Vdiff2_Utils is
       Style : String := "";
       Number : Natural := 1)
    is
-      Args_Highlight : Argument_List := (1 => new String'(File),
-                                         2 => new String'(Style),
-                                         3 => null);
+      Args_Highlight : Argument_List :=
+        (1 => new String'(File),
+         2 => new String'(Style),
+         3 => null);
+
    begin
       for J in 1 .. Number loop
          Args_Highlight (3) := new String'(Image (Pos + J - 1));
@@ -618,9 +620,11 @@ package body Vdiff2_Utils is
       Pos   : Natural;
       Style : String := "")
    is
-      Args_Highlight : Argument_List := (1 => new String'(File),
-                                         2 => new String'(Style),
-                                         3 => new String'(Image (Pos)));
+      Args_Highlight : Argument_List :=
+        (1 => new String'(File),
+         2 => new String'(Style),
+         3 => new String'(Image (Pos)));
+
    begin
       Execute_GPS_Shell_Command (Kernel, "unhighlight", Args_Highlight);
       Basic_Types.Free (Args_Highlight);
@@ -635,9 +639,10 @@ package body Vdiff2_Utils is
       File  : String;
       Pos   : Natural) return String
    is
-      Args : Argument_List := (1 => new String'(File),
-                               2 => new String'(Image (Pos)),
-                               3 => new String'("1"));
+      Args : Argument_List :=
+        (1 => new String'(File),
+         2 => new String'(Image (Pos)),
+         3 => new String'("1"));
       Res : constant String := Execute_GPS_Shell_Command
         (Kernel, "create_mark", Args);
 
