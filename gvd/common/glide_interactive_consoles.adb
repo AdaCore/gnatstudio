@@ -479,11 +479,16 @@ package body Glide_Interactive_Consoles is
             Get_End_Iter (Console.Buffer, Last_Iter);
             Insert (Console.Buffer, Last_Iter, ASCII.LF & "");
 
+            if Console.Handler = null then
+               return True;
+            end if;
+
             Get_End_Iter (Console.Buffer, Last_Iter);
             Get_Iter_At_Mark
               (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
 
             Backward_Char (Last_Iter, Success);
+
             declare
                Command : constant String :=
                  Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
@@ -794,9 +799,10 @@ package body Glide_Interactive_Consoles is
    -----------
 
    procedure Clear (Console : access Glide_Interactive_Console_Record) is
-      pragma Unreferenced (Console);
+      Start, The_End : Gtk_Text_Iter;
    begin
-      null;
+      Get_Bounds (Console.Buffer, Start, The_End);
+      Delete (Console.Buffer, Start, The_End);
    end Clear;
 
    ----------------------------
@@ -821,5 +827,19 @@ package body Glide_Interactive_Consoles is
    begin
       Set_Property (Console.Highlight_Tag, Foreground_Gdk_Property, Color);
    end Set_Highlight_Color;
+
+   ---------------
+   -- Get_Chars --
+   ---------------
+
+   function Get_Chars
+     (Console : access Glide_Interactive_Console_Record)
+     return String
+   is
+      Start, The_End : Gtk_Text_Iter;
+   begin
+      Get_Bounds (Console.Buffer, Start, The_End);
+      return Get_Text (Start, The_End);
+   end Get_Chars;
 
 end Glide_Interactive_Consoles;
