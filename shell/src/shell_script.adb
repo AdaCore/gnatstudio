@@ -157,7 +157,8 @@ package body Shell_Script is
    type Shell_Class_Instance is access all Shell_Class_Instance_Record'Class;
 
    function New_Instance
-     (Data : Shell_Callback_Data; Class : Class_Type) return Class_Instance;
+     (Script : access Shell_Scripting_Record; Class : Class_Type)
+      return Class_Instance;
    function Get_Class (Instance : access Shell_Class_Instance_Record)
       return Class_Type;
    function Get_Data (Instance : access Shell_Class_Instance_Record)
@@ -196,12 +197,15 @@ package body Shell_Script is
       Minimum_Args    : Natural;
       Maximum_Args    : Natural;
       Command_Handler : Module_Command_Function;
+      Class           : Class_Type;
    end record;
    --  Description for each of the registered commands.
    --  Command is the name that must be typed by the user in the console.
    --  Short_Command is the name under which the command was registered. It is
    --  the same as Command, except when the command is a method of a class. In
    --  this case, Command is equal to "Class.Short_Command"
+   --  The command was set as a constructor if Short_Command is
+   --  Constructor_Method.
 
    procedure Free (X : in out Command_Information);
    --  Free memory associated with X.
@@ -568,7 +572,7 @@ package body Shell_Script is
                while Command_Node /= Command_List.Null_Node loop
                   Info := Command_List.Data (Command_Node);
                   if Info.Command.all = Cmd then
-                     Insert (-("Usage: ") & Info.Usage.all);
+                     Insert (-("Usage: ") & Command & ' ' & Info.Usage.all);
                      Insert (Info.Description.all);
                   end if;
                   Command_Node := Command_List.Next (Command_Node);
@@ -594,23 +598,41 @@ package body Shell_Script is
    ----------------------
 
    procedure Register_Command
-     (Script       : access Shell_Scripting_Record;
-      Command      : String;
-      Usage        : String;
-      Description  : String;
-      Minimum_Args : Natural := 0;
-      Maximum_Args : Natural := 0;
-      Handler      : Module_Command_Function;
-      Class        : Class_Type := No_Class)
+     (Script         : access Shell_Scripting_Record;
+      Command        : String;
+      Usage          : String;
+      Description    : String;
+      Minimum_Args   : Natural := 0;
+      Maximum_Args   : Natural := 0;
+      Handler        : Module_Command_Function;
+      Class          : Class_Type := No_Class)
    is
       pragma Unreferenced (Script);
       use Command_List;
       Node : Command_List.List_Node;
       Cmd  : String_Access;
-      Extra_Arg : Natural;
+      Min  : Natural := Minimum_Args;
+      Max  : Natural := Maximum_Args;
+      Info : Command_Information;
    begin
       if Command = "" or else Shell_Module_Id = null then
          return;
+      end if;
+
+      if Class /= No_Class then
+         if Command = Constructor_Method then
+            Cmd := new String'(Get_Name (Class));
+         else
+            Cmd := new String'(Get_Name (Class) & "." & Command);
+            --  First parameter is always the instance
+
+            Min := Min + 1;
+            if Max /= Natural'Last then
+               Max := Max + 1;
+            end if;
+         end if;
+      else
+         Cmd := new String'(Command);
       end if;
 
       Node := First (Shell_Module_Id.Commands_List);
@@ -618,33 +640,26 @@ package body Shell_Script is
       --  Check that the command is not already registered.
 
       while Node /= Command_List.Null_Node loop
-         if Data (Node).Command.all = Command then
+         if Data (Node).Command.all = Cmd.all then
             Trace
               (Me,
-               "Interactive command " & Command & " is already registered");
-
+               "Interactive command " & Cmd.all & " is already registered");
             return;
          end if;
 
          Node := Next (Node);
       end loop;
 
-      if Class /= No_Class then
-         Cmd := new String'(Get_Name (Class) & "." & Command);
-         Extra_Arg := 1;  --  First parameter is always the instance
-      else
-         Cmd := new String'(Command);
-         Extra_Arg := 0;
-      end if;
-
-      Append (Shell_Module_Id.Commands_List,
-              (Command         => Cmd,
+      Info := (Command         => Cmd,
                Short_Command   => new String'(Command),
                Usage           => new String'(Usage),
                Description     => new String'(Description),
-               Minimum_Args    => Minimum_Args + Extra_Arg,
-               Maximum_Args    => Maximum_Args + Extra_Arg,
-               Command_Handler => Handler));
+               Minimum_Args    => Min,
+               Maximum_Args    => Max,
+               Class           => Class,
+               Command_Handler => Handler);
+
+      Append (Shell_Module_Id.Commands_List, Info);
    end Register_Command;
 
    --------------------
@@ -717,6 +732,8 @@ package body Shell_Script is
       Command_Node : Command_List.List_Node;
       Data         : Command_Information;
       Callback     : Shell_Callback_Data;
+      Instance     : Class_Instance;
+      Start        : Natural;
 
    begin
       if Shell_Module_Id = null then
@@ -732,12 +749,27 @@ package body Shell_Script is
             then
                Callback.Script := Shell_Scripting
                  (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
-               Callback.Args := new Argument_List (1 .. Args'Length);
+
+               if Data.Short_Command.all = Constructor_Method then
+                  Instance := New_Instance (Callback.Script, Data.Class);
+                  Callback.Args := new Argument_List (1 .. Args'Length + 1);
+                  Callback.Args (1) :=
+                    new String'(Name_From_Instance (Instance));
+                  Start := 2;
+               else
+                  Callback.Args := new Argument_List (1 .. Args'Length);
+                  Start := 1;
+               end if;
+
                for A in Args'Range loop
-                  Callback.Args (A - Args'First + 1) := Args (A);
+                  Callback.Args (A - Args'First + Start) := Args (A);
                end loop;
 
                Data.Command_Handler (Callback, Data.Short_Command.all);
+
+               if Data.Short_Command.all = Constructor_Method then
+                  Set_Return_Value (Callback, Instance);
+               end if;
 
                Unchecked_Free (Callback.Args);
                if Callback.Return_Value = null then
@@ -751,9 +783,12 @@ package body Shell_Script is
                   end;
                end if;
             else
-               Trace (Me, "Incorrect number of arguments for " & Command);
+               Trace (Me, "Incorrect number of arguments for " & Command
+                      & " Got " & Args'Length'Img
+                      & " Expecting " & Data.Minimum_Args'Img
+                      & " and " & Data.Maximum_Args'Img);
                return -"Incorrect number of arguments." & ASCII.LF
-                 & Data.Usage.all;
+                 & Data.Command.all & ' ' & Data.Usage.all;
             end if;
          end if;
          Command_Node := Command_List.Next (Command_Node);
@@ -994,13 +1029,14 @@ package body Shell_Script is
    ------------------
 
    function New_Instance
-     (Data : Shell_Callback_Data; Class : Class_Type) return Class_Instance
+     (Script : access Shell_Scripting_Record;
+      Class  : Class_Type) return Class_Instance
    is
       Instance : Shell_Class_Instance;
    begin
       Instance := new Shell_Class_Instance_Record'
         (Class_Instance_Record
-         with Script => Data.Script,
+         with Script => Shell_Scripting (Script),
               Class  => Class,
               Data   => (Data => Strings, Str => null));
       Instances_List.Prepend (Shell_Module_Id.Instances, Instance);
