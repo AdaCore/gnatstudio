@@ -545,14 +545,32 @@ package body Project_Explorers is
       Category    : Language_Category;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
-      N : Gtk_Tree_Iter;
+      N       : Gtk_Tree_Iter;
+      Sibling : Gtk_Tree_Iter;
+      Name    : String := Category_Name (Category);
    begin
       --  ??? code duplication from Add_Category_Node
+      Sibling := Children (Explorer.File_Model, Parent_Iter);
 
-      Append (Explorer.File_Model, N, Parent_Iter);
+      if Sibling = Null_Iter then
+         Append (Explorer.File_Model, N, Parent_Iter);
+      else
+         while Sibling /= Null_Iter
+           and then Get_String (Explorer.File_Model, Sibling, Base_Name_Column)
+           <= Name
+         loop
+            Next (Explorer.File_Model, Sibling);
+         end loop;
+
+         if Sibling = Null_Iter then
+            Append (Explorer.File_Model, N, Parent_Iter);
+         else
+            Insert_Before (Explorer.File_Model, N, Parent_Iter, Sibling);
+         end if;
+      end if;
 
       Set (Explorer.File_Model, N, Absolute_Name_Column, "");
-      Set (Explorer.File_Model, N, Base_Name_Column, Category_Name (Category));
+      Set (Explorer.File_Model, N, Base_Name_Column, Name);
       Set (Explorer.File_Model, N, Icon_Column,
            C_Proxy (Explorer.Close_Pixbufs (Category_Node)));
       Set (Explorer.File_Model, N, Node_Type_Column,
@@ -570,11 +588,29 @@ package body Project_Explorers is
       Construct   : Construct_Information;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
-      N    : Gtk_Tree_Iter;
-      User : User_Data_Access;
-      Val  : GValue;
+      N       : Gtk_Tree_Iter;
+      Sibling : Gtk_Tree_Iter;
+      User    : User_Data_Access;
+      Val     : GValue;
    begin
-      Append (Explorer.File_Model, N, Parent_Iter);
+      Sibling := Children (Explorer.File_Model, Parent_Iter);
+
+      if Sibling = Null_Iter then
+         Append (Explorer.File_Model, N, Parent_Iter);
+      else
+         while Sibling /= Null_Iter
+           and then Get_String (Explorer.File_Model, Sibling, Base_Name_Column)
+           <= Construct.Name.all
+         loop
+            Next (Explorer.File_Model, Sibling);
+         end loop;
+
+         if Sibling = Null_Iter then
+            Append (Explorer.File_Model, N, Parent_Iter);
+         else
+            Insert_Before (Explorer.File_Model, N, Parent_Iter, Sibling);
+         end if;
+      end if;
 
       Set (Explorer.File_Model, N, Absolute_Name_Column, File);
 
@@ -638,6 +674,7 @@ package body Project_Explorers is
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
 
    begin
+      Push_State (Explorer.Kernel, Busy);
       --  ??? code duplication from Expand_File_Node.
 
       F := Open_Read (File_Name, Binary);
@@ -684,6 +721,7 @@ package body Project_Explorers is
       end if;
 
       Free (Buffer);
+      Pop_State (Explorer.Kernel);
    end File_Append_File_Info;
 
    ----------------------------
