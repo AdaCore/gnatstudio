@@ -58,11 +58,15 @@ begin
    Return_Callback.Connect
      (Process_Tab, "delete_event", On_Process_Tab_Delete_Event'Access);
 
+   Gtk_New_Hbox (Process_Tab.Process_Hbox, False, 0);
+   --  Add (Process_Tab, Process_Tab.Process_Hbox);
+
    Gtk_New_Vpaned (Process_Tab.Process_Paned);
    Set_Handle_Size (Process_Tab.Process_Paned, 10);
    Set_Gutter_Size (Process_Tab.Process_Paned, 6);
    Set_Position (Process_Tab.Process_Paned, 500);
    --  Add (Process_Tab, Process_Tab.Process_Paned);
+   Pack_Start (Process_Tab.Process_Hbox, Process_Tab.Process_Paned, True, True, 0);
 
    Gtk_New_Vpaned (Process_Tab.Data_Editor_Paned);
    Set_Handle_Size (Process_Tab.Data_Editor_Paned, 10);

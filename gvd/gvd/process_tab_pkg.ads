@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
+with Gtk.Box; use Gtk.Box;
 with Gtk.Paned; use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
@@ -35,6 +36,7 @@ package Process_Tab_Pkg is
    type Process_Tab_Record is new Gtk_Window_Record with record
       Delete_Text_Handler_Id : Gtk.Handlers.Handler_Id;
       Stack_List_Select_Id : Gtk.Handlers.Handler_Id;
+      Process_Hbox : Gtk_Hbox;
       Process_Paned : Gtk_Vpaned;
       Data_Editor_Paned : Gtk_Vpaned;
       Data_Paned : Gtk_Hpaned;
