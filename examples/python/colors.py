@@ -2,7 +2,7 @@
 ## automatically when they are loaded.
 ## It demonstrates the use of hooks, and the setting of preferences in GPS
 
-import GPS, os.path
+import GPS
 
 def set_bg_color (hook_name, file):
    name = file.name()
