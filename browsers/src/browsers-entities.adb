@@ -57,7 +57,7 @@ package body Browsers.Entities is
    Left_Margin : constant := 20;
    --  Indentation for the attributes and methods layouts.
 
-   UML_Abstract : constant String := "<<Abstract>>";
+   UML_Abstract : constant String := "{Abstract}";
    --  String used in UML to indicate that an entity is abstract
 
    procedure On_Type_Browser
