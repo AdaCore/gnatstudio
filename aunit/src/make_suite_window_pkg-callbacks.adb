@@ -39,6 +39,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtkada.Types; use Gtkada.Types;
 
 with Row_Data; use Row_Data;
+with VFS;      use VFS;
 
 with Glide_Intl; use Glide_Intl;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
@@ -81,7 +82,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Suite_Window : constant Make_Suite_Window_Access :=
         Make_Suite_Window_Access (Get_Toplevel (Object));
 
-      S            : constant String := Get_Selection (Suite_Window.Explorer);
+      File         : constant Virtual_File :=
+        Get_Selection (Suite_Window.Explorer);
+      S            : constant String := Full_Name (File);
       Row_Num      : Gint;
       Suite_Name   : String_Access;
       Package_Name : String_Access;
@@ -89,7 +92,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
    begin
       Hide (Suite_Window.Explorer);
 
-      if S = "" then
+      if File = VFS.No_File then
          return;
       end if;
 

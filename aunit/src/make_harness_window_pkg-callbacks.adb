@@ -33,6 +33,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 with Glide_Intl; use Glide_Intl;
+with VFS; use VFS;
 
 package body Make_Harness_Window_Pkg.Callbacks is
    --  Callbacks for main "AUnit_Make_Harness" window. Template
@@ -104,7 +105,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Harness_Window : constant Make_Harness_Window_Access :=
         Make_Harness_Window_Access (Get_Toplevel (Object));
 
-      S              : constant String :=
+      S              : constant Virtual_File :=
         Get_Selection (Harness_Window.Explorer);
       Suite_Name     : String_Access;
       Package_Name   : String_Access;
@@ -116,11 +117,11 @@ package body Make_Harness_Window_Pkg.Callbacks is
    begin
       Hide (Harness_Window.Explorer);
 
-      if S = "" then
+      if S = VFS.No_File then
          return;
       end if;
 
-      Get_Suite_Name (S, Package_Name, Suite_Name);
+      Get_Suite_Name (Full_Name (S), Package_Name, Suite_Name);
 
       if Suite_Name /= null
         and then Package_Name /= null
@@ -136,7 +137,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             -"Warning: no suite was found in that file.");
       end if;
 
-      Set_Text (Harness_Window.File_Name_Entry, S);
+      Set_Text (Harness_Window.File_Name_Entry, Full_Name (S));
    end On_Ok_Button_Clicked;
 
    ------------------------------
