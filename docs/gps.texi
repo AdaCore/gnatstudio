@@ -70,6 +70,7 @@ Description of the main windows
 * The Work Space::
 * The Project Explorer::
 * The Console::
+* The Locations Tree::
 * The Status Line::
 
 Multiple Document Interface
@@ -179,6 +180,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Work Space::
 * The Project Explorer::
 * The Console::
+* The Locations Tree::
 * The Status Line::
 @end menu
 
@@ -336,6 +338,30 @@ according to the new setup.
 @section The Console
 @c --------------------------------------------------------------------
 @noindent
+
+@c --------------------------------------------------------------------
+@node The Locations Tree
+@section The Locations Tree
+@c --------------------------------------------------------------------
+@noindent
+
+The Location Tree is filled whenever GPS needs to display a list of
+locations in the source files (typically, when performing a global
+search, compilation results, and so on).
+
+@iftex
+@image{locations-view, 12.7cm}
+@end iftex
+
+@ifhtml
+@image{locations-view, 12.7cm}
+@end ifhtml
+
+The Location Tree shows a hierarchy of categories, which contain
+files, which contain locations. Clicking on a location item will bring
+up a file editor at the requested place. Right-clicking on file or
+category items brings up a contextual menu which permits to remove the
+corresponding node from the view.
 
 @c --------------------------------------------------------------------
 @node The Status Line
