@@ -23,7 +23,6 @@ with Gdk.Event;                    use Gdk.Event;
 with Glib;                         use Glib;
 with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
-with Glib.Values;                  use Glib.Values;
 with Gtk.Alignment;                use Gtk.Alignment;
 with Gtk.Arguments;                use Gtk.Arguments;
 with Gtk.Box;                      use Gtk.Box;
@@ -37,7 +36,6 @@ with Gtk.Frame;                    use Gtk.Frame;
 with Gtk.GEntry;                   use Gtk.GEntry;
 with Gtk.Handlers;
 with Gtk.Label;                    use Gtk.Label;
-with Gtk.List_Store;               use Gtk.List_Store;
 with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
@@ -92,7 +90,6 @@ with GUI_Utils;                use GUI_Utils;
 with Stringt;       use Stringt;
 with Types;         use Types;
 with Namet;         use Namet;
-with Snames;        use Snames;
 
 package body Project_Viewers is
 
@@ -450,7 +447,7 @@ package body Project_Viewers is
    ------------------------
 
    type Executables_Editor_Record is new Gtk_Box_Record with record
-      Executables  : Gtk_List_Store;
+      Executables  : Gtk_Tree_Store;
       Tree_View    : Gtk_Tree_View;
       Project      : Project_Type;
       Kernel       : Kernel_Handle;
@@ -1601,18 +1598,24 @@ package body Project_Viewers is
    procedure Add_Main_File
      (Editor : access Executables_Editor_Record'Class; File : String)
    is
-      Val  : GValue;
       Iter : Gtk_Tree_Iter;
    begin
-      Init (Val, GType_String);
-      Set_String (Val, File);
-      Append (Editor.Executables, Iter);
-      Set_Value
+      Append (Editor.Executables, Iter, Null_Iter);
+      Set
         (Editor.Executables,
          Iter   => Iter,
          Column => 0,
-         Value  => Val);
-      Unset (Val);
+         Value  => File);
+      Set
+        (Editor.Executables,
+         Iter   => Iter,
+         Column => 1,
+         Value  => Get_Executable_Name (Editor.Project, File));
+      Set
+        (Editor.Executables,
+         Iter   => Iter,
+         Column => 2,
+         Value  => True);
    end Add_Main_File;
 
    -------------------
@@ -1716,6 +1719,9 @@ package body Project_Viewers is
       Bbox     : Gtk_Vbutton_Box;
       Button2  : Gtk_Button;
 
+      Has_Support_For_Executables : constant Boolean :=
+        GNAT_Version (Kernel) >= "3.16";
+
    begin
       Box := new Executables_Editor_Record;
       Box.Project := Project;
@@ -1732,15 +1738,34 @@ package body Project_Viewers is
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => True, Fill => True);
 
-      Gtk_New (Box.Executables, (1 => GType_String));
+      Gtk_New (Box.Executables,
+               (0 => GType_String, 1 => GType_String, 2 => GType_Boolean));
       Gtk_New (Box.Tree_View, Model => Box.Executables);
       Set_Mode (Get_Selection (Box.Tree_View), Selection_Multiple);
-      Set_Headers_Visible (Box.Tree_View, False);
+
       Gtk_New (Renderer);
       Gtk_New (Column);
+      Set_Clickable (Column, True);
+      Set_Sort_Column_Id (Column, 0);
+      Set_Title (Column, -"Source file name");
       Pack_Start (Column, Renderer, Expand => True);
       Add_Attribute (Column, Renderer, "text", 0);
       Col := Append_Column (Box.Tree_View, Column);
+
+      Gtk_New (Column);
+      Set_Clickable (Column, True);
+      Set_Sort_Column_Id (Column, 1);
+      Set_Title (Column, -"Executable name");
+      Pack_Start (Column, Renderer, Expand => True);
+      Add_Attribute (Column, Renderer, "text", 1);
+
+      if Has_Support_For_Executables then
+         Add_Attribute (Column, Renderer, "editable", 2);
+      end if;
+
+      Col := Append_Column (Box.Tree_View, Column);
+
+      Set_Editable_And_Callback (Box.Executables, Renderer, 1);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -1768,7 +1793,7 @@ package body Project_Viewers is
       if Project /= No_Project then
          declare
             Mains : Argument_List := Get_Attribute_Value
-              (Project, Attribute_Name => Main_Attribute);
+              (Project, Attribute => Main_Attribute);
          begin
             for M in Mains'Range loop
                Add_Main_File (Box, Mains (M).all);
@@ -1795,7 +1820,7 @@ package body Project_Viewers is
       Ref_Project  : Project_Type)
       return Boolean
    is
-      pragma Unreferenced (Page, Kernel);
+      pragma Unreferenced (Page);
       Editor       : constant Executables_Editor :=
         Executables_Editor (Widget);
       Num_Children : constant Gint := N_Children (Editor.Executables);
@@ -1803,6 +1828,10 @@ package body Project_Viewers is
       Iter         : Gtk_Tree_Iter := Get_Iter_First (Editor.Executables);
       N            : Natural := New_Mains'First;
       Changed      : Boolean := False;
+
+      Has_Support_For_Executables : constant Boolean :=
+        GNAT_Version (Kernel) >= "3.16";
+
    begin
       Assert (Me, Project = Ref_Project,
               "Invalid project when modifying main files");
@@ -1811,6 +1840,19 @@ package body Project_Viewers is
       while Iter /= Null_Iter loop
          New_Mains (N) := new String'
            (Get_String (Editor.Executables, Iter, 0));
+
+         if Has_Support_For_Executables then
+            Changed := Changed or else
+              Get_Executable_Name (Project, New_Mains (N).all) /=
+              Get_String (Editor.Executables, Iter, 1);
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Attribute          => Executable_Attribute,
+               Attribute_Index    => New_Mains (N).all,
+               Value              => Get_String (Editor.Executables, Iter, 1));
+         end if;
+
          N := N + 1;
          Next (Editor.Executables, Iter);
       end loop;
@@ -1821,9 +1863,31 @@ package body Project_Viewers is
       if Project /= No_Project then
          declare
             Old_Mains    : Argument_List := Get_Attribute_Value
-              (Project, Attribute_Name => Main_Attribute);
+              (Project, Attribute => Main_Attribute);
+            Found : Boolean;
          begin
-            Changed := not Is_Equal (Old_Mains, New_Mains);
+            Changed := Changed or else not Is_Equal (Old_Mains, New_Mains);
+
+            if Changed and then Has_Support_For_Executables then
+               for M in Old_Mains'Range loop
+                  Found := False;
+                  for Nm in New_Mains'Range loop
+                     if New_Mains (Nm).all = Old_Mains (M).all then
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
+
+                  if not Found then
+                     Delete_Attribute
+                       (Project            => Project,
+                        Scenario_Variables => Scenario_Variables,
+                        Attribute          => Executable_Attribute,
+                        Attribute_Index    => Old_Mains (M).all);
+                  end if;
+               end loop;
+            end if;
+
             Free (Old_Mains);
          end;
       else
@@ -1835,13 +1899,13 @@ package body Project_Viewers is
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Main_Attribute,
+               Attribute          => Main_Attribute,
                Values             => New_Mains);
          else
             Delete_Attribute
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Main_Attribute);
+               Attribute          => Main_Attribute);
          end if;
       end if;
 
@@ -1963,9 +2027,8 @@ package body Project_Viewers is
          Trace (Me, "Source dirs modified");
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
-            Pkg_Name           => "",
             Scenario_Variables => Scenario_Variables,
-            Attribute_Name     => Get_String (Name_Source_Dirs),
+            Attribute          => Source_Dirs_Attribute,
             Values             => Dirs,
             Attribute_Index    => "",
             Prepend            => False);
@@ -2063,9 +2126,9 @@ package body Project_Viewers is
            (Obj_Dir.Exec_Dir,
             Name_As_Directory (GNAT.OS_Lib.Normalize_Pathname
              (Get_Attribute_Value
-              (Project => Project,
-               Attribute_Name => Exec_Dir_Attribute,
-               Default => Get_Current_Dir))));
+              (Project   => Project,
+               Attribute => Exec_Dir_Attribute,
+               Default   => Get_Current_Dir))));
       else
          Set_Text (Obj_Dir.Exec_Dir, Dir_Name (Full_Project));
       end if;
@@ -2090,7 +2153,7 @@ package body Project_Viewers is
                   Project = No_Project
                   or else Get_Attribute_Value
                     (Project => Project,
-                     Attribute_Name => Exec_Dir_Attribute,
+                     Attribute => Exec_Dir_Attribute,
                      Default => "@@@@") = "@@@@");
 
       Show_All (Obj_Dir);
@@ -2150,7 +2213,7 @@ package body Project_Viewers is
             Delete_Attribute
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Get_String (Name_Object_Dir));
+               Attribute          => Obj_Dir_Attribute);
 
          else
             if not Is_Directory (New_Dir.all) then
@@ -2173,7 +2236,7 @@ package body Project_Viewers is
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Get_String (Name_Object_Dir),
+               Attribute          => Obj_Dir_Attribute,
                Value              => New_Dir.all);
          end if;
 
@@ -2195,7 +2258,7 @@ package body Project_Viewers is
             Delete_Attribute
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Exec_Dir_Attribute);
+               Attribute          => Exec_Dir_Attribute);
 
          else
             if not Is_Directory (Exec_Dir.all) then
@@ -2218,7 +2281,7 @@ package body Project_Viewers is
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Scenario_Variables => Scenario_Variables,
-               Attribute_Name     => Exec_Dir_Attribute,
+               Attribute          => Exec_Dir_Attribute,
                Value              => Exec_Dir.all);
          end if;
       end if;
@@ -2362,7 +2425,7 @@ package body Project_Viewers is
          Update_Attribute_Value_In_Scenario
            (Project            => Get_Project (Kernel),
             Scenario_Variables => Scenario_Variables (Kernel),
-            Attribute_Name     => Main_Attribute,
+            Attribute          => Main_Attribute,
             Values             => Args,
             Prepend            => True);
          Recompute_View (Kernel);
