@@ -1649,6 +1649,11 @@ package body Project_Trees is
                when File_Node =>
                   if Get_Event_Type (Event) = Gdk_2button_Press then
                      Node_Selected (T, Node);
+
+                     --  Stop the propagation of the event, otherwise the
+                     --  node will also be opened, which is confusing.
+
+                     return True;
                   end if;
 
                when others =>
