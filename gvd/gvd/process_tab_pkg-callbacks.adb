@@ -139,11 +139,9 @@ package body Process_Tab_Pkg.Callbacks is
                if S'Length = 0 then
                   begin
                      Move_To_Previous (Top.Command_History);
-                     Text_Output_Handler
-                       (Top, Get_Current (Top.Command_History) & ASCII.LF,
-                        Is_Command => True);
                      Process_User_Command
-                       (Top, Get_Current (Top.Command_History));
+                       (Top, Get_Current (Top.Command_History),
+                        Output_Command => True);
                   exception
                      --  No previous command => do nothing
                      when No_Such_Item =>
