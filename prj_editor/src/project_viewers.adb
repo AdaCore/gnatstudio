@@ -231,12 +231,12 @@ package body Project_Viewers is
    procedure On_Edit_Switches
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Callback for the Project->Edit Switches menu
+   --  Callback for the Project->Edit Project Switches menu
 
    procedure On_Project_Properties
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
-   --  Callback for the Project->Edit properties menu
+   --  Callback for the Project->Edit Project Properties menu
 
    procedure On_Project_Recompute
      (Widget : access GObject_Record'Class;
@@ -2710,21 +2710,21 @@ package body Project_Viewers is
          Kernel_Handle (Kernel));
 
       Register_Menu
-        (Kernel, Project, -"Edit _Switches", "",
+        (Kernel, Project, -"Edit File _Switches", "",
          On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
       Register_Menu
-        (Kernel, Project, -"Edit _Properties", "",
+        (Kernel, Project, -"Edit Project _Properties", "",
          On_Project_Properties'Access, Ref_Item => -"Recent",
          Add_Before => False);
       Register_Menu
         (Kernel, Project, -"Save _All", "",
-         Save_All_Projects'Access, Ref_Item => -"Edit Properties",
+         Save_All_Projects'Access, Ref_Item => -"Edit Project Properties",
          Add_Before => False);
       Set_Tip
         (Get_Tooltips (Kernel),
          Register_Menu
          (Kernel, Project, -"R_ecompute Project", "",
-          On_Project_Recompute'Access, Ref_Item => -"Edit Switches",
+          On_Project_Recompute'Access, Ref_Item => -"Edit File Switches",
           Add_Before => False),
          Tip_Text => -("Recompute the contents of the project after"
                        & " modifications outside of GPS. This isn't needed"
