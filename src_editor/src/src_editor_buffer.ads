@@ -432,7 +432,6 @@ package Src_Editor_Buffer is
 
    function Do_Indentation
      (Buffer      : Source_Buffer;
-      Lang        : Language.Language_Access;
       From, To    : Gtk.Text_Iter.Gtk_Text_Iter) return Boolean;
    --  Reindent a specific range of lines (the ones containing From to To).
    --  Indentation depend on the language and the setup the user has chosen
@@ -440,11 +439,13 @@ package Src_Editor_Buffer is
    --  Do nothing if the preference is not activated.
    --  Return whether the current range could be indented correctly.
 
-   function Do_Indentation
-     (Buffer      : Source_Buffer;
-      Lang        : Language.Language_Access) return Boolean;
+   function Do_Indentation (Buffer : Source_Buffer) return Boolean;
    --  Same as above, but for the current line (or current selection if there
    --  is one).
+
+   function Should_Indent (Buffer : Source_Buffer) return Boolean;
+   --  Return true if auto-indentation is supported for this buffer, and if
+   --  the user has activated it.
 
    procedure Enqueue
      (Buffer  : access Source_Buffer_Record;

@@ -3673,14 +3673,36 @@ package body Src_Editor_Buffer is
       return Editor.Parse_Blocks;
    end Has_Block_Information;
 
+   -------------------
+   -- Should_Indent --
+   -------------------
+
+   function Should_Indent (Buffer : Source_Buffer) return Boolean is
+      Lang          : constant Language_Access := Get_Language (Buffer);
+      Indent_Params : Indent_Parameters;
+      Use_Tabs      : Boolean := False;
+      Indent_Style  : Indentation_Kind;
+   begin
+      if Lang = null
+        or else not Get_Language_Context (Lang).Can_Indent
+      then
+         return False;
+      end if;
+
+      Get_Indentation_Parameters
+        (Lang         => Lang,
+         Use_Tabs     => Use_Tabs,
+         Params       => Indent_Params,
+         Indent_Style => Indent_Style);
+
+      return Indent_Style /= None;
+   end Should_Indent;
+
    --------------------
    -- Do_Indentation --
    --------------------
 
-   function Do_Indentation
-     (Buffer      : Source_Buffer;
-      Lang        : Language_Access) return Boolean
-   is
+   function Do_Indentation (Buffer : Source_Buffer) return Boolean is
       Iter, End_Pos : Gtk_Text_Iter;
       Result : Boolean;
    begin
@@ -3706,7 +3728,7 @@ package body Src_Editor_Buffer is
          Copy (Iter, Dest => End_Pos);
       end if;
 
-      return Do_Indentation (Buffer, Lang, Iter, End_Pos);
+      return Do_Indentation (Buffer, Iter, End_Pos);
    end Do_Indentation;
 
    --------------------
@@ -3715,9 +3737,9 @@ package body Src_Editor_Buffer is
 
    function Do_Indentation
      (Buffer      : Source_Buffer;
-      Lang        : Language_Access;
       From, To    : Gtk_Text_Iter) return Boolean
    is
+      Lang          : constant Language_Access := Get_Language (Buffer);
       Indent_Style  : Indentation_Kind;
       End_Pos       : Gtk_Text_Iter;
       Iter          : Gtk_Text_Iter;
