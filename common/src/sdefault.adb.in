@@ -1,12 +1,10 @@
 package body Sdefault is
    pragma Style_Checks (Off);
-   S1 : aliased constant String :=
-     "@EXEC_PREFIX@/lib/gcc-lib/@TARGET@/@GCC_VERSION@/adainclude/";
-   S2 : aliased constant String :=
-     "@EXEC_PREFIX@/lib/gcc-lib/@TARGET@/@GCC_VERSION@/adalib/";
+   S1 : aliased constant String := "<unknown>";
+   S2 : aliased constant String := "<unknown>";
    S3 : aliased constant String := "@TARGET@/";
-   S4 : aliased constant String :=
-     "@EXEC_PREFIX@/lib/gcc-lib/@TARGET@/@GCC_VERSION@/";
+   S4 : aliased constant String := "<unknown>";
+
    function Include_Dir_Default_Name return String_Ptr is
    begin
       return new String'(S1);
