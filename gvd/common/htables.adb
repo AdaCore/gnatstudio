@@ -127,6 +127,7 @@ package body HTables is
 
          elsif Equal (Get_Key (Elmt), K) then
             Hash_Table.Table (Index) := Next (Elmt);
+            Free_Elmt_Ptr (Elmt);
 
          else
             loop
@@ -137,6 +138,7 @@ package body HTables is
 
                elsif Equal (Get_Key (Next_Elmt), K) then
                   Set_Next (Elmt, Next (Next_Elmt));
+                  Free_Elmt_Ptr (Next_Elmt);
                   return;
 
                else
@@ -151,9 +153,14 @@ package body HTables is
       -----------
 
       procedure Reset (Hash_Table : in out HTable) is
+         Tmp : Elmt_Ptr;
       begin
          for J in Hash_Table.Table'Range loop
-            Hash_Table.Table (J) := Null_Ptr;
+            while Hash_Table.Table (J) /= Null_Ptr loop
+               Tmp := Next (Hash_Table.Table (J));
+               Free_Elmt_Ptr (Hash_Table.Table (J));
+               Hash_Table.Table (J) := Tmp;
+            end loop;
          end loop;
       end Reset;
 
@@ -273,14 +280,14 @@ package body HTables is
       ------------
 
       procedure Remove (Hash_Table : in out HTable; K : Key) is
-         Tmp : Elmt_Ptr;
+--         Tmp : Elmt_Ptr;
       begin
-         Tmp := Get (Hash_Table.Table, K);
-
-         if Tmp /= null then
-            Remove (Hash_Table.Table, K);
-            Free (Tmp);
-         end if;
+--           Tmp := Get (Hash_Table.Table, K);
+--
+--           if Tmp /= null then
+         Remove (Hash_Table.Table, K);
+--              Free (Tmp);
+--           end if;
       end Remove;
 
       -----------
@@ -288,18 +295,18 @@ package body HTables is
       -----------
 
       procedure Reset (Hash_Table : in out HTable) is
-         E1 : Iterator;
-         E : Elmt_Ptr;
+--           E1 : Iterator;
+--           E : Elmt_Ptr;
       begin
-         Get_First (Hash_Table, E1);
-
-         loop
-            E := Get_Element (E1.Iter);
-            exit when E = null;
-
-            Get_Next (Hash_Table, E1);
-            Free (E);
-         end loop;
+--           Get_First (Hash_Table, E1);
+--
+--           loop
+--              E := Get_Element (E1.Iter);
+--              exit when E = null;
+--
+--              Get_Next (Hash_Table, E1);
+--              Free (E);
+--           end loop;
 
          Reset (Hash_Table.Table);
       end Reset;

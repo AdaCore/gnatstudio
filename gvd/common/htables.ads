@@ -72,6 +72,9 @@ pragma Preelaborate (HTables);
       with function Hash    (F : Key)      return Header_Num;
       with function Equal   (F1, F2 : Key) return Boolean;
 
+      with procedure Free_Elmt_Ptr (E : in out Elmt_Ptr);
+      --  Free the memory occupied by E
+
    package Static_HTable is
 
       type HTable is private;
@@ -213,15 +216,16 @@ pragma Preelaborate (HTables);
       function  Get_Key  (E : Elmt_Ptr) return Key;
 
       package Tab is new Static_HTable (
-        Header_Num => Header_Num,
-        Elmt_Ptr   => Elmt_Ptr,
-        Null_Ptr   => null,
-        Set_Next   => Set_Next,
-        Next       => Next,
-        Key        => Key,
-        Get_Key    => Get_Key,
-        Hash       => Hash,
-        Equal      => Equal);
+        Header_Num    => Header_Num,
+        Elmt_Ptr      => Elmt_Ptr,
+        Null_Ptr      => null,
+        Set_Next      => Set_Next,
+        Next          => Next,
+        Key           => Key,
+        Get_Key       => Get_Key,
+        Hash          => Hash,
+        Equal         => Equal,
+        Free_Elmt_Ptr => Free);
 
       type Iterator is record
          Iter : Tab.Iterator;
