@@ -33,7 +33,6 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;
-with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Label;                 use Gtk.Label;
@@ -63,6 +62,7 @@ with Log_Utils;                 use Log_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
@@ -211,6 +211,20 @@ package body VCS_View_Pkg is
       Kernel : access Kernel_Handle_Record'Class;
       File_Data   : Hooks_Data'Class);
    --  Callback for the "file_edited" signal.
+
+   function Context_Func
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+   --  Default context factory.
+
+   function Get_Path_At_Event
+     (Tree  : Gtk_Tree_View;
+      Event : Gdk_Event) return Gtk_Tree_Path;
+   --  Return the path at which Event has occured.
+   --  User must free memory associated to the returned path.
 
    -----------------
    -- On_Selected --
@@ -980,83 +994,69 @@ package body VCS_View_Pkg is
       Refresh (E);
    end Change_Hide_Not_Registered;
 
+   -----------------------
+   -- Get_Path_At_Event --
+   -----------------------
+
+   function Get_Path_At_Event
+     (Tree  : Gtk_Tree_View;
+      Event : Gdk_Event) return Gtk_Tree_Path
+   is
+      X         : constant Gdouble := Get_X (Event);
+      Y         : constant Gdouble := Get_Y (Event);
+      Buffer_X  : Gint;
+      Buffer_Y  : Gint;
+      Row_Found : Boolean;
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column := null;
+
+   begin
+      Path := Gtk_New;
+      Get_Path_At_Pos
+        (Tree,
+         Gint (X),
+         Gint (Y),
+         Path,
+         Column,
+         Buffer_X,
+         Buffer_Y,
+         Row_Found);
+
+      return Path;
+   end Get_Path_At_Event;
+
    ------------------
-   -- Button_Press --
+   -- Context_Func --
    ------------------
 
-   function Button_Press
-     (View  : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
+   function Context_Func
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+
    is
-      Menu     : Gtk_Menu;
+      pragma Unreferenced (Event_Widget);
+
       Check    : Gtk_Check_Menu_Item;
       Mitem    : Gtk_Menu_Item;
-      Context  : File_Selection_Context_Access := new File_Selection_Context;
+      Context  : File_Selection_Context_Access;
 
       Files    : String_List.List;
-      Explorer : constant VCS_View_Access := VCS_View_Access (View);
-      Kernel   : constant Kernel_Handle := Explorer.Kernel;
+      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
       Page     : VCS_Page_Access;
       Path     : Gtk_Tree_Path;
       Iter     : Gtk_Tree_Iter;
-
-      function Get_Path_At_Event return Gtk_Tree_Path;
-      --  Return the path at which Event has occured.
-      --  User must free memory associated to the returned path.
-
-      function Get_Path_At_Event return Gtk_Tree_Path is
-         X         : constant Gdouble := Get_X (Event);
-         Y         : constant Gdouble := Get_Y (Event);
-         Buffer_X  : Gint;
-         Buffer_Y  : Gint;
-         Row_Found : Boolean;
-         Path      : Gtk_Tree_Path;
-         Column    : Gtk_Tree_View_Column := null;
-
-      begin
-         Path := Gtk_New;
-         Get_Path_At_Pos
-           (Page.Tree,
-            Gint (X),
-            Gint (Y),
-            Path,
-            Column,
-            Buffer_X,
-            Buffer_Y,
-            Row_Found);
-
-         return Path;
-      end Get_Path_At_Event;
 
    begin
       Page := VCS_Page_Access
         (Get_Nth_Page (Explorer.Notebook,
                        Get_Current_Page (Explorer.Notebook)));
 
-      if Get_Event_Type (Event) = Gdk_2button_Press then
-         Path := Get_Path_At_Event;
-
-         if Path /= null then
-            Iter := Get_Iter (Page.Model, Path);
-            Open_File_Editor
-              (Kernel,
-               Create
-                (Full_Filename => Get_String (Page.Model, Iter, Name_Column)));
-         end if;
-
-         Unref (Selection_Context_Access (Context));
-         return True;
-      end if;
-
-      if Get_Button (Event) = 1 then
-         Unref (Selection_Context_Access (Context));
-         return False;
-      end if;
-
-      Gtk_New (Menu);
-
       --  If there is no selection, select the item under the cursor.
-      Path := Get_Path_At_Event;
+
+      Path := Get_Path_At_Event (Page.Tree, Event);
 
       if Path /= null
         and then not Path_Is_Selected (Get_Selection (Page.Tree), Path)
@@ -1073,11 +1073,15 @@ package body VCS_View_Pkg is
          Files := Get_Selected_Files (Explorer);
       end if;
 
+      --  Create the context
+
       if not String_List.Is_Empty (Files) then
          declare
             First_File : constant Virtual_File := Create
               (Full_Filename => String_List.Head (Files));
          begin
+            Context := new File_Selection_Context;
+
             Set_Context_Information
               (Context,
                Kernel,
@@ -1085,7 +1089,8 @@ package body VCS_View_Pkg is
             Set_File_Information (Context, File => First_File);
 
             Set_Current_Context (Explorer, Selection_Context_Access (Context));
-            VCS_Contextual_Menu (Kernel, Explorer.Context, Menu, True);
+            VCS_Contextual_Menu
+              (Kernel_Handle (Kernel), Explorer.Context, Menu, False);
 
             Gtk_New (Mitem);
             Append (Menu, Mitem);
@@ -1110,15 +1115,48 @@ package body VCS_View_Pkg is
           Widget_Callback.To_Marshaller (Change_Hide_Not_Registered'Access),
           Explorer);
 
-      Grab_Focus (Explorer);
-      Show_All (Menu);
-      Popup (Menu,
-             Button        => Gdk.Event.Get_Button (Event),
-             Activate_Time => Gdk.Event.Get_Time (Event));
-      Emit_Stop_By_Name (Page.Tree, "button_press_event");
+      Grab_Focus (Page.Tree);
 
-      Unref (Selection_Context_Access (Context));
-      return True;
+      return Selection_Context_Access (Context);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return null;
+   end Context_Func;
+
+   ------------------
+   -- Button_Press --
+   ------------------
+
+   function Button_Press
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean
+   is
+      Explorer : constant VCS_View_Access := VCS_View_Access (View);
+      Kernel   : constant Kernel_Handle := Explorer.Kernel;
+      Page     : VCS_Page_Access;
+      Path     : Gtk_Tree_Path;
+      Iter     : Gtk_Tree_Iter;
+
+   begin
+      Page := VCS_Page_Access
+        (Get_Nth_Page (Explorer.Notebook,
+                       Get_Current_Page (Explorer.Notebook)));
+
+      if Get_Event_Type (Event) = Gdk_2button_Press then
+         Path := Get_Path_At_Event (Page.Tree, Event);
+
+         if Path /= null then
+            Iter := Get_Iter (Page.Model, Path);
+            Open_File_Editor
+              (Kernel,
+               Create
+                (Full_Filename => Get_String (Page.Model, Iter, Name_Column)));
+         end if;
+      end if;
+
+      return False;
 
    exception
       when E : others =>
@@ -1309,6 +1347,13 @@ package body VCS_View_Pkg is
          Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
          Explorer,
          After => False);
+
+      Register_Contextual_Menu
+        (Explorer.Kernel,
+         Page.Tree,
+         Explorer,
+         VCS_Module_ID,
+         Context_Func'Access);
 
       Set_Column_Types (Page);
 
