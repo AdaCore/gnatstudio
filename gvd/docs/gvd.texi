@@ -38,7 +38,7 @@ Version @value{GVDVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2000, ACT-Europe.
+Copyright @copyright{} 2000-2001, ACT-Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -939,7 +939,6 @@ Options:
    --debugger DEBUG  use DEBUG as the underlying debugger.
    --jdb             assume a Java debugger.
    --host HOST       Run inferior debugger on HOST.
-   --no-explorer     Do not display explorer window.
    --target TARG:PRO Load program on machine TARG using protocol PRO.
    --log-level [0-4] Set level of logging (Default is 3).
    --tty             Use controlling tty as additional debugger console.
