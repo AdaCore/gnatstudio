@@ -774,6 +774,7 @@ package body Python_Module is
          Execute_Command
            (Python_Module_Id.Script,
             "execfile (""" & Sys & "/autoexec.py"")",
+            Hide_Output => True,
             Errors => Errors);
       end if;
 
