@@ -482,7 +482,7 @@ package body GVD.Text_Box.Asm_Editor is
         (Debugger_Process_Tab (Editor.Process).Debugger,
          Source_Line, Range_Start, Range_End, Range_Start_Len, Range_End_Len);
 
-      if Range_Start_Len /= 0 and then Range_End_Len /=0 then
+      if Range_Start_Len /= 0 and then Range_End_Len /= 0 then
          while Pos_Start = 0 or else Pos_End = 0 loop
 
             Pos_Start := Pos_From_Address
