@@ -351,9 +351,9 @@ package body Glide_Kernel.Timeout is
            Console_Process_Timeout.Add (Timeout, Process_Cb'Access, Data);
       else
          Unref (Data);
+         Pop_State (Kernel);
       end if;
 
-      Pop_State (Kernel);
 
    exception
       when E : others =>
