@@ -140,6 +140,7 @@ package body Odd.Process is
       Process   : Debugger_Process_Tab;
       File_Name : Odd.Types.String_Access;
       Line      : Natural;
+      Addr      : Odd.Types.String_Access;
    end record;
    type Load_File_Data_Access is access Load_File_Data;
    function Convert is new Unchecked_Conversion
@@ -154,6 +155,10 @@ package body Odd.Process is
    procedure Set_Line_Post_Process (User_Data : System.Address);
    --  Set a line, whose name was found while we were previously waiting for
    --  a prompt.
+
+   procedure Set_Addr_Post_Process (User_Data : System.Address);
+   --  Set an address, whose name was found while we were previously waiting
+   --  for a prompt.
 
    -----------------------
    -- Local Subprograms --
@@ -348,6 +353,17 @@ package body Odd.Process is
       Set_Line (Data.Process.Editor_Text, Data.Line);
    end Set_Line_Post_Process;
 
+   ---------------------------
+   -- Set_Addr_Post_Process --
+   ---------------------------
+
+   procedure Set_Addr_Post_Process (User_Data : System.Address) is
+      Data : Load_File_Data_Access := Convert (User_Data);
+   begin
+      Set_Address (Data.Process.Editor_Text, Data.Addr.all);
+      Free (Data.Addr);
+   end Set_Addr_Post_Process;
+
    -------------------------
    -- Text_Output_Handler --
    -------------------------
@@ -364,12 +380,15 @@ package body Odd.Process is
       File_Last   : Positive;
       Line        : Natural := 0;
       First, Last : Natural;
+      Addr_First  : Natural := 0;
+      Addr_Last   : Natural;
 
    begin
       if Get_Parse_File_Name (Get_Process (Process.Debugger)) then
          Found_File_Name
            (Process.Debugger,
-            Str, File_First, File_Last, First, Last, Line);
+            Str, File_First, File_Last, First, Last, Line,
+            Addr_First, Addr_Last);
       end if;
 
       --  Do not show the output if we have an internal command
@@ -402,7 +421,19 @@ package body Odd.Process is
             Convert (new Load_File_Data'
                      (Process => Process,
                       File_Name => new String'(Str (File_First .. File_Last)),
-                      Line      => 1)));
+                      Line      => 1,
+                      Addr      => null)));
+      end if;
+
+      if Addr_First /= 0 then
+         Register_Post_Cmd
+           (Get_Process (Process.Debugger),
+            Set_Addr_Post_Process'Access,
+            Convert (new Load_File_Data'
+                     (Process   => Process,
+                      File_Name => null,
+                      Line      => 1,
+                      Addr    => new String'(Str (Addr_First .. Addr_Last)))));
       end if;
 
       if Line /= 0 then
@@ -412,7 +443,8 @@ package body Odd.Process is
             Convert (new Load_File_Data'
                      (Process   => Process,
                       File_Name => null,
-                      Line      => Line)));
+                      Line      => Line,
+                      Addr      => null)));
       end if;
    end Text_Output_Handler;
 
@@ -574,14 +606,12 @@ package body Odd.Process is
       --  The language of the editor will automatically be set by the output
       --  filter.
 
-      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size,
+      Configure (Process.Editor_Text,
+                 Editor_Font, Editor_Font_Size,
                  dot_xpm, arrow_xpm, stop_xpm,
                  Comments_Color    => Comments_Color,
                  Strings_Color     => Strings_Color,
                  Keywords_Color    => Keywords_Color);
-      Set_Show_Line_Nums (Process.Editor_Text, Editor_Show_Line_Nums);
-      Set_Show_Lines_With_Code
-        (Process.Editor_Text, Editor_Show_Line_With_Code);
 
       --  Set the user data, so that we can easily convert afterwards.
 
