@@ -39,7 +39,6 @@ with Odd_Intl;         use Odd_Intl;
 with GVD.Canvas;       use GVD.Canvas;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Process;      use GVD.Process;
-with GVD.Status_Bar;   use GVD.Status_Bar;
 with GVD.Types;        use GVD.Types;
 with GVD.Trace;        use GVD.Trace;
 
@@ -210,6 +209,22 @@ package body Display_Items is
    --  whose Id is Id.
    --  Deref_Name should be the dereferenced version of Name
 
+   function Recompute_Sizes
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean;
+   --  Recomput the sizes and positions for all the items that are aliases
+   --  of other items.
+
+   function Remove_Aliases
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean;
+   --  Remove all the aliases currently set up
+
+   function Remove_Temporary
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Link   : access Canvas_Link_Record'Class) return Boolean;
+   --  Remove all temporary links from the canvas
+
    -------------
    -- Gtk_New --
    -------------
@@ -225,15 +240,6 @@ package body Display_Items is
       Entity      : Generic_Type_Access;
       Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
-
-      procedure Output_Error (Msg : String);
-      --  Output an error message on the status bar and in the log file.
-
-      procedure Output_Error (Msg : String) is
-      begin
-         Print_Message (Debugger.Window.Statusbar1, Error, Msg);
-         Output_Line (Debugger.Window, "# " & Msg);
-      end Output_Error;
 
    begin
       if Default_Entity = null then
@@ -264,7 +270,8 @@ package body Display_Items is
 
                if Entity = null then
                   Output_Error
-                    ((-"Could not get the type of ") & Variable_Name);
+                    (Debugger.Window,
+                     (-"Could not get the type of ") & Variable_Name);
                   return;
                else
                   Parse_Value
@@ -273,7 +280,8 @@ package body Display_Items is
 
                if Entity = null then
                   Output_Error
-                    ((-"Could not get the value of ") & Variable_Name);
+                    (Debugger.Window,
+                     (-"Could not get the value of ") & Variable_Name);
                end if;
 
                Item := new Display_Item_Record;
@@ -290,7 +298,8 @@ package body Display_Items is
             exception
                when Language.Unexpected_Type | Constraint_Error =>
                   Output_Error
-                    ((-"Could not parse type or value for ") & Variable_Name);
+                    (Debugger.Window,
+                     (-"Could not parse type or value for ") & Variable_Name);
                   return;
             end;
 
@@ -1600,89 +1609,73 @@ package body Display_Items is
       Refresh_Canvas (Canvas);
    end On_Canvas_Process_Stopped;
 
+   --------------------
+   -- Remove_Aliases --
+   --------------------
+
+   function Remove_Aliases
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean
+   is
+      It : Display_Item := Display_Item (Item);
+   begin
+      It.Was_Alias := It.Is_Alias_Of /= null;
+      It.Is_Alias_Of := null;
+      Set_Visibility (It, True);
+      return True;
+   end Remove_Aliases;
+
+   ----------------------
+   -- Remove_Temporary --
+   ----------------------
+
+   function Remove_Temporary
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Link   : access Canvas_Link_Record'Class) return Boolean is
+   begin
+      if GVD_Link (Link).Alias_Link then
+         Remove_Link (Canvas, Link);
+         Destroy (Link);
+      end if;
+
+      return True;
+   end Remove_Temporary;
+
+   ---------------------
+   -- Recompute_Sizes --
+   ---------------------
+
+   function Recompute_Sizes
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean
+   is
+      It : Display_Item := Display_Item (Item);
+   begin
+      if It.Is_Alias_Of /= null then
+         Set_Visibility (It, False);
+
+         --  Duplicate the links if required
+         Duplicate_Links (Canvas, Item);
+
+      --  If we broke the alias, move the item back to some new coordinates
+      elsif It.Was_Alias then
+         Move_To (Canvas, It);
+      end if;
+
+      return True;
+   end Recompute_Sizes;
+
    ---------------------------
    -- Recompute_All_Aliases --
    ---------------------------
 
    procedure Recompute_All_Aliases
      (Canvas           : access Interactive_Canvas_Record'Class;
-      Recompute_Values : Boolean := True)
-   is
-      function Recompute_Sizes
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Recomput the sizes and positions for all the items that are aliases
-      --  of other items.
-
-      function Remove_Aliases
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Remove all the aliases currently set up
-
-      function Remove_Temporary
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean;
-      --  Remove all temporary links from the canvas
-
-      --------------------
-      -- Remove_Aliases --
-      --------------------
-
-      function Remove_Aliases
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         It : Display_Item := Display_Item (Item);
-      begin
-         It.Was_Alias := It.Is_Alias_Of /= null;
-         It.Is_Alias_Of := null;
-         Set_Visibility (It, True);
-         return True;
-      end Remove_Aliases;
-
-      ----------------------
-      -- Remove_Temporary --
-      ----------------------
-
-      function Remove_Temporary
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean is
-      begin
-         if GVD_Link (Link).Alias_Link then
-            Remove_Link (Canvas, Link);
-            Destroy (Link);
-         end if;
-
-         return True;
-      end Remove_Temporary;
-
-      ---------------------
-      -- Recompute_Sizes --
-      ---------------------
-
-      function Recompute_Sizes
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         It : Display_Item := Display_Item (Item);
-      begin
-         if It.Is_Alias_Of /= null then
-            Set_Visibility (It, False);
-
-            --  Duplicate the links if required
-            Duplicate_Links (Canvas, Item);
-
-         --  If we broke the alias, move the item back to some new coordinates
-         elsif It.Was_Alias then
-            Move_To (Canvas, It);
-         end if;
-         return True;
-      end Recompute_Sizes;
-
+      Recompute_Values : Boolean := True) is
    begin
       --  Remove all the temporary links and aliases
-      For_Each_Link (Canvas, Remove_Temporary'Unrestricted_Access);
-      For_Each_Item (Canvas, Remove_Aliases'Unrestricted_Access);
+      For_Each_Link (Canvas, Remove_Temporary'Access);
+      For_Each_Item (Canvas, Remove_Aliases'Access);
 
       --  First: Recompile all the addresses, and detect the aliases.
       if Get_Detect_Aliases (GVD_Canvas (Canvas)) then
@@ -1696,7 +1689,7 @@ package body Display_Items is
 
       --  Now that everything has been redimensionned, we can finish to
       --  manipulate the aliases
-      For_Each_Item (Canvas, Recompute_Sizes'Unrestricted_Access);
+      For_Each_Item (Canvas, Recompute_Sizes'Access);
    end Recompute_All_Aliases;
 
    ---------------------
