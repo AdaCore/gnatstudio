@@ -89,6 +89,7 @@ private
       Font              : Gdk.Font.Gdk_Font;
       Line_Numbers_GC   : Gdk.GC.Gdk_GC;
       Show_Line_Numbers : Boolean;
+      LNA_Width_In_Digits : Natural;
    end record;
 
 end Src_Editor_View;
