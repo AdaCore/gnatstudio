@@ -29,24 +29,6 @@ package GVD.Menu is
    -- Callbacks --
    ---------------
 
-   procedure On_Open_Program
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Open Program
-
-   procedure On_Open_Core_Dump
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Open Core File
-
-   procedure On_Add_Symbols
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Add Symbols
-
    procedure On_Attach_To_Process
      (Object : Data_Type_Access;
       Action : Guint;
@@ -58,12 +40,6 @@ package GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Callback for File->Detach
-
-   procedure On_Change_Directory
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Change Directory
 
    procedure On_Run
      (Object : Data_Type_Access;
