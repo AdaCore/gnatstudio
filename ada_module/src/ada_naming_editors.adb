@@ -19,15 +19,14 @@
 -----------------------------------------------------------------------
 
 with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Clist;                use Gtk.Clist;
 with Gtk.List;                 use Gtk.List;
 with Gtk.Size_Group;           use Gtk.Size_Group;
-with Gtkada.Types;             use Gtkada.Types;
 with Casing;                   use Casing;
 with Prj;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
@@ -35,10 +34,13 @@ with GUI_Utils;                use GUI_Utils;
 with Glide_Intl;               use Glide_Intl;
 with Projects;                 use Projects;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Basic_Types;              use Basic_Types;
 with Projects.Editor;          use Projects, Projects.Editor;
-
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with String_Hash;
+with System;                   use System;
 
 package body Ada_Naming_Editors is
 
@@ -56,6 +58,31 @@ package body Ada_Naming_Editors is
    Apex_Naming_Scheme   : constant := 1;
    Dec_Naming_Scheme    : constant := 2;
    Custom_Naming_Scheme : constant := 3;
+
+   type Naming_Data is record
+      Body_Name : GNAT.OS_Lib.String_Access;
+      Spec_Name : GNAT.OS_Lib.String_Access;
+   end record;
+   No_Data : constant Naming_Data := (null, null);
+
+   procedure Free (Data : in out Naming_Data);
+   --  Free the memory occupied by Data
+
+   package Naming_Hash is new String_Hash
+     (Data_Type => Naming_Data,
+      Free_Data => Free,
+      Null_Ptr  => No_Data);
+   use Naming_Hash.String_Hash_Table;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Data : in out Naming_Data) is
+   begin
+      Free (Data.Body_Name);
+      Free (Data.Spec_Name);
+   end Free;
 
    -------------
    -- Gtk_New --
@@ -92,7 +119,6 @@ package body Ada_Naming_Editors is
       Ref (Editor.GUI.Main_Box);
       Unparent (Editor.GUI.Main_Box);
 
-      Set_Auto_Sort (Editor.GUI.Exception_List, True);
       Reset_Exception_Fields (Editor.GUI);
 
       for Casing in Casing_Type loop
@@ -204,10 +230,13 @@ package body Ada_Naming_Editors is
       Project : Projects.Project_Type;
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
    is
-      Num_Rows : constant Gint := Get_Rows (Editor.GUI.Exception_List);
       Changed  : Boolean := False;
+      Iter : Gtk_Tree_Iter;
       Ada_Scheme : constant Boolean :=
         Get_Index_In_List (Editor.GUI.Standard_Scheme) = 0;
+      Cache   : Naming_Hash.String_Hash_Table.HTable;
+      Data : Naming_Data;
+      Cache_Iter : Naming_Hash.String_Hash_Table.Iterator;
 
       procedure Update_If_Required
         (Name : Attribute_Pkg; Value : String; Index : String);
@@ -268,59 +297,46 @@ package body Ada_Naming_Editors is
       function List_Changed (List : Associative_Array; Column : Gint)
          return Boolean
       is
-         Length : constant Natural := List'Length;
-         Old_Names  : Argument_List (1 .. Length);
-         Old_Values : Argument_List (1 .. Length);
-         Current : Natural := 1;
+         Length : Natural := 0;
+         Iter : Naming_Hash.String_Hash_Table.Iterator;
+         Data : Naming_Data;
       begin
-         for Elem in List'Range loop
-            Old_Names (Current) := new String'(Get_String (List (Elem).Index));
-            Old_Values (Current) := new String'(To_String (List (Elem).Value));
-            Current := Current + 1;
+         --  Count the non-empty items in the table
+
+         Get_First (Cache, Iter);
+         loop
+            Data := Get_Element (Iter);
+            exit when Data = No_Data;
+            if (Column = 1 and then Data.Spec_Name /= null)
+              or else (Column = 2 and then Data.Body_Name /= null)
+            then
+               Length := Length + 1;
+            end if;
+
+            Get_Next (Cache, Iter);
          end loop;
 
-         for J in 0 .. Num_Rows - 1 loop
+         if List'Length /= Length then
+            return True;
+         end if;
+
+         for Elem in List'Range loop
             declare
-               U : constant String :=
-                 Get_Text (Editor.GUI.Exception_List, J, 0);
-               Value : constant String :=
-                 Get_Text (Editor.GUI.Exception_List, J, Column);
-               Found : Boolean := False;
+               U     : constant String := Get_String (List (Elem).Index);
+               Value : constant String := To_String (List (Elem).Value);
             begin
-               if Value /= "" then
-                  for Index in Old_Names'Range loop
-                     if Old_Names (Index) /= null
-                       and then Old_Names (Index).all = U
-                     then
-                        if Old_Values (Index).all /= Value then
-                           Free (Old_Names);
-                           Free (Old_Values);
-                           return True;
-                        end if;
-
-                        Free (Old_Names (Index));
-                        Free (Old_Values (Index));
-                           Found := True;
-                     end if;
-                  end loop;
-
-                  if not Found then
-                     Free (Old_Names);
-                     Free (Old_Values);
-                     return True;
-                  end if;
+               Data := Get (Cache, U);
+               if Data = No_Data
+                 or else (Column = 1
+                          and then (Data.Spec_Name = null
+                                    or else Data.Spec_Name.all /= Value))
+                 or else (Column = 2
+                          and then (Data.Body_Name = null
+                                    or else Data.Body_Name.all /= Value))
+               then
+                  return True;
                end if;
             end;
-         end loop;
-
-         --  If there remains at least one value in the old values, then the
-         --  lists are different
-         for Index in Old_Names'Range loop
-            if Old_Names (Index) /= null then
-               Free (Old_Names);
-               Free (Old_Values);
-               return True;
-            end if;
          end loop;
 
          return False;
@@ -328,10 +344,10 @@ package body Ada_Naming_Editors is
 
    begin
       Update_If_Required
-        (Specification_Suffix_Attribute,
+        (Spec_Suffix_Attribute,
          Get_Text (Get_Entry (Editor.GUI.Spec_Extension)), Ada_String);
       Update_If_Required
-        (Implementation_Suffix_Attribute,
+        (Impl_Suffix_Attribute,
          Get_Text (Get_Entry (Editor.GUI.Body_Extension)), Ada_String);
       Update_If_Required
         (Separate_Suffix_Attribute,
@@ -343,55 +359,89 @@ package body Ada_Naming_Editors is
       Update_If_Required
         (Dot_Replacement_Attribute, Get_Text (Editor.GUI.Dot_Replacement), "");
 
-      Delete_Attribute
-        (Project            => Project,
-         Scenario_Variables => Scenario_Variables,
-         Attribute          => Specification_Attribute,
-         Attribute_Index    => Any_Attribute);
-      Delete_Attribute
-        (Project            => Project,
-         Scenario_Variables => Scenario_Variables,
-         Attribute          => Implementation_Attribute,
-         Attribute_Index    => Any_Attribute);
+      --  Fill the hash table
+      Iter := Get_Iter_First (Editor.GUI.Exception_List_Model);
+      while Iter /= Null_Iter loop
+         declare
+            U : constant String :=
+              Get_String (Editor.GUI.Exception_List_Model, Iter, 0);
+            Spec : constant String :=
+              Get_String (Editor.GUI.Exception_List_Model, Iter, 1);
+            Bod : constant String :=
+              Get_String (Editor.GUI.Exception_List_Model, Iter, 2);
+         begin
+            if Spec /= "" then
+               Data.Spec_Name := new String'(Spec);
+            else
+               Data.Spec_Name := null;
+            end if;
+
+            if Bod /= "" then
+               Data.Body_Name := new String'(Bod);
+            else
+               Data.Body_Name := null;
+            end if;
+
+            Set (Cache, U, Data);
+         end;
+
+         Next (Editor.GUI.Exception_List_Model, Iter);
+      end loop;
+
+      --  Update the project if needed
 
       Changed := Changed
         or else Project = No_Project
         or else List_Changed
-           (Get_Attribute_Value
-            (Project, Specification_Attribute), 1)
+           (Get_Attribute_Value (Project, Specification_Attribute), 1)
         or else List_Changed
-           (Get_Attribute_Value
-            (Project, Implementation_Attribute), 2);
+           (Get_Attribute_Value (Project, Implementation_Attribute), 2);
 
       if Changed then
-         for J in 0 .. Num_Rows - 1 loop
+         Delete_Attribute
+           (Project            => Project,
+            Scenario_Variables => Scenario_Variables,
+            Attribute          => Specification_Attribute,
+            Attribute_Index    => Any_Attribute);
+         Delete_Attribute
+           (Project            => Project,
+            Scenario_Variables => Scenario_Variables,
+            Attribute          => Implementation_Attribute,
+            Attribute_Index    => Any_Attribute);
+
+         Get_First (Cache, Cache_Iter);
+         loop
+            Data := Get_Element (Cache_Iter);
+            exit when Data = No_Data;
+
             declare
-               U : constant String :=
-                 Get_Text (Editor.GUI.Exception_List, J, 0);
-               Spec : constant String :=
-                 Get_Text (Editor.GUI.Exception_List, J, 1);
-               Bod : constant String :=
-                 Get_Text (Editor.GUI.Exception_List, J, 2);
+               Key : constant String := Get_Key (Cache_Iter);
             begin
-               if Spec /= "" then
+               if Data.Spec_Name /= null then
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
                      Scenario_Variables => Scenario_Variables,
                      Attribute          => Specification_Attribute,
-                     Value              => Spec,
-                     Attribute_Index    => U);
+                     Value              => Data.Spec_Name.all,
+                     Attribute_Index    => Key);
                end if;
-               if Bod /= "" then
+
+               if Data.Body_Name /= null then
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
                      Scenario_Variables => Scenario_Variables,
                      Attribute          => Implementation_Attribute,
-                     Value              => Bod,
-                     Attribute_Index    => U);
+                     Value              => Data.Body_Name.all,
+                     Attribute_Index    => Key);
                end if;
             end;
+
+            Get_Next (Cache, Cache_Iter);
          end loop;
+
       end if;
+
+      Reset (Cache);
 
       return Changed;
    end Create_Project_Entry;
@@ -406,8 +456,19 @@ package body Ada_Naming_Editors is
       Project            : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
+      procedure Set_Unit_Spec
+        (Model : System.Address;
+         Iter  : Gtk_Tree_Iter;
+         Col   : Gint := 0;
+         Unit  : String;
+         Col2  : Gint := 1;
+         Spec  : String;
+         Col3  : Gint := 3;
+         Editable : Boolean := True;
+         Last  : Gint := -1);
+      pragma Import (C, Set_Unit_Spec, "gtk_tree_store_set");
+
       pragma Unreferenced (Kernel);
-      Row   : Gint;
       Dot_Replacement : constant String := Get_Attribute_Value
         (Project, Dot_Replacement_Attribute,
          Default => Default_Gnat_Dot_Replacement);
@@ -423,6 +484,7 @@ package body Ada_Naming_Editors is
       Spec_Suffix : constant String := Get_Attribute_Value
         (Project, Spec_Suffix_Attribute,
          Index => Ada_String, Default => Default_Gnat_Spec_Suffix);
+      Id : Gint;
    begin
       Set_Text (Editor.GUI.Dot_Replacement,                Dot_Replacement);
       Set_Text (Get_Entry (Editor.GUI.Casing),            -Casing);
@@ -430,8 +492,8 @@ package body Ada_Naming_Editors is
       Set_Text (Get_Entry (Editor.GUI.Body_Extension),     Body_Suffix);
       Set_Text (Get_Entry (Editor.GUI.Separate_Extension), Separate_Suffix);
 
-      Freeze (Editor.GUI.Exception_List);
-      Clear (Editor.GUI.Exception_List);
+      Clear (Editor.GUI.Exception_List_Model);
+      Id := Freeze_Sort (Editor.GUI.Exception_List_Model);
 
       if Display_Exceptions then
          declare
@@ -439,37 +501,55 @@ package body Ada_Naming_Editors is
               (Project, Specification_Attribute);
             Bodies : constant Associative_Array := Get_Attribute_Value
               (Project, Implementation_Attribute);
+            Iter : Gtk_Tree_Iter;
          begin
             for S in Specs'Range loop
-               Row := Prepend
-                 (Editor.GUI.Exception_List,
-                  Get_String (Specs (S).Index)
-                  + To_String (Specs (S).Value) + "");
+               Append (Editor.GUI.Exception_List_Model, Iter, Null_Iter);
+               Set_Unit_Spec
+                 (Get_Object (Editor.GUI.Exception_List_Model), Iter,
+                  Col   => 0,
+                  Unit  => Get_String (Specs (S).Index) & ASCII.NUL,
+                  Col2  => 1,
+                  Spec  => To_String (Specs (S).Value) & ASCII.NUL);
             end loop;
 
             for B in Bodies'Range loop
-               Row := Find_First_Row_Matching
-                 (Editor.GUI.Exception_List, 0, Get_String (Bodies (B).Index));
+               --  ??? We could store the name_id for the unit name, to avoid a
+               --  string comparison, and save time. However, this won't be
+               --  needed if C303-008 is implemented (merging the two exception
+               --  lists)
+               declare
+                  Unit : constant String := Get_String (Bodies (B).Index);
+               begin
+                  Iter := Get_Iter_First (Editor.GUI.Exception_List_Model);
+                  while Iter /= Null_Iter loop
+                     exit when Get_String
+                       (Editor.GUI.Exception_List_Model, Iter, 0) = Unit;
+                     Next (Editor.GUI.Exception_List_Model, Iter);
+                  end loop;
+               end;
 
-               if Row = -1 then
-                  Row := Prepend
-                    (Editor.GUI.Exception_List,
-                     Get_String (Bodies (B).Index)
-                     + "" + To_String (Bodies (B).Value));
+               if Iter = Null_Iter then
+                  Append (Editor.GUI.Exception_List_Model, Iter, Null_Iter);
+                  Set_Unit_Spec
+                    (Get_Object (Editor.GUI.Exception_List_Model), Iter,
+                     Col   => 0,
+                     Unit  => Get_String (Bodies (B).Index) & ASCII.NUL,
+                     Col2  => 2,
+                     Spec  => To_String (Bodies (B).Value) & ASCII.NUL);
                else
-                  Set_Text (Editor.GUI.Exception_List, Row, 2,
-                            To_String (Bodies (B).Value));
+                  Set (Editor.GUI.Exception_List_Model, Iter,
+                       Column => 2,
+                       Value  => To_String (Bodies (B).Value));
                end if;
             end loop;
-
-            Sort (Editor.GUI.Exception_List);
          end;
       end if;
 
-      Thaw (Editor.GUI.Exception_List);
+      Thaw_Sort (Editor.GUI.Exception_List_Model, Id);
 
       --  GNAT naming scheme ?
-      if Get_Rows (Editor.GUI.Exception_List) /= 0
+      if Get_Iter_First (Editor.GUI.Exception_List_Model) /= Null_Iter
         or else Get_Text (Get_Entry (Editor.GUI.Casing)) /=
           -Prj.Image (All_Lower_Case)
       then
@@ -521,52 +601,66 @@ package body Ada_Naming_Editors is
       Unit      : constant String := Get_Text (Editor.Unit_Name_Entry);
       Spec_Name : constant String := Get_Text (Editor.Spec_Filename_Entry);
       Body_Name : constant String := Get_Text (Editor.Body_Filename_Entry);
-      Text      : Gtkada.Types.Chars_Ptr_Array (0 .. 2);
-      Num_Rows  : constant Gint := Get_Rows (Editor.Exception_List);
-      Row       : Gint := -1;
+      Iter      : Gtk_Tree_Iter;
+      Id        : Gint;
 
    begin
-      if Unit /= Empty_Unit_Name then
-
+      if Unit /= Empty_Unit_Name
+        and then (Spec_Name /= Empty_Spec_Name
+                  or else Body_Name /= Empty_Body_Name)
+      then
          --  Check if there is already an entry for this unit
 
-         for J in 0 .. Num_Rows - 1 loop
+         Iter := Get_Iter_First (Editor.Exception_List_Model);
+         while Iter /= Null_Iter loop
             declare
                U : constant String :=
-                 Get_Text (Editor.Exception_List, J, 0);
+                 Get_String (Editor.Exception_List_Model, Iter, 0);
             begin
                if U = Unit then
-                  Row := J;
+                  exit;
                elsif  U > Unit then
+                  Iter := Null_Iter;
                   exit;
                end if;
             end;
+            Next (Editor.Exception_List_Model, Iter);
          end loop;
 
-         if Spec_Name /= Empty_Spec_Name
-           or else Body_Name /= Empty_Body_Name
-         then
-            if Row = -1 then
-               Text (0) := New_String (Unit);
-               Text (1) := New_String ("");
-               Text (2) := New_String ("");
-               Row := Append (Editor.Exception_List, Text);
-               Free (Text);
-            end if;
+         Id := Freeze_Sort (Editor.Exception_List_Model);
 
-            if Spec_Name /= Empty_Spec_Name then
-               Set_Text (Editor.Exception_List, Row, 1, Spec_Name);
-            end if;
-
-            if Body_Name /= Empty_Body_Name then
-               Set_Text (Editor.Exception_List, Row, 2, Body_Name);
-            end if;
-
-            Moveto (Editor.Exception_List, Row, 0, 0.0, 0.0);
-            Reset_Exception_Fields (Editor);
+         if Iter = Null_Iter then
+            Append (Editor.Exception_List_Model, Iter, Null_Iter);
+            Set (Editor.Exception_List_Model, Iter,
+                 Column => 0,
+                 Value  => Unit);
+            Set (Editor.Exception_List_Model, Iter,
+                 Column => 3,
+                 Value  => True);
          end if;
 
-         Grab_Focus (Editor.Unit_Name_Entry);
+         if Spec_Name /= Empty_Spec_Name then
+            Set (Editor.Exception_List_Model, Iter,
+                 Column => 1,
+                 Value  => Spec_Name);
+         end if;
+
+         if Body_Name /= Empty_Body_Name then
+            Set (Editor.Exception_List_Model, Iter,
+                 Column => 2,
+                 Value  => Body_Name);
+         end if;
+
+         Thaw_Sort (Editor.Exception_List_Model, Id);
+
+         Scroll_To_Cell
+           (Editor.Exception_List,
+            Get_Path (Editor.Exception_List_Model, Iter),
+            Column => Get_Column (Editor.Exception_List, 0),
+            Use_Align => False,
+            Row_Align => 0.0,
+            Col_Align => 0.0);
+         Reset_Exception_Fields (Editor);
       end if;
    end Add_New_Exception;
 
