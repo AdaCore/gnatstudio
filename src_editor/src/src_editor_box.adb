@@ -1548,7 +1548,7 @@ package body Src_Editor_Box is
                         Slot_Object => Editor,
                         After       => True);
 
-                     if Is_Subprogram (Entity) then
+                     if Is_Container (Entity) then
                         Gtk_New (Item, -"Goto body of " & Name);
                      else
                         Gtk_New (Item, -"Goto full declaration of " & Name);
