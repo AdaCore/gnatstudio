@@ -2799,7 +2799,7 @@
 	    <draw_indicator>True</draw_indicator>
 	    <child>
 	      <left_attach>0</left_attach>
-	      <right_attach>2</right_attach>
+	      <right_attach>4</right_attach>
 	      <top_attach>11</top_attach>
 	      <bottom_attach>12</bottom_attach>
 	      <xpad>0</xpad>

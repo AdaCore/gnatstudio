@@ -486,7 +486,7 @@ begin
 
    Gtk_New (General_Preferences.Show_Stack_Check, -"Show Call Stack");
    Set_Active (General_Preferences.Show_Stack_Check, False);
-   Attach (General_Preferences.Table3, General_Preferences.Show_Stack_Check, 0, 2, 11, 12,
+   Attach (General_Preferences.Table3, General_Preferences.Show_Stack_Check, 0, 4, 11, 12,
      Fill, 0,
      0, 0);
 
