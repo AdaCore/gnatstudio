@@ -147,6 +147,7 @@ package body Glide_Kernel.Console is
          Gtk_New (Results, Kernel_Handle (Kernel),
                   Module_ID (Console_Module_Id));
          Child := Put (Get_MDI (Kernel), Results);
+         Set_Focus_Child (Child);
 
          Set_Title (Child, -"Locations");
          Set_Dock_Side (Child, Bottom);
@@ -522,7 +523,9 @@ package body Glide_Kernel.Console is
       Enable_Prompt_Display (Console, False);
 
       Child := Put
-        (Get_MDI (Kernel), Console, Iconify_Button or Maximize_Button);
+        (Get_MDI (Kernel), Console, Iconify_Button or Maximize_Button,
+         Gtk_Widget (Get_View (Console)));
+      Set_Focus_Child (Child);
       Set_Title (Child, -"Messages");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
@@ -540,7 +543,7 @@ package body Glide_Kernel.Console is
       Child := Put
         (Get_MDI (Kernel), Interactive,
          Iconify_Button or Maximize_Button,
-         Focus_Widget => Gtk_Widget (Get_Child (Interactive)));
+         Focus_Widget => Gtk_Widget (Get_View (Interactive)));
       Set_Title (Child, -"Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
