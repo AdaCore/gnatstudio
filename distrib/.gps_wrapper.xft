@@ -11,7 +11,7 @@ root=`dirname $0`
 root=`dirname $root`
 LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
-FONTCONFIG_FILE=$root/fonts/fonts.conf
+FONTCONFIG_FILE=$root/etc/fonts/fonts.conf
 
 if [ "$GPS_DOC_PATH" = "" ]; then
    GPS_DOC_PATH=$root/doc/gnat/html:$root/doc/gnat-cross/html
