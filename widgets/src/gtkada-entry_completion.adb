@@ -317,15 +317,10 @@ package body Gtkada.Entry_Completion is
                exit when Compl = "";
 
                if Compl'Length >= T'Length then
-                  if GEntry.Case_Sensitive
-                    and then Compl
-                      (Compl'First .. Compl'First + T'Length - 1) = T
-                  then
-                     return S;
-
-                  elsif not GEntry.Case_Sensitive
-                    and then Case_Insensitive_Equal
-                      (Compl (Compl'First .. Compl'First + T'Length - 1), T)
+                  if Equal
+                    (Compl (Compl'First .. Compl'First + T'Length - 1),
+                     T,
+                     Case_Sensitive => GEntry.Case_Sensitive)
                   then
                      return S;
                   end if;

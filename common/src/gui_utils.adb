@@ -1401,8 +1401,9 @@ package body GUI_Utils is
            and then Get_Child (Menu_Item).all in Gtk_Label_Record'Class
          then
             Label := Gtk_Label (Get_Child (Menu_Item));
-            exit when Case_Insensitive_Equal
-              (Get_Text (Label), New_Name (New_Name'First .. Last - 1));
+            exit when Equal
+              (Get_Text (Label), New_Name (New_Name'First .. Last - 1),
+               Case_Sensitive => False);
          end if;
 
          Index := Index + 1;

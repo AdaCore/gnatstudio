@@ -29,11 +29,7 @@ package body String_Hash is
 
    function Equal (Key1, Key2 : String) return Boolean is
    begin
-      if Case_Sensitive then
-         return Key1 = Key2;
-      else
-         return Case_Insensitive_Equal (Key1, Key2);
-      end if;
+      return Equal (Key1, Key2, Case_Sensitive => Case_Sensitive);
    end Equal;
 
    ----------

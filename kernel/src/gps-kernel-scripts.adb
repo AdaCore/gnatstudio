@@ -383,7 +383,7 @@ package body GPS.Kernel.Scripts is
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
       for T in Tmp'Range loop
-         if Case_Insensitive_Equal (Get_Name (Tmp (T)), Name) then
+         if Equal (Get_Name (Tmp (T)), Name, False) then
             return Tmp (T);
          end if;
       end loop;

@@ -157,8 +157,8 @@ package body Naming_Editors is
            and then To_Lower (Editor.Pages (P).Language.all) = "ada";
 
          for L in Languages'Range loop
-            if Case_Insensitive_Equal
-              (Editor.Pages (P).Language.all, Languages (L).all)
+            if Equal
+              (Editor.Pages (P).Language.all, Languages (L).all, False)
             then
                Exists := True;
                exit;

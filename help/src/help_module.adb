@@ -347,9 +347,9 @@ package body Help_Module is
                     & "See also: " & Get_Attribute (Child, "name", "");
 
                elsif Child.Tag.all = "example" then
-                  if Case_Insensitive_Equal
+                  if Equal
                     (Get_Attribute (Child, "lang", GPS_Shell_Name),
-                     Language)
+                     Language, False)
                   then
                      Example := Example & ASCII.LF & ASCII.LF
                        & "Example:"

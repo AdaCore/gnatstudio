@@ -1161,22 +1161,12 @@ package body Directory_Tree is
 
             if not Path_Found
               and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
-                and then
-                  ((Filenames_Are_Case_Sensitive
-                    and then (D.Norm_Dest
-                               (D.Norm_Dest'First
-                                .. D.Norm_Dest'First
-                                  + D.Norm_Dir'Length + Dir'Length - 1)
-                                   = D.Norm_Dir.all & Dir))
-                   or else
-                     (not Filenames_Are_Case_Sensitive
-                      and then Case_Insensitive_Equal
-                        (D.Norm_Dest.all
-                           (D.Norm_Dest.all'First
-                              .. D.Norm_Dest.all'First
-                                + D.Norm_Dir.all'Length
-                                  + Dir'Length - 1),
-                         D.Norm_Dir.all & Dir)))
+              and then Equal
+                (D.Norm_Dest
+                   (D.Norm_Dest'First
+                    .. D.Norm_Dest'First + D.Norm_Dir'Length + Dir'Length - 1),
+                 D.Norm_Dir.all & Dir,
+                 Case_Sensitive => Filenames_Are_Case_Sensitive)
             then
                Path_Found := True;
 

@@ -1832,16 +1832,11 @@ package body Project_Properties is
             Set (Editor.Model, Iter, 0, Value);
 
             for C in Current_Value'Range loop
-               if Description.Case_Sensitive_Index then
-                  if Value = Current_Value (C).all then
-                     Selected := True;
-                     exit;
-                  end if;
-               else
-                  if Case_Insensitive_Equal (Value, Current_Value (C).all) then
-                     Selected := True;
-                     exit;
-                  end if;
+               if Equal (Value, Current_Value (C).all,
+                         Case_Sensitive => Description.Case_Sensitive_Index)
+               then
+                  Selected := True;
+                  exit;
                end if;
             end loop;
 
@@ -2508,12 +2503,9 @@ package body Project_Properties is
                   if Pos = -1 then
                      Pos := T;
                   end if;
-               elsif (Attr.Case_Sensitive_Index
-                      and then Attr.Index_Types (T).Index_Value.all = Index)
-                 or else
-                   (not Attr.Case_Sensitive_Index
-                    and then Case_Insensitive_Equal
-                      (Attr.Index_Types (T).Index_Value.all, Index))
+               elsif Equal
+                 (Attr.Index_Types (T).Index_Value.all, Index,
+                  Case_Sensitive => Attr.Case_Sensitive_Index)
                then
                   Pos := T;
                   exit;
@@ -2606,12 +2598,9 @@ package body Project_Properties is
       Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
    begin
       while Iter /= Null_Iter loop
-         if (Editor.Attribute.Case_Sensitive_Index
-             and then Get_String (Editor.Model, Iter, 0) = Attribute_Index)
-           or else
-             (not Editor.Attribute.Case_Sensitive_Index
-              and then Case_Insensitive_Equal
-                (Get_String (Editor.Model, Iter, 0), Attribute_Index))
+         if Equal (Get_String (Editor.Model, Iter, 0),
+                   Attribute_Index,
+                   Case_Sensitive => Editor.Attribute.Case_Sensitive_Index)
          then
             return Get_String (Editor.Model, Iter, 1);
          end if;
@@ -3057,13 +3046,8 @@ package body Project_Properties is
          Matched : Boolean;
       begin
          for C in Current_Index'Range loop
-            if Attr.Case_Sensitive_Index then
-               Matched := Current_Index (C).all = Value;
-            else
-               Matched :=
-                 Case_Insensitive_Equal (Current_Index (C).all, Value);
-            end if;
-
+            Matched := Equal (Current_Index (C).all, Value,
+                              Case_Sensitive => Attr.Case_Sensitive_Index);
             if Matched then
                Append (Ed.Model, Iter, Null_Iter);
                Set (Ed.Model, Iter, Index_Col, Value);

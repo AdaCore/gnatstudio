@@ -144,11 +144,8 @@ package body File_Utils is
 
    function File_Equal (File1, File2 : String) return Boolean is
    begin
-      if Filenames_Are_Case_Sensitive then
-         return File1 = File2;
-      else
-         return Case_Insensitive_Equal (File1, File2);
-      end if;
+      return Equal
+        (File1, File2, Case_Sensitive => Filenames_Are_Case_Sensitive);
    end File_Equal;
 
    ------------------

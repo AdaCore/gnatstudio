@@ -1152,7 +1152,7 @@ package body Shell_Script is
          end if;
       end if;
 
-      return Result = "1" or else Case_Insensitive_Equal (Result, "true");
+      return Result = "1" or else Equal (Result, "true", False);
    end Execute_Command;
 
    -------------------------------
@@ -1984,7 +1984,7 @@ package body Shell_Script is
       if Script.Console /= null then
          Insert (Script.Console, Result);
       end if;
-      return Result = "1" or else Case_Insensitive_Equal (Result, "true");
+      return Result = "1" or else Equal (Result, "true", False);
    end Execute_Command;
 
    -------------

@@ -1666,12 +1666,9 @@ package body GPS.Kernel is
          if Prop.Project_Package /= null
            and then Prop.Project_Index /= null
            and then Prop.Project_Attribute /= null
-           and then Case_Insensitive_Equal
-             (Prop.Project_Package.all, Pkg_Name)
-           and then Case_Insensitive_Equal
-             (Prop.Project_Attribute.all, Attribute)
-           and then Case_Insensitive_Equal
-             (Prop.Project_Index.all, Index)
+           and then Equal (Prop.Project_Package.all, Pkg_Name, False)
+           and then Equal (Prop.Project_Attribute.all, Attribute, False)
+           and then Equal (Prop.Project_Index.all, Index, False)
          then
             return Tools_Htable.String_Hash_Table.Get_Key (Iter);
          end if;
@@ -1814,9 +1811,7 @@ package body GPS.Kernel is
                        (Get_Language_Handler (Kernel),
                         File_Information (File));
                   begin
-                     if not Case_Insensitive_Equal
-                       (Lang, Filter.Language.all)
-                     then
+                     if not Equal (Lang, Filter.Language.all, False) then
                         Result := False;
                      end if;
                   end;
@@ -1826,9 +1821,10 @@ package body GPS.Kernel is
             if Result
               and then Filter.Module /= null
               and then (Get_Creator (Context) = null
-                        or else not Case_Insensitive_Equal
+                        or else not Equal
                           (Module_Name (Get_Creator (Context)),
-                           Filter.Module.all))
+                           Filter.Module.all,
+                           False))
             then
                Result := False;
             end if;
