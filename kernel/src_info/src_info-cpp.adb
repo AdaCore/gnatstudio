@@ -48,14 +48,14 @@ package body Src_Info.CPP is
    -- Symbol_Handler --
    --------------------
 
-   type Symbol_Handler is access procedure (Sym      : FIL_Table);
+   type Symbol_Handler is access procedure (Sym : FIL_Table);
 
    procedure Sym_Default_Handler (Sym      : FIL_Table);
    --  This is default handler for symbols, which are not registered
    --  in Symbols_Handlers.
 
-   procedure Sym_GV_Handler (Sym      : FIL_Table);
-   procedure Sym_FU_Handler (Sym      : FIL_Table);
+   procedure Sym_GV_Handler (Sym : FIL_Table);
+   procedure Sym_FU_Handler (Sym : FIL_Table);
 
    function Ext (S : String) return String;
    --  Used to fill Table_Type_To_Ext array
@@ -225,7 +225,10 @@ package body Src_Info.CPP is
         (SN_Dir & Directory_Separator & Browse.DB_File_Name);
 
       Global_LI_File := File;
+
       Process_File (Source_Filename);
+
+      File := Global_LI_File;
       Global_LI_File := No_LI_File;
 
       Close_DB_Files;
@@ -458,6 +461,11 @@ package body Src_Info.CPP is
       Put_Line ("Sym_GV_Handler ("
                 & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
                 & ")");
+
+      if not Is_Open (SN_Table (GV)) then
+         --  GV table does not exist, nothing to do ...
+         return;
+      end if;
 
       --  Lookup variable type
       Var := Find (SN_Table (GV), Sym.Buffer
