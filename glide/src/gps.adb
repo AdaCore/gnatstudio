@@ -770,7 +770,7 @@ procedure GPS is
         & (-"                       before the --load command") & LF
         & ("    --traceon=stream    Activate traces for a specific") & LF
         & ("                        debug stream") & LF
-        & ("    --traceoff=stream   Activate traces for a specific") & LF
+        & ("    --traceoff=stream   Disable traces for a specific") & LF
         & ("                        debug stream") & LF
         & ("    --tracefile=file    Load traces configuration from file");
 
