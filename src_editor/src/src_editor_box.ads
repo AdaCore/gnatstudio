@@ -398,7 +398,6 @@ package Src_Editor_Box is
    procedure Add_File_Information
      (Editor        : access Source_Editor_Box_Record;
       Identifier    : String;
-      Width         : Integer;
       Info          : Glide_Kernel.Modules.Line_Information_Data;
       Stick_To_Data : Boolean := True);
    --  Add the line information to the view corresponding to Editor.
