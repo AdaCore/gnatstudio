@@ -27,8 +27,7 @@ package body Task_Dialog_Pkg is
       Main_Window : Main_Debug_Window_Access;
       Information : Thread_Information_Array)
    is
-      Num_Columns : constant Thread_Fields :=
-        Information (Information'First).Num_Fields;
+      Num_Columns : Thread_Fields;
       Row         : Gint;
 
    begin
@@ -45,25 +44,35 @@ package body Task_Dialog_Pkg is
       Set_Homogeneous (Task_Dialog.Vbox1, False);
       Set_Spacing (Task_Dialog.Vbox1, 0);
 
-      Gtk_New (Task_Dialog.Scrolledwindow1);
-      Pack_Start
-        (Task_Dialog.Vbox1, Task_Dialog.Scrolledwindow1, True, True, 0);
-      Set_Policy (Task_Dialog.Scrolledwindow1, Policy_Never, Policy_Automatic);
+      if Information'Length > 0 then
+         Gtk_New (Task_Dialog.Scrolledwindow1);
+         Pack_Start
+           (Task_Dialog.Vbox1, Task_Dialog.Scrolledwindow1, True, True, 0);
+         Set_Policy
+           (Task_Dialog.Scrolledwindow1, Policy_Never, Policy_Automatic);
 
-      Gtk_New
-        (Task_Dialog.Task_List,
-         Gint (Num_Columns),
-         Information (Information'First).Information);
-      Widget_Callback.Connect
-        (Task_Dialog.Task_List, "select_row", On_Task_List_Select_Row'Access);
-      Add (Task_Dialog.Scrolledwindow1, Task_Dialog.Task_List);
-      Set_Selection_Mode (Task_Dialog.Task_List, Selection_Single);
-      Set_Shadow_Type (Task_Dialog.Task_List, Shadow_In);
-      Set_Show_Titles (Task_Dialog.Task_List, True);
+         Num_Columns := Information (Information'First).Num_Fields;
+         Gtk_New
+           (Task_Dialog.Task_List,
+            Gint (Num_Columns),
+            Information (Information'First).Information);
+         Widget_Callback.Connect
+           (Task_Dialog.Task_List,
+            "select_row",
+            On_Task_List_Select_Row'Access);
+         Add (Task_Dialog.Scrolledwindow1, Task_Dialog.Task_List);
+         Set_Selection_Mode (Task_Dialog.Task_List, Selection_Single);
+         Set_Shadow_Type (Task_Dialog.Task_List, Shadow_In);
+         Set_Show_Titles (Task_Dialog.Task_List, True);
 
-      for J in Gint range 0 .. Gint (Num_Columns) - 1 loop
-         Set_Column_Auto_Resize (Task_Dialog.Task_List, J, True);
-      end loop;
+         for J in Gint range 0 .. Gint (Num_Columns) - 1 loop
+            Set_Column_Auto_Resize (Task_Dialog.Task_List, J, True);
+         end loop;
+
+         for J in Information'First + 1 .. Information'Last loop
+            Row := Append (Task_Dialog.Task_List, Information (J).Information);
+         end loop;
+      end if;
 
       Task_Dialog.Hbox1 := Get_Action_Area (Task_Dialog);
       Set_Border_Width (Task_Dialog.Hbox1, 10);
@@ -83,10 +92,6 @@ package body Task_Dialog_Pkg is
         (Task_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
       Add (Task_Dialog.Hbuttonbox1, Task_Dialog.Close_Button);
-
-      for J in Information'First + 1 .. Information'Last loop
-         Row := Append (Task_Dialog.Task_List, Information (J).Information);
-      end loop;
    end Initialize;
 
 end Task_Dialog_Pkg;
