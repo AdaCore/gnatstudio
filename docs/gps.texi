@@ -31,7 +31,7 @@ unmodified in any copy.
 
 Using GPS
 
-GPS, the GNU Integrated Development Environment
+GPS, the GNAT Programming System
 
 Version @value{GPSVersion}
 
@@ -47,18 +47,22 @@ unmodified in any copy.
 * Introduction::
 * Description of the Main Windows::
 * Editing File::
+* Project Handling::
+* Compilation/Build::
 * Source Navigation::
 * Source Browsing::
-* Debugging with GPS::
+* Debugging::
+* Version Control System::
 * Preferences/Settings::
+* Working in a cross environment::
 * Customization::
 * Environment::
 
 @detailmenu
+
  --- The Detailed Node Listing ---
 
 Description of the main windows
-
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
@@ -67,38 +71,55 @@ Description of the main windows
 * The Console::
 * The Status Line::
 
-Editing File
 
+Editing File
 * General Information::
 * Navigation in the Source Editor::
 * Indentation::
 * Cross References::
 * Using an External Editor::
 
-Source Navigation
 
+Project Handling
+
+
+Compilation/Build
+
+
+Source Navigation
 * Spec/Body::
+* Cross References::
+
 
 Source Browsing
-
 * General Issues::
 
-Debugging with GPS
+
+Debugging
+
+
+Version Control System
+
 
 Preferences/Settings
 
-Customization
 
+Working in a cross environment
+* Customizing your projects::
+* Debugger issues::
+
+
+Customization
 * Customizing the Menu Bar::
 * Customizing the Tool Bar::
-* Changing Colors Fonts and Pixmaps::
+* Changing Colors Fonts and Key Bindings::
+
 
 Environment
-
 * Command Line Options::
 * Environment Variables::
 * Files::
-* Reporting bugs::
+* Reporting Suggestions and Bugs::
 
 @end detailmenu
 @end menu
@@ -111,7 +132,31 @@ Environment
 
 @noindent
 GPS is a complete integrated development environment that gives access
-to a wide range of tools. blah blah blah...
+to a wide range of tools and integrates them smoothly.
+
+This version is considered as beta software, meaning that you may encounter
+some instabilities or some missing features. For this reason we will
+particularly welcome bug reports, as well as suggestion for possible
+improvements (see @ref{Reporting Suggestions and Bugs}).
+
+GPS gives access to built-in file editing; HTML based help system;
+complete compile/build/run cycle; intelligent source navigation;
+project management; general graph technology giving access to many different
+browsers such as source dependency, project dependency, call graphs, etc...;
+fully integrated visual debugger, based on the GVD technology, and enhanced
+for inclusion in GPS; generic version control system, providing access
+to CVS, ClearCase, and possibly others in the future; many other tools
+such as a visual comparison, automatic generation of files, source reformatting.
+
+GPS is fully customizable, providing several levels of customizations:
+a first level, available through the preferences dialog (see
+@ref{Preferences/Settings}); a second level, which allows you to
+customize your menu items, tool bar and key bindings (see @ref{Customization}),
+and a third level, which allows any kind of very specific or tight
+integration, due to the open nature of GPS, and to its architecture.
+
+GPS also integrates with existing editors such as Emacs and Vi, see
+@ref{Using an External Editor}.
 
 @c --------------------------------------------------------------------
 @node Description of the Main Windows
@@ -165,7 +210,6 @@ to a wide range of tools. blah blah blah...
 * General Information::
 * Navigation in the Source Editor::
 * Indentation::
-* Cross References::
 * Using an External Editor::
 @end menu
 
@@ -177,103 +221,13 @@ to a wide range of tools. blah blah blah...
 @section Navigation in the Source Editor
 @noindent
 
-Here is the list of key bindings that can be used in the integrated editor:
-
-@subsection Navigation
-@table @b
-@item Ctrl-p, up
-move to previous line
-
-@item Ctrl-n, down
-Move to next line
-
-@item Home
-Move to beginning of line
-
-@item End
-Move to end of line
-
-@item Ctrl-Home
-Move to beginning of file
-
-@item Ctrl-End
-Move to end of file
-
-@item Page Up
-Move one page up
-
-@item Page Down
-Move one page down
-
-@item Right/Ctrl-f
-Move one character forward
-
-@item Left/Ctrl-b
-Move one character backward
-
-@item Ctrl-Right
-Move one word forward
-
-@item Ctrl-Left
-Move one word backward
-
-@item Ctrl-Up/Down
-Move cursor to beginning of previous/next line.
-
-@item Ctrl-PgUp/PgDn
-Move cursor left/right by one view width (same as
-clicking in scrollbar shaft), cursor set to first character
-or object in view.
-@end table
-
-@subsection Selection
-@table @b
-@item Shift-Ctrl-Right-Left
-Select one word forward/backward
-
-@item Shift+Ctrl+Up/Down
-Extend selection to beginning of prev/next line.
-
-@item Shift+Ctrl+Home/End
-Extend selection to beginning/end of buffer.
-
-@item Shift+Ctrl+PgUp/PgDn
-Extend selection left/right by one view width
-
-@item Ctrl+A or Ctrl+/
-Select whole text buffer
-
-@item Ctrl+\
-Deselect whole text buffer.
-@end table
+It is also possible to specify additional or alternate key bindings,
+in particular the standard Emacs key bindings can be used in the source
+editor, see @ref{Changing Colors Fonts and Key Bindings}.
 
 @subsection Editing
 @table @b
-@item Backspace
-Delete previous character
-
-@item Ctrl-d or Delete
-Delete next character
-
-@item Ctrl-Delete or Alt-d
-Delete to end of word
-
-@item Ctrl-Backspace
-Delete to start of word
-
-@item Ctrl-k
-Delete to end of line
-
-@item Ctrl-u
-Delete current line
-
-@item Alt-Space
-Delete all whitespaces around cursor, reinsert single space
-
-@item Alt-\
-Delete all whitespaces around cursor
-
-@item Ctrl-x or Ctrl-w
+@item Ctrl-x
 Cut to clipboard
 
 @item Ctrl-c
@@ -282,7 +236,7 @@ Copy to clipboard
 @item Ctrl-s
 Save file to disk
 
-@item Ctrl-v or Ctrl-y
+@item Ctrl-v
 Paste from clipboard
 
 @item Ctrl-z
@@ -298,47 +252,6 @@ Toggle overwrite mode
 @node Indentation
 @section Indentation
 @noindent
-
-@c --------------------------------------------------------------------------
-@node Cross References
-@section Cross References
-@c --------------------------------------------------------------------------
-
-@noindent
-
-GPS provides cross-references for all the entities defined in your
-application, as well as some advanced browsers like a call graph.
-For this to work, it needs some help from external tools, specific to
-each of the supported languages.
-
-@table @command
-@item Ada
-The GNAT compiler itself is used to generate the cross-references
-information. This means that you need to compile your application to
-get access to this feature or the call graph. GPS doesn't provide
-automatic recompilation at the moment, although this is a planned
-feature. If your sources have been modified, you should recompile the
-modified files.
-
-There are a few special cases where GPS can not find the external file
-(called @file{ALI file}) that contains the cross-references
-information. Most likely, this is either because you haven't compiled
-your sources first, or because the source code has changed since the
-@file{ALI file} was generated.
-
-It could also be that you haven't included in the project the object
-directories that contain the @file{ALI files}.
-
-In addition, one special case can not be handled automatically. This
-is for separate units, whose file name have been krunched through the
-@file{gnatkr} command. To handle this, you should force GPS to parse
-all the @file{ALI files} in the appropriate object directory. This is
-done by right-clicking on the object directory in the explorer
-(left-side panel on the main window), and selecting the menu "Parse
-all xref information".
-
-@end table
-
 
 @c --------------------------------------------------------------------------
 @node Using an External Editor
@@ -396,8 +309,8 @@ Note that one limitation of this editor is that if GPS needs to open
 the same file a second time, it will open a new editor, instead of
 reusing the existing one.
 
-Note that this requires that xterm is found in the PATH, and thus is
-not currently supported on Windows systems.
+To enable this capability, the xterm executable must found in the PATH,
+and thus is not currently supported on Windows systems.
 
 
 @item vi
@@ -431,11 +344,109 @@ menu to open the external editor.
 
 @menu
 * Spec/Body::
+* Cross References::
 @end menu
 
 @node Spec/Body
 @section Spec/Body
 @noindent
+
+@node Cross References
+@section Cross References
+@noindent
+
+GPS provides cross-references for all the entities defined in your
+application, as well as some advanced browsers like a call graph.
+For this to work, it needs some help from external tools, specific to
+each of the supported languages.
+
+@table @command
+@item Ada
+The GNAT compiler itself is used to generate the cross-references
+information. This means that you need to compile your application to
+get access to this feature or the various graphs. GPS doesn't provide
+automatic recompilation at the moment, although this is a planned
+feature. If your sources have been modified, you should recompile the
+modified files.
+
+If you need to navigate through sources that are not fully compilable
+(e.g after heavy modifications, or while porting an application), GNAT
+can still generate partial information if you specify the @code{-gnatQ}
+compilation option. Along with the @code{-k} option of gnatmake, it is
+then possible to generate as much relevant information as possible for a
+complete set of non compilable sources.
+
+There are a few special cases where GPS can not find the external file
+(called @file{ALI file}) that contains the cross-references
+information. Most likely, this is either because you haven't compiled
+your sources first, or because the source code has changed since the
+@file{ALI file} was generated.
+
+It could also be that you haven't included in the project the object
+directories that contain the @file{ALI files}.
+
+In addition, one special case can not be handled automatically. This
+is for separate units, whose file name have been krunched through the
+@file{gnatkr} command. To handle this, you should force GPS to parse
+all the @file{ALI files} in the appropriate object directory. This is
+done by right-clicking on the object directory in the explorer
+(left-side panel on the main window), and selecting the menu "Parse
+all xref information".
+
+@item C/C++
+To enable the navigation features for C and C++ source files, you need
+to first generate a database of symbol references, by going through the
+menu Build->Recompute Xref information. Messages in the console window
+will indicate the state of the processing. Due to the nature of these
+languages, in order to provide accurate cross references, GPS needs to
+generate the database in two phases: a first pass parses all the files
+that have been modified since the previous parsing, and a second pass
+generates global cross references by analysing the complete database.
+It is thus expected that for large projects, this phase can take a
+significant amount of cpu to proceed.
+
+In some cases, GPS won't be able to determine the exact function involved
+in a cross reference. This will typically occurs for overloaded functions,
+or if multiple functions with the same name, but under different
+@code{#ifdef} sections, are defined. In this case, GPS will display a
+dialog listing the possible choices to resolve the ambiguity.
+
+In addition, the C/C++ parser has the following limitations: namespaces
+are currently ignored (no specific processing is done for namespaces);
+no attempt is made to process the macros and other preprocessor defines.
+Macros are considered as special entities, so it is possible to navigate
+from a macro use to its definition, but the contents of the macro itself
+is ignored, which means for example that function calls made through macros
+won't be detected.
+
+@end table
+
+@c --------------------------------------------------------------------
+@node Project Handling
+@chapter Project Handling
+@c --------------------------------------------------------------------
+
+@noindent
+To handle projects, GPS uses the GNAT project file facility, as described
+in the GNAT User's Guide (@url{gnat_ug.html}) and in the GNAT Reference
+Manual (@url{gnat_rm.html}). For a best use of the project capabilities, it
+is recommended to first become familiar with this documentation.
+
+The project files are text files following a syntax close to Ada, it is thus
+possible to edit and modify them by hand, as well as generating them and
+loading them within GPS, both manual and automatic generation can be
+mixed. For example, you can first generate projects automatically using
+the @i{Project Wizard}, and then modify them by hand.
+
+All the non graphical GNAT tools are project aware, meaning that the notion
+of project goes well beyond GPS' user interface, and most capabilities of
+the project file can be accessed without using GPS itself, making the
+project files very attractive.
+
+@c --------------------------------------------------------------------
+@node Compilation/Build
+@chapter Compilation/Build
+@c --------------------------------------------------------------------
 
 @c --------------------------------------------------------------------
 @node Source Browsing
@@ -451,14 +462,65 @@ menu to open the external editor.
 @noindent
 
 @c --------------------------------------------------------------------
-@node Debugging with GPS
-@chapter Debugging with GPS
+@node Debugging
+@chapter Debugging
+@c --------------------------------------------------------------------
+
+@noindent
+Debugging is tightly integrated with the other components of GPS, in
+particular it is possible to edit files and navigate through your sources
+while debugging.
+
+To start a debug session, go to the menu @code{Debug->Initialize}, and choose
+either the name of your executable, if you have specified the name of
+your main program(s) in the project properties, or start an empty debug
+session using the @code{<no main file>} item. It is then possible to load
+any file to debug, by using the menu @code{Debug->Debug->Load File...}.
+
+After the debugger has been initialized, you have access to two new windows:
+the data window (in the top of the working area), and the debugger console
+(in a second page, after the GPS console). All the menus under @code{Debugger}
+are now also accessible, and you also have access to additional contextual
+menus, in particular in the source editor where it is possible to easily
+display variables, set breakpoints, and get automatic display (via @i{tooltips})
+of object values.
+
+During a debugging session, you can use all the facilities provided by GVD.
+See the GVD documentation (@url{gvd.html}) for a complete description
+of these functionalities.
+
+Once your debug session is terminated, go to the menu @code{Debug->Terminate},
+which will terminate your debug session, by closing the data window and the
+debugger console, as well as terminating the underlying debugger
+(e.g @code{gdb}) used by GPS to handle the low level debugging.
+
+@c --------------------------------------------------------------------
+@node Version Control System
+@chapter Version Control System
 @c --------------------------------------------------------------------
 
 @c --------------------------------------------------------------------
 @node Preferences/Settings
 @chapter Preferences/Settings
 @c --------------------------------------------------------------------
+
+@c --------------------------------------------------------------------
+@node Working in a cross environment
+@chapter Working in a cross environment
+@c --------------------------------------------------------------------
+
+@menu
+* Customizing your projects::
+* Debugger issues::
+@end menu
+
+@node Customizing your projects
+@section Customizing your projects
+@noindent
+
+@node Debugger issues
+@section Debugger issues
+@noindent
 
 @c --------------------------------------------------------------------
 @node Customization
@@ -468,7 +530,7 @@ menu to open the external editor.
 @menu
 * Customizing the Menu Bar::
 * Customizing the Tool Bar::
-* Changing Colors Fonts and Pixmaps::
+* Changing Colors Fonts and Key Bindings::
 @end menu
 
 @node Customizing the Menu Bar
@@ -611,8 +673,8 @@ recursively.
 @section Customizing the Tool Bar
 @noindent
 
-@node Changing Colors Fonts and Pixmaps
-@section Changing the Colors, Fonts and Pixmaps
+@node Changing Colors Fonts and Key Bindings
+@section Changing Colors Fonts and Key Bindings
 @noindent
 
 GPS can be configured through the usual gtk+ mechanisms of @file{rc
@@ -687,7 +749,7 @@ gtk-key-theme-name = "Emacs"
 * Command Line Options::
 * Environment Variables::
 * Files::
-* Reporting bugs::
+* Reporting Suggestions and Bugs::
 @end menu
 
 @node Command Line Options
@@ -761,7 +823,7 @@ Directory containing the debugging sessions.
    @item $HOME/.gps/gtkrc
 The theme used by the gtk+ library on which gps is based. It allows you
 to configure the colors and fonts used in your
-application. @xref{Changing Colors Fonts and Pixmaps}.
+application. @xref{Changing Colors Fonts and Key Bindings}.
 See also @file{<prefix>/etc/gps/gtkrc}.
 
    @item $HOME/.gps/sessions/@i{session}
@@ -797,11 +859,11 @@ Global preferences in XML format. See also @file{$HOME/.gps/preferences}.
 This directory contains the shared libraries used by GPS.
 
    @item @i{prefix}/doc/gps/html
-GPS will look for all the documentation under this directory.
+GPS will look for all the documentation files under this directory.
 
    @item @i{prefix}/share/gps/gps-animation.gif
 Animated image displayed in the top right corner of GPS to indicate that
-actions (e.g compilation) are on going.
+actions (e.g compilation) are going on.
 
    @item @i{prefix}/share/locale
 Directory used to retrieve the translation files, when relevant.
@@ -809,19 +871,22 @@ Directory used to retrieve the translation files, when relevant.
 @end table
 
 @c --------------------------------------------------------------------
-@node Reporting bugs
-@section Reporting bugs
+@node Reporting Suggestions and Bugs
+@section Reporting Suggestions and Bugs
 @c --------------------------------------------------------------------
 
 @noindent
-If you encounter a bug in GPS, you can report it to
-@uref{mailto:report@@gnat.com} if you are a supported user (to become a
-supported user, contact @uref{mailto:sales@@gnat.com}), or to the
-public gps development list (@uref{mailto:gps-devel@@lists.act-europe.fr}).
+If you would like to make suggestions about GPS, or if you encountered a bug,
+please report it to @uref{mailto:report@@gnat.com} following the usual GNAT
+reports recommendations as explained in the file README.GNATPRO.
 
 Please try to include a detailed description of the problem, including
-sources to reproduce it if possible, and/or a scenario describing the
-actions performed to reproduce the problem.
+sources to reproduce it if possible/needed, and/or a scenario describing the
+actions performed to reproduce the problem, as well as the tools (e.g
+@i{debugger}, @i{compiler}) involved.
+
+The files $HOME/.gps/log and $HOME/.gps/debugger.log may also bring some
+useful information when reporting a bug.
 
 @c @printindex cp
 
