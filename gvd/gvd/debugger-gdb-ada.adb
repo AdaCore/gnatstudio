@@ -279,6 +279,10 @@ package body Debugger.Gdb.Ada is
                             Parent => null);
    end Parse_Value;
 
+   --------------------------
+   -- Internal_Parse_Value --
+   --------------------------
+
    procedure Internal_Parse_Value
      (Lang       : access Gdb_Ada_Language;
       Type_Str   : String;
@@ -851,7 +855,10 @@ package body Debugger.Gdb.Ada is
          end if;
 
          --  Parse the next item
-         Tmp := Clone (Get_Item_Type (Result.all).all);
+         Tmp := Get_Value (Result.all, Current_Index);
+         if Tmp = null then
+            Tmp := Clone (Get_Item_Type (Result.all).all);
+         end if;
          Internal_Parse_Value
            (Lang, Type_Str, Index, Tmp, Repeat_Num,
             Parent => Generic_Type_Access (Result));
