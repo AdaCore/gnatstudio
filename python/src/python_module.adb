@@ -852,8 +852,11 @@ package body Python_Module is
    procedure Load_Python_Startup_Files
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Sys    : constant String := Get_System_Dir (Kernel) & "share/gps/python";
-      Dir    : constant String := Get_Home_Dir (Kernel) & "python_startup";
+      Sys    : constant String :=
+        Format_Pathname (Get_System_Dir (Kernel), UNIX)
+        & "share/gps/python/";
+      Dir    : constant String :=
+        Format_Pathname (Get_Home_Dir (Kernel), UNIX) & "python_startup";
       D      : Dir_Type;
       File   : String (1 .. 1024);
       Last   : Natural;
@@ -866,14 +869,17 @@ package body Python_Module is
          return;
       end if;
 
-      if Is_Regular_File (Sys & "/autoexec.py") then
-         Trace (Me, "Load python files from " & Sys & "/autoexec.py");
+      if Is_Regular_File (Sys & "autoexec.py") then
+         Trace (Me, "Load python files from " & Sys & "autoexec.py");
 
          Execute_Command
            (Python_Module_Id.Script,
-            "execfile (""" & Sys & "/autoexec.py"")",
+            "execfile (""" & Sys & "autoexec.py"")",
             Hide_Output => True,
             Errors => Errors);
+      else
+         Trace (Me,
+                "File " & Sys & "autoexec.py doesn't exist, nothing done");
       end if;
 
       if Is_Directory (Dir) then
