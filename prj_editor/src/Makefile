@@ -4,7 +4,7 @@
 GNAT_SRC=../../gnat/
 
 # List of C files to compile
-C_FILES=pixmaps.c
+C_FILES=pixmaps.c env.c
 
 # Main file(s) to compile
 MAIN=prj_wizard
@@ -42,7 +42,7 @@ ${NO_STYLE_FILES}: force
 	@cd ../obj; gnatmake -u $@ ${ALL_FLAGS}
 
 ../obj/%.o: %.c
-	cd ../obj; gcc -c ../src/$< -I../src
+	cd ../obj; gcc ${CFLAGS} -Wall -c ../src/$< -I../src
 
 # Check that the modules we depend on are available through links
 check_modules: check_gnat
