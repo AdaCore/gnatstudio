@@ -20,7 +20,6 @@ doc: gps.txt gps.html gps.info gps.ps
 
 gps.html: gps.texi
 	perl ./texi2html ${TEXI2HTML_FLAGS} gps.texi
-endif
 
 gps.info: gps.texi
 ifneq (${MAKEINFO},)
