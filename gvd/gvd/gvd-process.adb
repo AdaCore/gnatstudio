@@ -878,7 +878,7 @@ package body GVD.Process is
 
    procedure Final_Post_Process
      (Process : access Debugger_Process_Tab_Record'Class;
-      Mode    : GVD.Types.Command_Type := GVD.Types.Hidden)
+      Mode    : GVD.Types.Command_Type)
    is
       File_First  : Natural := 0;
       File_Last   : Positive;

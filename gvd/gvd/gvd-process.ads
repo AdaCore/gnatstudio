@@ -299,7 +299,7 @@ package GVD.Process is
 
    procedure Final_Post_Process
      (Process : access Debugger_Process_Tab_Record'Class;
-      Mode    : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode    : GVD.Types.Command_Type);
    --  Final post processing.
    --  Call the appropriate filters and reset Current_Output.
 
