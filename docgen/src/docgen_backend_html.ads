@@ -161,6 +161,6 @@ package Docgen_Backend_HTML is
      (B : access Backend_HTML;
       Kernel : Kernel_Handle) return String;
    --  Return the path which must contains the documentation, e.g:
-   --  "/..../gps/glide/html/"
+   --  "/..../gps/glide/obj/html/"
 
 end Docgen_Backend_HTML;
