@@ -307,6 +307,7 @@ package body VCS_View_API is
       Dir_Section     : Boolean;
       Project_Section : Boolean;
       Section_Active  : Boolean;
+      Items_Inserted  : Boolean := False;
 
       procedure Add_Action
         (Action   : VCS_Action;
@@ -314,6 +315,9 @@ package body VCS_View_API is
          Via_Log  : Boolean := False);
       --  Add a menu item corresponding to Action.
       --  If Via_Log is True,
+
+      procedure Add_Separator;
+      --  Add a separator in the menu if needed.
 
       procedure Add_Action
         (Action   : VCS_Action;
@@ -336,8 +340,19 @@ package body VCS_View_API is
             if not Section_Active then
                Set_Sensitive (Item, False);
             end if;
+
+            Items_Inserted := True;
          end if;
       end Add_Action;
+
+      procedure Add_Separator is
+      begin
+         if Items_Inserted then
+            Gtk_New (Item);
+            Append (Menu, Item);
+            Items_Inserted := False;
+         end if;
+      end Add_Separator;
 
       Log_File   : Boolean := False;
       Log_Exists : Boolean;
@@ -426,24 +441,20 @@ package body VCS_View_API is
             Add_Action (Update, On_Menu_Update'Access);
             Add_Action (Commit, On_Menu_Commit'Access, not Log_Exists);
 
-            Gtk_New (Item);
-            Append (Menu, Item);
+            Add_Separator;
 
             Add_Action (Open, On_Menu_Open'Access);
             Add_Action (History, On_Menu_View_Log'Access);
             Add_Action (History_Revision, On_Menu_View_Log_Rev'Access);
 
-            Gtk_New (Item);
-            Append (Menu, Item);
+            Add_Separator;
 
             Add_Action (Diff_Head, On_Menu_Diff'Access);
             Add_Action (Diff, On_Menu_Diff_Specific'Access);
             Add_Action (Diff2, On_Menu_Diff2'Access);
             Add_Action (Diff_Base_Head, On_Menu_Diff_Base_Head'Access);
 
-
-            Gtk_New (Item);
-            Append (Menu, Item);
+            Add_Separator;
 
             Add_Action (Annotate, On_Menu_Annotate'Access);
 
@@ -486,8 +497,7 @@ package body VCS_View_API is
                Context);
             Set_Sensitive (Item, Section_Active);
 
-            Gtk_New (Item);
-            Append (Menu, Item);
+            Add_Separator;
 
             Add_Action (Add, On_Menu_Add'Access, not Log_Exists);
             Add_Action (Remove, On_Menu_Remove'Access, not Log_Exists);
@@ -570,13 +580,19 @@ package body VCS_View_API is
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
          end if;
+
+         if Show_Everything
+           or else Project_Section
+           or else File_Section
+         then
+            Set_Sensitive (Menu_Item, Section_Active and then Items_Inserted);
+         end if;
       end if;
 
       if Show_Everything
         or else ((File_Section or else Dir_Section) and then Project_Section)
       then
-         Gtk_New (Item);
-         Append (Menu, Item);
+         Add_Separator;
       end if;
 
       --  Fill the section relative to project
@@ -592,7 +608,6 @@ package body VCS_View_API is
             Append (Menu, Menu_Item);
             Gtk_New (Submenu);
             Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
-            Set_Sensitive (Menu_Item, Section_Active);
          else
             Submenu := Gtk_Menu (Menu);
          end if;
@@ -660,6 +675,13 @@ package body VCS_View_API is
                  (On_Menu_Update_Project_Recursive'Access),
                Selection_Context_Access (File_Name));
             Set_Sensitive (Item, Section_Active);
+         end if;
+
+         if Show_Everything
+           or else Dir_Section
+           or else File_Section
+         then
+            Set_Sensitive (Menu_Item, Section_Active and then Items_Inserted);
          end if;
       end if;
    end VCS_Contextual_Menu;
@@ -1473,22 +1495,6 @@ package body VCS_View_API is
 
       Open (Ref, List);
       Get_Status (Ref, List);
-
-      --  ??? The following should be the responsibility of
-      --  the VCS modules themselves, due to the possibility
-      --  of having asynchronous commands, permission problems, etc.
-
-      --        declare
-      --           use String_List;
-
-      --           L_Temp : List_Node := First (List);
-      --        begin
-      --           while L_Temp /= Null_Node loop
-      --              Open_File_Editor (Kernel, Data (L_Temp));
-      --              L_Temp := Next (L_Temp);
-      --           end loop;
-      --        end;
-
       String_List.Free (List);
 
    exception
@@ -2367,7 +2373,6 @@ package body VCS_View_API is
          return;
       end if;
 
-      --  ??? This will not work with generic vcs.
       Status := Local_Get_Status (Ref, Files);
       Status_Temp := First (Status);
 
@@ -2821,7 +2826,6 @@ package body VCS_View_API is
          Get_Status (Ref, Files);
 
       elsif Command = "commit" then
-         --  ??? Should we check for the existence of logs ?
          Log_Action_Files (Kernel, Ref, Commit, Files);
 
       elsif Command = "diff_head" then
