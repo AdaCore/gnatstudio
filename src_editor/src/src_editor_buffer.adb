@@ -1388,6 +1388,23 @@ package body Src_Editor_Buffer is
       FD         : File_Descriptor := Invalid_FD;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+      CR_Found   : Boolean := False;
+
+      procedure New_Line (FD : File_Descriptor);
+      --  Write a new line on FD.
+
+      procedure New_Line (FD : File_Descriptor) is
+         NL            : constant String := ASCII.CR & ASCII.LF;
+         Bytes_Written : Integer;
+         pragma Unreferenced (Bytes_Written);
+
+      begin
+         if CR_Found then
+            Bytes_Written := Write (FD, NL (1)'Address, 2);
+         else
+            Bytes_Written := Write (FD, NL (2)'Address, 1);
+         end if;
+      end New_Line;
 
    begin
       Success := True;
@@ -1402,7 +1419,6 @@ package body Src_Editor_Buffer is
       Get_Bounds (Buffer, Start_Iter, End_Iter);
 
       declare
-         New_Line       : constant String := (1 => ASCII.LF);
          UTF8           : constant Gtkada.Types.Chars_Ptr :=
            Get_Text (Buffer, Start_Iter, End_Iter, True);
          Contents       : GNAT.OS_Lib.String_Access;
@@ -1426,12 +1442,14 @@ package body Src_Editor_Buffer is
          else
             while Current <= Length loop
                case Contents (Current) is
-                  when ASCII.LF | ASCII.CR =>
+                  when ASCII.CR =>
+                     CR_Found := True;
+
+                  when ASCII.LF =>
                      if Blanks /= 0 then
                         Bytes_Written := Write
                           (FD, Contents (First)'Address, Blanks - First);
-                        Bytes_Written := Write
-                          (FD, New_Line'Address, New_Line'Length);
+                        New_Line (FD);
                         Blanks := 0;
                         First := Current + 1;
                      end if;
@@ -1453,8 +1471,7 @@ package body Src_Editor_Buffer is
             if Blanks /= 0 then
                Bytes_Written :=
                  Write (FD, Contents (First)'Address, Blanks - First);
-               Bytes_Written :=
-                 Write (FD, New_Line'Address, New_Line'Length);
+               New_Line (FD);
 
             else
                Bytes_Written :=
@@ -1463,8 +1480,7 @@ package body Src_Editor_Buffer is
                if Contents (Length) /= ASCII.LF
                  and then Contents (Length) /= ASCII.CR
                then
-                  Bytes_Written :=
-                    Write (FD, New_Line'Address, New_Line'Length);
+                  New_Line (FD);
                end if;
             end if;
          end if;
