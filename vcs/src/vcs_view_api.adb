@@ -1142,9 +1142,11 @@ package body VCS_View_API is
       end loop;
 
       if Save_Logs then
-         return Save_MDI_Children (Kernel, Children & Logs, Force => False);
+         return Save_MDI_Children
+           (Kernel, Children & Logs, Force => Get_Pref (Kernel, Auto_Save));
       else
-         return Save_MDI_Children (Kernel, Children, Force => False);
+         return Save_MDI_Children
+           (Kernel, Children, Force => Get_Pref (Kernel, Auto_Save));
       end if;
    end Save_Files;
 
