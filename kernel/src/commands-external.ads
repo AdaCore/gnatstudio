@@ -29,7 +29,7 @@ package Commands.External is
    type External_Command is new Root_Command with private;
    type External_Command_Access is access all External_Command;
 
-   procedure Destroy (D : access External_Command);
+   procedure Free (D : in out External_Command);
    --  Free memory associated to D.
 
    type String_List_Handler is access

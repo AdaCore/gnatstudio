@@ -87,9 +87,9 @@ package body Commands.Debugger is
    -- Destroy --
    -------------
 
-   procedure Destroy (Command : access Set_Breakpoint_Command) is
+   procedure Free (Command : in out Set_Breakpoint_Command) is
    begin
       Free (Command.File);
-   end Destroy;
+   end Free;
 
 end Commands.Debugger;

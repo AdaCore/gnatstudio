@@ -22,7 +22,6 @@ with GNAT.Expect;                use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
-with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;             use Ada.Exceptions;
 
 with Traces;                     use Traces;
@@ -37,28 +36,23 @@ package body Commands.External is
    -- Local subprograms --
    -----------------------
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (External_Command, External_Command_Access);
-
    function Atomic_Command (D : External_Command_Access) return Boolean;
    --  ???
 
-   -------------
-   -- Destroy --
-   -------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Destroy (D : access External_Command) is
+   procedure Free (D : in out External_Command) is
       use String_List;
 
-      D_Copy : External_Command_Access := External_Command_Access (D);
    begin
       Free (D.Args);
       Free (D.Head);
       Free (D.Command);
       Free (D.Dir);
       Free (D.Output);
-      Unchecked_Free (D_Copy);
-   end Destroy;
+   end Free;
 
    ------------
    -- Create --
