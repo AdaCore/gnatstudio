@@ -28,7 +28,6 @@ with Glide_Kernel;
 with Gtk.Widget;
 with Gtk.Combo;
 with Gtk.Frame;
-with Gtkada.MDI;
 with Find_Utils;   use Find_Utils;
 with Files_Extra_Info_Pkg;
 
@@ -174,7 +173,6 @@ private
 
    type Current_File_Context is new Search_Context with record
       Scope                : Search_Scope              := Whole;
-      Child                : Gtkada.MDI.MDI_Child;
       All_Occurences       : Boolean;
       Next_Matches_In_File : Match_Result_Array_Access := null;
       Last_Match_Returned  : Natural                   := 0;

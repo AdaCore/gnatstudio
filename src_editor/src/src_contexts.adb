@@ -22,7 +22,6 @@ with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Gtkada.MDI;                use Gtkada.MDI;
-with Glib.Object;               use Glib.Object;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.Frame;                 use Gtk.Frame;
@@ -59,8 +58,10 @@ with Src_Editor_Module;         use Src_Editor_Module;
 
 package body Src_Contexts is
 
-   Me : constant Debug_Handle := Create ("Find_Utils");
+   Me : constant Debug_Handle := Create ("Src_Contexts");
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Match_Result, Match_Result_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Match_Result_Array, Match_Result_Array_Access);
 
@@ -107,6 +108,23 @@ package body Src_Contexts is
    --  no match was found. It is the responsability of the caller to free the
    --  returned array.
 
+   function Scan_Next
+     (Context        : access Search_Context'Class;
+      Kernel         : access Kernel_Handle_Record'Class;
+      Editor         : access Source_Editor_Box_Record'Class;
+      Scope          : Search_Scope;
+      Lang           : Language_Access;
+      Current_Line   : Integer;
+      Current_Column : Integer;
+      Backward       : Boolean) return Match_Result_Access;
+   --  Return the next occurence of Context in Editor, just before or just
+   --  after Current_Line, Current_Column. If no match is found after the
+   --  current position, for a forward search, return the first occurence from
+   --  the beginning of the editor. Likewise for a backward search.
+   --  Note that the index in the result might be incorrect, although the line
+   --  and column will always be correct.
+   --  null is returned if there is no match.
+
    procedure Highlight_Result
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String;
@@ -123,12 +141,6 @@ package body Src_Contexts is
 
    procedure Free (Result : in out Match_Result_Array_Access);
    --  Free Result and its components
-
-   procedure Cancel_Search
-     (Child : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Called for a search in the current editor, when the editor has been
-   --  killed.
 
    procedure Initialize_Scope_Combo
      (Combo  : access Gtk_Combo_Record'Class;
@@ -460,6 +472,88 @@ package body Src_Contexts is
               & ": " & Match.Text);
    end Highlight_Result;
 
+   ---------------
+   -- Scan_Next --
+   ---------------
+
+   function Scan_Next
+     (Context        : access Search_Context'Class;
+      Kernel         : access Kernel_Handle_Record'Class;
+      Editor         : access Source_Editor_Box_Record'Class;
+      Scope          : Search_Scope;
+      Lang           : Language_Access;
+      Current_Line   : Integer;
+      Current_Column : Integer;
+      Backward       : Boolean) return Match_Result_Access
+   is
+      pragma Unreferenced (Kernel);
+      Result : Match_Result_Access := null;
+      Continue_Till_End : Boolean := False;
+
+      function Stop_At_First_Callback (Match : Match_Result) return Boolean;
+      --  Stop at the first match encountered
+
+      function Backward_Callback (Match : Match_Result) return Boolean;
+      --  Return the last match just before Current_Line and Current_Column
+
+      function Stop_At_First_Callback (Match : Match_Result) return Boolean is
+      begin
+         Result := new Match_Result'(Match);
+         return False;
+      end Stop_At_First_Callback;
+
+      function Backward_Callback (Match : Match_Result) return Boolean is
+      begin
+         --  If we have already found a match, and the current one is after the
+         --  current position, we can stop there. Else, if we have passed the
+         --  current position but don't have any match yet, we have to return
+         --  the last match.
+         if Match.Line > Current_Line
+           or else (Match.Line = Current_Line
+                    and then Match.End_Column >= Current_Column)
+         then
+            if not Continue_Till_End
+              and then Result /= null
+            then
+               return False;
+            end if;
+
+            Continue_Till_End := True;
+         end if;
+
+         Unchecked_Free (Result);
+         Result := new Match_Result'(Match);
+         return True;
+      end Backward_Callback;
+
+   begin
+      if Backward then
+         Scan_Buffer
+           (Get_Slice (Editor, 1, 1), Context,
+            Backward_Callback'Unrestricted_Access, Scope, Lang);
+      else
+         Scan_Buffer
+           (Get_Slice (Editor, Current_Line, Current_Column), Context,
+            Stop_At_First_Callback'Unrestricted_Access, Scope, Lang);
+
+         --  Start from the beginning if necessary
+         if Result = null then
+            Scan_Buffer
+              (Get_Slice (Editor, 1, 1), Context,
+               Stop_At_First_Callback'Unrestricted_Access, Scope, Lang);
+         else
+            Result.Line       := Result.Line + Current_Line - 1;
+
+            if Current_Line = 1 then
+               Result.Column     := Result.Column + Current_Column - 1;
+               Result.End_Column := Result.End_Column + Current_Column - 1;
+            end if;
+         end if;
+      end if;
+
+      return Result;
+   end Scan_Next;
+
    --------------------
    -- Scan_And_Store --
    --------------------
@@ -511,8 +605,6 @@ package body Src_Contexts is
    ----------
 
    procedure Free (Result : in out Match_Result_Array_Access) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Match_Result, Match_Result_Access);
    begin
       if Result /= null then
          for R in Result'Range loop
@@ -580,23 +672,6 @@ package body Src_Contexts is
       end if;
    end Set_File_List;
 
-   -------------------
-   -- Cancel_Search --
-   -------------------
-
-   procedure Cancel_Search
-     (Child : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Child);
-   begin
-      --  No more search, since the editor has been killed
-
-      Search_Reset (Kernel);
-
-      --  ??? Current_File_Context_Access (Context).Child := null;
-   end Cancel_Search;
-
    --------------------------
    -- Current_File_Factory --
    --------------------------
@@ -607,28 +682,16 @@ package body Src_Contexts is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
+      pragma Unreferenced (Kernel);
       Context : Current_File_Context_Access;
-      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
       Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
 
    begin
-      if Child = null then
-         return null;
-
-      else
-         Context := new Current_File_Context;
-         Context.Child := Child;
-         Context.All_Occurences := All_Occurences;
-         Context.Scope := Search_Scope'Val
-           (Get_Index_In_List (Scope.Combo));
-
-         Kernel_Callback.Connect
-           (Child, "destroy",
-            Kernel_Callback.To_Marshaller (Cancel_Search'Access),
-            Kernel_Handle (Kernel));
-
-         return Search_Context_Access (Context);
-      end if;
+      Context := new Current_File_Context;
+      Context.All_Occurences := All_Occurences;
+      Context.Scope := Search_Scope'Val
+        (Get_Index_In_List (Scope.Combo));
+      return Search_Context_Access (Context);
    end Current_File_Factory;
 
    --------------------------------
@@ -707,30 +770,27 @@ package body Src_Contexts is
       Editor : Source_Editor_Box;
       Lang   : Language_Access;
       Match  : Match_Result_Access;
-      Inc    : Integer;
       Line, Column : Natural;
+      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
 
    begin
-      Editor := Get_Source_Box_From_MDI (Context.Child);
-
-      if Editor = null then
+      if Child = null then
          return False;
       end if;
 
-      Raise_Child (Context.Child);
-      Minimize_Child (Context.Child, False);
-
-      if Search_Backward then
-         Inc := -1;
-      else
-         Inc := 1;
-      end if;
+      Editor := Get_Source_Box_From_MDI (Child);
+      Raise_Child (Child);
+      Minimize_Child (Child, False);
 
       --  If there are still some matches in the current file that we haven't
-      --  returned, do it now.
+      --  returned, do it now (only the case when searching for all occurences)
 
       if Context.Next_Matches_In_File /= null then
-         Context.Last_Match_Returned := Context.Last_Match_Returned + Inc;
+         if Search_Backward then
+            Context.Last_Match_Returned := Context.Last_Match_Returned - 1;
+         else
+            Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
+         end if;
 
          --  Start from the beginning again if possible
          if Context.Last_Match_Returned <= 0
@@ -752,74 +812,56 @@ package body Src_Contexts is
             return True;
 
          else
-            --  ??? Contents of buffer has changed. See comment below about
-            --  the use of tags.
-
             Free (Context.Next_Matches_In_File);
             return False;
          end if;
       end if;
 
-      if Editor = null then
-         return False;
-      end if;
-
-      --  First search
+      --  Search either all occurences at once, or only the next matching
+      --  one. Note that when searching backward, we have to search from the
+      --  beginning, since otherwise we don't know how to handle regular
+      --  expressions and the search engine computed for Boyer-Moore is only
+      --  for forward searches.
 
       Lang := Get_Language_From_File
         (Get_Language_Handler (Kernel), Get_Filename (Editor));
+      Get_Cursor_Location (Editor, Line, Column);
 
-      declare
-         Buffer : constant String := Get_Slice (Editor, 1, 1);
-      begin
+      if Context.All_Occurences then
          Context.Next_Matches_In_File := Scan_And_Store
-           (Context, Kernel, Buffer, Is_File => False,
+           (Context, Kernel, Get_Slice (Editor, 1, 1), Is_File => False,
             Scope => Context.Scope, Lang => Lang);
-      end;
 
-      if Context.Next_Matches_In_File = null then
-         return False;
-      end if;
+         if Context.Next_Matches_In_File = null then
+            return False;
+         end if;
 
-      --  ??? Should use tags to take into account changes in the buffer
-      --  between two searches.
-
-      if Search_Backward then
-         for J in reverse Context.Next_Matches_In_File'Range loop
-            if Context.Next_Matches_In_File (J) /= null then
-               Context.Last_Match_Returned := J;
-               exit;
-            end if;
-         end loop;
-      else
          Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+         Match := Context.Next_Matches_In_File (Context.Last_Match_Returned);
 
-         if not Context.All_Occurences then
-            Get_Cursor_Location (Editor, Line, Column);
+      else
+         Match := Scan_Next
+           (Context, Kernel,
+            Editor         => Editor,
+            Scope          => Context.Scope,
+            Lang           => Lang,
+            Current_Line   => Line,
+            Current_Column => Column,
+            Backward       => Search_Backward);
 
-            while Context.Last_Match_Returned <=
-              Context.Next_Matches_In_File'Last
-            loop
-               Match :=
-                 Context.Next_Matches_In_File (Context.Last_Match_Returned);
-               exit when Match.Line > Line
-                 or else (Match.Line = Line and then Match.Column >= Column);
-               Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
-            end loop;
-
-            if Context.Last_Match_Returned >
-              Context.Next_Matches_In_File'Last
-            then
-               Context.Last_Match_Returned :=
-                 Context.Next_Matches_In_File'First;
-            end if;
+         if Match = null then
+            return False;
          end if;
       end if;
 
-      Match := Context.Next_Matches_In_File (Context.Last_Match_Returned);
       Set_Cursor_Location (Editor, Match.Line, Match.Column);
       Select_Region
         (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
+
+      if not Context.All_Occurences then
+         Unchecked_Free (Match);
+      end if;
+
       return True;
 
    exception
@@ -860,6 +902,9 @@ package body Src_Contexts is
       if Context.Files = null then
          return False;
       end if;
+
+      --  ??? Should handle the case where the file has changed, when we are
+      --  not searching for all occurences.
 
       --  Loop until at least one match
       loop
