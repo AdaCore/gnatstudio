@@ -6,6 +6,11 @@
 #include <db.h>
 #include <sn.h>
 
+/* RESTRICTED_CURSOR is used to check if all cursors were released after use */
+/*
+#define RESTRICTED_CURSOR
+*/
+
 /* Cursor positions */
 #define POS_FIRST       1	/* first key/data pair */
 #define POS_LAST        2	/* last key/data pair  */
@@ -20,6 +25,7 @@
 /* C presentation of Ada type DB_File */
 typedef struct DB_File_struct {
     DB *db;			/* database handler */
+    char *fname;                /* file name (a copy) */
     int last_errno;		/* 0 or last error number */
     char *key_p;		/* key pattern */
     int exact_match;		/* 1/0, if exact key match needed/not needed */
@@ -153,10 +159,18 @@ DB_File *ada_db_open(const char *file_name)
     file->db = dbopen(file_name, O_RDONLY, 0644, DB_BTREE, 0);
     file->last_errno = 0;
     file->key_p = 0;
+    file->fname = strdup(file_name);
     if (file->db == 0) {
 	file->last_errno = errno;
     }
     return file;
+}
+
+DB_File *ada_db_dup(const DB_File * file)
+{
+    DB_File *new_file;
+    new_file = ada_db_open (file->fname);
+    return new_file;
 }
 
 int ada_get_last_errno(const DB_File * file)
@@ -172,24 +186,41 @@ char *ada_get_errstr(const DB_File * file)
 void ada_db_close(DB_File * file)
 {
     file->last_errno = 0;
+    if (file->key_p) {
+	free(file->key_p);
+    }
+    if (file->fname) {
+        free(file->fname);
+    }
     if (file->db) {
 	if (file->db->close(file->db) != 0)
 	    file->last_errno = errno;
-    }
-    if (file->key_p) {
-	free(file->key_p);
     }
 }
 
 void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
 		       int exact_match)
 {
-    if (file->key_p)		/* key patternd was already set, free it before */
-	free(file->key_p);
-
-    file->key_p = strdup(key_p);
-    file->exact_match = exact_match;
+    file->last_errno = 0;
+    if (pos == POS_BY_KEY) {
+        if (file->key_p) { /* key pattern was already set, free it before */
+#ifdef RESTRICTED_CURSOR
+            file->last_errno = EINPROGRESS;
+#endif
+            free(file->key_p);
+    }
+        file->key_p = strdup(key_p);
+        file->exact_match = exact_match;
+    }
     file->pos = pos;
+}
+
+void ada_db_free_cursor(DB_File * file)
+{
+    if (file->key_p) {
+        free(file->key_p);
+        file->key_p = 0;
+    }
 }
 
 DB_Pair *ada_db_get_pair(DB_File * file, int move)
@@ -217,6 +248,10 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
 	flag = R_LAST;
 	break;
     case POS_BY_KEY:
+        if (!file->key_p) {
+	    file->last_errno = EINPROGRESS;
+	    return 0;
+        }
 	flag = R_CURSOR;
 	key.data = file->key_p;
 	key.size = strlen(file->key_p) + 1;
@@ -246,6 +281,10 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
     /* here result == 0 */
 
     if (move == MOVE_BY_KEY) {
+        if (!file->key_p) {
+	    file->last_errno = EINPROGRESS;
+	    return 0;
+        }
 	/* check if retrieved key is matched */
 	len = strlen(file->key_p);
 	if (strncmp(key.data, file->key_p, len) != 0) {
