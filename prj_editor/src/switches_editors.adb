@@ -1530,6 +1530,13 @@ package body Switches_Editors is
 
                if Lang = "ada" then
                   Pages := Pages or Ada_Page or Pretty_Printer_Page;
+
+                  if (Pages and Binder_Page) = 0
+                    and then Is_Main_File (Project, Files (F).all)
+                  then
+                     Pages := Pages or Binder_Page or Linker_Page;
+                  end if;
+
                elsif Lang = "c" then
                   Pages := Pages or C_Page;
                elsif Lang = "c++" then
