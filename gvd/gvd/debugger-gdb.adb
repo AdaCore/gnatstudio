@@ -93,7 +93,7 @@ package body Debugger.Gdb is
    --  Pattern to match a single line in "info breakpoint"
 
    File_Name_In_Breakpoint : constant Pattern_Matcher := Compile
-     ("at ([-~\w._]+):(\d+)");
+     ("at ([-~\w._/\\]+):(\d+)");
    --  How to find file names in the info given by "info breakpoint"
 
    Exception_In_Breakpoint : constant Pattern_Matcher := Compile
@@ -1405,7 +1405,8 @@ package body Debugger.Gdb is
                   Match (File_Name_In_Breakpoint, Br (Num).Info.all, Matched);
                   if Matched (0) /= No_Match then
                      Br (Num).File := new String'
-                       (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+                       (Base_File_Name (Br (Num).Info
+                          (Matched (1).First .. Matched (1).Last)));
                      Br (Num).Line := Integer'Value
                        (Br (Num).Info (Matched (2).First .. Matched (2).Last));
                   end if;
