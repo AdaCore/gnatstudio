@@ -1655,7 +1655,7 @@ package body GVD.Process is
       end if;
 
       if Get_Mode (Process.Editor_Text) /= Mode then
-         Apply_Mode (Process.Editor_Text, Mode);
+         Apply_Mode (Get_Source (Process.Editor_Text), Mode);
       end if;
 
    exception
