@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,34 +18,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;           use Ada.Exceptions;
-with Basic_Types;              use Basic_Types;
-with GNAT.Expect;              use GNAT.Expect;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Basic_Types;               use Basic_Types;
+with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
-with GNAT.Expect.TTY;          use GNAT.Expect.TTY;
+with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Glib;                     use Glib;
-with GPS.Intl;               use GPS.Intl;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Timeout;     use GPS.Kernel.Timeout;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Glib;                      use Glib;
+with GPS.Intl;                  use GPS.Intl;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Gtk.Main;                 use Gtk.Main;
-with Traces;                   use Traces;
+with Gtk.Main;                  use Gtk.Main;
+with Traces;                    use Traces;
 with Unchecked_Deallocation;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glib.Generic_Properties;  use Glib.Generic_Properties;
-with Projects;                 use Projects;
-with String_Utils;             use String_Utils;
-with VFS;                      use VFS;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Glib.Generic_Properties;   use Glib.Generic_Properties;
+with Projects;                  use Projects;
+with String_Utils;              use String_Utils;
+with VFS;                       use VFS;
 with System;
-with Commands.Interactive;     use Commands, Commands.Interactive;
+with Commands.Interactive;      use Commands, Commands.Interactive;
 
 package body External_Editor_Module is
 
