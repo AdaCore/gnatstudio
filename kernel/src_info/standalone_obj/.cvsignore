@@ -8,3 +8,4 @@ find_ref
 find_dep
 find_local_ref
 generate_db
+test_parse
