@@ -381,7 +381,7 @@ package body Src_Editor_Module is
       while Mark_Node /= Mark_Identifier_List.Null_Node loop
          Mark_Record := Mark_Identifier_List.Data (Mark_Node);
 
-         if Mark_Record.Id'Img = " " & Identifier then
+         if Image (Mark_Record.Id) = Identifier then
             return Mark_Record;
          end if;
 
@@ -515,7 +515,7 @@ package body Src_Editor_Module is
                        (Id.Stored_Marks, Mark_Record);
 
                      Free (Filename);
-                     return Mark_Record.Id'Img;
+                     return Image (Mark_Record.Id);
                   else
                      Free (Filename);
                      return -"File not open, use command edit to open it.";
@@ -717,8 +717,97 @@ package body Src_Editor_Module is
                return "Invalid position.";
             end if;
          end;
+      elsif Command = "get_line"
+        or else Command = "get_column"
+        or else Command = "get_file"
+      then
+         Node := First (Args);
+
+         while Node /= Null_Node loop
+            if Filename = null then
+               Filename := new String'(Data (Node));
+            else
+               Free (Filename);
+               return -"close: too many parameters";
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         if Filename /= null then
+            declare
+               Mark_Record : constant Mark_Identifier_Record
+                 := Find_Mark (Filename.all);
+            begin
+               Free (Filename);
+
+               if Mark_Record.Mark = null
+                 or else Mark_Record.Child = null
+               then
+                  return -"Mark not found.";
+               else
+                  if Command = "get_line" then
+                     return
+                       Image
+                         (Get_Line
+                              (Source_Box
+                                   (Get_Widget (Mark_Record.Child)).Editor,
+                               Mark_Record.Mark));
+                  elsif Command = "get_column" then
+                     return
+                       Image
+                         (Get_Column
+                              (Source_Box
+                                   (Get_Widget (Mark_Record.Child)).Editor,
+                               Mark_Record.Mark));
+                  else
+                     if Mark_Record.File = null then
+                        return "";
+                     else
+                        return Mark_Record.File.all;
+                     end if;
+                  end if;
+               end if;
+            end;
+         else
+            return -"Missing parameter mark.";
+         end if;
+
+      elsif Command = "get_last_line" then
+         Node := First (Args);
+
+         while Node /= Null_Node loop
+            if Filename = null then
+               Filename := new String'(Data (Node));
+            else
+               Free (Filename);
+               return -"close: too many parameters";
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         if Filename /= null then
+            declare
+               Child : constant MDI_Child := Find_Editor
+                 (Kernel, Filename.all);
+            begin
+               Free (Filename);
+               if Child = null then
+                  return -"File not found or not open.";
+
+               else
+                  return Image
+                    (Get_Last_Line
+                       (Source_Box (Get_Widget (Child)).Editor));
+               end if;
+            end;
+         else
+            return -"Missing parameter file.";
+         end if;
+
       else
-         return -"command not recognized: " & Command;
+         return -"Command not recognized: " & Command;
       end if;
    end Edit_Command_Handler;
 
@@ -1845,9 +1934,9 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Generate_Body;
 
-   ----------------------
+   ---------------------
    -- Pretty_Print_Cb --
-   ----------------------
+   ---------------------
 
    procedure Pretty_Print_Cb (Data : Process_Data; Status : Integer) is
       function Pretty_Name (Name : String) return String;
@@ -2464,6 +2553,38 @@ package body Src_Editor_Module is
          & (-"If <before> or <after> is omitted, the bounds will be")
          & ASCII.LF
          & (-"at the beginning and/or the end of the line."),
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "get_line",
+         Help => -"Usage:" & ASCII.LF
+         & "   mark" & ASCII.LF
+         & "Returns the current line of mark.",
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "get_column",
+         Help => -"Usage:" & ASCII.LF
+         & "  get_column mark" & ASCII.LF
+         & "Returns the current column of mark.",
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "get_file",
+         Help => -"Usage:" & ASCII.LF
+         & "  get_file mark" & ASCII.LF
+         & "Returns the current file of mark.",
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "get_last_line",
+         Help => -"Usage:" & ASCII.LF
+         & "  get_last_line file" & ASCII.LF
+         & "Returns the number of the last line in file.",
          Handler => Edit_Command_Handler'Access);
 
       Register_Command
