@@ -43,6 +43,8 @@ package body Ada_Module is
    Ada_Reserved_Casing       : Param_Spec_Enum;
    Ada_Ident_Casing          : Param_Spec_Enum;
    Ada_Format_Operators      : Param_Spec_Boolean;
+   Ada_Align_On_Colons       : Param_Spec_Boolean;
+   Ada_Align_On_Arrows       : Param_Spec_Boolean;
 
    package Casing_Properties is new
      Glib.Generic_Properties.Generic_Enumeration_Property
@@ -99,7 +101,9 @@ package body Ada_Module is
             Ident_Casing      => Casing_Type'Val
               (Get_Pref (K, Ada_Ident_Casing)),
             Format_Operators  => Get_Pref (K, Ada_Format_Operators),
-            Use_Tabs          => Get_Pref (K, Ada_Use_Tabs)));
+            Use_Tabs          => Get_Pref (K, Ada_Use_Tabs),
+            Align_On_Colons   => Get_Pref (K, Ada_Align_On_Colons),
+            Align_On_Arrows   => Get_Pref (K, Ada_Align_On_Arrows)));
    end On_Preferences_Changed;
 
    ---------------------
@@ -210,6 +214,25 @@ package body Ada_Module is
            Nick    => -"Format operators/delimiters"));
       Register_Property
         (Kernel, Param_Spec (Ada_Format_Operators), -"Editor:Ada");
+
+      Ada_Align_On_Colons := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Align-On-Colons",
+           Default => False,
+           Blurb   => -"Whether to align declarations on colons",
+           Nick    => -"Align declarations on colons"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Align_On_Colons), -"Editor:Ada");
+
+      Ada_Align_On_Arrows := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Ada-Align-On_Arrows",
+           Default => False,
+           Blurb   =>
+             -"Whether to align associations on arrow delimiters",
+           Nick    => -"Align associations on arrows"));
+      Register_Property
+        (Kernel, Param_Spec (Ada_Align_On_Arrows), -"Editor:Ada");
 
       Kernel_Callback.Connect
         (Kernel, "preferences_changed",
