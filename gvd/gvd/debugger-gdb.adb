@@ -1274,6 +1274,8 @@ package body Debugger.Gdb is
    is
       Context : constant Language_Debugger_Context :=
         Get_Language_Debugger_Context (Lang);
+      Dim : Dimension;
+
    begin
       Repeat_Num := 1;
 
@@ -1382,22 +1384,36 @@ package body Debugger.Gdb is
         and then Type_Str'Length /= 0
         and then Type_Str (Index) = '"'
       then
+         Dim := Get_Dimensions (Array_Type (Result.all), 1);
+
+         --  If the dimension was not known when parsing the type, we compute
+         --  it directly from the value of the string
+
+         if Dim.Last < Dim.First then
+            declare
+               Tmp : Natural := Index;
+               S   : String (1 .. 0);
+            begin
+               Parse_Cst_String (Type_Str, Tmp, S);
+               Dim.Last := Long_Integer (Tmp - Index) + Dim.First - 4;
+            end;
+         end if;
+
          declare
-            Dim : Dimension := Get_Dimensions (Array_Type (Result.all), 1);
             S : String (1 .. Integer (Dim.Last - Dim.First + 1));
             Simple : Simple_Type_Access;
 
          begin
             Parse_Cst_String (Type_Str, Index, S);
             Simple := Simple_Type_Access
-              (Get_Value (Array_Type (Result.all), 0));
+              (Get_Value (Array_Type (Result.all), Dim.First));
             if Simple = null then
                Simple := Simple_Type_Access (New_Simple_Type);
             end if;
             Set_Value (Simple.all, S);
             Set_Value (Item       => Array_Type (Result.all),
                        Elem_Value => Simple,
-                       Elem_Index => 0);
+                       Elem_Index => Dim.First);
             Shrink_Values (Array_Type (Result.all));
          end;
 
