@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.3.1
 
+- Callgraph hides left button when called entities are computed
+  Problem:    If you click on the right button in the title bar of the call
+              graph boxes, the called entities are properly computed, but the
+              left button is hidden, preventing computation of calling entities
+  Workaround: Close the box, and reopen it from a source editor with the
+              contextual menu "... is called by"
+
 - C901-006 No pretty printing on sub-project's files
   Problem:    When pretty printing a file not part of the main project,
               gps will execute the wrong command.
