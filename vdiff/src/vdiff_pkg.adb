@@ -97,6 +97,12 @@ begin
       Marsh => Widget_Callback.To_Marshaller (Value1_Changed'Access),
       Slot_Object => Vdiff);
 
+   Widget_Callback.Object_Connect
+     (Get_Hadjustment (Vdiff.Scrolledwindow1),
+      Name  => "value_changed",
+      Marsh => Widget_Callback.To_Marshaller (H_Value1_Changed'Access),
+      Slot_Object => Vdiff);
+
    Gtk_New (Vdiff.Label8);
    Set_Alignment (Vdiff.Label8, 0.5, 0.5);
    Set_Padding (Vdiff.Label8, 0, 0);
@@ -157,6 +163,12 @@ begin
      (Get_Vadjustment (Vdiff.Scrolledwindow2),
       Name  => "value_changed",
       Marsh => Widget_Callback.To_Marshaller (Value2_Changed'Access),
+      Slot_Object => Vdiff);
+
+   Widget_Callback.Object_Connect
+     (Get_Hadjustment (Vdiff.Scrolledwindow2),
+      Name  => "value_changed",
+      Marsh => Widget_Callback.To_Marshaller (H_Value2_Changed'Access),
       Slot_Object => Vdiff);
 
    Gtk_New (Vdiff.Label10);
