@@ -17,8 +17,8 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 with Ada.Text_IO;               use Ada.Text_IO;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Language;                  use Language;
@@ -29,7 +29,6 @@ with Language.Ada;              use Language.Ada;
 package body Html_Output is
 
    package TEL renames Type_Entity_List;
-   package ASU renames Ada.Strings.Unbounded;
 
    procedure Doc_HTML_Create
      (File   : in Ada.Text_IO.File_Type;
@@ -66,9 +65,7 @@ package body Html_Output is
    procedure Doc_HTML_Open
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
-
    begin
-
       Ada.Text_IO.Put_Line (File, "<HTML>");
       Ada.Text_IO.Put_Line (File, "<HEAD>");
       Ada.Text_IO.Put_Line (File, "<TITLE>" &
@@ -80,7 +77,6 @@ package body Html_Output is
                             "Type"" content=""" &
                             "text/html; charset=" & "ISO-8859-1" & """>");
       Ada.Text_IO.Put_Line (File, "</HEAD>");
-
       Ada.Text_IO.Put_Line (File, "<BODY bgcolor=""white"">");
    end Doc_HTML_Open;
 
@@ -108,7 +104,6 @@ package body Html_Output is
    procedure Doc_HTML_Subtitle
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
-
    begin
       Ada.Text_IO.Put_Line (File, "<BR>");
 
@@ -155,16 +150,22 @@ package body Html_Output is
       Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
                             "width=""100%""><TR><TD> <PRE>");
 
+      if Info.Package_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
       New_Text := Format_HTML (Info.Package_List,
                                Info.Package_Header.all,
                                Info.Package_Entity.File_Name.all,
                                Info.Package_Entity.Short_Name.all,
-                               False);
+                               Info.Package_Entity.Line,
+                               False,
+                               True);
 
       Ada.Text_IO.Put_Line (File, New_Text.all);
       Free (New_Text);
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Ada.Text_IO.Put_Line (File, "---" & Info.Package_Description.all);
+      Ada.Text_IO.Put_Line (File, Info.Package_Description.all);
       Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Package;
 
@@ -185,7 +186,10 @@ package body Html_Output is
                                Info.With_Header.all,
                                Info.With_File.all,
                                "",
+                               0,
+                               False,
                                False);
+
       Ada.Text_IO.Put_Line (File, New_Text.all);
       Free (New_Text);
 
@@ -212,16 +216,22 @@ package body Html_Output is
       Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
                             "width=""100%""><TR><TD> <PRE>");
 
+      if Info.Var_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
       New_Text := Format_HTML (Info.Var_List,
                                Info.Var_Header.all,
                                Info.Var_Entity.File_Name.all,
                                Info.Var_Entity.Short_Name.all,
-                               False);
+                               Info.Var_Entity.Line,
+                               False,
+                               True);
 
       Ada.Text_IO.Put_Line (File, New_Text.all);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Ada.Text_IO.Put_Line (File, "---" & Info.Var_Description.all);
+      Ada.Text_IO.Put_Line (File, Info.Var_Description.all);
       Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Var;
 
@@ -244,16 +254,22 @@ package body Html_Output is
       Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
                             "width=""100%""><TR><TD> <PRE>");
 
+      if Info.Exception_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
       New_Text := Format_HTML (Info.Exception_List,
                                Info.Exception_Header.all,
                                Info.Exception_Entity.File_Name.all,
                                Info.Exception_Entity.Short_Name.all,
-                               False);
+                               Info.Exception_Entity.Line,
+                               False,
+                               True);
 
       Ada.Text_IO.Put_Line (File, New_Text.all);
       Free (New_Text);
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Ada.Text_IO.Put_Line (File, "---" & Info.Exception_Description.all);
+      Ada.Text_IO.Put_Line (File, Info.Exception_Description.all);
       Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Exception;
 
@@ -276,17 +292,23 @@ package body Html_Output is
       Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
                             "width=""100%""><TR><TD> <PRE>");
 
+      if Info.Type_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
       New_Text := Format_HTML (Info.Type_List,
                                Info.Type_Header.all,
                                Info.Type_Entity.File_Name.all,
                                Info.Type_Entity.Short_Name.all,
-                               False);
+                               Info.Type_Entity.Line,
+                               False,
+                               True);
 
       Ada.Text_IO.Put_Line (File, New_Text.all);
       Free (New_Text);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Ada.Text_IO.Put_Line (File, "---" & Info.Type_Description.all);
+      Ada.Text_IO.Put_Line (File, Info.Type_Description.all);
       Ada.Text_IO.Put_Line (File, "<HR> ");
 
    end Doc_HTML_Type;
@@ -300,12 +322,97 @@ package body Html_Output is
       Info      : Doc_Info) is
 
       package TRL renames Type_Reference_List;
-      Node      : TRL.List_Node;
+
+      procedure Print_Ref_List
+        (Local_List    : TRL.List;
+         Called_Subp   : Boolean);
+      --  Processes the Ref_List to the output file.
+      --  If Called_Subp is True, the list of the subprograms
+      --  calling the current subprogram will be printed,
+      --  if False, the list of the subprograms called within it.
+
+      ----------------------
+      --  Print_Ref_List  --
+      ----------------------
+
+      procedure Print_Ref_List
+        (Local_List    : TRL.List;
+         Called_Subp   : Boolean) is
+         Node      : TRL.List_Node;
+         Suffix    : GNAT.OS_Lib.String_Access;
+      begin
+         if not TRL.Is_Empty (Local_List) then
+            if Called_Subp then
+               Ada.Text_IO.Put_Line (File,
+                                     "<H5> Subprogram is called by: </H5>");
+            else
+               Ada.Text_IO.Put_Line (File,
+                                     "<H5> Subprogram calls: </H5>");
+            end if;
+            Ada.Text_IO.Put_Line (File, "<TABLE>");
+
+            Node := TRL.First (Local_List);
+
+            --  for every reference found write the information to doc file
+            for J in 1 .. TRL.Length (Local_List) loop
+
+               --  check if the creating of a link is possible
+               if TRL.Data (Node).Set_Link then
+
+                  --  if a called subprogram => link to spec
+                  if Called_Subp then
+                     Suffix := new String'("_adb.htm");
+                  else
+                     Suffix := new String'("_ads.htm");
+                  end if;
+                  declare
+                     Body_File : constant String :=
+                       TRL.Data (Node).File_Name.all
+                       (TRL.Data (Node).File_Name'First ..
+                          TRL.Data (Node).File_Name'Last - 4)
+                     & Suffix.all;
+                     Number : constant String :=
+                       TRL.Data (Node).Line'Img;
+                  begin
+                     Ada.Text_IO.Put_Line
+                       (File,
+                        "<TR><TD><A href="""
+                        & Body_File & "#"
+                        & Number (2 .. Number'Last)
+                        & """>"
+                        & TRL.Data
+                          (Node).Subprogram_Name.all
+                        & "</A></TD><TD> in &nbsp&nbsp<I>"
+                        & TRL.Data (Node).File_Name.all
+                        & "</I></TD><TD>, line: "
+                        & TRL.Data (Node).Line'Img
+                        & "</TD><TD>, column: "
+                        & TRL.Data (Node).Column'Img
+                        & "</TD><TR>");
+                  end;
+               --  no link at all
+               else Ada.Text_IO.Put_Line (File,
+                                          "<TR><TD>"
+                                          & TRL.Data (Node).Subprogram_Name.all
+                                          & "</TD><TD> in &nbsp&nbsp<I>"
+                                          & TRL.Data (Node).File_Name.all
+                                          & "</I></TD><TD>, line: "
+                                          & TRL.Data (Node).Line'Img
+                                          & "</TD><TD>, column: "
+                                          & TRL.Data (Node).Column'Img
+                                          & "</TD></TR>");
+               end if;
+               Node := TRL.Next (Node);
+            end loop;
+               Ada.Text_IO.Put_Line (File, "</TABLE>");
+         end if;
+      end Print_Ref_List;
 
       Line_Nr      : constant String := Info.Subprogram_Entity.Line'Img;
-      Body_File    : ASU.Unbounded_String;
       New_Text     : GNAT.OS_Lib.String_Access;
-   begin
+
+   begin  --  Doc_HTML_Subprogram
+
    --  the mark for the HMTL browser to be able to find the position
       Ada.Text_IO.Put_Line (File, "  <A name="""
                             & Line_Nr (2 .. Line_Nr'Length)
@@ -313,60 +420,28 @@ package body Html_Output is
       Ada.Text_IO.Put_Line (File, "<TABLE  bgcolor=""#DDDDDD"" " &
                             "width=""100%""><TR><TD> <PRE>");
 
+      if Info.Subprogram_Entity.Is_Private then
+         Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
+      end if;
+
       New_Text := Format_HTML (Info.Subprogram_List,
                                Info.Subprogram_Header.all,
                                Info.Subprogram_Entity.File_Name.all,
                                Info.Subprogram_Entity.Short_Name.all,
-                               False);
+                               Info.Subprogram_Entity.Line,
+                               False,
+                               True);
 
       Ada.Text_IO.Put_Line (File, New_Text.all);
       Free (New_Text);
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
 
       --  write the description to doc file
-      Ada.Text_IO.Put_Line (File, "---" & Info.Subprogram_Description.all);
+      Ada.Text_IO.Put_Line (File, Info.Subprogram_Description.all);
       Ada.Text_IO.Put_Line (File, " <BR>  ");
 
-      --  write the "subprogram is called be:" references
-      --  if Info.Subprogram_Entity.Is_Ref_List_Set then
-      if not TRL.Is_Empty (Info.Subprogram_Entity.Ref_List) then
-         Ada.Text_IO.Put_Line (File, "<H5> Subprogram is called in: </H5> ");
-
-         Node := TRL.First (Info.Subprogram_Entity.Ref_List);
-         --  for every reference found write the information to doc file
-         for J in 1 .. TRL.Length (Info.Subprogram_Entity.Ref_List) loop
-
-            --  check if the creating of a link is possible
-            if TRL.Data (Node).File_Found then
-               Body_File :=
-                 ASU.To_Unbounded_String (TRL.Data (Node).File_Name.all);
-               Body_File := ASU.Replace_Slice (Body_File,
-                                                ASU.Index (Body_File, "."),
-                                                ASU.Index (Body_File, ".") + 3,
-                                                "_adb.htm");
-               declare
-                  Number : constant String := TRL.Data (Node).Line'Img;
-               begin
-                  Ada.Text_IO.Put_Line (File, "  <A href="""
-                                         & ASU.To_String (Body_File) & "#"
-                                         & Number (2 .. Number'Last)
-                                         & """> In file: </A> "
-                                         & TRL.Data (Node).File_Name.all
-                                         & "  / line: "
-                                         & TRL.Data (Node).Line'Img & "<BR>");
-               end;
-
-            else
-               Ada.Text_IO.Put_Line (File, "   In file:  "  &
-                                     TRL.Data (Node).File_Name.all &
-                                     " / Line: "   &
-                                     TRL.Data (Node).Line'Img &
-                                     "<BR>");
-
-            end if;
-            Node := TRL.Next (Node);
-         end loop;
-      end if;
+      Print_Ref_List (Info.Subprogram_Entity.Called_List, True);
+      Print_Ref_List (Info.Subprogram_Entity.Calls_List, False);
 
       Ada.Text_IO.Put_Line (File, "<HR> ");
    end Doc_HTML_Subprogram;
@@ -380,14 +455,24 @@ package body Html_Output is
       Text          : String;
       File_Name     : String;
       Entity_Name   : String;
-      Is_Body       : Boolean) return GNAT.OS_Lib.String_Access is
-
-      --  used to save the lines processed by the callback function
+      Entity_Line   : Natural;
+      Is_Body       : Boolean;
+      Do_Checks     : Boolean) return GNAT.OS_Lib.String_Access is
       Old_Line, Result_Line : GNAT.OS_Lib.String_Access;
-      --  how many chars have been already added in this line
+      --  used to save the lines processed by the callback function
+
       Already_Added_Chars  : Integer;
-      --  how many chars added while replacing HTML tags
+      --  how many chars have been already added in this line
+
       Replacing_Tags_Chars  : Integer;
+      --  how many chars added while replacing HTML tags
+
+      function Is_Called_Reference_Found
+        (Line_Nr     : Natural;
+         Source_File : String;
+         Called_Node :  Entity_List_Information) return Boolean;
+      --  looks in the Called_List if the entity is called called in the
+      --  given file at the given line.
 
       function Replace_HTML_Tags
         (Input_Text : String) return String;
@@ -398,6 +483,38 @@ package body Html_Output is
          Sloc_Start     : Source_Location;
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean;
+      --  the callback function to add HTML code to the text being parsed.
+      --  for each possible kind of parsed entity some HTML code will
+      --  be added to the Result_Line and the Already_Added_Chars
+      --  increased by the number of the added chars in order to keep
+      --  track of the current position in the original string.
+
+      ---------------------------------
+      --  Is_Called_Reference_Found  --
+      ---------------------------------
+
+      function Is_Called_Reference_Found
+        (Line_Nr     : Natural;
+         Source_File : String;
+         Called_Node : Entity_List_Information) return Boolean is
+
+         use Type_Reference_List;
+
+         Ref_Node : List_Node;
+      begin
+         if not Is_Empty (Called_Node.Called_List) then
+            Ref_Node := First (Called_Node.Called_List);
+            for J in 1 .. Length (Called_Node.Called_List) loop
+               if Data (Ref_Node).Line = Line_Nr and
+                 Data (Ref_Node).File_Name.all =
+                 GNAT.Directory_Operations.File_Name (Source_File) then
+                  return True;
+               end if;
+               Ref_Node := Next (Ref_Node);
+            end loop;
+         end if;
+         return False;
+      end Is_Called_Reference_Found;
 
       -----------------------
       -- Replace_HTML_Tags --
@@ -410,7 +527,7 @@ package body Html_Output is
       begin
          Result_Text := new String'(Input_Text);
 
-         for J in 1 .. Input_Text'Last - 1 loop
+         for J in Input_Text'First .. Input_Text'Last - 1 loop
             if Input_Text (J) = '<' then
                Old_Text := Result_Text;
                Result_Text :=
@@ -423,7 +540,7 @@ package body Html_Output is
                                              + Replacing_Tags_Chars));
                Free (Old_Text);
                Replacing_Tags_Chars := Replacing_Tags_Chars + 3;
-               --  1 char replaced by 4 new chars
+               --  1 char replaced by 4 new chars => + 3
             elsif Input_Text (J) = '>' then
                Old_Text := Result_Text;
                Result_Text :=
@@ -436,7 +553,7 @@ package body Html_Output is
                                              + Replacing_Tags_Chars));
                Free (Old_Text);
                Replacing_Tags_Chars := Replacing_Tags_Chars + 3;
-               --  1 char replaced by 4 new chars
+               --  1 char replaced by 4 new chars => + 3
             end if;
          end loop;
          return Result_Text.all;
@@ -456,20 +573,13 @@ package body Html_Output is
 
       begin  -- HTML_Spec_Callback
 
-         --  Put_Line (Current_Error, Result_Line.all
-         --            (Sloc_Start.Index + Already_Added_Chars ..
-         --               Sloc_End.Index + Already_Added_Chars));
-
-
-         --  DON'T FORGET: when you change the HTML code to
+         --  DON'T FORGET: when you change the HTML code to be
          --  added, change also the Already_Added_Chars
-         --  AND add the tag beginning in Replace_HTML_Tags !!!
 
          if Partial_Entity then  --  just to avoid the warning
             null;
          end if;
 
-         --  to free the access string later
          Old_Line := Result_Line;
          Replacing_Tags_Chars := 0;
 
@@ -505,20 +615,23 @@ package body Html_Output is
                Already_Added_Chars := Already_Added_Chars + 7;
                --  7 is the number of chars in "<B></B>"
                Free (Old_Line);
-            when String_Text => Result_Line := new String'
+            when String_Text =>
+               Result_Line := new String'
                  (Result_Line.all
                     (Result_Line'First ..
                        Sloc_Start.Index + Already_Added_Chars - 1) &
                   "<FONT color=""red"">" &
-                  Replace_HTML_Tags (Result_Line.all
-                    (Sloc_Start.Index + Already_Added_Chars ..
-                       Sloc_End.Index + Already_Added_Chars)) &
+                  Replace_HTML_Tags
+                    (Result_Line.all
+                       (Sloc_Start.Index + Already_Added_Chars ..
+                          Sloc_End.Index + Already_Added_Chars)) &
                   "</FONT>" &
                   Result_Line.all
                     (Sloc_End.Index + Already_Added_Chars + 1
-                    .. Result_Line'Last));
+                       .. Result_Line'Last));
                Already_Added_Chars := Already_Added_Chars + 25 +
                  Replacing_Tags_Chars;
+               --  25 is the number of chars added here
                Free (Old_Line);
             when Character_Text => Result_Line := new String'
                  (Result_Line.all
@@ -533,116 +646,150 @@ package body Html_Output is
                     (Sloc_End.Index + Already_Added_Chars + 1 ..
                        Result_Line'Last));
                Already_Added_Chars := Already_Added_Chars + 25;
+               --  25 is the number of chars added here
                Free (Old_Line);
             when Identifier_Text =>
+
+               --  perhaps links can be set:
 
                --  look in the list, if the identifier is there
                --  if found => make a link; if not found => ignore!
                if not TEL.Is_Empty (Entity_List) then
                   Entity_Node := TEL.First (Entity_List);
-               end if;
 
-               for J in 1 .. TEL.Length (Entity_List) loop
-                  --  check if the entity name is also the identiefier name
-                  if TEL.Data (Entity_Node).Short_Name.all
-                    = To_Lower (Text (Sloc_Start.Index ..
-                                                 Sloc_End.Index))
-                  --  and the kind of the entity is not Other_Entity
-                  --  ONLY possible: subprograms, exceptions,
-                  --  types and packages
-                    and TEL.Data (Entity_Node).Kind /= Other_Entity
-                    and TEL.Data (Entity_Node).Kind /= Var_Entity
-                  --  and this line is not the declararion of the entity
-                  --  (allowed for subprograms)
-                    and (not (TEL.Data (Entity_Node).Line
-                                = Sloc_Start.Line and
-                             TEL.Data (Entity_Node).File_Name.all
-                             = File_Name) or
-                        TEL.Data (Entity_Node).Kind = Procedure_Entity or
-                        TEL.Data (Entity_Node).Kind = Function_Entity)
-                  then
-                     --  if entity a subprogram and a link should and can be
-                     --  set => creat link to body
-                     if not Is_Body and TEL.Data (Entity_Node).File_Found and
-                       (TEL.Data (Entity_Node).Kind = Procedure_Entity or
-                          TEL.Data (Entity_Node).Kind = Function_Entity) then
-                        declare
-                           Number : constant String :=
-                             TEL.Data (Entity_Node).Line_In_Body'Img;
-                           Spe_File  : GNAT.OS_Lib.String_Access;
-                           Bod_File : GNAT.OS_Lib.String_Access;
-                           Node      : GNAT.OS_Lib.String_Access;
-                        begin
-                           Node := TEL.Data (Entity_Node).File_Name;
-                           Spe_File := new String'
-                             (GNAT.Directory_Operations.File_Name
-                                (Node.all));
-                           Bod_File := new String '(Spe_File.all
+                  for J in 1 .. TEL.Length (Entity_List) loop
+                     --  check if the entity name is also the identiefier name
+                     if TEL.Data (Entity_Node).Short_Name.all
+                       = To_Lower (Text (Sloc_Start.Index ..
+                                           Sloc_End.Index))
+                     --  and the lines for the entity found in the list
+                     --  are the same as for the entity passed to Format_HTML,
+                     --  in the spec of in the body (in the latter case
+                     --  it's important to look at the declaration line in the
+                     --  body but also all references where it is called.
+                     --  Or No Checks should be made.
+                       and ((not Is_Body and
+                               TEL.Data (Entity_Node).Line =
+                               Entity_Line)
+                            or (Is_Body and
+                                  TEL.Data (Entity_Node).Line_In_Body =
+                                  Sloc_Start.Line)
+                            or (Is_Body and
+                                  (TEL.Data (Entity_Node).Kind =
+                                     Procedure_Entity or
+                                       TEL.Data (Entity_Node).Kind
+                                       = Function_Entity) and
+                                      Is_Called_Reference_Found
+                                        (Sloc_Start.Line,
+                                         File_Name,
+                                         TEL.Data (Entity_Node)))
+                            or not Do_Checks)
+                     --  and the kind of the entity is not Other_Entity
+                     --  ONLY possible: subprograms, exceptions,
+                     --  types and packages
+                       and TEL.Data (Entity_Node).Kind /= Other_Entity
+                       and TEL.Data (Entity_Node).Kind /= Var_Entity
+                     --  and this line is not the declararion of the entity
+                     --  (allowed for subprograms)
+                       and (not (TEL.Data (Entity_Node).Line
+                                   = Sloc_Start.Line and
+                                     TEL.Data (Entity_Node).File_Name.all
+                                     = File_Name) or
+                                  TEL.Data (Entity_Node).Kind =
+                                  Procedure_Entity or
+                              TEL.Data (Entity_Node).Kind = Function_Entity)
+                     then
+                        --  if entity a subprogram and a link should and can be
+                        --  set => creat link to body
+                        if not Is_Body and
+                          TEL.Data (Entity_Node).Line_In_Body > 0 and
+                          (TEL.Data (Entity_Node).Kind = Procedure_Entity or
+                             TEL.Data (Entity_Node).Kind = Function_Entity)
+                        then
+                           declare
+                              Number : constant String :=
+                                TEL.Data (Entity_Node).Line_In_Body'Img;
+                              Spe_File  : GNAT.OS_Lib.String_Access;
+                              Bod_File : GNAT.OS_Lib.String_Access;
+                              Node      : GNAT.OS_Lib.String_Access;
+                           begin
+                              Node := TEL.Data (Entity_Node).File_Name;
+                              Spe_File := new String'
+                                (GNAT.Directory_Operations.File_Name
+                                   (Node.all));
+                              Bod_File := new String '(Spe_File.all
                                                       (Spe_File'First
                                                          .. Spe_File'Last - 4)
                                                     & "_adb.htm");
-                           Result_Line := new String'
-                             (Result_Line.all
-                                (Result_Line'First .. Sloc_Start.Index +
-                                   Already_Added_Chars - 1) &
-                              "<A href=""" &
-                              Bod_File.all & "#" &
-                              Number (2 .. Number'Last) & """>" &
-                              Result_Line.all
-                                (Sloc_Start.Index + Already_Added_Chars ..
-                                   Sloc_End.Index + Already_Added_Chars) &
-                              "</A>" &
-                              Result_Line.all
-                                (Sloc_End.Index + Already_Added_Chars + 1 ..
-                                   Result_Line'Last));
-                           Already_Added_Chars := Already_Added_Chars + 16 +
-                             Bod_File'Length + Number'Length - 1;
-                           Free (Old_Line);
-                           Free (Spe_File);
-                           Free (Bod_File);
-                        end;
-                        --  elsif: no subprograms, if should be
-                        --  => above and not here
-                     elsif not (TEL.Data (Entity_Node).Kind =
-                                  Procedure_Entity or
-                                    TEL.Data (Entity_Node).Kind
-                                    = Function_Entity) and
-                     --  and don't link if it is the entity itself, which was
-                     --  found in its header => except for subprograms (above)
-                     --  which are linked to the body, no linking here
-                       To_Lower (TEL.Data (Entity_Node).Short_Name.all) /=
-                       To_Lower (Entity_Name) then
-                        --  for the rest: create the link for the entity
-                        declare
-                           Number    : constant String
-                             := TEL.Data (Entity_Node).Line'Img;
-                           HTML_File : constant String
-                             := Get_Html_File_Name
-                               (TEL.Data (Entity_Node).File_Name.all);
-                        begin
-                           Result_Line := new String'
-                             (Result_Line.all
-                                (Result_Line'First .. Sloc_Start.Index +
-                                   Already_Added_Chars - 1) &
-                              "<A href=""" &
-                              HTML_File & "#" &
-                              Number (2 .. Number'Last) & """>" &
-                              Result_Line.all
-                                (Sloc_Start.Index + Already_Added_Chars ..
-                                   Sloc_End.Index + Already_Added_Chars) &
-                              "</A>" &
-                              Result_Line.all
-                                (Sloc_End.Index + Already_Added_Chars + 1 ..
-                                   Result_Line'Last));
-                           Already_Added_Chars := Already_Added_Chars +
-                             16 + HTML_File'Length + Number'Length - 1;
-                           Free (Old_Line);
-                        end;
+                              Result_Line := new String'
+                                (Result_Line.all
+                                   (Result_Line'First .. Sloc_Start.Index +
+                                      Already_Added_Chars - 1) &
+                                 "<A href=""" &
+                                 Bod_File.all & "#" &
+                                 Number (2 .. Number'Last) & """>" &
+                                 Result_Line.all
+                                   (Sloc_Start.Index + Already_Added_Chars ..
+                                      Sloc_End.Index + Already_Added_Chars) &
+                                 "</A>" &
+                                 Result_Line.all
+                                   (Sloc_End.Index + Already_Added_Chars + 1 ..
+                                      Result_Line'Last));
+                              Already_Added_Chars := Already_Added_Chars + 16 +
+                                Bod_File'Length + Number'Length - 1;
+                              Free (Old_Line);
+                              Free (Spe_File);
+                              Free (Bod_File);
+                           end;
+                           --  elsif: no subprograms, if working on the body
+                           --  file => processed above and not here
+                           --  here subprograms only if working on the
+                           --  spec file
+                        elsif (not (TEL.Data (Entity_Node).Kind =
+                                      Procedure_Entity or
+                                     TEL.Data (Entity_Node).Kind
+                                     = Function_Entity) or Is_Body) and
+                        --  and don't link if it is the entity itself, which
+                        --  was found in its header => except for subprograms
+                        --  (above) which are linked to the body, no linking
+                        --  here.
+                          To_Lower (TEL.Data (Entity_Node).Short_Name.all) /=
+                          To_Lower (Entity_Name) then
+                           --  for the rest: create the link for the entity
+                           declare
+                              Number    : constant String
+                                := TEL.Data (Entity_Node).Line'Img;
+                              Local_File : constant String
+                                := Get_Html_File_Name
+                                  (TEL.Data (Entity_Node).File_Name.all);
+                              HTML_File : constant String :=
+                                GNAT.Directory_Operations.File_Name
+                                  (Local_File);
+                           begin
+                              Result_Line := new String'
+                                (Result_Line.all
+                                   (Result_Line'First .. Sloc_Start.Index +
+                                      Already_Added_Chars - 1) &
+                                 "<A href=""" &
+                                 HTML_File & "#" &
+                                 Number (2 .. Number'Last) & """>" &
+                                 Result_Line.all
+                                   (Sloc_Start.Index + Already_Added_Chars ..
+                                      Sloc_End.Index + Already_Added_Chars) &
+                                 "</A>" &
+                                 Result_Line.all
+                                   (Sloc_End.Index + Already_Added_Chars + 1 ..
+                                      Result_Line'Last));
+                              Already_Added_Chars := Already_Added_Chars +
+                                16 + HTML_File'Length + Number'Length - 1;
+                              Free (Old_Line);
+                           end;
+                        end if;
+                        return False;
                      end if;
-                     return False;
-                  end if;
-                  Entity_Node := TEL.Next (Entity_Node);
-               end loop;
+                     Entity_Node := TEL.Next (Entity_Node);
+                  end loop;
+               end if;
             when others => null;
          end case;
          return False;  --  later: use false or not?
@@ -653,7 +800,7 @@ package body Html_Output is
       Already_Added_Chars := 0;
       Result_Line := new String'(Text);
 
-      --  parse the entities in this line
+      --  parse the entities in Text
       Parse_Entities (Ada_Lang,
                       Text,
                       HTML_Callback'Unrestricted_Access);
@@ -679,7 +826,7 @@ package body Html_Output is
                             Line_Nr (2 .. Line_Nr'Length)
                             & """>");
 
-      --  check if set a link to the body file
+      --  check if should set a link to the body file
       if Info.Header_Link then
          Body_File_Name :=
            new String '(Info.Header_File.all (Info.Header_File'First
@@ -691,7 +838,7 @@ package body Html_Output is
                                """> ");
          Ada.Text_IO.Put_Line (File, Info.Header_Package.all &
                                "</A></A></I></H1>");
-      --  check if set a link to the spec file
+      --  check if should set a link to the spec file
       elsif File_Extension (Info.Header_File.all) = ".adb" then
          Body_File_Name :=
            new String '(Info.Header_File.all (Info.Header_File'First
@@ -807,7 +954,8 @@ package body Html_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-      if False then        --  just to avoid the warning
+      --  just to avoid the warning that First_Dummy not used
+      if False then
          Put_Line (Info.First_Dummy.all);
       end if;
       Ada.Text_IO.Put_Line (File, "<HTML> ");
@@ -847,7 +995,8 @@ package body Html_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-      if False then        --  just to avoid the warning
+      --  just to avoid the warning that Second_Dummy not used
+      if False then
          Put_Line (Info.Second_Dummy.all);
       end if;
       Ada.Text_IO.Put_Line (File, "<HTML> ");
@@ -915,7 +1064,8 @@ package body Html_Output is
    (File   : in Ada.Text_IO.File_Type;
     Info   : Doc_Info) is
    begin
-      if False then        --  just to avoid the warning
+      --  just to avoid the warning that End_Index_Title not used
+      if False then
          Put_Line (Info.End_Index_Title.all);
       end if;
       Ada.Text_IO.Put_Line (File, "</BODY> ");
@@ -928,8 +1078,6 @@ package body Html_Output is
    -- Chars_Before --
    ------------------
 
-   --  returns the sum of the number of chars in
-   --  the lines until Line_Nr-1 in the Line string
    function Chars_Before
      (Line    : String;
       Line_Nr : Natural) return Natural is
@@ -1019,6 +1167,8 @@ package body Html_Output is
                                 Info.Body_Text.all,
                                 Info.Body_File.all,
                                 "",
+                                0,
+                                True,
                                 True);
 
       New_Text := Add_Address_Marks (New_Text.all);
@@ -1033,21 +1183,12 @@ package body Html_Output is
    ------------------------
 
    function Get_Html_File_Name
-     (File : String) return String
-   is
-      Html_File : ASU.Unbounded_String;
+     (File : String) return String is
    begin
-      Html_File := ASU.To_Unbounded_String (File_Name (File));
       if File_Extension (File) = ".ads" then
-         return ASU.To_String
-           ((ASU.Replace_Slice (Html_File,
-                                ASU.Index (Html_File, "."),
-                                ASU.Index (Html_File, ".") + 3, "_ads.htm")));
+         return File (File'First .. File'Last - 4) & "_ads.htm";
       else
-         return ASU.To_String
-           ((ASU.Replace_Slice (Html_File,
-                                ASU.Index (Html_File, "."),
-                                ASU.Index (Html_File, ".") + 3, "_adb.htm")));
+         return File (File'First .. File'Last - 4) & "_adb.htm";
       end if;
    end Get_Html_File_Name;
 
