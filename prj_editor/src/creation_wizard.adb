@@ -166,6 +166,9 @@ package body Creation_Wizard is
 
             if Get_Nth_Page (W, 2) = null then
                Set_Page (W, 2, Second_Page (W));
+            else
+               Show_Directory (Get_Tree (W.Src_Dir_Selection),
+                               Get_Text (W.Project_Location));
             end if;
 
          when 3 =>
@@ -174,6 +177,9 @@ package body Creation_Wizard is
 
             if Get_Nth_Page (W, 3) = null then
                Set_Page (W, 3, Third_Page (W));
+            else
+               Show_Directory (Get_Tree (W.Obj_Dir_Selection),
+                               Get_Text (W.Project_Location));
             end if;
 
          when 4 =>
@@ -291,7 +297,7 @@ package body Creation_Wizard is
      (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
    begin
       Gtk_New (Wiz.Src_Dir_Selection,
-               Initial_Directory => Get_Current_Dir,
+               Initial_Directory => Get_Text (Wiz.Project_Location),
                Multiple_Directories => True,
                Busy_Cursor_On => Get_Window (Wiz));
       return Gtk_Widget (Wiz.Src_Dir_Selection);
@@ -305,7 +311,7 @@ package body Creation_Wizard is
      (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
    begin
       Gtk_New (Wiz.Obj_Dir_Selection,
-               Initial_Directory => Get_Current_Dir,
+               Initial_Directory => Get_Text (Wiz.Project_Location),
                Multiple_Directories => False,
                Busy_Cursor_On => Get_Window (Wiz));
       return Gtk_Widget (Wiz.Obj_Dir_Selection);
@@ -368,7 +374,10 @@ package body Creation_Wizard is
 
    procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class) is
       Name : constant String := File_Selection_Dialog
-         (-"Select project file location", Dir_Only => True);
+        (-"Select project file location",
+         Default_Dir => Get_Text (Prj_Wizard (W).Project_Location)
+         & Directory_Separator,
+         Dir_Only => True);
    begin
       if Name /= "" then
          Set_Text (Prj_Wizard (W).Project_Location, Name);
