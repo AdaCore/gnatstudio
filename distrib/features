@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
+- Possibility to see the differences between the current file and a specified
+  VCS revision.
+
 - It is now possible to interrupt background tasks using the task manager, or
   the contextual menus on the progress bars.
 
