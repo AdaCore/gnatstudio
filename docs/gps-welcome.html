@@ -11,7 +11,7 @@
 <TD>
 <H1>Glide 2 Product Launch</H1>
 <H2>Version 0.5</H2>
-<H2>2001/12/21</H2>
+<H2>2002/25/01</H2>
 <ADDRESS>ACT-Europe</ADDRESS>
 </TD>
 </TABLE>
@@ -27,13 +27,25 @@ Here are the functionalities that are implemented at this stage:
 <LI>Basic source editing
 <LI>Source highlighting
 <LI>Automatic indentation
+<LI>Unlimited Undo/Redo
 <LI>Search/Replace
 <LI>Cut/Copy/Paste
 <LI>AUnit macros
-<LI>Cross References
+<LI>Source Navigation, including:
+   <UL>
+   <LI>Goto Declaration or Body
+   <LI>Goto Declaration
+   <LI>Goto Previous/Next Location (Unlimited)
+   <LI>List all references to an entity in the project
+   </UL>
 <LI>All project related operations, in particular:
    <UL>
    <LI>Default project
+   <LI>Project explorer with multiple views:
+      <UL>
+      <LI>A view Project/Directory/Source/Entities
+      <LI>A view File System/Directory/Source/Entities
+      </UL>
    <LI>Project Wizard (to create projects easily)
    <LI>Add/Remove project dependencies
    <LI>Add/Remove source directories/files
@@ -43,7 +55,11 @@ Here are the functionalities that are implemented at this stage:
    <LI>Naming Scheme
    <LI>Project Hierarchy Browser
    </UL>
-<LI>Source dependency browser
+Full support for Ada is provided, some support for C/C++ as well.
+
+<LI>Source dependency browser.
+<LI>Call graph (what calls what, what is called by what)
+
 <LI>Integrated debugging, providing all the functionalities of GVD
 <LI>Basic CVS support, including:
    <UL>
@@ -57,24 +73,9 @@ Here are the functionalities that are implemented at this stage:
    </UL>
 
 <LI>Compile/Build/Run
+<LI>Check file syntax
 <LI>Jump from error message to source editor
 <LI>Visual Diff between Files
-<LI>Metrics:
-   <UL>
-   <LI>Cyclomatic Complexity
-   <LI>Maximum nesting level
-   <LI>Number of statements
-   <LI>Number of types
-   <LI>Number of routines
-   <LI>Number of specification lines
-   <LI>Number of body lines
-   <LI>Number of lines
-   <LI>Number of blank lines
-   <LI>Number of code lines
-   <LI>Number of comment lines
-   <LI>Number of mixed code and comment lines
-   </UL>
-
 <LI>Automatic generation of body
 <LI>Source Reformatting
 <LI>Window manipulation
@@ -94,7 +95,7 @@ Here are the functionalities that are implemented at this stage:
 </UL>
 
 <P><HR><P>
-Copyright (C) 2001, ACT-Europe.
+Copyright (C) 2001-2002, ACT-Europe.
 
 </BODY>
 </HTML>
