@@ -94,6 +94,11 @@ package body Glide_Kernel.Modules is
    --  Create the Mime info for adding/creating/removing line information,
    --  and send it.
 
+   procedure Execute_Command
+     (Widget  : access GObject_Record'Class;
+      Command : Command_Access);
+   --  Execute a single command.
+
    ---------------------
    -- Compute_Tooltip --
    ---------------------
@@ -818,6 +823,7 @@ package body Glide_Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+      Command     : Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
@@ -827,9 +833,24 @@ package body Glide_Kernel.Modules is
       Item  : Gtk_Menu_Item;
    begin
       Item := Register_Menu
-        (Kernel, Parent_Path, Text, Stock_Image, Callback,
+        (Kernel, Parent_Path, Text, Stock_Image, Callback, Command,
          Accel_Key, Accel_Mods, Ref_Item, Add_Before, Sensitive);
    end Register_Menu;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   procedure Execute_Command
+     (Widget  : access GObject_Record'Class;
+      Command : Command_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Dummy : Boolean;
+   begin
+      Dummy := Execute (Command);
+   end Execute_Command;
 
    -------------------
    -- Register_Menu --
@@ -841,6 +862,7 @@ package body Glide_Kernel.Modules is
       Text        : String;
       Stock_Image : String := "";
       Callback    : Kernel_Callback.Marshallers.Void_Marshaller.Handler;
+      Command     : Command_Access := null;
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
@@ -875,6 +897,14 @@ package body Glide_Kernel.Modules is
         (Item, "activate",
          Kernel_Callback.To_Marshaller (Callback),
          Kernel_Handle (Kernel));
+
+      if Command /= null then
+         Command_Callback.Connect
+           (Item, "activate",
+            Command_Callback.To_Marshaller (Execute_Command'Access),
+            Command);
+      end if;
+
       return Item;
    end Register_Menu;
 
