@@ -68,6 +68,12 @@ package Basic_Types is
    procedure Free (Ar : in out GNAT.OS_Lib.Argument_List);
    --  Free all the strings in the array.
 
+   function Is_Equal
+     (List1, List2   : GNAT.OS_Lib.Argument_List;
+      Case_Sensitive : Boolean := True) return Boolean;
+   --  Return True if List1 has the same contents of List2 (no matter the order
+   --  of the strings in both arrays).
+
    -----------------
    -- File caches --
    -----------------
