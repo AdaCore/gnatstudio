@@ -28,6 +28,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
@@ -605,7 +606,6 @@ package body Src_Info.Queries is
       Line                   : Positive;
       Column                 : Positive;
       Handler                : access LI_Handler_Record'Class;
-      Source_Info_List       : LI_File_List;
       Project                : Project_Type;
       Location               : out File_Location;
       Status                 : out Find_Decl_Or_Body_Query_Status)
@@ -649,7 +649,6 @@ package body Src_Info.Queries is
               (Handler                => Handler,
                File                   => Body_LI,
                Source_Filename        => Get_Declaration_File_Of (Entity),
-               List                   => Source_Info_List,
                Project                => Project);
 
             if Body_LI /= null then
@@ -2097,8 +2096,7 @@ package body Src_Info.Queries is
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
-      Iterator     : in out Entity_Reference_Iterator;
-      List         : LI_File_List)
+      Iterator     : in out Entity_Reference_Iterator)
    is
       function Check_Declarations (Declarations : E_Declaration_Info_List)
          return E_Reference_List;
@@ -2249,14 +2247,14 @@ package body Src_Info.Queries is
          end if;
 
          if not First_Next then
-            Next (Lang_Handler, Iterator.Decl_Iter, List);
+            Next (Lang_Handler, Iterator.Decl_Iter);
          end if;
 
          while Get (Iterator.Decl_Iter) /= null loop
             Iterator.References := Check_LI (Get (Iterator.Decl_Iter));
             exit when Iterator.References /= null;
 
-            Next (Lang_Handler, Iterator.Decl_Iter, List);
+            Next (Lang_Handler, Iterator.Decl_Iter);
             Iterator.Part := None;
          end loop;
       end if;
@@ -2297,7 +2295,6 @@ package body Src_Info.Queries is
      (Root_Project           : Project_Type;
       Lang_Handler           : Language_Handlers.Language_Handler;
       Entity                 : Entity_Information;
-      List                   : LI_File_List;
       Iterator               : out Entity_Reference_Iterator;
       Project                : Project_Type := No_Project;
       LI_Once                : Boolean := False;
@@ -2309,7 +2306,7 @@ package body Src_Info.Queries is
       if In_File = VFS.No_File then
          Find_Ancestor_Dependencies
            (Root_Project, Lang_Handler,
-            Get_Declaration_File_Of (Entity), List,
+            Get_Declaration_File_Of (Entity),
             Iterator.Decl_Iter,
             Project                => Project,
             Include_Self           => True,
@@ -2317,7 +2314,7 @@ package body Src_Info.Queries is
             LI_Once                => True);
       else
          Find_Ancestor_Dependencies
-           (Root_Project, Lang_Handler, In_File, List,
+           (Root_Project, Lang_Handler, In_File,
             Iterator.Decl_Iter,
             Project                => Project,
             Include_Self           => True,
@@ -2326,7 +2323,7 @@ package body Src_Info.Queries is
             Single_Source_File     => True);
       end if;
 
-      Next (Lang_Handler, Iterator, List);
+      Next (Lang_Handler, Iterator);
    end Find_All_References;
 
    ---------------------------------
@@ -2579,8 +2576,7 @@ package body Src_Info.Queries is
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
-      Iterator : in out Dependency_Iterator;
-      List     : LI_File_List)
+      Iterator : in out Dependency_Iterator)
    is
       function Check_File return Dependency_File_Info_List;
       --  Check the current file in the iterator, and return the list of
@@ -2615,7 +2611,8 @@ package body Src_Info.Queries is
 
             if Handler = Iterator.Decl_LI.LI.Handler then
                LI := Locate_From_Source
-                 (List, Iterator.Source_Files (Iterator.Current_File));
+                 (Iterator.Decl_LI.LI.Handler,
+                  Iterator.Source_Files (Iterator.Current_File));
 
                --  Do nothing if the file is not the same language
                if LI = null
@@ -2626,7 +2623,6 @@ package body Src_Info.Queries is
                      File                   => LI,
                      Source_Filename        =>
                        Iterator.Source_Files (Iterator.Current_File),
-                     List                   => List,
                      Project                => Current (Iterator.Importing));
 
                   Assert
@@ -2840,15 +2836,14 @@ package body Src_Info.Queries is
    --------------------------------
 
    procedure Find_Ancestor_Dependencies
-     (Root_Project    : Project_Type;
-      Lang_Handler : Language_Handlers.Language_Handler;
-      Source_Filename : VFS.Virtual_File;
-      List            : LI_File_List;
-      Iterator        : out Dependency_Iterator;
-      Project         : Project_Type := No_Project;
-      Include_Self    : Boolean := False;
-      LI_Once         : Boolean := False;
-      Indirect_Imports : Boolean := False;
+     (Root_Project       : Project_Type;
+      Lang_Handler       : Language_Handlers.Language_Handler;
+      Source_Filename    : VFS.Virtual_File;
+      Iterator           : out Dependency_Iterator;
+      Project            : Project_Type := No_Project;
+      Include_Self       : Boolean := False;
+      LI_Once            : Boolean := False;
+      Indirect_Imports   : Boolean := False;
       Single_Source_File : Boolean := False)
    is
       Decl_Project : Project_Type := Project;
@@ -2874,15 +2869,6 @@ package body Src_Info.Queries is
          end if;
       end if;
 
-      Iterator.LI               := No_LI_File;
-      Iterator.LI_Once          := LI_Once;
-      Iterator.Current_Separate := null;
-      Iterator.Current_Part     := Unit_Spec;
-      Iterator.Decl_LI          := Locate_From_Source (List, Source_Filename);
-      Iterator.Source_Filename  := Source_Filename;
-      Iterator.Include_Self     := Include_Self;
-      Iterator.Indirect_Imports := Indirect_Imports;
-
       Handler := Get_LI_Handler_From_File
         (Glide_Language_Handler (Lang_Handler), Source_Filename);
 
@@ -2892,11 +2878,19 @@ package body Src_Info.Queries is
          return;
       end if;
 
+      Iterator.LI               := No_LI_File;
+      Iterator.LI_Once          := LI_Once;
+      Iterator.Current_Separate := null;
+      Iterator.Current_Part     := Unit_Spec;
+      Iterator.Decl_LI        := Locate_From_Source (Handler, Source_Filename);
+      Iterator.Source_Filename  := Source_Filename;
+      Iterator.Include_Self     := Include_Self;
+      Iterator.Indirect_Imports := Indirect_Imports;
+
       Create_Or_Complete_LI
         (Handler         => Handler,
          File            => Iterator.Decl_LI,
          Source_Filename => Source_Filename,
-         List            => List,
          Project         => Decl_Project);
 
       Assert (Me,
@@ -2929,7 +2923,7 @@ package body Src_Info.Queries is
       Iterator.Current_File := Iterator.Source_Files'First - 1;
       Iterator.Current_Progress := 0;
 
-      Next (Lang_Handler, Iterator, List);
+      Next (Lang_Handler, Iterator);
 
    exception
       when Assert_Failure =>
@@ -3093,8 +3087,12 @@ package body Src_Info.Queries is
       Decl : E_Declaration_Info_List := List;
    begin
       while Decl /= null loop
+         --  Ignore Overloaded and unresolved entities. In C/C++, they are
+         --  incorrectly resolved, and their location has no real meaning.
          if Decl.Value.Declaration.Location.Line = Decl_Line
            and then Decl.Value.Declaration.Location.Column = Decl_Column
+           and then Decl.Value.Declaration.Kind.Kind /= Overloaded_Entity
+           and then Decl.Value.Declaration.Kind.Kind /= Unresolved_Entity
            and then (Entity_Name = ""
                      or else Decl.Value.Declaration.Name.all = Entity_Name)
          then
@@ -3112,10 +3110,11 @@ package body Src_Info.Queries is
    ---------------------
 
    function Get_Declaration
-     (List : LI_File_List; Entity : Entity_Information) return E_Declaration is
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information) return E_Declaration is
    begin
       return Get_Declaration
-        (Get_Declaration_Location (List, Entity), Get_Name (Entity));
+        (Get_Declaration_Location (Handler, Entity), Get_Name (Entity));
    end Get_Declaration;
 
    ---------------------
@@ -3143,9 +3142,10 @@ package body Src_Info.Queries is
    ------------------------------
 
    function Get_Declaration_Location
-     (List : LI_File_List; Entity : Entity_Information) return File_Location is
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information) return File_Location is
    begin
-      return File_Location'(File   => Get_Source_File (List, Entity),
+      return File_Location'(File   => Get_Source_File (Handler, Entity),
                             Line   => Get_Declaration_Line_Of (Entity),
                             Column => Get_Declaration_Column_Of (Entity));
    end Get_Declaration_Location;
@@ -3155,12 +3155,13 @@ package body Src_Info.Queries is
    ---------------------
 
    function Get_Source_File
-     (List : LI_File_List; Entity : Entity_Information) return Source_File
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information) return Source_File
    is
       LI   : LI_File_Ptr;
       Part : Unit_Part;
    begin
-      LI   := Locate_From_Source (List, Get_Declaration_File_Of (Entity));
+      LI   := Locate_From_Source (Handler, Get_Declaration_File_Of (Entity));
       Part := Get_Unit_Part (LI, Get_Declaration_File_Of (Entity));
 
       if Part /= Unit_Separate then
@@ -3178,12 +3179,12 @@ package body Src_Info.Queries is
    -----------------
 
    procedure Renaming_Of
-     (List           : LI_File_List;
+     (Handler        : access LI_Handler_Record'Class;
       Entity         : Entity_Information;
       Is_Renaming    : out Boolean;
       Renamed_Entity : out Entity_Information)
    is
-      Decl : E_Declaration := Get_Declaration (List, Entity);
+      Decl : E_Declaration := Get_Declaration (Handler, Entity);
       Renamed_Location : constant File_Location := Decl.Rename;
    begin
       Is_Renaming := Renamed_Location /= Null_File_Location;
@@ -3571,10 +3572,6 @@ package body Src_Info.Queries is
 
    function Create  (Decl : E_Declaration) return Entity_Information is
    begin
-      if Decl.Name = null then
-         Trace (Me, "Decl.Name = null");
-      end if;
-
       return Create
         (File   => Get_File (Decl.Location),
          Line   => Get_Line (Decl.Location),
@@ -3754,25 +3751,97 @@ package body Src_Info.Queries is
    ----------------------
 
    function Get_Parent_Types
-     (Lib_Info : LI_File_Ptr;
-      Entity   : Entity_Information) return Parent_Iterator
+     (Lib_Info  : LI_File_Ptr;
+      Entity    : Entity_Information;
+      Recursive : Boolean := False) return Parent_Iterator
    is
+      Iter    : Parent_Iterator;
+      Current : Natural;
+
+      function Count
+        (Decl : E_Declaration_Info_List; Store : Boolean := False)
+         return Natural;
+      --  Return the number of primitive subprograms for Loc.
+      --  If Store is True, store non duplicate subprograms in the iterator
+
+      function Count
+        (Decl : E_Declaration_Info_List; Store : Boolean := False)
+         return Natural
+      is
+         Ent : Entity_Information;
+         C : Natural := 0;
+         Parent : File_Location_List;
+         Found  : Boolean;
+         Lib  : LI_File_Ptr;
+      begin
+         if Decl /= null then
+            Parent := Decl.Value.Declaration.Parent_Location;
+            while Parent /= null loop
+               if Parent.Kind = Parent_Type
+                 or else Parent.Kind = Container_Type
+               then
+                  if Store then
+                     Found := False;
+                     for C in Iter.Parents'First .. Current - 1 loop
+                        if Iter.Parents (C) = Parent then
+                           Found := True;
+                           exit;
+                        end if;
+                     end loop;
+
+                     if not Found then
+                        Iter.Parents (Current) := Parent;
+                        Current := Current + 1;
+                     end if;
+                  else
+                     C := C + 1;
+                  end if;
+
+                  if Recursive then
+                     Create_Or_Complete_LI
+                       (Lib_Info.LI.Handler,
+                        Lib,
+                        Source_Filename => Get_File (Parent.Value),
+                        Project         => Get_Project_From_File
+                          (Project_Registry
+                             (Get_Registry (Lib_Info.LI.Project)),
+                           Get_File (Parent.Value)));
+                     Ent := Find_Declaration_In_LI_Or_Dependencies
+                       (Lib, Parent.Value);
+                     C := C + Count (Find_Declaration_In_LI (Lib, Ent), Store);
+                     Destroy (Ent);
+                  end if;
+               end if;
+
+               Parent := Parent.Next;
+            end loop;
+         end if;
+
+         return C;
+      end Count;
+
       Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
         (Lib_Info, Entity);
-      Parent : File_Location_List;
+      N : Natural;
+      pragma Unreferenced (N);
    begin
       if Decl = null then
-         return (Lib_Info => Lib_Info, Current => null);
+         Trace (Me, "Get_Parent_Types: Decl not found for "
+                & Get_Name (Entity) & " in "
+                & Full_Name (Lib_Info.LI.LI_Filename).all);
+         return (Lib_Info => Lib_Info, Parents => null, Current => 0);
       else
-         Parent := Decl.Value.Declaration.Parent_Location;
-         while Parent /= null
-           and then Parent.Kind /= Parent_Type
-           and then Parent.Kind /= Container_Type
-         loop
-            Parent := Parent.Next;
-         end loop;
-
-         return (Lib_Info => Lib_Info, Current => Parent);
+         Iter := (Lib_Info => Lib_Info,
+                  Parents  => new File_Location_Array (1 .. Count (Decl)),
+                  Current  => 1);
+         Current := Iter.Parents'First;
+         N := Count (Decl, Store => True);
+         Trace (Me, "Get_Parent_Types: "
+                & Get_Name (Entity)
+                & " Recursive=" & Recursive'Img
+                & " Count=" & Iter.Parents'Length'Img
+                & " Last_Index=" & Integer'Image (Current - 1));
+         return Iter;
       end if;
    end Get_Parent_Types;
 
@@ -3782,14 +3851,8 @@ package body Src_Info.Queries is
 
    procedure Next (Iter : in out Parent_Iterator) is
    begin
-      if Iter.Current /= null then
-         Iter.Current := Iter.Current.Next;
-         while Iter.Current /= null
-           and then Iter.Current.Kind /= Parent_Type
-           and then Iter.Current.Kind /= Container_Type
-         loop
-            Iter.Current := Iter.Current.Next;
-         end loop;
+      if Iter.Parents /= null and then Iter.Current <= Iter.Parents'Last then
+         Iter.Current := Iter.Current + 1;
       end if;
    end Next;
 
@@ -3798,34 +3861,86 @@ package body Src_Info.Queries is
    ---------
 
    function Get (Iter : Parent_Iterator) return Entity_Information is
+      Lib  : LI_File_Ptr;
    begin
-      if Iter.Current = null then
+      if Iter.Parents = null
+        or else Iter.Current > Iter.Parents'Last
+        or else Iter.Parents (Iter.Current) = null
+      then
          return No_Entity_Information;
       else
+         Create_Or_Complete_LI
+           (Iter.Lib_Info.LI.Handler,
+            Lib,
+            Source_Filename => Get_File (Iter.Parents (Iter.Current).Value),
+            Project         => Get_Project_From_File
+              (Project_Registry
+                 (Get_Registry (Iter.Lib_Info.LI.Project)),
+               Get_File (Iter.Parents (Iter.Current).Value)));
          return Find_Declaration_In_LI_Or_Dependencies
-           (Iter.Lib_Info, Iter.Current.Value);
+           (Lib, Iter.Parents (Iter.Current).Value);
       end if;
    end Get;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Parent_Iterator) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (File_Location_Array, File_Location_Array_Access);
+   begin
+      Unchecked_Free (Iter.Parents);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Special_Iterator) is
+   begin
+      Destroy (Iter.Parent_Iter);
+   end Destroy;
 
    ------------------------------
    -- Get_Primitive_Operations --
    ------------------------------
 
    function Get_Primitive_Operations
-     (Lib_Info : LI_File_Ptr;
-      Entity   : Entity_Information) return Primitive_Iterator
+     (Lib_Info          : LI_File_Ptr;
+      Entity            : Entity_Information;
+      Include_Inherited : Boolean) return Primitive_Iterator
    is
       Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
         (Lib_Info, Entity);
+      P : Primitive_Iterator;
    begin
+      Trace (Me, "Get_Primitive_Operations: " & Get_Name (Entity)
+             & " Include_Inherited:"          & Include_Inherited'Img);
       if Decl = null then
-         return (Lib_Info => Lib_Info,
-                 Kind     => Primitive_Operation,
-                 Current  => null);
+         Trace (Me, "Get_Primitive_Operations: No declaration found");
+         return (Lib_Info          => Lib_Info,
+                 Kind              => Primitive_Operation,
+                 Parent_Iter       => No_Parent_Iterator,
+                 Processing_Parents => False,
+                 Current           => null);
       else
-         return (Lib_Info => Lib_Info,
-                 Kind     => Primitive_Operation,
-                 Current  => Decl.Value.Declaration.Primitive_Subprograms);
+         P := (Lib_Info    => Lib_Info,
+               Kind        => Primitive_Operation,
+               Parent_Iter => No_Parent_Iterator,
+               Processing_Parents => False,
+               Current     => Decl.Value.Declaration.Primitive_Subprograms);
+
+         if Include_Inherited then
+            P.Parent_Iter := Get_Parent_Types
+              (Lib_Info, Entity, Recursive => True);
+         end if;
+
+         if P.Current = null then
+            Next (P);
+         end if;
+
+         return P;
       end if;
    end Get_Primitive_Operations;
 
@@ -3842,18 +3957,22 @@ package body Src_Info.Queries is
       C    : E_Reference_List;
    begin
       if Decl = null then
-         return (Lib_Info => Lib_Info,
-                 Kind     => Discriminant,
-                 Current  => null);
+         return (Lib_Info    => Lib_Info,
+                 Kind        => Discriminant,
+                 Parent_Iter => No_Parent_Iterator,
+                 Processing_Parents => False,
+                 Current     => null);
       else
          C := Decl.Value.References;
          while C /= null and then C.Value.Kind /= Discriminant loop
             C := C.Next;
          end loop;
 
-         return (Lib_Info => Lib_Info,
-                 Kind     => Discriminant,
-                 Current  => C);
+         return (Lib_Info    => Lib_Info,
+                 Kind        => Discriminant,
+                 Parent_Iter => No_Parent_Iterator,
+                 Processing_Parents => False,
+                 Current     => C);
       end if;
    end Get_Discriminants;
 
@@ -3862,6 +3981,9 @@ package body Src_Info.Queries is
    ----------
 
    procedure Next (Iter : in out Special_Iterator) is
+      Ent  : Entity_Information;
+      Decl : E_Declaration_Info_List;
+      Lib_Info : LI_File_Ptr;
    begin
       if Iter.Current /= null then
          loop
@@ -3870,6 +3992,40 @@ package body Src_Info.Queries is
               or else Iter.Current.Value.Kind = Iter.Kind;
          end loop;
       end if;
+
+      while Iter.Current = null loop
+         --  Since the parent iterator doesn't include the item itself, we
+         --  must make sure we process the first parent correctly.
+         if Iter.Processing_Parents then
+            Next (Iter.Parent_Iter);
+         else
+            Iter.Processing_Parents := True;
+         end if;
+
+         Ent := Get (Iter.Parent_Iter);
+         exit when Ent = No_Entity_Information;
+
+         Trace (Me, "Next Special_Iterator: Moving to parent "
+                & Get_Name (Ent));
+
+         Create_Or_Complete_LI
+           (Iter.Lib_Info.LI.Handler,
+            Lib_Info,
+            Source_Filename => Get_Declaration_File_Of (Ent),
+            Project         => Get_Project_From_File
+              (Project_Registry (Get_Registry (Iter.Lib_Info.LI.Project)),
+               Get_Declaration_File_Of (Ent)));
+
+         Iter.Lib_Info := Lib_Info;
+         Decl := Find_Declaration_In_LI (Lib_Info, Ent);
+         Destroy (Ent);
+
+         if Decl /= null then
+            Iter.Current := Decl.Value.Declaration.Primitive_Subprograms;
+         else
+            Trace (Me, "Parent not found");
+         end if;
+      end loop;
    end Next;
 
    ---------
@@ -3885,23 +4041,6 @@ package body Src_Info.Queries is
            (Iter.Lib_Info, Iter.Current.Value.Location);
       end if;
    end Get;
-
-   ------------
-   -- Length --
-   ------------
-
-   function Length (Iter : Special_Iterator) return Natural is
-      L : Natural := 0;
-      C : E_Reference_List := Iter.Current;
-   begin
-      while C /= null loop
-         if C.Value.Kind = Iter.Kind then
-            L := L + 1;
-         end if;
-         C := C.Next;
-      end loop;
-      return L;
-   end Length;
 
    --------------------
    -- Is_Declaration --

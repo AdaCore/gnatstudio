@@ -69,6 +69,8 @@ package Src_Info.Queries is
 
    type Entity_Information_Array is array (Natural range <>)
      of Entity_Information;
+   type Entity_Information_Array_Access is access
+     Entity_Information_Array;
 
    procedure Destroy (Entity : in out Entity_Information);
    --  Free the memory associated with the entity;
@@ -144,7 +146,7 @@ package Src_Info.Queries is
    --  Return a new predefined entity for Name.
 
    procedure Renaming_Of
-     (List           : LI_File_List;
+     (Handler        : access LI_Handler_Record'Class;
       Entity         : Entity_Information;
       Is_Renaming    : out Boolean;
       Renamed_Entity : out Entity_Information);
@@ -210,7 +212,6 @@ package Src_Info.Queries is
       Line                   : Positive;
       Column                 : Positive;
       Handler                : access LI_Handler_Record'Class;
-      Source_Info_List       : LI_File_List;
       Project                : Projects.Project_Type;
       Location               : out File_Location;
       Status                 : out Find_Decl_Or_Body_Query_Status);
@@ -299,7 +300,6 @@ package Src_Info.Queries is
      (Root_Project           : Projects.Project_Type;
       Lang_Handler           : Language_Handlers.Language_Handler;
       Entity                 : Entity_Information;
-      List                   : LI_File_List;
       Iterator               : out Entity_Reference_Iterator;
       Project                : Projects.Project_Type := Projects.No_Project;
       LI_Once                : Boolean := False;
@@ -326,8 +326,7 @@ package Src_Info.Queries is
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
-      Iterator : in out Entity_Reference_Iterator;
-      List     : LI_File_List);
+      Iterator     : in out Entity_Reference_Iterator);
    --  Get the next reference to the entity
 
    function Get (Iterator : Entity_Reference_Iterator) return E_Reference;
@@ -416,10 +415,12 @@ package Src_Info.Queries is
    --  The returned entity must be freed by the user.
 
    type Parent_Iterator is private;
+   No_Parent_Iterator : constant Parent_Iterator;
 
    function Get_Parent_Types
-     (Lib_Info : LI_File_Ptr;
-      Entity   : Entity_Information) return Parent_Iterator;
+     (Lib_Info  : LI_File_Ptr;
+      Entity    : Entity_Information;
+      Recursive : Boolean := False) return Parent_Iterator;
    --  Return a pointer to the first parent type for the type Entity. In
    --  Object-oriented languages, this would be the classes Entity derives
    --  from. In Ada, this includes the parent type of a type or subtype
@@ -430,6 +431,9 @@ package Src_Info.Queries is
    function Get (Iter : Parent_Iterator) return Entity_Information;
    --  Return the current parent of the entity. No_Entity_Information is
    --  returned if there are no more parents
+
+   procedure Destroy (Iter : in out Parent_Iterator);
+   --  Free the memory occupied by the iterator
 
    --------------------
    -- Children types --
@@ -463,8 +467,9 @@ package Src_Info.Queries is
    subtype Discriminant_Iterator is Special_Iterator;
 
    function Get_Primitive_Operations
-     (Lib_Info : LI_File_Ptr;
-      Entity   : Entity_Information) return Primitive_Iterator;
+     (Lib_Info          : LI_File_Ptr;
+      Entity            : Entity_Information;
+      Include_Inherited : Boolean) return Primitive_Iterator;
    --  Return the first primitive operation for the type Entity. This will not
    --  return anything if Entity is a variable.
 
@@ -483,11 +488,8 @@ package Src_Info.Queries is
    procedure Next (Iter : in out Special_Iterator);
    --  Move the next entity.
 
-   function Length (Iter : Special_Iterator) return Natural;
-   --  Return the number of entities that remain to be returned by
-   --  Iter, including the current one. If Iter is the direct result of
-   --  Get_Primitive_Operations, this is the total number of primitive
-   --  operations for the entity.
+   procedure Destroy (Iter : in out Special_Iterator);
+   --  Free the memory occupied by Iter
 
    ---------------
    -- Variables --
@@ -577,15 +579,14 @@ package Src_Info.Queries is
    type Dependency_Iterator_Access is access Dependency_Iterator;
 
    procedure Find_Ancestor_Dependencies
-     (Root_Project    : Projects.Project_Type;
-      Lang_Handler    : Language_Handlers.Language_Handler;
-      Source_Filename : VFS.Virtual_File;
-      List            : LI_File_List;
-      Iterator        : out Dependency_Iterator;
-      Project         : Projects.Project_Type := Projects.No_Project;
-      Include_Self    : Boolean := False;
-      LI_Once         : Boolean := False;
-      Indirect_Imports : Boolean := False;
+     (Root_Project       : Projects.Project_Type;
+      Lang_Handler       : Language_Handlers.Language_Handler;
+      Source_Filename    : VFS.Virtual_File;
+      Iterator           : out Dependency_Iterator;
+      Project            : Projects.Project_Type := Projects.No_Project;
+      Include_Self       : Boolean := False;
+      LI_Once            : Boolean := False;
+      Indirect_Imports   : Boolean := False;
       Single_Source_File : Boolean := False);
    --  Prepare Iterator to return the list of all files that directly import
    --  Source_Filename. The rule is the following:
@@ -625,8 +626,7 @@ package Src_Info.Queries is
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
-      Iterator : in out Dependency_Iterator;
-      List     : LI_File_List);
+      Iterator : in out Dependency_Iterator);
    --  Get the next reference to the entity
 
    function Get (Iterator : Dependency_Iterator) return Dependency;
@@ -790,7 +790,8 @@ package Src_Info.Queries is
 private
 
    function Get_Declaration
-     (List : LI_File_List; Entity : Entity_Information) return E_Declaration;
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information) return E_Declaration;
    --  Return the declaration matching Entity, from the LI file and source file
    --  that contains that declaration.
    --  No_Declaration is returned if it wasn't found.
@@ -803,12 +804,14 @@ private
    --  Entity_Name, or No_Declaration is returned.
 
    function Get_Source_File
-     (List : LI_File_List; Entity : Entity_Information) return Source_File;
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information) return Source_File;
    --  Return the source file for the declaration of Entity. Return value
    --  must be freed by the caller.
 
    function Get_Declaration_Location
-     (List : LI_File_List; Entity : Entity_Information) return File_Location;
+     (Handler : access LI_Handler_Record'Class;
+      Entity  : Entity_Information) return File_Location;
    --  Return the location of the declaration of Entity
 
    function Get_Declaration
@@ -1016,10 +1019,16 @@ private
       Current     : E_Reference_List;
    end record;
 
+   type File_Location_Array is array (Natural range <>) of File_Location_List;
+   type File_Location_Array_Access is access File_Location_Array;
+
    type Parent_Iterator is record
       Lib_Info    : LI_File_Ptr;
-      Current     : File_Location_List;
+      Parents     : File_Location_Array_Access;
+      Current     : Natural;
    end record;
+
+   No_Parent_Iterator : constant Parent_Iterator := (null, null, 0);
 
    type Child_Type_Iterator is record
       Lib_Info    : LI_File_Ptr;
@@ -1033,6 +1042,11 @@ private
       Kind        : Reference_Kind;
       Lib_Info    : LI_File_Ptr;
       Current     : E_Reference_List;
+
+      Processing_Parents : Boolean;
+      Parent_Iter       : Parent_Iterator;
+      --  The parent entities to examine. This is No_Parent_Iterator if we are
+      --  not returning the inherited subprograms
    end record;
 
    pragma Inline (File_Information);
