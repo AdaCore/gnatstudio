@@ -20,9 +20,134 @@
 
 with SN.DB_Structures; use  SN.DB_Structures;
 with DB_API;           use DB_API;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
 
 package body SN.Find_Fns is
+
+   Null_Position   : constant String := "000000.000";
+   Position_Length : constant Integer := Null_Position'Length;
+
+   procedure To_String
+     (P : Point; Str : in out String; Where : in out Integer);
+   pragma Inline (To_String);
+   --  Store, in Str, at position Where, a 000000.000 representation of
+   --  Point. Where is left to the first character following this
+   --  representation.
+
+   procedure Get_Pair
+     (DB             : DB_File;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair);
+   --  Get the value in the database DB matching the key given by the
+   --  parameters. The returned value must be freed by the user.
+   --  Not_Found is raised if no matching key could be found.
+   --  Matching is done on as many parameters as possible, until one of them
+   --  has the default invalid value, in which case the first entry in DB
+   --  matching the parameters so far is returned, or Not_Found is raised if
+   --  there are none.
+
+   procedure Get_Pair
+     (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair);
+   --  Same as above, with a different index
+
+   --------------
+   -- Get_Pair --
+   --------------
+
+   procedure Get_Pair
+     (DB : DB_File;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair)
+   is
+      Key  : String (1 .. Name'Length + Position_Length + Filename'Length + 2);
+      Pos  : Integer := 1;
+   begin
+      if Name /= Invalid_String then
+         Key (1 .. Name'Length) := Name;
+         Pos := Pos + Name'Length;
+         Key (Pos) := Field_Sep;
+         Pos := Pos + 1;
+
+         if Start_Position /= Invalid_Point then
+            To_String (Start_Position, Key, Pos);
+            Key (Pos) := Field_Sep;
+            Pos := Pos + 1;
+
+            if Filename /= Invalid_String then
+               Key (Pos .. Key'Last) := Filename;
+               Pos := Key'Last + 1;
+            end if;
+         end if;
+      end if;
+
+      Set_Cursor
+        (DB, By_Key, Key (Key'First .. Pos - 1), Exact_Match => False);
+      Get_Pair (DB, Next_By_Key, Result);
+      Release_Cursor (DB);
+
+      if Result = No_Pair then
+         raise Not_Found;
+      end if;
+   end Get_Pair;
+
+   --------------
+   -- Get_Pair --
+   --------------
+
+   procedure Get_Pair
+     (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair)
+   is
+      Key  : String (1 .. Class'Length + Name'Length
+                     + Position_Length + Filename'Length + 3);
+      Pos  : Integer := 1;
+   begin
+      if Class /= Invalid_String then
+         Key (1 .. Class'Length) := Class;
+         Pos := Pos + Class'Length;
+         Key (Pos) := Field_Sep;
+         Pos := Pos + 1;
+
+         if Name /= Invalid_String then
+            Key (Pos .. Pos + Name'Length - 1) := Name;
+            Pos := Pos + Name'Length;
+            Key (Pos) := Field_Sep;
+            Pos := Pos + 1;
+
+            if Start_Position /= Invalid_Point then
+               To_String (Start_Position, Key, Pos);
+               Key (Pos) := Field_Sep;
+               Pos := Pos + 1;
+
+               if Filename /= Invalid_String then
+                  Key (Pos .. Key'Last) := Filename;
+                  Pos := Key'Last + 1;
+               end if;
+            end if;
+         end if;
+      end if;
+
+      Set_Cursor
+        (DB, By_Key, Key (Key'First .. Pos - 1), Exact_Match => False);
+      Get_Pair (DB, Next_By_Key, Result);
+      Release_Cursor (DB);
+
+      if Result = No_Pair then
+         raise Not_Found;
+      end if;
+   end Get_Pair;
 
    ----------
    -- Find --
@@ -35,74 +160,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out CL_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -117,74 +178,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out CON_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -199,74 +196,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out E_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -281,74 +214,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out EC_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -363,275 +232,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out FD_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   procedure Find
-     (DB             : DB_File;
-      Filename       : String      := Invalid_String;
-      Start_Position : Point       := Invalid_Point;
-      Class          : String      := Invalid_String;
-      Identifier     : String      := Invalid_String;
-      Sym_Type       : Symbol_Type := Undef;
-      Tab            : out FIL_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Identifier = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Identifier'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Sym_Type = Undef then
-            Fall := True;
-         else
-            --  Symbol type is 3 letters at most
-            Len := Len + 3;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Identifier = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Identifier'Length - 1)
-              := Identifier;
-            Pos := Pos + Identifier'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Sym_Type = Undef then
-            Fall := True;
-         else
-            To_String (Sym_Type, Key.all, Pos);
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   procedure Find
-     (DB             : DB_File;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out FR_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -646,76 +250,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out FU_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-
-      if null = P then
-         raise Not_Found;
-      end if;
-
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -730,257 +268,10 @@ package body SN.Find_Fns is
       Filename : String := Invalid_String;
       Tab      : out GV_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   procedure Find
-     (DB             : DB_File;
-      Class          : String := Invalid_String;
-      Base_Class     : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out IN_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Base_Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Base_Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Base_Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Base_Class'Length - 1)
-              := Base_Class;
-            Pos := Pos + Base_Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   procedure Find
-     (DB                : DB_File;
-      Included_File     : String := Invalid_String;
-      Start_Position    : Point  := Invalid_Point;
-      Include_From_File : String := Invalid_String;
-      Tab               : out IU_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Included_File = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Included_File'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Include_From_File = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Include_From_File'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Included_File = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Included_File'Length - 1)
-              := Included_File;
-            Pos := Pos + Included_File'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Include_From_File = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Include_From_File'Length - 1)
-              := Include_From_File;
-            Pos := Pos + Include_From_File'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -996,193 +287,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out IV_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Variable_Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Variable_Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Variable_Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Variable_Name'Length - 1)
-              := Variable_Name;
-            Pos := Pos + Variable_Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   procedure Find
-     (DB             : DB_File;
-      Function_Name  : String := Invalid_String;
-      Variable_Name  : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out LV_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Function_Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Function_Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Variable_Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Variable_Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Function_Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Function_Name'Length - 1)
-              := Function_Name;
-            Pos := Pos + Function_Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Variable_Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Variable_Name'Length - 1)
-              := Variable_Name;
-            Pos := Pos + Variable_Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Class, Variable_Name, Start_Position, Filename, P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -1197,74 +305,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out MA_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -1280,92 +324,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out MD_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -1380,74 +342,10 @@ package body SN.Find_Fns is
       Filename : String := Invalid_String;
       Tab      : out T_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Name, Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -1463,392 +361,10 @@ package body SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out FU_Table)
    is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
+      P : Pair;
    begin
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-
-      if P = null then
-         raise Not_Found;
-      end if;
-
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   procedure Find
-     (DB             : DB_File;
-      Scope          : String := Invalid_String;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out TA_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Scope = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Scope'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Scope = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Scope'Length - 1)
-              := Scope;
-            Pos := Pos + Scope'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   ----------
-   -- Find --
-   ----------
-
-   procedure Find
-     (DB          : DB_File;
-      Class       : String      := Invalid_String;
-      Symbol_Name : String      := Invalid_String;
-      Sym_Type    : Symbol_Type := Undef;
-      Ref_Class   : String      := Invalid_String;
-      Ref_Symbol  : String      := Invalid_String;
-      Ref_Type    : String      := Invalid_String;
-      Access_Type : String      := Invalid_String;
-      Position    : Point       := Invalid_Point;
-      Filename    : String      := Invalid_String;
-      Tab         : out TO_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Symbol_Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Symbol_Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Sym_Type = Undef then
-            Fall := True;
-         else
-            --  Symbol type is 3 letters at most
-            Len := Len + 3 + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Ref_Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Symbol = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Ref_Symbol'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Type = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Ref_Type'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Access_Type = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Access_Type'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Symbol_Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Symbol_Name'Length - 1)
-              := Symbol_Name;
-            Pos := Pos + Symbol_Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Sym_Type = Undef then
-            Fall := True;
-         else
-            To_String (Sym_Type, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Ref_Class'Length - 1)
-              := Ref_Class;
-            Pos := Pos + Ref_Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Symbol = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Ref_Symbol'Length - 1)
-              := Ref_Symbol;
-            Pos := Pos + Ref_Symbol'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Type = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Ref_Type'Length - 1)
-              := Ref_Type;
-            Pos := Pos + Ref_Type'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Access_Type = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Access_Type'Length - 1)
-              := Access_Type;
-            Pos := Pos + Access_Type'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
+      Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
+      Parse_Pair (P, Tab);
       Free (P);
    end Find;
 
@@ -1862,7 +378,7 @@ package body SN.Find_Fns is
       Line_Img : constant String := Integer'Image (P.Line);
       Col_Img  : constant String := Integer'Image (P.Column);
    begin
-      Str (Where .. Where + 9) := "000000.000";
+      Str (Where .. Where + Position_Length - 1) := Null_Position;
       Str (Where + 5 - Line_Img'Length + 2 .. Where + 5)
         := Line_Img (2 .. Line_Img'Length);
       Where := Where + 7;
@@ -1901,18 +417,4 @@ package body SN.Find_Fns is
          when others => raise Invalid_Symbol_Type;
       end case;
    end To_String;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   procedure To_String
-     (Sym_Type : Symbol_Type; Str : in out String;  Where : in out Integer)
-   is
-      S : constant String := To_String (Sym_Type);
-   begin
-      Str (Where .. Where + S'Length - 1) := S;
-      Where := Where + S'Length;
-   end To_String;
-
 end SN.Find_Fns;

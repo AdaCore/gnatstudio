@@ -33,43 +33,16 @@ package SN.Find_Fns is
    function To_String (Sym_Type : Symbol_Type) return String;
    --  converts symbol type into string
 
-   procedure To_String
-     (Sym_Type : Symbol_Type;
-      Str      : in out String;
-      Where    : in out Integer);
-   --  Store, in Str, at position Where, are textual representation of
-   --  Sym_Type. Where is left to the first character following this
-   --  representation.
-
-   procedure To_String
-     (P     : Point;
-      Str   : in out String;
-      Where : in out Integer);
-   --  Store, in Str, at position Where, a 000000.000 representation of
-   --  Point. Where is left to the first character following this
-   --  representation.
-
---     procedure Find
---       (DB              : DB_File;
---        Ref_Class       : String      := Invalid_String;
---        Ref_Symbol_Name : String      := Invalid_String;
---        Ref_Type        : String      := Invalid_String;
---        Class           : String      := Invalid_String;
---        Symbol_Name     : String      := Invalid_String;
---        Sym_Type        : Symbol_Type := Undef;
---        Access_Type     : String      := Invalid_String;
---        Position        : Point       := Invalid_Point;
---        Filename        : String      := Invalid_String;
---        Tab             : out BY_Table);
-   --  Find functions for Referred by table
-
    procedure Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
       Tab            : out CL_Table);
-   --  Find functions for Classes table
+   --  Find a class in the ".cl" class.
+   --  Not_Found is raised if the class couldn't be found.
+   --  If one parameter is not specified, all following parameters are ignored,
+   --  and the first value matching the parameters so far is returned.
 
    procedure Find
      (DB             : DB_File;
@@ -101,25 +74,8 @@ package SN.Find_Fns is
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
       Tab            : out FD_Table);
-   --  Find functions for Function table
-
-   procedure Find
-     (DB             : DB_File;
-      Filename       : String      := Invalid_String;
-      Start_Position : Point       := Invalid_Point;
-      Class          : String      := Invalid_String;
-      Identifier     : String      := Invalid_String;
-      Sym_Type       : Symbol_Type := Undef;
-      Tab            : out FIL_Table);
-   --  Find functions for Symbols of files table
-
-   procedure Find
-     (DB             : DB_File;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out FR_Table);
-   --  Find functions for Friends table
+   --  Find an entry in the ".fu" table.
+   --  Null_FD is returned if this function couldn't be find.
 
    procedure Find
      (DB             : DB_File;
@@ -140,37 +96,11 @@ package SN.Find_Fns is
    procedure Find
      (DB             : DB_File;
       Class          : String := Invalid_String;
-      Base_Class     : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out IN_Table);
-   --  Find functions for Inheritances table
-
-   procedure Find
-     (DB                : DB_File;
-      Included_File     : String := Invalid_String;
-      Start_Position    : Point  := Invalid_Point;
-      Include_From_File : String := Invalid_String;
-      Tab               : out IU_Table);
-   --  Find functions for Include table
-
-   procedure Find
-     (DB             : DB_File;
-      Class          : String := Invalid_String;
       Variable_Name  : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
       Tab            : out IV_Table);
    --  Find functions for Instance variables table
-
-   procedure Find
-     (DB             : DB_File;
-      Function_Name  : String := Invalid_String;
-      Variable_Name  : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out LV_Table);
-   --  Find functions for Local variables table
 
    procedure Find
      (DB             : DB_File;
@@ -205,28 +135,5 @@ package SN.Find_Fns is
       Filename : String := Invalid_String;
       Tab      : out T_Table);
    --  Find functions for Typedefs table
-
-   procedure Find
-     (DB             : DB_File;
-      Scope          : String := Invalid_String;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out TA_Table);
-   --  Find functions for Templates arguments table
-
-   procedure Find
-     (DB          : DB_File;
-      Class       : String      := Invalid_String;
-      Symbol_Name : String      := Invalid_String;
-      Sym_Type    : Symbol_Type := Undef;
-      Ref_Class   : String      := Invalid_String;
-      Ref_Symbol  : String      := Invalid_String;
-      Ref_Type    : String      := Invalid_String;
-      Access_Type : String      := Invalid_String;
-      Position    : Point       := Invalid_Point;
-      Filename    : String      := Invalid_String;
-      Tab         : out TO_Table);
-   --  Find functions for Refers to table
 
 end SN.Find_Fns;
