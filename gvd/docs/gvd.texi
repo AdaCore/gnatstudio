@@ -956,7 +956,7 @@ Helpers section.
      Output that confuses GVD includes:
 
      @itemize @bullet
-       @item Primary debugger prompts (e.g '(gdb) ')
+       @item Primary debugger prompts (e.g '(gvb) ')
        @item Secondary debugger prompts (e.g '>')
        @item Confirmation prompts (e.g '(y or n)')
      @end itemize
@@ -979,7 +979,7 @@ Helpers section.
      @item set height 0
      @item set width 0
      @item set verbose off
-     @item set prompt (gdb) 
+     @item set prompt (gvb) 
      @end itemize
 
      GVD sets these values automatically when invoking GDB; if these values
