@@ -360,6 +360,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       for I in 1 .. Num - 1 loop
          Current_Node := Next (Current_Node);
       end loop;
+
       return Current_Node;
    end Get_Element;
 
@@ -621,16 +622,21 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    begin
       loop
-         if Compare_Last (Data (Current_Node).Content.all, Name) then
+         if Compare_Last
+           (Without_Last_Blanks (Data (Current_Node).Content.all),
+            Without_Last_Blanks (Name))
+         then
             return Current_Num;
          end if;
 
          Current_Num := Current_Num + 1;
+
          Current_Node := Next (Current_Node);
          exit when Current_Node = Tokens_List.Null_Node;
       end loop;
 
-      return 0;
+
+      raise Codefix_Panic;
    end Get_Nth_Element;
 
    --------------
