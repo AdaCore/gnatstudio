@@ -63,6 +63,20 @@ package Vsearch_Ext is
    ---------------------
    -- Search Patterns --
    ---------------------
+   --  This module defines the following extension point in the custom files:
+   --    <vsearch-pattern>
+   --       <name>Name displayed in the combo box</name>
+   --       <regexp case-sensitive="false" >Replacement regexp</regexp>
+   --       <string case-sensitive="false" >Replacement string</string>
+   --    </vsearch-pattern>
+   --
+   --  Only one of regexp or string should be specified. The default is to
+   --  have case-insensitive patterns. If multiple regexps or strings are
+   --  given, the first regexp found will be used, and if there is none the
+   --  first string.
+   --
+   --  You should use the interface in Glide_Kernel.Custom instead of directly
+   --  calling the subprograms below to limit the dependencies on this package
 
    procedure Register_Search_Pattern
      (Kernel         : access Glide_Kernel.Kernel_Handle_Record'Class;
