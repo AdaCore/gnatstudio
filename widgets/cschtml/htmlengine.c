@@ -3913,7 +3913,7 @@ html_engine_select_region (HTMLEngine *e,
 	csc_html_debug_log (e->widget, "Active selection: %s\n", e->active_selection ? "TRUE" : "FALSE");
 
 	g_free (data);
-	gtk_widget_queue_draw (e->widget);
+	gtk_widget_queue_draw (GTK_WIDGET (e->widget));
 }
 
 static void
