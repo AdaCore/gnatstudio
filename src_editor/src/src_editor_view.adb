@@ -39,14 +39,19 @@ with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.Types;                use Gtkada.Types;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Pango.Font;                  use Pango.Font;
 
+with Commands.Editor;             use Commands.Editor;
+with Language;                    use Language;
+with Interfaces.C.Strings;        use Interfaces.C.Strings;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Basic_Types;                 use Basic_Types;
 with Commands;                    use Commands;
 with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 
 with Unchecked_Deallocation;
 
@@ -186,6 +191,14 @@ package body Src_Editor_View is
    procedure Restore_Cursor_Position
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position.
+
+   function Do_Indentation
+     (Buffer   : Source_Buffer;
+      Lang     : Language_Access;
+      New_Line : Boolean := True) return Boolean;
+   --  If supported by the language and if the preferences are activated,
+   --  automatically indent at the current cursor position.
+   --  If New_Line is True, insert a new line and insert spaces on the new line
 
    --------------------------
    -- Save_Cursor_Position --
@@ -541,9 +554,9 @@ package body Src_Editor_View is
    -------------
 
    procedure Gtk_New
-     (View              : out Source_View;
-      Buffer            : Src_Editor_Buffer.Source_Buffer := null;
-      Font              : Pango.Font.Pango_Font_Description) is
+     (View   : out Source_View;
+      Buffer : Src_Editor_Buffer.Source_Buffer := null;
+      Font   : Pango.Font.Pango_Font_Description) is
    begin
       View := new Source_View_Record;
       Initialize (View, Buffer, Font);
@@ -833,6 +846,154 @@ package body Src_Editor_View is
          return False;
    end Button_Press_Event_Cb;
 
+   --------------------
+   -- Do_Indentation --
+   --------------------
+
+   function Do_Indentation
+     (Buffer   : Source_Buffer;
+      Lang     : Language_Access;
+      New_Line : Boolean := True) return Boolean
+   is
+      Pos          : Gtk_Text_Iter;
+      Iter         : Gtk_Text_Iter;
+      Indent       : Natural;
+      Next_Indent  : Natural;
+      Line, Col    : Gint;
+      Offset       : Integer;
+      --  Offset between cursor and end of line
+
+      Blanks       : Natural;
+      C_Str        : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
+      Line_Ends    : Boolean := True;
+      Line_Start   : Natural;
+      Result       : Boolean;
+      Slice_Length : Natural;
+      Slice        : Unchecked_String_Access;
+      pragma Suppress (Access_Check, Slice);
+      Index        : Integer;
+      Replace_Cmd  : Editor_Replace_Slice;
+      Use_Tabs     : Boolean := False;
+
+   begin
+      if Lang = null
+        or else not Get_Pref (Get_Kernel (Buffer), Automatic_Indentation)
+      then
+         return False;
+      end if;
+
+      Get_Iter_At_Mark (Buffer, Pos, Get_Insert (Buffer));
+      Copy (Pos, Iter);
+
+      --  Go to last char of the line pointed by Pos
+
+      if not Ends_Line (Iter) then
+         Forward_To_Line_End (Iter, Line_Ends);
+      end if;
+
+      Line   := Get_Line (Iter);
+      Col    := Get_Line_Offset (Iter);
+      Offset := Natural (Col - Get_Line_Offset (Pos));
+
+      --  We're spending most of our time getting this string.
+      --  Consider saving the current line, indentation level and
+      --  the stacks used by Next_Indentation to avoid parsing
+      --  the buffer from scratch each time.
+
+      C_Str := Get_Slice (Buffer, 0, 0, Line, Col);
+      Slice := To_Unchecked_String (C_Str);
+      Slice_Length := Natural (Strlen (C_Str));
+
+      Blanks := Slice_Length - Offset + 1;
+
+      if Line_Ends then
+         Slice_Length := Slice_Length + 1;
+         Slice (Slice_Length) := ASCII.LF;
+      end if;
+
+      while Blanks <= Slice_Length
+        and then (Slice (Blanks) = ' '
+                  or else Slice (Blanks) = ASCII.HT)
+      loop
+         Blanks := Blanks + 1;
+      end loop;
+
+      Next_Indentation
+        (Lang, Slice (1 .. Slice_Length), Result, Indent, Next_Indent);
+
+      if not Result then
+         return False;
+      end if;
+
+      Set_Line_Offset (Iter, 0);
+      Line_Start := Natural (Get_Offset (Iter)) + 1;
+      Index      := Line_Start;
+
+      while Index <= Slice_Length
+        and then (Slice (Index) = ' '
+                  or else Slice (Index) = ASCII.HT)
+      loop
+         if Slice (Index) = ASCII.HT then
+            Use_Tabs := True;
+         end if;
+
+         Index := Index + 1;
+      end loop;
+
+      --  Replace everything at once, important for efficiency
+      --  and also because otherwise, undo/redo won't work properly.
+
+      if Line_Ends then
+         Slice_Length := Slice_Length - 1;
+      end if;
+
+      if New_Line then
+         Create
+           (Replace_Cmd,
+            Buffer,
+            Integer (Line), 0,
+            Integer (Line), Integer (Col),
+            (1 .. Indent => ' ') &
+            Slice (Index .. Slice_Length - Offset) & ASCII.LF &
+            (1 .. Next_Indent => ' ') &
+            Slice (Blanks .. Slice_Length));
+         Enqueue (Get_Queue (Buffer), Replace_Cmd);
+
+      elsif Use_Tabs or else Index - Line_Start /= Indent then
+         --  Only indent if the current indentation is wrong
+
+         Create
+           (Replace_Cmd,
+            Buffer,
+            Integer (Line), 0,
+            Integer (Line), Index - Line_Start,
+            (1 .. Indent => ' '));
+         Enqueue (Get_Queue (Buffer), Replace_Cmd);
+      end if;
+
+      --  Need to recompute iter, since the slice replacement that
+      --  we just did has invalidated iter.
+
+      if New_Line then
+         Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, Gint (Next_Indent));
+         Place_Cursor (Buffer, Pos);
+      end if;
+
+      g_free (C_Str);
+      return True;
+
+   exception
+      when others =>
+         --  Stop propagation of exception, since doing nothing
+         --  in this callback is harmless.
+
+         if C_Str /= Gtkada.Types.Null_Ptr then
+            g_free (C_Str);
+         end if;
+
+         return False;
+   end Do_Indentation;
+
    ------------------------
    -- Key_Press_Event_Cb --
    ------------------------
@@ -843,11 +1004,29 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Key    : constant Gdk_Key_Type := Get_Key_Val (Event);
+      Value  : Boolean := False;
+
    begin
-      case Get_Key_Val (Event) is
-         when GDK_Tab | GDK_Return | GDK_Linefeed |
-           GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End |
-           GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right
+      case Key is
+         when GDK_Return | GDK_Tab =>
+            if Key = GDK_Return then
+               Value := Do_Indentation (Buffer, Get_Language (Buffer), True);
+            elsif (Get_State (Event) and Control_Mask) /= 0 then
+               --  ??? Should use a preference for the key value
+
+               Value := Do_Indentation (Buffer, Get_Language (Buffer), False);
+            end if;
+
+            if Value then
+               return True;
+            else
+               End_Action (Buffer);
+            end if;
+
+         when GDK_Linefeed |
+           GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End | GDK_Begin |
+           GDK_Up | GDK_Down | GDK_Left | GDK_Right
          =>
             End_Action (Buffer);
 
