@@ -669,7 +669,6 @@ package Src_Editor_Buffer is
    function Get_Block
      (Editor : access Source_Buffer_Record;
       Line   : Buffer_Line_Type) return Block_Record;
-   pragma Inline (Get_Block);
    --  Return the block information associated with Line.
 
    function Has_Block_Information
@@ -1050,7 +1049,12 @@ private
       --  editor. If First_Removed_Line = 0, then no lines have been removed.
 
       Parse_Blocks : Boolean := False;
-      --  Whether the block information should be parsed.
+      --  Whether the block information should be parsed on-the-fly whenever
+      --  the text is edited.
+
+      Blocks_Need_Parsing : Boolean := False;
+      --  Whether the block information should be computed next time it is
+      --  needed.
 
       Blocks       : Block_List.List;
       --  A cache structure containing all the blocks in the buffer.
