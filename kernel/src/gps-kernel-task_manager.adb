@@ -43,10 +43,7 @@ with Commands.Custom;           use Commands.Custom;
 
 package body GPS.Kernel.Task_Manager is
 
-   type Task_Manager_Module_Id_Record is new Module_ID_Record with record
-      Kernel : Kernel_Handle;
-   end record;
-
+   type Task_Manager_Module_Id_Record is new Module_ID_Record with null record;
    type Task_Manager_Module_Id_Access is access all
      Task_Manager_Module_Id_Record'Class;
 
@@ -371,8 +368,6 @@ package body GPS.Kernel.Task_Manager is
       Script                    : Scripting_Language;
    begin
       Task_Manager_Module_Id := new Task_Manager_Module_Id_Record;
-      Task_Manager_Module_Id.Kernel := Kernel_Handle (Kernel);
-
       Register_Module
         (Module       => Module_ID (Task_Manager_Module_Id),
          Kernel       => Kernel,
@@ -416,7 +411,7 @@ package body GPS.Kernel.Task_Manager is
 
    procedure Destroy (Module : in out Task_Manager_Module_Id_Record) is
    begin
-      Destroy (Get_Task_Manager (Module.Kernel));
+      Destroy (Get_Task_Manager (Get_Kernel (Module)));
    end Destroy;
 
 end GPS.Kernel.Task_Manager;
