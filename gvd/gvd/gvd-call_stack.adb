@@ -265,6 +265,7 @@ package body GVD.Call_Stack is
          Set_Title (Col, -"Num");
          Dummy := Append_Column (Tree.Tree, Col);
          Set_Expander_Column (Tree.Tree, Col);
+         Set_Resizable (Col, True);
       end if;
 
       if (Tree.Backtrace_Mask and Program_Counter) /= 0 then
@@ -274,6 +275,7 @@ package body GVD.Call_Stack is
          Add_Attribute (Col, Text_Rend, "text", Program_Counter_Column);
          Set_Title (Col, -"PC");
          Dummy := Append_Column (Tree.Tree, Col);
+         Set_Resizable (Col, True);
       end if;
 
       if (Tree.Backtrace_Mask and Subprog_Name) /= 0 then
@@ -283,6 +285,7 @@ package body GVD.Call_Stack is
          Add_Attribute (Col, Text_Rend, "text", Subprog_Name_Column);
          Set_Title (Col, -"Subprogram");
          Dummy := Append_Column (Tree.Tree, Col);
+         Set_Resizable (Col, True);
       end if;
 
       if (Tree.Backtrace_Mask and Params) /= 0 then
@@ -292,6 +295,7 @@ package body GVD.Call_Stack is
          Add_Attribute (Col, Text_Rend, "text", Params_Column);
          Set_Title (Col, -"Parameters");
          Dummy := Append_Column (Tree.Tree, Col);
+         Set_Resizable (Col, True);
       end if;
 
       if (Tree.Backtrace_Mask and File_Location) /= 0 then
@@ -301,6 +305,7 @@ package body GVD.Call_Stack is
          Add_Attribute (Col, Text_Rend, "text", File_Location_Column);
          Set_Title (Col, -"Location");
          Dummy := Append_Column (Tree.Tree, Col);
+         Set_Resizable (Col, True);
       end if;
    end Set_Column_Types;
 
