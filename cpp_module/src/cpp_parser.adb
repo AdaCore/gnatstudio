@@ -503,15 +503,15 @@ package body CPP_Parser is
          Iter := Next (Obj_Dir, Iter);
       end loop;
 
-      Iter := Start (Obj_Dir);
-
       declare
          Files : chars_ptr_array (1 .. Interfaces.C.size_t (Length));
       begin
          for Table in Table_Type loop
+            Iter := Start (Obj_Dir);
+
             for D in Files'Range loop
                Files (D) := New_String
-                 (Current (Obj_Dir, Iter) & Db_Dir
+                 (Name_As_Directory (Current (Obj_Dir, Iter)) & Db_Dir
                   & SN.Browse.DB_File_Name & Table_Extension (Table));
                Iter := Next (Obj_Dir, Iter);
             end loop;
@@ -2055,72 +2055,75 @@ package body CPP_Parser is
       Sym    : FIL_Table;
       Entity : Entity_Information;
    begin
-      Set_Cursor
-        (Handler.SN_Table (FIL),
-         Position    => By_Key,
-         Key         => Full_Name (Get_Filename (Source)).all & Field_Sep,
-         Exact_Match => False);
+      if Is_Open (Handler.SN_Table (FIL)) then
+         Set_Cursor
+           (Handler.SN_Table (FIL),
+            Position    => By_Key,
+            Key         => Full_Name (Get_Filename (Source)).all & Field_Sep,
+            Exact_Match => False);
 
-      loop
-         Get_Pair (Handler.SN_Table (FIL), Next_By_Key, Result => P);
-         exit when P = No_Pair;
-         Parse_Pair (P, Sym);
+         loop
+            Get_Pair (Handler.SN_Table (FIL), Next_By_Key, Result => P);
+            exit when P = No_Pair;
+            Parse_Pair (P, Sym);
 
-         case Sym.Symbol is
-            when GV =>
-               Parse_GV_Table (Handler, Source, Sym);
+            case Sym.Symbol is
+               when GV =>
+                  Parse_GV_Table (Handler, Source, Sym);
 
-            when IU =>
-               Parse_IU_Table (Handler, Source, Sym);
+               when IU =>
+                  Parse_IU_Table (Handler, Source, Sym);
 
-            when T =>
-               Entity := Entity_From_FIL (Handler, Sym, Source);
-               Parse_T_Table (Handler, Entity, Sym);
+               when T =>
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Parse_T_Table (Handler, Entity, Sym);
 
-            when CL =>
-               Entity := Entity_From_FIL (Handler, Sym, Source);
-               Parse_CL_Table (Handler, Entity, Sym);
+               when CL =>
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Parse_CL_Table (Handler, Entity, Sym);
 
-            when CON =>
-               Entity := Entity_From_FIL (Handler, Sym, Source);
-               Parse_CON_Table (Handler, Entity, Sym);
+               when CON =>
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Parse_CON_Table (Handler, Entity, Sym);
 
-            when MA =>
-               Entity := Entity_From_FIL (Handler, Sym, Source);
-               Set_Kind (Entity, Macro_Entity);
+               when MA =>
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Set_Kind (Entity, Macro_Entity);
 
-            when FU =>
-               Parse_FU_Table (Handler, Source, Sym);
+               when FU =>
+                  Parse_FU_Table (Handler, Source, Sym);
 
-            when IV =>
-               Entity := Entity_From_FIL (Handler, Sym, Source);
-               Parse_IV_Table (Handler, Entity, Sym);
+               when IV =>
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Parse_IV_Table (Handler, Entity, Sym);
 
-            when MD =>
-               Parse_MD_Table (Handler, Sym, Source);
+               when MD =>
+                  Parse_MD_Table (Handler, Sym, Source);
 
-            when MI =>
-               Parse_MI_Table (Handler, Sym, Source);
+               when MI =>
+                  Parse_MI_Table (Handler, Sym, Source);
 
-            when TA =>
-               Entity := Entity_From_FIL (Handler, Sym, Source);
-               Parse_TA_Table (Handler, Entity, Sym);
+               when TA =>
+                  Entity := Entity_From_FIL (Handler, Sym, Source);
+                  Parse_TA_Table (Handler, Entity, Sym);
 
-            when FD    => null; --  Parsed when handling FU
-               --  Do something for cpp_ellipsis1 (we have one warning in FD)
+               when FD    => null; --  Parsed when handling FU
+                  --  Do something for cpp_ellipsis1 (we have one warning
+                  --  in FD)
 
-            when SN_IN => null; --  Parsed when handling CL
+               when SN_IN => null; --  Parsed when handling CL
 
-            when E | EC | UN | Undef | COM | COV | FR | LV | SU | UD =>
-               Trace
-                 (Me, "Parse_FIL_Table: "
-                  & Base_Name (Get_Filename (Source))
-                  & " has unparsed " & Sym.Symbol'Img & " for "
-                  & Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last));
-         end case;
-      end loop;
+               when E | EC | UN | Undef | COM | COV | FR | LV | SU | UD =>
+                  Trace
+                    (Me, "Parse_FIL_Table: "
+                     & Base_Name (Get_Filename (Source))
+                     & " has unparsed " & Sym.Symbol'Img & " for "
+                     & Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last));
+            end case;
+         end loop;
 
-      Release_Cursor (Handler.SN_Table (FIL));
+         Release_Cursor (Handler.SN_Table (FIL));
+      end if;
    end Parse_FIL_Table;
 
    ----------------
@@ -2150,10 +2153,7 @@ package body CPP_Parser is
       Source_Filename       : VFS.Virtual_File;
       File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File
    is
---        Project : constant Project_Type :=
---          Get_Project_From_File (Handler.Registry, Source_Filename);
       Source : Source_File;
---        LI     : LI_File;
    begin
       --  Do nothing if the database doesn't exist or hasn't been parsed
       if not Is_Open (Handler.SN_Table (FIL)) then
@@ -2169,19 +2169,11 @@ package body CPP_Parser is
             Entities.Error
               (File_Has_No_LI_Report.all, Source_Filename);
          end if;
+
+         Trace (Me, "Couldn't create Source_File for "
+                & Full_Name (Source_Filename).all);
          return null;
       end if;
-
---        if Get_LI (Source) = null then
---           LI := Get_Or_Create
---             (Db   => Handler.Db,
---              File => "???",
---              Project => Project);
---           Source := Get_Or_Create
---             (Db   => Handler.Db,
---              File => Source_Filename,
---              LI   => LI);
---        end if;
 
       if Get_Time_Stamp (Source) = VFS.No_Time
         or else Get_Time_Stamp (Source) < File_Time_Stamp (Source_Filename)
@@ -2224,9 +2216,53 @@ package body CPP_Parser is
       Project         : Projects.Project_Type;
       Recursive       : Boolean := False) return Integer
    is
-      pragma Unreferenced (Handler, Project, Recursive);
+      Iter  : Imported_Project_Iterator :=
+        Start (Project, Recursive => Recursive);
+      P     : Project_Type;
+      Count : Natural := 0;
+      Files : chars_ptr_array (1 .. 1);
+      Table : DB_File;
+      F_Pair : Pair;
+      F_Data : F_Table;
+      Db_Dir  : constant String := Name_As_Directory (SN.Browse.DB_Dir_Name);
+      Success : Boolean;
+      Source  : Source_File;
+      pragma Unreferenced (Source);
+
    begin
-      return 0;
+      loop
+         P := Current (Iter);
+         exit when P = No_Project;
+
+         Files (1) := New_String
+           (Name_As_Directory (Object_Path (P, Recursive => False)) & Db_Dir
+            & SN.Browse.DB_File_Name & Table_Extension (F));
+         DB_API.Open (Table, Files, Success);
+         Free (Files (1));
+
+         if Success then
+            Set_Cursor_At (Table);
+            loop
+               Get_Pair (Table, Next_By_Key, Result => F_Pair);
+               exit when F_Pair = No_Pair;
+
+               Parse_Pair (F_Pair, F_Data);
+
+               Source := Get_Source_Info
+                 (Handler,
+                  Create
+                    (Full_Filename => F_Data.Key
+                       (F_Data.File_Name.First .. F_Data.File_Name.Last)));
+               Count := Count + 1;
+            end loop;
+
+            Release_Cursor (Table);
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      return Count;
    end Parse_All_LI_Information;
 
    ------------------------
