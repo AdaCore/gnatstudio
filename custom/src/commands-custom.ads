@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -29,13 +29,13 @@
 --
 --     ??? The following still have to be implemented :
 --
---      %p  -> the current project
+--      %p  -> the current project (associated with the opened file)
 --      %P  -> the current root project
 --
 --      %l, %c -> the current line and column in the current file.
 --
---      %l  -> a list of source files in the current project
---      %P  -> a list of source files in the root project
+--      %s  -> a list of source files in the current project
+--      %S  -> a list of source files in the root project
 
 with Glide_Kernel;         use Glide_Kernel;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -56,9 +56,9 @@ package Commands.Custom is
    --  Execute Command, and return True if the command could be launched
    --  successfully.
    --  Context-related arguments (like "%f", "%p" and so on) are converted
-   --  when Execute is called, with paramers obtained from the current context
-   --  and the current project. If a parameter could bot be converted, the
-   --  command is not launched, and False is returned.
+   --  when Execute is called, with parameters obtained from the curren
+   --  context and the current project. If a parameter could not be converted,
+   --  the command is not launched, and False is returned.
 
 private
 

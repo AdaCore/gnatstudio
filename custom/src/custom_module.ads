@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -54,12 +54,12 @@
 --
 --  </Custom>
 
---  ??? Here is a non-exhaustive list of possible enhancements here
+--  Here is a non-exhaustive list of possible enhancements here
 --    -> facilities for creating toolbar buttons
 --    -> be able to add custom menu items to existing menus
 --    -> be able to position the custom menus relatively to
 --       other menus
---    -> add icons to the menus ?
+--    -> add icons to the menus (using stock icons)
 --    -> make the file syntax a little more flexible
 --       (right now it's very case-sensitive, and so on)
 --    -> Use GPS commands instead of shell commands
@@ -70,7 +70,7 @@ with Glide_Kernel;
 package Custom_Module is
 
    Custom_Module_ID   : Glide_Kernel.Module_ID;
-   Custom_Module_Name : constant String := "Unit_Testing";
+   Custom_Module_Name : constant String := "Custom";
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
