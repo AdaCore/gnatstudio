@@ -169,7 +169,6 @@ package body Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String := "";
       Create_New : Boolean := True;
-      Add_To_MDI : Boolean := True;
       Focus      : Boolean := True) return Source_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
@@ -348,8 +347,7 @@ package body Src_Editor_Module is
 
    function New_View
      (Kernel  : access Kernel_Handle_Record'Class;
-      Current : Source_Editor_Box;
-      Add     : Boolean) return Source_Box;
+      Current : Source_Editor_Box) return Source_Box;
    --  Create a new view for Current and add it in the MDI.
    --  The current editor is the focus child in the MDI.
    --  If Add is True, the Box is added to the MDI.
@@ -1254,12 +1252,11 @@ package body Src_Editor_Module is
       Src    : Source_Box := null;
       File   : Glib.String_Ptr;
       Str    : Glib.String_Ptr;
-      Data   : Location_Idle_Data;
       Id     : Idle_Handler_Id;
       Line   : Positive := 1;
       Column : Positive := 1;
       Child  : MDI_Child;
-      pragma Unreferenced (Id);
+      pragma Unreferenced (Id, MDI);
 
    begin
       if Node.Tag.all = "Source_Editor" then
@@ -1279,32 +1276,27 @@ package body Src_Editor_Module is
             end if;
 
             if not Is_Open (User, File.all) then
-               Src := Open_File (User, File.all, False, False);
+               Src := Open_File (User, File.all, False);
+               Child := Find_Editor (User, File.all);
             else
+               Child := Find_Editor (User, File.all);
                declare
-                  Child : constant MDI_Child := Find_Editor (User, File.all);
                   Edit  : constant Source_Editor_Box :=
                     Get_Source_Box_From_MDI (Child);
                begin
-                  Src := New_View (User, Edit, Add => False);
+                  Src := New_View (User, Edit);
                end;
             end if;
 
             if Src /= null then
-               Data.Edit := Src.Editor;
                Id := Location_Idle.Add
                  (File_Edit_Callback'Access,
                   (Src.Editor, Line, Column, 0, User));
-
-               Child := Put (MDI, Src,
-                           Focus_Widget => Gtk_Widget (Get_View (Src.Editor)));
-               Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
-               return Child;
             end if;
          end if;
       end if;
 
-      return null;
+      return Child;
 
    exception
       when E : others =>
@@ -1460,8 +1452,7 @@ package body Src_Editor_Module is
 
    function New_View
      (Kernel  : access Kernel_Handle_Record'Class;
-      Current : Source_Editor_Box;
-      Add     : Boolean) return Source_Box
+      Current : Source_Editor_Box) return Source_Box
    is
       MDI     : constant MDI_Window := Get_MDI (Kernel);
       Editor  : Source_Editor_Box;
@@ -1478,27 +1469,25 @@ package body Src_Editor_Module is
       begin
          Create_New_View (Editor, Kernel, Current);
          Gtk_New (Box, Editor);
-         Set_Size_Request
-           (Box,
-            Get_Pref (Kernel, Default_Widget_Width),
-            Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
 
-         if Add then
-            Child := Put (MDI, Box,
-                          Focus_Widget => Gtk_Widget (Get_View (Editor)));
-            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
-            Set_Focus_Child (Child);
+         Child := Put
+           (MDI, Box,
+            Focus_Widget => Gtk_Widget (Get_View (Editor)),
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
 
-            declare
-               Im : constant String := Image (Get_Ref_Count (Editor));
-            begin
-               Set_Title
-                 (Child,
-                  Title & " <" & Im & ">",
-                  Base_Name (Title) & " <" & Im & ">");
-            end;
-         end if;
+         Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+         Set_Focus_Child (Child);
+
+         declare
+            Im : constant String := Image (Get_Ref_Count (Editor));
+         begin
+            Set_Title
+              (Child,
+               Title & " <" & Im & ">",
+               Base_Name (Title) & " <" & Im & ">");
+         end;
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Box,
@@ -1521,7 +1510,7 @@ package body Src_Editor_Module is
 
    begin
       if Current /= null then
-         Box := New_View (Kernel, Current, Add => True);
+         Box := New_View (Kernel, Current);
       end if;
    end New_View;
 
@@ -1638,7 +1627,6 @@ package body Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String := "";
       Create_New : Boolean := True;
-      Add_To_MDI : Boolean := True;
       Focus      : Boolean := True) return Source_Box
    is
       MDI        : constant MDI_Window := Get_MDI (Kernel);
@@ -1668,59 +1656,55 @@ package body Src_Editor_Module is
 
       if Editor /= null then
          Gtk_New (Box, Editor);
-         Set_Size_Request
-           (Box,
-            Get_Pref (Kernel, Default_Widget_Width),
-            Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
 
-         if Add_To_MDI then
-            Child := Put
-              (MDI, Box, Focus_Widget => Gtk_Widget (Get_View (Editor)));
-            Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
+         Child := Put
+           (MDI, Box, Focus_Widget => Gtk_Widget (Get_View (Editor)),
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+         Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
 
-            if Focus then
-               Set_Focus_Child (Child);
-            end if;
+         if Focus then
+            Set_Focus_Child (Child);
+         end if;
 
-            Raise_Child (Child);
+         Raise_Child (Child);
 
-            if File /= "" then
-               Set_Title (Child, File, Base_Name (File));
-            else
-               --  Determine the number of "Untitled" files open.
+         if File /= "" then
+            Set_Title (Child, File, Base_Name (File));
+         else
+            --  Determine the number of "Untitled" files open.
 
-               declare
-                  Iterator    : Child_Iterator := First_Child (MDI);
-                  The_Child   : MDI_Child;
-                  Nb_Untitled : Natural := 0;
-                  No_Name     : constant String := -"Untitled";
-               begin
-                  The_Child := Get (Iterator);
+            declare
+               Iterator    : Child_Iterator := First_Child (MDI);
+               The_Child   : MDI_Child;
+               Nb_Untitled : Natural := 0;
+               No_Name     : constant String := -"Untitled";
+            begin
+               The_Child := Get (Iterator);
 
-                  while The_Child /= null loop
-                     if The_Child /= Child
-                       and then Get_Widget (The_Child).all in
-                         Source_Box_Record'Class
-                       and then Get_Filename (The_Child) = ""
-                     then
-                        Nb_Untitled := Nb_Untitled + 1;
-                     end if;
-
-                     Next (Iterator);
-                     The_Child := Get (Iterator);
-                  end loop;
-
-                  if Nb_Untitled = 0 then
-                     Set_Title (Child, No_Name);
-                  else
-                     Set_Title
-                       (Child, No_Name & " (" & Image (Nb_Untitled + 1) & ")");
+               while The_Child /= null loop
+                  if The_Child /= Child
+                    and then Get_Widget (The_Child).all in
+                    Source_Box_Record'Class
+                    and then Get_Filename (The_Child) = ""
+                  then
+                     Nb_Untitled := Nb_Untitled + 1;
                   end if;
 
-                  Set_Filename (Editor, Get_Filename (Child));
-               end;
-            end if;
+                  Next (Iterator);
+                  The_Child := Get (Iterator);
+               end loop;
+
+               if Nb_Untitled = 0 then
+                  Set_Title (Child, No_Name);
+               else
+                  Set_Title
+                    (Child, No_Name & " (" & Image (Nb_Untitled + 1) & ")");
+               end if;
+
+               Set_Filename (Editor, Get_Filename (Child));
+            end;
          end if;
 
          File_Edited (Kernel, File);
