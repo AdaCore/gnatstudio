@@ -518,9 +518,9 @@ package body Project_Explorers is
       Init_Graphics;
       Gtk_New (Explorer.Tree, Columns_Types);
       Set_Headers_Visible (Explorer.Tree, False);
-      Add (Scrolled, Explorer.Tree);
-
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));
+
+      Add (Scrolled, Explorer.Tree);
 
       Register_Contextual_Menu
         (Kernel          => Kernel,
@@ -582,6 +582,7 @@ package body Project_Explorers is
       Get_Selected (Get_Selection (E.Tree), Model, Node);
 
       if Node = Null_Iter
+        or else (Get_Title (Child) = " ")
         or else (Get_Title (Child) = Get_File_From_Node (E, Node, True))
       then
          return;
@@ -918,8 +919,16 @@ package body Project_Explorers is
       end if;
 
       Set (Explorer.Tree.Model, N, Base_Name_Column, Text.all);
-      Set (Explorer.Tree.Model, N, Absolute_Name_Column,
-           Directory);
+
+      --  Strip the ending directory terminator, if necessary.
+      --  For homogeneity reasons.
+
+      if Directory (Directory'Last) = Directory_Separator then
+         Set (Explorer.Tree.Model, N, Absolute_Name_Column,
+              Directory (Directory'First .. Directory'Last - 1));
+      else
+         Set (Explorer.Tree.Model, N, Absolute_Name_Column, Directory);
+      end if;
 
       if Object_Directory then
          Set (Explorer.Tree.Model, N, Icon_Column,
@@ -1573,7 +1582,7 @@ package body Project_Explorers is
                      Files_In_Project => null,
                      Object_Directory => True);
 
-               when Project_Node =>
+               when Project_Node | Modified_Project_Node =>
                   --  The list of imported project files cannot change with
                   --  the scenario, so there is nothing to be done here
                   declare
@@ -1859,11 +1868,18 @@ package body Project_Explorers is
       Node     : Gtk_Tree_Iter) return Project_Id
    is
       Parent_Iter : Gtk_Tree_Iter := Node;
+      Node_Type   : Node_Types;
    begin
-      while Parent_Iter /= Null_Iter
-        and then Get_Node_Type (Explorer.Tree.Model, Parent_Iter)
-        /= Project_Node
-      loop
+      while Parent_Iter /= Null_Iter loop
+         Node_Type := Get_Node_Type (Explorer.Tree.Model, Parent_Iter);
+
+         if Node_Type = Project_Node
+           or else Node_Type = Extends_Project_Node
+           or else Node_Type = Modified_Project_Node
+         then
+            exit;
+         end if;
+
          Parent_Iter := Parent (Explorer.Tree.Model, Parent_Iter);
       end loop;
 
