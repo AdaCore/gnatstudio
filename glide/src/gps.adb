@@ -62,6 +62,7 @@ with Browsers.Projects;
 with Browsers.Call_Graph;
 with Cpp_Module;
 with External_Editor_Module;
+with Find_Utils;
 with GVD_Module;
 with Metrics_Module;
 with Project_Explorers;
@@ -317,6 +318,7 @@ procedure GPS is
 
       --  Register all modules
 
+      Find_Utils.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Navigation_Module.Register_Module (GPS.Kernel);
       Metrics_Module.Register_Module (GPS.Kernel);
