@@ -652,6 +652,11 @@ package body Glide_Kernel.Modules is
       end if;
 
       return Menu;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unhandled exception "
+                & Exception_Information (E));
+         return null;
    end Create_Contextual_Menu;
 
    -----------------------------
@@ -1218,15 +1223,20 @@ package body Glide_Kernel.Modules is
          end loop;
 
          if Add_Before and then Ref_Item /= "" then
-            C := Previous;
+            if Previous = null then
+               Menu.Next := Convert (Kernel.Contextual);
+               Kernel.Contextual := Convert (Menu);
+            else
+               Menu.Next := Previous.Next;
+               Previous.Next := Menu;
+            end if;
+         else
+            Menu.Next    := C.Next;
+            C.Next := Menu;
          end if;
-
-         Menu.Next := C.Next;
-         C.Next := Menu;
       else
          Kernel.Contextual := Convert (Menu);
       end if;
-      Menu.Next := null;
    end Add_Contextual_Menu;
 
    ------------------------------
