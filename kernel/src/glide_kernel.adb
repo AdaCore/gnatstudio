@@ -67,7 +67,8 @@ package body Glide_Kernel is
       2 => New_String (Project_View_Changed_Signal),
       3 => New_String (Context_Changed_Signal),
       4 => New_String (Variable_Changed_Signal),
-      5 => New_String (Source_Lines_Revealed_Signal));
+      5 => New_String (Source_Lines_Revealed_Signal),
+      6 => New_String (File_Edited_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -108,7 +109,8 @@ package body Glide_Kernel is
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 .. 2 | 4 => (1 => GType_None),
-         3      | 5 => (1 => GType_Pointer));
+         3      | 5 => (1 => GType_Pointer),
+         6          => (1 => GType_String));
       Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
@@ -479,6 +481,26 @@ package body Glide_Kernel is
          Source_Lines_Revealed_Signal & ASCII.NUL,
          Selection_Context_Access (Context));
    end Source_Lines_Revealed;
+
+   -----------------
+   -- File_Edited --
+   -----------------
+
+   procedure File_Edited
+     (Handle  : access Kernel_Handle_Record;
+      File    : String)
+   is
+      procedure Internal
+        (Handle : System.Address;
+         Signal : String;
+         File   : String);
+      pragma Import (C, Internal, "g_signal_emit_by_name");
+   begin
+      Internal
+        (Get_Object (Handle),
+         File_Edited_Signal & ASCII.NUL,
+         File & ASCII.NUL);
+   end File_Edited;
 
    ---------------------
    -- Context_Changed --
