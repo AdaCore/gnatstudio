@@ -999,6 +999,11 @@ package body Python.GUI is
             null;
       end case;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         return False;
    end Key_Press_Handler;
 
    -----------------
