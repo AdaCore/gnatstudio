@@ -31,8 +31,18 @@ package Debugger is
 
    type Debugger_Access is access all Debugger_Root'Class;
 
+   procedure Spawn (Debugger       : access Debugger_Root;
+                    Remote_Machine : String := "") is abstract;
+   --  Spawn the external process.
+   --  Initialize should be called afterwards, but this is done in two
+   --  separate steps so that it is possible to set filters.
+   --
+   --  If Remote_Machine is different from the empty string, the debugger
+   --  is spawned on the remote machine.
+
    procedure Initialize (Debugger : access Debugger_Root) is abstract;
-   --  Spawn the external process, and initializes the debugger.
+   --  Initialize the debugger.
+   --  Spawn must have been called first.
 
    procedure Close (Debugger : in out Debugger_Root) is abstract;
    --  Terminates the external process.

@@ -28,6 +28,8 @@ with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Debugger.Gdb is
 
    ---------------
@@ -138,6 +140,35 @@ package body Debugger.Gdb is
       end;
    end Value_Of;
 
+   -----------
+   -- Spawn --
+   -----------
+
+   procedure Spawn (Debugger       : access Gdb_Debugger;
+                    Remote_Machine : String := "")
+   is
+   begin
+      --  Start the external debugger.
+      --  Note that there is no limitation on the buffer size, since we can
+      --  not control the length of what gdb will return...
+
+      if Remote_Machine = "" then
+         Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
+            ("sh", (new String' ("-c"), new String' ("gdb")),
+             Buffer_Size => 0,
+             Err_To_Out => True));
+      else
+         Debugger.Process := new Pipes_Id'(Non_Blocking_Spawn
+            ("sh", (new String' ("-c"),
+                    new String' ("rsh " & Remote_Machine & " gdb")),
+             Buffer_Size => 0,
+             Err_To_Out => True));
+      end if;
+
+      --  Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
+      --  Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
+   end Spawn;
+
    ----------------
    -- Initialize --
    ----------------
@@ -147,18 +178,9 @@ package body Debugger.Gdb is
       Matched   : GNAT.Regpat.Match_Array (0 .. 2);
 
    begin
-      --  Start the external debugger.
-      --  Note that there is no limitation on the buffer size, since we can
-      --  not control the length of what gdb will return...
-
-      Debugger.Process :=
-        new Pipes_Id' (Non_Blocking_Spawn
-          ("sh", (new String' ("-c"), new String' ("gdb")), 0, True));
-      --  ("sh", (new String' ("-c"), new String' ("rsh rome gdb")), 0, True));
-
---        Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
---        Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
+      --  Wait for initial prompt
       Wait_Prompt (Debugger.all);
+
       Send (Debugger.Process.all, "set prompt (gdb) ");
       Wait_Prompt (Debugger.all);
       Send (Debugger.Process.all, "set width 0");
@@ -169,14 +191,15 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger.all);
       Send (Debugger.Process.all, "show lang");
       Expect (Debugger.Process.all, Result,
-        Regexp_Array' (1 => +("The current source language is """ &
-          "(auto; currently )?(.+)""")), Matched);
+         "The current source language is ""(auto; currently )?([^""]+)""",
+         Matched);
 
       declare
          S        : constant String := Expect_Out (Debugger.Process.all);
          Lang     : String := S (Matched (2).First .. Matched (2).Last);
          Language : Language_Access;
       begin
+         Wait_Prompt (Debugger.all);
          if Lang = "ada" then
             Language := new Gdb_Ada_Language;
          elsif Lang = "c" then
@@ -187,15 +210,9 @@ package body Debugger.Gdb is
          end if;
 
          Set_Language (Debugger.all, Language);
-         Wait_Prompt (Debugger.all);
          Set_Debugger
            (Language_Debugger (Language.all), Debugger.all'Access);
       end;
-
-      --  Send a no op to gdb to clean the previous command
-
-      Send (Debugger.Process.all, " ");
-      Wait_Prompt (Debugger.all);
    end Initialize;
 
    -----------

@@ -28,6 +28,8 @@ package Debugger.Gdb is
 
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
+   procedure Spawn (Debugger       : access Gdb_Debugger;
+                    Remote_Machine : String := "");
    procedure Initialize (Debugger : access Gdb_Debugger);
 
    procedure Close (Debugger : in out Gdb_Debugger);
