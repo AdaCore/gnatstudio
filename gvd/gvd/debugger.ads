@@ -277,6 +277,12 @@ package Debugger is
    --  return an empty array.
    --  GDB_COMMAND: "info sources"
 
+   function Find_File
+     (Debugger : access Debugger_Root; File_Name : String)
+     return String;
+   --  Return the full path name for File_Name.
+   --  If File_Name is not found, then it is returned as is.
+
    ------------------------
    -- Execution Commands --
    ------------------------

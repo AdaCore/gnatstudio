@@ -340,4 +340,16 @@ package body Debugger is
       return Default;
    end Get_Type_Info;
 
+   ---------------
+   -- Find_File --
+   ---------------
+
+   function Find_File
+     (Debugger : access Debugger_Root; File_Name : String)
+     return String
+   is
+   begin
+      return File_Name;
+   end Find_File;
+
 end Debugger;
