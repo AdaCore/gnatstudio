@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -250,6 +250,16 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Display line numbers"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Display_Line_Numbers),
+         -"Editor");
+
+      Display_Subprogram_Name := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Src-Editor-Display-Subprogram_Name",
+         Default => True,
+         Blurb   =>
+           -"Whether the subprogram name should be displayed in status lines",
+         Nick    => -"Display subprogram name"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Display_Subprogram_Name),
          -"Editor");
 
       Display_Tooltip := Param_Spec_Boolean (Gnew_Boolean
