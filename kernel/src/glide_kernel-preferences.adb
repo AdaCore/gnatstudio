@@ -354,7 +354,7 @@ package body Glide_Kernel.Preferences is
          Nick  => -"Jump to delimiter",
          Blurb => -"Key used for jumping to the corresponding delimiter",
          Default_Modifier => Control_Mask,
-         Default_Key      => GDK_LC_j);
+         Default_Key      => GDK_apostrophe);
       Register_Property
         (Kernel.Preferences,
          Param_Spec (Delimiters_Jump_Key),
