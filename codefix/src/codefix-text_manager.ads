@@ -366,6 +366,11 @@ package Codefix.Text_Manager is
    --  any influence in the source code before the call of Update function.
 
    procedure Unchecked_Assign (This, Value : in out Extract'Class);
+   --  Assign Value to This without any clone of any object in the pool.
+
+   procedure Unchecked_Free (This : in out Extract);
+   --  Disconnect all elements connected to the Extract without freeing anyting
+   --  in the pool.
 
    procedure Remove
      (This, Prev : Ptr_Extract_Line; Container : in out Extract);
@@ -453,6 +458,7 @@ package Codefix.Text_Manager is
    --  Free the memory associated to an Extract.
 
    procedure Free_Data (This : in out Extract'Class);
+   --  Free the memory associated to an Extract.
 
    function Get_Line
      (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line;
@@ -560,14 +566,24 @@ package Codefix.Text_Manager is
      (This                 : out Extract;
       Extract_1, Extract_2 : Extract'Class;
       Current_Text         : Text_Navigator_Abstr'Class;
-      Success              : out Boolean);
+      Success              : out Boolean;
+      Merge_Characters     : Boolean := True);
    --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
-   --  then success is false.
+   --  then success is false. If Merge_Characters is True then lines modified
+   --  try to be merded. Otherwise, the line from Extract_2 is chosen.
 
    procedure Merge
-     (New_Str : out Dynamic_String;
+     (This                 : out Extract;
+      Extract_1, Extract_2 : Extract'Class;
+      Success              : out Boolean);
+   --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
+   --  then success is false. If two lines are modified together, then the line
+   --  from Extract_2 is chosen.
+
+   procedure Merge
+     (New_Str                    : out Dynamic_String;
       Original_Str, Str_1, Str_2 : String;
-      Success : out Boolean);
+      Success                    : out Boolean);
    --  Merge Str_1 and Str_2 into This. If no solution can be found,
    --  then success is false.
 
