@@ -534,8 +534,9 @@ package body Ada_Analyzer is
       -----------------------
 
       function End_Of_Identifier (P : Natural) return Natural is
-         Tmp  : Natural := P;
-         Prev : Natural := P - 1;
+         Tmp   : Natural := P;
+         Prev  : Natural := P - 1;
+         Start : Natural;
 
       begin
          loop
@@ -545,7 +546,7 @@ package body Ada_Analyzer is
                Tmp := Tmp + 1;
             end loop;
 
-            if Tmp = Buffer_Length
+            if Tmp >= Buffer_Length
               or else Buffer (Tmp) /= '.'
               or else Buffer (Tmp + 1) = '.'
             then
@@ -572,10 +573,16 @@ package body Ada_Analyzer is
                return Tmp;
 
             else
-               Tmp := End_Of_Word (Tmp);
+               Start := Tmp;
+               Tmp   := End_Of_Word (Tmp);
+
+               if Buffer (Start .. Tmp) = "all" then
+                  return Prev;
+               end if;
             end if;
 
             Prev := Tmp;
+            Tmp  := Tmp + 1;
          end loop;
 
          return Prev;
