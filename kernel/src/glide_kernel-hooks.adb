@@ -66,7 +66,6 @@ package body Glide_Kernel.Hooks is
    procedure Free (Hook : in out Hook_Description);
    --  See inherited doc
 
-
    type Shell_Wrapper_Record is new Hook_Args_Record with record
       Func   : GNAT.OS_Lib.String_Access;
       Hook   : GNAT.OS_Lib.String_Access;
@@ -74,6 +73,7 @@ package body Glide_Kernel.Hooks is
    end record;
    type Shell_Wrapper is access all Shell_Wrapper_Record'Class;
    procedure Destroy (Wrapper : in out Shell_Wrapper_Record);
+   function Get_Name (Hook : Shell_Wrapper_Record) return String;
    procedure Execute
      (Wrapper : Shell_Wrapper_Record;
       Kernel  : access Kernel_Handle_Record'Class;
@@ -88,6 +88,7 @@ package body Glide_Kernel.Hooks is
    end record;
    type Shell_Wrapper_Return is access all Shell_Wrapper_Return_Record'Class;
    procedure Destroy (Wrapper : in out Shell_Wrapper_Return_Record);
+   function Get_Name (Hook : Shell_Wrapper_Return_Record) return String;
    function Execute
      (Wrapper : Shell_Wrapper_Return_Record;
       Kernel  : access Kernel_Handle_Record'Class;
@@ -101,6 +102,7 @@ package body Glide_Kernel.Hooks is
    end record;
    type Shell_Wrapper_Shell is access all Shell_Wrapper_Shell_Record'Class;
    procedure Destroy (Wrapper : in out Shell_Wrapper_Shell_Record);
+   function Get_Name (Hook : Shell_Wrapper_Shell_Record) return String;
    procedure Execute
      (Wrapper : Shell_Wrapper_Shell_Record;
       Kernel  : access Kernel_Handle_Record'Class;
@@ -117,6 +119,7 @@ package body Glide_Kernel.Hooks is
    end record;
    type Shell_Wrapper_No_Args is access all Shell_Wrapper_No_Args_Record'Class;
    procedure Destroy (Wrapper : in out Shell_Wrapper_No_Args_Record);
+   function Get_Name (Hook : Shell_Wrapper_No_Args_Record) return String;
    procedure Execute
      (Wrapper : Shell_Wrapper_No_Args_Record;
       Kernel  : access Kernel_Handle_Record'Class);
@@ -191,11 +194,14 @@ package body Glide_Kernel.Hooks is
 
    type Simple_No_Args_Wrapper_Record is new Hook_No_Args_Record with record
       Func : No_Args_Execute;
+      Name : String_Access;
    end record;
    type Simple_No_Args_Wrapper
      is access all Simple_No_Args_Wrapper_Record'Class;
    --  A simple wrapper to encapsulate a function as a hook
 
+   procedure Destroy (Hook : in out Simple_No_Args_Wrapper_Record);
+   function Get_Name (Hook : Simple_No_Args_Wrapper_Record) return String;
    procedure Execute
      (Hook   : Simple_No_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class);
@@ -203,8 +209,11 @@ package body Glide_Kernel.Hooks is
 
    type Simple_Args_Wrapper_Record is new Hook_Args_Record with record
       Func : Args_Execute;
+      Name : String_Access;
    end record;
    type Simple_Args_Wrapper is access all Simple_Args_Wrapper_Record'Class;
+   procedure Destroy (Hook : in out Simple_Args_Wrapper_Record);
+   function Get_Name (Hook : Simple_Args_Wrapper_Record) return String;
    procedure Execute
      (Hook   : Simple_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
@@ -214,9 +223,12 @@ package body Glide_Kernel.Hooks is
    type Simple_Shell_Args_Wrapper_Record
      is new Hook_Shell_Args_Record with record
       Func : Shell_Args_Execute;
+      Name : String_Access;
      end record;
    type Simple_Shell_Args_Wrapper
      is access all Simple_Shell_Args_Wrapper_Record'Class;
+   procedure Destroy (Hook : in out Simple_Shell_Args_Wrapper_Record);
+   function Get_Name (Hook : Simple_Shell_Args_Wrapper_Record) return String;
    procedure Execute
      (Hook   : Simple_Shell_Args_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
@@ -225,13 +237,140 @@ package body Glide_Kernel.Hooks is
 
    type Simple_Return_Wrapper_Record is new Hook_Args_Return_Record with record
       Func : Args_Return_Execute;
+      Name : String_Access;
    end record;
    type Simple_Return_Wrapper is access all Simple_Return_Wrapper_Record'Class;
+   procedure Destroy (Hook : in out Simple_Return_Wrapper_Record);
+   function Get_Name (Hook : Simple_Return_Wrapper_Record) return String;
    function Execute
      (Hook   : Simple_Return_Wrapper_Record;
       Kernel : access Kernel_Handle_Record'Class;
       Data   : Hooks_Data'Class) return Boolean;
    --  See inherited doc
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Hook : in out Simple_No_Args_Wrapper_Record) is
+   begin
+      Free (Hook.Name);
+   end Destroy;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Simple_No_Args_Wrapper_Record) return String is
+   begin
+      if Hook.Name /= null then
+         return Hook.Name.all;
+      else
+         return -"<internal>";
+      end if;
+   end Get_Name;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Hook : in out Simple_Args_Wrapper_Record) is
+   begin
+      Free (Hook.Name);
+   end Destroy;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Simple_Args_Wrapper_Record) return String is
+   begin
+      if Hook.Name /= null then
+         return Hook.Name.all;
+      else
+         return -"<internal>";
+      end if;
+   end Get_Name;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Hook : in out Simple_Shell_Args_Wrapper_Record) is
+   begin
+      Free (Hook.Name);
+   end Destroy;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Simple_Shell_Args_Wrapper_Record) return String is
+   begin
+      if Hook.Name /= null then
+         return Hook.Name.all;
+      else
+         return -"<internal>";
+      end if;
+   end Get_Name;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Hook : in out Simple_Return_Wrapper_Record) is
+   begin
+      Free (Hook.Name);
+   end Destroy;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Simple_Return_Wrapper_Record) return String is
+   begin
+      if Hook.Name /= null then
+         return Hook.Name.all;
+      else
+         return -"<internal>";
+      end if;
+   end Get_Name;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Shell_Wrapper_Record) return String is
+   begin
+      return Hook.Func.all;
+   end Get_Name;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Shell_Wrapper_Return_Record) return String is
+   begin
+      return Hook.Func.all;
+   end Get_Name;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Shell_Wrapper_Shell_Record) return String is
+   begin
+      return Hook.Func.all;
+   end Get_Name;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Hook : Shell_Wrapper_No_Args_Record) return String is
+   begin
+      return Hook.Func.all;
+   end Get_Name;
 
    -------------
    -- Execute --
@@ -504,13 +643,17 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : No_Args_Execute;
-      Watch    : Glib.Object.GObject := null)
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : No_Args_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "")
    is
       Wrap : Simple_No_Args_Wrapper := new Simple_No_Args_Wrapper_Record;
    begin
+      if Func_Name /= "" then
+         Wrap.Name := new String'(Func_Name);
+      end if;
       Wrap.Func := Hook;
       Add_Hook (Kernel, Name, Wrap, Watch);
    end Add_Hook;
@@ -594,13 +737,18 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : Args_Execute;
-      Watch    : Glib.Object.GObject := null)
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : Args_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "")
    is
       Wrap : Simple_Args_Wrapper := new Simple_Args_Wrapper_Record;
    begin
+      if Func_Name /= "" then
+         Wrap.Name := new String'(Func_Name);
+      end if;
+
       Wrap.Func := Hook;
       Add_Hook (Kernel, Name, Wrap, Watch);
    end Add_Hook;
@@ -673,13 +821,18 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : Shell_Args_Execute;
-      Watch    : Glib.Object.GObject := null)
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : Shell_Args_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "")
    is
       Wrap : Simple_Shell_Args_Wrapper := new Simple_Shell_Args_Wrapper_Record;
    begin
+      if Func_Name /= "" then
+         Wrap.Name := new String'(Func_Name);
+      end if;
+
       Wrap.Func := Hook;
       Add_Hook (Kernel, Name, Wrap, Watch);
    end Add_Hook;
@@ -778,13 +931,18 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : Args_Return_Execute;
-      Watch    : Glib.Object.GObject := null)
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name      : String;
+      Hook      : Args_Return_Execute;
+      Watch     : Glib.Object.GObject := null;
+      Func_Name : String := "")
    is
       Wrap : Simple_Return_Wrapper := new Simple_Return_Wrapper_Record;
    begin
+      if Func_Name /= "" then
+         Wrap.Name := new String'(Func_Name);
+      end if;
+
       Wrap.Func := Hook;
       Add_Hook (Kernel, Name, Wrap, Watch);
    end Add_Hook;
@@ -1030,6 +1188,16 @@ package body Glide_Kernel.Hooks is
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
+         Command      => "describe_hook_functions",
+         Params       => Parameter_Names_To_Usage (Describe_Hook_Args),
+         Description  =>
+         -("List all the functions that are executed when the hook is"
+           & " executed"),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel,
          Command     => "list_hook_types",
          Description =>
          -("List all defined type hooks. See also register_hook."),
@@ -1241,6 +1409,30 @@ package body Glide_Kernel.Hooks is
                else
                   Set_Return_Value (Data, "");
                end if;
+            end if;
+         end;
+
+      elsif Command = "describe_hook_functions" then
+         Name_Parameters (Data, Describe_Hook_Args);
+         declare
+            Name : constant String := Nth_Arg (Data, 1);
+            Info : constant Hook_Description_Access :=
+              Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
+            Iter : Hooks_List.List_Node;
+         begin
+            if Info = null then
+               Set_Error_Msg (Data, "No such hook: " & Name);
+            else
+               Set_Return_Value_As_List (Data);
+
+               --  Rest is the list of functions connected to that hook
+               Iter := Hooks_List.First (Info.Funcs);
+
+               while Iter /= Hooks_List.Null_Node loop
+                  Set_Return_Value
+                    (Data, Get_Name (Hooks_List.Data (Iter).all));
+                  Iter := Hooks_List.Next (Iter);
+               end loop;
             end if;
          end;
 
