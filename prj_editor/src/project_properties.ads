@@ -28,6 +28,7 @@ with Glib.Object;
 with Glide_Kernel;
 with Gtk.Box;
 with Projects;
+with GNAT.OS_Lib;
 
 package Project_Properties is
 
@@ -60,5 +61,18 @@ private
    --  Generate the project entry for the attribute edited by the attribute.
    --  Project_Changed is set to True if the project is modified, unmodified
    --  otherwise.
+
+   function Get_Value_As_String
+     (Editor : access Root_Attribute_Editor_Record;
+      Attribute_Index : String := "") return String is abstract;
+   --  Return the current value in Editor for the given attribute_index. The
+   --  latter is ignored if the attribute is in fact not indexed
+
+   function Get_Value_As_List
+     (Editor : access Root_Attribute_Editor_Record;
+      Attribute_Index : String := "") return GNAT.OS_Lib.String_List
+     is abstract;
+   --  Return the current value in Editor for the given attribute_Index.
+   --  The returned value must be freed by the user
 
 end Project_Properties;
