@@ -155,7 +155,9 @@ package body Src_Editor_Module.Line_Highlighting is
       N := Lookup_Category (Id);
 
       if N /= 0 then
+         --  ??? Should the data be unref'ed befor it's replaced ?
          Module_Id.Categories (N).GC := GC;
+         Module_Id.Categories (N).Color := Color;
          return;
       end if;
 
