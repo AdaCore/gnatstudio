@@ -1681,8 +1681,8 @@ package body Src_Editor_Buffer is
             Buffer.End_Delimiters_Highlight := Create_Mark
               (Buffer, "", Last_Highlight_Iter);
 
-            Forward_To_Line_End (Last_Highlight_Iter, Success);
-            Set_Line_Offset (First_Highlight_Iter, 0);
+            Backward_To_Tag_Toggle (First_Highlight_Iter, null, Success);
+            Forward_To_Tag_Toggle (Last_Highlight_Iter, null, Success);
 
             Highlight_Slice
               (Buffer, First_Highlight_Iter, Last_Highlight_Iter);
