@@ -5854,12 +5854,6 @@ Unix systems), you can use an external terminal command, e.g:
 xterm -geo 80x50 -exe vi +%l %f
 @end smallexample
 
-Similarly under Windows:
-
-@smallexample
-cmd /c gvim +%l %f
-@end smallexample
-
 The following substitutions are provided:
 @table @code
 @item %l
