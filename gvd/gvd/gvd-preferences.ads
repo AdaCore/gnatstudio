@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -204,12 +204,6 @@ package GVD.Preferences is
    -- Data Window --
    -----------------
 
-   Separate_Data : constant String_Boolean := "Separate_Data";
-   --  Whether the Data window should be a separate window (False).
-
-   Show_Stack : constant String_Boolean := "Show_Stack";
-   --  Whether the Call Stack window should be visible (False);
-
    Xref_Color : constant String_Color := "Xref_Color";
    --  Color to use for the items that are clickable (blue).
 
@@ -228,9 +222,6 @@ package GVD.Preferences is
 
    Freeze_Bg_Color : constant String_Color := "Freeze_Bg_Color";
    --  Color used for frozen items (light grey)
-
-   Look_3d : constant String_Boolean := "Look_3d";
-   --  Should the items have a 3d look ?
 
    Title_Font : constant String_Font := "Title_Font";
    --  Font used for the name of the item.
@@ -268,12 +259,6 @@ package GVD.Preferences is
      "Default_Detect_Aliases";
    --  If True, do not create new items when a matching item is already
    --  present in the canvas.
-
-   Display_Grid : constant String_Boolean := "Display_Grid";
-   --  Whether the grid should be displayed in the canvas.
-
-   Align_Items_On_Grid : constant String_Boolean := "Align_Items_On_Grid";
-   --  Should items be aligned on the grid.
 
    --------------------
    -- Command Window --

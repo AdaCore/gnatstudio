@@ -353,15 +353,12 @@ package body GVD.Preferences is
       Set (String (Asm_Highlight_Color), "#FF0000");
       Set (String (Assembly_Range_Size), "200");
 
-      Set (Separate_Data, False);
-      Set (Show_Stack, False);
       Set (String (Xref_Color), "#0000FF");
       Set (String (Title_Color), "#BEBEBE");
       Set (String (Change_Color), "#FF0000");
       Set (String (Selection_Color), Color_Selection);
       Set (String (Thaw_Bg_Color), "#FFFFFF");
       Set (String (Freeze_Bg_Color), "#AAAAAA");
-      Set (Look_3d, True);
       Set (String (Title_Font), "Helvetica-Bold");
       Set (Title_Font_Size, Default_Font_Size);
       Set (String (Value_Font), "Helvetica");
@@ -373,8 +370,6 @@ package body GVD.Preferences is
       Set (Hide_Big_Items, True);
       Set (Big_Item_Height, Gint' (150));
       Set (Default_Detect_Aliases, True);
-      Set (Display_Grid, True);
-      Set (Align_Items_On_Grid, True);
       Set (String (Debugger_Highlight_Color), "#0000FF");
       Set (String (Debugger_Font), "Courier");
       Set (Debugger_Font_Size, Gint' (12));
@@ -466,15 +461,6 @@ package body GVD.Preferences is
       Set_Color (Dialog.Thaw_Bg_Color_Combo, Get_Pref (Thaw_Bg_Color));
       Set_Color (Dialog.Freeze_Bg_Color_Combo, Get_Pref (Freeze_Bg_Color));
 
-      --  Separate Data
-      Set_Active (Dialog.Separate_Data_Check, Get_Pref (Separate_Data));
-
-      --  Show Stack
-      Set_Active (Dialog.Show_Stack_Check, Get_Pref (Show_Stack));
-
-      --  Look 3d
-      Set_Active (Dialog.Look_3d_Check, Get_Pref (Look_3d));
-
       --  Title font (??? Should handle bold and italic)
       Font_Combo_Select
         (Dialog.Title_Font_Combo,
@@ -514,10 +500,6 @@ package body GVD.Preferences is
       --  Detect aliases
       Set_Active
         (Dialog.Detect_Aliases_Check, Get_Pref (Default_Detect_Aliases));
-
-      --  Display grid points
-      Set_Active (Dialog.Display_Grid_Check, Get_Pref (Display_Grid));
-      Set_Active (Dialog.Align_Grid_Check, Get_Pref (Align_Items_On_Grid));
 
       --  Command window
       Set_Color
@@ -601,14 +583,11 @@ package body GVD.Preferences is
       Set (Strings_Color, Get_Color (Dialog.String_Color_Combo), True);
       Set (Keywords_Color, Get_Color (Dialog.Keyword_Color_Combo), True);
       Set (Asm_Highlight_Color, Get_Color (Dialog.Asm_Highlight_Combo), True);
-      Set (Separate_Data, Get_Active (Dialog.Separate_Data_Check), True);
-      Set (Show_Stack, Get_Active (Dialog.Show_Stack_Check), True);
       Set (Xref_Color, Get_Color (Dialog.Xref_Color_Combo), True);
       Set (Title_Color, Get_Color (Dialog.Title_Color_Combo), True);
       Set (Change_Color, Get_Color (Dialog.Change_Color_Combo), True);
       Set (Thaw_Bg_Color, Get_Color (Dialog.Thaw_Bg_Color_Combo), True);
       Set (Freeze_Bg_Color, Get_Color (Dialog.Freeze_Bg_Color_Combo), True);
-      Set (Look_3d, Get_Active (Dialog.Look_3d_Check), True);
       Set (Title_Font, Title_Font_Size, Dialog.Title_Font_Combo, True);
       Set (Value_Font, Value_Font_Size, Dialog.Value_Font_Combo, True);
       Set (Type_Font, Type_Font_Size, Dialog.Type_Font_Combo, True);
@@ -616,8 +595,6 @@ package body GVD.Preferences is
       Set (Big_Item_Height, Get_Value_As_Int (Dialog.Big_Item_Spin), True);
       Set (Default_Detect_Aliases, Get_Active (Dialog.Detect_Aliases_Check),
            True);
-      Set (Display_Grid, Get_Active (Dialog.Display_Grid_Check), True);
-      Set (Align_Items_On_Grid, Get_Active (Dialog.Align_Grid_Check), True);
 
       Set (Debugger_Highlight_Color, Get_Color (Dialog.Debug_Highlight_Combo),
            True);
