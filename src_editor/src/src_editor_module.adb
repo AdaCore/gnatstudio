@@ -32,6 +32,7 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Main_Window;         use Glide_Main_Window;
 with GVD.Status_Bar;            use GVD.Status_Bar;
@@ -460,12 +461,20 @@ package body Src_Editor_Module is
       end if;
 
       Source := Source_Box (Get_Widget (Child)).Editor;
-      Save_To_File (Source, Name, Success);
 
-      --  Update the title, in case "save as..." was used.
-      Set_Title
-        (Child, Get_Filename (Source), Base_Name (Get_Filename (Source)));
+      declare
+         Old_Name : constant String := Get_Filename (Source);
+      begin
+         Save_To_File (Source, Name, Success);
 
+         if Old_Name /= Get_Filename (Source) then
+            --  Update the title, in case "save as..." was used.
+            Set_Title
+              (Child, Get_Filename (Source),
+               Base_Name (Get_Filename (Source)));
+            Recompute_View (Kernel);
+         end if;
+      end;
    end Save_To_File;
 
    -------------------------
