@@ -857,7 +857,7 @@ package body Debugger.Gdb.Ada is
          Num_Threads := Num_Threads + 1;
          EOL := Index;
 
-         while EOL < Output'Last and then Output (EOL) /= ASCII.LF loop
+         while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
             EOL := EOL + 1;
          end loop;
 
