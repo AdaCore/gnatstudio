@@ -437,13 +437,39 @@ package Src_Editor_Buffer is
       return Boolean;
    --  Return True if the buffer needs to be saved.
 
-   ----------------------
-   -- Line Information --
-   ----------------------
-
-   --  The following is related to information to be put in the side column.
+   -----------------------
+   -- Extra Information --
+   -----------------------
 
    type Line_Information_Access is access Line_Information_Record;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Line_Information_Record, Line_Information_Access);
+
+   --  The following is related to extra information associated to the buffer,
+   --  such as VCS status of the file.
+
+   type Extra_Information_Record is record
+      Identifier : String_Access;
+      Info       : Line_Information_Access;
+   end record;
+   type Extra_Information_Access is access Extra_Information_Record;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Extra_Information_Record, Extra_Information_Access);
+
+   type Extra_Information_Array is
+     array (Natural range <>) of Extra_Information_Access;
+   type Extra_Information_Array_Access is access Extra_Information_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Extra_Information_Array, Extra_Information_Array_Access);
+
+   function Get_Extra_Information
+     (Buffer : Source_Buffer)
+      return Extra_Information_Array_Access;
+   --  Return the extra information associated with the buffer.
+
+   --  The following is related to information to be put in the side column.
 
    type Line_Info_Width is record
       Info  : Line_Information_Access;
@@ -544,6 +570,11 @@ package Src_Editor_Buffer is
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
    --    Emitted when the information in the side column has been
    --    changed.
+   --
+   --  - "buffer_information_changed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class);
+   --    Emitted when the buffer information (such as VCS status)
+   --    has been changed.
    --
    --  - "status_changed"
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
@@ -685,6 +716,9 @@ private
       --  Width of the Left Window, in pixels.
 
       Original_Text_Inserted : Boolean := False;
+
+      Extra_Information : Extra_Information_Array_Access;
+      --  Extra information concerning the buffer.
    end record;
 
 end Src_Editor_Buffer;
