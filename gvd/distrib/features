@@ -13,11 +13,12 @@ New features in GVD 1.1.0
 - Scrolling of assembly window outside of displayed range is now possible
 - The Data window can now be separated from the main window (Edit->Preferences,
   Data/Separate Window)
-- The Memory View now handles editing in non-Hex mode, and possibility of 
+- The Memory View now handles editing in non-Hex mode, and the possibility of 
   displaying ASCII and another format at the same time.
 - The different window settings are now remembered from one session to another.
 - New command line option --editor-window that gives a much better integration
   with external editors such as Glide/Emacs.
+- A graphical list of processes is now displayed when attaching to a process.
 
 New features in GVD 1.0.2
 
