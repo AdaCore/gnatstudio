@@ -28,7 +28,10 @@ OBJ_DIR = $(ADA_MODULE_OBJ_DIR)
 CFLAGS = -g -O2
 
 PROJECT_FILE = ada_module
-LIBS := $(ADA_MODULE_OBJ_DIR)/libada_module$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(ADA_MODULE_SRCS)),)
+   LIBS := $(ADA_MODULE_OBJ_DIR)/libada_module$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(ADA_MODULE_ROOT),True)
    include ../builder/src/Makefile.generic

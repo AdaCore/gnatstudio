@@ -28,7 +28,10 @@ OBJ_DIR = $(CPP_MODULE_OBJ_DIR)
 CFLAGS = -g -O2
 
 PROJECT_FILE = cpp_module
-LIBS := $(CPP_MODULE_OBJ_DIR)/libcpp_module$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(ADA_MODULE_SRCS)),)
+   LIBS := $(CPP_MODULE_OBJ_DIR)/libcpp_module$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(CPP_MODULE_ROOT),True)
    include ../builder/src/Makefile.generic

@@ -22,7 +22,10 @@ OBJ_DIR = $(ALIASES_OBJ_DIR)
 CFLAGS = -g -O2
 
 PROJECT_FILE = aliases
-LIBS := $(ALIASES_OBJ_DIR)/libaliases$(AR_EXT) $(LIBS)
+
+ifneq ($(strip $(ALIASES_SRCS)),)
+   LIBS := $(ALIASES_OBJ_DIR)/libaliases$(AR_EXT) $(LIBS)
+endif
 
 ifeq ($(ALIASES_ROOT),True)
    include ../builder/src/Makefile.generic
