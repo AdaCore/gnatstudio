@@ -46,23 +46,37 @@ package Browsers.Dependency_Items is
    type File_Item is access all File_Item_Record'Class;
 
    procedure Gtk_New
-     (Item : out File_Item;
-      Win  : Gdk.Window.Gdk_Window;
+     (Item   : out File_Item;
+      Win    : Gdk.Window.Gdk_Window;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Dep  : Src_Info.Source_File);
+      File   : Src_Info.Internal_File);
    --  Create a new dependency item that represents Dep.
 
+   procedure Gtk_New
+     (Item            : out File_Item;
+      Win             : Gdk.Window.Gdk_Window;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Source_Filename : String);
+   --  Create a new dependency item directly from a source filename
+
    procedure Initialize
-     (Item : access File_Item_Record'Class;
-      Win  : Gdk.Window.Gdk_Window;
+     (Item   : access File_Item_Record'Class;
+      Win    : Gdk.Window.Gdk_Window;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Dep  : Src_Info.Source_File);
+      File   : Src_Info.Internal_File);
    --  Internal initialization function
 
    procedure On_Button_Click
-     (Item  : access File_Item;
+     (Item  : access File_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button);
    --  Called when the item is clicked on.
+
+   function Get_Source (Item : access File_Item_Record)
+      return Src_Info.Internal_File;
+   --  Return the source file associated with Item
+
+   procedure Destroy (Item : in out File_Item_Record);
+   --  Free the memory associated with the item
 
    ----------------------
    -- Dependency links --
@@ -80,7 +94,7 @@ package Browsers.Dependency_Items is
 private
    type File_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
    with record
-      Source : Src_Info.Source_File;
+      Source : Src_Info.Internal_File;
       Kernel : Glide_Kernel.Kernel_Handle;
 
       Browser : Browsers.Canvas.Glide_Browser := null;
@@ -93,4 +107,5 @@ private
       Dep : Src_Info.Dependency_Info;
    end record;
 
+   pragma Inline (Get_Source);
 end Browsers.Dependency_Items;

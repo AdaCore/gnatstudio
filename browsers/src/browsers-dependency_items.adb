@@ -29,6 +29,7 @@
 with Glib;              use Glib;
 with Gdk.Color;         use Gdk.Color;
 with Gdk.Drawable;      use Gdk.Drawable;
+with Gdk.Event;         use Gdk.Event;
 with Gdk.Font;          use Gdk.Font;
 with Gdk.GC;            use Gdk.GC;
 with Gdk.Window;        use Gdk.Window;
@@ -39,6 +40,7 @@ with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
 
 with Src_Info;                 use Src_Info;
+with Src_Info.ALI;             use Src_Info.ALI;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Browsers;    use Glide_Kernel.Browsers;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
@@ -64,11 +66,27 @@ package body Browsers.Dependency_Items is
      (Item : out File_Item;
       Win  : Gdk_Window;
       Kernel : access Kernel_Handle_Record'Class;
-      Dep  : Source_File)
-   is
+      File  : Internal_File) is
    begin
       Item := new File_Item_Record;
-      Initialize (Item, Win, Kernel, Dep);
+      Initialize (Item, Win, Kernel, Copy (File));
+   end Gtk_New;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Item            : out File_Item;
+      Win             : Gdk_Window;
+      Kernel          : access Kernel_Handle_Record'Class;
+      Source_Filename : String)
+   is
+      ALI : constant String := ALI_Filename_From_Source
+        (Source_Filename, Get_Project_View (Kernel), Get_Source_Path (Kernel));
+   begin
+      Item := new File_Item_Record;
+      Initialize (Item, Win, Kernel, Make_Source_File (Source_Filename, ALI));
    end Gtk_New;
 
    ----------------
@@ -79,12 +97,12 @@ package body Browsers.Dependency_Items is
      (Item : access File_Item_Record'Class;
       Win  : Gdk_Window;
       Kernel : access Kernel_Handle_Record'Class;
-      Dep  : Source_File)
+      File  : Internal_File)
    is
       use type Gdk_Window;
    begin
       pragma Assert (Win /= null);
-      Item.Source := Dep;
+      Item.Source := File;
       Item.Kernel := Kernel_Handle (Kernel);
       Update_Display (Item, Win);
    end Initialize;
@@ -126,22 +144,13 @@ package body Browsers.Dependency_Items is
       GC   : Gdk_GC;
       Width, Height : Gint;
 
-      List : LI_File_List;
-
    begin
       Ensure_Browser_Link (Item);
 
       Gdk_New (GC, Win);
       Set_Foreground (GC, White (Get_Default_Colormap));
 
-      List := Get_Source_Info_List (Item.Kernel);
-      Get_Unit_Name
-        (Item.Source,
-         List,
-         Get_Project_View (Item.Kernel),
-         Get_Source_Path (Item.Kernel),
-         Get_Object_Path (Item.Kernel),
-         Str2);
+      Get_Unit_Name (Item.Kernel, Item.Source, Str2);
 
       Width  := String_Width (Font, Str);
 
@@ -211,11 +220,27 @@ package body Browsers.Dependency_Items is
    ---------------------
 
    procedure On_Button_Click
-     (Item  : access File_Item;
+     (Item  : access File_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button) is
    begin
-      null;
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
+         Ensure_Browser_Link (Item);
+         Examine_Dependencies
+           (Item.Kernel, Item.Browser, Get_Source_Filename (Item.Source));
+      end if;
    end On_Button_Click;
+
+   ----------------
+   -- Get_Source --
+   ----------------
+
+   function Get_Source (Item : access File_Item_Record)
+      return Src_Info.Internal_File is
+   begin
+      return Item.Source;
+   end Get_Source;
 
    -------------
    -- Gtk_New --
@@ -228,5 +253,14 @@ package body Browsers.Dependency_Items is
       Link := new Dependency_Link_Record;
       Link.Dep := Dep;
    end Gtk_New;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Item : in out File_Item_Record) is
+   begin
+      Destroy (Item.Source);
+   end Destroy;
 
 end Browsers.Dependency_Items;
