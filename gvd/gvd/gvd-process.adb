@@ -1162,6 +1162,7 @@ package body GVD.Process is
                      Link_Name      => Link_Name.all,
                      Default_Entity => Entity);
                end if;
+
                if Item /= null then
                   Show_Item (Process.Data_Canvas, Item);
                end if;
@@ -1250,6 +1251,7 @@ package body GVD.Process is
                      Link_From     => Link_From,
                      Link_Name     => Link_Name.all);
                end if;
+
                if Item /= null then
                   Show_Item (Process.Data_Canvas, Item);
                end if;
@@ -1272,8 +1274,9 @@ package body GVD.Process is
                Last := Index;
                Skip_To_Blank (Cmd, Last);
                Set_Auto_Refresh
-                 (Find_Item (Process.Data_Canvas,
-                             Integer'Value (Cmd (Index .. Last - 1))),
+                 (Find_Item
+                    (Process.Data_Canvas,
+                     Integer'Value (Cmd (Index .. Last - 1))),
                   Get_Window (Process),
                   Enable,
                   Update_Value => True);
@@ -1291,8 +1294,9 @@ package body GVD.Process is
                   Last := Index;
                   Skip_To_Blank (Cmd, Last);
                   Free
-                    (Find_Item (Process.Data_Canvas,
-                                Integer'Value (Cmd (Index .. Last - 1))));
+                    (Find_Item
+                      (Process.Data_Canvas,
+                       Integer'Value (Cmd (Index .. Last - 1))));
                   Index := Last + 1;
                   Skip_Blanks (Cmd, Index);
                end loop;
