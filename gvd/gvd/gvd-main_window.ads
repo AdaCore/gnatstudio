@@ -23,7 +23,7 @@ with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
 with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
-with Open_Session_Pkg; use Open_Session_Pkg;
+with GVD.Session_Dialog; use GVD.Session_Dialog;
 with GVD.Dialogs; use GVD.Dialogs;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Basic_Types;
@@ -56,7 +56,7 @@ package GVD.Main_Window is
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
       GVD_Preferences     : GVD_Preferences_Access;
       Open_Program        : GVD_Open_Program;
-      Open_Session        : Open_Session_Access;
+      Open_Session        : GVD_Session_Dialog;
       History_Dialog      : History_Dialog_Access;
       Thread_Dialog       : Thread_Dialog_Access;
       Task_Dialog         : Task_Dialog_Access;

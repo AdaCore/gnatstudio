@@ -55,7 +55,7 @@ with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
 with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
-with Open_Session_Pkg;    use Open_Session_Pkg;
+with GVD.Session_Dialog;  use GVD.Session_Dialog;
 with Basic_Types;         use Basic_Types;
 with List_Select_Pkg;     use List_Select_Pkg;
 with Dock_Paned;          use Dock_Paned;
