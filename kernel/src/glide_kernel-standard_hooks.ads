@@ -65,7 +65,7 @@ package Glide_Kernel.Standard_Hooks is
    --  File_Location_Hooks --
    --------------------------
 
-   type File_Location_Hooks_Args is abstract new File_Hooks_Args with record
+   type File_Location_Hooks_Args is new File_Hooks_Args with record
       Line   : Natural;
       Column : Natural;
    end record;
@@ -75,7 +75,7 @@ package Glide_Kernel.Standard_Hooks is
 
    function Compute_Parent_Entity
      (Data : access File_Location_Hooks_Args)
-      return Entities.Entity_Information is abstract;
+      return Entities.Entity_Information;
    --  Return the name of the entity enclosing the location. This is either
    --  a subprogram, a package, ...
    --  The result of this call will generally be cached in the arguments, so

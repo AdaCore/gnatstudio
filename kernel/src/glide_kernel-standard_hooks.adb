@@ -77,7 +77,22 @@ package body Glide_Kernel.Standard_Hooks is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Context_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
+   procedure Location_Changed_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handles calls to run_hook from the shell for the various hooks
+
+   ---------------------------
+   -- Compute_Parent_Entity --
+   ---------------------------
+
+   function Compute_Parent_Entity
+     (Data : access File_Location_Hooks_Args)
+      return Entities.Entity_Information
+   is
+      pragma Unreferenced (Data);
+   begin
+      return null;
+   end Compute_Parent_Entity;
 
    ----------
    -- Free --
@@ -624,6 +639,26 @@ package body Glide_Kernel.Standard_Hooks is
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
    end Context_Run_Hook_Handler;
 
+   -----------------------------------
+   -- Location_Changed_Hook_Handler --
+   -----------------------------------
+
+   procedure Location_Changed_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Get_Hook_Name (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Args   : aliased File_Location_Hooks_Args :=
+        (Kernel => Kernel,
+         File   => Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))),
+         Line   => Nth_Arg (Data, 3),
+         Column => Nth_Arg (Data, 4));
+      pragma Unreferenced (Command);
+   begin
+      Run_Hook (Kernel, Name, Args'Unchecked_Access);
+   end Location_Changed_Hook_Handler;
+
    --------------
    -- Get_Name --
    --------------
@@ -1065,6 +1100,13 @@ package body Glide_Kernel.Standard_Hooks is
            & ASCII.LF
            & "Arguments are the following: (hook_name, context)"),
          Hook_With_Args, Context_Run_Hook_Handler'Access);
+
+      Create_Hook_Type
+        (Kernel, File_Location_Hook_Type,
+         -("Common type for all hooks that take a location in a source file as"
+           & " parameter." & ASCII.LF
+           & "Arguments are the following: (hook_name, file, line, column)"),
+         Hook_With_Args, Location_Changed_Hook_Handler'Access);
    end Register_Action_Hooks;
 
 end Glide_Kernel.Standard_Hooks;
