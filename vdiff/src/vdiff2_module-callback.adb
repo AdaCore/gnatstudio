@@ -618,6 +618,10 @@ package body Vdiff2_Module.Callback is
       Free (Root_Command (Cmd.all));
    end On_Ref_Change;
 
+   ---------------------------
+   --  On_Hide_Differences  --
+   ---------------------------
+
    procedure On_Hide_Differences
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
@@ -649,6 +653,10 @@ package body Vdiff2_Module.Callback is
       Free (Root_Command (Cmd.all));
    end On_Hide_Differences;
 
+   ----------------------
+   --  On_Recalculate  --
+   ----------------------
+
    procedure On_Recalculate
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
@@ -679,6 +687,10 @@ package body Vdiff2_Module.Callback is
       Unchecked_Execute (Cmd, Node);
       Free (Root_Command (Cmd.all));
    end On_Recalculate;
+
+   ---------------------------
+   --  On_Close_Difference  --
+   ---------------------------
 
    procedure On_Close_Difference
      (Widget  : access GObject_Record'Class;
