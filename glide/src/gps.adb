@@ -1414,7 +1414,9 @@ procedure GPS is
          end if;
       end if;
 
-      Context_Changed (Kernel, Context);
+      if Started and then Context /= null then
+         Context_Changed (Kernel, Context);
+      end if;
    end Child_Selected;
 
    ---------------------
