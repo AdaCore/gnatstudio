@@ -151,6 +151,12 @@ package Src_Info.Queries is
    --  Return True if both Entity1 and Entity2 represent the same source entity
    --  (same name and declaration location)
 
+   function Is_Discriminant
+     (Discr            : Entity_Information;
+      Lib_Info_For_Typ : LI_File_Ptr;
+      Typ              : Entity_Information) return Boolean;
+   --  Whether Discr is a discriminant of Type
+
    --------------------------------------
    -- Goto Declaration<->Body requests --
    --------------------------------------
@@ -622,10 +628,15 @@ package Src_Info.Queries is
    type Scope_Tree_Node is private;
    Null_Scope_Tree_Node : constant Scope_Tree_Node;
 
-   function Create_Tree (Lib_Info : LI_File_Ptr) return Scope_Tree;
+   function Create_Tree
+     (Lib_Info : LI_File_Ptr; Declarations_Only : Boolean := False)
+      return Scope_Tree;
    --  Create a new scope tree from an already parsed Library information.
    --  Note that the resulting tree needs to be freed whenever Lib_Info
    --  changes, since the tree points to internal nodes of Lib_Info.
+   --
+   --  If Declarations_Only is true, then only declarations are inserted into
+   --  the tree, no reference.
    --
    --  Consider using Glide_Kernel.Get_Scope_Tree instead, since it will parse
    --  the right source file for an entity.

@@ -1027,7 +1027,10 @@ package body Src_Info.Queries is
    -- Create_Tree --
    -----------------
 
-   function Create_Tree (Lib_Info : LI_File_Ptr) return Scope_Tree is
+   function Create_Tree
+     (Lib_Info : LI_File_Ptr; Declarations_Only : Boolean := False)
+      return Scope_Tree
+   is
 
       procedure Add_Declarations
         (Decl : E_Declaration_Info_List; T : in out Scope_Tree);
@@ -1428,7 +1431,10 @@ package body Src_Info.Queries is
                --  fit in the tree.
 
                Add_Single_Entity (New_Item, T);
-               Add_References (List.Value, T, Start_Of_Scope);
+
+               if not Declarations_Only then
+                  Add_References (List.Value, T, Start_Of_Scope);
+               end if;
 
                --  If the entity has an End_Of_Spec reference, and is a package
                --  (the one in which we are), we need to add it to the spec
@@ -1615,7 +1621,11 @@ package body Src_Info.Queries is
 
    function Start (Node : Scope_Tree_Node) return Scope_Tree_Node_Iterator is
    begin
-      return Scope_Tree_Node_Iterator (Node.Contents);
+      if Node = Null_Scope_Tree_Node then
+         return null;
+      else
+         return Scope_Tree_Node_Iterator (Node.Contents);
+      end if;
    end Start;
 
    ----------
@@ -1759,6 +1769,7 @@ package body Src_Info.Queries is
      (Entity : Entity_Information) return String is
    begin
       if Is_Predefined_Entity (Entity) then
+         Trace (Me, "Get_Declaration_File_Of: Predefined_Entity");
          return "";
       else
          return Entity.Decl_File.all;
@@ -3499,15 +3510,21 @@ package body Src_Info.Queries is
    is
       Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
         (Lib_Info, Entity);
+      C    : E_Reference_List;
    begin
       if Decl = null then
          return (Lib_Info => Lib_Info,
                  Kind     => Discriminant,
                  Current  => null);
       else
+         C := Decl.Value.References;
+         while C /= null and then C.Value.Kind /= Discriminant loop
+            C := C.Next;
+         end loop;
+
          return (Lib_Info => Lib_Info,
                  Kind     => Discriminant,
-                 Current  => Decl.Value.References);
+                 Current  => C);
       end if;
    end Get_Discriminants;
 
@@ -3734,5 +3751,33 @@ package body Src_Info.Queries is
 
       return False;
    end Is_Subtype;
+
+   ---------------------
+   -- Is_Discriminant --
+   ---------------------
+
+   function Is_Discriminant
+     (Discr            : Entity_Information;
+      Lib_Info_For_Typ : LI_File_Ptr;
+      Typ              : Entity_Information) return Boolean
+   is
+      Iter : Discriminant_Iterator := Get_Discriminants
+        (Lib_Info_For_Typ, Typ);
+      D    : Entity_Information;
+   begin
+      --  ??? Not efficient. Since this is used in the context of scope_tree,
+      --  should we improve the scope trees instead ?
+      loop
+         D := Get (Iter);
+         exit when D = No_Entity_Information;
+         if Is_Equal (D, Discr) then
+            return True;
+         end if;
+
+         Destroy (D);
+         Next (Iter);
+      end loop;
+      return False;
+   end Is_Discriminant;
 
 end Src_Info.Queries;
