@@ -44,8 +44,12 @@ with GVD.Types;
 with Basic_Types;      use Basic_Types;
 with GVD.Trace;        use GVD.Trace;
 with Process_Proxies;  use Process_Proxies;
+with Ada.Exceptions;   use Ada.Exceptions;
+with Traces;           use Traces;
 
 package body Display_Items is
+
+   Me : constant Debug_Handle := Create ("Display_Items");
 
    ---------------------
    -- Local Constants --
@@ -1105,6 +1109,10 @@ package body Display_Items is
       then
          Select_Item (Item, Component);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Button_Click;
 
    -----------------------
@@ -1353,6 +1361,10 @@ package body Display_Items is
             Button            => Get_Button (Event),
             Activate_Time     => Get_Time (Event));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Background_Click;
 
    -----------------------

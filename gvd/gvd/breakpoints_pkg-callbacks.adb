@@ -35,8 +35,12 @@ with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Breakpoints_Editor; use Breakpoints_Editor;
 
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Traces;                  use Traces;
 
 package body Breakpoints_Pkg.Callbacks is
+
+   Me : constant Debug_Handle := Create ("Breakpoints_Pkg.Callbacks");
 
    use Gtk.Arguments;
 
@@ -52,6 +56,11 @@ package body Breakpoints_Pkg.Callbacks is
    begin
       Hide (Object);
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Breakpoints_Delete_Event;
 
    ------------------------------------
@@ -69,6 +78,11 @@ package body Breakpoints_Pkg.Callbacks is
          On_Remove_Clicked (Object);
       end if;
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Breakpoints_Key_Press_Event;
 
    -------------------------
@@ -101,6 +115,10 @@ package body Breakpoints_Pkg.Callbacks is
             end if;
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Breakpoints_Show;
 
    ----------------------------------
@@ -118,6 +136,10 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Location_Selected_Toggled;
 
    -----------------------------------
@@ -135,6 +157,10 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, True);
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Subprogam_Selected_Toggled;
 
    ---------------------------------
@@ -151,6 +177,10 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, True);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Set_Sensitive (Breakpoints.Regexp_Combo, False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Address_Selected_Toggled;
 
    --------------------------------
@@ -167,6 +197,10 @@ package body Breakpoints_Pkg.Callbacks is
       Set_Sensitive (Breakpoints.Address_Combo, False);
       Set_Sensitive (Breakpoints.Subprogram_Combo, False);
       Set_Sensitive (Breakpoints.Regexp_Combo, True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Regexp_Selected_Toggled;
 
    -----------------------------
@@ -180,6 +214,10 @@ package body Breakpoints_Pkg.Callbacks is
       pragma Unreferenced (B);
    begin
       B := Set_Location_Breakpoint (Breakpoint_Editor_Access (Object));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Add_Location_Clicked;
 
    --------------------------------
@@ -241,6 +279,10 @@ package body Breakpoints_Pkg.Callbacks is
             end if;
          end loop;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Update_Location_Clicked;
 
    ----------------------------------
@@ -254,6 +296,10 @@ package body Breakpoints_Pkg.Callbacks is
         Breakpoint_Editor_Access (Object);
    begin
       Toggle_Advanced_Dialog (Editor);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Advanced_Location_Clicked;
 
    -------------------------------
@@ -266,6 +312,10 @@ package body Breakpoints_Pkg.Callbacks is
       pragma Unreferenced (Object);
    begin
       null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Add_Watchpoint_Clicked;
 
    ----------------------------------
@@ -278,6 +328,10 @@ package body Breakpoints_Pkg.Callbacks is
       pragma Unreferenced (Object);
    begin
       null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Update_Watchpoint_Clicked;
 
    ------------------------------------
@@ -291,6 +345,10 @@ package body Breakpoints_Pkg.Callbacks is
         Breakpoint_Editor_Access (Object);
    begin
       Toggle_Advanced_Dialog (Editor);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Advanced_Watchpoint_Clicked;
 
    ------------------------------------
@@ -328,6 +386,10 @@ package body Breakpoints_Pkg.Callbacks is
       end;
 
       Set_Busy (Editor.Process, False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Load_Exception_List_Clicked;
 
    ------------------------------
@@ -345,6 +407,10 @@ package body Breakpoints_Pkg.Callbacks is
 
    begin
       B := Set_Exception_Breakpoint (Editor);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Add_Exception_Clicked;
 
    ---------------------------------
@@ -372,6 +438,10 @@ package body Breakpoints_Pkg.Callbacks is
             end if;
          end loop;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Update_Exception_Clicked;
 
    -----------------------------------
@@ -385,6 +455,10 @@ package body Breakpoints_Pkg.Callbacks is
         Breakpoint_Editor_Access (Object);
    begin
       Toggle_Advanced_Dialog (Editor);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Advanced_Exception_Clicked;
 
    -----------------------
@@ -407,6 +481,10 @@ package body Breakpoints_Pkg.Callbacks is
               (Get_Text (Editor.Breakpoint_List, Selection, 0)),
             Mode => GVD.Types.Visible);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Remove_Clicked;
 
    ---------------------
@@ -429,6 +507,10 @@ package body Breakpoints_Pkg.Callbacks is
             Editor.Process.Breakpoints (Selection).Line,
             Process => GObject (Editor.Process));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Clicked;
 
    ----------------------
@@ -482,6 +564,10 @@ package body Breakpoints_Pkg.Callbacks is
       end if;
 
       Hide (Object);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Ok_Bp_Clicked;
 
 end Breakpoints_Pkg.Callbacks;

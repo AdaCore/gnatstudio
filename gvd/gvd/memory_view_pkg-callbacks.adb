@@ -31,8 +31,12 @@ with Gtk.Handlers;      use Gtk.Handlers;
 
 with GVD.Memory_View;   use GVD.Memory_View;
 with Basic_Types;       use Basic_Types;
+with Traces;            use Traces;
+with Ada.Exceptions;    use Ada.Exceptions;
 
 package body Memory_View_Pkg.Callbacks is
+
+   Me : constant Debug_Handle := Create ("Memory_View_Pkg.Callbacks");
 
    use Gtk.Arguments;
 
@@ -48,6 +52,11 @@ package body Memory_View_Pkg.Callbacks is
    begin
       Hide (Get_Toplevel (Object));
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Memory_View_Delete_Event;
 
    ----------------------------------
@@ -66,6 +75,10 @@ package body Memory_View_Pkg.Callbacks is
       if Realized_Is_Set (View) then
          Update_Display (View);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Memory_View_Size_Allocate;
 
    -------------------------------
@@ -79,6 +92,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Address_Entry_Activate;
 
    -----------------------------
@@ -92,6 +109,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Display_Memory (View, Get_Text (View.Address_Entry));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Address_View_Clicked;
 
    ---------------------------
@@ -105,6 +126,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Size_Entry_Changed;
 
    ---------------------------
@@ -118,6 +143,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Data_Entry_Changed;
 
    ---------------------------
@@ -131,6 +160,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Show_Ascii_Toggled;
 
    ---------------------
@@ -144,6 +177,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Page_Up (View);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Pgup_Clicked;
 
    ---------------------
@@ -157,6 +194,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Page_Down (View);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Pgdn_Clicked;
 
    -----------------------------
@@ -214,6 +255,10 @@ package body Memory_View_Pkg.Callbacks is
       --  an event for which Get_String is invalid
       when Invalid_Field =>
          return False;
+
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_View_Key_Press_Event;
 
    -------------------------
@@ -227,6 +272,10 @@ package body Memory_View_Pkg.Callbacks is
       pragma Unreferenced (Object, Params);
    begin
       null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Move_Cursor;
 
    ----------------------------------
@@ -255,6 +304,11 @@ package body Memory_View_Pkg.Callbacks is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+      return False;
    end On_View_Button_Release_Event;
 
    ----------------------
@@ -269,6 +323,10 @@ package body Memory_View_Pkg.Callbacks is
       Free (View.Flags);
       View.Flags := new String'(View.Values.all);
       Update_Display (View);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Reset_Clicked;
 
    -----------------------
@@ -282,6 +340,10 @@ package body Memory_View_Pkg.Callbacks is
         GVD_Memory_View (Get_Toplevel (Object));
    begin
       Apply_Changes (View);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Submit_Clicked;
 
    -----------------------
@@ -293,6 +355,10 @@ package body Memory_View_Pkg.Callbacks is
    is
    begin
       Hide (Get_Toplevel (Object));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Cancel_Clicked;
 
 end Memory_View_Pkg.Callbacks;
