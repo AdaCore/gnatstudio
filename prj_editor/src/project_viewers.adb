@@ -184,7 +184,7 @@ package body Project_Viewers is
    View_Version_Control : aliased constant View_Description :=
      (Num_Columns => 3,
       Titles      => "File Name" + "Revision" + "Head Revision",
-      Tab_Title   => new String' ("VC"),
+      Tab_Title   => new String' ("VCS"),
       Display     => (Name_Display'Access, null, null),
       Callbacks   => (null, null, null));
    View_Switches : aliased constant View_Description :=
