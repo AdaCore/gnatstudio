@@ -392,17 +392,25 @@ package body Glide_Kernel.Editor is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Top         : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Source      : Source_Editor_Box := Get_Current_Editor (Top);
-      Source_Info : LI_File_Ptr :=
-        Locate_From_Source
-          (Get_Source_Info_List (Kernel), Get_Filename (Source));
-
+      Source       : Source_Editor_Box := Get_Current_Editor (Top);
+      Source_Info  : LI_File_Ptr;
       Filename     : String_Access;
       Start_Line   : Positive;
       Start_Column : Positive;
       End_Line     : Positive;
       End_Column   : Positive;
    begin
+      if Get_Filename (Source) = "" then
+         Console.Insert
+           (Kernel, "Cross-references not possible on unamed files!",
+            Highlight_Sloc => False);
+         return;
+      end if;
+
+      Source_Info :=
+        Locate_From_Source
+          (Get_Source_Info_List (Kernel), Get_Filename (Source));
+
       if Source_Info = No_LI_File or else Is_Incomplete (Source_Info) then
          declare
             ALI_Filename : constant String :=
