@@ -335,6 +335,7 @@ package body VCS_View_Pkg is
                        and then GNAT.OS_Lib.Is_Regular_File (Log)
                      then
                         GNAT.OS_Lib.Delete_File (Log, Dummy);
+                        Close_File_Editors (Kernel, Log);
                      end if;
 
                      Remove_File_From_Mapping (Kernel, File);
