@@ -1,5 +1,11 @@
 New features in GPS 1.0.2
 
+- The project browser now behaves like all other browsers, with arrows drawn on
+  the items to compute dependencies only for specific projects
+
+- A new search context has been provided for Navigate->Find, to search in the
+  project browser
+
 - Search in the explorer can now be configured to search only projects,
   directories or files, or any combination of them
 
