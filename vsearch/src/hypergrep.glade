@@ -348,6 +348,7 @@
 	<widget>
 	  <class>GtkLabel</class>
 	  <name>files_label</name>
+	  <sensitive>False</sensitive>
 	  <label>Files:</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>
@@ -374,6 +375,7 @@
 	<widget>
 	  <class>GtkLabel</class>
 	  <name>directory_label</name>
+	  <sensitive>False</sensitive>
 	  <label>Directory:</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>

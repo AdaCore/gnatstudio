@@ -155,6 +155,8 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
       Set_Sensitive (Hyper_Grep_Window.Browse_Button,   Active);
       Set_Sensitive (Hyper_Grep_Window.Subdirs_Check,   Active);
       Set_Sensitive (Hyper_Grep_Window.Files_Combo,     Active);
+      Set_Sensitive (Hyper_Grep_Window.Files_Label,     Active);
+      Set_Sensitive (Hyper_Grep_Window.Directory_Label, Active);
    end On_Only_Project_Check_Toggled;
 
    -----------------------------

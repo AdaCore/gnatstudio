@@ -153,6 +153,7 @@ begin
    Set_Padding (Hyper_Grep_Base.Files_Label, 0, 0);
    Set_Justify (Hyper_Grep_Base.Files_Label, Justify_Center);
    Set_Line_Wrap (Hyper_Grep_Base.Files_Label, False);
+   Set_Sensitive (Hyper_Grep_Base.Files_Label, False);
    Attach (Hyper_Grep_Base.Files_Table, Hyper_Grep_Base.Files_Label, 0, 1, 1, 2,
      Fill, 0,
      0, 0);
@@ -162,6 +163,7 @@ begin
    Set_Padding (Hyper_Grep_Base.Directory_Label, 0, 0);
    Set_Justify (Hyper_Grep_Base.Directory_Label, Justify_Center);
    Set_Line_Wrap (Hyper_Grep_Base.Directory_Label, False);
+   Set_Sensitive (Hyper_Grep_Base.Directory_Label, False);
    Attach (Hyper_Grep_Base.Files_Table, Hyper_Grep_Base.Directory_Label, 0, 1, 2, 3,
      Fill, 0,
      0, 0);
