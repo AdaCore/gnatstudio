@@ -109,7 +109,9 @@ begin
                PRef := Ref;
                --  conversion to column
                PRef.Position.Column := Matches (0).First - Src_Line'First;
-               Fu_To_Handlers (Ref.Referred_Symbol)(PRef);
+               if (Fu_To_Handlers (Ref.Referred_Symbol) /= null) then
+                  Fu_To_Handlers (Ref.Referred_Symbol)(PRef);
+               end if;
             end loop;
             Free (Ref);
          end;
