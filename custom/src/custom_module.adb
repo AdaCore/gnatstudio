@@ -100,6 +100,7 @@ package body Custom_Module is
 
                if Current_Child.Tag.all = "Action" then
                   declare
+                     --  ??? where is Args freed
                      Args : constant Argument_List_Access :=
                        Argument_String_To_List (Current_Child.Value.all);
                      A : Argument_List_Access;
