@@ -160,10 +160,8 @@ package body Glide_Kernel.Preferences is
       Save_Desktop_On_Exit := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Save-Desktop-On-Exit",
          Nick    => -"Save desktop on exit",
-         Blurb   => -("True if the desktop should be saved when exiting GPS"
-                      & " and restore on next startup"),
-         Default => True,
-         Flags   => Param_Readable));
+         Blurb   => -("True if the desktop should be saved when exiting GPS"),
+         Default => True));
       Register_Property
         (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
 
