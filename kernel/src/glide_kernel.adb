@@ -139,6 +139,16 @@ package body Glide_Kernel is
 
       Set_Expression_Of (Item, Expr);
 
+      --  Register the name of the project so that we can retrieve it from one
+      --  of its views
+
+      Prj.Tree.Tree_Private_Part.Projects_Htable.Set
+        (Prj.Tree.Name_Of (Kernel.Project),
+         Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
+         (Name => Prj.Tree.Name_Of (Kernel.Project),
+          Node => Kernel.Project,
+          Modified => False));
+
       Recompute_View (Kernel);
    end Create_Default_Project;
 
