@@ -829,6 +829,7 @@ package body Debugger.Gdb is
         or else Command = "n"
         or else Command = "nexti"
         or else Command = "cont"
+        or else Command = "c"
         or else Command = "finish"
         or else Command = "begin"
         or else Command = "run";
