@@ -181,6 +181,11 @@ Known Problems fixed in GPS 2.1.0
               its foreground and background colors to the default values.
   Workaround: Set the color again explicitely
 
+- D622-018 Duplicate references returned for entities with no separate spec
+  Problem:    If you call "Find all references" on a subprogram with no
+              separate spec, a duplicate reference is returned.
+  Workaround: None found, except adding a separate spec
+
 - D614-009 Errors in C files are not displayed in the Locations window
   Problem:    Under Windows, the errors produced by compilation of C files are
               not visible in the Locations window.
