@@ -24,6 +24,7 @@ with Glib.Values;               use Glib.Values;
 with Csc_HTML_Widget;           use Csc_HTML_Widget;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -396,6 +397,11 @@ package body Glide_Kernel.Help is
       Result   : Boolean;
 
    begin
+      if not Is_Regular_File (Help_File) then
+         Insert (Kernel, Help_File & (-": File not found"), Mode => Error);
+         return;
+      end if;
+
       Child := Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
 
       if Child = null then
