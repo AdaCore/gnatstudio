@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Goto Spec/Body will now work even if the file was not previously compiled
+
 - Desktops are now project specific
   Opening a new project will close all open editors, browsers,... and open
   the desktop associated with the new project
