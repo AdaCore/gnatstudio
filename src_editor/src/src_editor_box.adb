@@ -776,7 +776,7 @@ package body Src_Editor_Box is
          begin
             Create_Pixmap_From_Text
               (Text     => Str,
-               Font     => Get_Pref (Data.Box.Kernel, Tooltip_Font),
+               Font     => Get_Pref (Data.Box.Kernel, Default_Font),
                Bg_Color => White (Get_Default_Colormap),
                Widget   => Widget,
                Pixmap   => Pixmap,
