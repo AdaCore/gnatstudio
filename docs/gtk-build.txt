@@ -165,20 +165,10 @@ cd pango-1.0.2
 # Under HP-UX, apply the patch libtool-hpux.diff:
 # patch -p0 < .../libtool-hpux.diff
 
-./configure --prefix=$prefix --with-included-modules=basic-x
+# Under HP-UX and Tru64, apply the patch pango-1.0.2.diff:
+# patch -p0 < .../pango-1.0.2.diff
 
-# Under HP-UX and Tru64, the command above fails with
-# checking modules to link statically... basic-x
-# configure: error: the specified module basic-x does not exist
-# Use instead:
-# ./configure --prefix=$prefix
-#
-# Modifying configure as follows works around the configure bug, but then
-# make fails:
-# Replace the following line:
-#  elif echo $module | grep -- "-x\($\|,\)" > /dev/null; then
-# by:
-#  elif echo $module | grep -- "-x\($\)" > /dev/null; then
+./configure --prefix=$prefix --with-included-modules=basic-x
 
 make
 make install
@@ -195,15 +185,12 @@ cd gtk+-2.0.3
 # Also, make sure that libX11.sl, libXt.sl and libXext.sl can be found under
 # e.g /usr/lib
 
+# Under HP-UX and Tru64, apply the patch gtk+-2.0.3.diff:
+# patch -p0 < .../gtk+-2.0.3.diff
+
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
   --enable-debug=minimum
-
-# Under Tru64 & HP-UX, the command above fails with
-# checking pixbuf loaders to build... xpm,png,gif,jpeg
-# configure: error: the specified loader xpm does not exist
-# Use instead:
-# ./configure --prefix=$prefix --without-libtiff --enable-debug=minimum
 
 make
 make install
