@@ -71,12 +71,15 @@ package body Traces is
    type Debug_Handle_Record is record
       Name   : String_Access;
       Active : Boolean;
+      Forced_Active : Boolean := False;
       Stream : File_Type_Access;
       Timer  : Ada.Calendar.Time;
       Next   : Debug_Handle;
       Count  : Natural;
    end record;
    --  ??? Should be protected so that streams are correctly closed on exit
+   --  If Forced_Active is true, then the Active status shouldn't be impacted
+   --  by a '+' in the configuration file
 
    procedure Unchecked_Free is new Unchecked_Deallocation
      (Debug_Handle_Record, Debug_Handle);
@@ -151,7 +154,11 @@ package body Traces is
    -- Create --
    ------------
 
-   function Create (Unit_Name : String) return Debug_Handle is
+   function Create
+     (Unit_Name : String;
+      Default   : Default_Activation_Status := From_Config)
+      return Debug_Handle
+   is
       Tmp : Debug_Handle := null;
       Upper_Case : constant String := To_Upper (Unit_Name);
    begin
@@ -161,12 +168,22 @@ package body Traces is
          Tmp := Find_Handle (Upper_Case);
          if Tmp = null then
             Tmp := new Debug_Handle_Record'
-              (Name   => new String'(Upper_Case),
-               Active => Default_Activation,
-               Stream => Default_Output,
-               Timer  => Ada.Calendar.Clock,
-               Count  => 1,
-               Next   => Handles_List);
+              (Name          => new String'(Upper_Case),
+               Active        => Default_Activation,
+               Forced_Active => False,
+               Stream        => Default_Output,
+               Timer         => Ada.Calendar.Clock,
+               Count         => 1,
+               Next          => Handles_List);
+
+            if Default = On then
+               Tmp.Active := True;
+               Tmp.Forced_Active := True;
+            elsif Default = Off then
+               Tmp.Active := False;
+               Tmp.Forced_Active := True;
+            end if;
+
             Handles_List := Tmp;
          end if;
 
@@ -605,7 +622,8 @@ package body Traces is
                      Skip_To_Newline;
                      Handle := Handles_List;
                      while Handle /= null loop
-                        if Handle /= Absolute_Time
+                        if not Handle.Forced_Active
+                          and then Handle /= Absolute_Time
                           and then Handle /= Elapsed_Time
                           and then Handle /= Stack_Trace
                           and then Handle /= Colors

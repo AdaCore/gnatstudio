@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -86,7 +86,11 @@ package Traces is
    procedure Finalize;
    --  Free all the registered handles
 
-   function Create (Unit_Name : String) return Debug_Handle;
+   type Default_Activation_Status is (From_Config, On, Off);
+   function Create
+     (Unit_Name : String;
+      Default   : Default_Activation_Status := From_Config)
+      return Debug_Handle;
    --  Create a new handle.
    --  Name is upper-cases, and looked-for in the configuration file to check
    --  whether debug traces should be emitted for that module.
