@@ -1737,7 +1737,7 @@ package body Project_Properties is
          end if;
 
          declare
-            List : constant String := Execute_Command
+            List : constant String := GPS.Kernel.Scripts.Execute_Command
               (Script,
                Command     => Attr.Dynamic_List_Cmd.all,
                Hide_Output => True,
