@@ -2489,7 +2489,8 @@ package body Debugger.Gdb is
          --  type.
          --  There is also
          --  "(<ref> array (...) of string) @0xbffff5fc: ((null), (null))"
-         --  where the value of the array is indeed visible
+         --  where the value of the array is indeed visible, in which case we
+         --  try and keep the array as long as possible
 
          if Index + 11 < Type_Str'Last
            and then Type_Str (Index + 1 .. Index + 11) = "<ref> array"
@@ -2517,6 +2518,26 @@ package body Debugger.Gdb is
            or else (Index + 5 <= Type_Str'Last
                     and then Type_Str (Index + 1 .. Index + 5) = "<ref>")
          then
+
+            --  If we have "(<ref> array (...) of string) @0xbffff5fc: ((null),
+            --  (null))", this is still considered as an array, which is
+            --  friendlier for the user in the canvas.
+
+            declare
+               Tmp : Natural := Index;
+            begin
+               Skip_To_Char (Type_Str, Tmp, ')');
+               Skip_To_Char (Type_Str, Tmp, ':');
+               if Type_Str (Tmp .. Tmp + 1) = " (" then
+                  Index := Tmp;
+                  Parse_Array_Value
+                    (Lang, Type_Str, Index, Array_Type_Access (Result));
+                  return;
+               end if;
+            end;
+
+            --  Otherwise, we convert to an access type
+
             if Parent /= null then
                Result := Replace (Parent, Result, New_Access_Type);
             else
