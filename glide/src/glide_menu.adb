@@ -239,8 +239,6 @@ package body Glide_Menu is
          Gtk_New (File & (-"_Close"), "", Stock_Close, On_Close'Access),
          Gtk_New (File & (-"Close _All"), "", null),
          Gtk_New (File & "sep2", Item_Type => Separator),
-         Gtk_New (File & (-"_Print"), "", Stock_Print, null),
-         Gtk_New (File & "sep3", Item_Type => Separator),
          Gtk_New (File & (-"_Exit"), "<control>Q",
                   Stock_Quit, On_Exit'Access),
 
