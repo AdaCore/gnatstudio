@@ -548,12 +548,11 @@ package body Glide_Kernel.Console is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      View : constant Result_View := Get_Or_Create_Result_View (Kernel, False);
+      View : Result_View;
       pragma Unreferenced (Mode);
    begin
-      if View /= null
-        and then Mime_Type = Mime_Location_Action
-      then
+      if Mime_Type = Mime_Location_Action then
+         View := Get_Or_Create_Result_View (Kernel, False);
          declare
             Identifier : constant String := Get_String (Data (Data'First));
             Category   : constant String := Get_String (Data (Data'First + 1));
