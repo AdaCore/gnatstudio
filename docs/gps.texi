@@ -5195,12 +5195,15 @@ Program used to execute commands externally.
 
 @item Print command
 @cindex print
+@cindex a2ps
+@cindex PrintFile
 @anchor{Print Command}
-Program used to print files. By default @code{a2ps}, available under Linux
-by default. This utility can be used on most unix systems, and can be downloaded
-from @url{http://www.inf.enst.fr/~demaille/a2ps}.
-Under Windows systems, a possible replacement is the PrintFile utility available
-from @url{http://www.lerup.com/printfile/descr.html}.
+Program used to print files. By default @code{a2ps}, available under GNU/Linux
+systems. This utility can be used on most unix systems, and can be downloaded
+from @url{http://www.inf.enst.fr/~demaille/a2ps}
+
+Under Windows systems, a possible replacement is the PrintFile freeware
+utility which is available from @url{http://www.lerup.com/printfile/descr.html}
 
 @end table
 
@@ -6370,6 +6373,10 @@ available.
 Another possibility on Unix systems is to use the file @file{Makefile.adalib}
 that can be found in the adalib directory of your GNAT installation and
 specify e.g @option{-g -O2} for the @option{CFLAGS} switches.
+
+@item The GPS main window is not displayed
+If when launching GPS, nothing happens, you can try to rename the @file{.gps}
+directory (see @ref{Files}) to start from a fresh set up.
 
 @end table
 
