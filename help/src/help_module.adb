@@ -38,6 +38,7 @@ with Gdk.Event;                    use Gdk.Event;
 with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
 with Gtk.Adjustment;               use Gtk.Adjustment;
 with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Menu;                     use Gtk.Menu;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Widget;                   use Gtk.Widget;
@@ -48,6 +49,7 @@ with OS_Utils;                     use OS_Utils;
 with Ada.Strings.Fixed;            use Ada.Strings.Fixed;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Find_Utils;                   use Find_Utils;
+with Gtk.Clipboard;                use Gtk.Clipboard;
 
 package body Help_Module is
 
@@ -139,6 +141,9 @@ package body Help_Module is
    procedure On_Load_Done (Html : access Gtk_Widget_Record'Class);
    --  Called when a file has been loaded.
 
+   procedure On_Copy (Html : access Glib.Object.GObject_Record'Class);
+   --  Callback for the "Copy" contextual menu item.
+
    procedure On_Zoom_In
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Help->Zoom in
@@ -169,6 +174,66 @@ package body Help_Module is
    --  Callback for Help->Open HTML...
    --  Display a file selection dialog, and then open the HTML file in the
    --  help widget.
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Generate a context corresponding to the currently viewed location.
+
+   function Help_Contextual
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
+   --  The contextual menu for HTML viewers.
+
+   ---------------------
+   -- Help_Contextual --
+   ---------------------
+
+   function Help_Contextual
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+   is
+      pragma Unreferenced (Event);
+      Mitem : Gtk_Menu_Item;
+   begin
+      Gtk_New (Mitem, -"Copy");
+      Add (Menu, Mitem);
+
+      Object_Callback.Object_Connect
+        (Mitem, "activate",
+         Object_Callback.To_Marshaller (On_Copy'Access),
+         Slot_Object => Object,
+         After => True);
+
+      return Default_Factory (Kernel, Gtk_Widget (Event_Widget));
+   end Help_Contextual;
+
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      pragma Unreferenced (Child);
+      Context : URL_Context_Access;
+   begin
+      Context := new URL_Context;
+
+      Set_Context_Information
+        (Context => Context,
+         Kernel  => Kernel,
+         Creator => Help_Module_ID);
+
+      return Selection_Context_Access (Context);
+   end Default_Factory;
 
    -----------------
    -- HTML_Loader --
@@ -515,6 +580,16 @@ package body Help_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Destroy;
 
+   -------------
+   -- On_Copy --
+   -------------
+
+   procedure On_Copy (Html : access GObject_Record'Class) is
+      Browser : constant Help_Browser := Help_Browser (Html);
+   begin
+      Set_Text (Get, Get_Selection (Browser.Csc));
+   end On_Copy;
+
    ------------------
    -- On_Load_Done --
    ------------------
@@ -639,6 +714,13 @@ package body Help_Module is
       Font_Adjust := Integer (Get_Pref (Kernel, Help_Font_Adjust));
 
       Result := Load_File (Kernel, Html, File);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Html.Csc,
+         Object          => Html,
+         ID              => Help_Module_ID,
+         Context_Func    => Help_Contextual'Access);
 
       return Html;
    end Create_Html_Editor;
@@ -917,7 +999,8 @@ package body Help_Module is
          Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
          Priority                => Default_Priority - 20,
-         Default_Context_Factory => null,
+         Contextual_Menu_Handler => null,
+         Default_Context_Factory => Default_Factory'Access,
          MDI_Child_Tag           => Help_Browser_Record'Tag,
          Mime_Handler            => Mime_Action'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
