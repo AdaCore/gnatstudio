@@ -3353,6 +3353,7 @@ package body GVD_Module is
       Subprogram_Filter : Action_Filter;
    begin
       GVD_Module_ID := new GVD_Module_Record;
+      Debugger_Module_ID := Module_ID (GVD_Module_ID);
       GVD.Preferences.GVD_Prefs := Get_Preferences (Kernel);
       GVD.Preferences.Register_Default_Preferences (GVD.Preferences.GVD_Prefs);
       GVD_Module_ID.Show_Lines_With_Code :=
