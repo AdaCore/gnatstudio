@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,7 @@
 with GNAT.Regpat;
 with Basic_Types;
 with VFS;
+with Case_Handling;
 
 package Language is
 
@@ -215,15 +216,6 @@ package Language is
    -- Source Analyzing --
    ----------------------
 
-   type Casing_Type is (Unchanged, Upper, Lower, Mixed, Smart_Mixed);
-   for Casing_Type'Size use Integer'Size;
-   pragma Convention (C, Casing_Type);
-   --  Casing used for identifiers and reserved words.
-   --  Only relevant for case insensitive languages.
-   --  - Mixed: Set first character of each word and characters after an
-   --    underscore to upper-case, all other characters are set to lower-case.
-   --  - Smart_Mixed: As Mixed but never force an upper-case to lower-case.
-
    type Source_Location is record
       Line   : Natural := 0;
       --  Line number for this entity. Line numbers start at 1.
@@ -245,8 +237,8 @@ package Language is
       Indent_Decl       : Natural;
       Tab_Width         : Natural;
       Indent_Case_Extra : Boolean;
-      Reserved_Casing   : Casing_Type;
-      Ident_Casing      : Casing_Type;
+      Reserved_Casing   : Case_Handling.Casing_Type;
+      Ident_Casing      : Case_Handling.Casing_Type;
       Format_Operators  : Boolean;
       Use_Tabs          : Boolean;
       Align_On_Colons   : Boolean;
@@ -279,8 +271,8 @@ package Language is
       Indent_Decl       => 0,
       Tab_Width         => 8,
       Indent_Case_Extra => True,
-      Reserved_Casing   => Unchanged,
-      Ident_Casing      => Unchanged,
+      Reserved_Casing   => Case_Handling.Unchanged,
+      Ident_Casing      => Case_Handling.Unchanged,
       Format_Operators  => False,
       Use_Tabs          => False,
       Align_On_Colons   => False,
@@ -467,11 +459,13 @@ package Language is
    --  character counts.
 
    procedure Format_Buffer
-     (Lang          : access Language_Root;
-      Buffer        : String;
-      Replace       : Replace_Text_Callback;
-      From, To      : Natural := 0;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
+     (Lang            : access Language_Root;
+      Buffer          : String;
+      Replace         : Replace_Text_Callback;
+      From, To        : Natural := 0;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters;
+      Case_Exceptions : Case_Handling.Casing_Exceptions :=
+        Case_Handling.No_Casing_Exception);
    --  Given a Buffer, reformat it, based on Indent_Params.
    --  Reformat only lines comprised between From and To.
 
