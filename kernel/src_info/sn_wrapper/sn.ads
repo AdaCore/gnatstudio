@@ -48,14 +48,15 @@ package SN is
       SU,      --  subroutine (Fortran)
       T,       --  typedef
       TA,      --  template argument
-      UD,      --  predefined entity ?
       UN,      --  union
 
+      UD,      --  undefined
       Undef    --  Undefined (leave last)
      );
-   --  Source Navigator DB tables types
+   --  Source Navigator DB tables types.
+   --  see dbutils.c::SN_symbol_types and sn.h for more information
 
-   subtype Table_Type  is All_Table_Types range BY .. UN;
+   subtype Table_Type  is All_Table_Types range BY .. UD;
    subtype Symbol_Type is All_Table_Types range CL .. Undef;
 
    Max_Src_Line_Length : constant Integer := 4096;
