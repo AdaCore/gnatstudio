@@ -31,14 +31,6 @@ package GPS.Main_Window.Debug is
    --  Their contents is updated based on the current debugger, unless
    --  Debugger is not null.
 
-   procedure Find_Match
-     (H   : in out History_List;
-      Num : in Natural;
-      D   : in Direction);
-   --  Moves in the history in the given direction until it finds a non-hidden
-   --  command which was sent to the debugger with number Num.
-   --  No_Such_Item is raised if no matching command is found.
-
    procedure Preferences_Changed
      (Window : access GPS_Window_Record'Class);
    --  Emit the "preferences_changed" signal, which indicates a change in

@@ -18,35 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Gdk.Window;          use Gdk.Window;
-with Gtk.Window;          use Gtk.Window;
-with Gtkada.Dialogs;      use Gtkada.Dialogs;
-with Gtkada.Canvas;       use Gtkada.Canvas;
-with Gtkada.MDI;          use Gtkada.MDI;
-with Gtk.Dialog;          use Gtk.Dialog;
-with Gtk.Widget;          use Gtk.Widget;
+with Glib;                 use Glib;
+with Gdk.Window;           use Gdk.Window;
+with Gtk.Window;           use Gtk.Window;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with Gtkada.Canvas;        use Gtkada.Canvas;
+with Gtkada.MDI;           use Gtkada.MDI;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.Widget;           use Gtk.Widget;
 
-with GPS.Intl;          use GPS.Intl;
-with GVD;                 use GVD;
-with GVD.Process;         use GVD.Process;
-with GVD.Proc_Utils;      use GVD.Proc_Utils;
-with GVD.Call_Stack;      use GVD.Call_Stack;
-with GVD.Canvas;          use GVD.Canvas;
-with GVD.Dialogs;         use GVD.Dialogs;
-with GVD.Types;           use GVD.Types;
-with GPS.Main_Window;     use GPS.Main_Window;
-with GVD.Memory_View;     use GVD.Memory_View;
-with Basic_Types;         use Basic_Types;
-with Std_Dialogs;         use Std_Dialogs;
-with Histories;           use Histories;
-with List_Select_Pkg;     use List_Select_Pkg;
-with Debugger;            use Debugger;
-with Process_Proxies;     use Process_Proxies;
-with Breakpoints_Editor;  use Breakpoints_Editor;
-with Display_Items;       use Display_Items;
-
+with GPS.Intl;             use GPS.Intl;
+with GVD;                  use GVD;
+with GVD.Process;          use GVD.Process;
+with GVD.Proc_Utils;       use GVD.Proc_Utils;
+with GVD.Call_Stack;       use GVD.Call_Stack;
+with GVD.Canvas;           use GVD.Canvas;
+with GVD.Dialogs;          use GVD.Dialogs;
+with GVD.Types;            use GVD.Types;
+with GPS.Main_Window;      use GPS.Main_Window;
+with GVD.Memory_View;      use GVD.Memory_View;
+with Basic_Types;          use Basic_Types;
+with Std_Dialogs;          use Std_Dialogs;
+with Histories;            use Histories;
+with List_Select_Pkg;      use List_Select_Pkg;
+with Debugger;             use Debugger;
+with Process_Proxies;      use Process_Proxies;
+with Breakpoints_Editor;   use Breakpoints_Editor;
+with Display_Items;        use Display_Items;
 with Interactive_Consoles; use Interactive_Consoles;
+with GPS.Kernel;           use GPS.Kernel;
+with GPS.Main_Window;      use GPS.Main_Window;
 
 package body GVD.Menu is
 
@@ -196,7 +197,7 @@ package body GVD.Menu is
             Title          => -"Run/Start",
             Message        => -"Run arguments:",
             Key            => Cst_Run_Arguments_History,
-            History        => Tab.History,
+            History        => Get_History (GPS_Window (Tab.Window).Kernel),
             Check_Msg      => -"Stop at beginning of main subprogram",
             Check_Msg2     => Msg.all,
             Button_Active  => Is_Start'Access,
@@ -417,8 +418,6 @@ package body GVD.Menu is
       Top  : constant GPS_Window :=
         GPS_Window (Get_Toplevel (Object));
       Tab  : constant Visual_Debugger := Get_Current_Process (Top);
-
-      use String_History;
 
    begin
       Show_All (Top.History_Dialog);
@@ -756,7 +755,7 @@ package body GVD.Menu is
             Message => -"Enter an expression to display:",
             Key     => "gvd_display_expression_dialog",
             Check_Msg => -"Expression is a subprogram call",
-            History   => Debugger.History,
+            History   => Get_History (GPS_Window (Debugger.Window).Kernel),
             Key_Check => "expression_subprogram_debugger",
             Button_Active => Is_Func'Access);
       begin

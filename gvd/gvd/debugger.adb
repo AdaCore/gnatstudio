@@ -46,7 +46,6 @@ with GVD.Process;       use GVD.Process;
 with String_Utils;      use String_Utils;
 with GVD.Types;         use GVD.Types;
 with Basic_Types;       use Basic_Types;
-with GPS.Main_Window;   use GPS.Main_Window;
 
 with Gtkada.Dialogs;    use Gtkada.Dialogs;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
@@ -574,10 +573,9 @@ package body Debugger is
         and then Mode /= Internal
       then
          Data.Mode := Mode;
-         Data.Debugger_Num := Integer (Get_Num (Process));
          Data.Command := new String'
            (Cmd (Index_Non_Blank (Cmd) .. Index_Non_Blank (Cmd, Backward)));
-         Append (Process.Window.Command_History, Data);
+         Append (Process.Command_History, Data);
       end if;
 
       --  Send the command to the debugger

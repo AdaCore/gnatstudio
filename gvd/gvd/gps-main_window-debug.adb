@@ -26,7 +26,6 @@ with Gtkada.Handlers;    use Gtkada.Handlers;
 
 with Breakpoints_Editor; use Breakpoints_Editor;
 with GVD.Dialogs;        use GVD.Dialogs;
-with GVD.Types;          use GVD.Types;
 with GVD.Process;        use GVD.Process;
 with Debugger;           use Debugger;
 with Process_Proxies;    use Process_Proxies;
@@ -90,7 +89,6 @@ package body GPS.Main_Window.Debug is
       end loop;
 
       Window.Current_Debugger := null;
-      Free (Window.Command_History);
    end Cleanup_Debuggers;
 
    -----------------------------
@@ -131,41 +129,6 @@ package body GPS.Main_Window.Debug is
          end if;
       end if;
    end Update_External_Dialogs;
-
-   ----------------
-   -- Find_Match --
-   ----------------
-
-   procedure Find_Match
-     (H   : in out History_List;
-      Num : in Natural;
-      D   : in Direction)
-   is
-      Data    : GNAT.OS_Lib.String_Access;
-      Current : History_Data;
-   begin
-      begin
-         Data := Get_Current (H).Command;
-      exception
-         when No_Such_Item =>
-            Data := null;
-      end;
-
-      loop
-         if D = Backward then
-            Move_To_Previous (H);
-         else
-            Move_To_Next (H);
-         end if;
-
-         Current := Get_Current (H);
-
-         exit when Current.Debugger_Num = Num
-           and then Current.Mode /= Hidden
-           and then (Data = null
-                     or else Current.Command.all /= Data.all);
-      end loop;
-   end Find_Match;
 
    -------------------------
    -- Preferences_Changed --

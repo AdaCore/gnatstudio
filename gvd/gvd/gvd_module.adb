@@ -1724,8 +1724,7 @@ package body GVD_Module is
             Remote_Protocol =>
               Get_Attribute_Value (Get_Project (K), Protocol_Attribute),
             Debugger_Name   => Args (1).all,
-            History         => Get_History (K),
-            Success => Success);
+            Success         => Success);
          GNAT.OS_Lib.Free (Args);
          Free (Module);
 

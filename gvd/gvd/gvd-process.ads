@@ -49,7 +49,8 @@ with Items;
 with GVD.Code_Editors;
 with GVD.Text_Box.Source_Editor;
 with GVD.Types;
-with Histories;
+with GVD.Histories;
+pragma Elaborate_All (GVD.Histories);
 with VFS;
 
 with Interactive_Consoles; use Interactive_Consoles;
@@ -60,6 +61,14 @@ package GVD.Process is
 
    Command_History_Collapse_Entries : constant Boolean := True;
    --  Whether we should collapse entries in the history list.
+
+   type History_Data is record
+      Mode    : GVD.Types.Command_Type;
+      Command : String_Access;
+   end record;
+
+   package String_History is new GVD.Histories (History_Data);
+   use String_History;
 
    ---------------------
    -- Visual_Debugger --
@@ -113,6 +122,9 @@ package GVD.Process is
       Window                  : GPS.Main_Window.GPS_Window;
       --  The associated main window.
 
+      Command_History         : String_History.History_List;
+      --  The history of commands for the current session.
+
       Delete_Text_Handler_Id  : Gtk.Handlers.Handler_Id;
       Stack_List_Select_Id    : Gtk.Handlers.Handler_Id;
 
@@ -132,10 +144,6 @@ package GVD.Process is
       Debuggee_Descriptor     : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Debuggee_Id             : Gtk.Main.Timeout_Handler_Id := 0;
       Cleanup_TTY             : Boolean := False;
-
-      History                 : Histories.History;
-      --  See GPS.Kernel.Get_History. This points to the same one as the GPS
-      --  kernel if we are not in standalone mode
 
       Edit_Pos                : Glib.Guint;
       --  The last position in the text window of the debugger where text
@@ -228,7 +236,6 @@ package GVD.Process is
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "";
-      History         : Histories.History := null;
       Success         : out Boolean);
    --  Configure a process tab.
    --  Kind specifies which debugger should be launched.

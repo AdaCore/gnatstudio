@@ -85,6 +85,7 @@ with GVD.Types;                  use GVD.Types;
 with Language_Handlers;          use Language_Handlers;
 with VFS;                        use VFS;
 with Config;                     use Config;
+with Histories;                  use Histories;
 
 with String_List_Utils;          use String_List_Utils;
 
@@ -244,8 +245,7 @@ package body GVD.Process is
    --  values used by the user
 
    procedure Setup_Command_Window
-     (Process : access Visual_Debugger_Record'Class;
-      History : Histories.History);
+     (Process : access Visual_Debugger_Record'Class);
    --  Set up/initialize the command window associated with Process.
 
    function Convert is new Ada.Unchecked_Conversion
@@ -485,7 +485,7 @@ package body GVD.Process is
       use String_History;
    begin
       Switch_Debugger (Debugger.Window, GObject (Object));
-      Wind (Debugger.Window.Command_History, Forward);
+      Wind (Debugger.Command_History, Forward);
    end On_Debugger_Text_Grab_Focus;
 
    -----------------------
@@ -977,7 +977,8 @@ package body GVD.Process is
 
       --  Create the canvas for this visual debugger.
 
-      Gtk_New (GVD_Canvas (Process.Data_Canvas), Process.History);
+      Gtk_New (GVD_Canvas (Process.Data_Canvas),
+               GPS.Kernel.Get_History (GPS_Window (Process.Window).Kernel));
       Add (Process.Data_Scrolledwindow, Process.Data_Canvas);
       Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
       Widget_Callback.Connect
@@ -1015,11 +1016,12 @@ package body GVD.Process is
    --------------------------
 
    procedure Setup_Command_Window
-     (Process : access Visual_Debugger_Record'Class;
-      History : Histories.History)
+     (Process : access Visual_Debugger_Record'Class)
    is
       Child : MDI_Child;
-      use type Histories.History;
+      H     : constant History := GPS.Kernel.Get_History
+        (GPS_Window (Process.Window).Kernel);
+
    begin
       Gtk_New
         (Process.Debugger_Text,
@@ -1027,14 +1029,14 @@ package body GVD.Process is
          Interpret_Command_Handler'Access,
          Process.all'Address,
          Process.Debugger_Text_Font,
-         History_List => History,
+         History_List => H,
          Key          => "gvd_console",
          Wrap_Mode    => Wrap_Char,
          Empty_Equals_Repeat => True);
 
-      if History /= null then
-         Histories.Set_Max_Length (History.all, 100, "gvd_console");
-         Histories.Allow_Duplicates (History.all, "gvd_console", True, True);
+      if H /= null then
+         Set_Max_Length (H.all, 100, "gvd_console");
+         Allow_Duplicates (H.all, "gvd_console", True, True);
       end if;
 
       Set_Highlight_Color
@@ -1195,7 +1197,6 @@ package body GVD.Process is
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
       Debugger_Name   : String := "";
-      History         : Histories.History := null;
       Success         : out Boolean)
    is
       Timeout       : constant Guint32 := 50;
@@ -1210,8 +1211,7 @@ package body GVD.Process is
 
    begin
       Set_Busy (Process, True);
-      Setup_Command_Window (Process, History);
-      Process.History := History;
+      Setup_Command_Window (Process);
       Setup_Data_Window (Process);
 
       if Get_Pref (GVD_Prefs, Show_Call_Stack) then
@@ -1712,9 +1712,7 @@ package body GVD.Process is
          end if;
       end if;
 
-      --  ??? need to keep a ref for sessions, except that sessions are
-      --  disabled in GPS.
-
+      Free (Debugger.Command_History);
       Unref (Debugger);
    end Close_Debugger;
 
@@ -1741,10 +1739,9 @@ package body GVD.Process is
       begin
          Output_Message (Debugger, Command, Mode);
          Data.Mode := Mode;
-         Data.Debugger_Num := Integer (Get_Num (Debugger));
          Skip_Blanks (Command, First);
          Data.Command := new String'(Command);
-         Append (Debugger.Window.Command_History, Data);
+         Append (Debugger.Command_History, Data);
          Set_Busy (Debugger);
       end Pre_User_Command;
 
