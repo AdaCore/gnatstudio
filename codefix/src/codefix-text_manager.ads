@@ -339,6 +339,9 @@ private
    --  type Text_Interface
    ----------------------------------------------------------------------------
 
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Construct_List, Construct_List_Access);
+
    type Text_Interface is abstract tagged record
       Tokens_List : Construct_List_Access := new Construct_List;
       File_Name   : Dynamic_String;
