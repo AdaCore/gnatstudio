@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -999,9 +999,9 @@ package body Src_Contexts is
    --------------------------
 
    function Current_File_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope    : constant Scope_Selector := Scope_Selector (Extra_Information);
       Child    : MDI_Child;
@@ -1042,9 +1042,9 @@ package body Src_Contexts is
    --------------------------------
 
    function Files_From_Project_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access
    is
       Scope : constant Scope_Selector := Scope_Selector (Extra_Information);
       Context : Files_Project_Context_Access := new Files_Project_Context;

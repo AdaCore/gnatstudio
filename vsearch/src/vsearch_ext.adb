@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -125,35 +125,35 @@ package body Vsearch_Ext is
    Search_User_Data_Quark : constant String := "gps-search_user";
 
    type Idle_Search_Data is record
-      Vsearch : Vsearch_Extended;
+      Vsearch         : Vsearch_Extended;
       Search_Backward : Boolean;
    end record;
 
    procedure Search_Iterate
-     (Data      : in out Idle_Search_Data;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type);
+     (Data    : in out Idle_Search_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
    --  Perform an atomic search operation.
 
    procedure Replace_Iterate
-     (Data      : in out Idle_Search_Data;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type);
+     (Data    : in out Idle_Search_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
    --  Perform an atomic replace operation.
 
    procedure Free (D : in out Idle_Search_Data);
    --  Free memory associated to D.
 
    package Search_Commands is new Commands.Generic_Asynchronous
-     (Data_Type   => Idle_Search_Data,
-      Free        => Free);
+     (Data_Type => Idle_Search_Data,
+      Free      => Free);
    --  Handle the search/replace commands.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Search_Regexps_Array, Search_Regexps_Array_Access);
 
    procedure Set_First_Next_Mode
-     (Vsearch : access Vsearch_Extended_Record'Class;
+     (Vsearch   : access Vsearch_Extended_Record'Class;
       Find_Next : Boolean);
    --  If Find_Next is False, a new search will be started, otherwise the next
    --  occurence of the current search will be searched.
@@ -333,7 +333,7 @@ package body Vsearch_Ext is
    -------------------
 
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class) is
-      Child : constant MDI_Child := MDI_Child (Search_Child);
+      Child   : constant MDI_Child := MDI_Child (Search_Child);
       Vsearch : constant Vsearch_Extended :=
         Vsearch_Extended (Get_Widget (Child));
       Close_Button : Gtk_Button;
@@ -394,9 +394,9 @@ package body Vsearch_Ext is
    --------------------
 
    procedure Search_Iterate
-     (Data      : in out Idle_Search_Data;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type) is
+     (Data    : in out Idle_Search_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type) is
    begin
       if Data.Vsearch.Continue
         and then Search
@@ -436,9 +436,9 @@ package body Vsearch_Ext is
    ---------------------
 
    procedure Replace_Iterate
-     (Data      : in out Idle_Search_Data;
-      Command   : Command_Access;
-      Result    : out Command_Return_Type) is
+     (Data    : in out Idle_Search_Data;
+      Command : Command_Access;
+      Result  : out Command_Return_Type) is
    begin
       if Data.Vsearch.Continue
         and then Replace
@@ -1486,11 +1486,11 @@ package body Vsearch_Ext is
    -----------------------------
 
    procedure Register_Search_Pattern
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String;
-      Regexp : String;
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Name           : String;
+      Regexp         : String;
       Case_Sensitive : Boolean := False;
-      Is_Regexp : Boolean := True)
+      Is_Regexp      : Boolean := True)
    is
       Tmp : Search_Regexps_Array_Access := Vsearch_Module_Id.Search_Regexps;
    begin
@@ -1610,9 +1610,9 @@ package body Vsearch_Ext is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Navigate  : constant String := "/_" & (-"Navigate");
-      Find_All  : constant String := -"Find _All References";
-      Mitem     : Gtk_Menu_Item;
+      Navigate : constant String := "/_" & (-"Navigate");
+      Find_All : constant String := -"Find _All References";
+      Mitem    : Gtk_Menu_Item;
    begin
       Vsearch_Module_Id := new Vsearch_Module_Record;
       Register_Module

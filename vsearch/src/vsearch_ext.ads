@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -110,7 +110,6 @@ package Vsearch_Ext is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class; Num : Natural)
       return String;
    --  Return the Num-th regular expression
-
 
 private
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record

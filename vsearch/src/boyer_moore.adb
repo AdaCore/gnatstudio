@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -79,7 +79,7 @@ with GNAT.Case_Util;          use GNAT.Case_Util;
 
 package body Boyer_Moore is
 
-   Debug : constant Boolean := False;
+   Debug     : constant Boolean := False;
    Debug_Run : constant Boolean := False;
 
    -------------
@@ -87,8 +87,8 @@ package body Boyer_Moore is
    -------------
 
    procedure Compile
-     (Motif : in out Pattern;
-      From_String : String;
+     (Motif          : in out Pattern;
+      From_String    : String;
       Case_Sensitive : Boolean := True)
    is
       --  Prefix contains the following:

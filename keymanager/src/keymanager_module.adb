@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -863,8 +863,8 @@ package body KeyManager_Module is
       procedure Save_Table
         (Table : in out Key_Htable.HTable; Prefix : String)
       is
-         Child : Node_Ptr;
-         Iter : Key_Htable.Iterator;
+         Child   : Node_Ptr;
+         Iter    : Key_Htable.Iterator;
          Binding : Key_Description_List;
       begin
          Get_First (Table, Iter);
