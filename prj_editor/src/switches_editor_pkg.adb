@@ -27,7 +27,6 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Glide_Intl; use Glide_Intl;
 with Switches_Editor_Pkg.Callbacks; use Switches_Editor_Pkg.Callbacks;
-with Gtk.Handlers; use Gtk.Handlers;
 
 package body Switches_Editor_Pkg is
 
