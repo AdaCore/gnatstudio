@@ -1,4 +1,6 @@
-\input texiplus   @c -*-texinfo-*-
+\input texinfo
+@input texiplus   @c -*-texinfo-*-
+
 @c %**start of header
 @setfilename gvd.info
 @settitle Using the GNU Visual Debugger
