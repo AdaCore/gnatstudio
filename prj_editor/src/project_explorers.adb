@@ -1399,7 +1399,9 @@ package body Project_Explorers is
                      Importing_Project => Importing_Project);
                end if;
 
-               if Data.Node_Type = Obj_Directory_Node then
+               if Data.Node_Type = Obj_Directory_Node
+                 and then Menu /= null
+               then
                   Gtk_New (Item, -"Parse all xref information");
                   Add (Menu, Item);
                   Widget_Callback.Object_Connect
