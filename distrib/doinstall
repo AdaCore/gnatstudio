@@ -93,6 +93,11 @@ install_binaries() {
   echo "Installing the binaries ...."
   cd $basedir
 
+  # Remove gpr2make, in case there is a recent GNAT installation, where
+  # gpr2make is a symbolic link to .gnat_wrapper
+
+  rm -f bin/gpr2make
+
   # Do the installation through tar, to preserve symbolic links
   # We also explicitly work on specific directories to avoid
   # copying junk files
