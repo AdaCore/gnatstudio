@@ -20,7 +20,6 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
-with Glib.Values;             use Glib.Values;
 with Gdk.Color;               use Gdk.Color;
 with Gdk.Pixbuf;              use Gdk.Pixbuf;
 with Gdk.Pixmap;              use Gdk.Pixmap;
@@ -127,6 +126,24 @@ package body GVD_Module is
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False);
 
+   type File_Edited_Hook_Record is new Hook_Args_Record with record
+      Top : Glide_Window;
+   end record;
+   type File_Edited_Hook is access File_Edited_Hook_Record'Class;
+   procedure Execute
+     (Hook   : File_Edited_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
+   --  Callback for the "file_edited" hook.
+
+   type Lines_Revealed_Hook_Record is new Hook_Args_Record with null record;
+   type Lines_Revealed_Hook is access Lines_Revealed_Hook_Record'Class;
+   procedure Execute
+     (Hook   : Lines_Revealed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
+   --  Callback for the "source_lines_revealed_hook" hook.
+
    type GPS_Proxy is new Process_Proxy with record
       Kernel : Kernel_Handle;
    end record;
@@ -158,8 +175,8 @@ package body GVD_Module is
       --  executable because the module was already loaded on cross targets.
 
       Delete_Id         : Handler_Id := (Null_Signal_Id, null);
-      File_Edited_Id    : Handler_Id := (Null_Signal_Id, null);
-      Lines_Revealed_Id : Handler_Id := (Null_Signal_Id, null);
+      File_Hook         : File_Edited_Hook;
+      Lines_Hook        : Lines_Revealed_Hook;
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
@@ -700,16 +717,6 @@ package body GVD_Module is
 
    procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "executable_changed" signal on the debugger process.
-
-   procedure File_Edited_Cb
-     (Widget  : access Gtk_Widget_Record'Class;
-      Args    : GValues);
-   --  Callback for the "file_edited" signal.
-
-   procedure Lines_Revealed_Cb
-     (Widget  : access Gtk_Widget_Record'Class;
-      Args    : GValues);
-   --  Callback for the "lines_revealed" signal.
 
    -------------------------
    -- Initialize_Debugger --
@@ -1545,10 +1552,16 @@ package body GVD_Module is
       if First_Debugger then
          --  Add columns information for not currently opened files.
 
-         Id.Lines_Revealed_Id := Widget_Callback.Object_Connect
-           (K, Source_Lines_Revealed_Signal, Lines_Revealed_Cb'Access, Top);
-         Id.File_Edited_Id := Widget_Callback.Object_Connect
-           (K, File_Edited_Signal, File_Edited_Cb'Access, Top);
+         Id.Lines_Hook := new Lines_Revealed_Hook_Record;
+         Add_Hook
+           (K, Source_Lines_Revealed_Hook, Id.Lines_Hook,
+            Watch => GObject (Top));
+
+         Id.File_Hook := new File_Edited_Hook_Record;
+         Id.File_Hook.Top := Top;
+         Add_Hook
+           (K, Glide_Kernel.File_Edited_Hook, Id.File_Hook,
+            Watch => GObject (Top));
 
          --  Add columns for debugging information to all the files that
          --  are currently open.
@@ -1668,8 +1681,10 @@ package body GVD_Module is
       if Top.First_Debugger = null then
          Id.Initialized := False;
 
-         Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
-         Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
+         Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
+         Id.Lines_Hook := null;
+         Remove_Hook (Kernel, Glide_Kernel.File_Edited_Hook, Id.File_Hook);
+         Id.File_Hook := null;
 
          Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
          Remove_Debugger_Columns (Kernel, VFS.No_File);
@@ -2125,54 +2140,52 @@ package body GVD_Module is
       Create_Debugger_Columns (Top.Kernel, VFS.No_File);
    end On_Executable_Changed;
 
-   --------------------
-   -- File_Edited_Cb --
-   --------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure File_Edited_Cb
-     (Widget  : access Gtk_Widget_Record'Class;
-      Args    : GValues)
+   procedure Execute
+     (Hook   : File_Edited_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      Top     : constant Glide_Window := Glide_Window (Widget);
-      File    : constant Virtual_File :=
-        Create (Full_Filename => Get_String (Nth (Args, 1)));
-      Process : constant Visual_Debugger := Get_Current_Process (Top);
-
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
    begin
-      Create_Debugger_Columns (Top.Kernel, File);
+      Create_Debugger_Columns (Kernel_Handle (Kernel), D.File);
 
    exception
       when E : others =>
-         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel, Process);
+         Debug_Terminate
+           (Kernel_Handle (Kernel), Get_Current_Process (Hook.Top));
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end File_Edited_Cb;
+   end Execute;
 
-   -----------------------
-   -- Lines_Revealed_Cb --
-   -----------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure Lines_Revealed_Cb
-     (Widget  : access Gtk_Widget_Record'Class;
-      Args    : GValues)
+   procedure Execute
+     (Hook   : Lines_Revealed_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      pragma Unreferenced (Widget);
-      Context      : constant Selection_Context_Access :=
-        To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
+      pragma Unreferenced (Hook);
+      D : constant Context_Hooks_Args := Context_Hooks_Args (Data);
       Area_Context : File_Area_Context_Access;
 
       Process      : constant Visual_Debugger :=
-        Get_Current_Process (Get_Main_Window (Get_Kernel (Context)));
+        Get_Current_Process (Get_Main_Window (Get_Kernel (D.Context)));
       Id           : constant GVD_Module := GVD_Module (GVD_Module_ID);
 
    begin
       if Process = null
         or else Process.Debugger = null
-        or else Context.all not in File_Area_Context'Class
+        or else D.Context.all not in File_Area_Context'Class
       then
          return;
       end if;
 
-      Area_Context := File_Area_Context_Access (Context);
+      Area_Context := File_Area_Context_Access (D.Context);
 
       declare
          Line1, Line2 : Integer;
@@ -2193,7 +2206,7 @@ package body GVD_Module is
             C           : Set_Breakpoint_Command_Access;
             Mode        : Breakpoint_Command_Mode := Set;
             Tab         : constant Visual_Debugger :=
-              Get_Current_Process (Get_Main_Window (Id.Kernel));
+              Get_Current_Process (Get_Main_Window (Kernel));
             Bps         : Bp_Array (Line1 .. Line2) := (others => 0);
             Lines_Valid : Boolean := False;
 
@@ -2234,21 +2247,21 @@ package body GVD_Module is
                   Mode := Set;
                end if;
 
-               Create (C, Id.Kernel, Tab, Mode, File, J);
+               Create (C, Kernel_Handle (Kernel), Tab, Mode, File, J);
                A (J).Associated_Command := Command_Access (C);
             end loop;
 
             Add_Line_Information
-              (Id.Kernel, File, Breakpoints_Column_Id,
+              (Kernel, File, Breakpoints_Column_Id,
                new Line_Information_Array'(A));
          end;
       end;
 
    exception
       when E : others =>
-         Debug_Terminate (Id.Kernel, Process);
+         Debug_Terminate (Kernel_Handle (Kernel), Process);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Lines_Revealed_Cb;
+   end Execute;
 
    ---------------------
    -- On_View_Changed --
