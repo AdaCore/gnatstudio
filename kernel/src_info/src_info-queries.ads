@@ -183,13 +183,13 @@ package Src_Info.Queries is
    type Entity_Declaration_Iterator is private;
 
    function Find_All_Possible_Declarations
-     (Lib_Info : LI_File_Ptr;
-      Entity_Name : String)
-      return Entity_Declaration_Iterator;
-   --  Return the first entity declaration in Lib_Info whose name is
-   --  Entity_Name. Note that the fake declarations for unresolved overloaded
-   --  entities (with E_Kind = Overloaded_Entity) are not returned.
-   --  The entity is search in all source files associated with Lib_Info.
+     (Lib_Info               : LI_File_Ptr;
+      Entity_Name            : String) return Entity_Declaration_Iterator;
+   --  Return the first entity declaration in Lib_Info or its imported units
+   --  whose name is Entity_Name. Note that the fake declarations for
+   --  unresolved overloaded entities (with E_Kind = Overloaded_Entity) are not
+   --  returned.  The entity is search in all source files associated with
+   --  Lib_Info and its dependencies
 
    function Get (Iterator : Entity_Declaration_Iterator)
       return Entity_Information;
@@ -311,7 +311,7 @@ package Src_Info.Queries is
       Dependencies    : out Dependency_List;
       Status          : out Dependencies_Query_Status);
    --  Return the list of units on which the units associated to the given
-   --  LI_File depend. Note that the dependencies.
+   --  LI_File depend.
    --  Note that only the direct dependencies for Source_Filename are returned
    --  (or the implicit dependencies). If Source_Filename is a spec, then the
    --  files imported from the body are not returned.
@@ -626,7 +626,8 @@ private
    end record;
 
    type Entity_Declaration_Iterator is record
-      LI          : LI_File_Ptr;
+      Current_Dep : Dependency_File_Info_List;
+      Lib_Info    : LI_File_Ptr;
       --  The LI file we are parsing
 
       Entity_Name : String_Access;
@@ -635,8 +636,7 @@ private
       Current     : E_Declaration_Info_List;
       --  The current declaration.
 
-      File        : File_Info_Ptr;
-      Part        : Unit_Part;
+      Part        : Analyzed_Part;
       Sep_Source  : File_Info_Ptr_List;
       --  The source file we are parsing.
    end record;

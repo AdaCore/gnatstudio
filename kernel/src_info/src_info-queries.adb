@@ -2297,26 +2297,25 @@ package body Src_Info.Queries is
    ------------------------------------
 
    function Find_All_Possible_Declarations
-     (Lib_Info : LI_File_Ptr;
-      Entity_Name : String)
-      return Entity_Declaration_Iterator
+     (Lib_Info               : LI_File_Ptr;
+      Entity_Name            : String) return Entity_Declaration_Iterator
    is
       Iter : Entity_Declaration_Iterator;
    begin
       Assert (Me, Lib_Info /= null and then Lib_Info.LI.Parsed,
               "Unparsed LI_File_Ptr in Find_All_Possible_Declarations");
-      Iter := (LI          => Lib_Info,
-               Entity_Name => null,
-               Current     => null,
-               File        => Lib_Info.LI.Spec_Info,
-               Part        => Unit_Spec,
-               Sep_Source  => null);
 
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
          Iter.Entity_Name := new String'(To_Lower (Entity_Name));
       else
          Iter.Entity_Name := new String'(Entity_Name);
       end if;
+
+      Iter.Lib_Info    := Lib_Info;
+      Iter.Current_Dep := Lib_Info.LI.Dependencies_Info;
+      Iter.Current     := null;
+      Iter.Part        := None;
+      Iter.Sep_Source  := null;
 
       Next (Iter);
       return Iter;
@@ -2342,7 +2341,8 @@ package body Src_Info.Queries is
 
    function At_End (Iterator : Entity_Declaration_Iterator) return Boolean is
    begin
-      return Iterator.Current = null;
+      return Iterator.Current = null
+        and then Iterator.Lib_Info = null;
    end At_End;
 
    ----------
@@ -2350,12 +2350,12 @@ package body Src_Info.Queries is
    ----------
 
    procedure Next (Iterator : in out Entity_Declaration_Iterator) is
+      File   : File_Info_Ptr;
    begin
       if Iterator.Current /= null then
          Iterator.Current := Iterator.Current.Next;
       end if;
 
-      --  For each file associated with Iterator.LI
       loop
          --  While there remains some declarations to analyze in the current
          --  file
@@ -2374,32 +2374,51 @@ package body Src_Info.Queries is
 
          pragma Assert (Iterator.Current = null);
 
-         --  No more matching declaration in the current file, move to the next
-         --  file
+         if Iterator.Lib_Info /= null then
+            --  Move to the next part of the original file
 
-         if Iterator.Part = Unit_Spec then
-            Iterator.Part := Unit_Body;
-            Iterator.File := Iterator.LI.LI.Body_Info;
+            if Iterator.Part = None then
+               Iterator.Part := Unit_Spec;
+               File := Iterator.Lib_Info.LI.Spec_Info;
 
-         else
-            if Iterator.Part = Unit_Body then
-               Iterator.Part := Unit_Separate;
-               Iterator.Sep_Source := Iterator.LI.LI.Separate_Info;
+            elsif Iterator.Part = Unit_Spec then
+               Iterator.Part := Unit_Body;
+               File := Iterator.Lib_Info.LI.Body_Info;
+
             else
-               Iterator.Sep_Source := Iterator.Sep_Source.Next;
+               if Iterator.Part = Unit_Body then
+                  Iterator.Part := Unit_Separate;
+                  Iterator.Sep_Source :=
+                    Iterator.Lib_Info.LI.Separate_Info;
+               else
+                  Iterator.Sep_Source := Iterator.Sep_Source.Next;
+               end if;
+
+               if Iterator.Sep_Source /= null then
+                  File := Iterator.Sep_Source.Value;
+               else
+                  --  No more files to analyze, move to next LI
+                  File := null;
+                  Iterator.Lib_Info := null;
+               end if;
             end if;
 
-            if Iterator.Sep_Source /= null then
-               Iterator.File := Iterator.Sep_Source.Value;
-            else
-               --  No more files to analyze.
-               Destroy (Iterator);
-               return;
+            if File /= null then
+               Iterator.Current := File.Declarations;
             end if;
          end if;
 
-         if Iterator.File /= null then
-            Iterator.Current := Iterator.File.Declarations;
+         --  Do not use "else", this might have been set to null above
+         if Iterator.Lib_Info = null then
+            if Iterator.Current_Dep = null then
+               Iterator.Lib_Info := null;
+               Destroy (Iterator);
+               return;
+            end if;
+
+            Iterator.Current := Iterator.Current_Dep.Value.Declarations;
+            Iterator.Current_Dep := Iterator.Current_Dep.Next;
+            Iterator.Part        := None;
          end if;
       end loop;
    end Next;
@@ -2410,6 +2429,7 @@ package body Src_Info.Queries is
 
    procedure Destroy (Iterator : in out Entity_Declaration_Iterator) is
    begin
+      Iterator.Lib_Info := null;
       Free (Iterator.Entity_Name);
       Iterator.Current := null;
    end Destroy;
