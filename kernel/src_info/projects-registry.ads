@@ -207,7 +207,8 @@ package Projects.Registry is
      (Registry        : Project_Registry;
       Filename        : Glib.UTF8_String;
       Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean) return String;
+      Use_Object_Path : Boolean;
+      Project         : Project_Type := No_Project) return String;
    --  Return the directory to which Source_Filename belongs.
    --  the returned path is normalized, and includes directory/basename.
    --  If Use_Source_Path is true, the file is looked for on the include
@@ -220,12 +221,16 @@ package Projects.Registry is
    --
    --  This function also works for project files, which are looked among the
    --  loaded project tree.
+   --
+   --  Project is used to save time. This must be the project to which
+   --  filename belongs, if it is known
 
    procedure Get_Full_Path_From_File
      (Registry        : Project_Registry;
       Filename        : Glib.UTF8_String;
       Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean);
+      Use_Object_Path : Boolean;
+      Project         : Project_Type := No_Project);
    --  Internal version of Get_Full_Path_From_File, which returns its result in
    --  Name_Buffer (1 .. Name_Len) for efficiency.
    --  Do not use outside of the projects.* hierarchy

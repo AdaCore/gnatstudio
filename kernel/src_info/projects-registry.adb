@@ -149,7 +149,6 @@ package body Projects.Registry is
       --  Implicit dependency on the global htables in the Prj.* packages.
    end record;
 
-
    procedure Add_Foreign_Source_Files
      (Registry : Project_Registry;
       Project  : Project_Type;
@@ -330,6 +329,8 @@ package body Projects.Registry is
          Unload_Project (Registry, View_Only);
       else
          Registry.Data := new Project_Registry_Data;
+         Reset (Registry.Data.Sources);
+         Reset (Registry.Data.Directories);
       end if;
    end Reset;
 
@@ -1145,15 +1146,12 @@ package body Projects.Registry is
      (Registry          : Project_Registry;
       Source_Filename   : Virtual_File;
       Root_If_Not_Found : Boolean := True)
-      return Project_Type
-   is
-      P : constant Project_Type :=
-        Get (Registry.Data.Sources, Base_Name (Source_Filename)).Project;
+      return Project_Type is
    begin
-      if P = No_Project and then Root_If_Not_Found then
-         return Registry.Data.Root;
-      end if;
-      return P;
+      return Get_Project_From_File
+        (Registry,
+         Base_Name         => Base_Name (Source_Filename),
+         Root_If_Not_Found => Root_If_Not_Found);
    end Get_Project_From_File;
 
    ---------------------------
@@ -1486,10 +1484,11 @@ package body Projects.Registry is
      (Registry        : Project_Registry;
       Filename        : Glib.UTF8_String;
       Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean)
+      Use_Object_Path : Boolean;
+      Project         : Project_Type := No_Project)
    is
       Locale   : constant String := Locale_From_UTF8 (Filename);
-      Project  : Project_Type;
+      Project2 : Project_Type;
       Path     : GNAT.OS_Lib.String_Access;
       Iterator : Imported_Project_Iterator;
       Info     : Source_File_Data;
@@ -1528,14 +1527,14 @@ package body Projects.Registry is
             Iterator := Start (Get_Root_Project (Registry));
 
             loop
-               Project := Current (Iterator);
-               exit when Project = No_Project;
+               Project2 := Current (Iterator);
+               exit when Project2 = No_Project;
 
-               if Project_Name (Project) & Project_File_Extension =
+               if Project_Name (Project2) & Project_File_Extension =
                  Filename
                then
                   declare
-                     S : constant String := Project_Path (Project);
+                     S : constant String := Project_Path (Project2);
                   begin
                      Name_Len := S'Length;
                      Name_Buffer (1 .. Name_Len) := S;
@@ -1551,19 +1550,24 @@ package body Projects.Registry is
          --  ??? Seems Prj.Nmsc is already computing and storing the path
          --  somewhere, unfortunately it requires a Unit_Name.
 
-         Project := Get_Project_From_File
-           (Registry, Create_From_Base (Filename));
          if Project /= No_Project then
+            Project2 := Project;
+         else
+            Project2 :=
+              Get_Project_From_File (Registry, Base_Name => Filename);
+         end if;
+
+         if Project2 /= No_Project then
             if Use_Source_Path then
                Path := Locate_Regular_File
-                 (Locale, Include_Path (Project, False));
+                 (Locale, Include_Path (Project2, False));
             end if;
 
             if Path = null
               and then Use_Object_Path
             then
                Path := Locate_Regular_File
-                 (Locale, Object_Path (Project, False));
+                 (Locale, Object_Path (Project2, False));
             end if;
          end if;
 
@@ -1601,7 +1605,6 @@ package body Projects.Registry is
 
                if Info /= No_Source_File_Data then
                   Info.Directory := Name_Find;
-
                   Set (Registry.Data.Sources, Filename, Info);
                end if;
             end;
@@ -1619,10 +1622,11 @@ package body Projects.Registry is
      (Registry        : Project_Registry;
       Filename        : String;
       Use_Source_Path : Boolean;
-      Use_Object_Path : Boolean) return String is
+      Use_Object_Path : Boolean;
+      Project         : Project_Type := No_Project) return String is
    begin
       Get_Full_Path_From_File
-        (Registry, Filename, Use_Source_Path, Use_Object_Path);
+        (Registry, Filename, Use_Source_Path, Use_Object_Path, Project);
       return Name_Buffer (1 .. Name_Len);
    end Get_Full_Path_From_File;
 
