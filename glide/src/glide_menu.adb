@@ -550,16 +550,14 @@ package body Glide_Menu is
          return;
       end if;
 
-      if Project = "default"
-        and then not Is_Regular_File (Project)
-      then
+      if Project = "" then
          --  This is the default internal project
 
-         Args := Argument_String_To_List ("gnatmake " & Title);
+         Args := Argument_String_To_List ("gnatmake -d " & Title);
          Console.Insert (Top.Kernel, "gnatmake " & Title & ASCII.LF, False);
 
       else
-         Args := Argument_String_To_List (Cmd);
+         Args := Argument_String_To_List (Cmd & " -d");
          Console.Insert (Top.Kernel, Cmd & ASCII.LF, False);
       end if;
 
