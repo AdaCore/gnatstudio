@@ -18,109 +18,150 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package handles the default value for all the preferences in GPS.
---  Note that all the preferences must be registered through this package
---  before being available to the user.
---  This package is separated from Glide_Kernel.Preferences for elaboration
---  circularity reasons.
+--  This package provides support for the handling of preferences in GPS. The
+--  preferences system is based on the glib types Param_Spec. These include
+--  natively the description of the param_spec, which can be used in a
+--  graphical editor, as well as precise information about the allowed values
+--  for the type. It also provides support for closely associating Ada
+--  enumeration types with C types, thus allowing almost any type of
+--  preference.
 
+with Glib; use Glib;
 with Glib.Properties;
+with Glib.Properties.Creation;
 with Basic_Types;
+with Gdk.Color;
+with Pango.Font;
+with Glib.Xml_Int;
+with Gtk.Widget;
 
 package Default_Preferences is
 
-   type Property_Color is new Glib.Property;
-   type Property_Font  is new Glib.Property;
+   type Preferences_Manager is tagged private;
+   --  Manages a set of preferences.
+   --  You can extend this type for instance if you need a fast access to some
+   --  of the preferences, by providing a cache system, and redefining the
+   --  Set_Pref subprograms.
 
-   function Register_Property
-     (Name            : String;
-      Default         : Glib.Gint;
-      Description     : String;
-      GUI_Description : String;
-      Page            : String;
-      Editable        : Boolean := True) return Glib.Properties.Property_Int;
-   --  Register a new property and its default value.
-   --  The returned value should be used later on to retrieve the value of the
-   --  property.
-   --  Description is the help string for this property. It is displayed in
-   --  tooltips in the preferences dialog.
-   --  GUI_Description is the label to use in the preferences dialog for this
-   --  property.
+   procedure Destroy (Manager : in out Preferences_Manager);
+   --  Free the memory used by Manager, including all the registered
+   --  preferences. Get_Pref mustn't be used afterwards.
+
+   type Param_Spec_Array is array (Natural range <>) of Glib.Param_Spec;
+
+   type Param_Spec_Color is new Glib.Properties.Creation.Param_Spec_String;
+   function Gnew_Color
+     (Name, Nick, Blurb : String;
+      Default           : String;
+      Flags             : Param_Flags := Param_Readable or Param_Writable)
+      return Param_Spec_Color;
+
+   type Param_Spec_Font is new Glib.Properties.Creation.Param_Spec_String;
+   function Gnew_Font
+     (Name, Nick, Blurb : String;
+      Default           : String;
+      Flags             : Param_Flags := Param_Readable or Param_Writable)
+      return Param_Spec_Font;
+
+   procedure Register_Property
+     (Manager : in out Preferences_Manager;
+      Param   : Glib.Param_Spec;
+      Page    : String);
+   --  Register a new property.
+   --  If the flags in param have Param_Writable, then this preference can be
+   --  edited graphically through the preferences dialog.
+   --  The Name is the name used when saving in the XML file. It shouldn't
+   --  contains any space, and should be a valid XML tag.
+   --  The nick_name field is used in the preferences dialog.
+   --  The description is used in the tooltips to provide more information the
+   --  preference.
    --  Page is the name of the preferences dialog page that should contain this
    --  property. A new page will be created if no such page already exists. If
-   --  the name is of the form Page::subpage, then a notebook will be created
+   --  the name is of the form Page:subpage, then a notebook will be created
    --  for Page, with a page called subpage.
-   --
-   --  If Editable is False, then this preference cannot be edited graphically
-   --  by the user, although it can be changed directly in the preferences
-   --  file.
+   --  Due to some limitations in glib, the name in Param must only use
+   --  alphanumeric characters or '-'.
 
-   function Register_Property
-     (Name            : String;
-      Default         : Glib.Guint;
-      Description     : String;
-      GUI_Description : String;
-      Page            : String;
-      Editable        : Boolean := True) return Glib.Properties.Property_Uint;
+   function Get_Pref
+     (Manager : Preferences_Manager;
+      Pref    : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint;
+   function Get_Pref
+     (Manager : Preferences_Manager;
+      Pref   : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean;
+   function Get_Pref
+     (Manager : Preferences_Manager;
+      Pref   : Glib.Properties.Creation.Param_Spec_String) return String;
+   function Get_Pref
+     (Manager : Preferences_Manager;
+      Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color;
+   function Get_Pref
+     (Manager : Preferences_Manager;
+      Pref   : Param_Spec_Font) return Pango.Font.Pango_Font_Description;
+   function Get_Pref
+     (Manager : Preferences_Manager;
+      Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Gint;
+   --  Get the value for a preference. The default value is returned if the
+   --  user hasn't explicitely overriden it.
+   --  Colors and fonts have already been allocated when they are returned.
+   --  For enumeration, it returns the 'Pos of the enumeration value.
 
-   function Register_Property
-     (Name            : String;
-      Default         : Boolean;
-      Description     : String;
-      GUI_Description : String;
-      Page            : String;
-      Editable        : Boolean := True)
-      return Glib.Properties.Property_Boolean;
+   procedure Set_Pref
+     (Manager : in out Preferences_Manager;
+      Name    : String;
+      Value   : Glib.Gint);
+   procedure Set_Pref
+     (Manager : in out Preferences_Manager;
+      Name    : String;
+      Value   : Boolean);
+   procedure Set_Pref  --   String, Font, Color
+     (Manager : in out Preferences_Manager;
+      Name    : String;
+      Value   : String);
+   --  Change the value of a preference. This overrides the default value if
+   --  this preference is set for the first time.
+   --  Checks are made to make sure the type of Name is valid.
 
-   function Register_Property
-     (Name            : String;
-      Default         : String;
-      Description     : String;
-      GUI_Description : String;
-      Page            : String;
-      Editable        : Boolean := True)
-      return Glib.Properties.Property_String;
+   function Get_Page
+     (Manager : Preferences_Manager; Param : Param_Spec) return String;
+   --  Return the name of the page for the Name preference.
+   --  Constraint_Error is raised if the preference doesn't exist.
 
-   function Register_Property
-     (Name            : String;
-      Default         : String;
-      Description     : String;
-      GUI_Description : String;
-      Page            : String;
-      Editable        : Boolean := True) return Property_Color;
+   procedure Load_Preferences
+     (Manager : in out Preferences_Manager; File_Name : String);
+   --  Load the preferences from a specific file.
+   --  The preferences can be loaded even if they have not been registered
+   --  yet.
 
-   function Register_Property
-     (Name            : String;
-      Default         : String;
-      Description     : String;
-      GUI_Description : String;
-      Page            : String;
-      Editable        : Boolean := True) return Property_Font;
-
-   function Find_Default_Pref (Name : String) return String;
-   --  Return the value, as a string, in the default preferences that matches
-   --  Name
-
-   procedure Save_Default_Preferences (File_Name : String);
+   procedure Save_Preferences
+     (Manager : in out Preferences_Manager; File_Name : String);
    --  Save the default preferences to File_Name.
 
-   function Get_Description (Name : String) return String;
-   --  Return the full description of the Name preference.
-
-   function Get_GUI_Description (Name : String) return String;
-   --  Return the GUI description of the Name preference.
-
-   function Get_Page (Name : String) return String;
-   --  Return the name of the page for the Name preference.
-
-   function Get_Type (Name : String) return Glib.GType;
-   --  Return the type of the Name preference.
-
-   function Is_Editable (Name : String) return Boolean;
-   --  Return True if the preference can be edited graphically.
-
-   function Get_All_Preferences return Basic_Types.String_Array;
+   function Get_All_Preferences (Manager : Preferences_Manager)
+      return Param_Spec_Array;
    --  Return the name of all the registered preferences.
    --  It is the responsability of the caller to free the returned array.
+
+   function Editor_Widget
+     (Manager : Preferences_Manager; Param : Param_Spec)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return a widget for graphical editing of Param. The exact type of widget
+   --  depends on the type of data in Param.
+   --  When the widget is modified, the corresponding preference is
+   --  automatically changed as well. However, nobody gets informed that the
+   --  preference has changed.
+
+private
+   type Preference_Information;
+   type Preference_Information_Access is access Preference_Information;
+   type Preference_Information is record
+      Page       : Basic_Types.String_Access;
+      Param      : Glib.Param_Spec;
+      Next       : Preference_Information_Access;
+   end record;
+
+   type Preferences_Manager is tagged record
+      Default     : Preference_Information_Access;
+      Preferences : Glib.Xml_Int.Node_Ptr;
+   end record;
 
 end Default_Preferences;
