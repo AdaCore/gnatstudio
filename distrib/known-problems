@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- Incorrect placement of cursor after insertion of <return>
+  Problem:    When auto-indentation is actived and one presses <return> in the
+              middle of a line, the cursor ends up at the end of the second
+              line instead of the beginning
+  Workaround: Press <home> just after <return>
+
 - C429-010 Automatic Uncomment Lines operations sometimes fail.
   Problem:    When uncommenting Ada lines that only contain "--", or lines
               starting with spaces, with less than two spaces after "--",
