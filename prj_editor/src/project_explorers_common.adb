@@ -679,6 +679,7 @@ package body Project_Explorers_Common is
 
       if Node_Type = File_Node
         or else Node_Type = Directory_Node
+        or else Node_Type = Obj_Directory_Node
         or else Node_Type = Entity_Node
       then
          File := new String'(Get_String (Model, Iter, Absolute_Name_Column));
