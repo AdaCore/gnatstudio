@@ -31,16 +31,17 @@ package Glide_Main_Window is
 
    type Glide_Window_Record is new GVD.Main_Window.GVD_Main_Window_Record with
    record
-      Kernel          : Glide_Kernel.Kernel_Handle;
-      Toolbar         : Gtk_Toolbar;
-      Animation_Frame : Gtk_Frame;
-      Animation       : Gdk_Pixbuf_Animation;
-      Animation_Iter  : Gdk_Pixbuf_Animation_Iter;
-      Animation_Image : Gtk_Image;
-      Timeout_Id      : Gtk.Main.Timeout_Handler_Id;
-      State_Level     : Integer := 0;
-      Busy_Level      : Integer := 0;
-      Interrupted     : Boolean := False;
+      Kernel               : Glide_Kernel.Kernel_Handle;
+      Toolbar              : Gtk_Toolbar;
+      Animation_Frame      : Gtk_Frame;
+      Animation            : Gdk_Pixbuf_Animation;
+      Animation_Iter       : Gdk_Pixbuf_Animation_Iter;
+      Animation_Image      : Gtk_Image;
+      Timeout_Id           : Gtk.Main.Timeout_Handler_Id;
+      State_Level          : Integer := 0;
+      Busy_Level           : Integer := 0;
+      Interrupted          : Boolean := False;
+      Desktop_Loaded       : Boolean := False;
    end record;
    type Glide_Window is access all Glide_Window_Record'Class;
 
