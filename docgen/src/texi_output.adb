@@ -24,6 +24,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Language;                  use Language;
 with Language.Ada;              use Language.Ada;
+with Language;                  use Language;
 
 package body Texi_Output is
 
@@ -883,25 +884,25 @@ package body Texi_Output is
    begin
 
       --  the global variables for the callback function of the parser
-      New_Line            := ASU.To_Unbounded_String (Info.Body_Line.all);
+      New_Line            := ASU.To_Unbounded_String (Info.Body_Text.all);
       Old_Line            := New_Line;
       Already_Added_Chars := 0;
       Chars_Nr_Before     := 0;
       --  how many chars in the lines before the current line
-      Source_File         := ASU.To_Unbounded_String (Info.Body_File.all);
+      Source_File         := ASU.To_Unbounded_String (Info.Body_Text.all);
       Entity_List         := Info.Body_List;
 
       --  parse the entities in this line
-      Parse_Entities (Ada_Lang, Info.Body_Line.all, TEXI_Body_Callback'Access);
+      Parse_Entities (Ada_Lang, Info.Body_Text.all, TEXI_Body_Callback'Access);
 
       --  each line will get a mark with its number as name
-      Add_Mark_For_Entity :
-      declare
-         Number : constant String := Info.Body_Line_Nr'Img;
-      begin
-         New_Line := "<A name=""" & Number (2 .. Number'Last) &
-         """> " & New_Line & " </A>";
-      end Add_Mark_For_Entity;
+      --  Add_Mark_For_Entity :
+      --  declare
+      --   Number : constant String := Info.Body_Line_Nr'Img;
+      --  begin
+      --   New_Line := "<A name=""" & Number (2 .. Number'Last) &
+      --   """> " & New_Line & " </A>";
+      --  end Add_Mark_For_Entity;
 
       --  write the line to the htm-file
       Ada.Text_IO.Put_Line (File, To_String (New_Line));
