@@ -29,6 +29,7 @@ with Gtk.Arrow;       use Gtk.Arrow;
 with Gtk.Box;         use Gtk.Box;
 with Gtk.Button;      use Gtk.Button;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Event_Box;   use Gtk.Event_Box;
 with Gtk.Frame;       use Gtk.Frame;
 with Gtk.Main;        use Gtk.Main;
 pragma Elaborate_All (Gtk.Main);
@@ -73,11 +74,14 @@ package body GVD.Status_Bar is
    ----------------
 
    procedure Initialize (Status : access GVD_Status_Bar_Record'Class) is
+      Event : Gtk_Event_Box;
    begin
       Initialize_Hbox (Status, Homogeneous => False, Spacing => 4);
 
+      Gtk_New (Event);
       Gtk_New (Status.Arrow_Button);
-      Pack_Start (Status, Status.Arrow_Button, False, False, 0);
+      Add (Event, Status.Arrow_Button);
+      Pack_Start (Status, Event, False, False, 0);
 
       Gtk_New (Status.Arrow, Arrow_Up, Shadow_Out);
       Add (Status.Arrow_Button, Status.Arrow);
@@ -155,6 +159,7 @@ package body GVD.Status_Bar is
       use type Messages_List.GSlist;
       Num     : Natural := 1;
       Frame   : Gtk_Frame;
+      Requisition : Gtk_Requisition;
 
    begin
       --  If not already displayed, create it.
@@ -223,14 +228,20 @@ package body GVD.Status_Bar is
          --  Reserve a minimal size
          --  ??? The text widget should be able to automatically give a
          --  correct width, but it doesn't.
+         Size_Request (Status.History_Win, Requisition);
          Set_Default_Size
            (Status.History_Win,
             Gint'Min (Gint (Get_Allocation_Width (Status.Status)), 500),
             -1);
+         if Y + Gint (Requisition.Height) > Screen_Height then
+            Y := Gint'Max (0, Screen_Height - Gint (Requisition.Height));
+         end if;
+
+         X := X + Gint (Get_Allocation_Width (Status.Arrow_Button));
+
+         Set_UPosition (Status.History_Win, X, Y);
 
          Realize (Status.History_Win);
-         Y := Y - Gint (Get_Allocation_Height (Status.History_Win));
-         Set_UPosition (Status.History_Win, X, Y);
 
          Show_All (Status.History_Win);
 
