@@ -145,6 +145,11 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br     : Contextual_Data_Record);
    --  Set a breakpoint on a specific line.
 
+   procedure Set_Subprogram_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record);
+   --  Set a breakpoint at the begining of a specified subprogram.
+
    procedure Till_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record);
@@ -530,7 +535,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Gtk_New (Mitem);
       Append (Source.Editor.Contextual_Menu, Mitem);
 
-      --  Line specific items
+      --  Breakpoints and Temporary Breakpoints
 
       Gtk_New
         (Mitem, Label => -"Set Breakpoint on Line" & Integer'Image (Line));
@@ -541,6 +546,19 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Data);
 
       if Line = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
+
+      Gtk_New
+        (Mitem, Label => -"Set Breakpoint on " & Entity);
+      Append (Source.Editor.Contextual_Menu, Mitem);
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller
+           (Set_Subprogram_Breakpoint'Access),
+         Data);
+
+      if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
 
@@ -1137,6 +1155,20 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Num := Break_Source
         (Br.Process.Debugger, Br.File, Br.Line, Mode => GVD.Types.Visible);
    end Set_Breakpoint;
+
+   -------------------------------
+   -- Set_Subprogram_Breakpoint --
+   -------------------------------
+
+   procedure Set_Subprogram_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record)
+   is
+      Num : Breakpoint_Identifier;
+   begin
+      Num := Break_Subprogram
+        (Br.Process.Debugger, Br.Name, Mode => GVD.Types.Visible);
+   end Set_Subprogram_Breakpoint;
 
    ---------------------
    -- Till_Breakpoint --
