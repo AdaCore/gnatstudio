@@ -472,6 +472,10 @@ package body Builder_Module is
       C            : Build_Command_Access;
 
    begin
+      if Langs'Length = 0 then
+         return;
+      end if;
+
       To_Lower (Langs (Langs'First).all);
 
       if Langs'Length = 1 and then Langs (Langs'First).all = "ada" then
