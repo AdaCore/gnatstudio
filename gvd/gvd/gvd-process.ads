@@ -70,10 +70,10 @@ package GVD.Process is
 
    type Stack_List_Mask is mod 2 ** 16;
    Frame_Num       : constant Stack_List_Mask := 2 ** 0;
-   Subprog_Name    : constant Stack_List_Mask := 2 ** 1;
-   Params          : constant Stack_List_Mask := 2 ** 2;
-   File_Location   : constant Stack_List_Mask := 2 ** 3;
-   Program_Counter : constant Stack_List_Mask := 2 ** 4;
+   Program_Counter : constant Stack_List_Mask := 2 ** 1;
+   Subprog_Name    : constant Stack_List_Mask := 2 ** 2;
+   Params          : constant Stack_List_Mask := 2 ** 3;
+   File_Location   : constant Stack_List_Mask := 2 ** 4;
    All_Info        : constant Stack_List_Mask := 2 ** 5 - 1;
    --  Lists the information to be displayed in the stack list window.
 

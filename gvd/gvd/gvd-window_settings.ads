@@ -37,12 +37,18 @@ package GVD.Window_Settings is
    --  Load the window settings from the file.
 
    type Process_Tab_Geometry is record
-      Data_Height    : Gint;
-      Data_Width     : Gint;
-      Stack_Width    : Gint;
-      Explorer_Width : Gint;
-      Command_Height : Gint;
-      Editor_Height  : Gint;
+      Data_Height            : Gint;
+      Data_Width             : Gint;
+      Stack_Mask             : Gint;
+      Stack_Width            : Gint;
+      Stack_Subprogram_Width : Gint;
+      Stack_Parameters_Width : Gint;
+      Stack_Num_Width        : Gint;
+      Stack_PC_Width         : Gint;
+      Stack_Location_Width   : Gint;
+      Explorer_Width         : Gint;
+      Command_Height         : Gint;
+      Editor_Height          : Gint;
    end record;
 
    function Get_Process_Tab_Geometry
