@@ -1,3 +1,11 @@
+Known Problems fixed in GVD 1.3.0
+
+- Tab key does not work properly for non trivial commands
+  Problem:    When using the tab key in the debugger console to complete
+              a command that contains spaces (e.g 'print p'), gvd replaces
+              the command by the last part of the completion.
+  Workaround: Type the beginning of the command by hand.
+
 Known Problems fixed in GVD 1.2.1
 
 - File extensions not properly recognized
