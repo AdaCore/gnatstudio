@@ -118,7 +118,7 @@ Debugging
 * The Data Window::
 * The Breakpoint Editor::
 * The Memory Window::
-* Using the Source Editors when Debugging::
+* Using the Source Editor when Debugging::
 * The Debugger Console::
 
 
@@ -1440,9 +1440,7 @@ display variables, set breakpoints, and get automatic display (via @i{tooltips})
 of object values.
 
 When you want to quit the debugger without quitting GPS, go to the menu
-@code{Debug->Terminate}, which will terminate your debug session, by closing
-the data window and the debugger console, as well as terminating the underlying
-debugger (e.g @code{gdb}) used by GPS to handle the low level debugging.
+@code{Debug->Terminate}, which will terminate your debug session.
 
 @menu
 * The Debugger Menu::
@@ -1450,7 +1448,7 @@ debugger (e.g @code{gdb}) used by GPS to handle the low level debugging.
 * The Data Window::
 * The Breakpoint Editor::
 * The Memory Window::
-* Using the Source Editors when Debugging::
+* Using the Source Editor when Debugging::
 * The Debugger Console::
 @end menu
 
