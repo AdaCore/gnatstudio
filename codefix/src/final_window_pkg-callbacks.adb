@@ -41,7 +41,7 @@ package body Final_Window_Pkg.Callbacks is
         Final_Window_Access (Object);
    begin
       Commit
-        (Final_Window.Graphic_Codefix.Corrector,
+        (Final_Window.Graphic_Codefix.Corrector.all,
          Final_Window.Graphic_Codefix.Current_Text.all);
       Quit (Final_Window.Graphic_Codefix);
       Destroy (Final_Window);
