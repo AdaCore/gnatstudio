@@ -112,7 +112,7 @@ procedure GPS is
    Home           : String_Access;
    Prefix         : String_Access;
    Dir            : String_Access;
-   Batch_Script   : String_Access;
+   Batch_File, Batch_Script : String_Access;
    Target,
    Protocol,
    Debugger_Name  : String_Access;
@@ -146,6 +146,10 @@ procedure GPS is
    procedure Child_Selected
      (MDI : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when a new child is selected
+
+   procedure Execute_Batch (Batch : String; As_File : Boolean);
+   --  Execute a batch command (either loading the file Batch if As_File is
+   --  true, or as a standard command otherwise).
 
    ---------------------
    -- Clean_Parameter --
@@ -326,8 +330,13 @@ procedure GPS is
            (-"   --debugger debugger Specify the debugger's command line");
          Put_Line ((-"   --target=TARG:PRO   ") &
                    (-"Load program on machine TARG using protocol PRO"));
-         Put_Line (-"   --batch=lang:file    Execute a script written in the");
-         Put_Line (-"                        language lang");
+         Put_Line
+           (-"   --load=lang:file    Execute an external file written");
+         Put_Line (-"                        in the language lang");
+         Put_Line
+           (-"   --eval=lang:file    Execute a command written in the");
+         Put_Line (-"                        language lang. This is executed");
+         Put_Line (-"                        before the --batch command");
          New_Line;
          Put_Line (-("Source files are searched everywhere on the project's "
                    & " source path"));
@@ -341,8 +350,13 @@ procedure GPS is
             LF & (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit.") & LF &
-            (-"   --batch=lang:file   Execute a script written in the") & LF &
-            (-"                       language lang") & LF &
+            (-"   --load=lang:file    Execute an external file written")
+            & LF &
+            (-"                        in the language lang") & LF &
+            (-"   --eval=lang:file    Execute a command written in the")
+            & LF &
+            (-"                        language lang. This is executed") & LF &
+            (-"                        before the --batch command") & LF &
             (-"   --debug[=program]   Start a debug session") & LF &
             (-"   --debugger debugger Specify the debugger's command line") &
             LF &
@@ -366,6 +380,59 @@ procedure GPS is
 
       null;
    end Ctrl_C_Handler;
+
+   -------------------
+   -- Execute_Batch --
+   -------------------
+
+   procedure Execute_Batch (Batch : String; As_File : Boolean) is
+      Executed : Boolean := False;
+   begin
+      for J in Batch'Range loop
+         if Batch (J) = ':' then
+            if As_File then
+               Execute_File
+                 (Script => Lookup_Scripting_Language
+                  (GPS.Kernel, Batch (Batch'First .. J - 1)),
+                  Filename => Batch (J + 1 .. Batch'Last),
+                  Display_In_Console => True);
+            else
+               Execute_Command
+                 (Script => Lookup_Scripting_Language
+                  (GPS.Kernel, Batch (Batch'First .. J - 1)),
+                  Command => Batch (J + 1 .. Batch'Last),
+                  Display_In_Console => True);
+            end if;
+
+            Executed := True;
+            exit;
+         end if;
+      end loop;
+
+      if not Executed then
+         if As_File then
+            Insert (GPS.Kernel,
+                    -"Language unknown for --batch command line switch",
+                    Mode => Error);
+         else
+            Insert (GPS.Kernel,
+                    -"Language unknown for --script command line switch",
+                    Mode => Error);
+         end if;
+      end if;
+
+   exception
+      when others =>
+         if As_File then
+            Insert (GPS.Kernel,
+                    -"Error when executing the script for -batch switch",
+                    Mode => Error);
+         else
+            Insert (GPS.Kernel,
+                    -"Error when executing the script for --script switch",
+                    Mode => Error);
+         end if;
+   end Execute_Batch;
 
    ------------------
    -- Finish_Setup --
@@ -666,33 +733,11 @@ procedure GPS is
       end if;
 
       if Batch_Script /= null then
-         declare
-            Executed : Boolean := False;
-         begin
-            for J in Batch_Script'Range loop
-               if Batch_Script (J) = ':' then
-                  Execute_File
-                    (Script => Lookup_Scripting_Language
-                      (GPS.Kernel, Batch_Script (Batch_Script'First .. J - 1)),
-                     Filename => Batch_Script (J + 1 .. Batch_Script'Last),
-                     Display_In_Console => True);
-                  Executed := True;
-                  exit;
-               end if;
-            end loop;
+         Execute_Batch (Batch_Script.all, As_File => False);
+      end if;
 
-            if not Executed then
-               Insert (GPS.Kernel,
-                       -"Language unknown for -batch command line switch",
-                       Mode => Error);
-            end if;
-
-         exception
-            when others =>
-               Insert (GPS.Kernel,
-                       -"Error when executing the script for -batch switch",
-                       Mode => Error);
-         end;
+      if Batch_File /= null then
+         Execute_Batch (Batch_File.all, As_File => True);
       end if;
 
       return False;
@@ -772,7 +817,7 @@ begin
 
    loop
       case Getopt ("-version -help P! -log-level= " &
-                   "-debug? -debugger= -target= -batch=")
+                   "-debug? -debugger= -target= -load= -eval=")
       is
          -- long option names --
          when '-' =>
@@ -800,28 +845,30 @@ begin
                      OS_Exit (0);
                   end if;
 
-               when 'b' =>
-                  --  --batch
-                  Free (Batch_Script);
-                  Batch_Script := new String'(Parameter);
-
                -- --log-level --
                when 'l' =>
-                  begin
-                     GPS.Log_Level := GVD.Types.Command_Type'Val
-                       (GVD.Types.Command_Type'Pos
-                          (GVD.Types.Command_Type'Last) + 1 -
-                          Integer'Value (Parameter));
+                  if Full_Switch = "-log-level" then
+                     begin
+                        GPS.Log_Level := GVD.Types.Command_Type'Val
+                          (GVD.Types.Command_Type'Pos
+                           (GVD.Types.Command_Type'Last) + 1 -
+                           Integer'Value (Parameter));
 
-                  exception
-                     when Constraint_Error =>
-                        if GVD.Can_Output then
-                           Put_Line ("Invalid parameter to --log-level");
-                        end if;
+                     exception
+                        when Constraint_Error =>
+                           if GVD.Can_Output then
+                              Put_Line ("Invalid parameter to --log-level");
+                           end if;
 
-                        Help;
-                        OS_Exit (-1);
-                  end;
+                           Help;
+                           OS_Exit (-1);
+                     end;
+
+                  elsif Full_Switch = "-load" then
+                     --  --load
+                     Free (Batch_File);
+                     Batch_File := new String'(Parameter);
+                  end if;
 
                when 'd' =>
                   --  --debug
@@ -834,6 +881,11 @@ begin
                      Free (Debugger_Name);
                      Debugger_Name := new String'(Parameter);
                   end if;
+
+               when 'e' =>
+                  --  --eval
+                  Free (Batch_Script);
+                  Batch_Script := new String'(Parameter);
 
                -- --target --
                when 't' =>
