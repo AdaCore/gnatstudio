@@ -2072,8 +2072,12 @@ package body Src_Editor_Buffer is
             end if;
          end if;
 
-         Buffer.Parse_Blocks := True;
+         Buffer.Parse_Blocks :=
+            not Equal (Get_Pref (Buffer.Kernel, Current_Block_Color),
+                       White (Get_Default_Colormap));
+
          Compute_Blocks (Buffer);
+
          Buffer_Information_Changed (Buffer);
       end if;
    end Set_Language;
