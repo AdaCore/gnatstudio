@@ -326,7 +326,7 @@ package body Builder_Module is
                      File_Arg := new String'("");
                   else
                      File_Arg :=
-                       new String'("ADA_SOURCES=" & Base_Name (File).all);
+                       new String'("ADA_SOURCES=" & Base_Name (File));
                   end if;
 
                   if Build_Progress then
@@ -1236,14 +1236,14 @@ package body Builder_Module is
                      Full_Name (Data.File).all & ' ' & Arguments);
                   Launch
                     (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-                     -"Run: " & Base_Name (Data.File).all & ' ' &
+                     -"Run: " & Base_Name (Data.File) & ' ' &
                      Krunch (Arguments, 12));
 
                else
                   Args := Argument_String_To_List (Arguments);
                   Launch
                     (Full_Name (Data.File).all,
-                     Args.all, -"Run: " & Base_Name (Data.File).all
+                     Args.all, -"Run: " & Base_Name (Data.File)
                      & ' ' & Krunch (Arguments, 12));
                end if;
 
