@@ -2018,6 +2018,7 @@ package body Project_Explorers is
          Set_Focus_Child (Child);
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
+         Raise_Child (Child);
          return Explorer;
       else
          Raise_Child (Child);
