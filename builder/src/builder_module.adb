@@ -147,6 +147,28 @@ package body Builder_Module is
    --    - in the GPS results view if it corresponds to a file location
    --    - in the GPS console if it is a general message.
 
+   procedure Add_Build_Menu
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Set_Shortcut : Boolean);
+   --  Remove all entries in Menu, and add new entries for all the main
+   --  subprograms of Project.
+   --  If Menu is null, a new one is created if there are any entries
+   --  If Set_Shortcut is true, the F4 shortcut is set for the first entry.
+
+   procedure Add_Run_Menu
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class);
+   --  Same as Add_Build_Menu, but for the Run menu
+
+   procedure Builder_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Add entries to the contextual menu
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -1178,6 +1200,113 @@ package body Builder_Module is
       Console.Raise_Console (Kernel);
    end On_Stop_Build;
 
+   --------------------
+   -- Add_Build_Menu --
+   --------------------
+
+   procedure Add_Build_Menu
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Set_Shortcut : Boolean)
+   is
+      Mains : Argument_List := Get_Attribute_Value
+        (Project, Attribute_Name => Main_Attribute);
+      Mitem        : Gtk_Menu_Item;
+      Has_Child    : Boolean := False;
+      Builder_Module : constant Builder_Module_ID_Access :=
+        Builder_Module_ID_Access (Builder_Module_ID);
+
+   begin
+      if Menu = null then
+         if Mains'Length = 0 then
+            return;
+         end if;
+         Gtk_New (Menu);
+      end if;
+
+      --  Remove all existing menus and dynamic accelerators
+
+      if Builder_Module.Build_Item /= null then
+         Remove_Accelerator
+           (Builder_Module.Build_Item,
+            Get_Default_Accelerators (Kernel), GDK_F4, 0);
+         Builder_Module.Build_Item := null;
+      end if;
+
+      Remove_All_Children (Menu);
+
+      for M in Mains'Range loop
+         Gtk_New (Mitem, Mains (M).all);
+         Append (Menu, Mitem);
+         File_Project_Cb.Object_Connect
+           (Mitem, "activate",
+            File_Project_Cb.To_Marshaller (On_Build'Access),
+            Slot_Object => Kernel,
+            User_Data => File_Project_Record'
+            (Length  => Mains (M)'Length,
+             Project => Project,
+             File    => Mains (M).all));
+
+         if Set_Shortcut then
+            --  The first item in the make menu should have a key binding
+
+            if not Has_Child then
+               Add_Accelerator
+                 (Mitem, "activate", Get_Default_Accelerators (Kernel),
+                  GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
+               Builder_Module.Build_Item := Mitem;
+            end if;
+
+            Has_Child := True;
+         end if;
+
+         Free (Mains);
+      end loop;
+   end Add_Build_Menu;
+
+   ------------------
+   -- Add_Run_Menu --
+   ------------------
+
+   procedure Add_Run_Menu
+     (Menu         : in out Gtk_Menu;
+      Project      : Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class)
+   is
+      Mains : constant Argument_List := Get_Attribute_Value
+        (Project, Attribute_Name => Main_Attribute);
+      Mitem        : Gtk_Menu_Item;
+   begin
+      if Menu = null then
+         if Mains'Length = 0 then
+            return;
+         end if;
+         Gtk_New (Menu);
+      end if;
+
+      Remove_All_Children (Menu);
+
+      for M in Mains'Range loop
+         declare
+            Full : constant String := Base_Name (Mains (M).all);
+            Exec : constant String := Full
+              (Full'First .. Delete_File_Suffix (Full, Project));
+         begin
+            Gtk_New (Mitem, Exec);
+            Append (Menu, Mitem);
+            File_Project_Cb.Object_Connect
+              (Mitem, "activate",
+               File_Project_Cb.To_Marshaller (On_Run'Access),
+               Slot_Object => Kernel,
+               User_Data => File_Project_Record'
+               (Length  => Exec'Length,
+                Project => Project,
+                File    => Exec));
+         end;
+      end loop;
+   end Add_Run_Menu;
+
    ---------------------
    -- On_View_Changed --
    ---------------------
@@ -1192,74 +1321,16 @@ package body Builder_Module is
       Mitem        : Gtk_Menu_Item;
       Menu1        : Gtk_Menu renames Builder_Module.Make_Menu;
       Menu2        : Gtk_Menu renames Builder_Module.Run_Menu;
-      Iter         : Imported_Project_Iterator := Start (Get_Project (Kernel));
-      Has_Child    : Boolean := False;
 
    begin
-      --  Remove all existing menus and dynamic accelerators
-
-      if Builder_Module.Build_Item /= null then
-         Remove_Accelerator
-           (Builder_Module.Build_Item,
-            Get_Default_Accelerators (Kernel), GDK_F4, 0);
-      end if;
-
-      Remove_All_Children (Menu1);
-      Remove_All_Children (Menu2);
-
-      --  Add all the main units from all the imported projects.
-
-      while Current (Iter) /= No_Project loop
-         declare
-            Mains : Argument_List := Get_Attribute_Value
-              (Current (Iter), Attribute_Name => Main_Attribute);
-         begin
-            for M in Mains'Range loop
-               Gtk_New (Mitem, Mains (M).all);
-               Append (Menu1, Mitem);
-               File_Project_Cb.Object_Connect
-                 (Mitem, "activate",
-                  File_Project_Cb.To_Marshaller (On_Build'Access),
-                  Slot_Object => Kernel,
-                  User_Data => File_Project_Record'
-                    (Length  => Mains (M)'Length,
-                     Project => Current (Iter),
-                     File    => Mains (M).all));
-
-               --  The first item in the make menu should have a key binding
-
-               if not Has_Child then
-                  Add_Accelerator
-                    (Mitem, "activate", Get_Default_Accelerators (Kernel),
-                     GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
-                  Builder_Module.Build_Item := Mitem;
-               end if;
-
-               Has_Child := True;
-
-               declare
-                  Exec : constant String := Base_Name (Mains (M).all,
-                     GNAT.Directory_Operations.File_Extension
-                       (Mains (M).all));
-               begin
-                  Gtk_New (Mitem, Exec);
-                  Append (Menu2, Mitem);
-                  File_Project_Cb.Object_Connect
-                    (Mitem, "activate",
-                     File_Project_Cb.To_Marshaller (On_Run'Access),
-                     Slot_Object => Kernel,
-                     User_Data => File_Project_Record'
-                       (Length  => Exec'Length,
-                        Project => Current (Iter),
-                        File    => Exec));
-               end;
-            end loop;
-
-            Free (Mains);
-         end;
-
-         Next (Iter);
-      end loop;
+      --  Only add the shortcuts for the root project
+      Add_Build_Menu (Menu         => Builder_Module.Make_Menu,
+                      Project      => Get_Project_View (Kernel),
+                      Kernel       => Kernel,
+                      Set_Shortcut => True);
+      Add_Run_Menu   (Menu         => Builder_Module.Run_Menu,
+                      Project      => Get_Project_View (Kernel),
+                      Kernel       => Kernel);
 
       --  No main program ?
 
@@ -1274,14 +1345,14 @@ package body Builder_Module is
             Project => No_Project,
             File    => ""));
 
-      if not Has_Child then
+      if Builder_Module.Build_Item = null then
          Add_Accelerator
            (Mitem, "activate", Get_Default_Accelerators (Kernel),
             GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
          Builder_Module.Build_Item := Mitem;
       end if;
 
-      Gtk_New (Mitem, -"All");
+      Gtk_New (Mitem, -"All main subprograms");
       Append (Menu1, Mitem);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
@@ -1311,7 +1382,7 @@ package body Builder_Module is
          File_Project_Cb.To_Marshaller (On_Run'Access),
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
-           (Length => 0, Project => Current (Iter), File => ""));
+           (Length => 0, Project => Get_Project_View (Kernel), File => ""));
 
       Show_All (Menu1);
       Show_All (Menu2);
@@ -1320,6 +1391,54 @@ package body Builder_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
+
+   ------------------------
+   -- Builder_Contextual --
+   ------------------------
+
+   procedure Builder_Contextual
+     (Object    : access GObject_Record'Class;
+      Context   : access Selection_Context'Class;
+      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object);
+      Item         : Gtk_Menu_Item;
+      File_Context : File_Selection_Context_Access;
+      Submenu      : Gtk_Menu;
+   begin
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_Context)
+           and then not Has_Directory_Information (File_Context)
+           and then not Has_File_Information (File_Context)
+         then
+            Add_Build_Menu
+              (Menu         => Submenu,
+               Project      => Project_Information (File_Context),
+               Kernel       => Get_Kernel (Context),
+               Set_Shortcut => False);
+
+            if Submenu /= null then
+               Gtk_New (Item, -"Build");
+               Set_Submenu (Item, Submenu);
+               Append (Menu, Item);
+            end if;
+
+            Submenu := null;
+            Add_Run_Menu
+              (Menu         => Submenu,
+               Project      => Project_Information (File_Context),
+               Kernel       => Get_Kernel (Context));
+
+            if Submenu /= null then
+               Gtk_New (Item, -"Run");
+               Set_Submenu (Item, Submenu);
+               Append (Menu, Item);
+            end if;
+         end if;
+      end if;
+   end Builder_Contextual;
 
    ---------------------
    -- Register_Module --
@@ -1339,6 +1458,7 @@ package body Builder_Module is
         (Module       => Builder_Module_ID,
          Kernel       => Kernel,
          Module_Name  => Builder_Module_Name,
+         Contextual_Menu_Handler => Builder_Contextual'Access,
          Priority     => Default_Priority);
 
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Debug");
