@@ -47,16 +47,17 @@ package Prj_API is
    type Project_Node_Array is array (Positive range <>) of Project_Node_Id;
    type Project_Node_Array_Access is access Project_Node_Array;
 
+   Ada_String : Types.String_Id;
+   C_String   : Types.String_Id;
+   Cpp_String : Types.String_Id;
+   --  Strings used for the various languages supported by Glide
+
    function Get_String (Str : Types.String_Id) return String;
    --  This functional form returns the value of Str as a string without
    --  affecting the contents of either Name_Buffer or Name_Len.
 
    procedure Free is new Unchecked_Deallocation
      (Project_Node_Array, Project_Node_Array_Access);
-
-   function Create_Project (Name, Path : String) return Project_Node_Id;
-   --  Create a new empty project.
-   --  You must have called "Project_Nodes.Set_Last (Empty_Node)" first.
 
    function Get_Project_View_From_Name
      (Name : Types.Name_Id) return Project_Id;
@@ -67,10 +68,48 @@ package Prj_API is
    function Get_Project_From_View (View : Project_Id) return Project_Node_Id;
    --  Converts from a project view to the associated node in the tree.
 
-   function Get_Or_Create_Declaration (Project : Project_Node_Id)
+   function Get_Or_Create_Package
+     (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
+   --  Create (or get an existing) package in project.
+   --
+   --  ??? Should always create, since we can use a find_* function to get an
+   --  existing one.
+
+   procedure Add_Imported_Project
+     (Project : Project_Node_Id; Imported_Project : Project_Node_Id);
+   --  Add a new with_statement for Imported_Project.
+
+   procedure Add_At_End
+     (Parent                       : Project_Node_Id;
+      Expr                         : Project_Node_Id;
+      Add_Before_First_Case_Or_Pkg : Boolean := False);
+   --  Add a new declarative item in the list in Parent.
+   --  This new declarative item will contain Expr (unless Expr is already a
+   --  declarative item, in which case it is added directly to the list).
+   --  The new item is inserted at the end of the list, unless
+   --  Add_Before_First_Case_Or_Pkg is True. In the latter case, it is added
+   --  just before the first case construction is seen (in normalized project
+   --  files, this corresponds to the end of the common section), or before the
+   --  first package
+
+   procedure Add_In_Front
+     (Parent : Project_Node_Id;
+      Node   : Project_Node_Id);
+   --  Add Node at the begining of the list for Parent.
+   --  Node can also be a N_Declarative_Item (or a list of them).
+
+   function Enclose_In_Expression (Node : Project_Node_Id)
       return Project_Node_Id;
-   --  Create (or get) the declaration associated with project
-   --  This returns a N_Project_Declaration
+   --  Enclose the Node inside a N_Expression node, and return this expression.
+
+   --------------------
+   -- Creating nodes --
+   --------------------
+
+   function Create_Project (Name, Path : String) return Project_Node_Id;
+   --  Create a new empty project and its declaration.
+   --  The project is also registered, so that it can be retrieved from one of
+   --  its view.
 
    function Create_Variable
      (Prj_Or_Pkg : Project_Node_Id;
@@ -123,48 +162,14 @@ package Prj_API is
    --  If the variable is a list, it also creates the associated
    --  N_Literal_String_List node.
 
-   function Get_Or_Create_Package
-     (Project : Project_Node_Id; Pkg : String) return Project_Node_Id;
-   --  Create (or get an existing) package in project.
-   --
-   --  ??? Should always create, since we can use a find_* function to get an
-   --  existing one.
-
    function Create_Variable_Reference (Var : Project_Node_Id)
       return Project_Node_Id;
    --  Create and return a reference to the variable Var.
    --  Var must be a variable declaration
 
-   procedure Add_Imported_Project
-     (Project : Project_Node_Id; Imported_Project : Project_Node_Id);
-   --  Add a new with_statement for Imported_Project.
-
-   procedure Add_At_End
-     (Parent                       : Project_Node_Id;
-      Expr                         : Project_Node_Id;
-      Add_Before_First_Case_Or_Pkg : Boolean := False);
-   --  Add a new declarative item in the list in Parent.
-   --  This new declarative item will contain Expr (unless Expr is already a
-   --  declarative item, in which case it is added directly to the list).
-   --  The new item is inserted at the end of the list, unless
-   --  Add_Before_First_Case_Or_Pkg is True. In the latter case, it is added
-   --  just before the first case construction is seen (in normalized project
-   --  files, this corresponds to the end of the common section), or before the
-   --  first package
-
-   function Enclose_In_Expression (Node : Project_Node_Id)
-      return Project_Node_Id;
-   --  Enclose the Node inside a N_Expression node, and return this expression.
-
-   --  function Find_Attribute_Declaration
-   --    (Prj_Or_Pkg     : Project_Node_Id;
-   --     Attribute_Name : String;
-   --     Index_Name     : Types.String_Id := Types.No_String)
-   --     return Project_Node_Id;
-   --  Find the declaration of Attribute_Name (possibly for a specific index)
-   --  in the project or the package Prj_Or_Pkg. When looking in a project, the
-   --  packages are not searched. Also, this function will not go recursively
-   --  inside the case statements.
+   -------------------
+   -- Finding nodes --
+   -------------------
 
    function Find_Type_Declaration
      (Project : Project_Node_Id; Name : Types.Name_Id)
@@ -176,9 +181,19 @@ package Prj_API is
      return Project_Node_Id;
    --  Return the package whose name is Name, or Empty_Node if there is none
 
-   -------------------------------
-   -- Node creation and copying --
-   -------------------------------
+   --  function Find_Attribute_Declaration
+   --    (Prj_Or_Pkg     : Project_Node_Id;
+   --     Attribute_Name : String;
+   --     Index_Name     : Types.String_Id := Types.No_String)
+   --     return Project_Node_Id;
+   --  Find the declaration of Attribute_Name (possibly for a specific index)
+   --  in the project or the package Prj_Or_Pkg. When looking in a project, the
+   --  packages are not searched. Also, this function will not go recursively
+   --  inside the case statements.
+
+   ------------------
+   -- Node cloning --
+   ------------------
 
    function Clone_Node (Node : Project_Node_Id; Deep_Clone : Boolean := False)
       return Project_Node_Id;

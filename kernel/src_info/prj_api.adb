@@ -51,17 +51,6 @@ package body Prj_API is
 
    Me : Debug_Handle := Create ("Prj_API");
 
-   function Internal_Create_Node
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Array_Index : String_Id := No_String;
-      Item_Kind : Project_Node_Kind := N_Attribute_Declaration;
-      Kind : Variable_Kind := List;
-      Add_Before_First_Case_Or_Pkg : Boolean := False)
-      return Project_Node_Id;
-   --  Internal version for Get_Or_Create_Attribute. If Array_Index is not
-   --  No_String, then the variable is defined for a specific index.
-
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
    --  Set Var as the expression to use for the value of Var. This
@@ -102,91 +91,34 @@ package body Prj_API is
 
    function Create_Project (Name, Path : String) return Project_Node_Id is
       Project : Project_Node_Id := Default_Project_Node (N_Project);
+      Project_Name : Name_Id;
    begin
       --  Adding the name of the project
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
-      Set_Name_Of (Project, Name_Enter);
+      Project_Name := Name_Enter;
+      Set_Name_Of (Project, Project_Name);
 
       --  Adding the project path
       Name_Len := Path'Length;
       Name_Buffer (1 .. Name_Len) := Path;
       Set_Path_Name_Of (Project, Name_Enter);
+      Set_Directory_Of (Project, Path_Name_Of (Project));
+
+      --  Create the project declaration
+      Set_Project_Declaration_Of
+        (Project, Default_Project_Node (N_Project_Declaration));
+
+      --  Register the name of the project so that we can retrieve it from one
+      --  of its views
+      Prj.Tree.Tree_Private_Part.Projects_Htable.Set
+        (Prj.Tree.Name_Of (Project),
+         Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
+         (Name => Project_Name,
+          Node => Project,
+          Modified => False));
       return Project;
    end Create_Project;
-
-   -------------------------------
-   -- Get_Or_Create_Declaration --
-   -------------------------------
-
-   function Get_Or_Create_Declaration (Project : Project_Node_Id)
-      return Project_Node_Id
-   is
-      Decl : Project_Node_Id := Project_Declaration_Of (Project);
-   begin
-      if Decl = Empty_Node then
-         Decl := Default_Project_Node (N_Project_Declaration);
-         Set_Project_Declaration_Of (Project, Decl);
-      end if;
-      return Decl;
-   end Get_Or_Create_Declaration;
-
-   function Internal_Create_Node
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String;
-      Array_Index : String_Id := No_String;
-      Item_Kind : Project_Node_Kind := N_Attribute_Declaration;
-      Kind : Variable_Kind := List;
-      Add_Before_First_Case_Or_Pkg : Boolean := False)
-      return Project_Node_Id
-   is
-      Var, Decl, Item : Project_Node_Id;
-   begin
-      pragma Assert
-        (Kind_Of (Prj_Or_Pkg) = N_Package_Declaration
-         or else Kind_Of (Prj_Or_Pkg) = N_Project
-         or else Kind_Of (Prj_Or_Pkg) = N_Case_Item);
-
-      --  Create the variable
-
-      Var      := Default_Project_Node (Item_Kind, Kind);
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      Set_Name_Of (Var, Name_Find);
-      if Item_Kind = N_Attribute_Declaration then
-         Set_Associative_Array_Index_Of (Var, Array_Index);
-      end if;
-
-      --  Create a declarative item around the variable
-      Item := Default_Project_Node (N_Declarative_Item);
-      Set_Current_Item_Node (Item, Var);
-
-      --  First step is to create the declarative item that will contain the
-      --  variable. This is dependent on the kind of node for Prj_Or_Pkg
-
-      if Kind_Of (Prj_Or_Pkg) = N_Project then
-         Decl := Get_Or_Create_Declaration (Prj_Or_Pkg);
-      else
-         Decl := Prj_Or_Pkg;
-      end if;
-
-      Add_At_End (Decl, Item, Add_Before_First_Case_Or_Pkg);
-
-      --  Insert the attribute or the variable in the list Prj_Or_Pkg.Variables
-      --  if needed. This might mean that the variable is inserted several
-      --  times. However, since we inserted in front, the first item in the
-      --  list will always contain a reference to the *first* declaration of
-      --  the variable.
-
-      if Item_Kind = N_Typed_Variable_Declaration
-        or else Item_Kind = N_Variable_Declaration
-      then
-         Set_Next_Variable (Var, First_Variable_Of (Prj_Or_Pkg));
-         Set_First_Variable_Of (Prj_Or_Pkg, Var);
-      end if;
-
-      return Var;
-   end Internal_Create_Node;
 
    ---------------------
    -- Create_Variable --
@@ -196,10 +128,20 @@ package body Prj_API is
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Kind : Variable_Kind := List)
-      return Project_Node_Id is
+      return Project_Node_Id
+   is
+      Node : Project_Node_Id :=
+        Default_Project_Node (N_Variable_Declaration, Kind);
    begin
-      return Internal_Create_Node
-        (Prj_Or_Pkg, Name, No_String, N_Variable_Declaration, Kind);
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      Set_Name_Of (Node, Name_Find);
+
+      Add_At_End (Prj_Or_Pkg, Node);
+
+      Set_Next_Variable (Node, First_Variable_Of (Prj_Or_Pkg));
+      Set_First_Variable_Of (Prj_Or_Pkg, Node);
+      return Node;
    end Create_Variable;
 
    ----------------------
@@ -211,24 +153,19 @@ package body Prj_API is
       Name : String;
       Index_Name : String_Id := No_String;
       Kind : Variable_Kind := List)
-      return Project_Node_Id is
+      return Project_Node_Id
+   is
+      Node : Project_Node_Id :=
+        Default_Project_Node (N_Attribute_Declaration, Kind);
    begin
-      return Internal_Create_Node
-        (Prj_Or_Pkg, Name, Index_Name, N_Attribute_Declaration, Kind);
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      Set_Name_Of (Node, Name_Find);
+      Set_Associative_Array_Index_Of (Node, Index_Name);
+
+      Add_At_End (Prj_Or_Pkg, Node);
+      return Node;
    end Create_Attribute;
-
-   -----------------
-   -- Create_Type --
-   -----------------
-
-   function Create_Type
-     (Prj_Or_Pkg : Project_Node_Id;
-      Name : String)
-      return Project_Node_Id is
-   begin
-      return Internal_Create_Node
-        (Prj_Or_Pkg, Name, No_String, N_String_Type_Declaration, Undefined);
-   end Create_Type;
 
    ---------------------------
    -- Create_Typed_Variable --
@@ -241,15 +178,39 @@ package body Prj_API is
       Add_Before_First_Case_Or_Pkg : Boolean := False)
       return Project_Node_Id
    is
-      V : Project_Node_Id;
+      Node : Project_Node_Id :=
+        Default_Project_Node (N_Typed_Variable_Declaration, Prj.Single);
    begin
-      pragma Assert (Kind_Of (Typ) = N_String_Type_Declaration);
-      V := Internal_Create_Node
-        (Prj_Or_Pkg, Name, No_String, N_Typed_Variable_Declaration, Single,
-         Add_Before_First_Case_Or_Pkg);
-      Set_String_Type_Of (V, Typ);
-      return V;
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      Set_Name_Of (Node, Name_Find);
+      Set_String_Type_Of (Node, Typ);
+
+      Add_At_End (Prj_Or_Pkg, Node);
+
+      Set_Next_Variable (Node, First_Variable_Of (Prj_Or_Pkg));
+      Set_First_Variable_Of (Prj_Or_Pkg, Node);
+      return Node;
    end Create_Typed_Variable;
+
+   -----------------
+   -- Create_Type --
+   -----------------
+
+   function Create_Type
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String)
+      return Project_Node_Id
+   is
+      Node : Project_Node_Id;
+   begin
+      Node := Default_Project_Node (N_String_Type_Declaration);
+      Name_Len := Name'Length;
+      Name_Buffer (1 .. Name_Len) := Name;
+      Set_Name_Of (Node, Name_Find);
+      Add_At_End (Prj_Or_Pkg, Node, True);
+      return Node;
+   end Create_Type;
 
    ------------------------
    -- Add_Possible_Value --
@@ -291,8 +252,6 @@ package body Prj_API is
    function Get_Or_Create_Package
      (Project : Project_Node_Id; Pkg : String) return Project_Node_Id
    is
-      Decl : constant Project_Node_Id := Get_Or_Create_Declaration (Project);
-      Decl_Item, Item : Project_Node_Id;
       Pack : Project_Node_Id;
       N : Name_Id;
    begin
@@ -301,6 +260,7 @@ package body Prj_API is
       N := Name_Find;
 
       --  Check if the package already exists
+
       Pack := First_Package_Of (Project);
       while Pack /= Empty_Node loop
          if Prj.Tree.Name_Of (Pack) = N then
@@ -309,26 +269,10 @@ package body Prj_API is
          Pack := Next_Package_In_Project (Pack);
       end loop;
 
-      --  Otherwise create the declarative item, and put it at the end. We can
-      --  not put it at the beginning, since otherwise this would skip the
-      --  section were scenario variables are declared, and they might be
-      --  referenced in the new package.
-
-      Decl_Item := Default_Project_Node (N_Declarative_Item);
-      Item := First_Declarative_Item_Of (Decl);
-      if Item = Empty_Node then
-         Set_First_Declarative_Item_Of (Decl, Decl_Item);
-      else
-         while Next_Declarative_Item (Item) /= Empty_Node loop
-            Item := Next_Declarative_Item (Item);
-         end loop;
-
-         Set_Next_Declarative_Item (Item, Decl_Item);
-      end if;
-
       --  Create the package and add it to the declarative item
+
       Pack := Default_Project_Node (N_Package_Declaration);
-      Set_Current_Item_Node (Decl_Item, Pack);
+      Set_Name_Of (Pack, N);
 
       --  Find the correct package id to use
 
@@ -343,7 +287,7 @@ package body Prj_API is
       Set_Next_Package_In_Project (Pack, First_Package_Of (Project));
       Set_First_Package_Of (Project, Pack);
 
-      Set_Name_Of (Pack, N);
+      Add_At_End (Project_Declaration_Of (Project), Pack);
 
       return Pack;
    end Get_Or_Create_Package;
@@ -1141,6 +1085,7 @@ package body Prj_API is
       Expr                         : Project_Node_Id;
       Add_Before_First_Case_Or_Pkg : Boolean := False)
    is
+      Real_Parent : Project_Node_Id;
       New_Decl, Decl, Next : Project_Node_Id;
    begin
       if Kind_Of (Expr) /= N_Declarative_Item then
@@ -1150,10 +1095,16 @@ package body Prj_API is
          New_Decl := Expr;
       end if;
 
-      Decl := First_Declarative_Item_Of (Parent);
+      if Kind_Of (Parent) = N_Project then
+         Real_Parent := Project_Declaration_Of (Parent);
+      else
+         Real_Parent := Parent;
+      end if;
+
+      Decl := First_Declarative_Item_Of (Real_Parent);
 
       if Decl = Empty_Node then
-         Set_First_Declarative_Item_Of (Parent, New_Decl);
+         Set_First_Declarative_Item_Of (Real_Parent, New_Decl);
       else
          loop
             Next := Next_Declarative_Item (Decl);
@@ -1171,6 +1122,40 @@ package body Prj_API is
          Set_Next_Declarative_Item (Decl, New_Decl);
       end if;
    end Add_At_End;
+
+   ------------------
+   -- Add_In_Front --
+   ------------------
+
+   procedure Add_In_Front
+     (Parent : Project_Node_Id;
+      Node   : Project_Node_Id)
+   is
+      Real_Parent : Project_Node_Id;
+      New_Decl, Decl : Project_Node_Id;
+   begin
+      if Kind_Of (Node) /= N_Declarative_Item then
+         New_Decl := Default_Project_Node (N_Declarative_Item);
+         Set_Current_Item_Node (New_Decl, Node);
+      else
+         New_Decl := Node;
+      end if;
+
+      if Kind_Of (Parent) = N_Project then
+         Real_Parent := Project_Declaration_Of (Parent);
+      else
+         Real_Parent := Parent;
+      end if;
+
+      Decl := New_Decl;
+      while Next_Declarative_Item (Decl) /= Empty_Node loop
+         Decl := Next_Declarative_Item (Decl);
+      end loop;
+
+      Set_Next_Declarative_Item
+        (Decl, First_Declarative_Item_Of (Real_Parent));
+      Set_First_Declarative_Item_Of (Real_Parent, New_Decl);
+   end Add_In_Front;
 
    ---------------------------
    -- Enclose_In_Expression --
@@ -1840,4 +1825,17 @@ begin
    Snames.Initialize;
    Prj.Initialize;
    Prj.Tree.Initialize;
+
+   --  The names should be lower-case
+   Start_String;
+   Store_String_Chars ("ada");
+   Ada_String := End_String;
+
+   Start_String;
+   Store_String_Chars ("c");
+   C_String := End_String;
+
+   Start_String;
+   Store_String_Chars ("c++");
+   Cpp_String := End_String;
 end Prj_API;
