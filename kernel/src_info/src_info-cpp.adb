@@ -257,9 +257,9 @@ package body Src_Info.CPP is
    type CType_Description is
       record
          Kind              : E_Kind;
-         IsVolatile        : Boolean;
-         IsConst           : Boolean;
-         IsTemplate        : Boolean;
+         IsVolatile        : Boolean := False;
+         IsConst           : Boolean := False;
+         IsTemplate        : Boolean := False;
          Parent_Point      : Point   := Invalid_Point;
          Parent_Filename   : SN.String_Access;
          Ancestor_Point    : Point   := Invalid_Point;
@@ -566,11 +566,6 @@ package body Src_Info.CPP is
       Volatile_Str : constant String := "volatile ";
       Const_Str    : constant String := "const ";
    begin
-      Desc.IsVolatile     := False;
-      Desc.IsConst        := False;
-      Desc.IsTemplate     := False;
-      Desc.Parent_Point   := Invalid_Point;
-      Desc.Ancestor_Point := Invalid_Point;
       Success             := False;
 
       --  check for leading volatile/const modifier
@@ -730,6 +725,12 @@ package body Src_Info.CPP is
       --  typedef found, it is time to set Is_Typedef
       Desc.Is_Typedef := True;
 
+      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+         Desc.Ancestor_Point    := Typedef.Start_Position;
+         Desc.Ancestor_Filename := new String' (Typedef.Buffer (
+                       Typedef.File_Name.First .. Typedef.File_Name.Last));
+      end if;
+
       --  lookup left side of the typedef in our type
       --  hash table
       Seek_Key  := new String'
@@ -739,6 +740,12 @@ package body Src_Info.CPP is
 
       if State = Incomplete then -- loop detected
          Desc.Kind := Unresolved_Entity;
+
+         --  Set parent type to ancestor type
+         Desc.Parent_Point := Desc.Ancestor_Point;
+         --  we need a copy here
+         Desc.Parent_Filename := new String' (Desc.Ancestor_Filename.all);
+
          Success   := True;
          Free (Typedef);
          return;
@@ -747,17 +754,12 @@ package body Src_Info.CPP is
       Type_Name_To_Kind (Typedef.Buffer (
               Typedef.Original.First .. Typedef.Original.Last),
               Desc, Success);
+
       if Success then
          --  parent type found (E_Kind is resolved)
          Desc.Parent_Point     := Typedef.Start_Position;
          Desc.Parent_Filename := new String'(Typedef.Buffer (
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
-
-         if Desc.Ancestor_Point = Invalid_Point then
-            Desc.Ancestor_Point    := Typedef.Start_Position;
-            Desc.Ancestor_Filename := new String' (Typedef.Buffer (
-                          Typedef.File_Name.First .. Typedef.File_Name.Last));
-         end if;
 
          Free (Typedef);
          Success := True;
