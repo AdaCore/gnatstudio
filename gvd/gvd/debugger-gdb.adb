@@ -2,7 +2,7 @@
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2402,6 +2402,33 @@ package body Debugger.Gdb is
       Repeat_Num : out Positive;
       Parent     : Items.Generic_Type_Access)
    is
+      procedure Skip_Parenthesis (Index : in out Natural);
+      --  Skip the parenthesis pair starting at Index, taking into account
+      --  nested parenthesis
+
+      ----------------------
+      -- Skip_Parenthesis --
+      ----------------------
+
+      procedure Skip_Parenthesis (Index : in out Natural) is
+         Num : Natural := 1;
+      begin
+         if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
+            Index := Index + 1;
+            while Num /= 0
+              and then Index <= Type_Str'Last
+            loop
+               if Type_Str (Index) = ')' then
+                  Num := Num - 1;
+               elsif Type_Str (Index) = '(' then
+                  Num := Num + 1;
+               end if;
+               Index := Index + 1;
+            end loop;
+            Index := Index + 1;
+         end if;
+      end Skip_Parenthesis;
+
       Context : constant Language_Debugger_Context :=
         Get_Language_Debugger_Context (Lang);
       Dim : Dimension;
@@ -2442,6 +2469,7 @@ package body Debugger.Gdb is
         or else Result'Tag = Enum_Type'Tag
       then
          if Type_Str /= "" then
+            Skip_Parenthesis (Index);
             declare
                Int : constant Natural := Index;
             begin
@@ -2471,25 +2499,7 @@ package body Debugger.Gdb is
             Index := Index + 6;
 
          else
-            --  Skip the parenthesis contents if needed
-            if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
-               declare
-                  Num : Natural := 1;
-               begin
-                  Index := Index + 1;
-                  while Num /= 0
-                    and then Index <= Type_Str'Last
-                  loop
-                     if Type_Str (Index) = ')' then
-                        Num := Num - 1;
-                     elsif Type_Str (Index) = '(' then
-                        Num := Num + 1;
-                     end if;
-                     Index := Index + 1;
-                  end loop;
-               end;
-               Index := Index + 1;
-            end if;
+            Skip_Parenthesis (Index);
 
             --  Access to subprograms are sometimes printed as:
             --     {void ()} 0x402488e4 <gtk_window_destroy>
