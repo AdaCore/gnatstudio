@@ -407,7 +407,6 @@ private
       WTX_Index        : Natural;
       WTX_Version      : Integer := -1;
       Endian           : Endian_Type := Unknown_Endian;
-      Has_Terminated   : Boolean := False;
       Default_Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
       Default_Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
       Debuggee_Pid     : Integer := 0;
