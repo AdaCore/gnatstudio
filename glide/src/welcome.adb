@@ -21,12 +21,12 @@
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Button;           use Gtk.Button;
 with Gtk.Check_Button;     use Gtk.Check_Button;
+with Gtk.Radio_Button;     use Gtk.Radio_Button;
 with Gtk.Combo;            use Gtk.Combo;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Frame;            use Gtk.Frame;
 with Gtk.GEntry;           use Gtk.GEntry;
-with Gtk.Label;            use Gtk.Label;
 with Gtk.Separator;        use Gtk.Separator;
 with Gtk.Size_Group;       use Gtk.Size_Group;
 with Gtk.Stock;            use Gtk.Stock;
@@ -46,12 +46,14 @@ with Creation_Wizard;           use Creation_Wizard;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Prj;           use Prj;
+with Prj;                       use Prj;
 
 package body Welcome is
 
-   procedure On_New_Project (Screen : access Gtk_Widget_Record'Class);
+   function On_New_Project
+     (Screen : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user wants to create a new widget
+   --  Return True if a new project has been created
 
    procedure On_Default_Project (Screen : access Gtk_Widget_Record'Class);
    --  Create and load a default project
@@ -74,13 +76,12 @@ package body Welcome is
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project_Name : String := "")
    is
-      Box, Hbox, Vbox : Gtk_Box;
-      Sep       : Gtk_Separator;
-      Label     : Gtk_Label;
-      Button    : Gtk_Button;
-      Size      : Gtk_Size_Group;
-      Quit      : Gtk_Widget;
-      pragma Unreferenced (Quit);
+      Box, Hbox    : Gtk_Box;
+      Sep          : Gtk_Separator;
+      Button       : Gtk_Button;
+      Size         : Gtk_Size_Group;
+      Stock_Button : Gtk_Widget;
+      pragma Unreferenced (Stock_Button);
 
    begin
       Screen := new Welcome_Screen_Record;
@@ -92,7 +93,7 @@ package body Welcome is
          Parent     => null,
          Title_Font => Get_Pref (Kernel, Wizard_Title_Font));
 
-      Set_Default_Size (Screen, 600, 300);
+      Set_Default_Size (Screen, 500, 350);
 
       Screen.Kernel := Kernel_Handle (Kernel);
 
@@ -107,9 +108,10 @@ package body Welcome is
 
       --  Default project
 
-      Gtk_New (Label, "Start with default project in directory:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
+      Gtk_New
+        (Screen.Default_Project,
+         Label => -"Start with default project in directory:");
+      Pack_Start (Box, Screen.Default_Project, Expand => False);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
@@ -118,52 +120,34 @@ package body Welcome is
       Pack_Start (Hbox, Screen.Default_Dir, Expand => True, Fill => True);
       Set_Text (Screen.Default_Dir, Get_Current_Dir);
 
-      Gtk_New_Vbox (Vbox, Homogeneous => True);
-      Pack_Start (Hbox, Vbox, Expand => False);
-
       Gtk_New (Button, -"Browse");
       Add_Widget (Size, Button);
-      Pack_Start (Vbox, Button, Expand => False);
+      Pack_Start (Hbox, Button, Expand => False);
       Widget_Callback.Object_Connect
         (Button, "clicked",
          Widget_Callback.To_Marshaller (On_Browse_Default'Access), Screen);
-
-      Gtk_New (Button, -"Start");
-      Add_Widget (Size, Button);
-      Pack_Start (Vbox, Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Default_Project'Access),
-         Screen);
 
       --  Creating a new project
 
       Gtk_New_Hseparator (Sep);
       Pack_Start (Box, Sep, Expand => False, Padding => 5);
 
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Box, Hbox, Expand => False);
-
-      Gtk_New (Label, -"Create new project with wizard");
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Hbox, Label, Expand => True, Fill => True);
-
-      Gtk_New (Button, -"Create");
-      Add_Widget (Size, Button);
-      Pack_Start (Hbox, Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_New_Project'Access),
-         Screen);
+      Gtk_New
+        (Screen.Create_Project,
+         Screen.Default_Project,
+         -"Create new project with wizard");
+      Pack_Start (Box, Screen.Create_Project, Expand => False);
 
       --  Open project
 
       Gtk_New_Hseparator (Sep);
       Pack_Start (Box, Sep, Expand => False, Padding => 5);
 
-      Gtk_New (Label, "Open existing project:");
-      Set_Alignment (Label, 0.0, 0.5);
-      Pack_Start (Box, Label, Expand => False);
+      Gtk_New
+        (Screen.Open_Project_Button,
+         Screen.Create_Project,
+         -"Open existing project:");
+      Pack_Start (Box, Screen.Open_Project_Button, Expand => False);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
@@ -175,23 +159,12 @@ package body Welcome is
       Set_Text (Get_Entry (Screen.Open_Project),
                 Normalize_Pathname (Project_Name, Resolve_Links => False));
 
-      Gtk_New_Vbox (Vbox, Homogeneous => True);
-      Pack_Start (Hbox, Vbox, Expand => False);
-
       Gtk_New (Button, -"Browse");
       Add_Widget (Size, Button);
-      Pack_Start (Vbox, Button, Expand => False);
+      Pack_Start (Hbox, Button, Expand => False);
       Widget_Callback.Object_Connect
         (Button, "clicked",
          Widget_Callback.To_Marshaller (On_Browse_Load'Access), Screen);
-
-      Gtk_New (Button, -"Open");
-      Add_Widget (Size, Button);
-      Pack_Start (Vbox, Button, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Load_Project'Access),
-         Screen);
 
       --  Always displaying the welcome dialog
 
@@ -204,7 +177,8 @@ package body Welcome is
       Gtk_New_Hseparator (Sep);
       Pack_End (Box, Sep, Expand => False, Padding => 5);
 
-      Quit := Add_Button (Screen, Stock_Quit, Gtk_Response_Close);
+      Stock_Button := Add_Button (Screen, Stock_Ok, Gtk_Response_OK);
+      Stock_Button := Add_Button (Screen, Stock_Quit, Gtk_Response_Close);
    end Gtk_New;
 
    ---------
@@ -222,12 +196,22 @@ package body Welcome is
          loop
             Response := Run (Screen);
 
-            exit when Response = Gtk_Response_OK
-              or else Response = Gtk_Response_Close;
+            exit when Response = Gtk_Response_Close
+              or else (Response = Gtk_Response_OK
+                       and then (not Get_Active (Screen.Create_Project)
+                                 or else On_New_Project (Screen)));
          end loop;
 
          if not Get_Active (Screen.Always_Show) then
             Set_Pref (Screen.Kernel, Display_Welcome, False);
+         end if;
+
+         if Response = Gtk_Response_OK then
+            if Get_Active (Screen.Default_Project) then
+               On_Default_Project (Screen);
+            elsif Get_Active (Screen.Open_Project_Button) then
+               On_Load_Project (Screen);
+            end if;
          end if;
 
          return Response /= Gtk_Response_Close;
@@ -246,9 +230,13 @@ package body Welcome is
    -- On_New_Project --
    --------------------
 
-   procedure On_New_Project (Screen : access Gtk_Widget_Record'Class) is
-      S : constant Welcome_Screen := Welcome_Screen (Screen);
-      Wiz : Creation_Wizard.Prj_Wizard;
+   function On_New_Project
+     (Screen : access Gtk_Widget_Record'Class) return Boolean
+   is
+      S      : constant Welcome_Screen := Welcome_Screen (Screen);
+      Wiz    : Creation_Wizard.Prj_Wizard;
+      Result : Boolean := False;
+
    begin
       Gtk_New (Wiz, S.Kernel);
 
@@ -258,11 +246,12 @@ package body Welcome is
          if Name /= "" then
             Load_Project (S.Kernel, Name);
             Project_Viewers.Add_To_Reopen (S.Kernel, Name);
-            Response (Welcome_Screen (Screen), Gtk_Response_OK);
+            Result := True;
          end if;
       end;
 
       Destroy (Wiz);
+      return Result;
    end On_New_Project;
 
    ------------------------
