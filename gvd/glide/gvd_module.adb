@@ -1308,9 +1308,13 @@ package body GVD_Module is
                            (Selection_Context_Access (Context), True));
                Entity_Info : constant Entity_Information :=
                  Get_Entity (Entity);
-               Kind        : constant E_Kind := Get_Kind (Entity_Info);
+               Kind        : E_Kind;
 
             begin
+               if Entity_Info /= null then
+                  Kind := Get_Kind (Entity_Info);
+               end if;
+
                if Entity_Info = null
                  or else (not Kind.Is_Type
                           and then Is_Printable_Entity (Kind.Kind))
@@ -1351,8 +1355,8 @@ package body GVD_Module is
                end if;
 
                if Entity_Info = null
-                 or else (not Kind.Is_Type
-                          and then Is_Printable_Entity (Kind.Kind))
+               or else (not Kind.Is_Type
+                        and then Is_Printable_Entity (Kind.Kind))
                then
                   Gtk_New (Mitem, -"Set value of " & Ent);
                   Append (Submenu, Mitem);
