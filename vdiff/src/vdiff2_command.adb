@@ -222,14 +222,11 @@ package body Vdiff2_Command is
    is
       Tmp : Diff_List;
       Button     : Message_Dialog_Buttons;
-      Args : Argument_List := (1 => new String'("true"),
-                               2 => new String'("true"));
       pragma Unreferenced (Button);
    begin
       Unhighlight_Difference (Kernel, Item);
-      Execute_GPS_Shell_Command (Kernel, "save", Args);
-      --  ??? Just for the moment
-      Free (Args);
+      Save_Difference (Kernel, Item);
+
       if Item.File3 = VFS.No_File then
          Tmp := Diff
            (Kernel, Item.File1,
@@ -322,4 +319,42 @@ package body Vdiff2_Command is
       Modify_Differences (Kernel, Diff, Id);
    end Change_Ref_File;
 
+   ---------------------
+   -- Save_Difference --
+   ---------------------
+
+   procedure Save_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head)
+   is
+      Link        : constant Diff_Chunk_Access := Data (Diff.Current_Node);
+      Interactive : constant String := "true";
+      Args        : Argument_List (1 .. 1);
+      Arg2        : Argument_List (1 .. 2) :=
+        (1 => new String'(Interactive),
+         2 => new String'("false"));
+   begin
+      if Link.Range1.Mark /= null then
+         Args := (1 => new String'(Link.Range1.Mark.all));
+         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Basic_Types.Free (Args);
+         Execute_GPS_Shell_Command (Kernel, "save", Arg2);
+      end if;
+
+      if Link.Range2.Mark /= null then
+         Args := (1 => new String'(Link.Range2.Mark.all));
+         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Basic_Types.Free (Args);
+         Execute_GPS_Shell_Command (Kernel, "save", Arg2);
+      end if;
+
+      if Link.Range3.Mark /= null then
+         Args := (1 => new String'(Link.Range3.Mark.all));
+         Execute_GPS_Shell_Command (Kernel, "goto_mark", Args);
+         Basic_Types.Free (Args);
+         Execute_GPS_Shell_Command (Kernel, "save", Arg2);
+      end if;
+
+      Basic_Types.Free (Arg2);
+   end Save_Difference;
 end Vdiff2_Command;
