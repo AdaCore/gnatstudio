@@ -1,7 +1,6 @@
 with "../gtkada/gtkada";
 with "../kernel/kernel";
 with "../widgets/widgets";
-with "../prj_editor/prj_editor";
 
 project VCS is
 
