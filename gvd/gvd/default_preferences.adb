@@ -961,10 +961,16 @@ package body Default_Preferences is
       Data : Pref_Description_Access) is
    begin
       if Data.Value /= null then
-         Set_Text (Gtk_Entry (Ent),
-                   Name (Get_Value (Enumeration (Param_Spec_Enum (Data.Param)),
-                                    Gint'Value (Data.Value.all))));
---                   Data.Value.all);
+         if Fundamental (Value_Type (Param_Spec (Data.Param))) =
+           GType_Enum
+         then
+            Set_Text
+              (Gtk_Entry (Ent),
+               Name (Get_Value (Enumeration (Param_Spec_Enum (Data.Param)),
+                                Gint'Value (Data.Value.all))));
+         else
+            Set_Text (Gtk_Entry (Ent), Data.Value.all);
+         end if;
       end if;
    end Update_Entry;
 
