@@ -56,6 +56,10 @@ package Src_Info.Queries is
       Status          : out Find_Decl_Or_Body_Query_Status);
    --  Implement the Goto Declaration<->Body algorithm using the given
    --  Filename, Entity_Name, and Line/Column position.
+   --  If not reference to the entity could be found, then File_Name_Found is
+   --  set to null, and the other values are undefined.
+   --
+   --  The memory allocated for File_Name_Found must be deallocated after use.
 
    ---------------------------
    -- Dependencies requests --
