@@ -123,6 +123,9 @@ package Default_Preferences is
       Pref    : Param_Spec_Color) return Gdk.Color.Gdk_Color;
    function Get_Pref
      (Manager : access Preferences_Manager_Record;
+      Pref    : Param_Spec_Color) return String;
+   function Get_Pref
+     (Manager : access Preferences_Manager_Record;
       Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description;
    function Get_Pref
      (Manager : access Preferences_Manager_Record;

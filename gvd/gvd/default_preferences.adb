@@ -510,9 +510,9 @@ package body Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color
    is
-      function Internal is new Generic_Get_Pref
+      function Color_Get_Pref is new Generic_Get_Pref
         (Param_Spec_Color, Param_Spec (Pref), String, Gdk_Color_Type, Value);
-      S : constant String := Internal (Manager, Pref);
+      S : constant String := Color_Get_Pref (Manager, Pref);
       Color : Gdk_Color;
    begin
       Color := Parse (S);
@@ -523,6 +523,20 @@ package body Default_Preferences is
       when Wrong_Color =>
          Color := Black (Get_Default_Colormap);
          return Color;
+   end Get_Pref;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Manager : access Preferences_Manager_Record;
+      Pref    : Param_Spec_Color) return String
+   is
+      function Color_Get_Pref is new Generic_Get_Pref
+        (Param_Spec_Color, Param_Spec (Pref), String, Gdk_Color_Type, Value);
+   begin
+      return Color_Get_Pref (Manager, Pref);
    end Get_Pref;
 
    --------------
