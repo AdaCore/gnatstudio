@@ -71,33 +71,29 @@ package Commands.Custom is
      (Item         : out Custom_Command_Access;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Args         : Argument_List_Access;
       Script       : Glide_Kernel.Scripts.Scripting_Language);
    --  Create a new custom command.
-   --  Caller must not free memory allocated to Args.
-   --
    --  If Script is null, the command is launched as a system
-   --  command. Otherwise, it is interpreted as a GPS Internal command in the
-   --  specific scripting language.
+   --  command (Unix or Windows). Otherwise, it is interpreted as a GPS
+   --  Internal command in the specific scripting language.
 
    procedure Free (X : in out Custom_Command);
-   --  Free memory associated to X.
+   --  Free memory associated with X.
 
    function Execute
      (Command : access Custom_Command) return Command_Return_Type;
-   --  Execute Command, and return True if the command could be launched
+   --  Execute Command, and return Success if the command could be launched
    --  successfully.
    --  Context-related arguments (like "%f", "%p" and so on) are converted
-   --  when Execute is called, with parameters obtained from the curren
+   --  when Execute is called, with parameters obtained from the current
    --  context and the current project. If a parameter could not be converted,
-   --  the command is not launched, and False is returned.
+   --  the command is not launched, and Failure is returned.
 
 private
 
    type Custom_Command is new Root_Command with record
       Kernel      : Kernel_Handle;
       Command     : String_Access;
-      Args        : Argument_List_Access;
       Script      : Glide_Kernel.Scripts.Scripting_Language;
    end record;
 

@@ -46,7 +46,6 @@ package body Commands.Custom is
    procedure Free (X : in out Custom_Command) is
    begin
       Free (X.Command);
-      Free (X.Args);
    end Free;
 
    ------------
@@ -57,13 +56,11 @@ package body Commands.Custom is
      (Item         : out Custom_Command_Access;
       Kernel       : Kernel_Handle;
       Command      : String;
-      Args         : Argument_List_Access;
       Script       : Glide_Kernel.Scripts.Scripting_Language) is
    begin
       Item := new Custom_Command;
       Item.Kernel := Kernel;
       Item.Command := new String'(Command);
-      Item.Args := Args;
       Item.Script := Script;
    end Create;
 
@@ -267,22 +264,23 @@ package body Commands.Custom is
          raise Invalid_Substitution;
       end Substitution;
 
-
+      Args : String_List_Access :=
+        Argument_String_To_List (Command.Command.all);
    begin
       --  Perform arguments substitutions for the command.
 
-      if Command.Args /= null then
-         New_Args := new String_List (Command.Args'Range);
+      if Args'Length > 1 then
+         New_Args := new String_List (Args'First + 1 .. Args'Last);
          Last := New_Args'First;
 
-         for J in Command.Args'Range loop
+         for J in New_Args'Range loop
             --  Special case for %prs, since this is a list of files
-            if Command.Args (J).all = "prs"
-              or else Command.Args (J).all = "Prs"
+            if Args (J).all = "%prs"
+              or else Args (J).all = "%Prs"
             then
                declare
                   Project : constant Project_Type := Project_From_Param
-                    (Command.Args (J).all);
+                    (Args (J) (Args (J)'First + 1 .. Args (J)'Last));
                   List    : String_Array_Access;
                begin
                   if Project = No_Project then
@@ -312,7 +310,7 @@ package body Commands.Custom is
             else
                New_Args (Last) := new String'
                  (Substitute
-                    (Command.Args (J).all,
+                    (Args (J).all,
                      Substitution_Char => '%',
                      Callback          => Substitution'Unrestricted_Access,
                      Recursive         => False));
@@ -326,14 +324,14 @@ package body Commands.Custom is
          if Command.Script /= null then
             Execute_Command
               (Command.Script,
-               Command_To_String (Command.Command.all, New_Args.all),
+               Command_To_String (Args (Args'First).all, New_Args.all),
                Display_In_Console => True);
             Success := True;
          else
             Trace (Me, "Executing external command " & Command.Command.all);
             Launch_Process
               (Command.Kernel,
-               Command.Command.all,
+               Args (Args'First).all,
                New_Args.all,
                "",
                null,
@@ -352,7 +350,7 @@ package body Commands.Custom is
       else
          Launch_Process
            (Command.Kernel,
-            Command.Command.all,
+            Args (Args'First).all,
             No_Args,
             "",
             null,
@@ -360,6 +358,8 @@ package body Commands.Custom is
             "",
             Success);
       end if;
+
+      Free (Args);
 
       Command_Finished (Command, Success);
 
