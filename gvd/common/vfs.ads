@@ -70,6 +70,11 @@ package VFS is
    --  If file names are case insensitive, the normalized name will always
    --  be all lower cases.
 
+   function File_Extension (File : Virtual_File) return UTF8_String;
+   --  Return the extension of the file, or the empty string if there is no
+   --  extension. This extension includes the last dot and all the following
+   --  characters;
+
    function Dir_Name (File : Virtual_File) return UTF8_String;
    --  Return the directory name for File
 
@@ -79,13 +84,21 @@ package VFS is
    --  The caller is responsible for freeing the returned memory.
    --  This works transparently for remote files
 
---   procedure Write_File (File : Virtual_File; Contents : UTF8_String);
-   --  Overwrite the contents of File and replace it with Contents.
-   --  This works for remote files as well.
-   --  This procedure takes care of end-of-line conversion if needed.
-
    procedure Delete (File : Virtual_File);
    --  Remove file from the disk. This also works for remote files
+
+   function Is_Writable (File : Virtual_File) return Boolean;
+   --  Return True if File is writable
+
+   function Is_Directory (File : Virtual_File) return Boolean;
+   --  Return True if File is in fact a directory
+
+   function Is_Absolute_Path (File : Virtual_File) return Boolean;
+   --  Return True if File contains an absolute path name, False if it only
+   --  contains the base name or a relative name.
+
+   function File_Time_Stamp (File : Virtual_File) return GNAT.OS_Lib.OS_Time;
+   --  Return the timestamp for this file
 
 --   procedure Define_Translation
 --     (Host_Dir : String; Remote_Dir : String);
@@ -94,6 +107,33 @@ package VFS is
 
    function "=" (File1, File2 : Virtual_File) return Boolean;
    --  Whether File1 and File2 represent the same physical file on disk.
+
+   -------------------
+   -- Writing files --
+   -------------------
+   --  Writing is more complex than reading, since generally the whole buffer
+   --  to write down is not available immediately, but the user wants to be
+   --  able to write characters in a series of calls.
+   --  The interface in this package will also support remote files. In this
+   --  case, writing the small chunks is done in a temporary file, which is
+   --  sent to the remote host only when the file is closed.
+
+   type Writable_File is private;
+
+   function Write_File (File : Virtual_File) return Writable_File;
+   --  Open File for writting. The returned handler can be used for writting.
+   --  You must close it, otherwise the file will not actually be written in
+   --  some cases
+
+   procedure Write
+     (File : in out Writable_File;
+      Str : UTF8_String;
+      As_UTF8 : Boolean := True);
+   --  Write a string to File. The required encoding for the string depends
+   --  on As_UTF8.
+
+   procedure Close (File : in out Writable_File);
+   --  Closes File, and write the file to disk
 
    ---------------------
    -- Locale encoding --
@@ -121,6 +161,11 @@ private
 
    type Virtual_File is new Ada.Finalization.Controlled with record
       Value : Contents_Access;
+   end record;
+
+   type Writable_File is record
+      File : Virtual_File;
+      FD   : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
    end record;
 
    procedure Finalize (File : in out Virtual_File);

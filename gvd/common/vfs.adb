@@ -31,6 +31,9 @@ with File_Utils;                 use File_Utils;
 with OS_Utils;                   use OS_Utils;
 with String_Utils;               use String_Utils;
 with GNAT.Case_Util;             use GNAT.Case_Util;
+with Interfaces.C.Strings;       use Interfaces.C.Strings;
+with Ada.Unchecked_Conversion;
+with System;
 
 package body VFS is
 
@@ -243,7 +246,8 @@ package body VFS is
 
    function Is_Regular_File (File : Virtual_File) return Boolean is
    begin
-      return File /= No_File and then Is_Regular_File (Full_Name (File));
+      return File /= No_File
+        and then Is_Regular_File (Locale_Full_Name (File));
    end Is_Regular_File;
 
    --------------------
@@ -257,5 +261,98 @@ package body VFS is
       Internal (Arr);
    end Unchecked_Free;
 
+   -----------------
+   -- Is_Writable --
+   -----------------
+
+   function Is_Writable (File : Virtual_File) return Boolean is
+   begin
+      return Is_Writable_File (Locale_Full_Name (File));
+   end Is_Writable;
+
+   ------------------
+   -- Is_Directory --
+   ------------------
+
+   function Is_Directory (File : Virtual_File) return Boolean is
+   begin
+      return Is_Directory (Locale_Full_Name (File));
+   end Is_Directory;
+
+   ----------------------
+   -- Is_Absolute_Path --
+   ----------------------
+
+   function Is_Absolute_Path (File : Virtual_File) return Boolean is
+   begin
+      return Is_Absolute_Path (Full_Name (File));
+   end Is_Absolute_Path;
+
+   --------------------
+   -- File_Extension --
+   --------------------
+
+   function File_Extension (File : Virtual_File) return UTF8_String is
+   begin
+      return File_Extension (Full_Name (File));
+   end File_Extension;
+
+   ----------------
+   -- Write_File --
+   ----------------
+
+   function Write_File (File : Virtual_File) return Writable_File is
+   begin
+      --  ??? Should we first delete the file ?
+      return (File => File,
+              FD   => Create_File (Locale_Full_Name (File), Binary));
+   end Write_File;
+
+   -----------
+   -- Write --
+   -----------
+
+   procedure Write
+     (File : in out Writable_File;
+      Str : UTF8_String;
+      As_UTF8 : Boolean := True)
+   is
+      function To_Address is new Ada.Unchecked_Conversion
+        (chars_ptr, System.Address);
+      Written : aliased Natural;
+      Read    : aliased Natural;
+      S       : chars_ptr;
+   begin
+      if As_UTF8 then
+         S := Locale_From_UTF8
+           (Str,
+            Read'Access,
+            Written'Access);
+         Written := Write (File.FD, To_Address (S), Written);
+         Free (S);
+      else
+         Written := Write (File.FD, Str'Address, Str'Length);
+      end if;
+
+      --  ??? Should raise an exception if we couldn't write all the bytes.
+   end Write;
+
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close (File : in out Writable_File) is
+   begin
+      Close (File.FD);
+   end Close;
+
+   ---------------------
+   -- File_Time_Stamp --
+   ---------------------
+
+   function File_Time_Stamp (File : Virtual_File) return GNAT.OS_Lib.OS_Time is
+   begin
+      return File_Time_Stamp (Locale_Full_Name (File));
+   end File_Time_Stamp;
 
 end VFS;
