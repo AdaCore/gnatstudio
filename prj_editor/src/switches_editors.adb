@@ -1616,6 +1616,7 @@ package body Switches_Editors is
                           Language, Value, Is_Default);
          end if;
       end if;
+
       return To_Argument_List (Value);
    end Get_Switches;
 
@@ -1626,8 +1627,7 @@ package body Switches_Editors is
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Project_Type;
-      Files     : File_Array)
-   is
+      Files     : File_Array) is
    begin
       Switches.Project := Project;
 
@@ -1673,13 +1673,14 @@ package body Switches_Editors is
          begin
             --  Force a space, so that at least some text is inserted, and thus
             --  we correctly initialize the widgets.
+
             Set_Text (Switches.Pages (P).Cmd_Line,
                       ' ' & Argument_List_To_String (List));
             Free (List);
 
             --  Now that the default widget values have been set, recompute
             --  the command line to find out the status of the switches that
-            --  haven't been initialize yet, for instance a radio button with
+            --  haven't been initialized yet, for instance a radio button with
             --  no correspondance on the command line.
             Refresh_Page (Switches.Pages (P));
          end;
