@@ -76,13 +76,15 @@ package body Wizards is
    -------------
 
    procedure Gtk_New
-     (Wiz : out Wizard;
-      Kernel : access Kernel_Handle_Record'Class;
-      Title : String;
-      Num_Pages : Positive) is
+     (Wiz       : out Wizard;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Title     : String;
+      Num_Pages : Positive;
+      Activate_Finish_From_Page : Integer := -1) is
    begin
       Wiz := new Wizard_Record;
-      Wizards.Initialize (Wiz, Kernel, Title, Num_Pages);
+      Wizards.Initialize
+        (Wiz, Kernel, Title, Num_Pages, Activate_Finish_From_Page);
    end Gtk_New;
 
    ----------------
@@ -90,10 +92,11 @@ package body Wizards is
    ----------------
 
    procedure Initialize
-     (Wiz : access Wizard_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class;
-      Title : String;
-      Num_Pages : Positive)
+     (Wiz       : access Wizard_Record'Class;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Title     : String;
+      Num_Pages : Positive;
+      Activate_Finish_From_Page : Integer := -1)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 => (1 => GType_Uint, 2 => GType_None));
@@ -103,6 +106,8 @@ package body Wizards is
          Title      => Title,
          Parent     => Get_Main_Window (Kernel),
          Title_Font => Get_Pref (Kernel, Wizard_Title_Font));
+
+      Wiz.Activate_Finish_From_Page := Activate_Finish_From_Page;
 
       Set_Default_Size (Wiz, 640, 480);
 
@@ -304,6 +309,27 @@ package body Wizards is
 
    procedure Set_Current_Page (Wiz : access Wizard_Record; Num : Positive) is
    begin
+      --  Active the appropriate buttons
+      Set_Sensitive (Wiz.Previous, Num > 1);
+
+      if Num >= Wiz.Activate_Finish_From_Page then
+         if Wiz.Activate_Finish_From_Page = -1 then
+            Set_Sensitive (Finish_Button (Wiz), Num = Wiz.Pages'Last);
+         else
+            Set_Sensitive (Finish_Button (Wiz), True);
+         end if;
+      else
+         Set_Sensitive (Finish_Button (Wiz), False);
+      end if;
+
+      if Num = Wiz.Pages'Last then
+         Set_Sensitive (Next_Button (Wiz), False);
+         Grab_Default (Finish_Button (Wiz));
+      else
+         Set_Sensitive (Next_Button (Wiz), True);
+         Grab_Default (Next_Button (Wiz));
+      end if;
+
       --  Inform all listeners that we are about to change the page. However,
       --  still want the old page to be the current one, in case they need it.
       --  This must be done first, so as to give them a chance to create the
@@ -348,19 +374,6 @@ package body Wizards is
         and then Wiz.Titles (Wiz.Current_Page) /= null
       then
          Set_Wizard_Title (Wiz, Wiz.Titles (Wiz.Current_Page).all);
-      end if;
-
-      --  Active the appropriate buttons
-      Set_Sensitive (Wiz.Previous, Wiz.Current_Page > 1);
-
-      if Wiz.Current_Page = Wiz.Pages'Last then
-         Show (Finish_Button (Wiz));
-         Hide (Next_Button (Wiz));
-         Grab_Default (Finish_Button (Wiz));
-      else
-         Hide (Finish_Button (Wiz));
-         Show (Next_Button (Wiz));
-         Grab_Default (Next_Button (Wiz));
       end if;
    end Set_Current_Page;
 

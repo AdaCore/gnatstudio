@@ -53,8 +53,9 @@ package body Creation_Wizard.Simple is
    begin
       Creation_Wizard.Initialize
         (Wiz, Kernel,
-         Force_Relative_Dirs => True,
-         Ask_About_Loading   => False);
+         Force_Relative_Dirs       => True,
+         Ask_About_Loading         => False,
+         Activate_Finish_From_Page => 1);
 
       Gtk_New (Wiz.Src_Dirs,
                Initial_Directory    => Get_Current_Dir,

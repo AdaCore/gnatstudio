@@ -72,7 +72,8 @@ package body Creation_Wizard.Full is
    begin
       Creation_Wizard.Initialize
         (Wiz, Kernel, Force_Relative_Dirs => False,
-         Ask_About_Loading => Ask_About_Loading);
+         Ask_About_Loading => Ask_About_Loading,
+         Activate_Finish_From_Page => 1);
       Wiz.XML_Pages_Count := 0;
 
       Main_Page_Box := Gtk_Box (Get_Nth_Page (Wiz, 1));

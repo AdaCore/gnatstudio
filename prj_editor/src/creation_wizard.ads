@@ -34,7 +34,8 @@ package Creation_Wizard is
      (Wiz                 : access Wizard_Base_Record'Class;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
       Force_Relative_Dirs : Boolean := False;
-      Ask_About_Loading   : Boolean := False);
+      Ask_About_Loading   : Boolean := False;
+      Activate_Finish_From_Page : Integer := -1);
    --  Initialize a new basic wizard.
    --  It has a single page, to select the name and location of the project
    --  (the user must provide both).
@@ -43,6 +44,7 @@ package Creation_Wizard is
    --  If Ask_About_Loading is true, then an extra page is appended at the end
    --  of the wizard, and the user can select whether to load the project
    --  immediately or not. Otherwise, the project is not loaded.
+   --  See doc in Wizards for Activate_Finish_From_Page.
 
    function Run (Wiz : access Wizard_Base_Record'Class) return String;
    --  Run the wizard and report the directory/name of the project that was

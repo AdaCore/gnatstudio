@@ -20,6 +20,7 @@
 
 with Glib;                  use Glib;
 with Gtk.Alignment;         use Gtk.Alignment;
+with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Check_Button;      use Gtk.Check_Button;
@@ -74,6 +75,10 @@ package body Creation_Wizard is
    --  Generate the project files from the contents of the wizard W.
    --  Return the directory/name of the project that was just created.
 
+   procedure Switch_Page
+     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
+   --  Called when a new page is selected in the wizard
+
    ----------------
    -- Initialize --
    ----------------
@@ -82,22 +87,41 @@ package body Creation_Wizard is
      (Wiz                 : access Wizard_Base_Record'Class;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
       Force_Relative_Dirs : Boolean := False;
-      Ask_About_Loading   : Boolean := False)
+      Ask_About_Loading   : Boolean := False;
+      Activate_Finish_From_Page : Integer := -1)
    is
       Main_Page_Box : Gtk_Box;
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
       Wiz.Ask_About_Loading := Ask_About_Loading;
       Wizards.Initialize
-        (Wiz, Kernel, -"Project setup", Num_Pages => 1);
-
-      Set_Sensitive (Next_Button (Wiz), False);
-      Set_Sensitive (Finish_Button (Wiz), False);
+        (Wiz, Kernel, -"Project setup", Num_Pages => 1,
+        Activate_Finish_From_Page => Activate_Finish_From_Page);
 
       Set_Toc (Wiz, 1, -"Naming the project", -"Creating a new project");
       Main_Page_Box := First_Page (Wiz, Force_Relative_Dirs);
       Set_Page (Wiz, 1, Main_Page_Box);
+
+      Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
    end Initialize;
+
+   -----------------
+   -- Switch_Page --
+   -----------------
+
+   procedure Switch_Page
+     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args)
+   is
+      Page_Num : constant Guint := To_Guint (Args, 1);
+      W : constant Wizard_Base := Wizard_Base (Wiz);
+   begin
+      if Page_Num = 1 then
+         Set_Sensitive
+           (Next_Button (W), Get_Text (W.Project_Name)'Length /= 0);
+         Set_Sensitive
+           (Finish_Button (W), Get_Text (W.Project_Name)'Length /= 0);
+      end if;
+   end Switch_Page;
 
    --------------------------
    -- Change_Forward_State --

@@ -65,20 +65,25 @@ package Wizards is
    type Wizard is access all Wizard_Record'Class;
 
    procedure Gtk_New
-     (Wiz : out Wizard;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Title : String;
-      Num_Pages : Positive);
+     (Wiz       : out Wizard;
+      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Title     : String;
+      Num_Pages : Positive;
+      Activate_Finish_From_Page : Integer := -1);
    --  Create a new wizard.
    --  Bg is the color to use for the background of the table of contents.
    --  Num_Pages is the number of pages. When the last one is displayed, the
    --  Next button is replaced by the Finished button.
+   --  From the Active_Finish_For_Page -th to the last, the Finish button
+   --  will be activated. If this parameter is negative, the finish button
+   --  will only be displayed on the last page.
 
    procedure Initialize
      (Wiz       : access Wizard_Record'Class;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
       Title     : String;
-      Num_Pages : Positive);
+      Num_Pages : Positive;
+      Activate_Finish_From_Page : Integer := -1);
    --  Internal function used to create the new widget
 
    procedure Set_Toc
@@ -178,6 +183,7 @@ private
       Previous        : Gtk.Button.Gtk_Button;
 
       Toc             : Widget_Array_Access;
+      Activate_Finish_From_Page : Integer := -1;
       Current_Page    : Positive;
       Pages           : Widget_Array_Access;
       Titles          : GNAT.OS_Lib.String_List_Access;
