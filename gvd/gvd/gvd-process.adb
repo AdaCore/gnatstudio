@@ -940,7 +940,7 @@ package body GVD.Process is
       if Line /= 0
         and then Mode /= Internal
       then
-         Set_Line (Process.Editor_Text, Line);
+         Set_Line (Process.Editor_Text, Line, Process => Gtk_Widget (Process));
       end if;
 
       --  Change the current assembly source displayed, before updating
@@ -2261,5 +2261,45 @@ package body GVD.Process is
             Base_File_Name (Get_Current_File (Process.Editor_Text)));
       end if;
    end Update_Editor_Frame;
+
+   ---------------------------------
+   -- Set_Current_Source_Location --
+   ---------------------------------
+
+   procedure Set_Current_Source_Location
+     (Process : access Debugger_Process_Tab_Record;
+      File    : String;
+      Line    : Integer) is
+   begin
+      Free (Process.Current_File);
+      Process.Current_File := new String' (File);
+      Process.Current_Line := Line;
+   end Set_Current_Source_Location;
+
+   -----------------------------
+   -- Get_Current_Source_File --
+   -----------------------------
+
+   function Get_Current_Source_File
+     (Process : access Debugger_Process_Tab_Record)
+     return String is
+   begin
+      if Process.Current_File = null then
+         return "";
+      else
+         return Process.Current_File.all;
+      end if;
+   end Get_Current_Source_File;
+
+   -----------------------------
+   -- Get_Current_Source_Line --
+   -----------------------------
+
+   function Get_Current_Source_Line
+     (Process : access Debugger_Process_Tab_Record)
+     return Integer is
+   begin
+      return Process.Current_Line;
+   end Get_Current_Source_Line;
 
 end GVD.Process;
