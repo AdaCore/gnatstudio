@@ -28,6 +28,7 @@ with Glib.Xml_Int;
 with Gdk;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
+with Gtk.Icon_Factory;
 with Gtk.Main;
 with Gtk.Menu;
 with Gtk.Toolbar;
@@ -172,6 +173,11 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record) return String;
    --  Return a string containing the GNAT version number.
    --  The string has the form "3.16w (20020610)"
+
+   function Get_Icon_Factory
+     (Handle : access Kernel_Handle_Record)
+      return Gtk.Icon_Factory.Gtk_Icon_Factory;
+   --  Return the default icon factory.
 
    -----------
    -- Files --
@@ -468,12 +474,14 @@ package Glide_Kernel is
 
    type Module_Customization_Handler is access procedure
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Glib.Xml_Int.Node_Ptr;
       Level  : Customization_Level);
    --  Subprogram called when a new customization has been parsed.
    --  It is initially called just after all modules have been registered,
    --  and gets passed the first child of the XML file (that is you must go
    --  through the list, following the Next nodes).
+   --  File is the XML file that is currently being parsed.
 
    --------------------
    -- Action filters --
@@ -975,6 +983,9 @@ private
       Customization_Strings : Glib.Xml_Int.Node_Ptr;
       --  The customization strings hard-coded by the modules, and they have
       --  been registered before all modules are loaded.
+
+      Icon_Factory : Gtk.Icon_Factory.Gtk_Icon_Factory;
+      --  The icon factory specific to GPS.
    end record;
 
 end Glide_Kernel;
