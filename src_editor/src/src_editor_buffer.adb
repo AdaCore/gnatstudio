@@ -54,7 +54,10 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Traces;                    use Traces;
+
+with String_List_Utils;         use String_List_Utils;
 
 package body Src_Editor_Buffer is
 
@@ -211,6 +214,20 @@ package body Src_Editor_Buffer is
      (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the preferences have changed.
 
+   procedure End_Action (Buffer : access Source_Buffer_Record'Class);
+   --  This procedure should be called every time that an internal
+   --  event should cancel the current user action: focus switching
+   --  to another window, cursor moved, etc.
+
+   procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class);
+   --  Actions that must be executed whenever an action is ended.
+
+   procedure Destroy_Hook (Buffer : access Source_Buffer_Record'Class);
+   --  Actions that must be executed when the buffer is destroyed.
+
+   procedure Initialize_Hook (Buffer : access Source_Buffer_Record'Class);
+   --  Actions that must be executed after initialization.
+
    --------------------
    -- Automatic_Save --
    --------------------
@@ -231,6 +248,18 @@ package body Src_Editor_Buffer is
       return True;
    end Automatic_Save;
 
+   ------------------
+   -- Destroy_Hook --
+   ------------------
+
+   procedure Destroy_Hook (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      --  Remove the completion data.
+      String_List_Utils.String_List.Free (Buffer.Completion.List);
+      GNAT.OS_Lib.Free (Buffer.Completion.Prefix);
+
+   end Destroy_Hook;
+
    --------------------
    -- Buffer_Destroy --
    --------------------
@@ -238,6 +267,8 @@ package body Src_Editor_Buffer is
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
       Result : Boolean;
    begin
+      Destroy_Hook (Buffer);
+
       if Buffer.Timeout_Id /= 0 then
          Timeout_Remove (Buffer.Timeout_Id);
          Buffer.Timeout_Id := 0;
@@ -472,6 +503,7 @@ package body Src_Editor_Buffer is
          if Length = 1
            and then (Text (1) = ASCII.LF or else Text (1) = ' ')
          then
+
             End_Action (Buffer);
             Create
               (Command,
@@ -1084,6 +1116,25 @@ package body Src_Editor_Buffer is
       Initialize (Buffer, Kernel, Lang);
    end Gtk_New;
 
+   ---------------------
+   -- Initialize_Hook --
+   ---------------------
+
+   procedure Initialize_Hook (Buffer : access Source_Buffer_Record'Class) is
+      Iter : Gtk_Text_Iter;
+   begin
+      --  Initialize the completion.
+      Clear (Buffer.Completion);
+
+      Get_Start_Iter (Buffer, Iter);
+
+      Buffer.Completion.Mark := Create_Mark (Buffer, "", Iter);
+      Buffer.Completion.Previous_Mark := Create_Mark (Buffer, "", Iter);
+      Buffer.Completion.Next_Mark := Create_Mark (Buffer, "", Iter);
+
+      Buffer.Completion.Buffer := Gtk.Text_Buffer.Gtk_Text_Buffer (Buffer);
+   end Initialize_Hook;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1161,6 +1212,8 @@ package body Src_Editor_Buffer is
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
          Slot_Object => Buffer,
          User_Data   => Kernel);
+
+      Initialize_Hook (Buffer);
    end Initialize;
 
    -------------------------
@@ -1250,6 +1303,7 @@ package body Src_Editor_Buffer is
       Free (Contents);
       Strip_Ending_Line_Terminator (Buffer);
       Set_Modified (Buffer, False);
+
       Buffer.Inserting := False;
       Buffer.Modified_Auto := False;
 
@@ -1760,7 +1814,9 @@ package body Src_Editor_Buffer is
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
-      End_Action (Buffer);
+      if not Buffer.Inserting then
+         End_Action (Buffer);
+      end if;
 
       if not Enable_Undo then
          Buffer.Inserting := True;
@@ -1792,7 +1848,9 @@ package body Src_Editor_Buffer is
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
-      End_Action (Buffer);
+      if not Buffer.Inserting then
+         End_Action (Buffer);
+      end if;
 
       if not Enable_Undo then
          Buffer.Inserting := True;
@@ -1829,7 +1887,9 @@ package body Src_Editor_Buffer is
       pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
       pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
 
-      End_Action (Buffer);
+      if not Buffer.Inserting then
+         End_Action (Buffer);
+      end if;
 
       if not Enable_Undo then
          Buffer.Inserting := True;
@@ -2039,19 +2099,49 @@ package body Src_Editor_Buffer is
       Remove_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
    end Unhighlight_All;
 
+   ---------------------
+   -- End_Action_Hook --
+   ---------------------
+
+   procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      if not Is_Empty (Buffer.Completion) then
+         Clear (Buffer.Completion);
+      end if;
+   end End_Action_Hook;
+
    ----------------
    -- End_Action --
    ----------------
 
-   procedure End_Action (Buffer : access Source_Buffer_Record) is
+   procedure End_Action (Buffer : access Source_Buffer_Record'Class) is
+      Command : constant Editor_Command :=
+        Editor_Command (Buffer.Current_Command);
+
+      --  Iter    : Gtk_Text_Iter;
+      --  Prev    : Gtk_Text_Iter;
+      --  Success : Boolean := True;
+   begin
+      End_Action_Hook (Buffer);
+
+      if not Is_Null_Command (Command) then
+         Buffer.Current_Command := null;
+      end if;
+   end End_Action;
+
+   -------------------------
+   -- External_End_Action --
+   -------------------------
+
+   procedure External_End_Action (Buffer : access Source_Buffer_Record) is
       Command : constant Editor_Command :=
         Editor_Command (Buffer.Current_Command);
 
    begin
       if not Is_Null_Command (Command) then
-         Buffer.Current_Command := null;
+         End_Action (Buffer);
       end if;
-   end End_Action;
+   end External_End_Action;
 
    ----------
    -- Redo --
@@ -2256,5 +2346,309 @@ package body Src_Editor_Buffer is
          Buffer_Destroy (Buffer);
       end if;
    end Unref;
+
+   -------------------
+   -- Do_Completion --
+   -------------------
+
+   procedure Do_Completion (Buffer : access Source_Buffer_Record) is
+
+      use String_List_Utils.String_List;
+
+      procedure Extend_Completions_List;
+      --  Add an item to the buffer's completion, or mark it as
+      --  complete. Place the completion node to the newly added
+      --  item, or to Null if the completion was finished.
+
+      -----------------------------
+      -- Extend_Completions_List --
+      -----------------------------
+
+      procedure Extend_Completions_List is
+         Data       : Completion_Data renames Buffer.Completion;
+         Word_Begin : Gtk_Text_Iter;
+         Word_End   : Gtk_Text_Iter;
+         Iter_Back  : Gtk_Text_Iter;
+         Iter_Forward : Gtk_Text_Iter;
+
+         Aux        : Gtk_Text_Iter;
+         Success    : Boolean := True;
+         Found      : Boolean := False;
+         Word_Found : Boolean := False;
+
+         Count      : Gint := 1;
+      begin
+         if Data.Complete then
+            if Data.Node = Null_Node then
+               Data.Node := First (Data.List);
+            else
+               Data.Node := Next (Data.Node);
+            end if;
+
+            return;
+         end if;
+
+         --  Loop until a new word with the right prefix is found.
+
+         Get_Iter_At_Mark (Buffer, Iter_Back, Data.Previous_Mark);
+         Get_Iter_At_Mark (Buffer, Iter_Forward, Data.Next_Mark);
+
+         while not Found loop
+            --  If a boundary is reached, force the search in the other
+            --  direction, otherwise extend search in the opposite direction
+
+            if Data.Top_Reached then
+               Data.Backwards := False;
+            elsif Data.Bottom_Reached then
+               Data.Backwards := True;
+            else
+               Data.Backwards := not Data.Backwards;
+            end if;
+
+            --  Find a word and examine it.
+
+            Count := 0;
+
+            while not Word_Found loop
+               if Data.Backwards then
+                  --  Find the previous real word, if it exists.
+
+                  Backward_Word_Start (Iter_Back, Success);
+                  Count := Count + 1;
+
+                  if Success then
+                     Copy (Iter_Back, Aux);
+                     Backward_Char (Aux, Success);
+
+                     if not Success or else Get_Char (Aux) /= '_' then
+                        Copy (Iter_Back, Word_Begin);
+                        Copy (Iter_Back, Word_End);
+                        Forward_Word_Ends (Word_End, Count, Success);
+
+                        Word_Found := True;
+                     end if;
+                  else
+                     exit;
+                  end if;
+
+               else
+                  --  Find the next real word.
+
+                  Forward_Word_End (Iter_Forward, Success);
+                  Count := Count + 1;
+
+                  if Success then
+                     if Get_Char (Iter_Forward) /= '_' then
+                        Copy (Iter_Forward, Word_End);
+                        Copy (Iter_Forward, Word_Begin);
+                        Backward_Word_Starts (Word_Begin, Count, Success);
+
+                        Word_Found := True;
+                     end if;
+                  else
+                     exit;
+                  end if;
+               end if;
+            end loop;
+
+            if Word_Found then
+               --  We have a valid word between Word_Begin and Word_End.
+
+               declare
+                  S : constant String := Get_Slice (Word_Begin, Word_End);
+               begin
+                  --  If the word has the right prefix, and is not already
+                  --  in the list, then add it to the list and point to it,
+                  --  otherwise continue extending the search.
+
+                  if S'Length > Data.Prefix'Length
+                    and then S
+                      (S'First .. S'First - 1 + Data.Prefix'Length)
+                      = Data.Prefix.all
+                    and then not Is_In_List
+                      (Data.List,
+                       S (S'First + Data.Prefix'Length .. S'Last))
+                  then
+                     Found := True;
+
+                     if Data.Backwards then
+                        Move_Mark (Buffer, Data.Previous_Mark, Word_Begin);
+                     else
+                        Move_Mark (Buffer, Data.Next_Mark, Word_End);
+                     end if;
+
+                     Append
+                       (Data.List,
+                        S (S'First + Data.Prefix'Length .. S'Last));
+
+                     Data.Node := Last (Data.List);
+                  end if;
+
+                  Word_Found := False;
+               end;
+            else
+               if Data.Backwards then
+                  Data.Top_Reached := True;
+               else
+                  Data.Bottom_Reached := True;
+               end if;
+
+               if Data.Top_Reached and then Data.Bottom_Reached then
+                  Data.Complete := True;
+
+                  if Data.Node /= Null_Node then
+                     Data.Node := Next (Data.Node);
+                  end if;
+
+                  return;
+               else
+                  null;
+               end if;
+            end if;
+         end loop;
+      end Extend_Completions_List;
+
+      Command : Editor_Command;
+
+      Iter    : Gtk_Text_Iter;
+      Prev    : Gtk_Text_Iter;
+      Success : Boolean;
+
+      Text    : GNAT.OS_Lib.String_Access;
+
+   begin
+      if Is_Empty (Buffer.Completion) then
+         Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+
+         --  If the completions list is empty, that means we have to
+         --  initiate the mark data and launch the first search.
+
+         End_Action (Buffer);
+
+         --  At this point the completion data is reset.
+         --  Get the completion suffix.
+
+         Copy (Iter, Prev);
+         Backward_Char (Prev, Success);
+
+         if not Success then
+            return;
+         end if;
+
+         while Is_Alphanumeric (Get_Char (Prev)) loop
+            Backward_Char (Prev, Success);
+            exit when not Success;
+         end loop;
+
+         if Success then
+            Forward_Char (Prev, Success);
+         end if;
+
+         declare
+            P : constant String := Get_Slice (Prev, Iter);
+         begin
+            if P /= "" then
+               Buffer.Completion.Prefix := new String'(P);
+
+               Move_Mark (Buffer, Buffer.Completion.Mark, Iter);
+               Move_Mark (Buffer, Buffer.Completion.Previous_Mark, Iter);
+               Move_Mark (Buffer, Buffer.Completion.Next_Mark, Iter);
+
+               Extend_Completions_List;
+            else
+               Clear (Buffer.Completion);
+               return;
+
+            end if;
+         end;
+      else
+         Extend_Completions_List;
+      end if;
+
+      if Buffer.Completion.Node /= Null_Node then
+         Text := new String'(Data (Buffer.Completion.Node));
+      else
+         Text := new String'("");
+      end if;
+
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Completion.Mark);
+
+      Buffer.Inserting := True;
+
+      Command := Editor_Command (Buffer.Current_Command);
+
+      if Command = null then
+         Create
+           (Command,
+            Insertion,
+            Source_Buffer (Buffer),
+            False,
+            Natural (Get_Line (Iter)),
+            Natural (Get_Line_Offset (Iter)));
+
+         Enqueue (Buffer.Queue, Command);
+         Add_Text (Command, Text.all);
+
+         Insert (Buffer,
+                 Get_Line (Iter),
+                 Get_Line_Offset (Iter),
+                 Text.all, False);
+
+         Buffer.Current_Command := Command_Access (Command);
+
+      else
+         Get_Iter_At_Mark (Buffer, Iter, Buffer.Completion.Mark);
+         Copy (Iter, Prev);
+         Forward_Chars (Prev, Get_Text (Command)'Length, Success);
+
+         if Success then
+            Replace_Slice
+              (Buffer,
+               Get_Line (Iter),
+               Get_Line_Offset (Iter),
+               Get_Line (Prev),
+               Get_Line_Offset (Prev),
+               Text.all, False);
+         else
+            Insert
+              (Buffer,
+               Get_Line (Iter),
+               Get_Line_Offset (Iter),
+               Text.all, False);
+         end if;
+
+         Set_Text (Command, Text.all);
+      end if;
+
+      GNAT.OS_Lib.Free (Text);
+
+      Buffer.Inserting := False;
+   end Do_Completion;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Data : in out Completion_Data) is
+   begin
+      GNAT.OS_Lib.Free (Data.Prefix);
+
+      String_List_Utils.String_List.Free (Data.List);
+      Data.Node := String_List_Utils.String_List.Null_Node;
+
+      Data.Top_Reached := False;
+      Data.Bottom_Reached := False;
+      Data.Complete := False;
+      Data.Backwards := False;
+   end Clear;
+
+   --------------
+   -- Is_Empty --
+   --------------
+
+   function Is_Empty (Data : Completion_Data) return Boolean is
+   begin
+      return (Data.Prefix = null);
+   end Is_Empty;
 
 end Src_Editor_Buffer;
