@@ -32,6 +32,7 @@ with Glide_Intl;                use Glide_Intl;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
 with Output;                    use Output;
+with OS_Utils;                  use OS_Utils;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.PP;                    use Prj.PP;
 with Prj.Part;                  use Prj.Part;
@@ -502,8 +503,7 @@ package body Projects.Registry is
 
          loop
             while Last >= Directory'First
-              and then Directory (Last) /= Path_Separator
-              and then Directory (Last) /= '/'
+              and then not Is_Directory_Separator (Directory (Last))
             loop
                Last := Last - 1;
             end loop;

@@ -300,27 +300,6 @@ package body Src_Info.LI_Utils is
          Referred_LI       => Referred_LI,
          Dep_Ptr           => Dep_Ptr);
 
-      --  D_Ptr := Find_Declaration
-      --    (File        => Tmp_LI_File_Ptr,
-      --     Symbol_Name => Symbol_Name,
-      --     Location    => Location);
-
-      --  if D_Ptr = null then
-      --     Insert_Declaration
-      --       (File                  => Tmp_LI_File_Ptr,
-      --        List                  => List,
-      --        DB_Dir                => DB_Dir,
-      --        Symbol_Name           => Symbol_Name,
-      --        Location              => Location,
-      --        Parent_Filename       => Parent_Filename,
-      --        Parent_Location       => Parent_Location,
-      --        Kind                  => Kind,
-      --        Scope                 => Scope,
-      --        Project               => Project,
-      --        End_Of_Scope_Location => End_Of_Scope_Location,
-      --        Declaration_Info      => Tmp_Ptr);
-      --  end if;
-
       --  Now Dep_Ptr points to valid Dependency_File_Info_Node object
       --  Inserting new declaration
 
