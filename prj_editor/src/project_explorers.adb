@@ -2746,7 +2746,7 @@ package body Project_Explorers is
         (Kernel, "Project_Explorer_Project", Position_Left, False, True);
 
       Register_Menu
-        (Kernel, Project, -"Project View", "", On_Open_Explorer'Access);
+        (Kernel, Project, -"Project _View", "", On_Open_Explorer'Access);
 
       Extra := new Explorer_Search_Extra_Record;
       Gtk.Frame.Initialize (Extra, -"Scope");
