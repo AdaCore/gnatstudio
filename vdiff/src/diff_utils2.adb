@@ -597,10 +597,7 @@ package body Diff_Utils2 is
    -- Horizontal_Diff --
    ---------------------
 
-   function Horizontal_Diff
-     (Line1, Line2 : String)
-      return Diff_List
-   is
+   function Horizontal_Diff (Line1, Line2 : String) return Diff_List is
       V_Fich1,
       V_Fich2     : Virtual_File;
       Fich1,
@@ -611,11 +608,10 @@ package body Diff_Utils2 is
       FD2         : File_Descriptor;
       Diff1       : Diff_List;
       Success     : Boolean;
-      EOL_Str     : constant String := (1 => ASCII.LF);
       N           : Integer;
       pragma Unreferenced (N);
-   begin
 
+   begin
       Create_Temp_File (FD1, Fich1);
       Create_Temp_File (FD2, Fich2);
 
@@ -623,19 +619,19 @@ package body Diff_Utils2 is
       V_Fich2 := Create (Fich2.all);
 
       for J in Line1'Range loop
-         Local_Line1 (2 * J -1) := Line1 (J);
-         Local_Line1 (2 * J) := EOL_Str (1);
+         Local_Line1 (2 * J - 1) := Line1 (J);
+         Local_Line1 (2 * J)     := ASCII.LF;
       end loop;
 
       for J in Line2'Range loop
-         Local_Line2 (2 * J -1) := Line2 (J);
-         Local_Line2 (2 * J) := EOL_Str (1);
+         Local_Line2 (2 * J - 1) := Line2 (J);
+         Local_Line2 (2 * J)     := ASCII.LF;
       end loop;
 
-      N := Write (FD2, Local_Line2 (Local_Line2'First)'Address,
-                  Local_Line2'Length);
       N := Write (FD1, Local_Line1 (Local_Line1'First)'Address,
                   Local_Line1'Length);
+      N := Write (FD2, Local_Line2 (Local_Line2'First)'Address,
+                  Local_Line2'Length);
       Close (FD1);
       Close (FD2);
 
