@@ -270,8 +270,6 @@ package body Gtkada.MDI is
       Region : Gdk_Region := null)
    is
       use Widget_List;
-      W : constant Gint := Gint (Get_Allocation_Width (Child.MDI));
-      H : constant Gint := Gint (Get_Allocation_Height (Child.MDI));
       R : Gdk_Region;
       List, Tmp : Widget_List.Glist;
       X, Y : Gint;
@@ -304,9 +302,9 @@ package body Gtkada.MDI is
       if Child.Uniconified_Width /= 0
         and then Child.Uniconified_Height /= 0
       then
-         while Child.X = 11 and then Y < H loop
+         while Child.X = 11 and then Y < Child.MDI.MDI_Height loop
             X := 10;
-            while X < W loop
+            while X < Child.MDI.MDI_Width loop
                Overlap := Rect_In
                  (R, (X, Y, Guint (Child.Uniconified_Width),
                       Guint (Child.Uniconified_Height)));
@@ -366,6 +364,7 @@ package body Gtkada.MDI is
       Gdk_New (M.Resize_GC, Get_Window (MDI));
       Set_Function (M.Resize_GC, Invert);
       Set_Exposures (M.Resize_GC, False);
+      Set_Subwindow (M.Resize_GC, Include_Inferiors);
 
       M.Title_GC := Get_White_GC (Get_Style (MDI));
 
@@ -399,12 +398,12 @@ package body Gtkada.MDI is
    procedure Size_Allocate_MDI (MDI : access Gtk_Widget_Record'Class) is
       M : MDI_Window := MDI_Window (MDI);
    begin
-      if M.MDI_Width /= Get_Allocation_Width (M)
-        or else M.MDI_Height /= Get_Allocation_Height (M)
+      if M.MDI_Width /= Gint (Get_Allocation_Width (M))
+        or else M.MDI_Height /= Gint (Get_Allocation_Height (M))
       then
+         M.MDI_Width := Gint (Get_Allocation_Width (M));
+         M.MDI_Height := Gint (Get_Allocation_Height (M));
          Move_Dock_Notebook (M, None);
-         M.MDI_Width := Get_Allocation_Width (M);
-         M.MDI_Height := Get_Allocation_Height (M);
       end if;
    end Size_Allocate_MDI;
 
@@ -639,7 +638,7 @@ package body Gtkada.MDI is
          Child.Title.all);
 
       --  For notebooks, we want the tabs area the same color as MDI
-      if Child.Initial.all in Gtk_Notebook_Record'Class then
+      if Child.State = Docked then
          Draw_Rectangle
            (Get_Window (Child),
             Get_Background_GC (Get_Style (MDI), State_Normal),
@@ -695,7 +694,7 @@ package body Gtkada.MDI is
       return Gint
    is
       Xmin : Gint := 0;
-      Xmax : Gint := Gint (Get_Allocation_Width (MDI)) - Min;
+      Xmax : Gint := MDI.MDI_Width - Min;
    begin
       if MDI.Docks (Left) /= null then
          Xmin := MDI.Docks (Left).Uniconified_Width;
@@ -716,7 +715,7 @@ package body Gtkada.MDI is
       return Gint
    is
       Ymin : Gint := 0;
-      Ymax : Gint := Gint (Get_Allocation_Height (MDI)) - Min;
+      Ymax : Gint := MDI.MDI_Height - Min;
    begin
       if MDI.Docks (Top) /= null then
          Ymin := MDI.Docks (Top).Uniconified_Height;
@@ -1511,8 +1510,8 @@ package body Gtkada.MDI is
    procedure Cascade_Children (MDI : access MDI_Window_Record) is
       Xmin : constant Gint := Constrain_X (MDI, 0);
       Ymin : constant Gint := Constrain_Y (MDI, 0);
-      W : Gint := Constrain_X (MDI, Gint (Get_Allocation_Width (MDI)), 0);
-      H : Gint := Constrain_Y (MDI, Gint (Get_Allocation_Height (MDI)), 0);
+      W : Gint := Constrain_X (MDI, MDI.MDI_Width, 0);
+      H : Gint := Constrain_Y (MDI, MDI.MDI_Height, 0);
       List : Widget_List.Glist := Children (MDI);
       C : MDI_Child;
       Tmp : Widget_List.Glist;
@@ -1565,10 +1564,8 @@ package body Gtkada.MDI is
    procedure Tile_Horizontally (MDI : access MDI_Window_Record) is
       Xmin : constant Gint := Constrain_X (MDI, 0);
       Ymin : constant Gint := Constrain_Y (MDI, 0);
-      W : constant Gint :=
-        Constrain_X (MDI, Gint (Get_Allocation_Width (MDI)), 0);
-      H : constant Gint :=
-        Constrain_Y (MDI, Gint (Get_Allocation_Height (MDI)), 0);
+      W : constant Gint := Constrain_X (MDI, MDI.MDI_Width, 0);
+      H : constant Gint := Constrain_Y (MDI, MDI.MDI_Height, 0);
       List : Widget_List.Glist := Children (MDI);
       C : MDI_Child;
       Tmp : Widget_List.Glist;
@@ -1608,10 +1605,8 @@ package body Gtkada.MDI is
    procedure Tile_Vertically (MDI : access MDI_Window_Record) is
       Xmin : constant Gint := Constrain_X (MDI, 0);
       Ymin : constant Gint := Constrain_Y (MDI, 0);
-      W : constant Gint :=
-        Constrain_X (MDI, Gint (Get_Allocation_Width (MDI)), 0);
-      H : constant Gint :=
-        Constrain_Y (MDI, Gint (Get_Allocation_Height (MDI)), 0);
+      W : constant Gint := Constrain_X (MDI, MDI.MDI_Width, 0);
+      H : constant Gint := Constrain_Y (MDI, MDI.MDI_Height, 0);
       List : Widget_List.Glist := Children (MDI);
       C : MDI_Child;
       Tmp : Widget_List.Glist;
@@ -1781,26 +1776,24 @@ package body Gtkada.MDI is
             H := Req.Height;
             case Side is
                when Left =>
-                  H := Gint (Get_Allocation_Height (MDI));
+                  H := MDI.MDI_Height;
 
                when Right =>
-                  X := Gint (Get_Allocation_Width (MDI)) - Req.Width;
-                  H := Gint (Get_Allocation_Height (MDI));
+                  X := MDI.MDI_Width - Req.Width;
+                  H := MDI.MDI_Height;
 
                when Bottom =>
-                  Y := Gint (Get_Allocation_Height (MDI)) - Req.Height;
-                  W := Gint (Get_Allocation_Width (MDI));
+                  Y := MDI.MDI_Height - Req.Height;
+                  W := MDI.MDI_Width;
 
                when Top =>
-                  W := Gint (Get_Allocation_Width (MDI));
+                  W := MDI.MDI_Width;
 
                when None =>
                   X := Constrain_X (MDI, 0, 0);
                   Y := Constrain_Y (MDI, 0, 0);
-                  W := Constrain_X
-                    (MDI, X + Gint (Get_Allocation_Width (MDI)), 0) - X;
-                  H := Constrain_Y
-                    (MDI, Y + Gint (Get_Allocation_Height (MDI)), 0) - Y;
+                  W := Constrain_X (MDI, X + MDI.MDI_Width, 0) - X;
+                  H := Constrain_Y (MDI, Y + MDI.MDI_Height, 0) - Y;
             end case;
             case Side is
                when Bottom | Top =>
@@ -2112,17 +2105,15 @@ package body Gtkada.MDI is
             C2 : MDI_Child;
          begin
             Child.X := Constrain_X (MDI, 0);
-            Child.Y := (Constrain_Y (MDI, Gint (Get_Allocation_Height (MDI)))
-                        / Icon_Height) * Icon_Height;
+            Child.Y := (Constrain_Y (MDI, MDI.MDI_Height) / Icon_Height)
+              * Icon_Height;
             while Tmp /= Null_List loop
                C2 := MDI_Child (Get_Data (Tmp));
                if C2 /= MDI_Child (Child) and then C2.State = Iconified then
                   if C2.Y mod Icon_Height = 0
                     and then C2.Y <= Child.Y
                   then
-                     if C2.X + Icons_Width >=
-                       Gint (Get_Allocation_Width (MDI))
-                     then
+                     if C2.X + Icons_Width >= MDI.MDI_Width then
                         Child.X := Constrain_X (MDI, 0);
                         Child.Y := C2.Y - Icon_Height;
                      elsif C2.X + Icons_Width > Child.X then
