@@ -232,6 +232,7 @@ package body Glide_Kernel.Project is
       procedure Report_Error (S : String) is
       begin
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
+         Parse_File_Locations (Kernel, S, "Project load");
       end Report_Error;
 
       Had_Project_Desktop : Boolean;
@@ -283,6 +284,7 @@ package body Glide_Kernel.Project is
       procedure Report_Error (S : String) is
       begin
          Console.Insert (Handle, S, Mode => Console.Error);
+         Parse_File_Locations (Handle, S, "Recompute view");
       end Report_Error;
 
       N : constant String := Project_Name (Get_Project (Handle));
@@ -401,6 +403,7 @@ package body Glide_Kernel.Project is
       procedure Report_Error (Msg : String) is
       begin
          Insert (Kernel, Msg, Mode => Glide_Kernel.Console.Error);
+         Parse_File_Locations (Kernel, Msg, "Project save");
       end Report_Error;
 
       Args    : Argument_List (1 .. 2);
