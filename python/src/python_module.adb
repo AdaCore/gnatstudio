@@ -147,6 +147,8 @@ package body Python_Module is
    procedure Set_Return_Value
      (Data   : in out Python_Callback_Data; Value : String);
    procedure Set_Return_Value
+     (Data   : in out Python_Callback_Data; Value : Boolean);
+   procedure Set_Return_Value
      (Data   : in out Python_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
      (Data   : in out Python_Callback_Data; Value : Class_Instance);
@@ -1057,6 +1059,16 @@ package body Python_Module is
          Setup_Return_Value (Data);
          Data.Return_Value := PyCObject_FromVoidPtr (Value);
       end if;
+   end Set_Return_Value;
+
+   ----------------------
+   -- Set_Return_Value --
+   ----------------------
+
+   procedure Set_Return_Value
+     (Data : in out Python_Callback_Data; Value : Boolean) is
+   begin
+      Set_Return_Value (Data, Boolean'Pos (Value));
    end Set_Return_Value;
 
    ----------------------
