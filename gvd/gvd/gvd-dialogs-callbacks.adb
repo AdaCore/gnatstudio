@@ -198,6 +198,7 @@ package body Odd.Dialogs.Callbacks is
                   Command,
                   Output_Command => True,
                   Mode           => Odd.Types.User);
+               Wait_User_Command (Tab);
                Gtk_New (Item, Label => Command);
                Show (Item);
                Add (History_Dialog.List, Item);
