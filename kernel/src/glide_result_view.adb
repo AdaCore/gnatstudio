@@ -1971,7 +1971,6 @@ package body Glide_Result_View is
       Quiet                   : Boolean := False)
    is
       View      : constant Result_View := Get_Or_Create_Result_View (Kernel);
-      Sort_Col  : Gint;
       Model     : Gtk_Tree_Store;
       Expand    : Boolean := Quiet;
 
@@ -2051,7 +2050,6 @@ package body Glide_Result_View is
          Length := 1;
       end if;
 
-      Sort_Col := Freeze_Sort (View.Tree.Model);
       Model := View.Tree.Model;
 
       while Start <= Text'Last loop
@@ -2130,13 +2128,18 @@ package body Glide_Result_View is
          Start := Real_Last + 1;
       end loop;
 
-      Thaw_Sort (View.Tree.Model, Sort_Col);
       Recount_Category (Kernel, Category);
 
       if View.Sort_By_Category then
-         Set_Sort_Column_Id (View.Sorting_Column, Category_Line_Column);
+         if Get_Sort_Column_Id (View.Sorting_Column)
+           /= Category_Line_Column
+         then
+            Set_Sort_Column_Id (View.Sorting_Column, Category_Line_Column);
+         end if;
       else
-         Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
+         if Get_Sort_Column_Id (View.Sorting_Column) /= Line_Column then
+            Set_Sort_Column_Id (View.Sorting_Column, Line_Column);
+         end if;
       end if;
    end Parse_File_Locations;
 
