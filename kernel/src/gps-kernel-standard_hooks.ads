@@ -212,11 +212,11 @@ package GPS.Kernel.Standard_Hooks is
    type File_Line_Hooks_Args (Identifier_Length : Natural)
      is new Hooks_Data with
    record
-      Identifier    : String (1 .. Identifier_Length);
       File          : VFS.Virtual_File := VFS.No_File;
       Info          : Line_Information_Data;
       Every_Line    : Boolean := True;
       Normalize     : Boolean := True;
+      Identifier    : String (1 .. Identifier_Length);
    end record;
    --  Identifier is the identity of the emitted
    --  If Every_Line is set to True, then the editor will emit a line_revealed
@@ -291,15 +291,16 @@ package GPS.Kernel.Standard_Hooks is
    procedure Free (X : in out Action_Item);
    --  Free memory associated to X.
 
-   type Location_Hooks_Args (Ident_Length, Cat_Length, Mes_Length : Natural)
-      is new Hooks_Data with record
-         Identifier : String (1 .. Ident_Length);
-         Category   : String (1 .. Cat_Length);
+   type Location_Hooks_Args (Ident_Length, Cat_Length, Mes_Length : Natural) is
+     new Hooks_Data with
+      record
          File       : VFS.Virtual_File;
          Line       : Integer;
          Column     : Integer;
-         Message    : String (1 .. Mes_Length);
          Action     : Action_Item;
+         Identifier : String (1 .. Ident_Length);
+         Category   : String (1 .. Cat_Length);
+         Message    : String (1 .. Mes_Length);
       end record;
    --  Identifier is the identity of the emitted.
 
