@@ -521,6 +521,7 @@ package body Glide_Kernel.Console is
                Key          => "",
                Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
+      Set_Size_Request (Console, 400, 100);
 
       Child := Put
         (Get_MDI (Kernel), Console, Iconify_Button or Maximize_Button,
@@ -540,6 +541,7 @@ package body Glide_Kernel.Console is
                Key          => "shell",
                Wrap_Mode    => Wrap_Char);
       Set_Completion_Handler (Interactive, Commands_As_List'Access);
+      Set_Size_Request (Interactive, 400, 100);
       Child := Put
         (Get_MDI (Kernel), Interactive,
          Iconify_Button or Maximize_Button,
