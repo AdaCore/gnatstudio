@@ -168,6 +168,9 @@ package Gtkada.MDI is
       Containing : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Give the focus to the child containing Containing.
 
+   procedure Set_Focus_Child (Child : access MDI_Child_Record'Class);
+   --  Make Child the active widget, and raise it at the top.
+
    function Create_Menu
      (MDI : access MDI_Window_Record) return Gtk.Menu.Gtk_Menu;
    --  Create a dynamic menu that can then be inserted into a menu bar. This

@@ -300,9 +300,6 @@ package body Gtkada.MDI is
      (MDI : access Gtk_Widget_Record'Class; Args : Gtk_Args) return Boolean;
    --  Called when the child needs to be redrawn.
 
-   procedure Activate_Child (Child : access MDI_Child_Record'Class);
-   --  Make Child the active widget, and raise it at the top.
-
    procedure Update_Dock_Menu (Child : access MDI_Child_Record'Class);
    procedure Update_Float_Menu (Child : access MDI_Child_Record'Class);
    --  Update the state of the "Float" menu item associated with child.
@@ -1442,7 +1439,7 @@ package body Gtkada.MDI is
          return False;
       end if;
 
-      Activate_Child (C);
+      Set_Focus_Child (C);
 
       --  Can't move items inside a notebook
       if C.State = Docked
@@ -1954,7 +1951,7 @@ package body Gtkada.MDI is
 
       if Realized_Is_Set (MDI) then
          Realize (C);
-         Activate_Child (C);
+         Set_Focus_Child (C);
       end if;
 
       return C;
@@ -2128,11 +2125,11 @@ package body Gtkada.MDI is
       end if;
    end Update_Float_Menu;
 
-   --------------------
-   -- Activate_Child --
-   --------------------
+   ---------------------
+   -- Set_Focus_Child --
+   ---------------------
 
-   procedure Activate_Child (Child : access MDI_Child_Record'Class) is
+   procedure Set_Focus_Child (Child : access MDI_Child_Record'Class) is
       Old  : MDI_Child := Child.MDI.Focus_Child;
       C    : MDI_Child := MDI_Child (Child);
 
@@ -2166,7 +2163,7 @@ package body Gtkada.MDI is
       then
          Set_Active (C.Menu_Item, True);
       end if;
-   end Activate_Child;
+   end Set_Focus_Child;
 
    ----------------------
    -- Cascade_Children --
@@ -2425,7 +2422,7 @@ package body Gtkada.MDI is
          end if;
       end if;
 
-      Activate_Child (Child);
+      Set_Focus_Child (Child);
       Update_Float_Menu (Child);
    end Float_Child;
 
@@ -2449,7 +2446,7 @@ package body Gtkada.MDI is
       Page_Num : Guint := To_Guint (Args, 2);
    begin
       if Page_Num /= -1 then
-         Activate_Child
+         Set_Focus_Child
            (MDI_Child (Get_Nth_Page
                        (Gtk_Notebook (Docked_Child), Gint (Page_Num))));
       end if;
@@ -2614,7 +2611,7 @@ package body Gtkada.MDI is
          Set_Sensitive (Child.Maximize_Button, True);
       end if;
 
-      Activate_Child (Child);
+      Set_Focus_Child (Child);
       Update_Dock_Menu (Child);
    end Dock_Child;
 
@@ -2703,7 +2700,7 @@ package body Gtkada.MDI is
          Set_Sensitive (Child.Maximize_Button, True);
       end if;
 
-      Activate_Child (Child);
+      Set_Focus_Child (Child);
    end Minimize_Child;
 
    -----------------------
@@ -2734,7 +2731,7 @@ package body Gtkada.MDI is
          Hide (MDI.Layout);
 
          if Old_Focus /= null then
-            Activate_Child (Old_Focus);
+            Set_Focus_Child (Old_Focus);
          end if;
 
       elsif MDI.Docks (None) /= null then
@@ -2837,7 +2834,7 @@ package body Gtkada.MDI is
    procedure Maximize_Child_Cb (Child : access Gtk_Widget_Record'Class) is
       M : MDI_Window := MDI_Child (Child).MDI;
    begin
-      Activate_Child (MDI_Child (Child));
+      Set_Focus_Child (MDI_Child (Child));
       Maximize_Children (M, M.Docks (None) = null);
    end Maximize_Child_Cb;
 
@@ -2914,7 +2911,7 @@ package body Gtkada.MDI is
       C : MDI_Child := MDI_Child (Child);
    begin
       if Get_Active (C.Menu_Item) then
-         Activate_Child (C);
+         Set_Focus_Child (C);
       end if;
    end Focus_Cb;
 
@@ -3177,7 +3174,7 @@ package body Gtkada.MDI is
       end loop;
 
       if Parent /= null then
-         Activate_Child (MDI_Child (Parent));
+         Set_Focus_Child (MDI_Child (Parent));
       end if;
    end Set_Focus_Child;
 
