@@ -631,6 +631,7 @@ package body Project_Explorers is
       Get_Selected (Get_Selection (E.Tree), Model, Node);
 
       if Node = Null_Iter
+        or else Child = null
         or else (Get_Title (Child) = " ")
         or else (Get_Title (Child) =
                    Full_Name (Get_File_From_Node (E.Tree.Model, Node)).all)
