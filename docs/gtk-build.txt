@@ -43,8 +43,8 @@ export C_INCLUDE_PATH
 ############
 # libiconv #
 ############
-# This step isn't needed on Linux nor Solaris nor Tru64 5.1
-# It is needed under HP-UX
+# This step isn't needed on Linux nor Solaris
+# It is needed under HP-UX and Tru64 5.1
 
 tar xzvf libiconv-1.7.tar.gz
 cd libiconv-1.7
