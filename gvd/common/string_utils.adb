@@ -638,6 +638,8 @@ package body String_Utils is
       for J in S'First + 1 .. S'Last loop
          if S (J - 1) = '_' then
             S (J) := To_Upper (S (J));
+         else
+            S (J) := To_Lower (S (J));
          end if;
       end loop;
    end Mixed_Case;
