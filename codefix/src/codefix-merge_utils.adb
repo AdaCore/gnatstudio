@@ -31,8 +31,9 @@ package body Codefix.Merge_Utils is
       Chronologic_Changes : Boolean)
    is
 
-      It_1, It_2 : Merge_Iterator;
-      New_Unit   : Merged_Unit;
+      It_1, It_2    : Merge_Iterator;
+      New_Unit      : Merged_Unit;
+      Intern_Result : Merge_Type;
 
       procedure Merge_Original;
       procedure Merge_Modified;
@@ -43,19 +44,19 @@ package body Codefix.Merge_Utils is
       begin
          case Get_Merge_Info (Data (It_2)) is
             when Original_Unit =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Modified =>
-               Append (Result, Clone (Data (It_2)));
+               Append (Intern_Result, Clone (Data (It_2)));
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Deleted =>
-               Append (Result, Clone (Data (It_2)));
+               Append (Intern_Result, Clone (Data (It_2)));
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Created =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
                It_1 := Next (It_1);
          end case;
       end Merge_Original;
@@ -64,7 +65,7 @@ package body Codefix.Merge_Utils is
       begin
          case Get_Merge_Info (Data (It_2)) is
             when Original_Unit =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Modified =>
@@ -78,9 +79,9 @@ package body Codefix.Merge_Utils is
                Set_Merge_Info (New_Unit, Unit_Modified);
 
                if Success then
-                  Append (Result, New_Unit);
+                  Append (Intern_Result, New_Unit);
                elsif Chronologic_Changes then
-                  Append (Result, Clone (Data (It_2)));
+                  Append (Intern_Result, Clone (Data (It_2)));
                   Success := True;
                end if;
 
@@ -89,7 +90,7 @@ package body Codefix.Merge_Utils is
             when Unit_Deleted =>
                Success := False;
             when Unit_Created =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
                It_1 := Next (It_1);
          end case;
       end Merge_Modified;
@@ -98,17 +99,17 @@ package body Codefix.Merge_Utils is
       begin
          case Get_Merge_Info (Data (It_2)) is
             when Original_Unit =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Modified =>
                Success := False;
             when Unit_Deleted =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
                It_1 := Next (It_1);
                It_2 := Next (It_2);
             when Unit_Created =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
                It_1 := Next (It_1);
          end case;
       end Merge_Deleted;
@@ -117,16 +118,16 @@ package body Codefix.Merge_Utils is
       begin
          case Get_Merge_Info (Data (It_2)) is
             when Original_Unit =>
-               Append (Result, Clone (Data (It_2)));
+               Append (Intern_Result, Clone (Data (It_2)));
                It_2 := Next (It_2);
             when Unit_Modified =>
-               Append (Result, Clone (Data (It_2)));
+               Append (Intern_Result, Clone (Data (It_2)));
                It_2 := Next (It_2);
             when Unit_Deleted =>
-               Append (Result, Clone (Data (It_2)));
+               Append (Intern_Result, Clone (Data (It_2)));
                It_2 := Next (It_2);
             when Unit_Created =>
-               Append (Result, Clone (Data (It_1)));
+               Append (Intern_Result, Clone (Data (It_1)));
 
                if Data (It_1) /= Data (It_2) then
                   It_1 := Next (It_1);
@@ -150,10 +151,10 @@ package body Codefix.Merge_Utils is
 
       while not Is_Null (It_1) and then not Is_Null (It_2) loop
          if It_1 < It_2 then
-            Append (Result, Clone (Data (It_1)));
+            Append (Intern_Result, Clone (Data (It_1)));
             It_1 := Next (It_1);
          elsif It_2 < It_1 then
-            Append (Result, Clone (Data (It_2)));
+            Append (Intern_Result, Clone (Data (It_2)));
             It_2 := Next (It_2);
          else
             case Get_Merge_Info (Data (It_1)) is
@@ -175,14 +176,16 @@ package body Codefix.Merge_Utils is
 
 
       while not Is_Null (It_1) loop
-         Append (Result, Clone (Data (It_1)));
+         Append (Intern_Result, Clone (Data (It_1)));
          It_1 := Next (It_1);
       end loop;
 
       while not Is_Null (It_2) loop
-         Append (Result, Clone (Data (It_2)));
+         Append (Intern_Result, Clone (Data (It_2)));
          It_2 := Next (It_2);
       end loop;
+
+      Result := Intern_Result;
 
    end Generic_Merge;
 
@@ -460,7 +463,8 @@ package body Codefix.Merge_Utils is
 
       function Real_Position
         (This : Mergable_String; Pos : Natural) return Natural;
-      --  ???
+      --  Returns the real index after having ignored the created
+      --  characters.
 
       function Real_Position
         (This : Mergable_String; Pos : Natural) return Natural
