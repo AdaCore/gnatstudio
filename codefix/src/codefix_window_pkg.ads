@@ -31,7 +31,6 @@ with Gtk.Object; use Gtk.Object;
 package Codefix_Window_Pkg is
 
    type Codefix_Window_Record is new Gtk_Hbox_Record with record
---      Hbox1 : Gtk_Hbox;
       Vbox6 : Gtk_Vbox;
       Error_Caption : Gtk_Label;
       Choices_Proposed : Gtk_Notebook;
