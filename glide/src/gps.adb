@@ -18,10 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk; use Gtk;
-with Gtk.Enums; use Gtk.Enums;
+with Gtk;                       use Gtk;
+with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Rc;
 with Glide_Page;
 with Glide_Menu;
