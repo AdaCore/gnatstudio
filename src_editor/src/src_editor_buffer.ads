@@ -524,9 +524,9 @@ package Src_Editor_Buffer is
    --  The various locations where a highlight can be made visible
 
    procedure Add_Line_Highlighting
-     (Editor : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Id     : String;
+     (Editor       : access Source_Buffer_Record;
+      Line         : Editable_Line_Type;
+      Id           : String;
       Highlight_In : Highlight_Location_Array);
    --  Enable the highlighting of Line using colors defined in category
    --  corresponding to Id.

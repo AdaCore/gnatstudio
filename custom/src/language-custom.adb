@@ -376,7 +376,6 @@ package body Language.Custom is
          Node := Node.Next;
       end loop;
 
-
       Tmp_Str := Get_Field (Top, "Parent");
 
       if Tmp_Str /= null then

@@ -1300,7 +1300,6 @@ package body Docgen.Work_On_Source is
       Doc_Package_Desc
         (B, Kernel, Result, Level, Description => Description.all);
       Free (Description);
-
    end Process_Package_Description;
 
    --------------------------

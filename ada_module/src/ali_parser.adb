@@ -19,32 +19,31 @@
 -----------------------------------------------------------------------
 
 with Basic_Types;
-with Entities;          use Entities;
-with Entities.Queries;  use Entities.Queries;
-with VFS;               use VFS;
-with Traces;            use Traces;
-with Projects;          use Projects;
-with Projects.Editor;   use Projects.Editor;
-with Projects.Registry; use Projects.Registry;
-with Glib.Convert;      use Glib.Convert;
-with File_Utils;        use File_Utils;
+with Entities;                  use Entities;
+with Entities.Queries;          use Entities.Queries;
+with VFS;                       use VFS;
+with Traces;                    use Traces;
+with Projects;                  use Projects;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
+with Glib.Convert;              use Glib.Convert;
+with File_Utils;                use File_Utils;
 
-with Ada.Calendar;   use Ada.Calendar;
-with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Calendar;              use Ada.Calendar;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GNAT.Case_Util;        use GNAT.Case_Util;
-with GNAT.OS_Lib;    use GNAT.OS_Lib;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
-with ALI;            use ALI;
-with Types;          use Types;
-with Namet;          use Namet;
+with ALI;                       use ALI;
+with Types;                     use Types;
+with Namet;                     use Namet;
 
 package body ALI_Parser is
    Me        : constant Debug_Handle := Create ("ALI", Off);
    Assert_Me : constant Debug_Handle := Create ("ALI.Assert", Off);
-
 
    type ALI_Handler_Record is new LI_Handler_Record with record
       Db       : Entities_Database;
@@ -683,8 +682,8 @@ package body ALI_Parser is
       Set_Kind (Entity, Kind);
       Set_Attributes
         (Entity,
-         Attributes => (Global      => Xref_Entity.Table (Xref_Ent).Lib,
-                        others      => False));
+         Attributes => (Global => Xref_Entity.Table (Xref_Ent).Lib,
+                        others => False));
 
       --  Do not process types for entities in other ALI files,
       --  since most of the time the closure will not be in the current ALI

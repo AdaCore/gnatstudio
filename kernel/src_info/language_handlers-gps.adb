@@ -243,9 +243,9 @@ package body Language_Handlers.GPS is
       Name    : String;
       Lang    : Language.Language_Access)
    is
-      Tmp : Language_Info_Access;
+      N     : constant String := To_Lower (Name);
+      Tmp   : Language_Info_Access;
       Index : Natural;
-      N   : constant String := To_Lower (Name);
    begin
       if Handler.Languages /= null then
          Index := Get_Index_From_Language (Handler, N);

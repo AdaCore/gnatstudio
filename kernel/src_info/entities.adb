@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2005                       --
---                             AdaCore                               --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -24,18 +24,18 @@ with VFS;                     use VFS;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Projects;                use Projects;
 with Traces;                  use Traces;
-with Language_Handlers.GPS; use Language_Handlers.GPS;
+with Language_Handlers.GPS;   use Language_Handlers.GPS;
 with GNAT.Heap_Sort_G;
 with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
 with File_Utils;              use File_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with GPS.Intl;              use GPS.Intl;
+with GPS.Intl;                use GPS.Intl;
 with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 with Language;                use Language;
 with String_Utils;            use String_Utils;
 with Entities.Queries;        use Entities.Queries;
-with Entities.Debug; use Entities.Debug;
+with Entities.Debug;          use Entities.Debug;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -183,16 +183,16 @@ package body Entities is
    --  declaration, end of record definition, ...)
 
    Is_Parameter_Array : constant Reference_Kind_Filter :=
-     (Subprogram_In_Parameter                  => True,
-      Subprogram_In_Out_Parameter              => True,
-      Subprogram_Out_Parameter                 => True,
-      Subprogram_Access_Parameter              => True,
-      others                                   => False);
+     (Subprogram_In_Parameter     => True,
+      Subprogram_In_Out_Parameter => True,
+      Subprogram_Out_Parameter    => True,
+      Subprogram_Access_Parameter => True,
+      others                      => False);
 
    Show_In_Call_Graph_Array : constant Reference_Kind_Filter :=
-     (Reference                                => True,
-      Modification                             => True,
-      others                                   => False);
+     (Reference    => True,
+      Modification => True,
+      others       => False);
 
    ------------------------
    -- Show_In_Call_Graph --
@@ -927,6 +927,10 @@ package body Entities is
       procedure Check_And_Remove (E : access Entities_Tries.Trie_Tree);
       --  Remove all references to File in E
 
+      ----------------------
+      -- Check_And_Remove --
+      ----------------------
+
       procedure Check_And_Remove (E : in out Entity_Information) is
       begin
          if E /= null and then E.Declaration.File = Dependencies_On then
@@ -1028,8 +1032,9 @@ package body Entities is
    -- Remove --
    ------------
 
-   procedure Remove  (D : in out Entities_Tries.Trie_Tree;
-                      E : Entity_Information)
+   procedure Remove
+     (D : in out Entities_Tries.Trie_Tree;
+      E : Entity_Information)
    is
       Pointer : Cell_Pointer;
       EL      : Entity_Information_List_Access;
@@ -1632,7 +1637,6 @@ package body Entities is
 
          Ref (Entity);
       end if;
-
    end Add;
 
    --------------------
@@ -1932,8 +1936,8 @@ package body Entities is
       Column       : Natural;
       Allow_Create : Boolean := True) return Entity_Information
    is
-      EL  : Entity_Information_List_Access;
-      E   : Entity_Information;
+      EL      : Entity_Information_List_Access;
+      E       : Entity_Information;
       Pointer : Cell_Pointer;
    begin
       Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
@@ -1943,8 +1947,7 @@ package body Entities is
 
       if EL = null then
          if Allow_Create then
-            EL := new Entity_Information_List'
-              (Null_Entity_Information_List);
+            EL := new Entity_Information_List'(Null_Entity_Information_List);
             Insert (Name, Pointer, EL);
          end if;
       else
@@ -2474,10 +2477,10 @@ package body Entities is
    ---------------------------
 
    procedure Parse_File_Constructs
-     (Handler      : access LI_Handler_Record;
-      Languages    : access Language_Handlers.Language_Handler_Record'Class;
-      File_Name    : VFS.Virtual_File;
-      Result       : out Language.Construct_List)
+     (Handler   : access LI_Handler_Record;
+      Languages : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name : VFS.Virtual_File;
+      Result    : out Language.Construct_List)
    is
       pragma Unreferenced (Handler);
       use Language;
@@ -2585,6 +2588,10 @@ package body Entities is
       procedure Move (From, To : Natural);
       function Lt   (Op1, Op2 : Natural) return Boolean;
 
+      ----------
+      -- Move --
+      ----------
+
       procedure Move (From, To : Natural) is
       begin
          if From = 0 then
@@ -2597,6 +2604,10 @@ package body Entities is
               Sources.Table (Source_File_Arrays.Index_Type (From + First));
          end if;
       end Move;
+
+      --------
+      -- Lt --
+      --------
 
       function Lt (Op1, Op2 : Natural) return Boolean is
          S1, S2 : Source_File;
@@ -2651,7 +2662,6 @@ package body Entities is
    is
       Current : Integer;
    begin
-
       Current := Decl_Index;
       Skip_Lines (Buffer, -1, Current);
       Comment_Start := Current;
@@ -2666,7 +2676,6 @@ package body Entities is
                    & " from" & Comment_Start'Img & " to" & Comment_End'Img);
          end if;
       end if;
-
    end Get_Documentation_Before;
 
    -----------------------------
@@ -2707,12 +2716,12 @@ package body Entities is
      (Entity                    : Entity_Information;
       Declaration_File_Contents : String := "") return String
    is
-      Buffer           : String_Access :=
+      Buffer             : String_Access :=
         Declaration_File_Contents'Unrestricted_Access;
-      Index            : Natural := Declaration_File_Contents'First;
-      Declaration_File : constant Virtual_File :=
+      Index              : Natural := Declaration_File_Contents'First;
+      Declaration_File   : constant Virtual_File :=
         Get_Filename (Get_Declaration_Of (Entity).File);
-      Lang             : constant Language_Access := Get_Language_From_File
+      Lang               : constant Language_Access := Get_Language_From_File
         (GPS_Language_Handler (Entity.Declaration.File.Db.Lang),
          Declaration_File);
       Current, Beginning : Natural;
@@ -2749,6 +2758,7 @@ package body Entities is
       end if;
 
       Skip_Lines (Buffer.all, Get_Declaration_Of (Entity).Line - 1, Index);
+
       Get_Documentation_Before
         (Context       => Context.all,
          Buffer        => Buffer.all,

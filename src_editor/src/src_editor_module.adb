@@ -2125,11 +2125,11 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class;
       Data   : access Hooks_Data'Class)
    is
-      D   : constant File_Location_Hooks_Args_Access :=
+      D      : constant File_Location_Hooks_Args_Access :=
         File_Location_Hooks_Args_Access (Data);
-      Box : Source_Editor_Box;
-      Id  : constant Source_Editor_Module :=
+      Id     : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
+      Box    : Source_Editor_Box;
       Entity : Entity_Information;
    begin
       if Id.Show_Subprogram_Names then
@@ -2141,7 +2141,6 @@ package body Src_Editor_Module is
                Show_Subprogram_Name (Box, Get_Name (Entity).all);
             end if;
          end if;
-
       end if;
 
    exception

@@ -927,7 +927,7 @@ package body Src_Editor_Box is
    --------------------------
 
    procedure Show_Subprogram_Name
-     (Box              : Source_Editor_Box;
+     (Box             : Source_Editor_Box;
       Subprogram_Name : String) is
    begin
       Show_Which_Function (Box, Subprogram_Name);
@@ -1548,9 +1548,9 @@ package body Src_Editor_Box is
 
          Set_File_Information
            (Context,
-            File      => Filename,
-            Line      => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
-            Column    => Integer (To_Box_Column (Column)));
+            File   => Filename,
+            Line   => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
+            Column => Integer (To_Box_Column (Column)));
 
          if Menu /= null then
             --  Move the cursor at the correct location. The cursor is grabbed
@@ -1603,7 +1603,7 @@ package body Src_Editor_Box is
       Entity : Entity_Information;
    begin
       if Context.all in Entity_Selection_Context'Class then
-         C := Entity_Selection_Context_Access (Context);
+         C      := Entity_Selection_Context_Access (Context);
          Entity := Get_Entity (C);
          return Entity /= null and then Get_Type_Of (Entity) /= null;
       end if;
@@ -2585,9 +2585,9 @@ package body Src_Editor_Box is
         Src_Editor_Buffer.Editable_Line_Type'Last) return Entity_Information
    is
       Normalized_Line : Editable_Line_Type := Line;
-      L     : Buffer_Line_Type;
-      New_L : Buffer_Line_Type;
-      Block : Block_Record;
+      L      : Buffer_Line_Type;
+      New_L  : Buffer_Line_Type;
+      Block  : Block_Record;
       Entity : Entity_Information;
       Status : Find_Decl_Or_Body_Query_Status;
    begin
