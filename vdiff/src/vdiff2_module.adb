@@ -264,6 +264,7 @@ package body Vdiff2_Module is
       Free (Root_Command (Id.Command_Next.all));
       Free (Root_Command (Id.Command_First.all));
       Free (Root_Command (Id.Command_Last.all));
+      Vdiff_Module_ID := null;
    end Destroy;
 
    ----------------------

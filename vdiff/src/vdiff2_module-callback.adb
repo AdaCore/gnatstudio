@@ -355,10 +355,15 @@ package body Vdiff2_Module.Callback is
    is
       D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Diff     : Diff_Head_Access := new Diff_Head;
-      Curr_Node : Diff_Head_List.List_Node :=
+      Curr_Node : Diff_Head_List.List_Node;
+   begin
+      if Vdiff_Module_ID = null then
+         return;
+      end if;
+
+      Curr_Node :=
         First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
 
-   begin
       while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff.all := Diff_Head_List.Data (Curr_Node);
          exit when Diff.File1 = D.File
