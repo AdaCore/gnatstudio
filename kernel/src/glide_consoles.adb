@@ -39,9 +39,6 @@ package body Glide_Consoles is
 
    Me : constant Debug_Handle := Create ("Glide_Console");
 
-   File_Pattern : constant Pattern_Matcher :=
-     Compile ("^([^:]+):(\d+):(\d+)?", Multiple_Lines);
-
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Handler for "button_press_event" signal
@@ -110,37 +107,38 @@ package body Glide_Consoles is
       Add_LF         : Boolean := True;
       Mode           : Glide_Kernel.Console.Message_Type := Info)
    is
+      File_Location : constant Pattern_Matcher :=
+        Compile (Get_Pref (Console.Kernel, File_Pattern), Multiple_Lines);
       New_Text  : String_Access;
       Color     : Gdk_Color;
+      Highlight : Gdk_Color;
 
    begin
       Freeze (Console.Text);
 
+      Highlight := Get_Pref (Console.Kernel, Message_Highlight);
+
       if Mode = Error then
-         Color := Get_Pref (Console.Kernel, Highlight_Error);
+         Color := Highlight;
       else
          Color := Null_Color;
       end if;
 
       if Add_LF then
-         New_Text := new String' (Text & ASCII.LF);
+         New_Text := new String'(Text & ASCII.LF);
       else
-         New_Text := new String' (Text);
+         New_Text := new String'(Text);
       end if;
 
       if Highlight_Sloc then
          declare
             Matched   : Match_Array (0 .. 3);
-            Highlight : Gdk_Color;
             Start     : Natural := New_Text'First;
             Last      : Natural;
 
          begin
-            Highlight := Get_Pref (Console.Kernel, Highlight_File);
-            Alloc (Get_Default_Colormap, Highlight);
-
             while Start <= New_Text'Last loop
-               Match (File_Pattern, New_Text (Start .. New_Text'Last),
+               Match (File_Location, New_Text (Start .. New_Text'Last),
                       Matched);
                exit when Matched (0) = No_Match;
 
@@ -157,7 +155,7 @@ package body Glide_Consoles is
 
                Insert
                  (Console.Text,
-                  Fore => Highlight,
+                  Fore  => Highlight,
                   Chars => New_Text (Matched (1).First .. Last));
                Start := Last + 1;
             end loop;
@@ -171,7 +169,7 @@ package body Glide_Consoles is
          end;
 
       else
-         Insert (Console.Text, Fore  => Color, Chars => New_Text.all);
+         Insert (Console.Text, Fore => Color, Chars => New_Text.all);
       end if;
 
       Free (New_Text);
@@ -186,6 +184,7 @@ package body Glide_Consoles is
       --  programs that output a lot of things, since its takes a very long
       --  time for the text widget to scroll smoothly otherwise (lots of
       --  events...)
+
       Set_Value (Get_Vadj (Console.Text),
                  Get_Upper (Get_Vadj (Console.Text)) -
                    Get_Page_Size (Get_Vadj (Console.Text)));
@@ -198,14 +197,22 @@ package body Glide_Consoles is
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
-      Console     : constant Glide_Console := Glide_Console (Widget);
-      Position    : constant Gint := Get_Position (Console.Text);
-      Contents    : constant String := Get_Chars (Console.Text, 0);
-      Start       : Natural := Natural (Position);
-      Last        : Natural := Start;
-      Matched     : Match_Array (0 .. 3);
-      Line        : Positive;
-      Column      : Positive;
+      Console       : constant Glide_Console := Glide_Console (Widget);
+      File_Location : constant Pattern_Matcher :=
+        Compile (Get_Pref (Console.Kernel, File_Pattern), Multiple_Lines);
+      File_Index    : constant Integer :=
+        Integer (Get_Pref (Console.Kernel, File_Pattern_Index));
+      Line_Index    : constant Integer :=
+        Integer (Get_Pref (Console.Kernel, Line_Pattern_Index));
+      Column_Index  : constant Integer :=
+        Integer (Get_Pref (Console.Kernel, Column_Pattern_Index));
+      Position      : constant Gint := Get_Position (Console.Text);
+      Contents      : constant String := Get_Chars (Console.Text, 0);
+      Start         : Natural := Natural (Position);
+      Last          : Natural := Start;
+      Matched       : Match_Array (0 .. 9);
+      Line          : Positive;
+      Column        : Positive;
 
    begin
       if Contents'Length = 0
@@ -225,20 +232,22 @@ package body Glide_Consoles is
          Last := Last + 1;
       end loop;
 
-      Match (File_Pattern, Contents (Start .. Last), Matched);
+      Match (File_Location, Contents (Start .. Last), Matched);
 
       if Matched (0) /= No_Match then
-         Line :=
-           Positive'Value (Contents (Matched (2).First .. Matched (2).Last));
+         Line := Positive'Value
+           (Contents (Matched (Line_Index).First ..
+                      Matched (Line_Index).Last));
 
-         if Matched (3) = No_Match then
+         if Column_Index = 0 or else Matched (Column_Index) = No_Match then
             Column := 1;
          else
             Column := Positive'Value
-                        (Contents (Matched (3).First .. Matched (3).Last));
+              (Contents (Matched (Column_Index).First ..
+                         Matched (Column_Index).Last));
          end if;
 
-         if Matched (1).First < Matched (1).Last then
+         if Matched (File_Index).First < Matched (File_Index).Last then
             Freeze (Console.Text);
             Select_Region
               (Console.Text, Gint (Start) - 1, Gint (Matched (0).Last));
@@ -246,7 +255,8 @@ package body Glide_Consoles is
             Thaw (Console.Text);
             Open_File_Editor
               (Console.Kernel,
-               Contents (Matched (1).First .. Matched (1).Last),
+               Contents (Matched (File_Index).First ..
+                         Matched (File_Index).Last),
                Line, Column);
          end if;
       end if;
