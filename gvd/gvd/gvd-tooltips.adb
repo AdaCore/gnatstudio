@@ -71,9 +71,14 @@ package body GVD.Tooltips is
       Event   : Gdk.Event.Gdk_Event;
       Tooltip : Tooltips) return Boolean
    is
-      pragma Unreferenced (Widget, Event);
+      pragma Unreferenced (Widget);
    begin
-      Set_Tooltip (Tooltip);
+      if Get_Event_Type (Event) = Motion_Notify then
+         Set_Tooltip (Tooltip);
+      elsif Tooltip.Active then
+         Remove_Tooltip (Tooltip);
+      end if;
+
       return False;
    end Tooltip_Event_Cb;
 
@@ -207,7 +212,7 @@ package body GVD.Tooltips is
       X, Y   : Gint;
 
    begin
-      if Tooltip.Active = True then
+      if Tooltip.Active then
          Remove_Tooltip (Tooltip);
       end if;
 
