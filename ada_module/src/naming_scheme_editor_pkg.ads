@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -27,8 +27,10 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Clist; use Gtk.Clist;
+--  with Gtk.Clist; use Gtk.Clist;
 with Gtk.Button; use Gtk.Button;
+with Gtk.Tree_View;
+with Gtk.Tree_Store;
 package Naming_Scheme_Editor_Pkg is
 
    type Naming_Scheme_Editor_Record is new Gtk_Window_Record with record
@@ -62,7 +64,9 @@ package Naming_Scheme_Editor_Pkg is
       Frame30 : Gtk_Frame;
       Vbox29 : Gtk_Vbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
-      Exception_List : Gtk_Clist;
+      --  Exception_List : Gtk_Clist;
+      Exception_List : Gtk.Tree_View.Gtk_Tree_View;
+      Exception_List_Model : Gtk.Tree_Store.Gtk_Tree_Store;
       Label28 : Gtk_Label;
       Label29 : Gtk_Label;
       Label30 : Gtk_Label;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -31,6 +31,10 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Combo;  use Gtk.Combo;
 with Gtk.List;   use Gtk.List;
 with Ada_Naming_Editors; use Ada_Naming_Editors;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
+with Gtk.Tree_Selection; use Gtk.Tree_Selection;
+with Gtk.Tree_View; use Gtk.Tree_View;
 
 package body Naming_Scheme_Editor_Pkg.Callbacks is
 
@@ -94,25 +98,36 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Params);
       E         : constant Naming_Scheme_Editor_Access :=
         Naming_Scheme_Editor_Access (Object);
-      Row       : constant Gint := To_Gint (Params, 1);
-      Spec_Name : constant String := Get_Text (E.Exception_List, Row, 1);
-      Body_Name : constant String := Get_Text (E.Exception_List, Row, 2);
-
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
    begin
-      Set_Text (E.Unit_Name_Entry, Get_Text (E.Exception_List, Row, 0));
+      Get_Selected (Get_Selection (E.Exception_List), Model, Iter);
 
-      if Spec_Name = "" then
-         Reset_Exception_Fields (E, E.Spec_Filename_Entry);
-      else
-         Set_Text (E.Spec_Filename_Entry, Spec_Name);
-      end if;
+      if Iter /= Null_Iter then
+         Set_Text
+           (E.Unit_Name_Entry, Get_String (E.Exception_List_Model, Iter, 0));
 
-      if Body_Name = "" then
-         Reset_Exception_Fields (E, E.Body_Filename_Entry);
-      else
-         Set_Text (E.Body_Filename_Entry, Body_Name);
+         declare
+            Spec_Name : constant String := Get_String
+              (E.Exception_List_Model, Iter, 1);
+            Body_Name : constant String := Get_String
+              (E.Exception_List_Model, Iter, 2);
+         begin
+            if Spec_Name = "" then
+               Reset_Exception_Fields (E, E.Spec_Filename_Entry);
+            else
+               Set_Text (E.Spec_Filename_Entry, Spec_Name);
+            end if;
+
+            if Body_Name = "" then
+               Reset_Exception_Fields (E, E.Body_Filename_Entry);
+            else
+               Set_Text (E.Body_Filename_Entry, Body_Name);
+            end if;
+         end;
       end if;
    end On_Exceptions_List_Select_Row;
 
@@ -128,12 +143,16 @@ package body Naming_Scheme_Editor_Pkg.Callbacks is
       use Gint_List;
       E     : constant Naming_Scheme_Editor_Access :=
         Naming_Scheme_Editor_Access (Object);
-      List  : constant Gint_List.Glist := Get_Selection (E.Exception_List);
+      --  List  : constant Gint_List.Glist := Get_Selection (E.Exception_List);
+      Model : Gtk_Tree_Model;
+      Iter  : Gtk_Tree_Iter;
    begin
-      if Get_Key_Val (Event) = GDK_Delete then
-         if List /= Null_List then
-            Remove (E.Exception_List, Get_Data (List));
-         end if;
+      Get_Selected (Get_Selection (E.Exception_List), Model, Iter);
+
+      if Iter /= Null_Iter
+        and then Get_Key_Val (Event) = GDK_Delete
+      then
+         Remove (E.Exception_List_Model, Iter);
          return True;
       end if;
       return False;

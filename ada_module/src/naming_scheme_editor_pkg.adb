@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -25,6 +25,14 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Glide_Intl; use Glide_Intl;
 with Naming_Scheme_Editor_Pkg.Callbacks; use Naming_Scheme_Editor_Pkg.Callbacks;
+with Gtk.Tree_View; use Gtk.Tree_View;
+with Gtk.Tree_Model; use Gtk.Tree_Model;
+with Gtk.Tree_Store; use Gtk.Tree_Store;
+with Glib;            use Glib;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection; use Gtk.Tree_Selection;
+with Gtk.Cell_Renderer_Text; use Gtk.Cell_Renderer_Text;
+with GUI_Utils; use GUI_Utils;
 
 package body Naming_Scheme_Editor_Pkg is
 
@@ -41,7 +49,9 @@ procedure Initialize (Naming_Scheme_Editor : access Naming_Scheme_Editor_Record'
    Spec_Extension_Items : String_List.Glist;
    Body_Extension_Items : String_List.Glist;
    Separate_Extension_Items : String_List.Glist;
-
+   Render : Gtk_Cell_Renderer_Text;
+   Col : Gtk_Tree_View_Column;
+   Col_Number : Gint;
 begin
    Gtk.Window.Initialize (Naming_Scheme_Editor, Window_Toplevel);
    Set_Title (Naming_Scheme_Editor, -"Naming scheme");
@@ -246,39 +256,96 @@ begin
    Set_Policy (Naming_Scheme_Editor.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
    Pack_Start (Naming_Scheme_Editor.Vbox29, Naming_Scheme_Editor.Scrolledwindow1, True, True, 0);
 
-   Gtk_New (Naming_Scheme_Editor.Exception_List, 3);
-   Set_Selection_Mode (Naming_Scheme_Editor.Exception_List, Selection_Single);
-   Set_Shadow_Type (Naming_Scheme_Editor.Exception_List, Shadow_In);
-   Set_Show_Titles (Naming_Scheme_Editor.Exception_List, True);
-   Set_Column_Width (Naming_Scheme_Editor.Exception_List, 0, 80);
-   Set_Column_Width (Naming_Scheme_Editor.Exception_List, 1, 124);
-   Set_Column_Width (Naming_Scheme_Editor.Exception_List, 2, 80);
+   Gtk_New (Naming_Scheme_Editor.Exception_List_Model,
+            (0 => GType_String, 1 => GType_String, 2 => GType_String,
+             3 => GType_Boolean));
+   Gtk_New (Naming_Scheme_Editor.Exception_List,
+            Naming_Scheme_Editor.Exception_List_Model);
+   Set_Mode
+     (Get_Selection (Naming_Scheme_Editor.Exception_List), Selection_Single);
+
+   Gtk_New (Col);
+   Col_Number := Append_Column (Naming_Scheme_Editor.Exception_List, Col);
+   Set_Title (Col, -"Unit name");
+   Gtk_New (Render);
+   Pack_Start (Col, Render, False);
+   Set_Sort_Column_Id (Col, 0);
+   Add_Attribute (Col, Render, "text", 0);
+   Add_Attribute (Col, Render, "editable", 3);
+   Set_Editable_And_Callback
+     (Naming_Scheme_Editor.Exception_List_Model, Render, 0);
    Widget_Callback.Object_Connect
-     (Naming_Scheme_Editor.Exception_List, "select_row", On_Exceptions_List_Select_Row'Access, Naming_Scheme_Editor);
+     (Render, "edited", On_Exceptions_List_Select_Row'Access,
+      Naming_Scheme_Editor);
+
+   Clicked (Col);
+
+   Gtk_New (Col);
+   Col_Number := Append_Column (Naming_Scheme_Editor.Exception_List, Col);
+   Set_Title (Col, -"Spec filename");
+   Gtk_New (Render);
+   Pack_Start (Col, Render, False);
+   Set_Sort_Column_Id (Col, 1);
+   Add_Attribute (Col, Render, "text", 1);
+   Add_Attribute (Col, Render, "editable", 3);
+   Set_Editable_And_Callback
+     (Naming_Scheme_Editor.Exception_List_Model, Render, 1);
+   Widget_Callback.Object_Connect
+     (Render, "edited", On_Exceptions_List_Select_Row'Access,
+      Naming_Scheme_Editor);
+
+   Gtk_New (Col);
+   Col_Number := Append_Column (Naming_Scheme_Editor.Exception_List, Col);
+   Set_Title (Col, -"Body filename");
+   Gtk_New (Render);
+   Pack_Start (Col, Render, False);
+   Set_Sort_Column_Id (Col, 2);
+   Add_Attribute (Col, Render, "text", 2);
+   Add_Attribute (Col, Render, "editable", 3);
+   Set_Editable_And_Callback
+     (Naming_Scheme_Editor.Exception_List_Model, Render, 2);
+   Widget_Callback.Object_Connect
+     (Render, "edited", On_Exceptions_List_Select_Row'Access,
+      Naming_Scheme_Editor);
+
+   --  Gtk_New (Naming_Scheme_Editor.Exception_List, 3);
+   --  Set_Selection_Mode (Naming_Scheme_Editor.Exception_List, Selection_Single);
+   --  Set_Shadow_Type (Naming_Scheme_Editor.Exception_List, Shadow_In);
+   --  Set_Show_Titles (Naming_Scheme_Editor.Exception_List, True);
+   --  Set_Column_Width (Naming_Scheme_Editor.Exception_List, 0, 80);
+   --  Set_Column_Width (Naming_Scheme_Editor.Exception_List, 1, 124);
+   --  Set_Column_Width (Naming_Scheme_Editor.Exception_List, 2, 80);
+
+   --  Widget_Callback.Object_Connect
+   --    (Naming_Scheme_Editor.Exception_List, "select_row", On_Exceptions_List_Select_Row'Access, Naming_Scheme_Editor);
    Return_Callback.Object_Connect
-     (Naming_Scheme_Editor.Exception_List, "key_press_event", On_Exception_List_Key_Press_Event'Access, Naming_Scheme_Editor);
+     (Naming_Scheme_Editor.Exception_List, "key_press_event",
+      On_Exception_List_Key_Press_Event'Access, Naming_Scheme_Editor);
+   Widget_Callback.Object_Connect
+     (Get_Selection (Naming_Scheme_Editor.Exception_List), "changed",
+      On_Exceptions_List_Select_Row'Access, Naming_Scheme_Editor);
    Add (Naming_Scheme_Editor.Scrolledwindow1, Naming_Scheme_Editor.Exception_List);
 
-   Gtk_New (Naming_Scheme_Editor.Label28, -("Unit name"));
-   Set_Alignment (Naming_Scheme_Editor.Label28, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label28, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label28, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label28, False);
-   Set_Column_Widget (Naming_Scheme_Editor.Exception_List, 0, Naming_Scheme_Editor.Label28);
+   --  Gtk_New (Naming_Scheme_Editor.Label28, -("Unit name"));
+   --  Set_Alignment (Naming_Scheme_Editor.Label28, 0.5, 0.5);
+   --  Set_Padding (Naming_Scheme_Editor.Label28, 0, 0);
+   --  Set_Justify (Naming_Scheme_Editor.Label28, Justify_Center);
+   --  Set_Line_Wrap (Naming_Scheme_Editor.Label28, False);
+   --  Set_Column_Widget (Naming_Scheme_Editor.Exception_List, 0, Naming_Scheme_Editor.Label28);
 
-   Gtk_New (Naming_Scheme_Editor.Label29, -("Spec filename"));
-   Set_Alignment (Naming_Scheme_Editor.Label29, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label29, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label29, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label29, False);
-   Set_Column_Widget (Naming_Scheme_Editor.Exception_List, 1, Naming_Scheme_Editor.Label29);
+   --  Gtk_New (Naming_Scheme_Editor.Label29, -("Spec filename"));
+   --  Set_Alignment (Naming_Scheme_Editor.Label29, 0.5, 0.5);
+   --  Set_Padding (Naming_Scheme_Editor.Label29, 0, 0);
+   --  Set_Justify (Naming_Scheme_Editor.Label29, Justify_Center);
+   --  Set_Line_Wrap (Naming_Scheme_Editor.Label29, False);
+   --  Set_Column_Widget (Naming_Scheme_Editor.Exception_List, 1, Naming_Scheme_Editor.Label29);
 
-   Gtk_New (Naming_Scheme_Editor.Label30, -("Body filename"));
-   Set_Alignment (Naming_Scheme_Editor.Label30, 0.5, 0.5);
-   Set_Padding (Naming_Scheme_Editor.Label30, 0, 0);
-   Set_Justify (Naming_Scheme_Editor.Label30, Justify_Center);
-   Set_Line_Wrap (Naming_Scheme_Editor.Label30, False);
-   Set_Column_Widget (Naming_Scheme_Editor.Exception_List, 2, Naming_Scheme_Editor.Label30);
+   --  Gtk_New (Naming_Scheme_Editor.Label30, -("Body filename"));
+   --  Set_Alignment (Naming_Scheme_Editor.Label30, 0.5, 0.5);
+   --  Set_Padding (Naming_Scheme_Editor.Label30, 0, 0);
+   --  Set_Justify (Naming_Scheme_Editor.Label30, Justify_Center);
+   --  Set_Line_Wrap (Naming_Scheme_Editor.Label30, False);
+   --  Set_Column_Widget (Naming_Scheme_Editor.Exception_List, 2, Naming_Scheme_Editor.Label30);
 
    Gtk_New_Hbox (Naming_Scheme_Editor.Hbox3, False, 3);
    Pack_Start (Naming_Scheme_Editor.Vbox29, Naming_Scheme_Editor.Hbox3, False, False, 0);
