@@ -49,13 +49,15 @@ package Glide_Kernel is
 
    procedure Gtk_New
      (Handle      : out Kernel_Handle;
-      Main_Window : Gtk.Window.Gtk_Window);
+      Main_Window : Gtk.Window.Gtk_Window;
+      Home_Dir    : String);
    --  Create a new Glide kernel.
    --  By default, it isn't associated with any project, nor any source editor.
+   --  Home_Dir is the directory under which config files can be loaded/saved.
 
    function Get_Default_Accelerators
      (Handle : access Kernel_Handle_Record)
-     return Gtk.Accel_Group.Gtk_Accel_Group;
+      return Gtk.Accel_Group.Gtk_Accel_Group;
    --  Returns the defauls accelerators group for the main window.
 
    procedure Initialize_All_Modules (Handle : access Kernel_Handle_Record);
@@ -137,6 +139,14 @@ package Glide_Kernel is
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar;
    --  Return the main toolbar associated with the kernel.
+
+   procedure Set_Busy
+     (Handle : Kernel_Handle;
+      Busy   : Boolean := True);
+   --  If Busy is True, indicate that Glide is busy performing a computation
+   --  or wait. This usually involves changing the cursor appearance and
+   --  displaying an animation.
+   --  If Handle is null, do nothing.
 
    --------------
    -- Contexts --
@@ -381,6 +391,9 @@ private
       --  The last context emitted by the explorer.
       --  This implies knowledge of the explorer (at least to check the module
       --  ID, but there is no way around that).
+
+      Home_Dir : GNAT.OS_Lib.String_Access;
+      --  The home directory (e.g ~/.glide).
    end record;
 
 end Glide_Kernel;
