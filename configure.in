@@ -219,4 +219,7 @@ AC_SUBST(MAKEINFO)
 AC_SUBST(TEXI2HTML)
 AC_SUBST(TEX)
 
+AC_CONFIG_SUBDIRS(kernel/src_info/sn)
+AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
+
 AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads)
