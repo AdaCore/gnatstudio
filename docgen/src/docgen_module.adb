@@ -653,9 +653,10 @@ package body Docgen_Module is
       --  Documentation for new files is added.
 
       if not Is_Directory
-        (Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel)) then
-         Make_Dir (Get_Doc_Directory
-                     (Docgen_Module (Docgen_Module_ID).B, Kernel));
+        (Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel))
+      then
+         Make_Dir
+           (Get_Doc_Directory (Docgen_Module (Docgen_Module_ID).B, Kernel));
       end if;
 
       Process_Files
