@@ -32,7 +32,7 @@ main (int argc, char **argv)
   gtk_init (&argc, &argv);
   window = gvd_create_main_window ();
   gvd_create_debugger
-    (window, gdb_type, argv[0], NULL, 0, NULL, NULL, NULL, NULL);
+    (window, gdb_type, argv[0], NULL, 0, NULL, NULL, NULL, NULL, NULL);
   gtk_widget_show_all (gvd_debug_window_get_widget (window));
   gtk_main ();
   adafinal ();
