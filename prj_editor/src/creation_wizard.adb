@@ -100,36 +100,47 @@ package body Creation_Wizard is
    is
       Page  : Project_Editor_Page;
       Attr_Count : constant Natural := Attribute_Editors_Page_Count;
-      Count : constant Natural :=
-        Project_Editor_Pages_Count (Kernel) + Attr_Count;
+      Count : constant Natural := Project_Editor_Pages_Count (Kernel);
       Main_Page_Box : Gtk_Box;
+      Box           : Gtk_Box;
+
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
+      Wiz.XML_Pages_Count := 0;
       Wizards.Initialize
-        (Wiz, Kernel, -"Project setup", Num_Pages => 1 + Count);
+        (Wiz, Kernel, -"Project setup", Num_Pages => 1);
 
       Set_Toc (Wiz, 1, -"Naming the project", -"Creating a new project");
       Main_Page_Box := First_Page (Wiz);
-
-      for E in 1 .. Attr_Count loop
-         Set_Toc (Wiz, 1 + E,
-                  Toc   => Attribute_Editors_Page_Name (E),
-                  Title => Attribute_Editors_Page_Name (E));
-         Set_Page
-           (Wiz, E + 1,
-            Attribute_Editors_Page_Box
-              (Kernel           => Kernel,
-               Project          => No_Project,
-               General_Page_Box => Main_Page_Box,
-               Path_Widget      => Wiz.Project_Location,
-               Nth_Page         => E));
-      end loop;
-
       Set_Page (Wiz, 1, Main_Page_Box);
 
-      for E in Attr_Count + 1 .. Count loop
-         Page := Get_Nth_Project_Editor_Page (Kernel, E - Attr_Count);
-         Set_Toc (Wiz, 1 + E, Get_Toc (Page), Get_Title (Page));
+      for E in 1 .. Attr_Count loop
+         Box := Attribute_Editors_Page_Box
+           (Kernel           => Kernel,
+            Project          => No_Project,
+            General_Page_Box => Main_Page_Box,
+            Path_Widget      => Wiz.Project_Location,
+            Nth_Page         => E,
+            Context          => "wizard");
+         if Box /= null then
+            Wiz.XML_Pages_Count := Wiz.XML_Pages_Count + 1;
+            Add_Page (Wiz,
+                      Page         => Box,
+                      Title        => Attribute_Editors_Page_Name (E),
+                      Toc_Contents => Attribute_Editors_Page_Name (E));
+         end if;
+      end loop;
+
+      for E in 1 .. Count loop
+         Page := Get_Nth_Project_Editor_Page (Kernel, E);
+         Add_Page (Wiz,
+                   Page         => Widget_Factory
+                     (Page, No_Project,
+                      Name_As_Directory (Get_Text (Wiz.Project_Location))
+                      & Get_Text (Wiz.Project_Name),
+                      Kernel),
+                   Title        => Get_Title (Page),
+                   Toc_Contents => Get_Toc (Page));
       end loop;
 
       Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
@@ -144,26 +155,13 @@ package body Creation_Wizard is
    is
       W        : constant Prj_Wizard := Prj_Wizard (Wiz);
       Page_Num : constant Guint := To_Guint (Args, 1);
-      Attr_Count : constant Integer := Attribute_Editors_Page_Count;
    begin
-      if Integer (Page_Num - 1) <= Attr_Count then
+      if Integer (Page_Num - 1) <= W.XML_Pages_Count then
          null;
 
-      elsif Integer (Page_Num - 1) - Attr_Count <=
+      elsif Integer (Page_Num - 1) - W.XML_Pages_Count <=
         Project_Editor_Pages_Count (W.Kernel)
       then
-         if Get_Nth_Page (W, Integer (Page_Num)) = null then
-            Set_Page
-              (W, Integer (Page_Num),
-               Widget_Factory
-                 (Get_Nth_Project_Editor_Page
-                    (W.Kernel, Integer (Page_Num - 1) - Attr_Count),
-                No_Project,
-                Name_As_Directory (Get_Text (W.Project_Location)) &
-                Get_Text (W.Project_Name),
-                W.Kernel));
-         end if;
-
          declare
             Languages : GNAT.OS_Lib.String_List := Get_Current_Value
               (Kernel  => W.Kernel,
@@ -173,7 +171,7 @@ package body Creation_Wizard is
          begin
             Refresh
               (Page         => Get_Nth_Project_Editor_Page
-                 (W.Kernel, Integer (Page_Num - 1) - Attr_Count),
+                 (W.Kernel, Integer (Page_Num - 1) - W.XML_Pages_Count),
                Widget       => Get_Nth_Page (W, Integer (Page_Num)),
                Project      => No_Project,
                Languages    => Languages);
@@ -359,14 +357,12 @@ package body Creation_Wizard is
    ------------------
 
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
-      Wiz            : constant Prj_Wizard := Prj_Wizard (W);
-      Dir            : constant String := Name_As_Directory
+      Wiz        : constant Prj_Wizard := Prj_Wizard (W);
+      Count      : constant Natural := Project_Editor_Pages_Count (Wiz.Kernel);
+      Dir        : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
       Name           : constant String := Get_Text (Wiz.Project_Name);
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
-      Attr_Count     : constant Integer := Attribute_Editors_Page_Count;
-      Count          : constant Natural :=
-        Project_Editor_Pages_Count (Wiz.Kernel) + Attr_Count;
       Languages      : GNAT.OS_Lib.String_List := Get_Current_Value
         (Kernel  => Wiz.Kernel,
          Pkg     => "",
@@ -375,6 +371,7 @@ package body Creation_Wizard is
       Project        : Project_Type;
       Changed        : Boolean;
       pragma Unreferenced (Changed);
+
 
    begin
       Push_State (Wiz.Kernel, Processing);
@@ -400,13 +397,14 @@ package body Creation_Wizard is
         (Project            => Project,
          Scenario_Variables => (1 .. 0 => No_Variable));
 
-      for P in Attr_Count + 2 .. Count loop
+      for P in 1 .. Count loop
          --  We are only interested in the side effect of Project_Editor, since
          --  we know for sure that the project will be modified
          Changed := Project_Editor
-           (Get_Nth_Project_Editor_Page (Wiz.Kernel, P - Attr_Count - 1),
+           (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
             Project,
-            Wiz.Kernel, Get_Nth_Page (Wiz, P),
+            Wiz.Kernel,
+            Get_Nth_Page (Wiz, P + Wiz.XML_Pages_Count + 1),
             Languages          => Languages,
             Scenario_Variables => (1 .. 0 => No_Variable),
             Ref_Project => Project);

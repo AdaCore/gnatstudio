@@ -70,6 +70,7 @@ with File_Utils;                use File_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
 with Ada.Unchecked_Deallocation;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
@@ -138,6 +139,7 @@ package body Project_Properties is
       Pkg               : GNAT.OS_Lib.String_Access;
       Description       : GNAT.OS_Lib.String_Access;
       Label             : GNAT.OS_Lib.String_Access;
+      Hide_In           : GNAT.OS_Lib.String_Access;
       Is_List           : Boolean := False;
       Ordered_List      : Boolean := False;
       Omit_If_Default   : Boolean := True;
@@ -218,7 +220,8 @@ package body Project_Properties is
       Size_Group  : Gtk_Size_Group;
       Path_Widget : Gtk_Entry;
       Widget      : out Gtk_Widget;
-      Expandable  : out Boolean);
+      Expandable  : out Boolean;
+      Context     : String);
    --  Create the widget used to edit Attr.
    --  Size_Group, if specified, is used to properly align all the labels.
    --  Expandable indicates whether the resulting widget should be expandable
@@ -1302,6 +1305,7 @@ package body Project_Properties is
       Indexed : constant Boolean := N.Child /= null
         and then (N.Child.Tag.all = "index"
                   or else N.Child.Tag.all = "specialized_index");
+      Hide_In : constant String := Get_Attribute (N, "hide_in");
       Child : Node_Ptr;
 
       procedure Parse_Indexed_Type (Value : String);
@@ -1369,6 +1373,7 @@ package body Project_Properties is
          A.Label := new String'(Label);
       end if;
 
+      A.Hide_In := new String'(Hide_In);
       A.Is_List := Is_List = "true" or else Is_List = "1";
       A.Ordered_List := Ordered = "true" or else Ordered = "1";
       A.Omit_If_Default := Omit = "true" or else Omit = "1";
@@ -1619,7 +1624,10 @@ package body Project_Properties is
                         Ed   : constant Indexed_Attribute_Editor :=
                           Indexed_Attribute_Editor (Att.Editor);
                      begin
-                        if Ed.Model /= null and then Is_Selected then
+                        if Ed /= null
+                          and then Ed.Model /= null
+                          and then Is_Selected
+                        then
                            Append (Ed.Model, New_Iter, Null_Iter);
                            Set (Ed.Model, New_Iter, 0, Index_Value);
                            Set (Ed.Model, New_Iter, 1,
@@ -1630,7 +1638,9 @@ package body Project_Properties is
                            Set (Ed.Model, New_Iter, 2,
                                 Is_Any_String (Att, Index_Value));
 
-                        elsif Ed.Model /= null then  --  Remove
+                        elsif Ed /= null
+                          and then Ed.Model /= null
+                        then  --  Remove
                            New_Iter := Get_Iter_First (Ed.Model);
                            while New_Iter /= Null_Iter loop
                               if Get_String (Ed.Model, New_Iter, 0) =
@@ -3137,12 +3147,28 @@ package body Project_Properties is
       Size_Group  : Gtk_Size_Group;
       Path_Widget : Gtk_Entry;
       Widget      : out Gtk_Widget;
-      Expandable  : out Boolean)
+      Expandable  : out Boolean;
+      Context     : String)
    is
       Label  : Gtk_Label;
       Box    : Gtk_Box;
       Event  : Gtk_Event_Box;
+      Find   : Natural;
    begin
+      if Attr.Hide_In /= null then
+         Find := Index (Attr.Hide_In.all, Context);
+         if Find < Attr.Hide_In'First then
+            null;
+         elsif (Find = Attr.Hide_In'First
+                or else Attr.Hide_In (Find - 1) = ' ')
+           and then (Find + Context'Length > Attr.Hide_In'Last
+                     or else Attr.Hide_In (Find + Context'Length) = ' ')
+         then
+            Widget := null;
+            return;
+         end if;
+      end if;
+
       Gtk_New_Hbox (Box, Homogeneous => False);
 
       if Attr.Label /= null then
@@ -3279,9 +3305,10 @@ package body Project_Properties is
             Project          => Project,
             Nth_Page         => P,
             General_Page_Box => General_Page_Box,
-            Path_Widget      => Editor.Path);
+            Path_Widget      => Editor.Path,
+            Context          => "properties");
 
-         if Box /= General_Page_Box then
+         if Box /= General_Page_Box and then Box /= null then
             Gtk_New (Event);
             Add (Event, Box);
 
@@ -3365,7 +3392,8 @@ package body Project_Properties is
       Project          : Projects.Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Nth_Page         : Integer) return Gtk.Box.Gtk_Box
+      Nth_Page         : Integer;
+      Context          : String) return Gtk.Box.Gtk_Box
    is
       Page : Attribute_Page renames Properties_Module_ID.Pages (Nth_Page);
       Page_Box     : Gtk_Box;
@@ -3376,24 +3404,9 @@ package body Project_Properties is
       W_Expandable : Boolean;
       W            : Gtk_Widget;
    begin
-      if Page.Name.all = "General" then
-         Page_Box := General_Page_Box;
-      else
-         Gtk_New_Vbox (Page_Box, Homogeneous => False);
-      end if;
-
-      Gtk_New (Size);
-
       for S in Page.Sections'Range loop
-         Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
-
-         Expandable := False;
-
-         if Page.Sections (S).Name.all /= "" then
-            Gtk_New (Frame, Page.Sections (S).Name.all);
-            Set_Border_Width (Frame, 5);
-            Add (Frame, Box);
-         end if;
+         Box   := null;
+         Frame := null;
 
          for A in Page.Sections (S).Attributes'Range loop
             Create_Widget_Attribute
@@ -3403,19 +3416,51 @@ package body Project_Properties is
                Size,
                Path_Widget => Gtk_Entry (Path_Widget),
                Widget      => W,
-               Expandable  => W_Expandable);
-            Expandable := Expandable or W_Expandable;
-            Pack_Start (Box, W, Expand => W_Expandable, Fill => True);
+               Expandable  => W_Expandable,
+               Context     => Context);
+
+            if W /= null then
+               if Page_Box = null then
+                  if Page.Name.all = "General" then
+                     Page_Box := General_Page_Box;
+                  else
+                     Gtk_New_Vbox (Page_Box, Homogeneous => False);
+                  end if;
+
+                  Gtk_New (Size);
+               end if;
+
+               if Box = null then
+                  Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
+
+                  Expandable := False;
+
+                  if Page.Sections (S).Name.all /= "" then
+                     Gtk_New (Frame, Page.Sections (S).Name.all);
+                     Set_Border_Width (Frame, 5);
+                     Add (Frame, Box);
+                  end if;
+               end if;
+
+               Expandable := Expandable or W_Expandable;
+               Pack_Start (Box, W, Expand => W_Expandable, Fill => True);
+            end if;
          end loop;
 
-         if Page.Sections (S).Name.all /= "" then
-            Pack_Start (Page_Box, Frame, Expand => Expandable, Fill => True);
-         else
-            Pack_Start (Page_Box, Box, Expand => Expandable, Fill => True);
+         if Page_Box /= null and then Box /= null then
+            if Page.Sections (S).Name.all /= "" then
+               Pack_Start
+                 (Page_Box, Frame, Expand => Expandable, Fill => True);
+            else
+               Pack_Start
+                 (Page_Box, Box, Expand => Expandable, Fill => True);
+            end if;
          end if;
       end loop;
 
-      Show_All (Page_Box);
+      if Page_Box /= null then
+         Show_All (Page_Box);
+      end if;
 
       return Page_Box;
    end Attribute_Editors_Page_Box;

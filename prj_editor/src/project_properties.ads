@@ -69,14 +69,21 @@ package Project_Properties is
       Project          : Projects.Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Nth_Page         : Integer) return Gtk.Box.Gtk_Box;
-   --  Return the contents of the Nth page for editing attributes
+      Nth_Page         : Integer;
+      Context          : String) return Gtk.Box.Gtk_Box;
+   --  Return the contents of the Nth page for editing attributes. It will
+   --  return null if the  given page contains no visible attribute.
+   --
    --  Project is the project from which the value of the attributes is taken.
    --  If No_Project is specified, the default value for the attributes will be
    --  used.
    --  General_Page_Box is the box associated with the "General" page, so that
    --  new attributes can be put in it.
    --  Path_Widget is the widget that contains the location of the project file
+   --
+   --  Context is the name of the window that will display this box. For
+   --  instance, it is "wizard" for the project wizard. This acts as a filter
+   --  over which attributes will be displayed.
 
    function Update_Project_Attributes
      (Project            : Projects.Project_Type;

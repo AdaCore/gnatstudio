@@ -58,6 +58,7 @@ private
       Project_Location  : Gtk.GEntry.Gtk_Entry;
       Relative_Paths    : Gtk.Check_Button.Gtk_Check_Button;
       Kernel            : Glide_Kernel.Kernel_Handle;
+      XML_Pages_Count   : Natural := 0;  --  number of pages defined by XML
    end record;
 
 end Creation_Wizard;
