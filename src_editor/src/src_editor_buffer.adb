@@ -4090,11 +4090,13 @@ package body Src_Editor_Buffer is
 
       --  Shift down existing buffer lines
 
-      for J in reverse Buffer_Line .. Editor.Line_Data'Last
-        - Buffer_Line_Type (Number)
+      for J in Buffer_Line + Buffer_Line_Type (Number)
+        .. Editor.Line_Data'Last
       loop
-         Editor.Line_Data (J + Buffer_Line_Type (Number)) :=
-           Editor.Line_Data (J);
+         if Editor.Line_Data (J).Editable_Line > Line then
+            Editor.Line_Data (J).Editable_Line :=
+              Editor.Line_Data (J).Editable_Line - Editable_Line_Type (Number);
+         end if;
       end loop;
 
       --  Shift down editable lines.
