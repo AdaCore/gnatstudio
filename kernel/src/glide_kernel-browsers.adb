@@ -40,7 +40,6 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Src_Info;                  use Src_Info;
 with Src_Info.Ali;              use Src_Info.Ali;
 with Src_Info.Queries;          use Src_Info.Queries;
-with Layouts;                   use Layouts;
 with String_Utils;              use String_Utils;
 
 package body Glide_Kernel.Browsers is
@@ -49,15 +48,24 @@ package body Glide_Kernel.Browsers is
    Default_Browser_Height : constant := 400;
    --  <preference> Default size for the browsers
 
+   Vertical_Layout : Boolean := True;
+   --  <preference> Should the layout of the graph be vertical or horizontal ?
+
    function Find_File
      (In_Browser : access Glide_Browser_Record'Class; Filename : String)
       return Canvas_Item;
    --  Return the child that shows Filename in the browser, or null if Filename
    --  is not already displayed in the canvas.
 
-   function Filter (Dep : Dependency) return Boolean;
+   function Filter
+     (Kernel : access Kernel_Handle_Record'Class;
+      Part   : Unit_Part;
+      Dep : Dependency)
+      return Boolean;
    --  A filter function that decides whether Dep should be displayed in the
    --  canvas. It should return false if Dep should not be displayed.
+   --
+   --  Part is the unit_part of the file whose dependencies we are examining.
    --
    --  ??? This obviously needs to be modifiable from the browser itself.
 
@@ -100,8 +108,6 @@ package body Glide_Kernel.Browsers is
 
       --  Else, just create a new one
       Gtk_New (Browser, Browser_Type, Kernel);
-      Set_Layout_Algorithm (Get_Canvas (Browser), Layer_Layout'Access);
-      Set_Auto_Layout (Get_Canvas (Browser), False);
       Child := Put (MDI, Browser);
       Set_Size_Request
         (Browser, Default_Browser_Width, Default_Browser_Height);
@@ -128,6 +134,7 @@ package body Glide_Kernel.Browsers is
       Intern        : Internal_File;
       New_Item      : Boolean;
       Must_Add_Link : Boolean;
+      Part : Unit_Part;
 
       function Has_One
         (Canvas : access Interactive_Canvas_Record'Class;
@@ -172,10 +179,12 @@ package body Glide_Kernel.Browsers is
 
       Find_Dependencies (Lib_Info, List, Status);
 
+      Part := Get_Unit_Part (Get_Source_Info_List (Kernel), F);
+
       if Status = Success then
          Dep := List;
          while Dep /= null loop
-            if Filter (Dep.Value) then
+            if Filter (Kernel, Part, Dep.Value) then
                Intern := File_Information (Dep.Value);
                Item := File_Item
                  (Find_File (In_Browser, Get_Source_Filename (Intern)));
@@ -210,7 +219,9 @@ package body Glide_Kernel.Browsers is
          end loop;
 
          Destroy (List);
-         Layout (Get_Canvas (In_Browser));
+         Layout (Get_Canvas (In_Browser),
+                 Force => False,
+                 Vertical_Layout => Vertical_Layout);
          Refresh_Canvas (Get_Canvas (In_Browser));
       end if;
    end Examine_Dependencies;
@@ -223,7 +234,7 @@ package body Glide_Kernel.Browsers is
       Name : constant String := Get_Source_Filename (Source);
       Ada_Runtime_File, Gtk_System_File : Boolean;
    begin
-      --  ??? The implementation here is two GNAT specific. However, getting
+      --  ??? The implementation here is too GNAT specific. However, getting
       --  ??? the Unit_Name would be expensive.
       Ada_Runtime_File := Name'Length > 2
         and then (Name (Name'First .. Name'First + 1) = "a-"
@@ -235,6 +246,9 @@ package body Glide_Kernel.Browsers is
         or else Name = "ada.ads"
         or else Name = "interfaces.ads"
         or else Name = "system.ads"
+        or else Name = "unchconv.ads"
+        or else Name = "unchdeal.ads"
+        or else Name = "text_io.ads"
         or else Name = "gnat.ads";
 
       Gtk_System_File := Name'Length > 4
@@ -249,7 +263,12 @@ package body Glide_Kernel.Browsers is
    -- Filter --
    ------------
 
-   function Filter (Dep : Dependency) return Boolean is
+   function Filter
+     (Kernel : access Kernel_Handle_Record'Class;
+      Part   : Unit_Part;
+      Dep    : Dependency)
+      return Boolean
+   is
       Explicit_Dependency : Boolean;
       Info : constant Dependency_Info := Dependency_Information (Dep);
    begin
@@ -257,7 +276,9 @@ package body Glide_Kernel.Browsers is
 
       --  Only show explicit dependencies, not implicit ones
       Explicit_Dependency :=
-        Get_Depends_From_Spec (Info) or else Get_Depends_From_Body (Info);
+        (Part = Unit_Spec and then Get_Depends_From_Spec (Info))
+        or else
+        (Part = Unit_Body and then Get_Depends_From_Body (Info));
 
       --  Do not display dependencies on runtime files
       return Explicit_Dependency
