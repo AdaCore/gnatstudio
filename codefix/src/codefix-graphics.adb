@@ -28,9 +28,13 @@ with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Label;              use Gtk.Label;
 with Gtk.Clist;              use Gtk.Clist;
 
+with Glide_Kernel.Console;   use Glide_Kernel.Console;
+
 with Diff_Utils;             use Diff_Utils;
 with Vdiff_Pkg;              use Vdiff_Pkg;
 with Vdiff_Utils;            use Vdiff_Utils;
+
+with Traces;                 use Traces;
 
 with Codefix;                use Codefix;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
@@ -43,6 +47,8 @@ with Final_Window_Pkg;       use Final_Window_Pkg;
 
 package body Codefix.Graphics is
 
+   Me : constant Debug_Handle := Create ("Codefix.Graphics");
+
    -------------
    -- Gtk_New --
    -------------
@@ -50,12 +56,11 @@ package body Codefix.Graphics is
    procedure Gtk_New
      (Graphic_Codefix : out Graphic_Codefix_Access;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator;
-      Errors_Found    : Ptr_Errors_Interface) is
+      Current_Text    : Ptr_Text_Navigator) is
    begin
       Graphic_Codefix := new Graphic_Codefix_Record;
       Codefix.Graphics.Initialize
-        (Graphic_Codefix, Kernel, Current_Text, Errors_Found);
+        (Graphic_Codefix, Kernel, Current_Text);
    end Gtk_New;
 
    ----------------
@@ -65,20 +70,12 @@ package body Codefix.Graphics is
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator;
-      Errors_Found    : Ptr_Errors_Interface) is
+      Current_Text    : Ptr_Text_Navigator) is
    begin
       Codefix_Window_Pkg.Initialize (Graphic_Codefix);
 
       Graphic_Codefix.Kernel := Kernel_Handle (Kernel);
       Graphic_Codefix.Current_Text := Current_Text;
-      Graphic_Codefix.Errors_Found := Errors_Found;
-
-      Analyze
-        (Graphic_Codefix.Corrector,
-         Graphic_Codefix.Current_Text.all,
-         Graphic_Codefix.Errors_Found.all,
-         null);
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
       Load_Next_Error (Graphic_Codefix);
@@ -90,9 +87,9 @@ package body Codefix.Graphics is
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class) is
    begin
-      Free (Graphic_Codefix.Current_Text.all);
-      Free (Graphic_Codefix.Corrector);
-      Free (Graphic_Codefix.Errors_Found.all);
+      --  Free (Graphic_Codefix.Current_Text.all);
+      --  Free (Graphic_Codefix.Corrector);
+
       Free (Graphic_Codefix.Vdiff_List);
       Destroy (Graphic_Codefix);
       --  Free_Parsers;  ??? Do I need to free parsers at the end of
@@ -145,6 +142,78 @@ package body Codefix.Graphics is
    procedure Load_Next_Error
      (Graphic_Codefix : access Graphic_Codefix_Record'Class)
    is
+      Success_Load : Boolean;
+   begin
+      if Graphic_Codefix.Current_Error /= Null_Error_Id then
+         Graphic_Codefix.Current_Error := Next (Graphic_Codefix.Current_Error);
+      else
+         Graphic_Codefix.Current_Error :=
+           Get_First_Error (Graphic_Codefix.Corrector);
+      end if;
+
+      if Graphic_Codefix.Current_Error = Null_Error_Id then
+         declare
+            Final_Window : Final_Window_Access;
+         begin
+            Gtk_New (Final_Window);
+            Show_All (Final_Window);
+            Final_Window.Graphic_Codefix := Graphic_Codefix_Access
+              (Graphic_Codefix);
+            return;
+         end;
+      end if;
+
+      if Get_Error_State
+        (Graphic_Codefix.Automatic_Skip,
+         Get_Category (Graphic_Codefix.Current_Error)) = Enabled
+      then
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
+
+      if Length (Get_Solutions (Graphic_Codefix.Current_Error)) = 1
+        and then Get_Error_State
+          (Graphic_Codefix.Automatic_Fix,
+           Get_Category (Graphic_Codefix.Current_Error)) = Enabled
+      then
+         Validate_And_Commit
+           (Graphic_Codefix.Corrector,
+            Graphic_Codefix.Current_Text.all,
+            Graphic_Codefix.Current_Error,
+            1);
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
+
+      Load_Error (Graphic_Codefix, Success_Load);
+
+      if not Success_Load then
+         Load_Next_Error (Graphic_Codefix);
+      end if;
+
+      if Graphic_Codefix.Nb_Tabs = 1
+        and then Get_Error_State
+          (Graphic_Codefix.Automatic_Fix,
+           Get_Category (Graphic_Codefix.Current_Error)) = Enabled
+      then
+         Valid_Current_Solution (Graphic_Codefix);
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
+
+      --  ???  Maybe an other function to print changes in notebook ?
+      Show_All (Graphic_Codefix);
+   end Load_Next_Error;
+
+
+   ---------------------
+   -- Load_Error --
+   ---------------------
+
+   procedure Load_Error
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class;
+      Success : out Boolean)
+   is
       procedure Display_Sol;
       --  Initialize the variable Proposition with the current solution.
 
@@ -160,8 +229,6 @@ package body Codefix.Graphics is
       Current_Nb_Tabs  : Integer;
       Current_Vdiff    : Vdiff_Lists.List_Node;
       Extended_Extract : Extract;
---      Success_Update   : Boolean;
---      Already_Fixed    : Boolean;
       New_Popdown_Str  : String_List.Glist;
 
       -----------------
@@ -248,9 +315,11 @@ package body Codefix.Graphics is
          Set_Text (Proposition.Label1, "Old text");
          Set_Text (Proposition.Label2, "Fixed text");
          Set_Text
-           (Proposition.File_Label1, Get_Files_Names (Extended_Extract, 50));
+           (Proposition.File_Label1,
+            Get_Files_Names (Extended_Extract, Label_VDiff_Size_Limit));
          Set_Text
-           (Proposition.File_Label2, Get_Files_Names (Extended_Extract, 50));
+           (Proposition.File_Label2,
+            Get_Files_Names (Extended_Extract, Label_VDiff_Size_Limit));
 
          Free (Previous_File);
       end Display_Sol;
@@ -287,60 +356,34 @@ package body Codefix.Graphics is
          Append (Graphic_Codefix.Vdiff_List, Proposition);
       end Add_Tab;
 
-      --  begin of Load_Next_Error
+      --  begin of Load_Error
 
    begin
-      if Graphic_Codefix.Current_Error /= Null_Error_Id then
-         Graphic_Codefix.Current_Error := Next (Graphic_Codefix.Current_Error);
-      else
-         Graphic_Codefix.Current_Error :=
-           Get_First_Error (Graphic_Codefix.Corrector);
-      end if;
-
-      if Graphic_Codefix.Current_Error = Null_Error_Id then
-         declare
-            Final_Window : Final_Window_Access;
-         begin
-            Gtk_New (Final_Window);
-            Show_All (Final_Window);
-            Final_Window.Graphic_Codefix := Graphic_Codefix_Access
-              (Graphic_Codefix);
-            return;
-         end;
-      end if;
-
-      if Get_Error_State
-        (Graphic_Codefix.Automatic_Skip,
-         Get_Category (Graphic_Codefix.Current_Error)) = Enabled
-      then
-         Load_Next_Error (Graphic_Codefix);
-         return;
-      end if;
-
-      if Length (Get_Solutions (Graphic_Codefix.Current_Error)) = 1
-        and then Get_Error_State
-          (Graphic_Codefix.Automatic_Fix,
-           Get_Category (Graphic_Codefix.Current_Error)) = Enabled
-      then
-         Validate_And_Commit
-           (Graphic_Codefix.Corrector,
-            Graphic_Codefix.Current_Text.all,
-            Graphic_Codefix.Current_Error,
-            1);
-         Load_Next_Error (Graphic_Codefix);
-         return;
-      end if;
-
       Current_Sol := First (Get_Solutions (Graphic_Codefix.Current_Error));
       Current_Vdiff := First (Graphic_Codefix.Vdiff_List);
 
       Current_Nb_Tabs := 0;
 
       while Current_Sol /= Command_List.Null_Node loop
-         Execute
-           (Data (Current_Sol),
-            Graphic_Codefix.Current_Text.all,
-            Extended_Extract);
+         begin
+            Execute
+              (Data (Current_Sol),
+               Graphic_Codefix.Current_Text.all,
+               Extended_Extract);
+         exception
+            when E : Codefix_Panic =>
+               Success := False;
+               Trace
+                 (Me, "No more sense for " & Get_Message
+                    (Get_Error_Message (Graphic_Codefix.Current_Error)));
+               Trace (Me, "Exception got: " & Exception_Information (E));
+               Insert
+                 (Graphic_Codefix.Kernel,
+                  "No more sense for " & Get_Message
+                    (Get_Error_Message (Graphic_Codefix.Current_Error)));
+
+               return;
+         end;
 
          Extend_Before
            (Extended_Extract,
@@ -350,19 +393,6 @@ package body Codefix.Graphics is
            (Extended_Extract,
             Graphic_Codefix.Current_Text.all,
             Display_Lines_After);
-
---         Update_Changes
---           (Graphic_Codefix.Corrector,
---            Graphic_Codefix.Current_Text,
---            Extended_Extract,
---            Success_Update,
---            Already_Fixed);
-
---         if Already_Fixed or else not Success_Update then
---            Free (Extended_Extract);
---            exit;
---         end if;
---
 
          if Current_Vdiff /= Vdiff_Lists.Null_Node then
             Modify_Tab;
@@ -378,6 +408,7 @@ package body Codefix.Graphics is
          Free (Extended_Extract);
 
          Current_Sol := Next (Current_Sol);
+         Success := True;
       end loop;
 
       Set_Popdown_Strings (Graphic_Codefix.Fix_Caption_List, New_Popdown_Str);
@@ -387,21 +418,8 @@ package body Codefix.Graphics is
         (Graphic_Codefix.Error_Caption,
          Get_Message (Get_Error_Message (Graphic_Codefix.Current_Error)));
 
-      if Current_Nb_Tabs = 1
-        and then Get_Error_State
-          (Graphic_Codefix.Automatic_Fix,
-           Get_Category (Graphic_Codefix.Current_Error)) = Enabled
-      then
-         Valid_Current_Solution (Graphic_Codefix);
-         Load_Next_Error (Graphic_Codefix);
-         return;
-      end if;
-
       Set_Current_Page (Graphic_Codefix.Choices_Proposed, 0);
-
-      --  ???  Maybe an other function to print changes in notebook ?
-      Show_All (Graphic_Codefix);
-   end Load_Next_Error;
+   end Load_Error;
 
    ----------------------------
    -- Valid_Current_Solution --
