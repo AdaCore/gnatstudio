@@ -339,15 +339,17 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Speed_Column_Policy), -"Editor");
 
-      Source_Editor_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Default-Font",
-         Default => "Courier 10",
-         Blurb   => -"The font used in the source editor",
-         Nick    => -"Default font"));
+      Default_Style := Gnew_Style
+        (Name    => "Src-Editor-Default-Style",
+         Nick    => -"Default",
+         Blurb   => -"Default style used in the source editors",
+         Default_Font => "Courier Bold 10",
+         Default_Fg   => "black",
+         Default_Bg   => "white");
       Register_Property
-        (Kernel.Preferences, Param_Spec (Source_Editor_Font),
+        (Kernel.Preferences, Param_Spec (Default_Style),
          -"Editor:Fonts & Colors");
-      GVD.Preferences.Fixed_Font := Source_Editor_Font;
+      GVD.Preferences.Fixed_Style := Default_Style;
 
       Keywords_Style := Gnew_Style
         (Name    => "Src-Editor-Keywords-Style",
