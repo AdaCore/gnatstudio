@@ -44,6 +44,9 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Items;            use Items;
 with Items.Simples;    use Items.Simples;
 
+with Odd.Status_Bar;  use Odd.Status_Bar;
+with Ada.Text_IO;     use Ada.Text_IO;
+
 package body Display_Items is
 
    --  The items are drawn with the following spacings:
@@ -78,6 +81,12 @@ package body Display_Items is
    --  Color used to highlight fields that have changed since the last update
    --  (red).
 
+   Thaw_Bg_Color : constant String := "#FFFFFF";
+   --  Color used for auto-refreshed items (white)
+
+   Freeze_Bg_Color : constant String := "#AAAAAA";
+   --  Color used for frozen items (light grey)
+
    Look_3d : constant Boolean := True;
    --  Should the items have a 3d look ?
 
@@ -110,11 +119,16 @@ package body Display_Items is
    --  Shortcut used to represent the derefenced item when generating a new
    --  item.
 
+   Attach_Links_To_Components : constant Boolean := True;
+   --  If True, then the links are attached to the middle of the actual
+   --  component that was dereferenced, not to the middle of the item.
+
    --  ??? Should get rid of these global variables.
    --  This could be done in a global initialization file, for all the
    --  graphic contexts we use in Odd.
 
-   White_GC   : Gdk.GC.Gdk_GC;
+   Thaw_Bg_Gc   : Gdk.GC.Gdk_GC;
+   Freeze_Bg_Gc : Gdk.GC.Gdk_GC;
    Grey_GC    : Gdk.GC.Gdk_GC;
    Black_GC   : Gdk.GC.Gdk_GC;
    Xref_GC    : Gdk.GC.Gdk_GC;
@@ -195,12 +209,15 @@ package body Display_Items is
    --  released.
 
    procedure Dereference_Item
-     (Item : access Display_Item_Record;
-      X    : Gint;
-      Y    : Gint);
+     (Item            : access Display_Item_Record;
+      Deref_Component : Generic_Type_Access;
+      X               : Gint;
+      Y               : Gint);
    --  Create a new item (or reference an existing one) that dereference
    --  the field pointed to by (X, Y) in Item.
    --  (X, Y) are relative to the top-left corner of item.
+   --  Deref_Component is the component on which the user has clicked and
+   --  that is being derefenced.
 
    function Search_Item
      (Canvas : access Odd_Canvas_Record'Class;
@@ -234,6 +251,15 @@ package body Display_Items is
    --  by a reference to Item.Is_Alias_Of (so that the temporary links
    --  point to the alias)
 
+   procedure Compute_Link_Pos (Link : access Odd_Link_Record'Class);
+   --  Compute the attachment of the link in its source item.
+   --  The position is based on the Source_Component field of the link.
+
+   procedure Change_Visibility
+     (Item      : access Display_Item_Record'Class;
+      Component : Generic_Type_Access);
+   --  Change the visibility status of a specific component in the item
+
    -------------
    -- Gtk_New --
    -------------
@@ -265,12 +291,21 @@ package body Display_Items is
                Entity := Parse_Type (Debugger.Debugger, Variable_Name);
 
                if Entity = null then
+                  Print_Message
+                    (Debugger.Window.Statusbar1,
+                     Error, "Could not get the type of " & Variable_Name);
                   Pop_Internal_Command_Status
                     (Get_Process (Debugger.Debugger));
                   return;
                else
                   Parse_Value
                     (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+               end if;
+
+               if Entity = null then
+                  Print_Message
+                    (Debugger.Window.Statusbar1,
+                     Error, "Could not get the value of " & Variable_Name);
                end if;
 
                Item := new Display_Item_Record;
@@ -285,6 +320,9 @@ package body Display_Items is
                --  Should display an error message somewhere.
             exception
                when Language.Unexpected_Type | Constraint_Error =>
+                  Print_Message
+                    (Debugger.Window.Statusbar1,
+                     Error, "Could not parse type for " & Variable_Name);
                   Pop_Internal_Command_Status
                     (Get_Process (Debugger.Debugger));
                   return;
@@ -393,9 +431,16 @@ package body Display_Items is
          return;
       end if;
 
-      if White_GC = null then
-         Gdk_New (White_GC, Win);
-         Set_Foreground (White_GC, White (Get_Default_Colormap));
+      if Thaw_Bg_Gc = null then
+         Color := Parse (Thaw_Bg_Color);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+         Gdk_New (Thaw_Bg_Gc, Win);
+         Set_Foreground (Thaw_Bg_Gc, Color);
+
+         Color := Parse (Freeze_Bg_Color);
+         Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+         Gdk_New (Freeze_Bg_Gc, Win);
+         Set_Foreground (Freeze_Bg_Gc, Color);
 
          Color := Parse (Xref_Color);
          Alloc (Gtk.Widget.Get_Default_Colormap, Color);
@@ -554,15 +599,25 @@ package body Display_Items is
             Alloc_Width, Alloc_Height);
       end if;
 
-
-      Draw_Rectangle
-        (Pixmap (Item),
-         GC     => White_GC,
-         Filled => True,
-         X      => 0,
-         Y      => Title_Height,
-         Width  => Alloc_Width - 1,
-         Height => Alloc_Height - Title_Height - 1);
+      if Item.Auto_Refresh then
+         Draw_Rectangle
+           (Pixmap (Item),
+            GC     => Thaw_Bg_Gc,
+            Filled => True,
+            X      => 0,
+            Y      => Title_Height,
+            Width  => Alloc_Width - 1,
+            Height => Alloc_Height - Title_Height - 1);
+      else
+         Draw_Rectangle
+           (Pixmap (Item),
+            GC     => Freeze_Bg_Gc,
+            Filled => True,
+            X      => 0,
+            Y      => Title_Height,
+            Width  => Alloc_Width - 1,
+            Height => Alloc_Height - Title_Height - 1);
+      end if;
 
       Draw_Rectangle
         (Pixmap (Item),
@@ -668,14 +723,25 @@ package body Display_Items is
       Component : Generic_Type_Access := null) is
    begin
       if not Get_Selected (Component) then
-         Draw_Rectangle
-           (Pixmap (Item),
-            GC     => White_GC,
-            Filled => True,
-            X      => Get_X (Component.all),
-            Y      => Get_Y (Component.all),
-            Width  => Get_Width (Component.all),
-            Height => Get_Height (Component.all));
+         if Item.Auto_Refresh then
+            Draw_Rectangle
+              (Pixmap (Item),
+               GC     => Thaw_Bg_Gc,
+               Filled => True,
+               X      => Get_X (Component.all),
+               Y      => Get_Y (Component.all),
+               Width  => Get_Width (Component.all),
+               Height => Get_Height (Component.all));
+         else
+            Draw_Rectangle
+              (Pixmap (Item),
+               GC     => Freeze_Bg_Gc,
+               Filled => True,
+               X      => Get_X (Component.all),
+               Y      => Get_Y (Component.all),
+               Width  => Get_Width (Component.all),
+               Height => Get_Height (Component.all));
+         end if;
       end if;
 
       Paint
@@ -813,9 +879,10 @@ package body Display_Items is
    ---------------------------
 
    procedure Update_Resize_Display
-     (Item        : access Display_Item_Record'Class;
-      Was_Visible : Boolean := False;
-      Hide_Big    : Boolean := False)
+     (Item             : access Display_Item_Record'Class;
+      Was_Visible      : Boolean := False;
+      Hide_Big         : Boolean := False;
+      Redisplay_Canvas : Boolean := True)
    is
    begin
       --  Update graphically.
@@ -852,7 +919,9 @@ package body Display_Items is
       end if;
 
       Update_Display (Item);
-      Item_Resized (Item.Debugger.Data_Canvas, Item);
+      if Redisplay_Canvas then
+         Item_Resized (Item.Debugger.Data_Canvas, Item);
+      end if;
    end Update_Resize_Display;
 
    -----------------
@@ -872,18 +941,49 @@ package body Display_Items is
          L := new Odd_Link_Record;
          Configure (L, From, To, Arrow, Name);
          L.Alias_Link := Alias_Link;
-         Add_Link (Canvas, L);
-      end if;
+
+         if Attach_Links_To_Components then
+            Add_Link (Canvas, L, Straight);
+         else
+            Add_Link (Canvas, L, Automatic);
+         end if;
+     end if;
    end Create_Link;
+
+   ----------------------
+   -- Compute_Link_Pos --
+   ----------------------
+
+   procedure Compute_Link_Pos (Link : access Odd_Link_Record'Class) is
+      X : constant Gint := Get_X (Link.Source_Component.all)
+        + Get_Width (Link.Source_Component.all) / 2;
+      Y : constant Gint := Get_Y (Link.Source_Component.all)
+        + Get_Height (Link.Source_Component.all) / 2;
+      Xpos, Ypos : Gfloat;
+      F : Boolean;
+      Visible : Boolean;
+   begin
+      Component_Is_Visible
+        (Display_Item (Get_Src (Link)).Entity, Link.Source_Component,
+         Visible, F);
+      if Visible and F then
+         Xpos := Gfloat (X) / Gfloat (Get_Coord (Get_Src (Link)).Width);
+         Ypos := Gfloat (Y) / Gfloat (Get_Coord (Get_Src (Link)).Height);
+         Set_Src_Pos (Link, Xpos, Ypos);
+      else
+         Set_Src_Pos (Link, 0.5, 0.5);
+      end if;
+   end Compute_Link_Pos;
 
    ----------------------
    -- Dereference_Item --
    ----------------------
 
    procedure Dereference_Item
-     (Item : access Display_Item_Record;
-      X    : Gint;
-      Y    : Gint)
+     (Item            : access Display_Item_Record;
+      Deref_Component : Generic_Type_Access;
+      X               : Gint;
+      Y               : Gint)
    is
       Name : constant String := Get_Component_Name
         (Item.Entity,
@@ -897,6 +997,29 @@ package body Display_Items is
             Get_Language (Item.Debugger.Debugger), Item_Name_In_Link, X, Y));
       New_Name : constant String := Dereference_Name
         (Get_Language (Item.Debugger.Debugger), Name);
+
+      function Set_Link_Pos
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class)
+        return Boolean;
+      --  Set the attachment position of the newly created link.
+      --  The link is attached to the middle of the component that was
+      --  dereferenced.
+
+      ------------------
+      -- Set_Link_Pos --
+      ------------------
+
+      function Set_Link_Pos
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class)
+        return Boolean is
+      begin
+         Odd_Link (Link).Source_Component := Deref_Component;
+         Compute_Link_Pos (Odd_Link (Link));
+         --  Only the first one
+         return False;
+      end Set_Link_Pos;
 
    begin
       --  The newly created item should have the same auto-refresh state as
@@ -913,6 +1036,10 @@ package body Display_Items is
             "graph print " & New_Name & " dependent on"
             & Integer'Image (Item.Num) & " link_name " & Link_Name,
             Output_Command => True);
+      end if;
+      if Attach_Links_To_Components then
+         For_Each_Link
+           (Item.Debugger.Data_Canvas, Set_Link_Pos'Unrestricted_Access);
       end if;
    end Dereference_Item;
 
@@ -1050,9 +1177,9 @@ package body Display_Items is
       then
          Dereference_Item
            (Item,
+            Component,
             Gint (Get_X (Event)),
             Gint (Get_Y (Event)) - Item.Title_Height - Border_Spacing);
-
 
       --  Hiding a component
 
@@ -1060,8 +1187,7 @@ package body Display_Items is
         and then Get_Event_Type (Event) = Gdk_2button_Press
         and then Gint (Get_Y (Event)) >= Item.Title_Height + Border_Spacing
       then
-         Set_Visibility (Component.all, not Get_Visibility (Component.all));
-         Update_Resize_Display (Item, Was_Visible => False, Hide_Big => False);
+         Change_Visibility (Item, Component);
 
       --  Selecting a component
 
@@ -1072,6 +1198,57 @@ package body Display_Items is
          Select_Item (Item, Component);
       end if;
    end On_Button_Click;
+
+   -----------------------
+   -- Change_Visibility --
+   -----------------------
+
+   procedure Change_Visibility
+     (Item      : access Display_Item_Record'Class;
+      Component : Generic_Type_Access)
+   is
+      function Reattach_All_Links
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class)
+        return Boolean;
+      --  Recompute the position of all the links attached to Item.
+
+      ------------------------
+      -- Reattach_All_Links --
+      ------------------------
+
+      function Reattach_All_Links
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class)
+        return Boolean is
+      begin
+         if Get_Src (Link) = Canvas_Item (Item)
+           and then Odd_Link (Link).Source_Component /= null
+         then
+            Compute_Link_Pos (Odd_Link (Link));
+         end if;
+         return True;
+      end Reattach_All_Links;
+
+   begin
+      Set_Visibility (Component.all, not Get_Visibility (Component.all));
+      --  Need to recompute the positions of the components first
+      Update_Resize_Display
+        (Item,
+         Was_Visible      => False,
+         Hide_Big         => False,
+         Redisplay_Canvas => False);
+
+      --  If needed, recompute the position of the links
+      if Attach_Links_To_Components then
+         For_Each_Link (Item.Debugger.Data_Canvas,
+                        Reattach_All_Links'Unrestricted_Access);
+
+      end if;
+
+      --  Redraw the canvas
+      Item_Resized (Item.Debugger.Data_Canvas, Item);
+   end Change_Visibility;
 
    ----------------------
    -- Set_Auto_Refresh --

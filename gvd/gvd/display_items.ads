@@ -149,9 +149,10 @@ package Display_Items is
    --  Get the display mode for item
 
    procedure Update_Resize_Display
-     (Item        : access Display_Item_Record'Class;
-      Was_Visible : Boolean := False;
-      Hide_Big    : Boolean := False);
+     (Item             : access Display_Item_Record'Class;
+      Was_Visible      : Boolean := False;
+      Hide_Big         : Boolean := False;
+      Redisplay_Canvas : Boolean := True);
    --  Recompute the size and update the contents of item.
    --  Was_Visible indicates whether the item was initially visible
    --  It also warns the canvas that the item has changed.
@@ -201,6 +202,13 @@ private
       --  True if this Link was created as a result of an aliasing operation.
       --  Such links are always deleted before each update, and recreated
       --  whenever an aliasing is detected.
+
+      Source_Component : Items.Generic_Type_Access := null;
+      --  Component of the source item to which the link is attached (generally
+      --  the dereferenced component itself. This is used when the links are
+      --  attached to the components themselves instead of the item).
+      --  If left to null, the link will be attached to the center of the
+      --  source item.
    end record;
 
 end Display_Items;
