@@ -172,8 +172,8 @@ package Glide_Kernel is
    --  explorer. This value is cached, and not computed directly from the
    --  explorer.
 
-   function Get_Kernel (Context : access Selection_Context)
-      return Kernel_Handle;
+   function Get_Kernel
+     (Context : access Selection_Context) return Kernel_Handle;
    --  Return the kernel associated with the context
 
    function Get_Creator (Context : access Selection_Context) return Module_ID;

@@ -309,19 +309,19 @@ package Glide_Kernel.Modules is
    type File_Selection_Context_Access is access all File_Selection_Context;
 
    procedure Set_File_Information
-     (Context : access File_Selection_Context;
-      Project_View : Prj.Project_Id := Prj.No_Project;
+     (Context           : access File_Selection_Context;
+      Project_View      : Prj.Project_Id := Prj.No_Project;
       Importing_Project : Prj.Project_Id := Prj.No_Project);
    --  Set the information in Context.
    --  File_Name should always be the base file name (no directory
    --  information), and Directory should always end with a path separator.
 
-   function Has_Project_Information (Context : access File_Selection_Context)
-      return Boolean;
+   function Has_Project_Information
+     (Context : access File_Selection_Context) return Boolean;
    --  True if the context has information about a selected project.
 
-   function Project_Information (Context : access File_Selection_Context)
-      return Prj.Project_Id;
+   function Project_Information
+     (Context : access File_Selection_Context) return Prj.Project_Id;
    --  Return the id of the selected project. This can be No_Project is there
    --  wasn't any information about a specific project
 
@@ -353,7 +353,7 @@ package Glide_Kernel.Modules is
      (Context : access Entity_Selection_Context) return Boolean;
    function Entity_Name_Information
      (Context : access Entity_Selection_Context) return String;
-   --  Check whether there is some directory information, and return it.
+   --  Check whether there is some entity information, and return it.
 
    function Has_Line_Information
      (Context : access Entity_Selection_Context) return Boolean;
@@ -365,14 +365,14 @@ package Glide_Kernel.Modules is
      (Context : access Entity_Selection_Context) return Boolean;
    function Column_Information
      (Context : access Entity_Selection_Context) return Integer;
-   --  Check whether there is some line information, and return it.
+   --  Check whether there is some column information, and return it.
 
 
 private
 
    type File_Name_Selection_Context is new Selection_Context with record
-      Directory    : GNAT.OS_Lib.String_Access := null;
-      File_Name    : GNAT.OS_Lib.String_Access := null;
+      Directory : GNAT.OS_Lib.String_Access := null;
+      File_Name : GNAT.OS_Lib.String_Access := null;
    end record;
 
    type File_Selection_Context is new File_Name_Selection_Context with record

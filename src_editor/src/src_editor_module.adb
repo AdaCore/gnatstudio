@@ -186,9 +186,9 @@ package body Src_Editor_Module is
    --  Edit a file (from a contextual menu)
 
    procedure Source_Editor_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Generate the contextual menu entries for contextual menus in other
    --  modules than the source editor.
 
@@ -819,11 +819,11 @@ package body Src_Editor_Module is
    ------------------------------
 
    procedure Source_Editor_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      File : File_Selection_Context_Access;
+      File  : File_Selection_Context_Access;
       Mitem : Gtk_Menu_Item;
    begin
       if Context.all in File_Selection_Context'Class then
