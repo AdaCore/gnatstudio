@@ -20,8 +20,8 @@ procedure Src is
    Main_Window : Gtk_Window;
    Kernel      : Glide_Kernel.Kernel_Handle;
    --  Ignored     : Boolean;
-begin
 
+begin
    Add_File_Extensions (Ada_Lang, ".ads;.adb;.ada");
    Add_File_Extensions (C_Lang, ".h;.c");
    Add_File_Extensions (Cpp_Lang, ".hh;.cc;.cpp");
@@ -40,6 +40,7 @@ begin
 
    Gtk_New (My_Box, Kernel);
    Create_Main_Window (Main_Window, My_Box);
+   Set_Title (Main_Window, "The GLIDE Source Editor");
    Show_All (Main_Window);
    --  Load_File
    --    (My_Box, "src_editor_box.adb", Success => Ignored);
