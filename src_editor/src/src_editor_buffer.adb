@@ -207,6 +207,10 @@ package body Src_Editor_Buffer is
    --  Low level save function. Only writes the buffer contents on disk,
    --  with no modification on the buffer's settings.
 
+   procedure Preferences_Changed
+     (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the preferences have changed.
+
    --------------------
    -- Automatic_Save --
    --------------------
@@ -840,22 +844,12 @@ package body Src_Editor_Buffer is
       Buffer.Lang := Lang;
       Buffer.Kernel := Kernel;
 
-      Buffer.Syntax_Tags :=
-        Create_Syntax_Tags
-          (Keyword_Color       => Get_Pref (Kernel, Default_Keyword_Color),
-           Keyword_Font_Attr   => Default_Keyword_Font_Attr,
-           Comment_Color       => Get_Pref (Kernel, Default_Comment_Color),
-           Comment_Font_Attr   => Default_Comment_Font_Attr,
-           Character_Color     => Get_Pref (Kernel, Default_Character_Color),
-           Character_Font_Attr => Default_Character_Font_Attr,
-           String_Color        => Get_Pref (Kernel, Default_String_Color),
-           String_Font_Attr    => Default_String_Font_Attr);
-      --  ??? Use preferences for the font attributes...
-
       --  Save the newly created highlighting tags into the source buffer
       --  tag table.
 
       Tags := Get_Tag_Table (Buffer);
+
+      Preferences_Changed (Buffer, Kernel);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
@@ -913,7 +907,37 @@ package body Src_Editor_Buffer is
         (Buffer, "delete_range",
          Cb => Delete_Range_Before_Handler'Access,
          After => False);
+
+      Kernel_Callback.Object_Connect
+        (Kernel, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         Slot_Object => Buffer,
+         User_Data   => Kernel_Handle (Kernel));
    end Initialize;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Buffer : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      B : Source_Buffer := Source_Buffer (Buffer);
+   begin
+      --  Since we update the tags directly, gtk+ will automatically refresh
+      --  the source view, we don't need to do anything for this.
+      Create_Syntax_Tags
+        (B.Syntax_Tags,
+         Keyword_Color       => Get_Pref (Kernel, Default_Keyword_Color),
+         Keyword_Font_Attr   => Default_Keyword_Font_Attr,
+         Comment_Color       => Get_Pref (Kernel, Default_Comment_Color),
+         Comment_Font_Attr   => Default_Comment_Font_Attr,
+         Character_Color     => Get_Pref (Kernel, Default_Character_Color),
+         Character_Font_Attr => Default_Character_Font_Attr,
+         String_Color        => Get_Pref (Kernel, Default_String_Color),
+         String_Font_Attr    => Default_String_Font_Attr);
+      --  ??? Use preferences for the font attributes...
+   end Preferences_Changed;
 
    ---------------
    -- Load_File --
