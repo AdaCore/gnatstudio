@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib.Values;
-with Pango.Enums;               use Pango.Enums;
 with Pango.Font;                use Pango.Font;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Types;                 use Gdk.Types;
