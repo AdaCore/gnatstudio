@@ -103,16 +103,25 @@ private
    --  Add a type to the documentation
 
    procedure Format_HTML
-     (File          : Ada.Text_IO.File_Type;
-      Entity_List   : Type_Entity_List.List;
-      Text          : String;
-      File_Name     : String;
-      Entity_Name   : String;
-      Entity_Line   : Natural;
-      Is_Body       : Boolean;
-      Process_Body  : Boolean;
-      Do_Checks     : Boolean);
+     (File             : Ada.Text_IO.File_Type;
+      LI_Unit          : LI_File_Ptr;
+      Text             : String;
+      File_Name        : String;
+      Entity_Name      : String;
+      Entity_Line      : Natural;
+      Line_In_Body     : Natural;
+      Source_File_List : Type_Source_File_List.List;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean;
+      Do_Check_Pack    : Boolean);
    --  Formatted Text as HTML code and write to the docfile.
+   --  Line_In_Body is used only for subprograms to create not regular
+   --  links (in this case it is not the line number of the declaration
+   --  which is needed, but the line of the definition in the body.
+   --  If Do_Check_Pack is set, the procedure will check if a link
+   --  should be set to First_Package_Line or link it to its declaration
+   --  line.
 
    procedure Doc_HTML_Header
      (File   : Ada.Text_IO.File_Type;
