@@ -29,6 +29,7 @@ pragma Warnings (On);
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Ada.Exceptions;       use Ada.Exceptions;
 
+with String_Utils;         use String_Utils;
 with Traces;               use Traces;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Intl;           use Glide_Intl;
@@ -48,6 +49,26 @@ package body Glide_Kernel.Timeout is
       Name   : String_Access := Data.Name;
       Fd     : Process_Descriptor_Access := Data.Descriptor;
       Result : Expect_Match;
+      Status : Integer;
+
+      procedure Cleanup;
+      --  Close the process descriptor and free its associated memory
+
+      procedure Cleanup is
+      begin
+         Close (Fd.all, Status);
+
+         if Status = 0 then
+            Console.Insert (Data.Kernel, "process terminated successfully");
+         else
+            Console.Insert
+              (Data.Kernel, "process exited with status " & Image (Status));
+         end if;
+
+         Free (Fd);
+         Free (Name);
+         Pop_State (Data.Kernel);
+      end Cleanup;
 
    begin
       Expect (Fd.all, Result, "\n", Timeout => 1);
@@ -60,20 +81,17 @@ package body Glide_Kernel.Timeout is
 
    exception
       when Process_Died =>
-         Console.Insert
-           (Data.Kernel, Expect_Out (Fd.all), Add_LF => False);
-         Close (Fd.all);
-         Free (Fd);
-         Data.Callback (Data);
-         Free (Name);
-         Pop_State (Data.Kernel);
+         Console.Insert (Data.Kernel, Expect_Out (Fd.all), Add_LF => False);
+
+         if Data.Callback /= null then
+            Data.Callback (Data);
+         end if;
+
+         Cleanup;
          return False;
 
       when E : others =>
-         Close (Fd.all);
-         Free (Fd);
-         Free (Name);
-         Pop_State (Data.Kernel);
+         Cleanup;
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Process_Cb;
@@ -134,19 +152,21 @@ package body Glide_Kernel.Timeout is
       exception
          when Invalid_Process =>
             Success := False;
-            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
       end Spawn;
 
    begin
       Push_State (Kernel, Processing);
       Spawn (Command, Arguments, Success);
 
-      if Success
-        and then Callback /= null
-      then
+      if Success then
          Id := Process_Timeout.Add
            (Timeout, Process_Cb'Access,
             (Kernel, Fd, new String' (Name), Callback));
+
+         if Callback = null then
+            Pop_State (Kernel);
+         end if;
       else
          Pop_State (Kernel);
       end if;
