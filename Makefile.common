@@ -50,7 +50,7 @@ NO_STYLE_FILES+=${wildcard *_pkg.adb}
 CFLAGS+=-O2 -g
 GNATBIND_FLAGS+=-bargs -E
 GNATLINK_FLAGS+=
-GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS}
+GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS} -j3
 STYLE_FLAGS=-gnaty -gnatwuwe
 
 all: ${MAIN}
@@ -159,6 +159,24 @@ endif
 check_widgets: force
 	@[ -f ${WIDGETS_SRC}/src/make_widgets.ads ] || \
 	   (echo "widgets sources not found in ${WIDGETS_SRC}, see README"; false)
+
+#####################
+## Browsers module ##
+#####################
+
+ifneq (,$(findstring browsers,$(MODULES)))
+
+# Location of widgets sources. See the README file at the top-level for
+# information on how to setup the required links
+BROWSERS_SRC=../../browsers
+
+MODULE_INCLUDE+=-aI${BROWSERS_SRC}/src -aO${BROWSERS_SRC}/obj
+endif
+
+.PHONY: check_browsers
+check_browsers: force
+	@[ -f ${BROWSERS_SRC}/src/make_browsers.adb ] || \
+	   (echo "browsers sources not found in ${WIDGETS_SRC}, see README"; false)
 
 ###################
 ## GTKADA module ##
