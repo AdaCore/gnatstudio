@@ -56,7 +56,7 @@ begin
       end if;
 
       if Info.Profile /= null then
-         Put (Info.Profile.all & " ");
+         Put (Reduce (Info.Profile.all) & " ");
       end if;
 
       if Info.Is_Declaration then
