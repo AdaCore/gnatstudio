@@ -199,11 +199,11 @@ ifneq (,$(findstring aunit,$(MODULES)))
 AUNIT_SRC=../../aunit
 
 MODULE_INCLUDE+=-I${AUNIT_SRC}/make_harness -I${AUNIT_SRC}/make_suite \
-  -I${AUNIT_SRC}/make_make_test
+  -I${AUNIT_SRC}/make_test
 endif
 
 .PHONY: check_aunit
-check_vdiff: force
+check_aunit: force
 	@[ -f ${AUNIT_SRC}/aunit_make_test.glade ] || \
 	   (echo "AUnit sources not found in ${AUNIT_SRC}, see README"; false)
 
