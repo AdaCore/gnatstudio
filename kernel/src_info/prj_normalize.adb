@@ -118,6 +118,11 @@ package body Prj_Normalize is
       --  ??? for a project and all its imported projects, so outside of this
       --  ??? subprogram
 
+      --  ??? Should check that an attribute isn't declared both in a case
+      --  ??? construction and in the common part.
+
+      --  ??? Should check that case items have only one choice
+
       if Kind_Of (Node) = N_Project then
          Decl_List := First_Declarative_Item_Of
            (Project_Declaration_Of (Node));
@@ -435,16 +440,16 @@ package body Prj_Normalize is
                   end if;
 
                when others =>
-                  if Debug_Mode then
-                     Trace (Me, "Before For_Each_Matching_Case_Item");
-                     --  Pretty_Print (Decl_Item);
-                     for J in Values'First .. Last_Values loop
-                        Trace (Me, J'Img
-                            & " " & Get_String (Values (J).Variable_Name)
-                            & " " & Get_String (Values (J).Variable_Value)
-                            & " " & Values (J).Negated'Img);
-                     end loop;
-                  end if;
+                  --  if Debug_Mode then
+                  --     Trace (Me, "Before For_Each_Matching_Case_Item");
+                  --     Pretty_Print (Decl_Item);
+                  --     for J in Values'First .. Last_Values loop
+                  --        Trace (Me, J'Img
+                  --            & " " & Get_String (Values (J).Variable_Name)
+                  --            & " " & Get_String (Values (J).Variable_Value)
+                  --            & " " & Values (J).Negated'Img);
+                  --     end loop;
+                  --  end if;
 
                   For_Each_Matching_Case_Item
                     (Project_Norm, Current_Pkg,
@@ -728,7 +733,7 @@ package body Prj_Normalize is
                end if;
 
                --  We can now report the matching case item
-               if not Handling_Done then
+               if not Handling_Done and then Action /= null then
                   Action (Current_Item);
                end if;
             end if;
@@ -757,7 +762,9 @@ package body Prj_Normalize is
       end if;
 
       if Case_Construct = Empty_Node then
-         Action (Top);
+         if Action /= null then
+            Action (Top);
+         end if;
       else
          Process_Case_Recursive (Case_Construct);
       end if;

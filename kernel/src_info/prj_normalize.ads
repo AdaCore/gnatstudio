@@ -190,6 +190,10 @@ package Prj_Normalize is
    --
    --  Important: Project must have been normalized first, and it is
    --  recommended to call Check_Case_Construction before
+   --
+   --  Action can be null, in which case a side effect of this subprogram is to
+   --  create the case constructs for the variables referenced in Values that
+   --  do not already have a case construct.
 
    procedure For_Each_Scenario_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
@@ -199,6 +203,10 @@ package Prj_Normalize is
    --  the value of the variables directly from the environment).
    --  Important: Project must have been normalized first, and it is
    --  recommended to call Check_Case_Construction before
+   --
+   --  Action can be null, in which case a side effect of this subprogram is to
+   --  create the nested case for all the scenario variables. All case items
+   --  are empty.
 
 private
 
