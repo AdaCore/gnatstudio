@@ -1,5 +1,24 @@
-with SN.Xref_Pools; use SN.Xref_Pools;
-with GNAT.Expect;   use GNAT.Expect;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2002                            --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with GNAT.Expect;
 
 package SN.Browse is
    Unlink_Failure    : exception;
@@ -16,10 +35,14 @@ package SN.Browse is
    --  Name of file for persistent xref pool
 
    procedure Browse
-     (File_Name, DB_Directory : in String;
-      Xrefs : in out Xref_Pool; PD : out GNAT.Expect.Process_Descriptor);
-   --  Starts language browser on the file so that all database files
-   --  should be placed in the specified directory.
+     (File_Name    : String;
+      DB_Directory : String;
+      PD           : out GNAT.Expect.Process_Descriptor);
+   --  Start the language browser on the files lists in File_Name (one file per
+   --  line, and lines can start with @ to specify the name of the xref file to
+   --  use from then on).
+   --  All database files are placed in the directory
+   --  DB_Directory. DB_Directory must end with a directory separator.
    --  A number of exceptions may be thrown to signal error during
    --  process spawning, file unlinking...
 
@@ -36,7 +59,7 @@ package SN.Browse is
    --  Removes all files from SN DB directory except xref pool
 
    procedure Is_Alive
-     (PD : in out GNAT.Expect.Process_Descriptor;
+     (PD     : in out GNAT.Expect.Process_Descriptor;
       Status : out Boolean);
    --  checks if the process is still running. If the process exited, its
    --  descriptor is closed and False returned in Status.

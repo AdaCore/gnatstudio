@@ -4,13 +4,15 @@ with GNAT.Directory_Operations,
      OS_Utils,
      System,
      Ada.Strings.Fixed,
-     Ada.Unchecked_Deallocation,
      Ada.Exceptions;
+with Basic_Types;
+with SN.Xref_Pools; use SN.Xref_Pools;
 
 with String_Utils; use String_Utils;
 
 use  GNAT.Directory_Operations,
      GNAT.IO_Aux,
+     GNAT.Expect,
      Ada.Strings.Fixed,
      Ada.Exceptions;
 
@@ -31,21 +33,6 @@ package body SN.Browse is
    CBrowser_Path  : String_Access := null;
    --  full path to CBrowser (found in PATH) or null,
    --  if CBrowser is not in PATH
-
-   procedure Free is new Ada.Unchecked_Deallocation
-                              (String, String_Access);
-
-   procedure Delete (Args : in out Argument_List_Access);
-
-   procedure Delete (Args : in out Argument_List_Access) is
-      procedure Delete_Array is new Ada.Unchecked_Deallocation
-                              (Argument_List, Argument_List_Access);
-   begin
-      for I in Args.all'Range loop
-         Free (Args.all (I));
-      end loop;
-      Delete_Array (Args);
-   end Delete;
 
    procedure Output_Filter
      (PD        : in GNAT.Expect.Process_Descriptor'Class;
@@ -73,37 +60,14 @@ package body SN.Browse is
    ------------
 
    procedure Browse
-     (File_Name, DB_Directory : in String;
-      Xrefs : in out Xref_Pool; PD : out GNAT.Expect.Process_Descriptor)
+     (File_Name    : String;
+      DB_Directory : String;
+      PD           : out GNAT.Expect.Process_Descriptor)
    is
-      Xref_File_Name      : String_Access;
-      Success             : Boolean;
-      Args                : Argument_List_Access;
+      Args : Argument_List (1 .. 6);
    begin
-      --  check DB_Directory exists
-      if not Is_Directory (DB_Directory) then
-         --  the target directory does not exists, create it
-         Make_Dir (DB_Directory);
-      end if;
-
-      Xref_File_Name := Xref_Filename_For (File_Name, DB_Directory, Xrefs);
-
-      --  unlink cross reference file, if any
-      if File_Exists (Name_As_Directory (DB_Directory)
-                      & Xref_File_Name.all) then
-         declare
-            Xref_File_Name_Nul  : String
-               := Name_As_Directory (DB_Directory)
-                  & Xref_File_Name.all & ASCII.NUL;
-         begin
-            Delete_File (Xref_File_Name_Nul'Address, Success);
-         end;
-         if not Success then
-            Raise_Exception (Unlink_Failure'Identity,
-               Xref_File_Name.all);
-         end if;
-      end if;
-
+      --  ??? This should be detected much earlier, so that we can report the
+      --  errors to GPS.
       if null = DBIMP_Path then
          Raise_Exception (Spawn_Failure'Identity,
            DBIMP & ": not found in PATH");
@@ -115,16 +79,17 @@ package body SN.Browse is
       end if;
 
       --  Execute browser
-      Args := Argument_String_To_List (
-          "-n " & Name_As_Directory (DB_Directory) & DB_File_Name
-          & " -p " & DBIMP_Path.all
-          & " -x " & Name_As_Directory (DB_Directory) & Xref_File_Name.all
-          & " " & File_Name);
+      Args := (1 => new String' ("-n"),
+               2 => new String' (DB_Directory & DB_File_Name),
+               3 => new String' ("-p"),
+               4 => new String' (DBIMP_Path.all),
+               5 => new String' ("-y"),
+               6 => new String' (File_Name));
 
-      GNAT.Expect.Non_Blocking_Spawn (PD, CBrowser_Path.all, Args.all,
+      GNAT.Expect.Non_Blocking_Spawn (PD, CBrowser_Path.all, Args,
          Err_To_Out => True);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
-      Delete (Args);
+      Basic_Types.Free (Args);
    end Browse;
 
    --------------------
@@ -146,7 +111,7 @@ package body SN.Browse is
       --  1024 is the value of FILENAME_MAX in stdio.h (see
       --  GNAT.Directory_Operations)
       Success      : Boolean;
-      Args         : Argument_List_Access;
+      Args         : Argument_List (1 .. 3);
       Content      : String_Access;
       Temp_File    : File_Descriptor;
    begin
@@ -197,21 +162,18 @@ package body SN.Browse is
       end loop;
       Close (Dir);
 
-      Args := Argument_String_To_List
-        (Name_As_Directory (DB_Directory) & DB_File_Name
-          & " -f " & Temp_Name
-      );
-
       if null = DBIMP_Path then
-         Delete (Args);
          raise Spawn_Failure;
       end if;
 
-      GNAT.Expect.Non_Blocking_Spawn (PD, DBIMP_Path.all, Args.all,
-         Err_To_Out => True);
-      Delete (Args);
-      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
+      Args := (1 => new String' (DB_Directory & DB_File_Name),
+               2 => new String' ("-f"),
+               3 => new String' (Temp_Name));
 
+      GNAT.Expect.Non_Blocking_Spawn
+        (PD, DBIMP_Path.all, Args, Err_To_Out => True);
+      GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
+      Basic_Types.Free (Args);
    end Generate_Xrefs;
 
    procedure Is_Alive
