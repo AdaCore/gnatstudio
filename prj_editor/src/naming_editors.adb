@@ -37,6 +37,8 @@ with Gtkada.Types;             use Gtkada.Types;
 with Prj.Tree;                 use Prj.Tree;
 with Prj_API;                  use Prj_API;
 with Prj;                      use Prj;
+with Types;                    use Types;
+with Stringt;                  use Stringt;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
@@ -174,19 +176,26 @@ package body Naming_Editors is
          for J in 0 .. Num_Rows - 1 loop
             declare
                U : constant String := Get_Text (Editor.Exception_List, J, 0);
+               U_Id : String_Id := No_String;
                Spec : constant String :=
                  Get_Text (Editor.Exception_List, J, 1);
                Bod : constant String :=
                  Get_Text (Editor.Exception_List, J, 2);
             begin
+               if U /= "" then
+                  Start_String;
+                  Store_String_Chars (U);
+                  U_Id := End_String;
+               end if;
+
                if Spec /= "" then
                   Var := Get_Or_Create_Attribute
-                    (Pack, "Specification", U, Single);
+                    (Pack, "Specification", U_Id, Single);
                   Set_Value (Var, Spec);
                end if;
                if Bod /= "" then
                   Var := Get_Or_Create_Attribute
-                    (Pack, "Body_Part", U, Single);
+                    (Pack, "Body_Part", U_Id, Single);
                   Set_Value (Var, Bod);
                end if;
             end;
