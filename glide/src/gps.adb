@@ -812,6 +812,8 @@ begin
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Reset_Title (GPS);
 
+   Glide_Menu.Register_Common_Menus (GPS.Kernel);
+
    Kernel_Callback.Connect
      (Get_MDI (GPS.Kernel), "child_selected",
       Kernel_Callback.To_Marshaller (Child_Selected'Unrestricted_Access),
