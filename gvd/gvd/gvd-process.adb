@@ -77,6 +77,7 @@ with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
 with GVD.Main_Window;            use GVD.Main_Window;
+with GVD.Main_Window.Utils;      use GVD.Main_Window.Utils;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
