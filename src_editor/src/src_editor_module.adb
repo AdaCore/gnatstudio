@@ -64,6 +64,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_View;           use Src_Editor_View;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with File_Utils;                use File_Utils;
@@ -75,6 +76,7 @@ with Find_Utils;                use Find_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with OS_Utils;                  use OS_Utils;
+with Aliases_Module;            use Aliases_Module;
 
 with Gtkada.Types;              use Gtkada.Types;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -371,6 +373,10 @@ package body Src_Editor_Module is
    function Get_Filename (Child : MDI_Child) return String;
    --  If Child is a file editor, return the corresponding filename,
    --  otherwise return an empty string.
+
+   function Expand_Aliases_Entities
+     (Data : Event_Data; Special : Character) return String;
+   --  Does the expansion of special entities in the aliases.
 
    ------------------
    -- Get_Filename --
@@ -2844,6 +2850,55 @@ package body Src_Editor_Module is
       return Default_Factory (Kernel, C.Editor);
    end Default_Factory;
 
+   -----------------------------
+   -- Expand_Aliases_Entities --
+   -----------------------------
+
+   function Expand_Aliases_Entities
+     (Data : Event_Data; Special : Character) return String
+   is
+      Box : Source_Editor_Box;
+      W   : Gtk_Widget;
+      Line, Column : Positive;
+   begin
+      if Get_Widget (Data).all in Source_View_Record'Class then
+         W := Get_Parent (Get_Widget (Data));
+         while W.all not in Source_Box_Record'Class loop
+            W := Get_Parent (W);
+         end loop;
+         Box := Source_Box (W).Editor;
+
+         case Special is
+            when 'l' =>
+               Get_Cursor_Location (Box, Line, Column);
+               return Image (Line);
+
+            when 'c' =>
+               Get_Cursor_Location (Box, Line, Column);
+               return Image (Column);
+
+            when 'f' =>
+               return Base_Name (Get_Filename (Box));
+
+            when 'd' =>
+               return Dir_Name (Get_Filename (Box));
+
+            when 'p' =>
+               return Project_Path
+                 (Get_Project_From_File
+                  (Get_Registry (Get_Kernel (Data)),
+                   Base_Name (Get_Filename (Box)),
+                   Root_If_Not_Found => True));
+
+            when others =>
+               return Invalid_Expansion;
+         end case;
+
+      else
+         return Invalid_Expansion;
+      end if;
+   end Expand_Aliases_Entities;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -3295,6 +3350,21 @@ package body Src_Editor_Module is
                Mask              => All_Options
                  and not Search_Backward));
       end;
+
+      --  Register the aliases special entities
+
+      Register_Special_Alias_Entity
+        (Kernel, -"Current line",   'l', Expand_Aliases_Entities'Access);
+      Register_Special_Alias_Entity
+        (Kernel, -"Current column", 'c', Expand_Aliases_Entities'Access);
+      Register_Special_Alias_Entity
+        (Kernel, -"Current file",   'f', Expand_Aliases_Entities'Access);
+      Register_Special_Alias_Entity
+        (Kernel, -"Project of current file", 'p',
+         Expand_Aliases_Entities'Access);
+      Register_Special_Alias_Entity
+        (Kernel, -"Directory of current file", 'd',
+         Expand_Aliases_Entities'Access);
    end Register_Module;
 
    -------------------------
