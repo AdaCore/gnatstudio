@@ -359,7 +359,10 @@ package body Entities is
 
    procedure Reset (LI : LI_File) is
    begin
-      Trace (Assert_Me, "Reseting LI " & Full_Name (LI.Name).all);
+      if Active (Assert_Me) then
+         Trace (Assert_Me, "Reseting LI " & Full_Name (LI.Name).all);
+      end if;
+
       for F in Source_File_Arrays.First .. Last (LI.Files) loop
          Reset (LI.Files.Table (F));
       end loop;
@@ -421,9 +424,12 @@ package body Entities is
                   Entity.Is_Valid := False;
                else
                   if Entity.References.Table (R).Caller /= null then
-                     Trace (Ref_Me, "Unref "
-                            & Entity.References.Table (R).Caller.Name.all
-                            & " from reference.caller");
+                     if Active (Ref_Me) then
+                        Trace (Ref_Me, "Unref "
+                               & Entity.References.Table (R).Caller.Name.all
+                               & " from reference.caller");
+                     end if;
+
                      Unref (Entity.References.Table (R).Caller);
                   end if;
 
@@ -459,9 +465,12 @@ package body Entities is
                   --  Do not touch references in other files, if there is any.
                   if Entity.References.Table (R).Location.File = File then
                      if Entity.References.Table (R).Caller /= null then
-                        Trace (Ref_Me, "Unref "
-                               & Entity.References.Table (R).Caller.Name.all
-                               & " from reference.caller");
+                        if Active (Ref_Me) then
+                           Trace (Ref_Me, "Unref "
+                                  & Entity.References.Table (R).Caller.Name.all
+                                  & " from reference.caller");
+                        end if;
+
                         Unref (Entity.References.Table (R).Caller);
                      end if;
 
@@ -471,11 +480,13 @@ package body Entities is
 
                Entity2 := Entity;  --  In case we need two unref below
                Remove (File.All_Entities, Entity);
+
                if Active (Assert_Me) then
                   Trace (Assert_Me, "Unref " & Entity.Name.all
                          & " from all_entities in "
                          & Base_Name (File.Name));
                end if;
+
                Unref (Entity);
                --  Entity.Ref_Count is at least 1 at this point
 
@@ -483,8 +494,12 @@ package body Entities is
                   --  The entity still existed in memory because it was
                   --  referenced from one or more external files, and we just
                   --  removed it from the last such file => free it
-                  Trace (Assert_Me, "Unref " & Entity2.Name.all
-                         & " since it has no more references");
+
+                  if Active (Assert_Me) then
+                     Trace (Assert_Me, "Unref " & Entity2.Name.all
+                            & " since it has no more references");
+                  end if;
+
                   Unref (Entity2);
                end if;
             end if;
@@ -520,8 +535,11 @@ package body Entities is
                   Remove (EL.all, E);
                end if;
 
-               Trace (Ref_Me, "Unref " & Entity.Name.all
-                      & " from Mark_Dependencies_As_Invalid");
+               if Active (Ref_Me) then
+                  Trace (Ref_Me, "Unref " & Entity.Name.all
+                         & " from Mark_Dependencies_As_Invalid");
+               end if;
+
                Unref (Entity);
             end if;
          end loop;
@@ -556,8 +574,11 @@ package body Entities is
                   Remove (EL.all, E);
                end if;
 
-               Trace (Ref_Me, "Unref " & Entity.Name.all
-                      & " from Remove_Marked_Entities");
+               if Active (Ref_Me) then
+                  Trace (Ref_Me, "Unref " & Entity.Name.all
+                         & " from Remove_Marked_Entities");
+               end if;
+
                Unref (Entity);
             end if;
 
@@ -598,8 +619,11 @@ package body Entities is
                   Remove (EL.all, E);
                end if;
 
-               Trace (Ref_Me, "Unref " & Entity.Name.all
-                      & " from Remove_Marked_Entities_In_List");
+               if Active (Ref_Me) then
+                  Trace (Ref_Me, "Unref " & Entity.Name.all
+                         & " from Remove_Marked_Entities_In_List");
+               end if;
+
                Unref (Entity);
             end if;
          end loop;
@@ -615,12 +639,15 @@ package body Entities is
 
    procedure Reset (File : Source_File) is
    begin
-      Trace (Assert_Me, "Reseting " & Full_Name (File.Name).all);
+      if Active (Assert_Me) then
+         Trace (Assert_Me, "Reseting " & Full_Name (File.Name).all);
+      end if;
 
       --  Mark all entities as valid temporarily
       --  We also clean them up, so that they don't reference anything else
 
       Entities.Debug.Set_Default_Output;
+
       if Active (Dump_Me) then
          Trace (Dump_Me, "Before Reset");
          Entities.Debug.Dump (Get_Database (File));
@@ -725,9 +752,13 @@ package body Entities is
 
          for E in reverse Entity_Information_Arrays.First .. Last (EL.all) loop
             Entity := EL.Table (E);
-            Trace (Ref_Me, "Unref " & Entity.Name.all
-                   & " from Unref_All_Entities_In_List ("
-                   & Reason & ")");
+
+            if Active (Ref_Me) then
+               Trace (Ref_Me, "Unref " & Entity.Name.all
+                      & " from Unref_All_Entities_In_List ("
+                      & Reason & ")");
+            end if;
+
             Unref (Entity);
          end loop;
 
@@ -749,9 +780,12 @@ package body Entities is
          for J in reverse
            Entity_Information_Arrays.First .. Last (List)
          loop
-            Trace (Ref_Me, "Unref " & List.Table (J).Name.all
-                   & " from Unref_All_Entities_In_List ("
-                   & Reason & ")");
+            if Active (Ref_Me) then
+               Trace (Ref_Me, "Unref " & List.Table (J).Name.all
+                      & " from Unref_All_Entities_In_List ("
+                      & Reason & ")");
+            end if;
+
             Unref (List.Table (J));
          end loop;
          Free (List);
@@ -767,36 +801,54 @@ package body Entities is
    is
       Entity2 : Entity_Information;
    begin
-      Trace (Ref_Me, "Isolate " & Entity.Name.all);
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "Isolate " & Entity.Name.all);
+      end if;
+
       if Entity.Caller_At_Declaration /= null then
-         Trace (Ref_Me, "Unref " & Entity.Caller_At_Declaration.Name.all
-                & " from caller_at_decl");
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Unref " & Entity.Caller_At_Declaration.Name.all
+                   & " from caller_at_decl");
+         end if;
+
          Unref (Entity.Caller_At_Declaration);
       end if;
 
       Entity.End_Of_Scope    := No_E_Reference;
 
       if Entity.Pointed_Type /= null then
-         Trace (Ref_Me, "Unref " & Entity.Pointed_Type.Name.all
-                & " from pointed_type");
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Unref " & Entity.Pointed_Type.Name.all
+                   & " from pointed_type");
+         end if;
+
          Unref (Entity.Pointed_Type);
       end if;
 
       if Entity.Returned_Type /= null then
-         Trace (Ref_Me, "Unref " & Entity.Returned_Type.Name.all
-                  & " from returned_type");
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Unref " & Entity.Returned_Type.Name.all
+                     & " from returned_type");
+         end if;
+
          Unref (Entity.Returned_Type);
       end if;
 
       if Entity.Primitive_Op_Of /= null then
-         Trace (Ref_Me, "Unref " & Entity.Primitive_Op_Of.Name.all
-                  & " from primitive_op");
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Unref " & Entity.Primitive_Op_Of.Name.all
+                     & " from primitive_op");
+         end if;
+
          Unref (Entity.Primitive_Op_Of);
       end if;
 
       if Entity.Rename /= null then
-         Trace (Ref_Me, "Unref " & Entity.Rename.Name.all
-                  & " from rename");
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Unref " & Entity.Rename.Name.all
+                     & " from rename");
+         end if;
+
          Unref (Entity.Rename);
       end if;
 
@@ -822,8 +874,12 @@ package body Entities is
                then
                   Entity2 := Entity; --  Since Unref puts it back to null
                   Remove (Entity2.Parent_Types.Table (J).Child_Types, P);
-                  Trace (Assert_Me, "Unref " & Entity2.Name.all
-                         & " From Isol.Parent_Types.Child_Types");
+
+                  if Active (Assert_Me) then
+                     Trace (Assert_Me, "Unref " & Entity2.Name.all
+                            & " From Isol.Parent_Types.Child_Types");
+                  end if;
+
                   Unref (Entity2);  --  will never actually free Entity
                end if;
             end loop;
@@ -841,9 +897,12 @@ package body Entities is
            Entity_Reference_Arrays.First .. Last (Entity.References)
          loop
             if Entity.References.Table (R).Caller /= null then
-               Trace (Ref_Me, "Unref "
-                      & Entity.References.Table (R).Caller.Name.all
-                      & " since reference.caller");
+               if Active (Ref_Me) then
+                  Trace (Ref_Me, "Unref "
+                         & Entity.References.Table (R).Caller.Name.all
+                         & " since reference.caller");
+               end if;
+
                Unref (Entity.References.Table (R).Caller);
             end if;
          end loop;
@@ -920,8 +979,11 @@ package body Entities is
       begin
          if E.Location.File = Dependencies_On then
             if E.Caller /= null then
-               Trace (Ref_Me, "Unref " & E.Caller.Name.all
-                      & " from reference.caller");
+               if Active (Ref_Me) then
+                  Trace (Ref_Me, "Unref " & E.Caller.Name.all
+                         & " from reference.caller");
+               end if;
+
                Unref (E.Caller);
             end if;
             E := No_E_Reference;
@@ -1280,8 +1342,11 @@ package body Entities is
          Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
          EL     : Entity_Information_List_Access;
       begin
-         Trace (Assert_Me, "Fast_Reset All_Entities for "
-                & Full_Name (Get_Filename (File)).all);
+         if Active (Assert_Me) then
+            Trace (Assert_Me, "Fast_Reset All_Entities for "
+                   & Full_Name (Get_Filename (File)).all);
+         end if;
+
          loop
             EL := Get (Iter);
             exit when EL = null;
@@ -1546,16 +1611,22 @@ package body Entities is
          Append (EL.all, Entity);
 
          Insert (Entity.Name.all, Pointer, EL);
-         Trace (Ref_Me, "Ref " & Entity.Name.all
-                & " from Add");
+
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Ref " & Entity.Name.all & " from Add");
+         end if;
+
          Ref (Entity);
 
       elsif not Check_Duplicates
         or else Find (EL.all, Entity.Declaration) = null
       then
          Append (EL.all, Entity);
-         Trace (Ref_Me, "Ref " & Entity.Name.all
-                & " from Add");
+
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Ref " & Entity.Name.all & " from Add");
+         end if;
+
          Ref (Entity);
       end if;
 
@@ -1696,8 +1767,12 @@ package body Entities is
    begin
       Assert (Assert_Me, Renaming_Of /= null, "Invalid renamed entity");
       Entity.Rename := Renaming_Of;
-      Trace (Ref_Me, "Ref " & Renaming_Of.Name.all
-             & " from Set_Is_Renaming_Of");
+
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "Ref " & Renaming_Of.Name.all
+                & " from Set_Is_Renaming_Of");
+      end if;
+
       Ref (Renaming_Of);
    end Set_Is_Renaming_Of;
 
@@ -1745,13 +1820,21 @@ package body Entities is
    begin
       Assert (Assert_Me, Is_Of_Type /= null, "Invalid type for entity");
       Append (Entity.Parent_Types, Is_Of_Type);
-      Trace (Ref_Me, "Ref " & Is_Of_Type.Name.all & " from Is_Of_Type");
+
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "Ref " & Is_Of_Type.Name.all & " from Is_Of_Type");
+      end if;
+
       Ref (Is_Of_Type);
 
       if Entity.Kind.Is_Type then
          Append (Is_Of_Type.Child_Types, Entity);
-         Trace (Ref_Me, "Ref " & Entity.Name.all
-                & " from Set_Type_Of.Child_Types");
+
+         if Active (Ref_Me) then
+            Trace (Ref_Me, "Ref " & Entity.Name.all
+                   & " from Set_Type_Of.Child_Types");
+         end if;
+
          Ref (Entity);
       end if;
    end Set_Type_Of;
@@ -1780,8 +1863,12 @@ package body Entities is
       Assert (Assert_Me, Primitive /= null, "Invalid primitive subprogram");
       Append (Entity.Primitive_Subprograms, Primitive);
       Primitive.Primitive_Op_Of := Entity;
-      Trace (Ref_Me, "Ref " & Primitive.Name.all
-             & " from Add_Primitive_Subprogram");
+
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "Ref " & Primitive.Name.all
+                & " from Add_Primitive_Subprogram");
+      end if;
+
       Ref (Primitive);
    end Add_Primitive_Subprogram;
 
@@ -1794,8 +1881,12 @@ package body Entities is
    begin
       Assert (Assert_Me, Points_To /= null, "Invalid pointed type");
       Entity.Pointed_Type := Points_To;
-      Trace (Ref_Me, "Ref " & Points_To.Name.all
-             & " from Set_Pointed_Type");
+
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "Ref " & Points_To.Name.all
+                & " from Set_Pointed_Type");
+      end if;
+
       Ref (Points_To);
    end Set_Pointed_Type;
 
@@ -1808,8 +1899,12 @@ package body Entities is
    begin
       Assert (Assert_Me, Returns /= null, "Invalid returned type");
       Entity.Returned_Type := Returns;
-      Trace (Ref_Me, "Ref " & Returns.Name.all
-             & " from Set_Returned_Type");
+
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "Ref " & Returns.Name.all
+                & " from Set_Returned_Type");
+      end if;
+
       Ref (Returns);
    end Set_Returned_Type;
 
@@ -2561,9 +2656,12 @@ package body Entities is
 
       if Comment_Start /= 0 then
          Comment_End := Line_End (Buffer, Current);
-         Trace (Assert_Me,
-                "Get_Documentation: Found a comment before the entity,"
-                & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+
+         if Active (Assert_Me) then
+            Trace (Assert_Me,
+                   "Get_Documentation: Found a comment before the entity,"
+                   & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+         end if;
       end if;
 
    end Get_Documentation_Before;
@@ -2589,9 +2687,12 @@ package body Entities is
          Comment_End := Comment_Start;
          Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
          Comment_End := Line_End (Buffer, Comment_End);
-         Trace (Assert_Me,
-                "Get_Documentation: Found a comment after the entity,"
-                & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+
+         if Active (Assert_Me) then
+            Trace (Assert_Me,
+                   "Get_Documentation: Found a comment after the entity,"
+                   & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+         end if;
       end if;
    end Get_Documentation_After;
 
@@ -2618,8 +2719,11 @@ package body Entities is
 
    begin
       if Lang = null then
-         Trace (Assert_Me, "Get_Documentation language unknown for "
-                & Full_Name (Declaration_File).all);
+         if Active (Assert_Me) then
+            Trace (Assert_Me, "Get_Documentation language unknown for "
+                   & Full_Name (Declaration_File).all);
+         end if;
+
          return "";
       end if;
 
@@ -2627,11 +2731,16 @@ package body Entities is
 
       if Declaration_File_Contents = "" then
          Buffer := Read_File (Declaration_File);
+
          if Buffer = null then
-            Trace (Assert_Me, "Get_Documentation, no file found "
-                   & Full_Name (Declaration_File).all);
+            if Active (Assert_Me) then
+               Trace (Assert_Me, "Get_Documentation, no file found "
+                      & Full_Name (Declaration_File).all);
+            end if;
+
             return "";
          end if;
+
          Must_Free_Buffer := True;
          Index := Buffer'First;
       end if;
