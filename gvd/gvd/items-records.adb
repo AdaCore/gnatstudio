@@ -30,6 +30,8 @@ with Unchecked_Deallocation;
 with Odd.Types;    use Odd.Types;
 with Gdk.Types;    use Gdk.Types;
 
+with Odd.Types;    use Odd.Types;
+
 package body Items.Records is
 
    ---------------------
@@ -424,19 +426,20 @@ package body Items.Records is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
---        if Show_Type (Context.Mode)
---          and then Item.Type_Name /= null
---        then
---           Draw_Text
---             (Context.Pixmap,
---              Font => Context.Font,
---              GC   => Context.GC,
---              X    => X + Left_Border + Border_Spacing,
---              Y    => Current_Y + Get_Ascent (Context.Font),
---              Text => Item.Type_Name.all);
---           Current_Y := Current_Y
---             + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
---        end if;
+      if Show_Type (Context.Mode)
+        and then Item.Type_Name /= null
+      then
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Type_Font,
+            GC   => Context.GC,
+            X    => X + Left_Border + Border_Spacing,
+            Y    => Current_Y + Get_Ascent (Context.Type_Font),
+            Text => Item.Type_Name.all);
+         Current_Y := Current_Y
+           + Get_Ascent (Context.Type_Font)
+           + Get_Descent (Context.Type_Font);
+      end if;
 
       for F in Item.Fields'Range loop
          Draw_Text
@@ -518,6 +521,19 @@ package body Items.Records is
          return;
       end if;
 
+      if Show_Type (Context.Mode)
+        and then Item.Type_Name /= null
+      then
+         Item.Type_Height := Get_Ascent (Context.Type_Font)
+           + Get_Descent (Context.Type_Font);
+         Total_Height := Total_Height + Item.Type_Height;
+         Total_Width := Gint'Max
+              (Total_Width,
+               Text_Width (Context.Type_Font, Item.Type_Name.all));
+      else
+         Item.Type_Height := 0;
+      end if;
+
       if Item.Visible then
          for F in Item.Fields'Range loop
             if Largest_Name = null
@@ -571,16 +587,6 @@ package body Items.Records is
               Text_Width (Context.Font, Largest_Name.all & " => ");
          end if;
 
---           if Show_Type (Context.Mode)
---             and then Item.Type_Name /= null
---           then
---              Total_Height := Total_Height
---                + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
---              Total_Width := Gint'Max
---                (Total_Width,
---                 Text_Width (Context.Font, Item.Type_Name.all));
---           end if;
-
          --  Keep enough space for the border (Border_Spacing on each side)
          Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
            + 2 * Border_Spacing;
@@ -633,7 +639,7 @@ package body Items.Records is
                                 X, Y : Glib.Gint)
                                return String
    is
-      Total_Height : Gint := Border_Spacing;
+      Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
@@ -645,6 +651,12 @@ package body Items.Records is
       --  Click in the left column ? => Select the whole item
 
       if X < Field_Name_Start then
+         return Name;
+      end if;
+
+      --  Did we click the type of the item
+
+      if Y < Item.Type_Height then
          return Name;
       end if;
 
@@ -700,7 +712,7 @@ package body Items.Records is
                            X, Y : Glib.Gint)
                           return Generic_Type_Access
    is
-      Total_Height : Gint := Border_Spacing;
+      Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
@@ -712,6 +724,12 @@ package body Items.Records is
       --  Click in the left column ? => Select the whole item
 
       if X < Field_Name_Start then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Did we click the type of the item
+
+      if Y < Item.Type_Height then
          return Generic_Type_Access (Item);
       end if;
 

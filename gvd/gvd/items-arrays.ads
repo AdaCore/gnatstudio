@@ -145,6 +145,8 @@ private
 
       Index_Width : Glib.Gint := 0;
 
+      Type_Height : Glib.Gint := 0;
+      --  Height of the first line used to display the type of the item.
    end record;
    --  Last_Value is the last value that is relevant in Values, or 0 if the
    --  array is empty.

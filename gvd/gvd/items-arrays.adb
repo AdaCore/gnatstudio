@@ -29,6 +29,8 @@ with Gdk.Types;    use Gdk.Types;
 with Language;     use Language;
 with Unchecked_Deallocation;
 
+with Odd.Types;    use Odd.Types;
+
 with Items.Repeats; use Items.Repeats;
 
 package body Items.Arrays is
@@ -576,28 +578,43 @@ package body Items.Arrays is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      for V in Item.Values'Range loop
+      if Show_Type (Context.Mode)
+        and then Item.Type_Name /= null
+      then
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Type_Font,
+                    GC   => Context.GC,
+                    X    => X + Border_Spacing,
+                    Y    => Current_Y + Get_Ascent (Context.Type_Font),
+                    Text => Item.Type_Name.all);
+         Current_Y := Current_Y
+           + Get_Ascent (Context.Type_Font) + Get_Descent (Context.Type_Font);
+      end if;
 
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Context.GC,
-                    X    => X + Left_Border + Border_Spacing,
-                    Y    => Current_Y + Get_Ascent (Context.Font),
-                    Text => Index_String (Item,
-                                          Item.Values (V).Index,
-                                          Item.Num_Dimensions));
-         Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Context.GC,
-                    X    => Arrow_Pos,
-                    Y    => Current_Y + Get_Ascent (Context.Font),
-                    Text => " => ");
-         Paint (Item.Values (V).Value.all, Context,
-                X + Left_Border + Border_Spacing + Item.Index_Width,
-                Current_Y);
-         Current_Y :=
-           Current_Y + Item.Values (V).Value.Height + Line_Spacing;
-      end loop;
+      if Show_Value (Context.Mode) then
+         for V in Item.Values'Range loop
+
+            Draw_Text (Context.Pixmap,
+                       Font => Context.Font,
+                       GC   => Context.GC,
+                       X    => X + Left_Border + Border_Spacing,
+                       Y    => Current_Y + Get_Ascent (Context.Font),
+                       Text => Index_String (Item,
+                                             Item.Values (V).Index,
+                                             Item.Num_Dimensions));
+            Draw_Text (Context.Pixmap,
+                       Font => Context.Font,
+                       GC   => Context.GC,
+                       X    => Arrow_Pos,
+                       Y    => Current_Y + Get_Ascent (Context.Font),
+                       Text => " => ");
+            Paint (Item.Values (V).Value.all, Context,
+                   X + Left_Border + Border_Spacing + Item.Index_Width,
+                   Current_Y);
+            Current_Y :=
+              Current_Y + Item.Values (V).Value.Height + Line_Spacing;
+         end loop;
+      end if;
 
       --  Draw a border
       Draw_Rectangle (Context.Pixmap,
@@ -642,26 +659,41 @@ package body Items.Arrays is
       end if;
 
       if Item.Visible then
-         Item.Index_Width := 20;  --  minimal width
-         if Item.Values /= null then
-            for V in Item.Values'Range loop
-               Size_Request
-                 (Item.Values (V).Value.all, Context, Hide_Big_Items);
-               Total_Width  :=
-                 Gint'Max (Total_Width, Item.Values (V).Value.Width);
-               Total_Height := Total_Height + Item.Values (V).Value.Height;
-               Item.Index_Width :=
-                 Gint'Max (Item.Index_Width, String_Width
-                           (Context.Font,
-                            Index_String (Item, Item.Values (V).Index,
-                                          Item.Num_Dimensions)));
-            end loop;
-            Total_Height :=
-              Total_Height + (Item.Values'Length - 1) * Line_Spacing;
+         if Show_Type (Context.Mode)
+           and then Item.Type_Name /= null
+         then
+            Item.Type_Height := Get_Descent (Context.Type_Font)
+              + Get_Ascent (Context.Type_Font);
+            Total_Height := Total_Height + Item.Type_Height;
+            Total_Width := Gint'Max
+              (Total_Width,
+               Text_Width (Context.Type_Font, Item.Type_Name.all));
+         else
+            Item.Type_Height := 0;
          end if;
 
-         Item.Index_Width :=
-           Item.Index_Width + Text_Width (Context.Font, String'(" => "));
+         if Show_Value (Context.Mode) then
+            Item.Index_Width := 20;  --  minimal width
+            if Item.Values /= null then
+               for V in Item.Values'Range loop
+                  Size_Request
+                    (Item.Values (V).Value.all, Context, Hide_Big_Items);
+                  Total_Width  :=
+                    Gint'Max (Total_Width, Item.Values (V).Value.Width);
+                  Total_Height := Total_Height + Item.Values (V).Value.Height;
+                  Item.Index_Width :=
+                    Gint'Max (Item.Index_Width, String_Width
+                              (Context.Font,
+                               Index_String (Item, Item.Values (V).Index,
+                                             Item.Num_Dimensions)));
+               end loop;
+               Total_Height :=
+                 Total_Height + (Item.Values'Length - 1) * Line_Spacing;
+            end if;
+
+            Item.Index_Width :=
+              Item.Index_Width + Text_Width (Context.Font, String'(" => "));
+         end if;
 
          --  Keep enough space for the border (Border_Spacing on each side)
 
@@ -710,7 +742,7 @@ package body Items.Arrays is
                                 X, Y : Glib.Gint)
                                return String
    is
-      Total_Height : Gint := Border_Spacing;
+      Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
@@ -725,6 +757,12 @@ package body Items.Arrays is
         or else Item.Values = null
         or else Item.Values'Length = 1
       then
+         return Name;
+      end if;
+
+      --  Did we click the type of the item
+
+      if Y < Item.Type_Height then
          return Name;
       end if;
 
@@ -768,7 +806,7 @@ package body Items.Arrays is
                            X, Y : Glib.Gint)
                           return Generic_Type_Access
    is
-      Total_Height : Gint := Border_Spacing;
+      Total_Height : Gint := Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Index_Width;
@@ -782,6 +820,12 @@ package body Items.Arrays is
       if X < Field_Name_Start
         or else Item.Values = null
       then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Did we click the type of the item
+
+      if Y < Item.Type_Height then
          return Generic_Type_Access (Item);
       end if;
 

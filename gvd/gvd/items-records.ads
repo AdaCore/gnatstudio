@@ -137,6 +137,9 @@ private
       Gui_Fields_Width : Glib.Gint := 0;
       --  Width allocated for the field names column when drawing the item
       --  on a pixmap. This is calculated once when Size_Request is called.
+
+      Type_Height : Glib.Gint := 0;
+      --  Height of the first line used to display the type of the item.
    end record;
    --  Num_Fields can be 0 in case of a 'null record'. Thus, it has to be
    --  a Natural.

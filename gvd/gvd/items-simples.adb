@@ -144,20 +144,21 @@ package body Items.Simples is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
+      if Item.Has_Changed then
+         Text_GC := Context.Modified_GC;
+      end if;
+
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
       then
          Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Context.GC,
+                    Font => Context.Type_Font,
+                    GC   => Text_Gc,
                     X    => X,
-                    Y    => Y2 + Get_Ascent (Context.Font),
+                    Y    => Y2 + Get_Ascent (Context.Type_Font),
                     Text => Item.Type_Name.all);
-         Y2 := Y2 + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
-      end if;
-
-      if Item.Has_Changed then
-         Text_GC := Context.Modified_GC;
+         Y2 := Y2 + Get_Ascent (Context.Type_Font)
+           + Get_Descent (Context.Type_Font);
       end if;
 
       if Show_Value (Context.Mode) then
@@ -202,9 +203,9 @@ package body Items.Simples is
       then
          Item.Width := Gint'Max
            (Item.Width,
-            Text_Width (Context.Font, Item.Type_Name.all));
+            Text_Width (Context.Type_Font, Item.Type_Name.all));
          Item.Height := Item.Height +
-           Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+           Get_Ascent (Context.Type_Font) + Get_Descent (Context.Type_Font);
       end if;
 
       if not Item.Valid then
@@ -396,12 +397,13 @@ package body Items.Simples is
         and then Show_Type (Context.Mode)
       then
          Draw_Text (Context.Pixmap,
-                    Font => Context.Font,
-                    GC   => Context.GC,
+                    Font => Context.Type_Font,
+                    GC   => Text_Gc,
                     X    => X,
-                    Y    => Y2 + Get_Ascent (Context.Font),
+                    Y    => Y2 + Get_Ascent (Context.Type_Font),
                     Text => Item.Type_Name.all);
-         Y2 := Y2 + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+         Y2 := Y2 + Get_Ascent (Context.Type_Font)
+           + Get_Descent (Context.Type_Font);
       end if;
 
       if Item.Value /= null

@@ -83,6 +83,7 @@ package Items is
       Xref_GC     : Gdk.GC.Gdk_GC;
       Modified_GC : Gdk.GC.Gdk_GC;
       Font        : Gdk.Font.Gdk_Font;
+      Type_Font   : Gdk.Font.Gdk_Font;
       Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
       Mode        : Display_Mode;
    end record;
