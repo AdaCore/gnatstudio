@@ -1669,15 +1669,15 @@ begin
    Add_Parser (new Unexpected_Word);
    Add_Parser (new Kw_Not_Allowed);
    Add_Parser (new Sep_Not_Allowed);
---   Add_Parser (new Should_Be_In);
---   Add_Parser (new Bad_Column);
+   Add_Parser (new Should_Be_In);
+   Add_Parser (new Bad_Column);
    Add_Parser (new Main_With_Missing);
    Add_Parser (new Bad_Casing_Standard);
    Add_Parser (new Bad_Casing_Declared);
    Add_Parser (new Bad_Casing_Keyword);
    Add_Parser (new Object_Not_Referenced);
    Add_Parser (new Pkg_Not_Referenced);
---   Add_Parser (new Pragma_Missplaced);
+   Add_Parser (new Pragma_Missplaced);
    Add_Parser (new Constant_Expected);
    Add_Parser (new Possible_Interpretation);
    Add_Parser (new Hidden_Declaration);
