@@ -1634,7 +1634,7 @@ package body Gtkada.File_Selector is
    procedure Browse_Location (Ent : access Gtk_Widget_Record'Class) is
       Result : Gtk_Entry := Gtk_Entry (Ent);
       Name : constant String := Select_Directory
-        (-"Select project file location",
+        (-"Select directory",
          Base_Directory => Get_Text (Result));
    begin
       if Name /= "" then
