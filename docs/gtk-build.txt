@@ -1,4 +1,4 @@
-Here are the complete procedures to build Gtk+ 2.2.0 from scratch
+Here are the complete procedures to build Gtk+ 2.2.1 from scratch
 (Systems tested are Redhat 7.1, Solaris 2.5.1, Solaris 2.8, Tru64 5.1a,
  HP-UX 11.00, IRIX 6.5 and AiX 5.1).
 
@@ -52,7 +52,7 @@ export C_INCLUDE_PATH
 # libiconv #
 ############
 # This step isn't needed on Linux nor AiX 5.1
-# It is needed under Solaris, HP-UX and IRIX
+# It is needed under Solaris, HP-UX, Tru64 and IRIX
 
 tar xzvf libiconv-1.7.tar.gz
 cd libiconv-1.7
@@ -64,7 +64,7 @@ make install
 # zlib #
 ########
 
-# Not needed on Tru64 5.1 nor IRIX 6.5
+# Not needed on Tru64 5.1a nor IRIX 6.5
 
 # AiX 5.1: although this library seems to be provided by the system, building
 # it is still needed, as the headers were not installed.
@@ -133,7 +133,7 @@ cd ..
 ###########
 
 # This step is not needed under Solaris & Linux
-# It is needed under HP-UX, Tru64 5.1, IRIX 6.5, AiX 5.1
+# It is needed under HP-UX, Tru64 5.1a, IRIX 6.5, AiX 5.1
 
 tar xzvf gettext-0.11.5.tar.gz
 cd gettext-0.11.5
@@ -154,10 +154,10 @@ cd ..
 ########
 # glib #
 ########
-tar xzvf glib-2.2.0.tar.gz
-cd glib-2.2.0
+tar xzvf glib-2.2.1.tar.gz
+cd glib-2.2.1
 
-# on Linux and Tru64:
+# on Linux:
 ./configure --prefix=$prefix --enable-debug=minimum
 
 # on other systems:
@@ -166,7 +166,12 @@ cd glib-2.2.0
 # possible switches for debugging:
 # --enable-gc-friendly --disable-mem-pools
 
+# on Tru64:
+make CFLAGS="-g -O2 -mieee -DTRIO_COMPILER_DECC"
+
+# on other systems:
 make
+
 make install
 cd ..
 
@@ -184,8 +189,8 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-1.2.0.tar.gz
-cd pango-1.2.0
+tar xzvf pango-1.2.1.tar.gz
+cd pango-1.2.1
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. In the future, we may want to also
@@ -205,8 +210,8 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-2.2.0.tar.gz
-cd gtk+-2.2.0
+tar xzvf gtk+-2.2.1.tar.gz
+cd gtk+-2.2.1
 
 # Under certain platforms such as AiX or NT, a very recent version of
 # libtool may be needed. To install the most recent version of libtool,
