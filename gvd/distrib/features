@@ -1,6 +1,9 @@
 New features in GVD 1.1.1
 
 - The data window is now zoomable
+- The breakpoint editor has been enhanced, and can now set advanced properties
+  like ignore_count, commands to execute when reaching the breakpoint, or
+  conditions to activate the breakpoint
 
 New features in GVD 1.1.0
 
