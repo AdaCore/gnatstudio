@@ -44,25 +44,24 @@ package body Docgen.Work_On_Source is
    package TEL renames Type_Entity_List;
 
    procedure Process_Source_Spec
-     (B                  : Docgen_Backend.Backend_Handle;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Doc_File           : File_Descriptor;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Source_Filename    : VFS.Virtual_File;
-      Package_Name       : String;
-      Package_Info       : Entity_Information;
-      Entity_List        : in out Type_Entity_List.List;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Tagged_Types_List  : in out Type_List_Tagged_Element.List;
+     (B                         : Docgen_Backend.Backend_Handle;
+      Kernel                    : access Kernel_Handle_Record'Class;
+      Doc_File                  : File_Descriptor;
+      Source_File_List          : in out Type_Source_File_List.List;
+      Source_Filename           : VFS.Virtual_File;
+      Package_Name              : String;
+      Package_Info              : Entity_Information;
+      Entity_List               : in out Type_Entity_List.List;
+      List_Ref_In_File          : in out List_Reference_In_File.List;
+      Tagged_Types_List         : in out Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Process_Body_File  : Boolean;
-      LI_Unit            : LI_File_Ptr;
-      Options            : All_Options;
-      Doc_Directory      : String;
-      Doc_Suffix         : String;
-      Level              : in out Natural;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      Parsed_List        : in out Construct_List);
+      LI_Unit                   : LI_File_Ptr;
+      Options                   : All_Options;
+      Doc_Directory             : String;
+      Doc_Suffix                : String;
+      Level                     : in out Natural;
+      File_Text                 : GNAT.OS_Lib.String_Access;
+      Parsed_List               : in out Construct_List);
    --  It's in charge of processing packages, types, variables, subprograms,
    --  exceptions, entries. It can be called recursively for inner package.
    --  Source_File_List : list of all files that must be processed by docgen.
@@ -80,8 +79,6 @@ package body Docgen.Work_On_Source is
    --  Tagged_Types_List: list of public tagged types.
    --  Private_Tagged_Types_List: list of private tagged types.
    --  Options          : options set by the preferences.
-   --  Process_Body_File: indicate if bofy files must be processed.
-   --  ???  This last parameter is redondant because Options indicate it.
    --  Level            : the level of the current package. By default, the
    --  level of the package file is 1, then this level is increased by 1 at
    --  each inner package
@@ -181,8 +178,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix                : String;
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
-      Level                     : in out Natural;
-      Process_Body_File         : Boolean);
+      Level                     : in out Natural);
    --  Will process renamed and instantiated packages and pass
    --  them to the output subprogram.
    --  Display_Private : indicate if we print the "Private" header.
@@ -261,7 +257,6 @@ package body Docgen.Work_On_Source is
       Entity_List       : in out Type_Entity_List.List;
       List_Ref_In_File  : in out List_Reference_In_File.List;
       Source_Filename   : VFS.Virtual_File;
-      Process_Body_File : Boolean;
       Package_Name      : String;
       Package_Info      : Entity_Information;
       File_Text         : GNAT.OS_Lib.String_Access;
@@ -298,7 +293,6 @@ package body Docgen.Work_On_Source is
       Entity_List        : in out Type_Entity_List.List;
       List_Ref_In_File   : in out List_Reference_In_File.List;
       Source_Filename    : VFS.Virtual_File;
-      Process_Body_File  : Boolean;
       Package_Name       : String;
       Package_Info       : Entity_Information;
       File_Text          : GNAT.OS_Lib.String_Access;
@@ -364,7 +358,7 @@ package body Docgen.Work_On_Source is
       Source_Filename   : VFS.Virtual_File;
       Package_Name      : String;
       Package_File      : VFS.Virtual_File;
-      Process_Body_File : Boolean;
+      LI_Unit           : LI_File_Ptr;
       Options           : All_Options);
    --  Will call the output subprogram to create the header of
    --  the package. This is NOT the same as Process_Open_File,
@@ -539,24 +533,24 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Source
-     (B                 : Docgen_Backend.Backend_Handle;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Doc_File          : File_Descriptor;
-      Next_Package      : GNAT.OS_Lib.String_Access;
-      Prev_Package      : GNAT.OS_Lib.String_Access;
-      Source_File_List  : in out Type_Source_File_List.List;
-      Source_Filename   : VFS.Virtual_File;
-      Package_Name      : String;
-      Entity_List       : in out Type_Entity_List.List;
-      List_Ref_In_File  : in out List_Reference_In_File.List;
-      Tagged_Types_List : in out Type_List_Tagged_Element.List;
+     (B                         : Docgen_Backend.Backend_Handle;
+      Kernel                    : access
+        Glide_Kernel.Kernel_Handle_Record'Class;
+      Doc_File                  : File_Descriptor;
+      Next_Package              : GNAT.OS_Lib.String_Access;
+      Prev_Package              : GNAT.OS_Lib.String_Access;
+      Source_File_List          : in out Type_Source_File_List.List;
+      Source_Filename           : VFS.Virtual_File;
+      Package_Name              : String;
+      Entity_List               : in out Type_Entity_List.List;
+      List_Ref_In_File          : in out List_Reference_In_File.List;
+      Tagged_Types_List         : in out Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Process_Body_File : Boolean;
-      LI_Unit           : LI_File_Ptr;
-      Options           : All_Options;
-      Doc_Directory     : String;
-      Doc_Suffix        : String;
-      Level             : in out Natural)
+      LI_Unit                   : LI_File_Ptr;
+      Options                   : All_Options;
+      Doc_Directory             : String;
+      Doc_Suffix                : String;
+      Level                     : in out Natural)
    is
       use TEL;
       use type Basic_Types.String_Access;
@@ -592,7 +586,7 @@ package body Docgen.Work_On_Source is
          Source_Filename,
          Package_Name,
          Source_Filename,
-         Process_Body_File,
+         LI_Unit,
          Options);
 
       --  Different processing for spec and body files
@@ -658,7 +652,6 @@ package body Docgen.Work_On_Source is
                   List_Ref_In_File,
                   Tagged_Types_List,
                   Private_Tagged_Types_List,
-                  Process_Body_File,
                   LI_Unit,
                   Options,
                   Doc_Directory,
@@ -697,25 +690,24 @@ package body Docgen.Work_On_Source is
    -------------------------
 
    procedure Process_Source_Spec
-     (B                  : Docgen_Backend.Backend_Handle;
-      Kernel             : access Kernel_Handle_Record'Class;
-      Doc_File           : File_Descriptor;
-      Source_File_List   : in out Type_Source_File_List.List;
-      Source_Filename    : VFS.Virtual_File;
-      Package_Name       : String;
-      Package_Info       : Entity_Information;
-      Entity_List        : in out Type_Entity_List.List;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Tagged_Types_List  : in out Type_List_Tagged_Element.List;
+     (B                         : Docgen_Backend.Backend_Handle;
+      Kernel                    : access Kernel_Handle_Record'Class;
+      Doc_File                  : File_Descriptor;
+      Source_File_List          : in out Type_Source_File_List.List;
+      Source_Filename           : VFS.Virtual_File;
+      Package_Name              : String;
+      Package_Info              : Entity_Information;
+      Entity_List               : in out Type_Entity_List.List;
+      List_Ref_In_File          : in out List_Reference_In_File.List;
+      Tagged_Types_List         : in out Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Process_Body_File  : Boolean;
-      LI_Unit            : LI_File_Ptr;
-      Options            : All_Options;
-      Doc_Directory      : String;
-      Doc_Suffix         : String;
-      Level              : in out Natural;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      Parsed_List        : in out Construct_List)
+      LI_Unit                   : LI_File_Ptr;
+      Options                   : All_Options;
+      Doc_Directory             : String;
+      Doc_Suffix                : String;
+      Level                     : in out Natural;
+      File_Text                 : GNAT.OS_Lib.String_Access;
+      Parsed_List               : in out Construct_List)
    is
       use Type_Entity_List;
       Display_Private  : Boolean := False;
@@ -740,8 +732,7 @@ package body Docgen.Work_On_Source is
          Source_File_List,
          Options,
          Doc_Directory, Doc_Suffix, False, Display_Private,
-         Level,
-         Process_Body_File);
+         Level);
       Process_Vars
         (B,
          Kernel,
@@ -800,7 +791,6 @@ package body Docgen.Work_On_Source is
          Entity_List,
          List_Ref_In_File,
          Source_Filename,
-         Process_Body_File,
          Package_Name,
          Package_Info,
          File_Text,
@@ -817,7 +807,6 @@ package body Docgen.Work_On_Source is
          Entity_List,
          List_Ref_In_File,
          Source_Filename,
-         Process_Body_File,
          Package_Name,
          Package_Info,
          File_Text,
@@ -847,8 +836,7 @@ package body Docgen.Work_On_Source is
             Source_File_List,
             Options,
             Doc_Directory, Doc_Suffix, True, Display_Private,
-            Level,
-            Process_Body_File);
+            Level);
          Process_Vars
            (B,
             Kernel,
@@ -907,7 +895,6 @@ package body Docgen.Work_On_Source is
             Entity_List,
             List_Ref_In_File,
             Source_Filename,
-            Process_Body_File,
             Package_Name,
             Package_Info,
             File_Text,
@@ -924,7 +911,6 @@ package body Docgen.Work_On_Source is
             Entity_List,
             List_Ref_In_File,
             Source_Filename,
-            Process_Body_File,
             Package_Name,
             Package_Info,
             File_Text,
@@ -1001,11 +987,12 @@ package body Docgen.Work_On_Source is
       Options          : All_Options;
       Level            : in out Natural)
    is
+      File      : aliased Virtual_File := Source_File;
       Data_Line : Doc_Info_Body_Line :=
         (Doc_Info_Options => Options,
          Doc_LI_Unit      => LI_Unit,
          Body_Text        => File_Text,
-         Body_File        => Source_File,
+         Body_File        => File'Unchecked_Access,
          Doc_File_List    => Source_File_List);
 
    begin
@@ -1025,7 +1012,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix       : String;
       Level            : in out Natural)
    is
-      Source_Filename  : Virtual_File;
+      Source_Filename  : Virtual_File_Access;
       Package_Name     : String_Access;
       Source_File_Node : Type_Source_File_List.List_Node;
       Index_File       : File_Descriptor;
@@ -1049,7 +1036,7 @@ package body Docgen.Work_On_Source is
          One_Ready := 0;
          Source_File_Node := TSFL.First (Source_File_List);
          Data             := TSFL.Data_Ref (Source_File_Node);
-         Source_Filename  := Data.File_Name;
+         Source_Filename  := Data.File_Name'Access;
 
          --  if first body file, take the next one, which must be spec file
          if not Is_Spec_File (Kernel, Source_Filename) then
@@ -1074,7 +1061,7 @@ package body Docgen.Work_On_Source is
          for J in 1 .. Type_Source_File_List.Length (Source_File_List) -
            One_Ready
          loop
-            Source_Filename := Data.File_Name;
+            Source_Filename := Data.File_Name'Access;
 
             --  Add unit, but only if from a spec file
             if Is_Spec_File (Kernel, Source_Filename) then
@@ -1126,7 +1113,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix                    : String)
    is
       use TEL;
-      Source_Filename       : Virtual_File;
+      Source_Filename       : Virtual_File_Access;
       Subprogram_Index_Node : Type_Entity_List.List_Node;
       Index_File            : File_Descriptor;
       Data_Public           : Doc_Info_Public_Index;
@@ -1258,7 +1245,7 @@ package body Docgen.Work_On_Source is
       Data_End        : Doc_Info_End_Of_Index;
       Doc_File_Name   : constant String := "index_type";
       Entity          : TEL.Data_Access;
-      File            : VFS.Virtual_File;
+      File            : VFS.Virtual_File_Access;
 
    begin
       Index_File :=
@@ -1742,7 +1729,7 @@ package body Docgen.Work_On_Source is
       Source_Filename   : VFS.Virtual_File;
       Package_Name      : String;
       Package_File      : Virtual_File;
-      Process_Body_File : Boolean;
+      LI_Unit           : LI_File_Ptr;
       Options           : All_Options)
    is
       use TEL;
@@ -1750,22 +1737,20 @@ package body Docgen.Work_On_Source is
       Declar_Line : Natural := First_File_Line;
       Entity_Node : Type_Entity_List.List_Node;
       Entity      : TEL.Data_Access;
+      File        : aliased Virtual_File := Package_File;
       Data_Header : Doc_Info_Header :=
         (Doc_Info_Options => Options,
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          Header_Package   => new String'(Package_Name),
-         Header_File      => Package_File,
+         Header_File      => File'Unchecked_Access,
          Header_Line      => Declar_Line,
-         Header_Link      => Process_Body_File);
-      --           Header_Link      =>
-      --           (Process_Body_File and
-      --           (Other_File_Name (Kernel, Source_Filename) /= No_File));
+         Header_Link      => Options.Process_Body_Files
+           and then
+             Get_Other_File_Of (LI_Unit, Source_Filename).all /= No_File);
       --  If a file x.ads (resp. x.adb) has no file x.adb (resp. x.ads),
       --  no link is made
 
-      --  ??? currently, there's a bug with Other_File_Name. When it will be
-      --  fixed, those commented lines will avoid making a link.
    begin
       if not TEL.Is_Empty (Entity_List) then
          Entity_Node := TEL.First (Entity_List);
@@ -1796,7 +1781,7 @@ package body Docgen.Work_On_Source is
       end if;
 
       Data_Header.Header_Line := Declar_Line;
-      Doc_Header (B, Kernel, Doc_File, Data_Header);
+      Doc_Header (B, Kernel, LI_Unit, Doc_File, Data_Header);
       Free (Data_Header.Header_Package);
    end Process_Header;
 
@@ -1971,17 +1956,21 @@ package body Docgen.Work_On_Source is
          --  the "+1" avoids the first ASCII.LF in New_Line
          Free (New_Line);
 
-         Data_With :=
-           (Doc_Info_Options => Options,
-            Doc_LI_Unit      => LI_Unit,
-            Doc_File_List    => Source_File_List,
-            With_Header_Line => First_With_Line,
-            With_File        => Source_Filename,
-            With_Header      => Final);
-         Doc_With (B, Kernel, Doc_File, List_Ref_In_File, Data_With, Level);
+         declare
+            File : aliased Virtual_File := Source_Filename;
+         begin
+            Data_With :=
+              (Doc_Info_Options => Options,
+               Doc_LI_Unit      => LI_Unit,
+               Doc_File_List    => Source_File_List,
+               With_Header_Line => First_With_Line,
+               With_File        => File'Unchecked_Access,
+               With_Header      => Final);
+            Doc_With (B, Kernel, Doc_File, List_Ref_In_File, Data_With, Level);
 
-         Free (Data_Subtitle.Subtitle_Name);
-         Free (Data_Subtitle.Subtitle_Package);
+            Free (Data_Subtitle.Subtitle_Name);
+            Free (Data_Subtitle.Subtitle_Package);
+         end;
       end if;
 
       Free (Final);
@@ -2099,8 +2088,7 @@ package body Docgen.Work_On_Source is
       Doc_Suffix                : String;
       Private_Entity            : Boolean;
       Display_Private           : in out Boolean;
-      Level                     : in out Natural;
-      Process_Body_File         : Boolean)
+      Level                     : in out Natural)
    is
       use TEL;
       Entity_Node             : Type_Entity_List.List_Node;
@@ -2210,7 +2198,6 @@ package body Docgen.Work_On_Source is
                         List_Ref_In_File,
                         Tagged_Types_List,
                         Private_Tagged_Types_List,
-                        Process_Body_File,
                         LI_Unit,
                         Options,
                         Doc_Directory,
@@ -2993,7 +2980,6 @@ package body Docgen.Work_On_Source is
       Entity_List        : in out Type_Entity_List.List;
       List_Ref_In_File   : in out List_Reference_In_File.List;
       Source_Filename    : VFS.Virtual_File;
-      Process_Body_File  : Boolean;
       Package_Name       : String;
       Package_Info       : Entity_Information;
       File_Text          : GNAT.OS_Lib.String_Access;
@@ -3079,7 +3065,7 @@ package body Docgen.Work_On_Source is
                      Doc_LI_Unit       => LI_Unit,
                      Doc_File_List     => Source_File_List,
                      Entry_Entity      => Entity.all,
-                     Entry_Link        => Process_Body_File,
+                     Entry_Link        => Options.Process_Body_Files,
                      Entry_Header      => Header,
                      Entry_Header_Line => Get_Declaration_Line_Of
                        (Entity.Entity));
@@ -3188,7 +3174,6 @@ package body Docgen.Work_On_Source is
       Entity_List        : in out Type_Entity_List.List;
       List_Ref_In_File   : in out List_Reference_In_File.List;
       Source_Filename    : VFS.Virtual_File;
-      Process_Body_File  : Boolean;
       Package_Name       : String;
       Package_Info       : Entity_Information;
       File_Text          : GNAT.OS_Lib.String_Access;
@@ -3267,7 +3252,7 @@ package body Docgen.Work_On_Source is
                      Doc_LI_Unit            => LI_Unit,
                      Doc_File_List          => Source_File_List,
                      Subprogram_Entity      => Entity.all,
-                     Subprogram_Link        => Process_Body_File,
+                     Subprogram_Link        => Options.Process_Body_Files,
                      Subprogram_List        => Entity_List,
                      Subprogram_Header      => Header,
                      Subprogram_Header_Line =>
