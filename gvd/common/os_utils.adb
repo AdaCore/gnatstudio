@@ -24,6 +24,7 @@ pragma Warnings (Off);
 with GNAT.Expect.TTY;      use GNAT.Expect.TTY;
 pragma Warnings (On);
 with Interfaces.C.Strings; use Interfaces.C.Strings;
+with String_Utils;         use String_Utils;
 
 package body OS_Utils is
 
@@ -47,7 +48,7 @@ package body OS_Utils is
 
       if S.all /= "" then
          declare
-            Val : constant String := S.all;
+            Val : constant String := Name_As_Directory (S.all);
          begin
             Free (S);
             return Val;
@@ -59,7 +60,7 @@ package body OS_Utils is
 
       if S.all /= "" then
          declare
-            Val : constant String := S.all;
+            Val : constant String := Name_As_Directory (S.all);
          begin
             Free (S);
             return Val;
@@ -67,7 +68,7 @@ package body OS_Utils is
       end if;
 
       Free (S);
-      return "/tmp";
+      return "/tmp/";
    end Get_Tmp_Dir;
 
    -------------------------
