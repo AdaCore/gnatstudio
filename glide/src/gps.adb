@@ -319,7 +319,7 @@ begin
          Load_Project (GPS.Kernel, Normalize_Pathname (Argument (J)));
          Project_Loaded := True;
       else
-         Open_File_Editor (GPS.Kernel, Normalize_Pathname (Argument (J)));
+         Open_File_Editor (GPS.Kernel, Argument (J));
          File_Opened := True;
       end if;
    end loop;
