@@ -38,7 +38,8 @@ package VCS.Unknown_VCS is
 
    procedure Get_Status
      (Rep         : access Unknown_VCS_Record;
-      Filenames   : String_List.List);
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False);
 
    function Local_Get_Status
      (Rep       : access Unknown_VCS_Record;

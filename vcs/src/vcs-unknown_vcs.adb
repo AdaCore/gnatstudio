@@ -88,9 +88,10 @@ package body VCS.Unknown_VCS is
 
    procedure Get_Status
      (Rep         : access Unknown_VCS_Record;
-      Filenames   : String_List.List)
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False)
    is
-      pragma Unreferenced (Rep);
+      pragma Unreferenced (Rep, Clear_Logs);
    begin
       if Filenames /= Null_List then
          Error (Head (Filenames));

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001 - 2002                    --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -131,7 +131,8 @@ package VCS is
 
    procedure Get_Status
      (Rep         : access VCS_Record;
-      Filenames   :        String_List.List) is abstract;
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False) is abstract;
    --  Return the status of a list of files.
    --  The returned File_Status_Record is to be filled only with information
    --  that have the corresponding parameter set to True, all the other fields
@@ -148,6 +149,9 @@ package VCS is
    --  The user must free Filenames.
    --  ??? The behaviour is undetermined when the Filenames list
    --  has duplicate entries, or empty/invalid entries.
+   --
+   --  If Clear_Logs is False, then the implementation should clear the
+   --  logs corresponding to files that are Up_To_Date.
 
    function Local_Get_Status
      (Rep         : access VCS_Record;

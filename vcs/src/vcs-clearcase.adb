@@ -286,7 +286,8 @@ package body VCS.ClearCase is
 
    procedure Get_Status
      (Rep         : access ClearCase_Record;
-      Filenames   : String_List.List)
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False)
    is
    begin
       --  ??? To be improved.
@@ -295,8 +296,7 @@ package body VCS.ClearCase is
         (Rep.Kernel,
          Local_Get_Status (Rep, Filenames),
          VCS_ClearCase_Module_ID.ClearCase_Reference,
-         True,
-         True);
+         True, True, Clear_Logs);
    end Get_Status;
 
    ----------------------

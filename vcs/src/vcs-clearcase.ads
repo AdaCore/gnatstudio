@@ -34,7 +34,8 @@ package VCS.ClearCase is
 
    procedure Get_Status
      (Rep         : access ClearCase_Record;
-      Filenames   : String_List.List);
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False);
 
    function Local_Get_Status
      (Rep       : access ClearCase_Record;

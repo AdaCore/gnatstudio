@@ -65,7 +65,8 @@ package body VCS.CVS is
 
    procedure Real_Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List);
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False);
    --  Just like Get_Status, but assuming that Filenames is not empty
    --  and that all files in Filenames are from the same directory.
 
@@ -276,8 +277,13 @@ package body VCS.CVS is
 
       Output         : List_Node := First (List);
       New_Dir        : constant String := String_List.Head (Head);
+      Head_Node      : List_Node := String_List.First (Head);
+      Clear_Logs     : Boolean;
 
    begin
+      Head_Node := String_List.Next (Head_Node);
+      Clear_Logs := Boolean'Value (Data (Head_Node));
+
       while Output /= Null_Node loop
          declare
             Line       : constant String := Data (Output);
@@ -427,7 +433,8 @@ package body VCS.CVS is
       end if;
 
       Display_File_Status
-        (Kernel, Result, VCS_CVS_Module_ID.CVS_Reference, True, True, True);
+        (Kernel, Result, VCS_CVS_Module_ID.CVS_Reference, True, True,
+         Clear_Logs);
       File_Status_List.Free (Result);
 
       return True;
@@ -439,7 +446,8 @@ package body VCS.CVS is
 
    procedure Real_Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List)
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False)
    is
       use String_List;
 
@@ -451,6 +459,7 @@ package body VCS.CVS is
 
    begin
       Append (Command_Head, Dir_Name (Data (Files)));
+      Append (Command_Head, Boolean'Image (Clear_Logs));
 
       --  Generate arguments list.
       --  If the first argument is a directory, do a simple query for
@@ -620,7 +629,8 @@ package body VCS.CVS is
 
    procedure Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List)
+      Filenames   : String_List.List;
+      Clear_Logs  : Boolean := False)
    is
       use String_List;
 
@@ -649,7 +659,7 @@ package body VCS.CVS is
             --  At this point, Current_List should not be empty and
             --  all its element are files from Current_Directory.
 
-            Real_Get_Status (Rep, Current_List);
+            Real_Get_Status (Rep, Current_List, Clear_Logs);
             Free (Current_List);
          end;
       end loop;
