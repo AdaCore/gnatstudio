@@ -73,6 +73,7 @@ begin
    Set_Submenu (Main_Debug_Window.File1, Main_Debug_Window.File1_Menu);
 
    Gtk_New (Main_Debug_Window.Open_Program1, -"Open Program...");
+   Set_Sensitive (Main_Debug_Window.Open_Program1, False);
    Gtk_New (The_Accel_Group);
    Add_Accel_Group (Main_Debug_Window, The_Accel_Group);
    Add_Accelerator (Main_Debug_Window.Open_Program1, "activate",
@@ -82,6 +83,7 @@ begin
       Widget_Callback.To_Marshaller (On_Open_Program1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Program1);
    Set_Right_Justify (Main_Debug_Window.Open_Program1, False);
+
 
    Gtk_New (Main_Debug_Window.Open_Debugger1, -"Open Debugger...");
    Widget_Callback.Object_Connect

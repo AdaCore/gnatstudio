@@ -33,11 +33,24 @@ with Gtk.Notebook; use Gtk.Notebook;
 with Odd.Status_Bar; use Odd.Status_Bar;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
+with Open_Session_Pkg; use Open_Session_Pkg;
 with Odd.Dialogs; use Odd.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Types;
+with Odd.Histories;
+with Debugger;
+
 package Main_Debug_Window_Pkg is
+
+   type History_Data is record
+      Mode         : Debugger.Command_Type;
+      Debugger_Num : Natural;
+      Command      : String_Access;
+   end record;
+
+   package String_History is new Odd.Histories (History_Data);
+   use String_History;
 
    type Cache_List_Record is private;
    type Cache_List is access Cache_List_Record;
@@ -50,6 +63,7 @@ package Main_Debug_Window_Pkg is
 
       Odd_Preferences     : Odd_Preferences_Access;
       Open_Program        : Open_Program_Access;
+      Open_Session        : Open_Session_Access;
       Task_Dialog         : Task_Dialog_Access;
       Backtrace_Dialog    : Backtrace_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
@@ -59,6 +73,9 @@ package Main_Debug_Window_Pkg is
 
       File_Caches         : Cache_List;
       --  List of data cached for each of the file of the application
+
+      Command_History : String_History.History_List;
+      --  The history of commands for the current session.
 
       -------------------------
 
