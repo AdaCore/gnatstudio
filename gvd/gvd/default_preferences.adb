@@ -22,7 +22,7 @@ with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glib.Xml_Int;             use Glib.Xml_Int;
+with Glib.XML;
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Font;                 use Gdk.Font;
 with Gtk.Adjustment;           use Gtk.Adjustment;
@@ -55,6 +55,12 @@ with Odd_Intl;                 use Odd_Intl;
 
 package body Default_Preferences is
 
+   Fallback_Font : constant String := "Sans 10";
+   --  The name of a font that should always work on all systems. This is used
+   --  in case the user-specified fonts can not be found.
+
+   use XML_Font;
+
    procedure Free is new Unchecked_Deallocation
      (Preference_Information, Preference_Information_Access);
 
@@ -64,6 +70,9 @@ package body Default_Preferences is
    end record;
    package Param_Handlers is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Nodes);
+
+   procedure Destroy_Cache (Data : in out XML_Cache);
+   --  Free the memory occupied by Data
 
    function Find_Node_By_Name
      (Preferences : Node_Ptr; Name : String)
@@ -131,6 +140,18 @@ package body Default_Preferences is
    procedure Select_Font (Ent : access Gtk_Widget_Record'Class);
    --  Open a dialog to select a new font
 
+   -------------------
+   -- Destroy_Cache --
+   -------------------
+
+   procedure Destroy_Cache (Data : in out XML_Cache) is
+   begin
+      if Data.Descr /= null then
+         Free (Data.Descr);
+         Data.Descr := null;
+      end if;
+   end Destroy_Cache;
+
    -----------
    -- Value --
    -----------
@@ -155,7 +176,7 @@ package body Default_Preferences is
          Manager.Default := N;
       end loop;
 
-      Free (Manager.Preferences);
+      Free (Manager.Preferences, Destroy_Cache'Access);
    end Destroy;
 
    -------------
@@ -395,10 +416,38 @@ package body Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description
    is
-      function Internal is new Generic_Get_Pref
-        (Param_Spec_Font, Param_Spec (Pref), String, Gdk.Font.Get_Type, Value);
+      use type Gdk.Gdk_Font;
+      N : Node_Ptr := Find_Node_By_Spec (Manager, Param_Spec (Pref));
+      Desc : Pango_Font_Description;
    begin
-      return From_String (Internal (Manager, Pref));
+      if N /= null
+        and then N.Value.all /= ""
+      then
+         if N.Specific_Data.Descr /= null then
+            return N.Specific_Data.Descr;
+         else
+            Desc := From_String (N.Value.all);
+         end if;
+      else
+         Desc := From_String (Default (Pref));
+      end if;
+
+      --  Check that the font exists, or use a default, to avoid crashes
+      if From_Description (Desc) = null then
+         Free (Desc);
+         Desc := From_String (Fallback_Font);
+      end if;
+
+      --  We must have a node to store the cached font description and avoid
+      --  memory leaks.
+      if N = null then
+         Set_Pref (Manager, Pspec_Name (Param_Spec (Pref)), To_String (Desc));
+         N := Find_Node_By_Spec (Manager, Param_Spec (Pref));
+      end if;
+
+      N.Specific_Data.Descr := Desc;
+
+      return Desc;
    end Get_Pref;
 
    --------------
@@ -409,11 +458,12 @@ package body Default_Preferences is
       N : Node_Ptr := Node;
    begin
       if N = null then
-         N     := new Glib.Xml_Int.Node;
+         N     := new XML_Font.Node;
          N.Tag := new String' (Name);
          Add_Child (Top, N);
       else
-         Glib.Xml_Int.Free (Node.Value);
+         Destroy_Cache (Node.Specific_Data);
+         XML_Font.Free (Node.Value);
       end if;
 
       N.Value := new String' (Value);
@@ -476,7 +526,7 @@ package body Default_Preferences is
    procedure Load_Preferences
      (Manager : access  Preferences_Manager_Record; File_Name : String) is
    begin
-      Free (Manager.Preferences);
+      Free (Manager.Preferences, Destroy_Cache'Access);
       if Is_Regular_File (File_Name) then
          Manager.Preferences := Parse (File_Name);
       end if;

@@ -32,7 +32,7 @@ with Glib.Properties.Creation;
 with Basic_Types;
 with Gdk.Color;
 with Pango.Font;
-with Glib.Xml_Int;
+with Glib.XML;
 with Gtk.Widget;
 with Gtk.Window;
 
@@ -105,7 +105,8 @@ package Default_Preferences is
       Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Gint;
    --  Get the value for a preference. The default value is returned if the
    --  user hasn't explicitely overriden it.
-   --  Colors and fonts have already been allocated when they are returned.
+   --  Colors have already been allocated when they are returned.
+   --  The Font_Description must not be freed by the caller
    --  For enumeration, it returns the 'Pos of the enumeration value.
 
    procedure Set_Pref
@@ -176,9 +177,14 @@ private
       Next       : Preference_Information_Access;
    end record;
 
+   type XML_Cache is record
+      Descr      : Pango.Font.Pango_Font_Description;
+   end record;
+   package XML_Font is new Glib.XML (XML_Cache);
+
    type Preferences_Manager_Record is tagged record
       Default     : Preference_Information_Access;
-      Preferences : Glib.Xml_Int.Node_Ptr;
+      Preferences : XML_Font.Node_Ptr;
    end record;
 
 end Default_Preferences;
