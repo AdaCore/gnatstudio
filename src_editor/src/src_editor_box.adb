@@ -360,8 +360,8 @@ package body Src_Editor_Box is
       Pop_State (Kernel_Handle (Kernel));
 
    exception
-      when E : Unsupported_Language =>
-         Insert (Kernel, Exception_Message (E),
+      when Unsupported_Language =>
+         Insert (Kernel, "No parser are registered for this language",
                  Mode => Glide_Kernel.Console.Error);
          Pop_State (Kernel_Handle (Kernel));
 
