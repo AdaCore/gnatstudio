@@ -104,6 +104,7 @@ package body Src_Editor_Box is
 
    procedure Initialize_Box
      (Box    : access Source_Editor_Box_Record;
+      Kernel : Glide_Kernel.Kernel_Handle;
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access);
    --  Perform the initialization of the given editor box. If Source_Buffer
@@ -191,6 +192,7 @@ package body Src_Editor_Box is
 
    procedure Initialize_Box
      (Box    : access Source_Editor_Box_Record;
+      Kernel : Glide_Kernel.Kernel_Handle;
       Source : Source_Buffer := null;
       Lang   : Language.Language_Access)
    is
@@ -200,6 +202,7 @@ package body Src_Editor_Box is
       Scrolling_Area : Gtk_Scrolled_Window;
       Label          : Gtk_Label;
    begin
+      Box.Kernel := Kernel;
       Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
 
       Gtk_New (Frame);
@@ -236,7 +239,8 @@ package body Src_Editor_Box is
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
       Pack_Start (Hbox, Frame, Expand => True, Fill => True);
-      Gtk_New (Box.Filename_Label);
+      --  Gtk_New (Box.Filename_Label);
+      --  ??? Commented out as not used for the moment.
 
       --  Line number area...
       Gtk_New (Frame);
@@ -278,11 +282,12 @@ package body Src_Editor_Box is
    -------------
 
    procedure Gtk_New
-     (Box  : out Source_Editor_Box;
-      Lang : Language.Language_Access := null) is
+     (Box    : out Source_Editor_Box;
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Lang   : Language.Language_Access := null) is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize (Box, Lang);
+      Initialize (Box, Kernel, Lang);
    end Gtk_New;
 
    ----------------
@@ -290,10 +295,11 @@ package body Src_Editor_Box is
    ----------------
 
    procedure Initialize
-     (Box  : access Source_Editor_Box_Record;
-      Lang : Language.Language_Access) is
+     (Box    : access Source_Editor_Box_Record;
+      Kernel : Glide_Kernel.Kernel_Handle;
+      Lang   : Language.Language_Access) is
    begin
-      Initialize_Box (Box, Lang => Lang);
+      Initialize_Box (Box, Kernel, Lang => Lang);
    end Initialize;
 
    ---------------------
@@ -305,7 +311,8 @@ package body Src_Editor_Box is
       Source : access Source_Editor_Box_Record) is
    begin
       Box := new Source_Editor_Box_Record;
-      Initialize_Box (Box, Source.Source_Buffer, Get_Language (Source));
+      Initialize_Box
+        (Box, Source.Kernel, Source.Source_Buffer, Get_Language (Source));
    end Create_New_View;
 
    -------------
