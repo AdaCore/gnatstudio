@@ -618,9 +618,13 @@ package body Src_Contexts is
             Was_Partial);
 
          --  Start from the beginning if necessary
+         --  ??? May want to display a dialog instead of wrapping automatically
+
          if Result = null then
             Raise_Console (Kernel);
-            Insert (Kernel, -"No more matches, starting from beginning");
+            Insert
+              (Kernel, -"No more matches, starting from beginning",
+               Mode => Error);
 
             Lexical_State := Statements;
             Scan_Buffer
