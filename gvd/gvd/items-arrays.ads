@@ -183,5 +183,9 @@ private
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
    procedure Reset_Recursive (Item : access Array_Type);
+   procedure Set_Visibility
+     (Item      : in out Array_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False);
 
 end Items.Arrays;

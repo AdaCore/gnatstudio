@@ -158,10 +158,13 @@ package Items is
    function Get_Y (Item : Generic_Type) return Glib.Gint;
    --  Return the coordinates in the pixmap where the item was displayed.
 
-   procedure Set_Visibility (Item    : in out Generic_Type;
-                             Visible : Boolean);
+   procedure Set_Visibility
+     (Item      : in out Generic_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False);
    --  Whether the item should be visible or not.
-   --  This function also applies to components of complex items.
+   --  This function also applies to components of complex items if Recursive
+   --  is True.
 
    function Get_Visibility (Item : Generic_Type) return Boolean;
    --  Return the visibility state of an item.

@@ -175,6 +175,10 @@ private
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
    procedure Reset_Recursive (Item : access Record_Type);
+   procedure Set_Visibility
+     (Item      : in out Record_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False);
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
      with null record;

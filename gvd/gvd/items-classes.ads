@@ -104,5 +104,9 @@ private
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
    procedure Reset_Recursive (Item : access Class_Type);
+   procedure Set_Visibility
+     (Item      : in out Class_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False);
 
 end Items.Classes;

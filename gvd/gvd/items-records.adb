@@ -806,4 +806,31 @@ package body Items.Records is
       return null;
    end Replace;
 
+   --------------------
+   -- Set_Visibility --
+   --------------------
+
+   procedure Set_Visibility
+     (Item      : in out Record_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False) is
+   begin
+      Item.Visible := Visible;
+
+      if Recursive then
+         for F in Item.Fields'Range loop
+            if Item.Fields (F).Value /= null then
+               Set_Visibility (Item.Fields (F).Value.all, Visible, Recursive);
+            end if;
+
+            if Item.Fields (F).Variant_Part /= null then
+               for V in Item.Fields (F).Variant_Part'Range loop
+                  Set_Visibility
+                    (Item.Fields (F).Variant_Part (V).all, Visible, Recursive);
+               end loop;
+            end if;
+         end loop;
+      end if;
+   end Set_Visibility;
+
 end Items.Records;

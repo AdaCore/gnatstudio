@@ -890,4 +890,21 @@ package body Items.Arrays is
       return Generic_Type_Access (Replace_With);
    end Replace;
 
+   --------------------
+   -- Set_Visibility --
+   --------------------
+
+   procedure Set_Visibility
+     (Item      : in out Array_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False) is
+   begin
+      Item.Visible := Visible;
+      if Recursive and then Item.Values /= null then
+         for V in Item.Values'Range loop
+            Set_Visibility (Item.Values (V).Value.all, Visible, Recursive);
+         end loop;
+      end if;
+   end Set_Visibility;
+
 end Items.Arrays;

@@ -403,4 +403,23 @@ package body Items.Classes is
       end if;
    end Propagate_Width;
 
+   --------------------
+   -- Set_Visibility --
+   --------------------
+
+   procedure Set_Visibility
+     (Item      : in out Class_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False)
+   is
+   begin
+      Item.Visible := Visible;
+      if Recursive then
+         for A in Item.Ancestors'Range loop
+            Set_Visibility (Item.Ancestors (A).all, Visible, Recursive);
+         end loop;
+         Set_Visibility (Item.Child.all, Visible, Recursive);
+      end if;
+   end Set_Visibility;
+
 end Items.Classes;

@@ -108,8 +108,10 @@ package body Items is
    -- Set_Visibility --
    --------------------
 
-   procedure Set_Visibility (Item    : in out Generic_Type;
-                             Visible : Boolean)
+   procedure Set_Visibility
+     (Item      : in out Generic_Type;
+      Visible   : Boolean;
+      Recursive : Boolean := False)
    is
    begin
       Item.Visible := Visible;
