@@ -1076,9 +1076,11 @@ package body C_Analyzer is
                Indent := Indent + Indent_Level;
 
             when Tok_Struct | Tok_Class | Tok_Enum | Tok_Union =>
-               Push (Tokens, Temp);
-               Do_Indent (Index, Indent);
-               Indent := Indent + Indent_Level;
+               if Paren_Level = 0 then
+                  Push (Tokens, Temp);
+                  Do_Indent (Index, Indent);
+                  Indent := Indent + Indent_Level;
+               end if;
 
             when Tok_Typedef =>
                if Constructs /= null then
