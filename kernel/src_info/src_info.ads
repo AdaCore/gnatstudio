@@ -609,7 +609,8 @@ private
       Column : Natural;
    end record;
    --  A location in a source file.
-   --  Column might be null for generic instantiations.
+   --  Column might be null for generic instantiations, or if the LI handler
+   --  doesn't know how to handle the column.
    --  Note that a tabulation character in the source file should count as 8
    --  columns in this structure.
 
@@ -941,9 +942,12 @@ private
    procedure Compute_Sources
      (Iterator     : in out LI_Handler_Iterator'Class;
       Project_View : Prj.Project_Id;
-      Recursive    : Boolean);
+      Recursive    : Boolean;
+      Language     : Types.Name_Id);
    --  Compute the list of source files that will need to be analyzed by the
-   --  iterator. Elements from this list can be read using Current_Source_File.
+   --  iterator. Elements from this list can be read using
+   --  Current_Source_File. Only the files belonging to Language will be
+   --  parsed.
    --
    --  This subprogram is provided as a help when writting your own iterators.
 

@@ -804,13 +804,17 @@ package body Src_Info is
    procedure Compute_Sources
      (Iterator     : in out LI_Handler_Iterator'Class;
       Project_View : Prj.Project_Id;
-      Recursive    : Boolean) is
+      Recursive    : Boolean;
+      Language     : Types.Name_Id)
+   is
+      use type Basic_Types.String_Access;
    begin
       Basic_Types.Free (Iterator.Source_Files);
       Iterator.Source_Files := Get_Source_Files
-        (Project_View => Project_View,
-         Recursive    => Recursive,
-         Full_Path    => True);
+        (Project_View      => Project_View,
+         Recursive         => Recursive,
+         Full_Path         => True,
+         Matching_Language => Language);
       Iterator.Current_File := Iterator.Source_Files'First;
    end Compute_Sources;
 
