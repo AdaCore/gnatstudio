@@ -71,6 +71,7 @@ with GUI_Utils;                   use GUI_Utils;
 with Remote_Connections;
 with System;
 
+with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 --  Modules registered by GPS.

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2004 - 2005                     --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Actions; use Glide_Kernel.Actions;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
+with Glide_Kernel.MDI;     use Glide_Kernel.MDI;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
@@ -329,7 +330,7 @@ package body Action_Editor is
       Initialize
         (Dialog,
          Title  => -"Editing action """ & Action_Name & """",
-         Parent => Get_Current_Window (Kernel),
+         Parent => Get_Current_Window (Kernel_Handle (Kernel)),
          Flags  => Destroy_With_Parent);
       Set_Default_Size (Dialog, 800, 600);
 
@@ -698,7 +699,7 @@ package body Action_Editor is
       Editor.Kernel := Kernel_Handle (Kernel);
       Initialize (Editor,
                   Title  => -"Actions editor",
-                  Parent => Get_Current_Window (Kernel),
+                  Parent => Get_Current_Window (Kernel_Handle (Kernel)),
                   Flags  => Destroy_With_Parent);
       Set_Default_Size (Editor, 640, 400);
 

@@ -54,6 +54,7 @@ with String_Utils;             use String_Utils;
 with String_List_Utils;        use String_List_Utils;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
+with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glib.Properties.Creation; use Glib.Properties.Creation;

@@ -71,6 +71,7 @@ with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Result_View;        use Glide_Result_View;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;

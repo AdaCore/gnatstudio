@@ -30,6 +30,7 @@ with Gtk.Widget;  use Gtk.Widget;
 with VFS;         use VFS;
 with Traces;      use Traces;
 with Glide_Intl;  use Glide_Intl;
+with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 with GNAT.OS_Lib;    use GNAT.OS_Lib;

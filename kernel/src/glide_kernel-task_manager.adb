@@ -28,6 +28,7 @@ with GVD.Status_Bar;           use GVD.Status_Bar;
 
 with Glide_Main_Window;        use Glide_Main_Window;
 
+with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;

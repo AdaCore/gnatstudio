@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,6 +32,7 @@ with Glide_Intl;                   use Glide_Intl;
 
 with Glide_Kernel;                 use Glide_Kernel;
 with Glide_Kernel.Actions;         use Glide_Kernel.Actions;
+with Glide_Kernel.MDI;             use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
 with Glide_Kernel.Hooks;           use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;

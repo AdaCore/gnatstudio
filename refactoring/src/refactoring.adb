@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -37,6 +37,8 @@ with Gtk.Tree_Store;        use Gtk.Tree_Store;
 with Gtk.Tree_View;         use Gtk.Tree_View;
 with Gtk.Tree_View_Column;  use Gtk.Tree_View_Column;
 with Gtk.Widget;            use Gtk.Widget;
+
+with Glide_Kernel.MDI;      use Glide_Kernel.MDI;
 
 package body Refactoring is
 

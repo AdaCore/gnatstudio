@@ -40,6 +40,7 @@ with Osint;                     use Osint;
 with Projects;                  use Projects;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Result_View;         use Glide_Result_View;

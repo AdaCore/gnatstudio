@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,6 +27,7 @@ with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Interactive_Consoles;     use Interactive_Consoles;
 with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
@@ -398,7 +399,7 @@ package body Glide_Kernel.Console is
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
             if Module /= null then
-               Child := Glide_Kernel.Put
+               Child := Put
                  (Kernel,
                   Child               => Console,
                   Position            => Position_Bottom,

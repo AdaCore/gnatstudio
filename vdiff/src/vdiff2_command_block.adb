@@ -17,8 +17,10 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Glide_Kernel.Contexts;             use Glide_Kernel.Contexts;
+with Glide_Kernel.MDI;                  use Glide_Kernel.MDI;
 with Glide_Kernel.Scripts;              use Glide_Kernel.Scripts;
 with Glide_Intl;                        use Glide_Intl;
 with Basic_Types;                       use Basic_Types;

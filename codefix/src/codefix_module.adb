@@ -37,6 +37,7 @@ with Gdk.Pixbuf;             use Gdk.Pixbuf;
 with Glib.Object;              use Glib.Object;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
+with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;

@@ -54,6 +54,7 @@ with VFS;                      use VFS;
 with Basic_Types;              use Basic_Types;
 with Generic_List;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
+with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;

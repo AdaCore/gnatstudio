@@ -24,6 +24,7 @@ with Glib;                     use Glib;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
+with Glide_Kernel.MDI;         use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;

@@ -47,6 +47,7 @@ with Entities;                      use Entities;
 with Entities.Debug;                use Entities.Debug;
 with Entities.Queries;              use Entities.Queries;
 with Glide_Kernel;                  use Glide_Kernel;
+with Glide_Kernel.MDI;              use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;          use Glide_Kernel.Modules;
 with Glide_Kernel.Console;          use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;         use Glide_Kernel.Contexts;

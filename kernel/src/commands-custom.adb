@@ -21,6 +21,7 @@
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
+with Glide_Kernel.MDI;     use Glide_Kernel.MDI;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;

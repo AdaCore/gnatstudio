@@ -63,6 +63,7 @@ with Config;                      use Config;
 with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
+with Glide_Kernel.MDI;            use Glide_Kernel.MDI;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with VFS;                         use VFS;

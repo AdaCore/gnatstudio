@@ -33,6 +33,7 @@ with Glib.Object;               use Glib.Object;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.MDI;          use Glide_Kernel.MDI;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
