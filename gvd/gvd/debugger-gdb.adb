@@ -1498,38 +1498,20 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
-   is
-      Cmd         : Basic_Types.String_Access;
-      Actual_Mode : Command_Type := Mode;
-
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is
    begin
       if Temporary then
-         Cmd := new String'("tbreak ");
+         Send (Debugger, "tbreak " & Name, Mode => Mode);
       else
-         Cmd := new String'("break ");
+         Send (Debugger, "break " & Name, Mode => Mode);
       end if;
 
-      if Mode in Visible_Command then
-         Actual_Mode := Hidden;
-      end if;
-
-      declare
-         Full_Cmd : constant String := Cmd.all & Name;
-         S        : constant String :=
-           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
-      begin
-         if Mode in Visible_Command then
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               Full_Cmd & ASCII.LF & S & ASCII.LF,
-               Set_Position => True);
-            Display_Prompt (Debugger);
-         end if;
-      end;
-
-      Free (Cmd);
-      return Get_Last_Breakpoint_Id (Debugger);
+      --  ??? Cannot compute the breakpoint id now, since the command is sent
+      --  asynchronously.
+      --  Need to send the command asynchronousely, since gdb may pop up a
+      --  question if there are multiple possible choices.
+      return 0;
    end Break_Subprogram;
 
    ------------------
