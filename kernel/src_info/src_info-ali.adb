@@ -305,7 +305,7 @@ package body Src_Info.ALI is
       end loop;
 
       --  If we reach this point, the character is illegal.
-      Trace (Me, "Char_To_E_KindL Invalid character " & C);
+      Trace (Me, "Char_To_E_Kind: Invalid character");
       raise ALI_Internal_Error;
    end Char_To_E_Kind;
 
@@ -322,7 +322,7 @@ package body Src_Info.ALI is
       end loop;
 
       --  If we reach this point, the character is illegal.
-      Trace (Me, "Char_To_R_Kind: Invalid character " & C);
+      Trace (Me, "Char_To_R_Kind: Invalid character");
       raise ALI_Internal_Error;
    end Char_To_R_Kind;
 
@@ -1234,9 +1234,10 @@ package body Src_Info.ALI is
       Decl      : E_Declaration renames Decl_Info.Declaration;
 
       Current_Sfile : Source_File;
-      Ent : constant String := To_Lower (Get_String (Xref_Ent.Entity));
-      Col : Natural := Natural (Xref_Ent.Col);
-      Is_Operator : constant Boolean := Ent (Ent'First) = '"';
+      Ent           : constant String :=
+        To_Lower (Get_String (Xref_Ent.Entity));
+      Col           : Natural := Natural (Xref_Ent.Col);
+      Is_Operator   : constant Boolean := Ent (Ent'First) = '"';
 
    begin
       if Is_Operator then
@@ -1277,7 +1278,7 @@ package body Src_Info.ALI is
          --  Search the declaration of the renamed entity, in the entities
          --  defined in the current LI file.
          Sect_Loop :
-         for Sect in  Xref_Section.First .. Xref_Section.Last loop
+         for Sect in Xref_Section.First .. Xref_Section.Last loop
             if Xref_Section.Table (Sect).File_Num in
               New_ALI.First_Sdep .. New_ALI.Last_Sdep
             then
@@ -1331,9 +1332,9 @@ package body Src_Info.ALI is
             end if;
 
             E_Ref.Location :=
-               (File   => Copy (Current_Sfile),
-                Line   => Positive (Current_Xref.Line),
-                Column => Natural (Current_Xref.Col));
+              (File   => Copy (Current_Sfile),
+               Line   => Positive (Current_Xref.Line),
+               Column => Natural (Current_Xref.Col));
 
             --  Insert the new Xref in the list of references
             --  (except if it is an end reference, in which case it is stored
@@ -1353,7 +1354,10 @@ package body Src_Info.ALI is
             else
                --  Insert at the end, so that the result of
                --  "Find_All_References" is properly sorted.
+               --  ??? Could optimize by keeping a pointer to the last element
+
                List := Decl_Info.References;
+
                while List.Next /= null loop
                   List := List.Next;
                end loop;
