@@ -39,6 +39,7 @@
           <choice>xscale-wrs-vxworks-gnatmake</choice>
           <choice>powerpc-elf-lynxos-gnatmake</choice>
           <choice>powerpc-xcoff-lynxos-gnatmake</choice>
+          <choice>erc32-elf-gnatmake</choice>
           <choice>gnaampmake</choice>
           <string />
       </specialized_index>
@@ -68,6 +69,7 @@
        <choice>xscale-wrs-vxworks-gnatls</choice>
        <choice>powerpc-elf-lynxos-gnatls</choice>
        <choice>powerpc-xcoff-lynxos-gnatls</choice>
+       <choice>erc32-elf-gnatls</choice>
        <choice>gnaampls</choice>
        <string />
    </project_attribute>
@@ -92,6 +94,7 @@
        <choice>xscale-wrs-vxworks-gdb</choice>
        <choice>powerpc-elf-lynxos-gdb</choice>
        <choice>powerpc-xcoff-lynxos-gdb</choice>
+       <choice>erc32-elf-gdb</choice>
        <string />
    </project_attribute>
        
