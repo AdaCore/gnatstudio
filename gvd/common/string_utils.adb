@@ -504,13 +504,14 @@ package body String_Utils is
       CR_Found : out Boolean) is
    begin
       CR_Found := False;
-      Last := Text'Last;
+      Last := Text'First - 1;
 
-      for J in Text'Range loop
-         if Text (J) = ASCII.CR then
+      for Index in Text'Range loop
+         if Text (Index) = ASCII.CR then
             CR_Found := True;
-            Last := Last - 1;
-            Text (J .. Last) := Text (J + 1 .. Last + 1);
+         else
+            Last := Last + 1;
+            Text (Last) := Text (Index);
          end if;
       end loop;
    end Strip_CR;
