@@ -78,6 +78,10 @@ package Src_Info.Queries is
    --  The file is set to VFS.No_File if this is a predefined entity, although
    --  it is better to check with Is_Predefined_Entity
 
+   function Is_Declaration_File_Of
+     (Entity : Entity_Information; File : VFS.Virtual_File) return Boolean;
+   --  Return True if Entity is declared in File.
+
    function Get_Kind (Entity : Entity_Information) return E_Kind;
    --  Return the kind of the entity. See glide_kernel.ads on how to convert
    --  this to a string.
