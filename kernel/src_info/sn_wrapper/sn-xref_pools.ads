@@ -2,6 +2,7 @@
 --  Generates unique filename for given source file name.
 
 with HTables;
+with GNAT.OS_Lib;
 
 package SN.Xref_Pools is
 
@@ -36,7 +37,7 @@ package SN.Xref_Pools is
    function Xref_Filename_For
      (Source_Filename : String;
       Directory       : String;
-      Pool            : Xref_Pool) return String_Access;
+      Pool            : Xref_Pool) return GNAT.OS_Lib.String_Access;
    --  Returns unique xref file name associated with specified source file
    --  name. It does the following steps:
    --
@@ -50,6 +51,9 @@ package SN.Xref_Pools is
    --
    --  Raises Xref_File_Error if it could not create file with generated
    --  file name in specified directory.
+   --
+   --  Directory must end with a directory separator.
+   --  The returned string must not be freed by the user.
 
    procedure Free_Filename_For
      (Source_Filename : String;
@@ -80,8 +84,8 @@ private
    type Xref_Elmt_Ptr is access all Xref_Elmt_Record;
 
    type Xref_Elmt_Record is record
-      Source_Filename   : String_Access;
-      Xref_Filename     : String_Access;
+      Source_Filename   : GNAT.OS_Lib.String_Access;
+      Xref_Filename     : GNAT.OS_Lib.String_Access;
       Valid             : Boolean := False;
       Next              : Xref_Elmt_Ptr;
    end record;
@@ -90,9 +94,9 @@ private
 
    procedure Set_Next (Xref : Xref_Elmt_Ptr; Next : Xref_Elmt_Ptr);
    function Next (Xref : Xref_Elmt_Ptr) return Xref_Elmt_Ptr;
-   function Get_Key (Xref : Xref_Elmt_Ptr) return String_Access;
-   function Hash (Key : String_Access) return Hash_Range;
-   function Equal (K1, K2 : String_Access) return Boolean;
+   function Get_Key (Xref : Xref_Elmt_Ptr) return GNAT.OS_Lib.String_Access;
+   function Hash (Key : GNAT.OS_Lib.String_Access) return Hash_Range;
+   function Equal (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean;
 
    package STable is new HTables.Static_HTable
      (Header_Num  => Hash_Range,
@@ -101,7 +105,7 @@ private
       Null_Ptr    => Null_Xref_Elmt,
       Set_Next    => Set_Next,
       Next        => Next,
-      Key         => String_Access,
+      Key         => GNAT.OS_Lib.String_Access,
       Get_Key     => Get_Key,
       Hash        => Hash,
       Equal       => Equal);

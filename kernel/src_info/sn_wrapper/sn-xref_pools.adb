@@ -212,18 +212,14 @@ package body SN.Xref_Pools is
      (Source_Filename : String;
       N               : Integer) return String
    is
-      Name  : String := Base_Name (Source_Filename);
+      Name  : constant String := Base_Name (Source_Filename);
    begin
       --  generates xref file name based on specified source file name and
       --  counter
       if N = 0 then
          return Name & Xref_Suffix;
       else
-         declare
-            S : String := Integer'Image (N);
-         begin
-            return Name & S (S'First + 1 .. S'Last) & Xref_Suffix;
-         end;
+         return Name & Image (N) & Xref_Suffix;
       end if;
    end Generate_Filename;
 
@@ -252,8 +248,8 @@ package body SN.Xref_Pools is
       Data.Source_Filename := Key;
       loop
          declare
-            Name        : String := Generate_Filename (Source_Filename, N);
-            Full_Name   : String := Name_As_Directory (Directory) & Name;
+            Name : constant String := Generate_Filename (Source_Filename, N);
+            Full_Name   : constant String := Directory & Name;
             FD          : File_Descriptor;
          begin
             if not Is_Regular_File (Full_Name) then
@@ -278,7 +274,6 @@ package body SN.Xref_Pools is
       STable.Set (Pool.all, Data);
 
       return Data.Xref_Filename;
-
    end Xref_Filename_For;
 
    -----------------------

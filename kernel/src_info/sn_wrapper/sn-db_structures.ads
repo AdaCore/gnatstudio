@@ -1,6 +1,7 @@
 with SN; use SN;
 with DB_API; use DB_API;
 with Simple_Vector;
+with GNAT.OS_Lib;
 
 package SN.DB_Structures is
 
@@ -27,7 +28,7 @@ package SN.DB_Structures is
          Position : Point;
          Referred_Argument_Types : Segment_Vector.Node_Access;
          Caller_Argument_Types : Segment_Vector.Node_Access;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Referred-By
 
@@ -40,7 +41,7 @@ package SN.DB_Structures is
          Attributes : Integer;
          Template_Parameters : Segment;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Classes
 
@@ -52,7 +53,7 @@ package SN.DB_Structures is
          End_Position : Point;
          Attributes : Integer;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Common blocks
 
@@ -65,7 +66,7 @@ package SN.DB_Structures is
          Attributes : Integer;
          Declared_Type : Segment;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Constants
 
@@ -78,7 +79,7 @@ package SN.DB_Structures is
          End_Position : Point;
          Attributes : Integer;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Common value
 
@@ -90,7 +91,7 @@ package SN.DB_Structures is
          End_Position : Point;
          Attributes : Integer;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Enumerations
 
@@ -102,7 +103,7 @@ package SN.DB_Structures is
          End_Position : Point;
          Attributes : Integer;
          Enumeration_Name : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Enumeration constants
 
@@ -112,7 +113,7 @@ package SN.DB_Structures is
          Group : Segment;
          Parsing_Time : Segment;
          Highlight_File : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Project File
 
@@ -127,7 +128,7 @@ package SN.DB_Structures is
          Arg_Types : Segment_Vector.Node_Access;
          Arg_Names : Segment_Vector.Node_Access;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Function declarations
 
@@ -142,7 +143,7 @@ package SN.DB_Structures is
          Highlight_Start_Position : Point;
          Highlight_End_Position : Point;
          Types_Of_Arguments : Segment_Vector.Node_Access;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Symbols of files
 
@@ -157,7 +158,7 @@ package SN.DB_Structures is
          Arg_Types : Segment_Vector.Node_Access;
          Arg_Names : Segment_Vector.Node_Access;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Friends
 
@@ -172,7 +173,7 @@ package SN.DB_Structures is
          Arg_Types : Segment_Vector.Node_Access;
          Arg_Names : Segment_Vector.Node_Access;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Function implementations
 
@@ -185,7 +186,7 @@ package SN.DB_Structures is
          Attributes : Integer;
          Value_Type : Segment;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Global variables
 
@@ -198,7 +199,7 @@ package SN.DB_Structures is
          End_Position : Point;
          Attributes : Integer;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Inheritances
 
@@ -207,7 +208,7 @@ package SN.DB_Structures is
          Included_File : Segment;
          Included_From_File : Segment;
          Included_At_Position : Point;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Includes
 
@@ -221,7 +222,7 @@ package SN.DB_Structures is
          Attributes : Integer;
          Value_Type : Segment;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Instance variables
 
@@ -235,7 +236,7 @@ package SN.DB_Structures is
          Attributes : Integer;
          Value_Type : Segment;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Local variables
 
@@ -247,7 +248,7 @@ package SN.DB_Structures is
          End_Position : Point;
          Attributes : Integer;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Macros
 
@@ -263,7 +264,7 @@ package SN.DB_Structures is
          Arg_Types : Segment_Vector.Node_Access;
          Arg_Names : Segment_Vector.Node_Access;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Method definitions
 
@@ -279,7 +280,7 @@ package SN.DB_Structures is
          Arg_Types : Segment_Vector.Node_Access;
          Arg_Names : Segment_Vector.Node_Access;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Method implementations
 
@@ -290,7 +291,7 @@ package SN.DB_Structures is
          Class : Segment;
          Method_Or_Function : Segment;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Remarks
 
@@ -301,7 +302,7 @@ package SN.DB_Structures is
          Position : Point;
          Attributes : Integer;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Subroutines
 
@@ -314,7 +315,7 @@ package SN.DB_Structures is
          Attributes : Integer;
          Original : Segment;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Typedefs
 
@@ -331,7 +332,7 @@ package SN.DB_Structures is
          Position : Point;
          Caller_Argument_Types : Segment_Vector.Node_Access;
          Referred_Argument_Types : Segment_Vector.Node_Access;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  References-To
 
@@ -343,7 +344,7 @@ package SN.DB_Structures is
          End_Position : Point;
          Attributes : Integer;
          Comments : Segment;
-         Buffer : String_Access;
+         Buffer : GNAT.OS_Lib.String_Access;
       end record;
    --  Unions
 

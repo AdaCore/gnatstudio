@@ -1,4 +1,25 @@
-with SN.Symbols; use SN.Symbols;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2002                            --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with SN.Symbols;  use SN.Symbols;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body SN.DB_Structures is
 
@@ -18,10 +39,11 @@ package body SN.DB_Structures is
 --  function Make_Array_From_String (input : String) return Arg_String_Array;
    --  Parses string of tokens separated by comma
 
-   procedure Make_Vector_From_String (Input : in String;
-                          Buffer : in String_Access;
-                          Buffer_Pos : in out Integer;
-                          Vector_Root : out Segment_Vector.Node_Access);
+   procedure Make_Vector_From_String
+     (Input       : String;
+      Buffer      : GNAT.OS_Lib.String_Access;
+      Buffer_Pos  : in out Integer;
+      Vector_Root : out Segment_Vector.Node_Access);
    --  Parses string of tokens separated by comma and stores parsed
    --  values in vector
 
@@ -1116,155 +1138,157 @@ package body SN.DB_Structures is
       return tab;
    end Parse_Pair;
 
-   -------------------------------------------------------------------------
+   ----------
+   -- Free --
+   ----------
 
    procedure Free (target : in out BY_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out CL_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out COM_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out CON_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out COV_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out E_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out EC_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out F_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FD_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FIL_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FR_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out FU_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out GV_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out IN_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out IU_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out IV_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out LV_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out MA_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out MD_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out MI_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out REM_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out SU_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out T_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out TO_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
    procedure Free (target : in out UN_Table) is
    begin
-      Free_String (target.Buffer);
+      Free (target.Buffer);
       Number_Of_Allocated_Buffers := Number_Of_Allocated_Buffers - 1;
    end Free;
 
@@ -1364,10 +1388,16 @@ package body SN.DB_Structures is
 --       return acc_big;
 --    end Make_Array_From_String;
 
-   procedure Make_Vector_From_String (Input : in String;
-                          Buffer : in String_Access;
-                          Buffer_Pos : in out Integer;
-                          Vector_Root : out Segment_Vector.Node_Access) is
+   -----------------------------
+   -- Make_Vector_From_String --
+   -----------------------------
+
+   procedure Make_Vector_From_String
+     (Input       : in String;
+      Buffer      : GNAT.OS_Lib.String_Access;
+      Buffer_Pos  : in out Integer;
+      Vector_Root : out Segment_Vector.Node_Access)
+   is
       n, pos : Integer;
       tmp_seg : Segment;
    begin

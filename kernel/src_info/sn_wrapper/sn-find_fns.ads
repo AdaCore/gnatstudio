@@ -1,7 +1,6 @@
-with SN.DB_Structures,
-     DB_API;
-use  SN.DB_Structures,
-     DB_API;
+with SN.DB_Structures, DB_API;
+with GNAT.OS_Lib;
+use  SN.DB_Structures, DB_API;
 
 package SN.Find_Fns is
       Not_Found           : exception;
@@ -11,12 +10,16 @@ package SN.Find_Fns is
       Invalid_Symbol_Type : exception;
       --  raised when a bad symbol passed to To_String function
 
-      procedure To_String (Sym_Type : in Symbol_Type; Str : in String_Access;
-          Where : in out Integer);
+      procedure To_String
+        (Sym_Type : Symbol_Type;
+         Str      : GNAT.OS_Lib.String_Access;
+         Where    : in out Integer);
       --  converts symbol type into string
 
-      procedure To_String (P : in Point; Str : in String_Access;
-                           Where : in out Integer);
+      procedure To_String
+        (P     : Point;
+         Str   : GNAT.OS_Lib.String_Access;
+         Where : in out Integer);
       --  converts Point to 000000.000 string
 
       --  Find functions for Referred by table
