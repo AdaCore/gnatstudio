@@ -41,9 +41,9 @@ package body Glide_Kernel.Help is
    Html_Module_Id : Module_ID;
    Html_Module_Name : constant String := "Help_Viewer";
 
-   --  ??? Preferences
    Default_Width  : constant := 400;
    Default_Height : constant := 400;
+   --  <preferences>
 
    type Help_Browser_Record is new Gtk_Scrolled_Window_Record with record
       Current_Help_File : GNAT.OS_Lib.String_Access;

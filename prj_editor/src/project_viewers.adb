@@ -81,9 +81,9 @@ package body Project_Viewers is
    Prj_Editor_Module_ID : Module_ID;
    --  Id for the project editor module
 
-   --  ??? Preferences
    Default_Project_Width  : constant := 400;
    Default_Project_Height : constant := 400;
+   --  <preferences>
 
    Project_Switches_Name : constant String := "Project Switches";
 

@@ -50,9 +50,9 @@ package body Src_Editor_Module is
    Src_Editor_Module_Id : Module_ID;
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
-   --  ??? Preferences
    Default_Editor_Width  : constant := 400;
    Default_Editor_Height : constant := 400;
+   --  <preferences>
 
    Me : Debug_Handle := Create ("Src_Editor_Module");
 

@@ -49,14 +49,14 @@ with Layouts;                   use Layouts;
 package body Browsers.Canvas is
 
    Selected_Link_Color : constant String := "#FF0000";
-   --  <preference> Color to use links whose ends are selected.
+   --  <preferences> Color to use links whose ends are selected.
 
    Selected_Item_Color : constant String := "#888888";
-   --  <preference> Color to use to draw the selected item.
+   --  <preferences> Color to use to draw the selected item.
 
    Parent_Linked_Item_Color : constant String := "#AAAAAA";
    Child_Linked_Item_Color : constant String := "#DDDDDD";
-   --  <preference> Color to use to draw the items that are linked to the
+   --  <preferences> Color to use to draw the items that are linked to the
    --  selected item.
 
    Zoom_Levels : constant array (Positive range <>) of Guint :=

@@ -45,12 +45,12 @@ package body Src_Editor_Buffer is
    -----------------
    -- Preferences --
    -----------------
-   --  ??? Should go in the preferences.
 
    Default_Keyword_Color   : constant String := "";
    Default_Comment_Color   : constant String := "blue";
    Default_String_Color    : constant String := "brown";
    Default_Character_Color : constant String := "brown";
+   --  <preferences>
 
    Default_Keyword_Font_Attr : constant Font_Attributes :=
      To_Font_Attributes (Weight => Pango.Enums.Pango_Weight_Bold);
@@ -61,10 +61,9 @@ package body Src_Editor_Buffer is
      To_Font_Attributes;
 
    Default_HL_Line_Color   : constant String := "green";
-
    Default_HL_Region_Color : constant String := "cyan";
-
    Automatic_Indentation   : constant Boolean := True;
+   --  <preferences>
 
    --------------------
    -- Signal Support --
