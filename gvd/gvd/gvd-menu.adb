@@ -1118,7 +1118,7 @@ package body GVD.Menu is
    begin
       Button := Message_Dialog
         ("GVD " & Version & " (" & Source_Date & ")" &
-         (-" built for ") & GVD.Target & ASCII.LF &
+         (-" hosted on ") & GVD.Target & ASCII.LF &
          (-"The GNU Visual Debugger") & ASCII.LF & ASCII.LF &
          (-"by Emmanuel Briot, Arnaud Charlet & Nicolas Setton") &
            ASCII.LF & ASCII.LF & "(c) 2000, 2001 ACT-Europe",

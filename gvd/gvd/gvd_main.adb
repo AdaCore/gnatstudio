@@ -183,7 +183,7 @@ procedure GVD_Main is
       Output_Line (Win, "# Bug detected in GVD");
       Output_Line (Win, "# Version: " & GVD.Version);
       Output_Line (Win, "# Date: " & GVD.Source_Date);
-      Output_Line (Win, "# Target: " & GVD.Target);
+      Output_Line (Win, "# Host: " & GVD.Target);
       Output_Line (Win, Exception_Information (E));
 
       Button := Message_Dialog
@@ -396,11 +396,11 @@ begin
                when 'v' =>
                   if GVD.Can_Output then
                      Put_Line ("GVD version " & GVD.Version &
-                       " (" & GVD.Source_Date & ") for " & GVD.Target);
+                       " (" & GVD.Source_Date & ") hosted on " & GVD.Target);
                   else
                      Button := Message_Dialog
                        ("GVD version " & GVD.Version &
-                        " (" & GVD.Source_Date & ") for " & GVD.Target,
+                        " (" & GVD.Source_Date & ") hosted on " & GVD.Target,
                         Information, Button_OK,
                         Title => -"Version",
                         Justification => Justify_Left);
