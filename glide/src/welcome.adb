@@ -44,7 +44,7 @@ with Glide_Intl;                use Glide_Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Project_Viewers;           use Project_Viewers;
-with Creation_Wizard;           use Creation_Wizard;
+with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
 with VFS;                       use VFS;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -298,23 +298,8 @@ package body Welcome is
      (Screen : access Gtk_Widget_Record'Class) return Boolean
    is
       S      : constant Welcome_Screen := Welcome_Screen (Screen);
-      Wiz    : Creation_Wizard.Prj_Wizard;
-      Result : Boolean := False;
-
    begin
-      Gtk_New (Wiz, S.Kernel);
-
-      declare
-         Name : constant String := Run (Wiz);
-      begin
-         if Name /= "" then
-            Load_Project (S.Kernel, Name);
-            Result := True;
-         end if;
-      end;
-
-      Destroy (Wiz);
-      return Result;
+      return Create_New_Project (S.Kernel);
 
    exception
       when E : others =>
