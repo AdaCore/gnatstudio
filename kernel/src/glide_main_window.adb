@@ -21,8 +21,6 @@
 with Glib.Values;
 with Pango.Font;                use Pango.Font;
 with Gdk.Event;                 use Gdk.Event;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Glib.Error;                use Glib.Error;
 with Glib.Object;               use Glib.Object;
 with Glide_Kernel;              use Glide_Kernel;
@@ -286,8 +284,7 @@ package body Glide_Main_Window is
       Bind_Default_Key
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
          Action          => "Move to next window",
-         Default_Key    => GDK_Tab,
-         Default_Mod    => Mod1_Mask);
+         Default_Key    => "alt-Tab");
 
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
@@ -300,8 +297,7 @@ package body Glide_Main_Window is
       Bind_Default_Key
         (Handler        => Get_Key_Handler (Main_Window.Kernel),
          Action         => "Move to previous window",
-         Default_Key    => GDK_ISO_Left_Tab,
-         Default_Mod    => Mod1_Mask + Shift_Mask);
+         Default_Key    => "alt-shift-ISO_Left_Tab");
    end Register_Keys;
 
    -------------
