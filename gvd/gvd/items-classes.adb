@@ -182,7 +182,7 @@ package body Items.Classes is
       Context : Drawing_Context;
       X, Y    : Glib.Gint := 0)
    is
-      Current_Y : Gint := Y;
+      Current_Y : Gint := Y + Item.Border_Spacing;
    begin
       Item.X := X;
       Item.Y := Y;
@@ -227,8 +227,7 @@ package body Items.Classes is
             --  itself a Class_Type and will already draw it.
             Paint (Item.Ancestors (A).all, Context, X + Item.Border_Spacing,
                    Current_Y);
-            Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing
-              + 3;
+            Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
 
             if Item.Ancestors (A).Child /= null
               and then Num_Fields (Item.Ancestors (A).Child.all) > 0
@@ -238,12 +237,13 @@ package body Items.Classes is
                   Cap_Style => Cap_Not_Last, Join_Style => Join_Miter);
                Draw_Line (Context.Pixmap, Context.GC,
                           X + Item.Border_Spacing,
-                          Current_Y - 2,
+                          Current_Y,
                           X + Item.Width - Item.Border_Spacing,
-                          Current_Y - 2);
+                          Current_Y);
                Set_Line_Attributes
                  (Context.GC, Line_Width => 0, Line_Style => Line_Solid,
                   Cap_Style => Cap_Not_Last, Join_Style => Join_Miter);
+               Current_Y := Current_Y + 2;
             end if;
 
          end if;
@@ -294,10 +294,17 @@ package body Items.Classes is
                Size_Request (Item.Ancestors (A).all, Context, Hide_Big_Items);
 
                --  If we don't have an null record
-               --  3 is for the size reserved for the separation line.
                if Item.Ancestors (A).Height /= 0 then
                   Total_Height := Total_Height + Item.Ancestors (A).Height +
-                    Line_Spacing + 3;
+                    Line_Spacing;
+
+                  --  Keep some space for the dashed line
+                  if Item.Ancestors (A).Child /= null
+                    and then Num_Fields (Item.Ancestors (A).Child.all) > 0
+                  then
+                     Total_Height := Total_Height + 2;
+                  end if;
+
                end if;
 
                Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
