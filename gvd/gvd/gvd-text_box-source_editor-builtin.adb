@@ -474,9 +474,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Set_State (Mitem, State_Insensitive);
       end if;
 
-      Gtk_New (Mitem, Label => -"View memory at address &" & Entity);
+      Gtk_New (Mitem, Label => -"View memory at &" & Entity);
       Append (Source.Editor.Contextual_Menu, Mitem);
-      Data.Auto_Refresh := True;
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (View_Into_Memory'Access),
