@@ -26,12 +26,11 @@ package body Language.Cpp is
 
    Keywords_List : constant Pattern_Matcher := Compile
      ("^(" & C_Keywords_Regexp &
-      "|abstract|c(atch|lass)|f(inal|riend)|interface|namespace|"
-      & "p(r(ivate|otected)|ublic)|synchronized|t(emplate|ry)|virtual"
+      "|a(bstract|sm)|bool|c(atch|lass|onst_cast)|d(elete|ynamic_cast)|" &
+      "explicit|f(alse|inal|riend)|interface|mutable|n(amespace|ew)|operator" &
+      "p(r(ivate|otected)|ublic)|reinterpret_cast|s(tatic_cast|ynchronized)|" &
+      "t(emplate|h(is|hrow)|r(ue|y)|ype(id|name))|using|virtual|wchar_t"
       & ")\W");
-   --  Adds: ("class" "interface" "namespace" "try" "catch" "friend"
-   --  "virtual" "template" "public" "protected" "private" "abstract"
-   --  "synchronized" "final"
 
    Classes_RE : aliased Pattern_Matcher :=
      Compile ("^\s*(class|struct)\s+([\w_]+)\s*(:[^{]+)?\{", Multiple_Lines);
@@ -118,6 +117,32 @@ package body Language.Cpp is
               Quote_Character               => '\',
               Constant_Character            => ''');
    end Get_Language_Context;
+
+   --------------------
+   -- Parse_Entities --
+   --------------------
+
+   procedure Parse_Entities
+     (Lang     : access Cpp_Language;
+      Buffer   : String;
+      Callback : Entity_Callback)
+   is
+      pragma Unreferenced (Lang);
+      pragma Suppress (All_Checks);
+      --  See comment in Language.C.Parse_Entities
+
+      Ignored     : Natural;
+      No_Contents : Boolean;
+
+   begin
+      Analyze_C_Source
+        (Buffer        => Buffer,
+         Indent        => Ignored,
+         Indent_Params => Default_Indent_Parameters,
+         No_Contents   => No_Contents,
+         Callback      => Callback,
+         Enable_Cpp    => True);
+   end Parse_Entities;
 
    -----------------------
    -- Is_Case_Sensitive --

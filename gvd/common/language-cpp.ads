@@ -49,6 +49,15 @@ package Language.Cpp is
    function Explorer_Regexps
      (Lang : access Cpp_Language) return Explorer_Categories;
 
+   ----------------------
+   -- Source Analyzing --
+   ----------------------
+
+   procedure Parse_Entities
+     (Lang     : access Cpp_Language;
+      Buffer   : String;
+      Callback : Entity_Callback);
+
 private
    type Cpp_Language is new Language.C.C_Language with null record;
 
