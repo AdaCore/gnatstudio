@@ -130,8 +130,8 @@ Here is a detailed list of the menu items that can be found in the menu bar:
 
 @ifset GPS
 @c -------------------------------------------------------------------- 
-@node The Debugger Menu
-@section The Debugger Menu
+@node The Debug Menu
+@section The Debug Menu
 @c --------------------------------------------------------------------
 
 The @code{Debug} entry in the menu bar provides operations that act at a
@@ -243,9 +243,9 @@ For more information, see @ref{Debugging a program remotely}.
 Add the symbols from a given file/module. This corresponds to the gdb
 command @i{add-symbol-file}. This menu is particularly useful under VxWorks
 targets, where the modules can be loaded independently of the debugger.
-For instance, if a module is loaded on the target while GVD is running,
-it is absolutely required to use this functionality, otherwise GVD/gdb won't 
-be able to work properly.
+For instance, if a module is independently loaded on the target (e.g. using
+windshell), it is absolutely required to use this functionality,
+otherwise the debugger won't work properly.
 
 @ifclear GPS
    @item Open Core Dump...
@@ -290,7 +290,7 @@ By default, this will save all the sub-sessions ran in GVD since start up.
 @c GPS
 
    @item Attach...
-Instead of starting a program to debug, you can instead attach GVD to an
+Instead of starting a program to debug, you can instead attach to an
 already running process. To do so, you need to specify the process id
 of the process you want to debug. The process might be busy in an
 infinite loop, or waiting for event processing. Note that as for
@@ -299,7 +299,7 @@ process.
 
    @item Detach
 Detaches the currently debugged process from the underlying debugger.
-This means that the executable will continue to run outside GVD. You can use
+This means that the executable will continue to run independently. You can use
 the @i{Attach To Process} menu later to re-attach to this process.
 
 @ifset GPS
@@ -609,7 +609,7 @@ the following commands. Failing to do so will result in blank windows.
       before using this command, otherwise a blank list will be displayed.
 
       When supported by the underlying debugger, clicking on a thread will
-      change the context (variables, call stack, source file) displayed by GVD,
+      change the context (variables, call stack, source file) displayed,
       allowing you to inspect the stack of the selected thread.
 
    @item Tasks
@@ -905,11 +905,11 @@ Enables or disables alignment of items on the grid.
 
      @item Detect Aliases
 Enables or disables the automatic detection of shared data structures.
-Each time you display an item or dereference a pointer, GVD looks at all
-the items already displayed on the canvas and compares their addresses with
-the address of the new item to display. If they match,
+Each time you display an item or dereference a pointer, all
+the items already displayed on the canvas are considered and their addresses
+are compared with the address of the new item to display. If they match,
 (for example if you tried to dereference a pointer to an object already
-displayed).  GVD will not create a new item, but it will create a link to it.
+displayed) instead of creating a new item a link will be displayed.
 
      @item Zoom in
 Redisplays the items in the data window with a bigger font
@@ -993,16 +993,15 @@ convey special meanings.
 This icon indicates that the debugger could not get the value of the
 variable or expression. There might be several reasons, for instance the
 variable is currently not in scope (and thus does not exist), or it might
-have been optimized away by the compiler. In all cases, GVD will update the
-display as soon as the variable becomes visible again.
+have been optimized away by the compiler. In all cases, the display will be
+updated as soon as the variable becomes visible again.
 
 @item package icon
 This icon indicates that part of a complex structure is currently hidden.
 Manipulating huge items in the data window (for instance if the variable
 is an array of hundreds of complex elements) might not be very helpful. As a
-result, GVD gives you the opportunity to shrink part of the value to
-save some screen space and make it easier to visualize the interesting parts
-of these variables.
+result, you can shrink part of the value to save some screen space and make it
+easier to visualize the interesting parts of these variables.
 
 Double-clicking on this icon will expand the hidden part, and clicking on
 any sub-rectangle in the display of the variable will hide that part and
@@ -1110,9 +1109,8 @@ The memory window allows you to display the contents of memory by
 specifying either an address, or a variable name.
 
 To display memory contents, enter the address using the C hexadecimal notation:
-0xabcd,
-or else the name of a variable, e.g foo, in the @i{Location} text entry. In the
-latter case, GVD will compute its address automatically. Then either press
+0xabcd, or the name of a variable, e.g foo, in the @i{Location} text entry.
+In the latter case, its address is computed automatically. Then either press
 @i{Enter} or click on the @i{View} button. This will display the memory with
 the corresponding addresses in the bottom text area.
 
@@ -1331,9 +1329,7 @@ Shows both the source code and the assembly window at the same time.
 @c --------------------------------------------------------------------
 
 It is often convenient to look at the assembly code for the subprogram
-or source line you are currently debugging. If the underlying debugger
-provides this kind of support (gdb does, but not jdb), then GVD will
-fully support that kind of debugging.
+or source line you are currently debugging.
 
 You can access the assembly window by right-clicking in the source
 window, and selecting one of the menus "Show Asm Code" or "Show Asm and
@@ -1355,8 +1351,8 @@ Moving to the next assembly instruction is done through the "Nexti"
 instead (step instruction), this will also jump to the subprogram
 being called.
 
-For efficiency reasons, GVD will only display a small part of the
-assembly code around the current instruction.
+For efficiency reasons, only a small part of the assembly code around the
+current instruction is displayed.
 You can specify in the @ref{preferences menu} how many instructions
 are displayed by default. Also, you can easily
 display the instructions immediately preceding or following the
@@ -1408,8 +1404,8 @@ text interface to some graphical features.
 
 @ifclear GPS
 
-These commands, as documented
-below, enable you to create scripts that automatically change the graphical
+These commands, as documented below, enable you to create scripts that
+automatically change the graphical
 aspect of GVD. They also permit, through the use of the @code{--tty} command
 line option, a better integration of GVD into other integrated environments
 and editors like GNU Emacs.
