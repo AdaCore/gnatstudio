@@ -102,9 +102,20 @@ package body Gtkada.Code_Editors is
       end loop;
 
       Freeze (Editor.Text);
+
+      --  Set the adjustment directly, so that the text is not scrolled
+      --  on the screen (which is too slow for big files)
+      Set_Value
+        (Get_Vadj (Editor.Text),
+         Gfloat (Position.Line + 1) *
+         Gfloat ((Get_Ascent (Editor.Font) + Get_Descent (Editor.Font))));
+      Changed (Get_Vadj (Editor.Text));
+
+      --  Change the cursor position, and highlight the entity.
       Set_Position (Editor.Text, Gint (Pos));
       Select_Region
         (Editor.Text, Gint (Pos), Gint (Last + Pos - Buffer'First));
+
       Thaw (Editor.Text);
    end Jump_To;
 
@@ -235,6 +246,7 @@ package body Gtkada.Code_Editors is
       Pack_Start (Box, Editor.Text, Expand => True, Fill => True);
       Pack_Start (Box, Scrollbar, Expand => False, Fill => False);
       Add2 (Paned, Box);
+      Show_All (Paned);
    end Initialize;
 
    ---------------
