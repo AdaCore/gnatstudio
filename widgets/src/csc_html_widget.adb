@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                     Copyright (C) 2001                            --
+--                     Copyright (C) 2001 - 2002                     --
 --                         ACT-Europe                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -191,6 +191,18 @@ package body Csc_HTML_Widget is
    begin
       return Value (Internal (Get_Object (HTML)));
    end Get_Title;
+
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   function Get_Selection (HTML : access Csc_HTML_Record) return String is
+      function Internal (HTML : System.Address) return chars_ptr;
+      pragma Import (C, Internal, "csc_html_get_selection");
+
+   begin
+      return Value (Internal (Get_Object (HTML)));
+   end Get_Selection;
 
    -------------
    -- Gtk_New --

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                     Copyright (C) 2001                            --
+--                     Copyright (C) 2001 - 2002                     --
 --                         ACT-Europe                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -214,6 +214,12 @@ package Csc_HTML_Widget is
 
    function Get_Title (HTML : access Csc_HTML_Record) return String;
    --  Return the current title associated with HTML.
+
+   ---------------
+   -- Selection --
+   ---------------
+
+   function Get_Selection (HTML : access Csc_HTML_Record) return String;
 
    -------------
    -- Anchors --
