@@ -310,6 +310,15 @@ package body Switches_Editors is
       Language : String) return Boolean;
    --  Return True if Page applies to Language.
 
+   function Get_Parameter
+     (Switch          : String;
+      Separator       : String;
+      List            : Argument_List;
+      Index_In_List   : Natural;
+      Skip_Next_Index : access Boolean) return String;
+   --  Get the parameter for Switch, assuming it was first seen at position
+   --  Index_In_List in List.
+
    -----------------------
    -- Get_Switch_Widget --
    -----------------------
@@ -413,22 +422,61 @@ package body Switches_Editors is
       end loop;
    end Filter_Switch;
 
+   -------------------
+   -- Get_Parameter --
+   -------------------
+
+   function Get_Parameter
+     (Switch          : String;
+      Separator       : String;
+      List            : Argument_List;
+      Index_In_List   : Natural;
+      Skip_Next_Index : access Boolean) return String is
+   begin
+      if Separator'Length > 1
+        and then Separator (Separator'First) = ' '
+      then
+         if Index_In_List < List'Last
+           and then List (Index_In_List + 1) /= null
+         then
+            Skip_Next_Index.all := True;
+            return List (Index_In_List + 1).all;
+         else
+            Skip_Next_Index.all := False;
+            return "";
+         end if;
+
+      else
+         Skip_Next_Index.all := False;
+         return List (Index_In_List)
+           (List (Index_In_List)'First + Switch'Length + Separator'Length
+            .. List (Index_In_List)'Last);
+      end if;
+   end Get_Parameter;
+
    ---------------------------
    -- Set_And_Filter_Switch --
    ---------------------------
 
    procedure Set_And_Filter_Switch
-     (Switch : Switch_Field_Widget; List : in out Argument_List) is
+     (Switch : Switch_Field_Widget; List : in out Argument_List)
+   is
+      Skip_Next_Index : aliased Boolean;
    begin
       for L in List'Range loop
          if List (L) /= null
            and then List (L).all = Switch.Switch
          then
-            if L < List'Last then
-               Set_Text (Switch.Field, List (L + 1).all);
+            Set_Text (Switch.Field,
+                      Get_Parameter
+                        (Switch          => Switch.Switch,
+                         Separator       => Switch.Separator,
+                         List            => List,
+                         Index_In_List   => L,
+                         Skip_Next_Index => Skip_Next_Index'Unchecked_Access));
+
+            if Skip_Next_Index then
                Free (List (L + 1));
-            else
-               Set_Text (Switch.Field, "");
             end if;
             Free (List (L));
          end if;
@@ -491,6 +539,7 @@ package body Switches_Editors is
       Item_Value : Integer := -2;
       Children   : Widget_List.Glist := Get_Children (Get_List (Switch.Combo));
       Item       : Combo_List_Item;
+      Skip_Next_Index : aliased Boolean;
    begin
       for L in List'Range loop
          if List (L) /= null
@@ -498,51 +547,66 @@ package body Switches_Editors is
            and then List (L) (List (L)'First .. List (L)'First
                               + Switch.Switch'Length - 1) = Switch.Switch
          then
-            begin
-               if List (L)'Last <
-                 List (L)'First + Switch.Switch'Length
-               then
-                  Item_Value := -1;
-
-               else
-                  Item_Value := L;
-               end if;
-            exception
-               when Constraint_Error =>
-                  Item_Value := -1;
-            end;
+            if Get_Parameter
+              (Switch          => Switch.Switch,
+               Separator       => Switch.Separator,
+               List            => List,
+               Index_In_List   => L,
+               Skip_Next_Index => Skip_Next_Index'Unchecked_Access) = ""
+            then
+               Item_Value := -1;
+            else
+               Item_Value := L;
+            end if;
             exit;
          end if;
       end loop;
 
-      while Children /= Widget_List.Null_List loop
-         Item := Combo_List_Item (Widget_List.Get_Data (Children));
-
-         if Item_Value = -1 then
+      if Item_Value = -1 then
+         while Children /= Widget_List.Null_List loop
+            Item := Combo_List_Item (Widget_List.Get_Data (Children));
             if Item.Value = Switch.Default_No_Digit then
                Select_Child (Get_List (Switch.Combo), Gtk_Widget (Item));
                exit;
             end if;
+            Children := Widget_List.Next (Children);
+         end loop;
 
-         elsif Item_Value = -2 then
+      elsif Item_Value = -2 then
+         while Children /= Widget_List.Null_List loop
+            Item := Combo_List_Item (Widget_List.Get_Data (Children));
             if Item.Value = Switch.Default_No_Switch then
                Select_Child (Get_List (Switch.Combo), Gtk_Widget (Item));
                exit;
             end if;
+            Children := Widget_List.Next (Children);
+         end loop;
 
-         elsif Item.Value =
-           List (Item_Value) (List (Item_Value)'First + Switch.Switch'Length
-                              .. List (Item_Value)'Last)
-         then
-            Select_Child (Get_List (Switch.Combo), Gtk_Widget (Item));
-            exit;
-         end if;
+      else
+         declare
+            Param : constant String := Get_Parameter
+              (Switch          => Switch.Switch,
+               Separator       => Switch.Separator,
+               List            => List,
+               Index_In_List   => Item_Value,
+               Skip_Next_Index => Skip_Next_Index'Unchecked_Access);
+         begin
+            while Children /= Widget_List.Null_List loop
+               Item := Combo_List_Item (Widget_List.Get_Data (Children));
 
-         Children := Widget_List.Next (Children);
-      end loop;
+               if Item.Value = Param then
+                  Select_Child (Get_List (Switch.Combo), Gtk_Widget (Item));
+                  exit;
+               end if;
 
-      if Item_Value >= 0 then
+               Children := Widget_List.Next (Children);
+            end loop;
+         end;
+
          Free (List (Item_Value));
+         if Skip_Next_Index then
+            Free (List (Item_Value + 1));
+         end if;
       end if;
    end Set_And_Filter_Switch;
 
@@ -585,7 +649,8 @@ package body Switches_Editors is
    procedure Set_And_Filter_Switch
      (Switch : Switch_Spin_Widget; List : in out Argument_List)
    is
-      Value  : Grange_Float := Grange_Float (Switch.Default);
+      Value           : Grange_Float := Grange_Float (Switch.Default);
+      Skip_Next_Index : aliased Boolean;
    begin
       for L in List'Range loop
          if List (L) /= null
@@ -593,11 +658,21 @@ package body Switches_Editors is
            and then List (L) (List (L)'First .. List (L)'First
                               + Switch.Switch'Length - 1) = Switch.Switch
          then
+            declare
+               Param : constant String := Get_Parameter
+                 (Switch          => Switch.Switch,
+                  Separator       => Switch.Separator,
+                  List            => List,
+                  Index_In_List   => L,
+                  Skip_Next_Index => Skip_Next_Index'Unchecked_Access);
             begin
-               Value := Grange_Float'Value
-                 (List (L) (List (L)'First + Switch.Switch'Length
-                            .. List (L)'Last));
+               Value := Grange_Float'Value (Param);
                Free (List (L));
+
+               if Skip_Next_Index then
+                  Free (List (L + 1));
+               end if;
+
                Set_Value (Switch.Spin, Value);
             exception
                when Constraint_Error =>
