@@ -1963,7 +1963,7 @@ package body GVD.Process is
 
       Close (Debugger.Debugger);
       Remove_Page (Notebook, Page_Num (Notebook, Debugger.Process_Mdi));
-      Set_Busy_Cursor (Debugger, False);
+      Set_Busy (Debugger, False);
       Destroy (Debugger);
 
       --  If the last notebook page was destroyed, disable "Open Program"
