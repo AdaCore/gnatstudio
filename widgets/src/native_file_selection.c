@@ -135,11 +135,11 @@ NativeWin32FileSelection
   ofn.lpstrTitle        = title;
 
   if (kind == 1)
-    ofn.Flags =
-      OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_EXPLORER | style_flag;
+    ofn.Flags = OFN_HIDEREADONLY | OFN_EXPLORER | style_flag;
   else
-    /* ??? Would be nice to take advantage of HIDEREADONLY box */
-    ofn.Flags = OFN_HIDEREADONLY | OFN_CREATEPROMPT | OFN_EXPLORER | style_flag;
+    /* ??? Would be nice to take advantage of READONLY box */
+    ofn.Flags =
+      OFN_HIDEREADONLY | OFN_CREATEPROMPT | OFN_EXPLORER | style_flag;
 
   ofn.nFileOffset       = 0;
   ofn.nFileExtension    = 0;
