@@ -66,6 +66,8 @@ package Codefix.File_Io is
    procedure Update (This : File_Interface);
    --  Save the file.
 
+   function Line_Max (This : File_Interface) return Natural;
+
    type Errors_File is new Errors_Interface with private;
    --  This type is an interface to the list of compilation errors that the
    --  compilator has found.
