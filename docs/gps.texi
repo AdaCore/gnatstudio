@@ -81,6 +81,7 @@ Description of the main windows
 Integrated Help
 
 Multiple Document Interface
+* Selecting Windows::
 * Closing Windows::
 * Maximized and Iconified Windows::
 * Docked Windows::
@@ -99,7 +100,6 @@ Source Navigation
 * Support for Cross References::
 * The Navigate Menu::
 * Source Navigation Contextual Menus::
-
 
 Project Handling
 * Description of the Projects::
@@ -121,7 +121,6 @@ Source Browsing
 * Dependency Browser::
 * Entity Browser::
 
-
 Debugging
 
 * The Debug Menu::
@@ -132,17 +131,14 @@ Debugging
 * Using the Source Editor when Debugging::
 * The Debugger Console::
 
-
 Version Control System
 * The VCS Explorer::
 * The VCS Menu::
 * The Version Control Contextual Menu::
 
-
 Working in a Cross Environment
 * Customizing your Projects::
 * Debugger Issues::
-
 
 Customization
 * The Preferences Dialog::
@@ -692,13 +688,16 @@ display.
 @c --------------------------------------------------------------------
 
 @menu
-* Multiple Document Interface::
+* Selecting Windows::
 * Closing Windows::
 * Maximized and Iconified Windows::
 * Docked Windows::
 * Floating Windows::
 * Moving Windows::
 @end menu
+
+
+@c ??? Must document the all-floating mode
 
 @noindent
 All the windows that are part of the GPS environment are under control
@@ -722,10 +721,31 @@ on.
 This section will show the various capacities that GPS provides to
 help you organize your workspace.
 
+@c --------------------------------------------------------------------
+@node Selecting Windows
+@section Selecting Windows
+@cindex window selection
+@c --------------------------------------------------------------------
+
+@noindent
 At any time, there is only one selected window in GPS (the @b{active
 window}). You can select a window either by clicking in its title bar,
 which will then get a different color, or by selecting its name in the
 menu @code{Window}.
+
+Alternatively, windows can be selected with the keyboard. By default,
+the selection key is @key{Alt-Tab}. When you press it, a temporary
+dialog is poped-up on the screen, with the name of the window that
+will be selected when the key is released. If you press the selection
+key multiple times, this will iterate over all the windows currently
+open in GPS.
+
+This interactive selection dialog is associated with a filter,
+displayed below the name of the selected window. If you maintain
+@key{Alt} pressed while pressing other keys than @key{Tab}, this
+will modify the current filter. From then on, pressing
+@key{Alt-Tab} will only iterate through those windows that match
+the filter.
 
 @c --------------------------------------------------------------------
 @node Closing Windows
@@ -3340,6 +3360,12 @@ If False, closing the window associated with a floating item will put the item
 back in the main GPS window, but will not destroy it. If True, the item is
 destroyed.
 
+@item All floating
+@cindex float
+If True, then all the windows will be floating by default, ie be under the
+control of your system (Windows) or your window manager (Unix machines). This
+replaces the MDI.
+
 @item Background color
 @cindex color
 Color to use for the background of the MDI.
@@ -3351,6 +3377,10 @@ Color to use for the title bar of unselected items.
 @item Selected title bar color
 @cindex color
 Color to use for the title bar of selected items.
+
+@item Select Window
+@cindex selection
+The key shortcut used to switch between windows.
 
 @end table
 
