@@ -124,12 +124,6 @@ package body VCS_Module is
       Command : String);
    --  Handler for the command "VCS.annotations_parse".
 
-   procedure VCS_Global_Menu
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context_Access;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  Handle the dynamic global menu.
-
    procedure VCS_Command_Handler_No_Param
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String);
@@ -187,41 +181,6 @@ package body VCS_Module is
          Menu,
          False);
    end VCS_Contextual_Menu;
-
-   ---------------------
-   -- VCS_Global_Menu --
-   ---------------------
-
-   procedure VCS_Global_Menu
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Context : Selection_Context_Access;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
-   is
-      Item : Gtk_Menu_Item;
-   begin
-      Gtk_New_With_Mnemonic (Item, -"_Explorer");
-      Kernel_Callback.Connect
-        (Item, "activate", On_Open_Interface'Access, Kernel_Handle (Kernel));
-      Append (Menu, Item);
-
-      --  ??? Should we use a vcs-specific vocable for the next two items ?
-
-      Gtk_New_With_Mnemonic (Item, -"Update all _projects");
-      Kernel_Callback.Connect
-        (Item, "activate", Update_All'Access, Kernel_Handle (Kernel));
-      Append (Menu, Item);
-
-      Gtk_New_With_Mnemonic (Item, -"_Query status for all projects");
-      Kernel_Callback.Connect
-        (Item, "activate", Query_Status_For_Project'Access,
-         Kernel_Handle (Kernel));
-      Append (Menu, Item);
-
-      Gtk_New (Item);
-      Append (Menu, Item);
-
-      VCS_Contextual_Menu (Kernel_Handle (Kernel), Context, Menu, True);
-   end VCS_Global_Menu;
 
    ------------------
    -- Get_VCS_List --
@@ -344,7 +303,54 @@ package body VCS_Module is
 
       VCS_Action_Context : constant Action_Filter :=
         Action_Filter (Create);
+
+      File_Filter : constant Action_Filter := Lookup_Filter (Kernel, "File");
+      Dir_Filter : constant Action_Filter :=
+        Lookup_Filter (Kernel, "Directory");
+      Prj_Filter : constant Action_Filter :=
+        Lookup_Filter (Kernel, "Project");
+
       Filter : Action_Filter;
+      Mitem  : Gtk_Menu_Item;
+
+      procedure Register_Action_Menu
+        (Action_Label : String;
+         Description  : String;
+         Menu_Label   : String;
+         Filter       : Action_Filter;
+         Callback     : Context_Callback.Marshallers.Void_Marshaller.Handler);
+      --  Registers an action and a menu.
+
+      procedure Register_Action_Menu
+        (Action_Label : String;
+         Description  : String;
+         Menu_Label   : String;
+         Filter       : Action_Filter;
+         Callback     : Context_Callback.Marshallers.Void_Marshaller.Handler)
+      is
+         Parent_String : Basic_Types.String_Access;
+      begin
+         Create (Command, Kernel_Handle (Kernel), Callback);
+         Register_Action (Kernel, Action_Label, Command, Description, Filter);
+
+         if Filter = Dir_Filter then
+            Parent_String := new String'("/" & (-"Directory"));
+         elsif Filter = Prj_Filter then
+            Parent_String := new String'("/" & (-"Project"));
+         else
+            Parent_String := new String'("");
+         end if;
+
+         Register_Menu
+           (Kernel      => Kernel,
+            Parent_Path => "/_" & VCS_Root & Parent_String.all,
+            Text        => Menu_Label,
+            Callback    => null,
+            Action      => Lookup_Action (Kernel, Action_Label));
+
+         Free (Parent_String);
+      end Register_Action_Menu;
+
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
       Register_Module
@@ -451,207 +457,233 @@ package body VCS_Module is
          Static_Method => True,
          Handler      => Annotations_Parse_Handler'Access);
 
-      Register_Dynamic_Menu
-        (Kernel      => Kernel,
-         Parent_Path => "/_" & VCS_Root,
-         Text        => "",
-         Factory     => VCS_Global_Menu'Access,
-         Ref_Item => -"Navigate",
-         Add_Before => False);
-
-      --  Register the VCS actions.
+      --  Register the main VCS menu and the VCS actions.
 
       Register_Filter (Kernel, VCS_Action_Context, "VCS");
 
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Get_Status'Access);
-      Register_Action
-        (Kernel,
-         "Status",
-         Command,
+      Register_Menu
+        (Kernel, "/_" & VCS_Root,
+         Ref_Item => -"Navigate",
+         Add_Before => False);
+
+      Gtk_New_With_Mnemonic (Mitem, -"_Explorer");
+      Kernel_Callback.Connect
+        (Mitem, "activate", On_Open_Interface'Access, Kernel_Handle (Kernel));
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Gtk_New_With_Mnemonic (Mitem, -"Update all _projects");
+      Kernel_Callback.Connect
+        (Mitem, "activate", Update_All'Access, Kernel_Handle (Kernel));
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Gtk_New_With_Mnemonic (Mitem, -"_Query status for all projects");
+      Kernel_Callback.Connect
+        (Mitem, "activate", Query_Status_For_Project'Access,
+         Kernel_Handle (Kernel));
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Status",
          -"Query the status of the current selection",
-         VCS_Action_Context);
+         -"Query status",
+         File_Filter,
+         On_Menu_Get_Status'Access);
 
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Open'Access);
-      Register_Action
-        (Kernel,
-         "Open",
-         Command,
-         -"Open the current file for editing",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Add'Access);
-      Register_Action
-        (Kernel,
-         "Add",
-         Command,
-         -"Add the current file to repository",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Remove'Access);
-      Register_Action
-        (Kernel,
-         "Remove",
-         Command,
-         -"Remove the current file from repository",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Revert'Access);
-      Register_Action
-        (Kernel,
-         "Revert",
-         Command,
-         -"Revert the current file to repository revision",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Annotate'Access);
-      Register_Action
-        (Kernel,
-         "Annotate",
-         Command,
-         -"Annotate the current file",
-         VCS_Action_Context);
-
-      Create
-        (Command, Kernel_Handle (Kernel), On_Menu_Remove_Annotate'Access);
-      Register_Action
-        (Kernel,
-         "Remove Annotate",
-         Command,
-         -"Remove the annotations from current file",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Diff'Access);
-      Register_Action
-        (Kernel,
-         "Diff against head",
-         Command,
-         -"Compare current file with the most recent revision",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Diff_Specific'Access);
-      Register_Action
-        (Kernel,
-         "Diff against revision...",
-         Command,
-         -"Compare current file against a specified revision",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_View_Log'Access);
-      Register_Action
-        (Kernel,
-         "History",
-         Command,
-         -"View the revision history for the current file",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Update'Access);
-      Register_Action
-        (Kernel,
-         "Update",
-         Command,
+      Register_Action_Menu
+        ("Update",
          -"Update to the current repository revision",
-         VCS_Action_Context);
+         -"Update",
+         File_Filter,
+         On_Menu_Update'Access);
 
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Edit_ChangeLog'Access);
-      Register_Action
-        (Kernel,
-         "Edit global ChangeLog",
-         Command,
-         -"Edit the global ChangeLog for the current selection",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Edit_Log'Access);
-      Register_Action
-        (Kernel,
-         "Edit revision log",
-         Command,
-         -"Edit the revision log for the current file",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Commit'Access);
-      Register_Action
-        (Kernel,
-         "Commit",
-         Command,
+      Register_Action_Menu
+        ("Commit",
          -"Commit current file, or file corresponding to the current log",
-         VCS_Action_Context);
+         -"Commit",
+         File_Filter,
+         On_Menu_Commit'Access);
 
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Remove_Log'Access);
-      Register_Action
-        (Kernel,
-         "Remove revision log",
-         Command,
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Open",
+         -"Open the current file for editing",
+         -"Open",
+         File_Filter,
+         On_Menu_Open'Access);
+
+      Register_Action_Menu
+        ("History",
+         -"View the revision history for the current file",
+         -"View entire revision history",
+         File_Filter,
+         On_Menu_View_Log'Access);
+
+      Register_Action_Menu
+        ("History for revision....",
+         -"View the revision history for one revision of the current file",
+         -"View specific revision history",
+         File_Filter,
+         On_Menu_View_Log_Rev'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Diff against head",
+         -"Compare current file with the most recent revision",
+         -"Compare against head revision",
+         File_Filter,
+         On_Menu_Diff'Access);
+
+      Register_Action_Menu
+        ("Diff against revision...",
+         -"Compare current file against a specified revision",
+         -"Compare against specific revision",
+         File_Filter,
+         On_Menu_Diff_Specific'Access);
+
+      Register_Action_Menu
+        ("Diff between two revisions",
+         -"Compare between two specified revisions of current file",
+         -"Compare between two revisions",
+         File_Filter,
+         On_Menu_Diff2'Access);
+
+      Register_Action_Menu
+        ("Diff base against head",
+         -"Compare between base and head revisions of current file",
+         -"Compare base against head",
+         File_Filter,
+         On_Menu_Diff_Base_Head'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Annotate",
+         -"Annotate the current file",
+         -"Add annotations",
+         File_Filter,
+         On_Menu_Annotate'Access);
+
+      Register_Action_Menu
+        ("Remove Annotate",
+         -"Remove the annotations from current file",
+         -"Remove annotations",
+         File_Filter,
+         On_Menu_Remove_Annotate'Access);
+
+      Register_Action_Menu
+        ("Edit revision log",
+         -"Edit the revision log for the current file",
+         -"Edit revision log",
+         File_Filter,
+         On_Menu_Edit_Log'Access);
+
+      Register_Action_Menu
+        ("Edit global ChangeLog",
+         -"Edit the global ChangeLog for the current selection",
+         -"Edit global ChangeLog",
+         File_Filter,
+         On_Menu_Edit_ChangeLog'Access);
+
+      Register_Action_Menu
+        ("Remove revision log",
          -"Remove the revision log corresponding to the current file",
-         VCS_Action_Context);
+         -"Remove revision log",
+         File_Filter,
+         On_Menu_Remove_Log'Access);
 
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Get_Status_Dir'Access);
-      Register_Action
-        (Kernel,
-         "Status dir",
-         Command,
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Add",
+         -"Add the current file to repository",
+         -"Add",
+         File_Filter,
+         On_Menu_Add'Access);
+
+      Register_Action_Menu
+        ("Remove",
+         -"Remove the current file from repository",
+         -"Remove",
+         File_Filter,
+         On_Menu_Remove'Access);
+
+      Register_Action_Menu
+        ("Revert",
+         -"Revert the current file to repository revision",
+         -"Revert",
+         File_Filter,
+         On_Menu_Revert'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Status dir",
          -"Query the status of the current directory",
-         VCS_Action_Context);
+         -"Query status",
+         Dir_Filter,
+         On_Menu_Get_Status_Dir'Access);
 
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Update_Dir'Access);
-      Register_Action
-        (Kernel,
-         "Update dir",
-         Command,
-         -"Update the current directory",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel),
-              On_Menu_Get_Status_Project'Access);
-      Register_Action
-        (Kernel,
-         "Status project",
-         Command,
-         -"Query the status of the current project",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel), On_Menu_Update_Project'Access);
-      Register_Action
-        (Kernel,
-         "Update project",
-         Command,
-         -"Update the current project",
-         VCS_Action_Context);
-
-      Create (Command, Kernel_Handle (Kernel),
-              On_Menu_Get_Status_Dir_Recursive'Access);
-      Register_Action
-        (Kernel,
-         "Status dir (recursively)",
-         Command,
+      Register_Action_Menu
+        ("Status dir (recursively)",
          -"Query the status of the current directory recursively",
-         VCS_Action_Context);
+         -"Query status (recursively)",
+         Dir_Filter,
+         On_Menu_Get_Status_Dir_Recursive'Access);
 
-      Create (Command, Kernel_Handle (Kernel),
-              On_Menu_Update_Dir_Recursive'Access);
-      Register_Action
-        (Kernel,
-         "Update dir (recursively)",
-         Command,
-         -"Update the current directory recursively",
-         VCS_Action_Context);
+      Register_Action_Menu
+        ("Update dir",
+         -"Update the current directory",
+         -"Update",
+         Dir_Filter,
+         On_Menu_Update_Dir'Access);
 
-      Create (Command, Kernel_Handle (Kernel),
-              On_Menu_Get_Status_Project_Recursive'Access);
-      Register_Action
-        (Kernel,
-         "Status project (recursively)",
-         Command,
+      Register_Action_Menu
+        ("Update dir (recursively)",
+         -"Update the current directory (recursively)",
+         -"Update (recursively)",
+         Dir_Filter,
+         On_Menu_Update_Dir_Recursive'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("Status project",
+         -"Query the status of the current project",
+         -"Query status",
+         Prj_Filter,
+         On_Menu_Get_Status_Project'Access);
+
+      Register_Action_Menu
+        ("Status project (recursively)",
          -"Query the status of the current project recursively",
-         VCS_Action_Context);
+         -"Query status (recursively)",
+         Prj_Filter,
+         On_Menu_Get_Status_Project_Recursive'Access);
 
-      Create (Command, Kernel_Handle (Kernel),
-              On_Menu_Update_Project_Recursive'Access);
-      Register_Action
-        (Kernel,
-         "Update project (recursively)",
-         Command,
-         -"Update the current project recursively",
-         VCS_Action_Context);
+      Register_Action_Menu
+        ("Update project",
+         -"Update the current project",
+         -"Update",
+         Prj_Filter,
+         On_Menu_Update_Project'Access);
+
+      Register_Action_Menu
+        ("Update project (recursively)",
+         -"Update the current project (recursively)",
+         -"Update (recursively)",
+         Prj_Filter,
+         On_Menu_Update_Project_Recursive'Access);
    end Register_Module;
 
    --------------------------
