@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                 Odd - The Other Display Debugger                  --
+--                                                                   --
+--                         Copyright (C) 2000                        --
+--                 Emmanuel Briot and Arnaud Charlet                 --
+--                                                                   --
+-- Odd is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Gdk.Bitmap;   use Gdk.Bitmap;
 with Gdk.Color;    use Gdk.Color;
 with Gdk.Pixmap;   use Gdk.Pixmap;
@@ -6,8 +26,6 @@ with Gtkada.Types; use Gtkada.Types;
 with Odd.Pixmaps;  use Odd.Pixmaps;
 with GNAT.Regpat;  use GNAT.Regpat;
 with Language;     use Language;
-
-with Text_IO; use Text_IO;
 
 package body Odd.Explorer is
 
@@ -125,6 +143,7 @@ package body Odd.Explorer is
             Null_Color,
             Categories (C).Icon.all);
       end loop;
+
       Create_From_Xpm_D
         (Folder_Open_Pixmap, Get_Window (Window), Folder_Open_Mask, Null_Color,
          mini_ofolder_xpm);
@@ -184,9 +203,11 @@ package body Odd.Explorer is
          if Internal_Cat (C).Node /= null then
             Sort_Recursive (Tree, Internal_Cat (C).Node);
          end if;
+
          Gdk.Pixmap.Unref (Internal_Cat (C).Pixmap);
          Gdk.Bitmap.Unref (Internal_Cat (C).Mask);
       end loop;
+
       Gdk.Pixmap.Unref (Folder_Open_Pixmap);
       Gdk.Bitmap.Unref (Folder_Open_Mask);
       Gdk.Pixmap.Unref (Folder_Pixmap);
