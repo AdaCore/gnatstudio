@@ -432,7 +432,6 @@ private
       Label_Box            : Gtk.Box.Gtk_Hbox;
 
       --  The status bar
-      Filename_Label       : Gtk.Label.Gtk_Label;
       Function_Label       : Gtk.Label.Gtk_Label;
       Read_Only_Label      : Gtk.Label.Gtk_Label;
       Modified_Label       : Gtk.Label.Gtk_Label;
