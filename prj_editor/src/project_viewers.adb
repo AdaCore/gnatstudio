@@ -38,6 +38,7 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.Notebook;    use Gtk.Notebook;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Style;       use Gtk.Style;
 with Gtk.Widget;      use Gtk.Widget;
@@ -553,7 +554,7 @@ package body Project_Viewers is
 
       Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
 
-      Gtk_New_From_Stock (Button, Stock_OK);
+      Gtk_New_From_Stock (Button, Stock_Ok);
       Pack_Start
         (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
       Widget_Callback.Object_Connect
@@ -785,21 +786,25 @@ package body Project_Viewers is
    is
       Label : Gtk_Label;
       Color : Gdk_Color;
+      Scrolled : Gtk_Scrolled_Window;
    begin
       Gtk.Notebook.Initialize (Viewer);
       Viewer.Manager := Project_Manager (Manager);
 
       for View in View_Type'Range loop
+         Gtk_New (Scrolled);
+         Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
          Gtk_New (Viewer.Pages (View),
                   Columns => Gint (Views (View).Num_Columns),
                   Titles  => Views (View).Titles);
+         Add (Scrolled, Viewer.Pages (View));
          Set_Column_Auto_Resize (Viewer.Pages (View), 0, True);
          Gtk_New (Label, Views (View).Tab_Title.all);
 
          Widget_Callback.Object_Connect
            (Viewer.Pages (View), "select_row",  Select_Row'Access, Viewer);
 
-         Append_Page (Viewer, Viewer.Pages (View), Label);
+         Append_Page (Viewer, Scrolled, Label);
       end loop;
 
       Widget_Callback.Connect (Viewer, "switch_page", Switch_Page'Access);
