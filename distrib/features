@@ -12,6 +12,7 @@ New features in GPS 2.1.0
 
 - Script updates:
   new classes GPS.Process, GPS.Toolbar
+  API change for GPS.Preference (import GPS_old.py for the old API)
 
 - New menu Help->Python Extensions
   Improved documentation for python scripting, including more examples
