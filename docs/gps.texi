@@ -3439,6 +3439,10 @@ needs to be explicitly called by the user.
 @cindex color
 Color for highlighting keywords.
 
+@item Current line color
+@cindex color
+Color for highlighting the current line.
+
 @item Comment color
 @cindex color
 Color for highlighting comments.
