@@ -144,7 +144,7 @@ package body Navigation_Module is
             end if;
 
             --  If the current location is a source location,
-            --  try to update the line/column from the context
+            --  try to update the line/column from the context.
 
             Context := Get_Current_Context (Kernel);
 
