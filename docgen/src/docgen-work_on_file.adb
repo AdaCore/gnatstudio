@@ -33,6 +33,7 @@ with Projects.Registry;         use Projects.Registry;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Intl;                use Glide_Intl;
 with VFS;                       use VFS;
+with String_Hash;
 
 package body Docgen.Work_On_File is
 
@@ -41,6 +42,19 @@ package body Docgen.Work_On_File is
    package TSFL renames Type_Source_File_List;
    package TEL  renames Type_Entity_List;
    package TRL  renames Type_Reference_List;
+
+   procedure Free_All_Tree (X : in out Scope_Tree);
+   --  Subprogram called in order to free the memory catched by each element
+   --  of the following hash table.
+
+   package Tree_Htable is new String_Hash
+     (Data_Type => Scope_Tree,
+      Free_Data => Free_All_Tree,
+      Null_Ptr  => Null_Scope_Tree);
+   use Tree_Htable.String_Hash_Table;
+   --  For each ali file, its scope tree is created one time and then it's
+   --  stored in the hash table for all the process. In fact, a scope tree
+   --  can be used by several files.
 
    procedure Process_One_File
      (B                             : Backend_Handle;
@@ -64,7 +78,8 @@ package body Docgen.Work_On_File is
       Converter                     : Docgen.Doc_Subprogram_Type;
       Doc_Directory                 : String;
       Doc_Suffix                    : String;
-      Still_Warned                  : in out Boolean);
+      Still_Warned                  : in out Boolean;
+      All_Scope_Tree : in out Tree_Htable.String_Hash_Table.HTable);
    --  Called by Process_Files for each file from the given list
    --  will examine that file and call the function Work_On_Source
    --  from Docgen.Work_On_File.
@@ -94,8 +109,11 @@ package body Docgen.Work_On_File is
    --  children even if they aren't declared in the processed files.
    --  Converter : indicates what format the documentation should be generated
    --  in.
-   --  Still_Warned : indicate that a message still has been put on the
+   --  Still_Warned   : indicate that a message still has been put on the
    --  console.
+   --  All_Scope_Tree : hash table which contains the scope trees built. This
+   --  hash table is shared by all files and finally destroyed at the end of
+   --  the documentation process in Process_Files.
 
    -------------------
    -- Process_Files --
@@ -130,6 +148,7 @@ package body Docgen.Work_On_File is
         Get_Doc_Directory (B, Kernel_Handle (Kernel));
       Still_Warned                  : Boolean;
       Level                         : Natural := 1;
+      All_Scope_Tree                : Tree_Htable.String_Hash_Table.HTable;
 
       function Find_Next_Package
         (Package_Nr : Natural) return String;
@@ -252,7 +271,8 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory_Root,
                Doc_Suffix,
-               Still_Warned);
+               Still_Warned,
+               All_Scope_Tree);
 
             Source_File_Node := TSFL.Next (Source_File_Node);
             J := J + 1;
@@ -292,6 +312,8 @@ package body Docgen.Work_On_File is
             Doc_Suffix, Level);
       end if;
 
+      Tree_Htable.String_Hash_Table.Reset (All_Scope_Tree);
+      --  Scope trees are deleted only when all files have been processed.
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
       Type_List_Tagged_Element.Free (Tagged_Types_List);
@@ -324,7 +346,8 @@ package body Docgen.Work_On_File is
       Converter             : Docgen.Doc_Subprogram_Type;
       Doc_Directory         : String;
       Doc_Suffix            : String;
-      Still_Warned          : in out Boolean)
+      Still_Warned          : in out Boolean;
+      All_Scope_Tree : in out Tree_Htable.String_Hash_Table.HTable)
    is
       LI_Unit          : LI_File_Ptr;
       LI_List          : Src_Info.LI_File_List;
@@ -397,6 +420,10 @@ package body Docgen.Work_On_File is
       procedure Global_Children
         (Found : in out Boolean;
          Iter  : in out Entity_Reference_Iterator);
+      --  Found : it indicates if a tagged type has children declared in other
+      --  ali files.
+      --  Iter  : if found is True, it points on children declared in other
+      --  ali files.
 
       procedure Is_Tagged_Type
         (Entity_Is_Tagged : in out Boolean;
@@ -404,6 +431,11 @@ package body Docgen.Work_On_File is
          Iter             : in out Entity_Reference_Iterator;
          Info             : in Entity_Information;
          LI_Unit          : in LI_File_Ptr);
+      --  Entity_Is_Tagged: indicate if Info is a tagged type.
+      --  Found_Global    : if Info is a tagged type, it indicates if there is
+      --  children declared in other ali files.
+      --  Iter            : if found_global is True, it points on children
+      --  declared in other ali files.
 
       --------------------------
       -- Add_Calls_References --
@@ -571,15 +603,28 @@ package body Docgen.Work_On_File is
                  (Source_File_List,
                   Get_File (Get_Location (Get (Reference_Iter))));
 
-               --  For the rest use the scope tree
-               Reference_Scope_Tree :=
-                 Create_Tree (Get_LI (Reference_Iter));
+               --  Try to get the scope tree associated with the ali file
+               Reference_Scope_Tree
+                 := Tree_Htable.String_Hash_Table.Get
+                   (All_Scope_Tree,
+                    Base_Name (Get_LI_Filename (Get_LI (Reference_Iter))));
+               --  First time, we met the ali file, we build the scope tree
+               --  and store it in the hash table during all the process of
+               --  docgen
+               if Reference_Scope_Tree = Null_Scope_Tree then
+                  Reference_Scope_Tree :=
+                    Create_Tree (Get_LI (Reference_Iter));
+                  Tree_Htable.String_Hash_Table.Set
+                    (All_Scope_Tree,
+                     Base_Name (Get_LI_Filename (Get_LI (Reference_Iter))),
+                     Reference_Scope_Tree);
+               end if;
+
                Find_Entity_References
                  (Reference_Scope_Tree,
                   Info,
                   Tree_Called_Callback'Unrestricted_Access);
 
-               Free (Reference_Scope_Tree);
                Next (Get_Language_Handler (Kernel),
                      Reference_Iter,
                      LI_List);
@@ -851,7 +896,19 @@ package body Docgen.Work_On_File is
          if LI_Unit /= No_LI_File then
             Entity_Iter :=
               Find_All_References_In_File (LI_Unit, Source_Filename);
-            Tree         := Create_Tree (LI_Unit);
+
+            --  Try to get the scope tree of the ali file.
+            Tree := Tree_Htable.String_Hash_Table.Get
+              (All_Scope_Tree, Base_Name (Get_LI_Filename (LI_Unit)));
+            --  The scope tree has never been created, we build and store it.
+            if Tree = Null_Scope_Tree then
+               Tree :=
+                 Create_Tree (LI_Unit);
+               Tree_Htable.String_Hash_Table.Set
+                 (All_Scope_Tree,
+                  Base_Name (Get_LI_Filename (LI_Unit)),
+                  Tree);
+            end if;
 
             loop
                Ref_In_File := Get (Entity_Iter);
@@ -1816,8 +1873,6 @@ package body Docgen.Work_On_File is
 
             Sort_List_By_Line_And_Column (List_Ref_In_File);
 
-            Free (Tree);
-
             --  Process the documentation of this file
             Process_Source
               (B,
@@ -1853,5 +1908,14 @@ package body Docgen.Work_On_File is
       List_Entity_In_File.Free (List_Ent_In_File, True);
       List_Reference_In_File.Free (List_Ref_In_File, True);
    end Process_One_File;
+
+   -------------------
+   -- Free_All_Tree --
+   -------------------
+
+   procedure Free_All_Tree (X : in out Scope_Tree) is
+   begin
+      Free (X);
+   end Free_All_Tree;
 
 end Docgen.Work_On_File;
