@@ -1176,6 +1176,8 @@ package body Ada_Analyzer is
                      Pop (Indents);
                      Num_Parens := Num_Parens - 1;
 
+                     Top_Token := Top (Tokens);
+
                      if Num_Parens = 0
                        and then Top_Token.Token in Token_Class_Declk
                      then
