@@ -531,6 +531,7 @@ package body Src_Info.Debug is
          when Exception_Entity                 => return "X";
          when Floating_Point_Object            => return "f";
          when Floating_Point_Type              => return "F";
+         when Generic_Class                    => return "g";
          when Generic_Function_Or_Operator     => return "v";
          when Generic_Package                  => return "k";
          when Generic_Procedure                => return "u";
