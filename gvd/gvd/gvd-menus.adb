@@ -104,6 +104,16 @@ package body Odd.Menus is
    --  Change the mode of a specific item to indicate whether the value of the
    --  item should be displayed
 
+   procedure Show_All
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Show all the subcomponents of the selected item.
+
+   procedure Hide_All
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Hide all the subcomponents of the selected item.
+
    --------------------------
    -- Change_Align_On_Grid --
    --------------------------
@@ -142,6 +152,32 @@ package body Odd.Menus is
    begin
       Display_Items.Update (Item.Canvas, Item.Item);
    end Update_Variable;
+
+   --------------
+   -- Show_All --
+   --------------
+
+   procedure Show_All
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+   begin
+      Set_Visibility (Item.Component.all, True, Recursive => True);
+      Update_Resize_Display (Item.Item, True);
+   end Show_All;
+
+   --------------
+   -- Hide_All --
+   --------------
+
+   procedure Hide_All
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+   begin
+      Set_Visibility (Item.Component.all, False, Recursive => True);
+      Update_Resize_Display (Item.Item, True);
+   end Hide_All;
 
    -------------------------
    -- Change_Display_Mode --
@@ -249,12 +285,28 @@ package body Odd.Menus is
 
       Gtk_New (Menu);
 
-      Gtk_New (Mitem, Label => -"Hide all");
-      Set_State (Mitem, State_Insensitive);
+      Gtk_New (Mitem, Label => -"Hide all " & Component_Name);
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (Hide_All'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value));
       Append (Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"Show all");
-      Set_State (Mitem, State_Insensitive);
+      Gtk_New (Mitem, Label => -"Show all " & Component_Name);
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (Show_All'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value));
       Append (Menu, Mitem);
 
       --  Display a separator
