@@ -1,6 +1,6 @@
 --  This is a very dirty package used to test the VCS system.
 
-with VCS;     use VCS;
+with VCS;         use VCS;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
