@@ -721,6 +721,7 @@ package body Src_Editor_Module is
 
                   if Child /= null then
                      Mark_Record.Child := Child;
+                     Mark_Record.Line := Line;
                      Box := Source_Box (Get_Widget (Child));
                      Mark_Record.Mark :=
                        Create_Mark
