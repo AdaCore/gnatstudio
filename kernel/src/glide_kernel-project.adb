@@ -45,7 +45,6 @@ with Gtkada.MDI;         use Gtkada.MDI;
 with Glide_Page;         use Glide_Page;
 with GVD.Process;        use GVD.Process;
 with Prj_API;            use Prj_API;
-with Src_Info.Queries;   use Src_Info.Queries;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 
 package body Glide_Kernel.Project is
