@@ -189,7 +189,7 @@ package body Project_Properties is
       Label        : Gtk_Label;
       Check        : Gtk_Check_Button;
       Table, Lang  : Gtk_Table;
-      Languages    : String_Array := Known_Languages
+      Languages    : GNAT.OS_Lib.String_List := Known_Languages
         (Get_Language_Handler (Kernel));
       Project_Languages : Argument_List := Get_Languages (Project_View);
       Ent          : Gtk_GEntry;
@@ -521,7 +521,7 @@ package body Project_Properties is
       Project : Project_Node_Id;
       Project_Languages : Argument_List := Get_Languages (Project_View);
       Num_Languages : Natural;
-      Languages : String_Array := Known_Languages
+      Languages : GNAT.OS_Lib.String_List := Known_Languages
         (Get_Language_Handler (Kernel));
       Ent : Gtk_GEntry;
       Check : Gtk_Check_Button;
