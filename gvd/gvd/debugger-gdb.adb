@@ -455,15 +455,25 @@ package body Debugger.Gdb is
    -- Value_Of --
    --------------
 
+   subtype String_2 is String (1 .. 2);
+   Fmt_Array : constant array (Value_Format) of String_2 :=
+     (Default_Format => "  ",
+      Decimal        => "/d",
+      Binary         => "/t",
+      Hexadecimal    => "/x",
+      Octal          => "/o");
+   --  Array used by Value_Of to print values in various formats.
+
    function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String
+      Format   : Value_Format := Default_Format) return String
    is
-      pragma Unreferenced (Format);
       S : constant String :=
-        Send (Debugger, "print " & Entity, Mode => Internal);
+        Send (Debugger, "print" & Fmt_Array (Format) & ' ' & Entity,
+              Mode => Internal);
       Index : Natural := S'First;
+
    begin
       --  The value is valid only if it starts with '$'
 
@@ -655,10 +665,12 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
-      --  Only relevant to Windows, but does not really matter if we do it
-      --  systematically.
+      if Get_Pref (GVD_Prefs, Execution_Window) then
+         --  Only relevant to Windows, but does not really matter if we do it
+         --  on other platforms.
 
-      Send (Debugger, "set new-console", Mode => Internal);
+         Send (Debugger, "set new-console", Mode => Internal);
+      end if;
 
       --  Make sure gdb will not ask too much interactive questions.
       --  Interactive questions are better left to the GUI itself.
@@ -884,10 +896,8 @@ package body Debugger.Gdb is
       end if;
 
       Set_Is_Started (Debugger, False);
-
-      if Debugger.Executable = null then
-         Debugger.Executable := new String'(Executable);
-      end if;
+      Free (Debugger.Executable);
+      Debugger.Executable := new String'(Executable);
 
       --  Report a change in the executable. This has to be done before we
       --  look for the current file and line, so that the explorer can be
