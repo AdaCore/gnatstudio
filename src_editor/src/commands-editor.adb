@@ -18,10 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;          use Glib;
-with Gtk.Text_Iter; use Gtk.Text_Iter;
-with Traces;        use Traces;
-with String_Utils;  use String_Utils;
+with Glib;                              use Glib;
+with Gtk.Text_Iter;                     use Gtk.Text_Iter;
+with Traces;                            use Traces;
+with String_Utils;                      use String_Utils;
+with Src_Editor_Box;                    use Src_Editor_Box;
+with Src_Editor_Module;                 use Src_Editor_Module;
 
 package body Commands.Editor is
 
@@ -140,7 +142,8 @@ package body Commands.Editor is
    -------------
 
    function Execute (Command : access Editor_Command_Type) return Boolean is
-      First : constant Natural := Command.Current_Text'First;
+      First  : constant Natural := Command.Current_Text'First;
+      Editor : Source_Editor_Box;
    begin
       if Command.User_Executed then
          Command.User_Executed := False;
@@ -158,12 +161,15 @@ package body Commands.Editor is
             return True;
          end if;
 
+         Editor := Find_Current_Editor (Get_Kernel (Command.Buffer));
+
          case Command.Edition_Mode is
             when Insertion =>
                Set_Cursor_Position
                  (Command.Buffer,
                   Gint (Command.Line),
                   Gint (Command.Column));
+               Scroll_To_Cursor_Location (Editor);
                Insert
                  (Command.Buffer,
                   Gint (Command.Line),
@@ -177,6 +183,7 @@ package body Commands.Editor is
                     (Command.Buffer,
                      Gint (Command.Line),
                      Gint (Command.Column));
+                  Scroll_To_Cursor_Location (Editor);
                end if;
 
             when Deletion =>
@@ -191,7 +198,7 @@ package body Commands.Editor is
                  (Command.Buffer,
                   Gint (Command.Line),
                   Gint (Command.Column));
-
+               Scroll_To_Cursor_Location (Editor);
          end case;
       end if;
 
