@@ -804,7 +804,8 @@ private
 
    function Get_Source_File
      (List : LI_File_List; Entity : Entity_Information) return Source_File;
-   --  Return the source file for the declaration of Entity.
+   --  Return the source file for the declaration of Entity. Return value
+   --  must be freed by the caller.
 
    function Get_Declaration_Location
      (List : LI_File_List; Entity : Entity_Information) return File_Location;
