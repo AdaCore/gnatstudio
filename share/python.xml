@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
+<!--  You need to install python_support.py as well when installing this file -->
 
-<Custom>
+<Python>
   <Language>
     <Name>Python</Name>
     <Spec_Suffix>.py</Spec_Suffix>
@@ -13,4 +14,19 @@
       <Case_Sensitive>True</Case_Sensitive>
     </Context>
   </Language>
-</Custom>
+
+  <filter_and name="Python">
+     <filter id="Source editor" />
+     <filter language="Python" />
+  </filter_and>
+
+  <action name="reload python module" >
+     <filter id="Python" />
+     <shell lang="python">python_support.reload_file ("""%f""")</shell>
+  </action>
+
+  <contextual action="reload python module">
+    <Title>Python/Reload module</Title>
+  </contextual>
+
+</Python>
