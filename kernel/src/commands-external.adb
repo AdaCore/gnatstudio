@@ -59,7 +59,7 @@ package body Commands.External is
    ------------
 
    procedure Create
-     (Item         : out External_Command;
+     (Item         : out External_Command_Access;
       Kernel       : Kernel_Handle;
       Command      : String_List.List;
       Dir          : String_List.List;
@@ -68,6 +68,7 @@ package body Commands.External is
       Handler      : String_List_Handler;
       Next_Command : Command_Access := null) is
    begin
+      Item := new External_Command;
       Item.Kernel  := Kernel;
       Item.Command := Copy_String_List (Command);
       Item.Dir     := Copy_String_List (Dir);
@@ -75,7 +76,6 @@ package body Commands.External is
       Item.Head    := Copy_String_List (Head);
       Item.Handler := Handler;
       Item.Next_Command := Next_Command;
-      String_List.Free (Item.Output);
    end Create;
 
    --------------------
@@ -118,6 +118,7 @@ package body Commands.External is
                Success := Execute (D.Next_Command);
             else
                Command_Finished (D.Queue);
+               Pop_State (D.Kernel);
             end if;
          end;
 
@@ -166,6 +167,7 @@ package body Commands.External is
                                   Atomic_Command'Access,
                                   External_Command_Access (Command));
 
+      Push_State (Command.Kernel, Processing);
       return True;
 
    exception
