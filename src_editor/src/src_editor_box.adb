@@ -375,6 +375,7 @@ package body Src_Editor_Box is
       L, C            : Natural;
       Length          : Natural;
       File_Up_To_Date : Boolean;
+      Filename        : String_Access;
 
    begin
       if Get_Filename (Editor) = "" then
@@ -482,14 +483,16 @@ package body Src_Editor_Box is
 
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
                 & Get_File (Location));
-         Open_File_Editor
-           (Kernel,
-            Get_Full_Path_From_File
-              (Registry        => Get_Registry (Kernel),
-               Filename        => Get_File (Location),
-               Use_Source_Path => True,
-               Use_Object_Path => False),
-            L, C, C + Length, False, From_Path => False);
+         Filename := new String'
+           (Get_Full_Path_From_File
+            (Registry        => Get_Registry (Kernel),
+             Filename        => Get_File (Location),
+             Use_Source_Path => True,
+             Use_Object_Path => False));
+         if Filename.all = "" then
+            Insert (Kernel, -"File not found: "
+                    & Get_File (Location), Mode => Error);
+         end if;
 
       else
          --  Open the file, and reset Source to the new editor in order to
@@ -497,15 +500,26 @@ package body Src_Editor_Box is
 
          L := Get_Declaration_Line_Of (Entity);
          C := Get_Declaration_Column_Of (Entity);
+         Filename := new String'
+           (Get_Full_Path_From_File
+            (Registry        => Get_Registry (Kernel),
+             Filename        => Get_Declaration_File_Of (Entity),
+             Use_Source_Path => True,
+             Use_Object_Path => False));
+         if Filename.all = "" then
+            Insert (Kernel, -"File not found: "
+                    & Get_Declaration_File_Of (Entity), Mode => Error);
+         end if;
+      end if;
 
+      if Filename.all /= "" then
          Open_File_Editor
-           (Kernel,
-            Get_Full_Path_From_File
-              (Registry        => Get_Registry (Kernel),
-               Filename        => Get_Declaration_File_Of (Entity),
-               Use_Source_Path => True,
-               Use_Object_Path => False),
-            L, C, C + Length, False, From_Path => False);
+           (Kernel, Filename.all, L, C, C + Length, False, From_Path => False);
+      else
+         Free (Filename);
+         Destroy (Entity);
+         Pop_State (Kernel_Handle (Kernel));
+         return;
       end if;
 
       --  Find the correct location for the entity, in case it is in fact
@@ -520,15 +534,12 @@ package body Src_Editor_Box is
          --  up-to-date.
 
          File_Up_To_Date := Is_Valid_Location (Source, L, C)
-           and then Is_Valid_Location (Source, L, C + Length);
-
-         if File_Up_To_Date then
-            File_Up_To_Date :=
-              Get_Slice (Source.Source_Buffer,
-                         To_Buffer_Line (L), To_Buffer_Column (C),
-                         To_Buffer_Line (L), To_Buffer_Column (C + Length)) =
+           and then Is_Valid_Location (Source, L, C + Length)
+           and then Get_Slice
+             (Source.Source_Buffer,
+              To_Buffer_Line (L), To_Buffer_Column (C),
+              To_Buffer_Line (L), To_Buffer_Column (C + Length)) =
                 Entity_Name_Information (Context);
-         end if;
 
          --  Search for the closest reference to the entity if
          --  necessary. Otherwise, there's nothing to be done, since the region
@@ -545,29 +556,14 @@ package body Src_Editor_Box is
 
             Find_Closest_Match
               (Source, L, C, Entity_Name_Information (Context));
-
-            if To_Body then
-               Open_File_Editor
-                 (Kernel,
-                  Get_Full_Path_From_File
-                    (Registry        => Get_Registry (Kernel),
-                     Filename        => Get_File (Location),
-                     Use_Source_Path => True,
-                     Use_Object_Path => False),
-                  L, C, C + Length, False, From_Path => False);
-            else
-               Open_File_Editor
-                 (Kernel,
-                  Get_Full_Path_From_File
-                    (Registry        => Get_Registry (Kernel),
-                     Filename        => Get_Declaration_File_Of (Entity),
-                     Use_Source_Path => True,
-                     Use_Object_Path => False),
-                  L, C, C + Length, False, From_Path => False);
-            end if;
+            Open_File_Editor
+              (Kernel,
+               Filename.all,
+               L, C, C + Length, False, From_Path => False);
          end if;
       end if;
 
+      Free (Filename);
       Destroy (Entity);
       Pop_State (Kernel_Handle (Kernel));
 
@@ -575,10 +571,12 @@ package body Src_Editor_Box is
       when Unsupported_Language =>
          Insert (Kernel, -"No parser is registered for this language",
                  Mode => Error);
+         Free (Filename);
          Pop_State (Kernel_Handle (Kernel));
 
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
+         Free (Filename);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Goto_Declaration_Or_Body;
 
@@ -1518,7 +1516,7 @@ package body Src_Editor_Box is
             then
                --  Multiple-line selection: return an area context.
 
-               Free (Selection_Context_Access (Context));
+               Unref (Selection_Context_Access (Context));
 
                declare
                   Area       : File_Area_Context_Access;
