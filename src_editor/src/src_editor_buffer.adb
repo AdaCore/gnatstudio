@@ -4201,6 +4201,7 @@ package body Src_Editor_Buffer is
          if Set then
             Editor.Line_Data (Line).Current_Highlight := Get_GC (Category);
          else
+            --  ??? This is never reached
             for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
                if Editor.Line_Data (Line).Enabled_Highlights (J) then
                   Editor.Line_Data (Line).Current_Highlight := Get_GC (J);
