@@ -867,8 +867,8 @@ package body Src_Editor_Buffer is
 
             exit Entity_Kind_Search_Loop;
 
-         elsif Begins_Tag (End_Iter, Tags (Current_Entity)) or else
-           Ends_Tag (Start_Iter, Tags (Current_Entity))
+         elsif Begins_Tag (End_Iter, Tags (Current_Entity))
+           or else Ends_Tag (Start_Iter, Tags (Current_Entity))
          then
             --  Case Begins_Tag:
             --    This means that we inserted right at the begining of
@@ -1543,13 +1543,13 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
       End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
-      Highlight_Complete : Boolean := False;
-      Entity_Start       : Gtk_Text_Iter;
-      Entity_End         : Gtk_Text_Iter;
-      Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
-      Slice_Offset_Line  : Gint;
+      Highlight_Complete  : Boolean := False;
+      Entity_Start        : Gtk_Text_Iter;
+      Entity_End          : Gtk_Text_Iter;
+      Tags                : Highlighting_Tags renames Buffer.Syntax_Tags;
+      Slice_Offset_Line   : Gint;
       Slice_Offset_Column : Gint;
-      Result             : Boolean;
+      Result              : Boolean;
 
       function Highlight_Cb
         (Entity         : Language_Entity;
@@ -3864,10 +3864,6 @@ package body Src_Editor_Buffer is
       return Do_Indentation (Buffer, Iter, End_Pos);
    end Do_Indentation;
 
-   --------------------
-   -- Do_Indentation --
-   --------------------
-
    function Do_Indentation
      (Buffer      : Source_Buffer;
       From, To    : Gtk_Text_Iter) return Boolean
@@ -3888,7 +3884,6 @@ package body Src_Editor_Buffer is
       Indent_Params : Indent_Parameters;
       From_Line     : Editable_Line_Type;
       To_Line       : Editable_Line_Type;
-      Update_Cursor : Boolean := False;
 
       procedure Local_Format_Buffer
         (Lang          : Language_Access;
@@ -3922,6 +3917,7 @@ package body Src_Editor_Buffer is
            and then Is_Space (Get_Char (Iter))
          loop
             Forward_Char (Iter, Result);
+            Cursor_Offset := Cursor_Offset - 1;
          end loop;
       end Skip_To_First_Non_Blank;
 
@@ -3986,7 +3982,6 @@ package body Src_Editor_Buffer is
                       Editable_Line_Type (Line), End_Column) /= Replace
          then
             if Line = Cursor_Line then
-               Update_Cursor := True;
                --  ??? Need to handle folded lines
                Get_Iter_At_Line (Buffer, Iter, Gint (Line - 1));
                Skip_To_First_Non_Blank (Iter);
@@ -4070,21 +4065,19 @@ package body Src_Editor_Buffer is
          Free (Buffer_Text);
       end if;
 
-      if Update_Cursor then
-         --  If the cursor was located before the first non-blank character,
-         --  move it to that character. This is more usual for Emacs users,
-         --  and more user friendly generally.
+      --  If the cursor was located before the first non-blank character,
+      --  move it to that character. This is more usual for Emacs users,
+      --  and more user friendly generally.
 
-         --  ??? Fix handling of folded lines
-         Get_Iter_At_Line (Buffer, Iter, Gint (Cursor_Line - 1));
-         Skip_To_First_Non_Blank (Iter);
+      --  ??? Fix handling of folded lines
+      Get_Iter_At_Line (Buffer, Iter, Gint (Cursor_Line - 1));
+      Skip_To_First_Non_Blank (Iter);
 
-         if Cursor_Offset > 0 then
-            Forward_Chars (Iter, Cursor_Offset, Result);
-         end if;
-
-         Place_Cursor (Buffer, Iter);
+      if Cursor_Offset > 0 then
+         Forward_Chars (Iter, Cursor_Offset, Result);
       end if;
+
+      Place_Cursor (Buffer, Iter);
 
       return True;
 
