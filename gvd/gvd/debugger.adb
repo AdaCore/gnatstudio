@@ -44,6 +44,12 @@ package body Debugger is
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
 
+   Can_Use_Ptys : Integer;
+   pragma Import (C, Can_Use_Ptys, "gvd_use_ptys");
+   --  This variable is set to 1 if gvd was configured to use PTYs for its
+   --  communication with the underlying debugger.
+   --  If this is set to 0, we fall back on the simpler pipes implementation.
+
    procedure Send_Internal_Pre
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
@@ -170,7 +176,7 @@ package body Debugger is
       Descriptor : Process_Descriptor_Access;
    begin
 
-      if Odd.Preferences.Use_Ptys then
+      if Odd.Preferences.Use_Ptys and then Can_Use_Ptys = 1 then
          Descriptor := new TTY_Process_Descriptor;
       else
          Descriptor := new Process_Descriptor;
