@@ -47,7 +47,7 @@ package body Browsers.Projects is
 
    Margin : constant := 2;
 
-   Me : Debug_Handle := Create ("Browsers.Projects");
+   Me : constant Debug_Handle := Create ("Browsers.Projects");
 
    Project_Browser_Module_ID : Module_ID;
 
@@ -125,7 +125,7 @@ package body Browsers.Projects is
       Project    : Prj.Tree.Project_Node_Id)
    is
       pragma Unreferenced (Kernel);
-      Font : Gdk_Font := Get_Text_Font (In_Browser);
+      Font : constant Gdk_Font := Get_Text_Font (In_Browser);
 
       function Vertex_Factory (Project_Name : Types.Name_Id)
          return Vertex_Access;
@@ -143,7 +143,7 @@ package body Browsers.Projects is
          return Edge_Access
       is
          pragma Unreferenced (V1, V2);
-         L : Glide_Browser_Link := new Glide_Browser_Link_Record;
+         L : constant Glide_Browser_Link := new Glide_Browser_Link_Record;
       begin
          return Edge_Access (L);
       end Edge_Factory;
@@ -221,7 +221,8 @@ package body Browsers.Projects is
       Menu    : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Browser, Event, Menu);
-      Context : Selection_Context_Access := new File_Selection_Context;
+      Context : Selection_Context_Access :=
+        new File_Selection_Context;
    begin
       Set_File_Information
         (File_Selection_Context_Access (Context),
@@ -349,7 +350,7 @@ package body Browsers.Projects is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel);
-      Browser : Project_Browser := Project_Browser (Child);
+      Browser : constant Project_Browser := Project_Browser (Child);
    begin
       if Selected_Item (Browser) = null then
          return null;

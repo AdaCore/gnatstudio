@@ -47,7 +47,7 @@ package body External_Editor_Module is
    External_Editor_User_Data : constant String := "External_Editor";
    --  String used to identify the user data in the kernel
 
-   Me : Debug_Handle := Create ("External_Editor_Module");
+   Me : constant Debug_Handle := Create ("External_Editor_Module");
 
    type External_Client is record
       Command_Name      : GNAT.OS_Lib.String_Access;

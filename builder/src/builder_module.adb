@@ -203,7 +203,7 @@ package body Builder_Module is
    procedure On_Build
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      K : Kernel_Handle := Kernel_Handle (Kernel);
+      K       : constant Kernel_Handle := Kernel_Handle (Kernel);
 
       Top     : constant Glide_Window :=
         Glide_Window (Get_Main_Window (K));
@@ -269,7 +269,8 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
 
    begin
       if Context = null
@@ -339,7 +340,8 @@ package body Builder_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
 
    begin
       if Context = null
@@ -499,7 +501,7 @@ package body Builder_Module is
    function Timeout_Compute_Xref (D : Compute_Xref_Data_Access)
       return Boolean
    is
-      Handler      : Glide_Language_Handler :=
+      Handler      : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (D.Kernel));
       Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       Finished     : Boolean;
@@ -702,7 +704,7 @@ package body Builder_Module is
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
       pragma Unreferenced (Data);
-      K : Kernel_Handle := Kernel_Handle (Kernel);
+      K : constant Kernel_Handle := Kernel_Handle (Kernel);
 
       Arguments : constant String := Simple_Entry_Dialog
         (Parent  => Get_Main_Window (K),

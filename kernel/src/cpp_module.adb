@@ -50,7 +50,7 @@ package body Cpp_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (K);
-      Handler : Glide_Language_Handler := Glide_Language_Handler
+      Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
    begin
       Reset
@@ -66,7 +66,7 @@ package body Cpp_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Handler : Glide_Language_Handler := Glide_Language_Handler
+      Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
       LI      : CPP_LI_Handler := new Src_Info.CPP.CPP_LI_Handler_Record;
       Msg     : constant String := Set_Executables (LI);
