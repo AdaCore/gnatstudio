@@ -35,6 +35,7 @@ with String_Utils;              use String_Utils;
 with Docgen.Backend;            use Docgen.Backend;
 with Language;                  use Language;
 with OS_Utils;                  use OS_Utils;
+with Doc_Utils;                 use Doc_Utils;
 
 package body Docgen.Work_On_Source is
 
@@ -1489,8 +1490,9 @@ package body Docgen.Work_On_Source is
                      end if;
 
                      Description := new String'
-                       (Entities.Get_Documentation
-                          (Entity.Entity,
+                       (Get_Documentation
+                          (Get_Language_Handler (Kernel),
+                           Entity.Entity,
                            File_Text.all));
 
                      --  We save in an Entity_Information the current package
@@ -1609,8 +1611,8 @@ package body Docgen.Work_On_Source is
                      end if;
 
                      Description := new String'
-                       (Entities.Get_Documentation
-                          (Entity.Entity,
+                       (Get_Documentation
+                          (Get_Language_Handler (Kernel), Entity.Entity,
                            File_Text.all));
 
                      Doc_Package
@@ -1763,8 +1765,8 @@ package body Docgen.Work_On_Source is
                   end if;
 
                   Description := new String'
-                    (Entities.Get_Documentation
-                       (Entity.Entity,
+                    (Get_Documentation
+                       (Get_Language_Handler (Kernel), Entity.Entity,
                         File_Text.all));
 
                   Doc_Var
@@ -1890,8 +1892,8 @@ package body Docgen.Work_On_Source is
                   end if;
 
                   Description := new String'
-                    (Entities.Get_Documentation
-                       (Entity.Entity,
+                    (Get_Documentation
+                       (Get_Language_Handler (Kernel), Entity.Entity,
                         File_Text.all));
 
                   Doc_Exception
@@ -2080,8 +2082,8 @@ package body Docgen.Work_On_Source is
                   end if;
 
                   Description := new String'
-                    (Entities.Get_Documentation
-                       (Entity.Entity,
+                    (Get_Documentation
+                       (Get_Language_Handler (Kernel), Entity.Entity,
                         File_Text.all));
 
                   Doc_Type
@@ -2242,8 +2244,9 @@ package body Docgen.Work_On_Source is
                   end if;
 
                   Description := new String'
-                    (Entities.Get_Documentation
-                       (Entity.Entity, File_Text.all));
+                    (Get_Documentation
+                       (Get_Language_Handler (Kernel),
+                        Entity.Entity, File_Text.all));
 
                   Doc_Entry
                     (B, Kernel, Result, List_Ref_In_File,
@@ -2447,8 +2450,9 @@ package body Docgen.Work_On_Source is
                   end if;
 
                   Description := new String'
-                    (Entities.Get_Documentation
-                       (Entity.Entity, File_Text.all));
+                    (Get_Documentation
+                       (Get_Language_Handler (Kernel),
+                        Entity.Entity, File_Text.all));
 
                   Doc_Subprogram
                     (B, Kernel, Result,
