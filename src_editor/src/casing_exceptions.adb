@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Maps;        use Ada.Strings.Maps;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Glib.Object;             use Glib.Object;
 with Glide_Intl;              use Glide_Intl;
@@ -58,12 +59,22 @@ package body Casing_Exceptions is
    procedure On_Add_Case_Exception
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-   --  Callback for the "Add case exception for" contextual menu
+   --  Callback for the "Add exception for" contextual menu
+
+   procedure On_Add_Case_Substring_Exception
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "Add substring exception for" contextual menu
 
    procedure On_Remove_Case_Exception
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-   --  Callback for the "Remove case exception for" contextual menu
+   --  Callback for the "Remove exception for" contextual menu
+
+   procedure On_Remove_Case_Substring_Exception
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "Remove substring exception for" contextual menu
 
    procedure Set_Casing
      (Context  : Entity_Selection_Context_Access;
@@ -100,6 +111,16 @@ package body Casing_Exceptions is
         (Casing_Module_Id.Casing_Exceptions_Table, Ident, Read_Only => False);
    end Add_Exception;
 
+   -----------------------------
+   -- Add_Substring_Exception --
+   -----------------------------
+
+   procedure Add_Substring_Exception (Ident : String) is
+   begin
+      Case_Handling.Add_Substring_Exception
+        (Casing_Module_Id.Casing_Exceptions_Table, Ident, Read_Only => False);
+   end Add_Substring_Exception;
+
    ----------------------
    -- Remove_Exception --
    ----------------------
@@ -109,6 +130,16 @@ package body Casing_Exceptions is
       Case_Handling.Remove_Exception
         (Casing_Module_Id.Casing_Exceptions_Table, Ident);
    end Remove_Exception;
+
+   --------------------------------
+   -- Remove_Substring_Exception --
+   --------------------------------
+
+   procedure Remove_Substring_Exception (Ident : String) is
+   begin
+      Case_Handling.Remove_Substring_Exception
+        (Casing_Module_Id.Casing_Exceptions_Table, Ident);
+   end Remove_Substring_Exception;
 
    -------------------------
    -- Get_Case_Exceptions --
@@ -139,6 +170,26 @@ package body Casing_Exceptions is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Add_Case_Exception;
 
+   -------------------------------------
+   -- On_Add_Case_Substring_Exception --
+   -------------------------------------
+
+   procedure On_Add_Case_Substring_Exception
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      C      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Name   : constant String := Entity_Name_Information (C);
+   begin
+      Add_Substring_Exception (Name);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Add_Case_Substring_Exception;
+
    ------------------------------
    -- On_Remove_Case_Exception --
    ------------------------------
@@ -158,6 +209,26 @@ package body Casing_Exceptions is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Remove_Case_Exception;
+
+   ----------------------------------------
+   -- On_Remove_Case_Substring_Exception --
+   ----------------------------------------
+
+   procedure On_Remove_Case_Substring_Exception
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      C      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Name   : constant String := Entity_Name_Information (C);
+   begin
+      Remove_Substring_Exception (Name);
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Remove_Case_Substring_Exception;
 
    ----------------
    -- Set_Casing --
@@ -291,9 +362,15 @@ package body Casing_Exceptions is
             begin
                while Child /= null loop
                   if Child.Tag.all = "word" then
-                     --  This is a full word exception, we ignore all other
-                     --  nodes for Now.
+                     --  This is a full word exception
                      Add_Exception
+                       (Casing_Module_Id.Casing_Exceptions_Table,
+                        Child.Value.all,
+                        Read_Only => True);
+
+                  elsif Child.Tag.all = "substring" then
+                     --  This is substring exception
+                     Add_Substring_Exception
                        (Casing_Module_Id.Casing_Exceptions_Table,
                         Child.Value.all,
                         Read_Only => True);
@@ -318,15 +395,23 @@ package body Casing_Exceptions is
    is
       pragma Unreferenced (Object);
 
-      Selection : Entity_Selection_Context_Access;
-      Menu_Item : Gtk_Menu_Item;
-      Submenu   : Gtk_Menu;
+      Kernel       : Kernel_Handle;
+      File         : Virtual_File;
+      File_Context : File_Selection_Context_Access;
+      Selection    : Entity_Selection_Context_Access;
+      Menu_Item    : Gtk_Menu_Item;
+      Submenu      : Gtk_Menu;
+      Substring    : Boolean;  --  True if substring selected
    begin
+      Kernel := Get_Kernel (Context);
+
       if Context.all not in Entity_Selection_Context'Class then
          return;
       end if;
 
-      Selection := Entity_Selection_Context_Access (Context);
+      File_Context := File_Selection_Context_Access (Context);
+      File         := File_Information (File_Context);
+      Selection    := Entity_Selection_Context_Access (Context);
 
       if not Has_Entity_Name_Information (Selection) then
          return;
@@ -342,8 +427,8 @@ package body Casing_Exceptions is
       Append (Menu, Menu_Item);
 
       declare
-         Name     : constant String :=
-           Krunch (Entity_Name_Information (Selection));
+         E_Name   : constant String := Entity_Name_Information (Selection);
+         Name     : constant String := Krunch (E_Name);
          New_Name : String (Name'Range);
       begin
          Gtk_New (Menu_Item, -"Lower " & To_Lower (Name));
@@ -378,24 +463,83 @@ package body Casing_Exceptions is
             Context_Callback.To_Marshaller (On_Set_Smart_Mixed'Access),
             User_Data   => Selection_Context_Access (Context));
 
+         --  Check wether we have an entity or substring selected
+
+         if Has_Entity_Column_Information (Selection)
+           and then Has_Line_Information (Selection)
+         then
+            declare
+               W_Seps : constant Character_Set :=
+                          To_Set (" ;.:=(),/'#*+-""><&"
+                                  & ASCII.HT & ASCII.CR & ASCII.LF);
+               --  Word separators
+               Before : aliased String := "1";
+               After  : aliased String
+                 := Integer'Image (E_Name'Length + 1);
+               Line   : aliased String :=
+                          Integer'Image (Line_Information (Selection));
+               Col    : aliased String :=
+                          Integer'Image
+                            (Entity_Column_Information (Selection));
+               Text   : constant String :=
+                          Execute_GPS_Shell_Command
+                            (Kernel, "Editor.get_chars",
+                             (1 => Full_Name (File).all'Unrestricted_Access,
+                              2 => Line'Unchecked_Access,
+                              3 => Col'Unchecked_Access,
+                              4 => Before'Unchecked_Access,
+                              5 => After'Unchecked_Access));
+            begin
+               if Text'Length > 1
+                 and then Is_In (Text (Text'First), W_Seps)
+                 and then Is_In (Text (Text'Last), W_Seps)
+               then
+                  --  Here we have a word not a substring
+                  Substring := False;
+               else
+                  Substring := True;
+               end if;
+            end;
+         end if;
+
          Gtk_New (Menu_Item);
          Append (Submenu, Menu_Item);
 
-         Gtk_New (Menu_Item, -"Add exception for " & Name);
-         Add (Submenu, Menu_Item);
-         Context_Callback.Connect
-           (Menu_Item, "activate",
-            Context_Callback.To_Marshaller
-              (On_Add_Case_Exception'Access),
-            User_Data   => Selection_Context_Access (Context));
+         if Substring then
+            Gtk_New (Menu_Item, -"Add substring exception for " & Name);
+            Context_Callback.Connect
+              (Menu_Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Add_Case_Substring_Exception'Access),
+               User_Data   => Selection_Context_Access (Context));
+         else
+            Gtk_New (Menu_Item, -"Add exception for " & Name);
+            Context_Callback.Connect
+              (Menu_Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Add_Case_Exception'Access),
+               User_Data   => Selection_Context_Access (Context));
+         end if;
 
-         Gtk_New (Menu_Item, -"Remove exception for " & Name);
          Add (Submenu, Menu_Item);
-         Context_Callback.Connect
-           (Menu_Item, "activate",
-            Context_Callback.To_Marshaller
-              (On_Remove_Case_Exception'Access),
-            User_Data   => Selection_Context_Access (Context));
+
+         if Substring then
+            Gtk_New (Menu_Item, -"Remove substring xception for " & Name);
+            Context_Callback.Connect
+              (Menu_Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Remove_Case_Substring_Exception'Access),
+               User_Data   => Selection_Context_Access (Context));
+         else
+            Gtk_New (Menu_Item, -"Remove exception for " & Name);
+            Context_Callback.Connect
+              (Menu_Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Remove_Case_Exception'Access),
+               User_Data   => Selection_Context_Access (Context));
+         end if;
+
+         Add (Submenu, Menu_Item);
       end;
    end Casing_Contextual;
 
