@@ -6443,10 +6443,22 @@ The current project. This is the name of the project, not the project file.
 The root project. This is the name of the project, not the project file.
 
 @item %pp
-The current project file pathname.
+The current project file pathname. If a file is selected, this is the project
+file to which the source file belongs.
 
 @item %PP
 The root project pathname.
+
+@item %pps
+This is similar to @code{%pp}, except it returns the project name prepended
+with "-P', or an empty string if there is no project file selected and the
+current source file doesn't belong to any project. This is mostly for use with
+the GNAT tools command line.
+
+@item %PPs
+This is similar to @code{%PP}, except it returns the project name prepended
+with "-P", or an empty string if the root project is the default project. This
+is mostly for use with the GNAT tools command line.
 
 @item %(p|P)[r](d|s)[f]
 Substituted by the list of sources or directories of a given project. This list
