@@ -88,6 +88,11 @@ package body Browsers.Canvas is
    procedure Realized (Browser : access Gtk_Widget_Record'Class);
    --  Callback for the "realized" signal.
 
+   function Key_Press
+     (Browser : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean;
+   --  Callback for the key press event
+
    -------------
    -- Gtk_New --
    -------------
@@ -114,6 +119,7 @@ package body Browsers.Canvas is
       Set_Policy (Browser, Policy_Automatic, Policy_Automatic);
       Gtk_New (Browser.Canvas);
       Add (Browser, Browser.Canvas);
+      Add_Events (Browser.Canvas, Key_Press_Mask);
       Browser.Mask := Mask;
       Browser.Kernel := Kernel_Handle (Kernel);
 
@@ -127,7 +133,28 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
          Widget_Callback.To_Marshaller (Realized'Access), Browser);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Browser.Canvas, "key_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
+         Browser);
    end Initialize;
+
+   ---------------
+   -- Key_Press --
+   ---------------
+
+   function Key_Press
+     (Browser : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Boolean is
+   begin
+      case Get_Key_Val (Event) is
+         when GDK_equal => Zoom_In (Browser);
+         when GDK_minus => Zoom_Out (Browser);
+         when others    => null;
+      end case;
+      return False;
+   end Key_Press;
 
    --------------
    -- Realized --
