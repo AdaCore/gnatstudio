@@ -293,6 +293,10 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Select All menu
 
+   procedure On_Insert_File
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Insert File... menu
+
    procedure On_Goto_Line_Current_Editor
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Navigate->Goto Line... menu
@@ -2754,6 +2758,45 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Select_All;
 
+   --------------------
+   -- On_Insert_File --
+   --------------------
+
+   procedure On_Insert_File
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Source : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+   begin
+      if Source /= null then
+         declare
+            F      : constant Virtual_File :=
+              Select_File
+                (Title             => -"Insert File",
+                 Parent            => Get_Main_Window (Kernel),
+                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Kind              => Open_File,
+                 History           => Get_History (Kernel));
+            Buffer : GNAT.OS_Lib.String_Access;
+            Line   : Editable_Line_Type;
+            Column : Natural;
+
+         begin
+            if F /= VFS.No_File then
+               Buffer := Read_File (F);
+               Get_Cursor_Position (Get_Buffer (Source), Line, Column);
+               Insert (Get_Buffer (Source), Line, Column, Buffer.all);
+               Free (Buffer);
+            end if;
+         end;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Insert_File;
+
    -----------------
    -- On_New_View --
    -----------------
@@ -3563,6 +3606,11 @@ package body Src_Editor_Module is
       --  Emacs keybindings for people who want to use them.
       Register_Menu (Kernel, Edit, -"_Select All",  "",
                      On_Select_All'Access, Ref_Item => -"Preferences");
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, -"Insert _File...",  "",
+                     On_Insert_File'Access, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
