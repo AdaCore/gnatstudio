@@ -6439,9 +6439,9 @@ such key bindings, you need to press the @code{Grab} button as usual, and then
 type the shortcut. The recording of the key binding will stop a short while
 after the last key stroke.
 
-This facility for creating complex shortcuts is not available for menu
-items yet.
-
+If you define complex shortcuts for menus, they will not appear next to
+the menu name when you select it with the mouse. This is expected, and is
+due to technical limitations in the graphical toolkit that GPS uses.
 
 @c -----------------------------------------------------------------
 @node Customizing through XML files
@@ -6607,7 +6607,8 @@ This tag accepts the following attributes:
 This tag must be specified. It provides the name by which the action is
 referenced in other parts of the customization files, for instance when it is
 associated with a menu or a toolbar button. The name can contain any character,
-although it is recommended to avoid XML special characters.
+although it is recommended to avoid XML special characters. It mustn't
+start with a '/'.
 
 @item output  (optional)
 If specified, this attribute indicates where the output of the commands will
@@ -7218,7 +7219,8 @@ The @code{<menu>} tag takes the following attributes:
 @item action  (mandatory)
 This attribute specifies which action to execute
 when the menu is selected by the user. If no action by this name was defined,
-no new menu is added.
+no new menu is added. The action name can start with a '/', in which case
+it represents the absolute path to a menu to execute instead.
 
 This attribute can be omitted only when no title is specified for the menu
 to make it a separator (see below).
@@ -7494,7 +7496,9 @@ over the entry. See the python documentation.
 @noindent
 All the actions defined above can be bound to specific key shortcuts through
 the @code{<key>} attribute. As usual, it requires one @code{<action>}
-attribute to specify what to do when the key is pressed.
+attribute to specify what to do when the key is pressed. The name of the
+action can start with a '/' to indicate that a menu should be executed
+instead of a user-defined action.
 
 This tag doesn't contain any child tag. Instead, its text contents specified
 the keyboard shortcut. The name
