@@ -22,11 +22,9 @@ with Glib;                use Glib;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Item_Factory;    use Gtk.Item_Factory;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Text;            use Gtk.Text;
 with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
@@ -620,10 +618,7 @@ package body GVD.Menu is
       Tab : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
 
    begin
-      Handler_Block (Tab.Debugger_Text, Tab.Delete_Text_Handler_Id);
-      Delete_Text (Tab.Debugger_Text);
-      Handler_Unblock (Tab.Debugger_Text, Tab.Delete_Text_Handler_Id);
-      Display_Prompt (Tab.Debugger);
+      Clear (Tab.Debugger_Text);
    end On_Clear_Window;
 
    -------------------
