@@ -217,7 +217,8 @@ package Project_Viewers is
    --  See naming_editors.ads
 
    type Naming_Scheme_Editor_Creator is access function
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Language : String)
      return Naming_Editors.Language_Naming_Editor;
 
    procedure Register_Naming_Scheme_Editor

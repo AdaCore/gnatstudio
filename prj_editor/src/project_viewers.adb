@@ -2975,7 +2975,8 @@ package body Project_Viewers is
       if Prj_Editor_Module_ID.Naming_Pages /= null then
          for Num in Prj_Editor_Module_ID.Naming_Pages'Range loop
             if Prj_Editor_Module_ID.Naming_Pages (Num).Language = Lang then
-               return Prj_Editor_Module_ID.Naming_Pages (Num).Creator (Kernel);
+               return Prj_Editor_Module_ID.Naming_Pages (Num).Creator
+                 (Kernel, Language);
             end if;
          end loop;
       end if;
