@@ -110,6 +110,10 @@ package Codefix.Merge_Utils is
      (This : in out Mergable_String; Start : Natural; Value : String);
    --  Insert Value on (means 'before') the Start Position.
 
+   procedure Modify
+     (This : in out Mergable_String; Start : Natural; Value : String);
+   --  Modify an unresizable portion of text by Value.
+
    procedure Replace
      (This : in out Mergable_String; Start, Len : Natural; Value : String);
    --  Replace Len characters from Start column by value.
