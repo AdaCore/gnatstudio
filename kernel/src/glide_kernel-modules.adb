@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                              G P S                                --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -905,7 +905,6 @@ package body Glide_Kernel.Modules is
       return Src_Info.Queries.Entity_Information
    is
       Lib_Info : LI_File_Ptr;
-      Location : File_Location;
       Status   : Find_Decl_Or_Body_Query_Status;
    begin
       if Context.Entity = No_Entity_Information then
@@ -916,14 +915,13 @@ package body Glide_Kernel.Modules is
             Trace (Me, "Couldn't find LI file for "
                    & File_Information (Context));
          else
-            Find_Declaration_Or_Body
+            Find_Declaration
               (Lib_Info           => Lib_Info,
                File_Name          => File_Information (Context),
                Entity_Name        => Entity_Name_Information (Context),
                Line               => Line_Information (Context),
                Column             => Column_Information (Context),
                Entity             => Context.Entity,
-               Location           => Location,
                Status             => Status);
 
             if Status /= Success then
