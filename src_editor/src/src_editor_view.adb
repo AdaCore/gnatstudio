@@ -63,6 +63,9 @@ with Basic_Types;    use Basic_Types;
 
 package body Src_Editor_View is
 
+   Margin : constant := 3;
+   --  The margin left of the text.
+
    Me : constant Debug_Handle := Create ("Source_View");
 
    function Strlen
@@ -667,7 +670,7 @@ package body Src_Editor_View is
                   Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
                X := Gint (B.Offset - 1) * View.Char_Width - Bracket_Offset -
-                 Rect.X;
+                 Rect.X + Margin;
 
                Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
                Draw_Line
@@ -716,7 +719,7 @@ package body Src_Editor_View is
                     (Window,
                      GC,
                      True,
-                     0, Buffer_Line_Y,
+                     Margin, Buffer_Line_Y,
                      Rect.Width, Line_Height);
                end if;
 
@@ -737,7 +740,7 @@ package body Src_Editor_View is
                Line_Height := Get_Line_Height (View, Cursor_Iter);
 
                Draw_Rectangle
-                 (Window, View.Current_Line_GC, True, 0, Buffer_Line_Y,
+                 (Window, View.Current_Line_GC, True, Margin, Buffer_Line_Y,
                   Rect.Width, Line_Height);
             end if;
 
@@ -752,7 +755,7 @@ package body Src_Editor_View is
             --  Redraw the line showing the nth column if needed
 
             if Column > 0 then
-               X := Column * View.Char_Width - Rect.X;
+               X := Column * View.Char_Width - Rect.X + Margin;
                Draw_Line (Window, View.Default_GC, X, Y, X, Y + Rect.Height);
             end if;
          end;
@@ -917,7 +920,7 @@ package body Src_Editor_View is
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
 
-      Set_Left_Margin (View, 4);
+      Set_Left_Margin (View, Margin);
 
       Preferences_Changed (View, Kernel_Handle (Kernel));
 
