@@ -60,7 +60,7 @@ package body Glide_Kernel.Actions is
 
       if Old /= No_Action then
          Insert (Kernel,
-                 -("Action """ & Name & """ is defined several times. Future "
+                 -("Action """ & Name & """ is defined several times. Future"
                    & " references to this action will execute the last"
                    & " definition encountered"),
                  Mode => Error);
