@@ -19,7 +19,7 @@ window is directly used by GVD as its source editor."
 			       (if (consp gud-gdb-history)
 				   (car gud-gdb-history)
 				 "gvd ")
-			       gdb-minibuffer-local-map nil
+			       gud-minibuffer-local-map nil
 			       '(gud-gdb-history . 1))))
 
   ;;  Check that we are really using GVD
