@@ -1,10 +1,5 @@
 Known Problems fixed in GPS 2.1.1
 
-- DB29-017 Freeze when resizing the memory view
-  Problem:    When the display format is not "Byte", resizing the memory
-              view causes GPS to freeze.
-  Workaround: Switch to "Byte" format before resizing the memory view.
-
 - DC06-007 Crash when selecting some fonts under Windows
   Problem:    When selecting some particular fonts (e.g. 'Serif') in the
               font selector under Windows, GPS will crash.
@@ -36,6 +31,10 @@ Known Problems fixed in GPS 2.1.1
   Workaround: This menu is obsolete and has been removed. Instead, close
               the window to hide the assembly view, and use the menu
               Debug->Data->Assembly to show it.
+
+  Problem:    When the display format is not "Byte", resizing the memory
+              view causes GPS to freeze.
+  Workaround: Switch to "Byte" format before resizing the memory view.
 
 Known Problems fixed in GPS 2.1.0
 
