@@ -22,6 +22,7 @@ with GNAT.Regpat;       use GNAT.Regpat;
 with Pixmaps_IDE;       use Pixmaps_IDE;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with String_Utils;      use String_Utils;
+with Glib.Unicode;      use Glib.Unicode;
 
 package body Language.C is
 
@@ -659,9 +660,10 @@ package body Language.C is
                First := Index;
 
                while Index <= Buffer'Last
-                 and then Is_Entity_Letter (Buffer (Index + 1))
+                 and then Is_Entity_Letter
+                   (Utf8_Get_Char (Buffer (Index + 1 .. Buffer'Last)))
                loop
-                  Index := Index + 1;
+                  Index := Utf8_Find_Next_Char (Buffer, Index);
                end loop;
 
                Token := Get_Token (Buffer (First .. Index));

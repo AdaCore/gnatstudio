@@ -25,8 +25,8 @@ with GNAT.OS_Lib;
 with GNAT.IO;                     use GNAT.IO;
 with Odd_Intl;                    use Odd_Intl;
 with String_Utils;                use String_Utils;
-with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Exceptions;              use Ada.Exceptions;
+with Glib.Unicode;                use Glib, Glib.Unicode;
 
 package body Language is
 
@@ -119,6 +119,7 @@ package body Language is
         Get_Language_Context (Language_Access (Lang));
       Keys : constant Pattern_Matcher := Keywords (Language_Access (Lang));
       Comm1, Comm2 : Character;
+      C : Gunichar;
 
    begin
       --  Do we have a comment ?
@@ -137,7 +138,7 @@ package body Language is
            (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
            /= Context.Comment_End
          loop
-            Next_Char := Next_Char + 1;
+            Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
          end loop;
 
          Next_Char := Next_Char + Context.Comment_End_Length;
@@ -159,7 +160,7 @@ package body Language is
          while Next_Char <= Buffer'Last
            and then Buffer (Next_Char) /= ASCII.LF
          loop
-            Next_Char := Next_Char + 1;
+            Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
          end loop;
 
          return;
@@ -184,7 +185,7 @@ package body Language is
                           Buffer (Next_Char - 1) /= Context.Quote_Character));
          end loop;
 
-         Next_Char := Next_Char + 1;
+         Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
          return;
       end if;
 
@@ -218,7 +219,7 @@ package body Language is
       Match (Keys, Buffer, Matched);
 
       if Matched (0) /= No_Match then
-         Next_Char := Matched (0).Last + 1;
+         Next_Char := Utf8_Find_Next_Char (Buffer, Matched (0).Last);
          Entity := Keyword_Text;
          return;
       end if;
@@ -228,9 +229,9 @@ package body Language is
       --  It is better to return a pointer to the newline, so that the icons
       --  on the side might be displayed properly.
 
-      if not Is_Entity_Letter (Buffer (Buffer'First)) then
+      if not Is_Entity_Letter (Utf8_Get_Char (Buffer)) then
          Entity := Normal_Text;
-         Next_Char := Buffer'First + 1;
+         Next_Char := Utf8_Find_Next_Char (Buffer, Buffer'First);
 
          Comm1 := ASCII.LF;
          Comm2 := ASCII.LF;
@@ -244,16 +245,18 @@ package body Language is
               Context.New_Line_Comment_Start (Context.Comment_Start'First);
          end if;
 
-         while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= ASCII.LF
-           and then Buffer (Next_Char) /= ASCII.HT
-           and then Buffer (Next_Char) /= Context.String_Delimiter
-           and then Buffer (Next_Char) /= Comm1
-           and then Buffer (Next_Char) /= Comm2
-           and then Buffer (Next_Char) /= Context.Constant_Character
-           and then not Is_Letter (Buffer (Next_Char))
-         loop
-            Next_Char := Next_Char + 1;
+         while Next_Char <= Buffer'Last loop
+            C := Utf8_Get_Char (Buffer (Next_Char .. Buffer'Last));
+
+            exit when C = Character'Pos (ASCII.LF)
+              or else C = Character'Pos (ASCII.HT)
+              or else C = Character'Pos (Context.String_Delimiter)
+              or else C = Character'Pos (Comm1)
+              or else C = Character'Pos (Comm2)
+              or else C = Character'Pos (Context.Constant_Character)
+              or else Is_Alpha (C);
+
+            Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
          end loop;
 
          return;
@@ -262,15 +265,16 @@ package body Language is
       --  Skip to the next meaningful character. we know we are
       --  starting with a letter
 
-      Next_Char := Buffer'First + 1;
+      Next_Char := Utf8_Find_Next_Char (Buffer, Buffer'First);
       Entity := Normal_Text;
 
       --  Skip the current word
 
       while Next_Char <= Buffer'Last
-        and then Is_Entity_Letter (Buffer (Next_Char))
+        and then Is_Entity_Letter
+          (Utf8_Get_Char (Buffer (Next_Char .. Buffer'Last)))
       loop
-         Next_Char := Next_Char + 1;
+         Next_Char := Utf8_Find_Next_Char (Buffer, Next_Char);
       end loop;
    end Looking_At;
 
