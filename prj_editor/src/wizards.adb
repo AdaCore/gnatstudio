@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;          use Gdk.Color;
-with Glib.Object;        use Glib.Object;
 with Glib;               use Glib;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
@@ -30,23 +29,32 @@ with Gtk.Stock;          use Gtk.Stock;
 with Gtk.Style;          use Gtk.Style;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;               use Logo_Boxes;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Wizards is
 
    Min_Toc_Width : constant Gint := 100;
    --  Minimal width, in pixels, for the TOC area, when it is displayed.
 
-   procedure Free is new Ada.Unchecked_Deallocation
-     (Widget_Array, Widget_Array_Access);
-   procedure Free is new Ada.Unchecked_Deallocation
-     (GNAT.OS_Lib.String_List, String_List_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Wizard_Page_Record'Class, Wizard_Page);
+
+   procedure On_Destroy (Wiz : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal
+
+   procedure Map (Wiz : access Gtk_Widget_Record'Class);
+   --  Callback for the "map" signal
+
+   procedure Set_Current_Page
+     (Wiz : access Wizard_Record'Class; Num : Positive);
+   --  Change the currently active page in the wizard
 
    procedure Next_Page (Wiz : access Gtk_Widget_Record'Class);
    --  Callback for the "next" button
@@ -54,38 +62,50 @@ package body Wizards is
    procedure Previous_Page (Wiz : access Gtk_Widget_Record'Class);
    --  Callback for the "previous" button
 
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Page_Num : Guint);
-   --  Callback when a new page is selected.
+   procedure On_Finish (Wiz : access Gtk_Widget_Record'Class);
+   --  Callback for the "finish" button
 
-   procedure Map (Wiz : access Gtk_Widget_Record'Class);
-   --  Callback for the "map" signal
+   ---------------
+   -- Next_Page --
+   ---------------
 
-   procedure On_Destroy (Wiz : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal
-
-   Signals : constant chars_ptr_array :=
-     (1 => New_String ("switch_page"));
-   --  Array of the signals created for this widget
-
-   Wizard_Class_Record : GObject_Class := Uninitialized_Class;
-   --  The meta-class for the wizard.
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Wiz       : out Wizard;
-      Kernel    : access Kernel_Handle_Record'Class;
-      Title     : String;
-      Num_Pages : Positive;
-      Activate_Finish_From_Page : Integer := -1) is
+   function Next_Page (Page : access Wizard_Page_Record) return Wizard_Page is
+      pragma Unreferenced (Page);
    begin
-      Wiz := new Wizard_Record;
-      Wizards.Initialize
-        (Wiz, Kernel, Title, Num_Pages, Activate_Finish_From_Page);
-   end Gtk_New;
+      return null;
+   end Next_Page;
+
+   -----------------
+   -- Is_Complete --
+   -----------------
+
+   function Is_Complete
+     (Page : access Wizard_Page_Record;
+      Wiz  : access Wizard_Record'Class) return Boolean is
+      pragma Unreferenced (Page, Wiz);
+   begin
+      return True;
+   end Is_Complete;
+
+   -----------------
+   -- Update_Page --
+   -----------------
+
+   procedure Update_Page (Page : access Wizard_Page_Record) is
+      pragma Unreferenced (Page);
+   begin
+      null;
+   end Update_Page;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Page : access Wizard_Page_Record) is
+      pragma Unreferenced (Page);
+   begin
+      null;
+   end On_Destroy;
 
    ----------------
    -- Initialize --
@@ -95,54 +115,44 @@ package body Wizards is
      (Wiz       : access Wizard_Record'Class;
       Kernel    : access Kernel_Handle_Record'Class;
       Title     : String;
-      Num_Pages : Positive;
-      Activate_Finish_From_Page : Integer := -1)
-   is
-      Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 => (1 => GType_Uint, 2 => GType_None));
+      Show_Toc  : Boolean := True) is
    begin
       Logo_Boxes.Initialize
         (Win        => Wiz,
          Title      => Title,
          Parent     => Get_Main_Window (Kernel),
+         Show_Toc   => Show_Toc,
          Title_Font => Get_Pref (Kernel, Wizard_Title_Font));
-
-      Wiz.Activate_Finish_From_Page := Activate_Finish_From_Page;
 
       Set_Default_Size (Wiz, 640, 480);
 
-      Initialize_Class_Record
-        (Wiz, Signals, Wizard_Class_Record,
-         "WizardRecord", Signal_Parameters);
-
-      --  The Previous button
       Gtk_New_From_Stock (Wiz.Previous, Stock_Go_Back);
       Set_Sensitive (Wiz.Previous, False);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Previous);
+      Widget_Callback.Object_Connect
+        (Wiz.Previous, "clicked",
+         Widget_Callback.To_Marshaller (Previous_Page'Access),
+         Wiz);
 
-      --  The Next button
       Gtk_New_From_Stock (Wiz.Next, Stock_Go_Forward);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Next);
       Set_Flags (Wiz.Next, Can_Default);
+      Widget_Callback.Object_Connect
+        (Wiz.Next, "clicked",
+         Widget_Callback.To_Marshaller (Next_Page'Access),
+         Wiz);
 
-      --  The Cancel and Apply button
       Wiz.Finish :=
         Gtk_Button (Add_Button (Wiz, Stock_Apply, Gtk_Response_Apply));
+      Set_Flags (Wiz.Finish, Can_Default);
+      Widget_Callback.Object_Connect
+        (Wiz.Finish, "clicked",
+         Widget_Callback.To_Marshaller (On_Finish'Access),
+         Wiz);
+
       Wiz.Cancel :=
         Gtk_Button (Add_Button (Wiz, Stock_Cancel, Gtk_Response_Cancel));
-      Set_Flags (Wiz.Finish, Can_Default);
 
-      Wiz.Current_Page := 1;
-      Widget_Callback.Object_Connect
-        (Previous_Button (Wiz), "clicked",
-         Widget_Callback.To_Marshaller (Previous_Page'Access),
-         Wiz,
-         After => True);
-      Widget_Callback.Object_Connect
-        (Next_Button (Wiz), "clicked",
-         Widget_Callback.To_Marshaller (Next_Page'Access),
-         Wiz,
-         After => True);
       Widget_Callback.Connect
         (Wiz, "map", Widget_Callback.To_Marshaller (Map'Access));
       Widget_Callback.Connect
@@ -157,17 +167,89 @@ package body Wizards is
         (Wiz.Highlight_Style, State_Normal,
          Get_Pref (Kernel, Wizard_Toc_Highlight_Color));
 
-      Set_Child_Visible (Get_Side_Box (Wiz), False);
-
-      Wiz.Toc := new Widget_Array (1 .. Num_Pages);
-      Wiz.Toc.all := (others => null);
-
-      Wiz.Pages := new Widget_Array (1 .. Num_Pages);
-      Wiz.Pages.all := (others => null);
-
-      Wiz.Titles := new GNAT.OS_Lib.String_List (1 .. Num_Pages);
-      Wiz.Titles.all := (others => null);
+      Wiz.Pages := null;
+      Wiz.Current_Page := 1;
+      Wiz.Kernel := Kernel_Handle (Kernel);
    end Initialize;
+
+   --------------
+   -- Add_Page --
+   --------------
+
+   procedure Add_Page
+     (Wiz         : access Wizard_Record;
+      Page        : access Wizard_Page_Record'Class;
+      Description : String;
+      Toc         : String := "";
+      Lazy_Creation : Boolean := False)
+   is
+      Tmp : Wizard_Pages_Array_Access := Wiz.Pages;
+      Req, Full_Req : Gtk_Requisition;
+   begin
+      if Wiz.Pages = null then
+         Wiz.Pages := new Wizard_Pages_Array (1 .. 1);
+      else
+         Wiz.Pages := new Wizard_Pages_Array (1 .. Tmp'Length + 1);
+         Wiz.Pages (Tmp'Range) := Tmp.all;
+         Unchecked_Free (Tmp);
+      end if;
+
+      Wiz.Pages (Wiz.Pages'Last) := Wizard_Page (Page);
+
+      if Page.Toc /= null then
+         Unref (Page.Toc);
+      end if;
+
+      if Toc = "" then
+         Gtk_New (Page.Toc, Description);
+      else
+         Gtk_New (Page.Toc, Toc);
+      end if;
+      Set_Justify (Page.Toc, Justify_Left);
+      Set_Alignment (Page.Toc, 0.0, 0.0);
+      Pack_Start (Get_Side_Box (Wiz), Page.Toc, Expand => False);
+      Set_Style (Page.Toc, Wiz.Normal_Style);
+
+      Size_Request (Page.Toc, Req);
+      if Req.Width < Min_Toc_Width then
+         Set_Size_Request (Page.Toc, Min_Toc_Width, Req.Height);
+      end if;
+
+      Free (Page.Title);
+      Page.Title := new String'(Description);
+
+      Page.Was_Complete := Is_Complete (Page, Wiz);
+      Display_Error (Wiz, "");
+
+      if not Lazy_Creation then
+         begin
+            Page.Content := Create_Content (Page, Wiz);
+
+            Size_Request (Page.Content, Req);
+            Size_Request (Get_Contents (Wiz), Full_Req);
+
+            if Req.Width > Full_Req.Width then
+               Full_Req.Width := Req.Width;
+            end if;
+            if Req.Height > Full_Req.Height then
+               Full_Req.Height := Req.Height;
+            end if;
+
+            Pack_Start (Get_Contents (Wiz),
+                        Page.Content,
+                        Expand => True, Fill => True);
+            Hide (Page.Content);
+            Set_Child_Visible (Page.Content, False);
+
+            Set_Size_Request
+              (Get_Contents (Wiz), Full_Req.Width, Full_Req.Height);
+         exception
+            when E : others =>
+               Trace (Exception_Handle, "Unexpected exception "
+                      & Exception_Information (E));
+         end;
+      end if;
+   end Add_Page;
 
    ----------------
    -- On_Destroy --
@@ -176,218 +258,15 @@ package body Wizards is
    procedure On_Destroy (Wiz : access Gtk_Widget_Record'Class) is
       W : constant Wizard := Wizard (Wiz);
    begin
-      if W.Titles /= null then
-         for P in W.Titles'Range loop
-            Free (W.Titles (P));
+      if W.Pages /= null then
+         for P in W.Pages'Range loop
+            On_Destroy (W.Pages (P));
+            Free (W.Pages (P).Title);
+            Unchecked_Free (W.Pages (P));
          end loop;
-         Free (W.Titles);
+         Unchecked_Free (W.Pages);
       end if;
    end On_Destroy;
-
-   -----------------
-   -- Switch_Page --
-   -----------------
-
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Page_Num : Guint) is
-   begin
-      Widget_Callback.Emit_By_Name (Wiz, "switch_page", Page_Num);
-   end Switch_Page;
-
-   ----------------------
-   -- Set_Wizard_Title --
-   ----------------------
-
-   procedure Set_Wizard_Title (Wiz : access Wizard_Record; Title : String) is
-   begin
-      Set_Text (Get_Title_Label (Wiz), Title);
-   end Set_Wizard_Title;
-
-   -------------
-   -- Set_Toc --
-   -------------
-
-   procedure Set_Toc
-     (Wiz      : access Wizard_Record;
-      Page_Num : Positive;
-      Toc      : String := "";
-      Title    : String := "";
-      Level    : Integer := 1)
-   is
-      Req : Gtk_Requisition;
-      Old : String_List_Access;
-   begin
-      pragma Assert (Page_Num <= Wiz.Toc'Last);
-
-      if Wiz.Toc (Page_Num) /= null then
-         Unref (Wiz.Toc (Page_Num));
-      end if;
-
-      Set_Child_Visible (Get_Side_Box (Wiz), True);
-
-      Gtk_New (Gtk_Label (Wiz.Toc (Page_Num)), Toc);
-      Set_Justify (Gtk_Label (Wiz.Toc (Page_Num)), Justify_Left);
-      Set_Alignment (Gtk_Label (Wiz.Toc (Page_Num)),
-                     Gfloat (Level - 1) * 0.2, 0.0);
-      Pack_Start
-        (Get_Side_Box (Wiz), Wiz.Toc (Page_Num), Expand => False);
-      --  ??? Should use a list instead of a box, so that we can put the item
-      --  at a specific location.
-
-      Set_Style (Wiz.Toc (Page_Num), Wiz.Normal_Style);
-
-      Size_Request (Wiz.Toc (Page_Num), Req);
-      if Req.Width < Min_Toc_Width then
-         Set_Size_Request (Wiz.Toc (Page_Num), Min_Toc_Width, Req.Height);
-      end if;
-
-      if Page_Num > Wiz.Titles'Length then
-         Old := Wiz.Titles;
-         Wiz.Titles := new GNAT.OS_Lib.String_List (Old'First .. Page_Num);
-         Wiz.Titles (Old'Range) := Old.all;
-         Free (Old);
-      else
-         Free (Wiz.Titles (Page_Num));
-      end if;
-
-      Wiz.Titles (Page_Num) := new String'(Title);
-   end Set_Toc;
-
-   --------------
-   -- Set_Page --
-   --------------
-
-   procedure Set_Page
-     (Wiz   : access Wizard_Record;
-      Page_Num : Positive;
-      Page  : access Gtk.Widget.Gtk_Widget_Record'Class) is
-   begin
-      if Wiz.Pages (Page_Num) /= null then
-         Unref (Wiz.Pages (Page_Num));
-      end if;
-
-      Wiz.Pages (Page_Num) := Gtk_Widget (Page);
-      Ref (Page);
-   end Set_Page;
-
-   --------------
-   -- Add_Page --
-   --------------
-
-   procedure Add_Page
-     (Wiz          : access Wizard_Record;
-      Page         : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Title        : String;
-      Toc_Contents : String)
-   is
-      Old  : Widget_Array_Access;
-      Old2 : String_List_Access;
-   begin
-      Old := Wiz.Toc;
-      Wiz.Toc := new Widget_Array (Old'First .. Old'Last + 1);
-      Wiz.Toc (Old'Range) := Old.all;
-      Free (Old);
-
-      Old := Wiz.Pages;
-      Wiz.Pages := new Widget_Array (Old'First .. Old'Last + 1);
-      Wiz.Pages (Old'Range) := Old.all;
-      Free (Old);
-
-      Old2 := Wiz.Titles;
-      Wiz.Titles := new GNAT.OS_Lib.String_List (Old2'First .. Old2'Last + 1);
-      Wiz.Titles (Old2'Range) := Old2.all;
-      Free (Old2);
-
-      Set_Toc (Wiz, Wiz.Toc'Last, Toc_Contents);
-      Set_Page (Wiz, Wiz.Pages'Last, Page);
-      Wiz.Titles (Wiz.Titles'Last) := new String'(Title);
-   end Add_Page;
-
-   ----------------------
-   -- Set_Current_Page --
-   ----------------------
-
-   procedure Set_Current_Page (Wiz : access Wizard_Record; Num : Positive) is
-   begin
-      --  Active the appropriate buttons
-      Set_Sensitive (Wiz.Previous, Num > 1);
-
-      if Num >= Wiz.Activate_Finish_From_Page then
-         if Wiz.Activate_Finish_From_Page = -1 then
-            Set_Sensitive (Finish_Button (Wiz), Num = Wiz.Pages'Last);
-         else
-            Set_Sensitive (Finish_Button (Wiz), True);
-         end if;
-      else
-         Set_Sensitive (Finish_Button (Wiz), False);
-      end if;
-
-      if Num = Wiz.Pages'Last then
-         Set_Sensitive (Next_Button (Wiz), False);
-         Grab_Default (Finish_Button (Wiz));
-      else
-         Set_Sensitive (Next_Button (Wiz), True);
-         Grab_Default (Next_Button (Wiz));
-      end if;
-
-      --  Inform all listeners that we are about to change the page. However,
-      --  still want the old page to be the current one, in case they need it.
-      --  This must be done first, so as to give them a chance to create the
-      --  pages on the fly.
-
-      Switch_Page (Wiz, Guint (Num));
-
-      pragma Assert (Num <= Wiz.Pages'Last and then Wiz.Pages (Num) /= null);
-
-      --  Unhighlight the current page
-
-      if Wiz.Toc /= null
-        and then Wiz.Current_Page in Wiz.Toc'Range
-        and then Wiz.Toc (Wiz.Current_Page) /= null
-      then
-         Set_Style (Wiz.Toc (Wiz.Current_Page), Wiz.Normal_Style);
-      end if;
-
-      if Wiz.Pages (Wiz.Current_Page) /= null then
-         Hide (Wiz.Pages (Wiz.Current_Page));
-      end if;
-
-      Wiz.Current_Page := Num;
-
-      if Get_Parent (Wiz.Pages (Wiz.Current_Page)) = null then
-         Pack_Start (Get_Contents (Wiz), Wiz.Pages (Wiz.Current_Page),
-                     Expand => True, Fill => True);
-      end if;
-      Show (Wiz.Pages (Wiz.Current_Page));
-
-      --  If the new page is valid, highlight it
-
-      if Wiz.Toc /= null
-        and then Wiz.Current_Page in Wiz.Toc'Range
-        and then Wiz.Toc (Wiz.Current_Page) /= null
-      then
-         Set_Style (Wiz.Toc (Wiz.Current_Page), Wiz.Highlight_Style);
-      end if;
-
-      if Wiz.Titles /= null
-        and then Wiz.Current_Page in Wiz.Titles'Range
-        and then Wiz.Titles (Wiz.Current_Page) /= null
-      then
-         Set_Wizard_Title (Wiz, Wiz.Titles (Wiz.Current_Page).all);
-      end if;
-   end Set_Current_Page;
-
-   ------------------
-   -- Get_Nth_Page --
-   ------------------
-
-   function Get_Nth_Page
-     (Wiz : access Wizard_Record; Page_Num : Positive)
-      return Gtk.Widget.Gtk_Widget is
-   begin
-      pragma Assert (Page_Num <= Wiz.Pages'Last);
-      return Wiz.Pages (Page_Num);
-   end Get_Nth_Page;
 
    ---------
    -- Map --
@@ -396,17 +275,132 @@ package body Wizards is
    procedure Map (Wiz : access Gtk_Widget_Record'Class) is
       W : constant Wizard := Wizard (Wiz);
    begin
-      --  Show the appropriate buttons
+      for P in W.Pages'Range loop
+         if W.Pages (P).Content /= null then
+            Hide (W.Pages (P).Content);
+         end if;
+      end loop;
+
       Set_Current_Page (W, W.Current_Page);
    end Map;
+
+   ------------------
+   -- Can_Complete --
+   ------------------
+
+   function Can_Complete (Wiz : access Wizard_Record) return Boolean is
+   begin
+      if Wiz.Pages /= null then
+         for P in Wiz.Pages'Range loop
+            if not Wiz.Pages (P).Was_Complete then
+               return False;
+            end if;
+         end loop;
+      end if;
+      return True;
+   end Can_Complete;
+
+   --------------------------------
+   -- Update_Buttons_Sensitivity --
+   --------------------------------
+
+   procedure Update_Buttons_Sensitivity
+     (Wiz : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      W : constant Wizard := Wizard (Wiz);
+   begin
+      Display_Error (W, "");
+      W.Pages (W.Current_Page).Was_Complete :=
+        Is_Complete (W.Pages (W.Current_Page), W);
+      Set_Sensitive (W.Next, W.Pages (W.Current_Page).Was_Complete
+                     and then W.Current_Page < W.Pages'Last);
+      Set_Sensitive (W.Finish, Can_Complete (W));
+      Set_Sensitive (W.Previous, W.Current_Page > 1
+                     and then W.Pages (W.Current_Page).Was_Complete);
+      Grab_Default (W.Finish);
+   end Update_Buttons_Sensitivity;
+
+   ----------------------
+   -- Set_Current_Page --
+   ----------------------
+
+   procedure Set_Current_Page
+     (Wiz : access Wizard_Record'Class; Num : Positive) is
+   begin
+      pragma Assert (Wiz.Pages /= null);
+      pragma Assert (Num <= Wiz.Pages'Last);
+
+      Display_Error (Wiz, "");
+
+      --  Unhighlight the current page
+
+      if Wiz.Pages (Wiz.Current_Page).Toc /= null then
+         Set_Style (Wiz.Pages (Wiz.Current_Page).Toc, Wiz.Normal_Style);
+      end if;
+
+      if Wiz.Pages (Wiz.Current_Page).Content /= null then
+         Hide (Wiz.Pages (Wiz.Current_Page).Content);
+         Set_Child_Visible (Wiz.Pages (Wiz.Current_Page).Content, False);
+      end if;
+
+      --  Display the new page
+
+      Wiz.Current_Page := Num;
+
+      if Wiz.Pages (Wiz.Current_Page).Content = null then
+         Wiz.Pages (Wiz.Current_Page).Content :=
+           Create_Content (Wiz.Pages (Wiz.Current_Page), Wiz);
+         Pack_Start (Get_Contents (Wiz),
+                     Wiz.Pages (Wiz.Current_Page).Content,
+                     Expand => True, Fill => True);
+      end if;
+
+      Set_Child_Visible (Wiz.Pages (Wiz.Current_Page).Content, True);
+      Show_All (Wiz.Pages (Wiz.Current_Page).Content);
+
+      Update_Page (Wiz.Pages (Wiz.Current_Page));
+
+      if Wiz.Pages (Wiz.Current_Page).Toc /= null then
+         Set_Style (Wiz.Pages (Wiz.Current_Page).Toc, Wiz.Highlight_Style);
+      end if;
+
+      Set_Text (Get_Title_Label (Wiz), Wiz.Pages (Wiz.Current_Page).Title.all);
+
+      Update_Buttons_Sensitivity (Wiz);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
+   end Set_Current_Page;
+
+   -------------------
+   -- Display_Error --
+   -------------------
+
+   procedure Display_Error
+     (Wiz : access Wizard_Record; Error_Msg : String) is
+   begin
+      Display_Error (Logo_Box_Record (Wiz.all)'Access, Error_Msg);
+   end Display_Error;
 
    ---------------
    -- Next_Page --
    ---------------
 
    procedure Next_Page (Wiz : access Gtk_Widget_Record'Class) is
-      W : constant Wizard := Wizard (Wiz);
+      W    : constant Wizard := Wizard (Wiz);
+      Next : constant Wizard_Page := Next_Page (W.Pages (W.Current_Page));
    begin
+      if Next /= null then
+         for P in W.Pages'Range loop
+            if W.Pages (P) = Next then
+               Set_Current_Page (W, P);
+               return;
+            end if;
+         end loop;
+      end if;
+
       Set_Current_Page (W, W.Current_Page + 1);
    end Next_Page;
 
@@ -420,59 +414,45 @@ package body Wizards is
       Set_Current_Page (W, W.Current_Page - 1);
    end Previous_Page;
 
-   ----------------------
-   -- Get_Current_Page --
-   ----------------------
+   ---------------
+   -- On_Finish --
+   ---------------
 
-   function Get_Current_Page (Wiz : access Wizard_Record) return Positive is
+   procedure On_Finish (Wiz : access Gtk_Widget_Record'Class) is
+      W : constant Wizard := Wizard (Wiz);
    begin
-      return Wiz.Current_Page;
-   end Get_Current_Page;
+      Perform_Finish (W);
+   end On_Finish;
 
-   -------------------
-   -- Cancel_Button --
-   -------------------
+   ---------------
+   -- Get_Pages --
+   ---------------
 
-   function Cancel_Button (Wiz : access Wizard_Record) return Gtk_Button is
+   function Get_Pages
+     (Wiz : access Wizard_Record) return Wizard_Pages_Array_Access is
    begin
-      return Wiz.Cancel;
-   end Cancel_Button;
+      return Wiz.Pages;
+   end Get_Pages;
 
-   ---------------------
-   -- Previous_Button --
-   ---------------------
+   ----------------
+   -- Get_Kernel --
+   ----------------
 
-   function Previous_Button (Wiz : access Wizard_Record) return Gtk_Button is
+   function Get_Kernel
+     (Wiz : access Wizard_Record) return Glide_Kernel.Kernel_Handle is
    begin
-      return Wiz.Previous;
-   end Previous_Button;
+      return Wiz.Kernel;
+   end Get_Kernel;
 
    -----------------
-   -- Next_Button --
+   -- Get_Content --
    -----------------
 
-   function Next_Button (Wiz : access Wizard_Record) return Gtk_Button is
+   function Get_Content
+     (Page : access Wizard_Page_Record'Class) return Gtk.Widget.Gtk_Widget is
    begin
-      return Wiz.Next;
-   end Next_Button;
+      return Page.Content;
+   end Get_Content;
 
-   -------------------
-   -- Finish_Button --
-   -------------------
-
-   function Finish_Button  (Wiz : access Wizard_Record) return Gtk_Button is
-   begin
-      return Wiz.Finish;
-   end Finish_Button;
-
-   -----------------------------------
-   -- Get_Activate_Finish_From_Page --
-   -----------------------------------
-
-   function Get_Activate_Finish_From_Page
-     (Wiz : access Wizard_Record) return Integer is
-   begin
-      return Wiz.Activate_Finish_From_Page;
-   end Get_Activate_Finish_From_Page;
 
 end Wizards;
