@@ -1039,13 +1039,13 @@ package body Python.GUI is
    is
       function Completion
         (Input     : String;
-         User_Data : Glib.Object.GObject)
+         User_Data : System.Address)
          return String_List_Utils.String_List.List;
       --  Handles completion for the commands
 
       function Completion
         (Input     : String;
-         User_Data : Glib.Object.GObject)
+         User_Data : System.Address)
          return String_List_Utils.String_List.List
       is
          use String_List_Utils.String_List;
@@ -1173,7 +1173,7 @@ package body Python.GUI is
                   Completion      => Completion'Unrestricted_Access,
                   Prompt_End_Mark => Interpreter.Prompt_End_Mark,
                   Uneditable_Tag  => Interpreter.Uneditable,
-                  User_Data       => null);
+                  User_Data       => System.Null_Address);
             end if;
             return True;
 
