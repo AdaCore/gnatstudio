@@ -96,9 +96,10 @@ package body Shell_Script is
    -------------------------
 
    type Shell_Callback_Data is new Callback_Data with record
-      Script       : Shell_Scripting;
-      Args         : GNAT.OS_Lib.Argument_List_Access;
-      Return_Value : GNAT.OS_Lib.String_Access;
+      Script         : Shell_Scripting;
+      Args           : GNAT.OS_Lib.Argument_List_Access;
+      Return_Value   : GNAT.OS_Lib.String_Access;
+      Return_As_List : Boolean := False;
    end record;
 
    function Get_Kernel (Data : Shell_Callback_Data)
@@ -106,6 +107,7 @@ package body Shell_Script is
    function Number_Of_Arguments (Data : Shell_Callback_Data) return Natural;
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return String;
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Integer;
+   function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Boolean;
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return System.Address;
    function Nth_Arg
@@ -115,17 +117,13 @@ package body Shell_Script is
    procedure Set_Return_Value_As_List
      (Data : in out Shell_Callback_Data; Size : Natural := 0);
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : Integer; Append : Boolean := False);
+     (Data   : in out Shell_Callback_Data; Value : Integer);
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : String; Append : Boolean := False);
+     (Data   : in out Shell_Callback_Data; Value : String);
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : System.Address; Append : Boolean := False);
+     (Data   : in out Shell_Callback_Data; Value : System.Address);
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : Class_Instance; Append : Boolean := False);
+     (Data   : in out Shell_Callback_Data; Value : Class_Instance);
    --  See doc from inherited subprogram
 
    -------------------
@@ -855,6 +853,21 @@ package body Shell_Script is
    -- Nth_Arg --
    -------------
 
+   function Nth_Arg (Data : Shell_Callback_Data; N : Positive)
+      return Boolean
+   is
+      S : constant String := Nth_Arg (Data, N);
+   begin
+      return Boolean'Value (S);
+   exception
+      when Constraint_Error =>
+         raise Invalid_Parameter;
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return Integer
    is
@@ -918,9 +931,9 @@ package body Shell_Script is
    procedure Set_Return_Value_As_List
      (Data : in out Shell_Callback_Data; Size : Natural := 0)
    is
-      pragma Unreferenced (Data, Size);
+      pragma Unreferenced (Size);
    begin
-      null;
+      Data.Return_As_List := True;
    end Set_Return_Value_As_List;
 
    ----------------------
@@ -928,13 +941,13 @@ package body Shell_Script is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : Integer; Append : Boolean := False)
-   is
-      pragma Unreferenced (Append);
+     (Data : in out Shell_Callback_Data; Value : Integer) is
    begin
-      Free (Data.Return_Value);
-      Data.Return_Value := new String'(Integer'Image (Value));
+      if not Data.Return_As_List then
+         Free (Data.Return_Value);
+      end if;
+
+      Set_Return_Value (Data, Integer'Image (Value));
    end Set_Return_Value;
 
    ----------------------
@@ -942,12 +955,11 @@ package body Shell_Script is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : String; Append : Boolean := False)
+     (Data : in out Shell_Callback_Data; Value : String)
    is
       Tmp : String_Access;
    begin
-      if Append and then Data.Return_Value /= null then
+      if Data.Return_As_List and then Data.Return_Value /= null then
          Tmp := Data.Return_Value;
          Data.Return_Value := new String'(Tmp.all & ASCII.LF & Value);
          Free (Tmp);
@@ -962,10 +974,9 @@ package body Shell_Script is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : System.Address; Append : Boolean := False) is
+     (Data : in out Shell_Callback_Data; Value : System.Address) is
    begin
-      Set_Return_Value (Data, "0x" & System.Address_Image (Value), Append);
+      Set_Return_Value (Data, "0x" & System.Address_Image (Value));
    end Set_Return_Value;
 
    ----------------------
@@ -973,10 +984,9 @@ package body Shell_Script is
    ----------------------
 
    procedure Set_Return_Value
-     (Data   : in out Shell_Callback_Data;
-      Value  : Class_Instance; Append : Boolean := False) is
+     (Data : in out Shell_Callback_Data; Value : Class_Instance) is
    begin
-      Set_Return_Value (Data, Name_From_Instance (Value), Append);
+      Set_Return_Value (Data, Name_From_Instance (Value));
    end Set_Return_Value;
 
    ------------------
