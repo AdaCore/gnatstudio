@@ -79,6 +79,9 @@ package body VCS.ClearCase is
       Head   : String_List.List;
       List   : String_List.List) return Boolean;
    --  Check that List corresponds to the output of a ClearCase checkin.
+   --  If Head is not empty, first item in head contains an error message to
+   --  be displayed in case of failure, and the second item, if not empty,
+   --  contains a file corresponding to a log file.
 
    function Checkout_Handler
      (Kernel : Kernel_Handle;
@@ -131,6 +134,103 @@ package body VCS.ClearCase is
       Message : String;
       List    : String_List.List := Null_List);
    --  Report a ClearCase error.
+
+   function Text_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Create a file with the information from List, and display it in an
+   --  editor. File name is based on the information found in Head.
+   --  ??? This is code duplication from vcs-cvs.adb
+
+   function Annotation_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Display the annotations for the file.
+
+   -------------------------------
+   -- Annotation_Output_Handler --
+   -------------------------------
+
+   function Annotation_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      use String_List;
+
+      L_Temp       : List_Node := First (List);
+      Length       : constant Natural := String_List.Length (List);
+      Current_File : constant String := String_List.Head (Head);
+      A            : Line_Information_Array (1 .. Length);
+
+   begin
+      --  ??? This assumes that the file currently opened is identical to the
+      --  file first checked-out from VCS. It would be necessary here to
+      --  force a save of the file, and then to get a diff between that file
+      --  and the one on VCS (which is given in the output of the annotation,
+      --  by the way), and to compute from that diff which lines correspond to
+      --  the annotated ones.
+
+      Open_File_Editor (Kernel, Current_File, From_Path => False);
+
+      for J in 1 .. Length loop
+         declare
+            S : constant String := Data (L_Temp);
+         begin
+            if S'Length > 70 then
+               A (J).Text := new String'(S (S'First .. S'First + 69));
+            else
+               A (J).Text := new String'(S);
+            end if;
+            --  The index is linked to the annotation format.
+         end;
+
+         L_Temp := Next (L_Temp);
+      end loop;
+
+      Add_Line_Information
+        (Kernel,
+         Current_File,
+         Annotation_Id,
+         new Line_Information_Array'(A));
+
+      return True;
+   end Annotation_Output_Handler;
+
+   -------------------------
+   -- Text_Output_Handler --
+   -------------------------
+
+   function Text_Output_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      use String_List;
+
+      L_Temp  : List_Node := First (List);
+      Success : Boolean;
+
+      Current_File : constant String := String_List.Head (Head);
+      Text_File    : constant String := Get_Tmp_Dir & Base_Name (Current_File);
+      File         : File_Type;
+
+   begin
+      Create (File, Name => Text_File);
+
+      while L_Temp /= Null_Node loop
+         Put (File, Data (L_Temp));
+         L_Temp := Next (L_Temp);
+      end loop;
+
+      Close (File);
+      Open_File_Editor (Kernel, Text_File, From_Path => False);
+      GNAT.OS_Lib.Delete_File (Text_File, Success);
+
+      return True;
+   end Text_Output_Handler;
 
    ------------------
    -- Report_Error --
@@ -615,7 +715,7 @@ package body VCS.ClearCase is
 
             Create (Checkout_File_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -661,54 +761,75 @@ package body VCS.ClearCase is
 
       File_Node : List_Node := First (Filenames);
       Logs_Node : List_Node := First (Logs);
+
    begin
       while File_Node /= Null_Node loop
          declare
-            Args     : List;
-            Head     : List;
-            File     : constant String := Data (File_Node);
-
+            Args                 : List;
+            Head                 : List;
+            File                 : constant String := Data (File_Node);
             Checkin_File_Command : External_Command_Access;
-
-            Fail_Message    : Console_Command_Access;
-            Success_Message : Console_Command_Access;
+            Fail_Message         : Console_Command_Access;
+            Success_Message      : Console_Command_Access;
+            Log_File             : constant String := Get_Tmp_Dir &
+              "clearcase_log_" & Base_Name (File);
+            Fd                   : GNAT.OS_Lib.File_Descriptor;
 
          begin
-            Insert (Kernel,
-                    -"ClearCase: Checking-in element: "
-                      & File & " ...", Mode => Info);
+            Insert
+              (Kernel,
+               -"ClearCase: Checking-in element: "
+               & File & " ...", Mode => Info);
 
             --  Create the end of the message.
 
-            Create (Fail_Message,
-                    Kernel,
-                    -("ClearCase: check-in of ") & File & (-" failed."),
-                    False,
-                    True,
-                    Info);
+            Create
+              (Fail_Message,
+               Kernel,
+               -("ClearCase: check-in of ") & File & (-" failed."),
+               False,
+               True,
+               Info);
 
-            Create (Success_Message,
-                    Kernel,
-                    -("ClearCase: check-in of ") & File & (-" done."),
-                    False,
-                    True,
-                    Info);
+            Create
+              (Success_Message,
+               Kernel,
+               -("ClearCase: check-in of ") & File & (-" done."),
+               False,
+               True,
+               Info);
 
             Append (Args, "ci");
-            Append (Args, "-c");
+            Append (Args, "-cfile");
 
-            Append (Args, Data (Logs_Node));
+            Fd := GNAT.OS_Lib.Create_File (Log_File, GNAT.OS_Lib.Binary);
+
+            declare
+               Log           : aliased constant String := Data (Logs_Node);
+               Bytes_Written : Integer;
+               pragma Unreferenced (Bytes_Written);
+            begin
+               Bytes_Written :=
+                 GNAT.OS_Lib.Write (Fd, Log (Log'First)'Address, Log'Length);
+            end;
+
+            GNAT.OS_Lib.Close (Fd);
+
+            Append (Args, Log_File);
+
             Append (Args, File);
 
             Append (Head, -"ClearCase error: could not check-in " & File);
+            Append (Head, Log_File);
 
-            Create (Checkin_File_Command,
-                    Kernel,
-                    "cleartool",
-                    "",
-                    Args,
-                    Head,
-                    Checkin_Handler'Access);
+            Create
+              (Checkin_File_Command,
+               Kernel,
+               Get_Pref (Rep.Kernel, ClearCase_Command),
+               "",
+               Args,
+               Head,
+               Checkin_Handler'Access);
 
             Free (Args);
             Free (Head);
@@ -771,7 +892,7 @@ package body VCS.ClearCase is
 
             Create (Update_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Null_List,
@@ -815,8 +936,23 @@ package body VCS.ClearCase is
 
       Node      : String_List.List_Node;
       Pattern   : constant String := "Checked in ";
+      Head_Node : String_List.List_Node;
+      Success   : Boolean;
    begin
       Node := First (List);
+
+      --  Delete the associated log file, if it exists.
+
+      if not Is_Empty (Head) then
+         Head_Node := String_List.First (Head);
+         Head_Node := String_List.Next (Head_Node);
+
+         if Head_Node /= Null_Node then
+            GNAT.OS_Lib.Delete_File (String_List.Data (Head_Node), Success);
+         end if;
+      end if;
+
+      --  Check for error messages in the output.
 
       while Node /= Null_Node loop
          declare
@@ -871,7 +1007,7 @@ package body VCS.ClearCase is
 
       Insert (Head, Error);
       Insert (List, Verbose);
-      return False;
+      return True;
    end Checkout_Handler;
 
    --------------------
@@ -971,7 +1107,7 @@ package body VCS.ClearCase is
 
             Create (Checkout_Dir_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -994,7 +1130,7 @@ package body VCS.ClearCase is
 
             Create (Make_Element_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1014,7 +1150,7 @@ package body VCS.ClearCase is
 
             Create (Checkin_Element_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1033,7 +1169,7 @@ package body VCS.ClearCase is
 
             Create (Checkin_Dir_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1132,7 +1268,7 @@ package body VCS.ClearCase is
 
             Create (Checkout_Dir_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1155,7 +1291,7 @@ package body VCS.ClearCase is
 
             Create (Remove_Element_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1174,7 +1310,7 @@ package body VCS.ClearCase is
 
             Create (Checkin_Dir_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Head,
@@ -1235,7 +1371,7 @@ package body VCS.ClearCase is
 
             Create (Revert_Command,
                     Kernel,
-                    "cleartool",
+                    Get_Pref (Rep.Kernel, ClearCase_Command),
                     "",
                     Args,
                     Null_List,
@@ -1300,11 +1436,10 @@ package body VCS.ClearCase is
       if Version_1 = ""
         and then Version_2 = ""
       then
-         --  ??? If no version is specified, we assume that
-         --  we want differences with the main branch, is that the
-         --  right behaviour ?
-         Append (Args, File & "@@/main/LATEST");
+         --  If no version is specified, we assume that
+         --  we want differences with the latest version.
          Append (Args, File);
+         Append (Args, File & "@@/main/LATEST");
 
       else
          if Version_2 = "" then
@@ -1324,7 +1459,7 @@ package body VCS.ClearCase is
 
       Create (Diff_File_Command,
               Kernel,
-              "cleartool",
+              Get_Pref (Rep.Kernel, ClearCase_Command),
               "",
               Args,
               Head,
@@ -1347,9 +1482,28 @@ package body VCS.ClearCase is
      (Rep  : access ClearCase_Record;
       File : String)
    is
-      pragma Unreferenced (Rep, File);
+      C            : External_Command_Access;
+      Command_Head : List;
+      Args         : List;
    begin
-      null;
+      Append (Args, "lshistory");
+      Append (Args, File);
+
+      Append (Command_Head, Base_Name (File) & "$changelog");
+
+      Create
+        (C,
+         Rep.Kernel,
+         Get_Pref (Rep.Kernel, ClearCase_Command),
+         Dir_Name (File),
+         Args,
+         Command_Head,
+         Text_Output_Handler'Access);
+
+      Enqueue (Rep.Queue, C);
+
+      Free (Command_Head);
+      Free (Args);
    end Log;
 
    --------------
@@ -1360,9 +1514,36 @@ package body VCS.ClearCase is
      (Rep  : access ClearCase_Record;
       File : String)
    is
-      pragma Unreferenced (Rep, File);
+      use String_List;
+
+      C            : External_Command_Access;
+      Command_Head : List;
+      Args         : List;
    begin
-      null;
+      Append (Args, "annotate");
+      Append (Args, "-nheader");
+      Append (Args, "-force");
+      Append (Args, "-fmt");
+      Append (Args, "%BAd\040%Sd\040%-16.16u\040%-40.40Vn");
+      Append (Args, "-out");
+      Append (Args, "-");
+
+      Append (Args, File);
+      Append (Command_Head, File);
+
+      Create
+        (C,
+         Rep.Kernel,
+         Get_Pref (Rep.Kernel, ClearCase_Command),
+         Dir_Name (File),
+         Args,
+         Command_Head,
+         Annotation_Output_Handler'Access);
+
+      Enqueue (Rep.Queue, C);
+
+      Free (Command_Head);
+      Free (Args);
    end Annotate;
 
    -------------
