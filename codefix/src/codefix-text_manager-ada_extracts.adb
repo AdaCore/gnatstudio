@@ -233,9 +233,17 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Elements_List => Tokens_List.Null_List,
          Back          => Clone (This.Back));
 
+      Token_It := First (This.Elements_List);
+
       while Token_It /= Tokens_List.Null_Node loop
-         Append (New_Extract.Elements_List, Clone (Data (Token_It)));
-         Token_It := Next (Token_It);
+         declare
+            New_Token : Token_Record := Clone (Data (Token_It));
+         begin
+            New_Token.Line := Get_Line
+              (New_Extract, Data (Token_It).Line.Cursor);
+            Append (New_Extract.Elements_List, New_Token);
+            Token_It := Next (Token_It);
+         end;
       end loop;
 
       return New_Extract;
@@ -323,6 +331,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Last_Col     => This.Last_Col,
          Line         => This.Line,
          Is_Separator => This.Is_Separator);
+      --  Be carefull !!! The line doesn't have to be cloned, because it is the
+      --  real line contained into the Extract and not a work copy.
    end Clone;
 
    -----------------
