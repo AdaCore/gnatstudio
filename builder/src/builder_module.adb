@@ -520,7 +520,7 @@ package body Builder_Module is
                Prj := Get_Project_From_File (Get_Registry (Kernel), F);
 
                if Prj = No_Project
-                 or else Is_Default (Get_Project (Kernel))
+                 or else Status (Get_Project (Kernel)) /= From_File
                then
                   Args := new Argument_List'
                     (Clone (Default_Builder_Switches)
@@ -542,7 +542,7 @@ package body Builder_Module is
       else
          --  Are we using the default internal project ?
 
-         if Is_Default (Get_Project (Kernel)) then
+         if Status (Get_Project (Kernel)) /= From_File then
             case Syntax is
                when GNAT_Syntax =>
                   if File = VFS.No_File then
@@ -802,7 +802,7 @@ package body Builder_Module is
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
 
-      if Is_Default (Prj) then
+      if Status (Prj) /= From_File then
          Insert_And_Launch
            (Kernel,
             Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
