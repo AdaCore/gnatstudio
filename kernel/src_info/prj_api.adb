@@ -76,10 +76,11 @@ package body Prj_API is
    --  Find a node given its name
 
    procedure Move_From_Common_To_Case_Construct
-     (Project         : Project_Node_Id;
-      Pkg_Name        : String;
-      Attribute_Name  : Types.Name_Id;
-      Attribute_Index : Types.String_Id := Types.No_String);
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String;
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : Types.Name_Id;
+      Attribute_Index    : Types.String_Id := Types.No_String);
    --  Move any declaration for the attribute from the common part of the
    --  project into each branch of the nested case construct. Nothing is done
    --  if there is no such declaration.
@@ -1342,12 +1343,13 @@ package body Prj_API is
    ----------------------------------------
 
    procedure Update_Attribute_Value_In_Scenario
-     (Project         : Project_Node_Id;
-      Pkg_Name        : String := "";
-      Attribute_Name  : String := "";
-      Values          : GNAT.OS_Lib.Argument_List;
-      Attribute_Index : Types.String_Id := Types.No_String;
-      Prepend         : Boolean := False)
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String := "";
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : String := "";
+      Values             : GNAT.OS_Lib.Argument_List;
+      Attribute_Index    : Types.String_Id := Types.No_String;
+      Prepend            : Boolean := False)
    is
       Attribute_N : Name_Id;
       List : Project_Node_Id := Empty_Node;
@@ -1422,7 +1424,7 @@ package body Prj_API is
       Attribute_N := Name_Find;
 
       Move_From_Common_To_Case_Construct
-        (Project, Pkg_Name, Attribute_N, Attribute_Index);
+        (Project, Pkg_Name, Scenario_Variables, Attribute_N, Attribute_Index);
 
       --  Create the string list for the new values.
       --  This can be prepended later on to the existing list of values.
@@ -1445,7 +1447,7 @@ package body Prj_API is
       end if;
 
       For_Each_Scenario_Case_Item
-        (Project, Pkg, Add_Or_Replace'Unrestricted_Access);
+        (Project, Pkg, Scenario_Variables, Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
    ----------------------------------------
@@ -1453,10 +1455,11 @@ package body Prj_API is
    ----------------------------------------
 
    procedure Move_From_Common_To_Case_Construct
-     (Project         : Project_Node_Id;
-      Pkg_Name        : String;
-      Attribute_Name  : Types.Name_Id;
-      Attribute_Index : Types.String_Id := Types.No_String)
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String;
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : Types.Name_Id;
+      Attribute_Index    : Types.String_Id := Types.No_String)
    is
       Parent : Project_Node_Id;
       Pkg  : Project_Node_Id := Empty_Node;
@@ -1490,7 +1493,7 @@ package body Prj_API is
 
       if Node /= Empty_Node then
          --  First, create the nested case for the scenario
-         For_Each_Scenario_Case_Item (Project, Pkg, null);
+         For_Each_Scenario_Case_Item (Project, Pkg, Scenario_Variables, null);
 
          --  Then populate it
          For_Each_Matching_Case_Item
@@ -1507,11 +1510,12 @@ package body Prj_API is
    ----------------------------------------
 
    procedure Update_Attribute_Value_In_Scenario
-     (Project         : Project_Node_Id;
-      Pkg_Name        : String := "";
-      Attribute_Name  : String := "";
-      Value           : String;
-      Attribute_Index : Types.String_Id := Types.No_String)
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String := "";
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : String := "";
+      Value              : String;
+      Attribute_Index    : Types.String_Id := Types.No_String)
    is
       Attribute_N : Name_Id;
       Val : Project_Node_Id := Empty_Node;
@@ -1552,7 +1556,7 @@ package body Prj_API is
       Attribute_N := Name_Find;
 
       Move_From_Common_To_Case_Construct
-        (Project, Pkg_Name, Attribute_N, Attribute_Index);
+        (Project, Pkg_Name, Scenario_Variables, Attribute_N, Attribute_Index);
 
       --  Create the node for the new value
 
@@ -1568,7 +1572,7 @@ package body Prj_API is
       end if;
 
       For_Each_Scenario_Case_Item
-        (Project, Pkg, Add_Or_Replace'Unrestricted_Access);
+        (Project, Pkg, Scenario_Variables, Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
    ---------------------------------

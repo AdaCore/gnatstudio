@@ -308,12 +308,13 @@ package Prj_API is
    --  Convert a variable value to a list of arguments.
 
    procedure Update_Attribute_Value_In_Scenario
-     (Project         : Project_Node_Id;
-      Pkg_Name        : String := "";
-      Attribute_Name  : String := "";
-      Values          : GNAT.OS_Lib.Argument_List;
-      Attribute_Index : Types.String_Id := Types.No_String;
-      Prepend         : Boolean := False);
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String := "";
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : String := "";
+      Values             : GNAT.OS_Lib.Argument_List;
+      Attribute_Index    : Types.String_Id := Types.No_String;
+      Prepend            : Boolean := False);
    --  Update the value of the attribute Attribute_Name in Project/Pkg_Name.
    --  If Pkg_Name is the empty string "", then the value is updated at the
    --  top-level of the project.
@@ -325,11 +326,12 @@ package Prj_API is
    --  instance the file name when modifying the switches).
 
    procedure Update_Attribute_Value_In_Scenario
-     (Project         : Project_Node_Id;
-      Pkg_Name        : String := "";
-      Attribute_Name  : String := "";
-      Value           : String;
-      Attribute_Index : Types.String_Id := Types.No_String);
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String := "";
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : String := "";
+      Value              : String;
+      Attribute_Index    : Types.String_Id := Types.No_String);
    --  Same as above, but for an attribute that contains a single value.
 
    -----------
