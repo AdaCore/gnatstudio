@@ -21,6 +21,8 @@
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
+with Gdk.Window;                use Gdk.Window;
+with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -894,15 +896,16 @@ package body Glide_Kernel is
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record)
    is
-      MDI  : constant MDI_Window := Get_MDI (Handle);
-      File_Name   : constant String :=
+      MDI   : constant MDI_Window := Get_MDI (Handle);
+      File_Name    : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
       Project_Name : constant String :=
         Project_Directory (Get_Project (Handle));
-      File : File_Type;
-      N    : Node_Ptr;
-      M    : Node_Ptr;
-      Old  : Node_Ptr;
+      File  : File_Type;
+      N     : Node_Ptr;
+      M     : Node_Ptr;
+      Old   : Node_Ptr;
+      State : Gdk_Window_State;
 
    begin
       --  Read the previous contents of the file, to save the desktops for
@@ -949,30 +952,42 @@ package body Glide_Kernel is
 
       --  Add GPS-specific nodes
 
+      State := Get_State (Get_Window (Handle.Main_Window));
+
+      if (State and Window_State_Maximized) = 0 then
+         M := new Node'
+           (Tag           => new String'("GPS_Width"),
+            Value         => new String'
+              (Allocation_Int'Image
+                 (Get_Allocation_Width (Gtk_Widget ((Handle.Main_Window))))),
+            Child         => null,
+            Parent        => null,
+            Next          => null,
+            Specific_Data => 0,
+            Attributes    => null);
+         Add_Child (N, M);
+
+         M := new Node'
+           (Tag           => new String'("GPS_Height"),
+            Value         => new String'
+              (Allocation_Int'Image
+                 (Get_Allocation_Height ((Handle.Main_Window)))),
+            Child         => null,
+            Parent        => null,
+            Next          => null,
+            Specific_Data => 0,
+            Attributes    => null);
+         Add_Child (N, M);
+      end if;
+
       M := new Node'
-        (Tag => new String'("GPS_Width"),
-         Value => new String'
-           (Allocation_Int'Image
-              (Get_Allocation_Width (Gtk_Widget ((Handle.Main_Window))))),
-         Child => null,
-         Parent => null,
-         Next => null,
+        (Tag           => new String'("GPS_State"),
+         Value         => new String'(Gdk_Window_State'Image (State)),
+         Child         => null,
+         Parent        => null,
+         Next          => null,
          Specific_Data => 0,
-         Attributes => null);
-
-      Add_Child (N, M);
-
-      M := new Node'
-        (Tag => new String'("GPS_Height"),
-         Value => new String'
-           (Allocation_Int'Image
-              (Get_Allocation_Height (Gtk_Widget ((Handle.Main_Window))))),
-         Child => null,
-         Parent => null,
-         Next => null,
-         Specific_Data => 0,
-         Attributes => null);
-
+         Attributes    => null);
       Add_Child (N, M);
 
       Print (N);
@@ -1013,6 +1028,8 @@ package body Glide_Kernel is
       Desktop_Node : Node_Ptr;
       Width  : Gint := 640;
       Height : Gint := 480;
+      State  : Gdk_Window_State := 0;
+
    begin
       if Is_Regular_File (File) then
          Trace (Me, "loading desktop file " & File);
@@ -1033,6 +1050,8 @@ package body Glide_Kernel is
                   Height := Gint'Value (Child.Value.all);
                elsif Child.Tag.all = "GPS_Width" then
                   Width := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "GPS_State" then
+                  State := Gdk_Window_State'Value (Child.Value.all);
                end if;
             end if;
 
@@ -1040,6 +1059,10 @@ package body Glide_Kernel is
          end loop;
 
          Set_Default_Size (Handle.Main_Window, Width, Height);
+
+         if (State and Window_State_Maximized) /= 0 then
+            Maximize (Handle.Main_Window);
+         end if;
 
          --  Call Show_All before restoring the desktop, in case some
          --  children stored in the desktop have something to hide.
