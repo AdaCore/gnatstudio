@@ -646,7 +646,6 @@ package body Src_Editor_Buffer is
 
       if Buffer.Parse_Blocks then
          Compute_Blocks (Buffer);
-         Emit_New_Cursor_Position (Buffer);
       end if;
 
       --  Re-highlight the highlight region if needed.
