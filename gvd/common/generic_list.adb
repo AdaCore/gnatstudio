@@ -343,7 +343,11 @@ package body Generic_List is
       if L.First = null then
          raise List_Empty;
       else
-         return List' (L.First.Next, L.Last);
+         if L.First.Next = null then
+            return Null_List;
+         else
+            return List' (L.First.Next, L.Last);
+         end if;
       end if;
    end Next;
 
@@ -360,6 +364,10 @@ package body Generic_List is
       else
          First := L.First;
          L.First := L.First.Next;
+
+         if L.First = null then
+            L.Last := null;
+         end if;
 
          if First.Element /= null then
             Free (First.Element.all);
