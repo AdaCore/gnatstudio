@@ -5117,8 +5117,10 @@ Color used for highlighting in the debugger console.
 @item Break on exceptions
 @cindex breakpoint
 @cindex exception
-Specifies whether a breakpoint on all exceptions should be set by default
-when loading a program.
+Specifies whether a breakpoint on all exceptions should be set by
+default when loading a program. This setup is only taken into account
+when a new debugger is initialized, and will not modify a running
+debugger (use the breakpoint editor for running debuggers).
 
 @item Execution window
 @cindex execution
