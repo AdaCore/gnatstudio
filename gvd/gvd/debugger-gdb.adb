@@ -696,6 +696,9 @@ package body Debugger.Gdb is
 
       Close (Get_Descriptor (Get_Process (Debugger)).all);
       Free (Debugger.Process);
+      Free (Debugger.Remote_Host);
+      Free (Debugger.Remote_Target);
+      Free (Debugger.Remote_Protocol);
 
       exception
          when Process_Died =>
