@@ -36,6 +36,9 @@ package body Glide_Kernel.Preferences is
    package Key_Themes_Properties is new Generic_Enumeration_Property
      ("Key_Themes", Key_Themes);
 
+   package Indentation_Properties is new Generic_Enumeration_Property
+     ("Indentation_Kind", Indentation_Kind);
+
    ---------------------------------
    -- Register_Global_Preferences --
    ---------------------------------
@@ -388,13 +391,12 @@ package body Glide_Kernel.Preferences is
 
       -- Editor:Languages --
 
-      Ada_Automatic_Indentation := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "Ada-Automatic-Indentation",
-           Default => True,
-           Blurb   =>
-             -("Whether the editor should indent automatically Ada sources"),
-           Nick    => -"Auto indentation"));
+      Ada_Automatic_Indentation := Param_Spec_Enum
+        (Indentation_Properties.Gnew_Enum
+           (Name    => "Ada-Auto-Indentation",
+            Default => Extended,
+            Blurb   => -"How the editor should indent Ada sources",
+            Nick    => -"Auto indentation"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Ada_Automatic_Indentation),
          -"Editor:Ada");
@@ -459,13 +461,12 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Ada_Indent_Case_Extra),
          -"Editor:Ada");
 
-      C_Automatic_Indentation := Param_Spec_Boolean
-        (Gnew_Boolean
-          (Name    => "C-Automatic-Indentation",
-           Default => True,
-           Blurb   =>
-             -("Whether the editor should indent automatically C/C++ sources"),
-           Nick    => -"Auto indentation"));
+      C_Automatic_Indentation := Param_Spec_Enum
+        (Indentation_Properties.Gnew_Enum
+           (Name    => "C-Auto-Indentation",
+            Default => Extended,
+            Blurb   => -"How the editor should indent C/C++ sources",
+            Nick    => -"Auto indentation"));
       Register_Property
         (Kernel.Preferences, Param_Spec (C_Automatic_Indentation),
          -"Editor:C/C++");
