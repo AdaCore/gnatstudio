@@ -240,7 +240,10 @@ package body GVD.Canvas is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Canvas : out GVD_Canvas) is
+   procedure Gtk_New
+     (Canvas      : out GVD_Canvas;
+      Accel_Group : Gtk_Accel_Group)
+   is
       Menu : Gtk_Menu;
    begin
       Canvas := new GVD_Canvas_Record;
@@ -249,7 +252,7 @@ package body GVD.Canvas is
 
       --  Create the  background contextual menu now, so that the key shortcuts
       --  are activated
-      Menu := Contextual_Background_Menu (Canvas);
+      Menu := Contextual_Background_Menu (Canvas, Accel_Group);
    end Gtk_New;
 
    -------------------
@@ -539,7 +542,8 @@ package body GVD.Canvas is
    --------------------------------
 
    function Contextual_Background_Menu
-     (Canvas : access GVD_Canvas_Record) return Gtk_Menu
+     (Canvas      : access GVD_Canvas_Record;
+      Accel_Group : Gtk_Accel_Group) return Gtk_Menu
    is
       Check : Gtk_Check_Menu_Item;
       Mitem : Gtk_Menu_Item;
@@ -550,7 +554,7 @@ package body GVD.Canvas is
          return Canvas.Contextual_Background_Menu;
       end if;
 
-      Unlock (Gtk.Accel_Group.Get_Default);
+      Unlock (Accel_Group);
 
       Gtk_New (Canvas.Contextual_Background_Menu);
 
@@ -589,7 +593,7 @@ package body GVD.Canvas is
          Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
       Add_Accelerator
         (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
+         Accel_Group, GDK_equal, 0, Accel_Visible);
 
       Gtk_New (Mitem, Label => -"Zoom out");
       Append (Canvas.Contextual_Background_Menu, Mitem);
@@ -598,7 +602,7 @@ package body GVD.Canvas is
          Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
       Add_Accelerator
         (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
+         Accel_Group, GDK_minus, 0, Accel_Visible);
 
       Gtk_New (Zooms_Menu);
 
@@ -623,7 +627,7 @@ package body GVD.Canvas is
 
       Show_All (Canvas.Contextual_Background_Menu);
 
-      Lock (Gtk.Accel_Group.Get_Default);
+      Lock (Accel_Group);
       return Canvas.Contextual_Background_Menu;
    end Contextual_Background_Menu;
 

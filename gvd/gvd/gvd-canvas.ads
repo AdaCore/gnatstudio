@@ -26,6 +26,7 @@ with Gdk.Bitmap;
 with Gtk.Menu;
 with Gtk.Widget;
 with Gtk.Window;
+with Gtk.Accel_Group;
 with Display_Items;
 with Items;
 
@@ -39,7 +40,9 @@ package GVD.Canvas is
      with private;
    type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
-   procedure Gtk_New (Canvas : out GVD_Canvas);
+   procedure Gtk_New
+     (Canvas      : out GVD_Canvas;
+      Accel_Group : Gtk.Accel_Group.Gtk_Accel_Group);
    --  Create a new canvas.
 
    procedure Init_Graphics (Canvas : access GVD_Canvas_Record'Class);
@@ -111,7 +114,9 @@ package GVD.Canvas is
    --  item on the canvas.
 
    function Contextual_Background_Menu
-     (Canvas : access GVD_Canvas_Record) return Gtk.Menu.Gtk_Menu;
+     (Canvas      : access GVD_Canvas_Record;
+      Accel_Group : Gtk.Accel_Group.Gtk_Accel_Group)
+     return Gtk.Menu.Gtk_Menu;
    --  Get the contextual background menu associated with canvas.
 
    function Item_Contextual_Menu
