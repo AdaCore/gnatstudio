@@ -3,9 +3,6 @@ For more details, please see the documentation.
 
 New features in GPS 3.0.0
 
-- DA15-001: Separators can be added in contextual menus, and the order of
-  entries can be specified through XML files
-
 - E213-003, DA13-002 New shell class: GPS.Contextual, to control the
   visibility of contextual menus
 
@@ -13,12 +10,14 @@ New features in GPS 3.0.0
 
 - Search results are now highlighted in the speedbar to the left side of editors
 
-- E202-013 Contents of the Locations window is now saved and restored accross
-  GPS sessions
-
 - E207-013 Use of an external web browser to view the documentation
 
 - E203-010 Improved search in comments only
+
+- E202-013 Contents of the Locations window is now saved and restored accross
+  GPS sessions
+
+- E104-003 Support for multiple compilation/builds in parallel
 
 - All areas of the GPS window can now be split, including the side areas.
   Windows can no longer be minimized or iconified in the MDI.
@@ -33,10 +32,6 @@ New features in GPS 3.0.0
 - Apply button in the project wizard is now clickable as soon as the first
   page has been completed. There is no need to go through all pages
 
-- C618-017 Projects can now be created more easily simply by specifing a set of
-  source and object directories, and letting GPS handle the creation
-  automatically
-
 - Add a new action to disable the casing/indentation on the next key.
   The default key shortcut for this action is ctrl-q.
 
@@ -49,6 +44,13 @@ New features in GPS 3.0.0
 - DC08-016: Entity references are now displayed in the location window along
   with the type of reference.
 
+- DA15-001: Separators can be added in contextual menus, and the order of
+  entries can be specified through XML files
+
+- C618-017 Projects can now be created more easily simply by specifing a set of
+  source and object directories, and letting GPS handle the creation
+  automatically
+
 - New "clean" Menu items in "Build" for cleaning up artifacts of
   compilation.
 
@@ -58,87 +60,4 @@ New features in GPS 3.0.0
 - DA14-014 New on-the-fly casing support has been added to GPS
 
 - The MDI no longer supports the Unmaximized (aka "window in window" mode).
-
-New features in GPS 2.1.0
-
-- New shell commands, to ease writing of GPS scripts. See 'help' in the
-  GPS shell for a full list of GPS commands, in particular:
-  new classes GPS.Process, GPS.Toolbar, GPS.GUI, GPS.Menu, GPS.Console,
-     GPS.Combo, GPS.Button, GPS.MDIWindow
-  API change for GPS.Preference (import GPS_old.py for the old API)
-
-- New project attributes and preferences can be defined in XML files
-
-- New multi-language build tool: gprmake
-  This tool replaces the gpr2make tool. This is a preliminary version,
-  still under development.
-
-- New preference "Multi language build" to choose between gnatmake and gprmake
-  to build projects with Ada and C/C++.
-
-- New menu Help->Python Extensions
-  Improved documentation for python scripting, including more examples
-
-- Improved indentation of C/C++ struct, class, union constructs
-
-- New command refill to wrap text or comment according to the right margin as
-  defined by the column highlight editor's preference.
-
-- GPS can recompute the indentation for an alias after its expansion
-
-- DA25-024 Columns can be sorted in the "Edit file switches" window
-
-- DA17-004 It is now possible to define an empty switch for <radio-entry>
-  in XML files, to indicate the default meaning.
-
-- DA13-006 New menu Help->GNAT Runtime
-
-- DA13-002 It is now possible to remove or gray out buttons in the toolbar
-
-- DA07-011 GPS.Locations.parse can now specify the highlighting colors to use
-  in the editor (similar to what is done for standard build failures)
-
-- Documentation can now be downloaded from the web through http
-
-- Multi-key shortcuts can now be created for menus
-
-- New switch --host to specify the tools host of the project
-
-- New preferences to choose cursor width and color
-
-- New preferences to modify the Windows title bars and tabs appearance
-
-- D930-017: New preference to chose whether the toolbar should be displayed
-
-- D930-007 Add support for substring case exceptions
-
-- D914-021 Default diff and patch utilities provided under Windows
-  These are gnu implementations and are called gnudiff and gnupatch.
-  It is still possible to change the default utilities by editing the
-  preferences.
-
-- D625-008 AUnit integration has been enhanced. It is now possible to select
-  the directory in which the generated code is saved. The generated code is
-  now following the GNAT Style convention so it can be compiled with the
-  standard -gnaty switch.
-
-- Relative paths in Project View: use absolute paths if the only common part
-  of the path is the root directory of the file system
-
-- Minor updates in python support: GPS.Hook.add now takes a subprogram as a
-  parameter, instead of a string. This is the more usual syntax for python
-  users
-
-- D802-011 New contextual menu "Go to type declaration of"
-
-- D617-014 Python commands' output can now be redirected to any GPS window
-
-- D607-009 USERPROFILE taken into account
-  In particular under Windows, this environment variable is defined in place
-  of HOME under Unix. GPS now takes it into account for storing information.
-
-- D525-015 New preference for indentation of variable declaration
-  So that it is possible to choose whether alignment of continuation lines
-  for variable delcaration is performed based on the 'colon' character, or
-  based on the first non blank character.
 
