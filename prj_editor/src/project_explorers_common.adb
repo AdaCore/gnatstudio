@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,27 +18,27 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Basic_Types;               use Basic_Types;
-with Pixmaps_IDE;               use Pixmaps_IDE;
-with Pixmaps_Prj;               use Pixmaps_Prj;
-with Glib.Convert;              use Glib.Convert;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
-with Language.Unknown;          use Language.Unknown;
-with Language;                  use Language;
-with Language_Handlers.Glide;   use Language_Handlers.Glide;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Basic_Types;                 use Basic_Types;
+with Pixmaps_IDE;                 use Pixmaps_IDE;
+with Pixmaps_Prj;                 use Pixmaps_Prj;
+with Glib.Convert;                use Glib.Convert;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
+with Language.Unknown;            use Language.Unknown;
+with Language;                    use Language;
+with Language_Handlers.Glide;     use Language_Handlers.Glide;
+with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
+with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with String_Utils;              use String_Utils;
-with Src_Info;                  use Src_Info;
-with GUI_Utils;                 use GUI_Utils;
-with Traces;                    use Traces;
-with Projects.Registry;         use Projects, Projects.Registry;
-with Ada.Exceptions;            use Ada.Exceptions;
-with Types;                     use Types;
-with VFS;                       use VFS;
-with Ada.Calendar;              use Ada.Calendar;
+with String_Utils;                use String_Utils;
+with Src_Info;                    use Src_Info;
+with GUI_Utils;                   use GUI_Utils;
+with Traces;                      use Traces;
+with Projects.Registry;           use Projects, Projects.Registry;
+with Ada.Exceptions;              use Ada.Exceptions;
+with Types;                       use Types;
+with VFS;                         use VFS;
+with Ada.Calendar;                use Ada.Calendar;
 
 package body Project_Explorers_Common is
 
@@ -108,7 +108,6 @@ package body Project_Explorers_Common is
         Gdk_New_From_Xpm_Data (var_xpm);
       Close_Pixbufs (Category_Node) :=
         Gdk_New_From_Xpm_Data (var_xpm);
-
    end Init_Graphics;
 
    -----------------
@@ -174,8 +173,7 @@ package body Project_Explorers_Common is
          Append (Model, N, Parent_Iter);
       else
          while Sibling /= Null_Iter
-           and then Get_String (Model, Sibling, Base_Name_Column)
-           <= Name
+           and then Get_String (Model, Sibling, Base_Name_Column) <= Name
          loop
             Next (Model, Sibling);
          end loop;
@@ -189,10 +187,8 @@ package body Project_Explorers_Common is
 
       Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
       Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
-      Set (Model, N, Icon_Column,
-           C_Proxy (Close_Pixbufs (Category_Node)));
-      Set (Model, N, Node_Type_Column,
-           Gint (Node_Types'Pos (Category_Node)));
+      Set (Model, N, Icon_Column, C_Proxy (Close_Pixbufs (Category_Node)));
+      Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Category_Node)));
       Set (Model, N, Up_To_Date_Column, True);
       Set (Model, N, Category_Column, Language_Category'Pos (Category));
 
@@ -256,15 +252,11 @@ package body Project_Explorers_Common is
       Set (Model, N, Entity_Base_Column,
            Locale_To_UTF8 (Reduce (Construct.Name.all)));
 
-      Set (Model, N, Icon_Column,
-           C_Proxy (Close_Pixbufs (Entity_Node)));
-      Set (Model, N, Node_Type_Column,
-           Gint (Node_Types'Pos (Entity_Node)));
+      Set (Model, N, Icon_Column, C_Proxy (Close_Pixbufs (Entity_Node)));
+      Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
 
-      Set (Model, N,
-           Line_Column, Gint (Construct.Sloc_Entity.Line));
-      Set (Model, N,
-           Column_Column, Gint (Construct.Sloc_Entity.Column));
+      Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
+      Set (Model, N, Column_Column, Gint (Construct.Sloc_Entity.Column));
       Set (Model, N, Up_To_Date_Column, True);
       return N;
    end Append_Entity_Node;
@@ -429,8 +421,7 @@ package body Project_Explorers_Common is
                               Append_Dummy_Iter (Model, Iter);
                            end if;
 
-                           Success := Expand_Row
-                             (Tree, Path, False);
+                           Success := Expand_Row (Tree, Path, False);
                         end if;
 
                         Path_Free (Path);
@@ -503,11 +494,9 @@ package body Project_Explorers_Common is
       Set (Model, Node, Node_Type_Column, Gint (Node_Types'Pos (N_Type)));
 
       if Expanded then
-         Set (Model, Node, Icon_Column,
-              C_Proxy (Open_Pixbufs (N_Type)));
+         Set (Model, Node, Icon_Column, C_Proxy (Open_Pixbufs (N_Type)));
       else
-         Set (Model, Node, Icon_Column,
-              C_Proxy (Close_Pixbufs (N_Type)));
+         Set (Model, Node, Icon_Column, C_Proxy (Close_Pixbufs (N_Type)));
       end if;
    end Set_Node_Type;
 
@@ -590,8 +579,8 @@ package body Project_Explorers_Common is
    ------------------------
 
    function Get_File_From_Node
-     (Model     : Gtk_Tree_Store;
-      Node      : Gtk_Tree_Iter)
+     (Model : Gtk_Tree_Store;
+      Node  : Gtk_Tree_Iter)
       return VFS.Virtual_File
    is
       Absolute : constant String := Get_Absolute_Name (Model, Node);
@@ -684,11 +673,11 @@ package body Project_Explorers_Common is
    ---------------------
 
    function Context_Factory
-     (Kernel     : Kernel_Handle;
-      Tree       : access Gtk_Tree_View_Record'Class;
-      Model      : Gtk_Tree_Store;
-      Event      : Gdk_Event;
-      Menu       : Gtk_Menu) return Selection_Context_Access
+     (Kernel : Kernel_Handle;
+      Tree   : access Gtk_Tree_View_Record'Class;
+      Model  : Gtk_Tree_Store;
+      Event  : Gdk_Event;
+      Menu   : Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Menu);
 
@@ -730,8 +719,8 @@ package body Project_Explorers_Common is
 
       if Node_Type = Entity_Node then
          Set_Entity_Information
-           (Context     => Entity_Selection_Context_Access (Context),
-            Entity_Name => Entity_Base
+           (Context       => Entity_Selection_Context_Access (Context),
+            Entity_Name   => Entity_Base
               (Get_String (Model, Iter, Entity_Base_Column)),
             Entity_Column => Integer
               (Get_Int (Model, Iter, Column_Column)));
@@ -747,7 +736,6 @@ package body Project_Explorers_Common is
          Line         => L);
 
       return Context;
-
    end Context_Factory;
 
 end Project_Explorers_Common;

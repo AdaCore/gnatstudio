@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
+with Glib;           use Glib;
 with Gdk.Pixbuf;
 with Gdk.Event;      use Gdk.Event;
 with Gtk.Tree_Model; use Gtk.Tree_Model;
@@ -176,8 +176,8 @@ package Project_Explorers_Common is
    --  The return strings always ends with a directory separator.
 
    function Get_File_From_Node
-     (Model     : Gtk_Tree_Store;
-      Node      : Gtk_Tree_Iter) return VFS.Virtual_File;
+     (Model : Gtk_Tree_Store;
+      Node  : Gtk_Tree_Iter) return VFS.Virtual_File;
    --  Return the name of the file containing Node (or, in case Node is an
    --  Entity_Node, the name of the file that contains the entity).
    --  The full name, including directory, is returned if Full_Path is True.
@@ -212,11 +212,11 @@ package Project_Explorers_Common is
    --  by this call.
 
    function Context_Factory
-     (Kernel     : Kernel_Handle;
-      Tree       : access Gtk_Tree_View_Record'Class;
-      Model      : Gtk_Tree_Store;
-      Event      : Gdk_Event;
-      Menu       : Gtk_Menu) return Selection_Context_Access;
+     (Kernel : Kernel_Handle;
+      Tree   : access Gtk_Tree_View_Record'Class;
+      Model  : Gtk_Tree_Store;
+      Event  : Gdk_Event;
+      Menu   : Gtk_Menu) return Selection_Context_Access;
    --  Return the context to use for the contextual menu.
 
 end Project_Explorers_Common;
