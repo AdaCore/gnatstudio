@@ -1213,6 +1213,23 @@ package body Src_Editor_Module is
                Set_Error_Msg (Data, -"file not found or not open");
             end if;
          end;
+
+      elsif Command = "set_background_color" then
+         declare
+            Filename    : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Color       : constant String := Nth_Arg (Data, 2);
+            Box         : Source_Box;
+            Child       : MDI_Child;
+         begin
+            Child := Find_Editor (Kernel, Filename);
+
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+               Modify_Base
+                 (Get_View (Box.Editor), State_Normal, Parse (Color));
+            end if;
+         end;
       end if;
    end Edit_Command_Handler;
 
@@ -3632,6 +3649,16 @@ package body Src_Editor_Module is
          Minimum_Args => 2,
          Maximum_Args => 2,
          Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "set_background_color",
+         Params       => "(file, color)",
+         Description  =>
+           -"Set the background color for the editors for file.",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
