@@ -326,9 +326,9 @@ package Language is
       Cat_Structure,
       Cat_Type,
       Cat_Subtype,
-      Cat_Representation_Clause,
-      Cat_Local_Variable,
       Cat_Variable,
+      Cat_Local_Variable,
+      Cat_Representation_Clause,
 
       ----------------
       -- Dependency --
@@ -349,17 +349,7 @@ package Language is
       Cat_Accept_Statement,
       Cat_Declare_Block,
       Cat_Simple_Block,
-      Cat_Exception_Handler,
-
-      -----------------
-      -- Token Types --
-      -----------------
-
-      Cat_Reserved_Word,
-      Cat_Identifier,
-      Cat_String,
-      Cat_Character,
-      Cat_Comment);
+      Cat_Exception_Handler);
 
    subtype Enclosing_Entity_Category is Language_Category
      range Cat_Package .. Cat_Entry;
@@ -382,9 +372,6 @@ package Language is
 
    subtype Construct_Category is Language_Category
      range Cat_Loop_Statement .. Cat_Exception_Handler;
-
-   subtype Token_Category is Language_Category
-     range Cat_Reserved_Word .. Cat_Comment;
 
    type Source_Entity_Kind is
      (Ent_Reserved_Word,
