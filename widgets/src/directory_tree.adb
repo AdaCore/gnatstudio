@@ -42,7 +42,6 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -1330,40 +1329,6 @@ package body Directory_Tree is
          end;
       end if;
    end Get_Multiple_Selection;
-
-   ---------
-   -- Run --
-   ---------
-
-   function Run
-     (Selector : access Directory_Selector_Record'Class;
-      Title    : String;
-      Parent   : access Gtk.Window.Gtk_Window_Record'Class)
-      return Gtk.Dialog.Gtk_Response_Type
-   is
-      Dialog   : Gtk_Dialog;
-      Button   : Gtk_Widget;
-      Response : Gtk_Response_Type;
-
-   begin
-      Gtk_New (Dialog,
-               Title => Title,
-               Parent => Parent,
-               Flags => Modal or Destroy_With_Parent);
-      Set_Default_Size (Dialog, 640, 480);
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Pack_Start (Get_Vbox (Dialog), Selector, Fill => True, Expand => True);
-      Show_All (Dialog);
-
-      Response := Run (Dialog);
-      Ref (Selector);
-      Remove (Get_Vbox (Dialog), Selector);
-      Destroy (Dialog);
-
-      return Response;
-   end Run;
 
    --------------
    -- Get_Tree --

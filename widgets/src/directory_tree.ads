@@ -34,10 +34,8 @@ with Gdk.Window;
 with Gtk.Box;
 with Gtk.Clist;
 with Gtk.Ctree;
-with Gtk.Dialog;
 with Gtk.Menu;
 with Gtk.Main;
-with Gtk.Window;
 with GNAT.OS_Lib;
 
 package Directory_Tree is
@@ -130,19 +128,6 @@ package Directory_Tree is
    function Get_Tree (Selector : access Directory_Selector_Record)
       return Dir_Tree;
    --  Return the directory selector used internal by the selector.
-
-   function Run
-     (Selector : access Directory_Selector_Record'Class;
-      Title    : String;
-      Parent   : access Gtk.Window.Gtk_Window_Record'Class)
-      return Gtk.Dialog.Gtk_Response_Type;
-   --  Open a new dialog, that contains Selector, and run it until the user
-   --  presses either OK or Cancel.
-   --  On exit, either Gtk_Response_OK or Gtk_Response_Cancel is
-   --  returned. Selector is removed from the dialog, but is not destroyed, and
-   --  you should do it yourself. If you got Gtk_Response_OK, you should read
-   --  the selection yourself with Get_Single_Selection or
-   --  Get_Multiple_Selection.
 
 private
    type Dir_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
