@@ -29,6 +29,7 @@ with Glide_Intl;        use Glide_Intl;
 with Traces;            use Traces;
 
 with Src_Editor_Box;    use Src_Editor_Box;
+with Src_Editor_Buffer; use Src_Editor_Buffer;
 
 package body Src_Editor_Module.Line_Highlighting is
 
@@ -66,9 +67,11 @@ package body Src_Editor_Module.Line_Highlighting is
             if Child /= null then
                Box := Source_Box (Get_Widget (Child));
                if Command = "highlight" then
-                  Add_Line_Highlighting (Box.Editor, Line, Category);
+                  Add_Line_Highlighting
+                    (Box.Editor, Editable_Line_Type (Line), Category);
                else
-                  Remove_Line_Highlighting (Box.Editor, Line, Category);
+                  Remove_Line_Highlighting
+                    (Box.Editor, Editable_Line_Type (Line), Category);
                end if;
             else
                Set_Error_Msg
