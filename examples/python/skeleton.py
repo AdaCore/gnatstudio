@@ -17,4 +17,4 @@ def add_skeleton (hook_name, file):
    if not os.path.exists (file.name()):
       GPS.Editor.replace_text (file.name(), 1, 1, skeleton)
 
-GPS.Hook ("file_edited").add ("skeleton.add_skeleton")
+GPS.Hook ("file_edited").add (add_skeleton)
