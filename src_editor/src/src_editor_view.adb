@@ -873,9 +873,13 @@ package body Src_Editor_View is
                Draw_Line
                  (Window, View.Current_Block_GC,
                   X, Block_Begin_Y, X, Block_End_Y);
-               Draw_Line
-                 (Window, View.Current_Block_GC,
-                  X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
+
+               if Block_Begin_Y /= 0 then
+                  Draw_Line
+                    (Window, View.Current_Block_GC,
+                     X, Block_Begin_Y, X + Bracket_Length, Block_Begin_Y);
+               end if;
+
                Draw_Line
                  (Window,
                   View.Current_Block_GC,
@@ -1802,6 +1806,10 @@ package body Src_Editor_View is
 
       Left_Window := Get_Window (View, Text_Window_Left);
 
+      if Left_Window = null then
+         return;
+      end if;
+
       if View.Side_Column_Buffer /= null
         and then View.Top_Line = View.Buffer_Top_Line
         and then View.Bottom_Line = View.Buffer_Bottom_Line
@@ -1882,6 +1890,10 @@ package body Src_Editor_View is
       end if;
 
       Right_Window := Get_Window (View.Area);
+
+      if Right_Window = null then
+         return;
+      end if;
 
       Get_Geometry (Right_Window, X, Y, Width, Height, Depth);
 
