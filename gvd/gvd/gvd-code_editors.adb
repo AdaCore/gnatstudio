@@ -1012,12 +1012,18 @@ package body Odd.Code_Editors is
       Freeze (Editor.Buttons);
       Hide_All (Editor.Buttons);
 
-      if Get_Parent (Editor.Current_Line_Button) /= null then
-         Move (Editor.Buttons, Editor.Current_Line_Button,
-               X => 10, Y => Y);
+      if Set_Current then
+         if Get_Parent (Editor.Current_Line_Button) /= null then
+            Move (Editor.Buttons, Editor.Current_Line_Button,
+                  X => 10, Y => Y);
+         else
+            Put (Editor.Buttons, Editor.Current_Line_Button,
+                 X => 10, Y => Y);
+         end if;
       else
-         Put (Editor.Buttons, Editor.Current_Line_Button,
-              X => 10, Y => Y);
+         if Get_Parent (Editor.Current_Line_Button) /= null then
+            Remove (Editor.Buttons, Editor.Current_Line_Button);
+         end if;
       end if;
       Show (Editor.Buttons);
 

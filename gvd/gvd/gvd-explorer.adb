@@ -280,8 +280,13 @@ package body Odd.Explorer is
             Load_File (Code_Editor (Explorer.Code_Editor),
                        Find_File (Tab.Debugger, Data.Extension),
                        Set_Current => False);
-            Set_Line (Code_Editor (Explorer.Code_Editor), Line,
-                      Set_Current => False);
+            if Line /= 1 then
+               Set_Line (Code_Editor (Explorer.Code_Editor), Line,
+                         Set_Current => True);
+            else
+               Set_Line (Code_Editor (Explorer.Code_Editor), Line,
+                         Set_Current => False);
+            end if;
          end if;
       end if;
    exception
