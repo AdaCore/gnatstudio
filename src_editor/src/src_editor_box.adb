@@ -220,7 +220,7 @@ package body Src_Editor_Box is
       Entity_Start   : Gtk_Text_Iter;
       Entity_End     : Gtk_Text_Iter;
       Status         : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
-      Decl           : E_Declaration_Info;
+      Entity         : Entity_Information;
       Location       : File_Location;
       Entity_Success : Boolean;
       L, C           : Natural;
@@ -274,9 +274,10 @@ package body Src_Editor_Box is
             Line               => To_Box_Line (Get_Line (Entity_Start)),
             Column             =>
               To_Box_Column (Get_Line_Offset (Entity_Start)),
-            Entity_Declaration => Decl,
+            Entity             => Entity,
             Location           => Location,
             Status             => Status);
+         Destroy (Entity);
 
          case Status is
             when Entity_Not_Found =>
