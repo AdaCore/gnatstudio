@@ -32,6 +32,7 @@ with Gdk.Pixmap;            use Gdk.Pixmap;
 with Glib;                  use Glib;
 with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Arguments;         use Gtk.Arguments;
+with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Enums;             use Gtk.Enums;
@@ -173,12 +174,15 @@ package body Creation_Wizard is
    procedure Switch_Page
      (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      W : Prj_Wizard := Prj_Wizard (Wiz);
-      Page_Num : Guint := To_Guint (Args, 1);
+      W        : constant Prj_Wizard := Prj_Wizard (Wiz);
+      Page_Num : constant Guint := To_Guint (Args, 1);
+
    begin
       case Page_Num is
          when 1 =>
             Set_Wizard_Title (W, "Creating a new project");
+            W.Language_Changed := True;
+
             if Get_Nth_Page (W, 1) = null then
                Set_Page (W, 1, First_Page (W));
             end if;
@@ -186,6 +190,7 @@ package body Creation_Wizard is
          when 2 =>
             Set_Wizard_Title
               (W, "Please select the source directories for this project");
+
             if Get_Nth_Page (W, 2) = null then
                Set_Page (W, 2, Second_Page (W));
             end if;
@@ -193,6 +198,7 @@ package body Creation_Wizard is
          when 3 =>
             Set_Wizard_Title
               (W, "Please select the build directory for this project");
+
             if Get_Nth_Page (W, 3) = null then
                Set_Page (W, 3, Third_Page (W));
             end if;
@@ -200,18 +206,22 @@ package body Creation_Wizard is
          when 4 =>
             Set_Wizard_Title
               (W, "Please select the switches to build the project");
-            if Get_Nth_Page (W, 4) = null then
+
+            if W.Language_Changed or else Get_Nth_Page (W, 4) = null then
                Set_Page (W, 4, Fourth_Page (W));
             end if;
 
          when 5 =>
             Set_Wizard_Title (W, "Please select the naming scheme to use");
-            if Get_Nth_Page (W, 5) = null then
+
+            if W.Language_Changed or else Get_Nth_Page (W, 5) = null then
                Set_Page (W, 5, Fifth_Page (W));
+               W.Language_Changed := False;
             end if;
 
          when 6 =>
             Set_Wizard_Title (W, "Loading the project");
+
             if Get_Nth_Page (W, 6) = null then
                Set_Page (W, 6, Sixth_Page (W));
             end if;
@@ -226,7 +236,7 @@ package body Creation_Wizard is
    ------------------------
 
    procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
-      W : Prj_Wizard := Prj_Wizard (Wiz);
+      W : constant Prj_Wizard := Prj_Wizard (Wiz);
    begin
       Set_Sensitive (Next_Button (W), Get_Chars (W.Project_Name)'Length /= 0);
    end First_Page_Checker;
@@ -235,21 +245,23 @@ package body Creation_Wizard is
    -- First_Page --
    ----------------
 
-   function First_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget
+   function First_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget
    is
       Table  : Gtk_Table;
       Label  : Gtk_Label;
       Button : Gtk_Button;
-      Align  : Gtk_Alignment;
+      Page   : Gtk_Vbox;
+      Box    : Gtk_Vbox;
       Frame  : Gtk_Frame;
-   begin
-      Gtk_New (Align, 0.0, 0.5, 1.0, 0.0);
-      Set_Border_Width (Align, 5);
 
-      Gtk_New (Frame, "Name and location");
+   begin
+      Gtk_New_Vbox (Page);
+      Set_Border_Width (Page, 5);
+
+      Gtk_New (Frame, "Name and Location");
       Set_Border_Width (Frame, 5);
-      Add (Align, Frame);
+      Pack_Start (Page, Frame, Expand => False);
 
       Gtk_New (Table, Rows => 4, Columns => 2, Homogeneous => False);
       Add (Frame, Table);
@@ -262,6 +274,7 @@ package body Creation_Wizard is
 
       --  We can't move to the next page until the name of the project has been
       --  specified
+
       Set_Sensitive (Next_Button (Wiz), False);
 
       Widget_Callback.Object_Connect
@@ -283,15 +296,33 @@ package body Creation_Wizard is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Advanced_Prj_Location'Access), Wiz);
 
-      return Gtk_Widget (Align);
+      Gtk_New (Frame, "Programming Languages");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Page, Frame, Expand => False);
+
+      Gtk_New_Vbox (Box);
+      Set_Border_Width (Box, 5);
+      Add (Frame, Box);
+
+      Gtk_New (Wiz.Ada_Support, "Ada");
+      Set_Active (Wiz.Ada_Support, True);
+      Pack_Start (Box, Wiz.Ada_Support, Expand => False);
+
+      Gtk_New (Wiz.C_Support, "C");
+      Pack_Start (Box, Wiz.C_Support, Expand => False);
+
+      Gtk_New (Wiz.Cpp_Support, "C++");
+      Pack_Start (Box, Wiz.Cpp_Support, Expand => False);
+
+      return Gtk_Widget (Page);
    end First_Page;
 
    -----------------
    -- Second_Page --
    -----------------
 
-   function Second_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget is
+   function Second_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
    begin
       Gtk_New (Wiz.Src_Dir_Selection,
                Initial_Directory => Get_Current_Dir,
@@ -303,8 +334,8 @@ package body Creation_Wizard is
    -- Third_Page --
    ----------------
 
-   function Third_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget is
+   function Third_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
    begin
       Gtk_New (Wiz.Obj_Dir_Selection,
                Initial_Directory => Get_Current_Dir,
@@ -316,10 +347,23 @@ package body Creation_Wizard is
    -- Fourth_Page --
    -----------------
 
-   function Fourth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget is
+   function Fourth_Page
+     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Widget is
    begin
       Gtk_New (Wiz.Switches);
+
+      if not Get_Active (Wiz.Ada_Support) then
+         Destroy_Pages (Wiz.Switches, Ada_Page or Binder_Page);
+      end if;
+
+      if not Get_Active (Wiz.C_Support) then
+         Destroy_Pages (Wiz.Switches, C_Page);
+      end if;
+
+      if not Get_Active (Wiz.Cpp_Support) then
+         Destroy_Pages (Wiz.Switches, Cpp_Page);
+      end if;
+
       return Get_Window (Wiz.Switches);
    end Fourth_Page;
 
@@ -476,7 +520,11 @@ package body Creation_Wizard is
 
       --  Append the switches
       Emit_Switches (Wiz, Project, "gnatmake", Gnatmake);
-      Emit_Switches (Wiz, Project, "compiler", Compiler);
+
+      if Get_Active (Wiz.Ada_Support) then
+         Emit_Switches (Wiz, Project, "compiler", Ada_Compiler);
+      end if;
+
       Emit_Switches (Wiz, Project, "gnatbind", Binder);
       Emit_Switches (Wiz, Project, "gnatlink", Linker);
 
