@@ -6,12 +6,12 @@ package body Src_Info.CPP.LI_Utils is
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
-      Parent_Filename         : in String := null;
+      Parent_Filename         : in String := "";
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
       End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := null;
+      Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point);
 
    -------------------------------------------------------------------------
@@ -22,12 +22,12 @@ package body Src_Info.CPP.LI_Utils is
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
-      Parent_Filename         : in String := null;
+      Parent_Filename         : in String := "";
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
       End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := null;
+      Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
       Declaration_Info        : in out E_Declaration_Info_List := null
    ) is
@@ -60,7 +60,8 @@ package body Src_Info.CPP.LI_Utils is
             raise Invalid_Source_Filename;
          end if;
       end if;
-      if File.LI.Body_Info.Declarations = null then
+      if File.LI.Body_Info.Declarations = null
+      then
          File.LI.Body_Info.Declarations := new E_Declaration_Info_Node;
          File.LI.Body_Info.Declarations.next := null;
          D_Ptr := File.LI.Body_Info.Declarations;
@@ -86,12 +87,12 @@ package body Src_Info.CPP.LI_Utils is
       Name                    : in String;
       Source_Filename         : in String;
       Location                : in Point;
-      Parent_Filename         : in String := null;
+      Parent_Filename         : in String := "";
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
       End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := String;
+      Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
       Declaration_Info        : in out E_Declaration_Info_List := null) is
    begin
@@ -184,12 +185,12 @@ package body Src_Info.CPP.LI_Utils is
       Symbol_Name             : in String;
       Source_Filename         : in String;
       Location                : in Point;
-      Parent_Filename         : in String := null;
+      Parent_Filename         : in String := "";
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
       End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := null;
+      Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point) is
    begin
       if D_Ptr = null then
@@ -204,7 +205,7 @@ package body Src_Info.CPP.LI_Utils is
       D_Ptr.value.Declaration.Location.Line := Location.Line;
       D_Ptr.value.Declaration.Location.Column := Location.Column;
       D_Ptr.value.Declaration.Kind := Kind;
-      if Parent_Filename = null then
+      if Parent_Location = Invalid_Point then
          D_Ptr.value.Declaration.Parent_Location := Null_File_Location;
       else
          D_Ptr.value.Declaration.Parent_Location.File.LI := File;
@@ -227,7 +228,7 @@ package body Src_Info.CPP.LI_Utils is
          D_Ptr.value.Declaration.End_Of_Scope.Location.Column
                := End_Of_Scope_Location.Column;
       end if;
-      if Rename_Filename = null then
+      if Rename_Location = Invalid_Point then
          D_Ptr.value.Declaration.Rename := Null_File_Location;
       else
          D_Ptr.value.Declaration.Rename.File.LI := File;
