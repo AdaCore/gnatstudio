@@ -34,5 +34,17 @@ package body Python_Module is
       null;
    end Register_Module;
 
+   -------------------------------
+   -- Load_Python_Startup_Files --
+   -------------------------------
+
+   procedure Load_Python_Startup_Files
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      null;
+   end Load_Python_Startup_Files;
+
 end Python_Module;
 

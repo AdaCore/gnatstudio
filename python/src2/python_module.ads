@@ -26,5 +26,17 @@ package Python_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
+   procedure Load_Python_Startup_Files
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Load all the user's startup file of the user.
+   --  This procedure should be called only after all standard modules
+   --  have been registered, so that if the user's startup files depend
+   --  on standard GPS functions these are already loaded.
+   --  This procedure does nothing if the python module hasn't been
+   --  registered.
+   --
+   --  ??? Ideally, we should have a hook run after all modules have been
+   --  registered
+
 end Python_Module;
 
