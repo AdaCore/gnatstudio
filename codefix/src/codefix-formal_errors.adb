@@ -750,51 +750,48 @@ package body Codefix.Formal_Errors is
       Solution_Cursors : Cursor_Lists.List;
       Name             : String) return Solution_List
    is
-      pragma Unreferenced (Current_Text, Error_Cursor, Solution_Cursors, Name);
---    Str_Array     : array (1 .. Length (Solution_Cursors)) of Dynamic_String;
---      New_Extract   : Extract;
---      List_Extracts : Extract_List.List;
---      Error_Line    : File_Cursor := File_Cursor (Error_Cursor);
---      Cursor_Node   : Cursor_Lists.List_Node;
---      Index_Str     : Positive := 1;
+      Str_Array   : array (1 .. Length (Solution_Cursors)) of Dynamic_String;
+      New_Command : Insert_Word_Cmd;
+      Cursor_Node : Cursor_Lists.List_Node;
+      Index_Str   : Positive := 1;
+      Word        : Word_Cursor;
+      Result      : Solution_List;
    begin
-      return Command_List.Null_List;
+      Cursor_Node := First (Solution_Cursors);
 
---      Cursor_Node := First (Solution_Cursors);
+      while Cursor_Node /= Cursor_Lists.Null_Node loop
+         Assign
+           (Str_Array (Index_Str),
+            Get_Extended_Unit_Name (Current_Text, Data (Cursor_Node)));
 
---      while Cursor_Node /= Cursor_Lists.Null_Node loop
---         Assign
---           (Str_Array (Index_Str),
---            Get_Extended_Unit_Name (Current_Text, Data (Cursor_Node)));
-
---         for J in 1 ..  Index_Str - 1 loop
---            if Str_Array (J).all = Str_Array (Index_Str).all then
+         for J in 1 ..  Index_Str - 1 loop
+            if Str_Array (J).all = Str_Array (Index_Str).all then
                --  ???  Free
---               return Extract_List.Null_List;
---            end if;
---         end loop;
+               return Command_List.Null_List;
+            end if;
+         end loop;
 
---         Error_Line.Col := 1;
---         Get_Line (Current_Text, Error_Line, New_Extract);
+         Word :=
+           (File_Cursor (Error_Cursor) with
+            String_Match => new String'(Str_Array (Index_Str).all & "."),
+            Mode         => Text_Ascii);
 
---         Add_Word
---           (New_Extract,
---            Error_Cursor,
---            Str_Array (Index_Str).all & ".");
+         Initialize (New_Command, Current_Text, Word);
 
---         Set_Caption
---           (New_Extract,
---            "Prefix """ & Name & """ by """ &
---              Str_Array (Index_Str).all & """");
+         Set_Caption
+           (New_Command,
+            "Prefix """ & Name & """ by """ &
+              Str_Array (Index_Str).all & """");
 
---         Append (List_Extracts, New_Extract);
---         Unchecked_Free (New_Extract);
+         Append (Result, New_Command);
 
---         Index_Str := Index_Str + 1;
---         Cursor_Node := Next (Cursor_Node);
---      end loop;
+         Unchecked_Free (New_Command);
 
---      return List_Extracts;
+         Index_Str := Index_Str + 1;
+         Cursor_Node := Next (Cursor_Node);
+      end loop;
+
+      return Result;
    end Resolve_Ambiguity;
 
    -----------------------
@@ -804,65 +801,19 @@ package body Codefix.Formal_Errors is
    function Remove_Conversion
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Object_Name   : String) return Solution_List
+      Object_Name  : String) return Solution_List
    is
-      pragma Unreferenced (Current_Text, Cursor, Object_Name);
---      procedure Right_Paren (Current_Index : in out Integer);
-      --  Put Current_Index extactly on the right paren correponding the last
-      --  left paren.
-
---      New_Extract   : Ada_Instruction;
---      Current_Line  : Ptr_Extract_Line;
---      Line_Cursor   : File_Cursor := File_Cursor (Cursor);
---      Str_Line      : Dynamic_String;
---      Current_Index : Natural := 1;
-
---      procedure Right_Paren (Current_Index : in out Integer) is
---      begin
---         loop
---            if Current_Index > Get_String (Current_Line.all)'Last then
---               Current_Index := 1;
---               Current_Line := Next (Current_Line.all);
---            end if;
-
---            case Get_String (Current_Line.all) (Current_Index) is
---               when '(' =>
---                  Current_Index := Current_Index + 1;
---                  Right_Paren (Current_Index);
---               when ')' =>
---                  return;
---               when others =>
---                  Current_Index := Current_Index + 1;
---            end case;
---         end loop;
---      end Right_Paren;
-
+      New_Command : Remove_Parenthesis_Cmd;
+      Result      : Solution_List;
    begin
-      return Command_List.Null_List;
---      Line_Cursor.Col := 1;
---      Get_Unit (Current_Text, Cursor, New_Extract);
---      Current_Line := Get_Line (New_Extract, Line_Cursor);
+      Initialize (New_Command, Current_Text, Cursor);
 
---      Erase
---        (New_Extract,
---         Cursor,
---         Search_String (New_Extract, "(", Cursor));
+      Set_Caption
+        (New_Command, "Remove useless conversion of """ & Object_Name & """");
 
---      Current_Index := Cursor.Col;
---      Right_Paren (Current_Index);
+      Append (Result, New_Command);
 
---      Assign (Str_Line, Get_String (Current_Line.all));
---      Set_String
---        (Current_Line.all,
---         Str_Line (Str_Line'First .. Current_Index - 1) &
---           Str_Line (Current_Index + 1 .. Str_Line'Last));
-
---      Free (Str_Line);
-
---      Set_Caption
---      (New_Extract, "Remove useless conversion of """ & Object_Name & """");
-
---      return New_Extract;
+      return Result;
    end Remove_Conversion;
 
    -----------------------
