@@ -59,8 +59,9 @@ csc_html_embedded_get_type (void)
 			sizeof (CscHTMLEmbeddedClass),
 			(GtkClassInitFunc) csc_html_embedded_class_init,
 			(GtkObjectInitFunc) csc_html_embedded_init,
-			(GtkArgSetFunc) NULL,
-			(GtkArgGetFunc) NULL
+			/* reserved_1 */ NULL,
+			/* reserved_2 */ NULL,
+			(GtkClassInitFunc) NULL,
 		};
     
 		select_paper_type = gtk_type_unique (gtk_bin_get_type (), &html_embedded_info);
@@ -87,7 +88,7 @@ csc_html_embedded_finalize (GtkObject *object)
 	g_free(eb->priv);
 	g_free(eb->type);
 
-	GTK_OBJECT_CLASS(parent_class)->finalize (object);
+	G_OBJECT_CLASS(parent_class)->finalize (object);
 }
 
 static void
@@ -121,11 +122,11 @@ static void csc_html_embedded_remove (GtkContainer *container, GtkWidget *child)
 static void
 csc_html_embedded_class_init (CscHTMLEmbeddedClass *class)
 {
-	GtkObjectClass *object_class;
+	GObjectClass *object_class;
 	GtkWidgetClass *widget_class;
 	GtkContainerClass *container_class;
 
-	object_class = (GtkObjectClass *) class;
+	object_class = (GObjectClass *) class;
 	widget_class = (GtkWidgetClass*) class;
 	container_class = (GtkContainerClass*) class;
 
@@ -134,12 +135,10 @@ csc_html_embedded_class_init (CscHTMLEmbeddedClass *class)
 	signals [CHANGED] =
 		gtk_signal_new ("changed",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (CscHTMLEmbeddedClass, changed),
 				gtk_marshal_NONE__NONE,
 				GTK_TYPE_NONE, 0);
-
-	gtk_object_class_add_signals (object_class, signals, LAST_SIGNAL);
 
 	object_class->finalize = csc_html_embedded_finalize;
 
