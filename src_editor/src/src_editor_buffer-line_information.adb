@@ -841,12 +841,15 @@ package body Src_Editor_Buffer.Line_Information is
       Line   : Buffer_Line_Type;
       Offset : Gint)
    is
-      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
-      EL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
+      BL                     : Columns_Config_Access renames
+        Buffer.Buffer_Line_Info_Columns;
+      EL                     : Columns_Config_Access renames
+        Buffer.Editable_Line_Info_Columns;
       Buffer_Line_Starting_X : Gint := 0;
       Editable_Line          : Editable_Line_Type;
-      Result : Command_Return_Type;
+      Result                 : Command_Return_Type;
       pragma Unreferenced (Result);
+
    begin
       Set_Cursor_Position (Buffer, Gint (Line - 1), 0);
 
@@ -883,27 +886,25 @@ package body Src_Editor_Buffer.Line_Information is
                    + EL.all (EL.all'Last).Width + 1);
       end if;
 
-      for Col in BL.all'Range loop
-         if Offset < Gint
-           (BL.all (Col).Width
-              + BL.all (Col).Starting_X) + Buffer_Line_Starting_X
-         then
-            if Buffer.Line_Data
-              (Line).Side_Info_Data
-              (Col).Info /= null
-              and then Buffer.Line_Data
-                (Line).Side_Info_Data
-                (Col).Info.Associated_Command /= null
+      if BL.all /= null then
+         for Col in BL.all'Range loop
+            if Offset < Gint
+              (BL.all (Col).Width + BL.all (Col).Starting_X) +
+              Buffer_Line_Starting_X
             then
-               Result := Execute
-                 (Buffer.Line_Data
-                    (Line).Side_Info_Data
-                    (Col).Info.Associated_Command);
-            end if;
+               if Buffer.Line_Data (Line).Side_Info_Data (Col).Info /= null
+                 and then Buffer.Line_Data (Line).Side_Info_Data
+                   (Col).Info.Associated_Command /= null
+               then
+                  Result := Execute
+                    (Buffer.Line_Data
+                       (Line).Side_Info_Data (Col).Info.Associated_Command);
+               end if;
 
-            return;
-         end if;
-      end loop;
+               return;
+            end if;
+         end loop;
+      end if;
    end On_Click;
 
    ---------------------
