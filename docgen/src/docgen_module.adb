@@ -207,22 +207,21 @@ package body Docgen_Module is
       List   : in out Type_Source_File_List.List)
    is
       use Type_Source_File_List;
-      File    : Virtual_File;
-      LI : LI_File_Ptr;
+      File : Virtual_File;
+      LI   : LI_File_Ptr;
    begin
       for J in 1 .. Tab'Length loop
          File := Tab (J);
-         --  we don't generate the doc of body file if
-         --  the preference "Generate the body files" is disable
-         if Is_Spec_File (Kernel, File) = True
-           or (Is_Spec_File (Kernel, File) = False
-               and Options.Process_Body_Files = True) then
-                  LI := Locate_From_Source_And_Complete (Kernel, File);
-                  Append (List,
-                          (File_Name        => File,
-                           Package_Name     => new String'(Get_Unit_Name
-                                                             (LI, File)),
-                           Other_File_Found => True));
+
+         if Is_Spec_File (Kernel, File)
+           or else Options.Process_Body_Files
+         then
+            LI := Locate_From_Source_And_Complete (Kernel, File);
+            Append
+              (List,
+               (File_Name        => File,
+                Package_Name     => new String'(Get_Unit_Name (LI, File)),
+                Other_File_Found => True));
          end if;
       end loop;
    end Array2List;
@@ -476,18 +475,17 @@ package body Docgen_Module is
 
    procedure Generate_File
      (Kernel : Kernel_Handle;
-      File : Virtual_File)
+      File   : Virtual_File)
    is
       use Type_Source_File_List;
       Source_File_List : Type_Source_File_List.List;
-      LI : LI_File_Ptr;
-      Body_File : Virtual_File;
-   begin
+      LI               : LI_File_Ptr;
+      Body_File        : Virtual_File;
 
-      --  if it's a body file and the preference "generate documentation
-      --  for body file" is disable, there's nothing to do
-      if Is_Spec_File (Kernel, File) = False and then
-        Options.Process_Body_Files = False then
+   begin
+      if not Is_Spec_File (Kernel, File)
+        and then not Options.Process_Body_Files
+      then
          return;
       end if;
 
@@ -497,19 +495,21 @@ package body Docgen_Module is
          (File_Name        => File,
           Package_Name     => new String'(Get_Unit_Name (LI, File)),
           Other_File_Found => True));
-      --  if it's a spec file and the preference "generate documentation
-      --  for body file" is enable, we also create the doc for the body file
-      if Is_Spec_File (Kernel, File) = True and then
-        Options.Process_Body_Files = True then
+
+      if Is_Spec_File (Kernel, File)
+        and then Options.Process_Body_Files
+      then
          Body_File := Get_Other_File_Of (LI, File);
+
          if Body_File /= No_File then
-            Append (Source_File_List,
-                    (File_Name        => Body_File,
-                     Package_Name     => new String'(Get_Unit_Name
-                                                       (LI, Body_File)),
-                     Other_File_Found => True));
+            Append
+              (Source_File_List,
+               (File_Name        => Body_File,
+                Package_Name     => new String'(Get_Unit_Name (LI, Body_File)),
+                Other_File_Found => True));
          end if;
       end if;
+
       Generate (Kernel, Source_File_List);
    end Generate_File;
 
