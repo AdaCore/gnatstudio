@@ -175,6 +175,7 @@ package body Debugger is
       end if;
 
       Set_Descriptor (Debugger.Process, Descriptor);
+      Set_Is_Started (Debugger, False);
    end General_Spawn;
 
    ---------------------
@@ -351,5 +352,27 @@ package body Debugger is
    begin
       return File_Name;
    end Find_File;
+
+   ----------------
+   -- Is_Started --
+   ----------------
+
+   function Is_Started (Debugger : access Debugger_Root)
+     return Boolean is
+   begin
+      return Debugger.Is_Started;
+   end Is_Started;
+
+   --------------------
+   -- Set_Is_Started --
+   --------------------
+
+   procedure Set_Is_Started
+     (Debugger   : access Debugger_Root;
+      Is_Started : Boolean)
+   is
+   begin
+      Debugger.Is_Started := Is_Started;
+   end Set_Is_Started;
 
 end Debugger;

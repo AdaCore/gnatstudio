@@ -357,6 +357,15 @@ package Debugger is
    --  This is a superset of Is_Execution_COmmand, since some breakpoints might
    --  be delete automatically when some breakpoints are reached.
 
+   function Is_Started (Debugger : access Debugger_Root)
+     return Boolean;
+   --  Return True if the debuggee executable has been started.
+
+   procedure Set_Is_Started
+     (Debugger   : access Debugger_Root;
+      Is_Started : Boolean);
+   --  Set the Is_Started state for the debuggee executable
+
    ----------------------
    -- Stack Management --
    ----------------------
@@ -561,5 +570,10 @@ private
       Process      : Process_Proxies.Process_Proxy_Access := null;
       Window       : Gtk.Window.Gtk_Window;
       The_Language : Language.Language_Access;
-   end record;
+
+      Is_Started  : Boolean := False;
+      --  True when the debugger session has been started (ie the execution
+      --  of the debuggee has started, and the user can now use commands like
+      --  Next, Step, ...)
+end record;
 end Debugger;
