@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,11 +27,6 @@ with VCS;                  use VCS;
 with Projects;             use Projects;
 
 package VCS_View_API is
-
-   procedure Open
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Open the selected files.
 
    -------------------------------
    -- Contextual menu callbacks --
@@ -74,14 +69,6 @@ package VCS_View_API is
       Context : Selection_Context_Access);
 
    procedure On_Menu_Diff_Base_Head
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Diff_Local
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Diff_Working_Head
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
