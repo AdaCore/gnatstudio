@@ -32,8 +32,6 @@ package VCS.CVS is
 
    function Name (Ref : access CVS_Record) return String;
 
-   procedure Free (Ref : access CVS_Record);
-
    procedure Get_Status
      (Rep         : access CVS_Record;
       Filenames   : String_List.List);

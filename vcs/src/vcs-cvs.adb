@@ -38,15 +38,21 @@ with Commands.External;         use Commands.External;
 
 package body VCS.CVS is
 
-   CVS_Reference : VCS_Access;
+   type VCS_CVS_Module_ID_Record is new Module_ID_Record with record
+      CVS_Reference : VCS_Access;
+   end record;
+   type VCS_CVS_Module_ID_Access is access all VCS_CVS_Module_ID_Record'Class;
 
    VCS_CVS_Module_Name : constant String := "CVS_Connectivity";
-   VCS_CVS_Module_ID   : Module_ID;
+   VCS_CVS_Module_ID   : VCS_CVS_Module_ID_Access;
    CVS_Identifier      : constant String := "CVS";
 
    -----------------------
    -- Local Subprograms --
    -----------------------
+
+   procedure Destroy (Id : in out VCS_CVS_Module_ID_Record);
+   --  Free the memory occupied by this module
 
    function Identify_VCS (S : String) return VCS_Access;
    --  Return an access to VCS_Record if S describes a CVS system.
@@ -120,16 +126,6 @@ package body VCS.CVS is
    begin
       return CVS_Identifier;
    end Name;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Ref : access CVS_Record) is
-      pragma Unreferenced (Ref);
-   begin
-      null;
-   end Free;
 
    --------------------------
    -- Error_Output_Handler --
@@ -436,7 +432,8 @@ package body VCS.CVS is
                  Mode => Verbose);
       end if;
 
-      Display_File_Status (Kernel, Result, CVS_Reference, True, True);
+      Display_File_Status
+        (Kernel, Result, VCS_CVS_Module_ID.CVS_Reference, True, True);
       File_Status_List.Free (Result);
 
       return True;
@@ -1186,11 +1183,21 @@ package body VCS.CVS is
       Lower_Case (Identifier);
 
       if Strip_Quotes (Id) = Identifier then
-         return CVS_Reference;
+         return VCS_CVS_Module_ID.CVS_Reference;
       end if;
 
       return null;
    end Identify_VCS;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Id : in out VCS_CVS_Module_ID_Record) is
+   begin
+      Unregister_VCS_Identifier (Identify_VCS'Access);
+      Free (Id.CVS_Reference);
+   end Destroy;
 
    ---------------------
    -- Register_Module --
@@ -1199,17 +1206,18 @@ package body VCS.CVS is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
+      VCS_CVS_Module_ID := new VCS_CVS_Module_ID_Record;
       Register_VCS_Identifier (Identify_VCS'Access);
       Register_Module
-        (Module                  => VCS_CVS_Module_ID,
+        (Module                  => Module_ID (VCS_CVS_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => VCS_CVS_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null);
 
-      CVS_Reference := new CVS_Record;
-      CVS_Reference.Kernel := Kernel_Handle (Kernel);
-      CVS_Reference.Queue  := New_Queue;
+      VCS_CVS_Module_ID.CVS_Reference := new CVS_Record;
+      VCS_CVS_Module_ID.CVS_Reference.Kernel := Kernel_Handle (Kernel);
+      VCS_CVS_Module_ID.CVS_Reference.Queue  := New_Queue;
 
       Register_VCS (Kernel, CVS_Identifier);
    end Register_Module;
