@@ -121,6 +121,19 @@ package body VCS.CVS is
    --  Parse the status information from List and display it in the VCS
    --  explorer.
 
+   function Intermediate_Diff_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Store List in a file given by Head.
+
+   function Diff_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Display comparison between file given in Head and patch
+   --  given in List.
+
    ----------
    -- Name --
    ----------
@@ -886,12 +899,6 @@ package body VCS.CVS is
    function Diff_Handler
      (Kernel : Kernel_Handle;
       Head   : String_List.List;
-      List   : String_List.List) return Boolean;
-   --  ???
-
-   function Diff_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
       List   : String_List.List) return Boolean
    is
       use String_List;
@@ -923,8 +930,43 @@ package body VCS.CVS is
         (Kernel, New_File => Current_File, Diff_File => Patch_File);
       GNAT.OS_Lib.Delete_File (Patch_File, Success);
 
+      if Current_File'Length > 5
+        and then Current_File
+          (Current_File'Last - 4 .. Current_File'Last) = "$orig"
+      then
+         GNAT.OS_Lib.Delete_File (Current_File, Success);
+      end if;
+
       return True;
    end Diff_Handler;
+
+   -------------------------------
+   -- Intermediate_Diff_Handler --
+   -------------------------------
+
+   function Intermediate_Diff_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      pragma Unreferenced (Kernel);
+      use String_List;
+
+      Orig_File    : constant String := String_List.Head (Head);
+      File         : File_Type;
+      L_Temp       : List_Node := First (List);
+   begin
+      Create (File, Name => Orig_File);
+
+      while L_Temp /= Null_Node loop
+         Put (File, Data (L_Temp));
+         L_Temp := Next (L_Temp);
+      end loop;
+
+      Close (File);
+
+      return True;
+   end Intermediate_Diff_Handler;
 
    ----------
    -- Diff --
@@ -943,25 +985,50 @@ package body VCS.CVS is
    begin
       Append (Args, "diff");
 
-      if Version_1 = ""
-        and then Version_2 = ""
-      then
-         Append (Args, "-r");
-         Append (Args, "HEAD");
-      end if;
-
       if Version_1 /= "" then
          Append (Args, "-r");
          Append (Args, Version_1);
+
+         declare
+            C_2               : External_Command_Access;
+            Args_2            : List;
+            Orig_File   : constant String :=
+              String_Utils.Name_As_Directory (Get_Pref (Rep.Kernel, Tmp_Dir)) &
+            Base_Name (File) & "$orig";
+         begin
+            Append (Command_Head, Orig_File);
+
+            Append (Args_2, "-q");
+            Append (Args_2, "update");
+            Append (Args_2, "-p");
+            Append (Args_2, Base_Name (File));
+
+            Create (C_2,
+                    Rep.Kernel,
+                    Get_Pref (Rep.Kernel, CVS_Command),
+                    Dir_Name (File),
+                    Args_2,
+                    Command_Head,
+                    Intermediate_Diff_Handler'Access);
+
+            Enqueue (Rep.Queue, C_2);
+            Free (Args_2);
+         end;
       end if;
 
       if Version_2 /= "" then
          Append (Args, "-r");
          Append (Args, Version_2);
+      else
+         Append (Args, "-r");
+         Append (Args, "HEAD");
       end if;
 
       Append (Args, Base_Name (File));
-      Append (Command_Head, File);
+
+      if Is_Empty (Command_Head) then
+         Append (Command_Head, File);
+      end if;
 
       Insert (Rep.Kernel,
               -"CVS: Getting comparison for file " & File & "...",
