@@ -343,16 +343,34 @@ package Prj_API is
    -- Imported projects --
    -----------------------
 
+   type Import_Project_Error is (Success,
+                                 Project_Already_Exists,
+                                 Imported_Project_Not_Found,
+                                 Dependency_On_Self,
+                                 Dependency_Already_Exists,
+                                 Circular_Dependency
+                                 );
+
    function Add_Imported_Project
-     (Project : Project_Node_Id;
+     (Project                   : Project_Node_Id;
       Imported_Project_Location : String;
-      Report_Errors  : Output.Output_Proc := null;
-      Use_Relative_Path         : Boolean) return Boolean;
+      Report_Errors             : Output.Output_Proc := null;
+      Use_Relative_Path         : Boolean)
+      return Import_Project_Error;
    --  Add a new with_statement for Imported_Project.
    --  Errors while parsing the project file are sent to Report_Errors.
    --  True is returned if the project was modified with success
    --  If Use_Relative_Path is True, then a relative path is used in the with
    --  statement, otherwise an absolute path is used.
+
+   procedure Set_With_Clause_Path
+     (With_Clause               : Project_Node_Id;
+      Imported_Project_Location : String;
+      Imported_Project          : Project_Node_Id;
+      Importing_Project         : Project_Node_Id;
+      Use_Relative_Path         : Boolean);
+   --  Set the attributes of the with_clause (imported project node, imported
+   --  project path,....)
 
    procedure Remove_Imported_Project
      (Project : Project_Node_Id; Imported_Project : String);

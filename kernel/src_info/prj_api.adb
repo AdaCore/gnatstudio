@@ -1278,6 +1278,34 @@ package body Prj_API is
    end Typed_Values_Count;
 
    --------------------------
+   -- Set_With_Clause_Path --
+   --------------------------
+
+   procedure Set_With_Clause_Path
+     (With_Clause               : Project_Node_Id;
+      Imported_Project_Location : String;
+      Imported_Project          : Project_Node_Id;
+      Importing_Project         : Project_Node_Id;
+      Use_Relative_Path         : Boolean) is
+   begin
+      Start_String;
+
+      if Use_Relative_Path then
+         Store_String_Chars
+           (Relative_Path_Name
+            (Imported_Project_Location,
+             Dir_Name (Get_String (Path_Name_Of (Importing_Project)))));
+      else
+         Store_String_Chars (Imported_Project_Location);
+      end if;
+
+      Set_String_Value_Of (With_Clause, End_String);
+
+      Set_Path_Name_Of (With_Clause, Prj.Tree.Path_Name_Of (Imported_Project));
+      Set_Project_Node_Of (With_Clause, Imported_Project);
+   end Set_With_Clause_Path;
+
+   --------------------------
    -- Add_Imported_Project --
    --------------------------
 
@@ -1285,9 +1313,11 @@ package body Prj_API is
      (Project                   : Project_Node_Id;
       Imported_Project_Location : String;
       Report_Errors             : Output.Output_Proc := null;
-      Use_Relative_Path         : Boolean) return Boolean
+      Use_Relative_Path         : Boolean)
+      return Import_Project_Error
    is
       use Prj.Tree.Tree_Private_Part;
+      use type Output.Output_Proc;
 
       procedure Fail (S1 : String; S2 : String := ""; S3 : String := "");
       --  Replaces Osint.Fail
@@ -1301,13 +1331,11 @@ package body Prj_API is
          Report_Errors (S1 & S2 & S3);
       end Fail;
 
-      With_Clause      : Project_Node_Id := First_With_Clause_Of (Project);
-      Imported_Project : Project_Node_Id;
+      With_Clause      : Project_Node_Id;
+      Imported_Project : Project_Node_Id := Empty_Node;
 
-      Ext      : constant String := GNAT.Directory_Operations.File_Extension
-        (Imported_Project_Location);
       Basename : constant String := Base_Name
-        (Imported_Project_Location, Ext);
+        (Imported_Project_Location, Prj.Project_File_Extension);
       Dep_ID   : Name_Id;
       Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
 
@@ -1325,15 +1353,18 @@ package body Prj_API is
          if Get_String (Path_Name_Of (Dep_Name.Node)) /=
            Format_Pathname (Imported_Project_Location)
          then
-            Report_Errors
-              (-"A different project with the same name"
-               & " already exists in the project tree.");
+            if Report_Errors /= null then
+               Report_Errors
+                 (-"A different project with the same name"
+                  & " already exists in the project tree.");
+            end if;
             Output.Set_Special_Output (null);
             Prj.Com.Fail := null;
-            return False;
+            return Project_Already_Exists;
          else
             Imported_Project := Dep_Name.Node;
          end if;
+
       else
          Prj.Part.Parse (Imported_Project, Imported_Project_Location,
                          Always_Errout_Finalize => True);
@@ -1342,68 +1373,63 @@ package body Prj_API is
       if Imported_Project = Empty_Node then
          Output.Set_Special_Output (null);
          Prj.Com.Fail := null;
-         return False;
+         return Imported_Project_Not_Found;
       end if;
 
       --  Make sure we are not trying to import ourselves, since otherwise it
       --  would result in an infinite loop when manipulating the project
 
       if Prj.Tree.Name_Of (Project) = Prj.Tree.Name_Of (Imported_Project) then
-         Report_Errors (-"Cannot add dependency to self");
+         if Report_Errors /= null then
+            Report_Errors (-"Cannot add dependency to self");
+         end if;
          Output.Set_Special_Output (null);
          Prj.Com.Fail := null;
-         return False;
+         return Dependency_On_Self;
       end if;
 
       --  Check if it is already there. If we have the same name but not the
       --  same path, we replace it anyway
 
+      With_Clause := First_With_Clause_Of (Project);
       while With_Clause /= Empty_Node loop
          if Prj.Tree.Name_Of (Project_Node_Of (With_Clause)) =
            Prj.Tree.Name_Of (Imported_Project)
          then
-            Report_Errors (-"This dependency already exists");
+            if Report_Errors /= null then
+               Report_Errors (-"This dependency already exists");
+            end if;
             Output.Set_Special_Output (null);
             Prj.Com.Fail := null;
-            return False;
+            return Dependency_Already_Exists;
          end if;
          With_Clause := Next_With_Clause_Of (With_Clause);
       end loop;
 
       With_Clause := Default_Project_Node (N_With_Clause);
-      Set_Project_Node_Of (With_Clause, Imported_Project);
       Set_Name_Of (With_Clause, Prj.Tree.Name_Of (Imported_Project));
-      Set_Path_Name_Of (With_Clause, Path_Name_Of (Imported_Project));
 
       Set_Next_With_Clause_Of (With_Clause, First_With_Clause_Of (Project));
       Set_First_With_Clause_Of (Project, With_Clause);
 
-      Start_String;
-
-      if Use_Relative_Path then
-         Store_String_Chars
-           (Relative_Path_Name
-            (Imported_Project_Location,
-             Dir_Name (Get_String (Path_Name_Of (Project)))));
-      else
-         Store_String_Chars
-           (Get_String (Path_Name_Of (Imported_Project)));
-      end if;
-
-      Set_String_Value_Of (With_Clause, End_String);
+      Set_With_Clause_Path
+        (With_Clause, Imported_Project_Location, Imported_Project,
+         Project, Use_Relative_Path);
 
       if Has_Circular_Dependencies (Project) then
          Set_First_With_Clause_Of (Project, Next_With_Clause_Of (With_Clause));
-         Report_Errors
-           (-"Circular dependency detected in the project hierarchy");
+         if Report_Errors /= null then
+            Report_Errors
+              (-"Circular dependency detected in the project hierarchy");
+         end if;
          Output.Set_Special_Output (null);
          Prj.Com.Fail := null;
-         return False;
+         return Circular_Dependency;
       end if;
 
       Output.Set_Special_Output (null);
       Prj.Com.Fail := null;
-      return True;
+      return Success;
 
    exception
       when others =>
