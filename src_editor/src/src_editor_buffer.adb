@@ -5418,6 +5418,7 @@ package body Src_Editor_Buffer is
    begin
       Recalculate_Side_Column_Width (Buffer);
       Side_Column_Configuration_Changed (Buffer);
+      Side_Column_Changed (Buffer);
    end Refresh_Side_Column;
 
 end Src_Editor_Buffer;
