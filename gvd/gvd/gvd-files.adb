@@ -160,8 +160,9 @@ package body GVD.Files is
 
             Cache.CR_Stripped := Get_Pref (Should_Strip_CR);
 
-            --  Check whether we should do an automatic strip (since GtkText is somewhat
-            --  unreliable and will sometimes put LF, sometimes CR & LF)
+            --  Check whether we should do an automatic strip (since GtkText
+            --  is somewhat unreliable and will sometimes put LF, sometimes CR
+            --  & LF)
             if not Cache.CR_Stripped then
                Pos := S'First;
                while Pos <= S'Last
