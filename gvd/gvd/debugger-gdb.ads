@@ -78,6 +78,8 @@ package Debugger.Gdb is
 
    function Info_Args (Debugger : access Gdb_Debugger) return String;
 
+   function Info_Registers (Debugger : access Gdb_Debugger) return String;
+
    function Get_Uniq_Id
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;

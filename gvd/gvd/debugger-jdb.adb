@@ -539,6 +539,16 @@ package body Debugger.Jdb is
       return "";
    end Info_Args;
 
+   --------------------
+   -- Info_Registers --
+   --------------------
+
+   function Info_Registers (Debugger : access Jdb_Debugger) return String is
+   begin
+      raise Unknown_Command;
+      return "";
+   end Info_Registers;
+
    --------------------------
    -- Highlighting_Pattern --
    --------------------------

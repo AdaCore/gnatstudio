@@ -299,6 +299,15 @@ package body Debugger.Gdb is
       return "info args";
    end Info_Args;
 
+   --------------------
+   -- Info_Registers --
+   --------------------
+
+   function Info_Registers (Debugger : access Gdb_Debugger) return String is
+   begin
+      return "info registers";
+   end Info_Registers;
+
    --------------
    -- Value_Of --
    --------------

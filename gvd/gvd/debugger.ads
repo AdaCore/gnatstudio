@@ -212,6 +212,10 @@ package Debugger is
    --  Return the command to be used to display the parameters of the current
    --  subprogram
 
+   function Info_Registers (Debugger : access Debugger_Root) return String
+      is abstract;
+   --  Return the command to be used to display the value of registers
+
    type Value_Format is (Decimal, Binary, Hexadecimal, Octal);
 
    function Value_Of
