@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<docgen>
+   <docgen_backend format="text">
+      <extension>html</extension>
+      <description>HTML documentation</description>
+   </docgen_backend>
+</docgen>
