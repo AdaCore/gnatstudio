@@ -33,6 +33,7 @@ with String_Utils;              use String_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with VFS;                       use VFS;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 
 package body Log_Utils is
 
@@ -112,18 +113,19 @@ package body Log_Utils is
    -----------------------------
 
    function Get_ChangeLog_From_File
-     (File_Name : VFS.Virtual_File) return VFS.Virtual_File
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : VFS.Virtual_File) return VFS.Virtual_File
    is
       procedure Add_Header (Pos : Positive; Date_Header : Boolean);
       --  Add ChangeLog headers at position POS in the file buffer content.
       --  If Date_Header is True, adds also the ISO date tag.
 
       ChangeLog   : constant String := Dir_Name (File_Name).all & "ChangeLog";
-      CL_File     : constant Virtual_File := Create (ChangeLog);
       Date_Tag    : constant String := Image (Clock, ISO_Date);
       Base_Name   : constant String := VFS.Base_Name (File_Name);
-      CL          : String_Access := Read_File (CL_File);
-      W_File      : Writable_File := Write_File (CL_File);
+      CL_File     : Virtual_File;   -- ChangeLog file
+      CL          : String_Access;  -- ChangeLog content
+      W_File      : Writable_File;  -- ChangeLog write access
       First, Last : Natural;
       F           : Natural;
 
@@ -168,6 +170,18 @@ package body Log_Utils is
       end Add_Header;
 
    begin
+      --  Makes sure that the ChangeLog buffer is saved before continuing
+      --  otherwise part of the ChangeLog file could be lost.
+
+      Execute_GPS_Shell_Command (Kernel, "Editor.save_buffer " & ChangeLog);
+      Execute_GPS_Shell_Command (Kernel, "Editor.close " & ChangeLog);
+
+      --  Get ChangeLog content
+
+      CL_File := Create (ChangeLog);
+      CL      := Read_File (CL_File);
+      W_File  := Write_File (CL_File);
+
       if CL = null then
          --  No ChangeLog content, add headers
          Add_Header (1, True);
@@ -347,7 +361,7 @@ package body Log_Utils is
       Log_File  : constant Virtual_File :=
         Get_Log_From_File (Kernel, File_Name, False);
    begin
-      if Log_File = No_File then
+      if Log_File = VFS.No_File then
          declare
             Log_File     : constant Virtual_File :=
               Get_Log_From_File (Kernel, File_Name, True);
