@@ -447,7 +447,7 @@ package body Projects.Registry is
       --  Use the full path name so that the messages are sent to the result
       --  view.
       Opt.Full_Path_Name_For_Brief_Errors := True;
-      Output.Set_Special_Output (Output_Proc (Errors));
+      Output.Set_Special_Output (Output.Output_Proc (Errors));
       Reset (Registry, View_Only => False);
 
       Prj.Com.Fail := Fail'Unrestricted_Access;
