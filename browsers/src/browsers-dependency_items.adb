@@ -550,6 +550,7 @@ package body Browsers.Dependency_Items is
       end if;
 
       Initial := File_Item (Find_File (Browser, F));
+
       if Initial = null then
          Gtk_New (Initial, Browser, Kernel, F);
          Put (Get_Canvas (Browser), Initial);
@@ -611,15 +612,11 @@ package body Browsers.Dependency_Items is
       if Recompute_Layout then
          Layout (Browser, Force => False);
       end if;
+
       Refresh_Canvas (Get_Canvas (Browser));
       Pop_State (Kernel_Handle (Kernel));
 
    exception
-      when Unsupported_Language =>
-         Pop_State (Kernel_Handle (Kernel));
-         Insert (Kernel, "Query unsupported for this language",
-                 Mode => Glide_Kernel.Console.Error);
-
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -734,6 +731,7 @@ package body Browsers.Dependency_Items is
 
       --  Look for an existing item corresponding to entity
       Item := File_Item (Find_File (Browser, File));
+
       if Item = null then
          Gtk_New (Item, Browser,  Kernel, File);
          Put (Get_Canvas (Browser), Item);
@@ -765,6 +763,7 @@ package body Browsers.Dependency_Items is
          while Examine_Ancestors_Idle (Data) loop
             null;
          end loop;
+
          Destroy_Idle (Data);
          Layout (Browser);
          Refresh_Canvas (Get_Canvas (Browser));
@@ -773,12 +772,6 @@ package body Browsers.Dependency_Items is
       --  All memory is freed at the end of Examine_From_Dependencies_Idle
 
    exception
-      when Unsupported_Language =>
-         Pop_State (Kernel_Handle (Kernel));
-         Insert (Kernel, "Query unsupported for this language",
-                 Mode => Glide_Kernel.Console.Error);
-         --  No need to free Data, which hasn't been created at this point
-
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
          Destroy (Data.Iter);

@@ -67,7 +67,6 @@ with Basic_Types;
 with Language;                   use Language;
 with Language.Ada;               use Language.Ada;
 with Language_Handlers;          use Language_Handlers;
-with Language_Handlers.Glide;    use Language_Handlers.Glide;
 with String_Utils;               use String_Utils;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
@@ -501,6 +500,7 @@ package body Src_Editor_Box is
              Filename        => Get_Declaration_File_Of (Entity),
              Use_Source_Path => True,
              Use_Object_Path => False));
+
          if Filename.all = "" then
             Insert (Kernel, -"File not found: "
                     & Get_Declaration_File_Of (Entity), Mode => Error);
@@ -563,12 +563,6 @@ package body Src_Editor_Box is
       Pop_State (Kernel_Handle (Kernel));
 
    exception
-      when Unsupported_Language =>
-         Insert (Kernel, -"No parser is registered for this language",
-                 Mode => Error);
-         Free (Filename);
-         Pop_State (Kernel_Handle (Kernel));
-
       when E : others =>
          Pop_State (Kernel_Handle (Kernel));
          Free (Filename);
@@ -621,10 +615,6 @@ package body Src_Editor_Box is
       Pop_State (Editor.Kernel);
 
    exception
-      when Unsupported_Language =>
-         Pop_State (Editor.Kernel);
-         Entity := No_Entity_Information;
-
       when E : others =>
          Pop_State (Editor.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
