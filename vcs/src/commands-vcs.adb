@@ -44,7 +44,7 @@ package body Commands.VCS is
      (Command : access Commit_Command_Type) return Boolean is
    begin
       Commit (Command.Rep, Command.Filenames, Command.Logs);
-      Command_Finished (Command.Queue, Command, True);
+      Command_Finished (Command, True);
 
       return True;
    end Execute;
@@ -71,7 +71,7 @@ package body Commands.VCS is
      (Command : access Get_Status_Command_Type) return Boolean is
    begin
       Get_Status (Command.Rep, Command.Filenames);
-      Command_Finished (Command.Queue, Command, True);
+      Command_Finished (Command, True);
       return True;
    end Execute;
 

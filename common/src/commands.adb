@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001 - 2002                     --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -84,9 +84,15 @@ package body Commands is
       Action.Queue := Queue;
 
       if High_Priority then
-         Prepend (Queue.The_Queue, Command_Access (Action));
+         Prepend (Queue.The_Queue, Queue.Queue_Node, Command_Access (Action));
+         Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
+
       else
          Append (Queue.The_Queue, Command_Access (Action));
+
+         if Queue.Queue_Node = Null_Node then
+            Queue.Queue_Node := First (Queue.The_Queue);
+         end if;
       end if;
 
       if not Queue.Command_In_Progress then
@@ -101,12 +107,14 @@ package body Commands is
    procedure Execute_Next_Action (Queue : Command_Queue) is
    begin
       --  If there is already a command running, then do nothing.
+
       if Queue.Command_In_Progress = True then
          return;
       end if;
 
       --  If the queue is empty, set its state accordingly.
-      if Is_Empty (Queue.The_Queue) then
+
+      if Queue.Queue_Node = Null_Node then
          Queue.Command_In_Progress := False;
          return;
       end if;
@@ -114,10 +122,10 @@ package body Commands is
       Queue.Command_In_Progress := True;
 
       declare
-         Action  : Command_Access := Head (Queue.The_Queue);
+         Action  : Command_Access := Data (Queue.Queue_Node);
          Success : Boolean;
       begin
-         Queue.The_Queue := Next (Queue.The_Queue);
+         Queue.Queue_Node := Next (Queue.Queue_Node);
          Success := Execute (Action);
 
          --  ??? Where is Action freed ? at the end of execution ?
@@ -128,17 +136,19 @@ package body Commands is
    -- Command_Finished --
    ----------------------
 
-   procedure Command_Finished (Queue   : Command_Queue;
-                               Action  : access Root_Command;
-                               Success : Boolean) is
+   procedure Command_Finished
+     (Action  : access Root_Command;
+      Success : Boolean)
+   is
+      Queue : Command_Queue renames Action.Queue;
+      Node  : List_Node;
    begin
       Queue.Command_In_Progress := False;
 
       if Success then
-         while not Is_Empty (Action.Next_Commands) loop
-            Enqueue (Action.Queue, Head (Action.Next_Commands), True);
-            Action.Next_Commands := Next (Action.Next_Commands);
-         end loop;
+         Node := Prev (Queue.The_Queue, Queue.Queue_Node);
+         Insert (Queue.The_Queue, Node, Action.Next_Commands);
+         Queue.Queue_Node := Next (Node);
 
       else
          Free (Action.Next_Commands);
@@ -163,8 +173,7 @@ package body Commands is
 
    procedure Add_Consequence_Action
      (Item   : Command_Access;
-      Action : Command_Access)
-   is
+      Action : Command_Access) is
    begin
       Append (Item.Next_Commands, Action);
    end Add_Consequence_Action;
