@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -733,6 +733,19 @@ package body Display_Items is
       elsif Item.Name /= null then
          Parse_Value (Item.Debugger.Debugger, Item.Name.all,
                       Item.Entity, Item.Format, Value_Found);
+
+         --  If the parsing using the previous type information has failed,
+         --  redo the full parsing.
+
+         if not Is_Valid (Item.Entity) then
+            Free (Item.Entity);
+            Item.Entity := Parse_Type (Item.Debugger.Debugger, Item.Name.all);
+
+            Parse_Value
+              (Item.Debugger.Debugger, Item.Name.all,
+               Item.Entity, Item.Format, Value_Found);
+         end if;
+
          Set_Valid (Item.Entity, Value_Found);
       end if;
 
