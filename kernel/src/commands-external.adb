@@ -19,16 +19,12 @@
 -----------------------------------------------------------------------
 
 with GNAT.Expect;               use GNAT.Expect;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Unchecked_Deallocation;
 
 with Glide_Kernel.Console; use Glide_Kernel.Console;
-
-with VCS; use VCS;
---  ??? we are withing this package only for Copy_String_List: we should put
---  that elsewhere.
 
 package body Commands.External is
 
@@ -133,7 +129,8 @@ package body Commands.External is
                     return Boolean
    is
       Id        : Timeout_Handler_Id;
-      Args      : Argument_List (1 .. String_List.Length (Command.Args));
+      Args      : GNAT.OS_Lib.Argument_List
+        (1 .. String_List.Length (Command.Args));
       Temp_Args : String_List.List := Command.Args;
 
       Old_Dir   : Dir_Name_Str := Get_Current_Dir;
@@ -155,7 +152,7 @@ package body Commands.External is
                           Buffer_Size => 0);
 
       for J in Args'Range loop
-         Free (Args (J));
+         GNAT.OS_Lib.Free (Args (J));
       end loop;
 
       Temp_Args := Command.Args;
