@@ -69,6 +69,11 @@ procedure Odd_Main is
    procedure Help;
    --  Display help on the standard output.
 
+   function Clean_Parameter return String;
+   --  Return a clean version of the parameter for command line switches, ie
+   --  return the same thing as GNAT.Command_Line.Parameter, but strips the
+   --  leading '=' if any, so that users can say '--log-level=4' for instance.
+
    procedure Init is
       Dir_Created : Boolean := False;
    begin
@@ -196,6 +201,20 @@ procedure Odd_Main is
       Put_Line ("Other arguments are passed to the underlying debugger.");
    end Help;
 
+   ---------------------
+   -- Clean_Parameter --
+   ---------------------
+
+   function Clean_Parameter return String is
+      P : constant String := Parameter;
+   begin
+      if P (P'First) = '=' then
+         return P (P'First + 1 .. P'Last);
+      else
+         return P;
+      end if;
+   end Clean_Parameter;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
@@ -239,7 +258,14 @@ begin
 
                -- --log-level --
                when 'l' =>
-                  Level := Integer'Value (Parameter);
+                  begin
+                     Level := Integer'Value (Clean_Parameter);
+                  exception
+                     when Constraint_Error =>
+                        Put_Line ("Invalid parameter to --log-level");
+                        Help;
+                        OS_Exit (-1);
+                  end;
 
                   --  Level 0 is no logging, 1 is minimal logging (only
                   --  user commands), 4 is max logging (all commands)
@@ -268,7 +294,7 @@ begin
                   -- --host --
                   elsif Full_Switch = "-host" then
                      Free (Remote_Host);
-                     Remote_Host := new String' (Parameter);
+                     Remote_Host := new String' (Clean_Parameter);
                   end if;
 
                when others =>
