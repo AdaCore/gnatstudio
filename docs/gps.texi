@@ -127,6 +127,7 @@ Project Handling
 * Supported Languages::
 * Scenarios and Configuration Variables::
 * The Project Explorer (Editing Projects)::
+* Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
 * The Project Properties Editor::
@@ -2864,6 +2865,7 @@ how such projects can be created and maintained.
 * Supported Languages::
 * Scenarios and Configuration Variables::
 * The Project Explorer (Editing Projects)::
+* Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
 * The Project Properties Editor::
@@ -2931,6 +2933,9 @@ to the location of the project that does the with.
 If this environment variable is set, it contains a colon-separated (or
 semicolon under Windows) list of directories in which the project files are
 searched.
+@item predefined project path.
+The compiler itself defines a predefined project path, in which standard
+libraries can be installed, like XML/Ada for instance.
 @end itemize
 
 
@@ -3374,6 +3379,40 @@ icon:
 @cindex screen shot
 @image{project-modified}
 @end ifhtml
+
+@c -------------------------------------------------------------------
+@node Disabling Project Edition Features
+@section Disabling Project Edition Features
+@cindex project editing
+@c -------------------------------------------------------------------
+
+@noindent
+The project files should generally be considered as part of the sources,
+and thus be put under control of a version control system. As such, you
+might want to prevent accidental editing of the project files, either
+by you or some other person using the same GPS installation.
+
+The main thing to do to prevent such accidental edition is to change
+the write permissions on the project files themselves. On Unix systems,
+you could also change the owner of the file. When GPS cannot write a
+project file, it will report an error to the user.
+
+However, the above doesn't prevent a user from trying to do some
+modifications at the GUI level, since the error message only occurs when
+trying to save the project (this is by design, so that temporary modification
+can be done in memory).
+
+You can disable all the project editing related menus in GPS by adding
+special startup switches. The recommended way is to create a small batch
+script that spawns GPS with these switches. You should use the following
+command line:
+
+@smallexample
+   gps --traceoff=MODULE.PROJECT_VIEWER --traceoff=MODULE.PROJECT_PROPERTIES
+@end smallexample
+
+What these do it prevent the loading of the two GPS modules that are
+responsible for project edition.
 
 @c -------------------------------------------------------------------
 @node The Project Menu
