@@ -136,7 +136,7 @@ Select the menu @code{Edit->Preferences}. This will open a preferences
 dialog window.
 
 Select the @code{Editor->Fonts & Colors} page by clicking on the cross next to
-the item @code {Editor} and then selecting the @code{Fonts & Colors} item.
+the item @code{Editor} and then selecting the @code{Fonts & Colors} item.
 
 As you go over the various lines and labels, you will notice that by
 holding the mouse over a label, a tooltip pops up displaying on-line help
