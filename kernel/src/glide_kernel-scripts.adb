@@ -1019,33 +1019,50 @@ package body Glide_Kernel.Scripts is
       procedure Set_Return_Attribute
         (Project          : Project_Type;
          Attr, Pkg, Index : String;
-         As_List          : Boolean)
-      is
-         List : Argument_List := Get_Attribute_Value
-           (Project, Build (Pkg, Attr), Index);
+         As_List          : Boolean) is
       begin
          if As_List then
-            Set_Return_Value_As_List (Data);
-         end if;
+            declare
+               List : Argument_List := Get_Attribute_Value
+                 (Project, Build (Pkg, Attr), Index);
+            begin
+               Set_Return_Value_As_List (Data);
 
-         --  If the attribute was a string in fact
-         if List'Length = 0 then
-            Set_Return_Value
-              (Data, Get_Attribute_Value
-                 (Project, Build (Pkg, Attr), "", Index));
+               --  If the attribute was a string in fact
+               if List'Length = 0 then
+                  Trace (Me, "MANU Attr="
+                         & Get_Attribute_Value
+                           (Project, Build (Pkg, Attr), "", Index));
+                  Set_Return_Value
+                    (Data, Get_Attribute_Value
+                       (Project, Build (Pkg, Attr), "", Index));
+               else
+                  for L in List'Range loop
+                     Set_Return_Value (Data, List (L).all);
+                  end loop;
+               end if;
 
+               Basic_Types.Free (List);
+            end;
          else
-            if As_List then
-               for L in List'Range loop
-                  Set_Return_Value (Data, List (L).all);
-               end loop;
-            else
-               Set_Return_Value
-                 (Data, Argument_List_To_String (List, True));
-            end if;
+            declare
+               Val : constant String := Get_Attribute_Value
+                 (Project, Build (Pkg, Attr), "", Index);
+            begin
+               if Val /= "" then
+                  Set_Return_Value (Data, Val);
+               else
+                  declare
+                     List : Argument_List := Get_Attribute_Value
+                       (Project, Build (Pkg, Attr), Index);
+                  begin
+                     Set_Return_Value
+                       (Data, Argument_List_To_String (List, True));
+                     Basic_Types.Free (List);
+                  end;
+               end if;
+            end;
          end if;
-
-         Basic_Types.Free (List);
       end Set_Return_Attribute;
 
       Instance : Class_Instance;
