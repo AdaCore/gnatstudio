@@ -83,16 +83,18 @@ package Odd.Dialogs is
       Backtrace        : Backtrace_Array);
 
    procedure Gtk_New
-     (Question_Dialog : out Question_Dialog_Access;
-      Main_Window     : Gtk_Window;
-      Debugger        : Debugger_Access;
-      Questions       : Question_Array);
+     (Question_Dialog            : out Question_Dialog_Access;
+      Main_Window                : Gtk_Window;
+      Debugger                   : Debugger_Access;
+      Multiple_Selection_Allowed : Boolean;
+      Questions                  : Question_Array);
 
    procedure Initialize
-     (Question_Dialog : access Question_Dialog_Record'Class;
-      Main_Window     : Gtk_Window;
-      Debugger        : Debugger_Access;
-      Questions       : Question_Array);
+     (Question_Dialog            : access Question_Dialog_Record'Class;
+      Main_Window                : Gtk_Window;
+      Debugger                   : Debugger_Access;
+      Multiple_Selection_Allowed : Boolean;
+      Questions                  : Question_Array);
 
 private
    type Odd_Dialog_Record is new Gtk_Dialog_Record with record

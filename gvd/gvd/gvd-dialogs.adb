@@ -20,7 +20,6 @@
 
 with Glib; use Glib;
 with Gtk; use Gtk;
-with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Types;    use Gtkada.Types;
 with Odd.Dialogs.Callbacks; use Odd.Dialogs.Callbacks;
@@ -30,6 +29,7 @@ with Interfaces.C;    use Interfaces.C;
 with Interfaces.C.Strings;
 with Odd.Types;       use Odd.Types;
 with Odd.Process;     use Odd.Process;
+with Odd_Intl;        use Odd_Intl;
 
 package body Odd.Dialogs is
 
@@ -73,14 +73,16 @@ package body Odd.Dialogs is
    end Gtk_New;
 
    procedure Gtk_New
-     (Question_Dialog : out Question_Dialog_Access;
-      Main_Window     : Gtk_Window;
-      Debugger        : Debugger_Access;
-      Questions       : Question_Array)
+     (Question_Dialog            : out Question_Dialog_Access;
+      Main_Window                : Gtk_Window;
+      Debugger                   : Debugger_Access;
+      Multiple_Selection_Allowed : Boolean;
+      Questions                  : Question_Array)
    is
    begin
       Question_Dialog := new Question_Dialog_Record;
-      Initialize (Question_Dialog, Main_Window, Debugger, Questions);
+      Initialize (Question_Dialog, Main_Window, Debugger,
+                  Multiple_Selection_Allowed, Questions);
    end Gtk_New;
 
    ------------
@@ -213,8 +215,7 @@ package body Odd.Dialogs is
       Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
       Set_Child_Ipadding (Dialog.Hbuttonbox1, 7, 0);
 
-      Gtk_New (Dialog.Close_Button, "Close");
-      Set_Flags (Dialog.Close_Button, Can_Default);
+      Gtk_New (Dialog.Close_Button, -"Close");
       Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
    end Initialize;
 
@@ -223,7 +224,7 @@ package body Odd.Dialogs is
       Main_Window : Gtk_Window;
       Information : Thread_Information_Array) is
    begin
-      Initialize (Task_Dialog, "Task Status", Main_Window);
+      Initialize (Task_Dialog, -"Task Status", Main_Window);
       Button_Callback.Connect
         (Task_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
@@ -235,7 +236,7 @@ package body Odd.Dialogs is
       Main_Window      : Gtk_Window;
       Backtrace        : Backtrace_Array) is
    begin
-      Initialize (Backtrace_Dialog, "Backtrace", Main_Window);
+      Initialize (Backtrace_Dialog, -"Backtrace", Main_Window);
       Button_Callback.Connect
         (Backtrace_Dialog.Close_Button, "clicked",
          Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
@@ -243,14 +244,16 @@ package body Odd.Dialogs is
    end Initialize;
 
    procedure Initialize
-     (Question_Dialog : access Question_Dialog_Record'Class;
-      Main_Window     : Gtk_Window;
-      Debugger        : Debugger_Access;
-      Questions       : Question_Array)
+     (Question_Dialog            : access Question_Dialog_Record'Class;
+      Main_Window                : Gtk_Window;
+      Debugger                   : Debugger_Access;
+      Multiple_Selection_Allowed : Boolean;
+      Questions                  : Question_Array)
    is
-      Temp     : Chars_Ptr_Array (0 .. 1);
-      Row      : Gint;
-      Width    : Gint;
+      Temp      : Chars_Ptr_Array (0 .. 1);
+      Row       : Gint;
+      Width     : Gint;
+      Ok_Button : Gtk_Button;
    begin
       Initialize (Question_Dialog, "Question", Main_Window);
       Widget_Callback.Connect
@@ -266,12 +269,21 @@ package body Odd.Dialogs is
       Set_Policy
         (Question_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
 
-      Gtk_New (Question_Dialog.List, 2, Question_Titles);
+      Gtk_New (OK_Button, -"OK");
+      Add (Question_Dialog.Hbuttonbox1, OK_Button);
       Widget_Callback.Connect
-        (Question_Dialog.List,
-         "select_row",
-         On_Question_List_Select_Row'Access);
+        (OK_Button,
+         "clicked",
+         On_Question_OK_Clicked'Access);
+
+      Gtk_New (Question_Dialog.List, 2, Question_Titles);
       Add (Question_Dialog.Scrolledwindow1, Question_Dialog.List);
+
+      if Multiple_Selection_Allowed then
+         Set_Selection_Mode (Question_Dialog.List, Selection_Multiple);
+      else
+         Set_Selection_Mode (Question_Dialog.List, Selection_Single);
+      end if;
 
       for J in Questions'Range loop
          Temp (0) := Strings.New_String (Questions (J).Choice.all);

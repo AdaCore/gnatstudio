@@ -30,6 +30,9 @@ with Debugger; use Debugger;
 with Odd.Code_Editors; use Odd.Code_Editors;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Process_Proxies; use Process_Proxies;
+with Gtk.Clist;       use Gtk.Clist;
+with Gtk.Enums;       use Gtk.Enums;
+with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
 
 package body Odd.Dialogs.Callbacks is
 
@@ -195,20 +198,29 @@ package body Odd.Dialogs.Callbacks is
       Hide (Get_Toplevel (Object));
    end On_Close_Button_Clicked;
 
-   ---------------------------------
-   -- On_Question_List_Select_Row --
-   ---------------------------------
+   ----------------------------
+   -- On_Question_OK_Clicked --
+   ----------------------------
 
-   procedure On_Question_List_Select_Row
+   procedure On_Question_OK_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Row         : Gint := To_Gint (Params, 1);
+      use type Gint_List.Glist;
       Dialog      : Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
+
+      Selection : Gint_List.Glist := Get_Selection (Dialog.List);
+      S : Unbounded_String;
+      Tmp       : Gint_List.Glist :=Gint_List. First (Selection);
    begin
+      while Tmp /= Gint_List.Null_List loop
+         Append (S, Get_Text (Dialog.List, Gint_List.Get_Data (Tmp), 0));
+         Tmp := Gint_List.Next (Tmp);
+      end loop;
+
       Send (Dialog.Debugger,
-            Get_Text (Dialog.List, Row, 0),
+            To_String (S),
             Display => True,
             Empty_Buffer => False,
             Wait_For_Prompt => False);
@@ -216,7 +228,7 @@ package body Odd.Dialogs.Callbacks is
       --  This dialog is destroyed, not simply hidden, since it has to
       --  be recreated from scratch every time anyway.
       Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
-   end On_Question_List_Select_Row;
+   end On_Question_OK_Clicked;
 
    -------------------------------
    -- On_Question_Close_Clicked --

@@ -38,7 +38,7 @@ package Odd.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
-   procedure On_Question_List_Select_Row
+   procedure On_Question_OK_Clicked
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
