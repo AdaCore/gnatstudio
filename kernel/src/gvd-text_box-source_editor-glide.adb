@@ -18,12 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib.Values;
-with Glib.Object;          use Glib.Object;
 with Gdk.Pixbuf;
 with Gtk.Container;        use Gtk.Container;
 with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Handlers;         use Gtk.Handlers;
 with Basic_Types;          use Basic_Types;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
@@ -40,23 +37,6 @@ with Commands.Debugger;    use Commands.Debugger;
 with Ada.Unchecked_Deallocation;
 
 package body GVD.Text_Box.Source_Editor.Glide is
-
-   --------------------
-   -- Local packages --
-   --------------------
-
-   package GEdit_Callback is new Gtk.Handlers.User_Callback
-     (GObject_Record, GEdit);
-
-   -----------------------
-   -- Local subprograms --
-   -----------------------
-
-   procedure On_Destroy
-     (Object : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Editor : GEdit);
-   --  Callback for the "destroy" signal.
 
    ------------
    -- Attach --
@@ -142,17 +122,6 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Window : access GVD.Main_Window.GVD_Main_Window_Record'Class) is
    begin
       Editor.Window := GVD.Main_Window.GVD_Main_Window (Window);
-
-      --  ??? the following is commented out since
-      --  Get_Widget (Editor) returns null at this point.
-      --  We must find some workaround for this, or free the memory
-      --  associated to Editor in another way.
-
-      --        GEdit_Callback.Connect
-      --          (Get_Widget (Editor),
-      --           "destroy",
-      --           On_Destroy'Access,
-      --           GEdit (Editor));
    end Initialize;
 
    ---------------
@@ -447,21 +416,13 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end loop;
    end Update_Breakpoints;
 
-   ----------------
-   -- On_Destroy --
-   ----------------
+   ---------------------
+   -- Free_Debug_Info --
+   ---------------------
 
-   procedure On_Destroy
-     (Object : access GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Editor : GEdit)
-   is
-      pragma Unreferenced (Params, Object);
+   procedure Free_Debug_Info (Editor : access GEdit_Record) is
    begin
       Free (Editor.Current_Breakpoints);
-   end On_Destroy;
-
-   pragma Unreferenced (On_Destroy);
-   --  ??? see comment in Initialize.
+   end Free_Debug_Info;
 
 end GVD.Text_Box.Source_Editor.Glide;
