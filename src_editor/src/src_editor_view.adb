@@ -26,6 +26,8 @@ with Gdk.Font;                    use Gdk.Font;
 with Gdk.GC;                      use Gdk.GC;
 with Gdk.Window;                  use Gdk.Window;
 with Gdk.Rectangle;               use Gdk.Rectangle;
+with Gdk.Types;                   use Gdk.Types;
+with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Gtk;                         use Gtk;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Handlers;
@@ -81,6 +83,16 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Restore the previously saved insert cursor position when the Source_View
    --  gains the focus back.
+
+   function Button_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "button_press_event" signal.
+
+   function Key_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "key_press_event" signal.
 
    procedure Map_Cb (View : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is mapped.
@@ -175,6 +187,7 @@ package body Src_Editor_View is
       --  currently is.
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
       Move_Mark (Buffer, View.Saved_Insert_Mark, Insert_Iter);
+      End_Action (Buffer);
       return False;
    end Focus_Out_Event_Cb;
 
@@ -425,6 +438,14 @@ package body Src_Editor_View is
         (View, "focus_out_event",
          Marsh => Return_Callback.To_Marshaller (Focus_Out_Event_Cb'Access),
          After => False);
+      Return_Callback.Connect
+        (View, "button_press_event",
+         Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
+         After => False);
+      Return_Callback.Connect
+        (View, "key_press_event",
+         Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
+         After => False);
    end Initialize;
 
    --------------
@@ -559,5 +580,55 @@ package body Src_Editor_View is
       Window_To_Buffer_Coords
         (View, Gint (Get_X (Event)), Gint (Get_Y (Event)), Line, Column);
    end Event_To_Buffer_Coords;
+
+   ---------------------------
+   -- Button_Press_Event_Cb --
+   ---------------------------
+
+   function Button_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+      View   : constant Source_View := Source_View (Widget);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+   begin
+      End_Action (Buffer);
+      return False;
+   end Button_Press_Event_Cb;
+
+   ------------------------
+   -- Key_Press_Event_Cb --
+   ------------------------
+
+   function Key_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      View   : constant Source_View := Source_View (Widget);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+   begin
+      case Get_Key_Val (Event) is
+         when GDK_Tab | GDK_Return | GDK_Linefeed
+           | GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End
+           | GDK_Begin | GDK_Up | GDK_Down | GDK_Left | GDK_Right =>
+            End_Action (Buffer);
+
+         when GDK_LC_z | GDK_Z =>
+            if (Get_State (Event) and Control_Mask) /= 0 then
+               Undo (Buffer);
+            end if;
+
+         when GDK_LC_r | GDK_R =>
+            if (Get_State (Event) and Control_Mask) /= 0 then
+               Redo (Buffer);
+            end if;
+
+         when others =>
+            null;
+      end case;
+
+      return False;
+   end Key_Press_Event_Cb;
 
 end Src_Editor_View;
