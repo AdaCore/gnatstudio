@@ -1,4 +1,4 @@
---  with "child1";
+with "child1";
 project Root is
    for Source_Files use ("root_src.adb");
    for Source_Dirs use (".");
