@@ -423,16 +423,15 @@ package body Vsearch_Ext is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
    begin
       if Get_Active (Vsearch.Options_Toggle) then
-         Attach
-           (Vsearch.Table, Vsearch.Options_Frame, 0, 2, 5, 6, Fill, 0, 2, 0);
+         Pack_Start (Vsearch.Vbox_Search, Vsearch.Options_Frame);
          Unref (Vsearch.Options_Frame);
 
       else
          Ref (Vsearch.Options_Frame);
-         Remove (Vsearch.Table, Vsearch.Options_Frame);
+         Remove (Vsearch.Vbox_Search, Vsearch.Options_Frame);
       end if;
 
-      Show_All (Vsearch.Table);
+      Show_All (Vsearch.Options_Frame);
 
    exception
       when E : others =>
@@ -533,7 +532,7 @@ package body Vsearch_Ext is
          Widget_Callback.To_Marshaller (On_Destroy'Access));
 
       Ref (Vsearch.Options_Frame);
-      Remove (Vsearch.Table, Vsearch.Options_Frame);
+      Remove (Vsearch.Vbox_Search, Vsearch.Options_Frame);
 
       Gtk_New_From_Stock (Vsearch.Search_Next_Button, Stock_Find);
       Pack_Start
