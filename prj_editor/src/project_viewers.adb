@@ -271,7 +271,8 @@ package body Project_Viewers is
    --  Called every time the selection has changed in the tree
 
    function Viewer_Contextual_Menu
-     (Viewer : access Gtk_Widget_Record'Class) return Gtk_Menu;
+     (Viewer : access Gtk_Widget_Record'Class; Event : Gdk_Event)
+      return Gtk_Menu;
    --  Return the contextual menu to use for the project viewer
 
    -------------------------
@@ -940,8 +941,10 @@ package body Project_Viewers is
    ----------------------------
 
    function Viewer_Contextual_Menu
-     (Viewer : access Gtk_Widget_Record'Class) return Gtk_Menu
+     (Viewer : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Gtk_Menu
    is
+      pragma Warnings (Off, Event);
       V : Project_Viewer := Project_Viewer (Viewer);
       Item : Gtk_Menu_Item;
    begin
