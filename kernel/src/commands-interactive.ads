@@ -71,7 +71,8 @@ package Commands.Interactive is
    --  applications.
 
    function Component_Editor
-     (Component : access Command_Component_Record)
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Component : access Command_Component_Record)
       return Gtk.Widget.Gtk_Widget is abstract;
    --  Return a graphical widget that can be used to edit Component.
    --  This widget should provide all the fields to edit the contents of the
@@ -84,6 +85,12 @@ package Commands.Interactive is
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class) is abstract;
    --  This function is passed the Editor created by Component_Editor, and
    --  should update the component accordingly.
+
+   function Get_Name
+     (Component : access Command_Component_Record) return String is abstract;
+   --  Return a short name for the component. This will generally be the
+   --  command that it executes. This is used when listing all the components
+   --  of an action
 
    -------------------------
    -- Interactive_Command --

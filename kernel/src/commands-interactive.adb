@@ -40,11 +40,14 @@ package body Commands.Interactive is
       with null record;
 
    function Component_Editor
-     (Component : access Internal_Component_Record)
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Component : access Internal_Component_Record)
       return Gtk.Widget.Gtk_Widget;
    procedure Update_From_Editor
      (Component : access Internal_Component_Record;
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
+   function Get_Name
+     (Component : access Internal_Component_Record) return String;
    --  See docs for inherited subprograms
 
 
@@ -91,13 +94,14 @@ package body Commands.Interactive is
    ----------------------
 
    function Component_Editor
-     (Component : access Internal_Component_Record)
+     (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Component : access Internal_Component_Record)
       return Gtk.Widget.Gtk_Widget
    is
-      pragma Unreferenced (Component);
+      pragma Unreferenced (Kernel, Component);
       Label : Gtk_Label;
    begin
-      Gtk_New (Label, -"Built-in command");
+      Gtk_New (Label, -"Built-in action");
       return Gtk.Widget.Gtk_Widget (Label);
    end Component_Editor;
 
@@ -275,5 +279,17 @@ package body Commands.Interactive is
    begin
       null;
    end Update_From_Editor;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Component : access Internal_Component_Record) return String
+   is
+      pragma Unreferenced (Component);
+   begin
+      return -"Built-in command";
+   end Get_Name;
 
 end Commands.Interactive;
