@@ -67,7 +67,7 @@ with Traces;                  use Traces;
 with Ada.Exceptions;          use Ada.Exceptions;
 
 with Generic_List;
-
+with Debugger_Pixmaps;        use Debugger_Pixmaps;
 with Commands;                use Commands;
 with Commands.Debugger;       use Commands.Debugger;
 
@@ -1059,13 +1059,12 @@ package body GVD_Module is
                     File_Line.Line);
 
             A (1).Line := File_Line.Line;
-            A (1).Text := new String' ("< >");
+            A (1).Image := Line_Has_Code_Pixbuf;
             A (1).Associated_Command := Command_Access (C);
             Add_Line_Information
               (D.Kernel,
                File_Line.File.all,
                GVD_Module_Name & "/Line Information",
-               20,
                new Line_Information_Array' (A));
 
          when No_Code =>
@@ -1307,6 +1306,8 @@ package body GVD_Module is
          new GVD_Module_User_Data'
            (Kernel_Handle (Kernel), File_Line_List.Null_List),
          GVD_Module_Kernel_Data_Id);
+
+      Init_Graphics;
    end Register_Module;
 
    ----------
