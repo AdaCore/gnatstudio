@@ -653,6 +653,17 @@ package Debugger is
    --  Set the number of times the breakpoint should be ignored before being
    --  activated.
 
+   procedure Set_Scope_Action
+     (Debugger : access Debugger_Root;
+      Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Num      : GVD.Types.Breakpoint_Identifier := 0;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Set the scope/action of the breakpoint identified by Num:
+   --  GDB_COMMAND: change-breakpoint-scope/change-breakpoint-action
+   --  Set the default scope/action of a debugging session if Num = 0:
+   --  GDB_COMMAND: set break-command-scope/set break-command-action
+
    ----------------
    -- Exceptions --
    ----------------

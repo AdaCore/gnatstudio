@@ -233,6 +233,13 @@ package Debugger.Jdb is
       Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Set_Scope_Action
+     (Debugger : access Jdb_Debugger;
+      Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Num      : GVD.Types.Breakpoint_Identifier := 0;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Finish
      (Debugger : access Jdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);

@@ -754,6 +754,22 @@ package body Debugger.Jdb is
       null;
    end Set_Breakpoint_Ignore_Count;
 
+   ----------------------
+   -- Set_Scope_Action --
+   ----------------------
+
+   procedure Set_Scope_Action
+     (Debugger : access Jdb_Debugger;
+      Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Num      : GVD.Types.Breakpoint_Identifier := 0;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Num, Scope, Action, Mode);
+   begin
+      null;
+   end Set_Scope_Action;
+
    ------------
    -- Finish --
    ------------
