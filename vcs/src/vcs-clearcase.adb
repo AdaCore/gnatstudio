@@ -27,7 +27,7 @@ package body VCS.ClearCase is
 
    VCS_ClearCase_Module_Name : constant String := "ClearCase_Connectivity";
    VCS_ClearCase_Module_ID   : Module_ID;
-   ClearCase_Identifier      : constant String := "clearcase";
+   ClearCase_Identifier      : constant String := "ClearCase";
 
    -----------------------
    -- Local Subprograms --
@@ -51,11 +51,13 @@ package body VCS.ClearCase is
    ------------------
 
    function Identify_VCS (S : String) return VCS_Access is
-      Id : String := S;
+      Id         : String := S;
+      Identifier : String := ClearCase_Identifier;
    begin
       Lower_Case (Id);
+      Lower_Case (Identifier);
 
-      if Strip_Quotes (Id) = ClearCase_Identifier then
+      if Strip_Quotes (Id) = Identifier then
          return ClearCase_Reference;
       end if;
 
