@@ -228,7 +228,7 @@ package body Project_Trees is
    -- Retrieving information --
    ----------------------------
 
-   function Get_Parent_Project
+   function Get_Project_From_Node
      (Tree    : access Project_Tree_Record'Class;
       Node    : Gtk_Ctree_Node) return Project_Id;
    --  Return the name of the project that Node belongs to. Note that if Node
@@ -349,24 +349,49 @@ package body Project_Trees is
       pragma Warnings (Off, Event);
       T : Project_Tree := Project_Tree (Tree);
       Item : Gtk_Menu_Item;
+      Row, Column : Gint;
+      Is_Valid : Boolean;
+      Node : Gtk_Ctree_Node;
+      Prj : Project_Id;
    begin
       if T.Contextual_Menu /= null then
          Destroy (T.Contextual_Menu);
       end if;
 
+      Get_Selection_Info
+        (T, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+         Row, Column, Is_Valid);
+
+      if not Is_Valid then
+         return null;
+      end if;
+
+      Node := Node_Nth (T, Guint (Row));
+      Prj := Get_Project_From_Node (T, Node);
+
       Gtk_New (T.Contextual_Menu);
 
-      Gtk_New (Item, Label => "Add Directory");
-      Set_Sensitive (Item, False);
-      Append (T.Contextual_Menu, Item);
+      if Prj /= No_Project then
+         Gtk_New (Item, Label => "Add Directory to "
+                  & Get_Name_String (Projects.Table (Prj).Name));
+         Set_Sensitive (Item, False);
+         Append (T.Contextual_Menu, Item);
 
-      Gtk_New (Item, Label => "Change Object Directory");
-      Set_Sensitive (Item, False);
-      Append (T.Contextual_Menu, Item);
+         Gtk_New (Item, Label => "Change Object Directory for "
+                  & Get_Name_String (Projects.Table (Prj).Name));
+         Set_Sensitive (Item, False);
+         Append (T.Contextual_Menu, Item);
+      end if;
 
-      Gtk_New (Item, Label => "Remove Directory");
-      Set_Sensitive (Item, False);
-      Append (T.Contextual_Menu, Item);
+      declare
+         Dir : constant String := Get_Directory_From_Node (T, Node);
+      begin
+         if Dir /= "" then
+            Gtk_New (Item, Label => "Remove Directory " & Dir);
+            Set_Sensitive (Item, False);
+            Append (T.Contextual_Menu, Item);
+         end if;
+      end;
 
       Gtk_New (Item, Label => "");
       Set_Sensitive (Item, False);
@@ -378,13 +403,26 @@ package body Project_Trees is
         (Item, "activate",
          Widget_Callback.To_Marshaller (On_Add_Variable'Access), T);
 
-      Gtk_New (Item, Label => "Edit Default Switches");
-      Set_Sensitive (Item, False);
-      Append (T.Contextual_Menu, Item);
+      if Prj /= No_Project then
+         Gtk_New (Item, Label => "Edit Default Switches for "
+                  & Get_Name_String (Projects.Table (Prj).Name));
+         Set_Sensitive (Item, False);
+         Append (T.Contextual_Menu, Item);
+      end if;
 
-      Gtk_New (Item, Label => "Edit Switches for <file>");
-      Set_Sensitive (Item, False);
-      Append (T.Contextual_Menu, Item);
+      declare
+         --  Since we don't want the full path name, we use the String_Id
+         --  version, not the String version.
+         File : String_Id := Get_File_From_Node (T, Node);
+      begin
+         if File /= No_String then
+            String_To_Name_Buffer (File);
+            Gtk_New (Item, Label => "Edit Switches for "
+                     & Name_Buffer (Name_Buffer'First .. Name_Len));
+            Set_Sensitive (Item, False);
+            Append (T.Contextual_Menu, Item);
+         end if;
+      end;
 
       return T.Contextual_Menu;
    end Tree_Contextual_Menu;
@@ -818,7 +856,7 @@ package body Project_Trees is
       Node : Gtk_Ctree_Node;
       Data : User_Data)
    is
-      Project_View : Project_Id := Get_Parent_Project (Tree, Node);
+      Project_View : Project_Id := Get_Project_From_Node (Tree, Node);
       Src : String_List_Id := Projects.Table (Project_View).Sources;
       N : Gtk_Ctree_Node;
 
@@ -1490,17 +1528,16 @@ package body Project_Trees is
       return (1 => Interfaces.C.Strings.New_String (Column1));
    end Create_Line_Text;
 
-   ------------------------
-   -- Get_Parent_Project --
-   ------------------------
+   ---------------------------
+   -- Get_Project_From_Node --
+   ---------------------------
 
-   function Get_Parent_Project
+   function Get_Project_From_Node
      (Tree    : access Project_Tree_Record'Class;
       Node    : Gtk_Ctree_Node) return Project_Id
    is
-      Parent : Gtk_Ctree_Node;
+      Parent : Gtk_Ctree_Node := Node;
    begin
-      Parent := Row_Get_Parent (Node_Get_Row (Node));
       while Node_Get_Row_Data (Tree, Parent).Node_Type
         /= Project_Node
       loop
@@ -1509,7 +1546,7 @@ package body Project_Trees is
 
       return
         Get_Project_View_From_Name (Node_Get_Row_Data (Tree, Parent).Name);
-   end Get_Parent_Project;
+   end Get_Project_From_Node;
 
    -------------------------------
    -- Get_Selected_Project_Node --
@@ -1577,7 +1614,9 @@ package body Project_Trees is
 
                   when Directory_Node =>
                      if Project_Filter /= No_Project
-                       and then Get_Parent_Project (Tree, N) /= Project_Filter
+                       and then Get_Project_From_Node
+                         (Tree, Row_Get_Parent (Node_Get_Row (N)))
+                         /= Project_Filter
                      then
                         return No_String;
                      else
