@@ -25,6 +25,8 @@
 --  </description>
 
 with Glib.Object;
+with Gtk.Box;
+with Gtk.GEntry;
 with Glide_Kernel;
 with Gtk.Box;
 with Projects;
@@ -47,6 +49,51 @@ package Project_Properties is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the project properties module
+
+   -----------------------
+   -- Attribute editors --
+   -----------------------
+
+   function Attribute_Editors_Page_Count return Natural;
+   --  Return the number of pages required to edit all the attributes of the
+   --  project, not including the "General" page.
+   --  The latter should always be added by the editors anyway, and thus isn't
+   --  taken into account even if some XML attributes should be displayed in
+   --  that page..
+
+   function Attribute_Editors_Page_Name (Nth : Integer) return String;
+   --  Return the name of the Nth page for editing attributes
+
+   function Attribute_Editors_Page_Box
+     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project          : Projects.Project_Type;
+      General_Page_Box : Gtk.Box.Gtk_Box := null;
+      Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Nth_Page         : Integer) return Gtk.Box.Gtk_Box;
+   --  Return the contents of the Nth page for editing attributes
+   --  Project is the project from which the value of the attributes is taken.
+   --  If No_Project is specified, the default value for the attributes will be
+   --  used.
+   --  General_Page_Box is the box associated with the "General" page, so that
+   --  new attributes can be put in it.
+   --  Path_Widget is the widget that contains the location of the project file
+
+   function Update_Project_Attributes
+     (Project            : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
+   --  Update the contents of the project based on the current editor for the
+   --  project editor.
+   --  Return True if the project was changed.
+
+   function Get_Current_Value
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Pkg     : String;
+      Name    : String;
+      Index   : String := "")
+      return GNAT.OS_Lib.String_List;
+   --  Return the value of the attribute as currently edited.
+   --  The returned value must be freed by the caller.
+
 
 private
    type Root_Attribute_Editor_Record is abstract new Gtk.Box.Gtk_Box_Record

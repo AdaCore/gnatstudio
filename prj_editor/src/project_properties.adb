@@ -662,7 +662,9 @@ package body Project_Properties is
             Trace (Me, "Change for attribute "
                    & Attr.Pkg.all & "'" & Attr.Name.all
                    & " (" & Lower_Attribute_Index
-                   & ") Old=""" & Old_Value & """ New=""" & Value & """");
+                   & ") Old=""" & Old_Value
+                   & """ Default=""" & Default_Value
+                   & """ New=""" & Value & """");
             Project_Changed := True;
          end if;
       end;
@@ -2435,7 +2437,13 @@ package body Project_Properties is
                   if Pos = -1 then
                      Pos := T;
                   end if;
-               elsif Attr.Index_Types (T).Index_Value.all = Index then
+               elsif (Attr.Case_Sensitive_Index
+                      and then Attr.Index_Types (T).Index_Value.all = Index)
+                 or else
+                   (not Attr.Case_Sensitive_Index
+                    and then Case_Insensitive_Equal
+                      (Attr.Index_Types (T).Index_Value.all, Index))
+               then
                   Pos := T;
                   exit;
                end if;
@@ -2676,6 +2684,27 @@ package body Project_Properties is
 
    function Get_Current_Value
      (Kernel  : access Kernel_Handle_Record'Class;
+      Pkg     : String;
+      Name    : String;
+      Index   : String := "")
+      return GNAT.OS_Lib.String_List
+   is
+      Attr : constant Attribute_Description_Access :=
+        Get_Attribute_Type_From_Name (Pkg, Name);
+   begin
+      return Get_Current_Value
+        (Kernel  => Kernel,
+         Project => Projects.No_Project,
+         Attr    => Attr,
+         Index   => Index);
+   end Get_Current_Value;
+
+   -----------------------
+   -- Get_Current_Value --
+   -----------------------
+
+   function Get_Current_Value
+     (Kernel  : access Kernel_Handle_Record'Class;
       Project : Project_Type;
       Attr    : Attribute_Description_Access;
       Index   : String := "";
@@ -2717,23 +2746,25 @@ package body Project_Properties is
 
       --  Else lookup in the project or in the default values
 
-      if Attr.Pkg.all = "" and then Attr.Name.all = "languages" then
-         return Get_Languages (Project, Recursive => False);
-      end if;
+      if Project /= Projects.No_Project then
+         if Attr.Pkg.all = "" and then Attr.Name.all = "languages" then
+            return Get_Languages (Project, Recursive => False);
+         end if;
 
-      if not Default_Only then
-         declare
-            Current : GNAT.OS_Lib.Argument_List := Get_Attribute_Value
-              (Project   => Project,
-               Attribute => Build (Package_Name   => Attr.Pkg.all,
-                                   Attribute_Name => Attr.Name.all),
-               Index     => Index);
-         begin
-            if Current'Length /= 0 then
-               return Current;
-            end if;
-            Free (Current);
-         end;
+         if not Default_Only then
+            declare
+               Current : GNAT.OS_Lib.Argument_List := Get_Attribute_Value
+                 (Project   => Project,
+                  Attribute => Build (Package_Name   => Attr.Pkg.all,
+                                      Attribute_Name => Attr.Name.all),
+                  Index     => Index);
+            begin
+               if Current'Length /= 0 then
+                  return Current;
+               end if;
+               Free (Current);
+            end;
+         end if;
       end if;
 
       --  Else get the default value
@@ -3147,17 +3178,10 @@ package body Project_Properties is
       Button       : Gtk_Widget;
       Page         : Project_Editor_Page;
       Box          : Gtk_Box;
-      Page_Box     : Gtk_Box;
       General_Page_Box : Gtk_Box;
       Main_Box     : Gtk_Box;
       Event        : Gtk_Event_Box;
-      Frame        : Gtk_Frame;
-      Size         : Gtk_Size_Group;
       General_Size : Gtk_Size_Group;
-      Expandable   : Boolean;
-      W_Expandable : Boolean;
-      W            : Gtk_Widget;
-
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
@@ -3226,58 +3250,25 @@ package body Project_Properties is
          --  sent to the parent of the notebook. In case of nested notebooks,
          --  this means the event is sent to the parent's of the enclosing
          --  notebook, and thus is improperly handled by the nested notebooks.
-         if Properties_Module_ID.Pages (P).Name.all = "General" then
-            Page_Box := General_Page_Box;
-            Size     := General_Size;
-         else
+
+         Box := Attribute_Editors_Page_Box
+           (Kernel           => Kernel,
+            Project          => Project,
+            Nth_Page         => P,
+            General_Page_Box => General_Page_Box,
+            Path_Widget      => Editor.Path);
+
+         if Box /= General_Page_Box then
             Gtk_New (Event);
-            Gtk_New_Vbox (Page_Box, Homogeneous => False);
-            Add (Event, Page_Box);
-            Gtk_New (Size);
-         end if;
+            Add (Event, Box);
 
-         for S in Properties_Module_ID.Pages (P).Sections'Range loop
-            Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
-
-            Expandable := False;
-
-            if Properties_Module_ID.Pages (P).Sections (S).Name.all /= "" then
-               Gtk_New (Frame,
-                        Properties_Module_ID.Pages (P).Sections (S).Name.all);
-               Set_Border_Width (Frame, 5);
-               Add (Frame, Box);
+            if Attribute_Editors_Page_Name (P) /= "General" then
+               Gtk_New (Label, Attribute_Editors_Page_Name (P));
+               Append_Page (Main_Note, Event, Label);
             end if;
-
-            for A in Properties_Module_ID.Pages (P).Sections (S).
-              Attributes'Range
-            loop
-               Create_Widget_Attribute
-                 (Kernel,
-                  Project,
-                  Properties_Module_ID.Pages (P).Sections (S).
-                    Attributes (A),
-                  Size,
-                  Path_Widget => Editor.Path,
-                  Widget      => W,
-                  Expandable  => W_Expandable);
-               Expandable := Expandable or W_Expandable;
-               Pack_Start (Box, W, Expand => W_Expandable, Fill => True);
-            end loop;
-
-            if Properties_Module_ID.Pages (P).Sections (S).Name.all /= "" then
-               Pack_Start
-                 (Page_Box, Frame, Expand => Expandable, Fill => True);
-            else
-               Pack_Start (Page_Box, Box, Expand => Expandable, Fill => True);
-            end if;
-         end loop;
-
-         if Properties_Module_ID.Pages (P).Name.all /= "General" then
-            Gtk_New (Label, Properties_Module_ID.Pages (P).Name.all);
-            Show (Event);
-            Append_Page (Main_Note, Event, Label);
          end if;
       end loop;
+
 
       Show_All (Editor);
 
@@ -3314,6 +3305,98 @@ package body Project_Properties is
          After => True);
    end Initialize;
 
+   ----------------------------------
+   -- Attribute_Editors_Page_Count --
+   ----------------------------------
+
+   function Attribute_Editors_Page_Count return Natural is
+   begin
+      if Properties_Module_ID.Pages = null then
+         return 0;
+      else
+         for P in Properties_Module_ID.Pages'Range loop
+            if Properties_Module_ID.Pages (P).Name.all = "General" then
+               return Properties_Module_ID.Pages'Length - 1;
+            end if;
+         end loop;
+
+         return Properties_Module_ID.Pages'Length;
+      end if;
+   end Attribute_Editors_Page_Count;
+
+   ---------------------------------
+   -- Attribute_Editors_Page_Name --
+   ---------------------------------
+
+   function Attribute_Editors_Page_Name (Nth : Integer) return String is
+   begin
+      return Properties_Module_ID.Pages (Nth).Name.all;
+   end Attribute_Editors_Page_Name;
+
+   --------------------------------
+   -- Attribute_Editors_Page_Box --
+   --------------------------------
+
+   function Attribute_Editors_Page_Box
+     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project          : Projects.Project_Type;
+      General_Page_Box : Gtk.Box.Gtk_Box := null;
+      Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Nth_Page         : Integer) return Gtk.Box.Gtk_Box
+   is
+      Page : Attribute_Page renames Properties_Module_ID.Pages (Nth_Page);
+      Page_Box     : Gtk_Box;
+      Box          : Gtk_Box;
+      Frame        : Gtk_Frame;
+      Size         : Gtk_Size_Group;
+      Expandable   : Boolean;
+      W_Expandable : Boolean;
+      W            : Gtk_Widget;
+   begin
+      if Page.Name.all = "General" then
+         Page_Box := General_Page_Box;
+      else
+         Gtk_New_Vbox (Page_Box, Homogeneous => False);
+      end if;
+
+      Gtk_New (Size);
+
+      for S in Page.Sections'Range loop
+         Gtk_New_Vbox (Box, Homogeneous => False, Spacing => 2);
+
+         Expandable := False;
+
+         if Page.Sections (S).Name.all /= "" then
+            Gtk_New (Frame, Page.Sections (S).Name.all);
+            Set_Border_Width (Frame, 5);
+            Add (Frame, Box);
+         end if;
+
+         for A in Page.Sections (S).Attributes'Range loop
+            Create_Widget_Attribute
+              (Kernel,
+               Project,
+               Page.Sections (S).Attributes (A),
+               Size,
+               Path_Widget => Gtk_Entry (Path_Widget),
+               Widget      => W,
+               Expandable  => W_Expandable);
+            Expandable := Expandable or W_Expandable;
+            Pack_Start (Box, W, Expand => W_Expandable, Fill => True);
+         end loop;
+
+         if Page.Sections (S).Name.all /= "" then
+            Pack_Start (Page_Box, Frame, Expand => Expandable, Fill => True);
+         else
+            Pack_Start (Page_Box, Box, Expand => Expandable, Fill => True);
+         end if;
+      end loop;
+
+      Show_All (Page_Box);
+
+      return Page_Box;
+   end Attribute_Editors_Page_Box;
+
    -------------------
    -- Get_Languages --
    -------------------
@@ -3321,33 +3404,13 @@ package body Project_Properties is
    function Get_Languages
      (Editor : Properties_Editor) return GNAT.OS_Lib.String_List
    is
-      pragma Unreferenced (Editor);
       Attr : constant Attribute_Description_Access :=
         Get_Attribute_Type_From_Name (Pkg => "", Name => "languages");
-      Iter : Gtk_Tree_Iter;
-      List : constant List_Attribute_Editor :=
-        List_Attribute_Editor (Attr.Editor);
    begin
-      if Attr.Editor /= null then
-         declare
-            Languages : GNAT.OS_Lib.String_List
-              (1 .. Integer (N_Children (List.Model)));
-            Index     : Natural := Languages'First;
-         begin
-            Iter := Get_Iter_First (List.Model);
-            while Iter /= Null_Iter loop
-               if Get_Boolean (List.Model, Iter, 1) then
-                  Languages (Index) := new String'
-                    (Get_String (List.Model, Iter, 0));
-                  Index := Index + 1;
-               end if;
-               Next (List.Model, Iter);
-            end loop;
-            return Languages (Languages'First .. Index - 1);
-         end;
-      else
-         return GNAT.OS_Lib.String_List'(1 .. 0 => null);
-      end if;
+      return Get_Current_Value
+        (Kernel     => Editor.Kernel,
+         Project    => Projects.No_Project,
+         Attr       => Attr);
    end Get_Languages;
 
    -----------------
@@ -3453,6 +3516,38 @@ package body Project_Properties is
       end case;
    end Warning_On_View_Incomplete;
 
+   -------------------------------
+   -- Update_Project_Attributes --
+   -------------------------------
+
+   function Update_Project_Attributes
+     (Project            : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
+   is
+      Attr    : Attribute_Description_Access;
+      Changed : Boolean := False;
+   begin
+      for P in Properties_Module_ID.Pages'Range loop
+         for S in Properties_Module_ID.Pages (P).Sections'Range loop
+            for A in Properties_Module_ID.Pages (P).Sections (S).
+              Attributes'Range
+            loop
+               Attr := Properties_Module_ID.Pages (P).Sections (S).
+                 Attributes (A);
+
+               if Attr.Editor = null then
+                  Trace (Me, "No editor created for "
+                         & Attr.Pkg.all & "'" & Attr.Name.all);
+               else
+                  Generate_Project
+                    (Attr.Editor, Project, Scenario_Variables, Changed);
+               end if;
+            end loop;
+         end loop;
+      end loop;
+      return Changed;
+   end Update_Project_Attributes;
+
    ---------------------
    -- Edit_Properties --
    ---------------------
@@ -3474,13 +3569,6 @@ package body Project_Properties is
          return Boolean;
       --  Modify the attributes set on the general page
 
-      function Process_XML_Attributes
-        (Project : Project_Type;
-         Scenario_Variables : Scenario_Variable_Array) return Boolean;
-      --  Generate the project for the attributes coming from
-      --  the XML files.
-      --  Return True if the project was modified
-
       ------------------
       -- Report_Error --
       ------------------
@@ -3489,39 +3577,6 @@ package body Project_Properties is
       begin
          Insert (Kernel, Msg);
       end Report_Error;
-
-      ----------------------------
-      -- Process_XML_Attributes --
-      ----------------------------
-
-      function Process_XML_Attributes
-        (Project            : Project_Type;
-         Scenario_Variables : Scenario_Variable_Array) return Boolean
-      is
-         Attr : Attribute_Description_Access;
-         Changed : Boolean := False;
-      begin
-         for P in Properties_Module_ID.Pages'Range loop
-            for S in Properties_Module_ID.Pages (P).Sections'Range loop
-               for A in Properties_Module_ID.Pages (P).Sections (S).
-                 Attributes'Range
-               loop
-                  Attr := Properties_Module_ID.Pages (P).Sections (S).
-                    Attributes (A);
-
-                  if Attr.Editor = null then
-                     Trace (Me, "No editor created for "
-                            & Attr.Pkg.all & "'" & Attr.Name.all);
-                  else
-                     Generate_Project
-                       (Attr.Editor, Project, Scenario_Variables, Changed);
-                     Attr.Editor := null;
-                  end if;
-               end loop;
-            end loop;
-         end loop;
-         return Changed;
-      end Process_XML_Attributes;
 
       --------------------------
       -- Process_General_Page --
@@ -3671,7 +3726,7 @@ package body Project_Properties is
                         Free (Curr);
                      end;
 
-                     Changed := Process_XML_Attributes
+                     Changed := Update_Project_Attributes
                        (Current (Prj_Iter), Vars)
                        or Process_General_Page
                         (Editor, Current (Prj_Iter), Project_Renamed_Or_Moved);
