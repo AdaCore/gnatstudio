@@ -31,7 +31,6 @@ with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Frame;            use Gtk.Frame;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Object;           use Gtk.Object;
 with Gtk.Radio_Button;     use Gtk.Radio_Button;
 with Gtk.Stock;            use Gtk.Stock;
@@ -2025,9 +2024,9 @@ package body Browsers.Call_Graph is
       Tools    : constant String := '/' & (-"Tools");
       Navigate : constant String := "/_" & (-"Navigate");
       Find_All : constant String := -"Find _All References";
-      Mitem    : Gtk_Menu_Item;
       Command  : Interactive_Command_Access;
       Filter   : Action_Filter;
+
    begin
       Register_Module
         (Module                  => Call_Graph_Module_Id,
@@ -2086,12 +2085,8 @@ package body Browsers.Call_Graph is
 
       Register_Menu (Kernel, Tools, -"Call Graph", "", On_Call_Graph'Access);
       Register_Menu
-        (Kernel, Navigate, Find_All, "",
-         On_Find_All_References'Access);
-
-      Gtk_New (Mitem);
-      Register_Menu
-        (Kernel, Navigate, Mitem, Ref_Item => Find_All);
+        (Kernel, Navigate, Find_All, "", On_Find_All_References'Access,
+         Ref_Item => -"Find Previous", Add_Before => False);
 
       Register_Command
         (Kernel, "find_all_refs",
