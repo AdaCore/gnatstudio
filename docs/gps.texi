@@ -2914,13 +2914,13 @@ The contextual menu obtained when right-clicking in the background of
 the browser contains the standard entries (@code{zoom in}, @code{zoom
 out} and @code{orthogonal links}), in addition to
 
-@itemize @bullet
+@table @command
 @item refresh
 @cindex refresh
 The project graph is not automatically refreshed. If you change the
 dependencies in the hierarchy (adding or removing dependencies), you
 need to select this menu item to force a refresh of the browser.
-@end itemize
+@end table
 
 The contextual menu obtained by right-clicking on a project item
 contains several items. Most of them are added by the project editor,
@@ -2930,7 +2930,7 @@ adding dependencies@dots{}
 
 Some new items are added to the menu
 
-@itemize @bullet
+@table @command
 @item Locate in explorer
 @cindex locate in explorer
 Selecting this item will switch the focus to the project explorer, and
@@ -2954,7 +2954,7 @@ are imported by them, and so on).
 @cindex examine projects depending on
 This item plays the same role as the left arrow in the title bar, and
 display all the projects that import directly the selected project.
-@end itemize
+@end table
 
 @c --------------------------------------------------------------------
 @node Searching and Replacing
@@ -2995,8 +2995,8 @@ screen, similar to the following:
 
 On this screen shot, you can see three entry fields:
 
-@table @b
-@item @code{"Search for"}
+@table @command
+@item Search for
 @cindex search for
 This is the location where you type the string or pattern you are
 looking for. The search widget supports two modes, either fixed strings
@@ -3013,14 +3013,14 @@ type definition, C++ method declaration,@dots{}
 @cindex C++
 @cindex Ada
 
-@item @code{"Replace with"}
+@item Replace with
 @cindex replace with
 This field should contain the string that will replace the occurrences
 of the pattern defined above.
 The combo box provides a history of previously used replacement
 strings.
 
-@item @code{"Look in"}
+@item Look in
 @cindex look in
 This field defines the context in which the search should
 occur. Clicking on the arrow on the right will display the list of all
@@ -3289,7 +3289,7 @@ The @code{refresh} menu item in the background contextual menu can be
 used to recompute the layout of items at any time, even for items that
 were previously moved interactively.
 
-@item @b{Interactive moving of items}
+@item Interactive moving of items
 Items can be moved interactively with the mouse. Click and drag the
 item by clicking on its title bar. The links will still be displayed
 during the move, so that you can check whether it overlaps any other
@@ -3361,7 +3361,6 @@ highlight linked items, so that this information remains available.
 Selecting this menu item will remove all items but the selected one.
 
 @end table
-
 
 @c --------------------------------------------------------------------
 @node Call Graph
@@ -3437,9 +3436,8 @@ declared in the same file.
 @c --------------------------------------------------------------------
 
 @noindent
-The dependency browser shows the dependencies between source files.
-@c ??? incomplete
-@i{This section is incomplete}
+The dependency browser shows the dependencies between source
+files. Each item in the browser represents one source file.
 
 @iftex
 @cindex screen shot
@@ -3451,6 +3449,82 @@ The dependency browser shows the dependencies between source files.
 @image{dependency-browser}
 @end ifhtml
 
+In this browser, clicking on the right arrow in the title bar will
+display the list of files that the selected file depends on. A file
+depend on another one if it explicitely imports it (@code{with}
+statement in Ada, or @code{#include} in C/C++). Implicit dependencies
+are currently not displayed in this browser, since the information is
+accessible by opening the other direct dependencies.
+
+Clicking on the left arrow in the title bar will display the list of
+files that depend on the selected file.
+
+This browser is accessible through the contextual menu in the
+explorer, by selecting one of the following items:
+
+@table @command
+@item Examine dependencies for @i{file}
+@cindex examine dependencies for
+
+This has the same effect as clicking on the right arrow for a file
+already in the browser, and will display the direct dependencies for
+that file.
+
+@item Examine files depending on @i{file}
+@cindex examine files depending on
+
+This has the same effect as clicking on the left arrow for a file
+already in the browser, and will display the list of files that
+directly depend on that file.
+
+@end table
+
+The background contextual menu in the browser adds a few entries to
+the standard menu:
+
+@table @command
+@item Open file...
+
+This menu entry will display an external dialog in which you can
+select the name of a file to analyze.
+
+@item Hide system files
+@cindex hide system files
+
+This menu entry is currently deactivated. It indicates whether
+standard system files (runtime files for instance in the case of Ada)
+are displayed in the browser. By default, these files will only be
+displayed if you explicitely select them through the @code{Open file}
+menu, or the contextual menu in the project explorer.
+
+@item Hide implicit dependencies
+@cindex hide implicit dependencies
+
+This menu entry is currently deactivated. It indicates whether
+indirect dependencies should also be displayed for the files.
+
+@end table
+
+
+The contextual menu available by right clicking on an item also adds a
+number of entries:
+
+@table @command
+@item Analyze other file
+@cindex analyze other file
+
+This will open a new item in the browser, displaying the complement
+file for the selected one. In Ada, this would be the body if you
+clicked on a spec file, or the opposite. In C, it depends on the
+naming conventions you specified in the project properties, but you
+would generally go from a @file{.h} file to a @file{.c} file and back.
+
+@item Examine dependencies for @i{file}
+@item Examine files depending on @i{file}
+
+These play the same role as in the project explorer contextual menu
+
+@end table
 
 @c --------------------------------------------------------------------
 @node Entity Browser
@@ -3459,9 +3533,30 @@ The dependency browser shows the dependencies between source files.
 @c --------------------------------------------------------------------
 
 @noindent
-The entity browser displays static information about any source entity.
-@c ??? incomplete
-@i{This section is incomplete}
+The entity browser displays static information about any source
+entity.
+
+The exact content of the items depend on the type of the item. For
+instance:
+
+@table @code
+@item Ada record / C struct
+The list of fields, each as an hyper link, is displayed. Clicking on
+one of the fields will open a new item for the type.
+
+@item Ada tagged type / C++ class
+The list of attributes and methods is displayed. They are also
+clickable hyper-links.
+
+@item Subprograms
+The list of parameters is displayed
+
+@item Packages
+The list of all the entities declared in that package is displayed
+
+@item and more ...
+
+@end table
 
 @iftex
 @cindex screen shot
@@ -3473,6 +3568,36 @@ The entity browser displays static information about any source entity.
 @image{entity-browser}
 @end ifhtml
 
+This browser is accessible through the contextual menu in the
+explorer, when clicking on an entity:
+
+@table @command
+@item Examine entity @i{entity}
+@cindex examine entity
+
+Open a new item in the entity browser that displays information for
+the selected entity.
+
+@end table
+
+Most information in the items is clickable (by default, they appear as
+underlined blue text). Clicking on one of these hyper links will open
+a new item in the entity browser for the selected entity.
+
+This browser can display the parent entities for an item. For
+instance, for a C++ class or Ada tagged type, this would be the types
+it derives from. This is accessible by clicking on the up arrow in the
+title bar of the item.
+
+Likewise, children entities (for instance types that derive from the
+item) can be displayed by clicking on the down arrow in the title bar.
+
+An extra button appear in the title bar for the C++ class or Ada
+tagged types, which toggles whether the inherited methods (or
+primitive operations in Ada) should be displayed. By default, only the
+new methods, or the ones that override an inherited one, are
+display. The parent's methods are not shown, unless you click on this
+title bar button.
 
 @c --------------------------------------------------------------------
 @node Debugging
