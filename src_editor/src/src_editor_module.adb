@@ -539,6 +539,11 @@ package body Src_Editor_Module is
    end record;
    procedure Activate (Callback : access On_Recent; Item : String);
 
+   procedure Toolbar_Destroy_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when we are about to destroy the toolbar which contains the
+   --  undo/redo items.
+
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  Create the module-wide GCs.
 
@@ -595,6 +600,28 @@ package body Src_Editor_Module is
       end if;
    end Dnd_Data;
 
+   ------------------------
+   -- Toolbar_Destroy_Cb --
+   ------------------------
+
+   procedure Toolbar_Destroy_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      UR : Undo_Redo;
+      pragma Unreferenced (Widget);
+   begin
+      UR := Undo_Redo_Data.Get (Kernel, Undo_Redo_Id);
+      UR.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
+      UR.Undo_Button := null;
+      UR.Redo_Button := null;
+      UR.Undo_Menu_Item := null;
+      UR.Redo_Menu_Item := null;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Toolbar_Destroy_Cb;
+
    ------------
    -- Map_Cb --
    ------------
@@ -633,6 +660,11 @@ package body Src_Editor_Module is
            (Id.Post_It_Note_GC,
             Black (Get_Default_Colormap));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Map_Cb;
 
    -------------------------
@@ -3945,7 +3977,7 @@ package body Src_Editor_Module is
       Mitem              : Gtk_Menu_Item;
       Button             : Gtk_Button;
       Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Undo_Redo          : Undo_Redo_Information;
+      UR                 : constant Undo_Redo := new Undo_Redo_Information;
       Selector           : Scope_Selector;
       Extra              : Files_Extra_Scope;
       Recent_Menu_Item   : Gtk_Menu_Item;
@@ -4285,13 +4317,13 @@ package body Src_Editor_Module is
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
 
-      Undo_Redo.Undo_Menu_Item :=
+      UR.Undo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"_Undo", Stock_Undo,
                        null, null,
                        GDK_Z, Control_Mask,
                        Ref_Item  => -"Preferences",
                        Sensitive => False);
-      Undo_Redo.Redo_Menu_Item :=
+      UR.Redo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"_Redo", Stock_Redo,
                        null, null,
                        GDK_R, Control_Mask,
@@ -4303,12 +4335,17 @@ package body Src_Editor_Module is
         (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
 
       Insert_Space (Toolbar, Position => 3);
-      Undo_Redo.Undo_Button := Insert_Stock
+      UR.Undo_Button := Insert_Stock
         (Toolbar, Stock_Undo, -"Undo Previous Action", Position => 4);
-      Set_Sensitive (Undo_Redo.Undo_Button, False);
-      Undo_Redo.Redo_Button := Insert_Stock
+      Set_Sensitive (UR.Undo_Button, False);
+      UR.Redo_Button := Insert_Stock
         (Toolbar, Stock_Redo, -"Redo Previous Action", Position => 5);
-      Set_Sensitive (Undo_Redo.Redo_Button, False);
+      Set_Sensitive (UR.Redo_Button, False);
+
+      Kernel_Callback.Connect
+        (Toolbar, "destroy",
+         Toolbar_Destroy_Cb'Access,
+         Kernel_Handle (Kernel));
 
       Append_Space (Toolbar);
 
@@ -4427,7 +4464,7 @@ package body Src_Editor_Module is
       Add_Hook (Kernel, File_Saved_Hook, File_Saved_Cb'Access);
       Add_Hook (Kernel, Location_Changed_Hook, Cursor_Stopped_Cb'Access);
 
-      Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
+      Undo_Redo_Data.Set (Kernel, UR, Undo_Redo_Id);
 
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
       Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
