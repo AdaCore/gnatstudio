@@ -403,16 +403,27 @@ package body VCS_View_API is
       On_Menu_Edit_Log (Widget, Get_Current_Context (Kernel));
    end Commit;
 
-   ---------------
-   -- View_Diff --
-   ---------------
+   --------------------
+   -- View_Head_Diff --
+   --------------------
 
-   procedure View_Diff
+   procedure View_Head_Diff
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle) is
    begin
       On_Menu_Diff (Widget, Get_Current_Context (Kernel));
-   end View_Diff;
+   end View_Head_Diff;
+
+   --------------------
+   -- View_Work_Diff --
+   --------------------
+
+   procedure View_Work_Diff
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) is
+   begin
+      On_Menu_Diff_Local (Widget, Get_Current_Context (Kernel));
+   end View_Work_Diff;
 
    --------------
    -- View_Log --
@@ -436,6 +447,17 @@ package body VCS_View_API is
    begin
       On_Menu_Annotate (Widget, Get_Current_Context (Kernel));
    end View_Annotate;
+
+   ------------------------
+   -- Remove_Annotations --
+   ------------------------
+
+   procedure Remove_Annotations
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle) is
+   begin
+      On_Menu_Remove_Annotate (Widget, Get_Current_Context (Kernel));
+   end Remove_Annotations;
 
    --------------
    -- Edit_Log --
