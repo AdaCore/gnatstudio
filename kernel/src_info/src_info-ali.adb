@@ -1309,7 +1309,7 @@ package body Src_Info.ALI is
          declare
             Current_Xref : Xref_Record renames Xref.Table (Xref_Id);
             E_Ref        : E_Reference;
-
+            List         : E_Reference_List;
          begin
             E_Ref.Kind := Char_To_R_Kind (Current_Xref.Rtype);
 
@@ -1326,15 +1326,25 @@ package body Src_Info.ALI is
                 Line   => Positive (Current_Xref.Line),
                 Column => Natural (Current_Xref.Col));
 
-            --  Insert the new Xref at the head of the References table
+            --  Insert the new Xref in the list of references
             --  (except if it is an end reference, in which case it is stored
             --  in a special location)
 
             if Is_End_Reference (E_Ref.Kind) then
                Decl.End_Of_Scope := E_Ref;
-            else
+            elsif Decl_Info.References = null then
                Decl_Info.References := new E_Reference_Node'
-                 (Value => E_Ref, Next => Decl_Info.References);
+                 (Value => E_Ref, Next => null);
+            else
+               --  Insert at the end, so that the result of
+               --  "Find_All_References" is properly sorted.
+               List := Decl_Info.References;
+               while List.Next /= null loop
+                  List := List.Next;
+               end loop;
+
+               List.Next := new E_Reference_Node'
+                 (Value => E_Ref, Next => null);
             end if;
          end Xref_Block;
       end loop;
