@@ -3,6 +3,9 @@ For more details, please see the documentation.
 
 New features in GPS 3.0.0
 
+- Menus created through XML files will be greyed out when the associated
+  filter doesn't match
+
 - E213-003, DA13-002 New shell class: GPS.Contextual, to control the
   visibility of contextual menus
 
