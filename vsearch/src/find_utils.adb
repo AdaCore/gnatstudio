@@ -179,9 +179,17 @@ package body Find_Utils is
          RE  : constant Pattern_Matcher := Context_As_Regexp (Context);
          Pos : Natural := Start_Index;
       begin
+         --  Special case here: If we have an empty section, do nothing. In
+         --  fact, End_Index might be 0 in the following case: we search in
+         --  one of the GPS source files for "all but comments". The first
+         --  section is empty, and End_Index is 0. However, it is
+         --  legitimate, if inefficient, to have an empty section
+         if End_Index = 0 then
+            return;
+         end if;
+
          loop
             Match (RE, Buffer, Context.Sub_Matches.all, Pos, End_Index);
-
             exit when Context.Sub_Matches (0) = No_Match;
 
             Pos := Context.Sub_Matches (0).First;
