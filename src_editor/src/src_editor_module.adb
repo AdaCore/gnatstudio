@@ -417,8 +417,9 @@ package body Src_Editor_Module is
    --  otherwise return an empty string.
 
    function Expand_Aliases_Entities
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Special : Character) return String;
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Expansion : String;
+      Special   : Character) return String;
    --  Does the expansion of special entities in the aliases.
 
    type On_Recent is new Menu_Callback_Record with record
@@ -2995,8 +2996,9 @@ package body Src_Editor_Module is
    -----------------------------
 
    function Expand_Aliases_Entities
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Special : Character) return String
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Expansion : String;
+      Special   : Character) return String
    is
       Box : Source_Editor_Box;
       W   : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
@@ -3012,27 +3014,27 @@ package body Src_Editor_Module is
          case Special is
             when 'l' =>
                Get_Cursor_Location (Box, Line, Column);
-               return Image (Line);
+               return Expansion & Image (Line);
 
             when 'c' =>
                Get_Cursor_Location (Box, Line, Column);
-               return Image (Column);
+               return Expansion & Image (Column);
 
             when 'f' =>
-               return Base_Name (Get_Filename (Box));
+               return Expansion & Base_Name (Get_Filename (Box));
 
             when 'd' =>
-               return Dir_Name (Get_Filename (Box)).all;
+               return Expansion & Dir_Name (Get_Filename (Box)).all;
 
             when 'p' =>
-               return Project_Name
+               return Expansion & Project_Name
                  (Get_Project_From_File
                   (Get_Registry (Kernel),
                    Get_Filename (Box),
                    Root_If_Not_Found => True));
 
             when 'P' =>
-               return Project_Path
+               return Expansion & Project_Path
                  (Get_Project_From_File
                   (Get_Registry (Kernel),
                    Get_Filename (Box),
