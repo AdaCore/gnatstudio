@@ -108,6 +108,9 @@ package body Layouts is
    pragma Inline (Height);
    --  Return the height of V
 
+   procedure Reverse_Edge (G : Graph; E : Edge_Access);
+   --  Reverse the two ends of the edge, so as to make the graph acyclick
+
    -----------
    -- Width --
    -----------
@@ -126,6 +129,24 @@ package body Layouts is
       return Integer (Get_Coord (Canvas_Item (V)).Height);
    end Height;
 
+   ------------------
+   -- Reverse_Edge --
+   ------------------
+
+   procedure Reverse_Edge (G : Graph; E : Edge_Access) is
+      Arrow : Arrow_Type := Get_Arrow_Type (Canvas_Link (E));
+   begin
+      Glib.Graphs.Revert_Edge (G, E);
+
+      case Arrow is
+         when No_Arrow | Both_Arrow => null;
+         when Start_Arrow => Arrow := End_Arrow;
+         when End_Arrow   => Arrow := Start_Arrow;
+      end case;
+
+      Configure (Canvas_Link (E), Arrow, Get_Descr (Canvas_Link (E)));
+   end Reverse_Edge;
+
    ---------------------------
    -- Partition_Topological --
    ---------------------------
@@ -136,7 +157,8 @@ package body Layouts is
       Num_Layers : out Natural)
    is
       Acyclic : aliased Boolean;
-      Sorted  : Depth_Vertices_Array := Depth_First_Search (G, Acyclic'Access);
+      Sorted  : Depth_Vertices_Array := Depth_First_Search
+        (G, Acyclic'Access, Reverse_Edge'Access);
       Eit     : Edge_Iterator;
       Max     : Natural;
       V       : Vertex_Access;
@@ -561,8 +583,8 @@ package body Layouts is
       for R in Lines'Range (1) loop
          for C in 0 .. Num_Per_Line (R) - 1 loop
             Relative_Position (Get_Index (Lines (R, C))) := C;
-            X (Get_Index (Lines (R, C))) := C * 60;
-            Y (Get_Index (Lines (R, C))) := R * 60;
+            X (Get_Index (Lines (R, C))) := C * 100;
+            Y (Get_Index (Lines (R, C))) := R * 100;
          end loop;
       end loop;
 
