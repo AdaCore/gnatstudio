@@ -886,6 +886,10 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Source_End);
    end Execute;
 
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (This : in out Paste_Profile_Cmd) is
    begin
       Free (This.Destination_Begin);
@@ -895,9 +899,9 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   ---------------------------------
-   -- Get_Visible_Declaration_Cmd --
-   ---------------------------------
+   -------------
+   -- Add_Use --
+   -------------
 
    procedure Add_Use
      (This             : out Get_Visible_Declaration_Cmd;
@@ -984,6 +988,7 @@ package body Codefix.Text_Manager.Ada_Commands is
         (Result.Prefix_Obj,
          Current_Text,
          Word,
+         File_Cursor (Word),
          False);
 
       Result.Prefix_Obj_Enabled := True;
