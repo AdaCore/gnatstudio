@@ -42,39 +42,15 @@ package Make_Suite_Window_Pkg is
 
 
    type Make_Suite_Window_Record is new Gtk_Window_Record with record
-      Explorer : File_Selector_Window_Access;
-      Name     : String_Access;
-
-      Vbox1 : Gtk_Vbox;
-      Hbox1 : Gtk_Hbox;
-      Vbox2 : Gtk_Vbox;
-      Label1 : Gtk_Label;
-      Vbox3 : Gtk_Vbox;
+      Explorer   : File_Selector_Window_Access;
+      Name       : String_Access;
       Name_Entry : Gtk_Entry;
-      Vbox4 : Gtk_Vbox;
-      Label2 : Gtk_Label;
-      Hbox2 : Gtk_Hbox;
-      Vbox11 : Gtk_Vbox;
-      Hbox5 : Gtk_Hbox;
-      Vbox12 : Gtk_Vbox;
-      Label7 : Gtk_Label;
-      Vbox13 : Gtk_Vbox;
-      Entry1 : Gtk_Entry;
-      Hbox8 : Gtk_Hbox;
-      Vbox14 : Gtk_Vbox;
-      Label8 : Gtk_Label;
-      Hbox6 : Gtk_Hbox;
-      Test_List : Gtk_Clist;
-      Label5 : Gtk_Label;
-      Label6 : Gtk_Label;
-      Vbuttonbox1 : Gtk_Vbutton_Box;
-      Add : Gtk_Button;
-      Remove : Gtk_Button;
-      Hbuttonbox1 : Gtk_Hbutton_Box;
-      Ok : Gtk_Button;
-      Cancel : Gtk_Button;
-      Help : Gtk_Button;
-      Scrolledwindow2 : Gtk_Scrolled_Window;
+      Test_List  : Gtk_Clist;
+      Add        : Gtk_Button;
+      Remove     : Gtk_Button;
+      Ok         : Gtk_Button;
+      Cancel     : Gtk_Button;
+      Help       : Gtk_Button;
    end record;
    type Make_Suite_Window_Access is access all Make_Suite_Window_Record'Class;
 

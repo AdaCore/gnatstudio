@@ -39,28 +39,16 @@ with GtkAda.File_Selector; use GtkAda.File_Selector;
 package Make_Harness_Window_Pkg is
 
    type Make_Harness_Window_Record is new Gtk_Window_Record with record
-      Suite_Name     : String_Access;
-      Procedure_Name : String_Access;
-      Explorer       : File_Selector_Window_Access;
-
-      Vbox3 : Gtk_Vbox;
-      Hbox2 : Gtk_Hbox;
-      Vbox8 : Gtk_Vbox;
-      Label6 : Gtk_Label;
-      Vbox6 : Gtk_Vbox;
-      Label1 : Gtk_Label;
-      Vbox9 : Gtk_Vbox;
-      Hbox4 : Gtk_Hbox;
+      Suite_Name      : String_Access;
+      Procedure_Name  : String_Access;
+      Explorer        : File_Selector_Window_Access;
       Procedure_Entry : Gtk_Entry;
-      Hbox3 : Gtk_Hbox;
       File_Name_Entry : Gtk_Entry;
-      Vbox10 : Gtk_Vbox;
-      Browse : Gtk_Button;
-      Hbuttonbox1 : Gtk_Hbutton_Box;
-      Ok : Gtk_Button;
-      Cancel : Gtk_Button;
-      Help : Gtk_Button;
-      Statusbar : Gtk_Statusbar;
+      Browse          : Gtk_Button;
+      Ok              : Gtk_Button;
+      Cancel          : Gtk_Button;
+      Help            : Gtk_Button;
+      Statusbar       : Gtk_Statusbar;
    end record;
    type Make_Harness_Window_Access is
      access all Make_Harness_Window_Record'Class;
