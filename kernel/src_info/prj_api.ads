@@ -148,17 +148,35 @@ package Prj_API is
    function Project_Name (Project_View : Project_Id) return String;
    --  Return the name of the project.
 
+   function Project_Path (Project_View : Project_Id) return String;
+   --  Return the full path name to the project file
+
    function Create_Default_Project (Name, Path : String)
       return Project_Node_Id;
    --  Create a new project, whose source directory and object directory are is
    --  Path.
 
-   procedure Rename
+   procedure Convert_Paths_To_Absolute
+     (Project : Project_Node_Id; Update_With_Statements : Boolean := False);
+   --  Convert all the paths (source path, object path) to absolute
+   --  directories in Project. This should always be used before moving a
+   --  project file.
+   --  This doesn't modify the with statements however if
+   --  Update_With_Statements is False.
+
+   procedure Rename_And_Move
      (Root_Project : Project_Node_Id;
       Project      : Project_Node_Id;
-      New_Name     : String);
+      New_Name     : String;
+      New_Path     : String);
    --  Rename Project to New_Name. All the nodes in the project tree starting
    --  at Root_Project, that reference Project, are also updated accordingly.
+   --  Also sets the path of the project file. Note that Path shouldn't include
+   --  the file name, which is New_Name.
+   --
+   --  The paths internal to the project are not upgraded, and will remain
+   --  relative paths if they were. Consider using Convert_Paths_To_Absolute if
+   --  necessary.
    --
    --  If there is already a project by that name in the project hierarchy,
    --  Project_Error is raised

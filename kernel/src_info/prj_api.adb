@@ -57,6 +57,9 @@ package body Prj_API is
    --  Name of the attribute used for file specific switches. Its index is the
    --  unit name
 
+   Source_Dir_Attribute_Name : constant String := "source_dirs";
+   Object_Dir_Attribute_Name : constant String := "object_dir";
+
    Default_Switches_Attribute : constant String := "default_switches";
    --  Name of the attribute used for default switches.
 
@@ -164,9 +167,9 @@ package body Prj_API is
    --------------------
 
    function Create_Project (Name, Path : String) return Project_Node_Id is
+      D : constant String := Path & Name & Project_File_Extension;
       Project : Project_Node_Id := Default_Project_Node (N_Project);
       Project_Name : Name_Id;
-      D : constant String := Path & Name & Project_File_Extension;
    begin
       --  Adding the name of the project
       Name_Len := Name'Length;
@@ -2337,76 +2340,27 @@ package body Prj_API is
       return Empty_Node;
    end Find_Project_In_Hierarchy;
 
-   ------------
-   -- Rename --
-   ------------
+   ---------------------
+   -- Rename_And_Move --
+   ---------------------
 
-   procedure Rename
+   procedure Rename_And_Move
      (Root_Project : Project_Node_Id;
       Project      : Project_Node_Id;
-      New_Name     : String)
+      New_Name     : String;
+      New_Path     : String)
    is
+      D : constant String := New_Path & New_Name & Project_File_Extension;
+      Full_Path : String_Id := No_String;
       Old : Project_Node_Id;
       Name : Name_Id;
-
-      procedure Replace_In_Hierarchy (Prj : Project_Node_Id);
-      --  Replace all the with statements in the hierarchy that referenced
-      --  Project.
-
-      function Substitute (Str : String) return String;
-      --  Substitute the old name by the new name in Str.
-      --  Old_Name must be found at the end of Str, possibly followed by
-      --  a suffix Project_File_Extension.
-
-      ----------------
-      -- Substitute --
-      ----------------
-
-      function Substitute (Str : String) return String is
-         Dir  : constant String := Dir_Name (Str);
-      begin
-         if Dir /= "./" then
-            return Dir & New_Name;
-         else
-            return New_Name;
-         end if;
-      end Substitute;
-
-      --------------------------
-      -- Replace_In_Hierarchy --
-      --------------------------
-
-      procedure Replace_In_Hierarchy (Prj : Project_Node_Id) is
-         With_Clause : Project_Node_Id := First_With_Clause_Of (Prj);
-      begin
-         --  No child of Project will have a with clause for Project.
-         if Prj = Project then
-            return;
-         end if;
-
-         while With_Clause /= Empty_Node loop
-            if Project_Node_Of (With_Clause) = Project then
-               declare
-                  String_Value : constant String := Substitute
-                    (Get_String (String_Value_Of (With_Clause)));
-               begin
-                  Set_Name_Of (With_Clause, Name);
-                  Set_Path_Name_Of (With_Clause, Path_Name_Of (Project));
-
-                  Start_String;
-                  Store_String_Chars (String_Value);
-                  Set_String_Value_Of (With_Clause, End_String);
-               end;
-
-            else
-               Replace_In_Hierarchy (Project_Node_Of (With_Clause));
-            end if;
-
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
-      end Replace_In_Hierarchy;
+      Old_Name : Name_Id;
+      Imported : Project_Node_Id;
+      Iterator : Imported_Project_Iterator := Start (Root_Project);
+      With_Clause : Project_Node_Id;
 
    begin
+      Old_Name := Prj.Tree.Name_Of (Project);
       Name_Len := New_Name'Length;
       Name_Buffer (1 .. Name_Len) := New_Name;
       Name := Name_Find;
@@ -2418,19 +2372,62 @@ package body Prj_API is
             -"There is already a project by this name in the project tree.");
       end if;
 
-      declare
-         Path : constant String := Substitute
-           (Get_Name_String (Path_Name_Of (Project)));
-      begin
-         Set_Name_Of (Project, Name);
+      Set_Name_Of (Project, Name);
 
-         Name_Len := Path'Length;
-         Name_Buffer (1 .. Name_Len) := Path;
-         Set_Path_Name_Of (Project, Name_Find);
-      end;
+      Name_Len := New_Path'Length;
+      Name_Buffer (1 .. Name_Len) := New_Path;
+      Set_Directory_Of (Project, Name_Enter);
 
-      Replace_In_Hierarchy (Root_Project);
-   end Rename;
+      Name_Len := D'Length;
+      Name_Buffer (1 .. Name_Len) := D;
+      Set_Path_Name_Of (Project, Name_Enter);
+
+      --  Unregister the old name
+      Prj.Tree.Tree_Private_Part.Projects_Htable.Set
+        (Prj.Tree.Name_Of (Project),
+         Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
+         (Name => Old_Name,
+          Node => Empty_Node,
+          Modified => False));
+
+      --  Register the new name
+      Prj.Tree.Tree_Private_Part.Projects_Htable.Set
+        (Prj.Tree.Name_Of (Project),
+         Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
+         (Name => Name,
+          Node => Project,
+          Modified => False));
+
+      --  Replace all the with_clauses in the project hierarchy that points to
+      --  Project.
+
+      loop
+         Imported := Current (Iterator);
+         exit when Imported = Empty_Node;
+
+         With_Clause := First_With_Clause_Of (Imported);
+
+         while With_Clause /= Empty_Node loop
+            if Project_Node_Of (With_Clause) = Project then
+
+               Set_Name_Of (With_Clause, Name);
+               Set_Path_Name_Of (With_Clause, Path_Name_Of (Project));
+
+               if Full_Path = No_String then
+                  Start_String;
+                  Store_String_Chars (D);
+                  Full_Path := End_String;
+               end if;
+
+               Set_String_Value_Of (With_Clause, Full_Path);
+            end if;
+
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+
+         Next (Iterator);
+      end loop;
+   end Rename_And_Move;
 
    ----------------------------------
    -- Add_Scenario_Variable_Values --
@@ -2692,6 +2689,7 @@ package body Prj_API is
       --  Called for each mtching node for the env. variable.
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+         pragma Unreferenced (Project, Parent, Choice);
       begin
          if Kind_Of (Node) = N_External_Value then
             Set_String_Value_Of (External_Reference_Of (Node), New_Name);
@@ -2824,6 +2822,7 @@ package body Prj_API is
       --  Called for each mtching node for the env. variable.
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+         pragma Unreferenced (Choice);
       begin
          case Kind_Of (Node) is
             when N_External_Value =>
@@ -2878,6 +2877,7 @@ package body Prj_API is
       --  Called for each mtching node for the env. variable.
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+         pragma Unreferenced (Project, Parent);
          C : Project_Node_Id;
       begin
          case Kind_Of (Node) is
@@ -2939,6 +2939,7 @@ package body Prj_API is
       --  Called for each mtching node for the env. variable.
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+         pragma Unreferenced (Project, Parent, Choice);
       begin
          if Kind_Of (Node) = N_Typed_Variable_Declaration then
             Set_External_Default_Of
@@ -2969,6 +2970,7 @@ package body Prj_API is
       --  Called for each mtching node for the env. variable.
 
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id) is
+         pragma Unreferenced (Project, Choice);
          C, C2 : Project_Node_Id;
       begin
          case Kind_Of (Node) is
@@ -3065,6 +3067,15 @@ package body Prj_API is
    begin
       return Get_Name_String (Projects.Table (Project_View).Name);
    end Project_Name;
+
+   ------------------
+   -- Project_Path --
+   ------------------
+
+   function Project_Path (Project_View : Project_Id) return String is
+   begin
+      return Get_Name_String (Projects.Table (Project_View).Path_Name);
+   end Project_Path;
 
    ----------------------------
    -- Create_Default_Project --
@@ -3364,6 +3375,87 @@ package body Prj_API is
    begin
       return Prj.Tree.Tree_Private_Part.Projects_Htable.Get (Name).Node;
    end Get_Project_From_Name;
+
+   -------------------------------
+   -- Convert_Paths_To_Absolute --
+   -------------------------------
+
+   procedure Convert_Paths_To_Absolute
+     (Project : Project_Node_Id; Update_With_Statements : Boolean := False)
+   is
+      procedure Convert_In_Section (Node : Project_Node_Id);
+      --  Convert the paths found under Node
+
+      ------------------------
+      -- Convert_In_Section --
+      ------------------------
+
+      procedure Convert_In_Section (Node : Project_Node_Id) is
+         Decl : Project_Node_Id := First_Declarative_Item_Of (Node);
+         Current, Item, Expr, Term, Str : Project_Node_Id;
+      begin
+         while Decl /= Empty_Node loop
+            Current := Current_Item_Node (Decl);
+            case Kind_Of (Current) is
+               when N_Case_Construction =>
+                  Item := First_Case_Item_Of (Current);
+                  while Item /= Empty_Node loop
+                     Convert_In_Section (Item);
+                     Item := Next_Case_Item (Item);
+                  end loop;
+
+               when N_Attribute_Declaration =>
+                  if Get_Name_String (Prj.Tree.Name_Of (Current)) =
+                      Source_Dir_Attribute_Name
+                    or else Get_Name_String (Prj.Tree.Name_Of (Current)) =
+                      Object_Dir_Attribute_Name
+                  then
+                     Expr := Expression_Of (Current);
+                     while Expr /= Empty_Node loop
+                        Term := First_Term (Expr);
+                        Str := Current_Term (Term);
+
+                        Set_Value (Current,
+                                   Normalize_Pathname
+                                   (Get_String (String_Value_Of (Str)),
+                                    Get_Name_String (Directory_Of (Project))));
+
+                        Expr := Next_Expression_In_List (Expr);
+                     end loop;
+                  end if;
+
+               when others =>
+                  null;
+
+            end case;
+
+            Decl := Next_Declarative_Item (Decl);
+         end loop;
+      end Convert_In_Section;
+
+
+      With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+   begin
+      --  First replace the with clauses
+      if Update_With_Statements then
+         while With_Clause /= Empty_Node loop
+            declare
+               Path : constant String := Normalize_Pathname
+                 (Get_String (String_Value_Of (With_Clause)),
+                  Get_Name_String (Directory_Of (Project)));
+            begin
+               Start_String;
+               Store_String_Chars (Path);
+               Set_String_Value_Of (With_Clause, End_String);
+            end;
+
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+      end if;
+
+      --  Then replace all the paths
+      Convert_In_Section (Project_Declaration_Of (Project));
+   end Convert_Paths_To_Absolute;
 
    -------------------------------------
    -- Register_Default_Naming_Schemes --
