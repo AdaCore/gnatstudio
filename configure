@@ -1309,7 +1309,7 @@ DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
 OPAQUE_MDI=False
-GTK_EXTRA_REFRESH=False
+HOST_TYPE=Unix
 
 ROOT=`pwd`
 TARGET=$host
@@ -3687,7 +3687,7 @@ case "${host}" in
 	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
 	OPAQUE_MDI=True
-	GTK_EXTRA_REFRESH=True
+	HOST_TYPE=Windows
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -4600,7 +4600,7 @@ s,@DEFAULT_PS@,$DEFAULT_PS,;t t
 s,@DEFAULT_FONT@,$DEFAULT_FONT,;t t
 s,@HTML_BROWSER@,$HTML_BROWSER,;t t
 s,@OPAQUE_MDI@,$OPAQUE_MDI,;t t
-s,@GTK_EXTRA_REFRESH@,$GTK_EXTRA_REFRESH,;t t
+s,@HOST_TYPE@,$HOST_TYPE,;t t
 s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
 s,@PYTHON_ADA_SOURCE@,$PYTHON_ADA_SOURCE,;t t
 s,@PYTHON_DIR@,$PYTHON_DIR,;t t
