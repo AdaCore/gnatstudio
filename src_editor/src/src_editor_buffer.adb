@@ -97,7 +97,7 @@ package body Src_Editor_Buffer is
    --  The delay between the last edit and the re-parsing of the buffer,
    --  in seconds.
 
-   Cursor_Reactivity_Delay   : constant Duration := 0.5;
+   Cursor_Reactivity_Delay   : constant Duration := 0.2;
    --  The timeout between the last time the cursor moves and the time it is
    --  considered as having stopped.
 
