@@ -77,6 +77,8 @@ package Main_Debug_Window_Pkg is
       Command_History : String_History.History_List;
       --  The history of commands for the current session.
 
+      Sessions_Dir        : String_Access;
+
       -------------------------
 
       Vbox1 : Gtk_Vbox;

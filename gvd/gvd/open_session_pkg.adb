@@ -129,12 +129,12 @@ package body Open_Session_Pkg is
    ------------------
 
    procedure Open_Session (Open : in out Open_Session_Access;
+                           Dir  : in String;
                            File : out Odd.Types.String_Access) is
-      Home : GNAT.OS_Lib.String_Access;
-      Sessions_Dir : Dir_Type;
-      Buffer : String (1 .. 256);
-      Last : Natural;
-      Item : Gtk_List_Item;
+      Directory : Dir_Type;
+      Buffer    : String (1 .. 256);
+      Last      : Natural;
+      Item      : Gtk_List_Item;
 
    begin
       if Open = null then
@@ -143,27 +143,21 @@ package body Open_Session_Pkg is
 
       Show_All (Open);
 
-      Home := Getenv ("HOME");
-
       Remove_Items (Open.List, Get_Children (Open.List));
 
-      if Home /= null then
+      GNAT.Directory_Operations.Open
+        (Directory, Dir);
+      loop
+         Read (Directory, Buffer, Last);
+         exit when Last = 0;
+         if Buffer (1) /= '.' then
+            Gtk_New (Item, Label => Buffer (1 .. Last));
+            Show (Item);
+            Add (Open.List, Item);
+         end if;
+      end loop;
 
-         GNAT.Directory_Operations.Open
-           (Sessions_Dir, Home.all & Directory_Separator &
-            ".gvd" & Directory_Separator & "sessions");
-         loop
-            Read (Sessions_Dir, Buffer, Last);
-            exit when Last = 0;
-            if Buffer (1) /= '.' then
-               Gtk_New (Item, Label => Buffer (1 .. Last));
-               Show (Item);
-               Add (Open.List, Item);
-            end if;
-         end loop;
-      end if;
-
-      GNAT.Directory_Operations.Close (Sessions_Dir);
+      GNAT.Directory_Operations.Close (Directory);
       Gtk.Main.Main;
 
       File := new String' (Get_Text (Open.Entry1));

@@ -50,6 +50,7 @@ package Open_Session_Pkg is
    procedure Initialize (Open_Session : access Open_Session_Record'Class);
 
    procedure Open_Session (Open : in out Open_Session_Access;
+                           Dir  : in String;
                            File : out String_Access);
 
 end Open_Session_Pkg;

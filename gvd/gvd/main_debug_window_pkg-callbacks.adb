@@ -205,13 +205,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Mode         : Command_Type;
 
    begin
-      Open_Session (Top.Open_Session, S);
+      Open_Session (Top.Open_Session, Top.Sessions_Dir.all, S);
 
       if S /= null
         and then S.all /= ""
       then
-         Open (File, In_File, Getenv ("HOME").all & Directory_Separator
-               & ".gvd" & Directory_Separator & "sessions"
+         Open (File, In_File, Top.Sessions_Dir.all
                & Directory_Separator & S.all);
 
          Get_Line (File, Buffer, Last);
@@ -340,15 +339,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Num_Pages := Gint
         (Page_List.Length (Get_Children (Top.Process_Notebook)));
 
-      Open_Session (Top.Open_Session, S);
+      Open_Session (Top.Open_Session, Top.Sessions_Dir.all, S);
 
       if S /= null
         and then S.all /= ""
       then
          Create (File, Out_File,
-                 Getenv ("HOME").all & Directory_Separator &
-                 ".gvd" & Directory_Separator &
-                 "sessions" & Directory_Separator & S.all);
+                 Top.Sessions_Dir.all
+                 & Directory_Separator & S.all);
          Put_Line (File, "[Session_File Header]");
          Put_Line (File, Gint'Image (Num_Pages));
          Put_Line (File, "---------------------");
