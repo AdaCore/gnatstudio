@@ -218,6 +218,9 @@ package body Src_Contexts is
       Context      : Selection_Context_Access;
       File         : Virtual_File := No_File;
    begin
+      --  The name of the file might come either from the current context (any
+      --  select in the project view for instance), or from the current editor
+
       --  ??? Here, we are relying on the fact that the Child_Iterator will
       --  iterate through children in an order corresponding to the order at
       --  which they were selected (most recently selected first, then the
