@@ -58,16 +58,6 @@ package body List_Select_Pkg is
       Clear (List_Select.List);
    end Remove_All_Items;
 
-   ---------------
-   -- Set_Label --
-   ---------------
-
-   procedure Set_Label
-     (List_Select : List_Select_Access; Label : String) is
-   begin
-      Set_Text (List_Select.The_Entry, Label);
-   end Set_Label;
-
    ----------
    -- Show --
    ----------
