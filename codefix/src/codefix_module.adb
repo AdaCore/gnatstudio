@@ -271,7 +271,7 @@ package body Codefix_Module is
    begin
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
-         Identifier    => "--  ???",
+         Identifier    => Location_Button_Name,
          Category      => Compilation_Category,
          File          => Get_Error_Message (Error).File_Name.all,
          Line          => Get_Error_Message (Error).Line,
@@ -444,7 +444,7 @@ package body Codefix_Module is
       while Solution_Node /= Command_List.Null_Node loop
          declare
             Mitem : Codefix_Menu_Item;
-            Str : Dynamic_String;
+            Str   : Dynamic_String;
          begin
             Gtk_New (Mitem, Get_Caption (Data (Solution_Node)));
             Assign (Str, Get_Caption (Data (Solution_Node)));
