@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -34,7 +34,7 @@ with Pixmaps_Prj;   use Pixmaps_Prj;
 
 package body Logo_Boxes is
 
-   Bg_Color : constant String := "#0e79bd";
+   Bg_Color : constant String := "#ffffff";
 
    -------------
    -- Gtk_New --
