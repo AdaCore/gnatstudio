@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -54,9 +54,6 @@ pragma Preelaborate (HTables);
    generic
       type Header_Num is range <>;
       --  An integer type indicating the number and range of hash headers.
-
-      type Element (<>) is limited private;
-      --  The type of element to be stored
 
       type Elmt_Ptr is private;
       --  The type used to reference an element (will usually be an access
@@ -215,7 +212,6 @@ pragma Preelaborate (HTables);
 
       package Tab is new Static_HTable (
         Header_Num => Header_Num,
-        Element    => Element_Wrapper,
         Elmt_Ptr   => Elmt_Ptr,
         Null_Ptr   => null,
         Set_Next   => Set_Next,
