@@ -768,12 +768,12 @@ package body Python_Module is
          return;
       end if;
 
-      if Is_Regular_File (Sys & "/site.py") then
-         Trace (Me, "Load python files from " & Sys & "/site.py");
+      if Is_Regular_File (Sys & "/autoexec.py") then
+         Trace (Me, "Load python files from " & Sys & "/autoexec.py");
 
          Execute_Command
            (Python_Module_Id.Script,
-            "execfile (""" & Sys & "/site.py"")",
+            "execfile (""" & Sys & "/autoexec.py"")",
             Errors => Errors);
       end if;
 
