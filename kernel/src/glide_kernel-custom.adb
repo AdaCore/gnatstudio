@@ -32,8 +32,9 @@ with File_Utils;                use File_Utils;
 
 package body Glide_Kernel.Custom is
 
-   Me : constant Debug_Handle := Create ("Kernel.Custom");
-
+   Me                       : constant Debug_Handle :=
+     Create ("Kernel.Custom");
+   XML_Extension            : constant String := ".xml";
    GPS_Custom_Path_External : constant String := "GPS_CUSTOM_PATH";
 
    procedure Execute_Customization_String
@@ -97,7 +98,9 @@ package body Glide_Kernel.Custom is
             declare
                F : constant String := Norm_Dir & File (1 .. Last);
             begin
-               if Is_Regular_File (F) then
+               if File_Extension (F) = XML_Extension
+                 and then Is_Regular_File (F)
+               then
                   Trace (Me, "Loading " & F);
                   File_Node := Parse (F);
 
