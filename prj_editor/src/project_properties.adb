@@ -57,9 +57,13 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with Prj_Normalize;             use Prj_Normalize;
 with Scenario_Selectors;        use Scenario_Selectors;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Project_Properties is
    use Widget_List;
+
+   Me : constant Debug_Handle := Create ("Project_Properties");
 
    type Widget_Array is array (Natural range <>) of Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
@@ -960,6 +964,10 @@ package body Project_Properties is
         File_Selection_Context_Access (Context);
    begin
       Edit_Properties (Project_Information (C), Get_Kernel (Context));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Edit_Project_Properties;
 
 end Project_Properties;
