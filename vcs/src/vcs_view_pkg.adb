@@ -58,6 +58,7 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 
 with Basic_Types;               use Basic_Types;
@@ -66,7 +67,16 @@ with Prj;                       use Prj;
 with Prj_API;                   use Prj_API;
 with Prj.Tree;                  use Prj.Tree;
 
+with Commands;                  use Commands;
+with Commands.VCS;              use Commands.VCS;
+with Commands.External;         use Commands.External;
+
+with Ada.Text_IO;               use Ada.Text_IO;
+
 package body VCS_View_Pkg is
+
+   Tmp_Dir : constant String := "/tmp/";
+   --  <preferences>
 
    ------------------
    --  Local types --
@@ -598,6 +608,38 @@ package body VCS_View_Pkg is
       end loop;
    end Log_Editor_Text_Changed;
 
+   -------------------
+   -- Check_Handler --
+   -------------------
+
+   function Check_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+
+   function Check_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      List_Temp : String_List.List := List;
+      Head_Temp : String_List.List := Head;
+   begin
+      if not String_List.Is_Empty (List) then
+         while not String_List.Is_Empty (Head_Temp) loop
+            Push_Message (Kernel, Error, String_List.Head (Head_Temp));
+            Head_Temp := String_List.Next (Head_Temp);
+         end loop;
+      end if;
+
+      while not String_List.Is_Empty (List_Temp) loop
+         Push_Message (Kernel, Error, String_List.Head (List_Temp));
+         List_Temp := String_List.Next (List_Temp);
+      end loop;
+
+      return String_List.Is_Empty (List);
+   end Check_Handler;
+
    ---------------------------
    -- Log_Editor_Ok_Clicked --
    ---------------------------
@@ -608,23 +650,124 @@ package body VCS_View_Pkg is
    is
       pragma Unreferenced (Object);
 
-      Logs         : String_List.List;
-      Files_Copy   : String_List.List;
-      Files_Copy_2 : String_List.List;
-      Files_Temp   : String_List.List := Parameter.Log_Editor.Files;
+      Logs               : String_List.List;
+      Files_Temp         : String_List.List := Parameter.Log_Editor.Files;
+
+      Commit_Command     : Commit_Command_Access;
+      Get_Status_Command : Get_Status_Command_Access;
+
+      Check_File         : External_Command_Access;
+      Check_Log          : External_Command_Access;
+
+      Command            : String_List.List;
+      Args               : String_List.List;
+
+      File_Check_Script  : constant String
+        := Get_Pref (Parameter.Kernel, VCS_Commit_File_Check);
+
+      Log_Check_Script   : constant String
+        := Get_Pref (Parameter.Kernel, VCS_Commit_Log_Check);
+
    begin
       while not String_List.Is_Empty (Files_Temp) loop
          String_List.Append (Logs, Get_Text (Parameter.Log_Editor));
-         String_List.Append (Files_Copy, String_List.Head (Files_Temp));
-         String_List.Append (Files_Copy_2, String_List.Head (Files_Temp));
          Files_Temp := String_List.Next (Files_Temp);
       end loop;
 
-      Commit (Parameter.VCS_Ref,
-              Files_Copy,
+      Create (Commit_Command,
+              Parameter.VCS_Ref,
+              Parameter.Log_Editor.Files,
               Logs);
-      Get_Status (Parameter.VCS_Ref,
-                  Files_Copy_2);
+
+      Create (Get_Status_Command,
+              Parameter.VCS_Ref,
+              Parameter.Log_Editor.Files);
+
+      --  ??? Must deal with multiple files log ?
+
+      if File_Check_Script /= "" then
+         String_List.Append (Command, File_Check_Script);
+         String_List.Append
+           (Args, String_List.Head (Parameter.Log_Editor.Files));
+
+         Create (Check_File,
+                 Parameter.Kernel,
+                 Command,
+                 String_List.Null_List,
+                 Args,
+                 String_List.Null_List,
+                 Check_Handler'Access);
+      end if;
+
+      if Log_Check_Script /= "" then
+         declare
+            Log_File : constant String
+              := Tmp_Dir & Base_Name
+              (String_List.Head (Parameter.Log_Editor.Files)) & "_log";
+            File     : File_Type;
+
+            Head     : String_List.List;
+         begin
+            String_List.Free (Command);
+            String_List.Append (Command, Log_Check_Script);
+
+            String_List.Free (Args);
+            String_List.Append (Args, Log_File);
+
+            String_List.Append
+              (Head,
+               -"File : " & String_List.Head (Parameter.Log_Editor.Files));
+            String_List.Append
+              (Head, -"The changelog provided does not pass the checks.");
+            Create (File, Name => Log_File);
+            Put_Line (File, Get_Text (Parameter.Log_Editor));
+            Close (File);
+
+            Create (Check_Log,
+                    Parameter.Kernel,
+                    Command,
+                    String_List.Null_List,
+                    Args,
+                    Head,
+                    Check_Handler'Access);
+         end;
+      end if;
+
+      if File_Check_Script = ""
+        and then Log_Check_Script = ""
+      then
+         --  No log check, no file check.
+
+         Enqueue (Get_Queue (Parameter.VCS_Ref), Commit_Command);
+      else
+         if Log_Check_Script /= "" then
+            Add_Consequence_Action (Check_Log,
+                                    Command_Access (Commit_Command));
+            if File_Check_Script /= "" then
+               --  Log check and file check.
+
+               Add_Consequence_Action (Check_File, Command_Access (Check_Log));
+               Enqueue (Get_Queue (Parameter.VCS_Ref), Check_File);
+            else
+               --  Log check, no file check.
+
+               Enqueue (Get_Queue (Parameter.VCS_Ref), Check_Log);
+            end if;
+         else
+            --  No log check, file check.
+
+            Add_Consequence_Action
+              (Check_File, Command_Access (Commit_Command));
+
+            Enqueue (Get_Queue (Parameter.VCS_Ref), Check_File);
+         end if;
+      end if;
+
+      Enqueue (Get_Queue (Parameter.VCS_Ref), Get_Status_Command);
+
+      String_List.Free (Logs);
+      String_List.Free (Command);
+      String_List.Free (Args);
 
       Close (Parameter.Log_Editor);
    end Log_Editor_Ok_Clicked;
