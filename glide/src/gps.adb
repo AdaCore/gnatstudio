@@ -937,7 +937,9 @@ procedure GPS is
 
       Shell_Script.Register_Module (GPS.Kernel);
       Python_Module.Register_Module (GPS.Kernel);
+
       Register_Default_Script_Commands (GPS.Kernel);
+      Python_Module.Initialize_IO;
 
       Glide_Result_View.Register_Commands (GPS.Kernel);
 
