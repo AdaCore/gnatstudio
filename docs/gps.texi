@@ -8369,7 +8369,7 @@ The output of the command is sent to the GPS console window, entitled
 "Messages".
 
 @item other values
-A new window is created, the name of which is given by the attribute. If such
+A new window is created, with the title given by the attribute. If such
 a window already exists, it is cleared up before any of the command in the
 chain is executed. The output of the command, as well
 as the text of the command itself, are sent to this new window.
@@ -8383,7 +8383,7 @@ will always be the empty string, i.e. output is sent to the GPS console.
 @smallexample
 <action name="ls current directory" output="default output" >
    <shell output="Current directory" >pwd</shell>
-   <external output="Current directory contents" >/bin/ls </external>
+   <external output="Current directory contents" >/bin/ls</external>
 </action>
 @end smallexample
 
