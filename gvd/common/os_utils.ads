@@ -69,7 +69,8 @@ package OS_Utils is
 
    function Get_Tmp_Dir return String;
    --  Return a string representing a valid directory that can be used to
-   --  create temporary files.
+   --  create temporary files. If needed, a trailing directory separator will
+   --  be added.
 
    procedure Make_Dir_Recursive (Name : String);
    --  Create the directory Name, and its parents if necessary (for instance,
