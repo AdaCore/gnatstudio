@@ -1185,37 +1185,10 @@ package body Projects is
       Attribute      : Attribute_Pkg;
       Index          : String := "") return GNAT.OS_Lib.Argument_List
    is
-      No_Value : Argument_List (1 .. 0);
       Value    : constant Variable_Value := Get_Attribute_Value
         (Project, Attribute, Index);
-      Val : String_List_Id;
    begin
-      case Value.Kind is
-         when Undefined =>
-            return No_Value;
-
-         when Single =>
-            Trace (Me, "Attribute " & String (Attribute) & " is not a list");
-            return No_Value;
-
-         when List =>
-            declare
-               Num    : Natural := Length (Value.Values);
-               Result : Argument_List (1 .. Num);
-            begin
-               Val := Value.Values;
-               Num := Result'First;
-
-               while Val /= Nil_String loop
-                  Result (Num) := new String'
-                    (Get_String (String_Elements.Table (Val).Value));
-                  Num := Num + 1;
-                  Val := String_Elements.Table (Val).Next;
-               end loop;
-
-               return Result;
-            end;
-      end case;
+      return To_Argument_List (Value);
    end Get_Attribute_Value;
 
    -------------------
@@ -2158,27 +2131,29 @@ package body Projects is
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean) is
    begin
+      Value := Nil_Variable_Value;
+
       --  Do we have some file-specific switches ?
-      if File /= VFS.No_File then
+      if Project /= No_Project and then File /= VFS.No_File then
          Value := Get_Attribute_Value
            (Project        => Project,
             Attribute      =>
               Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Switches)),
             Index          => Base_Name (File));
 
-         if Value /= Nil_Variable_Value then
-            Is_Default_Value := False;
-            return;
-         end if;
+         Is_Default_Value := Value = Nil_Variable_Value;
       end if;
 
-      Value := Get_Attribute_Value
-        (Project        => Project,
-         Attribute      =>
-           Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Default_Switches)),
-         Index          => Get_String (Language));
-
-      Is_Default_Value := True;
+      --  Search if the user has defined default switches for that tool
+      if Project /= No_Project and then Value = Nil_Variable_Value then
+         Value := Get_Attribute_Value
+           (Project        => Project,
+            Attribute      =>
+              Attribute_Pkg
+                (In_Pkg & '#' & Get_String (Name_Default_Switches)),
+            Index          => Get_String (Language));
+         Is_Default_Value := True;
+      end if;
    end Get_Switches;
 
    --------------------------
