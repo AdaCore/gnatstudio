@@ -1648,7 +1648,12 @@ package body Src_Info.Queries is
       while Tmp /= Null_Scope_Tree_Node loop
          if not Is_Label (Tmp) then
             T := Get_Entity (Tmp);
-            Full_Name := Get_Name (T) & Separator & Full_Name;
+
+            if Length (Full_Name) /= 0 then
+               Full_Name := Get_Name (T) & Separator & Full_Name;
+            else
+               Full_Name := To_Unbounded_String (Get_Name (T));
+            end if;
 
             Tmp2 := Get_Parent (Tmp);
 
