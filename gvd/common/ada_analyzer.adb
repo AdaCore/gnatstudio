@@ -1778,7 +1778,7 @@ package body Ada_Analyzer is
                   New_Line (Line_Count);
                end loop;
 
-               if Buffer (P - 1) = ASCII.LF then
+               if P = Buffer_Last or else Buffer (P - 1) = ASCII.LF then
                   Last := P - 1;
                   Line := Line_Count - 1;
 
