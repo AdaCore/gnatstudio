@@ -244,6 +244,10 @@ package Codefix.Text_Manager is
      (This : Text_Interface'Class) return Construct_List_Access;
    --  Return the parsed strucutre of the text_interface.
 
+   procedure Constrain_Update (This : in out Text_Interface) is abstract;
+   --  This function should constrain the update of the information contained
+   --  in This.
+
    ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
@@ -402,6 +406,10 @@ package Codefix.Text_Manager is
       File_Name : String) return Construct_List_Access;
    --  Return the parsed strucutre of the text_interface.
 
+   procedure Update_All
+     (This : Text_Navigator_Abstr'Class);
+   --  This function update all the text contained in This.
+
    ----------------------------------------------------------------------------
    --  type Extract_Line
    ----------------------------------------------------------------------------
@@ -439,7 +447,7 @@ package Codefix.Text_Manager is
    --  Return the cursor memorized in an Extract_Line.
 
    procedure Commit
-     (This         : Extract_Line;
+     (This         : in out Extract_Line;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Integer);
    --  Upate changes of the Extract_Line in the representation of the text. The
@@ -822,6 +830,10 @@ package Codefix.Text_Manager is
    procedure Delete_Empty_Lines (This : in out Extract);
    --  Delete all lines that are composed only by blanks characters.
 
+   function Get_Number_Actions (This : Extract) return Natural;
+   --  Returns the number of actions that have been made in the extract
+   --  during his commit.
+
    ----------------------------------------------------------------------------
    --  type Text_Command
    ----------------------------------------------------------------------------
@@ -838,7 +850,6 @@ package Codefix.Text_Manager is
       Mark_Id      : Ptr_Mark;
       String_Match : Dynamic_String;
       Mode         : String_Mode := Text_Ascii;
---      Flags        : Regexp_Flags := No_Flags;
    end record;
 
    procedure Free (This : in out Word_Mark);
@@ -879,6 +890,15 @@ package Codefix.Text_Manager is
       New_Extract  : out Extract'Class) is abstract;
    --  Execute a command, and create an extract to preview the changes. This
    --  procedure raises a Codefix_Panic is the correction is no longer avaible.
+
+   procedure Secured_Execute
+     (This         : Text_Command'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class;
+      Success      : out Boolean);
+   --  Same as the previous one, but when problems happend no exception is
+   --  raised but Success is False. Otherwise it is True. This function also
+   --  updates the current text, in order to be conformant with user's changes.
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command.
@@ -1077,6 +1097,10 @@ private
 
    type Extract_Line is record
       Context         : Merge_Info := Original_Unit;
+
+      Number_Actions  : Natural := 0;
+      --  This is the number of actions that have been made during the commit
+      --  of the line.
 
       Cursor          : File_Cursor;
       --  This cursor specify the position where the line begins.
