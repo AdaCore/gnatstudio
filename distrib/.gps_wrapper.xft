@@ -9,6 +9,11 @@ root=`dirname $0`
 # Strip 'bin' directory to retrieve the real root
 
 root=`dirname $root`
+
+GPS_STARTUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+GPS_STARTUP_PATH=$PATH
+export GPS_STARTUP_LD_LIBRARY_PATH GPS_STARTUP_PATH
+
 LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
 FONTCONFIG_FILE=$root/share/fonts/fonts.conf
