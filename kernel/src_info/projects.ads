@@ -331,6 +331,8 @@ package Projects is
    --  The returned value must be freed by the user.
    --  If Recursive is true, then all the languages supported by Project
    --  or its imported projects will be returned.
+   --  The list might be empty, if all language attributes in all projects
+   --  were defined to the empty list by the user.
 
    function Get_Executable_Name
      (Project : Project_Type; File : String) return String;
