@@ -23,6 +23,7 @@ with Glib; use Glib;
 with Gdk.Input;
 with Gdk.Types;
 with Gdk.Color;    use Gdk.Color;
+with Gdk.Font;     use Gdk.Font;
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Event;    use Gdk.Event;
 
@@ -170,6 +171,11 @@ package body GVD.Process is
      (Process : access Debugger_Process_Tab_Record'Class;
       Cmd     : String);
    --  Parse and process a "graph print" or "graph display" command
+
+   procedure Preferences_Changed
+     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the preferences have changed, and the editor should be
+   --  redisplayed with the new setup.
 
    -----------------------
    -- Add_Regexp_Filter --
@@ -636,6 +642,12 @@ package body GVD.Process is
          Widget_Callback.To_Marshaller
            (GVD.Code_Editors.Preferences_Changed'Access),
          Process.Editor_Text);
+
+      Widget_Callback.Object_Connect
+        (Process.Window, "preferences_changed",
+         Widget_Callback.To_Marshaller
+           (GVD.Process.Preferences_Changed'Access),
+         Process);
 
       --  Set up the command window for the contextual menus
 
@@ -1357,5 +1369,41 @@ package body GVD.Process is
             Process.all'Address);
       end if;
    end Send_Init;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor);
+      Str : constant String := Get_Chars (Process.Debugger_Text);
+      F : Gdk_Font :=
+        Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
+      C : Gdk_Color := Get_Pref (Debugger_Highlight_Color);
+   begin
+      if F /= Process.Debugger_Text_Font
+        or else Process.Debugger_Text_Highlight_Color /= C
+      then
+         Process.Debugger_Text_Font := F;
+         Process.Debugger_Text_Highlight_Color := C;
+
+         --  Redraw the text. Note that we are loosing the colors in any case,
+         --  since there is no way with the current Gtk_Text to get that
+         --  information.
+         Freeze (Process.Debugger_Text);
+         Handler_Block (Process.Debugger_Text, Process.Delete_Text_Handler_Id);
+         Delete_Text (Process.Debugger_Text);
+         Handler_Unblock
+           (Process.Debugger_Text, Process.Delete_Text_Handler_Id);
+         Insert (Process.Debugger_Text,
+                 Process.Debugger_Text_Font,
+                 Black (Get_System),
+                 Null_Color,
+                 Str);
+         Thaw (Process.Debugger_Text);
+      end if;
+   end Preferences_Changed;
 
 end GVD.Process;
