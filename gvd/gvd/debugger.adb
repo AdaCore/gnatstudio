@@ -552,7 +552,9 @@ package body Debugger is
       if Debugger.Window /= null then
          Process := GVD.Process.Convert (Debugger.Window, Debugger);
 
-         if Mode /= Internal then
+         if Mode /= Internal
+           and then Is_Execution_Command (Debugger, Cmd)
+         then
             Unhighlight_Current_Line
               (Get_Source (Process.Editor_Text), GObject (Process));
          end if;
