@@ -57,6 +57,7 @@ with Types;                     use Types;
 with Fname;                     use Fname;
 with Namet;                     use Namet;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
+with String_List_Utils;         use String_List_Utils;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -73,20 +74,28 @@ package body Browsers.Dependency_Items is
       Iter    : Dependency_Iterator_Access;
       Browser : Dependency_Browser;
       Item    : File_Item;
+      Recompute_Layout : Boolean;
    end record;
    package Dependency_Idle is new Gtk.Main.Idle
      (Examine_Dependencies_Idle_Data);
 
    procedure Examine_Dependencies
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File       : String);
+      File       : String;
+      Recompute_Layout : Boolean := True);
    --  Examine the dependencies for File in In_Browser.
    --  The browser is not cleared first.
+   --  Layout is recompute on exit if Recompute_Layout is true
 
    procedure Examine_From_Dependencies
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File       : String);
+     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File        : String;
+      Interactive : Boolean := True;
+      Recompute_Layout : Boolean := True);
    --  Display the list of files that depend directly on File.
+   --  if Interactive is True, then the computation is done in an idle loop, so
+   --  that the application remains responsive for the user.
+   --  Layout is recompute on exit if Recompute_Layout is true
 
    procedure Open_File
      (Browser : access Glib.Object.GObject_Record'Class;
@@ -192,6 +201,12 @@ package body Browsers.Dependency_Items is
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Create a current kernel context, based on the currently selected item
+
+   function Depends_On_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  Handler for the command "depends_on"
 
    -----------------------------
    -- Browser_Context_Factory --
@@ -313,7 +328,8 @@ package body Browsers.Dependency_Items is
 
    procedure Examine_Dependencies
      (Kernel       : access Kernel_Handle_Record'Class;
-      File         : String)
+      File         : String;
+      Recompute_Layout : Boolean := True)
    is
       Browser       : Dependency_Browser;
       Child_Browser : MDI_Child;
@@ -404,12 +420,15 @@ package body Browsers.Dependency_Items is
             Show_Item (Get_Canvas (Browser), Initial);
 
             Destroy (List);
-            Set_Auto_Layout (Get_Canvas (Browser), True);
-            Layout (Get_Canvas (Browser),
-                    Force => False,
-                    Vertical_Layout =>
-                      Get_Pref (Kernel, Browsers_Vertical_Layout));
-            Refresh_Canvas (Get_Canvas (Browser));
+
+            if Recompute_Layout then
+               Set_Auto_Layout (Get_Canvas (Browser), True);
+               Layout (Get_Canvas (Browser),
+                       Force => False,
+                       Vertical_Layout =>
+                         Get_Pref (Kernel, Browsers_Vertical_Layout));
+               Refresh_Canvas (Get_Canvas (Browser));
+            end if;
          end if;
       end if;
 
@@ -442,13 +461,15 @@ package body Browsers.Dependency_Items is
       end Clean;
 
    begin
-      Set_Auto_Layout (Get_Canvas (Data.Browser), True);
-      Layout (Get_Canvas (Data.Browser),
-              Force => False,
-              Vertical_Layout =>
-                Get_Pref (Get_Kernel (Data.Browser),
-                          Browsers_Vertical_Layout));
-      Refresh_Canvas (Get_Canvas (Data.Browser));
+      if Data.Recompute_Layout then
+         Set_Auto_Layout (Get_Canvas (Data.Browser), True);
+         Layout (Get_Canvas (Data.Browser),
+                 Force => False,
+                 Vertical_Layout =>
+                   Get_Pref (Get_Kernel (Data.Browser),
+                             Browsers_Vertical_Layout));
+         Refresh_Canvas (Get_Canvas (Data.Browser));
+      end if;
 
       --  Center the initial item
       Show_Item (Get_Canvas (Data.Browser), Data.Item);
@@ -516,8 +537,10 @@ package body Browsers.Dependency_Items is
    -------------------------------
 
    procedure Examine_From_Dependencies
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File       : String)
+     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File        : String;
+      Interactive : Boolean := True;
+      Recompute_Layout : Boolean := True)
    is
       Data : Examine_Dependencies_Idle_Data;
       Browser       : Dependency_Browser;
@@ -545,16 +568,24 @@ package body Browsers.Dependency_Items is
       --  For efficiency, do not recompute the layout for each item.
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
-      Data := (Iter    => new Dependency_Iterator,
-               Browser => Browser,
-               Item    => Item);
+      Data := (Iter             => new Dependency_Iterator,
+               Browser          => Browser,
+               Item             => Item,
+               Recompute_Layout => Recompute_Layout);
       Find_Ancestor_Dependencies (Kernel, File, Data.Iter.all);
 
-      Browser.Idle_Id := Dependency_Idle.Add
-        (Cb       => Examine_Ancestors_Idle'Access,
-         D        => Data,
-         Priority => Priority_Low_Idle,
-         Destroy  => Destroy_Idle'Access);
+      if Interactive then
+         Browser.Idle_Id := Dependency_Idle.Add
+           (Cb       => Examine_Ancestors_Idle'Access,
+            D        => Data,
+            Priority => Priority_Low_Idle,
+            Destroy  => Destroy_Idle'Access);
+      else
+         while Examine_Ancestors_Idle (Data) loop
+            null;
+         end loop;
+         Destroy_Idle (Data);
+      end if;
 
       --  All memory is freed at the end of Examine_From_Dependencies_Idle
 
@@ -808,6 +839,91 @@ package body Browsers.Dependency_Items is
          Menu    => null);
    end Default_Factory;
 
+   --------------------------------
+   -- Depends_On_Command_Handler --
+   --------------------------------
+
+   function Depends_On_Command_Handler
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String
+   is
+      use String_List_Utils.String_List;
+      Node : List_Node;
+      Browser : Dependency_Browser;
+
+      Found : Canvas_Item;
+
+      function Unexpanded
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+
+      ----------------
+      -- Unexpanded --
+      ----------------
+
+      function Unexpanded
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
+      begin
+         if not File_Item (Item).To_Parsed
+           or else not File_Item (Item).From_Parsed
+         then
+            Found := Canvas_Item (Item);
+            return False;
+         end if;
+
+         return True;
+      end Unexpanded;
+
+   begin
+      if Command = "uses_all" then
+         Browser := Dependency_Browser
+           (Get_Widget (Open_Dependency_Browser (Kernel)));
+
+         Examine_Dependencies (Kernel, File => Data (First (Args)));
+
+         loop
+            Found := null;
+            For_Each_Item
+              (Get_Canvas (Browser), Unexpanded'Unrestricted_Access);
+            exit when Found = null;
+
+            Examine_Dependencies
+              (Kernel, Get_Source_Filename (File_Item (Found).Source), False);
+            Examine_From_Dependencies
+              (Kernel, Get_Source_Filename (File_Item (Found).Source),
+               Interactive => False, Recompute_Layout => False);
+         end loop;
+
+         --  Do the layout only once
+
+         Set_Auto_Layout (Get_Canvas (Browser), True);
+         Layout (Get_Canvas (Browser),
+                 Force => False,
+                 Vertical_Layout =>
+                   Get_Pref (Kernel,  Browsers_Vertical_Layout));
+         Refresh_Canvas (Get_Canvas (Browser));
+
+         Trace (Me, "No more unexpanded items");
+
+      else
+         Node := First (Args);
+         while Node /= Null_Node loop
+            if Command = "uses" then
+               Examine_Dependencies (Kernel, File => Data (Node));
+            elsif Command = "used_by" then
+               Examine_From_Dependencies (Kernel, File => Data (Node));
+            end if;
+            Node := Next (Node);
+         end loop;
+      end if;
+
+      return "";
+   end Depends_On_Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -830,6 +946,27 @@ package body Browsers.Dependency_Items is
 
       Register_Menu (Kernel, Tools, -"Dependency Browser", "",
                      On_Dependency_Browser'Access);
+
+      Register_Command
+        (Kernel, "uses",
+         (-"Usage:") & ASCII.LF & "  uses file_name [file_name...]"
+         & ASCII.LF
+         & (-("Display in the dependency browser the list of files that"
+              & " file_name depends on. This is done for each of the"
+              & " file on the command line.")),
+         Handler => Depends_On_Command_Handler'Access);
+      Register_Command
+        (Kernel, "used_by",
+         (-"Usage:") & ASCII.LF & "  used_by file_name [file_name...]"
+         & ASCII.LF
+         & (-("Display in the dependency browser the list of files that"
+              & " depends on file_name. This is done for each of the"
+              & " file on the command line.")),
+         Handler => Depends_On_Command_Handler'Access);
+      Register_Command
+        (Kernel, "uses_all",
+         -"Reproducer for a bug -- ignore",
+         Handler => Depends_On_Command_Handler'Access);
    end Register_Module;
 
    -------------
