@@ -385,7 +385,7 @@ package body GVD.Preferences is
       Set (String (Default_External_Editor), "glide %f -emacs +%l");
       Set (String (Remote_Protocol), "rsh");
       Set (String (Remote_Copy), "rcp");
-      Set (String (HTML_Browser), "netscape");
+      Set (String (HTML_Browser), Default_HTML_Browser);
 
       Tab_Size_Cached := Get_Pref (Tab_Size);
    end Set_Default_Preferences;

@@ -84,4 +84,7 @@ package GVD is
    Exec_Command : constant String := "@EXEC_COMMAND@";
    --  Command used to run helpers.
 
+   Default_HTML_Browser : constant String := "@HTML_BROWSER@";
+   --  Command use to browse HTML pages.
+
 end GVD;
