@@ -371,8 +371,9 @@ package body Python_Module is
    --  Open a new python console if none exists
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr;
-
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
+     return Node_Ptr;
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
@@ -630,13 +631,18 @@ package body Python_Module is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
      return Node_Ptr
    is
       N : Node_Ptr;
    begin
+      --  We must test whether this is indeed a python-specific console, since
+      --  it might happen that the default console is redirected elsewhere (for
+      --  instance to the Messages window at the beginning)
       if Gtk_Widget (Widget) =
         Gtk_Widget (Get_Console (Python_Module_Id.Script.Interpreter))
+        and then Get_Title (Find_MDI_Child (Get_MDI (User), Widget)) = "Python"
       then
          N := new Node;
          N.Tag := new String'("Python_Console");
