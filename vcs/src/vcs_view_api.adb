@@ -993,9 +993,9 @@ package body VCS_View_API is
    -- Open_Explorer --
    -------------------
 
-   procedure Open_Explorer
+   function Open_Explorer
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access)
+      Context : Selection_Context_Access) return MDI_Child
    is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
       Explorer : VCS_View_Access := Get_Explorer (Kernel);
@@ -1007,7 +1007,9 @@ package body VCS_View_API is
          --  Must get the current directory (that depends on what module
          --  currently has the focus) before we insert a new child in the MDI.
 
-         String_List.Append (Dirs, Get_Current_Dir (Context));
+         if Context /= null then
+            String_List.Append (Dirs, Get_Current_Dir (Context));
+         end if;
 
          Gtk_New (Explorer, Kernel);
          Child := Put
@@ -1016,8 +1018,28 @@ package body VCS_View_API is
             Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"VCS Explorer");
-         Change_Context (Explorer, Context);
+
+         if Context /= null then
+            Change_Context (Explorer, Context);
+         end if;
+         return Child;
+      else
+         return Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
       end if;
+   end Open_Explorer;
+
+   -------------------
+   -- Open_Explorer --
+   -------------------
+
+   procedure Open_Explorer
+     (Kernel  : Kernel_Handle;
+      Context : Selection_Context_Access)
+   is
+      Child : MDI_Child;
+      pragma Unreferenced (Child);
+   begin
+      Child := Open_Explorer (Kernel, Context);
    end Open_Explorer;
 
    ------------------------
