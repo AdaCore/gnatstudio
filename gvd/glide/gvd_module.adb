@@ -1534,10 +1534,10 @@ package body GVD_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Display Local Variables", "",
-                     On_Display_Locals'Access,
+                     On_Display_Locals'Access, null,
                      GDK_L, Mod1_Mask, Sensitive => False);
       Register_Menu (Kernel, Data_Sub, -"Display Arguments", "",
-                     On_Display_Args'Access,
+                     On_Display_Args'Access, null,
                      GDK_U, Mod1_Mask, Sensitive => False);
       Register_Menu (Kernel, Data_Sub, -"Display Registers", "",
                      On_Display_Regs'Access, Sensitive => False);
@@ -1546,7 +1546,7 @@ package body GVD_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Refresh", Stock_Refresh,
-                     On_Data_Refresh'Access,
+                     On_Data_Refresh'Access, null,
                      GDK_L, Control_Mask, Sensitive => False);
       Register_Menu (Kernel, Data_Sub, -"Show", "",
                      On_Data_Show'Access, Sensitive => False);
@@ -1555,23 +1555,24 @@ package body GVD_Module is
       Register_Menu (Kernel, Debug, Mitem);
 
       Register_Menu (Kernel, Debug, -"Start", "",
-                     On_Start'Access, GDK_F2, Sensitive => False);
+                     On_Start'Access, null, GDK_F2, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Step", "",
-                     On_Step'Access, GDK_F5, Sensitive => False);
+                     On_Step'Access, null,  GDK_F5, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Step Instruction", "",
-                     On_Step_Instruction'Access,
+                     On_Step_Instruction'Access, null,
                      GDK_F5, Shift_Mask, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Next", "",
-                     On_Next'Access, GDK_F6, Sensitive => False);
+                     On_Next'Access, null, GDK_F6, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Next Instruction", "",
-                     On_Next_Instruction'Access,
+                     On_Next_Instruction'Access, null,
                      GDK_F6, Shift_Mask, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Finish", "",
-                     On_Finish'Access, GDK_F7, Sensitive => False);
+                     On_Finish'Access, null, GDK_F7, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Continue", "",
-                     On_Continue'Access, GDK_F8, Sensitive => False);
+                     On_Continue'Access, null, GDK_F8, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Interrupt", Stock_Stop,
-                     On_Interrupt'Access, GDK_Escape, Sensitive => False);
+                     On_Interrupt'Access, null,
+                     GDK_Escape, Sensitive => False);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
       Register_Menu (Kernel, Debug, -"Terminate", "",

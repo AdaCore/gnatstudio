@@ -1602,9 +1602,10 @@ package body Src_Editor_Module is
       --  Menus
 
       Register_Menu (Kernel, File, -"Open...",  Stock_Open,
-                     On_Open_File'Access, GDK_F3, Ref_Item => -"Save...");
+                     On_Open_File'Access, null,
+                     GDK_F3, Ref_Item => -"Save...");
       Register_Menu (Kernel, File, -"Open From Project...",  Stock_Open,
-                     On_Open_From_Path'Access,
+                     On_Open_From_Path'Access, null,
                      GDK_F3, Shift_Mask, Ref_Item => -"Save...");
 
       Source_Editor_Module (Src_Editor_Module_Id).Reopen_Menu_Item :=
@@ -1641,7 +1642,8 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, File, -"New View", "", On_New_View'Access,
                      Ref_Item => -"Open...");
 
-      Register_Menu (Kernel, File, -"Save", Stock_Save, On_Save'Access,
+      Register_Menu (Kernel, File, -"Save", Stock_Save,
+                     On_Save'Access, null,
                      GDK_S, Control_Mask, Ref_Item => -"Save...");
       Register_Menu (Kernel, Save, -"File As...", Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Desktop");
@@ -1656,11 +1658,13 @@ package body Src_Editor_Module is
 
       Undo_Redo.Undo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"Undo", Stock_Undo,
-                       null, GDK_Z, Control_Mask, Ref_Item => -"Preferences",
+                       null, null,
+                       GDK_Z, Control_Mask, Ref_Item => -"Preferences",
                        Sensitive => False);
       Undo_Redo.Redo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"Redo", Stock_Redo,
-                       null, GDK_R, Control_Mask, Ref_Item => -"Preferences",
+                       null, null,
+                       GDK_R, Control_Mask, Ref_Item => -"Preferences",
                        Sensitive => False);
 
       Gtk_New (Mitem);
@@ -1668,13 +1672,16 @@ package body Src_Editor_Module is
         (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
 
       Register_Menu (Kernel, Edit, -"Cut",  Stock_Cut,
-                     On_Cut'Access, GDK_Delete, Shift_Mask,
+                     On_Cut'Access, null,
+                     GDK_Delete, Shift_Mask,
                      Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit, -"Copy",  Stock_Copy,
-                     On_Copy'Access, GDK_Insert, Control_Mask,
+                     On_Copy'Access, null,
+                     GDK_Insert, Control_Mask,
                      Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit, -"Paste",  Stock_Paste,
-                     On_Paste'Access, GDK_Insert, Shift_Mask,
+                     On_Paste'Access, null,
+                     GDK_Insert, Shift_Mask,
                      Ref_Item => -"Preferences");
 
       --  ??? This should be bound to Ctrl-A, except this would interfer with

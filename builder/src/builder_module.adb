@@ -882,7 +882,7 @@ package body Builder_Module is
       Register_Menu (Kernel, Build, -"Check Syntax", "",
                      On_Check_Syntax'Access);
       Register_Menu (Kernel, Build, -"Compile File", "",
-                     On_Compile'Access, GDK_F4, Shift_Mask);
+                     On_Compile'Access, null, GDK_F4, Shift_Mask);
 
       --  Dynamic make menu
       Mitem := Register_Menu (Kernel, Build, -"Make", "", null);
@@ -891,7 +891,7 @@ package body Builder_Module is
       Set_Submenu (Mitem, Menu);
 
       Register_Menu (Kernel, Build, -"Custom...", "",
-                     On_Custom'Access, GDK_F9);
+                     On_Custom'Access, null, GDK_F9);
 
       Register_Menu (Kernel, Build, -"Recompute Xref information", "",
                      On_Compute_Xref'Access);
