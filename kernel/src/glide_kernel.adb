@@ -960,7 +960,7 @@ package body Glide_Kernel is
          Show_All (Main_Window);
 
          if Desktop_Node /= null then
-            Trace (Me, "Loadind desktop for " & Project_Name);
+            Trace (Me, "loading desktop for " & Project_Name);
             Kernel_Desktop.Restore_Desktop
               (MDI, Desktop_Node, Kernel_Handle (Handle));
          else
