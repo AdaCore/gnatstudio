@@ -250,6 +250,15 @@ package body Traces is
       end if;
    end Assert;
 
+   ----------------
+   -- Set_Active --
+   ----------------
+
+   procedure Set_Active (Handle : Debug_Handle; Active : Boolean) is
+   begin
+      Handle.Active := Active;
+   end Set_Active;
+
    ------------
    -- Active --
    ------------
@@ -421,6 +430,10 @@ package body Traces is
       Env  : String_Access := Getenv (Config_File_Environment);
       Home : String_Access;
    begin
+      if Default /= "" and then File_Exists (Default) then
+         return Default;
+      end if;
+
       --  First test the file described in the environment variable
       if Env /= null and then Env.all /= "" then
          if File_Exists (Env.all) then

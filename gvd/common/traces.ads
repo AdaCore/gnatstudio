@@ -144,6 +144,10 @@ package Traces is
    --  Message_If_Success is logged if Condition is True and the message
    --  is not the empty string.
 
+   procedure Set_Active (Handle : Debug_Handle; Active : Boolean);
+   pragma Inline (Set_Active);
+   --  Override the activation status for Handle
+
    function Active (Handle : Debug_Handle) return Boolean;
    pragma Inline (Active);
    --  Return True if traces for Handle are actived.
