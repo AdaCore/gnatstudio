@@ -1278,12 +1278,16 @@ package body String_Utils is
    -- Protect --
    -------------
 
-   function Protect (S : String) return String is
+   function Protect
+     (S : String; Protect_Quotes : Boolean := True) return String
+   is
       S2    : String (1 .. S'Length * 2);
       Index : Natural := 1;
    begin
       for J in S'Range loop
-         if S (J) = '"' or else S (J) = '\' then
+         if (Protect_Quotes and then S (J) = '"')
+           or else S (J) = '\'
+         then
             S2 (Index .. Index + 1) := '\' & S (J);
             Index := Index + 2;
          else
