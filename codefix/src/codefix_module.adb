@@ -118,6 +118,10 @@ package body Codefix_Module is
    is
       Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
       pragma Unreferenced (Context);
+      File : constant Virtual_File := Create
+        (Get_Error_Message (Mitem.Error).File_Name.all,
+         Codefix_Module_ID.Kernel);
+      Line : constant Natural := Get_Error_Message (Mitem.Error).Line;
    begin
       Validate_And_Commit
         (Codefix_Module_ID.Corrector.all,
@@ -129,14 +133,27 @@ package body Codefix_Module is
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
          Category      => Compilation_Category,
-         File          => Create
-           (Get_Error_Message (Mitem.Error).File_Name.all,
-            Codefix_Module_ID.Kernel),
-         Line          => Get_Error_Message (Mitem.Error).Line,
+         File          => File,
+         Line          => Line,
          Column        => Get_Error_Message (Mitem.Error).Col,
          Message       =>
            Cut_Message (Get_Message (Get_Error_Message (Mitem.Error))));
 
+      --  If the file is open, add the command in the side column of the
+      --  corresponding File Editor.
+
+      if Is_Open (Codefix_Module_ID.Kernel, File) then
+         declare
+            Info : Line_Information_Array (Line .. Line);
+         begin
+            Info (Line) := (null, null, null);
+            Add_Line_Information
+              (Codefix_Module_ID.Kernel,
+               File,
+               Location_Button_Name,
+               new Line_Information_Array'(Info));
+         end;
+      end if;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -289,18 +306,33 @@ package body Codefix_Module is
    -------------------
 
    procedure Remove_Pixmap (Error : Error_Id) is
+      File : constant Virtual_File := Create
+           (Get_Error_Message (Error).File_Name.all,
+            Codefix_Module_ID.Kernel);
+      Line : constant Natural := Get_Error_Message (Error).Line;
    begin
       Remove_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
          Category      => Compilation_Category,
-         File          => Create
-           (Get_Error_Message (Error).File_Name.all,
-            Codefix_Module_ID.Kernel),
-         Line          => Get_Error_Message (Error).Line,
+         File          => File,
+         Line          => Line,
          Column        => Get_Error_Message (Error).Col,
          Message       =>
            Cut_Message (Get_Message (Get_Error_Message (Error))));
+
+      if Is_Open (Codefix_Module_ID.Kernel, File) then
+         declare
+            Info : Line_Information_Array (Line .. Line);
+         begin
+            Info (Line) := (null, null, null);
+            Add_Line_Information
+              (Codefix_Module_ID.Kernel,
+               File,
+               Location_Button_Name,
+               new Line_Information_Array'(Info));
+         end;
+      end if;
    end Remove_Pixmap;
 
    -------------------
@@ -308,7 +340,9 @@ package body Codefix_Module is
    -------------------
 
    procedure Create_Pixmap (Error : Error_Id) is
-      New_Action    : Action_Item;
+      New_Action : Action_Item;
+      File       : Virtual_File;
+      Line       : constant Natural := Get_Error_Message (Error).Line;
    begin
       New_Action := new Line_Information_Record;
       New_Action.Text := new String'(-"Fix error");
@@ -329,18 +363,46 @@ package body Codefix_Module is
       Codefix_Command (New_Action.Associated_Command.all).Kernel :=
         Codefix_Module_ID.Kernel;
 
+      File := Create
+        (Get_Error_Message (Error).File_Name.all,
+         Codefix_Module_ID.Kernel);
+
       Add_Location_Action
         (Kernel        => Codefix_Module_ID.Kernel,
          Identifier    => Location_Button_Name,
          Category      => Compilation_Category,
-         File          => Create
-           (Get_Error_Message (Error).File_Name.all,
-            Codefix_Module_ID.Kernel),
-         Line          => Get_Error_Message (Error).Line,
+         File          => File,
+         Line          => Line,
          Column        => Get_Error_Message (Error).Col,
          Message       =>
            Cut_Message (Get_Message (Get_Error_Message (Error))),
          Action        => New_Action);
+
+      --  If the file is open, add the command in the side column of the
+      --  corresponding File Editor.
+
+      if Is_Open (Codefix_Module_ID.Kernel, File) then
+         Create_Line_Information_Column
+           (Codefix_Module_ID.Kernel,
+            File,
+            Location_Button_Name,
+            True,
+            False,
+            False);
+
+         declare
+            Info : Line_Information_Array (Line .. Line);
+         begin
+            Info (Line) :=
+              (null, New_Action.Image, New_Action.Associated_Command);
+            Add_Line_Information
+              (Codefix_Module_ID.Kernel,
+               File,
+               Location_Button_Name,
+               new Line_Information_Array'(Info),
+               False);
+         end;
+      end if;
    end Create_Pixmap;
 
    ---------------------
