@@ -139,7 +139,8 @@ package body Codefix.Formal_Errors is
    function Delete_With
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Name         : String) return Ada_List
+      Name         : String;
+      Move_To      : File_Cursor := Null_File_Cursor) return Ada_List
    is
       Extract_Use, New_Extract  : Ada_List;
       Temp_Extract              : Extract;
@@ -165,6 +166,10 @@ package body Codefix.Formal_Errors is
          Set_Caption
            (New_Extract,
             "Delete with and use clauses for unit """ & Name & """");
+
+         if Move_To /= Null_File_Cursor then
+            Add_Line (New_Extract, Move_To, "with " & Pkg_Info.Name.all & ";");
+         end if;
       end if;
 
       loop
@@ -182,6 +187,12 @@ package body Codefix.Formal_Errors is
             Cursor_Use.Col := Use_Info.Sloc_Start.Column;
             Cursor_Use.Line := Use_Info.Sloc_Start.Line;
             Get_Unit (Current_Text, Cursor_Use, Extract_Use);
+
+            if Move_To /= Null_File_Cursor then
+               Add_Line
+                 (New_Extract, Move_To, "use " & Use_Info.Name.all & ";");
+            end if;
+
             Remove_Elements (Extract_Use, Name);
             Unchecked_Assign (Temp_Extract, New_Extract);
             Unchecked_Free (New_Extract);
@@ -594,7 +605,7 @@ package body Codefix.Formal_Errors is
       Category     : Language_Category;
       Name         : String) return Solution_List
    is
-      function Delete_Var return Extract;
+      function Delete_Var return Ada_List;
       --  Delete a variable, or a constant.
 
       function Delete_Entity return Extract;
@@ -611,12 +622,12 @@ package body Codefix.Formal_Errors is
       -- Delete_Var --
       ----------------
 
-      function Delete_Var return Extract is
+      function Delete_Var return Ada_List is
          New_Extract : Ada_List;
       begin
          Get_Unit (Current_Text, Cursor, New_Extract);
          Remove_Elements (New_Extract, Name);
-         return Extract (New_Extract);
+         return New_Extract;
       end Delete_Var;
 
       -------------------
@@ -645,7 +656,8 @@ package body Codefix.Formal_Errors is
          New_Position.Col  := Declaration.Sloc_End.Column;
          Assign (New_Position.File_Name, Cursor.File_Name);
          Add_Line (New_Extract, New_Position, "pragma Unreferenced (" &
-                                              Name & ");");
+                     Name & ");");
+         Free (New_Position);
          return New_Extract;
       end Add_Pragma;
 
@@ -654,9 +666,9 @@ package body Codefix.Formal_Errors is
       --------------------------
 
       function Add_Parameter_Pragma return Extract is
-         New_Extract  : Extract;
-         New_Position : File_Cursor;
-         Declaration  : Construct_Information;
+         New_Extract           : Extract;
+         New_Position, Garbage : File_Cursor;
+         Declaration           : Construct_Information;
 
       begin
          Declaration := Get_Unit
@@ -664,12 +676,23 @@ package body Codefix.Formal_Errors is
          New_Position.Line := Declaration.Sloc_Entity.Line;
          New_Position.Col  := Declaration.Sloc_Entity.Column;
          Assign (New_Position.File_Name, Cursor.File_Name);
+
+         Garbage := New_Position;
          New_Position := File_Cursor
            (Search_String (Current_Text, New_Position, ")"));
+         Free (Garbage);
+
+         Garbage := New_Position;
          New_Position := File_Cursor
            (Search_String (Current_Text, New_Position, "is"));
-         Add_Line (New_Extract, New_Position, "pragma Unreferenced (" &
-                                              Name & ");");
+         Free (Garbage);
+
+         Add_Line
+           (New_Extract,
+            New_Position, "pragma Unreferenced (" & Name & ");");
+
+         Free (New_Position);
+
          return New_Extract;
       end Add_Parameter_Pragma;
 
@@ -684,11 +707,11 @@ package body Codefix.Formal_Errors is
       case Category is
          when Cat_Variable =>
 
-            New_Extract := Delete_Var;
+            New_Extract_List := Delete_Var;
             Set_Caption
-              (New_Extract,
+              (New_Extract_List,
                "Delete variable """ & Name & """");
-            Append (New_Solutions, New_Extract);
+            Append (New_Solutions, New_Extract_List);
 
          when Cat_Function | Cat_Procedure =>
 
@@ -920,12 +943,9 @@ package body Codefix.Formal_Errors is
          Cursor.File_Name.all,
          Cat_With);
 
-      Spec_Extract := Delete_With (Current_Text, Cursor, With_Info.Name.all);
-
-      --  ??? Should ask the project for the body file instead
-
-      Assign (Body_Name, Cursor.File_Name.all
-                (Cursor.File_Name'First .. Cursor.File_Name'Last - 3) & "adb");
+      Assign
+        (Body_Name,
+         Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
 
       Body_Info := Search_Unit
         (Current_Text,
@@ -944,9 +964,11 @@ package body Codefix.Formal_Errors is
 
          Last_With.Line := Body_Info.Sloc_Start.Line - 1;
 
-         --  Test Use_Info to know if it is necessary to add use clauses ?
-         Add_Line
-           (Spec_Extract, Last_With, "with " & With_Info.Name.all & ";");
+         Spec_Extract := Delete_With
+           (Current_Text, Cursor, With_Info.Name.all, Last_With);
+      else
+         Spec_Extract := Delete_With
+           (Current_Text, Cursor, With_Info.Name.all);
       end if;
 
       Set_Caption
