@@ -325,11 +325,14 @@ package body Breakpoints_Pkg.Callbacks is
       return Breakpoint_Identifier
    is
       Temporary : Boolean;
-      Br : Breakpoint_Data renames
-        Editor.Process.Breakpoints (Current);
+      Br : Breakpoint_Data;
       B : Breakpoint_Identifier;
       Remove : Boolean := False;
    begin
+      if Current /= -1 then
+         Br := Editor.Process.Breakpoints (Current);
+      end if;
+
       Temporary := Get_Active (Editor.Temporary_Location);
 
       if Get_Active (Editor.Location_Selected) then
@@ -546,11 +549,14 @@ package body Breakpoints_Pkg.Callbacks is
         Get_Chars (Get_Entry (Editor.Exception_Name));
       Unhandled : constant Boolean :=
         Get_Active (Editor.Stop_Not_Handled_Exception);
-      Br : Breakpoint_Data renames
-        Editor.Process.Breakpoints (Current);
+      Br : Breakpoint_Data;
       B         : Breakpoint_Identifier;
       Remove    : Boolean := False;
    begin
+      if Current /= -1 then
+         Br := Editor.Process.Breakpoints (Current);
+      end if;
+
       Temporary := Get_Active (Editor.Temporary_Exception);
 
       --  Some of the strings below deal with the GUI, and thus should be
