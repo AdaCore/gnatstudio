@@ -7,7 +7,7 @@ New features in GPS 2.0.0
 
 - Add support for custom Version Control Systems.
 
-- Improved rendering of fonts under Linux (using libXft)
+- Improved rendering of fonts under Linux and Solaris 8 (using libXft)
 
 - D204-015 Separator between switches and arguments can be specified in the
   XML files
