@@ -169,6 +169,7 @@ package String_Utils is
      (List : GNAT.OS_Lib.Argument_List) return String;
    --  Concatenate all the elements in List into a single string.
    --    Argument_String_To_List (Argument_List_To_String (X)) = X
+   --  The returned string ends with a space.
 
    function Clone (List : GNAT.OS_Lib.Argument_List)
       return GNAT.OS_Lib.Argument_List;
