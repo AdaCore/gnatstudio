@@ -24,11 +24,12 @@ with Browsers.Canvas;
 with Glide_Kernel;
 with Prj.Tree;
 with Gdk.Event;
-with Project_Browsers;
+with Gtk.Menu;
+with Types;
 
 package Browsers.Projects is
 
-   type Browser_Project_Vertex is new Project_Browsers.Project_Vertex
+   type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record
      with private;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
@@ -38,9 +39,18 @@ package Browsers.Projects is
       Project    : Prj.Tree.Project_Node_Id);
    --  Display the project hierarchy for Project in the canvas.
 
+   function Contextual_Factory
+     (Item    : access Browser_Project_Vertex;
+      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu)
+      return Glide_Kernel.Selection_Context_Access;
+   --  Return the context to use for this item
+
 private
-   type Browser_Project_Vertex is new Project_Browsers.Project_Vertex
+   type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record
    with record
+        Name    : Types.Name_Id;
         Browser : Browsers.Canvas.Glide_Browser;
    end record;
 
