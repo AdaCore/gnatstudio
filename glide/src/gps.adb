@@ -279,7 +279,7 @@ procedure GPS is
 
    procedure Display_Splash_Screen is
       File   : constant String := Format_Pathname
-        (GPS.Prefix_Directory.all & "/share/gps/gps-splash.jpg");
+        (GPS.Prefix_Directory.all & "/share/gps/gps-splash.png");
       Image  : Gtk_Image;
       Pixbuf : Gdk_Pixbuf;
       Error  : GError;
