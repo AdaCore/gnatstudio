@@ -41,6 +41,7 @@ with Src_Info;                  use Src_Info;
 with Src_Info.Ali;              use Src_Info.Ali;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Layouts;                   use Layouts;
+with String_Utils;              use String_Utils;
 
 package body Glide_Kernel.Browsers is
 
@@ -118,6 +119,7 @@ package body Glide_Kernel.Browsers is
       In_Browser   : access Glide_Browser_Record'Class;
       File         : String)
    is
+      F             : constant String := Base_File_Name (File);
       Item, Initial : File_Item;
       Link          : Dependency_Link;
       Dep, List     : Dependency_List;
@@ -146,7 +148,7 @@ package body Glide_Kernel.Browsers is
       end Has_One;
 
    begin
-      Lib_Info := Locate_From_Source (Kernel, File);
+      Lib_Info := Locate_From_Source (Kernel, F);
       if Lib_Info = No_LI_File then
          --  ??? Should be displayed in the status bar.
 
@@ -159,9 +161,9 @@ package body Glide_Kernel.Browsers is
       Complete_ALI_File_If_Needed (Kernel, Lib_Info);
       pragma Assert (Lib_Info /= No_LI_File);
 
-      Initial := File_Item (Find_File (In_Browser, File));
+      Initial := File_Item (Find_File (In_Browser, F));
       if Initial = null then
-         Gtk_New (Initial, Get_Window (In_Browser), Kernel,  File);
+         Gtk_New (Initial, Get_Window (In_Browser), Kernel,  F);
          Put (Get_Canvas (In_Browser), Initial);
 
          --  ??? Should check if the item was already expanded, so as to avoid
