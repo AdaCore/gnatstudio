@@ -43,11 +43,12 @@ package Glide_Consoles is
    --  Internal initialization function.
 
    procedure Insert
-     (Console        : access Glide_Console_Record;
-      Text           : String;
-      Highlight_Sloc : Boolean := True;
-      Add_LF         : Boolean := True;
-      Mode           : Message_Type := Info);
+     (Console             : access Glide_Console_Record;
+      Text                : String;
+      Highlight_Sloc      : Boolean := True;
+      Add_LF              : Boolean := True;
+      Mode                : Message_Type := Info;
+      Location_Identifier : String := "");
    --  Insert Text in the Glide's console.
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.
