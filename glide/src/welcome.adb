@@ -316,6 +316,8 @@ package body Welcome is
       Project_Name : constant String := Normalize_Pathname
         (Get_Text (Get_Entry (S.Open_Project)), Resolve_Links => False);
    begin
+      Change_Dir (Dir_Name (Project_Name));
+
       if File_Extension (Project_Name) = Project_File_Extension then
          Load_Project (S.Kernel, Project_Name);
          Project_Viewers.Add_To_Reopen (S.Kernel, Project_Name);
