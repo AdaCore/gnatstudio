@@ -76,6 +76,13 @@ package Odd.Preferences is
    Keywords_Color : constant String := "#0000FF";
    --  Color used for keywords (blue).
 
+   Editor_Highlight_Current_Line : constant Boolean := True;
+   --  If True, the current line is displayed with a background color, in
+   --  addition to the arrow that indicates the current line
+
+   Editor_Highlight_Color : constant String := "#00CC00";
+   --  The color to use to highlight the current line in the editor
+
    Tab_Size : constant Natural := 8;
    --  Horizontal Tab size.
    --  Please note : the implemented tab behaviour is to jump at the next
@@ -95,7 +102,7 @@ package Odd.Preferences is
    -- Assembly Window --
    ---------------------
 
-   Editor_Highlight_Color : constant String := "#FF0000";
+   Asm_Highlight_Color : constant String := "#FF0000";
    --  Color to use to highlight the assembly code for the current line (red)
 
    -----------------
