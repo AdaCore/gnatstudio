@@ -92,9 +92,12 @@ package body SN.Browse is
         DB_Directory & Directory_Separator & Xref_Pool_Filename);
 
       --  unlink cross reference file, if any
-      if File_Exists (Xref_File_Name.all) then
+      if File_Exists (DB_Directory & Directory_Separator
+                      & Xref_File_Name.all) then
          declare
-            Xref_File_Name_Nul  : String := Xref_File_Name.all & ASCII.NUL;
+            Xref_File_Name_Nul  : String
+               := DB_Directory & Directory_Separator
+                  & Xref_File_Name.all & ASCII.NUL;
          begin
             Delete_File (Xref_File_Name_Nul'Address, Success);
          end;
