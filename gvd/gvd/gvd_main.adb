@@ -30,6 +30,7 @@ with GVD.Process; use GVD.Process;
 with GVD.Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GVD.Preferences;
 
 pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
@@ -237,6 +238,13 @@ begin
       Main_Debug_Window.Log_Level  := GVD.Types.Hidden;
       Main_Debug_Window.Log_File   := Create_File (Log'Address, Fmode => Text);
    end;
+
+   if Getenv ("GVD_EDITOR") /= null then
+      Main_Debug_Window.External_Editor := Getenv ("GVD_EDITOR");
+   else
+      Main_Debug_Window.External_Editor := new
+        String'(GVD.Preferences.Default_External_Editor);
+   end if;
 
    loop
       case Getopt ("-debugger: -tty fullname -version -help " &

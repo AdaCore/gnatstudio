@@ -44,7 +44,6 @@ with GVD.Dialogs;         use GVD.Dialogs;
 with Gtkada.Types;        use Gtkada.Types;
 with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
-with GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Unchecked_Deallocation;
@@ -225,7 +224,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Editor : constant String := Substitute
-        (GVD.Preferences.External_Editor,
+        (Main_Debug_Window_Access (Tab.Window).External_Editor.all,
          Get_Current_File (Tab.Editor_Text),
          Get_Line (Tab.Editor_Text));
       Args   : Argument_List_Access;

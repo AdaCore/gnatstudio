@@ -73,6 +73,7 @@ package Main_Debug_Window_Pkg is
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
       Log_Level           : GVD.Types.Command_Type := GVD.Types.Internal;
+      External_Editor     : String_Access;
 
       File_Caches         : GVD.Types.File_Cache_List;
       --  List of data cached for each of the file of the application

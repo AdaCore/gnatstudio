@@ -211,9 +211,12 @@ package GVD.Preferences is
    List_Processes : constant String :=
      "ps x 2> /dev/null || ps -ef 2> /dev/null || ps";
 
-   External_Editor : constant String := "glide %f -emacs +%l";
+   Default_External_Editor : constant String := "glide %f -emacs +%l";
    --  External editor to use.
    --  %f is replaced by the full path name for the file to edit.
    --  %l is the line number to show in the editor.
+   --  This variable is superceded by the environment variable
+   --  GVD_EDITOR if it exists.
+   --  Try using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
 end GVD.Preferences;
