@@ -1064,7 +1064,7 @@ package body Src_Info.ALI is
          --  case the with line does not contain any information we need.
          --  The test is done based on unit names, so that we don't have to
          --  compute the source filename, which could be expensive with
-         --  different naming schems
+         --  different naming schemes.
 
          if New_LI_File.LI.Spec_Info /= null
            and then
@@ -1104,6 +1104,7 @@ package body Src_Info.ALI is
             Finfo := Get_File_Info (Current_Dep.Value.File);
 
             if Finfo.Source_Filename.all = Withed_File_Name
+            --  Why is the following line commented out ???
             --         or else Finfo.Source_Filename.all = Krunch_Name
             then
                --  Update the unit name if not present
