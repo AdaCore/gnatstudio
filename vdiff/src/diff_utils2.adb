@@ -600,8 +600,26 @@ package body Diff_Utils2 is
    -- Free_List --
    ---------------
 
-   procedure Free_List (Link : in out Diff_List) is
+   procedure Free_List (Link : in out Diff_List)
+   is
+      Curr_Node  : Diff_List_Node;
+      Curr_Chunk : Diff_Chunk_Access;
+
    begin
+      Curr_Node := First (Link);
+
+      while Curr_Node /= Diff_Chunk_List.Null_Node
+      loop
+         Curr_Chunk := Data (Curr_Node);
+         Free (Curr_Chunk.Range1.Mark);
+         Free (Curr_Chunk.Range2.Mark);
+         Free (Curr_Chunk.Range3.Mark);
+         Free (Curr_Chunk.Range1.Blank_Lines);
+         Free (Curr_Chunk.Range2.Blank_Lines);
+         Free (Curr_Chunk.Range3.Blank_Lines);
+         Curr_Node := Next (Curr_Node);
+      end loop;
+
       Free (Link, True);
    end Free_List;
 
@@ -664,6 +682,18 @@ package body Diff_Utils2 is
       end loop;
 
    end Free_List;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (V : in out T_VStr) is
+   begin
+      for J in V'Range loop
+         Free (V (J));
+      end loop;
+   end Free;
+
 
 end Diff_Utils2;
 
