@@ -338,15 +338,13 @@ package body Vsearch_Ext is
               (Vsearch.Table, Vsearch.Files_Frame, 0, 2, 3, 4, Fill, 0, 2, 0);
             Unref (Vsearch.Files_Frame);
             Show_All (Vsearch.Table);
-            Queue_Resize (Get_Toplevel (Vsearch.Table));
 
          elsif Vsearch.Context = Context_Files
            and then Value /= Context_Files
          then
             Ref (Vsearch.Files_Frame);
             Remove (Vsearch.Table, Vsearch.Files_Frame);
-            Show_All (Get_Toplevel (Vsearch.Table));
-            Queue_Resize (Get_Toplevel (Vsearch.Table));
+            Show_All (Vsearch.Table);
          end if;
 
          Vsearch.Context := Value;
