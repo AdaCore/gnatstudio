@@ -27,10 +27,12 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;         use Gdk.Color;
+with Gdk.Font;          use Gdk.Font;
 with Glib;              use Glib;
 with Glib.Properties;   use Glib.Properties;
 with Gint_Xml;          use Gint_Xml;
 with Gtk.Widget;        use Gtk.Widget;
+with Pango.Font;        use Pango.Font;
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
@@ -161,6 +163,19 @@ package body Glide_Kernel.Preferences is
       Color := Parse (Get_Node (Kernel, Property (Pref)).Value.all);
       Alloc (Gtk.Widget.Get_Default_Colormap, Color);
       return Color;
+   end Get_Pref;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Property_Font) return Gdk.Font.Gdk_Font
+   is
+      Name : constant String := Get_Node (Kernel, Property (Pref)).Value.all;
+   begin
+      return From_Description (From_String (Name));
    end Get_Pref;
 
 end Glide_Kernel.Preferences;
