@@ -73,7 +73,8 @@ package body Log_Utils is
 
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
-      File_Name : String) return String
+      File_Name : String;
+      Create    : Boolean := True) return String
    is
       Mapper      : File_Mapper_Access := Get_Logs_Mapper (Kernel);
       Real_Name   : constant String := Normalize_Pathname (File_Name);
@@ -83,7 +84,9 @@ package body Log_Utils is
       --  an entry. This is a bit inefficient, we should save the mapping
       --  on disk only on exit.
 
-      if Return_Name = "" then
+      if Return_Name = ""
+        and then Create
+      then
          declare
             Logs_Dir : constant String :=
               Normalize_Pathname (Get_Home_Dir (Kernel) & "/log_files");
