@@ -33,6 +33,7 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gdk.Event;           use Gdk.Event;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Menu;            use Gtk.Menu;
@@ -160,6 +161,7 @@ package body Browsers.Canvas is
       B          : Glide_Browser := Glide_Browser (Browser);
       Mitem      : Gtk_Menu_Item;
       Zooms_Menu : Gtk_Menu;
+      Check      : Gtk_Check_Menu_Item;
    begin
       if B.Contextual_Background_Menu /= null then
          return B.Contextual_Background_Menu;
@@ -174,6 +176,22 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Mitem, "activate",
          Widget_Callback.To_Marshaller (Open_File'Access), B);
+
+      Gtk_New (Mitem);
+      Append (B.Contextual_Background_Menu, Mitem);
+
+      Gtk_New (Check, Label => "Hide system files");
+      Set_Active (Check, True);
+      Set_Sensitive (Check, False);
+      Append (B.Contextual_Background_Menu, Check);
+
+      Gtk_New (Check, Label => "Hide implicit dependencies");
+      Set_Active (Check, True);
+      Set_Sensitive (Check, False);
+      Append (B.Contextual_Background_Menu, Check);
+
+      Gtk_New (Mitem);
+      Append (B.Contextual_Background_Menu, Mitem);
 
       Gtk_New (Mitem, Label => "Zoom in");
       Append (B.Contextual_Background_Menu, Mitem);
