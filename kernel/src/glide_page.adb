@@ -92,7 +92,11 @@ package body Glide_Page is
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False) is
    begin
-      Set_Busy (Glide_Window (Page.Window).Kernel, Busy);
+      if Busy then
+         Push_State (Glide_Window (Page.Window).Kernel, Processing);
+      else
+         Pop_State (Glide_Window (Page.Window).Kernel);
+      end if;
    end Set_Busy;
 
 end Glide_Page;
