@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                   Copyright (C) 2001-2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -228,16 +228,12 @@ package body Naming_Editors is
       Project : Prj.Tree.Project_Node_Id)
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
-      Workaround_For_Default_Extensions : constant Boolean := True;
-      --  ??? Should be True while the default extensions are not registered in
-      --  ??? the project parser.
    begin
       Delete_Package (Project, Get_Name_String (Name_Naming));
 
       --  Do nothing for the standard GNAT naming scheme
-      if Workaround_For_Default_Extensions
-        or else Get_Index_In_List (Editor.Standard_Scheme) /= 0
-      then
+
+      if Get_Index_In_List (Editor.Standard_Scheme) /= 0 then
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => Get_Name_String (Name_Naming),
