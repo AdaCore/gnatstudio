@@ -21,6 +21,7 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -93,10 +94,10 @@ package body Src_Editor_Module is
    Max_Number_Of_Reopens : constant Integer := 10;
    --  ??? should we have a preference for that ?
 
-   procedure Generate_Body_Cb (Data : Process_Data);
+   procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
 
-   procedure Pretty_Print_Cb (Data : Process_Data);
+   procedure Pretty_Print_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatpp has completed.
 
    procedure Gtk_New
@@ -1396,7 +1397,7 @@ package body Src_Editor_Module is
    -- Generate_Body_Cb --
    ----------------------
 
-   procedure Generate_Body_Cb (Data : Process_Data) is
+   procedure Generate_Body_Cb (Data : Process_Data; Status : Integer) is
       function Body_Name (Name : String) return String;
       --  Return the name of the body corresponding to a spec file.
 
@@ -1407,7 +1408,9 @@ package body Src_Editor_Module is
       end Body_Name;
 
    begin
-      Open_File_Editor (Data.Kernel, Body_Name (Data.Name.all));
+      if Status = 0 then
+         Open_File_Editor (Data.Kernel, Body_Name (Data.Name.all));
+      end if;
    end Generate_Body_Cb;
 
    ----------------------
@@ -1449,7 +1452,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Lower_Case (Lang);
+         To_Lower (Lang);
 
          if Lang /= "ada" then
             Console.Insert
@@ -1465,7 +1468,8 @@ package body Src_Editor_Module is
          Args (1) := new String'(File);
          Args (2) := new String'(Dir_Name (File));
          Launch_Process
-           (Kernel, "gnatstub", Args, Generate_Body_Cb'Access, File, Success);
+           (Kernel, "gnatstub", Args, null,
+            Generate_Body_Cb'Access, File, Success);
          Free (Args);
 
          if Success then
@@ -1484,7 +1488,7 @@ package body Src_Editor_Module is
    -- Pretty_Print_Cb --
    ----------------------
 
-   procedure Pretty_Print_Cb (Data : Process_Data) is
+   procedure Pretty_Print_Cb (Data : Process_Data; Status : Integer) is
       function Pretty_Name (Name : String) return String;
       --  Return the name of the pretty printed file.
 
@@ -1494,7 +1498,9 @@ package body Src_Editor_Module is
       end Pretty_Name;
 
    begin
-      Open_File_Editor (Data.Kernel, Pretty_Name (Data.Name.all));
+      if Status = 0 then
+         Open_File_Editor (Data.Kernel, Pretty_Name (Data.Name.all));
+      end if;
    end Pretty_Print_Cb;
 
    ---------------------
@@ -1538,7 +1544,7 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Lower_Case (Lang);
+         To_Lower (Lang);
 
          if Lang /= "ada" then
             Console.Insert
@@ -1566,7 +1572,8 @@ package body Src_Editor_Module is
          end if;
 
          Launch_Process
-           (Kernel, "gnat", Args.all, Pretty_Print_Cb'Access, File, Success);
+           (Kernel, "gnat", Args.all, null,
+            Pretty_Print_Cb'Access, File, Success);
          Free (Args);
 
          if Success then
