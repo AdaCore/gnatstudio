@@ -69,6 +69,21 @@ package Odd.Strings is
    --  and converted to the equivalent Character value.
    --  Str must be long enough to contain the string, not check is done.
 
+   procedure Skip_Simple_Value
+     (Type_Str             : in String;
+      Index                : in out Natural;
+      Array_Item_Separator : in Character := ',';
+      End_Of_Array         : in Character := ')';
+      Repeat_Item_Start    : in Character := '<');
+   --  Skip the value of a simple value ("65 'A'" for instance).
+   --  This stops at the first special character.
+   --
+   --  Array_Item_Separator is the separator in an array value (ie "5, 2, 3").
+   --  End_Of_Array is the array that indicates the end of an array value, as
+   --  in "((1, 2), (3, 4))".
+   --  Repeat_Item_Start if the character that starts a repeat statements, as
+   --  in "<repeats .. times>"
+
 private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);

@@ -266,5 +266,26 @@ package body Odd.Strings is
       Index := Index + 1;
    end Parse_Cst_String;
 
-end Odd.Strings;
+   -----------------------
+   -- Skip_Simple_Value --
+   -----------------------
+ 
+   procedure Skip_Simple_Value
+     (Type_Str             : in String;
+      Index                : in out Natural;
+      Array_Item_Separator : in Character := ',';
+      End_Of_Array         : in Character := ')';
+      Repeat_Item_Start    : in Character := '<')
+   is
+   begin
+      while Index <= Type_Str'Last
+        and then Type_Str (Index) /= Array_Item_Separator
+        and then Type_Str (Index) /= End_Of_Array
+        and then Type_Str (Index) /= ASCII.LF --  always the end of a field
+        and then Type_Str (Index) /= Repeat_Item_Start
+      loop
+         Index := Index + 1;
+      end loop;
+   end Skip_Simple_Value;
 
+end Odd.Strings;
