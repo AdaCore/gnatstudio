@@ -31,6 +31,7 @@ with Glib.Properties;
 with Glib.Properties.Creation;
 with Basic_Types;
 with Gdk.Color;
+with Gdk.Types;
 with Pango.Font;
 with Glib.XML;
 with Gtk.Widget;
@@ -66,6 +67,14 @@ package Default_Preferences is
       Flags             : Param_Flags := Param_Readable or Param_Writable)
       return Param_Spec_Font;
 
+   type Param_Spec_Key is new Glib.Properties.Creation.Param_Spec_String;
+   function Gnew_Key
+     (Name, Nick, Blurb : String;
+      Default_Modifier  : Gdk.Types.Gdk_Modifier_Type;
+      Default_Key       : Gdk.Types.Gdk_Key_Type;
+      Flags             : Param_Flags := Param_Readable or Param_Writable)
+      return Param_Spec_Key;
+
    procedure Register_Property
      (Manager : access Preferences_Manager_Record;
       Param   : Glib.Param_Spec;
@@ -90,19 +99,24 @@ package Default_Preferences is
       Pref    : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint;
    function Get_Pref
      (Manager : access Preferences_Manager_Record;
-      Pref   : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean;
+      Pref    : Glib.Properties.Creation.Param_Spec_Boolean) return Boolean;
    function Get_Pref
      (Manager : access Preferences_Manager_Record;
-      Pref   : Glib.Properties.Creation.Param_Spec_String) return String;
+      Pref    : Glib.Properties.Creation.Param_Spec_String) return String;
    function Get_Pref
      (Manager : access Preferences_Manager_Record;
-      Pref   : Param_Spec_Color) return Gdk.Color.Gdk_Color;
+      Pref    : Param_Spec_Color) return Gdk.Color.Gdk_Color;
    function Get_Pref
      (Manager : access Preferences_Manager_Record;
-      Pref   : Param_Spec_Font) return Pango.Font.Pango_Font_Description;
+      Pref    : Param_Spec_Font) return Pango.Font.Pango_Font_Description;
    function Get_Pref
      (Manager : access Preferences_Manager_Record;
-      Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Gint;
+      Pref    : Glib.Properties.Creation.Param_Spec_Enum) return Gint;
+   procedure Get_Pref
+     (Manager  : access Preferences_Manager_Record;
+      Pref     : Param_Spec_Key;
+      Modifier : out Gdk.Types.Gdk_Modifier_Type;
+      Key      : out Gdk.Types.Gdk_Key_Type);
    --  Get the value for a preference. The default value is returned if the
    --  user hasn't explicitely overriden it.
    --  Colors have already been allocated when they are returned.
@@ -121,6 +135,11 @@ package Default_Preferences is
      (Manager : access Preferences_Manager_Record;
       Name    : String;
       Value   : String);
+   procedure Set_Pref
+     (Manager  : access Preferences_Manager_Record;
+      Name     : String;
+      Modifier : Gdk.Types.Gdk_Modifier_Type;
+      Key      : Gdk.Types.Gdk_Key_Type);
    --  Change the value of a preference. This overrides the default value if
    --  this preference is set for the first time.
    --  Checks are made to make sure the type of Name is valid.
