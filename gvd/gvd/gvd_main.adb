@@ -570,7 +570,7 @@ exception
          Put_Line ("The underlying debugger died prematurely. Exiting...");
       end if;
 
-   when Invalid_Switch =>
+   when Invalid_Switch | Invalid_Parameter =>
       if GVD.Can_Output then
          Put_Line ("Invalid command line");
       end if;
