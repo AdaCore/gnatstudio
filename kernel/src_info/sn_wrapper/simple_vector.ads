@@ -10,8 +10,8 @@ package Simple_Vector is
    type Node_Access is access Node;
    type Node is
       record
-         data : Element_Type;
-         next : Node_Access;
+         Data : Element_Type;
+         Next : Node_Access;
       end record;
 
 

@@ -12,6 +12,35 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
    Overloaded   : Boolean := False;
    Init         : Boolean := True;
    Ptr          : E_Declaration_Info_List;
+   Kind         : E_Kind;
+
+   function Find_Function (Fn : FU_Table) return E_Declaration_Info_List;
+   --  searches for forward declaration. if no fwd decl found, searches for
+   --  implementation. If nothing found throws Declaration_Not_Found
+
+   function Find_Function (Fn : FU_Table) return E_Declaration_Info_List is
+      Decl_Info    : E_Declaration_Info_List;
+      FD_Tab       : FD_Table;
+   begin
+      FD_Tab := Find
+        (SN_Table (FD),
+         Fn.Buffer (Fn.Name.First .. Fn.Name.Last));
+      Decl_Info := Find_Declaration
+        (Global_LI_File,
+         Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+         "",
+         FD_Tab.Start_Position);
+      Free (FD_Tab);
+      return Decl_Info;
+   exception
+      when DB_Error | Not_Found | Declaration_Not_Found =>
+         Decl_Info := Find_Declaration
+           (Global_LI_File,
+            Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+            "",
+            Fn.Start_Position);
+         return Decl_Info;
+   end Find_Function;
 begin
    Info ("Fu_To_Fu_Handler: """
          & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
@@ -41,16 +70,38 @@ begin
       --  If procedure
       --    defined in the current file => add reference
       --    defined in another file => add dep decl and reference it
-      begin
-         if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
+      if Fn.Buffer (Fn.Return_Type.First .. Fn.Return_Type.Last)
+            = "void" then
+         Kind := Non_Generic_Function_Or_Operator;
+      else
+         Kind := Non_Generic_Procedure;
+      end if;
+      if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
             = Get_LI_Filename (Global_LI_File) then
+         begin
             --  this is a function defined in the current file
-            Decl_Info := Find_Declaration
-              (Global_LI_File,
-               Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-               "",
-               Fn.Start_Position);
-         else
+            --  it may be either forward declared or implemented
+            --  right away
+            Decl_Info := Find_Function (Fn);
+         exception
+            when Declaration_Not_Found =>
+               --  function is in the current file, but used before
+               --  declaration. Create forward declaration
+               Insert_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Global_LI_File,
+                  List               => Global_LI_File_List,
+                  Symbol_Name        =>
+                     Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+                  Source_Filename    =>
+                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location           => Ref.Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Declaration_Info   => Decl_Info);
+         end;
+      else
+         begin
             --  this function is defined somewhere else...
             Decl_Info := Find_Dependency_Declaration
               (Global_LI_File,
@@ -58,12 +109,24 @@ begin
                "",
                Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last),
                Fn.Start_Position);
-         end if;
-      exception
-         when Declaration_Not_Found =>
-            pragma Assert (False, "How did we get here?");
-            null;
-      end;
+         exception
+            when Declaration_Not_Found => -- insert dep decl
+               Insert_Dependency_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Global_LI_File,
+                  List               => Global_LI_File_List,
+                  Symbol_Name        =>
+                     Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+                  Source_Filename    =>
+                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location           => Fn.Start_Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Referred_Filename  =>
+                     Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last),
+                  Declaration_Info   => Decl_Info);
+         end;
+      end if;
    else -- overloaded entity
       --  have we already declared it?
       Ptr := Global_LI_File.LI.Body_Info.Declarations;

@@ -12,6 +12,7 @@ procedure Fu_To_Mi_Handler (Ref : TO_Table) is
    Overloaded   : Boolean := False;
    Method       : MI_Table;
    Ptr          : E_Declaration_Info_List;
+   Kind         : E_Kind;
 begin
    Info ("Fu_To_Mi_Handler: """
          & Ref.Buffer (Ref.Referred_Class.First .. Ref.Referred_Class.Last)
@@ -46,16 +47,22 @@ begin
       --  If method
       --    defined in the current file => add reference
       --    defined in another file => add dep decl and reference it
-      begin
-         if Method.Buffer (Method.File_Name.First .. Method.File_Name.Last)
-            = Get_LI_Filename (Global_LI_File) then
+      if Method.Buffer (Method.File_Name.First .. Method.File_Name.Last)
+         = Get_LI_Filename (Global_LI_File) then
+         begin
             --  this is a function defined in the current file
             Decl_Info := Find_Declaration
               (Global_LI_File,
                Method.Buffer (Method.Name.First .. Method.Name.Last),
                Method.Buffer (Method.Class.First .. Method.Class.Last),
                Method.Start_Position);
-         else
+         exception
+            when Declaration_Not_Found =>
+               pragma Assert (False, "How did we get here?");
+               null;
+         end;
+      else
+         begin
             --  this function is defined somewhere else...
             Decl_Info := Find_Dependency_Declaration
               (Global_LI_File,
@@ -63,12 +70,31 @@ begin
                Method.Buffer (Method.Class.First .. Method.Class.Last),
                Method.Buffer (Method.File_Name.First .. Method.File_Name.Last),
                Method.Start_Position);
-         end if;
-      exception
-         when Declaration_Not_Found =>
-            pragma Assert (False, "How did we get here?");
-            null;
-      end;
+         exception
+            when Declaration_Not_Found =>
+               if Method.Buffer (Method.Return_Type.First ..
+                                 Method.Return_Type.Last) = "void" then
+                  Kind := Non_Generic_Function_Or_Operator;
+               else
+                  Kind := Non_Generic_Procedure;
+               end if;
+               Insert_Dependency_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Global_LI_File,
+                  List               => Global_LI_File_List,
+                  Symbol_Name        =>
+                     Method.Buffer (Method.Name.First .. Method.Name.Last),
+                  Source_Filename    =>
+                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location           => Method.Start_Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Referred_Filename  =>
+                     Method.Buffer (Method.File_Name.First ..
+                                    Method.File_Name.Last),
+                  Declaration_Info   => Decl_Info);
+         end;
+      end if;
    else -- overloaded entity
       --  have we already declared it?
       Ptr := Global_LI_File.LI.Body_Info.Declarations;

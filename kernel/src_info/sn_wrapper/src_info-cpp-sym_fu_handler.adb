@@ -6,14 +6,14 @@ separate (Src_Info.CPP)
 
 procedure Sym_FU_Handler (Sym : FIL_Table)
 is
-   Decl_Info      : E_Declaration_Info_List;
+   Decl_Info      : E_Declaration_Info_List := null;
    Target_Kind    : E_Kind;
    Sym_Type       : SN.String_Access :=
                   new String'(ASCII.NUL & ASCII.NUL & ASCII.NUL);
    tmp_int        : Integer;
    P              : Pair_Ptr;
    FU_Tab         : FU_Table;
-   FD_Tab            : FD_Table;
+   FD_Tab         : FD_Table;
    MI_Tab         : MI_Table;
    MD_Tab         : MD_Table;
    Start_Position : Point := Sym.Start_Position;
@@ -69,6 +69,8 @@ begin
    --  If exist only one, Start_Position
    --  should point to it and we have to add Body_Entity reference
    --  Otherwise Start_Position should point directly to the body
+   --  We should also try to find GPS declaration created during
+   --  FD processing and not create new declaration
    if Sym.Symbol = MI then
       begin
          Set_Cursor
@@ -86,7 +88,17 @@ begin
             P := Get_Pair (SN_Table (MD), Next_By_Key);
             if P = null then -- not overloaded fwd declaration
                Body_Position  := Sym.Start_Position;
-               Start_Position := FD_Tab.Start_Position;
+               Start_Position := MD_Tab.Start_Position;
+               begin -- locate forward declaration
+                  Decl_Info := Find_Declaration
+                    (Global_LI_File,
+                     Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+                     Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+                     MD_Tab.Start_Position);
+               exception
+                  when Declaration_Not_Found =>
+                     null;
+               end;
             else -- overloaded or many forward declarations
                Free (P);
             end if;
@@ -112,6 +124,16 @@ begin
             if P = null then -- not overloaded fwd declaration
                Body_Position  := Sym.Start_Position;
                Start_Position := FD_Tab.Start_Position;
+               begin -- locate forward declaration
+                  Decl_Info := Find_Declaration
+                    (Global_LI_File,
+                     Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+                     "",
+                     FD_Tab.Start_Position);
+               exception
+                  when Declaration_Not_Found =>
+                     null;
+               end;
             else -- overloaded or many forward declarations
                Free (P);
             end if;
@@ -123,22 +145,30 @@ begin
       end;
    end if;
 
-   Insert_Declaration
-     (Handler               => LI_Handler (Global_CPP_Handler),
-      File                  => Global_LI_File,
-      List                  => Global_LI_File_List,
-      Symbol_Name           =>
-        Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-      Source_Filename       =>
-        Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-      Location              => Start_Position,
-      Kind                  => Target_Kind,
-      Scope                 => Global_Scope,
-      End_Of_Scope_Location => End_Position,
-      Declaration_Info      => Decl_Info);
-
-   --  Adjust EOS reference kind
-   Decl_Info.Value.Declaration.End_Of_Scope.Kind := End_Of_Body;
+   if Decl_Info = null then
+      Insert_Declaration
+        (Handler               => LI_Handler (Global_CPP_Handler),
+         File                  => Global_LI_File,
+         List                  => Global_LI_File_List,
+         Symbol_Name           =>
+           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+         Source_Filename       =>
+           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+         Location              => Start_Position,
+         Kind                  => Target_Kind,
+         Scope                 => Global_Scope,
+         End_Of_Scope_Location => End_Position,
+         Declaration_Info      => Decl_Info);
+   else
+      Decl_Info.Value.Declaration.End_Of_Scope.Location.Line
+         := End_Position.Line;
+      Decl_Info.Value.Declaration.End_Of_Scope.Location.Column
+         := End_Position.Column;
+      Decl_Info.Value.Declaration.End_Of_Scope.Location.File :=
+        (LI               => Global_LI_File,
+         Part             => Unit_Body,
+         Source_Filename  => new String'(Get_LI_Filename (Global_LI_File)));
+   end if;
 
    if Body_Position /= Invalid_Point then
       Insert_Reference

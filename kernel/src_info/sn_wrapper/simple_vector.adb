@@ -17,10 +17,10 @@ package body Simple_Vector is
       if Root = null then
          Root := new Node'(Item, null);
       else
-         while Node_Ptr.next /= null loop
-            Node_Ptr := Node_Ptr.next;
+         while Node_Ptr.Next /= null loop
+            Node_Ptr := Node_Ptr.Next;
          end loop;
-         Node_Ptr.next := new Node'(Item, null);
+         Node_Ptr.Next := new Node'(Item, null);
       end if;
    end Append;
 
@@ -31,10 +31,10 @@ package body Simple_Vector is
    begin
       while Node_Ptr /= null loop
          if i = Index then
-            return Node_Ptr.data;
+            return Node_Ptr.Data;
          end if;
          i := i + 1;
-         Node_Ptr := Node_Ptr.next;
+         Node_Ptr := Node_Ptr.Next;
       end loop;
       raise Element_Not_Found;
    end Get_Element_At;
@@ -45,7 +45,7 @@ package body Simple_Vector is
    begin
       while Node_Ptr /= null loop
          c := c + 1;
-         Node_Ptr := Node_Ptr.next;
+         Node_Ptr := Node_Ptr.Next;
       end loop;
       return c;
    end Size;
@@ -56,8 +56,8 @@ package body Simple_Vector is
       procedure Delete is new Ada.Unchecked_Deallocation (Node, Node_Access);
    begin
       while Node_Ptr /= null loop
-         Temp_Ptr := Node_Ptr.next;
-         --  Delete_Element (Node_Ptr.data);
+         Temp_Ptr := Node_Ptr.Next;
+         --  Delete_Element (Node_Ptr.Data);
          Delete (Node_Ptr);
          Node_Ptr := Temp_Ptr;
       end loop;
