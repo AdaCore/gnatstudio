@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C501-004 Incorrect naming scheme when saving new Ada file
+  Problem:    When you save a newly created Ada file, the suggested default
+              name used the GNAT naming scheme (.adb and .ads), instead of
+              the root project's
+  Workaround: Override the default value with the proper name
+
 - Incorrect placement of cursor after insertion of <return>
   Problem:    When auto-indentation is actived and one presses <return> in the
               middle of a line, the cursor ends up at the end of the second
