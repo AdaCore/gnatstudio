@@ -1,23 +1,3 @@
------------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
---                                                                   --
---                         Copyright (C) 2000                        --
---                 Emmanuel Briot and Arnaud Charlet                 --
---                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
--- under the terms of the GNU General Public License as published by --
--- the Free Software Foundation; either version 2 of the License, or --
--- (at your option) any later version.                               --
---                                                                   --
--- This program is  distributed in the hope that it will be  useful, --
--- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
--- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
--- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
------------------------------------------------------------------------
-
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -49,6 +29,7 @@ package Odd_Preferences_Pkg is
       Label16 : Gtk_Label;
       Statusbar_Timeout_Entry : Gtk_Entry;
       Label17 : Gtk_Label;
+      Break_Exception_Check : Gtk_Check_Button;
       Label7 : Gtk_Label;
       Vbox18 : Gtk_Vbox;
       Frame16 : Gtk_Frame;
@@ -58,9 +39,6 @@ package Odd_Preferences_Pkg is
       File_Name_Bg_Combo : Gtk_Color_Combo;
       Frame17 : Gtk_Frame;
       Table10 : Gtk_Table;
-      String_Color_Combo : Gtk_Color_Combo;
-      Comment_Color_Combo : Gtk_Color_Combo;
-      Keyword_Color_Combo : Gtk_Color_Combo;
       Label76 : Gtk_Label;
       Show_Lines_Code_Check : Gtk_Check_Button;
       Show_Line_Numbers_Check : Gtk_Check_Button;
@@ -69,6 +47,9 @@ package Odd_Preferences_Pkg is
       Label80 : Gtk_Label;
       Label81 : Gtk_Label;
       Editor_Font_Combo : Gtk_Font_Combo;
+      Comment_Color_Combo : Gtk_Color_Combo;
+      String_Color_Combo : Gtk_Color_Combo;
+      Keyword_Color_Combo : Gtk_Color_Combo;
       Frame18 : Gtk_Frame;
       Hbox7 : Gtk_Hbox;
       Label82 : Gtk_Label;
@@ -79,15 +60,10 @@ package Odd_Preferences_Pkg is
       Label83 : Gtk_Label;
       Detect_Aliases_Check : Gtk_Check_Button;
       Align_Grid_Check : Gtk_Check_Button;
-      Xref_Color_Combo : Gtk_Color_Combo;
       Label84 : Gtk_Label;
-      Title_Color_Combo : Gtk_Color_Combo;
       Label85 : Gtk_Label;
-      Change_Color_Combo : Gtk_Color_Combo;
-      Thaw_Bg_Color_Combo : Gtk_Color_Combo;
       Label86 : Gtk_Label;
       Label87 : Gtk_Label;
-      Freeze_Bg_Color_Combo : Gtk_Color_Combo;
       Look_3d_Check : Gtk_Check_Button;
       Label88 : Gtk_Label;
       Label89 : Gtk_Label;
@@ -99,13 +75,18 @@ package Odd_Preferences_Pkg is
       Title_Font_Combo : Gtk_Font_Combo;
       Value_Font_Combo : Gtk_Font_Combo;
       Type_Font_Combo : Gtk_Font_Combo;
+      Xref_Color_Combo : Gtk_Color_Combo;
+      Change_Color_Combo : Gtk_Color_Combo;
+      Thaw_Bg_Color_Combo : Gtk_Color_Combo;
+      Title_Color_Combo : Gtk_Color_Combo;
+      Freeze_Bg_Color_Combo : Gtk_Color_Combo;
       Label9 : Gtk_Label;
       Frame13 : Gtk_Frame;
       Table8 : Gtk_Table;
       Label92 : Gtk_Label;
-      Debug_Higlight_Combo : Gtk_Color_Combo;
       Label93 : Gtk_Label;
       Debug_Font_Combo : Gtk_Font_Combo;
+      Debug_Higlight_Combo : Gtk_Color_Combo;
       Label10 : Gtk_Label;
       Frame6 : Gtk_Frame;
       Table6 : Gtk_Table;
@@ -126,7 +107,8 @@ package Odd_Preferences_Pkg is
    type Odd_Preferences_Access is access all Odd_Preferences_Record'Class;
 
    procedure Gtk_New (Odd_Preferences : out Odd_Preferences_Access);
-   procedure Initialize
-     (Odd_Preferences : access Odd_Preferences_Record'Class);
+   procedure Initialize (Odd_Preferences : access Odd_Preferences_Record'Class);
+
+   Odd_Preferences : Odd_Preferences_Access;
 
 end Odd_Preferences_Pkg;

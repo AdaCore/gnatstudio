@@ -18,16 +18,16 @@ end Gtk_New;
 
 procedure Initialize (Odd_Preferences : access Odd_Preferences_Record'Class) is
    File_Name_Bg_Combo_Items : String_List.Glist;
-   String_Color_Combo_Items : String_List.Glist;
    Comment_Color_Combo_Items : String_List.Glist;
+   String_Color_Combo_Items : String_List.Glist;
    Keyword_Color_Combo_Items : String_List.Glist;
    Asm_Highlight_Combo_Items : String_List.Glist;
+   Big_Item_Spin_Adj : Gtk_Adjustment;
    Xref_Color_Combo_Items : String_List.Glist;
-   Title_Color_Combo_Items : String_List.Glist;
    Change_Color_Combo_Items : String_List.Glist;
    Thaw_Bg_Color_Combo_Items : String_List.Glist;
+   Title_Color_Combo_Items : String_List.Glist;
    Freeze_Bg_Color_Combo_Items : String_List.Glist;
-   Big_Item_Spin_Adj : Gtk_Adjustment;
    Debug_Higlight_Combo_Items : String_List.Glist;
 
 begin
@@ -55,7 +55,7 @@ begin
    Add (Odd_Preferences.Notebook1, Odd_Preferences.Frame1);
    Set_Shadow_Type (Odd_Preferences.Frame1, Shadow_Etched_In);
 
-   Gtk_New (Odd_Preferences.Table1, 4, 4, False);
+   Gtk_New (Odd_Preferences.Table1, 5, 4, False);
    Add (Odd_Preferences.Frame1, Odd_Preferences.Table1);
    Set_Row_Spacings (Odd_Preferences.Table1, 2);
    Set_Col_Spacings (Odd_Preferences.Table1, 0);
@@ -109,7 +109,7 @@ begin
    Set_Active (Odd_Preferences.Warn_Multiple_Check, False);
 
    Gtk_New (Odd_Preferences.Label16, -("Status Bar Time Out"));
-   Attach (Odd_Preferences.Table1, Odd_Preferences.Label16, 0, 1, 3, 4,
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Label16, 0, 1, 4, 5,
      Expand or Fill, 0,
      0, 0);
    Set_Alignment (Odd_Preferences.Label16, 7.45058e-09, 0.5);
@@ -118,7 +118,7 @@ begin
    Set_Line_Wrap (Odd_Preferences.Label16, False);
 
    Gtk_New (Odd_Preferences.Statusbar_Timeout_Entry);
-   Attach (Odd_Preferences.Table1, Odd_Preferences.Statusbar_Timeout_Entry, 1, 2, 3, 4,
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Statusbar_Timeout_Entry, 1, 2, 4, 5,
      Expand or Fill, 0,
      0, 0);
    Set_Editable (Odd_Preferences.Statusbar_Timeout_Entry, True);
@@ -127,13 +127,19 @@ begin
    Set_Visibility (Odd_Preferences.Statusbar_Timeout_Entry, True);
 
    Gtk_New (Odd_Preferences.Label17, -("ms"));
-   Attach (Odd_Preferences.Table1, Odd_Preferences.Label17, 2, 4, 3, 4,
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Label17, 2, 4, 4, 5,
      Expand or Fill, 0,
      0, 0);
    Set_Alignment (Odd_Preferences.Label17, 7.45058e-09, 0.5);
    Set_Padding (Odd_Preferences.Label17, 2, 0);
    Set_Justify (Odd_Preferences.Label17, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label17, False);
+
+   Gtk_New (Odd_Preferences.Break_Exception_Check, -"Break On Exceptions");
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Break_Exception_Check, 0, 4, 3, 4,
+     Expand or Fill, 0,
+     0, 0);
+   Set_Active (Odd_Preferences.Break_Exception_Check, False);
 
    Gtk_New (Odd_Preferences.Label7, -("General"));
    Set_Alignment (Odd_Preferences.Label7, 0.5, 0.5);
@@ -172,7 +178,7 @@ begin
 
    Gtk_New (Odd_Preferences.File_Name_Bg_Combo);
    Attach (Odd_Preferences.Table9, Odd_Preferences.File_Name_Bg_Combo, 1, 2, 1, 2,
-     Expand or Fill, 0,
+     Fill, 0,
      0, 0);
    Set_Case_Sensitive (Odd_Preferences.File_Name_Bg_Combo, False);
    Set_Use_Arrows (Odd_Preferences.File_Name_Bg_Combo, True);
@@ -195,57 +201,6 @@ begin
    Add (Odd_Preferences.Frame17, Odd_Preferences.Table10);
    Set_Row_Spacings (Odd_Preferences.Table10, 2);
    Set_Col_Spacings (Odd_Preferences.Table10, 5);
-
-   Gtk_New (Odd_Preferences.String_Color_Combo);
-   Attach (Odd_Preferences.Table10, Odd_Preferences.String_Color_Combo, 1, 2, 4, 5,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.String_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.String_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.String_Color_Combo, False);
-   String_List.Append (String_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.String_Color_Combo, String_Color_Combo_Items);
-   Free_String_List (String_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry9 := Get_Entry (Odd_Preferences.String_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry9, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry9, 0);
-   Set_Text (Odd_Preferences.Combo_Entry9, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry9, True);
-
-   Gtk_New (Odd_Preferences.Comment_Color_Combo);
-   Attach (Odd_Preferences.Table10, Odd_Preferences.Comment_Color_Combo, 1, 2, 3, 4,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Comment_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Comment_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Comment_Color_Combo, False);
-   String_List.Append (Comment_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Comment_Color_Combo, Comment_Color_Combo_Items);
-   Free_String_List (Comment_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry10 := Get_Entry (Odd_Preferences.Comment_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry10, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry10, 0);
-   Set_Text (Odd_Preferences.Combo_Entry10, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry10, True);
-
-   Gtk_New (Odd_Preferences.Keyword_Color_Combo);
-   Attach (Odd_Preferences.Table10, Odd_Preferences.Keyword_Color_Combo, 1, 2, 5, 6,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Keyword_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Keyword_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Keyword_Color_Combo, False);
-   String_List.Append (Keyword_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Keyword_Color_Combo, Keyword_Color_Combo_Items);
-   Free_String_List (Keyword_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry11 := Get_Entry (Odd_Preferences.Keyword_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry11, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry11, 0);
-   Set_Text (Odd_Preferences.Combo_Entry11, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry11, True);
 
    Gtk_New (Odd_Preferences.Label76, -("Font"));
    Attach (Odd_Preferences.Table10, Odd_Preferences.Label76, 0, 1, 0, 1,
@@ -310,6 +265,57 @@ begin
    Set_Tooltips (Odd_Preferences.Editor_Font_Combo, True);
    Set_Button_Relief (Odd_Preferences.Editor_Font_Combo, Relief_Normal);
 
+   Gtk_New (Odd_Preferences.Comment_Color_Combo);
+   Attach (Odd_Preferences.Table10, Odd_Preferences.Comment_Color_Combo, 1, 2, 3, 4,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Comment_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Comment_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Comment_Color_Combo, False);
+   String_List.Append (Comment_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Comment_Color_Combo, Comment_Color_Combo_Items);
+   Free_String_List (Comment_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry10 := Get_Entry (Odd_Preferences.Comment_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry10, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry10, 0);
+   Set_Text (Odd_Preferences.Combo_Entry10, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry10, True);
+
+   Gtk_New (Odd_Preferences.String_Color_Combo);
+   Attach (Odd_Preferences.Table10, Odd_Preferences.String_Color_Combo, 1, 2, 4, 5,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.String_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.String_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.String_Color_Combo, False);
+   String_List.Append (String_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.String_Color_Combo, String_Color_Combo_Items);
+   Free_String_List (String_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry9 := Get_Entry (Odd_Preferences.String_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry9, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry9, 0);
+   Set_Text (Odd_Preferences.Combo_Entry9, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry9, True);
+
+   Gtk_New (Odd_Preferences.Keyword_Color_Combo);
+   Attach (Odd_Preferences.Table10, Odd_Preferences.Keyword_Color_Combo, 1, 2, 5, 6,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Keyword_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Keyword_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Keyword_Color_Combo, False);
+   String_List.Append (Keyword_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Keyword_Color_Combo, Keyword_Color_Combo_Items);
+   Free_String_List (Keyword_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry11 := Get_Entry (Odd_Preferences.Keyword_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry11, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry11, 0);
+   Set_Text (Odd_Preferences.Combo_Entry11, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry11, True);
+
    Gtk_New (Odd_Preferences.Frame18, -"Assembly");
    Pack_Start (Odd_Preferences.Vbox18, Odd_Preferences.Frame18, False, False, 0);
    Set_Shadow_Type (Odd_Preferences.Frame18, Shadow_Etched_In);
@@ -325,7 +331,7 @@ begin
    Set_Line_Wrap (Odd_Preferences.Label82, False);
 
    Gtk_New (Odd_Preferences.Asm_Highlight_Combo);
-   Pack_Start (Odd_Preferences.Hbox7, Odd_Preferences.Asm_Highlight_Combo, True, True, 0);
+   Pack_Start (Odd_Preferences.Hbox7, Odd_Preferences.Asm_Highlight_Combo, False, True, 0);
    Set_Case_Sensitive (Odd_Preferences.Asm_Highlight_Combo, False);
    Set_Use_Arrows (Odd_Preferences.Asm_Highlight_Combo, True);
    Set_Use_Arrows_Always (Odd_Preferences.Asm_Highlight_Combo, False);
@@ -377,23 +383,6 @@ begin
      0, 0);
    Set_Active (Odd_Preferences.Align_Grid_Check, True);
 
-   Gtk_New (Odd_Preferences.Xref_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Xref_Color_Combo, 1, 2, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Xref_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Xref_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Xref_Color_Combo, False);
-   String_List.Append (Xref_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Xref_Color_Combo, Xref_Color_Combo_Items);
-   Free_String_List (Xref_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry13 := Get_Entry (Odd_Preferences.Xref_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry13, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry13, 0);
-   Set_Text (Odd_Preferences.Combo_Entry13, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry13, True);
-
    Gtk_New (Odd_Preferences.Label84, -("Title Background"));
    Attach (Odd_Preferences.Table3, Odd_Preferences.Label84, 2, 3, 0, 1,
      Fill, 0,
@@ -403,23 +392,6 @@ begin
    Set_Justify (Odd_Preferences.Label84, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label84, False);
 
-   Gtk_New (Odd_Preferences.Title_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Title_Color_Combo, 3, 4, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Title_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Title_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Title_Color_Combo, False);
-   String_List.Append (Title_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Title_Color_Combo, Title_Color_Combo_Items);
-   Free_String_List (Title_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry14 := Get_Entry (Odd_Preferences.Title_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry14, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry14, 0);
-   Set_Text (Odd_Preferences.Combo_Entry14, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry14, True);
-
    Gtk_New (Odd_Preferences.Label85, -("Changed Data"));
    Attach (Odd_Preferences.Table3, Odd_Preferences.Label85, 0, 1, 1, 2,
      Fill, 0,
@@ -428,40 +400,6 @@ begin
    Set_Padding (Odd_Preferences.Label85, 0, 0);
    Set_Justify (Odd_Preferences.Label85, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label85, False);
-
-   Gtk_New (Odd_Preferences.Change_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Change_Color_Combo, 1, 2, 1, 2,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Change_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Change_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Change_Color_Combo, False);
-   String_List.Append (Change_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Change_Color_Combo, Change_Color_Combo_Items);
-   Free_String_List (Change_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry15 := Get_Entry (Odd_Preferences.Change_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry15, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry15, 0);
-   Set_Text (Odd_Preferences.Combo_Entry15, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry15, True);
-
-   Gtk_New (Odd_Preferences.Thaw_Bg_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Thaw_Bg_Color_Combo, 1, 2, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Thaw_Bg_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Thaw_Bg_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Thaw_Bg_Color_Combo, False);
-   String_List.Append (Thaw_Bg_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Thaw_Bg_Color_Combo, Thaw_Bg_Color_Combo_Items);
-   Free_String_List (Thaw_Bg_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry16 := Get_Entry (Odd_Preferences.Thaw_Bg_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry16, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry16, 0);
-   Set_Text (Odd_Preferences.Combo_Entry16, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry16, True);
 
    Gtk_New (Odd_Preferences.Label86, -("Auto-Refreshed"));
    Attach (Odd_Preferences.Table3, Odd_Preferences.Label86, 0, 1, 2, 3,
@@ -480,23 +418,6 @@ begin
    Set_Padding (Odd_Preferences.Label87, 0, 0);
    Set_Justify (Odd_Preferences.Label87, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label87, False);
-
-   Gtk_New (Odd_Preferences.Freeze_Bg_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Freeze_Bg_Color_Combo, 3, 4, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Freeze_Bg_Color_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Freeze_Bg_Color_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Freeze_Bg_Color_Combo, False);
-   String_List.Append (Freeze_Bg_Color_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Freeze_Bg_Color_Combo, Freeze_Bg_Color_Combo_Items);
-   Free_String_List (Freeze_Bg_Color_Combo_Items);
-
-   Odd_Preferences.Combo_Entry17 := Get_Entry (Odd_Preferences.Freeze_Bg_Color_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry17, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry17, 0);
-   Set_Text (Odd_Preferences.Combo_Entry17, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry17, True);
 
    Gtk_New (Odd_Preferences.Look_3d_Check, -"3D Look");
    Attach (Odd_Preferences.Table3, Odd_Preferences.Look_3d_Check, 0, 4, 3, 4,
@@ -590,6 +511,91 @@ begin
    Set_Tooltips (Odd_Preferences.Type_Font_Combo, True);
    Set_Button_Relief (Odd_Preferences.Type_Font_Combo, Relief_Normal);
 
+   Gtk_New (Odd_Preferences.Xref_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Xref_Color_Combo, 1, 2, 0, 1,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Xref_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Xref_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Xref_Color_Combo, False);
+   String_List.Append (Xref_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Xref_Color_Combo, Xref_Color_Combo_Items);
+   Free_String_List (Xref_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry13 := Get_Entry (Odd_Preferences.Xref_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry13, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry13, 0);
+   Set_Text (Odd_Preferences.Combo_Entry13, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry13, True);
+
+   Gtk_New (Odd_Preferences.Change_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Change_Color_Combo, 1, 2, 1, 2,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Change_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Change_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Change_Color_Combo, False);
+   String_List.Append (Change_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Change_Color_Combo, Change_Color_Combo_Items);
+   Free_String_List (Change_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry15 := Get_Entry (Odd_Preferences.Change_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry15, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry15, 0);
+   Set_Text (Odd_Preferences.Combo_Entry15, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry15, True);
+
+   Gtk_New (Odd_Preferences.Thaw_Bg_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Thaw_Bg_Color_Combo, 1, 2, 2, 3,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Thaw_Bg_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Thaw_Bg_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Thaw_Bg_Color_Combo, False);
+   String_List.Append (Thaw_Bg_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Thaw_Bg_Color_Combo, Thaw_Bg_Color_Combo_Items);
+   Free_String_List (Thaw_Bg_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry16 := Get_Entry (Odd_Preferences.Thaw_Bg_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry16, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry16, 0);
+   Set_Text (Odd_Preferences.Combo_Entry16, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry16, True);
+
+   Gtk_New (Odd_Preferences.Title_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Title_Color_Combo, 3, 4, 0, 1,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Title_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Title_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Title_Color_Combo, False);
+   String_List.Append (Title_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Title_Color_Combo, Title_Color_Combo_Items);
+   Free_String_List (Title_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry14 := Get_Entry (Odd_Preferences.Title_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry14, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry14, 0);
+   Set_Text (Odd_Preferences.Combo_Entry14, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry14, True);
+
+   Gtk_New (Odd_Preferences.Freeze_Bg_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Freeze_Bg_Color_Combo, 3, 4, 2, 3,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Freeze_Bg_Color_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Freeze_Bg_Color_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Freeze_Bg_Color_Combo, False);
+   String_List.Append (Freeze_Bg_Color_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Freeze_Bg_Color_Combo, Freeze_Bg_Color_Combo_Items);
+   Free_String_List (Freeze_Bg_Color_Combo_Items);
+
+   Odd_Preferences.Combo_Entry17 := Get_Entry (Odd_Preferences.Freeze_Bg_Color_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry17, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry17, 0);
+   Set_Text (Odd_Preferences.Combo_Entry17, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry17, True);
+
    Gtk_New (Odd_Preferences.Label9, -("Data"));
    Set_Alignment (Odd_Preferences.Label9, 0.5, 0.5);
    Set_Padding (Odd_Preferences.Label9, 0, 0);
@@ -616,23 +622,6 @@ begin
    Set_Justify (Odd_Preferences.Label92, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label92, False);
 
-   Gtk_New (Odd_Preferences.Debug_Higlight_Combo);
-   Attach (Odd_Preferences.Table8, Odd_Preferences.Debug_Higlight_Combo, 1, 2, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
-   Set_Case_Sensitive (Odd_Preferences.Debug_Higlight_Combo, False);
-   Set_Use_Arrows (Odd_Preferences.Debug_Higlight_Combo, True);
-   Set_Use_Arrows_Always (Odd_Preferences.Debug_Higlight_Combo, False);
-   String_List.Append (Debug_Higlight_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Odd_Preferences.Debug_Higlight_Combo, Debug_Higlight_Combo_Items);
-   Free_String_List (Debug_Higlight_Combo_Items);
-
-   Odd_Preferences.Combo_Entry24 := Get_Entry (Odd_Preferences.Debug_Higlight_Combo);
-   Set_Editable (Odd_Preferences.Combo_Entry24, True);
-   Set_Max_Length (Odd_Preferences.Combo_Entry24, 0);
-   Set_Text (Odd_Preferences.Combo_Entry24, -"");
-   Set_Visibility (Odd_Preferences.Combo_Entry24, True);
-
    Gtk_New (Odd_Preferences.Label93, -("Font"));
    Attach (Odd_Preferences.Table8, Odd_Preferences.Label93, 0, 1, 1, 2,
      Fill, 0,
@@ -650,6 +639,23 @@ begin
    Set_Space_Style (Odd_Preferences.Debug_Font_Combo, Toolbar_Space_Empty);
    Set_Tooltips (Odd_Preferences.Debug_Font_Combo, True);
    Set_Button_Relief (Odd_Preferences.Debug_Font_Combo, Relief_Normal);
+
+   Gtk_New (Odd_Preferences.Debug_Higlight_Combo);
+   Attach (Odd_Preferences.Table8, Odd_Preferences.Debug_Higlight_Combo, 1, 2, 0, 1,
+     Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Odd_Preferences.Debug_Higlight_Combo, False);
+   Set_Use_Arrows (Odd_Preferences.Debug_Higlight_Combo, True);
+   Set_Use_Arrows_Always (Odd_Preferences.Debug_Higlight_Combo, False);
+   String_List.Append (Debug_Higlight_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Odd_Preferences.Debug_Higlight_Combo, Debug_Higlight_Combo_Items);
+   Free_String_List (Debug_Higlight_Combo_Items);
+
+   Odd_Preferences.Combo_Entry24 := Get_Entry (Odd_Preferences.Debug_Higlight_Combo);
+   Set_Editable (Odd_Preferences.Combo_Entry24, True);
+   Set_Max_Length (Odd_Preferences.Combo_Entry24, 0);
+   Set_Text (Odd_Preferences.Combo_Entry24, -"");
+   Set_Visibility (Odd_Preferences.Combo_Entry24, True);
 
    Gtk_New (Odd_Preferences.Label10, -("Command"));
    Set_Alignment (Odd_Preferences.Label10, 0.5, 0.5);

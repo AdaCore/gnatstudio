@@ -1,23 +1,3 @@
------------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
---                                                                   --
---                         Copyright (C) 2000                        --
---                 Emmanuel Briot and Arnaud Charlet                 --
---                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
--- under the terms of the GNU General Public License as published by --
--- the Free Software Foundation; either version 2 of the License, or --
--- (at your option) any later version.                               --
---                                                                   --
--- This program is  distributed in the hope that it will be  useful, --
--- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
--- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
--- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
--- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
------------------------------------------------------------------------
-
 with Gtk; use Gtk;
 with Gtk.Adjustment;  use Gtk.Adjustment;
 with Gtk.Widget;      use Gtk.Widget;
@@ -28,10 +8,6 @@ with Odd_Intl; use Odd_Intl;
 with Odd_Preferences_Pkg.Callbacks; use Odd_Preferences_Pkg.Callbacks;
 
 package body Odd_Preferences_Pkg is
-
-pragma Suppress (All_Checks);
---  Checks are expensive (in code size) in this unit, and not needed,
---  since the following code is generated automatically.
 
 procedure Gtk_New (Odd_Preferences : out Odd_Preferences_Access) is
 begin
@@ -67,7 +43,7 @@ begin
    Add (Odd_Preferences.Notebook1, Odd_Preferences.Frame1);
    Set_Shadow_Type (Odd_Preferences.Frame1, Shadow_Etched_In);
 
-   Gtk_New (Odd_Preferences.Table1, 4, 4, False);
+   Gtk_New (Odd_Preferences.Table1, 5, 4, False);
    Add (Odd_Preferences.Frame1, Odd_Preferences.Table1);
    Set_Row_Spacings (Odd_Preferences.Table1, 2);
    Set_Col_Spacings (Odd_Preferences.Table1, 0);
@@ -121,7 +97,7 @@ begin
    Set_Active (Odd_Preferences.Warn_Multiple_Check, False);
 
    Gtk_New (Odd_Preferences.Label16, -("Status Bar Time Out"));
-   Attach (Odd_Preferences.Table1, Odd_Preferences.Label16, 0, 1, 3, 4,
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Label16, 0, 1, 4, 5,
      Expand or Fill, 0,
      0, 0);
    Set_Alignment (Odd_Preferences.Label16, 7.45058e-09, 0.5);
@@ -130,7 +106,7 @@ begin
    Set_Line_Wrap (Odd_Preferences.Label16, False);
 
    Gtk_New (Odd_Preferences.Statusbar_Timeout_Entry);
-   Attach (Odd_Preferences.Table1, Odd_Preferences.Statusbar_Timeout_Entry, 1, 2, 3, 4,
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Statusbar_Timeout_Entry, 1, 2, 4, 5,
      Expand or Fill, 0,
      0, 0);
    Set_Editable (Odd_Preferences.Statusbar_Timeout_Entry, True);
@@ -139,13 +115,19 @@ begin
    Set_Visibility (Odd_Preferences.Statusbar_Timeout_Entry, True);
 
    Gtk_New (Odd_Preferences.Label17, -("ms"));
-   Attach (Odd_Preferences.Table1, Odd_Preferences.Label17, 2, 4, 3, 4,
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Label17, 2, 4, 4, 5,
      Expand or Fill, 0,
      0, 0);
    Set_Alignment (Odd_Preferences.Label17, 7.45058e-09, 0.5);
    Set_Padding (Odd_Preferences.Label17, 2, 0);
    Set_Justify (Odd_Preferences.Label17, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label17, False);
+
+   Gtk_New (Odd_Preferences.Break_Exception_Check, -"Break On Exceptions");
+   Attach (Odd_Preferences.Table1, Odd_Preferences.Break_Exception_Check, 0, 4, 3, 4,
+     Expand or Fill, 0,
+     0, 0);
+   Set_Active (Odd_Preferences.Break_Exception_Check, False);
 
    Gtk_New (Odd_Preferences.Label7, -("General"));
    Set_Alignment (Odd_Preferences.Label7, 0.5, 0.5);
@@ -184,7 +166,7 @@ begin
 
    Gtk_New (Odd_Preferences.File_Name_Bg_Combo);
    Attach (Odd_Preferences.Table9, Odd_Preferences.File_Name_Bg_Combo, 1, 2, 1, 2,
-     Expand or Fill, 0,
+     Fill, 0,
      0, 0);
 
    Gtk_New (Odd_Preferences.Frame17, -"Source");
@@ -195,21 +177,6 @@ begin
    Add (Odd_Preferences.Frame17, Odd_Preferences.Table10);
    Set_Row_Spacings (Odd_Preferences.Table10, 2);
    Set_Col_Spacings (Odd_Preferences.Table10, 5);
-
-   Gtk_New (Odd_Preferences.String_Color_Combo);
-   Attach (Odd_Preferences.Table10, Odd_Preferences.String_Color_Combo, 1, 2, 4, 5,
-     Expand or Fill, 0,
-     0, 0);
-
-   Gtk_New (Odd_Preferences.Comment_Color_Combo);
-   Attach (Odd_Preferences.Table10, Odd_Preferences.Comment_Color_Combo, 1, 2, 3, 4,
-     Expand or Fill, 0,
-     0, 0);
-
-   Gtk_New (Odd_Preferences.Keyword_Color_Combo);
-   Attach (Odd_Preferences.Table10, Odd_Preferences.Keyword_Color_Combo, 1, 2, 5, 6,
-     Expand or Fill, 0,
-     0, 0);
 
    Gtk_New (Odd_Preferences.Label76, -("Font"));
    Attach (Odd_Preferences.Table10, Odd_Preferences.Label76, 0, 1, 0, 1,
@@ -270,6 +237,21 @@ begin
      Fill, 0,
      0, 0);
 
+   Gtk_New (Odd_Preferences.Comment_Color_Combo);
+   Attach (Odd_Preferences.Table10, Odd_Preferences.Comment_Color_Combo, 1, 2, 3, 4,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Odd_Preferences.String_Color_Combo);
+   Attach (Odd_Preferences.Table10, Odd_Preferences.String_Color_Combo, 1, 2, 4, 5,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Odd_Preferences.Keyword_Color_Combo);
+   Attach (Odd_Preferences.Table10, Odd_Preferences.Keyword_Color_Combo, 1, 2, 5, 6,
+     Fill, 0,
+     0, 0);
+
    Gtk_New (Odd_Preferences.Frame18, -"Assembly");
    Pack_Start (Odd_Preferences.Vbox18, Odd_Preferences.Frame18, False, False, 0);
    Set_Shadow_Type (Odd_Preferences.Frame18, Shadow_Etched_In);
@@ -285,7 +267,7 @@ begin
    Set_Line_Wrap (Odd_Preferences.Label82, False);
 
    Gtk_New (Odd_Preferences.Asm_Highlight_Combo);
-   Pack_Start (Odd_Preferences.Hbox7, Odd_Preferences.Asm_Highlight_Combo, True, True, 0);
+   Pack_Start (Odd_Preferences.Hbox7, Odd_Preferences.Asm_Highlight_Combo, False, True, 0);
 
    Gtk_New (Odd_Preferences.Label8, -("Source"));
    Set_Alignment (Odd_Preferences.Label8, 0.5, 0.5);
@@ -325,11 +307,6 @@ begin
      0, 0);
    Set_Active (Odd_Preferences.Align_Grid_Check, True);
 
-   Gtk_New (Odd_Preferences.Xref_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Xref_Color_Combo, 1, 2, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
-
    Gtk_New (Odd_Preferences.Label84, -("Title Background"));
    Attach (Odd_Preferences.Table3, Odd_Preferences.Label84, 2, 3, 0, 1,
      Fill, 0,
@@ -339,11 +316,6 @@ begin
    Set_Justify (Odd_Preferences.Label84, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label84, False);
 
-   Gtk_New (Odd_Preferences.Title_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Title_Color_Combo, 3, 4, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
-
    Gtk_New (Odd_Preferences.Label85, -("Changed Data"));
    Attach (Odd_Preferences.Table3, Odd_Preferences.Label85, 0, 1, 1, 2,
      Fill, 0,
@@ -352,16 +324,6 @@ begin
    Set_Padding (Odd_Preferences.Label85, 0, 0);
    Set_Justify (Odd_Preferences.Label85, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label85, False);
-
-   Gtk_New (Odd_Preferences.Change_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Change_Color_Combo, 1, 2, 1, 2,
-     Expand or Fill, 0,
-     0, 0);
-
-   Gtk_New (Odd_Preferences.Thaw_Bg_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Thaw_Bg_Color_Combo, 1, 2, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
 
    Gtk_New (Odd_Preferences.Label86, -("Auto-Refreshed"));
    Attach (Odd_Preferences.Table3, Odd_Preferences.Label86, 0, 1, 2, 3,
@@ -380,11 +342,6 @@ begin
    Set_Padding (Odd_Preferences.Label87, 0, 0);
    Set_Justify (Odd_Preferences.Label87, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label87, False);
-
-   Gtk_New (Odd_Preferences.Freeze_Bg_Color_Combo);
-   Attach (Odd_Preferences.Table3, Odd_Preferences.Freeze_Bg_Color_Combo, 3, 4, 2, 3,
-     Expand or Fill, 0,
-     0, 0);
 
    Gtk_New (Odd_Preferences.Look_3d_Check, -"3D Look");
    Attach (Odd_Preferences.Table3, Odd_Preferences.Look_3d_Check, 0, 4, 3, 4,
@@ -466,6 +423,31 @@ begin
      Fill, 0,
      0, 0);
 
+   Gtk_New (Odd_Preferences.Xref_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Xref_Color_Combo, 1, 2, 0, 1,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Odd_Preferences.Change_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Change_Color_Combo, 1, 2, 1, 2,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Odd_Preferences.Thaw_Bg_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Thaw_Bg_Color_Combo, 1, 2, 2, 3,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Odd_Preferences.Title_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Title_Color_Combo, 3, 4, 0, 1,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Odd_Preferences.Freeze_Bg_Color_Combo);
+   Attach (Odd_Preferences.Table3, Odd_Preferences.Freeze_Bg_Color_Combo, 3, 4, 2, 3,
+     Fill, 0,
+     0, 0);
+
    Gtk_New (Odd_Preferences.Label9, -("Data"));
    Set_Alignment (Odd_Preferences.Label9, 0.5, 0.5);
    Set_Padding (Odd_Preferences.Label9, 0, 0);
@@ -492,11 +474,6 @@ begin
    Set_Justify (Odd_Preferences.Label92, Justify_Center);
    Set_Line_Wrap (Odd_Preferences.Label92, False);
 
-   Gtk_New (Odd_Preferences.Debug_Higlight_Combo);
-   Attach (Odd_Preferences.Table8, Odd_Preferences.Debug_Higlight_Combo, 1, 2, 0, 1,
-     Expand or Fill, 0,
-     0, 0);
-
    Gtk_New (Odd_Preferences.Label93, -("Font"));
    Attach (Odd_Preferences.Table8, Odd_Preferences.Label93, 0, 1, 1, 2,
      Fill, 0,
@@ -508,6 +485,11 @@ begin
 
    Gtk_New (Odd_Preferences.Debug_Font_Combo);
    Attach (Odd_Preferences.Table8, Odd_Preferences.Debug_Font_Combo, 1, 2, 1, 2,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Odd_Preferences.Debug_Higlight_Combo);
+   Attach (Odd_Preferences.Table8, Odd_Preferences.Debug_Higlight_Combo, 1, 2, 0, 1,
      Fill, 0,
      0, 0);
 
