@@ -439,8 +439,11 @@ procedure GPS is
 
          if File_Extension (Project_Name.all) = Project_File_Extension then
             Load_Project (GPS.Kernel, Project_Name.all);
+            Project_Viewers.Add_To_Reopen (GPS.Kernel, Project_Name.all);
          else
             Load_Project
+              (GPS.Kernel, Project_Name.all & Project_File_Extension);
+            Project_Viewers.Add_To_Reopen
               (GPS.Kernel, Project_Name.all & Project_File_Extension);
          end if;
 
@@ -592,18 +595,8 @@ begin
          Result := Save_All_MDI_Children (GPS.Kernel, Force => False);
    end;
 
-   Trace (Me, "Saving preferences in "
-          & String_Utils.Name_As_Directory (Dir.all) & "preferences");
-   Save_Preferences
-     (GPS.Kernel,
-      String_Utils.Name_As_Directory (Dir.all) & "preferences");
-
    Gtk.Accel_Map.Save
      (String_Utils.Name_As_Directory (Dir.all) & "custom_key");
-
-   Free (Home);
-   Free (Dir);
-   Free (Prefix);
 
    Handlers_Destroy (GPS.Kernel);
 
@@ -611,9 +604,13 @@ begin
    Glide_Page.Destroy (Page);
 
    Destroy (GPS);
-   Destroy (GPS.Kernel);
+   Destroy (GPS.Kernel, Dir.all);
    Prj_API.Finalize;
    Traces.Finalize;
+
+   Free (Home);
+   Free (Dir);
+   Free (Prefix);
 
 exception
    when Invalid_Switch | Invalid_Parameter =>
