@@ -1903,6 +1903,9 @@ package body Project_Viewers is
    begin
       Assert (Me, Project = Ref_Project,
               "Invalid project when modifying main files");
+      Trace (Me, "Generating Executables attribute, GNAT Version="
+             & GNAT_Version (Kernel) & " Support executables="
+             & Has_Support_For_Executables'Img);
 
       --  First get the list of main files
       while Iter /= Null_Iter loop
@@ -1913,12 +1916,26 @@ package body Project_Viewers is
             Changed := Changed or else
               Get_Executable_Name (Project, New_Mains (N).all) /=
               Get_String (Editor.Executables, Iter, 1);
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Scenario_Variables => Scenario_Variables,
-               Attribute          => Executable_Attribute,
-               Attribute_Index    => New_Mains (N).all,
-               Value              => Get_String (Editor.Executables, Iter, 1));
+
+            declare
+               Default_Exec : constant String :=
+                 Get_Executable_Name (No_Project, New_Mains (N).all);
+               New_Exec     : constant String :=
+                 Get_String (Editor.Executables, Iter, 1);
+            begin
+               --  Only generate the attribute if it different from the default
+               --  to stay compatible with older versions of project files as
+               --  much as possible
+
+               if Default_Exec /= New_Exec then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Scenario_Variables => Scenario_Variables,
+                     Attribute          => Executable_Attribute,
+                     Attribute_Index    => New_Mains (N).all,
+                     Value              => New_Exec);
+               end if;
+            end;
          end if;
 
          N := N + 1;
