@@ -182,22 +182,17 @@ package Find_Utils is
    function Search
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean is abstract;
+      Search_Backward : Boolean) return Boolean is abstract;
    --  This subprogram should search for the next occurrence of Context.
    --  It should return False if there is no other search to be performed, True
    --  if a call to this function might lead to another occurrence of the
    --  search string.
-   --  Interactive indicates whether the user has to request each next
-   --  search result. If Interactive is False, results should be displayed
-   --  in the Location view.
 
    function Replace
      (Context         : access Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
+      Search_Backward : Boolean) return Boolean;
    --  This subprogram should search for the next occurrence of Context. If
    --  Is_First_Search, the search should start from the beginning
    --  It should set Context to null when there is nothing more to replace.
@@ -205,10 +200,6 @@ package Find_Utils is
    --  if a call to this function might lead to another occurrence of the
    --  search string.
    --  The default implementation does nothing.
-   --  If Interactive is True, the current Search_Context should correspond
-   --  to the last Search_Context found when calling Search or Replace,
-   --  otherwise the replacing does not occur, only the searching for the
-   --  next occurrence.
 
    procedure Free (Context : in out Search_Context_Access);
    --  Free the memory both for the pointer and for the internal fields. It
