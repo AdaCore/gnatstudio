@@ -146,6 +146,12 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_out event.
 
+   procedure Box_Scrolled
+     (Adj : access Glib.Object.GObject_Record'Class;
+      Box : Source_Editor_Box);
+   --  Called when the source editor has been scrolled with the scrollbar. It
+   --  makes sure that the cursor stays in the visible area.
+
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
@@ -809,6 +815,11 @@ package body Src_Editor_Box is
          On_Box_Destroy'Access,
          User_Data => Source_Editor_Box (Box));
 
+      Box_Callback.Connect
+        (Get_Vadjustment (Scrolling_Area), "value_changed",
+         Box_Callback.To_Marshaller (Box_Scrolled'Access),
+         Source_Editor_Box (Box));
+
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
       Add_Events (Box.Source_View, Focus_Change_Mask);
@@ -827,6 +838,20 @@ package body Src_Editor_Box is
          ID              => Src_Editor_Module_Id,
          Context_Func    => Get_Contextual_Menu'Access);
    end Initialize_Box;
+
+   ------------------
+   -- Box_Scrolled --
+   ------------------
+
+   procedure Box_Scrolled
+     (Adj : access Glib.Object.GObject_Record'Class;
+      Box : Source_Editor_Box)
+   is
+      pragma Unreferenced (Adj);
+      Tmp : Boolean;
+   begin
+      Tmp := Place_Cursor_Onscreen (Box.Source_View);
+   end Box_Scrolled;
 
    --------------
    -- Focus_In --
