@@ -71,6 +71,7 @@ package Docgen.Work_On_Source is
      (B                : Backend_Handle;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Docgen.Type_Source_File_List.List;
+      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Options          : Docgen.All_Options;
       Converter        : Docgen.Doc_Subprogram_Type;
@@ -82,7 +83,8 @@ package Docgen.Work_On_Source is
      (B                     : Backend_Handle;
       Kernel                : access Glide_Kernel.Kernel_Handle_Record'Class;
       Subprogram_Index_List : Docgen.Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+      Entity_List           : in out Type_Entity_List.List;
+      List_Ref_In_File      : in out List_Reference_In_File.List;
       Options               : Docgen.All_Options;
       Converter             : Docgen.Doc_Subprogram_Type;
       Doc_Directory         : String;
@@ -93,6 +95,7 @@ package Docgen.Work_On_Source is
      (B               : Backend_Handle;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Type_Index_List : Docgen.Type_Entity_List.List;
+      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Options         : All_Options;
       Converter       : Doc_Subprogram_Type;
