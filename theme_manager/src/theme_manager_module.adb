@@ -59,6 +59,7 @@ with Ada.Strings.Unbounded;    use Ada.Strings.Unbounded;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with System;                   use System;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with VFS;
 
 package body Theme_Manager_Module is
 
@@ -123,6 +124,7 @@ package body Theme_Manager_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Handles tags read from the customization files
@@ -152,7 +154,9 @@ package body Theme_Manager_Module is
    --  Called when a theme is selected or unselected
 
    procedure Load_XML_Theme
-     (Kernel : access Kernel_Handle_Record'Class; XML : Node_Ptr);
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      XML    : Node_Ptr);
    --  Load an XML node as a customization file
 
    --------------------
@@ -160,9 +164,12 @@ package body Theme_Manager_Module is
    --------------------
 
    procedure Load_XML_Theme
-     (Kernel : access Kernel_Handle_Record'Class; XML : Node_Ptr) is
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
+      XML    : Node_Ptr) is
    begin
-      Execute_Customization_String (Kernel, XML, Level => Themes);
+      Execute_Customization_String
+        (Kernel, File, XML, Level => Themes);
    end Load_XML_Theme;
 
    -------------------
@@ -234,6 +241,7 @@ package body Theme_Manager_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
@@ -285,7 +293,7 @@ package body Theme_Manager_Module is
                Add_Child (Themes.Xml, Deep_Copy (N.Child), Append => True);
 
                if Themes.Active then
-                  Load_XML_Theme (Kernel, N.Child);
+                  Load_XML_Theme (Kernel, File, N.Child);
                end if;
             end;
 
@@ -390,7 +398,8 @@ package body Theme_Manager_Module is
             if Setting then
                while Themes /= null loop
                   if Themes.Name.all = Name then
-                     Load_XML_Theme (Ed.Kernel, Themes.Xml.Child);
+                     Load_XML_Theme
+                       (Ed.Kernel, VFS.No_File, Themes.Xml.Child);
                      exit;
                   end if;
 
