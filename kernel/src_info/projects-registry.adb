@@ -1751,12 +1751,9 @@ package body Projects.Registry is
                --  since this wouldn't work with extended projects were sources
                --  can be duplicated.
 
-               if Info = No_Source_File_Data then
-                  Set (Registry.Data.Sources,
-                       K => Filename,
-                       E => (Project2, Name_Ada, Name_Find));
-
-               else
+               if Info /= No_Source_File_Data
+                 and then Project2 = Real_Project
+               then
                   Info.Directory := Name_Find;
                   Set (Registry.Data.Sources, Filename, Info);
                end if;
