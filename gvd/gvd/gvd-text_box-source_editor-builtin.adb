@@ -33,6 +33,7 @@ with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtk.Layout;            use Gtk.Layout;
 with Gtk.Main;              use Gtk.Main;
+with GVD.Memory_View;       use GVD.Memory_View;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Pixmap;            use Gtk.Pixmap;
@@ -86,7 +87,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Editor : Builtin;
    end record;
    type Builtin_Text_Box is access all Builtin_Text_Box_Record'Class;
-   
+
    function On_Pixmap_Clicked
      (Editor : access Builtin_Text_Box_Record;
       Button : Natural;
@@ -167,6 +168,11 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record);
    --  Callback for the "display variable" contextual menu item.
+
+   procedure View_Into_Memory
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record);
+   --  Callback for the "view memory at address of" contextual menu item.
 
    procedure Change_Lines_With_Code
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
@@ -318,7 +324,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Add (Parent, Editor.Widget);
 
       if Editor.Never_Attached then
-         Editor.NEver_Attached := False;
+         Editor.Never_Attached := False;
       else
          Unref (Editor.Widget);
       end if;
@@ -468,6 +474,17 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Set_State (Mitem, State_Insensitive);
       end if;
 
+      Gtk_New (Mitem, Label => -"View memory at address &" & Entity);
+      Append (Source.Editor.Contextual_Menu, Mitem);
+      Data.Auto_Refresh := True;
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller (View_Into_Memory'Access),
+         Data);
+
+      if Entity'Length = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
       --  Display a separator
 
       Gtk_New (Mitem);
@@ -1128,6 +1145,25 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          end if;
       end if;
    end Graph_Print_Variable;
+
+   ----------------------
+   -- View_Into_Memory --
+   ----------------------
+
+   procedure View_Into_Memory
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record)
+   is
+      Top  : Main_Debug_Window_Access
+        := Br.Process.Window;
+      View : GVD_Memory_View := Top.Memory_View;
+   begin
+      if not Visible_Is_Set (View) then
+         Show_All (View);
+      end if;
+      Display_Memory (View, Br.Name);
+      Gdk_Raise (Get_Window (View));
+   end View_Into_Memory;
 
    ----------------------
    -- Change_Line_Nums --
