@@ -29,6 +29,7 @@
 with Glib;            use Glib;
 with Gtk;             use Gtk;
 with Gdk;             use Gdk;
+with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Arguments;   use Gtk.Arguments;
 with Gtk.Enums;       use Gtk.Enums;
@@ -180,6 +181,11 @@ package body Gtkada.File_Selector is
    --  ???
 
    function On_Selection_Entry_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+   --  ???
+
+   function On_Location_Entry_Key_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
    --  ???
@@ -928,9 +934,11 @@ package body Gtkada.File_Selector is
    is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
-
+      S   : constant String := Get_Text (Win.Location_Combo_Entry);
    begin
-      Change_Directory (Win, Get_Text (Win.Location_Combo_Entry));
+      if Is_Directory (S) then
+         Change_Directory (Win, S);
+      end if;
 
    exception
       when E : others =>
@@ -1132,6 +1140,35 @@ package body Gtkada.File_Selector is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end On_File_List_Key_Press_Event;
+
+   ---------------------------------------
+   -- On_Location_Entry_Key_Press_Event --
+   ---------------------------------------
+
+   function On_Location_Entry_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Win   : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Get_Toplevel (Object));
+      Event : constant Gdk_Event := To_Event (Params, 1);
+
+      use Gdk.Types;
+   begin
+      if Get_Key_Val (Event) = GDK_Return then
+         declare
+            S : String := Get_Text (Win.Location_Combo_Entry);
+         begin
+            if Is_Directory (S) then
+               Change_Directory (Win, S);
+            end if;
+         end;
+
+         return True;
+      end if;
+
+      return False;
+   end On_Location_Entry_Key_Press_Event;
 
    ----------------------------------------
    -- On_Selection_Entry_Key_Press_Event --
@@ -1509,13 +1546,17 @@ package body Gtkada.File_Selector is
 
       File_Selector_Window.Location_Combo_Entry :=
         Get_Entry (File_Selector_Window.Location_Combo);
-      Set_Editable (File_Selector_Window.Location_Combo_Entry, False);
+      Set_Editable (File_Selector_Window.Location_Combo_Entry, True);
       Set_Max_Length (File_Selector_Window.Location_Combo_Entry, 0);
       Set_Visibility (File_Selector_Window.Location_Combo_Entry, True);
       Widget_Callback.Connect
         (File_Selector_Window.Location_Combo_Entry, "activate",
          Widget_Callback.To_Marshaller
          (On_Location_Combo_Entry_Activate'Access));
+      Return_Callback.Connect
+        (File_Selector_Window.Location_Combo_Entry,
+         "key_press_event", On_Location_Entry_Key_Press_Event'Access,
+          After => False);
 
       Gtk_New_Hpaned (Hpaned1);
       Set_Position (Hpaned1, 200);
