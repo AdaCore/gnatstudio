@@ -32,8 +32,6 @@
 
   * [Yeti] Don't discard syntactic delimiters " /* -- */ in matching ?
 
-  * [Yeti] Avoid // in pathnames.
-
   * [Yeti] in C strings, '\' skips ASCII.LF; don't skip LF without '\' ?
 
   * [Yeti] handle "" in Ada strings as a '"' character, not as the string end
@@ -42,8 +40,6 @@
   * [Yeti] Add a callback reporting failures (opening error, ...)
 
 7 * [Yeti] Add a Match_Array parameter to the callback
-
-9 * [Yeti] When no initial directory, use no explicit one.
 
   * [Yeti] Select between reporting all matches in the line or only the first.
 
