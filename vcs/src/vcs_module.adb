@@ -541,7 +541,7 @@ package body VCS_Module is
       Free (Files);
 
       if not File_Status_List.Is_Empty (Status) then
-         Display_Editor_Status (Kernel, File_Status_List.Head (Status));
+         Display_Editor_Status (Kernel, Ref, File_Status_List.Head (Status));
       end if;
 
       File_Status_List.Free (Status);

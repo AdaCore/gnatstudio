@@ -422,7 +422,7 @@ package body VCS_View_Pkg is
             end if;
 
             if Is_Open (Kernel, File) then
-               Display_Editor_Status (Kernel, S);
+               Display_Editor_Status (Kernel, VCS_Identifier, S);
             end if;
 
          exception
