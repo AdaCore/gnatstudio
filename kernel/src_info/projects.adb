@@ -40,7 +40,6 @@ with Projects.Registry;         use Projects.Registry;
 with Snames;                    use Snames;
 with String_Hash;
 with String_Utils;              use String_Utils;
-with Stringt;                   use Stringt;
 with Traces;                    use Traces;
 with Types;                     use Types;
 
@@ -166,7 +165,8 @@ package body Projects is
       Dir_Name  : String;
       Has_Files : Boolean) is
    begin
-      Set (Project.Data.Directories, Dir_Name, (Has_Files => Has_Files));
+      Set (Project.Data.Directories,
+           Name_As_Directory (Dir_Name), (Has_Files => Has_Files));
    end Update_Directory_Cache;
 
    ------------------
@@ -301,17 +301,17 @@ package body Projects is
    -- Source_Dirs --
    -----------------
 
-   function Source_Dirs (Project : Project_Type) return String_Id_Array is
+   function Source_Dirs (Project : Project_Type) return Name_Id_Array is
       View    : constant Project_Id := Get_View (Project);
    begin
       if View = Prj.No_Project then
-         return (1 .. 0 => No_String);
+         return (1 .. 0 => No_Name);
 
       else
          declare
             Src     : String_List_Id := Prj.Projects.Table (View).Source_Dirs;
             Count   : constant Natural    := Length (Src);
-            Sources : String_Id_Array (1 .. Count);
+            Sources : Name_Id_Array (1 .. Count);
          begin
             for C in Sources'Range loop
                Sources (C) := String_Elements.Table (Src).Value;
@@ -472,7 +472,7 @@ package body Projects is
          Src  := Prj.Projects.Table (View).Sources;
 
          while Src /= Nil_String loop
-            String_To_Name_Buffer (String_Elements.Table (Src).Value);
+            Get_Name_String (String_Elements.Table (Src).Value);
             if Language_Matches
               (Project.Data.Registry.all,
                Name_Buffer (1 .. Name_Len),
@@ -527,14 +527,14 @@ package body Projects is
    ----------------------
 
    function Get_Source_Files
-     (Project : Project_Type; Recursive : Boolean) return String_Id_Array
+     (Project : Project_Type; Recursive : Boolean) return Name_Id_Array
    is
       Src     : String_List_Id;
       Count   : constant Natural := Source_Files_Count (Project, Recursive);
       Iter    : Imported_Project_Iterator := Start (Project, Recursive);
       Index   : Natural := 1;
       P       : Project_Type;
-      Sources : String_Id_Array (1 .. Count);
+      Sources : Name_Id_Array (1 .. Count);
 
    begin
       loop
@@ -563,7 +563,7 @@ package body Projects is
      (Filename : String; List : in out Array_Element_Id; Len : out Natural) is
    begin
       while List /= No_Array_Element loop
-         String_To_Name_Buffer (Array_Elements.Table (List).Value.Value);
+         Get_Name_String (Array_Elements.Table (List).Value.Value);
          exit when Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len));
          Len := 0;
          List := Array_Elements.Table (List).Next;
@@ -1461,7 +1461,7 @@ package body Projects is
       --  detect aliases).
 
       function External_Default (Var : Project_Node_Id)
-         return String_Id;
+         return Name_Id;
       --  Return the default value for the variable. Var must be a variable
       --  declaration.
       --  ??? This doesn't support cases where the default value is defined as
@@ -1498,7 +1498,7 @@ package body Projects is
       -- External_Default --
       ----------------------
 
-      function External_Default (Var : Project_Node_Id) return String_Id is
+      function External_Default (Var : Project_Node_Id) return Name_Id is
          Expr : Project_Node_Id := Expression_Of (Var);
       begin
          Expr := First_Term   (Expr);
@@ -1508,7 +1508,7 @@ package body Projects is
             Expr := External_Default_Of (Expr);
 
             if Expr = Empty_Node then
-               return No_String;
+               return No_Name;
             end if;
 
             if Kind_Of (Expr) /= N_Literal_String then
@@ -1523,7 +1523,7 @@ package body Projects is
 
             return String_Value_Of (Expr);
          else
-            return No_String;
+            return No_Name;
          end if;
       end External_Default;
 
@@ -1536,7 +1536,7 @@ package body Projects is
          List    : in out Scenario_Variable_Array;
          Current : in out Positive)
       is
-         V : constant String_Id := External_Reference_Of (Var);
+         V : constant Name_Id := External_Reference_Of (Var);
          N : constant String := Get_String (V);
       begin
          for Index in 1 .. Current - 1 loop
@@ -1545,7 +1545,7 @@ package body Projects is
             end if;
          end loop;
 
-         String_To_Name_Buffer (V);
+         Get_Name_String (V);
 
          List (Current) := Scenario_Variable'
            (Name        => Name_Find,
@@ -1613,11 +1613,11 @@ package body Projects is
    procedure Ensure_External_Value (Var : Scenario_Variable) is
       N : constant String := External_Reference_Of (Var);
    begin
-      if Prj.Ext.Value_Of (Var.Name) = No_String then
-         if Var.Default /= No_String then
+      if Prj.Ext.Value_Of (Var.Name) = No_Name then
+         if Var.Default /= No_Name then
             Prj.Ext.Add (N, External_Default (Var));
          else
-            String_To_Name_Buffer
+            Get_Name_String
               (String_Value_Of (First_Literal_String (Var.String_Type)));
             Prj.Ext.Add
               (N, Name_Buffer (Name_Buffer'First .. Name_Len));
@@ -1937,7 +1937,7 @@ package body Projects is
    -- External_Reference_Of --
    ---------------------------
 
-   function External_Reference_Of (Var : Project_Node_Id) return String_Id
+   function External_Reference_Of (Var : Project_Node_Id) return Name_Id
    is
       Expr : Project_Node_Id := Expression_Of (Var);
    begin
@@ -1948,7 +1948,7 @@ package body Projects is
          Expr := External_Reference_Of (Expr);
          return String_Value_Of (Expr);
       else
-         return No_String;
+         return No_Name;
       end if;
    end External_Reference_Of;
 
@@ -1996,25 +1996,6 @@ package body Projects is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return "";
-   end Get_String;
-
-   ----------------
-   -- Get_String --
-   ----------------
-
-   function Get_String (Str : Types.String_Id) return String is
-      pragma Suppress (All_Checks);
-      R : String (1 .. Natural (String_Length (Str)));
-   begin
-      if Str = No_String then
-         return "";
-      end if;
-
-      for J in R'Range loop
-         R (J) := Get_Character (Get_String_Char (Str, Int (J)));
-      end loop;
-
-      return R;
    end Get_String;
 
    ---------------------------

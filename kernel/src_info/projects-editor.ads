@@ -73,7 +73,7 @@ package Projects.Editor is
    function Length (List : Prj.String_List_Id) return Natural;
    --  Return the number of elements in the list.
 
-   function Is_Equal (Str1 : Types.String_Id; Str2 : String) return Boolean;
+   function Is_Equal (Str1 : Types.Name_Id; Str2 : String) return Boolean;
    --  Return True if the two strings are equal.
 
    --------------
@@ -179,7 +179,7 @@ package Projects.Editor is
    --  type is Type_Name.
 
    function Get_Environment
-     (Var_Or_Attribute : Project_Node_Id) return Types.String_Id;
+     (Var_Or_Attribute : Project_Node_Id) return Types.Name_Id;
    --  Return the name of the environment variable associated with
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
@@ -194,7 +194,7 @@ package Projects.Editor is
    procedure Add_Scenario_Variable_Values
      (Root_Project           : Project_Type;
       External_Var           : Scenario_Variable;
-      Values                 : String_Id_Array);
+      Values                 : Name_Id_Array);
    --  Add some values to the list of possible values for the scenario
    --  variables associated with External_Variable_Name. The changes are done
    --  recursively in Root_Project and all its imported projects.
@@ -202,7 +202,7 @@ package Projects.Editor is
    procedure Rename_External_Variable
      (Root_Project : Project_Type;
       Variable     : in out Scenario_Variable;
-      New_Name     : Types.String_Id);
+      New_Name     : Types.Name_Id);
    --  Rename all references to Old_Name in Root_Project and its imported
    --  projects.
    --  Old_Name is given as a string so that we don't need to allocate a new
@@ -211,7 +211,7 @@ package Projects.Editor is
    procedure Set_Default_Value_For_External_Variable
      (Root_Project      : Project_Type;
       Ext_Variable_Name : String;
-      Default           : Types.String_Id);
+      Default           : Types.Name_Id);
    --  Change the default value for all the scenario variables based on
    --  Ext_Variable_Name.
 
@@ -231,7 +231,7 @@ package Projects.Editor is
      (Root_Project      : Project_Type;
       Ext_Variable_Name : String;
       Old_Value_Name    : String;
-      New_Value_Name    : Types.String_Id);
+      New_Value_Name    : Types.Name_Id);
    --  Rename one of the choices in the list of possible values for the
    --  scenario variables asociated with Ext_Variable_Name. This also changes
    --  the default value for external references.
@@ -312,7 +312,7 @@ package Projects.Editor is
    --  Return the next item in the list
 
    function Data (Iter : String_List_Iterator) return Project_Node_Id;
-   function Data (Iter : String_List_Iterator) return Types.String_Id;
+   function Data (Iter : String_List_Iterator) return Types.Name_Id;
    --  Return the value pointed to by Iter.
    --  This could be either a N_String_Literal or a N_Expression node in the
    --  first case.
@@ -418,7 +418,7 @@ private
    --  Return the declaration of the type whose name is Name.
 
    procedure Add_Possible_Value
-     (Typ : Project_Node_Id; Choice : Types.String_Id);
+     (Typ : Project_Node_Id; Choice : Types.Name_Id);
    --  Add a new choice in the list of possible values for the type Typ.
    --  If Choice is already available in Typ, then it is not added again.
 

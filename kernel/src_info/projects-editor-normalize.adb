@@ -29,7 +29,6 @@ with Prj.Ext;  use Prj.Ext;
 with Prj.Tree; use Prj.Tree;
 with Types;    use Types;
 with Namet;    use Namet;
-with Stringt;  use Stringt;
 
 with Unchecked_Deallocation;
 
@@ -124,12 +123,7 @@ package body Projects.Editor.Normalize is
                 or else Kind_Of (Variable) = N_Typed_Variable_Declaration)
               and then Prj.Tree.Name_Of (Variable) = N
             then
-               if External_Reference_Of (Variable) = No_String then
-                  return No_Name;
-               else
-                  String_To_Name_Buffer (External_Reference_Of (Variable));
-                  return Name_Find;  --  ??? Inefficient
-               end if;
+               return External_Reference_Of (Variable);
             end if;
 
             Variable := Next_Variable (Variable);
@@ -342,7 +336,7 @@ package body Projects.Editor.Normalize is
 
                   --  Remove all the entries for the variable in the array
                   --  Note that we do not need to use String_Equal, since we
-                  --  know exactly the String_Id we started with.
+                  --  know exactly the Name_Id we started with.
 
                   if not Already_Have_Var then
                      while Last_Values >= Values'First
@@ -570,9 +564,7 @@ package body Projects.Editor.Normalize is
                --  Change the default value if needed
                Match := Values (J).Negated;
 
-               if String_Equal
-                 (Values (J).Variable_Value, String_Value_Of (Choice))
-               then
+               if Values (J).Variable_Value = String_Value_Of (Choice) then
                   Match := not Values (J).Negated;
                   exit Choice_Loop;
                end if;
@@ -653,7 +645,7 @@ package body Projects.Editor.Normalize is
          --  can create missing case constructions at the end
 
          Add_Value (Var_Seen, Last_Var_Seen,
-                    (Empty_Node, Name, No_String, False));
+                    (Empty_Node, Name, No_Name, False));
 
          --  For all possible values of the variable
 
@@ -813,8 +805,7 @@ package body Projects.Editor.Normalize is
       while Decl /= Empty_Node loop
          Item := Current_Item_Node (Decl);
          if Kind_Of (Item) = N_Typed_Variable_Declaration then
-            String_To_Name_Buffer (External_Reference_Of (Item));
-            Ref := Name_Find; --  ??? Inefficient
+            Ref := External_Reference_Of (Item);
 
             exit when Ref /= No_Name
               and then Ref = External_Name;

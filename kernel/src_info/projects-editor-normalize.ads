@@ -112,7 +112,7 @@ private package Projects.Editor.Normalize is
    type External_Variable_Value is record
       Variable_Type  : Prj.Tree.Project_Node_Id;
       Variable_Name  : Types.Name_Id;
-      Variable_Value : Types.String_Id;
+      Variable_Value : Types.Name_Id;
       Negated        : Boolean := False;
    end record;
    --  Description for one possible value of an external variable. Through an
@@ -221,7 +221,7 @@ private
    No_Value : constant External_Variable_Value :=
      (Variable_Type  => Prj.Tree.Empty_Node,
       Variable_Name  => Types.No_Name,
-      Variable_Value => Types.No_String,
+      Variable_Value => Types.No_Name,
       Negated        => False);
 
    All_Case_Items : constant External_Variable_Value_Array (1 .. 0) :=

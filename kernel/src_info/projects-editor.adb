@@ -36,7 +36,6 @@ with Projects.Registry;         use Projects.Registry;
 with Projects.Editor.Normalize; use Projects.Editor.Normalize;
 with Snames;                    use Snames;
 with String_Utils;              use String_Utils;
-with Stringt;                   use Stringt;
 with Traces;                    use Traces;
 with Types;                     use Types;
 
@@ -203,7 +202,7 @@ package body Projects.Editor is
    --  Enclose the Node inside a N_Expression node, and return this expression.
 
    function String_As_Expression
-     (Value : Types.String_Id) return Project_Node_Id;
+     (Value : Types.Name_Id) return Project_Node_Id;
    --  Return an N_Expression node that represents the static string Value.
    --  ??? Could be implemented in terms of Concatenate.
 
@@ -217,7 +216,7 @@ package body Projects.Editor is
    -- Misc --
    ----------
 
-   function Create_Literal_String (Str : Types.String_Id)
+   function Create_Literal_String (Str : Types.Name_Id)
       return Project_Node_Id;
    --  Create a literal string whose value is Str.
 
@@ -270,31 +269,17 @@ package body Projects.Editor is
    -- Is_Equal --
    --------------
 
-   function Is_Equal (Str1 : String_Id; Str2 : String) return Boolean is
-      pragma Suppress (All_Checks);
-      L     : constant Int := String_Length (Str1);
-      Index : Int := 1;
+   function Is_Equal (Str1 : Name_Id; Str2 : String) return Boolean is
    begin
-      if Integer (L) = Str2'Length then
-         for S in Str2'Range loop
-            if Get_Char_Code (Str2 (S)) /= Get_String_Char (Str1, Index) then
-               return False;
-            end if;
-
-            Index := Index + 1;
-         end loop;
-      else
-         return False;
-      end if;
-
-      return True;
+      Get_Name_String (Str1);
+      return Name_Buffer (1 .. Name_Len) = Str2;
    end Is_Equal;
 
    ---------------------------
    -- Create_Literal_String --
    ---------------------------
 
-   function Create_Literal_String (Str : Types.String_Id)
+   function Create_Literal_String (Str : Types.Name_Id)
       return Project_Node_Id
    is
       Node : Project_Node_Id;
@@ -309,7 +294,7 @@ package body Projects.Editor is
    -- String_As_Expression --
    --------------------------
 
-   function String_As_Expression (Value : String_Id) return Project_Node_Id is
+   function String_As_Expression (Value : Name_Id) return Project_Node_Id is
    begin
       return Enclose_In_Expression (Create_Literal_String (Value));
    end String_As_Expression;
@@ -429,9 +414,7 @@ package body Projects.Editor is
       Set_Name_Of (Node, Get_String (Name));
 
       if Index_Name /= "" then
-         Start_String;
-         Store_String_Chars (Index_Name);
-         Set_Associative_Array_Index_Of (Node, End_String);
+         Set_Associative_Array_Index_Of (Node, Get_String (Index_Name));
       end if;
 
       Add_At_End (Prj_Or_Pkg, Node);
@@ -532,7 +515,7 @@ package body Projects.Editor is
          if Kind_Of (Current) = N_Typed_Variable_Declaration
            and then Is_External_Variable (Current)
          then
-            String_To_Name_Buffer (External_Reference_Of (Current));
+            Get_Name_String (External_Reference_Of (Current));
             if Name_Buffer (1 .. Name_Len) = Name then
                return Current;
             end if;
@@ -636,7 +619,7 @@ package body Projects.Editor is
    -- Data --
    ----------
 
-   function Data (Iter : String_List_Iterator) return Types.String_Id is
+   function Data (Iter : String_List_Iterator) return Types.Name_Id is
    begin
       pragma Assert (Kind_Of (Iter.Current) = N_Literal_String);
       return String_Value_Of (Iter.Current);
@@ -861,9 +844,7 @@ package body Projects.Editor is
       List := Default_Project_Node (N_Literal_String_List, Prj.List);
 
       for A in reverse Values'Range loop
-         Start_String;
-         Store_String_Chars (Values (A).all);
-         Expr := String_As_Expression (End_String);
+         Expr := String_As_Expression (Get_String (Values (A).all));
          Set_Next_Expression_In_List
            (Expr, First_Expression_In_List (List));
          Set_First_Expression_In_List (List, Expr);
@@ -975,9 +956,7 @@ package body Projects.Editor is
 
       --  Create the node for the new value
 
-      Start_String;
-      Store_String_Chars (Value);
-      Val := Create_Literal_String (End_String);
+      Val := Create_Literal_String (Get_String (Value));
 
       For_Each_Scenario_Case_Item
         (Rename_Prj, Pkg, Case_Construct, Scenario_Variables,
@@ -1157,9 +1136,9 @@ package body Projects.Editor is
         and then
         (Attribute_Index = Any_Attribute
          or else (Attribute_Index = ""
-          and then Associative_Array_Index_Of (Node) = No_String)
+          and then Associative_Array_Index_Of (Node) = No_Name)
          or else (Attribute_Index /= ""
-                  and then Associative_Array_Index_Of (Node) /= No_String
+                  and then Associative_Array_Index_Of (Node) /= No_Name
                   and then Is_Equal (Associative_Array_Index_Of (Node),
                                      Attribute_Index)));
    end Attribute_Matches;
@@ -1253,7 +1232,7 @@ package body Projects.Editor is
    -- Add_Possible_Value --
    ------------------------
 
-   procedure Add_Possible_Value (Typ : Project_Node_Id; Choice : String_Id) is
+   procedure Add_Possible_Value (Typ : Project_Node_Id; Choice : Name_Id) is
       Str, S2 : Project_Node_Id;
    begin
       pragma Assert (Kind_Of (Typ) = N_String_Type_Declaration);
@@ -1261,7 +1240,7 @@ package body Projects.Editor is
       Str := First_Literal_String (Typ);
 
       while Str /= Empty_Node loop
-         if String_Equal (String_Value_Of (Str), Choice) then
+         if String_Value_Of (Str) = Choice then
             return;
          end if;
 
@@ -1416,7 +1395,7 @@ package body Projects.Editor is
      (Root_Project      : Project_Type;
       Ext_Variable_Name : String;
       Old_Value_Name    : String;
-      New_Value_Name    : Types.String_Id)
+      New_Value_Name    : Types.Name_Id)
    is
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
@@ -1462,7 +1441,7 @@ package body Projects.Editor is
 
       N := Get_String (Ext_Variable_Name);
 
-      if Value_Of (N) /= No_String
+      if Value_Of (N) /= No_Name
         and then Is_Equal (Value_Of (N), Old_Value_Name)
       then
          Add (Ext_Variable_Name, Get_String (New_Value_Name));
@@ -1513,7 +1492,7 @@ package body Projects.Editor is
       begin
          case Kind_Of (Node) is
             when N_External_Value =>
-               String_To_Name_Buffer
+               Get_Name_String
                  (String_Value_Of (Prj.Tree.External_Reference_Of (Node)));
                return Name_Buffer (1 .. Name_Len) = Ext_Variable_Name;
 
@@ -1705,16 +1684,13 @@ package body Projects.Editor is
          case Kind_Of (Node) is
             when N_External_Value =>
                if Delete_Direct_References then
-                  Start_String;
-                  Store_String_Chars (Keep_Choice);
                   Set_Current_Term
-                    (Parent, Create_Literal_String (End_String));
+                    (Parent, Create_Literal_String (Get_String (Keep_Choice)));
                end if;
 
             when N_Variable_Reference =>
-               Start_String;
-               Store_String_Chars (Keep_Choice);
-               Set_Current_Term (Parent, Create_Literal_String (End_String));
+               Set_Current_Term
+                 (Parent, Create_Literal_String (Get_String (Keep_Choice)));
 
             when N_Typed_Variable_Declaration =>
                Remove_Node (Project, Node);
@@ -1814,7 +1790,7 @@ package body Projects.Editor is
    procedure Set_Default_Value_For_External_Variable
      (Root_Project      : Project_Type;
       Ext_Variable_Name : String;
-      Default           : String_Id)
+      Default           : Name_Id)
    is
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
@@ -1843,7 +1819,7 @@ package body Projects.Editor is
    procedure Rename_External_Variable
      (Root_Project : Project_Type;
       Variable     : in out Scenario_Variable;
-      New_Name     : Types.String_Id)
+      New_Name     : Types.Name_Id)
    is
       procedure Callback (Project, Parent, Node, Choice : Project_Node_Id);
       --  Called for each mtching node for the env. variable.
@@ -1868,10 +1844,9 @@ package body Projects.Editor is
       --  the project.
       N := Get_String (External_Reference_Of (Variable));
 
-      String_To_Name_Buffer (New_Name);
-      Variable.Name := Name_Find;
+      Variable.Name := New_Name;
 
-      if Value_Of (N) /= No_String then
+      if Value_Of (N) /= No_Name then
          Set_Value (Variable, Get_String (Value_Of (N)));
       end if;
    end Rename_External_Variable;
@@ -1883,7 +1858,7 @@ package body Projects.Editor is
    procedure Add_Scenario_Variable_Values
      (Root_Project           : Project_Type;
       External_Var           : Scenario_Variable;
-      Values                 : String_Id_Array)
+      Values                 : Name_Id_Array)
    is
       Type_Node, Var : Project_Node_Id;
       Iter : Imported_Project_Iterator := Start (Root_Project);
@@ -1929,14 +1904,14 @@ package body Projects.Editor is
             null;
 
          when Single =>
-            String_To_Name_Buffer (Value.Value);
+            Get_Name_String (Value.Value);
             S (1) := new String'(Name_Buffer (1 .. Name_Len));
 
          when List =>
             V := Value.Values;
 
             for J in S'Range loop
-               String_To_Name_Buffer (String_Elements.Table (V).Value);
+               Get_Name_String (String_Elements.Table (V).Value);
                S (J) := new String'(Name_Buffer (1 .. Name_Len));
                V := String_Elements.Table (V).Next;
             end loop;
@@ -1961,7 +1936,7 @@ package body Projects.Editor is
             return "";
 
          when Prj.Single =>
-            String_To_Name_Buffer (Value.Value);
+            Get_Name_String (Value.Value);
             return Name_Buffer (1 .. Name_Len);
 
          when Prj.List =>
@@ -1969,7 +1944,7 @@ package body Projects.Editor is
 
             while Current /= Prj.Nil_String loop
                The_String := String_Elements.Table (Current);
-               String_To_Name_Buffer (The_String.Value);
+               Get_Name_String (The_String.Value);
 
                if Index /= Buffer'First then
                   Buffer (Index) := ' ';
@@ -1992,7 +1967,7 @@ package body Projects.Editor is
    ---------------------
 
    function Get_Environment
-     (Var_Or_Attribute : Project_Node_Id) return String_Id
+     (Var_Or_Attribute : Project_Node_Id) return Name_Id
    is
       Ext : Project_Node_Id;
    begin
@@ -2017,7 +1992,7 @@ package body Projects.Editor is
          pragma Assert (Kind_Of (Ext) = N_Literal_String);
          return String_Value_Of (Ext);
       else
-         return No_String;
+         return No_Name;
       end if;
    end Get_Environment;
 
@@ -2038,16 +2013,12 @@ package body Projects.Editor is
       Ext := Default_Project_Node (N_External_Value, Single);
       Set_Expression (Var, Enclose_In_Expression (Ext));
 
-      Start_String;
-      Store_String_Chars (External_Name);
-      Str := Create_Literal_String (End_String);
+      Str := Create_Literal_String (Get_String (External_Name));
 
       Set_External_Reference_Of (Ext, Str);
 
       if Default /= "" then
-         Start_String;
-         Store_String_Chars (Default);
-         Str := Create_Literal_String (End_String);
+         Str := Create_Literal_String (Get_String (Default));
          Set_External_Default_Of (Ext, Str);
       end if;
    end Set_Value_As_External;
@@ -2104,9 +2075,7 @@ package body Projects.Editor is
                Conv : constant String := Relative_Path_Name (Old, Base);
             begin
                if Conv /= Old then
-                  Start_String;
-                  Store_String_Chars (Conv);
-                  Set_String_Value_Of (Node, End_String);
+                  Set_String_Value_Of (Node, Get_String (Conv));
                   Changed := True;
                end if;
             end;
@@ -2115,9 +2084,7 @@ package body Projects.Editor is
                Conv : constant String := Normalize_Pathname (Old, Base);
             begin
                if Conv /= Old then
-                  Start_String;
-                  Store_String_Chars (Conv);
-                  Set_String_Value_Of (Node, End_String);
+                  Set_String_Value_Of (Node, Get_String (Conv));
                   Changed := True;
                end if;
             end;
@@ -2267,7 +2234,7 @@ package body Projects.Editor is
       New_Node := Tree_Private_Part.Project_Nodes.Last;
 
       --  Simple copy of all the fields. There is no need to duplicate
-      --  String_Id at this point, since nobody will modify them later on
+      --  Name_Id at this point, since nobody will modify them later on
       --  anyway. So we save some memory and keep them as is.
       --  Only the node ids will need to be copied for deep copies.
 
@@ -2555,20 +2522,20 @@ package body Projects.Editor is
       Imported_Project_Location : String;
       Imported_Project          : Project_Node_Id;
       Importing_Project         : Project_Node_Id;
-      Use_Relative_Path         : Boolean) is
+      Use_Relative_Path         : Boolean)
+   is
+      Clause : Name_Id;
    begin
-      Start_String;
-
       if Use_Relative_Path then
-         Store_String_Chars
+         Clause := Get_String
            (Relative_Path_Name
             (Imported_Project_Location,
              Dir_Name (Get_String (Path_Name_Of (Importing_Project)))));
       else
-         Store_String_Chars (Imported_Project_Location);
+         Clause := Get_String (Imported_Project_Location);
       end if;
 
-      Set_String_Value_Of (With_Clause, End_String);
+      Set_String_Value_Of (With_Clause, Clause);
 
       Set_Path_Name_Of (With_Clause, Prj.Tree.Path_Name_Of (Imported_Project));
       Set_Project_Node_Of (With_Clause, Imported_Project);
@@ -2841,13 +2808,12 @@ package body Projects.Editor is
                   D : constant String := Get_String (String_Value_Of (Node));
                begin
                   if not Is_Absolute_Path (D) then
-                     Start_String;
-                     Store_String_Chars
-                       (Relative_Path_Name
+                     Set_String_Value_Of
+                       (Node,
+                        Get_String (Relative_Path_Name
                         (Normalize_Pathname
                            (D, Old_Path, Resolve_Links => False),
-                         New_Path));
-                     Set_String_Value_Of (Node, End_String);
+                         New_Path)));
                   end if;
                end;
 
@@ -2859,7 +2825,7 @@ package body Projects.Editor is
 
       D           : constant String :=
         New_Path & To_File_Name (New_Name) & Project_File_Extension;
-      Full_Path   : String_Id := No_String;
+      Full_Path   : Name_Id := No_Name;
       Name        : constant Name_Id := Get_String (New_Name);
       Old_Name    : constant Name_Id := Prj.Tree.Name_Of (Project.Node);
       Old         : constant Project_Node_Id :=
@@ -2900,10 +2866,8 @@ package body Projects.Editor is
 
                Set_Path_Name_Of (With_Clause, Path_Name_Of (Project.Node));
 
-               if Full_Path = No_String then
-                  Start_String;
-                  Store_String_Chars (D);
-                  Full_Path := End_String;
+               if Full_Path = No_Name then
+                  Full_Path := Get_String (D);
                end if;
 
                Set_String_Value_Of (With_Clause, Full_Path);
@@ -2932,13 +2896,9 @@ package body Projects.Editor is
 
       Set_Name_Of (Project.Node, Name);
 
-      Name_Len := New_Path'Length;
-      Name_Buffer (1 .. Name_Len) := New_Path;
-      Set_Directory_Of (Project.Node, Name_Find);
+      Set_Directory_Of (Project.Node, Get_String (New_Path));
 
-      Name_Len := D'Length;
-      Name_Buffer (1 .. Name_Len) := D;
-      Set_Path_Name_Of (Project.Node, Name_Find);
+      Set_Path_Name_Of (Project.Node, Get_String (D));
 
       --  Unregister the old name
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
@@ -3042,19 +3002,12 @@ package body Projects.Editor is
 
    begin
       --  Adding the name of the project
-      Name_Len := Name'Length;
-      Name_Buffer (1 .. Name_Len) := Name;
-      Project_Name := Name_Find;
+      Project_Name := Get_String (Name);
       Set_Name_Of (Project, Project_Name);
 
       --  Adding the project path
-      Name_Len := Path'Length;
-      Name_Buffer (1 .. Name_Len) := Path;
-      Set_Directory_Of (Project, Name_Find);
-
-      Name_Len := D'Length;
-      Name_Buffer (1 .. Name_Len) := D;
-      Set_Path_Name_Of (Project, Name_Find);
+      Set_Directory_Of (Project, Get_String (Path));
+      Set_Path_Name_Of (Project, Get_String (D));
 
       --  Create the project declaration
       Set_Project_Declaration_Of
@@ -3144,14 +3097,11 @@ package body Projects.Editor is
 
       Set_Project_Modified (Project, True);
 
-      Name_Len := Env_Name'Length;
-      Name_Buffer (1 .. Name_Len) := Env_Name;
-
       Reset_Scenario_Variables_Cache
         (Project_Registry'Class (Get_Registry (Project)));
 
-      return (Name        => Name_Find,
-              Default     => No_String,
+      return (Name        => Get_String (Env_Name),
+              Default     => No_Name,
               String_Type => Typ);
    end Create_Environment_Variable;
 

@@ -35,7 +35,6 @@ package Projects is
    type Abstract_Registry is abstract tagged null record;
    type Abstract_Registry_Access is access all Abstract_Registry'Class;
 
-   type String_Id_Array    is array (Positive range <>) of Types.String_Id;
    type Name_Id_Array      is array (Positive range <>) of Types.Name_Id;
    type Project_Type_Array is array (Natural range <>) of Project_Type;
 
@@ -70,10 +69,6 @@ package Projects is
    --  Return the string in Name
    --  Same as Namet.Get_Name_String, but return "" in case of
    --  failure, instead of raising Assert_Failure.
-
-   function Get_String (Str : Types.String_Id) return String;
-   --  This functional form returns the value of Str as a string without
-   --  affecting the contents of either Name_Buffer or Name_Len.
 
    function Get_Registry (Project : Project_Type)
       return Abstract_Registry'Class;
@@ -123,7 +118,7 @@ package Projects is
    -- Directories --
    -----------------
 
-   function Source_Dirs (Project : Project_Type) return String_Id_Array;
+   function Source_Dirs (Project : Project_Type) return Name_Id_Array;
    --  Return the list of source directories for Prj, as an array. The
    --  directories are absolute directories.
 
@@ -135,6 +130,7 @@ package Projects is
    --  returned.
    --  Note that duplicate directories might be returned when directories are
    --  shared by multiple projects in the same tree.
+   --  Returned array must be freed by the user.
 
    function Include_Path
      (Project : Project_Type; Recursive : Boolean) return String;
@@ -180,7 +176,7 @@ package Projects is
    --  the specific language are returned.
 
    function Get_Source_Files
-     (Project : Project_Type; Recursive : Boolean) return String_Id_Array;
+     (Project : Project_Type; Recursive : Boolean) return Name_Id_Array;
    --  Same as above, but return the string ids (which is more efficient)
    --  Only the short file names are returned.
 
@@ -557,7 +553,7 @@ private
    --  Return True if Var is a reference to an external variable
 
    function External_Reference_Of (Var : Prj.Tree.Project_Node_Id)
-      return Types.String_Id;
+      return Types.Name_Id;
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
 
@@ -578,7 +574,7 @@ private
 
    type Scenario_Variable is record
       Name        : Types.Name_Id;
-      Default     : Types.String_Id;
+      Default     : Types.Name_Id;
       String_Type : Prj.Tree.Project_Node_Id;
    end record;
 
@@ -587,7 +583,7 @@ private
    --  of Importing. See projects.adb for the definition of these two caches
 
    No_Variable : constant Scenario_Variable :=
-     (Types.No_Name, Types.No_String, Prj.Tree.Empty_Node);
+     (Types.No_Name, Types.No_Name, Prj.Tree.Empty_Node);
 
    No_Project : constant Project_Type :=
      (Prj.Tree.Empty_Node, null);
