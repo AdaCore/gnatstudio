@@ -1225,13 +1225,10 @@ package body GVD.Process is
       Timeout       : constant Guint32 := 50;
 
       Child         : MDI_Child;
-      Widget        : Gtk_Widget;
       Window        : constant GVD_Main_Window :=
         GVD_Main_Window (Process.Window);
       Buttons       : Message_Dialog_Buttons;
       pragma Unreferenced (Buttons);
-
-      WTX_Version   : Natural := 0;
 
    begin
       Set_Busy (Process, True);
@@ -1318,14 +1315,14 @@ package body GVD.Process is
 
       Initialize (Process.Debugger);
 
-      --  Hide gdb-AE specific capabilities if we are not using a
-      --  debugger targeted to VxWorks AE
+      --  Hide or show gdb-AE specific capabilities according to the debugger
+      --  we are using
 
-      Info_WTX (Process.Debugger, WTX_Version);
-
-      if WTX_Version /= 3 then
+      declare
+         WTX_Version : Natural := 0;
+         Widget      : Gtk_Widget;
+      begin
          Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
-
          if Widget = null then
             --  This means that GVD is part of GPS
             Widget := Get_Widget
@@ -1333,9 +1330,15 @@ package body GVD.Process is
          end if;
 
          if Widget /= null then
-            Set_Sensitive (Widget, False);
+            Info_WTX (Process.Debugger, WTX_Version);
+
+            if WTX_Version = 3 then
+               Set_Sensitive (Widget, True);
+            else
+               Set_Sensitive (Widget, False);
+            end if;
          end if;
-      end if;
+      end;
 
       if Get_Pref (GVD_Prefs, Execution_Window)
         and then Support_TTY (Process.Debugger)
