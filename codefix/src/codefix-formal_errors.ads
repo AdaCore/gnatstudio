@@ -68,7 +68,8 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Str_Expected : String;
-      Str_Red      : String := "") return Extract;
+      Str_Red      : String := "";
+      Format_Red   : String_Mode := Text_Ascii) return Extract;
    --  This fonction replace Str_Red by Str_Expected in the current text by
    --  the position specified in the Message. If there is no Str_Red, it
    --  looks for the first word in the position.
@@ -127,6 +128,11 @@ package Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Extract;
    --  Move the pragma to the beginning of the file
+
+   function Not_Modified
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String) return Extract;
 
 private
 
