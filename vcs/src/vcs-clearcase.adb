@@ -1650,7 +1650,6 @@ package body VCS.ClearCase is
          Annotation_Output_Handler'Access,
          -"ClearCase: Querying annotations");
 
-
       Launch_Background_Command
         (Rep.Kernel,
          Command_Access (C),
@@ -1699,9 +1698,9 @@ package body VCS.ClearCase is
       --  ??? Need to adapt this to the ClearCase terminology.
       Actions :=
         (None         => null,
-         Status       => new String'(-"Query status"),
+         Status_Files => new String'(-"Query status"),
          Status_Dir   => null,
-         Local_Status => null,
+         Local_Status_Files => null,
          Local_Status_Dir => null,
          Open         => new String'(-"Start editing"),
          Update       => new String'(-"Update"),
