@@ -135,7 +135,6 @@ package body Format is
      (Buffer          : String;
       New_Buffer      : in out Extended_Line_Buffer;
       P               : in out Word;
-      In_Comments     : in out Boolean;
       Num_Parens      : in out Integer;
       String_Mismatch : in out Boolean;
       Semicolon       : in out Boolean;
@@ -489,7 +488,6 @@ package body Format is
      (Buffer          : String;
       New_Buffer      : in out Extended_Line_Buffer;
       P               : in out Word;
-      In_Comments     : in out Boolean;
       Num_Parens      : in out Integer;
       String_Mismatch : in out Boolean;
       Semicolon       : in out Boolean;
@@ -531,13 +529,7 @@ package body Format is
       end Handle_Two_Chars;
 
    begin
-      if In_Comments then
-         P := Next_Line (Buffer, P);
-         Line_Count := Line_Count + 1;
-      end if;
-
       End_Of_Line     := Line_End (Buffer, P);
-      In_Comments     := False;
       String_Mismatch := False;
 
       loop
@@ -760,7 +752,6 @@ package body Format is
       Num_Spaces          : Integer           := 0;
       Param_Indent        : Integer           := None;
       Spaces              : String (1 .. 150) := (others => ' ');
-      In_Comments         : Boolean           := False;
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
       Prev_Num_Parens     : Integer           := 0;
@@ -792,7 +783,7 @@ package body Format is
       --  a declaration part.
       --  If Token = Tok_Unknown, this is the beginning of a subprogram/
       --  begin block.
-      --  Otherwise, this is the beginning of a constructs (e.g select,
+      --  Otherwise, this is the beginning of a construct (e.g select,
       --  case, record, ...)
       pragma Inline (Push);
 
@@ -1141,29 +1132,15 @@ package body Format is
       --  Push a dummy token so that stack will never be empty.
       Push (Tok_Unknown);
 
-      while Prec < Buffer'Last and then not (Is_Word_Char (Buffer (Prec))) loop
-         if Buffer (Prec) = '"' then
-            In_String := not In_String;
-         elsif Buffer (Prec) = '-'
-           and then Buffer (Next_Char (Prec)) = '-'
-         then
-            In_Comments := True;
-            Next_Word
-              (Buffer, New_Buffer, Prec,
-               In_Comments, Num_Parens, String_Mismatch,
-               Semicolon, Line_Count);
-
-         else
-            Prec := Next_Char (Prec);
-         end if;
-      end loop;
-
+      Next_Word
+        (Buffer, New_Buffer, Prec, Num_Parens,
+         String_Mismatch, Semicolon, Line_Count);
       Current := End_Of_Word (Buffer, Prec);
 
       while Current < Buffer'Last loop
          Str_Len := Current - Prec + 1;
 
-         if not (Str_Len = 1 and then Buffer (Prec - 1) = ''') then
+         if Str_Len > 1 or else Buffer (Prec - 1) /= ''' then
             for J in Prec .. Current loop
                Str (J - Prec + 1) := To_Lower (Buffer (J));
             end loop;
@@ -1224,8 +1201,8 @@ package body Format is
          Semicolon       := False;
          Prec            := Current + 1;
          Next_Word
-           (Buffer, New_Buffer, Prec, In_Comments,
-            Num_Parens, String_Mismatch, Semicolon, Line_Count);
+           (Buffer, New_Buffer, Prec, Num_Parens,
+            String_Mismatch, Semicolon, Line_Count);
 
          Syntax_Error :=
            Syntax_Error or else (Prec = Buffer'Last and then Num_Spaces > 0);
