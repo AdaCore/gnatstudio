@@ -1887,9 +1887,27 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
     ###################################################################-->
 
   <shell_doc name="GPS.Timeout">
-      <param name="timeout">The timeout at which to execute the action</param>
-      <param name="action">The action/subprogram to execute</param>
-      <description>A timeout object executes a specific action repeatedly, at a specified interval, as long as it is registered.</description>
+      <description>This class gives access to actions that must be executed regularly at specific intervals</description>
+      <example lang="python">
+         ## Execute callback three times and remove it
+         import GPS;
+         def callback (timeout):
+            timeout.occur = timeout.occur + 1;
+            print "A timeout occur=" + `timeout.occur`
+            if timeout.occur == 3:
+               timeout.remove ()
+         t = GPS.Timeout (500, callback)
+         t.occur = 0
+      </example>
+      <see_also name="GPS.Timeout.__init__"/>
+  </shell_doc>
+
+  <shell_doc name="GPS.Timeout.__init__">
+      <param name="self">The timeout to initialize</param>
+      <param name="timeout">The timeout in milliseconds at which to execute the action</param>
+      <param name="action">A subprogram parameter to execute periodically</param>
+      <description>A timeout object executes a specific action repeatedly, at a specified interval, as long as it is registered.
+The action takes a single argument, which is the instance of GPS.Timeout that called it.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Timeout.remove">
