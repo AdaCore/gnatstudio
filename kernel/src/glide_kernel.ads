@@ -237,6 +237,9 @@ package Glide_Kernel is
       Context : access Selection_Context'Class);
    --  Emits the "context_changed" signal
 
+   procedure Variable_Changed (Handle : access Kernel_Handle_Record);
+   --  Emits the "variable_changed" signal
+
    -------------
    -- Signals --
    -------------
@@ -267,11 +270,18 @@ package Glide_Kernel is
    --    Emitted when a context has changed, like a new file/directory/project
    --    selection.
    --
+   --  - "variable_changed"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
+   --
+   --    Emitted when one of the scenario variables has been renamed, removed,
+   --    or when one of its possible values has changed.
+   --
    --  </signals>
 
    Project_Changed_Signal      : constant String := "project_changed";
    Project_View_Changed_Signal : constant String := "project_view_changed";
    Context_Changed_Signal      : constant String := "context_changed";
+   Variable_Changed_Signal     : constant String := "variable_changed";
 
 private
 

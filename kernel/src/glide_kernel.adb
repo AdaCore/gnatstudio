@@ -60,7 +60,8 @@ package body Glide_Kernel is
    Signals : constant chars_ptr_array :=
      (1 => New_String (Project_Changed_Signal),
       2 => New_String (Project_View_Changed_Signal),
-      3 => New_String (Context_Changed_Signal));
+      3 => New_String (Context_Changed_Signal),
+      4 => New_String (Variable_Changed_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -125,8 +126,8 @@ package body Glide_Kernel is
       Main_Window : Gtk.Window.Gtk_Window)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2 => (1 => GType_None),
-         3      => (1 => GType_Pointer));
+        (1 .. 2 | 4 => (1 => GType_None),
+         3          => (1 => GType_Pointer));
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Main_Window := Main_Window;
@@ -327,6 +328,17 @@ package body Glide_Kernel is
    begin
       Object_Callback.Emit_By_Name (Handle, Project_View_Changed_Signal);
    end Project_View_Changed;
+
+   ----------------------
+   -- Variable_Changed --
+   ----------------------
+
+   procedure Variable_Changed (Handle : access Kernel_Handle_Record) is
+   begin
+      Free (Handle.Scenario_Variables);
+      Handle.Scenario_Variables := null;
+      Object_Callback.Emit_By_Name (Handle, Variable_Changed_Signal);
+   end Variable_Changed;
 
    ---------------------
    -- Context_Changed --
