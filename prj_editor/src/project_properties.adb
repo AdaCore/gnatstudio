@@ -959,12 +959,18 @@ package body Project_Properties is
                declare
                   F   : Lang_Widget_Info renames Editor.Compilers (C);
                   Att : Project_Field renames Editor.Compilers (C).Attribute;
+                  Ent : Gtk_Entry;
                begin
-                  if F.Widget.all in Gtk_Entry_Record'Class
+                  if F.Widget.all in Gtk_Entry_Record'Class then
+                     Ent := Gtk_Entry (F.Widget);
+                  elsif F.Widget.all in Gtk_Combo_Record'Class then
+                     Ent := Get_Entry (Gtk_Combo (F.Widget));
+                  end if;
+
+                  if Ent /= null
                     and then
                       (Project = No_Project
-                       or else Get_Text (Gtk_Entry (F.Widget)) /=
-                         Get_Value (Project, Att))
+                       or else Get_Text (Ent) /= Get_Value (Project, Att))
                   then
                      Changed := True;
 
@@ -977,7 +983,7 @@ package body Project_Properties is
                            Scenario_Variables => Scenario_Variables,
                            Attribute        => Build
                              (Ide_Package, Att.Attribute_Name.all),
-                           Value            => Get_Text (Gtk_Entry (F.Widget)),
+                           Value            => Get_Text (Ent),
                            Attribute_Index  => Att.Attribute_Index.all);
                      else
                         Trace (Me, Att.Attribute_Name.all & " changed");
@@ -986,7 +992,7 @@ package body Project_Properties is
                            Scenario_Variables => Scenario_Variables,
                            Attribute       => Build
                            (Ide_Package, Att.Attribute_Name.all),
-                           Value           => Get_Text (Gtk_Entry (F.Widget)));
+                           Value           => Get_Text (Ent));
                      end if;
                   end if;
                end;
