@@ -264,11 +264,11 @@ package body Vsearch_Ext is
 
    function Idle_Search (Data : Idle_Search_Data) return Boolean is
    begin
-      if Search
+      if Data.Vsearch.Continue
+        and then Search
            (Data.Vsearch.Last_Search_Context,
             Data.Vsearch.Kernel,
             Data.Search_Backward)
-        and then Data.Vsearch.Continue
       then
          return True;
       else
@@ -304,12 +304,12 @@ package body Vsearch_Ext is
       Pattern        : constant String := Get_Text (Vsearch.Pattern_Entry);
 
    begin
-      if Vsearch.Find_Next then
-         if Vsearch.Search_Idle_Handler /= 0 then
-            Idle_Remove (Vsearch.Search_Idle_Handler);
-            Vsearch.Search_Idle_Handler := 0;
-         end if;
-      else
+      if Vsearch.Search_Idle_Handler /= 0 then
+         Idle_Remove (Vsearch.Search_Idle_Handler);
+         Vsearch.Search_Idle_Handler := 0;
+      end if;
+
+      if not Vsearch.Find_Next then
          Data := Find_Module (Get_Text (Get_Entry (Vsearch.Context_Combo)));
          Free (Vsearch.Last_Search_Context);
 
