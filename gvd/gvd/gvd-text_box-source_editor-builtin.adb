@@ -261,7 +261,7 @@ package body Odd.Source_Editors is
    is
       Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
       Result  : Boolean;
-      Num     : Natural;
+      Num     : Integer;
    begin
       if Button = 1 then
          Is_Breakpoint (Editor, Line, Result, Num);
@@ -579,6 +579,7 @@ package body Odd.Source_Editors is
       --  We claim the selection so that the selected entity always has the
       --  same color (if we don't, the first selection has a different color
       --  than the following ones).
+
       Claim_Selection (Text, True, 0);
       Set_Position (Text, Gint (Pos));
       Select_Region (Text, Gint (Pos), Gint (Last + Pos - Buffer'First));
@@ -980,6 +981,11 @@ package body Odd.Source_Editors is
       Found    : Boolean := False;
 
    begin
+      if Get_Process (Debug) = null then
+         Editor.Idle_Id := 0;
+         return False;
+      end if;
+
       --  If we already reached the end, cancel the Idle loop
 
       if Editor.Current_File_Cache.Line_Parsed = null then
