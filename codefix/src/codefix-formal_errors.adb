@@ -25,6 +25,7 @@ with GNAT.Regpat;             use GNAT.Regpat;
 with Language;                use Language;
 
 with Codefix.Text_Manager.Ada_Commands; use Codefix.Text_Manager.Ada_Commands;
+with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
 
 package body Codefix.Formal_Errors is
 
@@ -489,12 +490,14 @@ package body Codefix.Formal_Errors is
 
          Garbage := New_Position;
          New_Position := File_Cursor
-           (Search_String (Current_Text, New_Position, ")"));
+           (Search_String
+              (Current_Text, New_Position, ")", Std_Ada_Escape));
          Free (Garbage);
 
          Garbage := New_Position;
          New_Position := File_Cursor
-           (Search_String (Current_Text, New_Position, "is"));
+           (Search_String
+              (Current_Text, New_Position, "is", Std_Ada_Escape));
          Free (Garbage);
 
          Initialize
