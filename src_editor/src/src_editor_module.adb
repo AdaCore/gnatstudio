@@ -1958,13 +1958,16 @@ package body Src_Editor_Module is
       Box : Source_Editor_Box;
       Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
+      Entity : Entity_Information;
    begin
       if Id.Show_Subprogram_Names then
          Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
 
          if Box /= null then
-            Show_Subprogram_Name
-              (Box, Get_Name (Compute_Parent_Entity (D)).all);
+            Entity := Compute_Parent_Entity (D);
+            if Entity /= null then
+               Show_Subprogram_Name (Box, Get_Name (Entity).all);
+            end if;
          end if;
 
       end if;
