@@ -424,6 +424,7 @@ file$(OBJ_EXT):
 	@echo $(CC) -c -g -O $< -o $(OBJ_DIR)/$@
 ifndef FAKE_COMPILE
 	@$(CC) -c -g -O $(C_INCLUDES) $(DEP_CFLAGS) $< -o $(OBJ_DIR)/$@
+	@$(post-compile)
 endif
 
 C_INCLUDES and DEP_CFLAGS should always be added to the compilation flags,
