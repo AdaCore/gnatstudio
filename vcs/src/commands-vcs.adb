@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,8 +20,11 @@
 
 with Glide_Intl; use Glide_Intl;
 with VFS;        use VFS;
+with Traces;     use Traces;
 
 package body Commands.VCS is
+
+   Me : constant Debug_Handle := Create ("Command.VCS");
 
    ----------
    -- Free --
@@ -64,11 +67,38 @@ package body Commands.VCS is
    -------------
 
    function Execute
-     (Command : access Commit_Command_Type) return Command_Return_Type is
+     (Command : access Commit_Command_Type) return Command_Return_Type
+   is
+      use String_List;
+
+      Node : List_Node;
+      Log  : List_Node;
+
+      File : List;
    begin
-      Commit (Command.Rep, Command.Filenames, Command.Logs);
+      Node := First (Command.Filenames);
+      Log  := First (Command.Logs);
+
+      --  Launch one command for each commit.
+      --  ??? This needs to be modified when allowing multiple-file commit
+      --  with same changelog.
+
+      while Node /= Null_Node loop
+         Append (File, Data (Node));
+         Commit (Command.Rep, File, Data (Log));
+
+         Free (File);
+         Node := Next (Node);
+         Log  := Next (Log);
+      end loop;
+
       Command_Finished (Command, True);
       return Success;
+
+   exception
+      when List_Empty =>
+         Trace (Me, "Logs do not correspond to files");
+         return Failure;
    end Execute;
 
    ------------
