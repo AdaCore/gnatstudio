@@ -23,16 +23,22 @@ with Prj.Tree;
 
 package Project_Hash is
 
+   type Paths_Type_Information is (Relative, Absolute, From_Pref);
+
    type Project_Data_Record is record
       Modified : Boolean := False;
       --  True if the project has been modified by the user, and not saved
       --  yet.
 
+      Paths_Type : Paths_Type_Information := From_Pref;
+      --  True if the paths in the project file should be stored as relative
+      --  paths.
    end record;
    --  The data stored for each project loaded in the kernel (ie the root
    --  project and all its imported projects).
 
-   No_Project_Data : constant Project_Data_Record := (Modified => False);
+   No_Project_Data : constant Project_Data_Record :=
+     (Modified => False, Paths_Type => From_Pref);
 
    Max_Projects_No_Overload : constant Prj.Tree.Project_Node_Id := 99;
    type Project_Header_Num is new Prj.Tree.Project_Node_Id
