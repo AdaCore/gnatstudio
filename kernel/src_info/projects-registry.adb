@@ -628,6 +628,14 @@ package body Projects.Registry is
       Set_As_Incomplete_When_Errors := False;
 
       Parse_Source_Files (Registry, Report_Error'Unrestricted_Access);
+
+   exception
+      --  We can get an unexpected exception (actually Directory_Error) if the
+      --  project file's path is invalid, for instance because it was
+      --  modified by the user.
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: "
+                & Exception_Information (E));
    end Recompute_View;
 
    ------------------------
