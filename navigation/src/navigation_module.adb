@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,35 +18,35 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
+with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
 
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Widget;                use Gtk.Widget;
+with Gdk.Types;                   use Gdk.Types;
+with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
+with Gtk.Button;                  use Gtk.Button;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Gtk.Stock;                   use Gtk.Stock;
+with Gtk.Toolbar;                 use Gtk.Toolbar;
+with Gtk.Widget;                  use Gtk.Widget;
 
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel.Console;        use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Glide_Result_View;         use Glide_Result_View;
-with Glide_Intl;                use Glide_Intl;
+with Glide_Result_View;           use Glide_Result_View;
+with Glide_Intl;                  use Glide_Intl;
 
-with Commands;                  use Commands;
-with Commands.Locations;        use Commands.Locations;
-with Traces;                    use Traces;
-with Basic_Types;               use Basic_Types;
-with String_Utils;              use String_Utils;
-with VFS;                       use VFS;
-with Language;                  use Language;
+with Commands;                    use Commands;
+with Commands.Locations;          use Commands.Locations;
+with Traces;                      use Traces;
+with Basic_Types;                 use Basic_Types;
+with String_Utils;                use String_Utils;
+with VFS;                         use VFS;
+with Language;                    use Language;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Ada.Exceptions;              use Ada.Exceptions;
 
 package body Navigation_Module is
 
@@ -138,8 +138,10 @@ package body Navigation_Module is
    procedure Set_Current_Line
      (Kernel : Kernel_Handle;
       File   : Virtual_File;
-      Line   : Natural);
-   --  Set current File's line.
+      Line   : Natural;
+      Center : Boolean := False);
+   --  Set current File's line, if Center is True the cursor is centered
+   --  on the view.
 
    function Get_Last_Line
      (Kernel : Kernel_Handle;
@@ -191,7 +193,8 @@ package body Navigation_Module is
    procedure Set_Current_Line
      (Kernel : Kernel_Handle;
       File   : Virtual_File;
-      Line   : Natural)
+      Line   : Natural;
+      Center : Boolean := False)
    is
       Line_Img : aliased String := Image (Line);
    begin
@@ -200,6 +203,12 @@ package body Navigation_Module is
          "Editor.cursor_set_position",
          (Full_Name (File).all'Unrestricted_Access,
           Line_Img'Unchecked_Access));
+      if Center then
+         Execute_GPS_Shell_Command
+           (Kernel,
+            "Editor.cursor_center",
+            (1 => Full_Name (File).all'Unrestricted_Access));
+      end if;
    end Set_Current_Line;
 
    -------------------
@@ -533,7 +542,7 @@ package body Navigation_Module is
 
          if Line < Last_Line then
             --  A block has been found, set cursor to its first line.
-            Set_Current_Line (Kernel, File, Line);
+            Set_Current_Line (Kernel, File, Line, Center => True);
          end if;
       end if;
 
@@ -607,7 +616,7 @@ package body Navigation_Module is
 
          if Line > 1 then
             --  A block has been found, set cursor to its first line.
-            Set_Current_Line (Kernel, File, Line);
+            Set_Current_Line (Kernel, File, Line, Center => True);
          end if;
       end if;
 
