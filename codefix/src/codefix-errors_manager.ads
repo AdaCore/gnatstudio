@@ -103,9 +103,7 @@ package Codefix.Errors_Manager is
    type Ptr_Correction_Manager is access all Correction_Manager;
 
    type Error_Callback is access procedure
-     (Message      : Error_Message; --  ??? Remove this parameter ?
-      Id           : Error_Id;
-      Solutions    : Solution_List; --  ??? Remove this parameter ?
+     (Id           : Error_Id;
       Current_Text : Text_Navigator_Abstr'Class;
       Corrector    : in out Correction_Manager);
    --  Type of procedure that can be called when a correctible error message
