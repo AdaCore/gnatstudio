@@ -87,6 +87,12 @@ package body VCS.ClearCase is
    --  Check that List corresponds to the output of a ClearCase checkout
    --  or a ClearCase mkelem command.
 
+   function Remove_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Check that List corresponds to the output of a ClearCase remove.
+
    ------------
    -- Insert --
    ------------
@@ -103,7 +109,7 @@ package body VCS.ClearCase is
          Insert (Kernel,
                  "   " & Data (Node),
                  False,
-                 False,
+                 True,
                  Mode);
 
          Node := Next (Node);
@@ -262,14 +268,14 @@ package body VCS.ClearCase is
             Skip_To_String (S, Index, Error_Pattern);
 
             if Index < S'Last - Error_Pattern'Length then
-               Console.Insert
+               Insert
                  (Kernel,
                   -"ClearCase error:",
                   Highlight_Sloc => False,
                   Mode           => Error);
 
                while List_Temp /= Null_Node loop
-                  Console.Insert
+                  Insert
                     (Kernel,
                      "    " & Data (List_Temp),
                      Highlight_Sloc => False,
@@ -465,6 +471,34 @@ package body VCS.ClearCase is
       return True;
    end Checkout_Handler;
 
+   --------------------
+   -- Remove_Handler --
+   --------------------
+
+   function Remove_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean
+   is
+      pragma Unreferenced (Kernel);
+
+      Last_Line : constant String := Data (Last (List));
+      Pattern   : constant String := "Removed ";
+   begin
+      if Last_Line'Length < Pattern'Length
+        or else Last_Line
+        (Last_Line'First
+           .. Last_Line'First + Pattern'Length - 1) /= Pattern
+      then
+         Insert (Head, Error);
+         Insert (List, Verbose);
+
+         return False;
+      end if;
+
+      return True;
+   end Remove_Handler;
+
    ---------
    -- Add --
    ---------
@@ -498,7 +532,7 @@ package body VCS.ClearCase is
             Insert (Kernel,
                     -"Clearcase: Adding element: "
                       & File & " ...",
-                    False, False, Info);
+                    False, True, Info);
 
             --  Create the end of the message.
 
@@ -636,9 +670,133 @@ package body VCS.ClearCase is
      (Rep       : access ClearCase_Record;
       Filenames : String_List.List)
    is
-      pragma Unreferenced (Rep, Filenames);
+      Kernel : Kernel_Handle
+        renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
+
+      File_Node : List_Node := First (Filenames);
+
    begin
-      null;
+      while File_Node /= Null_Node loop
+         declare
+            Args     : List;
+            Head     : List;
+            File     : constant String := Data (File_Node);
+            Dir      : constant String := Dir_Name (Data (File_Node));
+
+            Checkout_Dir_Command   : External_Command_Access;
+            Remove_Element_Command : External_Command_Access;
+            Checkin_Dir_Command    : External_Command_Access;
+
+            Fail_Message    : Console_Command_Access;
+            Success_Message : Console_Command_Access;
+
+         begin
+            Insert (Kernel,
+                    -"Clearcase: Removing element: "
+                      & File & " ...",
+                    False, True, Info);
+
+            --  Create the end of the message.
+
+            Create (Fail_Message,
+                    Kernel,
+                    -("Removing of ") & File & (-" failed."),
+                    False,
+                    True,
+                    Info);
+
+            Create (Success_Message,
+                    Kernel,
+                    -"... done.",
+                    False,
+                    True,
+                    Info);
+
+            --  Check out the directory.
+
+            Append (Args, "co");
+            Append (Args, "-c");
+            Append (Args, -"Removing " & File);
+            Append (Args, Dir);
+
+            Append (Head, -"ClearCase error: could not checkout " & Dir);
+
+            Create (Checkout_Dir_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkout_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  Add the file
+
+            Append (Args, "rm");
+            Append (Args, "-c");
+            Append (Args, -"Removing this element.");
+            Append (Args, File);
+
+            Append
+              (Head,
+               -"ClearCase error: could not remove the element "
+                 & File);
+
+            Create (Remove_Element_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Remove_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  Check in the directory.
+            Append (Args, "ci");
+            Append (Args, "-c");
+            Append (Args, -"Removed element: " & File);
+            Append (Args, Dir);
+
+            Append (Head, -"ClearCase error: could not checkin " & Dir);
+
+            Create (Checkin_Dir_Command,
+                    Kernel,
+                    "cleartool",
+                    "",
+                    Args,
+                    Head,
+                    Checkin_Handler'Access);
+
+            Free (Args);
+            Free (Head);
+
+            --  If the directory checkout was successful, create the element.
+            Add_Consequence_Action
+              (Checkout_Dir_Command,
+               Remove_Element_Command);
+
+            Add_Alternate_Action
+              (Checkout_Dir_Command,
+               Fail_Message);
+
+            Add_Alternate_Action
+              (Remove_Element_Command,
+               Copy (Fail_Message));
+
+            Add_Consequence_Action
+              (Checkin_Dir_Command,
+               Success_Message);
+
+            Enqueue (Rep.Queue, Checkout_Dir_Command);
+            Enqueue (Rep.Queue, Checkin_Dir_Command);
+         end;
+
+         File_Node := Next (File_Node);
+      end loop;
    end Remove;
 
    ------------
