@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -35,6 +35,7 @@ package C_Analyzer is
       Replace          : Replace_Text_Callback := null;
       Constructs       : Construct_List_Access := null;
       Callback         : Entity_Callback       := null;
+      Indent_Offset    : Natural               := 0;
       Enable_Cpp       : Boolean               := False);
    --  Analyze a given C/C++ source in Buffer, and perform source reformatting
    --  between lines From .. To if Format is True.
