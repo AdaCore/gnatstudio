@@ -697,8 +697,6 @@ display.
 @end menu
 
 
-@c ??? Must document the all-floating mode
-
 @noindent
 All the windows that are part of the GPS environment are under control
 of what is commonly called a multiple document interface (MDI for
@@ -989,6 +987,20 @@ simply close the floating window by clicking in the appropriate title
 bar button, and the window will be put back in GPS. If you actually
 want to close it, you need to click once again on the cross button in
 its title bar.
+
+@cindex All Floating
+
+A special mode is also available in GPS, where all windows are
+floating. The MDI area in the main window becomes invisible. This can
+be useful if your system or window manager provides windows-handling
+facilities that GPS does and you rely on them. It might also be used
+if you want to have windows on various virtual desktops, when your
+window manager has this feature.
+
+This special mode is activated through a preference (menu
+@code{Edit->Preferences}). This preference is entitled @b{All
+Floating}.
+
 
 @c --------------------------------------------------------------------
 @node Moving Windows
@@ -2369,6 +2381,8 @@ If you confirm that you want to delete the variable, GPS will simply
 remove the variable, and from now on act as if the variable always had
 the value it had when it was deleted.
 
+
+@c ??? Show how modified projects appear in explorer
 
 @c -------------------------------------------------------------------
 @node The Project Wizard
