@@ -5,11 +5,12 @@ Since Glide groups many tools, some of them have their own repository
 such as GtkAda and GVD.
 
 Some of the tools need additional sources to compile, so you need to set up
-the following links:
-- Put a link called "gvd" in the directory that contains this README file.
-  The link should point to the top-level directory of the GVD sources
+the following directories/links:
+- Copy/Move the top-level directory of the GVD sources in the directory that
+  contains this README file.
+  Using a link will work, except when using the project files.
 
-- Put a link called "gnat" in the directory that contains this README file.
+- Put a link called "gnat_src" in the directory that contains this README file.
   The link should point to the src/ada directory in the GNAT sources.
   This tool requires at least GNAT 3.15.
 
@@ -26,8 +27,9 @@ aunit/
 common/
 gbuilder/
 glide/
-gnat -> /home/my_account/gnat/src/ada
-gvd ->  /home/my_account/gvd
+gnat/
+gnat_src -> /home/my_account/gnat/src/ada
+gvd/
 hypergrep/
 kernel/
 prj_editor/
