@@ -102,14 +102,20 @@ package body Src_Info.LI_Utils is
       else
          D_Ptr := File.LI.Body_Info.Declarations;
          loop
-            exit when D_Ptr.Next = null;
+            if D_Ptr.Value.Declaration.Location.Line = Location.Line
+              and then D_Ptr.Value.Declaration.Location.Line = Location.Line
+            then
+               D_Ptr.Value.Declaration := No_Declaration;
+               exit;
+            end if;
+            if D_Ptr.Next = null then
+               D_Ptr.Next := new E_Declaration_Info_Node;
+               D_Ptr.Next.Next := null;
+               D_Ptr := D_Ptr.Next;
+               exit;
+            end if;
             D_Ptr := D_Ptr.Next;
          end loop;
-         --  ??? Shouldn't we try to locate existent declaration for
-         --  that Symbol_Name?
-         D_Ptr.Next := new E_Declaration_Info_Node;
-         D_Ptr.Next.Next := null;
-         D_Ptr := D_Ptr.Next;
       end if;
       Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
             Source_Filename,
@@ -420,10 +426,10 @@ package body Src_Info.LI_Utils is
          --  FIXME, should also search for LI_File in current
          --  declaration as well
          if Parent_Filename = Declaration_Info.Value.Declaration
-                              .Location.File.Source_Filename.all
+                                 .Location.File.Source_Filename.all
          then
-            Tmp_LI_File_Ptr := Declaration_Info.Value
-                               .Declaration.Location.File.LI;
+            Tmp_LI_File_Ptr := Declaration_Info.Value.Declaration
+                                 .Location.File.LI;
          else
             raise Parent_Not_Available;
          end if;
