@@ -42,12 +42,10 @@ package body Basic_Types is
    end Free;
 
    procedure Free (Ar : in out String_Array_Access) is
-      procedure Free is new
-        Ada.Unchecked_Deallocation (String_Array, String_Array_Access);
    begin
       if Ar /= null then
          Free (Ar.all);
-         Free (Ar);
+         Unchecked_Free (Ar);
       end if;
    end Free;
 
