@@ -1056,13 +1056,20 @@ package body Browsers.Canvas is
    is
       Button_Width  : constant Gint := Get_Width  (Item.Browser.Close_Pixmap);
       Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
-      X : constant Gint := Item.Title_Width + Item.Title_X
-        - (Num + 1) * (Margin + Button_Width);
-      Y, W, H : Gint;
-      Thick : constant Gint := Y_Thickness (Get_Style (Item.Browser.Canvas));
+      X             : constant Gint := Item.Title_Width + Item.Title_X -
+        (Num + 1) * (Margin + Button_Width);
+      Y, W, H       : Gint;
+      Thick         : constant Gint :=
+        Y_Thickness (Get_Style (Item.Browser.Canvas));
+
+      use type Gdk.Gdk_Drawable;
+
    begin
       --  No title ? Don't draw any button
-      if Item.Title_Layout = null then
+
+      if Item.Title_Layout = null
+        or else Pixmap (Item) = null
+      then
          return;
       end if;
 
@@ -1105,38 +1112,45 @@ package body Browsers.Canvas is
       W, H : Gint;
       XThick : constant Gint := X_Thickness (Get_Style (Item.Browser.Canvas));
       YThick : constant Gint := Y_Thickness (Get_Style (Item.Browser.Canvas));
-   begin
-      if Item.Title_Layout /= null then
-         Reset_Active_Areas (Item.all, Other_Areas => False);
 
-         Get_Pixel_Size (Item.Title_Layout, W, H);
-         Draw_Rectangle
-           (Pixmap (Item),
-            GC     => Get_Title_Background_GC (Browser_Item (Item)),
-            Filled => True,
-            X      => Item.Title_X + YThick,
-            Y      => Item.Title_Y + YThick,
-            Width  => Item.Title_Width - 2 * XThick,
-            Height => H);
-         Draw_Layout
-           (Drawable => Pixmap (Item),
-            GC       => Get_Black_GC (Get_Style (Item.Browser)),
-            X        => Margin + XThick + Item.Title_X,
-            Y        => YThick + Item.Title_Y,
-            Layout   => Item.Title_Layout);
-         Draw_Line
-           (Pixmap (Item),
-            Gc     => Get_Black_GC (Get_Style (Item.Browser)),
-            X1     => XThick + Item.Title_X,
-            Y1     => H + YThick + Item.Title_Y,
-            X2     => Item.Title_Width + Item.Title_X - XThick - 1,
-            Y2     => H + YThick + Item.Title_Y);
-         Draw_Title_Bar_Button
-           (Item   => Item,
-            Num    => 0,
-            Pixbuf => Item.Browser.Close_Pixmap,
-            Cb     => Build (Close_Item'Access, Item));
+      use type Gdk.Gdk_Drawable;
+
+   begin
+      if Item.Title_Layout = null
+        or else Pixmap (Item) = null
+      then
+         return;
       end if;
+
+      Reset_Active_Areas (Item.all, Other_Areas => False);
+
+      Get_Pixel_Size (Item.Title_Layout, W, H);
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => Get_Title_Background_GC (Browser_Item (Item)),
+         Filled => True,
+         X      => Item.Title_X + YThick,
+         Y      => Item.Title_Y + YThick,
+         Width  => Item.Title_Width - 2 * XThick,
+         Height => H);
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Black_GC (Get_Style (Item.Browser)),
+         X        => Margin + XThick + Item.Title_X,
+         Y        => YThick + Item.Title_Y,
+         Layout   => Item.Title_Layout);
+      Draw_Line
+        (Pixmap (Item),
+         Gc     => Get_Black_GC (Get_Style (Item.Browser)),
+         X1     => XThick + Item.Title_X,
+         Y1     => H + YThick + Item.Title_Y,
+         X2     => Item.Title_Width + Item.Title_X - XThick - 1,
+         Y2     => H + YThick + Item.Title_Y);
+      Draw_Title_Bar_Button
+        (Item   => Item,
+         Num    => 0,
+         Pixbuf => Item.Browser.Close_Pixmap,
+         Cb     => Build (Close_Item'Access, Item));
    end Redraw_Title_Bar;
 
    ----------------------------
