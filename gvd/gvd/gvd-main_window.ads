@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                                GPS                                --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,6 +21,7 @@
 with Glib;
 with Glib.Object;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
+with Gtk.Box; use Gtk.Box;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Main;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
@@ -65,6 +66,7 @@ package GVD.Main_Window is
       Process_Mdi         : Gtkada.MDI.MDI_Window;
       --  The main widget
 
+      Menu_Box            : Gtk.Box.Gtk_Hbox;
       Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
       Open_Program        : GVD_Open_Program;
