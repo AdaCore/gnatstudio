@@ -58,9 +58,23 @@ package Advanced_Breakpoint_Pkg is
    end record;
    type Advanced_Breakpoint_Access is access all Advanced_Breakpoint_Record'Class;
 
+   type Advanced_Breakpoint_Descriptor is record
+      null;
+   end record;
+
+   procedure Advanced_Breakpoint_Editor
+     (Descriptor : out Advanced_Breakpoint_Descriptor);
+   --  Open an advanced breakpoint properties editor and launch a main loop
+   --  until the ok or cancel button has been pressed.
+   --  Return the advanced properties descriptor.
+   --  Note that this is your responsibility to free the memory associated with
+   --  Descriptor, using Free below.
+
+   procedure Free (Descriptor : in out Advanced_Breakpoint_Descriptor);
+   --  Free the dynamic memory associated with Descriptor.
+
+private
    procedure Gtk_New (Advanced_Breakpoint : out Advanced_Breakpoint_Access);
    procedure Initialize (Advanced_Breakpoint : access Advanced_Breakpoint_Record'Class);
-
-   Advanced_Breakpoint : Advanced_Breakpoint_Access;
 
 end Advanced_Breakpoint_Pkg;
