@@ -27,6 +27,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Gtk.Alignment;       use Gtk.Alignment;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Label;           use Gtk.Label;
@@ -61,7 +62,6 @@ with Unchecked_Deallocation;
 with Pixmaps_IDE;   use Pixmaps_IDE;
 with Pixmaps_Prj;   use Pixmaps_Prj;
 with Prj_API;       use Prj_API;
-with Prj_Manager;   use Prj_Manager;
 with Value_Editors; use Value_Editors;
 with Glide_Kernel;  use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
@@ -199,11 +199,11 @@ package body Variable_Editors is
       --  be modified (or the variable would no longer be valid for a scenario.
 
       if Scenario_Variable_Only then
-         Set_Sensitive (Editor.Untyped_List_Variable, False);
-         Set_Sensitive (Editor.List_Scrolled, False);
-         Set_Sensitive (Editor.Untyped_Single_Variable, False);
-         Set_Sensitive (Editor.Single_Value, False);
          Set_Sensitive (Editor.Get_Environment, False);
+         Destroy (Editor.Untyped_List_Variable);
+         Destroy (Editor.Untyped_Alignment);
+         Destroy (Editor.Untyped_Single_Variable);
+         Destroy (Editor.Single_Alignment);
       end if;
 
       --  Fill the information for the variable
@@ -419,9 +419,8 @@ package body Variable_Editors is
          Str := External_Reference_Of (Var);
          if Str /= No_String then
             String_To_Name_Buffer (Str);
-            Change_Scenario_Variable
-              (User.Editor.Kernel,
-               Name_Buffer (Name_Buffer'First .. Name_Len),
+            Prj.Ext.Add
+              (Name_Buffer (Name_Buffer'First .. Name_Len),
                Get_Chars (Get_Entry (Editor.Data (User.Row).Type_Combo)));
             Recompute_View (User.Editor.Kernel);
          end if;
@@ -527,20 +526,17 @@ package body Variable_Editors is
             String_Type_Of (Var));
          Set_Text (Get_Entry (Editor.Data (Row).Type_Combo), "");
 
+         --  The value of the variable is necessarily defined through Prj.Ext
+         --  (when the project view was recomputed). We now read its current
+         --  value from there.
          Str := External_Reference_Of (Var);
          if Str /= No_String then
             String_To_Name_Buffer (Str);
             Str := Prj.Ext.Value_Of (Name_Find);
-            if Str /= No_String then
-               String_To_Name_Buffer (Str);
-               Set_Text
-                 (Get_Entry (Editor.Data (Row).Type_Combo),
-                  Name_Buffer (Name_Buffer'First .. Name_Len));
-            else
-               Set_Text (Get_Entry (Editor.Data (Row).Type_Combo), "");
-               Display_Expr (Get_Entry (Editor.Data (Row).Type_Combo),
-                             Value_Of (Var));
-            end if;
+            String_To_Name_Buffer (Str);
+            Set_Text
+              (Get_Entry (Editor.Data (Row).Type_Combo),
+               Name_Buffer (Name_Buffer'First .. Name_Len));
          end if;
 
          Show_All (Editor.Data (Row).Type_Combo);
@@ -703,13 +699,17 @@ package body Variable_Editors is
                      Name_Buffer (Name_Buffer'First .. Name_Len) := N;
                      Set_Name_Of (Editor.Var, Name_Find);
                   end if;
-                  Set_Expression_Kind_Of
-                    (Editor.Var, Expression_Kind_Of (Expr));
+
+                  if Get_Active (Editor.Untyped_Single_Variable) then
+                     Set_Expression_Kind_Of (Editor.Var, Single);
+                  else
+                     Set_Expression_Kind_Of (Editor.Var, Prj.List);
+                  end if;
                end;
             end if;
 
             if Get_Active (Editor.Typed_Variable) then
-               --  Should delete previous type
+               --  ??? Should delete previous type
                Get_Name_String (Name_Of (Editor.Var));
                Name_Buffer (Name_Len + 1 .. Name_Len + 5) := "_Type";
                Name_Len := Name_Len + 5;
@@ -735,12 +735,14 @@ package body Variable_Editors is
                Set_Expression_Of (Editor.Var, Expr);
             end if;
 
-            Refresh (Editor.Var_Editor, Editor.Var);
-
             Recompute_View (Editor.Var_Editor.Kernel);
             --  ??? We don't really need to recompute the whole view, since
             --  ??? after all we only added a variable that doesn't have any
             --  ??? influence yet.
+            --
+            --  ??? We should register that the project is no longer normalized
+
+            Refresh (Editor.Var_Editor, Editor.Var);
 
             Destroy (Editor);
 
