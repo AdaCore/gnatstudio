@@ -934,36 +934,44 @@ package body Odd.Code_Editors is
       Pix : Gtk_Pixmap;
       Line_Height : constant Gint :=
         Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
-      Base_File : String := Base_File_Name (Editor.Current_File.all);
+
    begin
+      if Editor.Current_File = null then
+         return;
+      end if;
 
-      Hide_All (Editor.Buttons);
-      Freeze (Editor.Buttons);
+      declare
+         Base_File : String := Base_File_Name (Editor.Current_File.all);
+      begin
+         Hide_All (Editor.Buttons);
+         Freeze (Editor.Buttons);
 
-      --  Remove all existing breakpoints
+         --  Remove all existing breakpoints
 
-      while Tmp /= Null_List loop
-         Destroy (Get_Data (Tmp));
-         Tmp := Next (Tmp);
-      end loop;
-      Free (Editor.Breakpoint_Buttons);
-      Editor.Breakpoint_Buttons := Null_List;
+         while Tmp /= Null_List loop
+            Destroy (Get_Data (Tmp));
+            Tmp := Next (Tmp);
+         end loop;
 
-      --  Add the new ones
-      for B in Br'Range loop
-         if Br (B).File /= null
-           and then Br (B).File.all = Base_File
-         then
-            Gtk_New (Pix, Editor.Stop_Pixmap, Editor.Stop_Mask);
-            Put (Editor.Buttons, Pix,
-                 X => 0,
-                 Y => Gint (Br (B).Line - 1) * Line_Height + 3);
-            Prepend (Editor.Breakpoint_Buttons, Gtk_Widget (Pix));
-         end if;
-      end loop;
+         Free (Editor.Breakpoint_Buttons);
+         Editor.Breakpoint_Buttons := Null_List;
 
-      Show_All (Editor.Buttons);
-      Thaw (Editor.Buttons);
+         --  Add the new ones
+         for B in Br'Range loop
+            if Br (B).File /= null
+              and then Br (B).File.all = Base_File
+            then
+               Gtk_New (Pix, Editor.Stop_Pixmap, Editor.Stop_Mask);
+               Put (Editor.Buttons, Pix,
+                    X => 0,
+                    Y => Gint (Br (B).Line - 1) * Line_Height + 3);
+               Prepend (Editor.Breakpoint_Buttons, Gtk_Widget (Pix));
+            end if;
+         end loop;
+
+         Show_All (Editor.Buttons);
+         Thaw (Editor.Buttons);
+      end;
    end Update_Breakpoints;
 
 end Odd.Code_Editors;
