@@ -305,9 +305,18 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor");
 
+      Block_Highlighting := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Src-Editor-Block-Highlighting",
+         Default => True,
+         Blurb   =>
+           -"Should the editor enable block highlighting",
+         Nick    => -"Block highlighting"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Block_Highlighting), -"Editor");
+
       Block_Folding := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Block-Folding",
-         Default => False,
+         Default => True,
          Blurb   =>
            -"Should the editor enable block folding",
          Nick    => -"Block folding"));
@@ -368,7 +377,7 @@ package body Glide_Kernel.Preferences is
 
       Current_Block_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Current-Block-Color",
-         Default => "white",
+         Default => "#BBBBFF",
          Blurb   => -"Color for highlighting the current block",
          Nick    => -"Current block color"));
       Register_Property
