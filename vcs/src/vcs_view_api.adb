@@ -810,7 +810,7 @@ package body VCS_View_API is
                Add_Action (Annotate, On_Menu_Annotate'Access);
 
                if Actions (Annotate) /= null then
-                  Gtk_New (Item, Label => -"Undo " & Actions (Annotate).all);
+                  Gtk_New (Item, Label => -"Remove " & Actions (Annotate).all);
                   Append (Menu, Item);
                   Context_Callback.Connect
                     (Item, "activate",
