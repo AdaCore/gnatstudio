@@ -430,7 +430,7 @@ package body GUI_Utils is
             if Host = Windows then
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event) + 200);
+                      Activate_Time => Gdk.Event.Get_Time (Event) + 150);
             else
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
@@ -598,7 +598,7 @@ package body GUI_Utils is
                if Host = Windows then
                   Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
-                         Activate_Time => Gdk.Event.Get_Time (Event) + 200);
+                         Activate_Time => Gdk.Event.Get_Time (Event) + 150);
                else
                   Popup (Menu,
                          Button        => Gdk.Event.Get_Button (Event),
