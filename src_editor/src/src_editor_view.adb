@@ -1515,6 +1515,10 @@ package body Src_Editor_View is
             Set_Text (Layout, String'(Info (J).Text.all));
             Get_Pixel_Size (Layout, Buffer, Height);
 
+            if Buffer = 0 then
+               Buffer := 1;
+            end if;
+
             Widths (J) := Buffer;
 
             if Buffer > Width then
