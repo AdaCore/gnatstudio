@@ -649,6 +649,10 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
 
+      --  Make sure gdb will not ask too much interactive questions.
+      --  Interactive questions are better left to the GUI itself.
+      Send (Debugger, "set confirm off", Mode => Internal);
+
       --  Connect to the remote target if needed.
 
       if Debugger.Remote_Target /= null then
@@ -747,9 +751,6 @@ package body Debugger.Gdb is
          Interrupt (Debugger);
       end if;
 
-      --  Make sure gdb will not complain if the file is being run
-      Send (Debugger, "set confirm off");
-
       --  Now exit the debugger
       Send (Debugger, "quit", Wait_For_Prompt => False, Mode => Internal);
 
@@ -818,40 +819,34 @@ package body Debugger.Gdb is
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
+      Cmd                 : Basic_Types.String_Access;
+      Process             : Debugger_Process_Tab;
 
    begin
-      if Debugger.Remote_Target /= null then
-         declare
-            S : constant String :=
-              Send (Debugger, "load " & Exec, Mode => Hidden);
-
-         begin
-            if Match (No_Such_File_Regexp, S) /= 0 then
-               raise Executable_Not_Found;
-            end if;
-
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               ASCII.LF & S & ASCII.LF,
-               Set_Position => True);
-         end;
-
+      if Debugger.Remote_Target = null then
+         Cmd := new String' ("file " & Exec);
       else
-         declare
-            S : constant String :=
-              Send (Debugger, "file " & Exec, Mode => Hidden);
-
-         begin
-            if Match (No_Such_File_Regexp, S) /= 0 then
-               raise Executable_Not_Found;
-            end if;
-
-            Output_Text
-              (Convert (Debugger.Window, Debugger),
-               ASCII.LF & S & ASCII.LF,
-               Set_Position => True);
-         end;
+         Cmd := new String' ("load " & Exec);
       end if;
+
+      if Debugger.Window /= null then
+         Process := Convert (Debugger.Window, Debugger);
+         Output_Text (Process, Cmd.all & ASCII.LF, Set_Position => True);
+      end if;
+
+      declare
+         S : constant String := Send (Debugger, Cmd.all, Mode => Hidden);
+      begin
+         Free (Cmd);
+
+         if Match (No_Such_File_Regexp, S) /= 0 then
+            raise Executable_Not_Found;
+         end if;
+
+         if Process /= null and then S /= "" then
+            Output_Text (Process, S & ASCII.LF, Set_Position => True);
+         end if;
+      end;
 
       if Debugger.Window /= null then
          Display_Prompt (Debugger);
