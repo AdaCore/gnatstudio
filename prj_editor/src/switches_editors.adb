@@ -511,17 +511,19 @@ package body Switches_Editors is
             Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
 
-      Editor.Block_Refresh := True;
+      if not Editor.Block_Refresh then
+         Editor.Block_Refresh := True;
 
-      Set_Text (Cmd_Line, "");
+         Set_Text (Cmd_Line, "");
 
-      for K in Switches'Range loop
-         if Switches (K) /= null then
-            Append_Text (Cmd_Line, Switches (K).all & " ");
-         end if;
-      end loop;
+         for K in Switches'Range loop
+            if Switches (K) /= null then
+               Append_Text (Cmd_Line, Switches (K).all & " ");
+            end if;
+         end loop;
 
-      Editor.Block_Refresh := False;
+         Editor.Block_Refresh := False;
+      end if;
    end Set_Switches;
 
    ---------------------
