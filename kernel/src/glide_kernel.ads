@@ -97,6 +97,10 @@ package Glide_Kernel is
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
    --  Return the main window associated with the kernel.
+
+   function Get_Current_Window
+     (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
+   --  Return the window containing the current MDI Child.
    --  The main usage for this function should be to display the dialogs
    --  centered with regards to this window.
 
