@@ -130,8 +130,7 @@ package Odd.Process is
       Selected_Component : Items.Generic_Type_Access := null;
       --  The currently selected item, and its specific component.
 
-      Command_History : String_History.History_List
-        (Default_Command_History_Size, Command_History_Collapse_Entries);
+      Command_History : String_History.History_List;
       --  The history of commands for this process.
 
       Registered_Dialog : Gtk.Dialog.Gtk_Dialog := null;
