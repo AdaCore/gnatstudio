@@ -2,7 +2,7 @@
    Adapted from process.c in GNU Emacs.
    Copyright (C) 1985, 86, 87, 88, 93, 94, 95, 96, 1998
       Free Software Foundation, Inc.
-   Copyright (C) 2000, 2001 ACT-Europe.
+   Copyright (C) 2000, 2002 ACT-Europe.
 
 This file is part of GVD.
 
@@ -1927,7 +1927,8 @@ gvd_interrupt_process (struct GVD_Process* p)
           /* Detach from the foreground and child threads now that
              the foreground switching is over.  */
           if (foreground_thread)
-            AttachThreadInput (GetCurrentThreadId (), foreground_thread, FALSE);          if (child_thread)
+	    AttachThreadInput (GetCurrentThreadId (), foreground_thread, FALSE);
+	  if (child_thread)
             AttachThreadInput (GetCurrentThreadId (), child_thread, FALSE);
         }
     }
