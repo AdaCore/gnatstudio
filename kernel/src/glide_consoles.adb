@@ -240,8 +240,6 @@ package body Glide_Consoles is
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget
    is
-      pragma Warnings (Off, Node);
-      pragma Warnings (Off, User);
       Console : Glide_Console;
    begin
       if Node.Tag.all = "Console" then
