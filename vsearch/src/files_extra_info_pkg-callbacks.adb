@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
---                            ACT-Europe                             --
+--                      Copyright (C) 2001-2002                      --
+--                             ACT-Europe                            --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -27,9 +27,8 @@
 --  with Gtk.Enums; use Gtk.Enums;
 --  with Gtk.Style; use Gtk.Style;
 --  with Gtk.Widget; use Gtk.Widget;
-with Gtkada.File_Selection; use Gtkada.File_Selection;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Glide_Intl; use Glide_Intl;
-with GNAT.OS_Lib;
 
 package body Files_Extra_Info_Pkg.Callbacks is
 
@@ -44,12 +43,7 @@ package body Files_Extra_Info_Pkg.Callbacks is
    is
       Extra : constant Files_Extra_Info_Access :=
         Files_Extra_Info_Access (Object);
-      S       : constant String :=
-        File_Selection_Dialog
-         (-"Select a directory",
-          "." & GNAT.OS_Lib.Directory_Separator,
-          Dir_Only   => True,
-          Must_Exist => True);
+      S     : constant String := Select_Directory (-"Select a directory");
 
    begin
       if S /= "" then
