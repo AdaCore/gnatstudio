@@ -204,7 +204,9 @@ package body Commands is
          Node := First (Action.Next_Commands);
 
          while Node /= Null_Node loop
-            Enqueue (Queue, Data (Node), False);
+            Prepend (Queue.The_Queue, Queue.Queue_Node, Data (Node));
+            Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
+            Data (Node).Queue := Queue;
             Node := Next (Node);
          end loop;
 
