@@ -670,7 +670,6 @@ package body Python_Module is
       Result  : PyObject;
       Tmp     : Boolean;
       pragma Unreferenced (Ignored, Result, Tmp);
-      N       : Node_Ptr;
       Errors  : aliased Boolean;
 
    begin
@@ -681,6 +680,7 @@ package body Python_Module is
          Module_Name => "Python");
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+      Add_Default_Desktop_Item (Kernel, "Python_Console", Position_Bottom);
 
       Python_Module_Id.Script := new Python_Scripting_Record;
       Python_Module_Id.Script.Kernel := Kernel_Handle (Kernel);
@@ -693,15 +693,6 @@ package body Python_Module is
         (Python_Module_Id.Script.Interpreter,
          Get_Console (Kernel),
          Display_Prompt => False);
-
-      N     := new Node;
-      N.Tag := new String'("Python_Console");
-      Add_Default_Desktop_Item
-        (Kernel, N,
-         10, 10,
-         400, 100,
-         Normal, Position_Bottom,
-         Focus => False, Raised => False);
 
       --  Create the GPS module, in which all functions and classes are
       --  registered

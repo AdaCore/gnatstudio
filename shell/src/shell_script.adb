@@ -733,7 +733,6 @@ package body Shell_Script is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Script : Shell_Scripting;
-      N      : Node_Ptr;
    begin
       Shell_Module_Id := new Shell_Module_Id_Record;
       Register_Module
@@ -743,20 +742,12 @@ package body Shell_Script is
          Priority    => Glide_Kernel.Default_Priority);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+      Add_Default_Desktop_Item (Kernel, "Shell_Console", Position_Bottom);
 
       Script := new Shell_Scripting_Record;
       Script.Kernel := Kernel_Handle (Kernel);
       Register_Scripting_Language (Kernel, Script);
       Shell_Module_Id.Script := Script;
-
-      N     := new Node;
-      N.Tag := new String'("Shell_Console");
-      Add_Default_Desktop_Item
-        (Kernel, N,
-         10, 10,
-         400, 120,
-         Normal, Position_Bottom,
-         False, False);
 
       Register_Menu
         (Kernel,
