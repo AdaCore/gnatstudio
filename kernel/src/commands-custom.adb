@@ -721,9 +721,9 @@ package body Commands.Custom is
       Progress_Regexp : constant String :=
         Get_Attribute (Command, "progress-regexp", "");
       Progress_Current : constant Integer :=
-        Safe_Value (Get_Attribute (Command, "progress-current", "0"));
+        Safe_Value (Get_Attribute (Command, "progress-current", "1"));
       Progress_Final : constant Integer :=
-        Safe_Value (Get_Attribute (Command, "progress-final", "0"));
+        Safe_Value (Get_Attribute (Command, "progress-final", "2"));
       Progress_Hide : constant Boolean :=
         Get_Attribute (Command, "progress-hide", "true") = "true";
 
