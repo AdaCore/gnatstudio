@@ -1722,20 +1722,22 @@ package body GVD.Process is
 
       List := Top.First_Debugger;
 
-      if Visual_Debugger (List.Debugger) = Debugger then
-         Top.First_Debugger := List.Next;
-         Top.Current_Debugger := Top.First_Debugger.Debugger;
-      else
-         while List.Next /= null loop
-            if Visual_Debugger (List.Next.Debugger) = Debugger then
-               List.Next := List.Next.Next;
-               Top.Current_Debugger := List.Debugger;
+      if List /= null then
+         if Visual_Debugger (List.Debugger) = Debugger then
+            Top.First_Debugger := List.Next;
+            Top.Current_Debugger := Top.First_Debugger.Debugger;
+         else
+            while List.Next /= null loop
+               if Visual_Debugger (List.Next.Debugger) = Debugger then
+                  List.Next := List.Next.Next;
+                  Top.Current_Debugger := List.Debugger;
 
-               exit;
-            end if;
+                  exit;
+               end if;
 
-            List := List.Next;
-         end loop;
+               List := List.Next;
+            end loop;
+         end if;
       end if;
 
       --  ??? need to keep a ref for sessions, except that sessions are
@@ -1821,11 +1823,7 @@ package body GVD.Process is
       elsif Lowered_Command'Length <= Quit_String'Length
         and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
       then
-         if Debugger.Window.Standalone then
-            Close_Debugger (Debugger);
-         else
-            Display_Prompt (Debugger.Debugger);
-         end if;
+         Close_Debugger (Debugger);
 
       else
          --  Regular debugger command, send it.
