@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2004                            --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
-with Gtk.Arguments;         use Gtk.Arguments;
+with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Check_Button;      use Gtk.Check_Button;
@@ -38,24 +38,25 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Exceptions;            use Ada.Exceptions;
 
-with Projects.Editor; use Projects, Projects.Editor;
+with Projects.Editor;   use Projects, Projects.Editor;
 with Projects.Registry; use Projects.Registry;
+with Traces;            use Traces;
 
-with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Intl;       use Glide_Intl;
 with File_Utils;       use File_Utils;
-with Project_Viewers;  use Project_Viewers;
-with Project_Properties; use Project_Properties;
 
 package body Creation_Wizard is
 
    function First_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Box;
+     (Wiz                 : access Wizard_Base_Record'Class;
+      Force_Relative_Dirs : Boolean) return Gtk_Box;
    --  Return the widget to use for the "General" page in the wizard
 
    procedure Change_Forward_State (Wiz : access Gtk_Widget_Record'Class);
@@ -73,124 +74,40 @@ package body Creation_Wizard is
    --  Generate the project files from the contents of the wizard W.
    --  Return the directory/name of the project that was just created.
 
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
-   --  Called when a new page is selected in the wizard. We dynamically create
-   --  the page if needed.
-
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Wiz    : out Prj_Wizard;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Wiz := new Prj_Wizard_Record;
-      Creation_Wizard.Initialize (Wiz, Kernel);
-   end Gtk_New;
-
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Wiz    : access Prj_Wizard_Record'Class;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+     (Wiz                 : access Wizard_Base_Record'Class;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Force_Relative_Dirs : Boolean := False;
+      Ask_About_Loading   : Boolean := False)
    is
-      Page  : Project_Editor_Page;
-      Attr_Count : constant Natural := Attribute_Editors_Page_Count;
-      Count : constant Natural := Project_Editor_Pages_Count (Kernel);
       Main_Page_Box : Gtk_Box;
-      Box           : Gtk_Box;
-
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
-      Wiz.XML_Pages_Count := 0;
+      Wiz.Ask_About_Loading := Ask_About_Loading;
       Wizards.Initialize
         (Wiz, Kernel, -"Project setup", Num_Pages => 1);
 
+      Set_Sensitive (Next_Button (Wiz), False);
+      Set_Sensitive (Finish_Button (Wiz), False);
+
       Set_Toc (Wiz, 1, -"Naming the project", -"Creating a new project");
-      Main_Page_Box := First_Page (Wiz);
+      Main_Page_Box := First_Page (Wiz, Force_Relative_Dirs);
       Set_Page (Wiz, 1, Main_Page_Box);
-
-      --  "+1" here is for the "General" page, which is omitted in the result
-      --  of Attribute_Editors_Page_Count
-
-      for E in 1 .. Attr_Count + 1 loop
-         Box := Attribute_Editors_Page_Box
-           (Kernel           => Kernel,
-            Project          => No_Project,
-            General_Page_Box => Main_Page_Box,
-            Path_Widget      => Wiz.Project_Location,
-            Nth_Page         => E,
-            Context          => "wizard");
-         if Box /= null then
-            Wiz.XML_Pages_Count := Wiz.XML_Pages_Count + 1;
-            Add_Page (Wiz,
-                      Page         => Box,
-                      Title        => Attribute_Editors_Page_Name (E),
-                      Toc_Contents => Attribute_Editors_Page_Name (E));
-         end if;
-      end loop;
-
-      for E in 1 .. Count loop
-         Page := Get_Nth_Project_Editor_Page (Kernel, E);
-         Add_Page (Wiz,
-                   Page         => Widget_Factory
-                     (Page, No_Project,
-                      Name_As_Directory (Get_Text (Wiz.Project_Location))
-                      & Get_Text (Wiz.Project_Name),
-                      Kernel),
-                   Title        => Get_Title (Page),
-                   Toc_Contents => Get_Toc (Page));
-      end loop;
-
-      Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
    end Initialize;
-
-   -----------------
-   -- Switch_Page --
-   -----------------
-
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args)
-   is
-      W        : constant Prj_Wizard := Prj_Wizard (Wiz);
-      Page_Num : constant Guint := To_Guint (Args, 1);
-   begin
-      if Integer (Page_Num - 1) <= W.XML_Pages_Count then
-         null;
-
-      elsif Integer (Page_Num - 1) - W.XML_Pages_Count <=
-        Project_Editor_Pages_Count (W.Kernel)
-      then
-         declare
-            Languages : GNAT.OS_Lib.String_List := Get_Current_Value
-              (Kernel  => W.Kernel,
-               Pkg     => "",
-               Name    => "languages",
-               Index   => "");
-         begin
-            Refresh
-              (Page         => Get_Nth_Project_Editor_Page
-                 (W.Kernel, Integer (Page_Num - 1) - W.XML_Pages_Count),
-               Widget       => Get_Nth_Page (W, Integer (Page_Num)),
-               Project      => No_Project,
-               Languages    => Languages);
-            Free (Languages);
-         end;
-      end if;
-   end Switch_Page;
 
    --------------------------
    -- Change_Forward_State --
    --------------------------
 
    procedure Change_Forward_State (Wiz : access Gtk_Widget_Record'Class) is
-      W : constant Prj_Wizard := Prj_Wizard (Wiz);
+      W : constant Wizard_Base := Wizard_Base (Wiz);
    begin
       Set_Sensitive (Next_Button (W), Get_Text (W.Project_Name)'Length /= 0);
+      Set_Sensitive (Finish_Button (W), Get_Text (W.Project_Name)'Length /= 0);
    end Change_Forward_State;
 
    ------------------
@@ -198,7 +115,7 @@ package body Creation_Wizard is
    ------------------
 
    procedure Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
-      W       : constant Prj_Wizard := Prj_Wizard (Wiz);
+      W       : constant Wizard_Base := Wizard_Base (Wiz);
       Ignored : Message_Dialog_Buttons;
       pragma Unreferenced (Ignored);
 
@@ -263,7 +180,8 @@ package body Creation_Wizard is
    ----------------
 
    function First_Page
-     (Wiz : access Prj_Wizard_Record'Class) return Gtk_Box
+     (Wiz                 : access Wizard_Base_Record'Class;
+      Force_Relative_Dirs : Boolean) return Gtk_Box
    is
       Table  : Gtk_Table;
       Label  : Gtk_Label;
@@ -316,18 +234,22 @@ package body Creation_Wizard is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Advanced_Prj_Location'Access), Wiz);
 
-      Gtk_New (Frame, -"General");
-      Set_Border_Width (Frame, 5);
-      Pack_Start (Page, Frame, Expand => False);
+      if not Force_Relative_Dirs then
+         Gtk_New (Frame, -"General");
+         Set_Border_Width (Frame, 5);
+         Pack_Start (Page, Frame, Expand => False);
 
-      Gtk_New_Vbox (Box);
-      Set_Border_Width (Box, 5);
-      Add (Frame, Box);
+         Gtk_New_Vbox (Box);
+         Set_Border_Width (Box, 5);
+         Add (Frame, Box);
 
-      Gtk_New (Wiz.Relative_Paths, -"Use relative paths in the projects");
-      Set_Active (Wiz.Relative_Paths,
-                  Get_Pref (Wiz.Kernel, Generate_Relative_Paths));
-      Pack_Start (Box, Wiz.Relative_Paths, Expand => False);
+         Gtk_New (Wiz.Relative_Paths, -"Use relative paths in the projects");
+         Set_Active (Wiz.Relative_Paths,
+                     Get_Pref (Wiz.Kernel, Generate_Relative_Paths));
+         Pack_Start (Box, Wiz.Relative_Paths, Expand => False);
+      else
+         Wiz.Relative_Paths := null;
+      end if;
 
       Widget_Callback.Object_Connect
         (Next_Button (Wiz), "clicked",
@@ -347,11 +269,11 @@ package body Creation_Wizard is
         (Title          => -"Select project file location",
          Parent         => Gtk_Window (Get_Toplevel (W)),
          Base_Directory => Name_As_Directory
-           (Get_Text (Prj_Wizard (W).Project_Location)),
-         History        => Get_History (Prj_Wizard (W).Kernel));
+           (Get_Text (Wizard_Base (W).Project_Location)),
+         History        => Get_History (Wizard_Base (W).Kernel));
    begin
       if Name /= "" then
-         Set_Text (Prj_Wizard (W).Project_Location, Name);
+         Set_Text (Wizard_Base (W).Project_Location, Name);
       end if;
    end Advanced_Prj_Location;
 
@@ -360,17 +282,13 @@ package body Creation_Wizard is
    ------------------
 
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
-      Wiz        : constant Prj_Wizard := Prj_Wizard (W);
-      Count      : constant Natural := Project_Editor_Pages_Count (Wiz.Kernel);
+      Wiz        : constant Wizard_Base := Wizard_Base (W);
       Dir        : constant String := Name_As_Directory
         (Get_Text (Wiz.Project_Location));
       Name           : constant String := Get_Text (Wiz.Project_Name);
-      Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
-      Languages      : GNAT.OS_Lib.String_List := Get_Current_Value
-        (Kernel  => Wiz.Kernel,
-         Pkg     => "",
-         Name    => "languages",
-         Index   => "");
+      Relative_Paths : constant Boolean :=
+        Wiz.Relative_Paths = null
+        or else Get_Active (Wiz.Relative_Paths);
       Project        : Project_Type;
       Changed, Tmp   : Boolean;
       pragma Unreferenced (Changed, Tmp);
@@ -396,25 +314,9 @@ package body Creation_Wizard is
          Set_Paths_Type (Project, Absolute);
       end if;
 
-      Changed := Update_Project_Attributes
-        (Project            => Project,
-         Scenario_Variables => (1 .. 0 => No_Variable));
-
-      for P in 1 .. Count loop
-         --  We are only interested in the side effect of Project_Editor, since
-         --  we know for sure that the project will be modified
-         Changed := Project_Editor
-           (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
-            Project,
-            Wiz.Kernel,
-            Get_Nth_Page (Wiz, P + Wiz.XML_Pages_Count + 1),
-            Languages          => Languages,
-            Scenario_Variables => (1 .. 0 => No_Variable),
-            Ref_Project => Project);
-      end loop;
+      Generate_Project (Wiz, Project);
 
       Tmp := Save_Single_Project (Wiz.Kernel, Project);
-      Free (Languages);
       Pop_State (Wiz.Kernel);
 
       return Project_Path (Project);
@@ -424,17 +326,85 @@ package body Creation_Wizard is
    -- Run --
    ---------
 
-   function Run (Wiz : access Prj_Wizard_Record) return String is
+   function Run (Wiz : access Wizard_Base_Record'Class) return String is
+      Load_Project_Page : Gtk_Alignment;
+      Frame             : Gtk_Frame;
+      Load_Project      : Gtk_Check_Button;
+      Box               : Gtk_Vbox;
+      Label             : Gtk_Label;
    begin
+      if Wiz.Ask_About_Loading then
+         Gtk_New (Load_Project_Page, 0.0, 0.5, 1.0, 0.0);
+         Set_Border_Width (Load_Project_Page, 5);
+
+         Gtk_New (Frame);
+         Set_Border_Width (Frame, 5);
+         Add (Load_Project_Page, Frame);
+
+         Gtk_New_Vbox (Box, Spacing => 10);
+         Add (Frame, Box);
+         Gtk_New (Label, (-"Clicking on apply will generate the project") &
+                  ASCII.LF &
+                    (-"Warning: this operation may take a long time"));
+         Set_Alignment (Label, 0.0, 0.5);
+         Add (Box, Label);
+         Gtk_New (Load_Project, -"Automatically load the project");
+         Set_Active (Load_Project, True);
+         Add (Box, Load_Project);
+
+         Add_Page
+           (Wiz, Load_Project_Page, -"Loading the project", -"Load project");
+      end if;
+
       Show_All (Wiz);
       Set_Current_Page (Wiz, 1);
       Grab_Focus (Wiz.Project_Name);
 
       if Run (Wiz) = Gtk_Response_Apply then
-         return Generate_Prj (Wiz);
+         --  If we have a child project, report limitations.
+         --  Ignore trailing ".gpr" file extension in this check
+
+         declare
+            Name : constant String := Generate_Prj (Wiz);
+         begin
+            for J in reverse Name'First .. Name'Last - 4 loop
+               if Name (J) = '.' then
+                  Insert
+                    (Wiz.Kernel,
+                      -("Child projects must import or extend their parent"
+                        & " project. This is not done automatically by GPS,"
+                        & " and you will have to edit the project by hand to"
+                        & " make it valid."));
+                  Set_Active (Load_Project, False);
+                  exit;
+               elsif Name (J) = '/' or else Name (J) = Directory_Separator then
+                  exit;
+               end if;
+            end loop;
+
+            --  Load the project if needed
+
+            if Name /= ""
+              and then Wiz.Ask_About_Loading
+              and then Get_Active (Load_Project)
+            then
+               Glide_Kernel.Project.Load_Project (Wiz.Kernel, Name);
+            end if;
+
+            Destroy (Wiz);
+            return Name;
+         end;
       else
+         Destroy (Wiz);
          return "";
       end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
+         Destroy (Wiz);
+         return "";
    end Run;
 
 end Creation_Wizard;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2004                            --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,42 +23,50 @@ with Gtk.Check_Button;
 
 with Wizards;
 with Glide_Kernel;
+with Projects;
 
 package Creation_Wizard is
 
-   type Prj_Wizard_Record is new Wizards.Wizard_Record with private;
-   type Prj_Wizard is access all Prj_Wizard_Record'Class;
-
-   procedure Gtk_New
-     (Wiz    : out Prj_Wizard;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new project wizard.
-   --  New pages can be added at will with Add_Page
-   --  Default values for the various pages are taken from the project
-   --  currently loaded in Kernel.
+   type Wizard_Base_Record is abstract new Wizards.Wizard_Record with private;
+   type Wizard_Base is access all Wizard_Base_Record'Class;
 
    procedure Initialize
-     (Wiz    : access Prj_Wizard_Record'Class;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Internal function for the creation of a new wizard
+     (Wiz                 : access Wizard_Base_Record'Class;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Force_Relative_Dirs : Boolean := False;
+      Ask_About_Loading   : Boolean := False);
+   --  Initialize a new basic wizard.
+   --  It has a single page, to select the name and location of the project
+   --  (the user must provide both).
+   --  If Force_Relative_Dirs is False, then an extra button is added so that
+   --  the user can choose whether paths should be relative or absolute.
+   --  If Ask_About_Loading is true, then an extra page is appended at the end
+   --  of the wizard, and the user can select whether to load the project
+   --  immediately or not. Otherwise, the project is not loaded.
 
-   function Run (Wiz : access Prj_Wizard_Record) return String;
+   function Run (Wiz : access Wizard_Base_Record'Class) return String;
    --  Run the wizard and report the directory/name of the project that was
    --  created. The empty string is returned if the wizard was cancelled.
    --  Note that in this mode the wizard is modal.
-   --  The wizard is not destroyed on exit, it is your responsability to do
-   --  so. This allows you to access the extra pages you might have added to
-   --  the wizard with Add_Page.
+   --  The wizard is destroyed on exit
 
+   procedure Generate_Project
+     (Wiz     : access Wizard_Base_Record;
+      Project : in out Projects.Project_Type) is abstract;
+   --  This function is called once the project file itself has been created,
+   --  so that children of Wizard_Base_Record can add their own setup to
+   --  the project.
+   --  Project is the project being created, which hasn't been saved on the
+   --  disk yet at that point.
 
 private
 
-   type Prj_Wizard_Record is new Wizards.Wizard_Record with record
+   type Wizard_Base_Record is abstract new Wizards.Wizard_Record with record
       Project_Name      : Gtk.GEntry.Gtk_Entry;
       Project_Location  : Gtk.GEntry.Gtk_Entry;
       Relative_Paths    : Gtk.Check_Button.Gtk_Check_Button;
       Kernel            : Glide_Kernel.Kernel_Handle;
-      XML_Pages_Count   : Natural := 0;  --  number of pages defined by XML
+      Ask_About_Loading : Boolean;
    end record;
 
 end Creation_Wizard;
