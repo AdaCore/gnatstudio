@@ -1,0 +1,23 @@
+with "../gnat";
+with "../gtkada/gtkada";
+with "../prj_editor/prj_editor";
+with "../common/common";
+with "../widgets/widgets";
+with "../glide/glide";
+with "../gvd/gvd_common";
+with "kernel";
+
+project Kernel_Test is
+
+   for Source_Dirs use ("tests_src_info");
+
+   for Object_Dir use "obj";
+
+   for Source_Files use ("read_ali.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        ("-g", "-gnata", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
+   end Compiler;
+
+end Kernel_Test;
