@@ -98,8 +98,8 @@ package VFS is
    function Dir_Name (File : Virtual_File) return Cst_UTF8_String_Access;
    --  Return the directory name for File
 
-   function Read_File (File : Virtual_File) return UTF8_String_Access;
-   --  Return the contents of an entire file.
+   function Read_File (File : Virtual_File) return GNAT.OS_Lib.String_Access;
+   --  Return the contents of an entire file, encoded with the locale encoding.
    --  If the file cannot be found, return null.
    --  The caller is responsible for freeing the returned memory.
    --  This works transparently for remote files

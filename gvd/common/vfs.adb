@@ -269,7 +269,7 @@ package body VFS is
    -- Read_File --
    ---------------
 
-   function Read_File (File : Virtual_File) return UTF8_String_Access is
+   function Read_File (File : Virtual_File) return String_Access is
    begin
       if File.Value = null then
          return null;
@@ -444,8 +444,15 @@ package body VFS is
            (Str,
             Read'Access,
             Written'Access);
-         Written := Write (File.FD, To_Address (S), Written);
-         Free (S);
+
+         if S = Null_Ptr then
+            --  Couldn't convert ? Just save the string as is, this is better
+            --  than nothing
+            Written := Write (File.FD, Str'Address, Str'Length);
+         else
+            Written := Write (File.FD, To_Address (S), Written);
+            Free (S);
+         end if;
       else
          Written := Write (File.FD, Str'Address, Str'Length);
       end if;
