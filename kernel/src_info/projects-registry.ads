@@ -75,7 +75,8 @@ package Projects.Registry is
    --  Indicate to Register that the value for the environment values has
    --  changed, and that the project views need to be recomputed.
 
-   function Scenario_Variables (Registry : Project_Registry)
+   function Scenario_Variables
+     (Registry : Project_Registry)
       return Projects.Scenario_Variable_Array;
    --  Return the list of scenario variables used in the whole project
    --  hierarchy. The result is cached for efficiency
@@ -86,7 +87,8 @@ package Projects.Registry is
    --  called.
    --  This function is only needed for internal use in the projects hierarchy.
 
-   function Get_Root_Project (Registry : Project_Registry)
+   function Get_Root_Project
+     (Registry : Project_Registry)
       return Projects.Project_Type;
    --  Return the root project of the hierarchy
 
