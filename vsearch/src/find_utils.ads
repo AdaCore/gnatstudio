@@ -169,6 +169,13 @@ package Find_Utils is
    --  Free the memory both for the pointer and for the internal fields. It
    --  dispatches to calls to Free for Files_Context
 
+   function Match
+     (Context : access Search_Context'Class; Buffer : String) return Integer;
+   --  Check if Context matches Buffer, and return the index of the first
+   --  match, or -1 if there is no match
+   --  This automatically uses either a regexp or a faster Boyer Moore methode
+   --  for constant strings.
+
    Invalid_Context : exception;
    --  Raised when trying to access the components in Search_Context
 

@@ -69,8 +69,10 @@ package body Find_Utils is
    --  Mono_Comments   end of line terminated comments
    --  Multi_Comments  (possibly) multi-line comments
 
-   type Scan_Callback is access procedure (Match : Match_Result);
-   --  Callback for a match in a buffer
+   type Scan_Callback is access
+     function (Match : Match_Result) return Boolean;
+   --  Callback for a match in a buffer.
+   --  If it returns False, no more match will be checked.
 
    procedure Scan_Buffer_No_Scope
      (Buffer     : String;
@@ -79,8 +81,10 @@ package body Find_Utils is
       Ref_Index  : in out Integer;
       Ref_Line   : in out Integer;
       Ref_Column : in out Integer);
-   --  Scan Buffer for possible matches. Buffer is assumes to be a single valid
-   --  scope, and thus no scope handling is performed.
+   --  Find matches of Context in Buffer, starting at Buffer'FIrst, and until
+   --  either the end of the buffer or Callback returns False.
+   --  Buffer is assumes to be a single valid scope, and thus no scope handling
+   --  is performed.
    --  Ref_Index is assumed to correspond to position Ref_Line and
    --  Ref_Column in the original file. They are automatically updated when new
    --  positions are computed, so that they can be used during the next call to
@@ -161,6 +165,37 @@ package body Find_Utils is
       return Buffer'Last;
    end End_Of_Line;
 
+   -----------
+   -- Match --
+   -----------
+
+   function Match
+     (Context : access Search_Context'Class; Buffer : String) return Integer
+   is
+      Result : Integer := -1;
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Simple callback for the search algorithm
+
+      --------------
+      -- Callback --
+      --------------
+
+      function Callback (Match : Match_Result) return Boolean is
+      begin
+         Result := Match.Index;
+         return False;
+      end Callback;
+
+      Index : Integer := Buffer'First;
+      Line, Column : Integer := 0;
+   begin
+      Scan_Buffer_No_Scope
+        (Buffer, Context, Callback'Unrestricted_Access,
+         Index, Line, Column);
+      return Result;
+   end Match;
+
    --------------------------
    -- Scan_Buffer_No_Scope --
    --------------------------
@@ -225,14 +260,17 @@ package body Find_Utils is
                Line : constant String :=
                  Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
             begin
-               Callback (Match_Result'
+               if not Callback (Match_Result'
                  (Length     => Line'Length,
                   Index      => Pos,
                   Line       => Ref_Line,
                   Column     => Ref_Column,
                   End_Column =>
                     Ref_Column + Context.Sub_Matches (0).Last - Pos + 1,
-                  Text       => Line));
+                  Text       => Line))
+               then
+                  return;
+               end if;
             end;
 
             Pos := Pos + 1;
@@ -274,13 +312,16 @@ package body Find_Utils is
                   Line : constant String :=
                     Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
                begin
-                  Callback (Match_Result'
+                  if not Callback (Match_Result'
                     (Length     => Line'Length,
                      Index      => Pos,
                      Line       => Ref_Line,
                      Column     => Ref_Column,
                      End_Column => Ref_Column + Context.Look_For'Length,
-                     Text       => Line));
+                     Text       => Line))
+                  then
+                     return;
+                  end if;
                end;
             end if;
 
@@ -597,10 +638,10 @@ package body Find_Utils is
       Result : Match_Result_Array_Access := null;
       Count  : Natural := 0;
 
-      procedure Callback (Match : Match_Result);
+      function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
 
-      procedure Callback (Match : Match_Result) is
+      function Callback (Match : Match_Result) return Boolean is
          Tmp  : Match_Result_Array_Access;
          Size : Natural := 0;
       begin
@@ -623,6 +664,7 @@ package body Find_Utils is
          end if;
 
          Result (Count) := new Match_Result' (Match);
+         return True;
       end Callback;
 
    begin
