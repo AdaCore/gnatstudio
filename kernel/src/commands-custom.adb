@@ -48,7 +48,7 @@ with System;
 
 package body Commands.Custom is
 
-   Me : constant Debug_Handle := Create ("Commands.Custom");
+   Me : constant Debug_Handle := Create ("Commands.Custom", Off);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
