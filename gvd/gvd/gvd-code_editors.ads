@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -39,12 +39,10 @@ with Glib;
 with Glib.Object;
 with Gdk.Color;
 with Gtk.Paned;
-with Gtk.Scrolled_Window;
 with Gtk.Widget;
 with Gtk.Box;
 with Gtkada.Types;
 with Language;
-with GVD.Explorer;
 with GVD.Text_Box.Asm_Editor;
 with GVD.Text_Box.Source_Editor;
 with GVD.Types;
@@ -68,11 +66,6 @@ package GVD.Code_Editors is
      (Editor      : access Code_Editor_Record'Class;
       Process     : access Glib.Object.GObject_Record'Class);
    --  Internal procedure.
-
-   procedure Apply_Mode
-     (Editor : access Code_Editor_Record;
-      Mode   : GVD.Text_Box.Source_Editor.View_Mode);
-   --  Apply mode changes to the editor.
 
    procedure Show_Message
      (Editor      : access Code_Editor_Record;
@@ -154,16 +147,6 @@ package GVD.Code_Editors is
       return GVD.Text_Box.Source_Editor.Source_Editor;
    --  Return the widget used to display the source code
 
-   function Get_Explorer_Scroll
-     (Editor : access Code_Editor_Record'Class)
-      return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-   --  Return the window containing the Explorer.
-
-   function Get_Explorer
-     (Editor : access Code_Editor_Record'Class)
-      return GVD.Explorer.Explorer_Access;
-   --  Return the explorer associated with Editor.
-
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
       return GVD.Text_Box.Asm_Editor.Asm_Editor;
@@ -178,10 +161,6 @@ package GVD.Code_Editors is
      (Editor : access Code_Editor_Record) return VFS.Virtual_File;
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
-
-   procedure Display_Selection (Editor : access Code_Editor_Record);
-   --  Adjust the vertical position of the scrolled window
-   --  so that the current selection is visible.
 
    procedure Set_Current_Language
      (Editor : access Code_Editor_Record;
@@ -220,9 +199,6 @@ private
 
       Process          : Glib.Object.GObject;
       --  The process tab in which the editor is found.
-
-      Explorer        : GVD.Explorer.Explorer_Access;
-      Explorer_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    end record;
 
 end GVD.Code_Editors;

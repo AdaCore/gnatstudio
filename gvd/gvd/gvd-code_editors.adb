@@ -20,16 +20,11 @@
 
 with Glib;                use Glib;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Enums;           use Gtk.Enums;
-with Gtk.Ctree;           use Gtk.Ctree;
 with Gtk.Paned;           use Gtk.Paned;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with Pango.Font;          use Pango.Font;
-with GVD.Explorer;        use GVD.Explorer;
-with GVD.Process;         use GVD.Process;
 with GVD.Types;           use GVD.Types;
 with Basic_Types;         use Basic_Types;
 with VFS;                 use VFS;
@@ -37,7 +32,6 @@ with Config;              use Config;
 
 package body GVD.Code_Editors is
 
-   use GVD;
    use GVD.Text_Box.Asm_Editor;
    use GVD.Text_Box.Source_Editor;
 
@@ -161,28 +155,6 @@ package body GVD.Code_Editors is
       return Editor.Source;
    end Get_Source;
 
-   ------------------
-   -- Get_Explorer --
-   ------------------
-
-   function Get_Explorer
-     (Editor : access Code_Editor_Record'Class)
-      return GVD.Explorer.Explorer_Access is
-   begin
-      return Editor.Explorer;
-   end Get_Explorer;
-
-   -------------------------
-   -- Get_Explorer_Scroll --
-   -------------------------
-
-   function Get_Explorer_Scroll
-     (Editor : access Code_Editor_Record'Class)
-      return Gtk.Scrolled_Window.Gtk_Scrolled_Window is
-   begin
-      return Editor.Explorer_Scroll;
-   end Get_Explorer_Scroll;
-
    -------------
    -- Get_Asm --
    -------------
@@ -281,27 +253,6 @@ package body GVD.Code_Editors is
       return Get_Current_File (Editor.Source);
    end Get_Current_File;
 
-   -----------------------
-   -- Display_Selection --
-   -----------------------
-
-   procedure Display_Selection (Editor : access Code_Editor_Record) is
-      Node : Gtk_Ctree_Node;
-      use Node_List;
-
-   begin
-      if Get_Selection (Editor.Explorer) = Null_List then
-         return;
-      end if;
-
-      Node := Node_List.Get_Data
-        (Node_List.First (Get_Selection (Editor.Explorer)));
-
-      if Node_Is_Visible (Editor.Explorer, Node) /= Visibility_Full then
-         Node_Moveto (Editor.Explorer, Node, 0, 0.1, 0.1);
-      end if;
-   end Display_Selection;
-
    --------------------------
    -- Set_Current_Language --
    --------------------------
@@ -312,80 +263,6 @@ package body GVD.Code_Editors is
    begin
       Set_Current_Language (Editor.Source, Lang);
    end Set_Current_Language;
-
-   ----------------
-   -- Apply_Mode --
-   ----------------
-
-   procedure Apply_Mode
-     (Editor : access Code_Editor_Record; Mode : View_Mode)
-   is
-      Process : constant Visual_Debugger :=
-        Visual_Debugger (Editor.Process);
-   begin
-      if Mode = Editor.Mode then
-         return;
-      end if;
-
-      case Editor.Mode is
-         when Source =>
-            Detach (Editor.Source);
-         when Asm =>
-            Remove (Editor, Editor.Asm);
-         when Source_Asm =>
-            Detach (Editor.Source);
-            Remove (Editor.Source_Asm_Pane, Editor.Asm);
-            Remove (Editor, Editor.Source_Asm_Pane);
-      end case;
-
-      Editor.Mode := Mode;
-
-      case Editor.Mode is
-         when Source =>
-            Attach (Editor.Source, Editor);
-            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True,
-                      Process => Glib.Object.GObject (Process));
-
-            if Process.Breakpoints /= null then
-               Update_Breakpoints
-                 (Editor.Source, Process.Breakpoints.all, Editor.Process);
-            end if;
-
-         when Asm =>
-            Add (Editor, Editor.Asm);
-            Show_All (Editor.Asm);
-
-            if Editor.Asm_Address /= null then
-               Set_Address (Editor.Asm, Editor.Asm_Address.all);
-            end if;
-
-            Highlight_Address_Range (Editor.Asm, Editor.Source_Line);
-
-            if Process.Breakpoints /= null then
-               Update_Breakpoints (Editor.Asm, Process.Breakpoints.all);
-            end if;
-
-         when Source_Asm =>
-            Add (Editor, Editor.Source_Asm_Pane);
-            Attach (Editor.Source, Editor.Source_Asm_Pane);
-            Add2 (Editor.Source_Asm_Pane, Editor.Asm);
-            Show_All (Editor.Source_Asm_Pane);
-
-            if Editor.Asm_Address /= null then
-               Set_Address (Editor.Asm, Editor.Asm_Address.all);
-            end if;
-
-            Highlight_Address_Range (Editor.Asm, Editor.Source_Line);
-            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True,
-                      Process => Glib.Object.GObject (Process));
-
-            if Process.Breakpoints /= null then
-               Update_Breakpoints
-                 (Editor.Source, Process.Breakpoints.all, Editor.Process);
-               Update_Breakpoints (Editor.Asm, Process.Breakpoints.all);
-            end if;
-      end case;
-   end Apply_Mode;
 
    -----------------
    -- Set_Address --
