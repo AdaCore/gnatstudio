@@ -693,7 +693,10 @@ package body Language.Custom is
    function Comment_Line
      (Lang    : access Custom_Language;
       Line    : String;
-      Comment : Boolean := True) return String is
+      Comment : Boolean := True) return String
+   is
+      procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
+      pragma Import (C, C_Free, "free");
    begin
       if Lang.Comment_Line = null then
          if Lang.Parent = null then
@@ -706,22 +709,22 @@ package body Language.Custom is
 
       if Comment then
          declare
-            S   : chars_ptr :=
+            S   : constant chars_ptr :=
               Lang.Comment_Line (Line, True, Line'Length);
             Val : constant String := Value (S);
 
          begin
-            Free (S);
+            C_Free (S);
             return Val;
          end;
       else
          declare
-            S   : chars_ptr :=
+            S   : constant chars_ptr :=
               Lang.Comment_Line (Line, False, Line'Length);
             Val : constant String := Value (S);
 
          begin
-            Free (S);
+            C_Free (S);
             return Val;
          end;
       end if;
