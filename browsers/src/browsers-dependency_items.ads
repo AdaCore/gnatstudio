@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -29,7 +29,7 @@ with Types;
 
 package Browsers.Dependency_Items is
 
-   type Dependency_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
+   type Dependency_Browser_Record is new Browsers.Canvas.General_Browser_Record
      with private;
    type Dependency_Browser is access all Dependency_Browser_Record'Class;
 
@@ -42,26 +42,26 @@ package Browsers.Dependency_Items is
    ----------------
    --  These items represent source files from the application.
 
-   type File_Item_Record is new Browsers.Canvas.Glide_Browser_Text_Item_Record
+   type File_Item_Record is new Browsers.Canvas.Text_Item_With_Arrows_Record
      with private;
    type File_Item is access all File_Item_Record'Class;
 
    procedure Gtk_New
      (Item    : out File_Item;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       File    : Src_Info.Internal_File);
    --  Create a new dependency item that represents Dep.
 
    procedure Gtk_New
      (Item            : out File_Item;
-      Browser         : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser         : access Browsers.Canvas.General_Browser_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source_Filename : String);
    --  Create a new dependency item directly from a source filename
 
    procedure Initialize
      (Item    : access File_Item_Record'Class;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       File    : Src_Info.Internal_File);
    --  Internal initialization function
 
@@ -80,7 +80,7 @@ package Browsers.Dependency_Items is
 
    function Contextual_Factory
      (Item  : access File_Item_Record;
-      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  Return the context to use for this item
@@ -89,7 +89,7 @@ package Browsers.Dependency_Items is
    -- Dependency links --
    ----------------------
 
-   type Dependency_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
+   type Dependency_Link_Record is new Browsers.Canvas.Browser_Link_Record
      with private;
    type Dependency_Link is access all Dependency_Link_Record'Class;
 
@@ -101,7 +101,7 @@ package Browsers.Dependency_Items is
 
 private
    type File_Item_Record is new
-     Browsers.Canvas.Glide_Browser_Text_Item_Record with
+     Browsers.Canvas.Text_Item_With_Arrows_Record with
    record
       Source : Src_Info.Internal_File;
       Project_Name : Types.Name_Id := Types.No_Name;
@@ -113,13 +113,13 @@ private
       --  all the children have been parsed.
    end record;
 
-   type Dependency_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record
+   type Dependency_Link_Record is new Browsers.Canvas.Browser_Link_Record
    with record
       Dep : Src_Info.Dependency_Info;
    end record;
 
    type Dependency_Browser_Record is new
-     Browsers.Canvas.Glide_Browser_Record with
+     Browsers.Canvas.General_Browser_Record with
    record
       Idle_Id : Gtk.Main.Idle_Handler_Id;
    end record;

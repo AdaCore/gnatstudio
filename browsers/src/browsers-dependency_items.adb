@@ -99,7 +99,7 @@ package body Browsers.Dependency_Items is
    --  Open the file described in Context for analysis in the browser.
 
    function Find_File
-     (In_Browser : access Glide_Browser_Record'Class; Filename : String)
+     (In_Browser : access General_Browser_Record'Class; Filename : String)
       return Canvas_Item;
    --  Return the child that shows Filename in the browser, or null if Filename
    --  is not already displayed in the canvas.
@@ -161,7 +161,7 @@ package body Browsers.Dependency_Items is
       return Gtkada.MDI.MDI_Child;
    --  Open a new browser that supports all the types described in
    --  Browser_Type.
-   --  If there is already a browser in Glide2 that handles all the types
+   --  If there is already a browser in GPS that handles all the types
    --  Browser_Type, we re-use this one instead.
 
    procedure Destroy_Idle (Data : in out Examine_Dependencies_Idle_Data);
@@ -232,7 +232,7 @@ package body Browsers.Dependency_Items is
          Context_Callback.Object_Connect
            (Mitem, "activate",
             Context_Callback.To_Marshaller (Open_File'Access),
-            Slot_Object => Glide_Browser (Object),
+            Slot_Object => General_Browser (Object),
             User_Data   => Context);
 
          Gtk_New (Check, Label => -"Hide system files");
@@ -414,11 +414,11 @@ package body Browsers.Dependency_Items is
                        Force => False,
                        Vertical_Layout =>
                          Get_Pref (Kernel, Browsers_Vertical_Layout));
-               Refresh_Canvas (Get_Canvas (Browser));
             end if;
          end if;
       end if;
 
+      Refresh_Canvas (Get_Canvas (Browser));
       Pop_State (Kernel_Handle (Kernel));
 
    exception
@@ -455,8 +455,9 @@ package body Browsers.Dependency_Items is
                  Vertical_Layout =>
                    Get_Pref (Get_Kernel (Data.Browser),
                              Browsers_Vertical_Layout));
-         Refresh_Canvas (Get_Canvas (Data.Browser));
       end if;
+
+      Refresh_Canvas (Get_Canvas (Data.Browser));
 
       --  Center the initial item
       Show_Item (Get_Canvas (Data.Browser), Data.Item);
@@ -476,7 +477,7 @@ package body Browsers.Dependency_Items is
      (Data : Examine_Dependencies_Idle_Data) return Boolean
    is
       Child : File_Item;
-      Link  : Glide_Browser_Link;
+      Link  : Browser_Link;
       Dep   : Dependency;
    begin
       if Get (Data.Iter.all) = No_LI_File then
@@ -498,7 +499,7 @@ package body Browsers.Dependency_Items is
                if not Has_Link
                  (Get_Canvas (Data.Browser), Child, Data.Item)
                then
-                  Link := new Glide_Browser_Link_Record;
+                  Link := new Browser_Link_Record;
                   Add_Link
                     (Get_Canvas (Data.Browser), Link => Link,
                      Src => Child, Dest => Data.Item);
@@ -572,6 +573,7 @@ package body Browsers.Dependency_Items is
             null;
          end loop;
          Destroy_Idle (Data);
+         Refresh_Canvas (Get_Canvas (Browser));
       end if;
 
       --  All memory is freed at the end of Examine_From_Dependencies_Idle
@@ -636,40 +638,21 @@ package body Browsers.Dependency_Items is
    ---------------
 
    function Find_File
-     (In_Browser : access Glide_Browser_Record'Class; Filename : String)
+     (In_Browser : access General_Browser_Record'Class; Filename : String)
       return Canvas_Item
    is
-      Found : Canvas_Item := null;
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Check whether Item contains File
-
-      ----------------
-      -- Check_Item --
-      ----------------
-
-      function Check_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-      begin
-         if Item.all in File_Item_Record'Class
-           and then Get_Source_Filename (Get_Source (File_Item (Item))) =
-           Filename
-         then
-            Found := Canvas_Item (Item);
-            return False;
-         end if;
-
-         return True;
-      end Check_Item;
-
+      Iter : Item_Iterator := Start (Get_Canvas (In_Browser));
+      Item : Canvas_Item;
    begin
-      For_Each_Item (Get_Canvas (In_Browser), Check_Item'Unrestricted_Access);
-      return Found;
+      loop
+         Item := Get (Iter);
+         exit when Item = null
+           or else Get_Source_Filename (Get_Source (File_Item (Item))) =
+           Filename;
+
+         Next (Iter);
+      end loop;
+      return Item;
    end Find_File;
 
    ---------------------------
@@ -821,7 +804,7 @@ package body Browsers.Dependency_Items is
       end if;
 
       return Contextual_Factory
-        (Item    => Glide_Browser_Item (Selected_Item (Browser)),
+        (Item    => Browser_Item (Selected_Item (Browser)),
          Browser => Browser,
          Event   => null,
          Menu    => null);
@@ -839,33 +822,8 @@ package body Browsers.Dependency_Items is
       use String_List_Utils.String_List;
       Node    : List_Node;
       Browser : Dependency_Browser;
-
       Found   : Canvas_Item;
-
-      function Unexpanded
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Set Found to the first canvas item which has unexpanded ancestors or
-      --  children.
-
-      ----------------
-      -- Unexpanded --
-      ----------------
-
-      function Unexpanded
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
-      is
-         pragma Unreferenced (Canvas);
-         It : constant File_Item := File_Item (Item);
-      begin
-         if Get_Left_Arrow (It) or else Get_Right_Arrow (It) then
-            Found := Canvas_Item (Item);
-            return False;
-         end if;
-
-         return True;
-      end Unexpanded;
+      Iter    : Item_Iterator;
 
    begin
       if Command = "uses_all" then
@@ -876,8 +834,15 @@ package body Browsers.Dependency_Items is
 
          loop
             Found := null;
-            For_Each_Item
-              (Get_Canvas (Browser), Unexpanded'Unrestricted_Access);
+            Iter := Start (Get_Canvas (Browser));
+            loop
+               Found := Get (Iter);
+               exit when Found = null
+                 or else Get_Left_Arrow (File_Item (Found))
+                 or else Get_Right_Arrow (File_Item (Found));
+               Next (Iter);
+            end loop;
+
             exit when Found = null;
 
             Examine_Dependencies
@@ -964,7 +929,7 @@ package body Browsers.Dependency_Items is
 
    procedure Gtk_New
      (Item    : out File_Item;
-      Browser : access Glide_Browser_Record'Class;
+      Browser : access General_Browser_Record'Class;
       File    : Internal_File) is
    begin
       Item := new File_Item_Record;
@@ -977,7 +942,7 @@ package body Browsers.Dependency_Items is
 
    procedure Gtk_New
      (Item            : out File_Item;
-      Browser         : access Glide_Browser_Record'Class;
+      Browser         : access General_Browser_Record'Class;
       Kernel          : access Kernel_Handle_Record'Class;
       Source_Filename : String)
    is
@@ -999,10 +964,10 @@ package body Browsers.Dependency_Items is
 
    procedure Initialize
      (Item : access File_Item_Record'Class;
-      Browser : access Glide_Browser_Record'Class;
+      Browser : access General_Browser_Record'Class;
       File  : Internal_File) is
    begin
-      Browsers.Canvas.Initialize (Item, Browser, Get_Source_Filename (File));
+      Initialize (Item, Browser, Get_Source_Filename (File));
       Item.Source := File;
    end Initialize;
 
@@ -1054,7 +1019,7 @@ package body Browsers.Dependency_Items is
 
    procedure Destroy (Item : in out File_Item_Record) is
    begin
-      Destroy (Glide_Browser_Text_Item_Record (Item));
+      Destroy (Text_Item_Record (Item));
       Destroy (Item.Source);
    end Destroy;
 
@@ -1139,7 +1104,7 @@ package body Browsers.Dependency_Items is
 
    function Contextual_Factory
      (Item  : access File_Item_Record;
-      Browser : access Glide_Browser_Record'Class;
+      Browser : access General_Browser_Record'Class;
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
