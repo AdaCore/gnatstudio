@@ -112,6 +112,7 @@ struct sArray
 {
    char *string;
    int changed;
+   int  lineno_beg, charno_beg, lineno_end, charno_end;
 };
 
 struct sClass
@@ -314,7 +315,7 @@ extern int array_operator( Declarator_t Declarator );
 extern void initializer( void );
 extern void ctor_initializer( void );
 extern void constant_expression( void );
-extern int kr_argument_declaration_list( LongString *types, LongString *names );
+extern int kr_argument_declaration_list( LongString *types, LongString *names, LongString* argpos, LongString* arg_type_pos );
 extern int kr_argument_declaration( Array_t ArrayTypes, Array_t ArrayNames );
 extern int kr_argument_declarator_list( Declaration_t Declaration, Array_t ArrayTypes, Array_t ArrayNames );
 extern int kr_argument_declarator( Declarator_t Declarator );
@@ -357,7 +358,7 @@ extern char *get_name( char *name );
 extern void put_cross1( int type, char *scope, char *sym_name, char *file, int start_lineno, int start_colpos, int end_lineno, int end_colpos, unsigned long attr, char *ret, char *types, char *names, char *reserved, char* argpos, char* arg_type_pos, int ret_type_lineno, int ret_type_charno );
 extern int get_struct_name( int *plineno, int *pcharno, sString_t *psString );
 extern int is_single_parameter_list( LongString *types );
-extern int array_change_type_and_name( Array_t ArrayTypes, Array_t ArrayNames, char *type, char *name );
+extern int array_change_type_and_name( Array_t ArrayTypes, Array_t ArrayNames, char *type, char *name, int name_lineno_beg, int name_charno_beg, int name_lineno_end, int name_charno_end, int type_lineno_beg, int type_charno_beg, int type_lineo_end, int type_charno_end );
 extern void array_change_not_changed( Array_t ArrayTypes, Array_t ArrayNames );
 extern Array_t array_create( LongString *plstr );
 extern void array_destroy( Array_t Array );
@@ -365,6 +366,7 @@ extern void array_destroy( Array_t Array );
 extern void array_print( Array_t Array );
 #endif
 extern void array_to_string( LongString *plstr, Array_t Array );
+extern void array_to_pos( LongString *plstr, Array_t Array );
 extern int skip_macro( int t );
 extern void skip_macro_2( void );  /* 17.11.97 rigo */
 extern int skip_member_macro( void );
@@ -1044,7 +1046,7 @@ extern int declarator_list( Declaration_t Declaration )
          {
             if( ! skip_macro( LBRACE ))
             {
-               if( ! kr_argument_declaration_list( &sDeclarator.types, &sDeclarator.names ))
+               if( ! kr_argument_declaration_list( &sDeclarator.types, &sDeclarator.names, &sDeclarator.argpos, &sDeclarator.arg_type_pos ))
                {
 /* Az elso nekifutasra False-szal terunk vissza, ami lehetoseget ad arra,
 ** hogy az ellentetes keyw_cpp ertekkel ujra megprobaljuk az egesz deklaraciot
@@ -3323,7 +3325,8 @@ extern void constant_expression( void )
    niveau--;
 }
 
-extern int kr_argument_declaration_list( LongString *types, LongString *names )
+extern int kr_argument_declaration_list( LongString *types, LongString *names,
+               LongString* argpos, LongString* arg_type_pos )
 {
    Save_d();
    Array_t ArrayTypes;
@@ -3349,7 +3352,7 @@ extern int kr_argument_declaration_list( LongString *types, LongString *names )
 
    while( True )
    {
-      if( kr_argument_declaration( ArrayTypes, ArrayNames ))
+      if( kr_argument_declaration( ArrayTypes, ArrayNames) )
       {
 ok:
          if( token( 0 ) == LBRACE )
@@ -3388,6 +3391,8 @@ end:
 
       array_to_string( types, ArrayTypes );
       array_to_string( names, ArrayNames );
+      array_to_pos( argpos, ArrayNames );
+      array_to_pos( arg_type_pos, ArrayTypes );
    }
 
    array_destroy( ArrayTypes );
@@ -3426,22 +3431,22 @@ extern int kr_argument_declaration( Array_t ArrayTypes, Array_t ArrayNames )
    LongStringInit( &sDeclaration.type_name, -1 );
    sDeclaration.type_of_type_name = 0;
    LongStringInit( &sDeclaration.complete_class_name, -1 );
-   sDeclaration.lineno_beg    = 0;
-   sDeclaration.charno_beg    = 0;
+   sDeclaration.lineno_beg    = f_lineno (0);
+   sDeclaration.charno_beg    = f_charno (0);
    sDeclaration.lineno_end    = 0;
    sDeclaration.charno_end    = 0;
 
    sDeclaration.sClass.ClassParent      = 0;
    LongStringInit( &sDeclaration.sClass.name, -1 );
    sDeclaration.sClass.access           = 0;
-   sDeclaration.sClass.lineno_beg       = 0;
-   sDeclaration.sClass.charno_beg       = 0;
+   sDeclaration.sClass.lineno_beg       = f_lineno (0);
+   sDeclaration.sClass.charno_beg       = f_charno (0);
    sDeclaration.sClass.lineno_end       = 0;
    sDeclaration.sClass.charno_end       = 0;
 
    LongStringInit( &sDeclaration.sEnum.name, -1 );
-   sDeclaration.sEnum.lineno_beg        = 0;
-   sDeclaration.sEnum.charno_beg        = 0;
+   sDeclaration.sEnum.lineno_beg        = f_lineno (0);
+   sDeclaration.sEnum.charno_beg        = f_charno (0);
    sDeclaration.sEnum.lineno_end        = 0;
    sDeclaration.sEnum.charno_end        = 0;
 
@@ -3582,8 +3587,8 @@ extern int kr_argument_declarator_list( Declaration_t Declaration, Array_t Array
       LongStringMyFree( &sDeclarator.arg_type_pos );
       sDeclarator.base_typ   = 0;
       sDeclarator.pure       = 0;
-      sDeclarator.lineno_beg = 0;
-      sDeclarator.charno_beg = 0;
+      sDeclarator.lineno_beg = f_lineno (0);
+      sDeclarator.charno_beg = f_charno (0);
       sDeclarator.lineno_end = 0;
       sDeclarator.charno_end = 0;
 
@@ -3600,7 +3605,15 @@ extern int kr_argument_declarator_list( Declaration_t Declaration, Array_t Array
          if( ! array_change_type_and_name( ArrayTypes
                                          , ArrayNames
                                          , type.buf
-                                         , sDeclarator.name.buf ))
+                                         , sDeclarator.name.buf
+                                         , sDeclarator.lineno_beg
+                                         , sDeclarator.charno_beg
+                                         , sDeclarator.lineno_end
+                                         , sDeclarator.charno_end
+                                         , Declaration->lineno_beg
+                                         , Declaration->charno_beg
+                                         , Declaration->lineno_end
+                                         , Declaration->charno_end ))
          {
 #ifdef ARRAY_TEST
             printf( "unknown kr_declarator: <%s>\n", type.buf );
@@ -3633,6 +3646,8 @@ return_label:
    LongStringMyFree( &sDeclarator.type  );
    LongStringMyFree( &sDeclarator.types );
    LongStringMyFree( &sDeclarator.names );
+   LongStringMyFree( &sDeclarator.argpos );
+   LongStringMyFree( &sDeclarator.arg_type_pos );
    niveau--;
    return retval;
 }
@@ -5126,14 +5141,14 @@ extern void function_argument_declaration( LongString *types, LongString *names,
    sDeclaration.sClass.ClassParent      = 0;
    LongStringInit( &sDeclaration.sClass.name, -1 );
    sDeclaration.sClass.access           = 0;
-   sDeclaration.sClass.lineno_beg       = 0;
-   sDeclaration.sClass.charno_beg       = 0;
+   sDeclaration.sClass.lineno_beg       = f_lineno (0);
+   sDeclaration.sClass.charno_beg       = f_charno (0);
    sDeclaration.sClass.lineno_end       = 0;
    sDeclaration.sClass.charno_end       = 0;
 
    LongStringInit( &sDeclaration.sEnum.name, -1 );
-   sDeclaration.sEnum.lineno_beg        = 0;
-   sDeclaration.sEnum.charno_beg        = 0;
+   sDeclaration.sEnum.lineno_beg        = f_lineno (0);
+   sDeclaration.sEnum.charno_beg        = f_charno (0);
    sDeclaration.sEnum.lineno_end        = 0;
    sDeclaration.sEnum.charno_end        = 0;
 
@@ -5145,8 +5160,8 @@ extern void function_argument_declaration( LongString *types, LongString *names,
    LongStringInit( &sDeclarator.arg_type_pos, -1 );
    sDeclarator.base_typ = 0;
    sDeclarator.pure     = 0;
-   sDeclarator.lineno_beg = 0;
-   sDeclarator.charno_beg = 0;
+   sDeclarator.lineno_beg = f_lineno (0);
+   sDeclarator.charno_beg = f_charno (0);
    sDeclarator.lineno_end = 0;
    sDeclarator.charno_end = 0;
 
@@ -5383,11 +5398,11 @@ end:
       arg_type_pos->append ( arg_type_pos, pos, strlen (pos) );
    }
    LongStringMyFree( &sDeclaration.name );
-        LongStringMyFree( &sDeclaration.complete_class_name );
-        LongStringMyFree( &sDeclaration.sClass.name );
-        LongStringMyFree( &sDeclaration.type_name );
-        LongStringMyFree( &sDeclaration.sClass.name );
-        LongStringMyFree( &sDeclaration.sEnum.name );
+   LongStringMyFree( &sDeclaration.complete_class_name );
+   LongStringMyFree( &sDeclaration.sClass.name );
+   LongStringMyFree( &sDeclaration.type_name );
+   LongStringMyFree( &sDeclaration.sClass.name );
+   LongStringMyFree( &sDeclaration.sEnum.name );
    LongStringMyFree( &sDeclarator.name  );
    LongStringMyFree( &sDeclarator.type  );
    LongStringMyFree( &sDeclarator.types );
@@ -6676,7 +6691,7 @@ extern int is_single_parameter_list( LongString *types )
    return True;
 }
 
-extern int array_change_type_and_name( Array_t ArrayTypes, Array_t ArrayNames, char *type, char *name )
+extern int array_change_type_and_name( Array_t ArrayTypes, Array_t ArrayNames, char *type, char *name, int name_lineno_beg, int name_charno_beg, int name_lineno_end, int name_charno_end, int type_lineno_beg, int type_charno_beg, int type_lineno_end, int type_charno_end )
 {
    int i;
 
@@ -6689,8 +6704,17 @@ extern int array_change_type_and_name( Array_t ArrayTypes, Array_t ArrayNames, c
             my_free( ArrayTypes[i].string );
             my_free( ArrayNames[i].string );
 
-            ArrayTypes[i].string  = my_strdup( type );
             ArrayNames[i].string  = my_strdup( name );
+            ArrayNames[i].lineno_beg = name_lineno_beg;
+            ArrayNames[i].charno_beg = name_charno_beg;
+            ArrayNames[i].lineno_end = name_lineno_end;
+            ArrayNames[i].charno_end = name_charno_end;
+
+            ArrayTypes[i].string  = my_strdup( type );
+            ArrayTypes[i].lineno_beg = type_lineno_beg;
+            ArrayTypes[i].charno_beg = type_charno_beg;
+            ArrayTypes[i].lineno_end = type_lineno_end;
+            ArrayTypes[i].charno_end = type_charno_end;
 
             ArrayTypes[i].changed = True;
             ArrayNames[i].changed = True;
@@ -6765,6 +6789,10 @@ extern Array_t array_create( LongString *plstr )
 
          Array[i].string = my_strdup( pcBeg );
          Array[i].changed = False;
+         Array[i].lineno_beg = 0;
+         Array[i].charno_beg = 0;
+         Array[i].lineno_end = 0;
+         Array[i].charno_end = 0;
    
          *pcEnd = c;
          pcBeg = pcEnd+1;
@@ -6838,6 +6866,29 @@ extern void array_to_string( LongString *plstr, Array_t Array )
             LongStringMyAppend( plstr, "," );
          }
          LongStringMyAppend( plstr, Array[i].string );
+      }
+   }
+}
+
+extern void array_to_pos( LongString *plstr, Array_t Array )
+{
+   char buffer [64];
+   LongStringMyFree( plstr );
+
+   if( Array )
+   {
+      int i;
+
+      for( i = 0; Array[i].string; i++ )
+      {
+         if( i > 0 )
+         {
+            LongStringMyAppend( plstr, "," );
+         }
+         sprintf (buffer, "%06d.%03d:%06d.%03d",
+                     Array[i].lineno_beg, Array[i].charno_beg,
+                     Array[i].lineno_end, Array[i].charno_end);
+         LongStringMyAppend( plstr, buffer );
       }
    }
 }
