@@ -347,7 +347,8 @@ package body Debugger.Gdb is
      return String
    is
       --  ??? Probably, this should be language-dependent.
-      S       : String := Send (Debugger, "print &(" & Entity & ")");
+      S       : String :=
+        Send (Debugger, "print &(" & Entity & ")", Is_Internal => True);
       Matched : Match_Array (0 .. 1);
 
    begin
