@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- Ability to start a debug session from the command line
+
 - Better handling of long contextual menus
 
 - C213-012 Ability to launch any external editor
