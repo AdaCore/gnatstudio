@@ -1,0 +1,144 @@
+MODULE abstract_syntax
+
+TREE Tree
+
+EXPORT {
+# include "Idents.h"
+# include "StringM.h"
+# include "Position.h"
+
+extern	tIdent
+   ibreak, icatch, icontinue, ifor, iforeach, iglobal, iif, ireturn, iwhile,
+   ibinary, iarray, iforeach, icatch, ifile, istat, ilstat, iappend, iset,
+   iincr, iscan, igets, iinfo, ivwait, iparray, iexists, itkinfo, idefault,
+   ilappend, iproc, iglobal, ivariable, inamespace, ieval, isource, iunset,
+   iargs, ibody, irename;
+
+extern tIdent last_keyword;
+}
+
+GLOBAL {
+tIdent
+   ibreak, icatch, icontinue, ifor, iforeach, iglobal, iif, ireturn, iwhile,
+   ibinary, iarray, iforeach, icatch, ifile, istat, ilstat, iappend, iset,
+   iincr, iscan, igets, iinfo, ivwait, iparray, iexists, itkinfo, idefault,
+   ilappend, iproc, iglobal, ivariable, inamespace, ieval, isource, iunset,
+   iargs, ibody, irename;
+
+tIdent last_keyword;
+}
+
+PROPERTY INPUT
+
+RULE
+
+program		= stmts.
+
+stmts		= <
+   nostmt	= .
+   stmt_c	= next: stmts REV <
+      stmt	= words .
+      proc_c	= qualification: qualification_c param_names: words
+		      parameter: words block: texts [epos: tPosition]
+		      [attribute] <
+	 proc		= .
+	 method		= .
+	 body		= .
+	 configbody	= .
+	 constructor	= init: words .
+	 destructor	= .
+      > .
+      namespace_c	= qualification: qualification_c block: texts
+			  [epos: tPosition] [attribute] <
+	 namespace	= .
+	 class		= .
+	 itcl_class	= .
+      > .
+   > .
+> .
+words		= <
+   noword	= .
+   word_c	= next: words REV <
+      one_word	= [ident: tIdent] [pos: tPosition] .
+      obj_word	= [ident: tIdent] [pos: tPosition]
+		      [object: tTree] .		 /* ref to class or type */
+      qual_word	= qualification: qualification_c .
+      qual_words= qualifications .
+   > .
+> .
+qualifications	= <
+   noqualification	= .
+   one_qualification	= next: qualifications REV qualification: qualification_c .
+> .
+texts		= <
+   notext	= .
+   text		= next: texts REV [pos: tPosition] <
+      character	= [text: char] .
+      ident	= [ident: tIdent] .
+      block	= [epos: tPosition] stmts [type: char] .
+      content	= qualification: qualification_c .
+      block_content	= [epos: tPosition] stmts .
+   > .
+> .
+qualification_c	= [pos: tPosition] <
+   local_ident	= [ident: tIdent] .
+   global_ident	= [ident: tIdent] .
+   local_text	= texts .
+   global_text	= texts .
+   qualification= qualification: qualification_c [ident: tIdent] .
+   complex_qual	= qualification: qualification_c texts .
+   subscription	= qualification: qualification_c index: qualification_c .
+> .
+
+END abstract_syntax
+
+MODULE definition_table
+
+TREE
+
+EXPORT {
+typedef tTree * tHashTable;
+}
+
+EVAL
+
+GLOBAL {
+# include "Trafo.h"
+}
+
+DECLARE stmts words texts qualifications qualification_c = [env: tTree INH] .
+
+RULE
+
+envs		= <
+					/* a scope (or block) contains:	*/
+   env		= objects	    IN	/* a set (list) of objects	*/
+		  env	    : envs  IN	/* a reference to a surrounding scope */
+	       /* next      : envs  IN  /* a reference to the next part	*/
+                                        /* of a distributed scope	*/
+		  [object   : tTree IN]	/* a node in the syntax tree	*/
+		  [HashTable: tHashTable] /* pointer to hash table	*/
+		  [HashSize : int ]	/* size of hash table		*/
+		  .
+   env2		= env1	 : envs  IN	/* a first  (current)     scope	*/
+		  env2	 : envs  IN REV	/* a second (surrounding) scope	*/
+		  .
+   noenv        = .                     /* no more distributed envs	*/
+> .
+
+objects		= <			/* an object is described by:	*/
+   object	= [object: tTree     IN]/* a node in the syntax tree	*/
+		  [ident : tIdent    IN]/* an identifier		*/
+		  next	 : objects IN REV /* a next object		*/
+		  .
+   noobject	= .			/* the end of a list of objects	*/
+> .
+
+program		= { stmts:env := menv (mnoobject (), NoTree, SELF); } .
+proc_c		= { block:env := menv (mnoobject (), env, SELF);
+		    param_names:env := block:env; } .
+/* proc, method, body, configbody, constructor, destructor inherit from proc_c*/
+namespace_c	= { block:env := menv (mnoobject (), env, SELF); } .
+/* namespace, class, itcl_class inherits from namespace_c */
+
+END definition_table

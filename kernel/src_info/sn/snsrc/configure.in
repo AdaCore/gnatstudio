@@ -1,0 +1,13 @@
+dnl Process this file with autoconf to produce a configure script.
+
+dnl Initialization.
+AC_INIT(snavigator/parsers/cpp/cparser.c)
+AM_INIT_AUTOMAKE(sn,4.5.2)
+
+AC_CONFIG_SUBDIRS(db)
+AC_CONFIG_SUBDIRS(tcl8.1)
+AC_CONFIG_SUBDIRS(snavigator)
+
+AC_OUTPUT([Makefile])
+
+

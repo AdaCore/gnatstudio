@@ -1,0 +1,220 @@
+2000-09-26  Ben Elliston  <bje@redhat.com>
+
+	* hash/hash.h: Undefine Automake's VERSION macro.
+	* PORT/include/compat.h: Undefine BYTE_ORDER.
+
+1999-01-22  Syd Polk  <spolk@cygnus.com>
+
+	* hash/hash.c: Don't use really large blocks even if stat
+	returns them.
+
+1998-11-12  Syd Polk  <spolk@cygnus.com>
+
+	* configure: Regenerated with most current autoconf so that the
+	exe extension is not set to .pdb when compiling with MSVC.
+	
+1998-11-13  Ben Elliston  <bje@cygnus.com>
+
+	* include/db.h: Fix typo that left a comment unterminated.
+
+1998-11-12  Ben Elliston  <bje@cygnus.com>
+
+	* acconfig.h: Add defines for each type tested for by the macro
+	CY_AC_BERKELEY_DB.
+
+	* acinclude.m4: Test for more than just int8_t. Test for each type
+	in turn, and substitute HAVE_* style defines for each type.
+	
+	* aclocal.m4: Regenerate.
+
+	* config.h.in: Likewise.
+
+	* configure: Likewise.
+
+	* include/db.h: Wraf #ifndef's around typedefs for each of the
+	types we use. Only typedef them if they are not already available
+	on the target.
+	
+Sat Oct 24 12:23:57 1998  Andrew Cagney  <cagney@b1.cygnus.com>
+
+	* PORT/Makefile.am (TMPDIR): Do not set to "" - confuses berkley
+ 	AR.
+	* PORT/Makefile.in, Makefile.in: Regenerate.
+	
+1998-10-05  Syd Polk  <spolk@cygnus.com>
+	
+	* configure: Regenerated with new autoconf
+
+1998-09-30  Ben Elliston  <bje@cygnus.com>
+
+	* PORT/Win32/NTunixstubs.h: Remove #pragma message directives to
+	quieten down the Win32 build.
+
+1998-06-18  Ben Elliston  <bje@cygnus.com>
+
+	* PORT/Makefile.gvc: Remove.
+
+Tue Apr 14 14:17:21 1997  Ian T. Roxborough  <irox@cygnus.com>
+
+	* PORT/Makefile.gvc: Hacked make script to compile db lib
+	with MSVC.
+
+Tue Apr 14 14:17:21 1997  Ian T. Roxborough  <irox@cygnus.com>
+
+	* btree/bt_open.c: For WIN32 without cygwin we need to
+	use _open(_mktemp(...)..) instead of mkstemp(...).
+
+Tue Apr 14 14:12:34 1997  Ian T. Roxborough  <irox@cygnus.com>
+
+	* hash/hash_page.c: For Win32 without Cygwin we need to use
+	_open(_mktemp(...)..) instead of mkstemp(...).
+
+Thu Oct  2 22:42:25 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Call AM_INIT_AUTOMAKE.  Don't explicitly set or
+	substitute PACKAGE or VERSION.  Call AM_EXEEXT rather than
+	AM_CYGWIN32.
+	* aclocal.m4, configure, Makefile.in, config.h.in: Rebuild.
+	* PORT/Makefile.in: Rebuild.
+
+Fri Jun 27 17:32:50 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Use AM_CONFIG_HEADER rather than
+	AC_CONFIG_HEADER.  Call AM_CYGWIN32.  Set and substitute
+	WINFLAGS.
+	* PORT/Makefile.am (INCLUDES): Add $(WINFLAGS).
+	(noinst_LIBRARIES): Set to libdb.a rather than db.
+	(libdb_a_SOURCES): Rename from db_SOURCES.
+	(EXTRA_libdb_a_SOURCES): Rename from EXTRA_db_SOURCES.
+	(libdb_a_LIBADD): Rename from db_LIBADD.
+	(libdb_a_DEPENDENCIES): Rename from db_DEPENDENCIES.
+	* btree/bt_open.c (__bt_open): Use stat rather than _stat if
+	__CYGWIN32__.
+	* mpool/mpool.c (mpool_open): Likewise.
+	* hash/hash_page.c (__put_page): Don't call tell if __CYGWIN32__.
+	* hash/ndbm.c (MAXPATHLEN): Define if not defined.
+	* recno/rec_close.c: Do include <sys/uio.h> and <sys/mman.h> if
+	__CYGWIN32__.
+	(__rec_sync): Go ahead and call writev and ftruncate if
+	__CYGWIN32__.
+	* recno/rec_open.c (__rec_open): Likewise.
+	* configure, aclocal.m4, Makefile.in, PORT/Makefile.in: Rebuild.
+
+Wed Jun  4 09:56:57 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* test/hash.tests/creat3.c: New file.
+
+	* hash/hash_func.c: Conditionalize on WIN32, not MULTIX_BUGFIX.
+
+Mon Jun  2 17:13:06 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* hash/hash.h (HTAB): Rename errno field to dbm_errno in all
+	cases, not just when WIN32 is defined.
+	* hash/hash.c, hash/ndbm.c: Corresponding changes.
+
+Thu May 22 13:54:10 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: If using a cross compiler, assume that sprintf
+	returns char *.
+	* configure: Rebuild.
+	* PORT/snprintf.c: If SPRINTF_RET_CHARPNT, don't assume anything
+	about the return value of sprintf.
+
+Wed Feb 26 10:24:49 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* aclocal.m4, configure: Regenerated.
+	* acinclude.m4: New file.
+
+Tue Feb 25 14:55:32 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* include/cdefs.h: Moved from PORT/include.  cdefs.h is used by
+	db.h, and so should be more easily visible from other packages.
+
+Tue Feb 11 12:10:03 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* include/db.h (pgno_t): New define, for Irix.
+
+	* PORT/Makefile.am (check-local): Set TMPDIR to pwd if not set by
+	user.
+
+	* btree/bt_split.c (bt_psplit): Applied patch 2 from db web site.
+	(bt_psplit): Applied patch 4 from db web site.
+
+Mon Feb 10 12:43:33 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* test/run.test (main): Remove __dbtest.
+
+	* PORT/Makefile.am (memmove.o): Depend on memmove.c.
+	(mktemp.o): Depend on mktemp.c.
+	(snprintf.o): Depend on snprintf.c.
+
+	* PORT/snprintf.c (snprintf, vsnprintf): Reversed sense of ifdef.
+
+	* recno/rec_close.c (__rec_sync): Don't printf in non-WIN32 case.
+
+	* PORT/Makefile.am (dbtest_LDADD): Added -L.
+
+Fri Feb  7 14:36:16 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* test/dictionary: New file from Kerberos db2.
+	* test/run.test: WORDLIST env var names dictionary.  Look for
+	dictionary in more places.
+	(test12): Skip if dictionary too small, or if rev not found.
+	(test20): Skip if dictionary too small.
+
+	* PORT/Makefile.am (check-local): New target.
+
+	* configure.in: Added sh-with-functions checks from Kerberos db2.
+
+	* include/db.h: Use DB_BIT_TYPES_DEFINED.
+	* acconfig.h: Use DB_BIT_TYPES_DEFINED.
+	* configure.in (db_cv_type_u_char): Use DB_BIT_TYPES_DEFINED, not
+	__BIT_TYPES_DEFINED, to avoid warning on Linux.
+
+	* PORT/include/cdefs.h: Undefine __P to avoid warning on Linux.
+
+	* PORT/Makefile.am (dbtest.o): New target.
+	(check_PROGRAMS, dbtest_SOURCES, dbtest_LDADD,
+	dbtest_DEPENDENCIES): New macros.
+
+Thu Feb  6 15:10:48 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* hash/hash.h (BSIZE, BSHIFT): Avoid redefinition warning on AIX.
+
+Wed Feb  5 15:25:40 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* configure.in: Check for pgno_t.
+	* include/db.h (pgno_t): Removed.
+
+	* configure.in: Define __BIT_TYPES_DEFINED__ if u_int8_t is not
+	defined in sys/types.h.
+
+Fri Jan 31 13:47:11 1997  Tom Tromey  <tromey@cygnus.com>
+
+	* PORT/Makefile.am (db_DEPENDENCIES): New macro.
+
+	* PORT/memmove.c: Use <cdefs.h>, not <sys/cdefs.h>.
+	* PORT/snprintf.c: Use <cdefs.h>, not <sys/cdefs.h>.
+
+	* mpool/mpool.c: Use <queue.h>, not <sys/queue.h>.
+	* include/mpool.h: Use <queue.h>, not <sys/queue.h>.
+	* include/db.h: Use <cdefs.h>, not <sys/cdefs.h>.
+
+	* PORT/include/compat.h: Include config.h; use values defined
+	therein.
+
+	* PORT/snprintf.c: Use SPRINTF_RET_CHARPNT.
+
+	* PORT/memmove.c, PORT/mktemp.c, PORT/snprintf.c, PORT/strerror.c:
+	Moved from PORT/clib.
+
+	* acconfig.h: New file.
+	* aclocal.m4: New file.
+	* PORT/Makefile.am: New file.
+	* Makefile.am: New file.
+	* configure.in: New file (from db 2.0).
+
+Thu Jan 30 09:07:06 1997  Tom Tromey  <tromey@csk3.cygnus.com>
+
+	* Applied patches from Multix.
+

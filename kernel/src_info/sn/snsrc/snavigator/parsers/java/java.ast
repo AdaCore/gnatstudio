@@ -1,0 +1,331 @@
+MODULE abstract_syntax
+
+TREE IMPORT {
+# include "Position.h"
+# include "StringM.h"
+# include "Idents.h"
+
+# define t_boolean	1
+# define t_byte		2
+# define t_char		3
+# define t_double	4
+# define t_float	5
+# define t_int		6
+# define t_long		7
+# define t_short	8
+# define t_void		9
+
+# define a_PUBLIC	0x0001
+# define a_PROTECTED	0x0002
+# define a_PRIVATE	0x0004
+# define a_STATIC	0x0008
+# define a_ABSTRACT	0x0010
+# define a_FINAL	0x0020
+# define a_NATIVE	0x0040
+# define a_SYNCHRONIZED	0x0080
+# define a_TRANSIENT	0x0100
+# define a_VOLATILE	0x0200
+# define a_THREADSAFE	0x0400
+# define a_CONST	0x0800
+
+extern char * types [];
+
+typedef char ttype;
+
+# define and		 1
+# define and_and	 2
+# define assignment	 3
+# define complement	 4
+# define divide		 5
+# define equal		 6
+# define greater	 7
+# define greater_equal	 8
+# define less		 9
+# define less_equal	10
+# define lshift		11
+# define minus		12
+# define modulo		13
+# define negate		14
+# define not		15
+# define not_equal	16
+# define or		17
+# define or_or		18
+# define plus		19
+# define post_decr	20
+# define post_incr	21
+# define pre_decr	22
+# define pre_incr	23
+# define rshift		24
+# define times		25
+# define us_rshift	26
+# define xor		27
+
+typedef char toperator;
+}
+
+GLOBAL {
+# define writetoperator(a) (void) fputs (operators [a], yyf);
+
+static char * operators [] = { 0,
+   "and",
+   "and_and",
+   "assignment",
+   "complement",
+   "divide",
+   "equal",
+   "greater",
+   "greater_equal",
+   "less",
+   "less_equal",
+   "lshift",
+   "minus",
+   "modulo",
+   "negate",
+   "not",
+   "not_equal",
+   "or",
+   "or_or",
+   "plus",
+   "post_decr",
+   "post_incr",
+   "pre_decr",
+   "pre_incr",
+   "rshift",
+   "times",
+   "us_rshift",
+   "xor",
+};
+
+# define writettype(a) (void) fputs (types [a], yyf);
+
+char * types [] = { 0,
+   "boolean",
+   "byte",
+   "char",
+   "double",
+   "float",
+   "int",
+   "long",
+   "short",
+   "void",
+};
+}
+
+PROPERTY INPUT
+
+RULE
+
+compilation_unit	= package: qualified_symbol import_list field_list .
+
+import_list		= <
+   noimport		= .
+   import		= next: import_list REV qualified_symbol <
+      import_asterisk	= .
+   > .
+> .
+field_list		= <
+   nofield		= .
+   field		= next: field_list REV <
+      function		= [modifiers: long] [ident: tIdent] [pos: tPosition]
+			  decl_list throws: type_name_list block: statement_c <
+	 method		= type array: type .
+	 constructor	= .
+      > .
+      var_decl		= [modifiers: long] type decl_list .
+      static_initializer= statement_c .
+      initializer	= statement_c .
+      type_decl		= [modifiers: long]
+			  [ident: tIdent] [pos: tPosition] block: field_list <
+	 class		= extends: type interfaces: type_name_list .
+	 interface	= extends: type_name_list .
+      > .
+   > .
+> .
+decl_list		= <
+   nodecl		= .
+   decl			= next: decl_list REV
+			  [modifiers: long] type [ident: tIdent]
+			  [pos: tPosition] array: type <
+      variable		= expression: expression_c .
+      parameter		= .
+   > .
+> .
+statement_list		= <
+   nostatement		= .
+   statement		= next: statement_list REV statement: statement_c .
+> .
+statement_c		= <
+   compound_stmt	= statement_list .
+   expression_stmt	= expression: expression_c .
+   var_decl_stmt	= type decl_list .
+   type_decl_stmt	= type_decl .
+   if_stmt		= expression: expression_c then: statement_c <
+      if_else_stmt	= Else: statement_c .
+   > .
+   while_stmt		= expression: expression_c statement: statement_c .
+   do_stmt		= statement: statement_c expression: expression_c .
+   break_stmt		= <
+      break_id_stmt	= expression: expression_c .
+   > .
+   continue_stmt	= <
+      continue_id_stmt	= expression: expression_c .
+   > .
+   return_stmt		= <
+      return_expr_stmt	= expression: expression_c .
+   > .
+   for_stmt		= for_init: statement_list expression: expression_c for_incr: statement_list statement: statement_c .
+   throw_stmt		= expression: expression_c .
+   synchronized_stmt	= expression: expression_c statement: statement_c .
+   labeled_stmt		= [ident: tIdent] [pos: tPosition] statement: statement_c .
+   try_stmt		= statement: statement_c catch_list finally: statement_c .
+   switch_stmt		= expression: expression_c switch_list.
+   null_stmt		= .
+> .
+switch_list		= <
+   noswitch		= .
+   switch_		= next: switch_list REV expression_list statement_list .
+> .
+catch_list		= <
+   nocatch		= .
+   catch		= next: catch_list REV decl_list statement: statement_c .
+> .
+type_name_list		= <
+   notype_name		= .
+   type_name		= next: type_name_list REV named_type .
+> .
+type			= <
+   simple_type		= [type: ttype] .
+   named_type		= qualified_symbol .
+   array_type		= type .
+   notype		= .
+> .
+expression_list		= <
+   noexpression_l	= .
+   expression		= next: expression_list REV expression: expression_c .
+> .
+expression_c		= [pos: tPosition] <
+   qualified_symbol	= <
+      qualification	= qualified_symbol [ident: tIdent] .
+      ident		= [ident: tIdent] .
+      noexpression	= .
+   > .
+   unary		= expression: expression_c [operator: toperator] .
+   binary		= lop: expression_c rop: expression_c [operator: toperator] .
+   assign		= lval: expression_c rval: expression_c [operator: toperator].
+   aggregate		= expression_list .
+   call			= expression: expression_c expression_list .
+   select		= expression: expression_c [ident: tIdent] .
+   get_class_of_expr	= expression: expression_c .
+   get_class		= type .
+   subscript		= base: expression_c index: expression_c .
+   type_compare		= expression: expression_c type .
+   type_cast		= type dims: type expression: expression_c .
+   new			= type dims: type expression_list expression: expression_c .
+   anonymous		= type expression_list block: field_list .
+   conditional		= condition: expression_c true_expr: expression_c false_expr: expression_c .
+   super		= .
+   this			= .
+   null			= .
+   int_literal		= [value: long] .
+   long_literal		= [value: long] .
+   bool_literal		= [value: rbool] .
+   float_literal	= [value: tStringRef] .
+   char_literal		= [value: tStringRef] .
+   string_literal	= [value: tStringRef] .
+> .
+
+END abstract_syntax
+
+MODULE definition_table
+
+TREE EXPORT {
+typedef tTree * tHashTable;
+}
+
+EVAL GLOBAL {
+# include "Errors.h"
+# include "Trafo.h"
+# include "deftab.h"
+}
+
+DECLARE		/* the attribute 'env' gives access to the definition table */
+
+catch_list
+decl_list
+expression_c
+expression_list
+field_list
+import_list
+statement_c
+statement_list
+switch_list
+type
+type_name_list
+		= [env	: tTree  INH] .
+
+RULE		/* node types for the definition table (symbol table)	*/
+
+envs		= <
+					/* a scope (or block) contains:		*/
+   env		= objects	    IN	/* a set (list) of objects		*/
+		  env	    : envs  IN	/* a reference to a surrounding scope	*/
+		  [object   : tTree IN]	/* a node in the abstract syntax tree	*/
+		  [HashTable: tHashTable IN] /* pointer to hash table		*/
+		  [HashSize : int   IN]	/* size of hash table			*/
+		  .
+   env2		= env1	    : envs  IN	/* a first  (current)     scope		*/
+		  env2	    : envs  IN	/* a second (surrounding) scope		*/
+		  .
+> .
+objects		= <			/* an object is described by:		*/
+   object	= [object: tTree   IN]	/* a node in the abstract syntax tree	*/
+		  [ident : tIdent  IN]	/* an identifier			*/
+		  next	 : objects IN REV /* a next object			*/
+		  [collision: tTree  ]	/* collision chain for hash structure	*/
+		  .
+   noobject	= .			/* the end of a list of objects		*/
+> .
+		/* attribute grammar to construct the definition table	*/
+
+compilation_unit= {
+		    package:env		:= NoTree;
+		    import_list:env	:= NoTree;
+		    field_list:env	:= mEnv (get_objects (field_list,
+		       get_objects (import_list, NoTree)), NoTree, SELF);
+		  } .
+class		= { block:env := menv2 (mEnv (get_objects (block, NoTree), NoTree, SELF), env); } .
+interface	= { block:env := menv2 (mEnv (get_objects (block, NoTree), NoTree, SELF), env); } .
+anonymous	= { block:env := menv2 (mEnv (get_objects (block, NoTree), NoTree, SELF), env); } .
+method		= { block:env := mEnv (get_objects (decl_list, NoTree), env, SELF); } .
+constructor	= { block:env := mEnv (get_objects (decl_list, NoTree), env, SELF); } .
+compound_stmt	= { statement_list:env := mEnv (get_objects (statement_list, NoTree), env, SELF); } .
+for_stmt	= { statement:env := mEnv (get_objects (for_init, NoTree), env, SELF);
+		    for_init:env	:= statement:env;
+		    expression:env	:= statement:env;
+		    for_incr:env	:= statement:env;
+		  } .
+catch		= { statement:env := mEnv (get_objects (decl_list, NoTree), env, SELF); } .
+
+END definition_table
+
+MODULE name_analysis
+
+DECLARE
+
+qualified_symbol= [object	: tTree	] . /* pointer to definition table */
+
+decl_list
+expression_list	= [no_of_args	: short	] .
+
+RULE
+
+qualified_symbol= { object	:= nnoobject; } . /* name analysis can not be
+		performed yet because the symboltable is not complete.
+		the 'env' structure for superclasses is missing. */
+
+decl_list	= { no_of_args	:= 0; } .
+decl		= { no_of_args	:= next:no_of_args + 1; } .
+expression_list	= { no_of_args	:= 0; } .
+expression	= { no_of_args	:= next:no_of_args + 1; } .
+
+END name_analysis

@@ -1,0 +1,3656 @@
+/*
+
+		COBOL grammar
+		=============
+
+		conforming to:
+
+	ANSI'74 Standard (ANSI X3.23 - 1974)
+	ANSI'85 Standard (ANSI X3.23 - 1985)
+	IBM OS/VS COBOL
+	IBM VS COBOL II
+	IBM SAA COBOL/370
+	IBM DOSVS COBOL
+	X/Open
+	Micro Focus COBOL
+
+*/
+
+/* Ich, Doktor Josef Grosch, Informatiker, March 1997 */
+
+/*
+
+Conventions:
+
+The suffix _l stands for list.
+The suffix _e stands for list element.
+The suffix _o stands for optional.
+The suffix _i stands for imperative statement.
+
+For some nonterminals such as name, qualification, subscription, and identifier
+various kinds of usage are distinguished:
+
+No  suffix    stands for read access.
+The suffix _w stands for write access.
+The suffix _f stands for forward reference.
+The suffix _c stands for reference in CORRESPONDING context.
+The suffix _n stands for none of the above.
+
+The character - is replaced by _ in nonterminals.
+
+Notation for words:
+
+ keywords	: all uppercase				: END
+ optional words	: first uppercase, else lowercase	: Is
+ terminals	: all lowercase				: real
+ nonterminals	: all lowercase				: identifier
+
+Terminals with	: unsigned_integer, plus_integer, minus_integer, level_number,
+ attributes are	: real, string, name, paragraph_name, pseudo_text,
+		  picture_string, illegal_character
+
+*/
+
+/*
+
+		  Discussion of the LR-Conflicts
+		  ------------------------------
+
+The grammars for COBOL '85 and Micro Focus COBOL in their published forms are
+highly ambiguous and they are not LR(k) for any k. The grammars in their original
+version contain dozens of LR conflicts. However, the situation is not as bad as
+it might seem because:
+
+- The verbose syntax rules of the language specify how to resolve some conflicts.
+- Many rules can be rewritten into an LR(1) form.
+- A few rules are LR(2), they require lookahead of 2 tokens.
+- Some rules could be written in an LR(1) form, but the natural version that
+  reflects the semantic structure is LR(2).
+
+Theoretically, the grammar for Cobol following below is still not LR(k) for any k.
+The shift-reduce conflicts that require a lookahead of arbitrary length can be
+resolved in favor of the shift action according to the verbose syntax rules.
+Therefore, the grammar is practically LR(2). In order to process the grammar with
+an LALR(1) tool, a buffer could be inserted between scanner and parser. This buffer
+implements a lookahead of 2 tokens by modifying some tokens if these are followed
+by certain tokens. With this mechanism the grammar is actually LALR(1).
+The parser generator Lark automatically provides the mentioned buffer and even
+supports lookahead of an unlimited number of tokens. In the following
+I will discuss the interesting conflicts present in COBOL '85 in detail.
+
+
+1. file_control_entry
+
+   SELECT f ACCESS MODE SEQUENTIAL .
+   SELECT f ACCESS MODE SEQUENTIAL RELATIVE KEY IS n .
+
+   SELECT f ACCESS MODE RANDOM .
+   SELECT f ACCESS MODE RANDOM RELATIVE KEY IS n .
+
+   SELECT f ACCESS MODE DYNAMIC .
+   SELECT f ACCESS MODE DYNAMIC RELATIVE KEY IS n .
+
+   Does RELATIVE start the KEY phrase of the ACCESS MODE clause or does it
+   start the ORGANIZATION IS clause? This conflict requires a lookahead of 2.
+   It could be handled with a lookahead of 1 by adding the following rules:
+
+   select_clause = ACCESS Mode Is SEQUENTIAL RELATIVE .
+   select_clause = ACCESS Mode Is RANDOM     RELATIVE .
+   select_clause = ACCESS Mode Is DYNAMIC    RELATIVE .
+
+   These rules are combinations of ACCESS MODE clauses and ORGANIZATION IS
+   clauses. They recognize the given combinations of two clauses with one rule.
+
+   Using Lark, syntactic predicates that trigger trial parsing can be added
+   in order to solve the shift reduce conflicts:
+
+   select_clause = ACCESS Mode Is SEQUENTIAL ? - RELATIVE_Key_Is_name .
+   select_clause = ACCESS Mode Is RANDOM     ? - RELATIVE_Key_Is_name .
+   select_clause = ACCESS Mode Is DYNAMIC    ? - RELATIVE_Key_Is_name .
+   RELATIVE_Key_Is_name = RELATIVE Key Is name .
+
+   The nonterminal RELATIVE_Key_Is_name checks whether RELATIVE starts the
+   KEY phrase.
+
+2. report_group_description_entry
+
+   01 LINE NUMBER 50 .
+   01 LINE NUMBER 50 NEXT PAGE .
+
+   Does NEXT start the NEXT PAGE phrase of the LINE NUMBER clause or does it
+   start a NEXT GROUP clause? This conflict requires a lookahead of 2.
+   It could be handled with a lookahead of 1 by adding the following rules:
+
+   report_group_clause = LINE Number Is integer NEXT GROUP Is integer .
+   report_group_clause = LINE Number Is integer NEXT GROUP Is PLUS integer .
+   report_group_clause = LINE Number Is integer NEXT GROUP Is NEXT PAGE .
+
+   These rules are combinations of LINE NUMBER clauses and NEXT GROUP clauses.
+   They recognize the given combinations of two clauses with one rule.
+
+   Using Lark, the shift reduce conflict can be solved by considering a
+   lookahead of 2 tokens:
+
+   report_group_clause = LINE Number Is integer
+                                ? { GetLookahead (2) == YYCODE (GROUP) } .
+
+3. Scope delimiters and optional error phrases
+
+   ADD a TO b SIZE ERROR ADD c TO d END-ADD
+   ADD a TO b SIZE ERROR ADD c TO d NOT SIZE ERROR STOP RUN
+
+   Are END-ADD or the NOT SIZE ERROR phrase associated with the outer or the inner
+   ADD statement? This part of the grammar is ambiguous. The verbose syntax rules
+   specify that both phrases are to be associated with the inner ADD statement.
+   This corresponds to taking a shift action instead of a reduce action. This is
+   also the usual method for parser generators to solve this type of conflict.
+
+   This problem arises with all variants of ADD statements such as ADD TO,
+   ADD TO GIVING, and ADD CORRESPONDING as well as for many more imperative
+   statements with optional NOT phrases and optional scope delimiters:
+
+      ADD CORRESPONDING, ADD TO, ADD TO GIVING,
+      CALL,
+      COMPUTE,
+      DELETE,
+      DIVIDE BY GIVING, DIVIDE BY GIVING REMAINDER, DIVIDE INTO,
+      DIVIDE INTO GIVING, DIVIDE INTO GIVING REMAINDER,
+      MULTIPLY BY, MULTIPLY BY GIVING,
+      READ, READ KEY, READ NEXT,
+      RECEIVE,
+      REWRITE,
+      START,
+      STRING,
+      SUBTRACT CORRESPONDING FROM, SUBTRACT FROM, SUBTRACT FROM GIVING,
+      UNSTRING,
+      WRITE, WRITE WITH NO ADVANCING
+
+4. RECEIVE WITH DATA
+
+   RECEIVE n MESSAGE INTO i NO DATA CLOSE f WITH DATA STOP RUN
+   RECEIVE n MESSAGE INTO i NO DATA CLOSE f WITH LOCK
+
+   Does WITH start the WITH DATA phrase of the RECEIVE statement or does it
+   start the WITH LOCK phrase of the CLOSE statement? This conflict requires a
+   lookahead of 2. This problem arises in combination of the RECEIVE statement
+   and all statements that have an optional phrase starting with WITH. These are:
+
+      CLOSE	/ WITH NO REWIND / WITH LOCK
+      DISABLE	/ WITH KEY
+      DISPLAY	/ WITH NO ADVANCING
+      ENABLE	/ WITH KEY
+      OPEN	/ WITH NO REWIND
+      PERFORM	/ WITH TEST BEFORE / WITH TEST AFTER
+      STRING	/ WITH POINTER
+      UNSTRING	/ WITH POINTER
+      WRITE	/ WITH NO ADVANCING
+
+   Using Lark, these shift reduce conflicts can be solved by adding an
+   inspection of 2 lookahead tokens to numerous rules such as e. g.:
+
+   perform = PERFORM procedure ? { GetLookahead (2) == YYCODE (DATA) } .
+
+5. PERFORM UNTIL NOT
+
+   ADD a TO b SIZE ERROR PERFORM p UNTIL i NOT NUMERIC
+   "                                     e NOT ZERO
+   "                                     e NOT EQUAL TO f
+
+   ADD a TO b SIZE ERROR PERFORM p UNTIL i NOT On SIZE ERROR
+   "                                     i NOT INVALID KEY
+   "                                     i NOT On OVERFLOW
+   "                                     i NOT At END
+   "                                     i NOT At END-OF-PAGE
+   "                                     i NOT On EXCEPTION
+
+   Does the NOT continue the condition after UNTIL or does it start a NOT ERROR
+   or a similar NOT phrase of a containing statement? This conflict requires a
+   lookahead of 2. In combination of PERFORM and ADD it is the SIZE ERROR phrase
+   that causes the problem. For the other phrases, combinations of PERFORM with
+   READ and WRITE or similar statements cause the trouble.
+
+   Using Lark, this conflict can be solved by adding a syntactic predicate:
+
+   Is           = ? not .
+   not          = <
+                = NOT classification .
+                = NOT sign_3 .
+                = NOT EQUAL .
+                = NOT LESS .
+                = NOT GREATER .
+                = NOT '=' .
+                = NOT '<' .
+                = NOT '>' .
+                = NOT '(' .
+   > .
+
+6. INSPECT TALLYING
+
+   INSPECT a TALLYING i FOR ALL u v w j FOR ALL x y z
+
+   Does the identifier j continue the list of identifiers after the first ALL
+   or does it start a new FOR phrase? This problem could be formulated with a
+   lookahead of 1 but the natural version that reflects the semantic structure
+   requires a lookahead of 2.
+
+   LR(2) Version:
+
+      inspect           = INSPECT identifier TALLYING tallying_l .
+      tallying_l        = < = tallying_e . = tallying_l tallying_e . > .
+      tallying_e        = identifier 'FOR' for_l .
+
+   LR(1) Version:
+
+      inspect           = INSPECT identifier TALLYING identifier tallying_l .
+      tallying_l        = < = tallying_e . = tallying_l tallying_e . > .
+      tallying_e        = < = 'FOR' for_l . = 'FOR' for_l identifier . > .
+
+   Using Lark, this conflict can be solved by adding syntactic predicates:
+
+   for_e		= ALL     all_leading_l ? identifier_FOR .
+   for_e		= LEADING all_leading_l ? identifier_FOR .
+   identifier_FOR	= identifier 'FOR' .
+
+   The nonterminal identifier_FOR checks whether identifier starts a new
+   FOR phrase.
+
+7. Sections and Paragraphs
+
+   A SECTION. a. CONTINUE. b. CONTINUE. B SECTION. c. CONTINUE.
+
+   Does the name B start a new section or a new paragraph? As before this problem
+   could be formulated with a lookahead of 1 but the natural version that reflects
+   the semantic structure requires a lookahead of 2.
+
+   LR(2) Version:
+
+procedure_division	= <
+		= PROCEDURE DIVISION using_o '.' declaratives section_l .
+		= PROCEDURE DIVISION using_o '.'              section_l .
+		= PROCEDURE DIVISION using_o '.' paragraph_l .
+> .
+declaratives	= DECLARATIVES '.' d_section_l 'END' DECLARATIVES '.' .
+
+d_section_l	= <
+		=             section_head use '.' paragraph_l
+		   ? { GetLookahead (2) == YYCODE (SECTION) } .
+		= d_section_l section_head use '.' paragraph_l
+		   ? { GetLookahead (2) == YYCODE (SECTION) } .
+> .
+section_l	= <
+		= section_head paragraph_l
+		   ? { GetLookahead (2) == YYCODE (SECTION) } .
+		= section_head paragraph_l section_l .
+> .
+section_head	= name SECTION segment_number_o '.'
+
+paragraph_l	= <
+		= .
+		= paragraph_l paragraph_e .
+> .
+paragraph_e	= name '.' sentence_l .
+
+   LR(1) Version:
+
+procedure_division	= <
+		= PROCEDURE DIVISION using_o '.' declaratives name section_l .
+		= PROCEDURE DIVISION using_o '.' name section_l .
+		= PROCEDURE DIVISION using_o '.' name paragraph_l .
+> .
+declaratives	= DECLARATIVES '.' d_section_l 'END' DECLARATIVES '.' .
+
+d_section_l	= <
+		= SECTION segment_number_o '.' use '.' name paragraph_l .
+		= SECTION segment_number_o '.' use '.' .
+		= SECTION segment_number_o '.' use '.' name paragraph_l d_section_l .
+		= SECTION segment_number_o '.' use '.' name             d_section_l .
+> .
+section_l	= <
+		= SECTION segment_number_o '.' name paragraph_l .
+		= SECTION segment_number_o '.' .
+		= SECTION segment_number_o '.' name paragraph_l section_l .
+		= SECTION segment_number_o '.' name             section_l .
+> .
+paragraph_l	= <
+		= paragraph_e .
+		= paragraph_l paragraph_e .
+> .
+paragraph_e	= <
+		= '.' sentence_l name .
+		= '.' sentence_l .
+> .
+
+   Using Lark, the shift reduce conflicts in the LR(2) version can be solved
+   by adding an inspection of 2 lookahead tokens to some rules as shown above.
+
+8. Identifiers: Subscription or Modification?
+
+   n (i + 1)
+   n (i + 1 :)
+
+   Does the character '+' continue the index of a subscription or does it continue
+   the expression of a modification? This conflict requires lookahead of arbitrary
+   length. It can be solved by allowing a full expression for the first index of a
+   subscription. The check for the restricted form of the index is delegated to
+   semantic analysis.
+
+   identifier	= <
+		= qualification .
+		= qualification '(' expression index_l ')' .
+		= qualification '(' expression ':' ')' .
+		...
+   > .
+
+9. LINAGE clause of file_description_entry
+
+   In its natural form the LINAGE clause of the file_description_entry is LR(2).
+   It can be rewritten into an LR(1) form as can be seen below.
+
+10. SUM clause of report_group_description
+
+   SUM a SUM b
+
+   The SUM clause in a report_group_description_entry can be repeated several
+   times. All the clauses in a report_group_description_entry can be given in
+   arbitrary order. Therefore we allow a list of clauses and rely on semantic
+   analysis to detect multiple appearances of clauses. Now, if the SUM clause
+   would be specified as a list, too, it is ambiguous whether SUM b continues
+   the outer list of all clauses or the inner list of SUM clauses. The solution
+   omits the inner list, uses the outer list for the repetition of SUM clauses,
+   too, and delegates the detailed checks to semantic analysis.
+
+*/
+
+PARSER
+
+GLOBAL {
+# include <ctype.h>
+# include "Position.h"
+# include "StringM.h"
+# include "Idents.h"
+# include "keywdef.h"
+# include "keywords.h"
+# include "def.h"
+# include "deftab.h"
+# include "paf.h"
+
+# define yyInitStackSize	200
+# define yyInitBufferSize	32
+
+# define TOKENOP	PrevEPos = CurrentEPos; CurrentEPos = Attribute.name.EPos;
+# define BEFORE_TRIAL	tPosition SavePEPos, SaveCEPos; SavePEPos = PrevEPos; SaveCEPos = CurrentEPos;
+# define AFTER_TRIAL	PrevEPos = SavePEPos; CurrentEPos = SaveCEPos;
+
+extern	rbool		Copy ARGS ((tIdent ident, tPosition pos));
+
+static	tPosition	PrevEPos, CurrentEPos;
+static	tIdent		iCURRENT_DATE	;
+static	tIdent		iWHEN_COMPILED	;
+}
+
+BEGIN {
+   iCURRENT_DATE	= MakeIdent ("CURRENT-DATE"	, 12);
+   iWHEN_COMPILED	= MakeIdent ("WHEN-COMPILED"	, 13);
+}
+
+START programs descriptions
+
+PROPERTY INPUT
+
+RULE
+
+programs	= program_l program_end_o .
+
+program_end_o	= <
+		= program .
+		= program program_l 'END' PROGRAM name '.' .
+> .
+program_end	= program program_l 'END' PROGRAM name '.' .
+
+program_l	= <
+		= .
+		= program_l program_end .
+> .
+program		= identification_division
+		  environment_division_o
+		  data_division_o
+		  procedure_division_o .
+
+sce		= { => { Start_Comment_Entry (); }; } .
+
+identification_division	= identification_o program_id_o identification_l .
+
+environment_division_o	= <
+		= environment_division .
+	     /* = . */
+> .
+data_division_o	= <
+		= data_division .
+	     /* = . */
+> .
+procedure_division_o	= <
+		= procedure_division .
+		= .
+> .
+identification_o	= <
+		= IDENTIFICATION DIVISION '.'
+		{ => { Section = cID_DIV; }; } .
+		=
+		{ => { Section = cID_DIV; }; } .
+> .
+program_id_o	= <
+		= 'PROGRAM-ID' period_o sce name   program_o
+		{ => { (void) DeclareLabel (name:Scan, lPROGRAM, PrevEPos); }; } .
+		= 'PROGRAM-ID' period_o sce string program_o
+		{ => {	char word [128];
+			StGetString (string:Value, word);
+			string:Scan.name.Ident = MakeIdent (word, strlen (word));
+			(void) DeclareLabel (string:Scan, lPROGRAM, PrevEPos); }; } .
+		= .
+> .
+program_o	= <
+		= Is COMMON  Program .
+		= Is INITIAL Program .
+		= Is COMMON INITIAL Program .
+		= Is INITIAL COMMON Program .
+		= .
+> .
+identification_l	= <
+		= .
+		= identification_l sce AUTHOR		.
+		= identification_l sce INSTALLATION	.
+		= identification_l sce 'DATE-WRITTEN'	.
+		= identification_l sce 'DATE-COMPILED'	.
+		= identification_l sce SECURITY		.
+		= identification_l sce REMARKS		.
+		= identification_l copy_or_replace	.
+> .
+environment_division	=
+		  environment_o
+		  configuration_section_o
+		  input_output_section_o .
+
+environment_o	= <
+		= ENVIRONMENT DIVISION '.'
+		{ => { Section = cENV_DIV; }; } .
+		=
+		{ => { Section = cENV_DIV; }; } .
+> .
+configuration_section_o	= <
+		= configuration_o copy_o configuration_l .
+	     /* = . */
+> .
+input_output_section_o	= <
+		= input_output_o file_control i_o_control_o .
+	     /* = . */
+> .
+configuration_o	= <
+		= CONFIGURATION SECTION '.'
+		{ => { decimal_point_is_comma = rfalse; Section = cCONF_SCT; }; } .
+		=
+		{ => { decimal_point_is_comma = rfalse; Section = cCONF_SCT; }; } .
+> .
+configuration_l	= <
+		= .
+		= configuration_l source_computer_o .
+		= configuration_l object_computer_o .
+		= configuration_l special_names_o .
+> .
+source_computer_o	= <
+		= 'SOURCE-COMPUTER' sce '.' .
+		= 'SOURCE-COMPUTER' sce '.' With DEBUGGING MODE '.'
+		{ => { IsDebugging = rtrue; }; } .
+	     /* = . */
+> .
+object_computer_o	= <
+		= 'OBJECT-COMPUTER' sce '.' .
+		= 'OBJECT-COMPUTER' sce '.' memory_o program_sequence_o segment_limit_o '.' .
+	     /* = . */
+> .
+memory_o	= <
+		= MEMORY Size integer memory_unit .
+		= .
+> .
+memory_unit	= <
+		= WORDS .
+		= CHARACTERS .
+		= MODULES .
+> .
+program_sequence_o	= <
+		= Program Collating SEQUENCE Is alphabet_name .
+		= .
+> .
+segment_limit_o	= <
+		= 'SEGMENT-LIMIT' Is integer .
+		= .
+> .
+special_names_o	= <
+		= 'SPECIAL-NAMES' '.' copy_o .
+		= 'SPECIAL-NAMES' '.' copy_o special_names_l '.' .
+	     /* = . */
+> .
+special_names_l	= <
+		= .
+		= special_names_l implementor_name_l ? CONSOLE_Is_CRT .
+		= special_names_l alphabet_names .
+		= special_names_l symbolic_characters .
+		= special_names_l class_names .
+		= special_names_l currency_o .
+		= special_names_l decimal_point_o .
+		= special_names_l numeric_sign_o .
+		= special_names_l call_convention_o .
+		= special_names_l console_o .
+> .
+implementor_name_l	= <
+		=                    implementor_name_e .
+		= implementor_name_l implementor_name_e .
+> .
+implementor_name_e	= <
+		= implementor_name Is name
+		{ => { (void) Declare (MN, name:Scan, oDATA, PrevEPos); }; } .
+		= implementor_name Is name on_off
+		{ => { (void) Declare (MN, name:Scan, oDATA, PrevEPos); }; } .
+		= name on_off
+		{ => { (void) Declare (MN, name:Scan, oBTIN, PrevEPos); }; } .
+> .
+implementor_name	= <
+		= name .
+		= builtin_name .
+> .
+builtin_name	= <
+		= PRINTER	.
+		= 'PRINTER-1'	.
+		= CONSOLE ? { GetLookahead (2) == YYCODE (name) } .
+> .
+on_off		= <
+		= on_status .
+		= on_status off_status .
+		= off_status .
+		= off_status on_status .
+> .
+on_status	= ON  Status Is condition_name: name
+		{ => { (void) Declare (CN, condition_name:Scan, oDATA, PrevEPos); }; } .
+off_status	= OFF Status Is condition_name: name
+		{ => { (void) Declare (CN, condition_name:Scan, oDATA, PrevEPos); }; } .
+
+alphabet_names	= <
+		=                alphabet_entry .
+		= alphabet_names alphabet_entry .
+> .
+alphabet_entry	= <
+		= ALPHABET name Is alphabet_name .
+		= ALPHABET name Is alphabet_l ? implementor_name_e_head .
+> .
+alphabet_name	= <
+		= 'STANDARD-1' .
+		= name_ .
+> .
+alphabet_l	= <
+		= alphabet_e .
+		= alphabet_l alphabet_e .
+> .
+alphabet_e	= <
+		= alphabet_or_class_literal .
+		= alphabet_or_class_literal THROUGH alphabet_or_class_literal .
+		= alphabet_or_class_literal also_l .
+> .
+also_l		= <
+		= ALSO alphabet_or_class_literal .
+		= also_l ALSO alphabet_or_class_literal .
+> .
+alphabet_or_class_literal	= <
+		= u_integer .
+		= non_numeric_literal .
+> .
+symbolic_characters	= <
+		=                     symbolic_entry .
+		= symbolic_characters symbolic_entry .
+> .
+symbolic_entry	= <
+		= SYMBOLIC Characters symbolic_l ? - symbolic_e_head .
+		= SYMBOLIC Characters symbolic_l 'IN' alphabet_name .
+> .
+symbolic_l	= <
+		= symbolic_e .
+		= symbolic_l symbolic_e .
+> .
+symbolic_e	= symbolic_character_l AreIs integer_l .
+
+symbolic_character_l	= <
+		= symbolic_character .
+		= symbolic_character_l symbolic_character .
+> .
+integer_l	= <
+		= integer .
+		= integer_l integer .
+> .
+class_names	= <
+		=             class .
+		= class_names class .
+> .
+class		= CLASS name Is class_l ? implementor_name_e_head .
+
+class_l		= <
+		= class_e .
+		= class_l class_e .
+> .
+class_e		= <
+		= alphabet_or_class_literal .
+		= alphabet_or_class_literal THROUGH alphabet_or_class_literal .
+> .
+currency_o	= CURRENCY Sign Is non_figurative_literal .
+
+decimal_point_o	= 'DECIMAL-POINT' Is COMMA
+		{ => { decimal_point_is_comma = rtrue; }; } .
+
+numeric_sign_o	= NUMERIC SIGN Is Trailing SEPARATE .
+
+call_convention_o	= 'CALL-CONVENTION' integer IS name .
+
+console_o	= CONSOLE Is CRT cursor_o crt_status_o .
+
+cursor_o	= <
+		= CURSOR Is name .
+		= .
+> .
+crt_status_o	= <
+		= CRT STATUS Is name .
+		= .
+> .
+input_output_o	= <
+		= 'INPUT-OUTPUT' SECTION '.'
+		{ => { Section = cIO_SCT; }; } .
+		=
+		{ => { Section = cIO_SCT; }; } .
+> .
+file_control	= file_control_o file_control_entry_l .
+
+file_control_o	= <
+		= 'FILE-CONTROL' '.' .
+		= .
+> .
+file_control_entry_l	= <
+		= /* file_control_entry */ .
+		= file_control_entry_l file_control_entry .
+		= file_control_entry_l copy_or_replace .
+		= file_control_entry_l execute period_o .
+> .
+file_control_entry	= <
+		= 'SELECT'     Optional name_f copy_o select_clause_l '.' .
+		= 'SELECT' NOT OPTIONAL name_f copy_o select_clause_l '.' .
+> .
+select_clause_l	= <
+		= .
+		= select_clause_l select_clause .
+> .
+select_clause	= <
+		= ASSIGN To external_o LINE ADVANCING File assign_l .
+		= ASSIGN To external_o Multiple REEL  File assign_l .
+		= ASSIGN To external_o                File assign_l .
+		= ASSIGN To external_o DISK           FILE assign_l .
+		= ASSIGN To external_o DISK                assign_o .
+		= ASSIGN To external_o KEYBOARD            assign_o .
+		= ASSIGN To external_o DISPLAY             assign_o .
+		= ASSIGN To external_o PRINTER             assign_o .
+		= ASSIGN To external_o 'PRINTER-1'         assign_o .
+		= ASSIGN To external_o DISK FROM name_ .
+		= RESERVE integer ? - ALTERNATE_AREA .
+		= RESERVE integer_or_no Alternate AREA .
+		= RESERVE integer_or_no Alternate AREAS .
+		= organization_is_o SEQUENTIAL .
+		=                   RECORD SEQUENTIAL .
+		= ORGANIZATION Is   RECORD SEQUENTIAL .
+		= organization_is_o LINE   SEQUENTIAL .
+		=                   RELATIVE .
+		= ORGANIZATION Is   RELATIVE .
+		= organization_is_o INDEXED .
+		= PADDING Character Is qualification_f .
+		= PADDING Character Is non_numeric_literal .
+		= RECORD DELIMITER Is 'STANDARD-1' .
+		= RECORD DELIMITER Is name .
+		= RECORD DELIMITER Is literal .
+		= ACCESS Mode Is SEQUENTIAL ? - RELATIVE_Key_Is_name .
+	     /* = ACCESS Mode Is SEQUENTIAL RELATIVE Key Is qualification_f . */
+		= ACCESS Mode Is RANDOM     ? - RELATIVE_Key_Is_name .
+	     /* = ACCESS Mode Is RANDOM     RELATIVE Key Is qualification_f . */
+		= ACCESS Mode Is DYNAMIC    ? - RELATIVE_Key_Is_name .
+	     /* = ACCESS Mode Is DYNAMIC    RELATIVE Key Is qualification_f . */
+		= RELATIVE Key Is qualification_f .
+		= File STATUS Is qualification_f .
+		= File STATUS Is qualification_f qualification_f .
+		= SORT STATUS Is qualification_f .
+		= RECORD Key Is qualification_f .
+		= RECORD Key Is qualification_f '=' name_l .
+		= ALTERNATE Record Key Is alternate_l duplicates_o_2 password_o suppress_o .
+		= LOCK Mode Is MANUAL    lock_o .
+		= LOCK Mode Is AUTOMATIC lock_o .
+		= LOCK Mode Is EXCLUSIVE .
+		= PASSWORD Is qualification_f .
+> .
+assign_o	= <
+		= assign_l .
+		= ? { GetLookahead (2) == YYCODE (STATUS) } .
+> .
+assign_l	= <
+		= assign_e .
+		= assign_l assign_e .
+> .
+assign_e	= <
+		= name .
+		= non_figurative_non_numeric_literal .
+> .
+external_o	= <
+		= EXTERNAL .
+		= DYNAMIC .
+		= .
+> .
+integer_or_no	= <
+		= integer .
+		= NO .
+> .
+organization_is_o	= <
+		= ORGANIZATION Is .
+		= .
+> .
+alternate_l	= <
+		= alternate_e .
+		= alternate_l alternate_e .
+> .
+alternate_e	= <
+		= qualification_f .
+		= qualification_f e:'=' name_l ? { GetLookahead (2) == YYCODE ('=') } .
+> .
+duplicates_o_2	= <
+		= With DUPLICATES .
+		= .
+> .
+password_o	= <
+		= PASSWORD Is qualification_f .
+		= .
+> .
+suppress_o	= <
+	     /* = SUPPRESS When ZEROS .
+		= SUPPRESS When SPACE .
+		= SUPPRESS When ALL literal . */
+		= SUPPRESS When     literal .
+		= .
+> .
+lock_o		= <
+		= WITH LOCK ON          RECORD .
+		= WITH LOCK ON          RECORDS .
+		= WITH LOCK ON MULTIPLE RECORD .
+		= WITH LOCK ON MULTIPLE RECORDS .
+		= WITH LOCK ON ROLLBACK .
+		= .
+> .
+i_o_control_o	= <
+		= 'I-O-CONTROL' '.' copy_o .
+		= 'I-O-CONTROL' '.' copy_o i_o_control_l '.' .
+		= .
+> .
+i_o_control_l	= <
+		= .
+		= i_o_control_l i_o_control_e .
+> .
+i_o_control_e	= <
+		= RERUN         Every rerun_e .
+		= RERUN ON name Every rerun_e .
+		= SAME same Area For name name_l .
+		= MULTIPLE FILE Tape Contains multiple_l .
+		= APPLY 'WRITE-ONLY' On name_l .
+		= APPLY 'CORE-INDEX' On name_l .
+		= APPLY 'RECORD-OVERFLOW' On name_l .
+		= APPLY 'REORG-CRITERIA' To name_ On name_ .
+> .
+rerun_e		= <
+		=          REEL Of name .
+		= 'END' Of REEL Of name .
+		= integer RECORDS Of name .
+		= integer 'CLOCK-UNITS' .
+		= condition_name .
+> .
+same		= <
+		= RECORD .
+		= SORT .
+		= 'SORT-MERGE' .
+> .
+multiple_l	= <
+		= multiple_e .
+		= multiple_l multiple_e .
+> .
+multiple_e	= <
+		= name .
+		= name POSITION integer .
+> .
+data_division	= data_o
+		  file_section_o
+		  working_storage_section_o
+		  local_storage_section_o
+		  linkage_section_o
+		  communication_section_o
+		  report_section_o
+		  screen_section_o .
+
+data_o		= <
+		= DATA DIVISION '.'
+		{ => { Section = cDATA_DIV; }; } .
+		=
+		{ => { Section = cDATA_DIV; }; } .
+> .
+file_section_o	= <
+		= file_o file_description_l .
+	     /* = . */
+> .
+file_o		= <
+		= FILE SECTION '.'
+		{ => { Section = cFILE_SCT; }; } .
+		=
+		{ => { Section = cFILE_SCT; }; } .
+> .
+file_description_l	= <
+		= .
+		= file_description_l copy_or_replace .
+		= file_description_l execute period_o .
+		= file_description_l file_description_e .
+> .
+file_description_e	= <
+		= file_description_entry data_description_entry_l .
+		= sort_merge_file_description_entry data_description_entry_l .
+	     /* = report_file_description_entry . is covered by file_description_entry */
+> .
+working_storage_section_o	= <
+		= 'WORKING-STORAGE' SECTION '.'
+		{ => { Section = cWS_SCT; }; }
+		  data_description_entry_l .
+		= .
+> .
+local_storage_section_o	= <
+		= 'LOCAL-STORAGE' SECTION '.'
+		{ => { Section = cLS_SCT; }; }
+		  data_description_entry_l .
+		= .
+> .
+linkage_section_o	= <
+		= LINKAGE SECTION '.'
+		{ => { Section = cLINK_SCT; }; }
+		  data_description_entry_l .
+		= .
+> .
+communication_section_o	= <
+		= COMMUNICATION SECTION '.'
+		{ => { Section = cCOMM_SCT; }; }
+		  communication_description_l .
+		= .
+> .
+communication_description_l	= <
+		= communication_description_l communication_description_entry data_description_entry_l .
+		= communication_description_l copy_or_replace .
+		= communication_description_l execute period_o .
+		= .
+> .
+report_section_o	= <
+		= REPORT SECTION '.'
+		{ => { Section = cREP_SCT; }; }
+		  report_description_entry_l .
+		= .
+> .
+screen_section_o	= <
+		= SCREEN SECTION '.'
+		{ => { Section = cSCRN_SCT }; }
+		  screen_description_entry_l .
+		= .
+> .
+report_description_entry_l	= <
+		= report_description_entry_l report_description_entry report_group_description_entry_l .
+		= report_description_entry_l copy_or_replace .
+		= report_description_entry_l execute period_o .
+		= .
+> .
+report_group_description_entry_l	= <
+		= report_group_description_entry_l report_group_description_entry .
+		= .
+> .
+file_description_entry			= FD name copy_o file_clause_l '.'
+		{ => { (void) Declare (\FD, name:Scan, oFILE, PrevEPos); }; } .
+
+sort_merge_file_description_entry	= SD name copy_o sort_merge_clause_l '.'
+		{ => { (void) Declare (\SD, name:Scan, oFILE, PrevEPos); }; } .
+
+file_clause_l	= <
+		= .
+		= file_clause_l file_clause .
+> .
+file_clause	= <
+		= Is EXTERNAL .
+		= Is 'GLOBAL' .
+		= BLOCK  Contains            integer RECORDS .
+		= BLOCK  Contains            integer Characters .
+		= BLOCK  Contains integer TO integer RECORDS .
+		= BLOCK  Contains integer TO integer Characters .
+		= RECORD Contains            integer Characters .
+		= RECORD Contains integer TO integer Characters .
+		= RECORD Is VARYING In Size from_o to_o Characters depending_o .
+		= LABEL RECORD  AreIs STANDARD .
+		= LABEL RECORD  AreIs OMITTED .
+		= LABEL RECORD  AreIs name_l .
+		= LABEL RECORDS AreIs STANDARD .
+		= LABEL RECORDS AreIs OMITTED .
+		= LABEL RECORDS AreIs name_l .
+		= VALUE OF value_l .
+		= VALUE OF 'FILE-ID' Is name_or_literal .
+		= DATA RECORD  AreIs name_l_f .
+		= DATA RECORDS AreIs name_l_f .
+		= LINAGE Is linage LINES footing LINES AT top bottom_o .
+		= LINAGE Is linage LINES footing LINES    top bottom_o .
+		= LINAGE Is linage LINES footing       AT top bottom_o .
+		= LINAGE Is linage LINES footing          top bottom_o .
+		= LINAGE Is linage LINES footing LINES AT bottom .
+		= LINAGE Is linage LINES footing LINES    bottom .
+		= LINAGE Is linage LINES footing       AT bottom .
+		= LINAGE Is linage LINES footing          bottom .
+		= LINAGE Is linage LINES footing .
+		= LINAGE Is linage LINES         LINES AT top bottom_o .
+		= LINAGE Is linage LINES         LINES    top bottom_o .
+		= LINAGE Is linage LINES               AT top bottom_o .
+		= LINAGE Is linage LINES                  top bottom_o .
+		= LINAGE Is linage LINES         LINES AT bottom .
+		= LINAGE Is linage LINES         LINES    bottom .
+		= LINAGE Is linage LINES               AT bottom .
+		= LINAGE Is linage LINES                  bottom .
+		= LINAGE Is linage LINES .
+		= LINAGE Is linage       footing LINES AT top bottom_o .
+		= LINAGE Is linage       footing LINES    top bottom_o .
+		= LINAGE Is linage       footing       AT top bottom_o .
+		= LINAGE Is linage       footing          top bottom_o .
+		= LINAGE Is linage       footing LINES AT bottom .
+		= LINAGE Is linage       footing LINES    bottom .
+		= LINAGE Is linage       footing       AT bottom .
+		= LINAGE Is linage       footing          bottom .
+		= LINAGE Is linage       footing .
+		= LINAGE Is linage                     AT top bottom_o .
+		= LINAGE Is linage                        top bottom_o .
+		= LINAGE Is linage                     AT bottom .
+		= LINAGE Is linage                        bottom .
+		= LINAGE Is linage .
+		= 'CODE-SET' Is alphabet_name .
+		= 'CODE-SET' Is alphabet_name 'FOR' identifier_l .
+		= REPORT  AreIs name_l .
+		= REPORTS AreIs name_l .
+		= RECORDING Mode Is name .	/* name: F V U S */
+		= RECORDING Mode Is FIXED .
+		= RECORDING Mode Is VARIABLE .
+> .
+sort_merge_clause_l	= <
+		= .
+		= sort_merge_clause_l sort_merge_clause .
+> .
+sort_merge_clause	= <
+		= BLOCK  Contains            integer RECORDS .
+		= BLOCK  Contains            integer Characters .
+		= BLOCK  Contains integer TO integer RECORDS .
+		= BLOCK  Contains integer TO integer Characters .
+		= RECORD Contains            integer Characters .
+		= RECORD Contains integer TO integer Characters .
+		= RECORD Is VARYING In Size from_o to_o Characters depending_o .
+		= LABEL RECORD  AreIs STANDARD .
+		= LABEL RECORD  AreIs OMITTED .
+		= LABEL RECORD  AreIs name_l .
+		= LABEL RECORDS AreIs STANDARD .
+		= LABEL RECORDS AreIs OMITTED .
+		= LABEL RECORDS AreIs name_l .
+		= DATA RECORD  AreIs name_l_f .
+		= DATA RECORDS AreIs name_l_f .
+		= VALUE OF 'FILE-ID' Is name_or_literal .
+> .
+value_l		= <
+		= value_e .
+		= value_l value_e .
+> .
+value_e		= <
+		= name Is qualification
+		{ => { (void) UseName (name:Scan); }; } .
+		= name Is literal
+		{ => { (void) UseName (name:Scan); }; } .
+> .
+from_o		= < = From integer			. = . > .
+to_o		= < = TO integer			. = . > .
+depending_o	= < = DEPENDING On qualification	. = . > .
+bottom_o	= < = Lines At bottom			. = . > .
+footing		= With FOOTING At linage .
+top		= TOP linage .
+bottom		= BOTTOM linage .
+
+linage		= <
+		= qualification .
+		= integer .
+> .
+data_description_entry_l	= <
+		= .
+		= data_description_entry_l data_description_entry .
+		= data_description_entry_l copy_or_replace .
+		= data_description_entry_l execute period_o .
+> .
+data_description_entry	= <
+   Format_0	= <
+		= level_number name_or_Filler redefines_o copy '.'
+		  l2: level_number n2: name_or_Filler r2: redefines_o data_clause_l '.'
+		{ => { (void) Declare (level_number:Value, name_or_Filler:Scan, oDATA, PrevEPos); }; } .
+		= '77' name_or_Filler redefines_o copy '.'
+		  l2: '77' n2: name_or_Filler r2: redefines_o data_clause_l '.'
+		{ => { (void) Declare (77, name_or_Filler:Scan, oDATA, PrevEPos); }; } .
+   > .
+   Format_1	= <
+		= level_number name_or_Filler redefines_o data_clause_l '.'
+		{ => { (void) Declare (level_number:Value, name_or_Filler:Scan, oDATA, PrevEPos); }; } .
+		= '77'         name_or_Filler redefines_o data_clause_l '.'
+		{ => { (void) Declare (77, name_or_Filler:Scan, oDATA, PrevEPos); }; } .
+   > .
+   Format_2	= <
+		= '66' name RENAMES renames_tail
+		{ => { (void) Declare (66, name:Scan, oDATA, PrevEPos); }; } .
+		= '66' name in_of n2: name RENAMES renames_tail
+		{ => { (void) Declare (66, name:Scan, oDATA, PrevEPos); }; } .
+   > .
+   Format_3	= <
+		= '88' condition_name: name VALUE  AreIs condition_l false_o '.'
+		{ => { (void) Declare (88, condition_name:Scan, oDATA, PrevEPos); }; } .
+		= '88' condition_name: name VALUES AreIs condition_l false_o '.'
+		{ => { (void) Declare (88, condition_name:Scan, oDATA, PrevEPos); }; } .
+   > .
+   Format_4	= <
+		= '78' name VALUE Is const_expression '.'
+		{ => { (void) Declare (78, name:Scan, oDATA, PrevEPos); }; } .
+   > .
+> .
+period_o	= <
+		= '.' .
+		= .
+> .
+renames_tail	= <
+		= qualification '.' .
+		= qualification THROUGH qualification '.' .
+> .
+redefines_o	= <
+		= REDEFINES name
+		{ => { (void) UseName (name:Scan); }; } .
+		= .
+> .
+name_or_Filler	= <
+		= name
+		{ Scan := name:Scan; } .
+		= Filler
+		{ Scan := { Scan.name.Ident = NoIdent;
+			    Scan.Position   = NoPosition; }; } .
+> .
+data_clause_l	= <
+		= .
+		= data_clause_l data_clause .
+> .
+data_clause	= <
+		= Is EXTERNAL .
+		= Is 'GLOBAL' .
+		= PICTURE Is string .
+		= USAGE Is usage .
+		=          usage .
+		= SIGN  Is sign_1 .
+		=          sign_1 .
+		= OCCURS integer TO integer Times a_de_scending_l indexed_o .
+		= OCCURS integer            Times a_de_scending_l indexed_o .
+		= OCCURS integer TO integer Times DEPENDING On qualification_f a_de_scending_l indexed_o .
+		= OCCURS integer            Times DEPENDING On qualification_f a_de_scending_l indexed_o .
+		= SYNCHRONIZED .
+		= SYNCHRONIZED 'LEFT' .
+		= SYNCHRONIZED 'RIGHT' .
+		= JUSTIFIED Right .
+		= BLANK When ZERO .
+		= BLANK When ZEROS .
+		= VALUE Is name_or_literal .
+		= VALUE Is NULL .
+		= VALUE Is NULLS .
+> .
+usage		= <
+		= BINARY .
+		= COMPUTATIONAL .
+		= DISPLAY .
+		= INDEX .
+		= 'PACKED-DECIMAL' .
+		= 'COMPUTATIONAL-0' .
+		= 'COMPUTATIONAL-1' .
+		= 'COMPUTATIONAL-2' .
+		= 'COMPUTATIONAL-3' .
+		= 'COMPUTATIONAL-4' .
+		= 'COMPUTATIONAL-5' .
+		= 'COMPUTATIONAL-6' .
+		= 'COMPUTATIONAL-X' .
+		= POINTER .
+		= 'DISPLAY-1' .
+		= 'PROCEDURE-POINTER' .
+> .
+sign_1		= <
+		= LEADING  separate_o .
+		= TRAILING separate_o .
+> .
+separate_o	= <
+		= SEPARATE Character .
+		= .
+> .
+a_de_scending_l	= <
+		= .
+		= a_de_scending_l ASCENDING  Key Is qualification_l_f .
+		= a_de_scending_l DESCENDING Key Is qualification_l_f .
+> .
+indexed_o	= <
+		= INDEXED By indexed_l .
+		= .
+> .
+indexed_l	= <
+		= name
+		{ => { (void) Declare (IB, name:Scan, oDATA, PrevEPos); }; } .
+		= indexed_l name
+		{ => { (void) Declare (IB, name:Scan, oDATA, PrevEPos); }; } .
+> .
+condition_l	= <
+		= dd_condition_e .
+		= condition_l dd_condition_e .
+> .
+dd_condition_e	= <
+		= name_or_literal .
+		= name_or_literal THROUGH name_or_literal .
+> .
+false_o		= <
+		= When Set To FALSE literal .
+		= .
+> .
+const_expression	= <
+		= const_primary .
+		= const_primary operator const_primary .
+> .
+const_primary	= <
+		= literal .
+		= NEXT .
+		= 'START' Of name_ .
+		= LENGTH  Of name_ .
+> .
+operator	= <
+		= '+' .
+		= '-' .
+		= '*' .
+		= '/' .
+		= AND .
+		= OR .
+> .
+communication_description_entry	= <
+		= CD name copy_o For Initial 'INPUT' cd_input_o '.'
+		{ => (void) Declare (\CD, name:Scan, oDATA, PrevEPos); } .
+		= CD name copy_o For         'OUTPUT' cd_output_l '.'
+		{ => (void) Declare (\CD, name:Scan, oDATA, PrevEPos); } .
+		= CD name copy_o For Initial 'I-O' cd_i_o_o '.'
+		{ => (void) Declare (\CD, name:Scan, oDATA, PrevEPos); } .
+> .
+cd_input_o	= <
+		= cd_input_l .
+		= name_or_filler name_or_filler name_or_filler name_or_filler
+		  name_or_filler name_or_filler name_or_filler name_or_filler
+		  name_or_filler name_or_filler name_or_filler .
+> .
+cd_input_l	= <
+		= .
+		= cd_input_l cd_input_e .
+> .
+cd_input_e	= <
+		= Symbolic QUEUE		Is name_ .
+		= Symbolic 'SUB-QUEUE-1'	Is name_ .
+		= Symbolic 'SUB-QUEUE-2'	Is name_ .
+		= Symbolic 'SUB-QUEUE-3'	Is name_ .
+		= MESSAGE DATE			Is name_ .
+		= MESSAGE TIME			Is name_ .
+		= Symbolic SOURCE		Is name_ .
+		= TEXT LENGTH			Is name_ .
+		= 'END' KEY			Is name_ .
+		= STATUS KEY			Is name_ .
+		= Message COUNT			Is name_ .
+> .
+cd_output_l	= <
+		= .
+		= cd_output_l cd_output_e .
+> .
+cd_output_e	= <
+		= DESTINATION COUNT		Is name_ .
+		= TEXT LENGTH			Is name_ .
+		= STATUS KEY			Is name_ .
+		= DESTINATION TABLE OCCURS integer Times indexed_o .
+		= ERROR KEY			Is name_ .
+		=          DESTINATION		Is name_ .
+		= SYMBOLIC DESTINATION		Is name_ .
+> .
+cd_i_o_o	= <
+		= cd_i_o_l .
+		= name_or_filler name_or_filler name_or_filler name_or_filler
+		  name_or_filler name_or_filler .
+> .
+cd_i_o_l	= <
+		= .
+		= cd_i_o_l cd_i_o_e .
+> .
+cd_i_o_e	= <
+		= MESSAGE DATE			Is name_ .
+		= MESSAGE TIME			Is name_ .
+		= Symbolic TERMINAL		Is name_ .
+		= TEXT LENGTH			Is name_ .
+		= 'END' KEY			Is name_ .
+		= STATUS KEY			Is name_ .
+> .
+name_or_filler	= <
+		= name_ .
+		= FILLER .
+> .
+report_description_entry	= RD name report_clause_l '.'
+		{ => { (void) Declare (\RD, name:Scan, oDATA, PrevEPos); }; } .
+
+report_clause_l	= <
+		= .
+		= report_clause_l report_clause .
+> .
+report_clause	= <
+		= Is 'GLOBAL' .
+		= With CODE non_numeric_literal .
+		= With CODE name_ .
+		= CONTROL  AreIs qualification_l .
+		= CONTROLS AreIs qualification_l .
+		= CONTROL  AreIs FINAL .
+		= CONTROLS AreIs FINAL .
+		= CONTROL  AreIs FINAL qualification_l .
+		= CONTROLS AreIs FINAL qualification_l .
+		= PAGE limit_o integer line_o page_l .
+		= copy '.' .
+> .
+limit_o		= <
+		= LIMIT  AreIs .
+		= LIMITS AreIs .
+		= IS .
+		= Are .
+> .
+line_o		= <
+		= LINE .
+		= Lines .
+> .
+page_l		= <
+		= .
+		= page_l page_e .
+> .
+page_e		= <
+		= HEADING integer .
+		= FIRST DETAIL integer .
+		= LAST DETAIL integer .
+		= FOOTING integer .
+> .
+report_group_description_entry	= <
+		= level_number      report_group_clause_l '.' .
+		= level_number name report_group_clause_l '.'
+		{ => { (void) Declare (level_number:Value, name:Scan, oDATA, PrevEPos); }; } .
+> .
+report_group_clause_l	= <
+		= .
+		= report_group_clause_l  report_group_clause .
+> .
+report_group_clause	= <
+		= LINE Number Is integer ? { GetLookahead (2) == YYCODE (GROUP) } .
+		= LINE Number Is integer    NEXT PAGE .
+		= LINE Number Is integer ON NEXT PAGE .
+		= LINE Number Is PLUS integer .
+		= LINE Number Is NEXT PAGE .
+		= NEXT GROUP Is integer .
+		= NEXT GROUP Is PLUS integer .
+		= NEXT GROUP Is NEXT PAGE .
+		= TYPE Is type .
+		=          DISPLAY .
+		= USAGE Is DISPLAY .
+		=          'DISPLAY-1' .
+		= USAGE Is 'DISPLAY-1' .
+		= PICTURE Is string .
+		= SIGN Is sign_2 .
+		=         sign_2 .
+		= JUSTIFIED Right .
+		= BLANK When ZERO .
+		= BLANK When ZEROS .
+		= COLUMN Number Is integer .
+		= SOURCE Is identifier .
+		= VALUE Is name_or_literal .
+	/* repetition of SUM clause is done by nonterminal report_group_clause_l */
+		= SUM identifier_l                      reset_o .
+		= SUM identifier_l UPON qualification_l reset_o .
+		= GROUP Indicate .
+> .
+type		= <
+		= REPORT HEADING		. = RH			.
+		= PAGE HEADING			. = PH			.
+		= CONTROL HEADING name_or_final	. = CH name_or_final	.
+		= DETAIL			.
+		= CONTROL FOOTING name_or_final	. = CF name_or_final	.
+		= PAGE FOOTING			. = PF			.
+		= REPORT FOOTING		. = RF			.
+> .
+name_or_final	= <
+		= qualification .
+		= FINAL .
+> .
+sign_2		= <
+		= LEADING  SEPARATE Character .
+		= TRAILING SEPARATE Character .
+> .
+reset_o		= <
+		= RESET On name_or_final .
+		= .
+> .
+screen_description_entry_l	= <
+		= .
+		= screen_description_entry_l screen_description_entry .
+		= screen_description_entry_l copy_or_replace .
+		= screen_description_entry_l execute period_o .
+> .
+screen_description_entry	= <
+		= level_number name   screen_clause_l '.'
+		{ => { (void) Declare (level_number:Value, name:Scan, oDATA, PrevEPos); }; } .
+		= level_number Filler screen_clause_l '.'
+		{ => {	tScanAttribute a;
+			a.name.Ident = NoIdent;
+			a.Position   = level_number:Position;
+			(void) Declare (level_number:Value, a, oDATA, PrevEPos); }; } .
+> .
+screen_clause_l	= <
+		= .
+		= screen_clause_l screen_clause .
+> .
+screen_clause	= <
+		= BLANK SCREEN .
+		= BLANK LINE .
+		= BELL .
+		= BEEP .
+		= BLINK .
+		= ERASE EOL .
+		= ERASE EOS .
+		= HIGHLIGHT .
+		= LOWLIGHT .
+		= GRID .
+		= LEFTLINE .
+		= OVERLINE .
+		= 'REVERSE-VIDEO' .
+		= UNDERLINE .
+		= SIZE Is identifier_or_integer .
+		= LINE .
+		= LINE Number Is sign_line_o identifier_or_integer .
+		= COLUMN .
+		= COLUMN Number Is sign_line_o identifier_or_integer .
+		= COL .
+		= COL    Number Is sign_line_o identifier_or_integer .
+		= 'FOREGROUND-COLOR' Is identifier_or_integer .
+		= 'BACKGROUND-COLOR' Is identifier_or_integer .
+		= CONTROL Is identifier .
+		= VALUE Is literal .
+		= string .
+		= PICTURE Is string .
+		= FROM identifier_or_literal .
+		= TO identifier .
+		= USING identifier .
+		= USAGE Is DISPLAY .
+		=          DISPLAY .
+		= BLANK When ZERO .
+		=            ZERO .
+		= JUSTIFIED Right .
+		= SIGN  Is sign_1 .
+		=          sign_1 .
+		= AUTO .
+		= 'AUTO-SKIP' .
+		= SECURE .
+		= 'NO-ECHO' .
+		= REQUIRED .
+		= 'EMPTY-CHECK' .
+		= PROMPT .
+		= PROMPT CHARACTER Is identifier_or_literal .
+		= PROMPT           IS identifier_or_literal .
+		= PROMPT              identifier .
+		= PROMPT              string .
+		= OCCURS integer Times .
+		= FULL .
+		= 'LENGTH-CHECK' .
+		= 'ZERO-FILL' .
+> .
+sign_line_o	= <
+		= PLUS .
+		= '+' .
+		= '-' .
+		= .
+> .
+
+/* LR(2) Version */
+
+procedure_division	= <
+		= procedure_head using_o '.' declaratives_o section_l .
+		= procedure_head using_o '.' declaratives_o .
+		= procedure_head using_o '.' copy_or_replace declaratives_o section_l .
+		= procedure_head using_o '.' copy_or_replace declaratives_o .
+> .
+procedure_head	= PROCEDURE DIVISION mnemonic_name_o
+		{ => { Section = cPROC_DIV; }; } .
+
+mnemonic_name_o	= <
+		= name_ .
+		= .
+> .
+using_o		= <
+		= USING    using_l .
+		= CHAINING using_l .
+		= .
+> .
+using_l		= <
+		= using_1_e .
+		= using_l using_2_e .
+> .
+using_1_e	= <
+		= name_l .
+		= using_2_e .
+> .
+using_2_e	= <
+		= BY REFERENCE name_l .
+		= BY VALUE     name_l .
+> .
+declaratives_o	= <
+		= DECLARATIVES '.' d_section_l 'END' DECLARATIVES '.' .
+		= .
+> .
+d_section_l	= <
+		=             section_head use_o paragraph_l ? { GetLookahead (2) == YYCODE (SECTION) } .
+		=             section_head use_o             ? { GetLookahead (2) == YYCODE (SECTION) } .
+		= d_section_l section_head use_o paragraph_l ? { GetLookahead (2) == YYCODE (SECTION) } .
+		= d_section_l section_head use_o             ? { GetLookahead (2) == YYCODE (SECTION) } .
+> .
+section_l	= <
+		= paragraph_l         ? { GetLookahead (2) == YYCODE (SECTION) } .
+		=           section_e .
+		= section_l section_e .
+> .
+section_e	= <
+		= section_head             ? { GetLookahead (2) == YYCODE (SECTION) }
+		{ => { DeclareEnd (lSECTION, PrevEPos); }; } .
+		= section_head paragraph_l ? { GetLookahead (2) == YYCODE (SECTION) }
+		{ => { DeclareEnd (lSECTION, PrevEPos); }; } .
+> .
+section_head	= chapter_name SECTION segment_number_o '.'
+		{ => { (void) DeclareLabel (chapter_name:Scan, lSECTION, PrevEPos); }; } .
+
+segment_number_o	= <
+		= integer .
+		= .
+> .
+use_o		= <
+		= use '.' .
+		= .
+> .
+paragraph_l	= <
+		= sentence_l .
+		=             paragraph_e .
+		= paragraph_l paragraph_e .
+> .
+paragraph_e	= <
+		= paragraph_head
+		{ => { DeclareEnd (lPARAGRPH, PrevEPos); }; } .
+		= paragraph_head sentence_l
+		{ => { DeclareEnd (lPARAGRPH, PrevEPos); }; } .
+> .
+paragraph_head	= chapter_name '.'
+		{ => { (void) DeclareLabel (chapter_name:Scan, lPARAGRPH, PrevEPos); }; } .
+
+sentence_l	= <
+		= statement_l '.'		.
+		=             '.'		.
+		= copy_or_replace		.
+		= sentence_l statement_l '.'	.
+		= sentence_l             '.'	.
+		= sentence_l copy_or_replace	.
+> .
+statement_l	= <
+		= statement .
+		= statement statement_l .
+> .
+statement	= <
+		= accept .
+		= add .
+		= alter .
+		= call .
+		= cancel .
+		= chain .
+		= close .
+		= commit .
+		= compute .
+		= continue .
+		= delete .
+		= disable .
+		= display .
+		= divide .
+		= enable .
+		= enter .
+		= entry .
+		= evaluate .
+		= examine .
+		= execute .
+		= exhibit .
+		= exit .
+		= generate .
+		= goback .
+		= goto .
+		= if .
+		= initialize .
+		= initiate .
+		= inspect .
+		= merge .
+		= move .
+		= multiply .
+		= next_sentence .
+		= on .
+		= open .
+		= perform .
+		= purge .
+		= read .
+		= ready_trace .
+		= receive .
+		= release .
+		= reset_trace .
+		= return .
+		= rewrite .
+		= rollback .
+		= search .
+		= send .
+		= service .
+		= set .
+		= sort .
+		= start .
+		= stop .
+		= string_v .
+		= subtract .
+		= suppress .
+		= terminate .
+		= transform .
+		= unlock .
+		= unstring .
+		= write .
+> .
+imperative_statement	= <
+		= statement_i .
+		= statement_i imperative_statement .
+> .
+statement_i	= <
+		= accept_i .
+		= add_i .
+		= alter .
+		= call_i .
+		= cancel .
+		= chain .
+		= close .
+		= commit .
+		= compute_i .
+		= continue .
+		= delete_i .
+		= disable .
+		= display_i .
+		= divide_i .
+		= enable .
+		= evaluate_i .
+		= examine .
+		= execute .
+		= exhibit .
+		= exit .
+		= generate .
+		= goback .
+		= goto .
+		= if_i .
+		= initialize .
+		= initiate .
+		= inspect .
+		= merge .
+		= move .
+		= multiply_i .
+		= next_sentence .
+		= on .
+		= open .
+		= perform .
+		= purge .
+		= read_i .
+		= ready_trace .
+		= receive_i .
+		= release .
+		= reset_trace .
+		= return_i .
+		= rewrite_i .
+		= rollback .
+		= search_i .
+		= send .
+		= service .
+		= set .
+		= sort .
+		= start_i .
+		= stop .
+		= string_i .
+		= subtract_i .
+		= suppress .
+		= terminate .
+		= transform .
+		= unlock .
+		= unstring_i .
+		= write_i .
+> .
+accept		= <
+		= ACCEPT identifier_w FROM accept_name             End_accept .
+		= ACCEPT identifier_w                  exception_2 End_accept .
+		= ACCEPT identifier_w FROM accept_name exception   End_accept .
+		= ACCEPT identifier_w FROM accept_from             End_accept .
+		= ACCEPT ? name_Message_COUNT name_ Message COUNT .
+		= ACCEPT identifier_w                                            End_accept .
+		= ACCEPT identifier_w                                     with   End_accept .
+		= ACCEPT identifier_w                        mode_block   with_o End_accept .
+		= ACCEPT identifier_w             from_crt   mode_block_o with_o End_accept .
+		= ACCEPT identifier_w line_column from_crt_o mode_block_o with_o End_accept .
+		= ACCEPT identifier_w                                            escape End_accept .
+		= ACCEPT identifier_w                                     with   escape End_accept .
+		= ACCEPT identifier_w                        mode_block   with_o escape End_accept .
+		= ACCEPT identifier_w             from_crt   mode_block_o with_o escape End_accept .
+		= ACCEPT identifier_w line_column from_crt_o mode_block_o with_o escape End_accept .
+		= ACCEPT '(' integer integer ')' identifier_w .
+> .
+accept_i	= <
+		= ACCEPT identifier_w FROM accept_name             End_accept .
+		= ACCEPT identifier_w                  exception_2 'END-ACCEPT' .
+		= ACCEPT identifier_w FROM accept_name exception   'END-ACCEPT' .
+		= ACCEPT identifier_w FROM accept_from             End_accept .
+		= ACCEPT ? name_Message_COUNT name_ Message COUNT .
+		= ACCEPT identifier_w                                            End_accept .
+		= ACCEPT identifier_w                                     with   End_accept .
+		= ACCEPT identifier_w                        mode_block   with_o End_accept .
+		= ACCEPT identifier_w             from_crt   mode_block_o with_o End_accept .
+		= ACCEPT identifier_w line_column from_crt_o mode_block_o with_o End_accept .
+		= ACCEPT identifier_w                                            escape 'END-ACCEPT' .
+		= ACCEPT identifier_w                                     with   escape 'END-ACCEPT' .
+		= ACCEPT identifier_w                        mode_block   with_o escape 'END-ACCEPT' .
+		= ACCEPT identifier_w             from_crt   mode_block_o with_o escape 'END-ACCEPT' .
+		= ACCEPT identifier_w line_column from_crt_o mode_block_o with_o escape 'END-ACCEPT' .
+		= ACCEPT '(' integer integer ')' identifier_w .
+> .
+exception_2	= <
+		= EXCEPTION imperative_statement .
+		= EXCEPTION imperative_statement
+		  NOT On EXCEPTION imperative_statement .
+> .
+accept_name	= <
+		= name_ .
+		= CONSOLE .
+> .
+accept_from	= <
+		= DATE .
+		= DAY .
+		= 'DAY-OF-WEEK' .
+		= TIME .
+		= LINE NUMBER .
+		= USER NAME .
+		= ESCAPE KEY .
+		= EXCEPTION STATUS .
+> .
+escape		= <
+		= ON	 exception_or_escape imperative_statement .
+		= NOT On exception_or_escape imperative_statement .
+		= ON	 exception_or_escape imperative_statement
+		  NOT On exception_or_escape imperative_statement .
+> .
+exception_or_escape	= <
+		= EXCEPTION .
+		= ESCAPE .
+> .
+line_column	= <
+		= At LINE Number identifier_or_integer .
+		= At                                   COLUMN Number identifier_or_integer .
+		= At                                   COL    Number identifier_or_integer .
+		= At LINE Number identifier_or_integer COLUMN Number identifier_or_integer .
+		= At LINE Number identifier_or_integer COL    Number identifier_or_integer .
+		= AT identifier_or_integer .
+> .
+from_crt_o	= <
+   from_crt	= FROM CRT .
+		= .
+> .
+mode_block_o	= <
+   mode_block	= MODE Is BLOCK .
+		= .
+> .
+with_o		= <
+   with		= WITH with_l .
+		= ? { GetLookahead (2) == YYCODE (DATA) } .
+> .
+with_l		= <
+		= .
+		= with_l AUTO .
+		= with_l 'AUTO-SKIP' .
+		= with_l BELL .
+		= with_l BEEP .
+		= with_l BLINK .
+		= with_l FULL .
+		= with_l 'LENGTH-CHECK' .
+		= with_l GRID .
+		= with_l HIGHLIGHT .
+		= with_l LOWLIGHT .
+		= with_l LEFTLINE .
+		= with_l OVERLINE .
+		= with_l PROMPT Character Is .
+		= with_l PROMPT Character Is literal .
+		= with_l REQUIRED .
+		= with_l 'EMPTY-CHECK' .
+		= with_l 'REVERSE-VIDEO' .
+		= with_l SECURE .
+		= with_l 'NO-ECHO' .
+		= with_l SIZE Is identifier_or_integer .
+		= with_l UNDERLINE .
+		= with_l 'FOREGROUND-COLOR' Is integer .
+		= with_l 'BACKGROUND-COLOR' Is integer .
+		= with_l CONTROL Is identifier_or_literal .
+		= with_l 'TIME-OUT' AFTER identifier_or_integer .
+		= with_l 'LEFT-JUSTIFY' .
+		= with_l 'RIGHT-JUSTIFY' .
+		= with_l 'SPACE-FILL' .
+		= with_l 'TRAILING-SIGN' .
+		= with_l UPDATE .
+		= with_l UPPER .
+		= with_l LOWER .
+		= with_l 'ZERO-FILL' .
+> .
+add		= <
+		= ADD identifier_or_numeric_literal_l TO identifier_rounded_l_w End_add .
+		= ADD identifier_or_numeric_literal_l TO identifier_rounded_l_w size_error End_add .
+		= ADD identifier_or_numeric_literal_l TO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_add .
+		= ADD identifier_or_numeric_literal_l TO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error End_add .
+		= ADD CORRESPONDING identifier TO identifier_rounded_c End_add .
+		= ADD CORRESPONDING identifier TO identifier_rounded_c size_error End_add .
+		= ADD identifier_or_numeric_literal_l GIVING identifier_rounded_l_w End_add .
+		= ADD identifier_or_numeric_literal_l GIVING identifier_rounded_l_w size_error End_add .
+> .
+add_i		= <
+		= ADD identifier_or_numeric_literal_l TO identifier_rounded_l_w End_add .
+		= ADD identifier_or_numeric_literal_l TO identifier_rounded_l_w size_error 'END-ADD' .
+		= ADD identifier_or_numeric_literal_l TO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_add .
+		= ADD identifier_or_numeric_literal_l TO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error 'END-ADD' .
+		= ADD CORRESPONDING identifier TO identifier_rounded_c End_add .
+		= ADD CORRESPONDING identifier TO identifier_rounded_c size_error 'END-ADD' .
+		= ADD identifier_or_numeric_literal_l GIVING identifier_rounded_l_w End_add .
+		= ADD identifier_or_numeric_literal_l GIVING identifier_rounded_l_w size_error 'END-ADD' .
+> .
+size_error	= <
+		= On	 SIZE ERROR imperative_statement .
+		= NOT On SIZE ERROR imperative_statement .
+		= On	 SIZE ERROR imperative_statement
+		  NOT On SIZE ERROR imperative_statement .
+> .
+giving		= ? identifier_or_numeric_literal_GIVING .
+
+alter		= ALTER alter_l .
+
+alter_l		= <
+		= alter_e .
+		= alter_l alter_e .
+> .
+alter_e		= <
+		= procedure_name TO            procedure_name .
+		= procedure_name TO PROCEED TO procedure_name .
+> .
+call		= <
+
+		= CALL call_name call_using_o giving_o End_call .
+		= CALL call_name call_using_o giving_o on_overflow End_call .
+		= CALL call_name call_using_o giving_o exception End_call .
+> .
+call_i		= <
+		= CALL call_name call_using_o giving_o End_call .
+		= CALL call_name call_using_o giving_o on_overflow 'END-CALL' .
+		= CALL call_name call_using_o giving_o exception 'END-CALL' .
+> .
+call_name	= <
+	     /* =      procedure_pointer_data_item .
+		= name procedure_pointer_data_item . */
+	     /* =      identifier_or_non_numeric_literal .
+		= name identifier_or_non_numeric_literal . */
+		=      qualification_n
+		{ => {  UseLabelExtern (qualification_n:Scan); }; } .
+		=      string
+		{ => {	char word [128];
+			StGetString (string:Value, word);
+			string:Scan.name.Ident = MakeIdent (word, strlen (word));
+			UseLabelExtern (string:Scan); }; } .
+		= name qualification_n
+		{ => {  UseLabelExtern (qualification_n:Scan);
+			UseLabelExtern (name:Scan); }; } .
+		= name string
+		{ => {	char word [128];
+			StGetString (string:Value, word);
+			string:Scan.name.Ident = MakeIdent (word, strlen (word));
+			UseLabelExtern (string:Scan);
+			UseLabelExtern (name:Scan); }; } .
+> .
+call_using_o	= <
+		= USING call_using_l .
+		= .
+> .
+call_using_l	= <
+		= call_using_1_e .
+		= call_using_l call_using_2_e .
+> .
+call_using_1_e	= <
+	     /* = identifier_l . */
+		= call_chain_l .
+		= call_using_2_e .
+> .
+call_using_2_e	= <
+		= chain_2_e .
+		= By VALUE call_chain_l .
+> .
+call_chain_l	= <
+		= call_chain_e .
+		= call_chain_l call_chain_e .
+> .
+call_chain_e	= <
+		= identifier_or_literal .
+		= literal SIZE Is literal .
+> .
+giving_o	= <
+		= giving_or_returning Into identifier .
+		= giving_or_returning ADDRESS OF identifier .
+		= .
+> .
+overflow	= <
+   on_overflow	= On	 OVERFLOW imperative_statement .
+		= NOT On OVERFLOW imperative_statement .
+		= On	 OVERFLOW imperative_statement
+		  NOT On OVERFLOW imperative_statement .
+> .
+exception	= <
+		= On	 EXCEPTION imperative_statement .
+		= NOT On EXCEPTION imperative_statement .
+		= On	 EXCEPTION imperative_statement
+		  NOT On EXCEPTION imperative_statement .
+> .
+cancel		= CANCEL identifier_or_non_numeric_literal_l .
+
+chain		= <
+		= CHAIN identifier_or_non_numeric_literal End_chain .
+		= CHAIN identifier_or_non_numeric_literal USING chain_l End_chain .
+> .
+chain_l		= <
+		= chain_1_e .
+		= chain_l chain_2_e .
+> .
+chain_1_e	= <
+		= call_chain_l .
+		= chain_2_e .
+> .
+chain_2_e	= <
+		= By REFERENCE call_chain_l .
+		=              ADDRESS OF call_chain_l .
+		= By REFERENCE ADDRESS OF call_chain_l .
+		= By CONTENT   call_chain_l .
+> .
+close		= 'CLOSE' close_l .
+
+close_l		= <
+		= close_e .
+		= close_l close_e .
+> .
+close_e		= <
+		= file_name ? { GetLookahead (2) == YYCODE (DATA) } .
+		= file_name REEL ? { GetLookahead (2) == YYCODE (DATA) } .
+		= file_name REEL With LOCK .
+		= file_name REEL For REMOVAL .
+		= file_name REEL With NO REWIND .
+		= file_name With NO REWIND .
+		= file_name With LOCK .
+		= file_name With DISP .
+> .
+commit		= COMMIT .
+
+compute		= <
+		= COMPUTE identifier_rounded_l_w equal_2 expression End_compute .
+		= COMPUTE identifier_rounded_l_w equal_2 expression size_error End_compute .
+> .
+compute_i	= <
+		= COMPUTE identifier_rounded_l_w equal_2 expression End_compute .
+		= COMPUTE identifier_rounded_l_w equal_2 expression size_error 'END-COMPUTE' .
+> .
+equal_2		= <
+		= '=' .
+		= EQUAL .
+> .
+continue	= CONTINUE .
+
+delete		= <
+		= DELETE file_name Record End_delete .
+		= DELETE file_name Record invalid End_delete .
+		= DELETE FILE file_name_l .
+> .
+delete_i	= <
+		= DELETE file_name Record End_delete .
+		= DELETE file_name Record invalid 'END-DELETE' .
+		= DELETE FILE file_name_l .
+> .
+invalid		= <
+		=     INVALID Key imperative_statement .
+		= NOT INVALID Key imperative_statement .
+		=     INVALID Key imperative_statement
+		  NOT INVALID Key imperative_statement .
+> .
+disable		= <
+		= DISABLE device name_ ? { GetLookahead (2) == YYCODE (DATA) } .
+		= DISABLE device name_ With KEY identifier_or_literal .
+> .
+device		= <
+		= 'INPUT' .
+		= 'INPUT' TERMINAL .
+		= 'I-O' TERMINAL .
+		= 'OUTPUT' .
+> .
+display		= <
+		= DISPLAY display_l upon_o display_advancing_o End_display .
+		= DISPLAY display_l upon_o display_advancing_o exception End_display .
+		= DISPLAY display_2_l End_display .
+> .
+display_i	= <
+		= DISPLAY display_l upon_o display_advancing_o End_display .
+		= DISPLAY display_l upon_o display_advancing_o exception 'END-DISPLAY' .
+		= DISPLAY display_2_l End_display .
+> .
+display_l	= <
+		= identifier_or_literal ? non_screen_display .
+		= display_l identifier_or_literal .
+> .
+display_2_l	= <
+		= display_2_e .
+		= display_2_l display_2_e .
+> .
+display_2_e	= identifier_or_literal display_3_l ? { GetLookahead (2) == YYCODE (DATA) } .
+
+upon_o		= <
+		= UPON name_ .
+		= UPON builtin_name .
+		= .
+> .
+display_advancing_o	= <
+		= With NO ADVANCING .
+		= ? { GetLookahead (2) == YYCODE (DATA) } .
+> .
+display_3_l	= <
+		= display_3_e .
+		= display_3_l display_3_e .
+> .
+display_3_e	= <
+		= At LINE   Number identifier_or_integer .
+		= At COLUMN Number identifier_or_integer .
+		= At COL    Number identifier_or_integer .
+		= AT identifier_or_integer .
+		= UPON CRT .
+		= UPON 'CRT-UNDER' .
+		= mode_block .
+   		= WITH with_display_l .
+> .
+with_display_l	= <
+		= .
+		= with_display_l BELL .
+		= with_display_l BEEP .
+		= with_display_l BLINK .
+		= with_display_l GRID .
+		= with_display_l ERASE EOL .
+		= with_display_l ERASE EOS .
+		= with_display_l HIGHLIGHT .
+		= with_display_l LOWLIGHT .
+		= with_display_l LEFTLINE .
+		= with_display_l OVERLINE .
+		= with_display_l 'REVERSE-VIDEO' .
+		= with_display_l SIZE Is identifier_or_integer .
+		= with_display_l UNDERLINE .
+		= with_display_l 'FOREGROUND-COLOR' Is integer .
+		= with_display_l 'BACKGROUND-COLOR' Is integer .
+		= with_display_l CONTROL Is identifier_or_literal .
+		= with_display_l BLANK SCREEN .
+		= with_display_l BLANK LINE .
+> .
+divide		= <
+		= DIVIDE identifier_or_numeric_literal INTO identifier_rounded_l_w End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_divide .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_l_w End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w End_divide .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO identifier_rounded_l_w size_error End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error End_divide .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w size_error End_divide .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w size_error End_divide .
+> .
+divide_i	= <
+		= DIVIDE identifier_or_numeric_literal INTO identifier_rounded_l_w End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_divide .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_l_w End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w End_divide .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w End_divide .
+		= DIVIDE identifier_or_numeric_literal INTO identifier_rounded_l_w size_error 'END-DIVIDE' .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error 'END-DIVIDE' .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error 'END-DIVIDE' .
+		= DIVIDE identifier_or_numeric_literal INTO giving identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w size_error 'END-DIVIDE' .
+		= DIVIDE identifier_or_numeric_literal BY   identifier_or_numeric_literal GIVING identifier_rounded_w REMAINDER identifier_w size_error 'END-DIVIDE' .
+> .
+enable		= <
+		= ENABLE device name_ ? { GetLookahead (2) == YYCODE (DATA) } .
+		= ENABLE device name_ With KEY identifier_or_literal .
+> .
+enter		= <
+		= ENTER name
+		{ => { UseLabelExtern (name:Scan); }; } .
+		= ENTER name procedure_name
+		{ => { UseLabelExtern (name:Scan); }; } .
+	     /* = ENTER COBOL .
+		= ENTER COBOL procedure_name . COBOL is covered by name */
+> .
+entry		= <
+		= ENTRY name
+		{ => { (void) DeclareLabel (name:Scan, lENTRY, PrevEPos); }; } .
+		= ENTRY name USING entry_l
+		{ => { (void) DeclareLabel (name:Scan, lENTRY, PrevEPos); }; } .
+		= ENTRY string
+		{ => {	char word [128];
+			StGetString (string:Value, word);
+			string:Scan.name.Ident = MakeIdent (word, strlen (word));
+			(void) DeclareLabel (string:Scan, lENTRY, PrevEPos); }; } .
+		= ENTRY string USING entry_l
+		{ => {	char word [128];
+			StGetString (string:Value, word);
+			string:Scan.name.Ident = MakeIdent (word, strlen (word));
+			(void) DeclareLabel (string:Scan, lENTRY, PrevEPos); }; } .
+> .
+entry_l		= <
+		= entry_1_e .
+		= entry_l entry_2_e .
+> .
+entry_1_e	= <
+		= identifier_l .
+		= entry_2_e .
+> .
+entry_2_e	= <
+		= By REFERENCE name_l .
+		= By VALUE     name_l .
+> .
+evaluate	= EVALUATE evaluate_expression_l case_l when_other_o End_evaluate .
+
+evaluate_i	= EVALUATE evaluate_expression_l case_l when_other_o 'END-EVALUATE' .
+
+evaluate_expression_l	= <
+		= evaluate_expression .
+		= evaluate_expression_l ALSO evaluate_expression .
+> .
+evaluate_expression	= <
+	     /* = expression_or_literal . is covered by condition */
+		= condition .
+		= TRUE .
+		= FALSE .
+> .
+case_l		= <
+		=        when_l imperative_statement .
+		= case_l when_l imperative_statement .
+> .
+when_other_o	= <
+		= WHEN OTHER imperative_statement .
+		= .
+> .
+when_l		= <
+		=        WHEN when_label_l .
+		= when_l WHEN when_label_l .
+> .
+when_label_l	= <
+		= when_label .
+		= when_label_l ALSO when_label .
+> .
+when_label	= <
+		= ANY .
+		= condition .
+		= TRUE .
+		= FALSE .
+/*		= expression_or_literal .
+		= expression_or_literal THROUGH expression_or_literal .
+		= NOT expression_or_literal .
+		= NOT expression_or_literal THROUGH expression_or_literal . */
+		= condition THROUGH condition .
+> .
+expression_or_literal	= <
+	     /* = identifier . is covered by expression */
+		= non_numeric_literal .
+		= expression .
+> .
+examine		= <
+		= EXAMINE identifier TALLYING examine_tally_o literal .
+		= EXAMINE examine_repl identifier_w TALLYING examine_tally_o literal REPLACING BY literal .
+		= EXAMINE examine_repl identifier_w REPLACING examine_repl_o literal BY literal .
+> .
+examine_repl	= ? examine_replacing .
+
+examine_repl_o	= <
+   examine_tally_o	= <
+		= ALL .
+		= LEADING .
+		= UNTIL FIRST .
+   > .
+		= FIRST .
+> .
+execute		= EXECUTE .
+
+exhibit		= EXHIBIT exhibit_o identifier_or_numeric_literal_l upon_o .
+
+exhibit_o	= <
+		=         NAMED .
+		= CHANGED NAMED .
+		= CHANGED .
+> .
+exit		= <
+		= EXIT .
+		= EXIT PROGRAM .
+		= EXIT PROGRAM giving_2_o .
+		= EXIT PERFORM .
+		= EXIT PERFORM CYCLE .
+		= EXIT PARAGRAPH .
+		= EXIT SECTION .
+> .
+giving_2_o	= <
+		= giving_or_returning name_ .
+		= giving_or_returning ADDRESS OF name_ .
+		= giving_or_returning literal .
+		= giving_or_returning literal SIZE Is literal .
+> .
+giving_or_returning	= <
+		= GIVING .
+		= RETURNING .
+> .
+generate	= GENERATE qualification .
+
+goback		= <
+		= GOBACK .
+		= GOBACK giving_2_o .
+> .
+goto		= <
+		= GO To .
+		= GO To procedure_name .
+		= GO To procedure_name_l DEPENDING On identifier .
+> .
+procedure_name_l	= <
+		= procedure_name .
+		= procedure_name_l procedure_name .
+> .
+if		= IF condition then else .
+
+if_i		= IF condition then else_i .
+
+then		= Then statement_l .
+
+else		= <
+		= ELSE statement_l End_if .
+		= End_if .
+> .
+else_i		= <
+		= ELSE statement_l 'END-IF' .
+		= 'END-IF' .
+> .
+initialize	= INITIALIZE identifier_l_w replacing_o .
+
+replacing_o	= <
+		= REPLACING initialize_replacing_l .
+		= .
+> .
+initialize_replacing_l	= <
+		= initialize_replacing_e .
+		= initialize_replacing_l initialize_replacing_e .
+> .
+initialize_replacing_e	= replacing_mode Data BY identifier_or_literal .
+
+replacing_mode	= <
+		= ALPHABETIC .
+		= ALPHANUMERIC .
+		= NUMERIC .
+		= 'ALPHANUMERIC-EDITED' .
+		= 'NUMERIC-EDITED' .
+		= NATIONAL .
+		= 'NATIONAL-EDITED' .
+		= DBCS .
+> .
+initiate	= INITIATE name_l .
+
+inspect		= <
+		= INSPECT identifier TALLYING tallying_l .
+		= INSPECT inspect_repl identifier_w REPLACING replacing_l .
+		= INSPECT inspect_repl identifier_w TALLYING tallying_l REPLACING replacing_l .
+		= INSPECT inspect_repl identifier_w CONVERTING identifier_or_non_all_literal TO identifier_or_non_all_literal before_after_o .
+> .
+inspect_repl	= ? identifier_replacing .
+
+tallying_l	= <
+		= tallying_e .
+		= tallying_l tallying_e .
+> .
+tallying_e	= identifier_w 'FOR' for_l .
+
+for_l		= <
+		= for_e .
+		= for_l for_e .
+> .
+for_e		= <
+		= CHARACTERS before_after_o .
+		= ALL     all_leading_l ? identifier_FOR .
+		= LEADING all_leading_l ? identifier_FOR .
+> .
+all_leading_l	= <
+		= all_leading_e .
+		= all_leading_l all_leading_e .
+> .
+all_leading_e	= identifier_or_non_all_literal before_after_o .
+
+replacing_l	= <
+		= replacing_e .
+		= replacing_l replacing_e .
+> .
+replacing_e	= <
+		= CHARACTERS BY identifier_or_non_all_literal before_after_o .
+		= ALL     all_leading_first_l .
+		= LEADING all_leading_first_l .
+		= FIRST   all_leading_first_l .
+> .
+all_leading_first_l	= <
+		= all_leading_first_e .
+		= all_leading_first_l all_leading_first_e .
+> .
+all_leading_first_e	= identifier_or_non_all_literal BY identifier_or_non_all_literal before_after_o .
+
+before_after_o	= <
+		= BEFORE Initial identifier_or_non_all_literal .
+		= AFTER  Initial identifier_or_non_all_literal .
+		= BEFORE Initial identifier_or_non_all_literal AFTER  Initial identifier_or_non_all_literal .
+		= AFTER  Initial identifier_or_non_all_literal BEFORE Initial identifier_or_non_all_literal .
+		= .
+> .
+merge		= <
+		= MERGE file_name sort_merge_l sequence_o USING file_name_l output .
+		= MERGE file_name sort_merge_l sequence_o USING file_name_l GIVING file_name_l .
+> .
+sort_merge_l	= <
+		= .
+		= sort_merge_l sort_merge_e .
+> .
+sort_merge_e	= <
+		= On ASCENDING  Key qualification_l .
+		= On DESCENDING Key qualification_l .
+		= On ASCENDING  Key .
+		= On DESCENDING Key .
+> .
+sequence_o	= <
+		= Collating SEQUENCE Is alphabet_name .
+		= .
+> .
+output		= 'OUTPUT' PROCEDURE Is procedure .
+
+move		= <
+		= MOVE identifier_or_literal TO identifier_l_w .
+		= MOVE CORRESPONDING identifier TO identifier_l_c .
+> .
+multiply	= <
+		= MULTIPLY identifier_or_numeric_literal BY identifier_rounded_l_w End_multiply .
+		= MULTIPLY identifier_or_numeric_literal BY giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_multiply .
+		= MULTIPLY identifier_or_numeric_literal BY identifier_rounded_l_w size_error End_multiply .
+		= MULTIPLY identifier_or_numeric_literal BY giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error End_multiply .
+> .
+multiply_i	= <
+		= MULTIPLY identifier_or_numeric_literal BY identifier_rounded_l_w End_multiply .
+		= MULTIPLY identifier_or_numeric_literal BY giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_multiply .
+		= MULTIPLY identifier_or_numeric_literal BY identifier_rounded_l_w size_error 'END-MULTIPLY' .
+		= MULTIPLY identifier_or_numeric_literal BY giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error 'END-MULTIPLY' .
+> .
+next_sentence	= NEXT SENTENCE .
+
+on		= ON identifier_or_numeric_literal on_every_o on_until_o imperative_statement on_else_o .
+
+on_every_o	= <
+		= AND EVERY identifier_or_numeric_literal .
+		= .
+> .
+on_until_o	= <
+		= UNTIL identifier_or_numeric_literal .
+		= .
+> .
+on_else_o	= <
+		= ELSE imperative_statement .
+		= .
+> .
+open		= OPEN open_l .
+
+open_l		= <
+		= open_e .
+		= open_l open_e .
+> .
+open_e		= <
+		= 'INPUT'  file_name_1_l .
+		= 'OUTPUT' file_name_2_l .
+		= 'I-O'    file_name_3_l .
+		= EXTEND   file_name_3_l .
+> .
+file_name_1_l	= <
+		= file_name_1 .
+		= file_name_1_l file_name_1 .
+> .
+file_name_2_l	= <
+		= file_name_2 .
+		= file_name_2_l file_name_2 .
+> .
+file_name_3_l	= <
+		= file_name_3 .
+		= file_name_3_l file_name_3 .
+> .
+file_name_1	= <
+		= file_name ? { GetLookahead (2) == YYCODE (DATA) } .
+		= file_name REVERSED .
+		= file_name With NO REWIND .
+		= file_name With LOCK .
+> .
+file_name_2	= <
+		= file_name ? { GetLookahead (2) == YYCODE (DATA) } .
+		= file_name With NO REWIND .
+		= file_name With LOCK .
+> .
+file_name_3	= <
+		= file_name ? { GetLookahead (2) == YYCODE (DATA) } .
+		= file_name With LOCK .
+> .
+file_name	= name
+		{ => { (void) UseName (name:Scan); }; } .
+
+file_name_l	= <
+		= file_name .
+		= file_name_l file_name .
+> .
+perform		= <
+		= PERFORM procedure ? { GetLookahead (2) == YYCODE (DATA) } .
+		= PERFORM procedure identifier_or_integer TIMES .
+		= PERFORM procedure test_o UNTIL condition .
+		= PERFORM procedure test_o UNTIL EXIT .
+		= PERFORM procedure test_o VARYING varying_l .
+		= PERFORM                                       perform_body .
+		= PERFORM           identifier_or_integer TIMES perform_body .
+		= PERFORM           test_o UNTIL condition perform_body .
+		= PERFORM           test_o UNTIL EXIT           perform_body .
+		= PERFORM           test_o VARYING varying_l    perform_body .
+> .
+perform_body	= <
+		= imperative_statement End_perform .
+		= 'END-PERFORM' .
+> .
+procedure	= <
+		= procedure_name .
+		= procedure_name THROUGH procedure_name .
+> .
+test_o		= <
+		= With TEST BEFORE .
+		= With TEST AFTER .
+		= .
+> .
+varying_l	= <
+		= varying_e .
+		= varying_l AFTER varying_e .
+> .
+varying_e	= identifier_w FROM identifier_or_numeric_literal BY identifier_or_numeric_literal UNTIL condition .
+
+purge		= PURGE name
+		{ => { (void) UseName (name:Scan); }; } .
+
+read		= <
+		= READ file_name NEXT     Record into_o with_read_o     End_read .
+		= READ file_name NEXT     Record into_o with_read_o end End_read .
+		= READ file_name PREVIOUS Record into_o with_read_o     End_read .
+		= READ file_name PREVIOUS Record into_o with_read_o end End_read .
+		= READ file_name          Record into_o with_read_o     End_read .
+		= READ file_name          Record into_o with_read_o end End_read .
+		= READ file_name          Record into_o KEY Is qualification End_read .
+		= READ file_name          Record into_o KEY Is qualification invalid End_read .
+		= READ file_name          Record into_o                      invalid End_read .
+> .
+read_i		= <
+		= READ file_name NEXT     Record into_o with_read_o     End_read .
+		= READ file_name NEXT     Record into_o with_read_o end 'END-READ' .
+		= READ file_name PREVIOUS Record into_o with_read_o     End_read .
+		= READ file_name PREVIOUS Record into_o with_read_o end 'END-READ' .
+		= READ file_name          Record into_o with_read_o     End_read .
+		= READ file_name          Record into_o with_read_o end 'END-READ' .
+		= READ file_name          Record into_o KEY Is qualification End_read .
+		= READ file_name          Record into_o KEY Is qualification invalid 'END-READ' .
+		= READ file_name          Record into_o                      invalid 'END-READ' .
+> .
+into_o		= <
+		= INTO identifier_w .
+		= .
+> .
+with_read_o	= <
+		= With          LOCK .
+		= With KEPT     LOCK .
+		= With NO       LOCK .
+		= With 'IGNORE' LOCK .
+		= With WAIT .
+		= ? { yy2 = GetLookahead (2),
+		      yy2 == YYCODE (DATA)		||
+		      yy2 == YYCODE (AT)		||
+		      yy2 == YYCODE ('END')		||
+		      yy2 == YYCODE ('END-OF-PAGE')	||
+		      yy2 == YYCODE (ON)		||
+		      yy2 == YYCODE (SIZE)		||
+		      yy2 == YYCODE (OVERFLOW)		||
+		      yy2 == YYCODE (EXCEPTION)		||
+		      yy2 == YYCODE (ESCAPE) } .
+> .
+end		= <
+		=     At 'END' imperative_statement .
+		= NOT At 'END' imperative_statement .
+		=     At 'END' imperative_statement
+		  NOT At 'END' imperative_statement .
+> .
+end_o		= <
+		= At 'END' imperative_statement .
+		= .
+> .
+not_end_o	= <
+		= NOT At 'END' imperative_statement .
+		= .
+> .
+ready_trace	= READY TRACE .
+
+receive		= <
+		= RECEIVE name_ message_segment INTO identifier_w End_receive .
+		= RECEIVE name_ message_segment INTO identifier_w data End_receive .
+> .
+receive_i	= <
+		= RECEIVE name_ message_segment INTO identifier_w End_receive .
+		= RECEIVE name_ message_segment INTO identifier_w data 'END-RECEIVE' .
+> .
+message_segment	= <
+		= MESSAGE .
+		= SEGMENT .
+> .
+data		= <
+		= NO DATA imperative_statement .
+		=      DATA imperative_statement .
+		= WITH DATA imperative_statement .
+		= NO DATA imperative_statement      DATA imperative_statement .
+		= NO DATA imperative_statement WITH DATA imperative_statement .
+> .
+release		= <
+		= RELEASE qualification .
+		= RELEASE ? qualification_FROM qualification_w FROM identifier .
+> .
+reset_trace	= RESET TRACE .
+
+return		= RETURN file_name Record into_o return_end not_end_o End_return .
+
+return_i	= RETURN file_name Record into_o return_end not_end_o 'END-RETURN' .
+
+return_end	= At 'END' imperative_statement .
+
+rewrite		= <
+		= REWRITE qualification from_2_o End_rewrite .
+		= REWRITE qualification from_2_o invalid End_rewrite .
+> .
+rewrite_i	= <
+		= REWRITE qualification from_2_o End_rewrite .
+		= REWRITE qualification from_2_o invalid 'END-REWRITE' .
+> .
+from_2_o	= <
+		= FROM identifier .
+		= FROM literal .
+		= .
+> .
+rollback	= ROLLBACK .
+
+search		= <
+		= SEARCH     qualification varying_o end_o search_when_l End_search .
+		= SEARCH ALL qualification end_o WHEN search_l imperative_statement End_search .
+> .
+search_i	= <
+		= SEARCH     qualification varying_o end_o search_when_l 'END-SEARCH' .
+		= SEARCH ALL qualification end_o WHEN search_l imperative_statement 'END-SEARCH' .
+> .
+varying_o	= <
+		= VARYING identifier_w .
+		= .
+> .
+search_when_l	= <
+		= when_e .
+		= search_when_l when_e .
+> .
+when_e		= WHEN condition imperative_statement .
+
+search_l	= <
+		= search_e .
+		= search_l AND search_e .
+> .
+search_e	= <
+	     /* = identifier equal expression_or_literal . */
+		= expression_or_literal equal expression_or_literal .
+		= condition_name .
+> .
+send		= <
+		= SEND name_ FROM identifier ? { GetLookahead (2) == YYCODE (DATA) } .
+		= SEND name_                 With identifier advancing_o send_replacing_o .
+		= SEND name_ FROM identifier With identifier advancing_o send_replacing_o .
+	     /* With ESI, EMI, EGI is covered by identifier */
+> .
+advancing_o	= <
+		= advancing .
+		= .
+> .
+advancing	= <
+		= BEFORE Advancing advance .
+		= AFTER  Advancing advance .
+> .
+advance		= <
+		= identifier_or_numeric_literal line_o .
+	     /*	= positive_integer line_o .
+		= name . */
+		= PAGE .
+	     /* = TAB .
+		= FORMFEED . is covered by name */
+> .
+send_replacing_o	= <
+		= REPLACING Line .
+		= .
+> .
+service		= <
+		= SERVICE LABEL .
+		= SERVICE RELOAD identifier .
+> .
+set		= <
+	     /* = SET identifier_l TO identifier_or_integer .
+		= SET name_l UP   BY identifier_or_integer .
+		= SET name_l DOWN BY identifier_or_integer .
+		= SET name_l TO ON  on_off_l .
+		= SET name_l TO OFF on_off_l .
+		= SET name_l TO     identifier_or_integer .
+		= SET condition_name_l TO TRUE . */
+			/* the above rules are replaced by the following ones */
+		= SET set_l UP   BY identifier_or_integer .
+		= SET set_l UP   BY LENGTH OF identifier .
+		= SET set_l DOWN BY identifier_or_integer .
+		= SET set_l DOWN BY LENGTH OF identifier .
+		= SET set_l TO ON    on_off_l .
+		= SET set_l TO OFF   on_off_l .
+		= SET set_l TO TRUE  true_false_l .
+		= SET set_l TO FALSE true_false_l .
+		= SET set_l TO ADDRESS OF identifier .
+		= SET set_l TO identifier_or_literal .
+		= SET set_l TO NULL .
+		= SET set_l TO NULLS .
+	     /* = SET procedure_pointer_data_item TO procedure_pointer_data_item .
+		= SET procedure_pointer_data_item TO ENTRY identifier_or_literal .
+		= SET procedure_pointer_data_item TO NULL .
+		= SET procedure_pointer_data_item TO NULLS . */
+		= SET set_l TO ENTRY identifier_or_literal .
+> .
+set_l		= <
+		= set_e .
+		= set_l set_e .
+> .
+set_e		= <
+		= ADDRESS OF identifier_w .
+		= identifier_w .
+> .
+on_off_l	= <
+		= .
+		= on_off_l on_off_e .
+> .
+on_off_e	= <
+		= name_l TO ON .
+		= name_l TO OFF .
+> .
+true_false_l	= <
+		= .
+		= true_false_l true_false_e .
+> .
+true_false_e	= <
+		= name_l TO TRUE .
+		= name_l TO FALSE .
+> .
+sort		= <
+		= SORT qualification sort_merge_l duplicates_o sequence_o input output .
+		= SORT qualification sort_merge_l duplicates_o sequence_o USING file_name_l output .
+		= SORT qualification sort_merge_l duplicates_o sequence_o input GIVING file_name_l .
+		= SORT qualification sort_merge_l duplicates_o sequence_o USING file_name_l GIVING file_name_l .
+		= SORT qualification sort_merge_l duplicates_o sequence_o .
+> .
+duplicates_o	= <
+		= With DUPLICATES In Order .
+		= ? ON_head_or_WITH_DATA .
+> .
+input		= 'INPUT' PROCEDURE Is procedure .
+
+start		= <
+		= 'START' file_name key_o End_start .
+		= 'START' file_name key_o invalid End_start .
+> .
+start_i		= <
+		= 'START' file_name key_o End_start .
+		= 'START' file_name key_o invalid 'END-START' .
+> .
+key_o		= <
+		= KEY start_operator qualification ? { GetLookahead (2) == YYCODE (DATA) } .
+		= KEY start_operator qualification With SIZE identifier_or_literal .
+		= .
+> .
+start_operator	= <
+		= equal .
+		= greater .
+		= greater_equal .
+		= less .
+		= less_equal .
+> .
+stop		= <
+		= STOP RUN .
+		= STOP RUN giving_2_o .
+		= STOP RUN literal .
+		= STOP name_ .
+		= STOP literal .
+> .
+string_v	= <
+		= STRING string_l INTO subscription_w pointer_o End_string .
+		= STRING string_l INTO subscription_w pointer_o overflow End_string .
+> .
+string_i	= <
+		= STRING string_l INTO subscription_w pointer_o End_string .
+		= STRING string_l INTO subscription_w pointer_o overflow 'END-STRING' .
+> .
+string_l	= <
+		= string_e .
+		= string_l string_e .
+> .
+string_e	= identifier_or_non_numeric_literal_l DELIMITED By delimiter .
+
+delimiter	= <
+		= identifier_or_non_numeric_literal .
+		= SIZE .
+> .
+pointer_o	= <
+		= With POINTER identifier_w .
+		= ? { GetLookahead (2) == YYCODE (DATA) } .
+> .
+subtract	= <
+		= SUBTRACT identifier_or_numeric_literal_l FROM identifier_rounded_l_w End_subtract .
+		= SUBTRACT identifier_or_numeric_literal_l FROM giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_subtract .
+		= SUBTRACT CORRESPONDING identifier FROM identifier_rounded_c End_subtract .
+		= SUBTRACT identifier_or_numeric_literal_l FROM identifier_rounded_l_w size_error End_subtract .
+		= SUBTRACT identifier_or_numeric_literal_l FROM giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error End_subtract .
+		= SUBTRACT CORRESPONDING identifier FROM identifier_rounded_c size_error End_subtract .
+> .
+subtract_i	= <
+		= SUBTRACT identifier_or_numeric_literal_l FROM identifier_rounded_l_w End_subtract .
+		= SUBTRACT identifier_or_numeric_literal_l FROM giving identifier_or_numeric_literal GIVING identifier_rounded_l_w End_subtract .
+		= SUBTRACT CORRESPONDING identifier FROM identifier_rounded_c End_subtract .
+		= SUBTRACT identifier_or_numeric_literal_l FROM identifier_rounded_l_w size_error 'END-SUBTRACT' .
+		= SUBTRACT identifier_or_numeric_literal_l FROM giving identifier_or_numeric_literal GIVING identifier_rounded_l_w size_error 'END-SUBTRACT' .
+		= SUBTRACT CORRESPONDING identifier FROM identifier_rounded_c size_error 'END-SUBTRACT' .
+> .
+suppress	= SUPPRESS Printing .
+
+terminate	= TERMINATE name_l .
+
+transform	= TRANSFORM identifier_w Characters FROM identifier_or_literal TO identifier_or_literal .
+
+unlock		= <
+		= UNLOCK name_ RECORD .
+		= UNLOCK name_ RECORDS .
+> .
+unstring	= <
+		= UNSTRING subscription delimited_o INTO unstring_l pointer_o tallying_o End_unstring .
+		= UNSTRING subscription delimited_o INTO unstring_l pointer_o tallying_o overflow End_unstring .
+> .
+unstring_i	= <
+		= UNSTRING subscription delimited_o INTO unstring_l pointer_o tallying_o End_unstring .
+		= UNSTRING subscription delimited_o INTO unstring_l pointer_o tallying_o overflow 'END-UNSTRING' .
+> .
+delimited_o	= <
+		= DELIMITED By delimited_l .
+		= .
+> .
+delimited_l	= <
+		= delimited_e .
+		= delimited_l OR delimited_e .
+> .
+delimited_e	= <
+		= ALL identifier_or_non_numeric_literal .
+		=     identifier_or_non_numeric_literal .
+> .
+tallying_o	= <
+		= TALLYING In identifier_w .
+		= .
+> .
+unstring_l	= <
+		= unstring_e .
+		= unstring_l unstring_e .
+> .
+unstring_e	= <
+		= identifier_w .
+		= identifier_w DELIMITER In identifier_w .
+		= identifier_w                           COUNT In identifier_w .
+		= identifier_w DELIMITER In identifier_w COUNT In identifier_w .
+> .
+use		= <
+		= USE          AFTER Standard exception_or_error PROCEDURE On use_files giving_use_o .
+		= USE 'GLOBAL' AFTER Standard exception_or_error PROCEDURE On use_files giving_use_o .
+		= USE          AFTER Standard begin_or_end file_or_reel LABEL PROCEDURE On use_files .
+		= USE Global BEFORE REPORTING identifier .
+		= USE For DEBUGGING On use_l .
+> .
+exception_or_error	= <
+		= EXCEPTION .
+		= ERROR .
+> .
+begin_or_end	= <
+		= BEGINNING .
+		= ENDING .
+> .
+use_files	= <
+		= file_name_l .
+		= 'INPUT' .
+		= 'OUTPUT' .
+		= 'I-O' .
+		= EXTEND .
+> .
+giving_use_o	= <
+		= GIVING name_l .
+		= .
+> .
+file_or_reel	= <
+		= FILE .
+		= REEL .
+		= .
+> .
+use_l		= <
+		= use_e .
+		= use_l use_e .
+> .
+use_e		= <
+	     /* = name . covered by identifier */
+		=                   subscription .
+		= ALL References Of subscription .
+	     /* = procedure_name . covered by identifier except the four following rules */
+		= paragraph_name .
+		= paragraph_name in_of chapter_name .
+		= u_integer .
+		= u_integer      in_of chapter_name .
+		= ALL PROCEDURES .
+> .
+write		= <
+		= WRITE qualification from_2_o advancing End_write .
+		= WRITE qualification from_2_o           End_write .
+		= WRITE qualification from_2_o AFTER POSITIONING identifier_or_integer LINES End_write .
+		= WRITE qualification from_2_o advancing end_of_page End_write .
+		= WRITE qualification from_2_o           end_of_page End_write .
+		= WRITE qualification from_2_o AFTER POSITIONING identifier_or_integer LINES end_of_page End_write .
+		= WRITE qualification from_2_o invalid End_write .
+> .
+write_i		= <
+		= WRITE qualification from_2_o advancing End_write .
+		= WRITE qualification from_2_o           End_write .
+		= WRITE qualification from_2_o AFTER POSITIONING identifier_or_integer LINES End_write .
+		= WRITE qualification from_2_o advancing end_of_page 'END-WRITE' .
+		= WRITE qualification from_2_o           end_of_page 'END-WRITE' .
+		= WRITE qualification from_2_o AFTER POSITIONING identifier_or_integer LINES end_of_page 'END-WRITE' .
+		= WRITE qualification from_2_o invalid 'END-WRITE' .
+> .
+end_of_page	= <
+		=     At 'END-OF-PAGE' imperative_statement .
+		= NOT At 'END-OF-PAGE' imperative_statement .
+		=     At 'END-OF-PAGE' imperative_statement
+		  NOT At 'END-OF-PAGE' imperative_statement .
+> .
+copy_o		= <
+		= .
+		= copy '.' .
+> .
+copy_or_replace	= <
+		= copy '.' .
+		= replace '.' .
+> .
+copy		= <
+		= COPY copy_name                     copy_suppress_o copy_replacing_o
+		{ => { (void) Copy (copy_name:Ident, copy_name:Pos); }; } .
+		= COPY copy_name in_of n2: copy_name copy_suppress_o copy_replacing_o
+		{ => { (void) Copy (copy_name:Ident, copy_name:Pos); }; } .
+> .
+copy_name	= <
+		= name	 { Pos := name:Position; } .
+		= string { Pos := string:Position;
+			   Ident := { {
+			      char word [128];
+			      StGetString (string:Value, word);
+			      Ident = MakeIdent (& word [1], strlen (word) - 2);
+			   } }; } .
+> .
+copy_suppress_o	= <
+		= SUPPRESS .
+		= .
+> .
+copy_replacing_o	= <
+		= { => { begin_replacing (); }; }
+		  REPLACING copy_replacing_l
+		  { => { end_replacing (); }; } .
+		= .
+> .
+copy_replacing_l	= <
+		= copy_replacing_e .
+		= copy_replacing_l copy_replacing_e .
+> .
+copy_replacing_e	= replacing_item_1 BY replacing_item_2 .
+
+replace		= <
+		= REPLACE
+		  { => { begin_replacing (); }; }
+		  replace_l
+		  { => { end_replacing (); }; } .
+		= REPLACE OFF .
+> .
+replace_l	= <
+		= replace_e .
+		= replace_l replace_e .
+> .
+replace_e	= pseudo_text_1 BY pseudo_text_2 .
+
+replacing_item_1	= <
+		= replacing_item .
+  pseudo_text_1	= '==' token_l '==' .
+> .
+replacing_item_2	= <
+		= replacing_item .
+  pseudo_text_2	= { => { start_pseudo_text (); }; } '==' pseudo_text '==' .
+> .
+replacing_item	= <
+		= identifier_n .
+		= paragraph_name in_of chapter_name .
+		= u_integer      in_of chapter_name .
+		= token .
+> .
+token_l		= <
+		= token_e .
+		= token_l token_e .
+> .
+token_e		= <
+		= name .
+		= token .
+		= '.' .
+> .
+token		= <
+		= paragraph_name ? { GetLookahead (2) == YYCODE (BY) } .
+		= integer .
+		= real .
+		= string .
+		= picture_string .
+		= illegal_character .
+		= ALL .
+		= BY .
+		= 'FUNCTION' .
+		= 'IN' .
+		= LENGTH .
+		= OF .
+		= '&' .
+		= '(' .
+		= ')' .
+		= '*' .
+		= '**' .
+		= '+' .
+		= '-' .
+		= '/' .
+		= ':' .
+		= '<' .
+		= '<=' .
+		= '<>' .
+		= '=' .
+		= '>' .
+		= '>=' .
+> .
+
+/* condition */
+
+condition	= <
+		= and_condition .
+		= condition OR and_condition .
+> .
+and_condition	= <
+		= not_condition .
+		= and_condition AND not_condition .
+> .
+not_condition	= <
+		= primary_condition .
+		= NOT primary_condition .
+> .
+primary_condition	= <
+  simple_condition	= <
+    relation_condition	= <
+			= expression_or_literal relational_operator expression_or_literal .
+			= relational_operator_2 expression_or_literal .
+			= expression_or_literal        '(' condition ')' .
+			= expression_or_literal Is NOT '(' condition ')' .
+    > .
+    class_condition	= <
+		     /* = identifier Is     classification .
+			= identifier Is NOT classification . */
+			= expression_or_literal Is     classification .
+			= expression_or_literal Is NOT classification .
+    > .
+    variable_or_switch	= <
+		     /* = condition_name . */
+			= expression_or_literal .
+    > .
+    sign_condition	= <
+		     /* = expression Is     sign_3 .
+			= expression Is NOT sign_3 . */
+			= expression_or_literal Is     sign_3 .
+			= expression_or_literal Is NOT sign_3 .
+    > .
+    pointer_condition	= <
+			= ADDRESS OF identifier relational_operator pointer_operand .
+			= expression_or_literal relational_operator pointer_operand .
+			= NULL                  relational_operator pointer_operand .
+    > .
+  > .
+> .
+classification	= <
+		= NUMERIC .
+		= ALPHABETIC .
+	     /* = 'ALPHABETIC-LOWER' . is covered by name */
+	     /* = 'ALPHABETIC-UPPER' . is covered by name */
+		= name_ .
+		= DBCS .
+	     /* = KANJI . is covered by name */
+> .
+sign_3		= <
+		= POSITIVE .
+		= NEGATIVE .
+		= ZERO .
+		= ZEROS .
+> .
+pointer_operand	= <
+		= ADDRESS OF identifier .
+	     /* = identifier . */
+		= NULL .
+> .
+relational_operator	= <
+   equal	= < = Is EQUAL To			. = Is '=' To		.
+		    =    EQUALS				.			  > .
+   not_equal	= < = Is NOT EQUAL To			. = Is NOT '=' To	.
+		    = Is UNEQUAL To			. = Is '<>'		. > .
+   greater	= < = Is GREATER Than			. = Is '>' Than		.
+		    =    EXCEEDS						. > .
+   greater_equal= < = Is NOT LESS Than			. = Is NOT '<' Than	.
+		    = Is GREATER Than OR EQUAL To	. = Is '>='		. > .
+   less		= < = Is LESS Than			. = Is '<' Than		. > .
+   less_equal	= < = Is NOT GREATER Than		. = Is NOT '>' Than	.
+		    = Is LESS Than OR EQUAL To		. = Is '<='		. > .
+		= < = ARE EQUAL To			. = ARE '=' To		. > .
+		= < = ARE NOT EQUAL To			. = ARE NOT '=' To	.
+		    = ARE UNEQUAL To			. = ARE '<>'		. > .
+		= < = ARE GREATER Than			. = ARE '>' Than	. > .
+		= < = ARE NOT LESS Than			. = ARE NOT '<' Than	.
+		    = ARE GREATER Than OR EQUAL To	. = ARE '>='		. > .
+		= < = ARE LESS Than			. = ARE '<' Than	. > .
+		= < = ARE NOT GREATER Than		. = ARE NOT '>' Than	.
+		    = ARE LESS Than OR EQUAL To		. = ARE '<='		. > .
+> .
+is_relational_operator	= <
+		= IS  no_is_relational_operator .
+		= ARE no_is_relational_operator .
+> .
+no_is_relational_operator	= <
+		= < =    NOT EQUAL To			. =    NOT '=' To	.
+		    =    UNEQUAL To			. =    '<>'		. > .
+		= < =    EQUAL To			. =    '=' To		.
+		    =    EQUALS				.			  > .
+		= < =    NOT GREATER Than		. =    NOT '>' Than	.
+		    =    LESS Than OR EQUAL To		. =    '<='		. > .
+		= < =    GREATER Than			. =    '>' Than		.
+		    =    EXCEEDS						. > .
+		= < =    NOT LESS Than			. =    NOT '<' Than	.
+		    =    GREATER Than OR EQUAL To	. =    '>='		. > .
+		= < =    LESS Than			. =    '<' Than		. > .
+> .
+relational_operator_2	= <
+		=      is_relational_operator .
+		=   no_is_relational_operator .
+> .
+
+/* expression */
+
+expression	= <
+		= multiplicative_expression .
+		= expression '+' multiplicative_expression .
+		= expression '-' multiplicative_expression .
+> .
+multiplicative_expression	= <
+		= power_expression .
+		= multiplicative_expression '*' power_expression .
+		= multiplicative_expression '/' power_expression .
+> .
+power_expression	= <
+		= unary_expression .
+		= power_expression '**' unary_expression .
+> .
+unary_expression	= <
+		= '+' primary_expression .
+		= '-' primary_expression .
+		=     primary_expression .
+> .
+primary_expression	= <
+		= identifier .
+		= numeric_literal .
+		= '(' condition ')' .
+		= LENGTH OF identifier .
+> .
+identifier	= <
+   subscription	= <
+		= qualification ? parentheses_relational_operator .
+		= qualification '(' ALL index_l ')' .
+		= qualification '(' expression index_l ')' ? - reference_modifier .
+   > .
+		= qualification                            reference_modifier .
+		= qualification '(' expression index_l ')' reference_modifier .
+		= function_call .
+> .
+qualification	= <
+		= name { Scan := name:Scan; decl := UseName (name:Scan); } .
+		= name in_of q: qualification
+		{ Scan := name:Scan;
+		  decl := q:decl ? UseField (name:Scan, q:decl->fields) : NULL; } .
+> .
+qualification_f	= <
+		= name_f .
+		= name in_of qualification_f { => { UseFieldForward (name:Scan); }; } .
+> .
+identifier_w	= <
+   subscription_w	= <
+		= qualification_w .
+		= qualification_w '(' expression index_l ')' .
+   > .
+		= qualification_w                            reference_modifier .
+		= qualification_w '(' expression index_l ')' reference_modifier .
+> .
+qualification_w	= { => { acc = PAF_REF_WRITE; }; } qualification
+		  { => { acc = PAF_REF_READ; }; } .
+
+identifier_c	= <
+		= qualification_c .
+		= qualification_c '(' expression index_l ')' .
+		= qualification_c                            reference_modifier .
+		= qualification_c '(' expression index_l ')' reference_modifier .
+> .
+qualification_c	= qualification .
+
+identifier_n	= <
+		= qualification_n ? { GetLookahead (2) == YYCODE (BY) } .
+		= qualification_n '(' expression index_l ')' ? - reference_modifier .
+		= qualification_n                            reference_modifier .
+		= qualification_n '(' expression index_l ')' reference_modifier .
+> .
+qualification_n	= <
+		= name ? { GetLookahead (2) == YYCODE (BY) }
+		{ Scan := name:Scan; } .
+		= name in_of qualification
+		{ Scan := name:Scan; } .
+> .
+in_of		= <
+		= 'IN' .
+		= OF .
+> .
+index_l		= <
+		= .
+		= index_l index .
+		= index_l ALL .
+> .
+index		= <
+		= integer .
+		= qualification .
+		= qualification '+' integer .
+		= qualification '-' integer .
+> .
+reference_modifier	= <
+		= '(' expression ':' ')' .
+		= '(' expression ':' expression ')' .
+> .
+identifier_l	= <
+		= identifier .
+		= identifier_l identifier .
+> .
+identifier_l_w	= <
+		= identifier_w .
+		= identifier_l_w identifier_w .
+> .
+identifier_l_c	= <
+		= identifier_c .
+		= identifier_l_c identifier_c .
+> .
+qualification_l	= <
+		= qualification .
+		= qualification_l qualification .
+> .
+qualification_l_f	= <
+		= qualification_f .
+		= qualification_l_f qualification_f .
+> .
+name_l		= <
+		= name_ .
+		= name_l name_ .
+> .
+name_l_f	= <
+		= name_f .
+		= name_l_f name_f .
+> .
+identifier_or_numeric_literal_l	= <
+		= identifier_or_numeric_literal .
+		= identifier_or_numeric_literal_l identifier_or_numeric_literal .
+> .
+identifier_or_non_numeric_literal_l	= <
+		= identifier_or_non_numeric_literal .
+		= identifier_or_non_numeric_literal_l identifier_or_non_numeric_literal .
+> .
+identifier_rounded_l_w	= <
+		= identifier_rounded_w .
+		= identifier_rounded_l_w identifier_rounded_w .
+> .
+function_call	= <
+		= 'FUNCTION' function_name_1 ? - reference_modifier .
+		= 'FUNCTION' function_name_2 '(' argument_l ')' ? - reference_modifier .
+		= 'FUNCTION' function_name_1 reference_modifier .
+		= 'FUNCTION' function_name_2 '(' argument_l ')' reference_modifier .
+> .
+function_name_1	= name
+		? { name:Ident == iCURRENT_DATE || name:Ident == iWHEN_COMPILED } .
+
+function_name_2	= <
+		= name .
+		= LENGTH .
+> .
+argument_l	= <
+		= expression .
+		= argument_l expression .
+> .
+
+/* low level nonterminals (almost terminals) */
+
+symbolic_character	= name_ .
+condition_name		= identifier .
+identifier_rounded_w	= identifier_w Rounded .
+identifier_rounded_c	= identifier_c Rounded .
+
+identifier_or_literal	= <
+		= identifier .
+		= literal .
+		= LENGTH OF identifier .
+> .
+identifier_or_numeric_literal	= <
+		= identifier .
+		= numeric_literal .
+		= LENGTH OF identifier .
+> .
+identifier_or_non_numeric_literal	= <
+		= identifier .
+		= non_figurative_non_numeric_literal .
+		= non_all_figurative_non_numeric_literal .
+> .
+identifier_or_non_all_literal	= <
+		= identifier .
+		= non_all_figurative_literal .
+		= non_figurative_non_numeric_literal .
+> .
+name_or_literal	= <
+		= name_ .
+		= literal .
+> .
+identifier_or_integer	= <
+		= identifier .
+		= integer .
+> .
+name_		= name
+		{ => { (void) UseName (name:Scan); }; } .
+
+name_f		= name
+		{ => { UseForward (name:Scan); }; } .
+
+procedure_name	= <
+		= chapter_name
+		{ => { UseLabel (chapter_name:Scan); }; } .
+		= chapter_name in_of c2: chapter_name
+		{ => { UseLabel2 (chapter_name:Scan, c2:Scan); }; } .
+> .
+chapter_name	= <
+		= name ? - in_of_qualification_TIMES
+		{ Scan := name:Scan; } .
+		= paragraph_name
+		{ Scan := paragraph_name:Scan; } .
+		= u_integer
+		{ Scan := { { char word [128];
+			Scan = u_integer:Scan;
+			(void) sprintf (word, "%ld", u_integer:Value);
+			Scan.name.Ident = MakeIdent (word, strlen (word)); } }; } .
+> .
+integer		= <
+   positive_integer	= <
+		= plus_integer .
+		= u_integer ? { GetLookahead (2) == YYCODE (BY) } .
+   > .
+		= minus_integer .
+> .
+u_integer	= <			/* complete unsigned integers */
+		= unsigned_integer	{ Scan := unsigned_integer:Scan	; } .
+		= level_number		{ Scan := level_number:Scan	; } .
+		= '66' { Value := 66;	  Scan := '66':Scan		; } .
+		= '77' { Value := 77;	  Scan := '77':Scan		; } .
+		= '78' { Value := 78;	  Scan := '78':Scan		; } .
+		= '88' { Value := 88;	  Scan := '88':Scan		; } .
+> .
+
+/* literal */
+
+literal		= <
+		= non_numeric_literal .
+		= numeric_literal .
+> .
+non_figurative_literal	= <
+		= non_figurative_non_numeric_literal .
+		= non_figurative_numeric_literal .
+> .
+figurative_literal	= <
+		= figurative_non_numeric_literal .
+		= figurative_numeric_literal .
+> .
+non_numeric_literal	= <
+		= non_figurative_non_numeric_literal .
+		= figurative_non_numeric_literal .
+		= concat_expression.
+> .
+concat_expression	= <
+		= concat_expression '&' concat_operand .
+		= concat_operand '&' concat_operand .
+> .
+concat_operand	= <
+		= non_figurative_non_numeric_literal .
+		= non_all_figurative_non_numeric_literal .
+		= name_ .
+> .
+numeric_literal	= <
+		= non_figurative_numeric_literal .
+		= figurative_numeric_literal .
+> .
+figurative_non_numeric_literal	= <
+		= non_all_figurative_non_numeric_literal .
+		= all_figurative_non_numeric_literal .
+> .
+figurative_numeric_literal	= <
+		= non_all_figurative_numeric_literal .
+		= all_figurative_numeric_literal .
+> .
+non_figurative_non_numeric_literal	= string .
+
+non_figurative_numeric_literal	= <
+		= integer .
+		= real .
+> .
+non_all_figurative_literal	= <
+		= non_all_figurative_non_numeric_literal .
+		= non_all_figurative_numeric_literal .
+> .
+non_all_figurative_non_numeric_literal	= <
+		= SPACE .
+		= 'HIGH-VALUE' .
+		= 'LOW-VALUE' .
+		= QUOTE .
+	     /* = symbolic_character . is covered by name or identifier */
+> .
+non_all_figurative_numeric_literal	= <
+		= ZERO .
+		= ZEROS .
+> .
+all_figurative_non_numeric_literal	= <
+		= ALL SPACE .
+		= ALL 'HIGH-VALUE' .
+		= ALL 'LOW-VALUE' .
+		= ALL QUOTE .
+		= ALL string .
+		= ALL symbolic_character .
+> .
+all_figurative_numeric_literal	= <
+		= ALL ZERO .
+		= ALL ZEROS .
+> .
+
+/* optional words */
+
+Advancing	= < = ADVANCING		. = . > .
+Are		= < = ARE		. = . > .
+AreIs		= < = ARE		. = IS . = . > .
+Area		= < = AREA		. = . > .
+At		= < = AT		. = . > .
+By		= < = BY		. = . > .
+Character	= < = CHARACTER		. = . > .
+Characters	= < = CHARACTERS	. = . > .
+Collating	= < = COLLATING		. = . > .
+Contains	= < = CONTAINS		. = . > .
+Data		= < = DATA		. = . > .
+Every		= < = EVERY		. = . > .
+File		= < = FILE		. = . > .
+Filler		= < = FILLER		. = . > .
+For		= < = 'FOR'		. = . > .
+From		= < = FROM		. = . > .
+Indicate	= < = INDICATE		. = . > .
+In		= < = 'IN'		. = . > .
+Into		= < = INTO		. = . > .
+Is		= < = IS		. = ? not . > .
+Key		= < = KEY		. = . > .
+Line		= < = LINE		. = . > .
+Lines		= < = LINES		. = . > .
+Message		= < = MESSAGE		. = . > .
+Mode		= < = MODE		. = . > .
+Number		= < = NUMBER		. = . > .
+Of		= < = OF		. = . > .
+On		= < = ON		. = . > .
+Order		= < = ORDER		. = . > .
+Printing	= < = PRINTING		. = . > .
+Program		= < = PROGRAM		. = . > .
+References	= < = REFERENCES	. = . > .
+Right		= < = 'RIGHT'		. = . > .
+Sign		= < = SIGN		. = . > .
+Size		= < = SIZE		. = . > .
+Standard	= < = STANDARD		. = . > .
+Status		= < = STATUS		. = . > .
+Symbolic	= < = SYMBOLIC		. = . > .
+Tape		= < = TAPE		. = . > .
+Than		= < = THAN		. = . > .
+Then		= < = THEN		. = . > .
+Times		= < = TIMES		. = . > .
+To		= < = TO		. = . > .
+When		= < = WHEN		. = . > .
+With		= < = WITH		. = . > .
+
+Trailing	= < = TRAILING		. = . > .
+Set		= < = SET		. = . > .
+Alternate	= < = ALTERNATE		. = . > .
+Multiple	= < = MULTIPLE		. = . > .
+
+/* optional keywords */
+
+Global		= < = 'GLOBAL'		. = . > .
+Initial		= < = INITIAL		. = . > .
+Optional	= < = OPTIONAL		. = . > .
+Record		= < = RECORD		. = ? { GetLookahead (2) == YYCODE (SENTENCE) } . > .
+Rounded		= < = ROUNDED		. = . > .
+
+/* scope delimiters */
+
+End_accept	= < = 'END-ACCEPT'	. = ? accept_tail	. > .
+End_add		= < = 'END-ADD'		. = ? - add_tail	. > .
+End_call	= < = 'END-CALL'	. = ? - call_tail	. > .
+End_chain	= < = 'END-CHAIN'	. = . > .
+End_compute	= < = 'END-COMPUTE'	. = ? - compute_tail	. > .
+End_delete	= < = 'END-DELETE'	. = ? - delete_tail	. > .
+End_display	= < = 'END-DISPLAY'	. = ? - display_tail	. > .
+End_divide	= < = 'END-DIVIDE'	. = ? - divide_tail	. > .
+End_evaluate	= < = 'END-EVALUATE'	. = . > .
+End_if		= < = 'END-IF'		. = . > .
+End_multiply	= < = 'END-MULTIPLY'	. = ? - multiply_tail	. > .
+End_perform	= < = 'END-PERFORM'	. = . > .
+End_read	= < = 'END-READ'	. = ? - read_tail	. > .
+End_receive	= < = 'END-RECEIVE'	. = . > .
+End_return	= < = 'END-RETURN'	. = ? - return_tail	. > .
+End_rewrite	= < = 'END-REWRITE'	. = ? - rewrite_tail	. > .
+End_search	= < = 'END-SEARCH'	. = . > .
+End_start	= < = 'END-START'	. = ? - start_tail	. > .
+End_string	= < = 'END-STRING'	. = ? - string_tail	. > .
+End_subtract	= < = 'END-SUBTRACT'	. = ? - subtract_tail	. > .
+End_unstring	= < = 'END-UNSTRING'	. = ? - unstring_tail	. > .
+End_write	= < = 'END-WRITE'	. = ? - write_tail	. > .
+
+/* lookahead languages for trial parsing */
+
+RELATIVE_Key_Is_name	= RELATIVE Key Is name .
+
+ON_head		= <
+		= ON name .
+		= ON numeric_literal .
+> .
+not		= <
+		= NOT classification .
+		= NOT sign_3 .
+		= NOT EQUAL .
+		= NOT LESS .
+		= NOT GREATER .
+		= NOT '=' .
+		= NOT '<' .
+		= NOT '>' .
+		= NOT '(' .
+> .
+ALTERNATE_AREA	= <
+		= ALTERNATE AREA .
+		= ALTERNATE AREAS .
+> .
+ON_head_or_WITH_DATA	= <
+		= ON_head .
+		= WITH DATA .
+> .
+name_Message_COUNT	= name Message COUNT .
+
+identifier_or_numeric_literal_GIVING	= identifier_or_numeric_literal GIVING .
+
+examine_replacing	= <
+		= identifier TALLYING UNTIL FIRST  literal REPLACING .
+		= identifier TALLYING ALL          literal REPLACING .
+		= identifier TALLYING LEADING      literal REPLACING .
+		= identifier REPLACING .
+> .
+qualification_FROM	= qualification FROM .
+
+identifier_replacing	= <
+		= identifier REPLACING .
+		= identifier TALLYING tallying_l REPLACING .
+		= identifier CONVERTING .
+> .
+identifier_FOR	= identifier 'FOR' .
+
+CONSOLE_Is_CRT	= CONSOLE Is CRT .
+
+implementor_name_e_head	= <
+		= implementor_name Is name .
+		= implementor_name ON .
+		= implementor_name OFF .
+> .
+symbolic_e_head	= symbolic_character_l AreIs integer .
+
+non_screen_display	= <
+		= UPON name .
+		= UPON builtin_name .
+		= With NO ADVANCING .
+> .
+parentheses_relational_operator	= '(' relational_operator_3 .
+
+relational_operator_3	= <
+		= < = Is EQUAL		. = Is '='	.
+		    =    EQUALS		.		  > .
+		= < = Is NOT EQUAL	. = Is NOT '='	.
+		    = Is UNEQUAL	. = Is '<>'	. > .
+		= < = Is GREATER	. = Is '>'	.
+		    =    EXCEEDS			. > .
+		= < = Is NOT LESS	. = Is NOT '<'	.
+					  = Is '>='	. > .
+		= < = Is LESS		. = Is '<'	. > .
+		= < = Is NOT GREATER	. = Is NOT '>'	.
+					  = Is '<='	. > .
+		= < = ARE EQUAL		. = ARE '='	. > .
+		= < = ARE NOT EQUAL	. = ARE NOT '='	.
+		    = ARE UNEQUAL	. = ARE '<>'	. > .
+		= < = ARE GREATER	. = ARE '>'	. > .
+		= < = ARE NOT LESS	. = ARE NOT '<'	.
+					  = ARE '>='	. > .
+		= < = ARE LESS		. = ARE '<'	. > .
+		= < = ARE NOT GREATER	. = ARE NOT '>'	.
+					  = ARE '<='	. > .
+> .
+in_of_qualification_TIMES	= in_of qualification TIMES .
+
+on_size_error_head	= On SIZE ERROR .
+on_exception_head	= On EXCEPTION .
+on_overflow_head	= On OVERFLOW .
+invalid_head		= INVALID .
+at_end_head		= At 'END' .
+at_end_of_page_head	= At 'END-OF-PAGE' .
+on_error_head		= ON ERROR .
+
+not_size_error_head	= NOT On SIZE ERROR .
+not_exception_head	= NOT On EXCEPTION .
+not_overflow_head	= NOT On OVERFLOW .
+not_invalid_head	= NOT INVALID .
+not_end_head		= NOT At 'END' .
+not_end_of_page_head	= NOT At 'END-OF-PAGE' .
+
+size_error_head	= <
+		= on_size_error_head .
+		= not_size_error_head .
+> .
+accept_tail	= <
+		= size_error_head .
+		= on_overflow_head .
+		= not_overflow_head .
+		= not_invalid_head .
+		= not_end_head .
+		= not_end_of_page_head .
+		= on_error_head .
+		= ON_head_or_WITH_DATA .
+> .
+add_tail	= <
+		= size_error_head .
+		= 'END-ADD' .
+> .
+call_tail	= <
+		= on_exception_head .
+		= not_exception_head .
+		= on_overflow_head .
+		= on_error_head .
+		= 'END-CALL' .
+> .
+compute_tail	= <
+		= size_error_head .
+		= 'END-COMPUTE' .
+> .
+delete_tail	= <
+		= invalid_head .
+		= not_invalid_head .
+		= 'END-DELETE' .
+> .
+display_tail	= <
+		= on_exception_head .
+		= not_exception_head .
+		= 'END-DISPLAY' .
+> .
+divide_tail	= <
+		= size_error_head .
+		= 'END-DIVIDE' .
+> .
+multiply_tail	= <
+		= size_error_head .
+		= 'END-MULTIPLY' .
+> .
+read_tail	= <
+		= at_end_head .
+		= not_end_head .
+		= invalid_head .
+		= not_invalid_head .
+		= 'END-READ' .
+> .
+return_tail	= <
+		= not_end_head .
+		= 'END-RETURN' .
+> .
+rewrite_tail	= <
+		= invalid_head .
+		= not_invalid_head .
+		= 'END-REWRITE' .
+> .
+start_tail	= <
+		= invalid_head .
+		= not_invalid_head .
+		= 'END-START' .
+> .
+string_tail	= <
+		= on_overflow_head .
+		= not_overflow_head .
+		= 'END-STRING' .
+> .
+subtract_tail	= <
+		= size_error_head .
+		= 'END-SUBTRACT' .
+> .
+unstring_tail	= <
+		= on_overflow_head .
+		= not_overflow_head .
+		= 'END-UNSTRING' .
+> .
+write_tail	= <
+		= at_end_of_page_head .
+		= not_end_of_page_head .
+		= invalid_head .
+		= not_invalid_head .
+		= 'END-WRITE' .
+> .
+
+/* grammar for copy books */
+
+descriptions	= description_l .
+
+description_l	= <
+		= .
+		= description_l file_description_entry .
+		= description_l sort_merge_file_description_entry .
+		= description_l data_description_entry .
+		= description_l communication_description_entry .
+		= description_l report_description_entry report_group_description_entry_l .
+	     /* = description_l screen_description_entry . */
+> .
+
+/* terminals with attributes */
+
+   terminals	:   [EPos : tPosition	] { EPos  := NoPosition	; } <
+name		: 1 [Ident: tIdent	] { Ident := NoIdent	; } .
+paragraph_name	: 2 [Ident: tIdent	] { Ident := NoIdent	; } .
+unsigned_integer: 3 [Value: long	] { Value := 0		; } .
+plus_integer	: 4 [Value: long	] { Value := 1		; } .
+minus_integer	: 5 [Value: long	] { Value := -1		; } .
+level_number	: 6 [Value: int		] { Value := 1		; } .
+real		: 7 [Value: tStringRef	] { Value := PutString (String, 0); } .
+string		: 8 [Value: tStringRef	] { Value := PutString (String, 0); } .
+pseudo_text	: 9 [Value: tStringRef	] { Value := PutString (String, 0); } .
+picture_string	: 10[Value: tStringRef	] { Value := PutString (String, 0); } .
+illegal_character:11[Value: char	] { Value := ' '	; } .
+   > .
+
+MODULE attributes
+
+PROPERTY SYN
+
+DECLARE
+
+integer		= [Value: long	] .
+u_integer	= [Value: long	] [Scan: tScanAttribute] .
+qualification	= [decl	: tpdecl] [Scan: tScanAttribute] .
+copy_name	= [Ident: tIdent] [Pos: tPosition] .
+chapter_name	= [Scan	: tScanAttribute] .
+name_or_Filler	= [Scan	: tScanAttribute] .
+qualification_n	= [Scan	: tScanAttribute] .
+
+END attributes
+
+MODULE tokens
+
+RULE
+
+'.'	: 12 .

@@ -1,0 +1,162 @@
+#!/bin/sh
+# This wrapper gets called from Source Navigator and calls the Gcc Java 
+# front end to generate cross-referencing information.
+#
+# Copyright (C) 1999, Cygnus Solutions.
+#
+# Written by Alexandre Petit-Bianco <apbianco@cygnus.com>, April 1999.
+
+# Where the import file name, specified by SN, will be stored
+import_file=""
+# Where the piped exec file name, specified by SN, will be stored
+piped_exec=""
+# Where the xreference file name, specified by SN, will be stored
+xref_file=""
+# Some jc1 fixed options.
+jc1_options="-quiet -fxref=sn"
+# Where the jc1 flag for xrefs on local variables will be stored, when set
+xref_local=""
+# Where the dbimp options will be stored, as we see them
+dbimp_options=""
+# Where the database prefix will be stored.
+dbimp_db_prefix=""
+# Path to libgcj's ZIP archive
+libgcj_zip=""
+# Temporary file to dump CLASSPATH element candidates
+classpath_tmp_file=/tmp/classpath-$$
+
+# Verify that gcj is in the path
+if [ ! "`which gcj | egrep \"no gcj\"`" ]; then
+  # And then gcj should be able to tell us where jc1 is
+  jc1=`gcj -print-prog-name=jc1`;
+# Otherwise, we try to find jc1 somewhere else
+elif [ ! "`which jc1 | egrep \"no jc1\"`" ]; then
+    jc1=`which jc1`;
+# Bad news, we haven't found something suitable.
+else
+  echo -n "`basename $0`: Can't find \`gcj' nor \`jc1'. Check your "
+  echo "\$PATH environment variable"
+  exit 1
+fi
+
+# Last test on the jc1 we found.
+if [ ! -x "$jc1" ]; then
+  echo "The jc1 which was found ($jc1) doesn't seem right"
+  exit 1
+fi
+
+# Next, augment CLASSPATH with the libgcj ZIP archive
+libgcj_zip="`which gcj | sed 's/bin\/gcj/share\/libgcj\.zip/g'`"
+if [ "$libgcj_zip" ]; then
+  if [ "$CLASSPATH" ]; then
+    CLASSPATH="$CLASSPATH:$libgcj_zip"
+  else
+    CLASSPATH="$libgcj_zip"
+  fi
+else
+  echo -n "Can't find the gcj library Zip archive (libgcj.zip)."
+  exit 1
+fi
+
+
+# Parse the options we receive from SN
+while [ "$1" ]
+do
+  case $1 in
+  # Dbimp options
+  "-c")
+    shift
+    dbimp_options="$dbimp_options -c $1"
+    shift;;
+  "-n")
+    shift
+    dbimp_db_prefix=$1
+    shift;;
+  "-p")
+    shift
+    piped_exec=$1
+    shift;;
+  "-H")
+    shift
+    dbimp_options="$dbimp_options -H $1"
+    shift;;
+  "-P")
+    shift
+    dbimp_options="$dbimp_options -P $1"
+    shift;;
+  # Parser options
+  "-x")
+    shift
+    xref_file=$1
+    shift;;
+  "-l")
+    xref_local="-fxref-sn-local-vars"
+    shift;;
+  "-y")
+    shift
+    import_file=$1
+    shift;;
+  # Unknown or intentionally discarded options
+  *)
+    shift;;
+  esac
+done
+
+# Test that the xref file (if any) is writable
+if [ ! -w "$xref_file" ]
+then
+  # If the file isn't writable, return 13 (EACCES)
+  echo "Error: (open) \`$xref_file', errno: 13"
+  exit 1
+fi
+
+# Complete dbimp's options
+[ "$dbimp_db_prefix" ] && dbimp_options="$dbimp_options $dbimp_db_prefix"
+
+# Try to work a CLASSPATH by stuffing in it all directories seen from
+# the files passed as arguments.
+echo "Generating CLASSPATH entries..."
+touch $classpath_tmp_file
+if [ -w "$classpath_tmp_file" ]; then
+  for file in `cat $import_file`
+  do
+    file="`pwd`/$file"
+    while [ "`dirname $file`" != "/" ] 
+    do
+      file="`dirname $file`"
+      echo $file >> $classpath_tmp_file
+    done
+  done
+  classpath=`sort $classpath_tmp_file | uniq | \
+             awk '{printf (":%s"), $1}' | sed 's/^://g'`
+else
+  classpath="`pwd`"  
+fi
+
+# Append the computed classpath to the existing CLASSPATH. Note that,
+# at that stage, CLASSPATH always contains something.
+[ "$classpath" ] && CLASSPATH="$CLASSPATH:$classpath"
+
+# Complete jc1's options
+[ -f "$xref_file" ] && jc1_options="$jc1_options -fxref-sn-file=$xref_file"
+[ "$xref_local" ] && jc1_options="$jc1_options $xref_local"
+jc1_options="$jc1_options -fCLASSPATH=$CLASSPATH"
+
+# Loop on all files found in the import file, and call jc1.
+for file in `cat $import_file`
+do
+  # If the file isn't readable, return 13 (EACCES)
+  if [ ! -r "$file" ]; then
+    echo "Error: (open) \`$file', errno: 13"
+    exit 2
+  # Otherwise, extract xrefs.
+  else
+    echo $file
+    echo "$jc1 $jc1_options $file | $piped_exec $dbimp_options" >> /tmp/log
+    # Note: we do not support reporting error writing to the dbimp pipe.
+    $jc1 $jc1_options $file | $piped_exec $dbimp_options
+  fi
+done
+
+exit 0
+

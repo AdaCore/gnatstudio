@@ -1,0 +1,553 @@
+# Makefile.in generated automatically by automake 1.4 from Makefile.am
+
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+#TMPDIR =
+
+
+SHELL = @SHELL@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+includedir = @includedir@
+oldincludedir = /usr/include
+
+DESTDIR =
+
+pkgdatadir = $(datadir)/@PACKAGE@
+pkglibdir = $(libdir)/@PACKAGE@
+pkgincludedir = $(includedir)/@PACKAGE@
+
+top_builddir = ..
+
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+transform = @program_transform_name@
+
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+BASH = @BASH@
+BFDHDIR = @BFDHDIR@
+BFDLIB = @BFDLIB@
+CC = @CC@
+CPP = @CPP@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+DEJAGNUHDIR = @DEJAGNUHDIR@
+DEJAGNULIB = @DEJAGNULIB@
+DEVOHDIR = @DEVOHDIR@
+ENDIAN = @ENDIAN@
+EXEEXT = @EXEEXT@
+FALSE = @FALSE@
+FCTSH = @FCTSH@
+GUILIB = @GUILIB@
+HACK = @HACK@
+HAVE_DEVO_SIM = @HAVE_DEVO_SIM@
+IDEHDIR = @IDEHDIR@
+IDELIB = @IDELIB@
+IDETCLLIB = @IDETCLLIB@
+ILUHDIR = @ILUHDIR@
+ILULIB = @ILULIB@
+ILUTOP = @ILUTOP@
+INTLHDIR = @INTLHDIR@
+INTLLIB = @INTLLIB@
+ITCLHDIR = @ITCLHDIR@
+ITCLLIB = @ITCLLIB@
+ITCLMKIDX = @ITCLMKIDX@
+ITCLSH = @ITCLSH@
+ITCL_BUILD_LIB_SPEC = @ITCL_BUILD_LIB_SPEC@
+ITCL_LIB_FILE = @ITCL_LIB_FILE@
+ITCL_LIB_FULL_PATH = @ITCL_LIB_FULL_PATH@
+ITCL_SH = @ITCL_SH@
+ITK_BUILD_LIB_SPEC = @ITK_BUILD_LIB_SPEC@
+ITK_LIB_FILE = @ITK_LIB_FILE@
+ITK_LIB_FULL_PATH = @ITK_LIB_FULL_PATH@
+LIBERTY = @LIBERTY@
+LIBGCC = @LIBGCC@
+LIBGUIHDIR = @LIBGUIHDIR@
+LIBGUILIB = @LIBGUILIB@
+LIBIBERTY = @LIBIBERTY@
+MAKEINFO = @MAKEINFO@
+OBJEXT = @OBJEXT@
+OPCODESLIB = @OPCODESLIB@
+PACKAGE = @PACKAGE@
+RANLIB = @RANLIB@
+RUNTESTDIR = @RUNTESTDIR@
+SH = @SH@
+SH5 = @SH5@
+SIMHDIR = @SIMHDIR@
+SIMLIB = @SIMLIB@
+TCLCONFIG = @TCLCONFIG@
+TCLHDIR = @TCLHDIR@
+TCL_BIN_DIR = @TCL_BIN_DIR@
+TCL_BUILD_LIB_SPEC = @TCL_BUILD_LIB_SPEC@
+TCL_CFLAGS = @TCL_CFLAGS@
+TCL_DEFS = @TCL_DEFS@
+TCL_LD_FLAGS = @TCL_LD_FLAGS@
+TCL_LD_SEARCH_FLAGS = @TCL_LD_SEARCH_FLAGS@
+TCL_LIBS = @TCL_LIBS@
+TCL_LIB_FILE = @TCL_LIB_FILE@
+TCL_LIB_FULL_PATH = @TCL_LIB_FULL_PATH@
+TCL_LIB_SPEC = @TCL_LIB_SPEC@
+TCL_RANLIB = @TCL_RANLIB@
+TCL_SHLIB_CFLAGS = @TCL_SHLIB_CFLAGS@
+TCL_SHLIB_LD = @TCL_SHLIB_LD@
+TIXHDIR = @TIXHDIR@
+TIX_BUILD_LIB_SPEC = @TIX_BUILD_LIB_SPEC@
+TIX_LIB_FULL_PATH = @TIX_LIB_FULL_PATH@
+TKCONFIG = @TKCONFIG@
+TKHDIR = @TKHDIR@
+TK_BUILD_INCLUDES = @TK_BUILD_INCLUDES@
+TK_BUILD_LIB_SPEC = @TK_BUILD_LIB_SPEC@
+TK_DEFS = @TK_DEFS@
+TK_LIBS = @TK_LIBS@
+TK_LIB_FILE = @TK_LIB_FILE@
+TK_LIB_FULL_PATH = @TK_LIB_FULL_PATH@
+TK_LIB_SPEC = @TK_LIB_SPEC@
+TK_VERSION = @TK_VERSION@
+TK_XINCLUDES = @TK_XINCLUDES@
+TK_XLIBSW = @TK_XLIBSW@
+VERSION = @VERSION@
+WINFLAGS = @WINFLAGS@
+ac_cv_c_itclsh = @ac_cv_c_itclsh@
+
+INCLUDES = -I$(srcdir)/../include -I$(srcdir)/include -D__DBINTERFACE_PRIVATE $(WINFLAGS)
+
+
+# ################################################################
+#
+# libdb
+#
+
+lib_LIBRARIES = libdb.a
+
+H_OBJS = hash.$(OBJEXT) hash_bigkey.$(OBJEXT) hash_buf.$(OBJEXT) hash_func.$(OBJEXT) hash_log2.$(OBJEXT) hash_page.$(OBJEXT) hsearch.$(OBJEXT) ndbm.$(OBJEXT)
+
+
+B_OBJS = bt_close.$(OBJEXT) bt_conv.$(OBJEXT) bt_debug.$(OBJEXT) bt_delete.$(OBJEXT) bt_get.$(OBJEXT) bt_open.$(OBJEXT) bt_overflow.$(OBJEXT) bt_page.$(OBJEXT) bt_put.$(OBJEXT) bt_search.$(OBJEXT) bt_seq.$(OBJEXT) bt_split.$(OBJEXT) bt_utils.$(OBJEXT)
+
+
+D_OBJS = db.$(OBJEXT)
+
+M_OBJS = mpool.$(OBJEXT)
+
+R_OBJS = rec_close.$(OBJEXT) rec_delete.$(OBJEXT) rec_get.$(OBJEXT) rec_open.$(OBJEXT) rec_put.$(OBJEXT) rec_search.$(OBJEXT) rec_seq.$(OBJEXT) rec_utils.$(OBJEXT)
+
+
+libdb_a_SOURCES = @HACK@
+EXTRA_libdb_a_SOURCES = hack.c
+libdb_a_LIBADD = @LIBOBJS@ $(H_OBJS) $(B_OBJS) $(D_OBJS) $(M_OBJS) $(R_OBJS)
+libdb_a_DEPENDENCIES = $(libdb_a_LIBADD)
+
+# ################################################################
+#
+# The test program.
+#
+
+check_PROGRAMS = dbtest
+
+dbtest_SOURCES = @HACK@
+dbtest_LDADD = -L. $(dbtest_DEPENDENCIES)
+dbtest_DEPENDENCIES = dbtest.$(OBJEXT) @LIBOBJS@ -ldb
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_HEADER = ../config.h
+CONFIG_CLEAN_FILES = 
+LIBRARIES =  $(lib_LIBRARIES)
+
+
+DEFS = @DEFS@ -I. -I$(srcdir) -I..
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+libdb_a_OBJECTS = 
+AR = ar
+check_PROGRAMS =  dbtest$(EXEEXT)
+dbtest_OBJECTS = 
+dbtest_LDFLAGS = 
+CFLAGS = @CFLAGS@
+COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+DIST_COMMON =  README Makefile.am Makefile.in memmove.c snprintf.c \
+strerror.c
+
+
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+
+TAR = gtar
+GZIP_ENV = --best
+DEP_FILES =  .deps/hack.P .deps/memmove.P .deps/snprintf.P \
+.deps/strerror.P
+SOURCES = $(libdb_a_SOURCES) $(EXTRA_libdb_a_SOURCES) $(dbtest_SOURCES)
+OBJECTS = $(libdb_a_OBJECTS) $(dbtest_OBJECTS)
+
+all: all-redirect
+.SUFFIXES:
+.SUFFIXES: .S .c .o .obj .s
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+	cd $(top_srcdir) && $(AUTOMAKE) --gnu PORT/Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+
+mostlyclean-libLIBRARIES:
+
+clean-libLIBRARIES:
+	-test -z "$(lib_LIBRARIES)" || rm -f $(lib_LIBRARIES)
+
+distclean-libLIBRARIES:
+
+maintainer-clean-libLIBRARIES:
+
+install-libLIBRARIES: $(lib_LIBRARIES)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(libdir)
+	@list='$(lib_LIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(libdir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(libdir)/$$p; \
+	  else :; fi; \
+	done
+	@$(POST_INSTALL)
+	@list='$(lib_LIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo " $(RANLIB) $(DESTDIR)$(libdir)/$$p"; \
+	    $(RANLIB) $(DESTDIR)$(libdir)/$$p; \
+	  else :; fi; \
+	done
+
+uninstall-libLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	list='$(lib_LIBRARIES)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(libdir)/$$p; \
+	done
+
+# FIXME: We should only use cygpath when building on Windows,
+# and only if it is available.
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
+.s.o:
+	$(COMPILE) -c $<
+
+.S.o:
+	$(COMPILE) -c $<
+
+mostlyclean-compile:
+	-rm -f *.o core *.core
+	-rm -f *.$(OBJEXT)
+
+clean-compile:
+
+distclean-compile:
+	-rm -f *.tab.c
+
+maintainer-clean-compile:
+
+libdb.a: $(libdb_a_OBJECTS) $(libdb_a_DEPENDENCIES)
+	-rm -f libdb.a
+	$(AR) cru libdb.a $(libdb_a_OBJECTS) $(libdb_a_LIBADD)
+	$(RANLIB) libdb.a
+
+mostlyclean-checkPROGRAMS:
+
+clean-checkPROGRAMS:
+	-test -z "$(check_PROGRAMS)" || rm -f $(check_PROGRAMS)
+
+distclean-checkPROGRAMS:
+
+maintainer-clean-checkPROGRAMS:
+
+dbtest$(EXEEXT): $(dbtest_OBJECTS) $(dbtest_DEPENDENCIES)
+	@rm -f dbtest$(EXEEXT)
+	$(LINK) $(dbtest_LDFLAGS) $(dbtest_OBJECTS) $(dbtest_LDADD) $(LIBS)
+
+tags: TAGS
+
+ID: $(HEADERS) $(SOURCES) $(LISP)
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	here=`pwd` && cd $(srcdir) \
+	  && mkid -f$$here/ID $$unique $(LISP)
+
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
+	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+
+mostlyclean-tags:
+
+clean-tags:
+
+distclean-tags:
+	-rm -f TAGS ID
+
+maintainer-clean-tags:
+
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+
+subdir = PORT
+
+distdir: $(DISTFILES)
+	here=`cd $(top_builddir) && pwd`; \
+	top_distdir=`cd $(top_distdir) && pwd`; \
+	distdir=`cd $(distdir) && pwd`; \
+	cd $(top_srcdir) \
+	  && $(AUTOMAKE) --include-deps --build-dir=$$here --srcdir-name=$(top_srcdir) --output-dir=$$top_distdir --gnu PORT/Makefile
+	@for file in $(DISTFILES); do \
+	  d=$(srcdir); \
+	  if test -d $$d/$$file; then \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	  fi; \
+	done
+
+DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+
+-include $(DEP_FILES)
+
+mostlyclean-depend:
+
+clean-depend:
+
+distclean-depend:
+	-rm -rf .deps
+
+maintainer-clean-depend:
+
+%.o: %.c
+	@echo '$(COMPILE) -c $<'; \
+	$(COMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-cp .deps/$(*F).pp .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm .deps/$(*F).pp
+
+%.lo: %.c
+	@echo '$(LTCOMPILE) -c $<'; \
+	$(LTCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-sed -e 's/^\([^:]*\)\.o[ 	]*:/\1.lo \1.o :/' \
+	  < .deps/$(*F).pp > .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm -f .deps/$(*F).pp
+info-am:
+info: info-am
+dvi-am:
+dvi: dvi-am
+check-am: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
+	$(MAKE) $(AM_MAKEFLAGS) check-local
+check: check-am
+installcheck-am:
+installcheck: installcheck-am
+install-exec-am: install-libLIBRARIES
+install-exec: install-exec-am
+
+install-data-am:
+install-data: install-data-am
+
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+install: install-am
+uninstall-am: uninstall-libLIBRARIES
+uninstall: uninstall-am
+all-am: Makefile $(LIBRARIES)
+all-redirect: all-am
+install-strip:
+	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+installdirs:
+	$(mkinstalldirs)  $(DESTDIR)$(libdir)
+
+
+mostlyclean-generic:
+
+clean-generic:
+
+distclean-generic:
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+
+maintainer-clean-generic:
+mostlyclean-am:  mostlyclean-libLIBRARIES mostlyclean-compile \
+		mostlyclean-checkPROGRAMS mostlyclean-tags \
+		mostlyclean-depend mostlyclean-generic
+
+mostlyclean: mostlyclean-am
+
+clean-am:  clean-libLIBRARIES clean-compile clean-checkPROGRAMS \
+		clean-tags clean-depend clean-generic mostlyclean-am
+
+clean: clean-am
+
+distclean-am:  distclean-libLIBRARIES distclean-compile \
+		distclean-checkPROGRAMS distclean-tags distclean-depend \
+		distclean-generic clean-am
+
+distclean: distclean-am
+
+maintainer-clean-am:  maintainer-clean-libLIBRARIES \
+		maintainer-clean-compile maintainer-clean-checkPROGRAMS \
+		maintainer-clean-tags maintainer-clean-depend \
+		maintainer-clean-generic distclean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+maintainer-clean: maintainer-clean-am
+
+.PHONY: mostlyclean-libLIBRARIES distclean-libLIBRARIES \
+clean-libLIBRARIES maintainer-clean-libLIBRARIES uninstall-libLIBRARIES \
+install-libLIBRARIES mostlyclean-compile distclean-compile \
+clean-compile maintainer-clean-compile mostlyclean-checkPROGRAMS \
+distclean-checkPROGRAMS clean-checkPROGRAMS \
+maintainer-clean-checkPROGRAMS tags mostlyclean-tags distclean-tags \
+clean-tags maintainer-clean-tags distdir mostlyclean-depend \
+distclean-depend clean-depend maintainer-clean-depend info-am info \
+dvi-am dvi check-local check check-am installcheck-am installcheck \
+install-exec-am install-exec install-data-am install-data install-am \
+install uninstall-am uninstall all-redirect all-am all installdirs \
+mostlyclean-generic distclean-generic clean-generic \
+maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+
+
+check-local:
+	srcdir=$(srcdir); export srcdir; \
+	if test -z "$(TMPDIR)"; then TMPDIR=`pwd`; \
+	else TMPDIR="$(TMPDIR)"; fi; \
+	$(FCTSH) $(top_srcdir)/test/run.test
+
+# ################################################################
+#
+# All the compilation rules.  Normally you don't have to do this with
+# automake.
+#
+
+hash.$(OBJEXT): ../hash/hash.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/hash.c
+hash_bigkey.$(OBJEXT): ../hash/hash_bigkey.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/hash_bigkey.c
+hash_buf.$(OBJEXT): ../hash/hash_buf.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/hash_buf.c
+hash_func.$(OBJEXT): ../hash/hash_func.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/hash_func.c
+hash_log2.$(OBJEXT): ../hash/hash_log2.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/hash_log2.c
+hash_page.$(OBJEXT): ../hash/hash_page.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/hash_page.c
+hsearch.$(OBJEXT): ../hash/hsearch.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/hsearch.c
+ndbm.$(OBJEXT): ../hash/ndbm.c
+	$(COMPILE) -c -I$(srcdir)/../hash $(srcdir)/../hash/ndbm.c
+
+bt_close.$(OBJEXT): ../btree/bt_close.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_close.c
+bt_conv.$(OBJEXT): ../btree/bt_conv.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_conv.c
+bt_debug.$(OBJEXT): ../btree/bt_debug.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_debug.c
+bt_delete.$(OBJEXT): ../btree/bt_delete.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_delete.c
+bt_get.$(OBJEXT): ../btree/bt_get.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_get.c
+bt_open.$(OBJEXT): ../btree/bt_open.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_open.c
+bt_overflow.$(OBJEXT): ../btree/bt_overflow.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_overflow.c
+bt_page.$(OBJEXT): ../btree/bt_page.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_page.c
+bt_put.$(OBJEXT): ../btree/bt_put.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_put.c
+bt_search.$(OBJEXT): ../btree/bt_search.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_search.c
+bt_seq.$(OBJEXT): ../btree/bt_seq.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_seq.c
+bt_split.$(OBJEXT): ../btree/bt_split.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_split.c
+bt_stack.$(OBJEXT): ../btree/bt_stack.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_stack.c
+bt_utils.$(OBJEXT): ../btree/bt_utils.c
+	$(COMPILE) -c -I$(srcdir)/../btree $(srcdir)/../btree/bt_utils.c
+
+db.$(OBJEXT): ../db/db.c
+	$(COMPILE) -c $(srcdir)/../db/db.c
+
+mpool.$(OBJEXT): ../mpool/mpool.c
+	$(COMPILE) -c -I$(srcdir)/../mpool $(srcdir)/../mpool/mpool.c
+
+rec_close.$(OBJEXT): ../recno/rec_close.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_close.c
+rec_delete.$(OBJEXT): ../recno/rec_delete.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_delete.c
+rec_get.$(OBJEXT): ../recno/rec_get.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_get.c
+rec_open.$(OBJEXT): ../recno/rec_open.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_open.c
+rec_put.$(OBJEXT): ../recno/rec_put.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_put.c
+rec_search.$(OBJEXT): ../recno/rec_search.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_search.c
+rec_seq.$(OBJEXT): ../recno/rec_seq.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_seq.c
+rec_utils.$(OBJEXT): ../recno/rec_utils.c
+	$(COMPILE) -c -I$(srcdir)/../recno $(srcdir)/../recno/rec_utils.c
+
+dbtest.$(OBJEXT): ../test/dbtest.c
+	$(COMPILE) -c $(srcdir)/../test/dbtest.c
+
+memmove.$(OBJEXT): memmove.c
+	$(COMPILE) -DMEMMOVE -c $(srcdir)/memmove.c
+mktemp.$(OBJEXT): mktemp.c
+	$(COMPILE) -c $(srcdir)/mktemp.c
+snprintf.$(OBJEXT): snprintf.c
+	$(COMPILE) -c $(srcdir)/snprintf.c
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:

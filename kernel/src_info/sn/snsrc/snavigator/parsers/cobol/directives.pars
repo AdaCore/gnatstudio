@@ -1,0 +1,54 @@
+/*
+
+		Compiler Directives
+		===================
+
+   Process compiler directives according to syntax of Micro Focus.
+   Currently, the SET SOURCEFORMAT directive is interpreted, only.
+
+*/
+
+/* Ich, Doktor Josef Grosch, Informatiker, June 1997 */
+
+PARSER directives
+
+GLOBAL {
+# include "Source.h"
+}
+
+PROPERTY INPUT
+
+RULE
+
+directive	= <
+		= SET SOURCEFORMAT
+		{ => { char s [256]; StGetString (Attribute.string.Value, s);
+		       if (strncmp (s + 1, "FREE", 4) == 0) {
+			  free_format = rtrue; MaxColumn = 1024;
+		       } else if (strncmp (s + 1, "FIXED", 5) == 0) {
+			  free_format = rfalse; MaxColumn = 72;
+		       }
+		}; } string .
+		= SET name literal .
+		= SET name .
+		= DISPLAY string .
+		= ELSE .
+		= \END .
+		= IF literal     operator literal .
+		= IF literal NOT operator literal .
+		= IF literal     DEFINED .
+		= IF literal NOT DEFINED .
+> .
+literal		= <
+		= unsigned_integer .
+		= string .
+> .
+operator	= <
+		= '<' .
+		= '>' .
+		= '=' .
+> .
+
+name		: 1 [Ident: tIdent	] { Ident := NoIdent	; } .
+unsigned_integer: 3 [Value: long	] { Value := 0		; } .
+string		: 8 [Value: tStringRef	] { Value := PutString (String, 0); } .

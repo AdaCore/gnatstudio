@@ -1,0 +1,23 @@
+#!/usr/local/bin/wish -f
+set paf_rcsid "\$Id$"
+# This program tells PAF the reload files specified in the command line.
+# The target project name must contain the string "test".
+
+wm withdraw .
+
+foreach intp [winfo interps] {
+    if {![string match "*paf*" $intp]} {
+        continue
+    }
+    set msg ""
+    set pars ""
+    set cmd {set tmp $PafProjectName}
+    catch {set pars [send $intp $cmd]} msg
+    if {$msg != ""} {
+        puts stdout $msg
+    }
+    if {[string match "*test*" $pars]} {
+	send $intp paf_reload_files [list $argv]
+    }
+}
+exit

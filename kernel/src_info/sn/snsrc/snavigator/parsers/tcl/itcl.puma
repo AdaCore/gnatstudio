@@ -1,0 +1,2880 @@
+TRAFO	itcl
+
+PUBLIC	Interpret_itcl make_one_word Mword Mqualification Mstmt Mblock_content
+
+GLOBAL {
+# include "Reuse.h"
+# include "Position.h"
+# include "StringM.h"
+# include "Idents.h"
+# include "Parser.h"
+# include "Eval.h"
+# include "paf.h"
+
+# define null		(char *) NULL
+# define scope_type(cur_class) cur_class ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF
+# define default_attr	PAF_PUBLIC
+
+extern	FILE *	cross_ref_fp	;
+extern	int	report_local_vars;
+
+static	tIdent
+		iat_scope	,
+		iclass		,
+		icommon		,
+		iconfigbody	,
+		iconstructor	,
+		idestructor	,
+		idelete		,
+		ihash_auto	,
+		iinherit	,
+		iisa		,
+		iitcl		,
+		iitcl_class	,
+		iitcl_info	,
+		iitk		,
+		iiwidgets	,
+		ilocal		,
+		imethod		,
+		iobject		,
+		iobjects	,
+		iprevious	,
+		iprivate	,
+		iprotected	,
+		ipublic		,
+		ithis		,
+		ivirtual	;
+
+static	char	buffer [1024]	;
+static	char	args_buffer [1024];
+static	int	length		;
+static	rbool	need_pass_2	;
+static	rbool	in_string	;
+static	tPosition gpos		;
+static	tTree	genv, predef	;
+static	char *	p		;
+static	char *	current_ident	;
+static	char *	current_class	;
+static	char *	cur_proc_ptr	= NULL;
+static	char *	cur_class_ptr	= NULL;
+static	char *	cur_arg_types_ptr = NULL;
+
+static tIdent MakeID
+# if defined __STDC__ | defined __cplusplus
+(char * s)
+# else
+(s)
+ char * s;
+# endif
+{
+   return MakeIdent (s, strlen (s));
+}
+}
+
+BEGIN {
+   yyf		= stdout;
+   need_pass_2	= rfalse;
+   in_string	= rfalse;
+
+   iappend	= MakeID ("append");
+   iarray	= MakeID ("array");
+   ibreak	= MakeID ("break");
+   icatch	= MakeID ("catch");
+   icontinue	= MakeID ("continue");
+   idefault	= MakeID ("default");
+   ifor		= MakeID ("for");
+   iforeach	= MakeID ("foreach");
+   iglobal	= MakeID ("global");
+   iif		= MakeID ("if");
+   iincr	= MakeID ("incr");
+   iinfo	= MakeID ("info");
+   ilappend	= MakeID ("lappend");
+   ireturn	= MakeID ("return");
+   iset		= MakeID ("set");
+   iunset	= MakeID ("unset");
+   iwhile	= MakeID ("while");
+
+   last_keyword	= MakeID ("concat");
+   last_keyword	= MakeID ("eval");
+   last_keyword	= MakeID ("expr");
+   last_keyword	= MakeID ("format");
+   last_keyword	= MakeID ("glob");
+   last_keyword	= MakeID ("join");
+   last_keyword	= MakeID ("lindex");
+   last_keyword	= MakeID ("linsert");
+   last_keyword	= MakeID ("list");
+   last_keyword	= MakeID ("llength");
+   last_keyword	= MakeID ("lrange");
+   last_keyword	= MakeID ("lreplace");
+   last_keyword	= MakeID ("lsearch");
+   last_keyword	= MakeID ("lsort");
+   last_keyword	= MakeID ("regexp");
+   last_keyword	= MakeID ("regsub");
+   last_keyword	= MakeID ("split");
+   last_keyword	= MakeID ("string");
+   last_keyword	= MakeID ("switch");
+   last_keyword	= MakeID ("uplevel");
+   last_keyword	= MakeID ("upvar");
+   last_keyword	= MakeID ("winfo");
+
+   iargs	= MakeID ("args");
+   ibinary	= MakeID ("binary");
+   ibody	= MakeID ("body");
+   icatch	= MakeID ("catch");
+   ieval	= MakeID ("eval");
+   iexists	= MakeID ("exists");
+   ifile	= MakeID ("file");
+   iforeach	= MakeID ("foreach");
+   igets	= MakeID ("gets");
+   iglobal	= MakeID ("global");
+   ilstat	= MakeID ("lstat");
+   inamespace	= MakeID ("namespace");
+   iparray	= MakeID ("parray");
+   iproc	= MakeID ("proc");
+   irename	= MakeID ("rename");
+   iscan	= MakeID ("scan");
+   isource	= MakeID ("source");
+   istat	= MakeID ("stat");
+   itkinfo	= MakeID ("tkinfo");
+   ivariable	= MakeID ("variable");
+   ivwait	= MakeID ("vwait");
+
+   iat_scope	= MakeID ("@scope");
+   iclass	= MakeID ("class");
+   icommon	= MakeID ("common");
+   iconfigbody	= MakeID ("configbody");
+   iconstructor	= MakeID ("constructor");
+   idelete	= MakeID ("delete");
+   idestructor	= MakeID ("destructor");
+   ihash_auto	= MakeID ("#auto");
+   iinherit	= MakeID ("inherit");
+   iisa		= MakeID ("isa");
+   iitcl	= MakeID ("itcl");
+   iitcl_class	= MakeID ("itcl_class");
+   iitcl_info	= MakeID ("itcl_info");
+   iitk		= MakeID ("itk");
+   iiwidgets	= MakeID ("iwidgets");
+   ilocal	= MakeID ("local");
+   imethod	= MakeID ("method");
+   iobject	= MakeID ("object");
+   iobjects	= MakeID ("objects");
+   iprevious	= MakeID ("previous");
+   iprivate	= MakeID ("private");
+   iprotected	= MakeID ("protected");
+   ipublic	= MakeID ("public");
+   ithis	= MakeID ("this");
+   ivirtual	= MakeID ("virtual");
+
+   genv		= mnoobject ();
+   predef	= mnostmt ();
+   predef	= mclass (predef, mlocal_ident (NoPosition, iitcl),
+		     mnotext (), NoPosition, PAF_PUBLIC);
+   genv		= mobject (predef, iitcl, genv);
+   predef	= mclass (predef, mlocal_ident (NoPosition, iitk),
+		     mnotext (), NoPosition, PAF_PUBLIC);
+   genv		= mobject (predef, iitk, genv);
+   predef	= mclass (predef, mlocal_ident (NoPosition, iiwidgets),
+		     mnotext (), NoPosition, PAF_PUBLIC);
+   genv		= mobject (predef, iiwidgets, genv);
+   predef	= mprogram (predef);
+   Eval (predef);
+}
+
+/**************************************************************/
+
+PROCEDURE Interpret_itcl (Tree)
+
+program (stmts := stmts: stmts (env := env: env (objects := objects))) :-
+   objects := genv;
+   genv := env;
+   cur_class_ptr := null; cur_proc_ptr := null;
+   get_objects (stmts);					/* pass 1 */
+{  if (need_pass_2) {
+      cur_class_ptr = null; cur_proc_ptr = null;
+      pass2 (stmts);
+   }
+};
+   cur_class_ptr := null; cur_proc_ptr := null;
+   pass3 (stmts);
+   .
+
+/**************************************************************/
+
+PROCEDURE get_objects (s: Tree)
+
+proc_c (next := next, env := e, qualification := qualification:
+      local_ident (pos := pos, ident := ident),
+      param_names := param_names, block := block, attribute := attribute) :-
+   e->env.objects := object (s, ident, e->env.objects);
+   dcl (e->env.objects, attribute);
+   get_objects (next);
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (ident);
+   get_param_objects (param_names);
+   get_objects (block);
+   cur_proc_ptr := prev_proc;
+   .
+proc_c (next := next, qualification := qualification:
+      global_ident (pos := pos, ident := ident),
+      param_names := param_names, block := block, attribute := attribute) :-
+   genv->env.objects := object (s, ident, genv->env.objects);
+   dcl (genv->env.objects, attribute);
+   get_objects (next);
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (ident);
+   get_param_objects (param_names);
+   get_objects (block);
+   cur_proc_ptr := prev_proc;
+   .
+proc_c (next := next, qualification := q: local_text (...),
+      param_names := param_names, block := block) ;
+proc_c (next := next, qualification := q: global_text (...),
+      param_names := param_names, block := block) :-
+   get_objects (next);
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (get_ident (q));
+   get_param_objects (param_names);
+   get_objects (block);
+   cur_proc_ptr := prev_proc;
+   .
+proc_c (next := next) :-
+   need_pass_2 := rtrue;
+   get_objects (next);					/* pass 2 */
+   .
+namespace (next := next, env := e, qualification := qualification:
+      local_ident (pos := pos, ident := ident),
+      block := blk, attribute := attribute) :-
+   obj: objects; obj := IdentifyLocal (ident, e->env.objects);
+{  if (obj != NoTree && obj->object.object->Kind == knamespace) {
+      relocate (blk, obj->object.object->namespace.block->texts.env);
+      use (obj, pos, PAF_REF_READ);
+   } else {
+      e->env.objects = mobject (s, ident, e->env.objects);
+      dcl (e->env.objects, attribute);
+   }
+};
+   get_objects (next);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   get_objects (blk);
+   cur_class_ptr := prev_class;
+   .
+namespace (next := next, qualification := qualification:
+      global_ident (pos := pos, ident := ident),
+      block := blk, attribute := attribute) :-
+   obj: objects; obj := IdentifyGlobal (ident);
+{  if (obj != NoTree && obj->object.object->Kind == knamespace) {
+      relocate (blk, obj->object.object->namespace.block->texts.env);
+      use (obj, pos, PAF_REF_READ);
+   } else {
+      genv->env.objects = mobject (s, ident, genv->env.objects);
+      dcl (genv->env.objects, attribute);
+   }
+};
+   get_objects (next);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   get_objects (blk);
+   cur_class_ptr := prev_class;
+   .
+namespace (next := next, qualification := q: local_text (...), block := block) ;
+namespace (next := next, qualification := q: global_text (...), block := block) :-
+   get_objects (next);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (get_ident (q));
+   get_objects (block);
+   cur_class_ptr := prev_class;
+   .
+namespace (next := next) :-
+   need_pass_2 := rtrue;
+   get_objects (next);					/* pass 2 */
+   .
+class (next := next, env := e, qualification := qualification:
+      local_ident (pos := pos, ident := ident),
+      block := blk, attribute := attribute) ;
+itcl_class (next := next, env := e, qualification := qualification:
+      local_ident (pos := pos, ident := ident),
+      block := blk, attribute := attribute) :-
+   obj: objects; obj := IdentifyLocal (ident, e->env.objects);
+{  if (obj != NoTree && Tree_IsType (obj->object.object, knamespace_c)) {
+      relocate (blk, obj->object.object->class.block->texts.env);
+      use (obj, pos, PAF_REF_READ);
+   } else {
+      e->env.objects = mobject (s, ident, e->env.objects);
+      dcl (e->env.objects, attribute);
+   }
+};
+   get_objects (next);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   get_objects (blk);
+   cur_class_ptr := prev_class;
+   .
+class (next := next, env := e, qualification := qualification:
+      global_ident (pos := pos, ident := ident),
+      block := blk, attribute := attribute) ;
+itcl_class (next := next, env := e, qualification := qualification:
+      global_ident (pos := pos, ident := ident),
+      block := blk, attribute := attribute) :-
+   obj: objects; obj := IdentifyGlobal (ident);
+{  if (obj != NoTree && Tree_IsType (obj->object.object, knamespace_c)) {
+      relocate (blk, obj->object.object->class.block->texts.env);
+      use (obj, pos, PAF_REF_READ);
+   } else {
+      e->env.objects = mobject (s, ident, e->env.objects);
+      dcl (e->env.objects, attribute);
+   }
+};
+   get_objects (next);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   get_objects (blk);
+   cur_class_ptr := prev_class;
+   .
+class (next := next, env := e, qualification := q:
+      local_text (...), block := blk, attribute := attribute) ;
+itcl_class (next := next, env := e, qualification := q:
+      local_text (...), block := blk, attribute := attribute) ;
+class (next := next, env := e, qualification := q:
+      global_text (...), block := blk, attribute := attribute) ;
+itcl_class (next := next, env := e, qualification := q:
+      global_text (...), block := blk, attribute := attribute) :-
+   get_objects (next);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (get_ident (q));
+   get_objects (blk);
+   cur_class_ptr := prev_class;
+   .
+class (next := next) ;
+itcl_class (next := next) :-
+   need_pass_2 := rtrue;
+   get_objects (next);					/* pass 2 */
+   .
+stmt (env := env, next := next: stmts, words := words:
+      one_word (ident := ident, next := w2: word_c (...))) :-
+   add_variables (ident, w2, default_attr);
+   get_objects (words);
+   get_objects (next);
+   .
+stmt (env := env, next := next: stmts, words := words) :-
+   get_objects (words);
+   get_objects (next);
+   .
+block (env := env, next := next: texts, pos := pos, stmts := stmts) :-
+   get_objects (stmts);
+   get_objects (next);
+   .
+content (env := env, next := next: texts, pos := pos, qualification := qualification: qualification_c) :-
+   get_objects (qualification);
+   get_objects (next);
+   .
+block_content (env := env, next := next: texts, pos := pos, stmts := stmts) :-
+   get_objects (stmts);
+   get_objects (next);
+   .
+text (env := env, next := next: texts, pos := pos) :-
+   get_objects (next);
+   .
+one_word (env := env, next := next: words, ident := ident, pos := pos) :-
+   get_objects (next);
+   .
+qual_word (env := env, next := next: words, qualification := qualification: qualification_c) :-
+   get_objects (qualification);
+   get_objects (next);
+   .
+qual_words (env := env, next := next: words, qualifications := qualifications) :-
+   get_objects (qualifications);
+   get_objects (next);
+   .
+one_qualification (env := env, next := next: qualifications, qualification := qualification: qualification_c) :-
+   get_objects (qualification);
+   get_objects (next);
+   .
+local_text (pos := pos, env := env, texts := texts) :-
+   get_objects (texts);
+   .
+global_text (pos := pos, env := env, texts := texts) :-
+   get_objects (texts);
+   .
+qualification (pos := pos, env := env, qualification := qualification: qualification_c, ident := ident) :-
+   get_objects (qualification);
+   .
+complex_qual (pos := pos, env := env, qualification := qualification: qualification_c, texts := texts) :-
+   get_objects (qualification);
+   get_objects (texts);
+   .
+subscription (pos := pos, env := env, qualification := qualification: qualification_c, index := index: qualification_c) :-
+   get_objects (qualification);
+   get_objects (index);
+   .
+
+/**************************************************************/
+
+PROCEDURE get_param_objects (s: words)
+
+one_word (next := next, env := e, ident := ident, pos := pos) :-
+   e->env.objects := object (s, ident, e->env.objects);
+   dcl (e->env.objects, PAF_PUBLIC);
+   get_param_objects (next);
+   .
+word_c (next := next) :-
+   get_param_objects (next);				/* ignore garbage */
+   .
+
+/**************************************************************/
+
+PROCEDURE add_variables (tIdent, word_c, attr: int)
+
+(iset), w2: word_c (next := noword (...)), _ :-		/* set r	*/
+   add_var (w2, PAF_REF_READ, default_attr);
+   .
+(iset), w2, _ :-					/* set w x	*/
+   add_var (w2, PAF_REF_WRITE, default_attr);
+   .
+(iglobal), w2, _ :-					/* global d ...	*/
+   add_global_vars (w2);
+   .
+(ivariable), w2: word_c (next := noword (...)), _ :-	/* variable d	*/
+   add_variable_vars (w2, PAF_REF_READ, attr);
+   .
+(ivariable), w2: word_c (next :=			/* variable w x {} */
+	     w3: word_c (next :=
+	     w4: qual_word (env := env, qualification := qualification))), _ :-
+   relocate (qualification, menv (mnoobject (), env, w4));
+   add_variable_vars (w2, PAF_REF_WRITE, attr);
+   .
+(ivariable), w2, _ :-					/* variable w x */
+   add_variable_vars (w2, PAF_REF_WRITE, attr);
+   .
+(icommon), w2: word_c (next := noword (...)), _ :-	/* common d	*/
+   add_var (w2, PAF_REF_READ, default_attr);
+   .
+(icommon), w2, _ :-					/* common w x	*/
+   add_var (w2, PAF_REF_WRITE, default_attr);
+   .
+(ipublic), w2: one_word (ident := ident, next :=	/* public	*/
+   w3: word_c (...)), _ :-
+   ident == ivariable || ident == icommon;
+   add_variables (ident, w3, PAF_PUBLIC);
+   .
+(ipublic), w2: word_c (next := noword (...)), _ :-	/* public d	*/
+   add_var (w2, PAF_REF_READ, PAF_PUBLIC);
+   .
+(ipublic), w2: word_c (next :=				/* public w x {} */
+	   w3: word_c (next :=
+	   w4: qual_word (env := env, qualification := qualification))), _ :-
+   relocate (qualification, menv (mnoobject (), env, w4));
+   add_var (w2, PAF_REF_WRITE, PAF_PUBLIC);
+   .
+(ipublic), w2, _ :-					/* public w x	*/
+   add_var (w2, PAF_REF_WRITE, PAF_PUBLIC);
+   .
+(iprotected), w2: one_word (ident := ident, next :=	/* protected	*/
+   w3: word_c (...)), _ :-
+   ident == ivariable || ident == icommon;
+   add_variables (ident, w3, PAF_PROTECTED);
+   .
+(iprotected), w2: word_c (next := noword (...)), _ :-	/* protected d	*/
+   add_var (w2, PAF_REF_READ, PAF_PROTECTED);
+   .
+(iprotected), w2: word_c (next :=			/* protected w x {} */
+	      w3: word_c (next :=
+	      w4: qual_word (env := env, qualification := qualification))), _ :-
+   relocate (qualification, menv (mnoobject (), env, w4));
+   add_var (w2, PAF_REF_WRITE, PAF_PROTECTED);
+   .
+(iprotected), w2, _ :-					/* protected w x */
+   add_var (w2, PAF_REF_WRITE, PAF_PROTECTED);
+   .
+(iprivate), w2: one_word (ident := ident, next :=	/* private	*/
+   w3: word_c (...)), _ :-
+   ident == ivariable || ident == icommon;
+   add_variables (ident, w3, PAF_PRIVATE);
+   .
+(iprivate), w2: word_c (next := noword (...)), _ :-	/* private d	*/
+   add_var (w2, PAF_REF_READ, PAF_PRIVATE);
+   .
+(iprivate), w2: word_c (next :=				/* private w x {} */
+	    w3: word_c (next :=
+	    w4: qual_word (env := env, qualification := qualification))), _ :-
+   relocate (qualification, menv (mnoobject (), env, w4));
+   add_var (w2, PAF_REF_WRITE, PAF_PRIVATE);
+   .
+(iprivate), w2, _ :-					/* private w x	*/
+   add_var (w2, PAF_REF_WRITE, PAF_PRIVATE);
+   .
+/*
+(ilocal), w2: word_c (next := w3: word_c (...)), _ :-	/* local c d	/*
+   add_var (w3, PAF_REF_READ, default_attr);
+   .
+(iinherit), w2, _ :-					/* inherit x ... /*
+   inherit_var (w2);
+   .
+*/
+(iinherit), w2, _ :-					/* inherit x ... */
+   need_pass_2 := rtrue;
+   .
+(iappend), w2, _ :-					/* append w	*/
+   add_var (w2, PAF_REF_WRITE, default_attr);
+   .
+(ilappend), w2, _ :-					/* lappend w	*/
+   add_var (w2, PAF_REF_WRITE, default_attr);
+   .
+(iarray), w2: one_word (ident := (iset), next :=	/* array set w	*/
+   w3: word_c (...)), _ :-
+   add_var (w3, PAF_REF_WRITE, default_attr);
+   .
+(iarray), w2: word_c (next := w3: word_c (...)), _ :-	/* array x r	*/
+   add_var (w3, PAF_REF_READ, default_attr);
+   .
+(ibinary), w2: one_word (ident := (iscan), next :=   /* binary scan x x w ... */
+   w3: word_c (next :=
+   w4: word_c (next :=
+   w5: word_c (...)))), _ :-
+   add_vars (w5, PAF_REF_WRITE);
+   .
+(iscan), w2: word_c (next :=				/* scan x x w ... */
+   w3: word_c (next :=
+   w4: word_c (...))), _ :-
+   add_vars (w4, PAF_REF_WRITE);
+   .
+(iforeach), w2, _ :-					/* foreach */
+   add_foreach_vars (w2);
+   .
+(ivwait), w2, _ :-					/* vwait r	*/
+   add_var (w2, PAF_REF_READ, default_attr);
+   .
+(iincr), w2, _ :-					/* incr w	*/
+   add_var (w2, PAF_REF_WRITE, default_attr);
+   .
+(iparray), w2, _ :-					/* parray r	*/
+   add_var (w2, PAF_REF_READ, default_attr);
+   .
+(icatch), w2: word_c (next := w3: word_c (...)), _ :-	/* catch x w	*/
+   add_var (w3, PAF_REF_WRITE, default_attr);
+   .
+(igets), w2: word_c (next := w3: word_c (...)), _ :-	/* gets x w	*/
+   add_var (w3, PAF_REF_WRITE, default_attr);
+   .
+(iinfo), w2: one_word (ident := (iexists), next :=	/* info exists r */
+   w3: word_c (...)), _ :-
+   add_var (w3, PAF_REF_READ, default_attr);
+   .
+(iinfo), w2: one_word (ident := (iargs), next :=	/* info args r */
+   w3: word_c (...)), _ :-
+   add_var (w3, PAF_REF_READ, default_attr);
+   .
+(iinfo), w2: one_word (ident := (ibody), next :=	/* info body r */
+   w3: word_c (...)), _ :-
+   add_var (w3, PAF_REF_READ, default_attr);
+   .
+(iinfo), w2: one_word (ident := (idefault), next :=	/* info default r x w */
+   w3: word_c (next :=
+   w4: word_c (next :=
+   w5: word_c (...)))), _ :-
+   add_var (w3, PAF_REF_READ, default_attr);
+   add_var (w5, PAF_REF_WRITE, default_attr);
+   .
+(itkinfo), w2: one_word (ident := (ivariable), next :=	/* tkinfo variable r */
+   w3: word_c (...)), _ :-
+   add_var (w3, PAF_REF_READ, default_attr);
+   .
+(ifile), w2: one_word (ident := (ilstat), next :=	/* file lstat x w */
+   w3: word_c (next :=
+   w4: word_c (...))), _ :-
+   add_var (w4, PAF_REF_WRITE, default_attr);
+   .
+(ifile), w2: one_word (ident := (istat), next :=	/* file stat x w */
+   w3: word_c (next :=
+   w4: word_c (...))), _ :-
+   add_var (w4, PAF_REF_WRITE, default_attr);
+   .
+(iunset), w2, _ :-					/* unset w ...	*/
+   add_vars (w2, PAF_REF_WRITE);
+   .
+/*
+(irename), w2, _ :-					/* rename r x	/*
+   add_var (w2, PAF_REF_READ, default_attr);
+   .
+(idelete), w2: word_c (next := w3), _ :-		/* delete x w ... /*
+   add_vars (w3, PAF_REF_WRITE);
+   .
+*/
+(isource), w2: word_c (next := noword (...)), _ :-	/* source filename */
+   include (w2);
+   .
+
+/**************************************************************/
+
+PROCEDURE include (word_c)
+
+one_word (env := env, ident := ident, pos := pos) :-
+   put_symbol (PAF_INCLUDE_DEF, NIL, GetCStr (ident), current_file,
+      (int) pos.Line, (int) pos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + StLength (GetStringRef (ident)) - 1),
+      0, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+   .
+qual_word (env := env, qualification := qualification) :-
+   .
+qual_words (env := env, qualifications := qualifications) :-
+   .
+
+/**************************************************************/
+
+PROCEDURE add_global_vars (w: words)
+
+/*
+one_word (ident := ident, env := e, pos := pos, next := next) :-
+   obj: objects; obj := Identify (ident, e);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   e->env.objects := object (obj->object.object, ident, e->env.objects);
+   add_global_vars (next);
+   .
+*/
+one_word (ident := ident, env := e, pos := pos, next := next) :-
+   genv->env.objects := object (w, ident, genv->env.objects);
+   e->env.objects := object (w, ident, e->env.objects);
+   e := genv;
+   dcl (genv->env.objects, PAF_PUBLIC);
+   add_global_vars (next);
+   .
+/*
+qual_word (env := e, qualification :=
+      global_ident (pos := pos, ident := ident), next := next) :-
+   obj: objects; obj := IdentifyGlobal (ident);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   e->env.objects := object (obj->object.object, ident, e->env.objects);
+   add_global_vars (next);
+   .
+*/
+qual_word (qualification :=
+      g: global_ident (env := e, pos := pos, ident := ident), next := next) :-
+   genv->env.objects := object (g, ident, genv->env.objects);
+   e->env.objects := object (g, ident, e->env.objects);
+   e := genv;
+   dcl (e->env.objects, PAF_PUBLIC);
+   add_global_vars (next);
+   .
+qual_word (next := next) ;
+qual_words (next := next) :-
+   add_global_vars (next);			/* crazy: ignore it */
+   .
+
+/**************************************************************/
+
+PROCEDURE add_variable_vars (w: [words, qualification_c], acc: int, attr: int)
+
+LOCAL { tTree obj, e2; }
+
+one_word (ident := ident, env := e: env (object := object), pos := pos, next := next), ... :-
+   ! Tree_IsType (object, kproc_c);
+   e->env.objects := object (w, ident, e->env.objects);
+   dcl (e->env.objects, attr);
+{  if (acc == PAF_REF_WRITE) use (e->env.objects, pos, acc); };
+   .
+one_word (ident := ident, env := e, pos := pos, next := next), ... :-
+   e2 := get_namespace (e);
+   obj := IdentifyLocal (ident, e2->env.objects);
+   obj != NIL;
+   e->env.objects := object (obj->object.object, ident, e->env.objects);
+   use (e->env.objects, pos, acc);
+   .
+one_word (ident := ident, env := e, pos := pos, next := next), ... :-
+   e2->env.objects := object (w, ident, e2->env.objects);
+   e->env.objects := object (w, ident, e->env.objects);
+   e := e2;
+   dcl (e2->env.objects, attr);
+{  if (acc == PAF_REF_WRITE) use (e2->env.objects, pos, acc); };
+   .
+qual_word (next := next, qualification := qualification), ... :-
+   add_variable_vars (qualification, acc, attr);
+   .
+qual_words (next := next), ... :-
+   .
+global_ident (pos := pos, env := e, ident := ident), ... :-
+   obj := IdentifyGlobal (ident);
+   obj != NIL;
+   e->env.objects := object (obj->object.object, ident, e->env.objects);
+   use (e->env.objects, pos, acc);
+   .
+global_ident (pos := pos, env := e, ident := ident), ... :-
+   genv->env.objects := object (w, ident, genv->env.objects);
+   e->env.objects := object (w, ident, e->env.objects);
+   e := genv;
+   dcl (genv->env.objects, attr);
+{  if (acc == PAF_REF_WRITE) use (genv->env.objects, pos, acc); };
+   .
+q: qualification (pos := pos), ... ;
+q: complex_qual (pos := pos), ... :-			/* pass 2 */
+   need_pass_2 := rtrue;
+   .
+
+/**************************************************************/
+
+PROCEDURE add_vars (words, acc: int)
+
+w: word_c (next := next), _ :-
+   add_var (w, acc, default_attr);
+   add_vars (next, acc);
+   .
+
+/**************************************************************/
+
+PROCEDURE add_foreach_vars ([words, stmts])
+
+qual_word (qualification := local_text (texts := block (stmts := stmts)),
+   next := word_c (next := next)) :-			/* foreach { w ... } */
+   add_foreach_vars (stmts);
+   add_foreach_vars (next);
+   .
+w: word_c (next := word_c (next := next)) :-		/* foreach w	*/
+   add_var (w, PAF_REF_WRITE, default_attr);
+   add_foreach_vars (next);
+   .
+stmt (next := next, words := words) :-
+   add_vars (words, PAF_REF_WRITE);
+   add_foreach_vars (next);
+   .
+
+/**************************************************************/
+
+PROCEDURE add_var (w: word_c, acc: int, attr: int)
+
+one_word (env := env, ident := ident, pos := pos), ... :-
+   add_var_2 (ident, pos, w, env, acc, attr);
+   .
+qual_word (env := env, qualification := subscription (qualification :=
+      l: local_ident (pos := pos, ident := ident))), ... :-
+   add_var_2 (ident, pos, l, env, acc, attr);
+   .
+obj_word (env := env, ident := ident, pos := pos), ... :-
+   add_var_2 (ident, pos, w, env, acc, attr);
+   .
+qual_word (qualification := qualification (pos := pos)), ... ;
+qual_word (qualification := complex_qual (pos := pos)), ... ;
+qual_word (qualification := global_ident (pos := pos)), ... ;
+qual_word (qualification := subscription (pos := pos)), ... :- /* pass 2 */
+   need_pass_2 := rtrue;
+   .
+
+/**************************************************************/
+
+PROCEDURE add_var_2 (i: tIdent, pos: tPosition, w: [word_c, qualification_c],
+	e: envs, acc: int, attr:int)
+
+... :-
+   obj: objects; obj := IdentifyVariable (i, e);
+   obj != NIL;
+   use (obj, pos, acc);
+   .
+... :-
+   e->env.objects := object (w, i, e->env.objects);
+   dcl (e->env.objects, attr);
+{  if (acc == PAF_REF_WRITE) use (e->env.objects, pos, acc); };
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyLocal (i: tIdent, o: objects) objects
+
+_, object (object := object, ident := ident, next := next) :-
+   ident == i && ! Tree_IsType (object, kproc_c);
+   RETURN o;
+   .
+_, object (object := object, ident := ident, next := next) :-
+   RETURN IdentifyLocal (i, next);
+   .
+_, _ :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyGlobal (tIdent) objects
+
+i :- RETURN IdentifyLocal (i, genv->env.objects); .
+
+/**************************************************************/
+
+FUNCTION Identify (tIdent, envs) objects
+
+i, env :-
+   obj: objects; obj := IdentifyMember (i, env);
+   obj != NIL;
+   RETURN obj;
+   .
+i, env (env := NIL) :-
+   RETURN NIL;
+   .
+i, env (env := env) ;
+i, env2 (env2 := env) :-
+   RETURN Identify (i, env);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyMember (tIdent, envs) objects
+
+ident, env (env := env, objects := objects) :-
+   obj: objects; obj := IdentifyLocal (ident, objects);
+   obj != NIL;
+   RETURN obj;
+   .
+ident, env (env := env, objects := objects) :-
+   RETURN IdentifySuper (ident, env);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifySuper (tIdent, envs) objects
+
+ident, NIL :-
+   RETURN NIL;
+   .
+ident, env2 (env1 := env1, env2 := env2) :-
+   obj: objects; obj := IdentifyMember (ident, env1);
+   obj != NIL;
+   RETURN obj;
+   .
+ident, env2 (env1 := env1, env2 := env2) :-
+   RETURN IdentifySuper (ident, env2);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyVariable (tIdent, envs) objects
+
+ident, env (env := env, objects := objects) :-
+   obj: objects; obj := IdentifyLocal (ident, objects);
+   obj != NIL;
+   RETURN obj;
+   .
+ident, env (env := NIL) :-
+   RETURN NIL;
+   .
+ident, env (env := env: env (object := class (...))) ;
+ident, env (env := env: env (object := itcl_class (...))) :-
+   obj: objects; obj := IdentifyMember (ident, env);
+   obj != NIL;
+   RETURN obj;
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyProcLocal (i: tIdent, o: objects) objects
+
+_, object (object := object, ident := ident, next := next) :-
+   ident == i && Tree_IsType (object, kproc_c);
+   RETURN o;
+   .
+_, object (object := object, ident := ident, next := next) :-
+   RETURN IdentifyProcLocal (i, next);
+   .
+_, _ :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyProcGlobal (tIdent) objects
+
+i :- RETURN IdentifyProcLocal (i, genv->env.objects); .
+
+/**************************************************************/
+
+FUNCTION IdentifyProc (tIdent, envs) objects
+
+i, env :-
+   obj: objects; obj := IdentifyProcMember (i, env);
+   obj != NIL;
+   RETURN obj;
+   .
+i, env (env := NIL) :-
+   RETURN NIL;
+   .
+i, env (env := env) ;
+i, env2 (env2 := env) :-
+   RETURN IdentifyProc (i, env);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyProcMember (tIdent, envs) objects
+
+ident, env (env := env, objects := objects) :-
+   obj: objects; obj := IdentifyProcLocal (ident, objects);
+   obj != NIL;
+   RETURN obj;
+   .
+ident, env (env := env, objects := objects) :-
+   RETURN IdentifyProcSuper (ident, env);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION IdentifyProcSuper (tIdent, envs) objects
+
+ident, NIL :-
+   RETURN NIL;
+   .
+ident, env2 (env1 := env1, env2 := env2) :-
+   obj: objects; obj := IdentifyProcMember (ident, env1);
+   obj != NIL;
+   RETURN obj;
+   .
+ident, env2 (env1 := env1, env2 := env2) :-
+   RETURN IdentifyProcSuper (ident, env2);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION get_namespace (envs) env
+
+e: env (object := namespace_c	(...)) ;
+e: env (object := program	(...)) :- RETURN e; .
+
+env (env := env) :- RETURN get_namespace (env); .
+
+/**************************************************************/
+
+PROCEDURE pass2 (t: Tree)
+
+stmt (env := env, next := next: stmts, words := words:
+      one_word (ident := ident, next := w2: word_c (...))) :-
+   add_qualifications (ident, w2, default_attr);
+   pass2 (words);
+   pass2 (next);
+   .
+stmt (env := env, next := next: stmts, words := words) :-
+   pass2 (words);
+   pass2 (next);
+   .
+configbody (next := next, qualification := qualification, block := block) :-
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := "";
+   get_objects (block);
+   pass2 (block);
+   cur_proc_ptr := prev_proc;
+   pass2 (next);
+   .
+proc_c (next := next, qualification := local_ident (ident := ident), block := block) ;
+proc_c (next := next, qualification := global_ident (ident := ident), block := block) :-
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (ident);
+   pass2 (block);
+   cur_proc_ptr := prev_proc;
+   pass2 (next);
+   .
+proc_c (next := next, qualification := q: local_text (...), block := block) ;
+proc_c (next := next, qualification := q: global_text (...), block := block) :-
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (get_ident (q));
+   pass2 (block);
+   cur_proc_ptr := prev_proc;
+   pass2 (next);
+   .
+proc_c (next := next, qualification := q: qualification_c (pos := pos),
+      param_names := param_names, env := e1,
+      block := block: texts (env := env (env := e2)), attribute := attribute) :-
+   e: envs; e := get_env (q);
+   ident: tIdent; ident := get_ident (q);
+{  if (e) {
+      e1 = e;
+      e2 = e;
+      e->env.objects = mobject (t, ident, e->env.objects);
+      dcl (e->env.objects, attribute);
+   } else {
+      e1->env.objects = mobject (t, ident, e1->env.objects);
+      dcl (e1->env.objects, attribute);
+   }
+};
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (ident);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := get_class (q);
+   get_param_objects (param_names);
+   get_objects (block);
+   pass2 (block);
+   cur_proc_ptr := prev_proc;
+   cur_class_ptr := prev_class;
+   pass2 (next);
+   .
+namespace (next := next, qualification := local_ident (ident := ident), block := block) ;
+namespace (next := next, qualification := global_ident (ident := ident), block := block) :-
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   pass2 (block);
+   cur_class_ptr := prev_class;
+   pass2 (next);
+   .
+namespace (next := next, qualification := q: local_text (...), block := block) ;
+namespace (next := next, qualification := q: global_text (...), block := block) :-
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (get_ident (q));
+   pass2 (block);
+   cur_class_ptr := prev_class;
+   pass2 (next);
+   .
+namespace (next := next, qualification := q: qualification_c (pos := pos),
+      env := e1, block := blk: texts (env := env (env := e2)),
+      attribute := attribute) :-
+   e: envs; e := get_env (q);
+   ident: tIdent; ident := get_ident (q);
+   obj: objects;
+{  if (e) {
+      e1 = e;
+      e2 = e;
+      obj = IdentifyLocal (ident, e->env.objects);
+      if (obj != NoTree && obj->object.object->Kind == knamespace) {
+	 relocate (blk, obj->object.object->namespace.block->texts.env);
+	 use (obj, pos, PAF_REF_READ);
+      } else {
+	 e->env.objects = mobject (t, ident, e->env.objects);
+	 dcl (e->env.objects, attribute);
+      }
+   } else {
+      e1->env.objects = mobject (t, ident, e1->env.objects);
+      dcl (e1->env.objects, attribute);
+   }
+};
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   get_objects (blk);
+   pass2 (blk);
+   cur_class_ptr := prev_class;
+   pass2 (next);
+   .
+class (next := next, qualification := local_ident (ident := ident), block := block) ;
+itcl_class (next := next, qualification := local_ident (ident := ident), block := block) ;
+class (next := next, qualification := global_ident (ident := ident), block := block) ;
+itcl_class (next := next, qualification := global_ident (ident := ident), block := block) :-
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   pass2 (block);
+   cur_class_ptr := prev_class;
+   pass2 (next);
+   .
+class (next := next, qualification := q: local_text (...), block := block) ;
+itcl_class (next := next, qualification := q: local_text (...), block := block) ;
+class (next := next, qualification := q: global_text (...), block := block) ;
+itcl_class (next := next, qualification := q: global_text (...), block := block) :-
+   ident: tIdent; ident := get_ident (q);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   pass2 (block);
+   cur_class_ptr := prev_class;
+   pass2 (next);
+   .
+class (next := next, qualification := q: qualification_c (pos := pos),
+      env := e1, block := blk: texts (env := env (env := e2)),
+      attribute := attribute) ;
+itcl_class (next := next, qualification := q: qualification_c (pos := pos),
+      env := e1, block := blk: texts (env := env (env := e2)),
+      attribute := attribute) :-
+   e: envs; e := get_env (q);
+   ident: tIdent; ident := get_ident (q);
+   obj: objects;
+{  if (e) {
+      e1 = e;
+      e2 = e;
+      obj = IdentifyLocal (ident, e->env.objects);
+      if (obj != NoTree && Tree_IsType (obj->object.object, knamespace_c)) {
+	 relocate (blk, obj->object.object->namespace_c.block->texts.env);
+	 use (obj, pos, PAF_REF_READ);
+      } else {
+	 e->env.objects = mobject (t, ident, e->env.objects);
+	 dcl (e->env.objects, attribute);
+      }
+   } else {
+      e1->env.objects = mobject (t, ident, e1->env.objects);
+      dcl (e1->env.objects, attribute);
+   }
+};
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   get_objects (blk);
+   pass2 (blk);
+   cur_class_ptr := prev_class;
+   pass2 (next);
+   .
+stmt_c (env := env, next := next: stmts) :-
+   pass2 (next);
+   .
+one_word (env := env, next := next: words, ident := ident, pos := pos) :-
+   pass2 (next);
+   .
+qual_word (env := env, next := next: words, qualification := qualification: qualification_c) :-
+   pass2 (qualification);
+   pass2 (next);
+   .
+qual_words (env := env, next := next: words, qualifications := qualifications) :-
+   pass2 (qualifications);
+   pass2 (next);
+   .
+one_qualification (env := env, next := next: qualifications, qualification := qualification: qualification_c) :-
+   pass2 (qualification);
+   pass2 (next);
+   .
+block (env := env, next := next: texts, pos := pos, stmts := stmts) :-
+   pass2 (stmts);
+   pass2 (next);
+   .
+content (env := env, next := next: texts, pos := pos, qualification := qualification: qualification_c) :-
+   pass2 (qualification);
+   pass2 (next);
+   .
+block_content (env := env, next := next: texts, pos := pos, stmts := stmts) :-
+   pass2 (stmts);
+   pass2 (next);
+   .
+text (env := env, next := next: texts, pos := pos) :-
+   pass2 (next);
+   .
+local_text (pos := pos, env := env, texts := texts) :-
+   pass2 (texts);
+   .
+global_text (pos := pos, env := env, texts := texts) :-
+   pass2 (texts);
+   .
+qualification (pos := pos, env := env, qualification := qualification: qualification_c, ident := ident) :-
+   pass2 (qualification);
+   .
+complex_qual (pos := pos, env := env, qualification := qualification: qualification_c, texts := texts) :-
+   pass2 (qualification);
+   pass2 (texts);
+   .
+subscription (pos := pos, env := env, qualification := qualification: qualification_c, index := index: qualification_c) :-
+   pass2 (qualification);
+   pass2 (index);
+   .
+
+/**************************************************************/
+
+PROCEDURE pass3 (Tree)
+
+stmt (next := next, words :=
+      w1: one_word (ident := ident)) :-			/* #		*/
+   GetCStr (ident) [0] == '#';
+   pass3 (next);
+   .
+stmt (next := next, words :=
+      w1: one_word (ident := (ilocal), pos := pos, next :=
+      w2: word_c (next :=
+      w3: word_c (...)))) :-				/* local r d	*/
+   use_proc_undef (ilocal, pos);
+   obj: objects; obj := use_word (w2);
+   w3 := declare_object (w3, obj);
+   pass3 (w2);
+   pass3 (next);
+   .
+stmt (next := next, words :=
+      w1: one_word (ident := (irename), pos := pos, next :=
+      w2: word_c (next :=
+      w3: word_c (...)))) :-				/* rename r x	*/
+   use_proc_undef (irename, pos);
+   obj: objects; obj := use_proc (w2);
+   pass3 (w2);
+   pass3 (next);
+   .
+stmt (next := next, words :=
+      w1: one_word (ident := (idelete), pos := pos, next :=
+      w2: one_word (ident := ident, next := w3))) :-	/* delete x w ... */
+   use_proc_undef (idelete, pos);
+   ident == iobject || ident == iclass || ident == inamespace;
+   add_vars (w3, PAF_REF_WRITE);
+   pass3 (w3);
+   pass3 (next);
+   .
+stmt (next := next, words :=			/* itcl_info objects ... */
+      w1: one_word (ident := (iitcl_info), pos := pos, next :=
+      w2: one_word (ident := (iobjects), next := w3))) :-
+   use_proc_undef (iitcl_info, pos);
+   itcl_info (w3);
+   pass3 (w3);
+   pass3 (next);
+   .
+stmt (next := next, env := env, words :=		/* virtual	*/
+      w1: one_word (ident := (ivirtual), pos := pos, next := w2)) :-
+   use_proc_undef (ivirtual, pos);
+   pass3 (stmt (env := env, next := nostmt (env := env), words := w2));
+   pass3 (next);
+   .
+stmt (next := next, env := env, words :=		/* previous	*/
+      w1: one_word (ident := (iprevious), pos := pos, next := w2)) :-
+   use_proc_undef (iprevious, pos);
+   pass3 (stmt (env := env, next := nostmt (env := env), words := w2));
+   pass3 (next);
+   .
+stmt (next := next, env := env, words :=		/* $this method */
+      w1: qual_word (next :=
+      w2: one_word (ident := ident, pos := pos, next := w3),
+      qualification := local_text (texts := content (next := notext (_),
+      qualification := local_ident (ident := (ithis)))))) :-
+   obj: objects; obj := IdentifyMember (ident, get_namespace (env));
+{  if (obj) use (obj, pos, PAF_REF_READ); };
+   pass3 (w3);
+   pass3 (next);
+   .
+stmt (next := next, words :=				/* class :: proc */
+      w1: word_c (next :=
+      w2: qual_word (qualification := global_ident (ident := (NoIdent)), next :=
+      w3: word_c (...)))) :-
+   obj: objects; obj := use_word (w1);
+{
+   if (obj) switch (obj->object.object->Kind) {
+   case kclass		:
+   case kitcl_class	: use_proc_object (obj, w3); break;
+   }
+};
+   pass3 (w1);
+   pass3 (next);
+   .
+stmt (next := next, words := w1: word_c (next := w2: word_c (...))) :-
+   obj: objects; obj := use_word (w1);			/* class object	 */
+{							/* object method */
+   if (obj) switch (obj->object.object->Kind) {
+   case kclass		:
+   case kitcl_class	: w2 = declare_object (w2, obj); break;
+   case kobj_word	: use_proc_object (obj, w2); break;
+   }
+};
+   pass3 (w1);
+   pass3 (next);
+   .
+stmt (next := next, words := w1: word_c (...)) :-
+   obj: objects; obj := use_proc (w1);
+   pass3 (w1);
+   pass3 (next);
+   .
+stmt (next := next, words := words) :-
+   pass3 (words);
+   pass3 (next);
+   .
+body (env := env, next := next, qualification := qualification, parameter := parameter, block := block) :-
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (get_ident (qualification));
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := get_class (qualification);
+   pass3 (qualification);
+   /* pass3 (parameter); */
+   pass3 (block);
+   cur_proc_ptr := prev_proc;
+   cur_class_ptr := prev_class;
+   pass3 (next);
+   .
+configbody (next := next, qualification := qualification, block := block) :-
+   obj: objects; obj := use_qual (qualification);
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := "";
+   pass3 (block);
+   cur_proc_ptr := prev_proc;
+   pass3 (next);
+   .
+proc_c (next := next, qualification := qualification, block := block) :-
+   prev_proc: tString; prev_proc := cur_proc_ptr;
+   cur_proc_ptr := GetCStr (get_ident (qualification));
+   pass3 (qualification);
+   /* pass3 (parameter); */
+   pass3 (block);
+   cur_proc_ptr := prev_proc;
+   pass3 (next);
+   .
+namespace_c (next := next, qualification := qualification, block := block) :-
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (get_ident (qualification));
+   pass3 (qualification);
+   pass3 (block);
+   cur_class_ptr := prev_class;
+   pass3 (next);
+   .
+one_word (env := env, next := next: words, ident := ident) :-
+   pass3 (next);
+   .
+obj_word (env := env, next := next: words, ident := ident) :-
+   pass3 (next);
+   .
+qual_word (env := env, next := next: words, qualification := qualification) :-
+   pass3 (qualification);
+   pass3 (next);
+   .
+qual_words (env := env, next := next: words, qualifications := qualifications) :-
+   pass3 (qualifications);
+   pass3 (next);
+   .
+one_qualification (env := env, next := next: qualifications, qualification := qualification: qualification_c) :-
+   pass3 (qualification);
+   pass3 (next);
+   .
+character (env := env, next := next: texts, pos := pos, text := text) :-
+   pass3 (next);
+   .
+ident (env := env, next := next: texts, pos := pos, ident := ident) :-
+   pass3 (next);
+   .
+content (env := env, next := next: texts, pos := pos, qualification := qualification: qualification_c) :-
+   obj: objects; obj := use_qual (qualification);
+   pass3 (qualification);
+   pass3 (next);
+   .
+block (env := env, next := next, pos := pos, stmts := stmts, type := type) :-
+   prev_in_string: rbool; prev_in_string := in_string;
+   in_string := type == '"';
+   pass3 (stmts);
+   in_string := prev_in_string;
+   pass3 (next);
+   .
+block_content (env := env, next := next: texts, pos := pos, stmts := stmts) :-
+   pass3 (stmts);
+   pass3 (next);
+   .
+qualification (pos := pos, qualification := qualification: qualification_c, ident := ident) :-
+   pass3 (qualification);
+   .
+local_text (pos := pos, env := env, texts := texts) :-
+   pass3 (texts);
+   .
+global_text (pos := pos, env := env, texts := texts) :-
+   pass3 (texts);
+   .
+complex_qual (pos := pos, env := env, qualification := qualification, texts := texts) :-
+   pass3 (qualification);
+   pass3 (texts);
+   .
+subscription (pos := pos, env := env, qualification := qualification: qualification_c, index := index: qualification_c) :-
+   pass3 (qualification);
+   pass3 (index);
+   .
+
+/**************************************************************/
+
+FUNCTION make_one_word ([texts, qualification_c]) tIdent
+
+ident (next := notext (...), ident := ident) :-
+   RETURN ident;
+   .
+t :-
+   length := 0;
+   make_one_word_2 (t);
+   RETURN MakeIdent (buffer, length);
+   .
+
+/**************************************************************/
+
+PROCEDURE make_one_word_2 ([texts, qualification_c])
+
+character (next := next, text := text) :-
+   buffer [length ++] := text;
+   make_one_word_2 (next);
+   .
+ident (next := next, ident := ident) :-
+   GetString (ident, & buffer [length]);
+   length := length + StLength (GetStringRef (ident));
+   make_one_word_2 (next);
+   .
+content (next := next, qualification := qualification) :-
+   buffer [length ++] := '$';
+   make_one_word_2 (qualification);
+   make_one_word_2 (next);
+   .
+local_ident (pos := pos, env := env, ident := ident) :-
+   GetString (ident, & buffer [length]);
+   length := length + StLength (GetStringRef (ident));
+   .
+global_ident (pos := pos, env := env, ident := ident) :-
+   strcpy (& buffer [length], "::"); length := length + 2;
+   GetString (ident, & buffer [length]);
+   length := length + StLength (GetStringRef (ident));
+   .
+local_text (pos := pos, env := env, texts := texts) :-
+   make_one_word_2 (texts);
+   .
+global_text (pos := pos, env := env, texts := texts) :-
+   strcpy (& buffer [length], "::"); length := length + 2;
+   make_one_word_2 (texts);
+   .
+qualification (pos := pos, qualification := qualification, ident := ident) :-
+   make_one_word_2 (qualification);
+   strcpy (& buffer [length], "::"); length := length + 2;
+   GetString (ident, & buffer [length]);
+   length := length + StLength (GetStringRef (ident));
+   .
+complex_qual (pos := pos, qualification := qualification, texts := texts) :-
+   make_one_word_2 (qualification);
+   strcpy (& buffer [length], "::"); length := length + 2;
+   make_one_word_2 (texts);
+   .
+subscription (pos := pos, qualification := qualification, index := index) :-
+   make_one_word_2 (qualification);
+   strcpy (& buffer [length], "("); length := length + 1;
+   make_one_word_2 (index);
+   strcpy (& buffer [length], ")"); length := length + 1;
+   .
+block (next := notext (...), stmts := nostmt (...)) :-
+   .
+notext (...) :-
+   .
+_ :-
+   buffer [length ++] := '?';
+   .
+
+/**************************************************************/
+
+FUNCTION Mword (words, [word_c, qualification_c, qualifications]) words
+
+w, local_ident (pos := pos, ident := ident) :-
+   RETURN one_word (_, w, ident, pos);
+   .
+w, t: qualification_c (...) :-
+   RETURN qual_word (_, w, t);
+   .
+w, t: one_qualification (...) :-
+   RETURN qual_words (_, w, t);
+   .
+w, t: one_word (next := next) :-
+   next := w;
+   RETURN t;
+   .
+
+/**************************************************************/
+
+FUNCTION Mqualification ([word_c, qualification_c, qualifications]) qualifications
+
+one_word (ident := ident, pos := pos) :-
+   RETURN one_qualification (next := noqualification (_), qualification :=
+      local_ident (pos := pos, ident := ident));
+   .
+q: qualification_c (...) :-
+   RETURN one_qualification (next := noqualification (_), qualification := q);
+   .
+q: qualifications (...) :-
+   RETURN q;
+   .
+
+/**************************************************************/
+
+FUNCTION Mstmt (stmts, words) stmts
+
+s, w :-
+   stmt: stmts; stmt := Mstmt_1 (s, w, default_attr);
+   stmt != NIL;
+   RETURN stmt;
+   .
+s, w :-
+   RETURN stmt (_, s, w);
+   .
+
+/**************************************************************/
+
+FUNCTION Mstmt_1 (stmts, words, attr: int) stmts
+
+s, w1: one_word (ident := (ipublic), pos := pos, next := w2), _ :-
+   RETURN Mstmt_1 (s, w2, PAF_PUBLIC);
+   .
+s, w1: one_word (ident := (iprotected), pos := pos, next := w2), _ :-
+   RETURN Mstmt_1 (s, w2, PAF_PROTECTED);
+   .
+s, w1: one_word (ident := (iprivate), pos := pos, next := w2), _ :-
+   RETURN Mstmt_1 (s, w2, PAF_PRIVATE);
+   .
+s, w1: one_word (ident := ident, pos := pos, next := w2), _ :-
+   ident == iproc	||
+   ident == imethod	||
+   ident == ibody	||
+   ident == iconfigbody	||
+   ident == iconstructor||
+   ident == idestructor	||
+   ident == iclass	||
+   ident == iitcl_class	||
+   ident == inamespace	||
+   ident == iat_scope	;
+   gpos := pos;
+   RETURN Mstmt_2 (s, ident, w2, attr);
+   .
+s, w1: qual_word (next := w2, qualification := global_ident (pos := pos, ident := ident)), _ :-
+   RETURN Mstmt_1 (s, one_word (_, w2, ident, pos), attr);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION Mstmt_2 (stmts, tIdent, words, attr: int) stmts
+
+s, (iproc),
+   w2: word_c (next := noword (...)), _ :-
+   get_end_pos (w2 => epos);
+   RETURN proc (_, s, make_qualification (w2), noword (_), noword (_),
+      notext (_), epos, attr);
+   .
+s, (iproc),
+   w2: word_c	(next :=
+   w3: word_c	(next := noword	(...))), _ :-
+   get_end_pos (w3 => epos);
+   RETURN proc (_, s, make_qualification (w2),
+      ReverseTree (param_names (w3)), w3, notext (_), epos, attr);
+   .
+s, (iproc),
+   w2: word_c	(next :=
+   w3: word_c	(next :=
+   w4:>qual_word (qualification := local_text (texts := b: block (epos := epos))))), _ :-
+   p: proc;
+   p := proc (_, s, make_qualification (w2),
+      ReverseTree (param_names (w3)), w3, b, epos, attr);
+   w4 := noword (_);
+   RETURN p;
+   .
+s, (iproc),
+   w2: word_c	(next :=
+   w3: word_c	(next :=
+   w4: word_c	(...))), _ :-
+   get_end_pos (w4 => epos);
+   RETURN proc (_, s, make_qualification (w2),
+      ReverseTree (param_names (w3)), w3, notext (_), epos, attr);
+   .
+s, (imethod),
+   w2: word_c	(next := noword	(...)), _ :-
+   itcl := itcl + 1;
+   get_end_pos (w2 => epos);
+   RETURN method (_, s, make_qualification (w2), noword (_), noword (_),
+       notext (_), epos, attr);
+   .
+s, (imethod),
+   w2: word_c	(next :=
+   w3: word_c	(next := noword	(...))), _ :-
+   itcl := itcl + 1;
+   get_end_pos (w3 => epos);
+   RETURN method (_, s, make_qualification (w2),
+      ReverseTree (param_names (w3)), w3, notext (_), epos, attr);
+   .
+s, (imethod),
+   w2: word_c	(next :=
+   w3: word_c	(next :=
+   w4:>qual_word (qualification := local_text (texts := b: block (epos := epos))))), _ :-
+   itcl := itcl + 1;
+   p: method;
+   p := method (_, s, make_qualification (w2),
+      ReverseTree (param_names (w3)), w3, b, epos, attr);
+   w4 := noword (_);
+   RETURN p;
+   .
+s, (imethod),
+   w2: word_c	(next :=
+   w3: word_c	(next :=
+   w4: one_word (...))), _ :-
+   itcl := itcl + 1;
+   get_end_pos (w4 => epos);
+   RETURN method (_, s, make_qualification (w2),
+      ReverseTree (param_names (w3)), w3, notext (_), epos, attr);
+   .
+s, (inamespace),
+   w2: one_word (ident := (ieval), next :=
+   w3: word_c	(next :=
+   w4: qual_word (qualification := local_text (texts := b: block (epos := epos))))), _ :-
+   tcl80 := tcl80 + 1;
+   RETURN namespace (_, s, make_qualification (w3), b, epos, attr);
+   .
+s, (inamespace),
+   w2: one_word (ident := (ieval), next :=
+   w3: word_c	(next :=
+   w4: word_c	(...))), _ :-
+   tcl80 := tcl80 + 1;
+   get_end_pos (w4 => epos);
+   RETURN namespace (_, s, make_qualification (w3), notext (_), epos, attr);
+   .
+s, (inamespace),
+   w2: word_c (next := next), _ :-
+   get_script (next => script, epos);
+   itcl := itcl + 1;
+   RETURN namespace (_, s, make_qualification (w2), script, epos, attr);
+   .
+s, (iat_scope),
+   w2: word_c (next := next), _ :-
+   itcl := itcl + 1;
+   get_end_pos_2 (next => epos);
+   RETURN namespace (_, s, make_qualification (w2),
+      block (_, notext (_), gpos, epos, stmt (_, nostmt (_), next), '@'), epos, attr);
+   .
+s, (iclass),
+   w2: word_c	(next :=
+   w3: qual_word (qualification := local_text (texts := b: block (epos := epos)))), _ :-
+   itcl := itcl + 1;
+   RETURN class (_, s, make_qualification (w2), b, epos, attr);
+   .
+s, (iitcl_class),
+   w2: word_c	(next :=
+   w3: qual_word (qualification := local_text (texts := b: block (epos := epos)))), _ :-
+   itcl15 := itcl15 + 1;
+   RETURN itcl_class (_, s, make_qualification (w2), b, epos, attr);
+   .
+s, (ibody),
+   w2: word_c	(next :=
+   w3: word_c	(next :=
+   w4:>qual_word (qualification := local_text (texts := b: block (epos := epos))))), _ :-
+   itcl := itcl + 1;
+   p: body;
+   p := body (_, s, make_qualification (w2),
+      ReverseTree (param_names (w3)), w3, b, epos, attr);
+   w4 := noword (_);
+   RETURN p;
+   .
+s, (iconfigbody),
+   w2: word_c	(next :=
+   w3:>qual_word (qualification := local_text (texts := b: block (epos := epos)))), _ :-
+   itcl := itcl + 1;
+   RETURN configbody (_, s, make_qualification (w2), noword (_), noword (_),
+      b, epos, attr);
+   .
+s, (iconstructor),
+   w2: word_c	(next :=
+   w3:>qual_word (qualification :=
+       local_text (texts := b: block (epos := epos)), next := noword (...))), _ :-
+   itcl := itcl + 1;
+   p: constructor;
+   p := constructor (_, s, local_ident (gpos, _, iconstructor),
+      ReverseTree (param_names (w2)), w2, b, epos, attr, noword (_));
+   w3 := noword (_);
+   RETURN p;
+   .
+s, (iconstructor),
+   w2: word_c	(next :=
+   w3:>word_c	(next :=
+   w4: qual_word (qualification := local_text (texts := b: block (epos := epos))))), _ :-
+   itcl := itcl + 1;
+   p: constructor;
+   p := constructor (_, s, local_ident (gpos, _, iconstructor),
+      ReverseTree (param_names (w2)), w2, b, epos, attr, w3);
+   w3 := noword (_);
+   RETURN p;
+   .
+s, (idestructor),
+   w2: qual_word (qualification := local_text (texts := b: block (epos := epos))), _ :-
+   itcl := itcl + 1;
+   RETURN destructor (_, s, local_ident (gpos, _, idestructor), noword (_),
+      noword (_), b, epos, attr);
+   .
+... :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION Mblock_content (tPosition, tPosition, stmts) text
+
+b, e, stmt (next := nostmt (...), words :=
+      one_word (next := noword (...), ident := ident, pos := pos)) :-
+   RETURN content (_, NoTree, b, local_ident (pos := pos, ident := ident));
+   .
+b, e, stmt (next := nostmt (...), words :=
+      qual_word (next := noword (...), qualification := q: qualification_c (...))) :-
+   RETURN content (_, NoTree, b, q);
+   .
+b, e, s :-
+   RETURN block_content (_, NoTree, b, e, s);
+   .
+
+/**************************************************************/
+
+FUNCTION make_qualification ([word_c, qualifications]) qualification_c
+
+one_word (ident := ident, pos := pos) :-
+   RETURN local_ident (pos := pos, ident := ident);
+   .
+qual_word (qualification := qualification) :-
+   RETURN qualification;
+   .
+qual_words (qualifications := qualifications) :-
+   RETURN make_qualification (qualifications);
+   .
+one_qualification (next := next: noqualification (...), qualification := qualification) :-
+   RETURN make_qualification (qual_word (qualification := qualification));
+   .
+one_qualification (next := next) :-
+   RETURN make_qualification (next);
+   .
+
+/**************************************************************/
+
+FUNCTION param_names (word_c) words
+
+one_word (env := env, next := next: words, ident := ident, pos := pos) :-
+   RETURN one_word (next := noword (_), ident := ident, pos := pos);
+   .
+qual_word (qualification := local_text (texts := block (stmts := stmts))) :-
+   RETURN param_names_2 (stmts, noword (_));
+   .
+qual_word (qualification := q: qualification_c (pos := pos)) :-
+   RETURN one_word (pos := pos, ident := make_one_word (q), next := noword (_));
+   .
+qual_words (...) :-				/* crazy: ignore it */
+   RETURN noword (_);
+   .
+
+/**************************************************************/
+
+FUNCTION param_names_2 (stmts, words) words
+
+stmt (env := env, next := next: stmts, words := words), w :-
+   RETURN param_names_2 (next, param_names_3 (words, w));
+   .
+_, w :-
+   RETURN w;
+   .
+
+/**************************************************************/
+
+FUNCTION param_names_3 (words, words) words
+
+one_word (env := env, next := next: words, ident := ident, pos := pos), w :-
+   RETURN param_names_3 (next, one_word (next := w, ident := ident, pos := pos));
+   .
+qual_word (next := next, qualification := local_text (texts := block (stmts :=
+      stmt (env := env, words := words)))), w :-
+   RETURN param_names_3 (next, param_names_4 (words, w));
+   .
+qual_word (next := next, qualification := q: qualification_c (pos := pos)), w :-
+   RETURN param_names_3 (next, one_word (pos := pos, ident := make_one_word (q), next := w));
+   .
+_, w :-
+   RETURN w;
+   .
+
+/**************************************************************/
+
+FUNCTION param_names_4 (words, words) words
+
+one_word (env := env, next := next: words, ident := ident, pos := pos), w :-
+   RETURN one_word (next := w, ident := ident, pos := pos);
+   .
+qual_word (qualification := q: qualification_c (pos := pos)), w :-
+   RETURN one_word (pos := pos, ident := make_one_word (q), next := w);
+   .
+_, w :-
+   RETURN w;
+   .
+
+/**************************************************************/
+
+PROCEDURE get_end_pos ([words, texts, qualification_c, qualifications] => tPosition)
+
+one_word (ident := ident, pos := pos) => e :-
+   e: tPosition; e := pos;
+   e.Column := e.Column + StLength (GetStringRef (ident)) - 1;
+   .
+qual_word (qualification := qualification) => e :-
+   get_end_pos (qualification => e);
+   .
+qual_words (qualifications := qualifications) => e :-
+   get_end_pos (qualifications => e);
+   .
+one_qualification (next := next: qualifications, qualification := qualification: qualification_c) => e :-
+   get_end_pos (qualification => e);
+   .
+text (next := next: text (...)) => e :-
+   get_end_pos (next => e);
+   .
+character (pos := pos) => e :-
+   e: tPosition; e := pos;
+   .
+ident (pos := pos, ident := ident) => e :-
+   e: tPosition; e := pos;
+   e.Column := e.Column + StLength (GetStringRef (ident)) - 1;
+   .
+block (epos := epos) => e :-
+   e: tPosition; e := epos;
+   .
+content (qualification := qualification) => e :-
+   get_end_pos (qualification => e);
+   .
+block_content (epos := epos) => e :-
+   e: tPosition; e := epos;
+   .
+local_ident (pos := pos, ident := ident) => e :-
+   e: tPosition; e := pos;
+   e.Column := e.Column + StLength (GetStringRef (ident)) - 1;
+   .
+global_ident (pos := pos, ident := ident) => e :-
+   e: tPosition; e := pos;
+   e.Column := e.Column + StLength (GetStringRef (ident)) - 1;
+   .
+local_text (pos := pos, texts := texts) => e :-
+   get_end_pos (texts => e);
+   .
+global_text (pos := pos, texts := texts) => e :-
+   get_end_pos (texts => e);
+   .
+qualification (pos := pos, ident := ident) => e :-
+   e: tPosition; e := pos;
+   e.Column := e.Column + StLength (GetStringRef (ident)) - 1;
+   .
+complex_qual (texts := texts) => e :-
+   get_end_pos (texts => e);
+   .
+subscription (qualification := qualification) => e :-
+   get_end_pos (qualification => e);
+   .
+
+/**************************************************************/
+
+PROCEDURE get_begin_pos (qualification_c => tPosition)
+
+qualification (qualification := qualification_c (pos := pos)) => pos :- .
+complex_qual (qualification := qualification (pos := pos)) => pos :- .
+qualification_c (pos := pos) => pos :- .
+
+/**************************************************************/
+
+PROCEDURE get_end_pos_2 (words => tPosition)
+
+w: word_c (next := noword (...)) => e :-
+   get_end_pos (w => e);
+   .
+word_c (next := next) => e :-
+   get_end_pos_2 (next => e);
+   .
+
+/**************************************************************/
+
+PREDICATE get_script (words => texts, tPosition)
+
+one_word (ident := ident, pos := pos, next := next) => s, e :-
+   strncmp (GetCStr (ident), "-l", 2) == 0;
+   get_script (next => s, e);
+   .
+one_word (ident := ident, pos := pos, next := word_c (next := next)) => s, e :-
+   strncmp (GetCStr (ident), "-e", 2) == 0;
+   get_script (next => s, e);
+   .
+one_word (ident := ident, pos := pos, next := next) => s, e :-
+   strncmp (GetCStr (ident), "--", 2) == 0;
+   get_script (next => s, e);
+   .
+qual_word (qualification := local_text (texts := b: block (epos := epos))) :-
+   => b, epos,
+   .
+
+/**************************************************************/
+
+PROCEDURE itcl_info (words)
+
+one_word (ident := ident, env := env, next :=
+      one_word (ident := i2, pos := pos, next := next)) :-
+   strncmp (GetCStr (ident), "-c", 2) == 0 ||		/* -class */
+   strncmp (GetCStr (ident), "-i", 2) == 0;		/* -isa	  */
+   obj: objects; obj := Identify (i2, env);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   itcl_info (next);
+   .
+word_c (next := next) :-
+   itcl_info (next);
+   .
+
+/**************************************************************/
+
+FUNCTION get_env (qualification_c) env
+
+qualification (qualification := qualification) ;
+complex_qual  (qualification := qualification) ;
+subscription  (qualification := qualification) ;
+qualification :-
+   RETURN get_env_2 (qualification);
+   .
+
+/**************************************************************/
+
+FUNCTION get_env_2 (qualification_c) env
+
+local_ident (pos := pos, env := e, ident := ident) :-
+   obj: objects; obj := Identify (ident, e);
+   obj != NIL && Tree_IsType (obj->object.object, knamespace_c);
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj->object.object->namespace_c.block->words.env;
+   .
+local_ident (pos := pos, ident := ident) :-
+   use_undef (ident, pos);
+   RETURN NIL;
+   .
+global_ident (pos := pos, ident := ident) :-
+   obj: objects; obj := IdentifyGlobal (ident);
+   obj != NIL && Tree_IsType (obj->object.object, knamespace_c);
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj->object.object->namespace_c.block->words.env;
+   .
+global_ident (pos := pos, ident := ident) :-
+   use_undef (ident, pos);
+   RETURN NIL;
+   .
+qualification (pos := pos, qualification := qualification, ident := ident) :-
+   env: envs; env := get_env_2 (qualification);
+   env != NIL;
+   obj: objects; obj := IdentifyMember (ident, env);
+   obj != NIL && Tree_IsType (obj->object.object, knamespace_c);
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj->object.object->namespace_c.block->words.env;
+   .
+qualification (pos := pos, ident := ident) :-
+   use_undef (ident, pos);
+   RETURN NIL;
+   .
+complex_qual (pos := pos, qualification := qualification, texts := texts) :-
+   env: envs; env := get_env_2 (qualification);
+   env != NIL;
+   ident: tIdent; ident := make_one_word (texts);
+   obj: objects; obj := IdentifyMember (ident, env);
+   obj != NIL && Tree_IsType (obj->object.object, knamespace_c);
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj->object.object->namespace_c.block->words.env;
+   .
+subscription (pos := pos, qualification := qualification, index := index) :-
+   RETURN get_env_2 (qualification);
+   .
+local_text (pos := pos, env := env, texts := texts) :-
+   RETURN NIL;
+   .
+global_text (pos := pos, env := env, texts := texts) :-
+   RETURN NIL;
+   .
+_ :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION get_ident (qualification_c) tIdent
+
+qualification (ident := ident) :-
+   RETURN ident;
+   .
+complex_qual (texts := texts) :-
+   RETURN make_one_word (texts);
+   .
+subscription (qualification := qualification) :-
+   RETURN get_ident (qualification);
+   .
+local_ident (ident := ident) :-
+   RETURN ident;
+   .
+global_ident (ident := ident) :-
+   RETURN ident;
+   .
+_ :-
+   RETURN NoIdent;
+   .
+
+/**************************************************************/
+
+PROCEDURE add_qualifications (tIdent, word_c, attr: int)
+
+(iset), w2: word_c (next := noword (...)), _ :-		/* set r	*/
+   add_qual (w2, PAF_REF_READ);
+   .
+(iset), w2, _ :-					/* set w x	*/
+   add_qual (w2, PAF_REF_WRITE);
+   .
+(ivariable), w2: word_c (next := noword (...)), _ :-	/* variable d	*/
+   add_variable_quals (w2, PAF_REF_READ, PAF_PUBLIC);
+   .
+(ivariable), w2, _ :-					/* variable w x	*/
+   add_variable_quals (w2, PAF_REF_WRITE, PAF_PUBLIC);
+   .
+(icommon), w2: word_c (next := noword (...)), _ :-	/* common d	*/
+   add_qual (w2, PAF_REF_READ);
+   .
+(icommon), w2, _ :-					/* common w x	*/
+   add_qual (w2, PAF_REF_WRITE);
+   .
+(ipublic), w2: one_word (ident := ident, next :=	/* public	*/
+   w3: word_c (...)), _ :-
+   add_qualifications (ident, w3, PAF_PUBLIC);
+   .
+(iprotected), w2: one_word (ident := ident, next :=	/* protected	*/
+   w3: word_c (...)), _ :-
+   add_qualifications (ident, w3, PAF_PROTECTED);
+   .
+(iprivate), w2: one_word (ident := ident, next :=	/* private	*/
+   w3: word_c (...)), _ :-
+   add_qualifications (ident, w3, PAF_PRIVATE);
+   .
+/*
+(ilocal), w2: word_c (next := w3: word_c (...)), _ :-	/* local c d	/*
+   add_qual (w3, PAF_REF_READ);
+   .
+*/
+(iinherit), w2: word_c (...), _ :-			/* inherit x ... */
+   inherit_var (w2);
+   .
+(iappend), w2, _ :-					/* append w	*/
+   add_qual (w2, PAF_REF_WRITE);
+   .
+(ilappend), w2, _ :-					/* lappend w	*/
+   add_qual (w2, PAF_REF_WRITE);
+   .
+(iarray), w2: one_word (ident := (iset), next :=	/* array set w	*/
+   w3: word_c (...)), _ :-
+   add_qual (w3, PAF_REF_WRITE);
+   .
+(iarray), w2: word_c (next := w3: word_c (...)), _ :-	/* array x r	*/
+   add_qual (w3, PAF_REF_READ);
+   .
+(ibinary), w2: one_word (ident := (iscan), next :=   /* binary scan x x w ... */
+   w3: word_c (next :=
+   w4: word_c (next :=
+   w5: word_c (...)))), _ :-
+   add_quals (w5, PAF_REF_WRITE);
+   .
+(iscan), w2: word_c (next :=				/* scan x x w ... */
+   w3: word_c (next :=
+   w4: word_c (...))), _ :-
+   add_quals (w4, PAF_REF_WRITE);
+   .
+(iforeach), w2, _ :-					/* foreach */
+   add_foreach_quals (w2);
+   .
+(ivwait), w2, _ :-					/* vwait r	*/
+   add_qual (w2, PAF_REF_READ);
+   .
+(iincr), w2, _ :-					/* incr w	*/
+   add_qual (w2, PAF_REF_WRITE);
+   .
+(iparray), w2, _ :-					/* parray r	*/
+   add_qual (w2, PAF_REF_READ);
+   .
+(icatch), w2: word_c (next := w3: word_c (...)), _ :-	/* catch x w	*/
+   add_qual (w3, PAF_REF_WRITE);
+   .
+(igets), w2: word_c (next := w3: word_c (...)), _ :-	/* gets x w	*/
+   add_qual (w3, PAF_REF_WRITE);
+   .
+(iinfo), w2: one_word (ident := (iexists), next :=	/* info exists r */
+   w3: word_c (...)), _ :-
+   add_qual (w3, PAF_REF_READ);
+   .
+(iinfo), w2: one_word (ident := (iargs), next :=	/* info args r */
+   w3: word_c (...)), _ :-
+   add_qual (w3, PAF_REF_READ);
+   .
+(iinfo), w2: one_word (ident := (ibody), next :=	/* info body r */
+   w3: word_c (...)), _ :-
+   add_qual (w3, PAF_REF_READ);
+   .
+(iinfo), w2: one_word (ident := (idefault), next :=	/* info default r x w */
+   w3: word_c (next :=
+   w4: word_c (next :=
+   w5: word_c (...)))), _ :-
+   add_qual (w2, PAF_REF_READ);
+   add_qual (w5, PAF_REF_WRITE);
+   .
+(itkinfo), w2: one_word (ident := (ivariable), next :=	/* tkinfo variable r */
+   w3: word_c (...)), _ :-
+   add_qual (w3, PAF_REF_READ);
+   .
+(ifile), w2: one_word (ident := (ilstat), next :=	/* file lstat x w */
+   w3: word_c (next :=
+   w4: word_c (...))), _ :-
+   add_qual (w4, PAF_REF_WRITE);
+   .
+(ifile), w2: one_word (ident := (istat), next :=	/* file stat x w */
+   w3: word_c (next :=
+   w4: word_c (...))), _ :-
+   add_qual (w4, PAF_REF_WRITE);
+   .
+(iunset), w2, _ :-					/* unset w ...	*/
+   add_quals (w2, PAF_REF_WRITE);
+   .
+/*
+(irename), w2, _ :-					/* rename r x	/*
+   add_qual (w2, PAF_REF_READ);
+   .
+(idelete), w2: word_c (next := w3), _ :-		/* delete x w ... /*
+   add_quals (w3, PAF_REF_WRITE);
+   .
+*/
+
+/**************************************************************/
+
+PROCEDURE inherit_var (w: [words, qualification_c])
+
+one_word (env := env, next := next, ident := ident, pos := pos) :-
+   inherit_var (next);
+   inherit_var_2 (ident, pos, env, Identify (ident, env));
+   .
+qual_word (env := env, next := next, qualification := qualification) :-
+   inherit_var (next);
+   inherit_var (qualification);
+   .
+qual_words (env := env, next := next, qualifications := qualifications) :-
+   inherit_var (next);
+   .
+global_ident (pos := pos, env := env, ident := ident) :-
+   inherit_var_2 (ident, pos, env, IdentifyGlobal (ident));
+   .
+q: qualification (pos := pos, env := e, ident := ident) :-
+   e2: env; e2 := get_env (q);
+   e2 != NIL;
+   inherit_var_2 (ident, pos, e, IdentifyMember (ident, e2));
+   .
+q: qualification (pos := pos, env := env, ident := ident) :-
+   inherit_var_2 (ident, pos, env, NIL);
+   .
+
+/**************************************************************/
+
+PROCEDURE inherit_var_2 (tIdent, tPosition, env, objects)
+
+ident, pos, env (env := env), NIL :-
+   put_symbol (PAF_CLASS_INHERIT, cur_class_ptr, GetCStr (ident), current_file,
+      (int) pos.Line, (int) pos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + StLength (GetStringRef (ident)) - 1),
+      PAF_PUBLIC, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+   .
+ident, pos, env (env := env),
+       obj: object (object := namespace_c (block := texts (env := e))) :-
+   put_symbol (PAF_CLASS_INHERIT, cur_class_ptr, GetCStr (ident), current_file,
+      (int) pos.Line, (int) pos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + StLength (GetStringRef (ident)) - 1),
+      PAF_PUBLIC, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+   use (obj, pos, PAF_REF_READ);
+   env := env2 (e, env);
+   .
+
+/**************************************************************/
+
+PROCEDURE add_variable_quals ([words, qualification_c], acc: int, attr: int)
+
+LOCAL { tTree obj, e2; }
+
+qual_word (env := env, next := next: words, qualification := qualification), ... :-
+   add_variable_quals (qualification, acc, attr);
+   .
+qual_words (next := next), ... :-		/* crazy: ignore it */
+   .
+subscription (pos := pos, env := env, qualification := qualification), ... :-
+   add_variable_quals (qualification, acc, attr);
+   .
+q: qualification_c (env := e, pos := pos), ... :-
+   e2 := get_env (q);
+   e2 != NIL;
+   ident: tIdent; ident := get_ident (q);
+   obj: objects; obj := IdentifyMember (ident, e2->env.objects);
+   obj == NIL;
+   e2->env.objects := object (q, ident, e2->env.objects);
+   e := e2;
+   dcl (e2->env.objects, attr);
+{  if (acc == PAF_REF_WRITE) use (e2->env.objects, pos, acc); };
+   .
+q: qualification_c (pos := pos), ... :-
+   e2 != NIL;
+   use (obj, pos, acc);
+   .
+
+/**************************************************************/
+
+PROCEDURE add_quals (words, acc: int)
+
+w: word_c (next := next), _ :-
+   add_qual (w, acc);
+   add_quals (next, acc);
+   .
+
+/**************************************************************/
+
+PROCEDURE add_foreach_quals ([words, stmts])
+
+qual_word (qualification := local_text (texts := block (stmts := stmts)),
+   next := word_c (next := next)) :-			/* foreach { w ... } */
+   add_foreach_quals (stmts);
+   add_foreach_quals (next);
+   .
+w: word_c (next := word_c (next := next)) :-		/* foreach w	*/
+   add_qual (w, PAF_REF_WRITE);
+   add_foreach_quals (next);
+   .
+stmt (next := next, words := words) :-
+   add_quals (words, PAF_REF_WRITE);
+   add_foreach_quals (next);
+   .
+
+/**************************************************************/
+
+PROCEDURE add_qual (w: [word_c, qualifications], acc: int)
+
+qual_word (qualification := qualification), _ :-
+   add_qual_2 (qualification, acc);
+   .
+qual_words (qualifications := qualifications), _ :-
+   add_qual (qualifications, acc);
+   .
+one_qualification (next := next: noqualification (...), qualification := qualification: qualification_c), _ :-
+   add_qual_2 (qualification, acc);
+   .
+one_qualification (next := next: qualifications, qualification := qualification: qualification_c), _ :-
+   add_qual (next, acc);
+   .
+
+/**************************************************************/
+
+PROCEDURE add_qual_2 (w: qualification_c, acc: int)
+
+LOCAL { tIdent id; tTree env; }
+
+global_ident (pos := pos, ident := ident), _ :-
+   obj: objects; obj := IdentifyGlobal (ident);
+   obj != NIL;
+   use (obj, pos, acc);
+   .
+global_ident (pos := pos, ident := ident), _ :-
+   genv->env.objects := object (w, ident, genv->env.objects);
+   dcl (genv->env.objects, PAF_PUBLIC);
+{  if (acc == PAF_REF_WRITE) use (genv->env.objects, pos, acc); };
+   .
+global_text (pos := pos, texts := texts), _ :-
+   id := make_one_word (texts);
+   obj: objects; obj := IdentifyGlobal (id);
+   obj != NIL;
+   use (obj, pos, acc);
+   .
+global_text (pos := pos, texts := texts), _ :-
+   genv->env.objects := object (w, id, genv->env.objects);
+   dcl (genv->env.objects, PAF_PUBLIC);
+{  if (acc == PAF_REF_WRITE) use (genv->env.objects, pos, acc); };
+   .
+local_text (...), _ :-
+   .
+subscription (qualification := local_ident (...)), _ :-
+   .
+subscription (qualification := local_text (...)), _ :-
+   .
+subscription (qualification := qualification), _ :-
+   add_qual_2 (qualification, acc);
+   .
+qualification_c (pos := pos), _ :-
+   env := get_env (w);
+   env != NIL;
+   id := get_ident (w);
+   obj: objects; obj := IdentifyMember (id, env->env.objects);
+   obj != NIL;
+   use (obj, pos, acc);
+   .
+qualification_c (pos := pos, env := e), _ :-
+   env != NIL;
+   e := env;
+   env->env.objects := object (w, id, env->env.objects);
+   dcl (env->env.objects, PAF_PUBLIC);
+{  if (acc == PAF_REF_WRITE) use (env->env.objects, pos, acc); };
+   .
+
+/**************************************************************/
+
+FUNCTION use_qual (qualification_c) objects
+
+global_ident (pos := pos, ident := ident) :-
+   obj: objects; obj := IdentifyGlobal (ident);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+global_ident (pos := pos, ident := ident) :-
+   use_undef (ident, pos);
+   RETURN NIL;
+   .
+local_ident (pos := pos, env := e, ident := ident) :-
+   obj: objects; obj := Identify (ident, e);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+local_ident (pos := pos, ident := ident) :-
+   use_undef (ident, pos);
+   RETURN NIL;
+   .
+/*
+global_text (pos := pos, texts := texts) :-
+   ident: tIdent; ident := make_one_word (texts);
+   obj: objects; obj := IdentifyGlobal (ident);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+local_text (pos := pos, env := e, texts := texts) :-
+   ident: tIdent; ident := make_one_word (texts);
+   obj: objects; obj := Identify (ident, e);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+*/
+subscription (qualification := qualification, index := index) :-
+   RETURN use_qual (qualification);
+   .
+q: qualification_c (pos := pos) :-
+   env: envs; env := get_env (q);
+   env != NIL;
+   ident: tIdent; ident := get_ident (q);
+   obj: objects; obj := IdentifyMember (ident, env);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+q: qualification_c (pos := pos) :-
+   env: envs; env := get_env (q);
+   env != NIL;
+   ident: tIdent; ident := get_ident (q);
+   use_undef (ident, pos);
+   RETURN NIL;
+   .
+_ :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION use_proc_qual (qualification_c) objects
+
+global_ident (pos := pos, ident := ident) :-
+   obj: objects; obj := IdentifyProcGlobal (ident);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+global_ident (pos := pos, ident := ident) :-
+   use_proc_undef (ident, pos);
+   RETURN NIL;
+   .
+local_ident (pos := pos, env := e, ident := ident) :-
+   obj: objects; obj := IdentifyProc (ident, e);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+local_ident (pos := pos, ident := ident) :-
+   use_proc_undef (ident, pos);
+   RETURN NIL;
+   .
+q: qualification_c (pos := pos) :-
+   env: envs; env := get_env (q);
+   env != NIL;
+   ident: tIdent; ident := get_ident (q);
+   obj: objects; obj := IdentifyProcMember (ident, env);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   RETURN obj;
+   .
+q: qualification_c (pos := pos) :-
+   env: envs; env := get_env (q);
+   env != NIL;
+   ident: tIdent; ident := get_ident (q);
+   use_proc_undef (ident, pos);
+   RETURN NIL;
+   .
+_ :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION use_proc ([word_c, qualifications]) objects
+
+one_word (env := env, ident := ident, pos := pos) :-
+   obj: objects; obj := IdentifyProc (ident, env);
+{  if (obj) {
+      use (obj, pos, PAF_REF_READ);
+   } else {
+      use_proc_undef (ident, pos);
+   }
+};
+   RETURN obj;
+   .
+qual_word (qualification := qualification) :-
+   RETURN use_proc_qual (qualification);
+   .
+qual_words (qualifications := qualifications) :-
+   RETURN use_proc (qualifications);
+   .
+one_qualification (next := next: noqualification (...), qualification := qualification) :-
+   RETURN use_proc_qual (qualification);
+   .
+one_qualification (next := next) :-
+   RETURN use_proc (next);
+   .
+
+/**************************************************************/
+
+FUNCTION use_word ([word_c, qualifications]) objects
+
+one_word (env := env, ident := ident, pos := pos) :-
+   obj: objects; obj := Identify (ident, env);
+{  if (obj) switch (obj->object.object->Kind) {
+   case kproc		:
+   case kmethod		:
+   case kconstructor	:
+   case kdestructor	:
+   case knamespace	:
+   case kclass		:
+   case kitcl_class	:
+   case kobj_word	: use (obj, pos, PAF_REF_READ);
+   } else {
+      use_undef (ident, pos);
+   }
+};
+   RETURN obj;
+   .
+qual_word (qualification := qualification) :-
+   RETURN use_qual (qualification);
+   .
+qual_words (qualifications := qualifications) :-
+   RETURN use_word (qualifications);
+   .
+one_qualification (next := next: noqualification (...), qualification := qualification) :-
+   RETURN use_qual (qualification);
+   .
+one_qualification (next := next) :-
+   RETURN use_word (next);
+   .
+
+/**************************************************************/
+
+PROCEDURE use ([objects, stmts, words, qualification_c], p: tPosition, acc: int)
+
+object (object := object, ident := ident), ... :-
+   (cross_ref_fp);
+   current_ident := GetCStr (ident);
+   use (object, p, acc);
+   .
+one_word (pos := pos, env := env, ident := ident), ... ;
+obj_word (pos := pos, env := env, ident := ident), ... ;
+local_ident (pos := pos, env := env, ident := ident), ... ;
+global_ident (pos := pos, env := env, ident := ident), ... ;
+qualification_c (pos := pos, env := env), ... :-
+   use_2 (env, p, acc);
+   .
+proc_c (env := env: env (object := namespace_c (...)), param_names := param_names,
+      qualification := q: qualification_c (pos := pos), epos := epos), ... :-
+   put_cross_ref (PAF_REF_TO_MBR_FUNC, scope_type (cur_class_ptr),
+      PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_proc_ptr, cur_arg_types_ptr,
+      current_namespace (env), current_ident, NIL, current_file, (int) p.Line,
+      PAF_REF_READ);
+   .
+proc_c (env := env, qualification := q: qualification_c (pos := pos),
+   param_names := param_names, epos := epos), ... :-
+   put_cross_ref (PAF_REF_TO_FUNCTION, scope_type (cur_class_ptr),
+      PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_proc_ptr, cur_arg_types_ptr,
+      NIL, current_ident, NIL, current_file, (int) p.Line, PAF_REF_READ);
+   .
+namespace_c (env := env, qualification := qualification), ... :-
+   put_cross_ref (PAF_REF_TO_CLASS, scope_type (cur_class_ptr),
+      PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_proc_ptr, cur_arg_types_ptr,
+      NIL, current_ident, NIL, current_file, (int) p.Line, PAF_REF_READ);
+   .
+
+/**************************************************************/
+
+PROCEDURE use_2 (env: env, pos: tPosition, acc: int)
+
+env (object := proc_c (...)), ... ;
+env (object := qual_word (...)), ... :-
+   (report_local_vars);
+   put_cross_ref (PAF_REF_TO_LOCAL_VAR, scope_type (cur_class_ptr),
+      PAF_REF_SCOPE_LOCAL, cur_class_ptr, cur_proc_ptr, NIL, NIL,
+      current_ident, NIL, current_file, (int) pos.Line, acc);
+   .
+env (object := program (...)), ... :-
+   put_cross_ref (PAF_REF_TO_GLOB_VAR, scope_type (cur_class_ptr),
+      PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_proc_ptr, NIL, NIL,
+      current_ident, NIL, current_file, (int) pos.Line, acc);
+   .
+env (object := namespace_c (...)), ... :-
+   put_cross_ref (PAF_REF_TO_MBR_VAR, scope_type (cur_class_ptr),
+      PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_proc_ptr, NIL, current_namespace (env),
+      current_ident, NIL, current_file, (int) pos.Line, acc);
+   .
+
+/**************************************************************/
+
+PROCEDURE use_undef (ident: tIdent, pos: tPosition)
+
+... :-
+   ident > last_keyword;
+   c: char; c := * GetCStr (ident);
+   'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z' || c == '_';
+   put_cross_ref (PAF_REF_UNDEFINED, scope_type (cur_class_ptr),
+      PAF_REF_SCOPE_GLOBAL, cur_class_ptr, cur_proc_ptr, NIL, NIL,
+      GetCStr (ident), NIL, current_file, (int) pos.Line, PAF_REF_READ);
+   .
+
+/**************************************************************/
+
+PROCEDURE use_proc_undef (ident: tIdent, pos: tPosition)
+
+... :-
+   ! in_string;
+   use_undef (ident, pos);
+   .
+
+/**************************************************************/
+
+PROCEDURE dcl ([objects, stmts, words, qualification_c], attr: int)
+
+/*
+o: object (object := configbody (qualification := qualification_c (pos := pos)), ident := ident), ... :-
+   use (o, pos, PAF_REF_READ);
+   .
+*/
+object (object := object, ident := ident), ... :-
+   ident != NoIdent;
+   current_ident := GetCStr (ident);
+/* c: char; c := * current_ident;
+   'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z' || '0' <= c && c <= '9' || c == '_'; */
+   * current_ident != '-';
+   dcl (object, attr);
+   .
+one_word (pos := pos, env := env, ident := ident), ... ;
+obj_word (pos := pos, env := env, ident := ident), ... ;
+local_ident (pos := pos, env := env, ident := ident), ... ;
+global_ident (pos := pos, env := env, ident := ident), ... ;
+qualification_c (pos := pos, env := env), ... :-
+   dcl_2 (env, pos, attr);
+   .
+body (env := env, qualification := q: qualification_c (pos := pos),
+      param_names := param_names, epos := epos), ... :-
+   to_names (param_names, args_buffer);
+   current_class := get_class (q);
+   get_begin_pos (q => bpos);
+   put_symbol (PAF_MBR_FUNC_DEF, current_class, current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      attr, NIL, NIL, args_buffer, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+   .
+/*
+configbody (env := env, qualification := q: qualification_c (pos := pos),
+      param_names := param_names, epos := epos), ... :-
+   to_names (param_names, args_buffer);
+   current_class := get_class (q);
+   get_begin_pos (q => bpos);
+   put_symbol (PAF_MBR_FUNC_DEF, current_class, current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      attr, NIL, NIL, args_buffer, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+   .
+*/
+p:
+proc_c (env := env: env (object := namespace_c (...)), param_names := param_names,
+      qualification := q: qualification_c (pos := pos), block := notext (...),
+      epos := epos), ... :-
+   to_names (param_names, args_buffer);
+   current_class := current_namespace (env);
+   get_begin_pos (q => bpos);
+   put_symbol (PAF_MBR_FUNC_DCL, current_class, current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      attr | add_attr (p), NIL, NIL, args_buffer, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+   .
+p:
+proc_c (env := env: env (object := namespace_c (...)), param_names := param_names,
+      qualification := q: qualification_c (pos := pos), epos := epos), ... :-
+   to_names (param_names, args_buffer);
+   current_class := current_namespace (env);
+   get_begin_pos (q => bpos);
+   put_symbol (PAF_MBR_FUNC_DEF, current_class, current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      attr, NIL, NIL, args_buffer, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+   put_symbol (PAF_MBR_FUNC_DCL, current_class, current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      attr | add_attr (p), NIL, NIL, args_buffer, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+   .
+proc_c (env := env, qualification := q: qualification_c (pos := pos),
+      param_names := param_names, epos := epos), ... :-
+   to_names (param_names, args_buffer);
+   get_begin_pos (q => bpos);
+   put_symbol (PAF_FUNC_DEF, NIL, current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      attr, NIL, NIL, args_buffer, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+/* put_symbol (PAF_FUNC_DCL, NIL, current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      attr, NIL, NIL, args_buffer, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+*/
+   .
+namespace_c (env := env, qualification := q: qualification_c (pos := pos),
+      epos := epos), ... :-
+   get_begin_pos (q => bpos);
+   put_symbol (PAF_CLASS_DEF, current_namespace (env), current_ident, current_file,
+      (int) pos.Line, (int) pos.Column - 1, (int) epos.Line, (int) epos.Column,
+      0, NIL, NIL, NIL, NIL,
+      (int) bpos.Line, (int) bpos.Column - 1,
+      (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1));
+   .
+
+/**************************************************************/
+
+PROCEDURE dcl_2 (env: env, pos: tPosition, attr: int)
+
+env (object := proc_c (...)), ... ;
+env (object := qual_word (...)), ... :-
+   (report_local_vars);
+   put_symbol (PAF_LOCAL_VAR_DEF, NIL, current_ident, current_file,
+   (int) pos.Line, (int) pos.Column - 1,
+   (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1),
+   attr, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+   .
+env (object := program (...)), ... :-
+   put_symbol (PAF_GLOB_VAR_DEF, NIL, current_ident, current_file,
+   (int) pos.Line, (int) pos.Column - 1,
+   (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1),
+   attr, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+   .
+env (object := namespace_c (...)), ... :-
+   put_symbol (PAF_MBR_VAR_DEF, current_namespace (env), current_ident,
+   current_file, (int) pos.Line, (int) pos.Column - 1,
+   (int) pos.Line, (int) (pos.Column + strlen (current_ident) - 1),
+   attr, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+   .
+
+/**************************************************************/
+
+FUNCTION current_namespace ([envs, qualification_c]) tString
+
+env (object := program (...)) :-
+   RETURN NIL;
+   .
+env (object := namespace_c (qualification := q)) :-
+   RETURN GetCStr (get_ident (q));
+   .
+env (env := env) :-
+   RETURN current_namespace (env);
+   .
+
+/**************************************************************/
+
+FUNCTION get_class (qualification_c) tString
+
+qualification (qualification := qualification, ident := ident) :-
+   RETURN get_class_name (qualification);
+   .
+complex_qual (qualification := qualification, texts := texts) :-
+   RETURN get_class_name (qualification);
+   .
+_ :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+FUNCTION get_class_name (qualification_c) tString
+
+local_ident (pos := pos, env := env, ident := ident) ;
+global_ident (pos := pos, env := env, ident := ident) ;
+qualification (qualification := qualification, ident := ident) :-
+   RETURN GetCStr (ident);
+   .
+_ :-
+   RETURN NIL;
+   .
+
+/**************************************************************/
+
+PROCEDURE to_names (words, tString)
+
+t, buffer :- p := buffer; get_names (t); * p := '\0'; .
+
+PROCEDURE get_names (words)
+
+one_word (next := next, ident := ident) :-
+   GetString (ident, p); p := p + LengthSt (GetStringRef (ident));
+   get_separator (next);
+   get_names (next);
+   .
+
+/**************************************************************/
+
+PROCEDURE get_separator (words)
+
+one_word (...) :- * p ++ := ','; .
+
+/**************************************************************/
+
+PROCEDURE relocate (Tree, new_env: env)
+
+stmt (env := env, next := next: stmts, words := words), _ :-
+   env := new_env;
+   relocate (words, new_env);
+   relocate (next, new_env);
+   .
+proc_c (env := env, next := next: stmts, qualification := qualification:
+   qualification_c, param_names := param_names: words, parameter := parameter:
+   words, block := block: texts (env := env (env := e)), epos := epos), _ :-
+   env := new_env;
+   e := new_env;
+   relocate (qualification, new_env);
+   relocate (next, new_env);
+   .
+namespace_c (env := env, next := next: stmts, qualification := qualification,
+   block := block: texts (env := env (env := e)), epos := epos), _ :-
+   env := new_env;
+   e := new_env;
+   relocate (qualification, new_env);
+   relocate (next, new_env);
+   .
+one_word (env := env, next := next: words, ident := ident, pos := pos), _ :-
+   env := new_env;
+   relocate (next, new_env);
+   .
+obj_word (env := env, next := next: words, ident := ident, pos := pos), _ :-
+   env := new_env;
+   relocate (next, new_env);
+   .
+qual_word (env := env, next := next: words, qualification := qualification: qualification_c), _ :-
+   env := new_env;
+   relocate (qualification, new_env);
+   relocate (next, new_env);
+   .
+qual_words (env := env, next := next: words, qualifications := qualifications), _ :-
+   env := new_env;
+   relocate (qualifications, new_env);
+   relocate (next, new_env);
+   .
+one_qualification (env := env, next := next: qualifications, qualification := qualification: qualification_c), _ :-
+   env := new_env;
+   relocate (qualification, new_env);
+   relocate (next, new_env);
+   .
+character (env := env, next := next: texts, pos := pos, text := text), _ :-
+   env := new_env;
+   relocate (next, new_env);
+   .
+ident (env := env, next := next: texts, pos := pos, ident := ident), _ :-
+   env := new_env;
+   relocate (next, new_env);
+   .
+block (env := env, next := next: texts, pos := pos, epos := epos, stmts := stmts), _ :-
+   env := new_env;
+   relocate (stmts, new_env);
+   relocate (next, new_env);
+   .
+content (env := env, next := next: texts, pos := pos, qualification := qualification: qualification_c), _ :-
+   env := new_env;
+   relocate (qualification, new_env);
+   relocate (next, new_env);
+   .
+block_content (env := env, next := next: texts, pos := pos, epos := epos, stmts := stmts), _ :-
+   env := new_env;
+   relocate (stmts, new_env);
+   relocate (next, new_env);
+   .
+local_ident (pos := pos, env := env, ident := ident), _ :-
+   env := new_env;
+   .
+global_ident (pos := pos, env := env, ident := ident), _ :-
+   env := new_env;
+   .
+local_text (pos := pos, env := env, texts := texts), _ :-
+   env := new_env;
+   relocate (texts, new_env);
+   .
+global_text (pos := pos, env := env, texts := texts), _ :-
+   env := new_env;
+   relocate (texts, new_env);
+   .
+qualification (pos := pos, env := env, qualification := qualification: qualification_c, ident := ident), _ :-
+   env := new_env;
+   relocate (qualification, new_env);
+   .
+complex_qual (pos := pos, env := env, qualification := qualification: qualification_c, texts := texts), _ :-
+   env := new_env;
+   relocate (qualification, new_env);
+   relocate (texts, new_env);
+   .
+subscription (pos := pos, env := env, qualification := qualification: qualification_c, index := index: qualification_c), _ :-
+   env := new_env;
+   relocate (qualification, new_env);
+   relocate (index, new_env);
+   .
+
+/**************************************************************/
+
+FUNCTION declare_object (word_c, objects) word_c
+
+w, NIL :-
+   RETURN w;
+   .
+one_word (env := env, ident := ident, pos := pos, next := next), obj :-
+   ident != ihash_auto;
+   w: word_c;
+   w := obj_word (env := env, ident := ident, pos := pos, next := next, object := obj);
+   add_var (w, PAF_REF_READ, PAF_PUBLIC);
+   RETURN w;
+   .
+w, _ :-
+   RETURN w;
+   .
+
+/**************************************************************/
+
+PROCEDURE use_proc_object (object, word_c)
+
+_, one_word (ident := (iisa), env := env, next :=
+      one_word (ident := ident, pos := pos)) :-
+   obj: objects; obj := IdentifyProc (ident, env);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   .
+object (object := obj_word (object := object (object := namespace_c (block := texts (env := e))))),
+      one_word (ident := ident, pos := pos) :-
+   obj: objects; obj := IdentifyProcMember (ident, e);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   .
+object (object := namespace_c (block := texts (env := e))),
+      one_word (ident := ident, pos := pos) :-
+   obj: objects; obj := IdentifyProcMember (ident, e);
+   obj != NIL;
+   use (obj, pos, PAF_REF_READ);
+   .
+
+/**************************************************************/
+
+PROCEDURE get_pos (words => tPosition)
+
+one_word (pos := pos) => pos :- .
+_ => NoPosition :- .
+
+/**************************************************************/
+
+FUNCTION add_attr (proc_c) long
+
+constructor (...) :- RETURN PAF_CONSTRUCTOR; .
+destructor  (...) :- RETURN PAF_DESTRUCTOR; .
+_		  :- RETURN 0; .

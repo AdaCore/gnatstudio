@@ -1,0 +1,5 @@
+Makefile
+db
+html
+*.ali
+*.o

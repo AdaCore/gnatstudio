@@ -1,0 +1,25 @@
+CC       = @CC@
+
+INCLUDES = -I../include
+LIBS = -L../lib
+
+DEVALL=
+DEVCLEAN=
+
+-include Makefile.dev
+
+.PHONY: all clean distclean install
+
+all : db_capi.o $(DEVALL)
+
+db_capi.o : db_capi.c
+	$(CC) $(INCLUDES) -c $<
+
+clean :
+	$(RM) *.o $(DEVCLEAN)
+
+distclean : clean
+	$(RM) Makefile
+
+install :
+	cp db_capi.o ../lib

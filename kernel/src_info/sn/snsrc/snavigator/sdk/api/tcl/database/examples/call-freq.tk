@@ -1,0 +1,299 @@
+# the next line restarts using wish \
+exec hyper "$0" "$@"
+
+###############################################################################
+#
+# Copyright (C) 1997 Cygnus Solutions, Inc.
+#
+# Description:
+# This Tcl/Tk tool is used to plot the caller/callee frequencies for all
+# functions/methods in a project.  Functions appearing with high caller/callee
+# frequencies may be ones which require coverage, additional documentation,
+# optimisations, etc.
+#
+###############################################################################
+
+set maxheight 300
+set maxwidth ${maxheight} ;# make the viewing area square
+
+# Return the actual argument decremented by one.  Returns 0 if the result
+# would go negative.
+
+proc decr {val} {
+    if {(${val} > 0)} {
+        return [expr ${val} - 1]
+    }
+    return 0
+}
+
+# Extract all the refers-to references from the project database, returning
+# the table as a list.
+
+proc torefs {path projname} {
+    set db_functions [dbopen nav_func ${path}/${projname}.to RDONLY 0644 btree]
+    return [${db_functions} seq]
+}
+
+# Is this object a function or method implementation?  Returns 1 if so, 0
+# otherwise.
+
+proc isfunc {objtype} {
+    if {[string compare "${objtype}" "fu"] == 0 || [string compare\
+      "${objtype}" "mi"] == 0} {
+        return 1
+    }
+    return 0
+}
+
+# Transform a class/method name into a fully qualified C++ method (ie.
+# class::method).
+
+proc qualify {class method} {
+    if {[string compare ${class} "\#"] == 0} {
+        return ${method}
+    }
+    return "${class}::${method}" ;# C++ style naming
+}
+
+# Return the closest point in the collection of real points that the arguments
+# $x and $y would snap to.
+
+proc closest {x y} {
+    global diameter
+    global points
+
+    for {set i 0} {${i} < 9} {incr i} {
+        switch ${i} {
+            0 {
+                    set x1 [decr ${x}]
+                    set y1 [decr ${y}]
+                    if {[info exists points(${x1},${y1})]} {
+                        return [list ${x1} ${y1}]
+                    }
+                }
+            1 {
+                    set y1 [decr ${y}]
+                    if {[info exists points(${x},${y1})]} {
+                        return [list ${x} ${y1}]
+                    }
+                }
+            2 {
+                    set x1 [expr ${x} + 1]
+                    set y1 [expr ${y} - 1]
+                    if {[info exists points(${x1},${y1})]} {
+                        return [list ${x1} ${y1}]
+                    }
+                }
+            3 {
+                    set x1 [decr ${x}]
+                    if {[info exists points(${x1},${y})]} {
+                        return [list ${x1} ${y}]
+                    }
+                }
+            4 {
+                    if {[info exists points(${x},${y})]} {
+                        return [list ${x} ${y}]
+                    }
+                }
+            5 {
+                    set x1 [expr ${x} + 1]
+                    if {[info exists points(${x1},${y})]} {
+                        return [list ${x1} ${y}]
+                    }
+                }
+            6 {
+                    set x1 [decr ${x}]
+                    set y1 [expr ${y} + 1]
+                    if {[info exists points(${x1},${y1})]} {
+                        return [list ${x1} ${y1}]
+                    }
+                }
+            7 {
+                    set y1 [expr ${y} + 1]
+                    if {[info exists points(${x},${y1})]} {
+                        return [list ${x} ${y1}]
+                    }
+                }
+            8 {
+                    set x1 [expr ${x} + 1]
+                    set y1 [expr ${y} + 1]
+                    if {[info exists points(${x1},${y1})]} {
+                        return [list ${x1} ${y1}]
+                    }
+                }
+            default {
+                    puts "not enough cases"
+                    exit
+                }
+        }
+    }
+    return 0
+}
+
+# Pop up a dialog box and show all of the function names in a listbox that 
+# are called by x others and call y others.
+
+proc showfuncs {x y} {
+    global points
+    set closestxy [closest ${x} ${y}]
+
+    if {${closestxy} != 0} {
+        set x [lindex ${closestxy} 0]
+        set y [lindex ${closestxy} 1]
+
+        if {[info exists .top.funcs]} {
+            puts "window exists!"
+            exit
+        }
+
+        toplevel .top.funcs
+        wm title .top.funcs "Functions"
+
+        label .top.funcs.calls -text "Calls ${x} functions"
+        label .top.funcs.calledby -text "Called by ${y} functions"
+
+        pack .top.funcs.calls .top.funcs.calledby -side top
+
+        button .top.funcs.dismiss -text "Dismiss"
+        .top.funcs.dismiss configure -command { destroy .top.funcs }
+        pack .top.funcs.dismiss -side bottom
+
+        listbox .top.funcs.list -relief sunken
+        pack .top.funcs.list -side left
+
+        set temp [split $points(${x},${y})]
+        foreach f [lsort [lrange ${temp} 0 [expr [llength ${temp}] - 2]]] {
+            .top.funcs.list insert end ${f}
+        }
+    }
+}
+
+# Plot a point on the canvas.  Perform transformations so that the points
+# originate in the bottom-left hand corner.
+
+proc plot {x y funcname} {
+    global points
+    set diameter 3
+
+    append points(${x},${y}) ${funcname}\t
+
+    set canvy [lindex [.top.graph configure -height] 4]
+
+    set viewy [expr ${canvy} - ${y}]
+    if {${viewy} < 0} {
+        set viewy 0
+    }
+
+    .top.graph create oval [expr ${x} - 2] [expr ${viewy} - 2] [expr ${x} +\
+      ${diameter}] [expr ${viewy} + ${diameter}] -fill blue
+}
+
+# Count the number of calls for each function in the project.  Place caller
+# and callee tallies in separate associative arrays.
+
+proc countcalls {path projname} {
+    global calleecount
+    global callercount
+
+    foreach entry [torefs ${path}/.snprj ${projname}] {
+        set subentry [lindex ${entry} 0]
+        set callerclass [lindex ${subentry} 0]
+        set callerfn [lindex ${subentry} 1]
+        set calleeclass [lindex ${subentry} 3]
+        set calleefn [lindex ${subentry} 4]
+
+        if {[isfunc [lindex ${subentry} 2]] && [isfunc [lindex ${subentry}\
+          5]]} {
+            set caller [qualify ${callerclass} ${callerfn}]
+            set callee [qualify ${calleeclass} ${calleefn}]
+
+            if {[info exists callercount(${caller})]} {
+                incr callercount(${caller})
+            } else {
+                set callercount(${caller}) 1
+            }
+
+            if {[info exists calleecount(${callee})]} {
+                incr calleecount(${callee})
+            } else {
+                set calleecount(${caller}) 1
+            }
+        }
+    }
+}
+
+# Calculate the points to be plotted on the canvas.
+
+proc calcpoints {warn} {
+    global calleecount
+    global callercount
+    global points
+
+    foreach key [array names callercount] {
+        if {[info exists calleecount(${key})]} {
+            set points(${key}) [list $callercount(${key}) $calleecount(${key})]
+        } else {
+            if {${warn}} {
+                puts "Warning: ${key} may be an unused function"
+            }
+            set points(${key}) [list $callercount(${key}) 0]
+        }
+    }
+
+    foreach key [array names calleecount] {
+        if {![info exists points(${key})]} {
+            set points(${key}) [list 0 $calleecount(${key})]
+        }
+    }
+}
+
+# Plot the points on the canvas.
+
+proc plotpoints {} {
+    global points
+
+    foreach key [array names points] {
+        set coords [split $points(${key})]
+        set x [lindex ${coords} 0]
+        set y [lindex ${coords} 1]
+        plot ${x} ${y} ${key}
+    }
+}
+
+# Draw the main window.
+
+wm withdraw .
+toplevel .top
+wm title .top "Call frequencies for [lindex ${argv} 1]"
+
+# Check command line usage.
+
+if {${argc} < 2} {
+    puts "Usage: ${argv0} projectdir projname"
+    exit
+}
+
+# Draw the canvas with a "Dismiss" button.
+
+canvas .top.graph
+.top.graph configure -height ${maxheight} -width ${maxwidth}
+pack .top.graph -padx 1m -pady 1m -side top
+
+button .top.dismiss -text "Dismiss"
+.top.dismiss configure -command { exit }
+
+bind .top.graph <1> { 
+    set diff [lindex [.top.graph configure -height] 4]
+    showfuncs %x [expr $diff - %y]
+}
+pack .top.dismiss -side bottom
+
+countcalls [lindex ${argv} 0] [lindex ${argv} 1]
+
+if {${argc} > 2 && [string compare [lindex ${argv} 2] "-warn"] == 0} {
+    calcpoints 1
+} else {
+    calcpoints 0
+}
+
+plotpoints

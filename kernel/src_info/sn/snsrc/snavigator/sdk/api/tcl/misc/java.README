@@ -1,0 +1,10 @@
+Java developers can customize Source-Navigator to integrate the Tools
+of the JDK. Just copy the `java.rc.tcl' file to your file to your
+$HOME/.sn/rc.tcl file. The compile button then will automatically call
+the Java compiler for the file in the editor window. The "Java" button
+will start the Java interpreter on the current file. With the buttons
+"Netscape" and "ApV" you can start Netscape or Appletviewer on the
+current editor file, which should be an HTML file.
+
+Of course you can customize rc.tcl to suit your own needs.  It is just
+intended as a starting point.

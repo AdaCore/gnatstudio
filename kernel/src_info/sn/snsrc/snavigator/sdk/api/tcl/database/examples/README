@@ -1,0 +1,69 @@
+This directory contains examples of small and useful tools that may be readily
+produced using the Source-Navigator database API.
+
+These examples are all written in the Tcl programming language.  Some examples
+utilise the Tk toolkit.
+
+None of the examples require that Source-Navigator be running in order to use
+them.  They work on the database directly using the database API provided by 
+the "hyper" Tcl interpreter that comes with the SDK.  At the top of each 
+script is a path to the interpreter that may need to be edited to locate the
+interpreter on your system.
+
+Most of the examples require at least two command line arguments: the path
+to the Source-Navigator project directory and the name of the project you're
+interested in.  More details can be found in the comment block at the top of
+each script file and each script is quite heavily documented.
+
+The current example tools are:
+
+call-freq.tk
+
+This tool is used to plot the caller/callee frequencies for all functions and
+methods in a project.  Functions appearing which have call many functions or
+all called by many functions may be ones which require coverage testing,
+additional documentation, optimisation, etc.
+
+Each function is represented as a point on a graph.  Clicking on a point opens
+a list box showing the name of the function and the caller/callee statistics.
+
+clobber.tcl
+
+This tool is used to show the names of all the functions/methods in a project
+which modify a particular global variable.
+
+constants.tcl
+
+This tool identifies global variables in projects which are accessed as read-
+only objects.  There variables are therefore candidates for becoming constants.
+
+diamonds.tcl
+
+This tool can be used to locate multiple inheritence diamonds in the class
+hierarchy of a project written in an object-oriented language like C++.  In
+his book, Effective C++, Scott Myers points out the dangers associated with
+class hierarchies in which two classes derived from the same superclass are
+inherited by a fourth derivedmost class.  Diamonds are universally considered
+to be poor C++ programming practice and this tool can locate them in a
+Source-Navigator project.
+
+multicludes.tcl
+
+This tool reports on redundant header files.  By reducing #include complexity
+in a source file, compilation time can be reduced.  This tool locates simple
+duplication, whereby foo.c may #include "bar.h" and then "bar.h" again later.
+By optionally specifying a -transitive command line argument to the script,
+a more thorough search through the header file graph is performed such that
+#includes of <stdio.h> may be detected as unnecessary if another #included
+header file includes it on your behalf.
+
+unimp-methods.tcl
+
+This tool locates class method definitions that are surplus to a class (ie.
+for which there is no method implementation).  This tool is not always 
+accurate, however, in that it will also make the suggestion that methods
+that are defined inline are not implemented when they really are.
+
+unused.tcl
+
+This tool determines where unused global variables exist in a project.

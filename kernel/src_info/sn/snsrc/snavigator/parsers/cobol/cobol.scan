@@ -1,0 +1,775 @@
+/*
+
+		COBOL scanner
+		=============
+
+		conforming to:
+
+   ANSI'74 Standard (ANSI X3.23 - 1974)
+   ANSI'85 Standard (ANSI X3.23 - 1985)
+   IBM OS/VS COBOL
+   IBM VS COBOL II
+   IBM SAA COBOL/370
+   IBM DOSVS COBOL
+   X/Open
+   Micro Focus COBOL
+
+*/
+
+/* Ich, Doktor Josef Grosch, Informatiker, Feb. 1995 */
+
+EXPORT	{
+# include "ratc.h"
+# include "Position.h"
+# include "StringM.h"
+# include "Idents.h"
+
+extern	rbool	ansi_copy		;
+extern	rbool	IsDebugging		;
+extern	rbool	decimal_point_is_comma	;
+
+extern	void	begin_replacing		ARGS ((void));
+extern	void	end_replacing		ARGS ((void));
+extern	void	start_pseudo_text	ARGS ((void));
+extern	void	Start_Comment_Entry	ARGS ((void));
+
+INSERT tScanAttribute
+}
+
+GLOBAL	{
+# include <ctype.h>
+# include <string.h>
+# include "Errors.h"
+# include "cobol.h"
+# include "keywdef.h"
+# include "keywords.h"
+# include "copy_pars.h"
+# include "directives.h"
+# include "paf.h"
+
+# define	MaxStringLength		4096
+
+	rbool	ansi_copy		= rfalse;
+	rbool	IsDebugging		= rfalse;
+	rbool	decimal_point_is_comma	= rfalse;
+
+extern	rbool	Copy ARGS ((tIdent ident, tPosition pos));
+
+extern	int	error_count		;
+
+static	char	String			[MaxStringLength + 72];
+static	int	length			;
+static	rbool	in_comment_entry	= rfalse;
+static	tIdent	iNOTE, iSKIP1, iSKIP2, iSKIP3, iCOPY, iREPLACE;
+static	unsigned long	dialect_save	;
+static	tPosition	start_position	;
+
+int Get_Token ARGS ((void));
+
+int GetToken ARGS ((void))
+{
+   register int Token = Get_Token ();
+
+   if (Token != EofToken) {
+      Attribute.name.EPos.Line   = yyLineCount;
+      Attribute.name.EPos.Column = (unsigned char *) TokenPtr - yyLineStart + TokenLength - 1;
+   }
+   return Token;
+}
+
+# define GetToken Get_Token
+
+INSERT ErrorAttribute
+
+# define CheckLength(x, y)
+
+/*
+static void CheckLength
+# if defined __STDC__ | defined __cplusplus
+   (int Length, int Limit)
+# else
+   (Length, Limit) int Length, Limit;
+# endif
+{
+   if (! in_comment_entry && Length > Limit)
+      Message ("token too long", xxWarning, Attribute.Position);
+}
+*/
+
+static void CheckAreaA ARGS ((void))
+{
+   if (Attribute.Position.Column < 8 || 11 < Attribute.Position.Column)
+      Message ("token must begin in area A", xxWarning, Attribute.Position);
+}
+
+void begin_replacing ARGS ((void))
+{
+   dialect_save = dialect;
+   dialect = copy_replace;
+}
+
+void end_replacing ARGS ((void))
+{
+   dialect = dialect_save;
+}
+
+void start_pseudo_text ARGS ((void))
+{
+   yyStart (Pseudo_Text);
+   length = 0;
+   start_position = Attribute.Position;
+}
+
+void Start_Comment_Entry ARGS ((void))
+{
+   if (free_format) yyStart (Skip)
+   else yyStart (Comment_Entry);
+}
+
+static int Handle_Comment_Entry ARGS ((void))
+{
+   int Token;
+
+   start_position = Attribute.Position;
+   yyStart (STD); in_comment_entry = rtrue;
+   for (;;) {
+      Token = GetToken ();
+      switch (Token) {
+      case kCOPY		:
+      case kREPLACE		:
+	 if (Attribute.Position.Column <= 11) {
+	    in_comment_entry = rfalse;
+	    (void) copy_pars ();
+	    in_comment_entry = rtrue;
+	 }
+	 break;
+
+      case EofToken 		: goto exit_loop;
+
+      case kPROGRAM_ID		:
+      case kAUTHOR		: /* FOLLOW set of classical comment entries */
+      case kINSTALLATION	:
+      case kDATE_WRITTEN	:
+      case kDATE_COMPILED	:
+      case kSECURITY		:
+      case kREMARKS		:
+      case kEND			:
+      case kIDENTIFICATION	:
+      case kENVIRONMENT		:
+      case kDATA		:
+      case kPROCEDURE		:
+
+				  /* FOLLOW set of SOURCE-COMPUTER */
+   /* case kWITH		: optional */
+      case kDEBUGGING		:
+      case kOBJECT_COMPUTER	:
+      case kMEMORY		: /* FOLLOW set of OBJECT-COMPUTER */
+   /* case kPROGRAM		: optional */
+   /* case kCOLLATING		: optional */
+      case kSEQUENCE		:
+      case kSEGMENT_LIMIT	:
+      case kTERMINAL		:
+      case kSPECIAL_NAMES	: /* FOLLOW set because of optional headings */
+      case kINPUT_OUTPUT	:
+      case kFILE_CONTROL	:
+      case kI_O_CONTROL		:
+      case kSELECT		:
+      case kFILE		:
+      case kWORKING_STORAGE	:
+      case kLOCAL_STORAGE	:
+      case kLINKAGE		:
+      case kCOMMUNICATION	:
+      case kREPORT		:
+      case kSCREEN		:
+	 if (Attribute.Position.Column <= 11) goto exit_loop;
+      }
+   }
+exit_loop:
+   yyStart (STD); in_comment_entry = rfalse;
+   if (hl) (void) fprintf (hlfp, "%d rem %d.%d %d.%d\n", PAF_HIGH,
+      start_position.Line, start_position.Column - 1,
+      Attribute.Position.Line, Attribute.Position.Column - 1);
+   return Token;
+}
+
+				/* continuation of integers and reals	*/
+
+static int HandleContinuedNumber
+# if defined __STDC__ | defined __cplusplus
+   (int length)
+# else
+   (length) int length;
+# endif
+{
+   register char * p = strpbrk (String, ".,");
+
+   if (p != NULL) {
+      int l;
+      if (! decimal_point_is_comma && * p == '.' ||
+	    decimal_point_is_comma && * p == ',') {
+	 char * q;
+	 Attribute.real.Value = PutString (String, length);
+	 if (* String == '+' || * String == '-') CheckLength (length, 20);
+	 else CheckLength (length, 19);
+	 if (decimal_point_is_comma) * p = '.';
+	 (void) strtod (String, & q);
+	 if (decimal_point_is_comma) * p = ',';
+	 if (* q != '\0') {
+	    MessageI ("error in real number", xxError, Attribute.Position,
+	       xxString, String);
+	    error_count ++;
+	 }
+	 return real;
+      }
+      l = p - String;
+      yyLess ((TokenLength + l - length));
+      switch (* String) {
+      case ',': yyLess (1); return -1;
+      case '.': yyLess (1); return '.';
+      case '+': if (l == 1) { return '+'; } break;
+      case '-': if (l == 1) { return '-'; } break;
+      }
+      length = l;
+   }
+   CheckLength (length, 19);
+   switch (* String) {
+   case '+': Attribute.plus_integer.Value = atol (String);
+	     return plus_integer;
+   case '-': Attribute.minus_integer.Value = atol (String);
+	     return minus_integer;
+   default : Attribute.unsigned_integer.Value = atol (String);
+	     return unsigned_integer;
+   }
+}
+}
+
+LOCAL	{ int k; }
+
+BEGIN	{
+   iNOTE	= MakeIdent ("NOTE"	, 4);
+   iSKIP1	= MakeIdent ("SKIP1"	, 5);
+   iSKIP2	= MakeIdent ("SKIP2"	, 5);
+   iSKIP3	= MakeIdent ("SKIP3"	, 5);
+   iCOPY	= MakeIdent ("COPY"	, 4);
+   iREPLACE	= MakeIdent ("REPLACE"	, 7);
+   yyStart (STD);
+}
+
+DEFAULT	{
+if (! in_comment_entry) {
+   MessageI ("illegal character", xxError, Attribute.Position, xxCharacter,
+      TokenPtr);
+   error_count ++;
+}
+}
+
+DEFINE
+   A		= {Aa} .
+   B		= {Bb} .
+   C		= {Cc} .
+   D		= {Dd} .
+   E		= {Ee} .
+   F		= {Ff} .
+   G		= {Gg} .
+   H		= {Hh} .
+   I		= {Ii} .
+   J		= {Jj} .
+   K		= {Kk} .
+   L		= {Ll} .
+   M		= {Mm} .
+   N		= {Nn} .
+   O		= {Oo} .
+   P		= {Pp} .
+   Q		= {Qq} .
+   R		= {Rr} .
+   S		= {Ss} .
+   T		= {Tt} .
+   U		= {Uu} .
+   V		= {Vv} .
+   W		= {Ww} .
+   X		= {Xx} .
+   Y		= {Yy} .
+   Z		= {Zz} .
+   Letter	= {A-Za-z} .
+   Digit	= {0-9} .
+   HexDigit	= {0-9A-Fa-f} .
+   PicChar	= {AaBbCcDdEePpRrSsVvXxZz09+\-/,*$} .
+   Repl		= \( Digit + \) .
+   PicElmt	= PicChar Repl ? .
+   EOL		= \r ? \n .		/* end of line			*/
+
+START
+   Comment_Entry, Note, Picture, String1, String2, SQL, Pseudo_Text,
+   Continue_Picture, Continue_Int, Continue_Real, Continue_Para, Continue_Name,
+   Include, Skip, Directive
+
+RULE
+
+#STD# {,;}		:- {}		/* skip separators		*/
+
+#STD# \f | \r | \26	:- {}		/* skip control characters	*/
+
+#STD# < D ANY *		:- { if (IsDebugging) yyLess (1); }
+
+< "-"			:  { if (free_format) return '-';
+			  /* else if (! in_comment_entry) {
+				Message ("incorrect continuation line",
+				xxError, Attribute.Position);
+				error_count ++; } */
+			   }
+
+NOT #Pseudo_Text# < " " * $		/* process Micro Focus directive */
+			:- { yyPush (Directive); (void) directives ();
+			     yyPop (); }
+
+NOT #Pseudo_Text# < {*/} ANY * EOL
+			:  { yyEol (0);	/* skip comment line		*/
+			     if (hl) (void) fprintf (hlfp, "%d rem %d.%d %d.%d\n",
+				PAF_HIGH, Attribute.Position.Line, 0,
+				Attribute.Position.Line, TokenLength);
+			   }
+
+NOT #Pseudo_Text# < " " + EOL
+			:- { yyEol (0); } /* skip blank line		*/
+
+					/* handle comment entry		*/
+
+#Comment_Entry# ANY		: { yyLess (0); k = Handle_Comment_Entry ();
+				    if (k == kCOPY) goto lCOPY;
+				    if (k == kREPLACE) goto lREPLACE;
+				    return k;
+				  }
+
+#STD# N O T E			: { /* Attribute.name.Ident = iNOTE;
+				    if (! (keywords [Attribute.name.Ident].mask & dialect))
+				       return name; */
+				    if (! in_comment_entry) {
+				       yyStart (Note);
+				       start_position = Attribute.Position;
+				    }
+				  }
+
+#Note# - {\t\n.} *		:- {}
+#Note# "."			:  { yyPrevious; if (hl)
+				     (void) fprintf (hlfp, "%d rem %d.%d %d.%d\n", PAF_HIGH,
+				       start_position.Line, start_position.Column - 1,
+				       Attribute.Position.Line, Attribute.Position.Column );
+				   }
+
+#STD# T I T L E / {\ \t\r\n}	: { yyStart (Skip); }
+#STD# S K I P {123} "." ?	,
+#STD# E J E C T "." ?		: { /* length = GetUpper (String);
+				    Attribute.name.Ident = MakeIdent (String, length);
+				    if (! (keywords [Attribute.name.Ident].mask & dialect))
+				       return name; */ }
+
+#STD# C B L		/ {\ \t\r\n},
+#STD# P R O C E S S	/ {\ \t\r\n}
+				:  { if (dialect & (os | vs)) { yyStart (Skip); }
+				     else goto lName; }
+
+#STD# "*" C B L		/ {\ \t\r\n},
+#STD# "*" C O N T R O L	/ {\ \t\r\n}
+				:  { if (dialect & (os | vs)) { yyStart (Skip); }
+				     else { yyLess (1); return '*'; } }
+
+#Skip# ANY *			:- { yyPrevious; }
+
+					/* handle string		*/
+
+#STD#	  \'			:  { yyStart (String1); length = 1; String [0] = '\'';
+				     start_position = Attribute.Position; }
+
+#String1# \' " " * EOL / "-" " " * \'
+				:- { yyEol (0); if (free_format) goto lString1; }
+#String1# < "-" " " * \'	:- {}
+#String1# < ANY " " * / - {\ '\n} ANY *,
+#String1# < ANY " " * \'	:  { if (! in_comment_entry) {
+				        Message ("continuation of string expected",
+					xxError, Attribute.Position);
+      					error_count ++;
+				     }
+				     Attribute.Position = start_position;
+				     Attribute.string.Value = PutString (String, length);
+				     yyPrevious; return string; }
+
+#String1# - {'\t\r\n} +		:- { if (length < MaxStringLength) length += GetWord (& String [length]); }
+#String1# \'\'			:- { if (length < MaxStringLength) length += GetWord (& String [length]); }
+#String1# \t			:- { if (length < MaxStringLength) String [length ++] = '\t'; }
+#String1# \r			:- {}
+#String1# \'			:- { lString1: if (length < MaxStringLength)
+				     (void) strcpy (& String [length ++], "\'");
+				     Attribute.string.Value = PutString (String, length);
+				     yyPrevious; return string; }
+
+#STD#	  \"			:  { yyStart (String2); length = 1; String [0] = '\"';
+				     start_position = Attribute.Position; }
+
+#String2# \" " " * EOL / "-" " " * \"
+				:- { yyEol (0); if (free_format) goto lString2; }
+#String2# < "-" " " * \"	:- {}
+#String2# < ANY " " * / - {\ "\n} ANY *,
+#String2# < ANY " " * \"	:  { if (! in_comment_entry) {
+					Message ("continuation of string expected",
+					xxError, Attribute.Position);
+      					error_count ++;
+				     }
+				     Attribute.Position = start_position;
+				     Attribute.string.Value = PutString (String, length);
+				     yyPrevious; return string; }
+
+#String2# - {"\t\r\n} +		:- { if (length < MaxStringLength) length += GetWord (& String [length]); }
+#String2# \"\"			:- { if (length < MaxStringLength) length += GetWord (& String [length]); }
+#String2# \t			:- { if (length < MaxStringLength) String [length ++] = '\t'; }
+#String2# \r			:- {}
+#String2# \"			:- { lString2: if (length < MaxStringLength)
+				     (void) strcpy (& String [length ++], "\"");
+				     Attribute.string.Value = PutString (String, length);
+				     yyPrevious; return string; }
+
+					/* handle picture string	*/
+
+#STD# P I C (T U R E) ?		: { length = GetUpper (String);
+				    Attribute.name.Ident = MakeIdent (String, length);
+				    if (! (keywords [Attribute.name.Ident].mask & dialect))
+				       return name;
+				    if (hl)
+				       (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+				       Attribute.Position.Line, Attribute.Position.Column - 1,
+				       Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1);
+				    yyStart (Picture); return PICTURE; }
+
+#Picture# I S			: { if (hl)
+				       (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+				       Attribute.Position.Line, Attribute.Position.Column - 1,
+				       Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1);
+				    return IS; }
+
+#Picture# (PicElmt | ".") * PicElmt,
+#Picture# PicElmt + "." / "."	: { length = GetUpper (String);
+				    Attribute.string.Value = PutString (String, length);
+				    yyPrevious; CheckLength (TokenLength, 30); return string; }
+
+#Picture# - {\ \t\n}		: { Attribute.string.Value = GetStringRef (NoIdent);
+				    yyLess (0); yyPrevious; return string; }
+
+					/* continuation of picture string	*/
+
+#Picture# (PicElmt | ".") + / " " * EOL "-"
+				: { length = GetUpper (String);
+				    if (free_format) {
+				       Attribute.string.Value = PutString (String, length);
+				       CheckLength (TokenLength, 30);
+				       yyPrevious; return string;
+				    } else
+				       yyStart (Continue_Picture); }
+
+#Continue_Picture, Continue_Int, Continue_Real, Continue_Para, Continue_Name#
+	" " * EOL "-" {\ \t} *	:- { yyEol ((TokenLength - 1 - (strchr (TokenPtr, '\n') - TokenPtr))); }
+
+
+#Continue_Picture# (PicElmt | ".") * PicElmt,
+#Continue_Picture# PicElmt + "." / "."
+				:- { length += GetUpper (& String [length]);
+				     Attribute.string.Value = PutString (String, length);
+				     yyStart (STD); CheckLength (length, 30); return string; }
+
+#Continue_Picture# - {\ \t\n}	:- { yyLess (0); yyStart (STD);
+				     Attribute.string.Value = PutString (String, length);
+				     CheckLength (length, 30);
+				     return string; }
+
+#STD# I N C L U D E		: { if (dialect != copy_replace) goto lCOPY;
+				    Attribute.name.Ident =
+				       MakeIdent (TokenPtr, TokenLength);
+				    return name; }
+
+#STD# C O P Y			: { lCOPY: Attribute.name.Ident = iCOPY;
+				    if (! (keywords [Attribute.name.Ident].mask & dialect))
+				       return name;
+				    if (hl)
+				       (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+				       Attribute.Position.Line, Attribute.Position.Column - 1,
+				       Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1);
+				    if (ansi_copy && ! in_comment_entry) (void) copy_pars ();
+				    else return COPY; }
+
+			/* next pattern should actually be '< "-INC" LUDE ?' */
+#STD# "-INC" LUDE ?		,
+#STD# "++INC" LUDE ?		:-{ yyStart (Include); }
+
+#Include# (Letter | Digit) ((Letter | Digit | "-") * (Letter | Digit)) ?
+				: { (void) Copy (MakeIdent (TokenPtr, TokenLength), Attribute.Position);
+				    yyPrevious; }
+
+#Include# \f | \r | \26		:-{}	/* skip control characters	*/
+
+#Include# - {\ \t\r\n}		:-{ yyLess (0); yyPrevious; }
+
+#STD# R E P L A C E		: { lREPLACE: Attribute.name.Ident = iREPLACE;
+				    if (! (keywords [Attribute.name.Ident].mask & dialect))
+				       return name;
+				    if (hl)
+				       (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+				       Attribute.Position.Line, Attribute.Position.Column - 1,
+				       Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1);
+				    if (ansi_copy && ! in_comment_entry) (void) copy_pars ();
+				    else return REPLACE; }
+
+#STD# E X E C (U T E) ? /* " " + (S Q L | C I C S | D L I) */
+				: { if (hl)
+				       (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+				       Attribute.Position.Line, Attribute.Position.Column - 1,
+				       Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1);
+				    yyStart (SQL); }
+
+					/* delimiters			*/
+
+#STD# "&"	: { return '&'	; }
+#STD# "("	: { return '('	; }
+#STD# ")"	: { return ')'	; }
+#STD# "*"	: { return '*'	; }
+#STD# "**"	: { return '**'	; }
+#STD# "+"	: { return '+'	; }
+#STD# "-"	: { return '-'	; }
+#STD# "."	: { return '.'	; }
+#STD# "/"	: { return '/'	; }
+#STD# "66"	: { return '66'	; }
+#STD# "77"	: { return '77'	; }
+#STD# "78"	: { return '78'	; }
+#STD# "88"	: { return '88'	; }
+#STD# ":"	: { return ':'	; }
+#STD# "<"	: { return '<'	; }
+#STD# "<="	: { return '<='	; }
+#STD# "<>"	: { return '<>'	; }
+#STD# "="	: { return '='	; }
+#STD# ">"	: { return '>'	; }
+#STD# ">="	: { return '>='	; }
+#STD# "=="	: { return '=='	; }
+
+					/* numbers and names		*/
+
+#STD# Digit +			: { int i = atol (TokenPtr);
+				    CheckLength (TokenLength, 18);
+				    if (1 <= i && i <= 49) {
+				       Attribute.level_number.Value = i;
+				       return level_number;
+				    } else {
+				       Attribute.unsigned_integer.Value = i;
+				       return unsigned_integer;
+				    }
+				  }
+
+#STD# "+" Digit +		: { Attribute.plus_integer.Value = atol (TokenPtr);
+				    CheckLength (TokenLength, 19);
+				    return plus_integer; }
+
+#STD# "-" Digit +		: { Attribute.minus_integer.Value = atol (TokenPtr);
+				    CheckLength (TokenLength, 19);
+				    return minus_integer; }
+
+#STD# {+\-} ? Digit * {.,} Digit + (E {+\-} ? Digit +) ?
+				: { length = GetWord (String);
+				    k = HandleContinuedNumber (length);
+				    if (k >= 0) return k; }
+
+#STD# {=Xx} \" HexDigit + \"	,
+#STD# {=Xx} \' HexDigit + \'	: { Attribute.string.Value =
+				       PutString (TokenPtr, TokenLength);
+				    return string; }
+
+#STD# Digit ((Digit | "-") * Digit) ?
+				: { Attribute.paragraph_name.Ident =
+				       MakeIdent (TokenPtr, TokenLength);
+				    CheckLength (TokenLength, 30);
+				    return paragraph_name; }
+
+#STD# (Letter | Digit) ((Letter | Digit | "-") * (Letter | Digit)) ?
+				: { lName: length = GetUpper (String);
+				    Attribute.name.Ident = MakeIdent (String, length);
+				    if (Attribute.name.Ident <= max_keyword &&
+				       (keywords [Attribute.name.Ident].mask & dialect)) {
+				       if (hl)
+					  (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+					  Attribute.Position.Line, Attribute.Position.Column - 1,
+					  Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1);
+				       return keywords [Attribute.name.Ident].code;
+				    }
+				    CheckLength (TokenLength, 30);
+				    return name; }
+
+					/* continuation of numbers and names */
+
+#STD# {+\-} ? Digit * / " " * EOL "-"
+				:  { length = GetWord (String);
+				     if (free_format)
+				        return HandleContinuedNumber (length);
+				     else
+					yyStart (Continue_Int); }
+
+#STD# {+\-} ? Digit * "." Digit * (E {+\-} ? Digit *) ? / " " * EOL "-"
+				:  { length = GetWord (String);
+				     if (decimal_point_is_comma)
+				        return HandleContinuedNumber (length);
+				     else if (free_format)
+				        return HandleContinuedNumber (length);
+				     else
+					yyStart (Continue_Real); }
+
+#STD# {+\-} ? Digit * "," Digit * (E {+\-} ? Digit *) ? / " " * EOL "-"
+				:  { length = GetWord (String);
+				     if (! decimal_point_is_comma) {
+				        k = HandleContinuedNumber (length);
+				        if (k >= 0) return k;
+				     } else if (free_format)
+				        return HandleContinuedNumber (length);
+				     else
+					yyStart (Continue_Real); }
+
+#STD# Digit (Digit | "-") * / " " * EOL "-"
+				:  { length = GetWord (String);
+				     if (free_format) {
+					Attribute.paragraph_name.Ident = MakeIdent (String, length);
+					CheckLength (length, 30);
+					yyPrevious; return paragraph_name;
+				     } else
+					yyStart (Continue_Para); }
+
+#STD# (Letter | Digit) (Letter | Digit | "-") * / " " * EOL "-"
+				:  { if (free_format) goto lName;
+				     length = GetUpper (String);
+				     yyStart (Continue_Name); }
+
+#Continue_Int# Digit * ({.,} Digit + (E {+\-} ? Digit +) ?) ? ,
+#Continue_Real# Digit * (E {+\-} ? Digit +) ? ,
+#Continue_Real# {+\-} ? Digit +	:- { length += GetWord (& String [length]);
+				     yyPrevious;
+				     return HandleContinuedNumber (length); }
+
+#Continue_Int, Continue_Para# (Digit | "-") * Digit
+				:- { length += GetWord (& String [length]);
+				     Attribute.paragraph_name.Ident = MakeIdent (String, length);
+				     CheckLength (length, 30);
+				     yyPrevious; return paragraph_name; }
+
+#Continue_Int, Continue_Para, Continue_Name# (Letter | Digit | "-") * (Letter | Digit)
+				:- { length += GetUpper (& String [length]);
+				     yyPrevious;
+				     Attribute.name.Ident = MakeIdent (String, length);
+				     if (Attribute.name.Ident <= max_keyword &&
+				        (keywords [Attribute.name.Ident].mask & dialect)) {
+				        int token = keywords [Attribute.name.Ident].code;
+					if (hl) (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+					   Attribute.Position.Line, Attribute.Position.Column - 1,
+					   yyLineCount, (unsigned char *) TokenPtr - yyLineStart + TokenLength - 1);
+				        if (token == kCOPY || token == kREPLACE) {
+					   if (ansi_copy && ! in_comment_entry) {
+					      (void) copy_pars ();
+					   } else {
+					      return token;
+					   }
+				        } else if (token == kPICTURE) {
+					   yyStart (Picture);
+					   return token;
+					} else {
+					   return token;
+					}
+				     } else if (Attribute.name.Ident == iNOTE) {
+					yyStart (Note);
+				        start_position = Attribute.Position;
+				     } else if (Attribute.name.Ident == iSKIP1 ||
+					Attribute.name.Ident == iSKIP2 ||
+					Attribute.name.Ident == iSKIP3) {
+				     } else {
+					CheckLength (length, 30);
+					return name;
+				     } }
+
+#Continue_Int, Continue_Real# - {\ \t\n}
+				:- { yyLess (0); yyPrevious;
+				     return HandleContinuedNumber (length); }
+
+#Continue_Name, Continue_Para# - {\ \t\n}
+				:- { yyLess (0); yyPrevious;
+				     Attribute.name.Ident = MakeIdent (String, length);
+				     CheckLength (length, 30);
+				     return name; }
+
+#SQL# - {Ee\t\n} + | E		:- {}
+#SQL# E N D "-" E X E C		: { if (hl)
+				       (void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH,
+				       Attribute.Position.Line, Attribute.Position.Column - 1,
+				       Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1);
+				    yyPrevious; return EXECUTE; }
+
+#Pseudo_Text# - {=\t\n} + | =	:- { if (length < MaxStringLength)
+					length += GetWord (& String [length]); }
+#Pseudo_Text# \t		:- { if (length < MaxStringLength)
+					String [length ++] = '\t'; }
+#Pseudo_Text# \n		:- { if (length < MaxStringLength)
+					String [length ++] = '\n'; yyEol (0); }
+#Pseudo_Text# ==		:- { Attribute.pseudo_text.Value =
+					PutString (String, length);
+				     Attribute.Position = start_position;
+				     yyLess (0); yyPrevious;
+				     return pseudo_text; }
+
+#STD# {!#$%?@[\\]^_`{|\}~}	: { if (! in_comment_entry) {
+				       Attribute.illegal_character.Value =
+					  * TokenPtr;
+				       return illegal_character;
+				  } }
+
+/*
+#STD# (PicElmt | ".") * PicElmt,
+#STD# PicElmt + "." / "."	: { length = GetUpper (String);
+				    Attribute.string.Value = PutString (String, length);
+				    CheckLength (TokenLength, 30); return string; }
+
+#STD# (PicElmt | ".") + / " " * EOL "-"
+				: { length = GetUpper (String);
+				    yyStart (Continue_Picture); }
+*/
+
+					/* compiler directives		*/
+
+#Directive# \n			: { yyEol (0); return EofToken; }
+
+#Directive# \f | \r | \26	:-{}	/* skip control characters	*/
+
+#Directive# Digit +		: { Attribute.unsigned_integer.Value =
+					atol (TokenPtr);
+				    return unsigned_integer; }
+
+#Directive# \' - {'\n} * \'	,
+#Directive# \" - {"\n} * \"	: { Attribute.string.Value =
+					PutString (TokenPtr, TokenLength);
+				    return string; }
+
+#Directive# "<"	: { return 10; }
+#Directive# "="	: { return 12; }
+#Directive# ">"	: { return 11; }
+#Directive# D E F I N E D	: { return 14; }
+#Directive# D I S P L A Y	: { return 5; }
+#Directive# E L S E	: { return 6; }
+#Directive# E N D	: { return 7; }
+#Directive# I F	: { return 9; }
+#Directive# N O T	: { return 13; }
+#Directive# S E T	: { return 2; }
+#Directive# S O U R C E F O R M A T	: { return 4; }
+
+#Directive# (Letter | Digit) ((Letter | Digit | "-") * (Letter | Digit)) ?
+				: { length = GetUpper (String);
+				    Attribute.name.Ident =
+					MakeIdent (String, length);
+				    return name; }
+
+					/* error handling		*/
+
+#STD, Directive# - {\ \t\n}	: { if (! in_comment_entry) {
+				       MessageI ("illegal character", xxError,
+				       Attribute.Position, xxCharacter, TokenPtr);
+				       error_count ++;
+				  } }
+
+\t | \f | \26			:- {}

@@ -1,0 +1,20 @@
+all : sn elbrus
+
+sn :
+	cd snsrc && ./configure && make && make install
+
+elbrus :
+	cd src && $(MAKE)
+
+distclean : uninstall
+	rm -f Makefile config.cache include/config.h config.log config.status
+	cd src && $(MAKE) distclean
+	cd snsrc && $(MAKE) distclean
+
+uninstall :
+	rm -f include/cdefs.h include/db.h include/mpool.h \
+		include/snptools.h include/sn.h \
+		bin/*browser bin/db* lib/lib*
+
+install :
+	cd src && $(MAKE) install

@@ -1,0 +1,1332 @@
+/*
+
+			Java Grammar
+			============
+
+
+		       conforming to:
+
+	The Java Language Specification - Version 1.1
+
+
+- builds an abstract syntax tree
+- the tree can be visualized if tcl + tk are available
+
+- The cpp variable SHARE in the parser controls, whether for end of list nodes
+  (node types with the prefix 'no') only one node per node type is created or
+  whether always separate nodes are allocated. '# define SHARE' selects
+  "sharing" of nodes. This implies that instead of a tree a simple graph is
+  constructed. This is more efficient in terms of runtime and memory consumption
+  and it should work as long as only good-natured attribute computations are
+  performed. If the syntax tree is to be visualized with the procedure DrawTree
+  it is recommended not to define SHARE because pure trees are more pretty than
+  simple graphs.
+
+*/
+
+/* Ich, Doktor Josef Grosch, Informatiker, Apr. 1997 */
+
+PARSER
+
+EXPORT {
+# include <stdio.h>
+# include "Idents.h"
+
+# define s_anonymous "<anonymous>"
+
+extern	FILE *	yyin;
+extern	FILE *	hlfp;
+extern	int	hl;
+extern	char *	current_file;
+extern	tIdent	i_anonymous;
+
+extern	void	start_parser ARGS ((char *fname, int parse_cplpl, FILE *highl_fp, int highlight));
+}
+
+GLOBAL {
+# include "stdlib.h"
+# include "StringM.h"
+# include "Tree.h"
+# include "Eval.h"
+# include "Trafo.h"
+# include "deftab.h"
+# include "paf.h"
+
+# define NIL (char *) NULL
+
+extern	FILE *	cross_ref_fp;
+
+	FILE *	yyin;
+	FILE *	hlfp;
+	int	hl;
+	char *	current_file;
+	tIdent	i_anonymous;
+
+static	tString	current_ident, current_class;
+static	char	current_string		[256];
+static	char	ret_buffer		[1024];
+static	char	arg_types_buffer	[1024];
+static	char	args_buffer		[1024];
+static	unsigned long current_attr;
+static	tTree	current_type;
+
+# define SHARE
+
+# ifdef SHARE
+
+static	tTree
+   snocatch		,
+   snodecl		,
+   snoexpression	,
+   snoexpression_l	,
+   snofield		,
+   snoimport		,
+   snostatement		,
+   snoswitch		,
+   snotype		,
+   snotype_name		;
+
+# define dnocatch		snocatch
+# define dnodecl		snodecl
+# define dnoexpression		snoexpression
+# define dnoexpression_l	snoexpression_l
+# define dnofield		snofield
+# define dnoimport		snoimport
+# define dnostatement		snostatement
+# define dnoswitch		snoswitch
+# define dnotype		snotype
+# define dnotype_name		snotype_name
+
+# else
+
+# define dnocatch		mnocatch ()
+# define dnodecl		mnodecl ()
+# define dnoexpression		mnoexpression (NoPosition)
+# define dnoexpression_l	mnoexpression_l ()
+# define dnofield		mnofield ()
+# define dnoimport		mnoimport ()
+# define dnostatement		mnostatement ()
+# define dnoswitch		mnoswitch ()
+# define dnotype		mnotype ()
+# define dnotype_name		mnotype_name ()
+
+# endif
+
+static	rbool	is_initialized	= rfalse;
+static	rbool	report		= rfalse;
+static	rbool	graphic		= rfalse;
+
+static void get_options ARGS ((void))
+{
+   char * arg	= getenv ("PAF_JAVA");
+
+   if (arg == NULL) return;
+
+   while (* arg) {
+      if (* arg == '-') {
+	 switch (* ++ arg) {
+	 case 'f': report = rtrue; break;
+	 case 'g': graphic = rtrue; break;
+
+	 case 'h':
+	    (void) printf ("\nsyntax of PAF_JAVA:\n\n");
+	    (void) printf ("   [-f] [-h]\n\n");
+	    (void) printf (" f : report error messages (default: do not report)\n");
+	    (void) printf (" h : help\n\n");
+	    break;
+	 }
+      }
+      arg ++;
+   }
+}
+
+void start_parser (fname, parse_cplpl, highl_fp, highlight)
+   char	*	fname;
+   int		parse_cplpl;
+   FILE	*	highl_fp;
+   int		highlight;
+{
+   current_file = fname;
+   hlfp = highl_fp;
+   hl = highlight;
+   if (! is_initialized) { get_options (); is_initialized = rtrue; }
+   StoreMessages	(rtrue);
+   InitStringMemory	();
+   InitIdents		();
+   init_deftab		();
+   if (fname) Attribute.Position.FileName = MakeIdent (fname, strlen (fname));
+   else       Attribute.Position.FileName = NoIdent;
+   BeginFile		("");
+   (void) Parser	();
+   /* (void) CheckTree	(TreeRoot); */
+   if (cross_ref_fp != NULL) {
+      Eval		(TreeRoot);
+      Traverse		(TreeRoot);
+   }
+# ifdef DRAWTREE
+   if (graphic) DrawTree (TreeRoot);
+# endif
+   ReleaseTreeModule	();
+   CloseStringMemory	();
+   if (report) WriteMessages (stderr);
+}
+
+static	int	class_stack_ptr	= 0;
+static	char *	class_stack	[32] = { NIL };
+
+# define push(ident)  { class_stack [++ class_stack_ptr] = current_class; \
+			current_class = GetCStr (ident); }
+# define pop()	      { current_class = class_stack [class_stack_ptr --]; }
+# define top()	        class_stack [class_stack_ptr]
+
+static void get_bpos (tree, l, c)
+   tTree	tree;
+   int *	l;
+   int *	c;
+{
+   while (tree->Kind == kqualification)
+      tree = tree->qualification.qualified_symbol;
+   * l = tree->ident.pos.Line;
+   * c = tree->ident.pos.Column - 1;
+}
+
+static void put_extends (tree)
+   tTree	tree;
+{
+   while (tree->Kind == ktype_name) {
+      tTree symbol = tree->type_name.named_type->named_type.qualified_symbol;
+      to_types (symbol, current_string);
+      if (symbol->Kind == kident)
+	 put_symbol (PAF_CLASS_INHERIT, current_class, current_string, current_file,
+	 (int) symbol->ident.pos.Line,
+	 (int) symbol->ident.pos.Column - 1,
+	 (int) symbol->ident.pos.Line,
+	 (int) (symbol->ident.pos.Column + LengthSt (GetStringRef (symbol->ident.ident)) - 1),
+	 (unsigned long) PAF_PUBLIC, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+      else {
+	 int l, c;
+         get_bpos (symbol->qualification.qualified_symbol, & l, & c);
+	 put_symbol (PAF_CLASS_INHERIT, current_class, current_string, current_file,
+	 l, c, (int) symbol->qualification.pos.Line,
+	 (int) (symbol->qualification.pos.Column + LengthSt (GetStringRef (symbol->qualification.ident)) - 1),
+	 (unsigned long) PAF_PUBLIC, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+      }
+      tree = tree->type_name.next;
+   }
+}
+}
+
+BEGIN {
+   i_anonymous = MakeIdent (s_anonymous, strlen (s_anonymous));
+
+# ifdef SHARE
+
+   snocatch		= mnocatch ();
+   snodecl		= mnodecl ();
+   snoexpression	= mnoexpression (NoPosition);
+   snoexpression_l	= mnoexpression_l ();
+   snofield		= mnofield ();
+   snoimport		= mnoimport ();
+   snostatement		= mnostatement ();
+   snoswitch		= mnoswitch ();
+   snotype		= mnotype ();
+   snotype_name		= mnotype_name ();
+
+# endif
+}
+
+PREC
+   RIGHT '>>=' '>>>=' '<<=' '+=' '-=' '*=' '/=' '%=' '&=' '^=' '|=' '='
+   RIGHT '?' ':'
+   LEFT	 '||'
+   LEFT	 '&&'
+   LEFT	 '|'
+   LEFT	 '^'
+   LEFT	 '&'
+   LEFT	 '==' '!='
+   LEFT	 '<=' '>=' instanceof '<' '>'
+   LEFT	 '>>' '>>>' '<<'
+   LEFT	 '+' '-'
+   LEFT	 '*' '/' '%'
+   NONE	 CAST
+   NONE	 '++' '--' '!' '~' UNARY_OP
+   NONE	 POST_OP
+   NONE	 ')'
+
+PROPERTY INPUT
+
+RULE
+
+Goal		= CompilationUnit .
+
+Type		= <
+		= PrimitiveType .
+		= ReferenceType .
+		= void		{ tree := msimple_type (t_void	); } .
+> .
+PrimitiveType	= <
+   NumericType	= <
+      IntegralType	= <
+		= byte		{ tree := msimple_type (t_byte	); } .
+		= short		{ tree := msimple_type (t_short	); } .
+		= int		{ tree := msimple_type (t_int	); } .
+		= long		{ tree := msimple_type (t_long	); } .
+		= char		{ tree := msimple_type (t_char	); } .
+      > .
+      FloatingPointType	= <
+		= float		{ tree := msimple_type (t_float	); } .
+		= double	{ tree := msimple_type (t_double); } .
+      > .
+   > .
+		= boolean	{ tree := msimple_type (t_boolean); } .
+> .
+ReferenceType	= <
+		= ClassOrInterfaceType .
+		= ArrayType .
+> .
+ClassOrInterfaceType	= Name
+		{ tree := mnamed_type (Name:tree); } .
+
+ClassType	= ClassOrInterfaceType .
+
+InterfaceType	= ClassOrInterfaceType .
+
+ArrayType	= <
+		= PrimitiveType '[' ']'
+		{ tree := marray_type (PrimitiveType:tree); } .
+		= Name '[' ']'
+		{ tree := marray_type (mnamed_type (Name:tree)); } .
+		= ArrayType '[' ']'
+		{ tree := marray_type (ArrayType:tree); } .
+> .
+Name		= <
+   SimpleName	= Identifier
+		{ tree := mident (Identifier:Position, Identifier:ident);
+		  bpos := Identifier:Position;
+		  epos := { epos.Line = bpos.Line;
+			epos.Column = bpos.Column +
+			  LengthSt (GetStringRef (Identifier:ident)) - 1; }; } .
+   QualifiedName= Name '.' Identifier
+		{ tree := mqualification (Identifier:Position, Name:tree, Identifier:ident);
+		  bpos := Name:bpos;
+		  epos := { epos.Line = Identifier:Position.Line;
+			epos.Column = Identifier:Position.Column +
+			  LengthSt (GetStringRef (Identifier:ident)) - 1; }; } .
+> .
+CompilationUnit	= PackageDeclaration ImportDeclarations TypeDeclarations
+		{ => { TreeRoot = mcompilation_unit (PackageDeclaration:tree,
+			ReverseTree (ImportDeclarations:tree),
+			ReverseTree (TypeDeclarations:tree)); }; } .
+
+ImportDeclarations	= <
+		=
+		{ tree := dnoimport; } .
+		= ImportDeclarations ImportDeclaration
+		{ tree := { tree = ImportDeclaration:tree;
+			tree->import.next = ImportDeclarations:tree; }; } .
+> .
+TypeDeclarations	= <
+		=
+		{ tree := dnofield; } .
+		= TypeDeclarations TypeDeclaration
+		{ tree := { tree = TypeDeclaration:tree;
+			tree->field.next = TypeDeclarations:tree; }; } .
+		= TypeDeclarations ';' .
+> .
+PackageDeclaration	= <
+		=
+		{ tree := dnoexpression; } .
+		= package Name ';' .
+> .
+ImportDeclaration	= <
+   SingleTypeImportDeclaration
+		= import Name ';'
+		{ => { if (hl >= 0) { to_files (Name:tree, current_string);
+		   put_symbol (PAF_INCLUDE_DEF, NIL, current_string, current_file,
+		      (int) Name:bpos.Line, (int) Name:bpos.Column - 1,
+		      (int) Name:epos.Line, (int) Name:epos.Column,
+		      0L, NIL, NIL, NIL, NIL, 0, 0, 0, 0); } };
+		  tree := mimport (NoTree, Name:tree); } .
+   TypeImportOnDemandDeclaration
+		= import Name '.' '*' ';'
+		{ => { if (hl >= 0) { to_files (Name:tree, current_string);
+		   (void) strcat (current_string, "/*");
+		   put_symbol (PAF_INCLUDE_DEF, NIL, current_string, current_file,
+		      (int) Name:bpos.Line, (int) Name:bpos.Column - 1,
+		      (int) Name:epos.Line, (int) Name:epos.Column,
+		      0L, NIL, NIL, NIL, NIL, 0, 0, 0, 0); } };
+		  tree := mimport_asterisk (NoTree, Name:tree); } .
+> .
+TypeDeclaration	= <
+		= ClassDeclaration .
+		= InterfaceDeclaration .
+	     /* = ';' . */
+> .
+Modifiers	= <
+		= Modifier .
+		= Modifiers Modifier
+		{ attr := Modifiers:attr | Modifier:attr; } .
+> .
+Modifier	= <
+		= public	{ attr := PAF_PUBLIC		; } .
+		= protected	{ attr := PAF_PROTECTED		; } .
+		= private	{ attr := PAF_PRIVATE		; } .
+		= static	{ attr := PAF_STATIC		; } .
+		= abstract	{ attr := PAF_ABSTRACT		; } .
+		= final		{ attr := PAF_FINAL		; } .
+		= native	{ attr := PAF_NATIVE		; } .
+		= synchronized	{ attr := PAF_SYNCHRONIZED	; } .
+		= transient	{ attr := PAF_TRANSIENT		; } .
+		= volatile	{ attr := PAF_VOLATILE		; } .
+	     /* = threadsafe	{ attr := PAF_THREADSAFE	; } .
+		= const		{ attr := PAF_CONST		; } .
+	     */
+> .
+ClassDeclaration	= <
+		= class Identifier
+		{ => if (hl >= 0) push (Identifier:ident); }
+		  Super Interfaces ClassBody
+		{ => { if (hl >= 0) {
+		   current_attr = PAF_PRIVATE;
+		   put_symbol (PAF_CLASS_DEF, top (), current_class, current_file,
+		      (int) Identifier:Position.Line, (int) Identifier:Position.Column - 1,
+		      (int) ClassBody:epos.Line, (int) ClassBody:epos.Column,
+		      current_attr, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+		   pop (); } };
+		  tree := mclass (NoTree, 0L,
+			Identifier:ident, Identifier:Position, ClassBody:tree,
+			Super:tree, Interfaces:tree); } .
+		= Modifiers class Identifier
+		{ => if (hl >= 0) push (Identifier:ident); }
+		  Super Interfaces ClassBody
+		{ => { if (hl >= 0) {
+		   current_attr = Modifiers:attr;
+		   if ((current_attr & (PAF_PRIVATE | PAF_PROTECTED | PAF_PUBLIC)) == 0L)
+		      current_attr |= PAF_PRIVATE;
+		   put_symbol (PAF_CLASS_DEF, top (), current_class, current_file,
+		      (int) Identifier:Position.Line, (int) Identifier:Position.Column - 1,
+		      (int) ClassBody:epos.Line, (int) ClassBody:epos.Column,
+		      current_attr, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+		   pop (); } };
+		  tree := mclass (NoTree, Modifiers:attr,
+			Identifier:ident, Identifier:Position, ClassBody:tree,
+			Super:tree, Interfaces:tree); } .
+> .
+Super		= <
+		=
+		{ tree := dnotype; } .
+		= extends ClassType
+		{ => { if (hl >= 0) { to_types (ClassType:tree, current_string);
+		   put_symbol (PAF_CLASS_INHERIT, current_class, current_string, current_file,
+		      (int) ClassType:bpos.Line, (int) ClassType:bpos.Column - 1,
+		      (int) ClassType:epos.Line, (int) ClassType:epos.Column,
+		      (unsigned long) PAF_PUBLIC, NIL, NIL, NIL, NIL, 0, 0, 0,
+		      0); } }; } .
+> .
+Interfaces	= <
+		=
+		{ tree := dnotype_name; } .
+		= implements InterfaceTypeList
+		{ tree := ReverseTree (InterfaceTypeList:tree); } .
+> .
+InterfaceTypeList	= <
+		= InterfaceType
+		{ tree := mtype_name (dnotype_name, InterfaceType:tree); } .
+		= InterfaceTypeList ',' InterfaceType
+		{ tree := mtype_name (InterfaceTypeList:tree, InterfaceType:tree); } .
+> .
+ClassBody	= '{' ClassBodyDeclarations '}'
+		{ tree := ReverseTree (ClassBodyDeclarations:tree);
+		  epos := '}':Position; } .
+
+ClassBodyDeclarations	= <
+		=
+		{ tree := mnofield (); } .
+		= ClassBodyDeclarations ClassBodyDeclaration
+		{ tree := { tree = ClassBodyDeclaration:tree;
+			tree->\field.next = ClassBodyDeclarations:tree; }; } .
+		= ClassBodyDeclarations ';' .
+> .
+ClassBodyDeclaration	= <
+   ClassMemberDeclaration	 = <
+		= FieldDeclaration .
+		= MethodDeclaration .
+   > .
+		= ClassDeclaration .
+		= InterfaceDeclaration .
+		= ClassInitializer .
+		= ConstructorDeclaration .
+> .
+get_type_1	= { => { current_attr = PAF_PRIVATE;
+		    current_type = $0.Type.tree; }; } .
+
+get_type_2	= { => { current_attr = $-1.Modifiers.attr;
+		    if ((current_attr & (PAF_PRIVATE | PAF_PROTECTED | PAF_PUBLIC)) == 0L)
+		       current_attr |= PAF_PRIVATE;
+		    current_type = $0.Type.tree; }; } .
+
+FieldDeclaration	= <
+		= Type get_type_1 VariableDeclarators ';'
+		{ tree := mvar_decl (NoTree, 0L, Type:tree, VariableDeclarators:tree); } .
+		= Modifiers Type get_type_2 VariableDeclarators ';'
+		{ tree := mvar_decl (NoTree, Modifiers:attr, Type:tree, VariableDeclarators:tree); } .
+> .
+VariableDeclarators	= <
+		= VariableDeclarator
+		{ tree := { tree = VariableDeclarator:tree;
+			tree->variable.next = dnodecl; }; } .
+		= VariableDeclarators ',' VariableDeclarator
+		{ tree := { tree = VariableDeclarator:tree;
+			tree->variable.next = VariableDeclarators:tree; }; } .
+> .
+VariableDeclarator	= id: VariableDeclaratorId VariableInitializerOpt
+		{ => { if (hl >= 0) { current_ident = GetCStr (id:ident);
+		   put_symbol (PAF_MBR_VAR_DEF, current_class, current_ident, current_file,
+		      (int) id:Position.Line, (int) id:Position.Column - 1,
+		      (int) id:Position.Line, (int) (id:Position.Column +
+		      LengthSt (GetStringRef (id:ident)) - 1),
+		      current_attr, NIL, NIL, NIL, NIL, 0, 0, 0, 0); } };
+		  tree := mvariable (NoTree, current_attr, current_type,
+		  	id:ident, id:Position, id:tree, VariableInitializerOpt:tree); } .
+
+VariableDeclaratorId	= <
+		= Identifier
+		{ tree := dnotype; } .
+		= VariableDeclaratorId '[' ']'
+		{ tree := marray_type (VariableDeclaratorId:tree);
+		  Position := VariableDeclaratorId:Position; } .
+> .
+LocalVariableDeclaration	= <
+		= Type
+		{ => { current_attr = 0L; current_type = Type:tree; }; }
+		  LocalVariableDeclarators
+		{ tree := mvar_decl_stmt (Type:tree, ReverseTree (LocalVariableDeclarators:tree)); } .
+		= final Type
+		{ => { current_attr = a_FINAL; current_type = Type:tree; }; }
+		  LocalVariableDeclarators
+		{ tree := mvar_decl_stmt (Type:tree, ReverseTree (LocalVariableDeclarators:tree)); } .
+> .
+LocalVariableDeclarators	= <
+		= LocalVariableDeclarator
+		{ tree := { tree = LocalVariableDeclarator:tree;
+			tree->variable.next = dnodecl; }; } .
+		= LocalVariableDeclarators ',' LocalVariableDeclarator
+		{ tree := { tree = LocalVariableDeclarator:tree;
+			tree->variable.next = LocalVariableDeclarators:tree; }; } .
+> .
+LocalVariableDeclarator	= id: VariableDeclaratorId VariableInitializerOpt
+		{ => { if (hl >= 0) { current_ident = GetCStr (id:ident);
+		   put_symbol (PAF_LOCAL_VAR_DEF, NIL, current_ident, current_file,
+		      (int) id:Position.Line, (int) id:Position.Column - 1,
+		      (int) id:Position.Line, (int) (id:Position.Column +
+		      LengthSt (GetStringRef (id:ident)) - 1),
+		      0L, NIL, NIL, NIL, NIL, 0, 0, 0, 0); } };
+		  tree := mvariable (NoTree, current_attr, current_type,
+		  	id:ident, id:Position, id:tree, VariableInitializerOpt:tree); } .
+
+MethodDeclaration	= MethodHeader MethodBody
+		{ => { if (hl >= 0) { current_ident = GetCStr (MethodHeader:ident);
+		   to_types (MethodHeader:type, ret_buffer);
+		   to_types (MethodHeader:tree, arg_types_buffer);
+		   to_names (MethodHeader:tree, args_buffer);
+		   current_attr = MethodHeader:attr;
+		   if ((current_attr & (PAF_PRIVATE | PAF_PROTECTED | PAF_PUBLIC)) == 0L)
+		      current_attr |= PAF_PRIVATE;
+		   put_symbol (PAF_MBR_FUNC_DEF, current_class, current_ident, current_file,
+		      (int) MethodHeader:Position.Line, (int) MethodHeader:Position.Column - 1,
+		      (int) MethodBody:epos.Line, (int) MethodBody:epos.Column,
+		      current_attr, ret_buffer, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		   put_symbol (PAF_MBR_FUNC_DCL, current_class, current_ident, current_file,
+		      (int) MethodHeader:Position.Line, (int) MethodHeader:Position.Column - 1,
+		      (int) MethodBody:epos.Line, (int) MethodBody:epos.Column,
+		      current_attr, ret_buffer, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		} };
+		  tree := mmethod (NoTree, MethodHeader:attr, MethodHeader:ident,
+			MethodHeader:Position, MethodHeader:tree,
+			MethodHeader:throws, MethodBody:tree,
+			MethodHeader:type, MethodHeader:array); } .
+
+MethodHeader	= <
+		= Type get_type_1 MethodDeclarator ThrowsOpt
+		{ tree := MethodDeclarator:tree; attr := 0L;
+		  type := Type:tree; throws := ThrowsOpt:tree;
+		  Position := MethodDeclarator:Position; } .
+		= Modifiers Type get_type_2 MethodDeclarator ThrowsOpt
+		{ tree := MethodDeclarator:tree;
+		  type := Type:tree; throws := ThrowsOpt:tree;
+		  Position := MethodDeclarator:Position; } .
+> .
+MethodDeclarator	= <
+		= Identifier '(' FormalParameterListOpt ')'
+		{ array := dnotype;
+		  Position := Identifier:Position; } .
+		= MethodDeclarator '[' ']'
+		{ array := marray_type (MethodDeclarator:array);
+		  Position := MethodDeclarator:Position; } .
+> .
+MethodBody	= <
+		= Block .
+		= ';'
+		{ epos := ';':Position; tree := mnull_stmt (); } .
+> .
+FormalParameterListOpt	= <
+		=
+		{ tree := dnodecl; } .
+		= FormalParameterList
+		{ tree := ReverseTree (FormalParameterList:tree); } .
+> .
+FormalParameterList	= <
+		= FormalParameter
+		{ tree := { tree = FormalParameter:tree;
+			tree->\parameter.next = dnodecl; }; } .
+		= FormalParameterList ',' FormalParameter
+		{ tree := { tree = FormalParameter:tree;
+			tree->\parameter.next = FormalParameterList:tree; }; } .
+> .
+FormalParameter	= <
+		= Type id: VariableDeclaratorId
+		{ tree := mparameter (NoTree, 0L, Type:tree, id:ident,
+			id:Position, id:tree); } .
+		= final Type id: VariableDeclaratorId
+		{ tree := mparameter (NoTree, PAF_FINAL, Type:tree, id:ident,
+			id:Position, id:tree); } .
+> .
+ThrowsOpt	= <
+		=
+		{ tree := dnotype_name; } .
+		= throws ClassTypeList
+		{ tree := ReverseTree (ClassTypeList:tree); } .
+> .
+ClassTypeList	= <
+		= ClassType
+		{ tree := mtype_name (dnotype_name, ClassType:tree); } .
+		= ClassTypeList ',' ClassType
+		{ tree := mtype_name (ClassTypeList:tree, ClassType:tree); } .
+> .
+ClassInitializer	= <
+		= Block
+		{ tree := minitializer (NoTree, Block:tree); } .
+		= static Block
+		{ tree := mstatic_initializer (NoTree, Block:tree); } .
+> .
+ConstructorDeclaration	= <
+		= id: ConstructorDeclarator ThrowsOpt ConstructorBody
+		{ => { if (hl >= 0) { current_ident = GetCStr (id:ident);
+		   to_types (id:tree, arg_types_buffer);
+		   to_names (id:tree, args_buffer);
+		   current_attr = PAF_PRIVATE;
+		   put_symbol (PAF_MBR_FUNC_DEF, current_class, current_ident, current_file,
+		      (int) id:Position.Line, (int) id:Position.Column - 1,
+		      (int) ConstructorBody:epos.Line, (int) ConstructorBody:epos.Column,
+		      current_attr | PAF_CONSTRUCTOR, NIL, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		   put_symbol (PAF_MBR_FUNC_DCL, current_class, current_ident, current_file,
+		      (int) id:Position.Line, (int) id:Position.Column - 1,
+		      (int) ConstructorBody:epos.Line, (int) ConstructorBody:epos.Column,
+		      current_attr | PAF_CONSTRUCTOR, NIL, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		} };
+		  tree := mconstructor (NoTree, 0L, id:ident,
+			id:Position, id:tree, ThrowsOpt:tree,
+			mcompound_stmt (ConstructorBody:tree)); } .
+		= Modifiers id: ConstructorDeclarator ThrowsOpt ConstructorBody
+		{ => { if (hl >= 0) { current_ident = GetCStr (id:ident);
+		   to_types (id:tree, arg_types_buffer);
+		   to_names (id:tree, args_buffer);
+		   current_attr = Modifiers:attr;
+		   if ((current_attr & (PAF_PRIVATE | PAF_PROTECTED | PAF_PUBLIC)) == 0L)
+		      current_attr |= PAF_PRIVATE;
+		   put_symbol (PAF_MBR_FUNC_DEF, current_class, current_ident, current_file,
+		      (int) id:Position.Line, (int) id:Position.Column - 1,
+		      (int) ConstructorBody:epos.Line, (int) ConstructorBody:epos.Column,
+		      current_attr | PAF_CONSTRUCTOR, NIL, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		   put_symbol (PAF_MBR_FUNC_DCL, current_class, current_ident, current_file,
+		      (int) id:Position.Line, (int) id:Position.Column - 1,
+		      (int) ConstructorBody:epos.Line, (int) ConstructorBody:epos.Column,
+		      current_attr | PAF_CONSTRUCTOR, NIL, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		} };
+		  tree := mconstructor (NoTree, Modifiers:attr, id:ident,
+			id:Position, id:tree, ThrowsOpt:tree,
+			mcompound_stmt (ConstructorBody:tree)); } .
+> .
+ConstructorDeclarator	= SimpleName: Identifier '(' FormalParameterListOpt ')'
+		{ Position := SimpleName:Position; } .
+
+ConstructorBody	= <
+		= '{' '}'
+		{ tree := dnostatement;
+		  epos := '}':Position; } .
+		= '{' BlockStatements '}'
+		{ tree := ReverseTree (BlockStatements:tree);
+		  epos := '}':Position; } .
+		= '{' ExplicitConstructorInvocation '}'
+		{ tree := { tree = ExplicitConstructorInvocation:tree;
+			tree->statement.next = dnostatement; };
+		  epos := '}':Position; } .
+		= '{' ExplicitConstructorInvocation BlockStatements '}'
+		{ tree := { tree = ExplicitConstructorInvocation:tree;
+		   tree->statement.next = ReverseTree (BlockStatements:tree); };
+		  epos := '}':Position; } .
+> .
+ExplicitConstructorInvocation	= <
+		= super '(' ArgumentListOpt ')' ';'
+		{ tree := mstatement (dnostatement, mexpression_stmt (mcall
+		('(':Position, msuper (super:Position), ArgumentListOpt:tree))); } .
+		= this '(' ArgumentListOpt ')' ';'
+		{ tree := mstatement (dnostatement, mexpression_stmt (mcall
+		('(':Position, mthis (this:Position), ArgumentListOpt:tree))); } .
+> .
+InterfaceDeclaration	= <
+		= interface Identifier
+		{ => if (hl >= 0) push (Identifier:ident); }
+		  ExtendsInterfacesOpt InterfaceBody
+		{ => { if (hl >= 0) {
+		   current_attr = PAF_PRIVATE;
+		   put_symbol (PAF_CLASS_DEF, top (), current_class, current_file,
+		      (int) Identifier:Position.Line, (int) Identifier:Position.Column - 1,
+		      (int) InterfaceBody:epos.Line, (int) InterfaceBody:epos.Column,
+		      current_attr | PAF_INTERFACE, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+		   pop (); } };
+		  tree := minterface (NoTree, 0L,
+			Identifier:ident, Identifier:Position,
+			InterfaceBody:tree, ExtendsInterfacesOpt:tree); } .
+		= Modifiers interface Identifier
+		{ => if (hl >= 0) push (Identifier:ident); }
+		  ExtendsInterfacesOpt InterfaceBody
+		{ => { if (hl >= 0) {
+		   current_attr = Modifiers:attr;
+		   if ((current_attr & (PAF_PRIVATE | PAF_PROTECTED | PAF_PUBLIC)) == 0L)
+		      current_attr |= PAF_PRIVATE;
+		   put_symbol (PAF_CLASS_DEF, top (), current_class, current_file,
+		      (int) Identifier:Position.Line, (int) Identifier:Position.Column - 1,
+		      (int) InterfaceBody:epos.Line, (int) InterfaceBody:epos.Column,
+		      current_attr | PAF_INTERFACE, NIL, NIL, NIL, NIL, 0, 0, 0, 0);
+		   pop (); } };
+		  tree := minterface (NoTree, Modifiers:attr,
+			Identifier:ident, Identifier:Position,
+			InterfaceBody:tree, ExtendsInterfacesOpt:tree); } .
+> .
+ExtendsInterfacesOpt	= <
+		=
+		{ tree := dnotype_name; } .
+		= extends ExtendsInterfaces
+		{ tree := ReverseTree (ExtendsInterfaces:tree);
+		  => { if (hl >= 0) put_extends (tree); }; } .
+> .
+ExtendsInterfaces	= <
+		= InterfaceType
+		{ tree := mtype_name (dnotype_name, InterfaceType:tree); } .
+		= ExtendsInterfaces ',' InterfaceType
+		{ tree := mtype_name (ExtendsInterfaces:tree, InterfaceType:tree); } .
+> .
+InterfaceBody	= '{' InterfaceMemberDeclarations '}'
+		{ tree := ReverseTree (InterfaceMemberDeclarations:tree);
+		  epos := '}':Position; } .
+
+InterfaceMemberDeclarations	= <
+		=
+		{ tree := dnofield; } .
+		= InterfaceMemberDeclarations InterfaceMemberDeclaration
+		{ tree := { tree = InterfaceMemberDeclaration:tree;
+		     tree->field.next = InterfaceMemberDeclarations:tree; }; } .
+> .
+InterfaceMemberDeclaration	= <
+   ConstantDeclaration		= FieldDeclaration .
+   AbstractMethodDeclaration	= MethodHeader ';'
+		{ => { if (hl >= 0) { current_ident = GetCStr (MethodHeader:ident);
+		   to_types (MethodHeader:type, ret_buffer);
+		   to_types (MethodHeader:tree, arg_types_buffer);
+		   to_names (MethodHeader:tree, args_buffer);
+		   put_symbol (PAF_MBR_FUNC_DEF, current_class, current_ident, current_file,
+		      (int) MethodHeader:Position.Line, (int) MethodHeader:Position.Column - 1,
+		      (int) ';':Position.Line, (int) ';':Position.Column,
+		      current_attr, ret_buffer, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		   put_symbol (PAF_MBR_FUNC_DCL, current_class, current_ident, current_file,
+		      (int) MethodHeader:Position.Line, (int) MethodHeader:Position.Column - 1,
+		      (int) ';':Position.Line, (int) ';':Position.Column,
+		      current_attr, ret_buffer, arg_types_buffer,
+		      args_buffer, NIL, 0, 0, 0, 0);
+		} };
+		  tree := mmethod (NoTree, MethodHeader:attr, MethodHeader:ident,
+			MethodHeader:Position, MethodHeader:tree,
+			MethodHeader:throws, dnostatement,
+			MethodHeader:type, MethodHeader:array); } .
+		= ClassDeclaration .
+		= InterfaceDeclaration .
+> .
+VariableInitializerOpt	= <
+		=
+		{ tree := dnoexpression; } .
+		= '=' VariableInitializer .
+> .
+VariableInitializer	= <
+			= Expression .
+   ArrayInitializer	= '{' VariableInitializersOpt '}'
+		{ tree := maggregate ('{':Position, VariableInitializersOpt:tree); } .
+> .
+VariableInitializersOpt	= <
+		= CommaOpt
+		{ tree := dnoexpression_l; } .
+		= VariableInitializers CommaOpt
+		{ tree := ReverseTree (VariableInitializers:tree); } .
+> .
+VariableInitializers	= <
+		= VariableInitializer
+		{ tree := mexpression (dnoexpression_l, VariableInitializer:tree); } .
+		= VariableInitializers ',' VariableInitializer
+		{ tree := mexpression (VariableInitializers:tree, VariableInitializer:tree); } .
+> .
+CommaOpt	= <
+		= .
+		= ',' .
+> .
+ArrayInitializerOpt	= <
+		=
+		{ tree := dnoexpression; } .
+		= ArrayInitializer .
+> .
+Block		= <
+		= '{' '}'
+		{ tree := mcompound_stmt (dnostatement);
+		  epos := '}':Position; } .
+		= '{' BlockStatements '}'
+		{ tree := mcompound_stmt (ReverseTree (BlockStatements:tree));
+		  epos := '}':Position; } .
+> .
+BlockStatements	= <
+		= BlockStatement
+		{ tree := mstatement (dnostatement, BlockStatement:tree); } .
+		= BlockStatements BlockStatement
+		{ tree := mstatement (BlockStatements:tree, BlockStatement:tree); } .
+> .
+BlockStatement		= <
+   LocalVariableDeclarationStatement
+			= LocalVariableDeclaration ';' .
+			= ClassDeclaration
+		{ tree := { tree = mtype_decl_stmt (ClassDeclaration:tree);
+			ClassDeclaration:tree->type_decl.next = dnofield; }; } .
+			= InterfaceDeclaration
+		{ tree := { tree = mtype_decl_stmt (InterfaceDeclaration:tree);
+			InterfaceDeclaration:tree->type_decl.next = dnofield; }; } .
+   Statement		= <
+			= StatementWithoutTrailingSubstatement .
+      LabeledStatement	= Identifier ':' Statement
+		{ tree := mlabeled_stmt (Identifier:ident, Identifier:Position, Statement:tree); } .
+      IfThenStatement	= if '(' Expression ')' Statement
+		{ tree := mif_stmt (Expression:tree, Statement:tree); } .
+      IfThenElseStatement
+			= if '(' Expression ')' StatementNoShortIf else s2: Statement
+		{ tree := mif_else_stmt (Expression:tree, StatementNoShortIf:tree, s2: tree); } .
+      WhileStatement	= while '(' Expression ')' Statement
+		{ tree := mwhile_stmt (Expression:tree, Statement:tree); } .
+      ForStatement	= for '(' ForInit ';' ExpressionOpt ';' ForUpdate ')' Statement
+		{ tree := mfor_stmt (ForInit:tree, ExpressionOpt:tree, ForUpdate:tree, Statement:tree); } .
+   > .
+> .
+StatementNoShortIf	= <
+			= StatementWithoutTrailingSubstatement .
+   LabeledStatementNoShortIf
+			= Identifier ':' StatementNoShortIf
+		{ tree := mlabeled_stmt (Identifier:ident, Identifier:Position, StatementNoShortIf:tree); } .
+   IfThenElseStatementNoShortIf
+			= if '(' Expression ')' StatementNoShortIf else s2: StatementNoShortIf
+		{ tree := mif_else_stmt (Expression:tree, StatementNoShortIf:tree, s2: tree); } .
+   WhileStatementNoShortIf
+			= while '(' Expression ')' StatementNoShortIf
+		{ tree := mwhile_stmt (Expression:tree, StatementNoShortIf:tree); } .
+   ForStatementNoShortIf= for '(' ForInit ';' ExpressionOpt ';' ForUpdate ')' StatementNoShortIf
+		{ tree := mfor_stmt (ForInit:tree, ExpressionOpt:tree, ForUpdate:tree, StatementNoShortIf:tree); } .
+> .
+StatementWithoutTrailingSubstatement	= <
+			= Block .
+   EmtpyStatement	= ';'
+		{ tree := mnull_stmt (); } .
+   ExpressionStatement	= StatementExpression ';'
+		{ tree := mexpression_stmt (StatementExpression:tree); } .
+   SwitchStatement	= switch '(' Expression ')' SwitchBlock
+		{ tree := mswitch_stmt (Expression:tree, SwitchBlock:tree); } .
+   DoStatement		= do Statement while '(' Expression ')' ';'
+		{ tree := mdo_stmt (Statement:tree, Expression:tree); } .
+   BreakStatement	= <
+			= break ';'
+		{ tree := mbreak_stmt (); } .
+			= break Identifier ';'
+		{ tree := mbreak_id_stmt (mident (Identifier:Position, Identifier:ident)); } .
+   > .
+   ContinueStatement	= <
+			= continue ';'
+		{ tree := mcontinue_stmt (); } .
+			= continue Identifier ';'
+		{ tree := mcontinue_id_stmt (mident (Identifier:Position, Identifier:ident)); } .
+   > .
+   ReturnStatement	= <
+			= return ';'
+		{ tree := mreturn_stmt (); } .
+			= return Expression ';'
+		{ tree := mreturn_expr_stmt (Expression:tree); } .
+   > .
+   ThrowStatement	= throw Expression ';'
+		{ tree := mthrow_stmt (Expression:tree); } .
+   SynchronizedStatement= synchronized '(' Expression ')' Block
+		{ tree := msynchronized_stmt (Expression:tree, Block:tree); } .
+   TryStatement		= <
+			= try Block Catches
+		{ tree := mtry_stmt (Block:tree, ReverseTree (Catches:tree), mnull_stmt ()); } .
+			= try Block CatchesOpt Finally
+		{ tree := mtry_stmt (Block:tree, CatchesOpt:tree, Finally:tree); } .
+   > .
+> .
+StatementExpression	= <
+		= Assignment .
+		= '++' cExpression
+		{ tree := munary ('++':Position, cExpression:tree, pre_incr); } .
+		= '--' cExpression
+		{ tree := munary ('--':Position, cExpression:tree, pre_decr); } .
+		= cExpression '++' PREC POST_OP
+		{ tree := munary ('++':Position, cExpression:tree, post_incr); } .
+		= cExpression '--' PREC POST_OP
+		{ tree := munary ('--':Position, cExpression:tree, post_decr); } .
+		= MethodInvocation .
+		= ClassInstanceCreationExpression .
+> .
+SwitchBlock	= <
+		= '{' '}'
+		{ tree := dnoswitch; } .
+		= '{' SwitchBlockStatementGroups '}'
+		{ tree := ReverseTree (SwitchBlockStatementGroups:tree); } .
+		= '{' SwitchLabels '}'
+		{ tree := ReverseTree (mswitch_ (dnoswitch,
+			ReverseTree (SwitchLabels:tree), dnostatement)); } .
+		= '{' SwitchBlockStatementGroups SwitchLabels '}'
+		{ tree := ReverseTree (mswitch_ (SwitchBlockStatementGroups:tree,
+			ReverseTree (SwitchLabels:tree), dnostatement)); } .
+> .
+SwitchBlockStatementGroups	= <
+		= SwitchBlockStatementGroup
+		{ tree := { tree = SwitchBlockStatementGroup:tree;
+			tree->switch_.next = dnoswitch; }; } .
+		= SwitchBlockStatementGroups SwitchBlockStatementGroup
+		{ tree := { tree = SwitchBlockStatementGroup:tree;
+		    tree->switch_.next = SwitchBlockStatementGroups:tree; }; } .
+> .
+SwitchBlockStatementGroup	= SwitchLabels BlockStatements
+		{ tree := mswitch_ (NoTree, ReverseTree (SwitchLabels:tree), ReverseTree (BlockStatements:tree)); } .
+
+SwitchLabels	= <
+		= SwitchLabel
+		{ tree := mexpression (dnoexpression_l, SwitchLabel:tree); } .
+		= SwitchLabels SwitchLabel
+		{ tree := mexpression (SwitchLabels:tree, SwitchLabel:tree); } .
+> .
+SwitchLabel	= <
+		= case ConstantExpression: Expression ':' .
+		= default ':'
+		{ tree := dnoexpression; } .
+> .
+ForInit		= <
+		=
+		{ tree := dnostatement; } .
+		= StatementExpressionList
+		{ tree := ReverseTree (StatementExpressionList:tree); } .
+		= LocalVariableDeclaration
+		{ tree := mstatement (dnostatement, LocalVariableDeclaration:tree); } .
+> .
+ExpressionOpt	= <
+		=
+		{ tree := dnoexpression; } .
+		= Expression .
+> .
+ForUpdate	= <
+		=
+		{ tree := dnostatement; } .
+		= StatementExpressionList
+		{ tree := ReverseTree (StatementExpressionList:tree); } .
+> .
+StatementExpressionList	= <
+		= StatementExpression
+		{ tree := mstatement (dnostatement,
+			mexpression_stmt (StatementExpression:tree)); } .
+		= StatementExpressionList ',' StatementExpression
+		{ tree := mstatement (StatementExpressionList:tree,
+			mexpression_stmt (StatementExpression:tree)); } .
+> .
+CatchesOpt	= <
+		=
+		{ tree := dnocatch; } .
+		= Catches
+		{ tree := ReverseTree (Catches:tree); } .
+> .
+Catches		= <
+		= CatchClause
+		{ tree := { tree = CatchClause:tree;
+			tree->catch.next = dnocatch; }; } .
+		= Catches CatchClause
+		{ tree := { tree = CatchClause:tree;
+			tree->catch.next = Catches:tree; }; } .
+> .
+CatchClause	= catch '(' FormalParameter ')' Block
+		{ tree := { FormalParameter:tree->parameter.next = dnodecl;
+			tree = mcatch (NoTree, FormalParameter:tree, Block:tree); }; } .
+
+Finally		= finally Block .
+
+Primary		= <
+   PrimaryNoNewArray	= <
+      Literal		= <
+		= IntegerLiteral
+		{ tree := mint_literal (IntegerLiteral:Position, IntegerLiteral:value); } .
+		= LongLiteral
+		{ tree := mlong_literal (LongLiteral:Position, LongLiteral:value); } .
+		= FloatingPointLiteral
+		{ tree := mfloat_literal (FloatingPointLiteral:Position, FloatingPointLiteral:value); } .
+		= DoubleLiteral
+		{ tree := mfloat_literal (DoubleLiteral:Position, DoubleLiteral:value); } .
+		= CharacterLiteral
+		{ tree := mchar_literal (CharacterLiteral:Position, CharacterLiteral:value); } .
+		= StringLiteral
+		{ tree := mstring_literal (StringLiteral:Position, StringLiteral:value); } .
+	 BooleanLiteral	= <
+		= true
+		{ tree := mbool_literal (true:Position, rtrue); } .
+		= false
+		{ tree := mbool_literal (false:Position, rfalse); } .
+	 > .
+	 NullLiteral	= null
+		{ tree := mnull (null:Position); } .
+      > .
+		= this
+		{ tree := mthis (this:Position); } .
+		= '(' Expression ')' .
+      ClassInstanceCreationExpression
+		= new ClassType '(' ArgumentListOpt ')'
+		{ tree := mnew (new:Position, ClassType:tree, dnotype,
+			ArgumentListOpt:tree, dnoexpression); } .
+      AnonymousClass
+		= new ClassType '(' ArgumentListOpt ')'
+		{ => if (hl >= 0) push (i_anonymous); }
+		  ClassBody
+		{ tree := manonymous (new:Position, ClassType:tree,
+			ArgumentListOpt:tree, ClassBody:tree);
+		  => if (hl >= 0) pop (); } .
+      FieldAccess	= <
+		= Primary '.' Identifier
+		{ tree := mselect (Identifier:Position, Primary:tree, Identifier:ident); } .
+		= super '.' Identifier
+		{ tree := mselect (Identifier:Position, msuper (super:Position), Identifier:ident); } .
+      > .
+		= Name '.' class
+		{ tree := mget_class_of_expr (class:Position, Name:tree); } .
+		= super '.' class
+		{ tree := mget_class_of_expr (class:Position, msuper (super:Position)); } .
+		= PrimitiveType '.' class
+		{ tree := mget_class (class:Position, PrimitiveType:tree); } .
+		= void '.' class
+		{ tree := mget_class (class:Position, msimple_type (t_void)); } .
+		= Name '.' this
+		{ tree := mget_class_of_expr (this:Position, Name:tree); } .
+		= super '.' this
+		{ tree := mget_class_of_expr (this:Position, msuper (super:Position)); } .
+		= PrimitiveType '.' this
+		{ tree := mget_class (this:Position, PrimitiveType:tree); } .
+		= void '.' this
+		{ tree := mget_class (this:Position, msimple_type (t_void)); } .
+      MethodInvocation	= <
+		= Name '(' ArgumentListOpt ')'
+		{ tree := mcall ('(':Position, Name:tree, ArgumentListOpt:tree); } .
+		= Primary '.' Identifier '(' ArgumentListOpt ')'
+		{ tree := mcall ('(':Position, mselect (Identifier:Position,
+		     Primary:tree, Identifier:ident), ArgumentListOpt:tree); } .
+		= super '.' Identifier '(' ArgumentListOpt ')'
+		{ tree := mcall ('(':Position, mselect (Identifier:Position,
+		     msuper (super:Position), Identifier:ident), ArgumentListOpt:tree); } .
+      > .
+      ArrayAccess	= <
+		= Name '[' Expression ']'
+		{ tree := msubscript ('[':Position, Name:tree, Expression:tree); } .
+		= PrimaryNoNewArray '[' Expression ']'
+		{ tree := msubscript ('[':Position, PrimaryNoNewArray:tree, Expression:tree); } .
+      > .
+   > .
+   ArrayCreationExpression	= <
+		= new PrimitiveType DimExprs ArrayInitializerOpt
+		{ tree := mnew (new:Position, PrimitiveType:tree,
+			dnotype, ReverseTree (DimExprs:tree),
+			ArrayInitializerOpt:tree); } .
+		= new PrimitiveType DimExprs Dims ArrayInitializerOpt
+		{ tree := mnew (new:Position, PrimitiveType:tree,
+			Dims:tree, ReverseTree (DimExprs:tree),
+			ArrayInitializerOpt:tree); } .
+		= new PrimitiveType Dims ArrayInitializer
+		{ tree := mnew (new:Position, PrimitiveType:tree,
+			Dims:tree, dnoexpression_l, ArrayInitializer:tree); } .
+		= new ClassOrInterfaceType DimExprs ArrayInitializerOpt
+		{ tree := mnew (new:Position, ClassOrInterfaceType:tree,
+			dnotype, ReverseTree (DimExprs:tree),
+			ArrayInitializerOpt:tree); } .
+		= new ClassOrInterfaceType DimExprs Dims ArrayInitializerOpt
+		{ tree := mnew (new:Position, ClassOrInterfaceType:tree,
+			Dims:tree, ReverseTree (DimExprs:tree),
+			ArrayInitializerOpt:tree); } .
+		= new ClassOrInterfaceType Dims ArrayInitializer
+		{ tree := mnew (new:Position, ClassOrInterfaceType:tree,
+			Dims:tree, dnoexpression_l, ArrayInitializer:tree); } .
+   > .
+> .
+DimExprs	= <
+		= DimExpr
+		{ tree := mexpression (dnoexpression_l, DimExpr:tree); } .
+		= DimExprs DimExpr
+		{ tree := mexpression (DimExprs:tree, DimExpr:tree); } .
+> .
+DimExpr		= '[' Expression ']' .
+
+Dims		= <
+		= '[' ']'
+		{ tree := marray_type (dnotype); } .
+		= Dims '[' ']'
+		{ tree := marray_type (Dims:tree); } .
+> .
+ArgumentListOpt	= <
+		=
+		{ tree := dnoexpression_l; } .
+		= ArgumentList
+		{ tree := ReverseTree (ArgumentList:tree); } .
+> .
+ArgumentList	= <
+		= Expression
+		{ tree := mexpression (dnoexpression_l, Expression:tree); } .
+		= ArgumentList ',' Expression
+		{ tree := mexpression (ArgumentList:tree, Expression:tree); } .
+> .
+cExpression	= <
+		= Primary .
+		= Name .
+		= cExpression '++' PREC POST_OP
+		{ tree := munary ('++':Position, cExpression:tree, post_incr); } .
+		= cExpression '--' PREC POST_OP
+		{ tree := munary ('--':Position, cExpression:tree, post_decr); } .
+		= '++' cExpression
+		{ tree := munary ('++':Position, cExpression:tree, pre_incr); } .
+		= '--' cExpression
+		{ tree := munary ('--':Position, cExpression:tree, pre_decr); } .
+		= '+' cExpression PREC UNARY_OP
+		{ tree := munary ('+':Position, cExpression:tree, plus); } .
+		= '-' cExpression PREC UNARY_OP
+		{ tree := munary ('-':Position, cExpression:tree, negate); } .
+		= '~' cExpression
+		{ tree := munary ('~':Position, cExpression:tree, complement); } .
+		= '!' cExpression
+		{ tree := munary ('!':Position, cExpression:tree, not); } .
+
+   CastExpression	= <
+		= '(' PrimitiveType ')' cExpression PREC CAST
+		{ tree := mtype_cast ('(':Position, PrimitiveType:tree,
+			dnotype, cExpression:tree); } .
+		= '(' PrimitiveType Dims ')' cExpression PREC CAST
+		{ tree := mtype_cast ('(':Position, PrimitiveType:tree,
+			Dims:tree, cExpression:tree); } .
+		= '(' Expression ')' e2: cExpression PREC CAST
+		{ tree := mtype_cast ('(':Position, mnamed_type (Expression:tree),
+			dnotype, e2:tree); } .
+		= '(' Name Dims ')' cExpression PREC CAST
+		{ tree := mtype_cast ('(':Position, mnamed_type (Name:tree),
+			Dims:tree, cExpression:tree); } .
+   > .
+		= cExpression '*'   e2: cExpression
+		{ tree := mbinary ('*':Position, cExpression:tree, e2:tree, times); } .
+		= cExpression '/'   e2: cExpression
+		{ tree := mbinary ('/':Position, cExpression:tree, e2:tree, divide); } .
+		= cExpression '%'   e2: cExpression
+		{ tree := mbinary ('%':Position, cExpression:tree, e2:tree, modulo); } .
+		= cExpression '+'   e2: cExpression
+		{ tree := mbinary ('+':Position, cExpression:tree, e2:tree, plus); } .
+		= cExpression '-'   e2: cExpression
+		{ tree := mbinary ('-':Position, cExpression:tree, e2:tree, minus); } .
+		= cExpression '<<'  e2: cExpression
+		{ tree := mbinary ('<<':Position, cExpression:tree, e2:tree, lshift); } .
+		= cExpression '>>'  e2: cExpression
+		{ tree := mbinary ('>>':Position, cExpression:tree, e2:tree, rshift); } .
+		= cExpression '>>>' e2: cExpression
+		{ tree := mbinary ('>>>':Position, cExpression:tree, e2:tree, us_rshift); } .
+		= cExpression '<'   e2: cExpression
+		{ tree := mbinary ('<':Position, cExpression:tree, e2:tree, less); } .
+		= cExpression '>'   e2: cExpression
+		{ tree := mbinary ('>':Position, cExpression:tree, e2:tree, greater); } .
+		= cExpression '<='  e2: cExpression
+		{ tree := mbinary ('<=':Position, cExpression:tree, e2:tree, less_equal); } .
+		= cExpression '>='  e2: cExpression
+		{ tree := mbinary ('>=':Position, cExpression:tree, e2:tree, greater_equal); } .
+		= cExpression instanceof ReferenceType
+		{ tree := mtype_compare (instanceof:Position, cExpression:tree, ReferenceType:tree); } .
+		= cExpression '=='  e2: cExpression
+		{ tree := mbinary ('==':Position, cExpression:tree, e2:tree, equal); } .
+		= cExpression '!='  e2: cExpression
+		{ tree := mbinary ('!=':Position, cExpression:tree, e2:tree, not_equal); } .
+		= cExpression '&'   e2: cExpression
+		{ tree := mbinary ('&':Position, cExpression:tree, e2:tree, and); } .
+		= cExpression '^'   e2: cExpression
+		{ tree := mbinary ('^':Position, cExpression:tree, e2:tree, xor); } .
+		= cExpression '|'   e2: cExpression
+		{ tree := mbinary ('|':Position, cExpression:tree, e2:tree, or); } .
+		= cExpression '&&'  e2: cExpression
+		{ tree := mbinary ('&&':Position, cExpression:tree, e2:tree, and_and); } .
+		= cExpression '||'  e2: cExpression
+		{ tree := mbinary ('||':Position, cExpression:tree, e2:tree, or_or); } .
+		= cExpression '?'   e2: Expression ':' e3: cExpression
+		{ tree := mconditional ('?':Position, cExpression:tree, e2:tree, e3:tree); } .
+> .
+Expression	= <
+   AssignmentExpression	= <
+      ConditionalExpression	= cExpression .
+      Assignment	= LeftHandSide AssignmentOperator Expression
+		{ tree := massign (AssignmentOperator:Position, LeftHandSide:tree,
+			Expression:tree, AssignmentOperator:operator); } .
+   > .
+> .
+LeftHandSide	= <
+		= Name .
+		= FieldAccess .
+		= ArrayAccess .
+> .
+AssignmentOperator	 = <
+		= '='		{ operator := assignment; } .
+		= '*='		{ operator := times	; } .
+		= '/='		{ operator := divide	; } .
+		= '%='		{ operator := modulo	; } .
+		= '+='		{ operator := plus	; } .
+		= '-='		{ operator := minus	; } .
+		= '<<='		{ operator := lshift	; } .
+		= '>>='		{ operator := rshift	; } .
+		= '>>>='	{ operator := us_rshift	; } .
+		= '&='		{ operator := and	; } .
+		= '^='		{ operator := xor	; } .
+		= '|='		{ operator := or	; } .
+> .
+
+
+Identifier	: [ident: tIdent	] { ident := NoIdent		; } .
+IntegerLiteral	: [value: long		] { value := 0			; } .
+LongLiteral	: [value: long		] { value := 0			; } .
+FloatingPointLiteral
+		: [value: tStringRef	] { value := PutString ("", 0)	; } .
+DoubleLiteral	: [value: tStringRef	] { value := PutString ("", 0)	; } .
+CharacterLiteral: [value: tStringRef	] { value := PutString ("", 0)	; } .
+StringLiteral	: [value: tStringRef	] { value := PutString ("", 0)	; } .
+
+MODULE attributes
+
+PROPERTY SYN
+
+DECLARE
+
+ArgumentList
+ArgumentListOpt
+ArrayInitializerOpt
+ArrayType
+Block
+BlockStatement
+BlockStatements
+CatchClause
+Catches
+CatchesOpt
+ClassBody
+ClassBodyDeclaration
+ClassBodyDeclarations
+ClassDeclaration
+ClassInitializer
+ClassOrInterfaceType
+ClassType
+ClassTypeList
+ConstructorBody
+ConstructorDeclaration
+ConstructorDeclarator
+DimExpr
+DimExprs
+Dims
+ExplicitConstructorInvocation
+Expression
+ExpressionOpt
+ExtendsInterfaces
+ExtendsInterfacesOpt
+FieldDeclaration
+Finally
+ForInit
+ForUpdate
+FormalParameter
+FormalParameterList
+FormalParameterListOpt
+ImportDeclaration
+ImportDeclarations
+InterfaceBody
+InterfaceDeclaration
+InterfaceMemberDeclaration
+InterfaceMemberDeclarations
+InterfaceType
+InterfaceTypeList
+Interfaces
+LeftHandSide
+LocalVariableDeclaration
+LocalVariableDeclarator
+LocalVariableDeclarators
+MethodBody
+MethodDeclaration
+MethodDeclarator
+MethodHeader
+Name
+PackageDeclaration
+Primary
+PrimitiveType
+ReferenceType
+StatementExpression
+StatementExpressionList
+StatementNoShortIf
+StatementWithoutTrailingSubstatement
+Super
+SwitchBlock
+SwitchBlockStatementGroup
+SwitchBlockStatementGroups
+SwitchLabel
+SwitchLabels
+ThrowsOpt
+Type
+TypeDeclaration
+TypeDeclarations
+VariableDeclarator
+VariableDeclaratorId
+VariableDeclarators
+VariableInitializer
+VariableInitializerOpt
+VariableInitializers
+VariableInitializersOpt
+cExpression
+			= [tree: tTree] .
+
+Modifier
+Modifiers		= [attr: long] .
+
+Block
+MethodBody
+ConstructorBody
+InterfaceBody
+ClassBody		= [epos: tPosition] .
+
+ConstructorDeclarator
+VariableDeclaratorId	= [ident: tIdent] [Position: tPosition] .
+
+MethodDeclarator
+MethodHeader		= [ident: tIdent] [Position: tPosition] [array: tTree] .
+
+MethodHeader		= [attr: long] [type: tTree] [throws: tTree] .
+
+ClassType
+ClassOrInterfaceType
+Name			= [bpos: tPosition] [epos: tPosition] .
+
+AssignmentOperator	= [operator: int] [Position: tPosition] .
+
+END attributes
