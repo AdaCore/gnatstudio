@@ -156,6 +156,8 @@ package Codefix.Formal_Errors is
    function Move_With_To_Body
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Ada_List;
+   --  Move all use and with clauses to the body, if needed. Otherwise, their
+   --  are just deleted.
 
 private
 
@@ -174,7 +176,8 @@ private
    function Delete_With
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Name         : String) return Ada_List;
+      Name         : String;
+      Move_To      : File_Cursor := Null_File_Cursor) return Ada_List;
 
    Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
 
