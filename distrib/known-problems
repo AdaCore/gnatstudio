@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.0
 
+- Internal error when looking for the body of Unchecked_Deallocation
+  Problem:    If you right click on the work Unchecked_Deallocation in Ada
+              mode, and ask for its body, an internal error is reported
+  Workaround: Unchecked_Deallocation has no body, no need to look for it
+
 - Words containing underscores not selected entirely when double-clicking
   Problem:    If you double-click on a word that contains an underscore, only
               part of the word is selected.
