@@ -1,6 +1,25 @@
-with Glib; use Glib;
+-----------------------------------------------------------------------
+--                          G L I D E  I I                           --
+--                                                                   --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
-with Basic_Types; use Basic_Types;
+with Basic_Types;     use Basic_Types;
 
 package VCS_View_Pixmaps is
 
@@ -17,14 +36,14 @@ package VCS_View_Pixmaps is
 
 private
 
-   Unknown_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Unknown_Xpm, "unknown_xpm");
+   Unknown_File_Xpm : aliased Pixmap_Array;
+   pragma Import (C, Unknown_File_Xpm, "unknown_file_xpm");
 
    Removed_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Removed_Xpm, "unknown_xpm");
+   pragma Import (C, Removed_Xpm, "unknown_file_xpm");
 
    Not_Registered_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Not_Registered_Xpm, "unknown_xpm");
+   pragma Import (C, Not_Registered_Xpm, "unknown_file_xpm");
 
    Modified_Xpm : aliased Pixmap_Array;
    pragma Import (C, Modified_Xpm, "modified_xpm");
