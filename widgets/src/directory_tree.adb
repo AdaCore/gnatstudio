@@ -1064,14 +1064,16 @@ package body Directory_Tree is
       Item         : Gtk_Menu_Item;
       Selected_Row : Gint;
       Selected_Col : Gint;
-      Is_Valid     : Boolean;
+      Is_Valid     : Boolean := False;
       Menu         : Gtk_Menu;
 
    begin
-      Get_Selection_Info
-        (Selector.Directory,
-         Gint (Get_X (Event)), Gint (Get_Y (Event)),
-         Selected_Row, Selected_Col, Is_Valid);
+      if Get_Event_Type (Event) in Button_Press .. Button_Release then
+         Get_Selection_Info
+           (Selector.Directory,
+            Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            Selected_Row, Selected_Col, Is_Valid);
+      end if;
 
       if Is_Valid then
          Select_Row (Selector.Directory, Selected_Row, Selected_Col);
