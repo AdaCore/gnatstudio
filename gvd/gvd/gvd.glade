@@ -78,6 +78,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_recent1</name>
+	    <sensitive>False</sensitive>
 	    <label>Open Recent</label>
 	    <right_justify>False</right_justify>
 	  </widget>
@@ -85,6 +86,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_core_dump1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_core_dump1_activate</handler>
@@ -117,6 +119,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_session1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_N</key>
@@ -135,6 +138,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>save_session_as1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_S</key>
@@ -159,6 +163,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>attach_to_process1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_attach_to_process1_activate</handler>
@@ -172,6 +177,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>detach_process1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_detach_process1_activate</handler>
@@ -191,6 +197,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>print_graph1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_P</key>
@@ -209,6 +216,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>change_directory1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_change_directory1_activate</handler>
@@ -228,6 +236,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>close1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_W</key>
@@ -246,6 +255,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>restart1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_restart1_activate</handler>
@@ -289,6 +299,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>undo3</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_z</key>
@@ -306,6 +317,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>redo1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_y</key>
@@ -329,6 +341,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>cut1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_SHIFT_MASK</modifiers>
 	      <key>GDK_Delete</key>
@@ -346,6 +359,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>copy1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_Insert</key>
@@ -363,6 +377,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>paste1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_SHIFT_MASK</modifiers>
 	      <key>GDK_Insert</key>
@@ -380,6 +395,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>clear1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_U</key>
@@ -397,6 +413,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>delete1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_delete1_activate</handler>
@@ -415,6 +432,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>select_all1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_A</key>
@@ -451,6 +469,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>gdb_settings1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_gdb_settings1_activate</handler>
@@ -470,6 +489,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>save_options1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_save_options1_activate</handler>
@@ -484,7 +504,6 @@
       <widget>
 	<class>GtkMenuItem</class>
 	<name>view1</name>
-	<sensitive>False</sensitive>
 	<label>View</label>
 	<right_justify>False</right_justify>
 
@@ -495,6 +514,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>execution_window1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_9</key>
@@ -518,6 +538,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>gdb_console1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_1</key>
@@ -536,6 +557,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>source_window1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_2</key>
@@ -554,6 +576,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>data_window1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_3</key>
@@ -572,6 +595,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>machine_code_window1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_4</key>
@@ -620,6 +644,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>run_again1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_F3</key>
@@ -657,6 +682,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>run_in_execution_window1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_run_in_execution_window1_activate</handler>
@@ -748,6 +774,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>until1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_F7</key>
@@ -808,6 +835,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>continue_without_signal1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_SHIFT_MASK</modifiers>
 	      <key>GDK_F9</key>
@@ -832,6 +860,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>kill1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_F4</key>
@@ -868,6 +897,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>abort1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_\</key>
@@ -888,7 +918,6 @@
       <widget>
 	<class>GtkMenuItem</class>
 	<name>commands1</name>
-	<sensitive>False</sensitive>
 	<label>Commands</label>
 	<right_justify>False</right_justify>
 
@@ -899,6 +928,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>command_history1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_command_history1_activate</handler>
@@ -917,6 +947,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>previous1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_Up</key>
@@ -934,6 +965,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>next2</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_Down</key>
@@ -957,6 +989,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>find_backward1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_B</key>
@@ -974,6 +1007,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>find_forward1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_S</key>
@@ -991,6 +1025,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>quit_search1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_Escape</key>
@@ -1014,6 +1049,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>complete1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_Tab</key>
@@ -1031,6 +1067,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>apply1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>0</modifiers>
 	      <key>GDK_Return</key>
@@ -1054,6 +1091,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>clear_line1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_u</key>
@@ -1071,6 +1109,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>clear_window1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK | GDK_SHIFT_MASK</modifiers>
 	      <key>GDK_u</key>
@@ -1094,6 +1133,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>define_command1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_define_command1_activate</handler>
@@ -1106,6 +1146,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>edit_buttons1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_edit_buttons1_activate</handler>
@@ -1143,6 +1184,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>registers1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_registers1_activate</handler>
@@ -1169,6 +1211,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>processes1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_processes1_activate</handler>
@@ -1182,6 +1225,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>signals1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_signals1_activate</handler>
@@ -1197,7 +1241,6 @@
       <widget>
 	<class>GtkMenuItem</class>
 	<name>source1</name>
-	<sensitive>False</sensitive>
 	<label>Source</label>
 	<right_justify>False</right_justify>
 
@@ -1208,6 +1251,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>lookup_1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_/</key>
@@ -1225,6 +1269,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>find_1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_.</key>
@@ -1242,6 +1287,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>find_2</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_,</key>
@@ -1265,6 +1311,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>find_words_only1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_W</key>
@@ -1283,6 +1330,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>find_case_sensitive1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_I</key>
@@ -1307,6 +1355,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>display_line_numbers1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_N</key>
@@ -1325,6 +1374,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>display_machine_code1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_4</key>
@@ -1348,6 +1398,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>edit_source1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK | GDK_SHIFT_MASK</modifiers>
 	      <key>GDK_v</key>
@@ -1365,6 +1416,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>reload_source1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK | GDK_SHIFT_MASK</modifiers>
 	      <key>GDK_l</key>
@@ -1407,6 +1459,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>edit_displays1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_edit_displays1_activate</handler>
@@ -1419,6 +1472,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>edit_watchpoints1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_edit_watchpoints1_activate</handler>
@@ -1431,6 +1485,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>examine_memory1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_examine_memory1_activate</handler>
@@ -1449,6 +1504,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>print_1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_=</key>
@@ -1466,6 +1522,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>display_1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_-</key>
@@ -1489,6 +1546,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>detect_aliases1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_A</key>
@@ -1513,6 +1571,7 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>display_local_variables1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_L</key>
@@ -1531,6 +1590,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>display_arguments1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_U</key>
@@ -1548,6 +1608,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>more_status_display1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_more_status_display1_activate</handler>
@@ -1566,6 +1627,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>align_on_grid1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_G</key>
@@ -1583,6 +1645,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>rotate_graph1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_R</key>
@@ -1600,6 +1663,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>layout_graph1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_Y</key>
@@ -1623,6 +1687,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>refresh1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_L</key>
@@ -1652,6 +1717,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>overview1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_overview1_activate</handler>
@@ -1664,6 +1730,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>on_item1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_SHIFT_MASK</modifiers>
 	      <key>GDK_F1</key>
@@ -1681,6 +1748,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>on_window1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_on_window1_activate</handler>
@@ -1699,6 +1767,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>what_now_1</name>
+	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
 	      <key>GDK_F1</key>
@@ -1716,6 +1785,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>tip_of_the_day1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_tip_of_the_day1_activate</handler>
@@ -1734,6 +1804,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>odd_reference1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_odd_reference1_activate</handler>
@@ -1746,6 +1817,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>odd_news1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_odd_news1_activate</handler>
@@ -1758,6 +1830,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>gdb_reference1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_gdb_reference1_activate</handler>
@@ -1776,6 +1849,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>odd_license1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_odd_license1_activate</handler>
@@ -1788,6 +1862,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>odd_www_page1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_odd_www_page1_activate</handler>
