@@ -18,21 +18,37 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;         use Glib;
-with Gdk.Color;    use Gdk.Color;
-with Gtk.Main;     use Gtk.Main;
-with Gtk.Widget;   use Gtk.Widget;
-with Gtk.Status_Bar; use Gtk.Status_Bar;
-with Gtk.Text;     use Gtk.Text;
-with Creation_Wizard; use Creation_Wizard;
-with Gtkada.Dialogs; use Gtkada.Dialogs;
-with Glide_Intl; use Glide_Intl;
-with Glide_Pkg;  use Glide_Pkg;
-with Hyper_Grep; use Hyper_Grep;
+with Glib;                  use Glib;
+with Gdk.Color;             use Gdk.Color;
+with Gtk.Label;             use Gtk.Label;
+with Gtk.Main;              use Gtk.Main;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Status_Bar;        use Gtk.Status_Bar;
+with Gtk.Text;              use Gtk.Text;
+with Gtkada.Dialogs;        use Gtkada.Dialogs;
+with Gtkada.File_Selection; use Gtkada.File_Selection;
 
-with GNAT.Expect; use GNAT.Expect;
-with GNAT.Regpat; use GNAT.Regpat;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Creation_Wizard;       use Creation_Wizard;
+with Glide_Intl;            use Glide_Intl;
+
+--  with Glide_Pkg;             use Glide_Pkg;
+with GVD.Main_Window;       use GVD.Main_Window;
+with GVD.Status_Bar;        use GVD.Status_Bar;
+with GVD.Process;           use GVD.Process;
+with Glide_Page;
+
+with Hyper_Grep;            use Hyper_Grep;
+with Vdiff_Pkg;             use Vdiff_Pkg;
+with Vdiff_Utils;           use Vdiff_Utils;
+with Diff_Utils;            use Diff_Utils;
+
+with GVD.Dialogs;           use GVD.Dialogs;
+
+with GNAT.Expect;           use GNAT.Expect;
+with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
+
+with Factory_Data;          use Factory_Data;
 
 package body Glide_Menu is
 
@@ -137,6 +153,24 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Project->Build menu
+
+   procedure On_Run
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Run->Run menu
+
+   procedure On_Debug
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Run->Debug menu
+
+   procedure On_Compare_Two_Files
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Tools->Compare->Two Files menu
 
    procedure On_Manual
      (Object : Data_Type_Access;
@@ -332,7 +366,7 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top  : constant Glide_Access := Glide_Access (Object);
+      Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
       Grep : Hyper_Grep_Access;
       Id   : Message_Id;
 
@@ -340,7 +374,8 @@ package body Glide_Menu is
       Gtk_New (Grep, Object.all'Access);
       Show_All (Grep);
       Main;
-      Id := Push (Top.Statusbar, 1, "end of search.");
+      --  Id := Push (Top.Statusbar, 1, "end of search.");
+      Print_Message (Top.Statusbar, Help, "end of search.");
    end On_Search_Files;
 
    --------------
@@ -352,26 +387,32 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top     : constant Glide_Access := Glide_Access (Object);
-      Cmd     : constant String := "./build_gvd";  --  ???
-      Fd      : Process_Descriptor;
-      Matched : Match_Array (0 .. 3);
-      Result  : Expect_Match;
-      Args    : constant Argument_List_Access :=
+      Top       : constant GVD_Main_Window := GVD_Main_Window (Object);
+      --  Top       : constant Glide_Access := Glide_Access (Object);
+
+      Cmd       : constant String := "./build_gvd";  --  ???
+      Fd        : Process_Descriptor;
+      Matched   : Match_Array (0 .. 3);
+      Result    : Expect_Match;
+      Args      : constant Argument_List_Access :=
         Argument_String_To_List (Cmd);
-      Matcher : constant Pattern_Matcher := Compile
+      Matcher   : constant Pattern_Matcher := Compile
         (ASCII.SUB & "completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      File    : constant Pattern_Matcher := Compile ("([^:]*):(\d+):(\d+:)?");
-      Dead    : Boolean;
-      Id      : Message_Id;
-      Last    : Natural;
+      File      : constant Pattern_Matcher :=
+        Compile ("([^:]*):(\d+):(\d+:)?");
+      Dead      : Boolean;
+      Id        : Message_Id;
+      Last      : Natural;
       Highlight : Gdk_Color;
+      Console   : constant Gtk_Text :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
+      --  Top.Console;
 
    begin
       Highlight := Parse (Highlight_File);
       Alloc (Get_Default_Colormap, Highlight);
-      Insert (Top.Console, Chars => Cmd & ASCII.LF);
+      Insert (Console, Chars => Cmd & ASCII.LF);
       Non_Blocking_Spawn
         (Fd, Args (Args'First).all, Args.all,
          Err_To_Out  => True);
@@ -398,7 +439,7 @@ package body Glide_Menu is
 
                if Matched (0) /= No_Match then
                   Insert
-                    (Top.Console,
+                    (Console,
                      Chars => S (S'First .. Matched (1).First - 1));
 
                   if Matched (3) = No_Match then
@@ -408,26 +449,88 @@ package body Glide_Menu is
                   end if;
 
                   Insert
-                    (Top.Console,
+                    (Console,
                      Fore => Highlight,
                      Chars => S (Matched (1).First .. Last));
-                  Insert (Top.Console, Chars => S (Last + 1 .. S'Last));
+                  Insert (Console, Chars => S (Last + 1 .. S'Last));
 
                else
-                  Insert (Top.Console, Chars => S);
+                  Insert (Console, Chars => S);
                end if;
             else
-               Id := Push (Top.Statusbar, 1, S (S'First + 1 .. S'Last));
+               --  Id := Push (Top.Statusbar, 1, S (S'First + 1 .. S'Last));
+               Print_Message (Top.Statusbar, Help, S (S'First + 1 .. S'Last));
             end if;
          end;
       end loop;
 
    exception
       when Process_Died =>
-         Insert (Top.Console, Chars => Expect_Out (Fd));
-         Id := Push (Top.Statusbar, 1, "completed.");
+         Insert (Console, Chars => Expect_Out (Fd));
+         --  Id := Push (Top.Statusbar, 1, "completed.");
+         Print_Message (Top.Statusbar, Help, "completed.");
          Close (Fd);
    end On_Build;
+
+   ------------
+   -- On_Run --
+   ------------
+
+   procedure On_Run
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Arguments : constant String := Simple_Entry_Dialog
+        (Parent  => Object,
+         Title   => -"Arguments Selection",
+         Message => -"Enter the arguments to your application:",
+         Key     => "glide_run_arguments");
+
+   begin
+      if Arguments = ""
+        or else Arguments (Arguments'First) /= ASCII.NUL
+      then
+         null;
+      end if;
+   end On_Run;
+
+   --------------
+   -- On_Debug --
+   --------------
+
+   procedure On_Debug
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget) is
+   begin
+      --  GVD.Menu.On_Run (null, Action, Widget);
+      null;
+   end On_Debug;
+
+   --------------------------
+   -- On_Compare_Two_Files --
+   --------------------------
+
+   procedure On_Compare_Two_Files
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Vdiff  : Vdiff_Access;
+      Result : Diff_Occurrence_Link;
+      File1  : constant String := File_Selection_Dialog ("Select First File");
+      File2  : constant String := File_Selection_Dialog ("Select Second File");
+
+   begin
+      Result := Diff (File1, File2);
+      Gtk_New (Vdiff);
+      Set_Text (Vdiff.File_Label1, File1);
+      Set_Text (Vdiff.File_Label2, File2);
+      Fill_Diff_Lists (Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
+      Show_All (Vdiff);
+      --  ??? Free (Result);
+   end On_Compare_Two_Files;
 
    ---------------
    -- On_Manual --
@@ -537,27 +640,17 @@ package body Glide_Menu is
          Gtk_New (-"/_Project/Build Library", "", On_Build'Access),
 
          Gtk_New (-"/_Run", Item_Type => Branch),
-         Gtk_New (-"/_Run/Run...", "", null),
-         Gtk_New (-"/_Run/Attach To Process...", "", null),
-         Gtk_New (-"/_Run/Detach Process", "", null),
-         Gtk_New (-"/_Run/Open Core Dump...", "", null),
+         Gtk_New (-"/_Run/Run...", "", On_Run'Access),
+         Gtk_New (-"/_Run/sep1", Item_Type => Separator),
+         Gtk_New (-"/_Run/Debug", Item_Type => Branch),
+         Gtk_New (-"/_Run/Debug/Executable...", "", null),
+         Gtk_New (-"/_Run/Debug/Running Process...", "", null),
+         Gtk_New (-"/_Run/Debug/Core Dump...", "", null),
          Gtk_New (-"/_Run/Session", Item_Type => Branch),
          Gtk_New (-"/_Run/Session/Open...", "", null),
          Gtk_New (-"/_Run/Session/Save As...", "", null),
          Gtk_New (-"/_Run/Session/Command History...", "", null),
-         Gtk_New (-"/_Run/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Run/Step", "F5", null),
-         Gtk_New (-"/_Run/Step Instruction", "<shift>F5",
-                  null),
-         Gtk_New (-"/_Run/Next", "F6", null),
-         Gtk_New (-"/_Run/Next Instruction", "<shift>F6",
-                  null),
-         Gtk_New (-"/_Run/Finish", "F7", null),
-         Gtk_New (-"/_Run/Continue", "F8", null),
-         Gtk_New (-"/_Run/Interrupt", "esc", null),
-         Gtk_New (-"/_Run/sep2", Item_Type => Separator),
          Gtk_New (-"/_Run/Data", Item_Type => Branch),
-
          Gtk_New (-"/_Run/Data/Call Stack", "", null, Check_Item),
          Gtk_New (-"/_Run/Data/Threads", "", null),
          Gtk_New (-"/_Run/Data/Tasks", "", null),
@@ -573,6 +666,17 @@ package body Glide_Menu is
          Gtk_New (-"/_Run/Data/sep3", Item_Type => Separator),
          Gtk_New (-"/_Run/Data/Refresh", "<control>L", null),
          Gtk_New (-"/_Run/Data/Show", "", null),
+         Gtk_New (-"/_Run/sep2", Item_Type => Separator),
+         Gtk_New (-"/_Run/Step", "F5", null),
+         Gtk_New (-"/_Run/Step Instruction", "<shift>F5",
+                  null),
+         Gtk_New (-"/_Run/Next", "F6", null),
+         Gtk_New (-"/_Run/Next Instruction", "<shift>F6",
+                  null),
+         Gtk_New (-"/_Run/Finish", "F7", null),
+         Gtk_New (-"/_Run/Continue", "F8", null),
+         Gtk_New (-"/_Run/Interrupt", "esc", null),
+         Gtk_New (-"/_Run/Detach Process", "", null),
          Gtk_New (-"/_Run/sep3", Item_Type => Separator),
          Gtk_New (-"/_Run/Profile", "", null),
          Gtk_New (-"/_Run/Memory Analyzer", "", null),
@@ -594,7 +698,8 @@ package body Glide_Menu is
          Gtk_New (-"/_Tools/Unit Testing/New Test Suite", "", null),
          Gtk_New (-"/_Tools/Unit Testing/New Test Harness", "", null),
          Gtk_New (-"/_Tools/Compare", Item_Type => Branch),
-         Gtk_New (-"/_Tools/Compare/Two Files...", "", null),
+         Gtk_New (-"/_Tools/Compare/Two Files...", "",
+                  On_Compare_Two_Files'Access),
          Gtk_New (-"/_Tools/Compare/Three Files...", "", null),
 
          Gtk_New (-"/_Help", Item_Type => Branch),
