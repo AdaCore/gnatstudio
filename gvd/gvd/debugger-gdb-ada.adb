@@ -28,8 +28,11 @@ with Items.Simples; use Items.Simples;
 with Items.Arrays;  use Items.Arrays;
 with Items.Records; use Items.Records;
 with Items.Classes; use Items.Classes;
+with Traces;        use Traces;
 
 package body Debugger.Gdb.Ada is
+
+   Me : constant Debug_Handle := Create ("Debug.Gdb.Ada");
 
    use Language;
 
@@ -195,6 +198,8 @@ package body Debugger.Gdb.Ada is
    is
       Start : constant Natural := Index;
    begin
+      Trace (Me, "Parse_Type: " & Type_Str (Index .. Type_Str'Last));
+
       if Looking_At (Type_Str, Index, "const ") then
          Index := Index + 6;
       end if;
@@ -616,6 +621,7 @@ package body Debugger.Gdb.Ada is
       Part       : Generic_Type_Access;
 
    begin
+      Trace (Me, "Parse_Record_Type: " & Type_Str (Index .. Type_Str'Last));
       Skip_Blanks (Type_Str, Index);
       Tmp_Index := Index;
 
