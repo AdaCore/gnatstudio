@@ -23,7 +23,6 @@ package body Entities.Debug is
      (Entities : Entities_Tries.Trie_Tree; Full : Boolean; Name : String);
    procedure Dump (LI        : LI_File);
    procedure Dump (Timestamp : Ada.Calendar.Time);
-   procedure Dump (Loc       : File_Location);
    procedure Dump (Files     : Source_File_List; Name : String);
    procedure Dump (Files     : Dependency_List; Name : String);
    procedure Dump (E         : Entity_Information_List_Access);

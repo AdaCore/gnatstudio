@@ -5,5 +5,6 @@ package Entities.Debug is
 
    procedure Dump (Entity : Entity_Information; Full : Boolean; Name : String);
    procedure Dump (File   : Source_File);
+   procedure Dump (Loc    : File_Location);
 
 end Entities.Debug;
