@@ -45,27 +45,6 @@ package Src_Info is
    --  the corresponding LI file and hence can not be used for performing
    --  searches on this LI_File.
 
-   type LI_File_List is private;
-   --  A list of LI_File_Ptr.
-
-   procedure Reset (LIFL : in out LI_File_List);
-   --  Reset the given list of LI_File_Ptr and deallocate all the
-   --  memory allocated for this list. The new list becomes empty.
-
-   function Locate
-     (List        : LI_File_List;
-      LI_Filename : VFS.Virtual_File) return LI_File_Ptr;
-   --  Return a pointer to the LI_File whose filename is LI_Filename.
-   --  Return No_LI_File if no such LI_File is found.
-
-   function Locate_From_Source
-     (List            : LI_File_List;
-      Source_Filename : VFS.Virtual_File) return LI_File_Ptr;
-   --  Return a pointer to the LI_File which has a source file named
-   --  Source_Filename. Return No_LI_File if not found.
-   --  Note that the path to the file is ignored during the search, only
-   --  the basename is taken into account.
-
    function Get_LI_Filename (LI : LI_File_Ptr) return VFS.Virtual_File;
    --  Return the name of the LI file associated with LI
 
@@ -160,7 +139,7 @@ package Src_Info is
    -- LI handlers --
    -----------------
 
-   type LI_Handler_Record is abstract tagged limited null record;
+   type LI_Handler_Record is abstract tagged limited private;
    type LI_Handler is access all LI_Handler_Record'Class;
    --  General type to handle and generate Library Information data (for
    --  cross-references, and the various queries for the browsers).
@@ -174,7 +153,6 @@ package Src_Info is
      (Handler         : access LI_Handler_Record;
       File            : in out LI_File_Ptr;
       Source_Filename : VFS.Virtual_File;
-      List            : LI_File_List;
       Project         : Projects.Project_Type;
       Check_Timestamp : Boolean := True) is abstract;
    --  Find the LI file for Source_Filename, or create one if there is none
@@ -207,7 +185,6 @@ package Src_Info is
 
    procedure Parse_All_LI_Information
      (Handler      : access LI_Handler_Record;
-      List         : LI_File_List;
       In_Directory : String;
       Project      : Projects.Project_Type) is abstract;
    --  Parse all the existing LI information in the directory In_Directory, and
@@ -240,6 +217,10 @@ package Src_Info is
    --  be called until all the files are processed.
    --  Note that only the database on the disk needs to be regenerated, not the
    --  LI structures themselves, which will be done by Create_Or_Complete_LI.
+
+   procedure Reset (Handler : access LI_Handler_Record);
+   --  Reset the given list of LI_File_Ptr and deallocate all the
+   --  memory allocated for this list. The new list becomes empty.
 
    ------------------
    --  Constructs  --
@@ -557,8 +538,7 @@ private
    --      Subprogram body, package body, task body, entry body, protected
    --      body, accept statement.
    --    - Primitive_Operation: used for primitive operations of tagged types
-   --      (in Ada), or for methods (in C++). It possibly points to inherited
-   --      methods in the parent type.
+   --      (in Ada), or for methods (in C++).
    --    - Overriding_Primitive_Operation is used for primitive operations
    --      that override one of the inherited operations from the parent (for
    --      instance A derives from B and both define the operation foo() with
@@ -836,9 +816,10 @@ private
       Primitive_Subprograms : E_Reference_List;
       --  <specific to Ada tagged types or C++ classes>
       --  This fields points to the list of methods or primitive subprograms
-      --  for a class, possibly in other LI files if the operation was
-      --  inherited and not overloaded. The Kind of the reference should be
-      --  Primitive_Operation.
+      --  for a class.
+      --  Inherited operations that are not overloaded by this class are not
+      --  stored in this list, you must query each of the parent for their
+      --  own primitive subprograms.
       --  This list should be empty in most cases, except in the file that
       --  contains the declaration of the tagged type (other files that simply
       --  reference the type do not need to set this field, since they do not
@@ -1062,11 +1043,28 @@ private
 
    type LI_HTable_Access is access LI_File_HTable.HTable;
 
-   type LI_File_List is record
+   ----------------
+   -- LI_Handler --
+   ----------------
+
+   type LI_Handler_Record is abstract tagged limited record
       Table : LI_HTable_Access;
    end record;
-   --  The list of LI_File is implemented as a hash-table rather than
-   --  a plain chained list to improve the lookup performances.
+
+   function Locate
+     (Handler     : access LI_Handler_Record'Class;
+      LI_Filename : VFS.Virtual_File) return LI_File_Ptr;
+   --  Return a pointer to the LI_File whose filename is LI_Filename.
+   --  Return No_LI_File if no such LI_File is found.
+
+   function Locate_From_Source
+     (Handler         : access LI_Handler_Record'Class;
+      Source_Filename : VFS.Virtual_File) return LI_File_Ptr;
+   --  Return a pointer to the LI_File which has a source file named
+   --  Source_Filename. Return No_LI_File if not found.
+   --  Note that the path to the file is ignored during the search, only
+   --  the basename is taken into account.
+
 
    --------------------------
    --  LI handler iterator --

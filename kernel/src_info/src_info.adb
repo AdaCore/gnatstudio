@@ -89,13 +89,13 @@ package body Src_Info is
    -- Reset --
    -----------
 
-   procedure Reset (LIFL : in out LI_File_List) is
+   procedure Reset (Handler : access LI_Handler_Record) is
    begin
-      if LIFL.Table = null then
-         LIFL.Table := new LI_File_HTable.HTable;
+      if Handler.Table = null then
+         Handler.Table := new LI_File_HTable.HTable;
       end if;
 
-      Reset (LIFL.Table.all);
+      Reset (Handler.Table.all);
    end Reset;
 
    ------------
@@ -103,11 +103,10 @@ package body Src_Info is
    ------------
 
    function Locate
-     (List        : LI_File_List;
-      LI_Filename : VFS.Virtual_File)
-      return LI_File_Ptr is
+     (Handler     : access LI_Handler_Record'Class;
+      LI_Filename : VFS.Virtual_File) return LI_File_Ptr is
    begin
-      return Get (List.Table.all, Base_Name (LI_Filename));
+      return Get (Handler.Table.all, Base_Name (LI_Filename));
    end Locate;
 
    ------------------------
@@ -115,14 +114,13 @@ package body Src_Info is
    ------------------------
 
    function Locate_From_Source
-     (List            : LI_File_List;
-      Source_Filename : VFS.Virtual_File)
-      return LI_File_Ptr
+     (Handler         : access LI_Handler_Record'Class;
+      Source_Filename : VFS.Virtual_File) return LI_File_Ptr
    is
       Short_Filename : constant String := Base_Name (Source_Filename);
       Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
-      Table          : LI_File_HTable.HTable := List.Table.all;
+      Table          : LI_File_HTable.HTable := Handler.Table.all;
       --  ??? Make a copy of the table since Get_First and Get_Next need
       --  a Read/Writable HTable. This is temporary since we should stop
       --  using Get_First/Next soon. See ??? comment below.
