@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,15 +30,8 @@ package body Commands.Controls is
    Me : constant Debug_Handle := Create ("Commands.Controls");
 
    type Queue_Change_Command is new Root_Command with record
-      The_Queue                 : Command_Queue;
-      Undo_Button               : Gtk_Button;
-      Redo_Button               : Gtk_Button;
-      Undo_Menu_Item            : Gtk_Menu_Item;
-      Redo_Menu_Item            : Gtk_Menu_Item;
-      Undo_Button_Handler_ID    : Handler_Id;
-      Redo_Button_Handler_ID    : Handler_Id;
-      Undo_Menu_Item_Handler_ID : Handler_Id;
-      Redo_Menu_Item_Handler_ID : Handler_Id;
+      The_Queue : Command_Queue;
+      UR        : Undo_Redo;
    end record;
    type Queue_Change_Access is access all Queue_Change_Command;
 
@@ -122,24 +115,26 @@ package body Commands.Controls is
    function Execute
      (Command : access Queue_Change_Command) return Command_Return_Type is
    begin
-      if Command.Undo_Button /= null then
-         Set_Sensitive (Command.Undo_Button,
+      if Command.UR.Undo_Button /= null then
+         Set_Sensitive (Command.UR.Undo_Button,
                         not Undo_Queue_Empty (Command.The_Queue));
       end if;
 
-      if Command.Redo_Button /= null then
+      if Command.UR.Redo_Button /= null then
          Set_Sensitive
-           (Command.Redo_Button, not Redo_Queue_Empty (Command.The_Queue));
+           (Command.UR.Redo_Button, not Redo_Queue_Empty (Command.The_Queue));
       end if;
 
-      if Command.Undo_Menu_Item /= null then
+      if Command.UR.Undo_Menu_Item /= null then
          Set_Sensitive
-           (Command.Undo_Menu_Item, not Undo_Queue_Empty (Command.The_Queue));
+           (Command.UR.Undo_Menu_Item,
+            not Undo_Queue_Empty (Command.The_Queue));
       end if;
 
-      if Command.Redo_Menu_Item /= null then
+      if Command.UR.Redo_Menu_Item /= null then
          Set_Sensitive
-           (Command.Redo_Menu_Item, not Redo_Queue_Empty (Command.The_Queue));
+           (Command.UR.Redo_Menu_Item,
+            not Redo_Queue_Empty (Command.The_Queue));
       end if;
 
       return Success;
@@ -150,36 +145,30 @@ package body Commands.Controls is
    ------------------
 
    procedure Set_Controls
-     (Queue       : Command_Queue;
-      Undo_Button : Gtk_Button;
-      Redo_Button : Gtk_Button;
-      Undo_Menu_Item : Gtk_Menu_Item;
-      Redo_Menu_Item : Gtk_Menu_Item)
+     (Queue : Command_Queue;
+      UR    : Undo_Redo)
    is
       Command : Queue_Change_Access;
    begin
       if Queue = null then
-         Set_Sensitive (Undo_Button, False);
-         Set_Sensitive (Redo_Button, False);
-         Set_Sensitive (Undo_Menu_Item, False);
-         Set_Sensitive (Redo_Menu_Item, False);
+         Set_Sensitive (UR.Undo_Button, False);
+         Set_Sensitive (UR.Redo_Button, False);
+         Set_Sensitive (UR.Undo_Menu_Item, False);
+         Set_Sensitive (UR.Redo_Menu_Item, False);
       else
          Command := new Queue_Change_Command;
          Command.The_Queue := Queue;
-         Command.Undo_Button := Undo_Button;
-         Command.Redo_Button := Redo_Button;
-         Command.Undo_Menu_Item := Undo_Menu_Item;
-         Command.Redo_Menu_Item := Redo_Menu_Item;
+         Command.UR := UR;
 
-         Command.Undo_Button_Handler_ID := Command_Callback.Connect
-           (Undo_Button, "clicked", On_Undo'Access, Command, True);
-         Command.Redo_Button_Handler_ID := Command_Callback.Connect
-           (Redo_Button, "clicked", On_Redo'Access, Command, True);
+         Command.UR.Undo_Button_Handler_ID := Command_Callback.Connect
+           (UR.Undo_Button, "clicked", On_Undo'Access, Command, True);
+         Command.UR.Redo_Button_Handler_ID := Command_Callback.Connect
+           (UR.Redo_Button, "clicked", On_Redo'Access, Command, True);
 
-         Command.Undo_Menu_Item_Handler_ID := Command_Callback.Connect
-           (Undo_Menu_Item, "activate", On_Undo'Access, Command, True);
-         Command.Redo_Menu_Item_Handler_ID := Command_Callback.Connect
-           (Redo_Menu_Item, "activate", On_Redo'Access, Command, True);
+         Command.UR.Undo_Menu_Item_Handler_ID := Command_Callback.Connect
+           (UR.Undo_Menu_Item, "activate", On_Undo'Access, Command, True);
+         Command.UR.Redo_Menu_Item_Handler_ID := Command_Callback.Connect
+           (UR.Redo_Menu_Item, "activate", On_Redo'Access, Command, True);
 
          Execute (Command);
          Add_Queue_Change_Hook (Queue, Command_Access (Command), "Controls");
@@ -219,30 +208,32 @@ package body Commands.Controls is
 
       Command := Queue_Change_Access (The_Command);
 
-      if Command.Undo_Button_Handler_ID.Signal /= Null_Signal_Id then
-         Disconnect (Command.Undo_Button, Command.Undo_Button_Handler_ID);
-         Disconnect (Command.Redo_Button, Command.Redo_Button_Handler_ID);
+      if Command.UR.Undo_Button_Handler_ID.Signal /= Null_Signal_Id then
          Disconnect
-           (Command.Undo_Menu_Item, Command.Undo_Menu_Item_Handler_ID);
+           (Command.UR.Undo_Button, Command.UR.Undo_Button_Handler_ID);
          Disconnect
-           (Command.Redo_Menu_Item, Command.Redo_Menu_Item_Handler_ID);
-         Command.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
+           (Command.UR.Redo_Button, Command.UR.Redo_Button_Handler_ID);
+         Disconnect
+           (Command.UR.Undo_Menu_Item, Command.UR.Undo_Menu_Item_Handler_ID);
+         Disconnect
+           (Command.UR.Redo_Menu_Item, Command.UR.Redo_Menu_Item_Handler_ID);
+         Command.UR.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
       end if;
 
-      if Command.Undo_Button /= null then
-         Set_Sensitive (Command.Undo_Button, False);
+      if Command.UR.Undo_Button /= null then
+         Set_Sensitive (Command.UR.Undo_Button, False);
       end if;
 
-      if Command.Redo_Button /= null then
-         Set_Sensitive (Command.Redo_Button, False);
+      if Command.UR.Redo_Button /= null then
+         Set_Sensitive (Command.UR.Redo_Button, False);
       end if;
 
-      if Command.Undo_Menu_Item /= null then
-         Set_Sensitive (Command.Undo_Menu_Item, False);
+      if Command.UR.Undo_Menu_Item /= null then
+         Set_Sensitive (Command.UR.Undo_Menu_Item, False);
       end if;
 
-      if Command.Redo_Menu_Item /= null then
-         Set_Sensitive (Command.Redo_Menu_Item, False);
+      if Command.UR.Redo_Menu_Item /= null then
+         Set_Sensitive (Command.UR.Redo_Menu_Item, False);
       end if;
    end Unset_Controls;
 
