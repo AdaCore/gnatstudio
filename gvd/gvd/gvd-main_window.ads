@@ -21,6 +21,7 @@
 with Glib;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
+with Gtk.Item_Factory; use Gtk.Item_Factory;
 with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with GVD.Session_Dialog; use GVD.Session_Dialog;
@@ -91,8 +92,18 @@ package GVD.Main_Window is
    end record;
    type GVD_Main_Window is access all GVD_Main_Window_Record'Class;
 
-   procedure Gtk_New (Main_Window : out GVD_Main_Window);
-   procedure Initialize (Main_Window : access GVD_Main_Window_Record'Class);
+   procedure Gtk_New
+     (Main_Window : out GVD_Main_Window;
+      Key         : String;
+      Menu_Items  : Gtk_Item_Factory_Entry_Array);
+   --  Create a new main window.
+   --  Key is a unique string identifying main_window.
+   --  Menu_Items is used to create the menu bar.
+
+   procedure Initialize
+     (Main_Window : access GVD_Main_Window_Record'Class;
+      Key         : String;
+      Menu_Items  : Gtk_Item_Factory_Entry_Array);
 
    procedure Update_External_Dialogs
      (Window   : access GVD_Main_Window_Record'Class;

@@ -20,12 +20,15 @@
 
 with Glib;                use Glib;
 with Gtk;                 use Gtk;
-with Gtk.Object;          use Gtk.Object;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Menu_Bar;        use Gtk.Menu_Bar;
 with Gtk.Notebook;        use Gtk.Notebook;
+with Gtk.Object;          use Gtk.Object;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.Types;
+with Factory_Data;
 with GVD.Types;           use GVD.Types;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Preferences;     use GVD.Preferences;
@@ -89,21 +92,41 @@ package body GVD.Main_Window is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Main_Window : out GVD_Main_Window) is
+   procedure Gtk_New
+     (Main_Window : out GVD_Main_Window;
+      Key         : String;
+      Menu_Items  : Gtk_Item_Factory_Entry_Array) is
    begin
       Main_Window := new GVD_Main_Window_Record;
-      GVD.Main_Window.Initialize (Main_Window);
+      GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Main_Window : access GVD_Main_Window_Record'Class) is
+   procedure Initialize
+     (Main_Window : access GVD_Main_Window_Record'Class;
+      Key         : String;
+      Menu_Items  : Gtk_Item_Factory_Entry_Array)
+   is
+      Accel_Group : Gtk_Accel_Group;
+      Menu        : Gtk_Widget;
+
    begin
       Main_Debug_Window_Pkg.Initialize (Main_Window);
       Initialize_Class_Record
         (Main_Window, Signals, Class_Record, Type_Name => "GvdMainWindow");
+
+      Gtk_New (Accel_Group);
+      Add_Accel_Group (Main_Window, Accel_Group);
+      Gtk_New (Main_Window.Factory, Gtk.Menu_Bar.Get_Type, Key, Accel_Group);
+      Factory_Data.Create_Items
+        (Main_Window.Factory, Menu_Items, Main_Window.all'Access);
+      Lock (Accel_Group);
+      Menu := Get_Widget (Main_Window.Factory, Key);
+      Pack_Start (Main_Window.Vbox, Menu, False, False, 0);
+      Reorder_Child (Main_Window.Vbox, Menu, 0);
 
       Gtk_New (Main_Window.Task_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));
