@@ -469,6 +469,7 @@ package body VCS_View_Pkg is
          Status_Temp := Next (Status_Temp);
       end loop;
 
+      Clear (Explorer.Model);
       Refresh (Explorer);
    end Display_File_Status;
 
