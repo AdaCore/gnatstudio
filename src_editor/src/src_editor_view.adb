@@ -33,9 +33,12 @@ with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
 with Gtk;                         use Gtk;
+with Gtk.Adjustment;              use Gtk.Adjustment;
+with Gtk.Drawing_Area;            use Gtk.Drawing_Area;
 with Gtk.Enums;                   use Gtk.Enums;
 with Gtk.Handlers;
 with Gtk.Main;                    use Gtk.Main;
+with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
@@ -59,6 +62,9 @@ with VFS;                         use VFS;
 
 package body Src_Editor_View is
 
+   Speed_Column_Width : constant := 10;
+   --  The width of the speed column
+
    Margin : constant := 3;
    --  The margin left of the text.
 
@@ -72,6 +78,7 @@ package body Src_Editor_View is
       Setup       => Setup);
 
    package Source_View_Idle is new Gtk.Main.Idle (Source_View);
+   package Source_View_Timeout is new Gtk.Main.Timeout (Source_View);
 
    --------------------------
    -- Forward declarations --
@@ -112,6 +119,16 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
    --  Callback for the "button_press_event" signal.
+
+   function Speed_Bar_Button_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "button_press_event" signal on the speed bar.
+
+   function Speed_Bar_Button_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for the "button_press_event" signal on the speed bar.
 
    function Key_Press_Event_Cb
      (Widget : access Gtk_Widget_Record'Class;
@@ -158,7 +175,10 @@ package body Src_Editor_View is
    --  Callback for the "line_highlight_change" signal.
 
    procedure Redraw_Columns (View : access Source_View_Record'Class);
-   --  Redraw the left and right areas around View.
+   --  Redraw the left area.
+
+   procedure Redraw_Speed_Column (View : access Source_View_Record'Class);
+   --  Redraw the speed column
 
    procedure Set_Font
      (View : access Source_View_Record'Class;
@@ -214,6 +234,29 @@ package body Src_Editor_View is
 
    procedure On_Scroll (View : access Gtk_Widget_Record'Class);
    --  Callback when the adjustments have changed.
+
+   function Scroll_Timeout (View : Source_View) return Boolean;
+   --  Scroll to View.Scroll_To_Value;
+
+   function Speed_Bar_Expose_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean;
+   --  Callback for an "expose" event on the speed bar.
+
+   procedure Speed_Bar_Size_Allocate_Cb
+     (Widget : access Gtk_Widget_Record'Class);
+   --  Callback for an "size_allocate" signal on the speed bar.
+
+   --------------------
+   -- Scroll_Timeout --
+   --------------------
+
+   function Scroll_Timeout (View : Source_View) return Boolean is
+   begin
+      Set_Value (Get_Vadjustment (View.Scroll), View.Scroll_To_Value);
+      View.Scroll_Requested := False;
+      return False;
+   end Scroll_Timeout;
 
    -------------------------
    -- Cursor_Is_On_Screen --
@@ -277,6 +320,8 @@ package body Src_Editor_View is
 
    procedure Delete (View : access Source_View_Record) is
    begin
+      View.Area := null;
+
       Unref (View.Side_Column_GC);
       Unref (View.Side_Background_GC);
       Unref (View.Default_GC);
@@ -286,6 +331,11 @@ package body Src_Editor_View is
       if View.Side_Column_Buffer /= null then
          Gdk.Pixmap.Unref (View.Side_Column_Buffer);
          View.Side_Column_Buffer := null;
+      end if;
+
+      if View.Speed_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
+         View.Speed_Column_Buffer := null;
       end if;
 
       Delete_Mark (Get_Buffer (View), View.Saved_Cursor_Mark);
@@ -305,6 +355,10 @@ package body Src_Editor_View is
       View.Connect_Expose_Registered := True;
 
       Remove_Synchronization (View);
+
+      if View.Scroll_Requested then
+         Timeout_Remove (View.Scroll_Timeout);
+      end if;
    end Delete;
 
    ---------------------
@@ -394,7 +448,20 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
+      if User.Speed_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (User.Speed_Column_Buffer);
+         User.Speed_Column_Buffer := null;
+      end if;
+
       Invalidate_Window (User);
+
+      if Realized_Is_Set (User)
+        and then not User.Idle_Redraw_Registered
+      then
+         User.Idle_Redraw_Registered := True;
+         User.Idle_Redraw_Id := Source_View_Idle.Add
+           (Idle_Column_Redraw'Access, User);
+      end if;
 
    exception
       when E : others =>
@@ -494,8 +561,14 @@ package body Src_Editor_View is
          View.Side_Column_Buffer := null;
       end if;
 
+      if View.Speed_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
+         View.Speed_Column_Buffer := null;
+      end if;
+
       if Realized_Is_Set (View) then
          Redraw_Columns (View);
+         Redraw_Speed_Column (View);
       end if;
 
       View.Idle_Redraw_Registered := False;
@@ -568,6 +641,47 @@ package body Src_Editor_View is
       Get_Iter_Location (View, Line, Rect);
       return Rect.Height;
    end Get_Line_Height;
+
+   --------------------------------
+   -- Speed_Bar_Size_Allocate_Cb --
+   --------------------------------
+
+   procedure Speed_Bar_Size_Allocate_Cb
+     (Widget : access Gtk_Widget_Record'Class)
+   is
+      View   : constant Source_View := Source_View (Widget);
+   begin
+      if View.Speed_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (View.Speed_Column_Buffer);
+         View.Speed_Column_Buffer := null;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Speed_Bar_Size_Allocate_Cb;
+
+   -------------------------------
+   -- Speed_Bar_Expose_Event_Cb --
+   -------------------------------
+
+   function Speed_Bar_Expose_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      View   : constant Source_View := Source_View (Widget);
+      pragma Unreferenced (Event);
+
+   begin
+      Redraw_Speed_Column (View);
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Speed_Bar_Expose_Event_Cb;
 
    ---------------------
    -- Expose_Event_Cb --
@@ -953,11 +1067,13 @@ package body Src_Editor_View is
 
    procedure Gtk_New
      (View   : out Source_View;
-      Buffer : Src_Editor_Buffer.Source_Buffer := null;
+      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
+      Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       View := new Source_View_Record;
-      Initialize (View, Buffer, Kernel);
+      Initialize (View, Scroll, Area, Buffer, Kernel);
    end Gtk_New;
 
    ----------------
@@ -966,6 +1082,8 @@ package body Src_Editor_View is
 
    procedure Initialize
      (View   : access Source_View_Record;
+      Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+      Area   : Gtk.Drawing_Area.Gtk_Drawing_Area;
       Buffer : Src_Editor_Buffer.Source_Buffer;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
@@ -983,9 +1101,49 @@ package body Src_Editor_View is
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
       View.Kernel := Kernel_Handle (Kernel);
+      View.Scroll := Scroll;
+      View.Area   := Area;
+
+      Set_Events
+        (Area,
+         Button_Motion_Mask or Button_Press_Mask or Button_Release_Mask);
+
+      Return_Callback.Object_Connect
+        (Area, "button_press_event",
+         Marsh       => Return_Callback.To_Marshaller
+           (Speed_Bar_Button_Press_Event_Cb'Access),
+         After       => False,
+         Slot_Object => View);
+
+      Return_Callback.Object_Connect
+        (Area, "motion_notify_event",
+         Marsh       => Return_Callback.To_Marshaller
+           (Speed_Bar_Button_Press_Event_Cb'Access),
+         After       => False,
+         Slot_Object => View);
+
+      Return_Callback.Object_Connect
+        (Area, "button_release_event",
+         Marsh       => Return_Callback.To_Marshaller
+           (Speed_Bar_Button_Release_Event_Cb'Access),
+         After       => False,
+         Slot_Object => View);
+
+      Return_Callback.Object_Connect
+        (View.Area, "expose_event",
+         Marsh       => Return_Callback.To_Marshaller
+           (Speed_Bar_Expose_Event_Cb'Access),
+         After       => False,
+         Slot_Object => View);
+
+      Widget_Callback.Object_Connect
+        (View.Area, "size_allocate",
+         Marsh       => Widget_Callback.To_Marshaller
+           (Speed_Bar_Size_Allocate_Cb'Access),
+         After       => False,
+         Slot_Object => View);
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
-
       Set_Left_Margin (View, Margin);
 
       Preferences_Changed (View, Kernel_Handle (Kernel));
@@ -1320,6 +1478,78 @@ package body Src_Editor_View is
          Line, Column, Out_Of_Bounds);
    end Event_To_Buffer_Coords;
 
+   -------------------------------------
+   -- Speed_Bar_Button_Press_Event_Cb --
+   -------------------------------------
+
+   function Speed_Bar_Button_Press_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean
+   is
+      View       : constant Source_View := Source_View (Widget);
+      Dummy_Gint : Gint;
+      W, H, D    : Gint;
+      Button_Y   : Gint;
+      Lower, Upper : Gdouble;
+      Adj          : Gtk_Adjustment;
+   begin
+      if (Get_Event_Type (Event) = Button_Release
+          and then Get_Button (Event) = 1)
+        or else Get_Event_Type (Event) = Motion_Notify
+      then
+         if View.Scrolling
+           or else View.Area = null
+         then
+            return False;
+         end if;
+
+         Button_Y := Gint (Get_Y (Event));
+
+         Get_Geometry
+           (Get_Window (View.Area), Dummy_Gint, Dummy_Gint, W, H, D);
+
+         Adj := Get_Vadjustment (View.Scroll);
+         Lower := Get_Lower (Adj);
+         Upper := Get_Upper (Adj) - Get_Page_Size (Adj);
+
+         if Button_Y > H then
+            View.Scroll_To_Value := Upper;
+         else
+            View.Scroll_To_Value :=
+              Lower + (Upper - Lower) * Gdouble (Button_Y) / Gdouble (H);
+         end if;
+
+         if not View.Scroll_Requested then
+            View.Scroll_Requested := True;
+            View.Scroll_Timeout := Source_View_Timeout.Add
+              (10, Scroll_Timeout'Access, View);
+         end if;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Speed_Bar_Button_Press_Event_Cb;
+
+   ---------------------------------------
+   -- Speed_Bar_Button_Release_Event_Cb --
+   ---------------------------------------
+
+   function Speed_Bar_Button_Release_Event_Cb
+     (Widget : access Gtk_Widget_Record'Class;
+      Event  : Gdk_Event) return Boolean is
+   begin
+      return Speed_Bar_Button_Press_Event_Cb (Widget, Event);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Speed_Bar_Button_Release_Event_Cb;
+
    ---------------------------
    -- Button_Press_Event_Cb --
    ---------------------------
@@ -1330,15 +1560,20 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Left_Window : constant Gdk.Window.Gdk_Window :=
+
+      Left_Window  : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
+
+      Window : Gdk.Window.Gdk_Window;
 
       Result : Boolean;
       pragma Unreferenced (Result);
    begin
       External_End_Action (Buffer);
 
-      if Get_Window (Event) = Left_Window
+      Window := Get_Window (Event);
+
+      if Window = Left_Window
         and then Get_Event_Type (Event) = Button_Press
         and then Get_Button (Event) = 1
       then
@@ -1369,7 +1604,9 @@ package body Src_Editor_View is
             On_Click (Buffer, Line, Button_X);
          end;
 
-      elsif Get_Event_Type (Event) = Gdk_2button_Press then
+      elsif Window /= Left_Window
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
          --  ??? This is a tweak necessary to implement the feature
          --  "select an entire word containing '_' when double-clicking".
          --  Might be worth investigating whether it could be implemented at
@@ -1545,6 +1782,99 @@ package body Src_Editor_View is
       end if;
    end Redraw_Columns;
 
+   -------------------------
+   -- Redraw_Speed_Column --
+   -------------------------
+
+   procedure Redraw_Speed_Column (View : access Source_View_Record'Class) is
+      Right_Window : Gdk.Window.Gdk_Window;
+
+      X, Y, Width, Height, Depth : Gint;
+      GC                         : Gdk.GC.Gdk_GC;
+
+      Src_Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+
+      Line_Height : Gint;
+      Total_Lines : Gint;
+
+      Info_Exists : Boolean := False;
+
+   begin
+      if View.Area = null then
+         return;
+      end if;
+
+      Right_Window := Get_Window (View.Area);
+
+      Get_Geometry (Right_Window, X, Y, Width, Height, Depth);
+      Total_Lines := Get_Line_Count (Src_Buffer);
+
+      if View.Speed_Column_Buffer = null then
+         Gdk_New
+           (View.Speed_Column_Buffer,
+            Right_Window,
+            Speed_Column_Width,
+            Height);
+
+         Draw_Rectangle
+           (View.Speed_Column_Buffer,
+            View.Side_Background_GC,
+            True, X, Y, Speed_Column_Width, Height);
+
+         Line_Height := Height / Total_Lines + 1;
+
+         --  Make the line height at least 2 pixels high.
+
+         if Line_Height <= 1 then
+            Line_Height := 2;
+         end if;
+
+         Info_Exists := False;
+
+         for J in 1 .. Total_Lines loop
+            GC := Get_Highlight_GC (Src_Buffer, Buffer_Line_Type (J));
+
+            if GC /= null then
+               Draw_Rectangle
+                 (View.Speed_Column_Buffer,
+                  GC,
+                  True,
+                  0, (Height * Gint (J)) / Total_Lines,
+                  Speed_Column_Width, Line_Height);
+
+               Info_Exists := True;
+            end if;
+         end loop;
+
+         if Info_Exists then
+            Show_All (View.Area);
+         else
+            Hide_All (View.Area);
+            return;
+         end if;
+      end if;
+
+      Draw_Pixmap
+        (Drawable => Right_Window,
+         Src      => View.Speed_Column_Buffer,
+         Gc       => View.Side_Column_GC,
+         Xsrc     => 0,
+         Ysrc     => 0,
+         Xdest    => 0,
+         Ydest    => 0);
+
+      Draw_Rectangle
+        (Drawable => Right_Window,
+         GC       => View.Current_Block_GC,
+         Filled   => False,
+         X        => 0,
+         Y        => (Height * Gint (View.Top_Line)) / Total_Lines,
+         Width    => Speed_Column_Width - 1,
+         Height   =>
+           (Gint (View.Bottom_Line - View.Top_Line) * Height)
+         / Total_Lines);
+   end Redraw_Speed_Column;
+
    -----------------------------
    -- Set_Synchronized_Editor --
    -----------------------------
@@ -1585,26 +1915,23 @@ package body Src_Editor_View is
 
    procedure On_Scroll (View : access Gtk_Widget_Record'Class) is
       Src_View : constant Source_View := Source_View (View);
-      Buf      : Source_Buffer;
 
-      Success  : Boolean;
-      pragma Unreferenced (Success);
-
-      Iter     : Gtk_Text_Iter;
    begin
+      Redraw_Speed_Column (Src_View);
+
       if Src_View.Scrolling or else Src_View.Synchronized_Editor = null then
          return;
       end if;
 
       Src_View.Scrolling := True;
 
-      Buf := Source_Buffer (Get_Buffer (Src_View.Synchronized_Editor));
-
-      if Is_Valid_Position (Buf, Gint (Src_View.Top_Line - 1), 0) then
-         Get_Iter_At_Line (Buf, Iter, Gint (Src_View.Top_Line - 1));
-
-         Success := Scroll_To_Iter
-           (Src_View.Synchronized_Editor, Iter, 0.0, True, 0.0, 0.0);
+      if not Src_View.Synchronized_Editor.Scrolling
+        and then Src_View.Scroll /= null
+        and then Src_View.Synchronized_Editor.Scroll /= null
+      then
+         Set_Value
+           (Get_Vadjustment (Src_View.Synchronized_Editor.Scroll),
+            Get_Value (Get_Vadjustment (Src_View.Scroll)));
       end if;
 
       Src_View.Scrolling := False;
