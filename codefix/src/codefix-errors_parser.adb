@@ -1173,9 +1173,7 @@ package body Codefix.Errors_Parser is
    procedure Initialize (This : in out Bad_Casing_Standard) is
    begin
       This.Matcher :=
-        (new Pattern_Matcher'
-           (Compile ("bad casing for entity in Standard")),
-         new Pattern_Matcher'
+        (1 => new Pattern_Matcher'
            (Compile ("bad capitalization, mixed case required")));
    end Initialize;
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -705,7 +705,7 @@ package Codefix.Errors_Parser is
    --  Fix messages that guess a missing with.
 
    type Bad_Casing_Standard is new Error_Parser
-     (new String'("Wrong_Case"), 2)
+     (new String'("Wrong_Case"), 1)
    with null record;
 
    procedure Initialize (This : in out Bad_Casing_Standard);
