@@ -24,13 +24,15 @@ with Basic_Types;          use Basic_Types;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Diff_Utils2;          use Diff_Utils2;
 with Vdiff2_Module.Utils;  use Vdiff2_Module.Utils;
-with Traces; use Traces;
+with Traces;               use Traces;
 with VFS;                  use VFS;
 
 package body Vdiff2_Command is
-   Me                  : constant Debug_Handle := Create ("VDiff2_Command");
+
    use Diff_Head_List;
    use Diff_Chunk_List;
+
+   Me : constant Debug_Handle := Create ("VDiff2_Command");
    Id : Diff_Head_List_Access;
 
    ------------
@@ -67,7 +69,7 @@ package body Vdiff2_Command is
    begin
       if Diff /= Diff_Head_List.Null_Node then
          Tmp.all := Data (Diff);
-         Command.Action (Command.Kernel, Tmp);
+         Command.Action (Command.Kernel, Tmp.all);
       end if;
 
       Free (Tmp);
@@ -97,7 +99,7 @@ package body Vdiff2_Command is
       Context       : constant Selection_Context_Access
         := Get_Current_Context (Command.Kernel);
       Curr_Node     : Diff_Head_List.List_Node;
-      Diff          : Diff_Head_Access := new Diff_Head;
+      Diff          : Diff_Head;
       Selected_File : Virtual_File;
 
    begin
@@ -111,17 +113,16 @@ package body Vdiff2_Command is
          Curr_Node := Is_In_Diff_List (Selected_File, Command.List_Diff.all);
 
          if Curr_Node /= Diff_Head_List.Null_Node then
-            Diff.all := Data (Curr_Node);
+            Diff := Data (Curr_Node);
             Trace (Me, "Execute Action");
             Command.Action (Command.Kernel, Diff);
-            if Diff /= null then
-               Set_Data (Curr_Node, Diff.all);
-            else
+            if Diff.List = Diff_Chunk_List.Null_List then
                Remove_Nodes (Command.List_Diff.all,
                              Prev (Command.List_Diff.all, Curr_Node),
                              Curr_Node);
+            else
+               Set_Data (Curr_Node, Diff);
             end if;
-            Free (Diff);
          end if;
       end if;
       return Commands.Success;
@@ -136,7 +137,7 @@ package body Vdiff2_Command is
 
    procedure Next_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out  Diff_Head_Access)
+      Diff   : in out  Diff_Head)
    is
       Link      : Diff_List_Node;
       Curr_Data : Diff_Chunk_Access;
@@ -156,7 +157,7 @@ package body Vdiff2_Command is
 
    procedure Prev_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access)
+      Diff   : in out Diff_Head)
    is
       Link      : Diff_List_Node;
       Curr_Data : Diff_Chunk_Access;
@@ -176,7 +177,7 @@ package body Vdiff2_Command is
 
    procedure First_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access)
+      Diff   : in out Diff_Head)
    is
       Link      : Diff_List_Node;
       Curr_Data : Diff_Chunk_Access;
@@ -196,7 +197,7 @@ package body Vdiff2_Command is
 
    procedure Last_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access)
+      Diff   : in out Diff_Head)
    is
       Link     : Diff_List_Node;
       Curr_Data : Diff_Chunk_Access;
@@ -216,18 +217,16 @@ package body Vdiff2_Command is
 
    procedure Reload_Difference
      (Kernel : Kernel_Handle;
-      Item   : in out Diff_Head_Access)
+      Item   : in out Diff_Head)
    is
       Tmp : Diff_List;
    begin
       Unhighlight_Difference (Kernel, Item);
       if Item.File3 = VFS.No_File then
-         Trace (Me, "Execute Action Diff");
          Tmp := Diff
            (Kernel, Item.File1,
             Item.File2);
       else
-         Trace (Me, "Execute Action Diff3");
          Tmp := Diff3
            (Kernel, Item.File1,
             Item.File2, Item.File3);
@@ -241,7 +240,7 @@ package body Vdiff2_Command is
       end if;
       --  ??? Just For the Moment
          Item.Current_Node := First (Item.List);
-         Modify_Differences (Kernel, Item.all, Id);
+         Modify_Differences (Kernel, Item, Id);
    end Reload_Difference;
 
 
@@ -251,7 +250,7 @@ package body Vdiff2_Command is
 
    procedure Close_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access)
+      Diff   : in out Diff_Head)
    is
       Args1 : Argument_List := (1 => new String'(Full_Name (Diff.File1)));
       Args2 : Argument_List := (1 => new String'(Full_Name (Diff.File2)));
@@ -260,7 +259,7 @@ package body Vdiff2_Command is
 
       if Diff.File3 /= VFS.No_File then
          Args3 := (1 => new String'(Full_Name (Diff.File3)));
-         --  After this call all memory associated when the Diff is Free
+         --  After this call all memory associated with the Diff is Free
          Execute_GPS_Shell_Command (Kernel, "close", Args3);
       end if;
 
@@ -283,9 +282,9 @@ package body Vdiff2_Command is
 
    procedure Unhighlight_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access)is
+      Diff   : in out Diff_Head)is
    begin
-      Hide_Differences (Kernel, Diff.all);
+      Hide_Differences (Kernel, Diff);
    end Unhighlight_Difference;
 
    -----------------------
@@ -294,7 +293,7 @@ package body Vdiff2_Command is
 
    procedure Remove_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access) is
+      Diff   : in out Diff_Head) is
    begin
       Unhighlight_Difference (Kernel, Diff);
       Free (Diff.List);
@@ -306,10 +305,10 @@ package body Vdiff2_Command is
 
    procedure Change_Ref_File
      (Kernel : Kernel_Handle;
-      Diff   : in out Diff_Head_Access) is
+      Diff   : in out Diff_Head) is
    begin
       Unhighlight_Difference (Kernel, Diff);
-      Modify_Differences (Kernel, Diff.all, Id);
+      Modify_Differences (Kernel, Diff, Id);
    end Change_Ref_File;
 
 end Vdiff2_Command;
