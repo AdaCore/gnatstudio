@@ -991,21 +991,26 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Word_Read           : Dynamic_String;
-      Unallowed_Character : String (1 .. 1);
+      Word_Read            : Dynamic_String;
+      Unallowed_Characters : Dynamic_String;
+      Format_Str           : String_Mode;
    begin
       Assign
         (Word_Read,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
       if Word_Read.all = "form feed" then
-         Unallowed_Character := (1 => ASCII.FF);
+         Assign (Unallowed_Characters, (1 => ASCII.FF));
+         Format_Str := Text_Ascii;
       elsif Word_Read.all = "vertical tab" then
-         Unallowed_Character := (1 => ASCII.HT);
+         Assign (Unallowed_Characters, (1 => ASCII.HT));
+         Format_Str := Text_Ascii;
       elsif Word_Read.all = "trailing spaces" then
-         Unallowed_Character := (1 => ' ');  --  NB : Try ASCII.EOT
+         Assign (Unallowed_Characters, "([/s]+)");
+         Format_Str := Regular_Expression;
       elsif Word_Read.all = "space" then
-         Unallowed_Character := " ";
+         Assign (Unallowed_Characters, " ");
+         Format_Str := Text_Ascii;
       end if;
 
       Append
@@ -1013,7 +1018,10 @@ package body Codefix.Errors_Parser is
          Unexpected
            (Current_Text,
             Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+            Unallowed_Characters.all,
+            Format_Str));
+
+      Free (Unallowed_Characters);
       Free (Word_Read);
    end Fix;
 
