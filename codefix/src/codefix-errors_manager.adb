@@ -26,6 +26,10 @@ package body Codefix.Errors_Manager is
    --  type Errors_Interface
    ----------------------------------------------------------------------------
 
+   -----------------
+   -- Get_Message --
+   -----------------
+
    procedure Get_Message
      (This         : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
@@ -36,6 +40,13 @@ package body Codefix.Errors_Manager is
       File_Pos, Logic_Pos : Natural;
 
    begin
+
+      if This.Preview /= Invalid_Error_Message then
+         Current := This.Preview;
+         This.Preview := Invalid_Error_Message;
+         return;
+      end if;
+
       Get_Direct_Message (This, Current);
 
       if Current.File_Name = null or else Current.File_Name.all = "" then
@@ -65,6 +76,22 @@ package body Codefix.Errors_Manager is
       Current.Col := File_Pos;
       Free (Current_Line);
    end Get_Message;
+
+   -----------------
+   -- Get_Preview --
+   -----------------
+
+   procedure Get_Preview
+     (This         : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Preview      : out Error_Message) is
+   begin
+      if This.Preview = Invalid_Error_Message then
+         Get_Message (This, Current_Text, This.Preview);
+      end if;
+
+      Preview := This.Preview;
+   end Get_Preview;
 
    ----------------------------------------------------------------------------
    --  type Correction_Manager
@@ -175,45 +202,14 @@ package body Codefix.Errors_Manager is
    is
       pragma Unreferenced (Error);
 
-      Line_This, Line_Choice : Ptr_Extract_Line;
+      Temp_Fix_List          : Extract;
+      Success                : Boolean;
+
    begin
-      Line_This := Get_First_Line (This.Fix_List);
-      Line_Choice := Get_First_Line (Choice);
-
-      while Line_Choice /= null and then Line_This /= null loop
-         if Get_Context (Line_Choice.all) = Line_Created then
-            Add_Element
-              (Line_This,
-               null,
-               new Extract_Line'(Clone (Line_Choice.all, False)),
-               This.Fix_List);
-            Line_This := Next (Line_This.all);
-            Line_Choice := Next (Line_Choice.all);
-         elsif Get_Context (Line_This.all) = Line_Created then
-            Line_This := Next (Line_This.all);
-         elsif Get_Cursor (Line_This.all) < Get_Cursor (Line_Choice.all) then
-            Line_This := Next (Line_This.all);
-         elsif Get_Cursor (Line_Choice.all) < Get_Cursor (Line_This.all) then
-            Add_Element
-              (Line_This,
-               null,
-               new Extract_Line'(Clone (Line_Choice.all, False)),
-               This.Fix_List);
-            Line_This := Next (Line_This.all);
-            Line_Choice := Next (Line_Choice.all);
-         else
-            Assign (Line_This.all, Line_Choice.all);
-            Line_This := Next (Line_This.all);
-            Line_Choice := Next (Line_Choice.all);
-         end if;
-      end loop;
-
-      if Line_Choice /= null then
-         Add_Element
-           (This.Fix_List,
-            new Extract_Line'(Clone (Line_Choice.all, True)));
-      end if;
-
+      Unchecked_Assign (Temp_Fix_List, This.Fix_List);
+      Unchecked_Free (This.Fix_List);
+      Merge (This.Fix_List, Temp_Fix_List, Choice, Success);
+      Free (Temp_Fix_List);
    end Validate;
 
    ------------
