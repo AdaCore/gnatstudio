@@ -48,7 +48,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2001-2005, ACT Europe
+Copyright @copyright{} 2001-2005, AdaCore
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -974,19 +974,12 @@ Cancel button.
 @end menu
 
 @noindent
-By default when you start GPS, the working area contains a help window
-displaying HTML help files. On-line help for the GNAT tools is available
-from the @code{Help} menu item.
+By default when you start GPS, the working area contains a welcome page
+giving a few starting points in the integrated help.
 
-Since HTML pages can contain lots of complex information, resizing the
-help window can take some time, making the user interface less responsive.
-It is therefore recommended to close the @code{Help} window
-when not using it. You can reopen this window at any time using the
-@code{Help} menu item.
-
-For the best use of the integrated help, it is recommended to load small
-HTML pages each time instead of long pages which will be slow to load and
-display.
+On-line help for the GNAT tools is available from the @code{Help} menu item.
+GPS launches an external html browser to view these pages. (See
+ @ref{The Preferences Dialog} on how to configure this.)
 
 @node The Help Menu
 @section The Help Menu
@@ -994,18 +987,16 @@ display.
 The Help menu item provides the following entries:
 
 @table @b
-@item Contents
-This opens a special HTML file that contains links for all the
-documentation files currently registered in GPS, @xref{Adding New Help Files}.
 
-@item Zoom in
-Increase the size of the font used to display the help file.
-
-@item Zoom out
-Decrease the size of the font used to display the help file.
+@item Welcome
+Open the GPS Welcome page.
 
 @item Open HTML file...
 Open a file selection dialog to load an HTML file.
+
+@item Contents
+Open a special HTML file that contains links for all the
+documentation files currently registered in GPS, @xref{Adding New Help Files}.
 
 @item About
 Display a dialog giving information about the versions of GPS and GNAT used:
@@ -1025,9 +1016,6 @@ Display a dialog giving information about the versions of GPS and GNAT used:
 This menu contains a number of additional entries, depending on what
 documentation packages were installed on your system. See the next
 section to see how to add new help files.
-
-The help window also provides a contextual menu that gives the possibility
-to copy the current selection to the clipboard.
 
 @node Adding New Help Files
 @section Adding New Help Files
@@ -1274,7 +1262,7 @@ keeping the left button pressed, drop it anywhere else inside GPS.
 
 Selecting an item so that it can be dragged is done simply by clicking
 with the left mouse button in its title bar, and keep the button
-pressed while moving the mouse. 
+pressed while moving the mouse.
 
 If the window is inside a notebook, you can also choose to select the
 notebook tab to start dragging the window around.
@@ -3125,7 +3113,7 @@ between projects.
 This relationship between projects is extremely important, since it determines
 that source files the project's sources can depend on. For instance, if you
 are writting an XML application based on XML/Ada, you will need to make
-your project depend on @file{xmlada.gpr}. 
+your project depend on @file{xmlada.gpr}.
 
 The dependencies also determine in what order your application is build.
 When you compile a project, GPS will always first make sure that the projects
@@ -3918,8 +3906,6 @@ The @i{Scope} entry is described in the @code{Files...} section above.
 @item Project Browser
 Search in the project browser (@pxref{The Project Browser}).
 
-@item Help
-Search in the help window.
 @end table
 
 @end table
@@ -4585,7 +4571,7 @@ debug sessions at once.
 * Upgrading from GVD to GPS::
 @end menu
 
-@c -------------------------------------------------------------------- 
+@c --------------------------------------------------------------------
 @node The Debug Menu
 @section The Debug Menu
 @cindex menu
@@ -4617,7 +4603,7 @@ Execute the program for one machine instruction only.
 
    @item Next
 @cindex next
-Execute the program until it reaches the next source line, 
+Execute the program until it reaches the next source line,
 stepping over subroutine calls.
 
    @item Next Instruction
@@ -4958,7 +4944,7 @@ Clones the selected component into a new, independent item.
 
      @item View memory at address of @i{component}
 @cindex memory view
-Brings up the memory view dialog and explore memory at the address of the 
+Brings up the memory view dialog and explore memory at the address of the
 component.
 
      @item Set value of @i{component}
@@ -5383,7 +5369,7 @@ displays the value in the data window.
 
      @item View memory at address of @i{selection}
 @cindex memory view
-Brings up the memory view dialog and explores memory at the address of the 
+Brings up the memory view dialog and explores memory at the address of the
 selection.
 
      @item Set Breakpoint on Line @i{xx}
@@ -5395,7 +5381,7 @@ Sets a breakpoint at the beginning of the subprogram named @i{selection}
 
      @item Continue Until Line @i{xx}
 @cindex continue until
-Continues execution (the program must have been started previously) until 
+Continues execution (the program must have been started previously) until
 it reaches the specified line.
 
      @item Show Current Location
@@ -5479,7 +5465,7 @@ and can send commands (you need to refer to the underlying debugger's
 documentation, but usually typing @i{help} will give you an overview of
 the commands available).
 
-If the underlying debugger allows it, pressing @key{Tab} in this 
+If the underlying debugger allows it, pressing @key{Tab} in this
 window will provide completion for the command that is being typed (or for
 its arguments).
 
@@ -7110,6 +7096,10 @@ e.g. @code{rcp -l user}
 @item Execute command
 @cindex execution
 Program used to execute commands externally.
+
+@item HTML Browser
+@cindex html
+Program used to execute view HTML files, for instance the documentation.
 
 @item Print command
 @cindex print
