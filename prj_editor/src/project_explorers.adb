@@ -229,6 +229,14 @@ package body Project_Explorers is
    --  Add the object and exec directory nodes for Node. They are added
    --  unconditionally
 
+   procedure Add_Source_Directories
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Tree_Iter;
+      Project  : Project_Type;
+      Dirs     : in out String_List_Utils.String_List.List;
+      Files    : File_Array);
+   --  Add the sources directories listed in Dirs
+
    ---------------------
    -- Expanding nodes --
    ---------------------
@@ -1004,6 +1012,62 @@ package body Project_Explorers is
       return N;
    end Add_Directory_Node;
 
+   ----------------------------
+   -- Add_Source_Directories --
+   ----------------------------
+
+   procedure Add_Source_Directories
+     (Explorer : access Project_Explorer_Record'Class;
+      Node     : Gtk_Tree_Iter;
+      Project  : Project_Type;
+      Dirs     : in out String_List_Utils.String_List.List;
+      Files    : File_Array)
+   is
+      use String_List_Utils.String_List;
+      N               : Gtk_Tree_Iter;
+      Dir_Node        : String_List_Utils.String_List.List_Node;
+      File_Node       : File_Array (Files'Range);
+      File_Node_Index : Integer;
+   begin
+      --  ??? Sorting will only work when we are adding all directories
+      if Filenames_Are_Case_Sensitive then
+         String_List_Utils.Sort (Dirs);
+      else
+         String_List_Utils.Sort_Case_Insensitive (Dirs);
+      end if;
+
+      Dir_Node := First (Dirs);
+
+      while Dir_Node /= Null_Node loop
+         N := Add_Directory_Node
+           (Explorer         => Explorer,
+            Directory        => Data (Dir_Node),
+            Project          => Project,
+            Parent_Node      => Node);
+
+         File_Node_Index := File_Node'First;
+         for S in Files'Range loop
+            if Dir_Name (Files (S)).all = Data (Dir_Node) then
+               File_Node (File_Node_Index) := Files (S);
+               File_Node_Index := File_Node_Index + 1;
+            end if;
+         end loop;
+
+         Sort (File_Node (File_Node'First .. File_Node_Index - 1));
+
+         for S in File_Node'First .. File_Node_Index - 1 loop
+            Append_File
+              (Kernel => Explorer.Kernel,
+               Model  => Explorer.Tree.Model,
+               File   => File_Node (S),
+               Base   => N);
+         end loop;
+
+         Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
+         Dir_Node := Next (Dir_Node);
+      end loop;
+   end Add_Source_Directories;
+
    -------------------------
    -- Expand_Project_Node --
    -------------------------
@@ -1018,9 +1082,6 @@ package body Project_Explorers is
 
       procedure Add_Projects;
       --  Adds the subprojects.
-
-      procedure Add_Source_Directories;
-      --  Add the source directories to the project
 
       procedure Add_Projects is
          Iter : Imported_Project_Iterator;
@@ -1053,85 +1114,36 @@ package body Project_Explorers is
          end if;
       end Add_Projects;
 
-      procedure Add_Source_Directories is
-         N    : Gtk_Tree_Iter;
-         Dirs : String_List_Utils.String_List.List;
-         Dir  : constant Name_Id_Array := Source_Dirs (Project);
-         Dir_Node : String_List_Utils.String_List.List_Node;
-         Files : File_Array_Access := Get_Source_Files
-           (Project, Recursive => False);
-         File_Node : File_Array (Files'Range);
-         File_Node_Index : Integer;
-
-      begin
-         --  Prepare all the source files for all the directories now, so that
-         --  we can properly take into account cases where a project contains
-         --  duplicate source files (in which case we only want to list the
-         --  one that appears in the first directory).
-         --  Note: We have to use a system call below. Two files with the same
-         --  name can appear in the hiearchy, for instance when using extending
-         --  projects, and Get_Full_Path_From_File would only return the first
-         --  instance of the file.
-
-         for D in Dir'Range loop
-            Get_Name_String (Dir (D));
-            Append (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
-         end loop;
-
-         if Filenames_Are_Case_Sensitive then
-            String_List_Utils.Sort (Dirs);
-         else
-            String_List_Utils.Sort_Case_Insensitive (Dirs);
-         end if;
-
-         Dir_Node := First (Dirs);
-
-         while Dir_Node /= Null_Node loop
-            N := Add_Directory_Node
-              (Explorer         => Explorer,
-               Directory        => Data (Dir_Node),
-               Project          => Project,
-               Parent_Node      => Node);
-
-            File_Node_Index := File_Node'First;
-            for S in Files'Range loop
-               if Dir_Name (Files (S)).all = Data (Dir_Node) then
-                  File_Node (File_Node_Index) := Files (S);
-                  File_Node_Index := File_Node_Index + 1;
-               end if;
-            end loop;
-
-            Sort (File_Node (File_Node'First .. File_Node_Index - 1));
-
-            for S in File_Node'First .. File_Node_Index - 1 loop
-               Append_File
-                 (Kernel => Explorer.Kernel,
-                  Model  => Explorer.Tree.Model,
-                  File   => File_Node (S),
-                  Base   => N);
-            end loop;
-
-            Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-            Dir_Node := Next (Dir_Node);
-         end loop;
-
-         Unchecked_Free (Files);
-         Free (Dirs);
-      end Add_Source_Directories;
+      Files : File_Array_Access := Get_Source_Files
+        (Project, Recursive => False);
+      Dirs : String_List_Utils.String_List.List;
+      Dir  : constant Name_Id_Array := Source_Dirs (Project);
 
    begin
       Push_State (Explorer.Kernel, Busy);
 
+      --  Prepare all the source files for all the directories now, so that
+      --  we can properly take into account cases where a project contains
+      --  duplicate source files (in which case we only want to list the
+      --  one that appears in the first directory).
+
+      for D in Dir'Range loop
+         Get_Name_String (Dir (D));
+         Append (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
+      end loop;
+
       if Projects_Before_Directories then
          Add_Projects;
-         Add_Source_Directories;
+         Add_Source_Directories (Explorer, Node, Project, Dirs, Files.all);
          Add_Object_Directories (Explorer, Node, Project);
       else
-         Add_Source_Directories;
+         Add_Source_Directories (Explorer, Node, Project, Dirs, Files.all);
          Add_Object_Directories (Explorer, Node, Project);
          Add_Projects;
       end if;
 
+      Unchecked_Free (Files);
+      Free (Dirs);
       Pop_State (Explorer.Kernel);
 
    exception
@@ -1439,58 +1451,21 @@ package body Project_Explorers is
 
       procedure Add_Directories is
          Dirs        : String_List_Utils.String_List.List;
-         Dir_Node    : String_List_Utils.String_List.List_Node;
-
-         use String_List_Utils.String_List;
-
       begin
          --  Sources directory
 
          for J in Sources'Range loop
             if Sources (J) /= No_Name then
                Get_Name_String (Sources (J));
-               Append (Dirs, Name_Buffer (1 .. Name_Len));
+               String_List_Utils.String_List.Append
+                 (Dirs, Name_Buffer (1 .. Name_Len));
             end if;
          end loop;
 
-            if Filenames_Are_Case_Sensitive then
-               String_List_Utils.Sort (Dirs);
-            else
-               String_List_Utils.Sort_Case_Insensitive (Dirs);
-            end if;
-
-            --  If the projects are to be prepended, reverse the list.
-
-            if not Projects_Before_Directories then
-               declare
-                  Dirs2 : String_List_Utils.String_List.List;
-                  Dirs2_Node : List_Node := First (Dirs);
-               begin
-                  while Dirs2_Node /= Null_Node loop
-                     Prepend (Dirs2, Data (Dirs2_Node));
-                     Dirs2_Node := Next (Dirs2_Node);
-                  end loop;
-
-                  Free (Dirs);
-                  Dirs := Dirs2;
-               end;
-            end if;
-
-         Dir_Node := First (Dirs);
-
-         while Dir_Node /= Null_Node loop
-            N := Add_Directory_Node
-              (Explorer         => Explorer,
-               Directory        => Data (Dir_Node),
-               Parent_Node      => Node,
-               Project          => Project,
-               Object_Directory => False);
-            Dir_Node := Next (Dir_Node);
-         end loop;
-
-         Free (Dirs);
-
+         Add_Source_Directories (Explorer, Node, Project, Dirs, Files.all);
          Add_Object_Directories (Explorer, Node, Project);
+
+         String_List_Utils.String_List.Free (Dirs);
       end Add_Directories;
 
       procedure Add_Projects is
