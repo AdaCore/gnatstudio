@@ -525,7 +525,7 @@ package body Debugger.Gdb is
          --  must also be initialized.
          --  No need to do anything in text-only mode
          if Debugger.Window /= null then
-            Executable_Changed (Convert (Debugger.Window, Debugger));
+            Executable_Changed (Convert (Debugger.Window, Debugger), "");
          end if;
 
          Push_Internal_Command_Status (Get_Process (Debugger), True);
@@ -579,14 +579,18 @@ package body Debugger.Gdb is
 
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : String) is
+      Executable : String;
+      Mode       : Command_Type := Internal)
+   is
    begin
       Set_Is_Started (Debugger, False);
 
       if Debugger.Remote_Target then
-         Send (Debugger, "load " & Executable, Mode => Internal);
+         Send (Debugger, "load " & Executable,
+               Display => Mode /= Internal, Mode => Mode);
       else
-         Send (Debugger, "file " & Executable, Mode => Internal);
+         Send (Debugger, "file " & Executable,
+               Display => Mode /= Internal, Mode => Mode);
       end if;
 
       --  Report a change in the executable. This has to be done before we
@@ -594,7 +598,7 @@ package body Debugger.Gdb is
       --  correctly updated.
       --  No need to do anything in text-only mode
       if Debugger.Window /= null then
-         Executable_Changed (Convert (Debugger.Window, Debugger));
+         Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
       end if;
 
       --  Detect the current language, and get the name and line of the
@@ -734,7 +738,9 @@ package body Debugger.Gdb is
         or else (Command'Length >= 6
           and then Command (Command'First .. Command'First + 5) = "thread")
         or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "task");
+          and then Command (Command'First .. Command'First + 3) = "task")
+        or else (Command'Length >= 4
+          and then Command (Command'First .. Command'First + 3) = "file");
    end Is_Context_Command;
 
    --------------------------
@@ -747,7 +753,9 @@ package body Debugger.Gdb is
    begin
       return    Command = "step"
         or else Command = "stepi"
+        or else Command = "s"
         or else Command = "next"
+        or else Command = "n"
         or else Command = "nexti"
         or else Command = "cont"
         or else Command = "finish"

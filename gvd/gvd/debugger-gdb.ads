@@ -98,7 +98,8 @@ package Debugger.Gdb is
 
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
-      Executable : String);
+      Executable : String;
+      Mode       : Command_Type := Internal);
 
    procedure Run
      (Debugger : access Gdb_Debugger;

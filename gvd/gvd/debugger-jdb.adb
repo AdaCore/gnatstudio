@@ -173,7 +173,7 @@ package body Debugger.Jdb is
          --  Indicate that a new executable is present (even if there is none,
          --  we still need to reset some data).
          if Debugger.Window /= null then
-            Executable_Changed (Convert (Debugger.Window, Debugger));
+            Executable_Changed (Convert (Debugger.Window, Debugger), "");
          end if;
       end if;
 
@@ -213,11 +213,13 @@ package body Debugger.Jdb is
 
    procedure Set_Executable
      (Debugger : access Jdb_Debugger;
-      Executable : String) is
+      Executable : String;
+      Mode       : Command_Type := Internal)is
    begin
       Set_Is_Started (Debugger, False);
-      Send (Debugger, "load " & Executable);
-      Executable_Changed (Convert (Debugger.Window, Debugger));
+      Send (Debugger, "load " & Executable,
+            Display => Mode /= Internal, Mode => Mode);
+      Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
    end Set_Executable;
 
    -----------------

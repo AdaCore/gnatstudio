@@ -72,7 +72,8 @@ package Debugger.Jdb is
 
    procedure Set_Executable
      (Debugger   : access Jdb_Debugger;
-      Executable : String);
+      Executable : String;
+      Mode       : Command_Type := Internal);
 
    procedure Run
      (Debugger : access Jdb_Debugger;
