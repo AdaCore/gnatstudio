@@ -11,7 +11,7 @@
    <action name="generic_cvs_status" show-command="true" output="none">
       <shell output="">echo "Querying status for $2-"</shell>
       <external>cvs status "$2-"</external>
-      <shell>VCS.status_parse "Custom CVS" "%1" "$1" FALSE</shell>
+      <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
    </action>
 
    <!-------------------->
@@ -22,7 +22,7 @@
       <shell output="">echo "Querying status for directory:"</shell>
       <shell output="">pwd</shell>
       <external>cvs status .</external>
-      <shell>VCS.status_parse "Custom CVS" "%1" "$1" FALSE</shell>
+      <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
    </action>
 
    <!------------------>
@@ -32,7 +32,7 @@
    <action name="generic_cvs_annotate" show-command="true" output="">
       <shell>echo "Querying annotations for $1"</shell>
       <external output="none">cvs annotate "$1"</external>
-      <shell output="none">VCS.annotations_parse "Custom CVS" "$1" "%1"</shell>
+      <shell output="none">VCS.annotations_parse "CVS" "$1" "%1"</shell>
    </action>
 
    <!---------------------->
@@ -41,7 +41,7 @@
 
    <action name="generic_cvs_local_status" show-command="true" output="none">
       <shell>Editor.get_buffer "./CVS/Entries"</shell>
-      <shell>VCS.status_parse "Custom CVS" "%1" FALSE TRUE</shell>
+      <shell>VCS.status_parse "CVS" "%1" FALSE TRUE</shell>
    </action>
 
    <!---------------->
@@ -184,7 +184,7 @@
    <!-- CVS -->
    <!--------->
 
-   <vcs name="Custom CVS" absolute_names="FALSE">
+   <vcs name="CVS" absolute_names="FALSE">
       <status_files       action="generic_cvs_status"       label="Query status"/>
       <status_dir         action="generic_cvs_status_dir"   label="Query status for directory"/>
       <local_status_files action="generic_cvs_local_status" label="Local status"/>
