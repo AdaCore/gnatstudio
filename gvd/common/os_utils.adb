@@ -154,7 +154,7 @@ package body OS_Utils is
 
    procedure Set_OpenVMS_Host (Setting : Boolean := True) is
    begin
-      OpenVMS_Host := True;
+      OpenVMS_Host := Setting;
    end Set_OpenVMS_Host;
 
    -----------
