@@ -42,6 +42,7 @@ with Gtk.Paned;
 with Gtk.Scrolled_Window;
 with Gtk.Widget;
 with Gtk.Box;
+with Gtk.Socket;
 with Gtkada.Types;
 with Language;
 with GVD.Asm_Editors;
@@ -106,7 +107,9 @@ package GVD.Code_Editors is
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color    : Gdk.Color.Gdk_Color;
       Strings_Color     : Gdk.Color.Gdk_Color;
-      Keywords_Color    : Gdk.Color.Gdk_Color);
+      Keywords_Color    : Gdk.Color.Gdk_Color;
+      TTY_Mode          : Boolean;
+      External_XID      : Glib.Guint32);
    --  Set the various settings of an editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
@@ -115,6 +118,9 @@ package GVD.Code_Editors is
    --  each line.
    --  Current_Line_Icon is displayed on the left of the line currently
    --  "active" (using the procedure Set_Line below).
+   --  TTY_Mode is true when GVD has been lauched with TTY emulation.
+   --  External_XID is the X Window ID of the external (e.g Emacs) editor that
+   --  should be used as the source window. Zero means no external editor.
 
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
@@ -127,6 +133,15 @@ package GVD.Code_Editors is
      (Editor : access Code_Editor_Record'Class)
       return GVD.Source_Editors.Source_Editor;
    --  Return the widget used to display the source code
+
+   function Get_Editor_Container
+     (Editor : access Code_Editor_Record'Class) return Gtk.Box.Gtk_Hbox;
+   --  Return the box that contains the source editor.
+
+   function Get_External_Source
+     (Editor : access Code_Editor_Record'Class) return Gtk.Socket.Gtk_Socket;
+   --  Return the external widget used to display the source code.
+   --  Only call this function when in TTY mode.
 
    function Get_Explorer_Scroll
      (Editor : access Code_Editor_Record'Class)
@@ -191,6 +206,7 @@ private
       --  Contains either Source, Asm or Source_Asm_Pane.
 
       Source          : GVD.Source_Editors.Source_Editor;
+      External_Source : Gtk.Socket.Gtk_Socket;
       Asm             : GVD.Asm_Editors.Asm_Editor;
       Source_Asm_Pane : Gtk.Paned.Gtk_Paned;
 
@@ -204,6 +220,10 @@ private
 
       Explorer        : GVD.Explorer.Explorer_Access;
       Explorer_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+
+      External_XID    : Glib.Guint32 := 0;
+      --  X Window ID of the external (e.g Emacs) editor that
+      --  should be used as the source window. Zero means no external editor.
    end record;
 
 end GVD.Code_Editors;
