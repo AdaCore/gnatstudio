@@ -23,7 +23,6 @@ with Gdk.Window;          use Gdk.Window;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -32,7 +31,6 @@ with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Canvas;       use Gtkada.Canvas;
-with Gtkada.MDI;          use Gtkada.MDI;
 
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -1130,7 +1128,6 @@ package body GVD.Menu is
          Gtk_New (-"/_File/New Debugger...", "", On_Open_Debugger'Access),
          Gtk_New (-"/_File/Open Core Dump...", "", On_Open_Core_Dump'Access),
          Gtk_New (-"/_File/sep1", Item_Type => Separator),
-
          Gtk_New (-"/_File/Edit Current Source", "<control>E",
                   On_Edit_Source'Access),
          Gtk_New (-"/_File/Open Source...", "", On_Open_Source'Access),
