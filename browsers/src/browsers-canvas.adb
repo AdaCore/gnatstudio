@@ -21,6 +21,7 @@
 with Glib;                use Glib;
 with Glib.Graphs;         use Glib.Graphs;
 with Glib.Object;         use Glib.Object;
+with Glib.Values;         use Glib.Values;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.GC;              use Gdk.GC;
 with Gtkada.Canvas;       use Gtkada.Canvas;
@@ -32,6 +33,7 @@ with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
+with Gtk.Arguments;       use Gtk.Arguments;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Menu;            use Gtk.Menu;
@@ -106,8 +108,10 @@ package body Browsers.Canvas is
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the layout of links.
 
-   function On_Expose
-     (Browser : access Gtk_Widget_Record'Class) return Boolean;
+   procedure On_Draw_Links
+     (Browser : access Gtk_Widget_Record'Class;
+      Args    : Glib.Values.GValues);
+   --  Make sure that the highlighted links are always drawn last.
 
    ----------------
    -- Initialize --
@@ -138,31 +142,32 @@ package body Browsers.Canvas is
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Browser);
 
-      Gtkada.Handlers.Return_Callback.Object_Connect
-        (Browser.Canvas, "expose_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller (On_Expose'Access),
+      Widget_Callback.Object_Connect
+        (Browser.Canvas, "draw_links", On_Draw_Links'Access,
          Browser, After => True);
    end Initialize;
 
-   ---------------
-   -- On_Expose --
-   ---------------
+   ------------------
+   -- On_Draw_Link --
+   ------------------
 
-   function On_Expose
-     (Browser : access Gtk_Widget_Record'Class) return Boolean
+   procedure On_Draw_Links
+     (Browser : access Gtk_Widget_Record'Class;
+      Args    : Glib.Values.GValues)
    is
-      B : Glide_Browser := Glide_Browser (Browser);
+      B   : Glide_Browser := Glide_Browser (Browser);
+      Win : Gdk_Window := Gdk_Window (To_C_Proxy (Args, 1));
    begin
       --  Redraw the selected links if needed.
       --  IF we don't do that, then it might happen that unselected links
-      --  overlap selected links.
+      --  overlap selected links. This also means that these links are drawn
+      --  twice...
       if B.Selected_Item /= null
         and then Get_Orthogonal_Links (Get_Canvas (B))
       then
-         Update_Links (Get_Canvas (B), B.Selected_Item);
+         Update_Links (Get_Canvas (B), Win, B.Selected_Item);
       end if;
-      return False;
-   end On_Expose;
+   end On_Draw_Links;
 
    ---------------
    -- Key_Press --
@@ -379,7 +384,7 @@ package body Browsers.Canvas is
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class) is
       B : Glide_Browser := Glide_Browser (Browser);
    begin
-      Layout (Get_Canvas (B), Force => False, Vertical_Layout => True);
+      Layout (Get_Canvas (B), Force => True, Vertical_Layout => True);
       Refresh_Canvas (Get_Canvas (B));
    end On_Refresh;
 
