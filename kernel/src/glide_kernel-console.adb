@@ -182,10 +182,10 @@ package body Glide_Kernel.Console is
    ------------
 
    procedure Insert
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Text           : String;
-      Add_LF         : Boolean := True;
-      Mode           : Message_Type := Info)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info)
    is
       Console : constant Interactive_Console := Get_Console (Kernel);
    begin
@@ -443,6 +443,7 @@ package body Glide_Kernel.Console is
             S : constant String := Strip_CR (Contents.all);
          begin
             Insert (Console, S);
+            Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
             Parse_File_Locations (Kernel, S, -"Loaded contents");
          end;
 
