@@ -1707,7 +1707,6 @@ package body VCS.ClearCase is
       VCS_ClearCase_Module_ID.ClearCase_Reference := new ClearCase_Record;
       VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel
         := Kernel_Handle (Kernel);
-      VCS_ClearCase_Module_ID.ClearCase_Reference.Queue  := New_Queue;
 
       Register_VCS (VCS_Module_ID, ClearCase_Identifier);
 
