@@ -148,19 +148,19 @@ package body Src_Info is
 
       LI_File_Loop :
       while Current_LI /= null loop
-         --  See if the filename matches the spec filename
+         --  Check if the filename matches the body filename
 
-         if Current_LI.LI.Spec_Info /= null
-           and then Current_LI.LI.Spec_Info.Source_Filename.all =
+         if Current_LI.LI.Body_Info /= null
+           and then Current_LI.LI.Body_Info.Source_Filename.all =
               Short_Filename
          then
             return Current_LI;
          end if;
 
-         --  Check if the filename matches the body filename
+         --  See if the filename matches the spec filename
 
-         if Current_LI.LI.Body_Info /= null
-           and then Current_LI.LI.Body_Info.Source_Filename.all =
+         if Current_LI.LI.Spec_Info /= null
+           and then Current_LI.LI.Spec_Info.Source_Filename.all =
               Short_Filename
          then
             return Current_LI;
