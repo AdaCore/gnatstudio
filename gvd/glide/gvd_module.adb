@@ -1668,14 +1668,21 @@ package body GVD_Module is
    procedure On_View_Changed
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      use GNAT.OS_Lib;
+
       pragma Unreferenced (K);
       Mitem : Gtk_Menu_Item;
       Menu  : Gtk_Menu renames GVD_Module (GVD_Module_ID).Initialize_Menu;
       Iter  : Imported_Project_Iterator := Start (Get_Project (Kernel));
+      Debuggable_Suffix : GNAT.OS_Lib.String_Access := Get_Debuggable_Suffix;
 
    begin
       --  Remove all existing menus
       Remove_All_Children (Menu);
+
+      if Debuggable_Suffix = null then
+         Debuggable_Suffix := new String'("");
+      end if;
 
       --  Add all the main units from all the imported projects.
       while Current (Iter) /= No_Project loop
@@ -1685,8 +1692,17 @@ package body GVD_Module is
          begin
             for M in Mains'Range loop
                declare
-                  Exec : constant String := Base_Name (Mains (M).all,
-                    GNAT.Directory_Operations.File_Extension (Mains (M).all));
+                  --  The heuristics here might be a little light:
+                  --  we compute the name of the main executables from the
+                  --  base names of the main files plus the system
+                  --  debuggable suffix.
+
+                  Exec : constant String :=
+                    Base_Name
+                      (Mains (M).all,
+                       GNAT.Directory_Operations.File_Extension
+                         (Mains (M).all))
+                    & Debuggable_Suffix.all;
                begin
                   Gtk_New (Mitem, Exec);
                   Append (Menu, Mitem);
@@ -1706,6 +1722,8 @@ package body GVD_Module is
 
          Next (Iter);
       end loop;
+
+      Free (Debuggable_Suffix);
 
       --  Specific entry to start the debugger without any main program
       Gtk_New (Mitem, -"<no main file>");
