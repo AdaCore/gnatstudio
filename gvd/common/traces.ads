@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                        Copyright (C) 2001-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free software; you can redistribute it and/or modify  it --
@@ -101,7 +101,7 @@ package Traces is
    --  If Default is not From_Config, this forces an explicit activation
    --  status for that handle. To change it, the user must explicitely have
    --  a line for this handle in the config file, and this handle is not
-   --  impacted by the user of "+" in this config file.
+   --  impacted by the use of "+" in this config file.
 
    function Unit_Name (Handle : Debug_Handle) return String;
    --  Return the unit name (upper-cased) for this handle. This can be used for
