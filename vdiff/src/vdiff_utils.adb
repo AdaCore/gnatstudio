@@ -214,6 +214,13 @@ package body Vdiff_Utils is
       Thaw (List1);
       Close (Infile2);
       Close (Infile1);
+
+   exception
+      when End_Error =>
+         Thaw (List2);
+         Thaw (List1);
+         Close (Infile2);
+         Close (Infile1);
    end Fill_Diff_Lists;
 
    --------------------
