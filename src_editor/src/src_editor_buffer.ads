@@ -386,6 +386,16 @@ package Src_Editor_Buffer is
    procedure Jump_To_Delimiter (Buffer : access Source_Buffer_Record);
    --  Jump to the other delimiter, if applicable.
 
+   procedure Add_Controls (Buffer : access Source_Buffer_Record);
+   --  Connect the Undo/Redo buttons to the queue containing the buffer
+   --  commands. This MUST be called every time that the Buffer.Queue
+   --  pointer is modified.
+
+   procedure Remove_Controls (Buffer : access Source_Buffer_Record);
+   --  Disconnect the Undo/Redo buttons from the queue containing the buffer
+   --  commands. This MUST be called every time that the Buffer.Queue
+   --  pointer is modified and the controls actually refer to Queue.
+
 private
    type Completion_Data is record
       Prefix : GNAT.OS_Lib.String_Access;
@@ -481,6 +491,10 @@ private
 
       Completion : Completion_Data;
       --  Completion data.
+
+      Controls_Set : Boolean := False;
+      --  Whether the Queue is currently connected to the
+      --  Undo/Redo buttons.
    end record;
 
 end Src_Editor_Buffer;
