@@ -43,13 +43,21 @@ package body GVD.Preferences is
    procedure XML_Add_Child (N : Node_Ptr; Child : Node_Ptr);
    procedure XML_Free (N : in out Node_Ptr);
    procedure XML_Write (N : Node_Ptr; File_Name : String);
-   --  These two functions are there only so that GVD doesn't depend on the
+   function XML_Deep_Copy (N : Node_Ptr; Parent : Node_Ptr := null)
+      return Node_Ptr;
+   --  These functions are there only so that GVD doesn't depend on the
    --  very latest version of GtkAda and can be released independently.
    --  These should be coordinated with GtkAda when a new release of the latter
    --  is done. ???
 
    Current_Preferences : Node_Ptr;
    --  The XML tree that contains the current preferences.
+
+   Saved_Preferences : Node_Ptr := null;
+   --  The XML tree that saves the state of the preferences at the time the
+   --  dialog was initially opened.
+   --  This should be null most of the time, except when the preferences
+   --  dialog is open.
 
    Tab_Size_Cached : Gint;
    --  Cached value for tab size, for fast access
@@ -77,6 +85,11 @@ package body GVD.Preferences is
    --  Create a new entry in the current preferences, or modify the value
    --  of the existing one (only if Override is True)
 
+   procedure Set_From_Dialog
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+   --  Set the preferences from the contents of Dialog.
+   --  This modifies Current_PReferences, not Saved_Preferences.
+
    -------------------
    -- XML_Add_Child --
    -------------------
@@ -87,6 +100,38 @@ package body GVD.Preferences is
       Child.Parent := N;
       N.Child := Child;
    end XML_Add_Child;
+
+   -------------------
+   -- XML_Deep_Copy --
+   -------------------
+
+   function XML_Deep_Copy (N : Node_Ptr; Parent : Node_Ptr := null)
+      return Node_Ptr
+   is
+      Attr : String_Ptr;
+      Value : String_Ptr;
+   begin
+      if N = null then
+         return null;
+      else
+         if N.Attributes /= null then
+            Attr := new String' (N.Attributes.all);
+         end if;
+
+         if N.Value /= null then
+            Value := new String' (N.Value.all);
+         end if;
+
+         return new Node'
+           (Tag => new String' (N.Tag.all),
+            Attributes => Attr,
+            Value => Value,
+            Parent => Parent,
+            Child => XML_Deep_Copy (N.Child, Parent => N),
+            Next => XML_Deep_Copy (N.Next, Parent => Parent),
+            Specific_Data => N.Specific_Data);
+      end if;
+   end XML_Deep_Copy;
 
    --------------
    -- XML_Free --
@@ -156,6 +201,26 @@ package body GVD.Preferences is
       procedure Write_Node (N : Node_Ptr; Indent : Natural);
       --  Write a node and its children to the file
 
+      procedure Print_String (S : String);
+      --  Print S to File, after replacing the '<' and '>' characters.
+
+      ------------------
+      -- Print_String --
+      ------------------
+
+      procedure Print_String (S : String) is
+      begin
+         for J in S'Range loop
+            if S (J) = '<' then
+               Put (File, "&lt;");
+            elsif S (J) = '>' then
+               Put (File, "&gt;");
+            else
+               Put (File, S (J));
+            end if;
+         end loop;
+      end Print_String;
+
       ----------------
       -- Write_Node --
       ----------------
@@ -165,7 +230,7 @@ package body GVD.Preferences is
       begin
          Put (File, (1 .. Indent => ' ') & '<' & N.Tag.all & '>');
          if N.Value /= null then
-            Put (File, N.Value.all);
+            Print_String (N.Value.all);
          end if;
          while Child /= null loop
             New_Line (File);
@@ -174,12 +239,14 @@ package body GVD.Preferences is
          end loop;
          if N.Child /= null then
             New_Line (File);
+            Put (File, (1 .. Indent => ' '));
          end if;
-         Put (File, (1 .. Indent => ' ') & "</" & N.Tag.all & '>');
+         Put (File, "</" & N.Tag.all & '>');
       end Write_Node;
 
    begin
       Create (File, Out_File, File_Name);
+      Put_Line (File, "<?xml version=""1.0""?>");
       Write_Node (N, 0);
       Close (File);
    end XML_Write;
@@ -642,6 +709,12 @@ package body GVD.Preferences is
       Set_Text (Dialog.List_Processes_Entry, Get_Pref (List_Processes));
       Set_Text (Dialog.Remote_Shell_Entry, Get_Pref (Remote_Protocol));
       Set_Text (Dialog.Remote_Copy_Entry, Get_Pref (Remote_Copy));
+
+      Saved_Preferences := Current_Preferences;
+
+      --  ??? Not very efficient, we should fix the Get function to accept
+      --  an empty tree.
+      Current_Preferences := XML_Deep_Copy (Saved_Preferences);
    end Fill_Dialog;
 
    ---------------------
@@ -711,6 +784,38 @@ package body GVD.Preferences is
            True);
       Set (String (Remote_Copy), Get_Chars (Dialog.Remote_Copy_Entry), True);
    end Set_From_Dialog;
+
+   -----------------------
+   -- Apply_Preferences --
+   -----------------------
+
+   procedure Apply_Preferences
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+   begin
+      Set_From_Dialog (Dialog);
+   end Apply_Preferences;
+
+   ---------------------
+   -- Set_Preferences --
+   ---------------------
+
+   procedure Set_Preferences
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+   begin
+      Set_From_Dialog (Dialog);
+      Free (Saved_Preferences);
+   end Set_Preferences;
+
+   ------------------------
+   -- Cancel_Preferences --
+   ------------------------
+
+   procedure Cancel_Preferences
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+   begin
+      Free (Current_Preferences);
+      Current_Preferences := Saved_Preferences;
+   end Cancel_Preferences;
 
 begin
    --  Initialize the default values

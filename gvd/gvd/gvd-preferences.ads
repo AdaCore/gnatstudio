@@ -36,9 +36,19 @@ package GVD.Preferences is
      (Dialog : General_Preferences_Pkg.General_Preferences_Access);
    --  Fill up the preference dialog given the current settings
 
-   procedure Set_From_Dialog
+   procedure Apply_Preferences
      (Dialog : General_Preferences_Pkg.General_Preferences_Access);
-   --  Set the preferences from the contents of Dialog.
+   --  Apply temporarily the preferences set in Dialog. This change can still
+   --  be cancelled by calling Cancel_Preferences.
+
+   procedure Set_Preferences
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+   --  Set the preferences set in Dialog. This doesn't save the preferences
+   --  to a file.
+
+   procedure Cancel_Preferences
+     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+   --  Cancel any previous temporary change in the preferences.
 
    procedure Load_Preferences (File_Name : String);
    --  Load the preferences file, and initialize the preferences database.
