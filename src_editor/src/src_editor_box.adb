@@ -257,7 +257,9 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel,
             -"No cross-reference information found for "
-            & Get_Filename (Editor),
+            & Get_Filename (Editor) & ASCII.LF
+            & (-("Recompile your file or select Build->Recompute Xref"
+                 & " Information, depending on the language")),
             Mode           => Error,
             Highlight_Sloc => False);
          Pop_State (Kernel_Handle (Kernel));
