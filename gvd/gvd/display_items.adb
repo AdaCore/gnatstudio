@@ -219,7 +219,7 @@ package body Display_Items is
             --  should not happen, but at least the user knows why the variable
             --  is not displayed correctly.
          exception
-            when Language.Unexpected_Type =>
+            when Language.Unexpected_Type | Constraint_Error =>
                Item := new Display_Item_Record;
                Item.Entity := New_Simple_Type;
                Set_Value (Simple_Type (Item.Entity.all), "<parse_error>");
