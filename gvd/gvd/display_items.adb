@@ -1083,7 +1083,7 @@ package body Display_Items is
       --  Raise or lower the item
 
       if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
+        and then Get_Event_Type (Event) = Button_Press
         and then Gint (Get_Y (Event)) <= Item.Title_Height
       then
          if Is_On_Top (Item.Debugger.Data_Canvas, Item) then
@@ -1142,7 +1142,7 @@ package body Display_Items is
       --  Selecting a component
 
       elsif Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
+        and then Get_Event_Type (Event) = Button_Press
         and then Gint (Get_Y (Event)) > Item.Title_Height
       then
          Select_Item (Item, Component);
