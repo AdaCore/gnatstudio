@@ -95,17 +95,20 @@ package body Cpp_Module is
         (Get_Pref (Kernel, C_Automatic_Indentation));
       Tabs   : constant Boolean := Get_Pref (Kernel, C_Use_Tabs);
       Params : constant Indent_Parameters :=
-        (Indent_Level      => Integer (Get_Pref (Kernel, C_Indentation_Level)),
-         Indent_Continue   => 0,
-         Indent_Decl       => 0,
-         Tab_Width         => Integer (Get_Pref (Kernel, Tab_Width)),
-         Indent_Case_Extra => Automatic,
-         Reserved_Casing   => Case_Handling.Unchanged,
-         Ident_Casing      => Case_Handling.Unchanged,
-         Format_Operators  => False,
-         Use_Tabs          => Tabs,
-         Align_On_Colons   => False,
-         Align_On_Arrows   => False);
+                 (Indent_Level        =>
+                    Integer (Get_Pref (Kernel, C_Indentation_Level)),
+                  Indent_Continue     => 0,
+                  Indent_Decl         => 0,
+                  Tab_Width           =>
+                    Integer (Get_Pref (Kernel, Tab_Width)),
+                  Indent_Case_Extra   => Automatic,
+                  Reserved_Casing     => Case_Handling.Unchanged,
+                  Ident_Casing        => Case_Handling.Unchanged,
+                  Format_Operators    => False,
+                  Use_Tabs            => Tabs,
+                  Align_On_Colons     => False,
+                  Align_On_Arrows     => False,
+                  Align_Decl_On_Colon => False);
 
    begin
       Set_Indentation_Parameters
