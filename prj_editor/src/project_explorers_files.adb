@@ -1232,7 +1232,6 @@ package body Project_Explorers_Files is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
-      N       : Node_Ptr;
    begin
       Register_Module
         (Module                  => Explorer_Files_Module_Id,
@@ -1243,22 +1242,8 @@ package body Project_Explorers_Files is
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-
-      --  Add a files explorer to the default desktop
-      N := new Node;
-      N.Tag := new String'("Project_Explorer_Files");
-
-      Add_Default_Desktop_Item
-        (Kernel, N,
-         10, 10,
-         215, 600,
-         "File View", "Project Explorer - File View",
-         Docked, Left,
-         False);
-
       Register_Menu
         (Kernel, Project, -"File View", "", On_Open_Explorer'Access);
-
    end Register_Module;
 
 end Project_Explorers_Files;
