@@ -583,12 +583,6 @@ package body Glide_Result_View is
    procedure On_Destroy (View : access Gtk_Widget_Record'Class) is
       V : constant Result_View := Result_View (View);
    begin
-      --  Free (V.Non_Leaf_Color);
-
-      --  Do not free the following color, since it is the default black
-      --  color. Kept here as a reminder if we ever change the color.
-      --  Free (V.Leaf_Color);
-      --
       Unref (V.Category_Pixbuf);
    end On_Destroy;
 
