@@ -96,31 +96,35 @@ pragma Preelaborate (HTables);
       --  Removes the latest inserted element pointer associated with the
       --  given key if any, does nothing if none.
 
-      procedure Get_First
-        (Hash_Table : in out HTable;
-         Elmt       : out Elmt_Ptr);
+      type Iterator is private;
+
+      procedure Get_First (Hash_Table : HTable; Iter : out Iterator);
       --  Returns Null_Ptr if the Htable is empty, otherwise returns one
       --  non specified element. There is no guarantee that 2 calls to this
       --  function will return the same element.
 
-      procedure Get_Next
-        (Hash_Table : in out HTable;
-         Elmt       : out Elmt_Ptr);
+      procedure Get_Next (Hash_Table : HTable; Iter : in out Iterator);
       --  Returns a non-specified element that has not been returned by the
       --  same function since the last call to Get_First or Null_Ptr if
       --  there is no such element or Get_First has bever been called. If
       --  there is no call to 'Set' in between Get_Next calls, all the
       --  elements of the Htable will be traversed.
 
+      function Get_Element (Iter : Iterator) return Elmt_Ptr;
+      --  Return the current element
+
    private
 
       type HTable_Array is array (Header_Num) of Elmt_Ptr;
 
-      type HTable is record
-         Table            : HTable_Array;
+      type Iterator is record
          Iterator_Index   : Header_Num;
          Iterator_Ptr     : Elmt_Ptr;
          Iterator_Started : Boolean := False;
+      end record;
+
+      type HTable is record
+         Table            : HTable_Array;
       end record;
 
    end Static_HTable;
@@ -173,12 +177,12 @@ pragma Preelaborate (HTables);
 
       type Iterator is private;
 
-      procedure Get_First (Hash_Table : in out HTable; Iter : out Iterator);
+      procedure Get_First (Hash_Table : HTable; Iter : out Iterator);
       --  Returns No_Element if the Htable is empty, otherwise returns one
       --  non specified element. There is no guarantee that 2 calls to this
       --  function will return the same element.
 
-      procedure Get_Next (Hash_Table : in out HTable; Iter : out Iterator);
+      procedure Get_Next (Hash_Table : HTable; Iter : in out Iterator);
       --  Returns a non-specified element that has not been returned by the
       --  same function since the last call to Get_First or No_Element if
       --  there is no such element. If there is no call to 'Set' in between
@@ -202,8 +206,6 @@ pragma Preelaborate (HTables);
          Next : Elmt_Ptr;
       end record;
 
-      type Iterator is new Elmt_Ptr;
-
       procedure Free (X : in out Elmt_Ptr);
 
       procedure Set_Next (E : Elmt_Ptr; Next : Elmt_Ptr);
@@ -220,6 +222,10 @@ pragma Preelaborate (HTables);
         Get_Key    => Get_Key,
         Hash       => Hash,
         Equal      => Equal);
+
+      type Iterator is record
+         Iter : Tab.Iterator;
+      end record;
 
       type HTable is record
          Table : Tab.HTable;

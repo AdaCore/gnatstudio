@@ -28,7 +28,7 @@ package body HTables is
 
    package body Static_HTable is
 
-      procedure Get_Non_Null (Hash_Table : in out HTable; Elmt : out Elmt_Ptr);
+      procedure Get_Non_Null (Hash_Table : HTable; Iter : in out Iterator);
       --  Returns Null_Ptr if Iterator_Started is false of the Table is
       --  empty. Returns Iterator_Ptr if non null, or the next non null
       --  element in table if any.
@@ -55,54 +55,60 @@ package body HTables is
          end loop;
       end Get;
 
+      -----------------
+      -- Get_Element --
+      -----------------
+
+      function Get_Element (Iter : Iterator) return Elmt_Ptr is
+      begin
+         if not Iter.Iterator_Started then
+            return Null_Ptr;
+         else
+            return Iter.Iterator_Ptr;
+         end if;
+      end Get_Element;
+
       ---------------
       -- Get_First --
       ---------------
 
-      procedure Get_First (Hash_Table : in out HTable; Elmt : out  Elmt_Ptr) is
+      procedure Get_First (Hash_Table : HTable; Iter : out Iterator) is
       begin
-         Hash_Table.Iterator_Started := True;
-         Hash_Table.Iterator_Index := Hash_Table.Table'First;
-         Hash_Table.Iterator_Ptr :=
-           Hash_Table.Table (Hash_Table.Iterator_Index);
-         Get_Non_Null (Hash_Table, Elmt);
+         Iter.Iterator_Started := True;
+         Iter.Iterator_Index   := Hash_Table.Table'First;
+         Iter.Iterator_Ptr     := Hash_Table.Table (Iter.Iterator_Index);
+         Get_Non_Null (Hash_Table, Iter);
       end Get_First;
 
       --------------
       -- Get_Next --
       --------------
 
-      procedure Get_Next (Hash_Table : in out HTable; Elmt : out Elmt_Ptr) is
+      procedure Get_Next (Hash_Table : HTable; Iter : in out Iterator) is
       begin
-         if not Hash_Table.Iterator_Started then
-            Elmt := Null_Ptr;
+         if not Iter.Iterator_Started then
             return;
          end if;
 
-         Hash_Table.Iterator_Ptr := Next (Hash_Table.Iterator_Ptr);
-         Get_Non_Null (Hash_Table, Elmt);
+         Iter.Iterator_Ptr := Next (Iter.Iterator_Ptr);
+         Get_Non_Null (Hash_Table, Iter);
       end Get_Next;
 
       ------------------
       -- Get_Non_Null --
       ------------------
 
-      procedure Get_Non_Null
-        (Hash_Table : in out HTable; Elmt : out Elmt_Ptr) is
+      procedure Get_Non_Null (Hash_Table : HTable; Iter : in out Iterator) is
       begin
-         while Hash_Table.Iterator_Ptr = Null_Ptr  loop
-            if Hash_Table.Iterator_Index = Hash_Table.Table'Last then
-               Hash_Table.Iterator_Started := False;
-               Elmt := Null_Ptr;
+         while Iter.Iterator_Ptr = Null_Ptr  loop
+            if Iter.Iterator_Index = Hash_Table.Table'Last then
+               Iter.Iterator_Started := False;
                return;
             end if;
 
-            Hash_Table.Iterator_Index := Hash_Table.Iterator_Index + 1;
-            Hash_Table.Iterator_Ptr   :=
-              Hash_Table.Table (Hash_Table.Iterator_Index);
+            Iter.Iterator_Index := Iter.Iterator_Index + 1;
+            Iter.Iterator_Ptr   := Hash_Table.Table (Iter.Iterator_Index);
          end loop;
-
-         Elmt := Hash_Table.Iterator_Ptr;
       end Get_Non_Null;
 
       ------------
@@ -207,11 +213,9 @@ package body HTables is
       -- Get_First --
       ---------------
 
-      procedure Get_First (Hash_Table : in out HTable; Iter : out Iterator) is
-         Tmp : Elmt_Ptr;
+      procedure Get_First (Hash_Table : HTable; Iter : out Iterator) is
       begin
-         Get_First (Hash_Table.Table, Tmp);
-         Iter := Iterator (Tmp);
+         Get_First (Hash_Table.Table, Iter.Iter);
       end Get_First;
 
       -------------
@@ -227,11 +231,9 @@ package body HTables is
       -- Get_Next --
       --------------
 
-      procedure Get_Next (Hash_Table : in out HTable; Iter : out Iterator) is
-         Tmp : Elmt_Ptr;
+      procedure Get_Next (Hash_Table : HTable; Iter : in out Iterator) is
       begin
-         Get_Next (Hash_Table.Table, Tmp);
-         Iter := Iterator (Tmp);
+         Get_Next (Hash_Table.Table, Iter.Iter);
       end Get_Next;
 
       -------------
@@ -240,7 +242,7 @@ package body HTables is
 
       function Get_Key (Iter : Iterator) return Key is
       begin
-         return Iter.K.all;
+         return Get_Element (Iter.Iter).K.all;
       end Get_Key;
 
       -----------------
@@ -248,11 +250,12 @@ package body HTables is
       -----------------
 
       function Get_Element (Iter : Iterator) return Element is
+         Ptr : constant Elmt_Ptr := Get_Element (Iter.Iter);
       begin
-         if Iter = null then
+         if Ptr = null then
             return No_Element;
          else
-            return Iter.E;
+            return Get_Element (Iter.Iter).E;
          end if;
       end Get_Element;
 
@@ -285,14 +288,17 @@ package body HTables is
       -----------
 
       procedure Reset (Hash_Table : in out HTable) is
-         E1, E2 : Elmt_Ptr;
+         E1 : Iterator;
+         E : Elmt_Ptr;
       begin
-         Get_First (Hash_Table.Table, E1);
+         Get_First (Hash_Table, E1);
 
-         while E1 /= null loop
-            Get_Next (Hash_Table.Table, E2);
-            Free (E1);
-            E1 := E2;
+         loop
+            E := Get_Element (E1.Iter);
+            exit when E = null;
+
+            Free (E);
+            Get_Next (Hash_Table, E1);
          end loop;
 
          Reset (Hash_Table.Table);
