@@ -155,7 +155,7 @@ package body Wizards is
       Set_Style (Wiz.Title, Style);
 
       From_Description (Font, Desc);
-      Set_USize (Wiz.Title_Box, -1,
+      Set_Size_Request (Wiz.Title_Box, -1,
                  (Get_Ascent (Font) + Get_Descent (Font)) * 3);
 
       Wiz.Toc := new Widget_Array (1 .. Num_Pages);
@@ -215,7 +215,7 @@ package body Wizards is
 
       Size_Request (Wiz.Toc (Page_Num), Req);
       if Req.Width < Min_Toc_Width then
-         Set_USize (Wiz.Toc (Page_Num), Min_Toc_Width, Req.Height);
+         Set_Size_Request (Wiz.Toc (Page_Num), Min_Toc_Width, Req.Height);
       end if;
 
       Wiz.Has_Toc := True;

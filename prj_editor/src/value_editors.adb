@@ -280,9 +280,10 @@ package body Value_Editors is
    begin
       Realize (Editor);
       F := Get_Font (Get_Style (Editor));
-      Set_USize (Editor, -1,
-                 Gint (Lines) * (Get_Ascent (F) + Get_Descent (F))
-                 + 2 * (Y_Thickness (Get_Style (Editor)) + Text_Border_Room));
+      Set_Size_Request
+        (Editor, -1,
+         Gint (Lines) * (Get_Ascent (F) + Get_Descent (F))
+         + 2 * (Y_Thickness (Get_Style (Editor)) + Text_Border_Room));
    end Set_Visible_Lines;
 
    ----------------------------
