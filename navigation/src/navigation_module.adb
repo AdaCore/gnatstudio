@@ -345,7 +345,6 @@ package body Navigation_Module is
       Register_Menu (Kernel, Navigate, -"Goto _File Spec<->Body",
                      Stock_Convert, On_Other_File'Access);
       Register_Menu (Kernel, Navigate, -"Goto _Parent Unit", "", null);
-      Register_Menu (Kernel, Navigate, -"Find _All References", "", null);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
       Register_Menu (Kernel, Navigate, -"_Start Of Statement",
