@@ -86,12 +86,12 @@ package body Src_Editor_Box is
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.
 
-   function To_Buffer_Line (Line : Positive) return Gint;
+   function To_Buffer_Line (Line : Natural) return Gint;
    pragma Inline (To_Buffer_Line);
    --  Convert a line number in the Source Box to a line number in the
    --  Source Buffer. Same rationale as in To_Box_Line.
 
-   function To_Buffer_Column (Col : Positive) return Gint;
+   function To_Buffer_Column (Col : Natural) return Gint;
    pragma Inline (To_Buffer_Column);
    --  Convert to a column number in the Source Box to a column number
    --  in the Source Buffer. Same rationale as in To_Box_Line.
@@ -221,11 +221,11 @@ package body Src_Editor_Box is
    ------------------------------
 
    procedure Goto_Declaration_Or_Body
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel  : access Kernel_Handle_Record'Class;
       To_Body : Boolean;
-      Editor : Source_Editor_Box := null;
-      Line   : Natural := 0;
-      Column : Natural := 0)
+      Editor  : Source_Editor_Box := null;
+      Line    : Natural := 0;
+      Column  : Natural := 0)
    is
       Source         : Source_Editor_Box := Editor;
       Source_Info    : LI_File_Ptr;
@@ -477,18 +477,18 @@ package body Src_Editor_Box is
    -- To_Buffer_Line --
    --------------------
 
-   function To_Buffer_Line (Line : Positive) return Gint is
+   function To_Buffer_Line (Line : Natural) return Gint is
    begin
-      return Gint (Line - 1);
+      return Gint (Line) - 1;
    end To_Buffer_Line;
 
    ----------------------
    -- To_Buffer_Column --
    ----------------------
 
-   function To_Buffer_Column (Col : Positive) return Gint is
+   function To_Buffer_Column (Col : Natural) return Gint is
    begin
-      return Gint (Col - 1);
+      return Gint (Col) - 1;
    end To_Buffer_Column;
 
    --------------------------
@@ -1436,8 +1436,8 @@ package body Src_Editor_Box is
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive) return String is
+      End_Line     : Natural := 0;
+      End_Column   : Natural := 0) return String is
    begin
       return Get_Slice
         (Editor.Source_Buffer,

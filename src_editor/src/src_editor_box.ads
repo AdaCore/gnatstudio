@@ -236,10 +236,11 @@ package Src_Editor_Box is
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
       Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive) return String;
+      End_Line     : Natural := 0;
+      End_Column   : Natural := 0) return String;
    --  Return the text located between (Start_Line, Start_Column) and
    --  (End_Line, End_Column).
+   --  If End_Line = 0, contents until the end of the buffer will be retrieved.
    --
    --  The validity of both locations should be verified before invoking this
    --  function. An incorrect location will cause an Assertion_Failure when
