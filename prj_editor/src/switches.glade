@@ -3959,6 +3959,7 @@ _.ada
 	  <items>.h
 .hh
 .H
+.hpp
 </items>
 	  <child>
 	    <left_attach>1</left_attach>
@@ -3998,6 +3999,7 @@ _.ada
 	  <items>.c
 .cc
 .C
+.cpp
 </items>
 	  <child>
 	    <left_attach>1</left_attach>
