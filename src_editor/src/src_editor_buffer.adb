@@ -506,6 +506,8 @@ package body Src_Editor_Buffer is
 
    procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class) is
    begin
+      Buffer.Blocks_Need_Parsing := True;
+
       if not Buffer.Parse_Blocks then
          return;
       end if;
@@ -3870,10 +3872,26 @@ package body Src_Editor_Buffer is
 
    function Get_Block
      (Editor : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Block_Record is
+      Line   : Buffer_Line_Type) return Block_Record
+   is
+      Prev : Boolean;
    begin
       if Line = 0 then
          return New_Block;
+      end if;
+
+      --  If the editor hasn't calculated block information on-the-fly,
+      --  calculate the block information now.
+
+      if Editor.Blocks_Need_Parsing then
+         --  We need to temporarily change the value of
+         --  Editor.Block_Highlighting so that Compute_Blocks parses the
+         --  information that we want.
+
+         Prev := Editor.Block_Highlighting;
+         Editor.Block_Highlighting := True;
+         Compute_Blocks (Editor);
+         Editor.Block_Highlighting := Prev;
       end if;
 
       if Editor.Line_Data /= null
