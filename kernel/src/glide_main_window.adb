@@ -27,6 +27,7 @@ package body Glide_Main_Window is
    begin
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window));
+      Main_Window.Standalone := False;
    end Initialize;
 
 end Glide_Main_Window;
