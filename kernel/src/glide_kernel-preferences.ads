@@ -146,6 +146,7 @@ package Glide_Kernel.Preferences is
    File_Pattern_Index    : Param_Spec_Int;
    Line_Pattern_Index    : Param_Spec_Int;
    Column_Pattern_Index  : Param_Spec_Int;
+   Message_Pattern_Index  : Param_Spec_Int;
    Style_Pattern_Index   : Param_Spec_Int;
    Warning_Pattern_Index : Param_Spec_Int;
 
