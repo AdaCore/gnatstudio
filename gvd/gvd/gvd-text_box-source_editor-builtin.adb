@@ -227,8 +227,7 @@ package body GVD.Source_Editors is
    --------------------------
 
    procedure Activate_Computation
-     (Editor : access Source_Editor_Record'Class)
-   is
+     (Editor : access Source_Editor_Record'Class) is
    begin
       if Editor.Show_Lines_With_Code then
          Editor.Idle_Id := Editor_Idle.Add
@@ -246,8 +245,9 @@ package body GVD.Source_Editors is
       Result : out Boolean;
       Num    : out Integer)
    is
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      Breakpoints_Array : GVD.Types.Breakpoint_Array_Ptr :=
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
+      Breakpoints_Array : constant GVD.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
 
    begin
@@ -887,6 +887,7 @@ package body GVD.Source_Editors is
       end if;
 
       Update_Child (Editor);
+
       Update_Buttons (Editor, True);
 
       if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
