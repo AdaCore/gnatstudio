@@ -419,8 +419,10 @@ package body VCS_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item : Gtk_Menu_Item;
-      VCS_Root  : constant String := -"VCS";
-      VCS       : constant String := '/' & VCS_Root;
+
+      VCS_Root    : constant String := -"VCS";
+      VCS         : constant String := '/' & VCS_Root;
+      VCS_Compare : constant String := VCS & "/_" & (-"Compare");
 
    begin
       VCS_Module_ID := new VCS_Module_ID_Record;
@@ -451,12 +453,13 @@ package body VCS_Module is
       Register_Menu (Kernel, VCS, -"Start _Editing", "", Open'Access);
       Register_Menu (Kernel, VCS, -"_View revision history", "",
                      View_Log'Access);
-      Register_Menu (Kernel, VCS, -"Compare against _head revision", "",
+
+      Register_Menu (Kernel, VCS_Compare, -"Against _head revision", "",
                      View_Head_Diff'Access);
-      Register_Menu (Kernel, VCS, -"Compare against _working revision", "",
+      Register_Menu (Kernel, VCS_Compare, -"Against _working revision", "",
                      View_Work_Diff'Access);
-      Register_Menu (Kernel, VCS,
-                     -"_Compare working revision against head revision", "",
+      Register_Menu (Kernel, VCS_Compare,
+                     -"Working revision _against head revision", "",
                      View_Work_Head_Diff'Access);
       Register_Menu (Kernel, VCS, -"_Annotate", "", View_Annotate'Access);
       Register_Menu (Kernel, VCS, -"Remove a_nnotations", "",
