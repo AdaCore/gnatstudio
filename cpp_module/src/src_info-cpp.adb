@@ -281,6 +281,11 @@ package body Src_Info.CPP is
          Referred_LI       => Referred_LI,
          Dep_Ptr           => Dep_Ptr);
 
+      if Dep_Ptr = null then
+         Declaration_Info := null;
+         return;
+      end if;
+
       --  Now Dep_Ptr points to valid Dependency_File_Info_Node object
       --  Inserting new declaration
 
@@ -2102,11 +2107,14 @@ package body Src_Info.CPP is
                Kind               => Class_Kind,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
-            Set_End_Of_Scope
-              (Decl_Info,
-               Decl_Info.Value.Declaration.Location.File.LI,
-               CL_Tab.End_Position,
-               End_Of_Spec);
+
+            if Decl_Info /= null then
+               Set_End_Of_Scope
+                 (Decl_Info,
+                  Decl_Info.Value.Declaration.Location.File.LI,
+                  CL_Tab.End_Position,
+                  End_Of_Spec);
+            end if;
          end if;
       end if;
    end Find_Or_Create_Class;
