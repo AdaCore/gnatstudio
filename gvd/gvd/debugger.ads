@@ -212,7 +212,7 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Timeout  : Integer) return Boolean is abstract;
    --  Wait for the prompt.
-   --  Timeout is the number of 50ms times to wait.
+   --  Timeout is the number of ms to wait.
    --  Return True if a prompt was found.
 
    procedure Display_Prompt

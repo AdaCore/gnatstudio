@@ -210,7 +210,7 @@ package body Debugger.Jdb is
       --  kill it abruptly.
 
       begin
-         Wait (Get_Process (Debugger), Result, ".*", Timeout => 2);
+         Wait (Get_Process (Debugger), Result, ".*", Timeout => 200);
       exception
          when Process_Died =>
             --  This is somewhat expected... RIP.

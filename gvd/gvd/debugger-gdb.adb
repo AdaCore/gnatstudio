@@ -757,7 +757,7 @@ package body Debugger.Gdb is
       --  kill it abruptly.
 
       begin
-         Wait (Get_Process (Debugger), Result, ".+", Timeout => 5);
+         Wait (Get_Process (Debugger), Result, ".+", Timeout => 200);
       exception
          when Process_Died =>
             --  This is somewhat expected... RIP.
