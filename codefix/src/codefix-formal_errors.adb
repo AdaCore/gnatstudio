@@ -781,11 +781,6 @@ package body Codefix.Formal_Errors is
       Body_Name   : String_Access;
 
    begin
-      Put_Line ("Moving with clause to file from "
-                & Cursor.File_Name.all
-                & " to "
-                & Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
-
       Assign (Body_Name,
               Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
 
