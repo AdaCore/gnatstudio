@@ -2338,7 +2338,7 @@ package body Ada_Analyzer is
       Current := End_Of_Word (Prec);
 
       Main_Loop :
-      while Prec <= Buffer_Last loop
+      loop
          Str_Len := Current - Prec + 1;
 
          for J in Prec .. Current loop
@@ -2476,6 +2476,8 @@ package body Ada_Analyzer is
 
          Prec       := Current + 1;
          Prev_Token := Token;
+
+         exit Main_Loop when Prec > Buffer_Last;
 
          Next_Word (Prec, Terminated);
 
