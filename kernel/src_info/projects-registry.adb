@@ -95,7 +95,7 @@ package body Projects.Registry is
    use Source_Htable.String_Hash_Table;
 
    type Project_Registry_Data is record
-      Root    : Project_Type;
+      Root    : Project_Type := No_Project;
       --  The root of the project hierarchy
 
       Sources  : Source_Htable.String_Hash_Table.HTable;
