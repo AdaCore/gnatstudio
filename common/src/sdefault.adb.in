@@ -1,4 +1,5 @@
 package body Sdefault is
+   pragma Style_Checks (Off);
    S1 : aliased constant String :=
      "@EXEC_PREFIX@/lib/gcc-lib/@TARGET@/@GCC_VERSION@/adainclude/";
    S2 : aliased constant String :=
