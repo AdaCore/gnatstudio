@@ -2124,15 +2124,15 @@ package body Src_Editor_Box is
       Column      : Positive := 1;
       Force_Focus : Boolean  := True)
    is
-      Buffer_Line : constant Gint := To_Buffer_Line (Line);
-      Buffer_Col  : constant Gint := To_Buffer_Column (Column);
+      Editable_Line : constant Editable_Line_Type := Editable_Line_Type (Line);
+
    begin
-      if Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col) then
+      if Is_Valid_Position (Editor.Source_Buffer, Editable_Line, Column) then
          if Force_Focus then
             Grab_Focus (Editor.Source_View);
          end if;
 
-         Set_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
+         Set_Cursor_Position (Editor.Source_Buffer, Editable_Line, Column);
          Scroll_To_Cursor_Location (Editor.Source_View, True);
 
       else
