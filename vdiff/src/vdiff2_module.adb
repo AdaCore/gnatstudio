@@ -388,7 +388,6 @@ package body Vdiff2_Module is
          Command_Access
            (VDiff2_Module (Vdiff_Module_ID).Command_First),
          Image, -"Go to the first difference");
-
    end VDiff_Toolbar;
 
    --------------------------
