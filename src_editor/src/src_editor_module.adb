@@ -2015,6 +2015,7 @@ package body Src_Editor_Module is
       Kernel : constant Kernel_Handle :=
         Get_Kernel (Source_Box (Widget).Editor);
    begin
+      --  ??? How come we need to access this low-level information ?
       return Get_Ref_Count (Get_Buffer (Source_Box (Widget).Editor)) = 1
         and then not Save_MDI_Children
           (Kernel,
