@@ -12,7 +12,7 @@ with Work_on_File;	use Work_on_File;
 
 procedure docgen is
 
-   Help_Requested : exception renames Ada.IO_Exceptions.Device_Error;
+   Help_Requested : exception;
    --raised when the help option was used. no need to go on!
    Command_Line_Error : exception;
    --this is a  second comment
