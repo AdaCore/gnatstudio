@@ -130,21 +130,21 @@
 	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:41:47 GMT</last_modification_time>
 	    </signal>
-	    <label>Edit Source...</label>
+	    <label>Edit Current Source</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>reload_source1</name>
-	    <sensitive>False</sensitive>
+	    <name>open_source1</name>
+	    <sensitive>True</sensitive>
 	    <signal>
 	      <name>activate</name>
-	      <handler>on_reload_source1_activate</handler>
+	      <handler>on_open_source1_activate</handler>
 	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:42:04 GMT</last_modification_time>
 	    </signal>
-	    <label>Reload Source</label>
+	    <label>Open Source...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -292,7 +292,7 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>undo3</name>
+	    <name>undo1</name>
 	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_CONTROL_MASK</modifiers>
@@ -301,7 +301,7 @@
 	    </accelerator>
 	    <signal>
 	      <name>activate</name>
-	      <handler>on_undo3_activate</handler>
+	      <handler>on_undo1_activate</handler>
 	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:19:49 GMT</last_modification_time>
 	    </signal>
@@ -5675,7 +5675,7 @@ remote
 	      <handler>on_unselect_all_clicked</handler>
 	      <last_modification_time>Tue, 05 Sep 2000 20:05:04 GMT</last_modification_time>
 	    </signal>
-	    <label>Unselect all</label>
+	    <label>Unselect All</label>
 	  </widget>
 	</widget>
       </widget>
