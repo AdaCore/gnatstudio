@@ -1202,7 +1202,7 @@ package body String_Utils is
       Parent_Dir : constant String := ".." & Directory_Separator;
 
    begin
-      if File = Base then
+      if File = Base or else File = Base (Base'First .. Base'Last - 1) then
          return ".";
       end if;
 
