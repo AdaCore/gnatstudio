@@ -126,7 +126,7 @@ package Prj_API is
    --  at Root_Project, that reference Project, are also updated accordingly.
    --
    --  If there is already a project by that name in the project hierarchy,
-   --  Renaming_Error_Name_Exists is raised
+   --  Project_Error is raised
 
    function Create_Variable
      (Prj_Or_Pkg : Project_Node_Id;
@@ -528,9 +528,11 @@ package Prj_API is
 
    Invalid_Value : exception;
 
-   Renaming_Error_Name_Exists : exception;
-   --  Raised when a project renaming could not be performed because the name
-   --  was already used.
+   Project_Error   : exception;
+   Project_Warning : exception;
+   --  Two general exceptions that are raised when a subprogram could not
+   --  perform its duty. A warning means that nothing was done, but is not
+   --  critical.
 
 private
    type String_List_Iterator is record

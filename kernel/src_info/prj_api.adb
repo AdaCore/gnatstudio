@@ -44,6 +44,7 @@ with Stringt;       use Stringt;
 with Ada.Text_IO;   use Ada.Text_IO;
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
 with String_Utils;  use String_Utils;
+with Ada.Exceptions; use Ada.Exceptions;
 
 with Traces; use Traces;
 
@@ -1087,6 +1088,8 @@ package body Prj_API is
       --  would result in an infinite loop when manipulating the project
 
       if Prj.Tree.Name_Of (Project) = Prj.Tree.Name_Of (Imported_Project) then
+         Raise_Exception
+           (Project_Warning'Identity, "Cannot add dependency to self");
          return;
       end if;
 
@@ -1097,6 +1100,8 @@ package body Prj_API is
          if Prj.Tree.Name_Of (Project_Node_Of (With_Clause)) =
            Prj.Tree.Name_Of (Imported_Project)
          then
+            Raise_Exception
+              (Project_Warning'Identity, "This dependency already exists");
             return;
          end if;
          With_Clause := Next_With_Clause_Of (With_Clause);
@@ -1505,6 +1510,9 @@ package body Prj_API is
                Set_Next_Expression_In_List
                  (Expr, First_Expression_In_List
                   (Current_Term (First_Term (Previous_Decl))));
+            else
+               Set_Next_Expression_In_List (Previous_Decl, Empty_Node);
+               Set_Next_Term (First_Term (Previous_Decl), Empty_Node);
             end if;
 
             Set_Current_Term (First_Term (Previous_Decl), List);
@@ -1585,7 +1593,10 @@ package body Prj_API is
    is
       Parent : Project_Node_Id;
       Pkg  : Project_Node_Id := Empty_Node;
-      Node : Project_Node_Id;
+      Node, Tmp : Project_Node_Id;
+      Case_Items : Project_Node_Array_Access :=
+        new Project_Node_Array (1 .. 100);
+      Case_Items_Last : Natural := Case_Items'First - 1;
 
       procedure Add_Item (Case_Item : Project_Node_Id);
       --  Add the declaration Node to Case_Item, in front, since the
@@ -1597,7 +1608,7 @@ package body Prj_API is
 
       procedure Add_Item (Case_Item : Project_Node_Id) is
       begin
-         Add_In_Front (Case_Item, Clone_Node (Node, True));
+         Add_Node_To_List (Case_Items, Case_Items_Last, Case_Item);
       end Add_Item;
 
    begin
@@ -1608,21 +1619,43 @@ package body Prj_API is
          Parent := Project_Declaration_Of (Project);
       end if;
 
-      Node := Find_Last_Declaration_Of
+      --  First, create the nested case for the scenario, and memorize each of
+      --  them. This will easily allow to keep the order of all the
+      --  declarations for this attribute that are currently in the common part
+      For_Each_Scenario_Case_Item (Project, Pkg, Scenario_Variables, null);
+      For_Each_Matching_Case_Item
+        (Project, Pkg, All_Case_Items, Add_Item'Unrestricted_Access);
+
+      Node := First_Declarative_Item_Of (Parent);
+      while Node /= Empty_Node loop
+         if Attribute_Matches
+           (Current_Item_Node (Node), Attribute_Name, Attribute_Index)
+         then
+            for Parent in Case_Items'First .. Case_Items_Last loop
+               Tmp := Default_Project_Node (N_Declarative_Item);
+               Set_Current_Item_Node
+                 (Tmp, Clone_Node (Current_Item_Node (Node), True));
+
+               if Kind_Of (Case_Items (Parent)) = N_Case_Item then
+                  Set_Next_Declarative_Item
+                    (Tmp, First_Declarative_Item_Of (Case_Items (Parent)));
+                  Set_First_Declarative_Item_Of (Case_Items (Parent), Tmp);
+               else
+                  Set_Next_Declarative_Item
+                    (Tmp, Next_Declarative_Item (Case_Items (Parent)));
+                  Set_Next_Declarative_Item (Case_Items (Parent), Tmp);
+               end if;
+               Case_Items (Parent) := Tmp;
+            end loop;
+         end if;
+
+         Node := Next_Declarative_Item (Node);
+      end loop;
+
+      Free (Case_Items);
+
+      Remove_Attribute_Declarations
         (Parent, Attribute_Name, Attribute_Index);
-
-      if Node /= Empty_Node then
-         --  First, create the nested case for the scenario
-         For_Each_Scenario_Case_Item (Project, Pkg, Scenario_Variables, null);
-
-         --  Then populate it
-         For_Each_Matching_Case_Item
-           (Project, Pkg, All_Case_Items, Add_Item'Unrestricted_Access);
-
-         --  And remove the attribute from the common part
-         Remove_Attribute_Declarations
-           (Parent, Attribute_Name, Attribute_Index);
-      end if;
    end Move_From_Common_To_Case_Construct;
 
    ----------------------------------------
@@ -2248,7 +2281,9 @@ package body Prj_API is
 
       Old := Find_Project_In_Hierarchy (Root_Project, Name);
       if Old /= Empty_Node then
-         raise Renaming_Error_Name_Exists;
+         Raise_Exception
+           (Project_Error'Identity,
+            "There is already a project by this name in the project tree.");
       end if;
 
       declare
