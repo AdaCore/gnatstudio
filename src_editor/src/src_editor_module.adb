@@ -981,7 +981,8 @@ package body Src_Editor_Module is
               Create (Nth_Arg (Data, 1), Kernel);
             Child  : constant MDI_Child := Find_Editor (Kernel, File);
             Line   : constant Editable_Line_Type :=
-              Editable_Line_Type (Positive'(Nth_Arg (Data, 2)));
+              Editable_Line_Type (Natural'(Nth_Arg (Data, 2)));
+
          begin
             if Child = null then
                Set_Error_Msg
@@ -1025,7 +1026,7 @@ package body Src_Editor_Module is
             if Child = null then
                Set_Error_Msg
                  (Data,
-                    -("Attempting to get cursor position for non open file : ")
+                    -("Attempting to get cursor position for non open file: ")
                   & Base_Name (File));
             else
                declare
@@ -1057,12 +1058,13 @@ package body Src_Editor_Module is
             if Child = null then
                Set_Error_Msg
                  (Data,
-                    -("Attempting to set cursor position for non open file : ")
+                    -("Attempting to set cursor position for non open file: ")
                   & Base_Name (File));
             else
                if Column = 0 then
                   --  Column has not been specified, set it to the first non
                   --  white space character.
+                  --  Do we really always want this behavior ???
 
                   declare
                      Chars : constant String :=
