@@ -62,6 +62,7 @@ package Glide_Kernel is
    --  Initialize all the modules that are registered. This should be called
    --  only after the main window and the MDI have been initialized, so that
    --  the modules can add entries in the menus and the MDI.
+   --  Only the modules that haven't been initialized yet are processed.
 
    procedure Set_Source_Path
      (Handle : access Kernel_Handle_Record;
@@ -277,6 +278,7 @@ private
       Priority        : Module_Priority;
       Initializer     : Module_Initializer;
       Contextual_Menu : Module_Menu_Handler;
+      Was_Initialized : Boolean := False;
    end record;
 
    type Selection_Context is tagged record
