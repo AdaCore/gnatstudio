@@ -31,7 +31,6 @@ with Gtk.List_Item;           use Gtk.List_Item;
 with Gtk.List;                use Gtk.List;
 with Odd_Intl;                use Odd_Intl;
 with Gtk.Enums;               use Gtk.Enums;
-with Process_Proxies;         use Process_Proxies;
 with Gtk.Handlers;            use Gtk.Handlers;
 
 package body Breakpoints_Pkg.Callbacks is
@@ -312,8 +311,6 @@ package body Breakpoints_Pkg.Callbacks is
 
          Freeze (Editor.Clist1);
 
-         Push_Internal_Command_Status
-           (Get_Process (Editor.Process.Debugger), True);
          if Toggle_Breakpoint_State
            (Editor.Process,
             Breakpoint_Num => Integer'Value (Get_Text (Editor.Clist1, Row, 0)))
@@ -323,7 +320,6 @@ package body Breakpoints_Pkg.Callbacks is
          else
             Set_Text (Editor.Clist1, Row, Enable_Column, "");
          end if;
-         Pop_Internal_Command_Status (Get_Process (Editor.Process.Debugger));
 
          --  Make sure the row is selected
          Emit_Stop_By_Name (Editor.Clist1, "select_row");
