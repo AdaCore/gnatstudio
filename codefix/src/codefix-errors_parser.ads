@@ -130,7 +130,7 @@ with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 
-use Codefix.Formal_Errors.Extract_List;
+use Codefix.Formal_Errors.Command_List;
 use Codefix.Formal_Errors.Cursor_Lists;
 
 package Codefix.Errors_Parser is
