@@ -104,7 +104,7 @@ package body Glide_Kernel is
       7  => New_String (File_Saved_Signal),
       8  => New_String (File_Closed_Signal),
       9  => New_String (File_Changed_On_Disk_Signal),
-      10  => New_String (Compilation_Finished_Signal),
+      10 => New_String (Compilation_Finished_Signal),
 
       11 => New_String (Preferences_Changed_Signal),
       12 => New_String (Search_Regexps_Changed_Signal),
@@ -310,6 +310,7 @@ package body Glide_Kernel is
         Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
       Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
       Value : Boolean;
+
    begin
       if Iter /= Null_Iter then
          Value := not Get_Boolean (Model, Iter, 0);
@@ -329,11 +330,12 @@ package body Glide_Kernel is
      (View   : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Model : constant Gtk_Tree_Store :=
+      Model       : constant Gtk_Tree_Store :=
         Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
       Path_String : constant String := Get_String (Nth (Params, 1));
       Iter        : constant Gtk_Tree_Iter :=
         Get_Iter_From_String (Model, Path_String);
+
    begin
       Set (Model, Iter, 0, not Get_Boolean (Model, Iter, 0));
    end Select_Child_When_Saving;
@@ -343,28 +345,30 @@ package body Glide_Kernel is
    -----------------------
 
    function Save_MDI_Children
-     (Handle : access Kernel_Handle_Record;
+     (Handle   : access Kernel_Handle_Record;
       Children : Gtkada.MDI.MDI_Child_Array := Gtkada.MDI.No_Children;
-      Force  : Boolean := False) return Boolean
+      Force    : Boolean := False) return Boolean
    is
-      Column_Types : constant GType_Array := (GType_Boolean, GType_String);
-      MDI       : constant MDI_Window := Get_MDI (Handle);
+      Column_Types        : constant GType_Array :=
+        (GType_Boolean, GType_String);
+      MDI                 : constant MDI_Window := Get_MDI (Handle);
       Project_Description : constant String := -"Project";
-      Iter      : Child_Iterator;
-      Child     : MDI_Child;
-      Has_Unsaved : Boolean := False;
-      Model     : Gtk_Tree_Store;
-      Dialog    : Gtk_Dialog;
-      It        : Gtk_Tree_Iter := Null_Iter;
-      Renderer  : Gtk_Cell_Renderer_Text;
-      Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
-      Scrolled  : Gtk_Scrolled_Window;
-      View      : Gtk_Tree_View;
-      Col       : Gtk_Tree_View_Column;
-      Col_Num   : Gint;
-      Label     : Gtk_Label;
-      Button    : Gtk_Widget;
-      Response  : Gtk_Response_Type;
+      Iter                : Child_Iterator;
+      Child               : MDI_Child;
+      Num_Unsaved         : Natural := 0;
+      Model               : Gtk_Tree_Store;
+      Dialog              : Gtk_Dialog;
+      It                  : Gtk_Tree_Iter := Null_Iter;
+      Renderer            : Gtk_Cell_Renderer_Text;
+      Toggle_Renderer     : Gtk_Cell_Renderer_Toggle;
+      Scrolled            : Gtk_Scrolled_Window;
+      View                : Gtk_Tree_View;
+      Col                 : Gtk_Tree_View_Column;
+      Col_Num             : Gint;
+      pragma Unreferenced (Col_Num);
+      Label               : Gtk_Label;
+      Button              : Gtk_Widget;
+      Response            : Gtk_Response_Type;
 
       procedure Add_Child_If_Needed (Child : MDI_Child);
       --  Add the child to the model if we should ask for its saving
@@ -389,7 +393,7 @@ package body Glide_Kernel is
             Append (Model, It, Null_Iter);
             Set (Model, It, 0, True);
             Set (Model, It, 1, Get_Title (Child));
-            Has_Unsaved := True;
+            Num_Unsaved := Num_Unsaved + 1;
          end if;
       end Add_Child_If_Needed;
 
@@ -397,6 +401,7 @@ package body Glide_Kernel is
          Module : constant Module_ID := Get_Module_From_Child (Child);
          Tmp    : Boolean;
          pragma Unreferenced (Tmp);
+
       begin
          if Module /= null
            and then Module.Info.Save_Function /= null
@@ -406,7 +411,6 @@ package body Glide_Kernel is
          end if;
       end Save_Child;
 
-      pragma Unreferenced (Col_Num);
    begin
       if Force then
          if Children /= No_Children then
@@ -415,8 +419,10 @@ package body Glide_Kernel is
                   Save_Child (Children (C));
                end if;
             end loop;
+
          else
             Iter := First_Child (MDI);
+
             loop
                Child := Get (Iter);
                exit when Child = null;
@@ -424,13 +430,14 @@ package body Glide_Kernel is
                Next (Iter);
             end loop;
          end if;
+
          return True;
       end if;
 
       Gtk_New (Model, Column_Types);
 
       if Project_Modified (Get_Project (Handle), Recursive => True) then
-         Has_Unsaved := True;
+         Num_Unsaved := Num_Unsaved + 1;
          Append (Model, It, Null_Iter);
          Set (Model, It, 0, True);
          Set (Model, It, 1, Project_Description);
@@ -442,32 +449,49 @@ package body Glide_Kernel is
          end loop;
       else
          Iter := First_Child (MDI);
+
          loop
             Child := Get (Iter);
+
             exit when Child = null;
+
             Add_Child_If_Needed (Child);
             Next (Iter);
          end loop;
       end if;
 
-      if Has_Unsaved then
-         Gtk_New (Dialog,
-                  Title  => -"Saving windows",
-                  Parent => Get_Main_Window (Handle),
-                  Flags  => Modal or Destroy_With_Parent);
+      if Num_Unsaved /= 0 then
+         if Num_Unsaved = 1 then
+            Gtk_New (Dialog,
+                     Title  => -"Confirmation",
+                     Parent => Get_Main_Window (Handle),
+                     Flags  => Modal or Destroy_With_Parent);
+            Gtk_New (Label, -"Do you want to save the following file ?");
 
-         Gtk_New (Label, -"Select the windows that should be saved.");
+         else
+            Gtk_New (Dialog,
+                     Title  => -"Saving files",
+                     Parent => Get_Main_Window (Handle),
+                     Flags  => Modal or Destroy_With_Parent);
+            Gtk_New (Label, -"Do you want to save the following files ?");
+         end if;
+
          Set_Alignment (Label, 0.0, 0.0);
          Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
-         Gtk_New (Label, -"Clicking on the title of the first column will");
-         Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
-         Gtk_New (Label, -"select or unselect all.");
-         Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+         if Num_Unsaved > 1 then
+            Gtk_New (Label);
+            Set_Markup
+              (Label,
+               (-"Clicking on the ") &
+                 (-"<span style=""oblique"">Select</span>") &
+                 (-" label will select/unselect all"));
+            Set_Alignment (Label, 0.0, 0.0);
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+         end if;
 
          Gtk_New (Scrolled);
-         Set_Size_Request (Scrolled, -1, 300);
+         Set_Size_Request (Scrolled, -1, 150);
          Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
          Pack_Start (Get_Vbox (Dialog), Scrolled, Padding => 10);
 
@@ -481,7 +505,7 @@ package body Glide_Kernel is
          Gtk_New (Col);
          Set_Clickable (Col, True);
          Col_Num := Append_Column (View, Col);
-         Set_Title (Col, -"Save");
+         Set_Title (Col, -"Select");
          Pack_Start (Col, Toggle_Renderer, False);
          Add_Attribute (Col, Toggle_Renderer, "active", 0);
          Widget_Callback.Object_Connect
@@ -503,11 +527,17 @@ package body Glide_Kernel is
 
          Button := Add_Button (Dialog, Stock_Save, Gtk_Response_Apply);
          Grab_Default (Button);
-         Button := Add_Button (Dialog, -"None",  Gtk_Response_No);
+         Grab_Focus (Button);
+
+         if Num_Unsaved = 1 then
+            Button := Add_Button (Dialog, -"_Don't Save", Gtk_Response_No);
+         else
+            Button := Add_Button (Dialog, -"_None", Gtk_Response_No);
+         end if;
+
          Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
          Show_All (Dialog);
-
          Response := Run (Dialog);
 
          if Response = Gtk_Response_Apply then
@@ -591,11 +621,11 @@ package body Glide_Kernel is
 
       else
          Create_Or_Complete_LI
-           (Handler                => Handler,
-            File                   => File,
-            Source_Filename        => Source_Filename,
-            List                   => Handle.Source_Info_List,
-            Project                => Project);
+           (Handler         => Handler,
+            File            => File,
+            Source_Filename => Source_Filename,
+            List            => Handle.Source_Info_List,
+            Project         => Project);
          return File;
       end if;
    end Locate_From_Source_And_Complete;
@@ -997,12 +1027,12 @@ package body Glide_Kernel is
       Set_Output (File);
 
       N := new Node'
-        (Tag => new String'("GPS_Desktop"),
-         Child => null,
-         Parent => null,
-         Value  => null,
-         Attributes => null,
-         Next => null,
+        (Tag           => new String'("GPS_Desktop"),
+         Child         => null,
+         Parent        => null,
+         Value         => null,
+         Attributes    => null,
+         Next          => null,
          Specific_Data => 0);
 
       --  Merge the old contents of the file
@@ -1708,12 +1738,11 @@ package body Glide_Kernel is
          if Run (Dialog) = Gtk_Response_OK then
             Status := Success;
             Get_Selected (Get_Selection (View), Gtk_Tree_Model (Model), It);
-
             Index := Get_Int (Model, It, 4);
-
             Iter := Find_All_Possible_Declarations
               (Lib_Info    => Lib_Info,
                Entity_Name => Entity_Name);
+
             while Index /= 1 loop
                Next  (Iter);
             end loop;
@@ -1873,15 +1902,16 @@ package body Glide_Kernel is
          --  We need to find the body of the entity in fact. In Ada, this
          --  will always be the same LI as the spec, but this is no
          --  longer true for C or C++.
+
          Find_Next_Body
-           (Kernel             => Kernel,
-            Lib_Info           => Lib_Info,
-            File_Name          => Get_Declaration_File_Of (Entity),
-            Entity_Name        => Get_Name (Entity),
-            Line               => Get_Declaration_Line_Of (Entity),
-            Column             => Get_Declaration_Column_Of (Entity),
-            Location           => Location,
-            Status             => Status);
+           (Kernel      => Kernel,
+            Lib_Info    => Lib_Info,
+            File_Name   => Get_Declaration_File_Of (Entity),
+            Entity_Name => Get_Name (Entity),
+            Line        => Get_Declaration_Line_Of (Entity),
+            Column      => Get_Declaration_Column_Of (Entity),
+            Location    => Location,
+            Status      => Status);
 
          --  In case there is no body, do nothing.
          if Location /= Null_File_Location then
@@ -2271,7 +2301,6 @@ package body Glide_Kernel is
    begin
       if Is_Absolute_Path_Or_URL (Name) then
          return Create (Full_Filename => Name);
-
       else
          declare
             Full : constant String := Get_Full_Path_From_File
@@ -2279,6 +2308,7 @@ package body Glide_Kernel is
                Filename        => Name,
                Use_Source_Path => Use_Source_Path,
                Use_Object_Path => Use_Object_Path);
+
          begin
             if Full /= "" then
                return Create (Full_Filename => Full);
