@@ -408,7 +408,7 @@ package body Debugger.Gdb is
    is
       pragma Unreferenced (Str, Matched);
    begin
-      Process.Continuation_Line := True;
+      Process.Debugger.Continuation_Line := True;
    end Continuation_Line_Filter;
 
    ----------
@@ -2565,7 +2565,10 @@ package body Debugger.Gdb is
             begin
                Skip_To_Char (Type_Str, Tmp, ')');
                Skip_To_Char (Type_Str, Tmp, ':');
-               if Type_Str (Tmp .. Tmp + 1) = " (" then
+
+               if Tmp < Type_Str'Last
+                 and then Type_Str (Tmp .. Tmp + 1) = " ("
+               then
                   Index := Tmp;
                   Parse_Array_Value
                     (Lang, Type_Str, Index, Array_Type_Access (Result));
