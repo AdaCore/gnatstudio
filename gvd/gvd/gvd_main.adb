@@ -104,9 +104,13 @@ begin
          --  Install input handler to receive commands from an external
          --  IDE while handling GtkAda events.
 
+         Main_Debug_Window.TTY_Mode := True;
          Id := Standard_Input_Package.Add
            (0, Input_Read, Input_Available'Access,
             Main_Debug_Window.all'Access);
+
+      elsif Argument (J) = "--debug" then
+         Main_Debug_Window.Debug_Mode := True;
 
       elsif Argument (J) = "--jdb" then
          Debug_Type := Debugger.Jdb_Type;
