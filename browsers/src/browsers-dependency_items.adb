@@ -102,10 +102,14 @@ package body Browsers.Dependency_Items is
    --
    --  ??? This obviously needs to be modifiable from the browser itself.
 
-   function Is_System_File (Source : Internal_File) return Boolean;
+   function Is_System_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      Source : Internal_File) return Boolean;
    --  Return True if Source is a system file (runtime file for Ada).
    --  ??? This should be moved to a more general location, and perhaps be
    --  ??? implemented with support from the project files.
+   --  ??? It could also simply use the paths to detect whether the file is in
+   --  ??? one of the predefined paths.
 
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -367,7 +371,10 @@ package body Browsers.Dependency_Items is
    -- Is_System_File --
    --------------------
 
-   function Is_System_File (Source : Internal_File) return Boolean is
+   function Is_System_File
+     (Kernel : access Kernel_Handle_Record'Class;
+      Source : Internal_File) return Boolean
+   is
       Name : constant String := Get_Source_Filename (Source);
       Ada_Runtime_File, Gtk_System_File : Boolean;
    begin
@@ -422,7 +429,7 @@ package body Browsers.Dependency_Items is
       --  Do not display dependencies on runtime files
 
       return Explicit_Dependency
-        and then not Is_System_File (File_Information (Dep));
+        and then not Is_System_File (Kernel, File_Information (Dep));
    end Filter;
 
    ---------------
@@ -799,13 +806,19 @@ package body Browsers.Dependency_Items is
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       Context : Selection_Context_Access := new File_Selection_Context;
-      Src        : Src_Info.Internal_File;
+      Src     : Src_Info.Internal_File := Get_Source (Item);
+      Filename : constant String := Get_Full_Source_Filename
+        (Src,
+         Get_Source_Info_List (Get_Kernel (Browser)),
+         Get_Project_View (Get_Kernel (Browser)),
+         Get_Predefined_Source_Path (Get_Kernel (Browser)));
    begin
       Src := Get_Source (Item);
       Set_File_Information
         (File_Selection_Context_Access (Context),
          Project_View => Project_Of (Get_Kernel (Browser), Item),
-         File_Name    => Get_Source_Filename (Src));
+         Directory    => Dir_Name (Filename),
+         File_Name    => Base_Name (Filename));
       return Context;
    end Contextual_Factory;
 
