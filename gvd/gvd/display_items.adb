@@ -130,36 +130,40 @@ package body Display_Items is
    --  Recompute the size of an item, and redraw its contents.
    --  It also warns the canvas that the item has changed.
 
-   procedure Update_Component (Item : access Display_Item_Record'Class;
-                               Component : Generic_Type_Access := null);
+   procedure Update_Component
+     (Item : access Display_Item_Record'Class;
+      Component : Generic_Type_Access := null);
    --  Update a specific component of a complex item.
    --  The item must have been displayed at least once before the last time
    --  its visibility state changed.
    --  If Component is null, the whole item is redraw, otherwise only the
    --  specific Component is updated.
 
-   procedure Select_Item (Item      : access Display_Item_Record'Class;
-                          Component : Generic_Type_Access);
+   procedure Select_Item
+     (Item      : access Display_Item_Record'Class;
+      Component : Generic_Type_Access);
    --  Select a specific Component in Item, after unselecting the current
    --  selection.
    --  If Component is null, no new selection is made, but the current one is
    --  released.
 
-   procedure Dereference_Item (Item : access Display_Item_Record;
-                               X    : Gint;
-                               Y    : Gint);
+   procedure Dereference_Item
+     (Item : access Display_Item_Record;
+      X    : Gint;
+      Y    : Gint);
    --  Create a new item (or reference an existing one) that dereference
    --  the field pointed to by (X, Y) in Item.
    --  (X, Y) are relative to the top-left corner of item.
 
-   function Search_Item (Canvas : access Interactive_Canvas_Record'Class;
-                         Id     : String)
-                        return Display_Item;
+   function Search_Item
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Id     : String) return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
 
-   procedure Create_Link (Canvas : access Interactive_Canvas_Record'Class;
-                          From, To : access Display_Item_Record'Class;
-                          Name : String);
+   procedure Create_Link
+     (Canvas : access Interactive_Canvas_Record'Class;
+      From, To : access Display_Item_Record'Class;
+      Name : String);
    --  Add a new link between two items.
    --  The link is not created if there is already a similar one.
 
@@ -189,6 +193,7 @@ package body Display_Items is
          Item := null;
 
          Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
+
          if Alias_Item /= null then
             Select_Item (Alias_Item, Alias_Item.Entity);
             Show_Item (Debugger.Data_Canvas, Alias_Item);
@@ -202,12 +207,13 @@ package body Display_Items is
 
          begin
             Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+
             if Entity = null then
                Set_Internal_Command (Get_Process (Debugger.Debugger), False);
                return;
             else
-               Parse_Value (Debugger.Debugger, Variable_Name, Entity,
-                            Value_Found);
+               Parse_Value
+                 (Debugger.Debugger, Variable_Name, Entity, Value_Found);
             end if;
 
             Item := new Display_Item_Record;
@@ -227,8 +233,9 @@ package body Display_Items is
          end;
 
          if Id /= "" then
-            Item.Id       := new String'(Id);
+            Item.Id := new String'(Id);
          end if;
+
          Item.Debugger := Debugger;
          Set_Internal_Command (Get_Process (Debugger.Debugger), False);
          Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
@@ -353,57 +360,65 @@ package body Display_Items is
       end if;
 
 
-      Draw_Rectangle (Pixmap (Item),
-                      GC     => White_GC,
-                      Filled => True,
-                      X      => 0,
-                      Y      => Title_Height,
-                      Width  => Alloc_Width - 1,
-                      Height => Alloc_Height - Title_Height - 1);
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => White_GC,
+         Filled => True,
+         X      => 0,
+         Y      => Title_Height,
+         Width  => Alloc_Width - 1,
+         Height => Alloc_Height - Title_Height - 1);
 
-      Draw_Rectangle (Pixmap (Item),
-                      GC     => Grey_GC,
-                      Filled => True,
-                      X      => 0,
-                      Y      => 0,
-                      Width  => Alloc_Width - 1,
-                      Height => Title_Height);
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => Grey_GC,
+         Filled => True,
+         X      => 0,
+         Y      => 0,
+         Width  => Alloc_Width - 1,
+         Height => Title_Height);
 
-      Draw_Rectangle (Pixmap (Item),
-                      GC     => Black_GC,
-                      Filled => False,
-                      X      => 0,
-                      Y      => 0,
-                      Width  => Alloc_Width - 1,
-                      Height => Alloc_Height - 1);
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => Black_GC,
+         Filled => False,
+         X      => 0,
+         Y      => 0,
+         Width  => Alloc_Width - 1,
+         Height => Alloc_Height - 1);
+
       if Look_3d then
-         Draw_Line (Pixmap (Item),
-                    GC   => Black_GC,
-                    X1   => Alloc_Width - 1,
-                    Y1   => 2,
-                    X2   => Alloc_Width - 1,
-                    Y2   => Alloc_Height - 1);
-         Draw_Line (Pixmap (Item),
-                    GC   => Black_GC,
-                    X1   => 1,
-                    Y1   => Alloc_Height - 1,
-                    X2   => Alloc_Width - 1,
-                    Y2   => Alloc_Height - 1);
+         Draw_Line
+           (Pixmap (Item),
+            GC   => Black_GC,
+            X1   => Alloc_Width - 1,
+            Y1   => 2,
+            X2   => Alloc_Width - 1,
+            Y2   => Alloc_Height - 1);
+         Draw_Line
+           (Pixmap (Item),
+            GC   => Black_GC,
+            X1   => 1,
+            Y1   => Alloc_Height - 1,
+            X2   => Alloc_Width - 1,
+            Y2   => Alloc_Height - 1);
       end if;
 
-      Draw_Line (Pixmap (Item),
-                 GC     => Black_GC,
-                 X1     => 0,
-                 Y1     => Title_Height,
-                 X2     => Alloc_Width - 1,
-                 Y2     => Title_Height);
+      Draw_Line
+        (Pixmap (Item),
+         GC     => Black_GC,
+         X1     => 0,
+         Y1     => Title_Height,
+         X2     => Alloc_Width - 1,
+         Y2     => Title_Height);
 
-      Draw_Text (Pixmap (Item),
-                 Font   => Title_Font,
-                 GC     => Black_GC,
-                 X      => Spacing,
-                 Y      => Spacing + Get_Ascent (Title_Font),
-                 Text   => Item.Name.all);
+      Draw_Text
+        (Pixmap (Item),
+         Font   => Title_Font,
+         GC     => Black_GC,
+         X      => Spacing,
+         Y      => Spacing + Get_Ascent (Title_Font),
+         Text   => Item.Name.all);
 
       --  First button
 
@@ -413,24 +428,25 @@ package body Display_Items is
       --  Second button
 
       Set_Clip_Mask (Black_Gc, Close_Mask);
-      Set_Clip_Origin (Black_Gc,
-                       Alloc_Width - Buttons_Size - Spacing,
-                       Spacing);
-      Draw_Pixmap (Pixmap (Item),
-                   GC     => Black_Gc,
-                   Src    => Close_Pixmap,
-                   Xsrc   => 0,
-                   Ysrc   => 0,
-                   Xdest  => Alloc_Width - Buttons_Size - Spacing,
-                   Ydest  => Spacing);
+      Set_Clip_Origin
+        (Black_Gc, Alloc_Width - Buttons_Size - Spacing, Spacing);
+      Draw_Pixmap
+        (Pixmap (Item),
+         GC     => Black_Gc,
+         Src    => Close_Pixmap,
+         Xsrc   => 0,
+         Ysrc   => 0,
+         Xdest  => Alloc_Width - Buttons_Size - Spacing,
+         Ydest  => Spacing);
       Set_Clip_Mask (Black_Gc, Null_Pixmap);
       Set_Clip_Origin (Black_Gc, 0, 0);
 
       if Item.Entity /= null then
-         Paint (Item.Entity.all, Black_GC, Xref_Gc, Font,
-                Pixmap (Item),
-                X => Border_Spacing,
-                Y => Title_Height + Border_Spacing);
+         Paint
+           (Item.Entity.all, Black_GC, Xref_Gc, Font,
+            Pixmap (Item),
+            X => Border_Spacing,
+            Y => Title_Height + Border_Spacing);
       end if;
    end Update_Display;
 
@@ -438,39 +454,42 @@ package body Display_Items is
    -- Update_Component --
    ----------------------
 
-   procedure Update_Component (Item : access Display_Item_Record'Class;
-                               Component : Generic_Type_Access := null)
-   is
+   procedure Update_Component
+     (Item : access Display_Item_Record'Class;
+      Component : Generic_Type_Access := null) is
    begin
       if not Get_Selected (Component) then
-         Draw_Rectangle (Pixmap (Item),
-                         GC     => White_GC,
-                         Filled => True,
-                         X      => Get_X (Component.all),
-                         Y      => Get_Y (Component.all),
-                         Width  => Get_Width (Component.all),
-                         Height => Get_Height (Component.all));
+         Draw_Rectangle
+           (Pixmap (Item),
+            GC     => White_GC,
+            Filled => True,
+            X      => Get_X (Component.all),
+            Y      => Get_Y (Component.all),
+            Width  => Get_Width (Component.all),
+            Height => Get_Height (Component.all));
       end if;
-      Paint (Component.all,
-             Black_GC, Xref_Gc, Font,
-             Pixmap (Item),
-             X => Get_X (Component.all),
-             Y => Get_Y (Component.all));
+
+      Paint
+        (Component.all,
+         Black_GC, Xref_Gc, Font,
+         Pixmap (Item),
+         X => Get_X (Component.all),
+         Y => Get_Y (Component.all));
    end Update_Component;
 
    -----------------
    -- Search_Item --
    -----------------
 
-   function Search_Item (Canvas : access Interactive_Canvas_Record'Class;
-                         Id     : String)
-                        return Display_Item
+   function Search_Item
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Id     : String) return Display_Item
    is
       Alias_Item : Display_Item := null;
 
-      function Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
-                            Item   : access Canvas_Item_Record'Class)
-                           return Boolean;
+      function Alias_Found
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
       --  Set New_Item to a non-null value if an alias was found for
       --  Return False when we need to stop traversing the list of children.
 
@@ -478,10 +497,9 @@ package body Display_Items is
       -- Alias_Found --
       -----------------
 
-      function Alias_Found (Canvas : access Interactive_Canvas_Record'Class;
-                            Item   : access Canvas_Item_Record'Class)
-                           return Boolean
-      is
+      function Alias_Found
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean is
       begin
          if Display_Item (Item).Id /= null
            and then Alias_Item = null
@@ -490,6 +508,7 @@ package body Display_Items is
             Alias_Item := Display_Item (Item);
             return False;
          end if;
+
          return True;
       end Alias_Found;
 
@@ -506,12 +525,12 @@ package body Display_Items is
 
    function Update_On_Auto_Refresh
      (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
-   is
+      Item   : access Canvas_Item_Record'Class) return Boolean is
    begin
       if Display_Item (Item).Auto_Refresh then
          Update (Canvas, Display_Item (Item));
       end if;
+
       return True;
    end Update_On_Auto_Refresh;
 
@@ -592,15 +611,17 @@ package body Display_Items is
         (Get_Language (Item.Debugger.Debugger), Name);
       Link_Name : constant String := Dereference_Name
         (Get_Language (Item.Debugger.Debugger),
-         Get_Component_Name (Item.Entity,
-                             Get_Language (Item.Debugger.Debugger),
-                             "@", X, Y));
+         Get_Component_Name
+           (Item.Entity,
+            Get_Language (Item.Debugger.Debugger), "@", X, Y));
       New_Item : Display_Item;
 
    begin
       --  Do we have an existing item that matches this ?
-      New_Item := Search_Item (Item.Debugger.Data_Canvas,
-                               Get_Value (Access_Type (Component.all)).all);
+
+      New_Item := Search_Item
+        (Item.Debugger.Data_Canvas,
+         Get_Value (Access_Type (Component.all)).all);
 
       if New_Item = null then
          Gtk_New (New_Item,
@@ -623,9 +644,9 @@ package body Display_Items is
    -- Select_Item --
    -----------------
 
-   procedure Select_Item (Item      : access Display_Item_Record'Class;
-                          Component : Generic_Type_Access)
-   is
+   procedure Select_Item
+     (Item      : access Display_Item_Record'Class;
+      Component : Generic_Type_Access) is
    begin
       --  Unselect the current selection
 
@@ -664,16 +685,17 @@ package body Display_Items is
    -- On_Button_Click --
    ---------------------
 
-   procedure On_Button_Click (Item   : access Display_Item_Record;
-                              Event  : Gdk.Event.Gdk_Event_Button)
+   procedure On_Button_Click
+     (Item   : access Display_Item_Record;
+      Event  : Gdk.Event.Gdk_Event_Button)
    is
       Buttons_Start : Gint :=
-        Gint (Get_Coord (Item).Width) - Num_Buttons * Buttons_Size
-        - Num_Buttons * Spacing + 1;
+        Gint (Get_Coord (Item).Width) - Num_Buttons * Buttons_Size -
+          Num_Buttons * Spacing + 1;
       Component : Generic_Type_Access;
-   begin
 
-      --  Click in a button ?
+   begin
+      --  Click on a button ?
 
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
@@ -688,8 +710,8 @@ package body Display_Items is
 
          for B in 0 .. Num_Buttons - 1 loop
             if Gint (Get_X (Event)) >= Buttons_Start
-              and then Gint (Get_X (Event))
-              <= Buttons_Start + Buttons_Size + Spacing
+              and then Gint (Get_X (Event)) <=
+                Buttons_Start + Buttons_Size + Spacing
             then
                case B is
                   when 0 =>
@@ -780,35 +802,42 @@ package body Display_Items is
    begin
       Item.Auto_Refresh := Auto_Refresh;
 
-      Draw_Rectangle (Pixmap (Item),
-                      GC     => Grey_GC,
-                      Filled => True,
-                      X      => Width - 2 * Buttons_Size - 2 * Spacing,
-                      Y      => Spacing,
-                      Width  => Buttons_Size,
-                      Height => Buttons_Size);
-      Set_Clip_Origin (Black_Gc,
-                       Width - 2 * Buttons_Size - 2 * Spacing,
-                       Spacing);
+      Draw_Rectangle
+        (Pixmap (Item),
+         GC     => Grey_GC,
+         Filled => True,
+         X      => Width - 2 * Buttons_Size - 2 * Spacing,
+         Y      => Spacing,
+         Width  => Buttons_Size,
+         Height => Buttons_Size);
+      Set_Clip_Origin
+        (Black_Gc,
+         Width - 2 * Buttons_Size - 2 * Spacing,
+         Spacing);
+
       if Item.Auto_Refresh then
          Set_Clip_Mask (Black_Gc, Auto_Display_Mask);
-         Draw_Pixmap (Pixmap (Item),
-                      GC     => Black_Gc,
-                      Src    => Auto_Display_Pixmap,
-                      Xsrc   => 0,
-                      Ysrc   => 0,
-                      Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
-                      Ydest  => Spacing);
+         Draw_Pixmap
+           (Pixmap (Item),
+            GC     => Black_Gc,
+            Src    => Auto_Display_Pixmap,
+            Xsrc   => 0,
+            Ysrc   => 0,
+            Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
+            Ydest  => Spacing);
+
       else
          Set_Clip_Mask (Black_Gc, Locked_Mask);
-         Draw_Pixmap (Pixmap (Item),
-                      GC     => Black_Gc,
-                      Src    => Locked_Pixmap,
-                      Xsrc   => 0,
-                      Ysrc   => 0,
-                      Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
-                      Ydest  => Spacing);
+         Draw_Pixmap
+           (Pixmap (Item),
+            GC     => Black_Gc,
+            Src    => Locked_Pixmap,
+            Xsrc   => 0,
+            Ysrc   => 0,
+            Xdest  => Width - 2 * Buttons_Size - 2 * Spacing,
+            Ydest  => Spacing);
       end if;
+
       Set_Clip_Mask (Black_Gc, Null_Pixmap);
       Set_Clip_Origin (Black_Gc, 0, 0);
    end Set_Auto_Refresh;
@@ -822,6 +851,7 @@ package body Display_Items is
       if Item.Debugger.Selected_Item = Canvas_Item (Item) then
          Item.Debugger.Selected_Item := null;
       end if;
+
       Free (Item.Name);
       Free (Item.Entity);
       Free (Item.Id);
@@ -857,9 +887,10 @@ package body Display_Items is
       elsif Get_Button (Event) = 3
         and then Get_Event_Type (Event) = Button_Press
       then
-         Popup (Contextual_Background_Menu (Canvas),
-                Button            => Get_Button (Event),
-                Activate_Time     => Get_Time (Event));
+         Popup
+           (Contextual_Background_Menu (Canvas),
+            Button            => Get_Button (Event),
+            Activate_Time     => Get_Time (Event));
       end if;
    end On_Background_Click;
 
