@@ -215,7 +215,7 @@ This should now report a successful build.
 @noindent
 
 Let's now try to understand a little bit how the program is working by
-looking at the @file{gps.adb} editor: there's a loop, the main processing is
+looking at the @file{sdc.adb} editor: there's a loop, the main processing is
 done by the functions Process and Next (at line 30).
 
 Move the mouse over @code{Process} and let a tooltip appear
