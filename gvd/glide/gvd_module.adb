@@ -38,6 +38,7 @@ with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Pixmap;              use Gtk.Pixmap;
+with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Table;               use Gtk.Table;
 with Gtk.Toolbar;             use Gtk.Toolbar;
@@ -49,7 +50,6 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Factory_Data;            use Factory_Data;
 
 with Display_Items;             use Display_Items;
-with Dock_Paned;                use Dock_Paned;
 with Items;                     use Items;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Dialogs;               use GVD.Dialogs;
@@ -645,6 +645,8 @@ package body GVD_Module is
 
       Set_Mode (Editor, Source_Asm);
       Child := Put (Top.Process_Mdi, Assembly);
+      Set_Dock_Side (Child, Right);
+      Dock_Child (Child);
       Unref (Assembly);
       Set_Title (Child, -"Assembly View");
 
@@ -1257,6 +1259,8 @@ package body GVD_Module is
       Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
       Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
 
+      Set_Pref (Kernel, Show_Call_Stack, Page.Stack_Scrolledwindow /= null);
+
       if Page.Debugger /= null
         and then Get_Process (Page.Debugger) /= null
       then
@@ -1275,8 +1279,12 @@ package body GVD_Module is
          Close (Top.Process_Mdi, Page.Debuggee_Console);
       end if;
 
-      if Page.Data_Paned /= null then
-         Close (Top.Process_Mdi, Page.Data_Paned);
+      if Page.Data_Scrolledwindow /= null then
+         Close (Top.Process_Mdi, Page.Data_Scrolledwindow);
+      end if;
+
+      if Page.Stack_Scrolledwindow /= null then
+         Close (Top.Process_Mdi, Page.Stack_Scrolledwindow);
       end if;
 
       if Top.History_Dialog /= null then
@@ -1997,7 +2005,7 @@ package body GVD_Module is
       Register_Menu (Kernel, Debug_Sub, -"_Kill", "",
                      On_Kill'Access);
 
-      --  ???
+      --  ??? Not supported yet in the context of GPS
       Register_Menu (Kernel, Session_Sub, -"_Open...", Stock_Open,
                      null, Sensitive => False);
       Register_Menu (Kernel, Session_Sub, -"_Save As...", Stock_Save_As,
@@ -2008,12 +2016,8 @@ package body GVD_Module is
 
       Set_Sensitive (Mitem, False);
 
-      Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Call Stack"));
-      Kernel_Callback.Connect
-        (Mitem, "activate",
-         Kernel_Callback.To_Marshaller (On_Call_Stack'Access),
-         User_Data => Kernel_Handle (Kernel));
-
+      Register_Menu (Kernel, Data_Sub, -"_Call Stack", "",
+                     On_Call_Stack'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"_Threads", "",
                      On_Threads'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"T_asks", "",
