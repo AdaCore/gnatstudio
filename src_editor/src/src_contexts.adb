@@ -1556,6 +1556,8 @@ package body Src_Contexts is
       Gtk.Combo.Set_Popdown_Strings (Combo, Scope_Combo_Items);
       Free_String_List (Scope_Combo_Items);
 
+      Set_Text (Get_Entry (Combo), -"Whole Text");
+
       Set_Editable (Get_Entry (Combo), False);
       Set_Max_Length (Get_Entry (Combo), 0);
       Set_Tip (Get_Tooltips (Kernel),
