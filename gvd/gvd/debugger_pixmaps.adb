@@ -30,6 +30,7 @@ package body Debugger_Pixmaps is
    begin
       if Line_Has_Code_Pixbuf = Null_Pixbuf then
          Line_Has_Code_Pixbuf := Gdk_New_From_Xpm_Data (dot_xpm);
+         Line_Might_Have_Code_Pixbuf := Gdk_New_From_Xpm_Data (grey_dot_xpm);
          Line_Has_Breakpoint_Pixbuf := Gdk_New_From_Xpm_Data (stop_xpm);
          Current_Line_Pixbuf := Gdk_New_From_Xpm_Data (arrow_xpm);
       end if;
