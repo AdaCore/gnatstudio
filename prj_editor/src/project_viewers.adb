@@ -856,6 +856,10 @@ package body Project_Viewers is
       Set_Foreground (Viewer.Default_Switches_Style, State_Normal, Color);
 
       Show_All (Viewer);
+
+      --  The initial contents of the viewer should be read immediately from
+      --  the explorer, without forcing the user to do a new selection.
+      Explorer_Selection_Changed (Viewer);
    end Initialize;
 
    ------------------
