@@ -303,7 +303,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "General-Use-Native-Dialogs",
          Nick    => -"Native dialogs",
          Blurb   =>
-           -"If true use OS native dialogs, otherwise use portable dialogs",
+           -"Use OS native dialogs if enabled, portable dialogs otherwise",
          Default => True,
          Flags   => Param_Readable));
       Register_Property
@@ -312,8 +312,7 @@ package body Glide_Kernel.Preferences is
       Can_Change_Accels := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Can-Change-Accels",
          Nick    => -"Dynamic key bindings",
-         Blurb   =>
-           -"True if the menu key bindings can be changed interactively",
+         Blurb   => -"Ability to change the menu key bindings interactively",
          Default => False));
       Register_Property
         (Kernel.Preferences, Param_Spec (Can_Change_Accels), -"General");
@@ -323,7 +322,7 @@ package body Glide_Kernel.Preferences is
            (Name    => "General-Splash-Screen",
             Nick    => -"Display splash screen",
             Blurb   =>
-              -"True if a splash screen should be displayed when starting GPS",
+              -"Whether a splash screen should be displayed when starting GPS",
          Default => True));
       Register_Property
         (Kernel.Preferences, Param_Spec (Splash_Screen), -"General");
@@ -331,7 +330,7 @@ package body Glide_Kernel.Preferences is
       Display_Welcome := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Display-Welcome",
          Nick    => -"Display welcome window",
-         Blurb   => -("True if GPS should display the welcome window"
+         Blurb   => -("Enabled when GPS should display the welcome window"
                       & " for the selection of the project"),
          Default => True));
       Register_Property
@@ -340,8 +339,8 @@ package body Glide_Kernel.Preferences is
       Toolbar_Show_Text := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Toolbar-Text",
          Nick    => -"Show text in tool bar",
-         Blurb   => -("True if the tool bar should show both text and icons,"
-                      & " False if it should only show icons"),
+         Blurb   => -("Enabled if tool bar should show both text and icons,"
+                      & " Disabled if it should only show icons"),
          Default => False));
       Register_Property
         (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
@@ -358,7 +357,7 @@ package body Glide_Kernel.Preferences is
       Save_Desktop_On_Exit := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Save-Desktop-On-Exit",
          Nick    => -"Save desktop on exit",
-         Blurb   => -("True if the desktop should be saved when exiting GPS"),
+         Blurb   => -("Whether the desktop should be saved when exiting GPS"),
          Default => True));
       Register_Property
         (Kernel.Preferences, Param_Spec (Save_Desktop_On_Exit), -"General");
@@ -368,7 +367,7 @@ package body Glide_Kernel.Preferences is
       MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-Opaque",
          Default => GVD.Default_Opaque_MDI,
-         Blurb   => -("If True, items will be resized or moved opaquely when"
+         Blurb   => -("Whether items will be resized or moved opaquely when"
                       & " not maximized"),
          Nick    => -"Opaque"));
       Register_Property
@@ -377,10 +376,11 @@ package body Glide_Kernel.Preferences is
       MDI_Destroy_Floats := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-Destroy-Floats",
          Default => False,
-         Blurb   => -("If False, closing the window associated with a floating"
-                      & " item will put the item back in the main GPS window,"
-                      & " but will not destroy it. If True, the item is"
-                      & " destroyed"),
+         Blurb   =>
+           -("If disabled, closing the window associated with a floating"
+             & " item will put the item back in the main GPS window,"
+             & " but will not destroy it. If enabled, the item is"
+             & " destroyed"),
          Nick    => -"Destroy floats"));
       Register_Property
         (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats), -"Windows");
@@ -388,9 +388,10 @@ package body Glide_Kernel.Preferences is
       MDI_All_Floating := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-All-Floating",
          Default => False,
-         Blurb   => -("If True, all windows will be set as floating, and put"
-                      & " under control of your window manager. Otherwise, a"
-                      & " multiple document interface is used."),
+         Blurb   =>
+           -("If enabled, all windows will be set as floating, and put"
+             & " under control of your window manager. Otherwise, a"
+             & " multiple document interface is used."),
          Nick    => -"All floating"));
       Register_Property
         (Kernel.Preferences, Param_Spec (MDI_All_Floating), -"Windows");
@@ -657,7 +658,7 @@ package body Glide_Kernel.Preferences is
       Browsers_Draw_Grid := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Browsers-Draw-Grid",
          Default => True,
-         Blurb   => -("Whether a grid should be displayed in the browsers"),
+         Blurb   => -"Whether a grid should be displayed in the browsers",
          Flags   => Param_Readable,
          Nick    => -"Draw grid"));
       Register_Property
@@ -714,8 +715,8 @@ package body Glide_Kernel.Preferences is
       Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Browsers-Vertical-Layout",
          Default => True,
-         Blurb   => -("Whether the layout of the graph should be vertical"
-                      & " or horizontal"),
+         Blurb   => -("If enabled, the layout of graphs will be vertical,"
+                      & " otherwise horizontal"),
          Nick    => -"Vertical layout"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
@@ -912,8 +913,8 @@ package body Glide_Kernel.Preferences is
       Generate_Relative_Paths := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Prj-Editor-Generate-Relative-Paths",
          Default => True,
-         Blurb   => -("Whether paths should be absolute or relative when the"
-                      & " projects are modified"),
+         Blurb   => -("If enabled, use relative paths when the projects are " &
+                      "modified, use absolute paths otherwise"),
          Nick    => -"Relative project paths"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"Project");
