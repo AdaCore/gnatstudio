@@ -1274,7 +1274,7 @@ package body VCS.CVS is
             Skip_To_Char (S, Rev_Index, '(');
             Create
               (Command, Kernel,
-               "vcs.log "
+               "vcs_log "
                & String_List.Head (Head)
                & " "
                & Strip_Quotes (S (S'First .. Rev_Index - 1)),

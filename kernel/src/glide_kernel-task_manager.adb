@@ -268,14 +268,10 @@ package body Glide_Kernel.Task_Manager is
            (Glide_Window (Get_Main_Window (Kernel)).Statusbar));
 
       Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
-
       Create
-        (Push_Command, Kernel_Handle (Kernel), "busy_indicator.push_state",
-         Script);
-
+        (Push_Command, Kernel_Handle (Kernel), "set_busy", Script);
       Create
-        (Pop_Command, Kernel_Handle (Kernel), "busy_indicator.pop_state",
-         Script);
+        (Pop_Command, Kernel_Handle (Kernel), "unset_busy", Script);
 
       Set_Busy_Commands
         (Get_Task_Manager (Kernel),

@@ -581,7 +581,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.get_status",
+         Command      => "vcs_get_status",
          Params       => "(file)",
          Description  => -"Query the status for file",
          Minimum_Args => 1,
@@ -590,7 +590,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.update",
+         Command      => "vcs_update",
          Params       => "(file)",
          Description  => -"Update file",
          Minimum_Args => 1,
@@ -599,7 +599,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.commit",
+         Command      => "vcs_commit",
          Params       => "(file)",
          Description  => -"Commit file",
          Minimum_Args => 1,
@@ -608,7 +608,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.diff_head",
+         Command      => "vcs_diff_head",
          Params       => "(file)",
          Description  =>
            -"Show differences between local file and the head revision",
@@ -618,7 +618,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.diff_working",
+         Command      => "vcs_diff_working",
          Params       => "(file)",
          Description  =>
            -"Show differences between local file and the working revision",
@@ -628,7 +628,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.annotate",
+         Command      => "vcs_annotate",
          Params       => "(file)",
          Description  => -"Display the annotations for file",
          Minimum_Args => 1,
@@ -637,7 +637,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.remove_annotations",
+         Command      => "vcs_remove_annotations",
          Params       => "(file)",
          Description  => -"Remove the annotations for file",
          Minimum_Args => 1,
@@ -646,7 +646,7 @@ package body VCS_Module is
 
       Register_Command
         (Kernel       => Kernel,
-         Command      => "vcs.log",
+         Command      => "vcs_log",
          Params       => "(file, [revision])",
          Description  =>
            -("Get the revision changelog for file."
