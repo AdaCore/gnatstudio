@@ -22,7 +22,7 @@ OBJ_DIR = $(GVD_COMMON_OBJ_DIR)
 CFLAGS = -g -O2 -DSYSTEM_INCLUDE=@opsysfile@ @DEFS@
 
 PROJECT_FILE = gvd_common
-LIBS := $(GVD_COMMON_OBJ_DIR)/libgvd_common$(AR_EXT) $(LIBS)
+LIBS := $(GVD_COMMON_OBJ_DIR)/libgvd_common$(AR_EXT) @OS_LIBS@ $(LIBS)
 
 ifeq ($(GVD_COMMON_ROOT),True)
    include ../builder/src/Makefile.generic
