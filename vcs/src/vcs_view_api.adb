@@ -46,9 +46,7 @@ with OS_Utils;                  use OS_Utils;
 
 with Basic_Types;               use Basic_Types;
 
-with Prj;                       use Prj;
-with Prj_API;                   use Prj_API;
-with Prj.Tree;                  use Prj.Tree;
+with Projects.Registry;         use Projects, Projects.Registry;
 
 with Commands;                  use Commands;
 with Commands.VCS;              use Commands.VCS;
@@ -90,7 +88,7 @@ package body VCS_View_API is
    procedure Query_Project_Files
      (Explorer   : VCS_View_Access;
       Kernel     : Kernel_Handle;
-      Project    : Project_Id;
+      Project    : Project_Type;
       Real_Query : Boolean;
       Recursive  : Boolean);
    --  Query/List the status of files belonging to Project.
@@ -128,8 +126,8 @@ package body VCS_View_API is
    --  committing.
 
    function Get_Files_In_Project
-     (Project_View : Prj.Project_Id;
-      Recursive    : Boolean := True) return String_List.List;
+     (Project   : Project_Type;
+      Recursive : Boolean := True) return String_List.List;
    --  Return the list of source files in Project.
    --  If Recursive is True, then source files from all included
    --  subprojects will be returned as well.
@@ -145,7 +143,7 @@ package body VCS_View_API is
    function Get_Current_Ref (Kernel : Kernel_Handle) return VCS_Access;
    --  Return the VCS reference corresponding to the current context in Kernel.
 
-   function Get_Current_Ref (Project : Project_Id) return VCS_Access;
+   function Get_Current_Ref (Project : Project_Type) return VCS_Access;
    --  Return the VCS reference registered in Project.
 
    function Get_Selected_Files
@@ -263,10 +261,11 @@ package body VCS_View_API is
    -- Get_Current_Ref --
    ---------------------
 
-   function Get_Current_Ref (Project : Project_Id) return VCS_Access is
+   function Get_Current_Ref (Project : Project_Type) return VCS_Access is
    begin
       --  ??? maybe we could cache this information.
-      return Get_VCS_From_Id (Get_Vcs_Kind (Project));
+      return Get_VCS_From_Id
+        (Get_Attribute_Value (Project, Vcs_Kind_Attribute, Ide_Package));
    end Get_Current_Ref;
 
    ---------------------
@@ -277,7 +276,7 @@ package body VCS_View_API is
       C : constant Selection_Context_Access := Get_Current_Context (Kernel);
    begin
       if C = null then
-         return Get_Current_Ref (Get_Project_View (Kernel));
+         return Get_Current_Ref (Get_Project (Kernel));
       else
          return Get_Current_Ref (C);
       end if;
@@ -650,8 +649,7 @@ package body VCS_View_API is
                         Dir_Name (Original),
                         Base_Name (Original),
                         Get_Project_From_File
-                          (Get_Project_View (Kernel),
-                           Base_Name (Original)));
+                          (Get_Registry (Kernel), Base_Name (Original)));
 
                      Gtk_New (Item, Label => -"Commit file "
                               & Base_Name (Original));
@@ -949,7 +947,7 @@ package body VCS_View_API is
          Query_Project_Files
            (Explorer,
             Get_Kernel (Explorer),
-            Get_Project_View (Get_Kernel (Explorer)),
+            Get_Project (Get_Kernel (Explorer)),
             False, False);
          return;
       end if;
@@ -985,7 +983,7 @@ package body VCS_View_API is
             Query_Project_Files
               (Explorer,
                Get_Kernel (Context),
-               Get_Project_View (Get_Kernel (Context)),
+               Get_Project (Get_Kernel (Context)),
                False, False);
          end if;
       end if;
@@ -1122,7 +1120,7 @@ package body VCS_View_API is
       Commit_Command     : Commit_Command_Access;
       Get_Status_Command : Get_Status_Command_Access;
 
-      Project            : Project_Id;
+      Project            : Project_Type;
 
       Child              : MDI_Child;
       Success            : Boolean;
@@ -1167,7 +1165,7 @@ package body VCS_View_API is
 
       while Files_Temp /= Null_Node loop
          Project := Get_Project_From_File
-           (Get_Project_View (Kernel), Data (Files_Temp));
+           (Get_Registry (Kernel), Data (Files_Temp));
 
          if Project /= No_Project then
             declare
@@ -1328,7 +1326,7 @@ package body VCS_View_API is
          if Has_Project_Information (File) then
             return Get_Current_Ref (Project_Information (File));
          else
-            return Get_Current_Ref (Get_Project_View (Kernel));
+            return Get_Current_Ref (Get_Project (Kernel));
          end if;
       end if;
 
@@ -1840,7 +1838,7 @@ package body VCS_View_API is
                Recursive);
          else
             Files := Get_Files_In_Project
-              (Get_Project_View (Get_Kernel (Context)), Recursive);
+              (Get_Project (Get_Kernel (Context)), Recursive);
          end if;
 
          Update (Ref, Files);
@@ -1889,16 +1887,16 @@ package body VCS_View_API is
    procedure Query_Project_Files
      (Explorer   : VCS_View_Access;
       Kernel     : Kernel_Handle;
-      Project    : Project_Id;
+      Project    : Project_Type;
       Real_Query : Boolean;
       Recursive  : Boolean)
    is
       pragma Unreferenced (Explorer);
 
-      procedure Query_Status_For_Project (The_Project : Project_Id);
+      procedure Query_Status_For_Project (The_Project : Project_Type);
       --  Display the status for The_Project only.
 
-      procedure Query_Status_For_Project (The_Project : Project_Id) is
+      procedure Query_Status_For_Project (The_Project : Project_Type) is
          use String_List;
          Status         : File_Status_List.List;
          Blank_Status   : File_Status_Record;
@@ -1936,9 +1934,8 @@ package body VCS_View_API is
          end if;
       end Query_Status_For_Project;
 
-      Iterator        : Imported_Project_Iterator
-        := Start (Get_Project_From_View (Project), Recursive);
-      Current_Project : Project_Id := Current (Iterator);
+      Iterator : Imported_Project_Iterator := Start (Project, Recursive);
+      Current_Project : Project_Type := Current (Iterator);
    begin
       while Current_Project /= No_Project loop
          Query_Status_For_Project (Current_Project);
@@ -1974,7 +1971,7 @@ package body VCS_View_API is
             Query_Project_Files
               (Get_Explorer (Kernel),
                Kernel,
-               Get_Project_View (Kernel),
+               Get_Project (Kernel),
                False, Recursive);
          end if;
       end if;
@@ -2039,7 +2036,7 @@ package body VCS_View_API is
             Query_Project_Files
               (Get_Explorer (Kernel),
                Kernel,
-               Get_Project_View (Kernel),
+               Get_Project (Kernel),
                True, Recursive);
          end if;
       end if;
@@ -2220,13 +2217,13 @@ package body VCS_View_API is
    --------------------------
 
    function Get_Files_In_Project
-     (Project_View : Project_Id;
-      Recursive    : Boolean := True) return String_List.List
+     (Project   : Project_Type;
+      Recursive : Boolean := True) return String_List.List
    is
       Result  : String_List.List;
       Files   : String_Array_Access;
    begin
-      Files   := Get_Source_Files (Project_View, Recursive);
+      Files   := Get_Source_Files (Project, Recursive);
 
       for J in reverse Files.all'Range loop
          String_List.Prepend (Result, Files (J).all);
@@ -2245,20 +2242,15 @@ package body VCS_View_API is
      (Kernel : Kernel_Handle) return String_List.List
    is
       Result   : String_List.List;
-      Project  : Project_Node_Id;
+      Iterator : Imported_Project_Iterator :=
+        Start (Get_Project (Kernel), True);
    begin
-      Project := Get_Project (Kernel);
-
-      declare
-         Iterator : Imported_Project_Iterator := Start (Project, True);
-      begin
-         while Current (Iterator) /= Empty_Node loop
-            String_List.Concat (Result,
-                                String_Array_To_String_List
-                                (Source_Dirs (Current (Iterator))));
-            Next (Iterator);
-         end loop;
-      end;
+      while Current (Iterator) /= No_Project loop
+         String_List.Concat (Result,
+                             String_Array_To_String_List
+                             (Source_Dirs (Current (Iterator))));
+         Next (Iterator);
+      end loop;
 
       return Result;
    end Get_Dirs_In_Project;
@@ -2281,7 +2273,7 @@ package body VCS_View_API is
       Explorer := Get_Explorer (Kernel);
       Clear (Explorer);
 
-      Get_Status (Ref, Get_Files_In_Project (Get_Project_View (Kernel)));
+      Get_Status (Ref, Get_Files_In_Project (Get_Project (Kernel)));
 
    exception
       when E : others =>
