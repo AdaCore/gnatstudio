@@ -96,9 +96,11 @@ package body Glide_Kernel.Modules is
       Identifier     : String;
       Info           : Line_Information_Data;
       Stick_To_Data  : Boolean := True;
-      Every_Line     : Boolean := True);
+      Every_Line     : Boolean := True;
+      Normalize      : Boolean := True);
    --  Create the Mime info for adding/creating/removing line information,
    --  and send it.
+   --  If File is an empty string, send the Mime for all open buffers.
 
    procedure Execute_Command
      (Widget  : access GObject_Record'Class;
@@ -1232,31 +1234,69 @@ package body Glide_Kernel.Modules is
       Identifier     : String;
       Info           : Line_Information_Data;
       Stick_To_Data  : Boolean := True;
-      Every_Line     : Boolean := True)
+      Every_Line     : Boolean := True;
+      Normalize      : Boolean := True)
    is
       Value         : GValue_Array (1 .. 5);
+
+      use String_List_Utils.String_List;
    begin
-      Init (Value (1),  Glib.GType_String);
       Init (Value (2),  Glib.GType_String);
       Init (Value (3),  Glib.GType_Pointer);
       Init (Value (4),  Glib.GType_Boolean);
       Init (Value (5),  Glib.GType_Boolean);
-      Set_String (Value (1), Normalize_Pathname (File));
+
       Set_String (Value (2), Identifier);
       Set_Address (Value (3), To_Address (Info));
       Set_Boolean (Value (4), Stick_To_Data);
       Set_Boolean (Value (5), Every_Line);
 
-      if not Mime_Action
-        (Kernel, Mime_File_Line_Info, Value, Set_Busy => False)
-      then
-         Trace (Me, "No file editor with line info display "
-                & "capability was registered");
-      end if;
+      if File /= "" then
+         Init (Value (1),  Glib.GType_String);
 
-      for J in Value'Range loop
-         Unset (Value (J));
-      end loop;
+         if Normalize then
+            Set_String (Value (1), Normalize_Pathname (File));
+         else
+            Set_String (Value (1), File);
+         end if;
+
+         if not Mime_Action
+           (Kernel, Mime_File_Line_Info, Value, Set_Busy => False)
+         then
+            Trace (Me, "No file editor with line info display "
+                   & "capability was registered");
+         end if;
+
+         for J in Value'Range loop
+            Unset (Value (J));
+         end loop;
+      else
+         declare
+            Files : List := Open_Files (Kernel);
+            Node  : List_Node := First (Files);
+         begin
+            while Node /= Null_Node loop
+               Init (Value (1),  Glib.GType_String);
+               Set_String (Value (1), Data (Node));
+
+               if not Mime_Action
+                 (Kernel, Mime_File_Line_Info, Value, Set_Busy => False)
+               then
+                  Trace (Me, "No file editor with line info display "
+                         & "capability was registered");
+               end if;
+
+               Unset (Value (1));
+               Node := Next (Node);
+            end loop;
+
+            for J in 2 .. Value'Last loop
+               Unset (Value (J));
+            end loop;
+
+            Free (Files);
+         end;
+      end if;
    end General_Line_Information;
 
    ----------------------
@@ -1291,17 +1331,21 @@ package body Glide_Kernel.Modules is
       File           : String;
       Identifier     : String;
       Stick_To_Data  : Boolean := True;
-      Every_Line     : Boolean := True)
+      Every_Line     : Boolean := True;
+      Normalize      : Boolean := True)
    is
       A_Access : Line_Information_Data;
    begin
       A_Access := new Line_Information_Array (0 .. 0);
-      General_Line_Information (Kernel,
-                                File,
-                                Identifier,
-                                A_Access,
-                                Stick_To_Data,
-                                Every_Line);
+
+      General_Line_Information
+        (Kernel,
+         File,
+         Identifier,
+         A_Access,
+         Stick_To_Data,
+         Every_Line,
+         Normalize);
       Unchecked_Free (A_Access);
    end Create_Line_Information_Column;
 
@@ -1329,9 +1373,11 @@ package body Glide_Kernel.Modules is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String;
       Identifier     : String;
-      Info           : Line_Information_Data) is
+      Info           : Line_Information_Data;
+      Normalize      : Boolean := True) is
    begin
-      General_Line_Information (Kernel, File, Identifier, Info);
+      General_Line_Information
+        (Kernel, File, Identifier, Info, Normalize => Normalize);
    end Add_Line_Information;
 
    -------------------------
