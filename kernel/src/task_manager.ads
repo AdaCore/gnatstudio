@@ -65,6 +65,16 @@ package Task_Manager is
      (Manager : Task_Manager_Access);
    --  Free all memory associated to the task manager.
 
+   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget;
+   procedure Set_GUI
+     (Manager : Task_Manager_Access;
+      GUI     : Gtk_Widget);
+   --  Get and set the active graphical interface for Manager.
+
+   function Has_Running_Commands
+     (Manager : Task_Manager_Access) return Boolean;
+   --  Return True if there is one or more command that is Running or Paused.
+
 private
    type Queue_Status is (Not_Started, Running, Paused, Completed, Interrupted);
 

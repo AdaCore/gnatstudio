@@ -510,4 +510,45 @@ package body Task_Manager is
       end if;
    end Destroy;
 
+   -------------
+   -- Get_GUI --
+   -------------
+
+   function Get_GUI (Manager : Task_Manager_Access) return Gtk_Widget is
+   begin
+      return Manager.GUI;
+   end Get_GUI;
+
+   -------------
+   -- Set_GUI --
+   -------------
+
+   procedure Set_GUI
+     (Manager : Task_Manager_Access;
+      GUI     : Gtk_Widget)
+   is
+   begin
+      Manager.GUI := GUI;
+   end Set_GUI;
+
+   --------------------------
+   -- Has_Running_Commands --
+   --------------------------
+
+   function Has_Running_Commands
+     (Manager : Task_Manager_Access) return Boolean is
+   begin
+      if Manager.Queues = null then
+         return False;
+      end if;
+
+      for J in Manager.Queues'Range loop
+         if Manager.Queues (J).Status in Running .. Paused then
+            return True;
+         end if;
+      end loop;
+
+      return False;
+   end Has_Running_Commands;
+
 end Task_Manager;
