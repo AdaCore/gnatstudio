@@ -114,7 +114,7 @@ package GVD.Types is
       --  The name of the variable to watch for watchpoints. This is left to
       --  null for breakpoints.
 
-      File        : VFS.Virtual_File;
+      File        : VFS.Virtual_File := VFS.No_File;
       --  The file name that contains the breakpoint.
       --  Must be stored as an absolute file name.
 
