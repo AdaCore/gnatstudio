@@ -51,6 +51,7 @@ with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
+with Commands.Controls;          use Commands.Controls;
 with Language;                   use Language;
 with Language_Handlers;          use Language_Handlers;
 with Language_Handlers.Glide;    use Language_Handlers.Glide;
@@ -139,6 +140,9 @@ package body Src_Editor_Box is
    function Focus_In (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_in event. This checks whether the physical file
    --  on the disk is more recent than the one that was read for the editor.
+
+   function Focus_Out (Box : access GObject_Record'Class) return Boolean;
+   --  Callback for the focus_out event.
 
    ----------------------------------
    -- The contextual menu handling --
@@ -623,7 +627,10 @@ package body Src_Editor_Box is
       Add_Events (Box.Source_View, Focus_Change_Mask);
       Object_Return_Callback.Object_Connect
         (Box.Source_View, "focus_in_event",
-         Object_Return_Callback.To_Marshaller (Focus_In'Access), Box);
+         Object_Return_Callback.To_Marshaller (Focus_In'Access), Box, False);
+      Object_Return_Callback.Object_Connect
+        (Box.Source_View, "focus_out_event",
+         Object_Return_Callback.To_Marshaller (Focus_Out'Access), Box, False);
 
       --  The Contextual Menu handling
       Register_Contextual_Menu
@@ -639,9 +646,9 @@ package body Src_Editor_Box is
    --------------
 
    function Focus_In (Box : access GObject_Record'Class) return Boolean is
-      B : Source_Editor_Box := Source_Editor_Box (Box);
+      B             : Source_Editor_Box := Source_Editor_Box (Box);
       New_Timestamp : Timestamp;
-
+      Undo_Redo     : Undo_Redo_Information;
    begin
       if B.Filename /= null then
          New_Timestamp := To_Timestamp (File_Time_Stamp (B.Filename.all));
@@ -662,8 +669,28 @@ package body Src_Editor_Box is
             B.Timestamp := New_Timestamp;
          end if;
       end if;
+
+      Undo_Redo := Undo_Redo_Data.Get (B.Kernel, Undo_Redo_Id);
+
+      Set_Controls (Get_Queue (B.Source_Buffer),
+                    Undo_Redo.Undo_Button,
+                    Undo_Redo.Redo_Button,
+                    Undo_Redo.Undo_Menu_Item,
+                    Undo_Redo.Redo_Menu_Item);
       return False;
    end Focus_In;
+
+   ---------------
+   -- Focus_Out --
+   ---------------
+
+   function Focus_Out (Box : access GObject_Record'Class) return Boolean is
+      B         : Source_Editor_Box := Source_Editor_Box (Box);
+   begin
+      Unset_Controls (Get_Queue (B.Source_Buffer));
+
+      return False;
+   end Focus_Out;
 
    ----------------------
    -- Is_Entity_Letter --
