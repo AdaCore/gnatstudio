@@ -486,7 +486,6 @@ package body Src_Contexts is
       Current_Column : Integer;
       Backward       : Boolean) return Match_Result_Access
    is
-      pragma Unreferenced (Kernel);
       Result : Match_Result_Access := null;
       Continue_Till_End : Boolean := False;
 
@@ -538,6 +537,7 @@ package body Src_Contexts is
 
          --  Start from the beginning if necessary
          if Result = null then
+            Insert (Kernel, -"No more matches, starting from beginning");
             Scan_Buffer
               (Get_Slice (Editor, 1, 1), Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope, Lang);
@@ -855,6 +855,7 @@ package body Src_Contexts is
       end if;
 
       Set_Cursor_Location (Editor, Match.Line, Match.Column);
+
       Select_Region
         (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
 
