@@ -195,6 +195,12 @@ package Docgen is
    package List_Entity_Handle is
      new Generic_List (Entity_Handle);
 
+   function Compare_Name
+     (X, Y : Entity_Handle) return Boolean;
+
+   procedure Sort_List_Name   is
+     new Sort (List_Entity_Handle, "<" => Compare_Name);
+
    type Tagged_Element is record
       Me                   : Entity_Handle;
       My_Parents           : List_Entity_Handle.List;
