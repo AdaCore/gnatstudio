@@ -22,6 +22,7 @@ with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
+with Gdk.Color;                 use Gdk.Color;
 with Gtk;                       use Gtk;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
@@ -68,6 +69,8 @@ with Ada.Unchecked_Deallocation;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
+
+with Src_Editor_Buffer.Blocks;  use Src_Editor_Buffer.Blocks;
 
 package body Src_Editor_Buffer is
 
@@ -258,6 +261,27 @@ package body Src_Editor_Buffer is
    procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever the user inserts or deletes text.
 
+   procedure Lines_Remove_Hook_Before
+     (Buffer       : access Source_Buffer_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer);
+   --  Actions that must be executed whenever a line is removed.
+   --  This is called before the lines are actually removed from the buffer.
+
+   procedure Lines_Remove_Hook_After
+     (Buffer       : access Source_Buffer_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer);
+   --  Same as above, but occurs after the lines have been removed.
+
+   procedure Lines_Add_Hook
+     (Buffer : access Source_Buffer_Record'Class;
+      Start  : Integer;
+      Number : Integer);
+   --  Actions that must be executed whenever a line is added.
+   --  Start is the number of the line just before the lines were inserted,
+   --  Number is the number of lines that were inserted.
+
    procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever an action is ended.
 
@@ -430,13 +454,13 @@ package body Src_Editor_Buffer is
 
       Unchecked_Free (Buffer.Line_Info);
 
-      for J in Buffer.Highlightings'Range loop
-         if Buffer.Highlightings (J).Enabled_Highlights /= null then
-            Unchecked_Free (Buffer.Highlightings (J).Enabled_Highlights);
+      for J in Buffer.Line_Data'Range loop
+         if Buffer.Line_Data (J).Enabled_Highlights /= null then
+            Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
          end if;
       end loop;
 
-      Unchecked_Free (Buffer.Highlightings);
+      Unchecked_Free (Buffer.Line_Data);
    end Buffer_Destroy;
 
    ---------------------
@@ -597,6 +621,7 @@ package body Src_Editor_Buffer is
       Dummy  : Boolean;
       Start  : Integer;
       Iter   : Gtk_Text_Iter;
+      Number : Integer;
 
    begin
       Get_Text_Iter (Nth (Params, 1), Iter);
@@ -613,11 +638,14 @@ package body Src_Editor_Buffer is
       end if;
 
       --  Call Add_Lines, to compute added lines for the side column.
-      --  ??? We could create a hook for added lines.
 
       Start := Integer (Get_Line (Iter));
       Backward_Chars (Iter, Length, Dummy);
-      Add_Lines (Buffer, Start, Start - Integer (Get_Line (Iter)));
+      Number := Start - Integer (Get_Line (Iter));
+
+      if Number > 0 then
+         Lines_Add_Hook (Buffer, Start, Number);
+      end if;
 
    exception
       when E : others =>
@@ -754,6 +782,12 @@ package body Src_Editor_Buffer is
          Delete_Range_Cb (Buffer, Start_Iter);
       end if;
 
+      if Buffer.First_Removed_Line > 0 then
+         Lines_Remove_Hook_After
+           (Buffer, Buffer.First_Removed_Line, Buffer.Last_Removed_Line);
+         Buffer.First_Removed_Line := 0;
+      end if;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -811,7 +845,7 @@ package body Src_Editor_Buffer is
       --  Remove the lines in the side information column.
 
       if Line_Start /= Line_End then
-         Remove_Lines
+         Lines_Remove_Hook_Before
            (Buffer, Integer (Line_Start + 1), Integer (Line_End + 1));
       end if;
 
@@ -1469,8 +1503,12 @@ package body Src_Editor_Buffer is
       Buffer.Real_Lines := new Natural_Array (1 .. 1);
       Buffer.Real_Lines (1) := 0;
 
-      Buffer.Highlightings := new Highlighting_Array (1 .. 1);
-      Buffer.Highlightings (1) := (null, null);
+      Buffer.Line_Data := new Line_Data_Array (1 .. 1);
+      Buffer.Line_Data (1) := New_Line_Data;
+
+      --  Compute the block information.
+
+      Compute_Blocks (Buffer);
    end Initialize_Hook;
 
    ----------------
@@ -1573,6 +1611,7 @@ package body Src_Editor_Buffer is
    is
       B       : Source_Buffer := Source_Buffer (Buffer);
       Timeout : Gint;
+      Prev    : Boolean;
    begin
       --  Since we update the tags directly, gtk+ will automatically refresh
       --  the source view, we don't need to do anything for this.
@@ -1604,6 +1643,17 @@ package body Src_Editor_Buffer is
       if Timeout > 0 then
          B.Timeout_Id := Buffer_Timeout.Add
            (Guint32 (Timeout) * 1000,  Automatic_Save'Access, B.all'Access);
+      end if;
+
+      --  ??? Should improve this when the preference for source highlightings
+      --  becomes more sophisticated.
+      Prev := B.Parse_Blocks;
+      B.Parse_Blocks :=
+        not Equal (Get_Pref (Kernel, Current_Block_Color),
+                   White (Get_Default_Colormap));
+
+      if not Prev and then B.Parse_Blocks then
+         Compute_Blocks (B);
       end if;
    end Preferences_Changed;
 
@@ -1957,6 +2007,8 @@ package body Src_Editor_Buffer is
                Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
             end if;
          end if;
+
+         Compute_Blocks (Buffer);
       end if;
    end Set_Language;
 
@@ -2387,6 +2439,11 @@ package body Src_Editor_Buffer is
       --  Currently, Gtk_Text_Buffer does not export a service to replace
       --  some text, so we delete the slice first, then insert the text...
 
+      if Start_Line /= End_Line then
+         Lines_Remove_Hook_Before
+           (Buffer, Integer (Start_Line + 1), Integer (End_Line + 1));
+      end if;
+
       Delete (Buffer, Start_Iter, End_Iter);
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
@@ -2571,6 +2628,60 @@ package body Src_Editor_Buffer is
       Get_End_Iter (Buffer, End_Iter);
       Remove_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
    end Unhighlight_All;
+
+   --------------------
+   -- Lines_Add_Hook --
+   --------------------
+
+   procedure Lines_Add_Hook
+     (Buffer : access Source_Buffer_Record'Class;
+      Start  : Integer;
+      Number : Integer) is
+   begin
+      --  Resynchronize the arrays that need to be synchronized with line
+      --  numbers.
+      Add_Lines (Buffer, Start, Number);
+
+      --  Parse the block information.
+      Compute_Blocks (Buffer);
+   end Lines_Add_Hook;
+
+   ------------------------------
+   -- Lines_Remove_Hook_Before --
+   ------------------------------
+
+   procedure Lines_Remove_Hook_Before
+     (Buffer       : access Source_Buffer_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer) is
+   begin
+      --  Resynchronize the arrays that need to be synchronized with line
+      --  numbers.
+      Remove_Lines (Buffer, Start_Line, End_Line);
+
+      --  It is necessary to set the fields Buffer.First_Removed_Line and
+      --  Buffer.Last_Removed_Line because the parameters for the
+      --  "delete_range" signal are invalid when we connect after the actual
+      --  deletion has been done.
+
+      Buffer.First_Removed_Line := Start_Line;
+      Buffer.Last_Removed_Line  := End_Line;
+   end Lines_Remove_Hook_Before;
+
+   -----------------------------
+   -- Lines_Remove_Hook_After --
+   -----------------------------
+
+   procedure Lines_Remove_Hook_After
+     (Buffer       : access Source_Buffer_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer)
+   is
+      pragma Unreferenced (Start_Line, End_Line);
+   begin
+      --  Parse the block information.
+      Compute_Blocks (Buffer);
+   end Lines_Remove_Hook_After;
 
    ---------------------
    -- End_Action_Hook --
@@ -3211,12 +3322,12 @@ package body Src_Editor_Buffer is
    is
       Line_Info  : Line_Info_Display_Array_Access renames Buffer.Line_Info;
       Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
-      Highlightings : Highlighting_Array_Access renames Buffer.Highlightings;
+      Highlightings : Line_Data_Array_Access renames Buffer.Line_Data;
    begin
       if Line not in Real_Lines'Range then
          declare
             A : constant Natural_Array := Real_Lines.all;
-            H : constant Highlighting_Array := Highlightings.all;
+            H : constant Line_Data_Array := Highlightings.all;
          begin
             Unchecked_Free (Real_Lines);
             Real_Lines := new Natural_Array (1 .. Line * 2);
@@ -3225,11 +3336,11 @@ package body Src_Editor_Buffer is
             Real_Lines (A'Last + 1 .. Real_Lines'Last) := (others => 0);
 
             Unchecked_Free (Highlightings);
-            Highlightings := new Highlighting_Array (1 .. Line * 2);
+            Highlightings := new Line_Data_Array (1 .. Line * 2);
 
             Highlightings (H'Range) := H;
             Highlightings (H'Last + 1 .. Highlightings'Last) :=
-              (others => (null, null));
+              (others => New_Line_Data);
          end;
       end if;
 
@@ -3540,7 +3651,7 @@ package body Src_Editor_Buffer is
       Number : Integer)
    is
       Real_Lines : Natural_Array_Access renames Buffer.Real_Lines;
-      Highlightings : Highlighting_Array_Access renames Buffer.Highlightings;
+      Highlightings : Line_Data_Array_Access renames Buffer.Line_Data;
 
       Bottom_Line : Integer;
 
@@ -3550,16 +3661,16 @@ package body Src_Editor_Buffer is
       procedure Expand_Lines (N : Integer) is
          A : constant Natural_Array := Real_Lines.all;
 
-         H : constant Highlighting_Array := Highlightings.all;
+         H : constant Line_Data_Array := Highlightings.all;
       begin
          Real_Lines := new Natural_Array (1 .. N * 2);
          Real_Lines (A'Range) := A;
          Real_Lines (A'Last + 1 .. Real_Lines'Last) := (others => 0);
 
-         Highlightings := new Highlighting_Array (1 .. N * 2);
+         Highlightings := new Line_Data_Array (1 .. N * 2);
          Highlightings (H'Range) := H;
          Highlightings (H'Last + 1 .. Highlightings'Last) :=
-           (others => (null, null));
+           (others => New_Line_Data);
 
       end Expand_Lines;
 
@@ -3578,7 +3689,7 @@ package body Src_Editor_Buffer is
          for J in 1 .. Number loop
             Real_Lines (J) := J;
 
-            Highlightings (J) := (null, null);
+            Highlightings (J) := New_Line_Data;
          end loop;
 
          Buffer.Original_Text_Inserted := True;
@@ -3605,7 +3716,7 @@ package body Src_Editor_Buffer is
 
          Highlightings
            (Integer'Max (Start - Number + 1, Real_Lines'First) .. Start)
-           := (others => (null, null));
+           := (others => New_Line_Data);
       end if;
    end Add_Lines;
 
@@ -3619,7 +3730,7 @@ package body Src_Editor_Buffer is
       End_Line   : Integer)
    is
       Real_Lines    : Natural_Array_Access renames Buffer.Real_Lines;
-      Highlightings : Highlighting_Array_Access renames Buffer.Highlightings;
+      Highlightings : Line_Data_Array_Access renames Buffer.Line_Data;
    begin
       if End_Line <= Start_Line then
          return;
@@ -3639,7 +3750,7 @@ package body Src_Editor_Buffer is
 
       Highlightings
         (Highlightings'Last + Start_Line - End_Line + 1
-           .. Highlightings'Last) := (others => (null, null));
+           .. Highlightings'Last) := (others => New_Line_Data);
    end Remove_Lines;
 
    ----------
@@ -3736,8 +3847,8 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      if Line < Editor.Highlightings'First
-        or else Line > Editor.Highlightings'Last
+      if Line < Editor.Line_Data'First
+        or else Line > Editor.Line_Data'Last
       then
          Trace (Me, -"Wrong line number: " & Image (Line));
          return;
@@ -3745,25 +3856,25 @@ package body Src_Editor_Buffer is
 
       Last_Index := Get_Last_Index;
 
-      if Editor.Highlightings (Line).Enabled_Highlights = null then
+      if Editor.Line_Data (Line).Enabled_Highlights = null then
          --  If we are removing a highlight where no highlight is defined,
          --  we can exit immediately.
          if not Set then
             return;
          end if;
 
-         Editor.Highlightings (Line).Enabled_Highlights :=
+         Editor.Line_Data (Line).Enabled_Highlights :=
            new Boolean_Array (1 .. Last_Index);
-         Editor.Highlightings (Line).Enabled_Highlights.all :=
+         Editor.Line_Data (Line).Enabled_Highlights.all :=
            (others   => False);
-         Editor.Highlightings (Line).Enabled_Highlights (Category) := Set;
+         Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
 
          if Set then
-            Editor.Highlightings (Line).Current_Highlight := Get_GC (Category);
+            Editor.Line_Data (Line).Current_Highlight := Get_GC (Category);
          else
-            for J in Editor.Highlightings (Line).Enabled_Highlights'Range loop
-               if Editor.Highlightings (Line).Enabled_Highlights (J) then
-                  Editor.Highlightings (Line).Current_Highlight := Get_GC (J);
+            for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
+               if Editor.Line_Data (Line).Enabled_Highlights (J) then
+                  Editor.Line_Data (Line).Current_Highlight := Get_GC (J);
                end if;
             end loop;
          end if;
@@ -3771,32 +3882,32 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      if Editor.Highlightings (Line).Enabled_Highlights'Last < Last_Index then
+      if Editor.Line_Data (Line).Enabled_Highlights'Last < Last_Index then
          declare
             A : Boolean_Array_Access;
          begin
             A := new Boolean_Array (1 .. Last_Index);
-            A (1 .. Editor.Highlightings (Line).Enabled_Highlights'Last)
-              := Editor.Highlightings (Line).Enabled_Highlights.all;
-            A (Editor.Highlightings (Line).Enabled_Highlights'Last + 1
+            A (1 .. Editor.Line_Data (Line).Enabled_Highlights'Last)
+              := Editor.Line_Data (Line).Enabled_Highlights.all;
+            A (Editor.Line_Data (Line).Enabled_Highlights'Last + 1
                  .. Last_Index) := (others => False);
-            Unchecked_Free (Editor.Highlightings (Line).Enabled_Highlights);
-            Editor.Highlightings (Line).Enabled_Highlights := A;
+            Unchecked_Free (Editor.Line_Data (Line).Enabled_Highlights);
+            Editor.Line_Data (Line).Enabled_Highlights := A;
          end;
       end if;
 
-      Editor.Highlightings (Line).Enabled_Highlights (Category) := Set;
+      Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
 
-      for J in Editor.Highlightings (Line).Enabled_Highlights'Range loop
-         if Editor.Highlightings (Line).Enabled_Highlights (J) then
-            Editor.Highlightings (Line).Current_Highlight := Get_GC (J);
+      for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
+         if Editor.Line_Data (Line).Enabled_Highlights (J) then
+            Editor.Line_Data (Line).Current_Highlight := Get_GC (J);
             return;
          end if;
       end loop;
 
       --  If we reach this stage, no highlighting was found, therefore we
       --  remove the current GC.
-      Editor.Highlightings (Line).Current_Highlight := null;
+      Editor.Line_Data (Line).Current_Highlight := null;
    end Set_Line_Highlighting;
 
    --------------------------
@@ -3809,7 +3920,7 @@ package body Src_Editor_Buffer is
       Id     : String) is
    begin
       if Line = 0 then
-         for J in Editor.Highlightings'Range loop
+         for J in Editor.Line_Data'Range loop
             Set_Line_Highlighting (Editor, J, Id, True);
          end loop;
       else
@@ -3829,7 +3940,7 @@ package body Src_Editor_Buffer is
       Id     : String) is
    begin
       if Line = 0 then
-         for J in Editor.Highlightings'Range loop
+         for J in Editor.Line_Data'Range loop
             Set_Line_Highlighting (Editor, J, Id, False);
          end loop;
       else
@@ -3847,13 +3958,30 @@ package body Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record;
       Line   : Positive) return Gdk_GC is
    begin
-      if Editor.Highlightings /= null
-        and then Line <= Editor.Highlightings'Last
+      if Editor.Line_Data /= null
+        and then Line <= Editor.Line_Data'Last
       then
-         return Editor.Highlightings (Line).Current_Highlight;
+         return Editor.Line_Data (Line).Current_Highlight;
       end if;
 
       return null;
    end Get_Highlight_GC;
+
+   ---------------
+   -- Get_Block --
+   ---------------
+
+   function Get_Block
+     (Editor : access Source_Buffer_Record;
+      Line   : Positive) return Block_Record is
+   begin
+      if Editor.Line_Data /= null
+        and then Line <= Editor.Line_Data'Last
+      then
+         return Editor.Line_Data (Line).Block;
+      end if;
+
+      return New_Block;
+   end Get_Block;
 
 end Src_Editor_Buffer;
