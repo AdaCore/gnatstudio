@@ -152,10 +152,10 @@ package body DDE is
                Data : String (1 .. Integer (Data_Len));
                for Data'Address use Data_Raw;
 
-               Pos : constant Natural := Index (Data, ":");
+               Pos       : constant Natural := Index (Data, ":");
                Operation : DDE_Operation;
-               Argument : constant String :=
-                 Data (Pos + 1 .. Index (Data, ASCII.Nul & "") - 1);
+               Argument  : constant String :=
+                 Data (Pos + 1 .. Index (Data, (1 => ASCII.NUL) - 1);
                --  The data block is terminated by a nul character
 
             begin
