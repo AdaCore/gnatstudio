@@ -617,7 +617,8 @@ package body Items.Simples is
    ---------------
 
    procedure Set_Value (Item : in out Debugger_Output_Type; Value : String) is
-      S              : String := Strip_Control_M (Value);
+      S              : constant String :=
+        Do_Tab_Expansion (Strip_Control_M (Value));
       V              : String_Access := Item.Value;
 
       Index_New      : Positive := S'First;
@@ -691,7 +692,7 @@ package body Items.Simples is
       end if;
 
       V := Item.Value;
-      Item.Value := new String'(Do_Tab_Expansion (Item.Value.all));
+      Item.Value := new String'(Item.Value.all);
       Free (V);
 
       Item.Valid := True;
