@@ -128,6 +128,11 @@ package body Odd.Code_Editors is
       Event  : Gdk.Event.Gdk_Event) return Boolean;
    --  Handle button press events in the text editor.
 
+   function Pixmap_Clicked_Cb
+     (Editor : access Code_Editor_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
+   --  Handle button press events in the buttons layout.
+
    procedure Print_Buffer (Editor : access Code_Editor_Record'Class);
    --  Insert the contents of the buffer in the editor. Color highlighting is
    --  provided, and line numbers may or may not be added.
@@ -186,6 +191,41 @@ package body Odd.Code_Editors is
 
    procedure Show_Current_Line_Menu (Editor : access Code_Editor_Record'Class);
    --  Display the current file and current line in the editor.
+
+   procedure Is_Breakpoint
+     (Editor : access Code_Editor_Record'Class;
+      Line   : Integer;
+      Result : out Boolean;
+      Num    : out Integer);
+   --  Tell if a breakpoint is set at a specific line.
+   --  If it is the case, return the number of the breakpoint.
+
+   -------------------
+   -- Is_Breakpoint --
+   -------------------
+
+   procedure Is_Breakpoint
+     (Editor : access Code_Editor_Record'Class;
+      Line   : Integer;
+      Result : out Boolean;
+      Num    : out Integer)
+   is
+      Breakpoints_Array : Odd.Types.Breakpoint_Array_Ptr :=
+        Convert (Editor).Breakpoints;
+   begin
+      for Index in Breakpoints_Array'Range loop
+         if Breakpoints_Array (Index).Line = Line
+           and then Breakpoints_Array (Index).File.all =
+             Base_File_Name (Editor.Current_File.all)
+         then
+            Num := Breakpoints_Array (Index).Num;
+            Result := True;
+            return;
+         end if;
+      end loop;
+
+      Result := False;
+   end Is_Breakpoint;
 
    -------------------
    -- Scroll_Layout --
@@ -296,6 +336,7 @@ package body Odd.Code_Editors is
       --  so we can just set a size of 0.
       Gtk_New (Editor.Buttons);
       Set_USize (Editor.Buttons, Layout_Width, 0);
+      Add_Events (Editor.Buttons, Button_Press_Mask or Button_Release_Mask);
 
       Gtk_New (Editor.Explorer_Scroll);
       Set_Policy (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
@@ -319,6 +360,10 @@ package body Odd.Code_Editors is
       Editor_Event_Cb.Object_Connect
         (Editor.Text, "button_press_event",
          Editor_Event_Cb.To_Marshaller (Button_Press_Cb'Access),
+         Slot_Object => Editor);
+      Editor_Event_Cb.Object_Connect
+        (Editor.Buttons, "button_press_event",
+         Editor_Event_Cb.To_Marshaller (Pixmap_Clicked_Cb'Access),
          Slot_Object => Editor);
 
       Pack_Start (Editor, Paned, Expand => True, Fill => True);
@@ -405,13 +450,84 @@ package body Odd.Code_Editors is
       end if;
    end Set_Current_Language;
 
+   -----------------------
+   -- Pixmap_Clicked_Cb --
+   -----------------------
+
+   function Pixmap_Clicked_Cb
+     (Editor : access Code_Editor_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
+   is
+      Num     : Integer;
+      Result  : Boolean;
+      Line    : Gint := 0;
+
+   begin
+      case Get_Button (Event) is
+         when 1 | 3 =>
+            if Get_Event_Type (Event) = Button_Press
+              and then Editor.Buffer /= null
+            then
+               Line :=
+                 (Gint (Get_Y (Event)) +
+                   Gint (Get_Value (Get_Vadj (Editor.Text)))) /
+                 (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font)) + 1;
+
+               case Get_Button (Event) is
+                  when 3 =>
+                     --
+                     --  ??? Should figure what to put here later
+                     --
+
+                     return True;
+
+                  when 1 =>
+                     Is_Breakpoint (Editor, Integer (Line), Result, Num);
+
+                     if Result then
+                        Remove_Breakpoint
+                          (Convert (Editor).Debugger, Num, Display => True);
+                     else
+                        Break_Source (Convert (Editor).Debugger,
+                                      Editor.Current_File.all,
+                                      Integer (Line),
+                                      Display => True);
+                     end if;
+
+                     return True;
+
+                  when others =>
+                     return False;
+               end case;
+            end if;
+
+            return False;
+
+         when 4 =>
+            Set_Value
+              (Get_Vadj (Editor.Text),
+               Get_Value (Get_Vadj (Editor.Text)) -
+                 Get_Page_Increment (Get_Vadj (Editor.Text)));
+            return True;
+
+         when  5 =>
+            Set_Value
+              (Get_Vadj (Editor.Text),
+               Get_Value (Get_Vadj (Editor.Text)) +
+                 Get_Page_Increment (Get_Vadj (Editor.Text)));
+            return True;
+
+         when others => return False;
+      end case;
+   end Pixmap_Clicked_Cb;
+
    ---------------------
    -- Button_Press_Cb --
    ---------------------
 
-   function Button_Press_Cb (Editor : access Code_Editor_Record'Class;
-                             Event  : Gdk.Event.Gdk_Event)
-                            return Boolean
+   function Button_Press_Cb
+     (Editor : access Code_Editor_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean
    is
       Menu    : Gtk_Menu;
       X, Y    : Gint;
@@ -425,113 +541,142 @@ package body Odd.Code_Editors is
                                      Get_Selection_End_Pos (Editor.Text)));
 
    begin
-      if Get_Button (Event) = 3
-        and then Get_Event_Type (Event) = Button_Press
-        and then Editor.Buffer /= null
-      then
-         Index := Editor.Buffer'First;
+      case Get_Button (Event) is
+         when 3 =>
+            if Get_Event_Type (Event) = Button_Press
+              and then Editor.Buffer /= null
+            then
+               Index := Editor.Buffer'First;
 
-         --  Take advantage of the fact that all lines and characters have the
-         --  same size.
-         Y := Gint (Get_Y (Event)) + Gint (Get_Value (Get_Vadj (Editor.Text)));
-         Line := Y / (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font))
-           + 1;
-         X := Gint (Get_X (Event)) / Char_Width (Editor.Font, Character'('m'));
+               --  Take advantage of the fact that all lines and characters
+               --  have the same size.
+               Y := Gint (Get_Y (Event))
+                 + Gint (Get_Value (Get_Vadj (Editor.Text)));
+               Line := Y / (Get_Ascent (Editor.Font)
+                            + Get_Descent (Editor.Font))
+                 + 1;
+               X := Gint (Get_X (Event))
+                 / Char_Width (Editor.Font, Character'('m'));
 
-         --  Do not count the space used for line numbers
-         if Editor.Show_Line_Nums then
-            X := X - Gint (Line_Numbers_Width);
-         end if;
-
-         --  Get the index of the item
-         if X < 0 then
-            Index := -1;
-         else
-            while Index <= Editor.Buffer'Last
-              and then Current_Line < Line
-            loop
-               if Editor.Buffer (Index) = ASCII.LF then
-                  Current_Line := Current_Line + 1;
+               --  Do not count the space used for line numbers
+               if Editor.Show_Line_Nums then
+                  X := X - Gint (Line_Numbers_Width);
                end if;
-               Index := Index + 1;
-            end loop;
-            Index := Index + Integer (X) - Editor.Buffer'First;
-         end if;
 
-         Start_Index := Index;
-         if Editor.Show_Line_Nums then
-            Start_Index := Index + Integer (Line) * (Line_Numbers_Width + 1);
-         end if;
+               --  Get the index of the item
+               if X < 0 then
+                  Index := -1;
+               else
+                  while Index <= Editor.Buffer'Last
+                    and then Current_Line < Line
+                  loop
+                     if Editor.Buffer (Index) = ASCII.LF then
+                        Current_Line := Current_Line + 1;
+                     end if;
+                     Index := Index + 1;
+                  end loop;
+                  Index := Index + Integer (X) - Editor.Buffer'First;
+               end if;
 
-         --  Only take the selection into account if it is under the cursor.
-         --  Otherwise, the behavior is somewhat unexpected.
-
-         if Get_Has_Selection (Editor.Text)
-           and then Min <= Gint (Start_Index)
-           and then Gint (Start_Index) <= Max
-         then
-            --  Keep only the first line of the selection. This avoids having
-            --  too long menus, and since the debugger can not handle multiple
-            --  line commands anyway is not a big problem.
-            --  We do not use Editor.Buffer directly, so that we don't have to
-            --  take into account the presence of line numbers.
-
-            declare
-               S : String := Get_Chars (Editor.Text, Min, Max);
-            begin
-               for J in S'Range loop
-                  if S (J) = ASCII.LF then
-                     Max := Gint (J - S'First) + Min;
-                     exit;
-                  end if;
-               end loop;
-
-               --  Use the selection...
-               Menu := Editor_Contextual_Menu
-                 (Editor, Line, Get_Chars (Editor.Text, Min, Max));
-            end;
-         else
-            if Index < 0 then
-               Menu := Editor_Contextual_Menu (Editor, Line, "");
-            else
-               --  Find the beginning of the entity
                Start_Index := Index;
-               while Start_Index >= Editor.Buffer'First
-                 and then (Is_Letter (Editor.Buffer (Start_Index))
-                           or else
-                           Is_Digit (Editor.Buffer (Start_Index))
-                           or else
-                           Editor.Buffer (Start_Index) = '_')
-               loop
-                  Start_Index := Start_Index - 1;
-               end loop;
+               if Editor.Show_Line_Nums then
+                  Start_Index := Index
+                    + Integer (Line) * (Line_Numbers_Width + 1);
+               end if;
 
-               --  Find the end of the entity
-               while Index <= Editor.Buffer'Last
-                 and then (Is_Letter (Editor.Buffer (Index))
-                           or else
-                           Is_Digit (Editor.Buffer (Index))
-                           or else
-                           Editor.Buffer (Index) = '_')
-               loop
-                  Index := Index + 1;
-               end loop;
+               --  Only take the selection into account if it is under
+               --  the cursor.
+               --  Otherwise, the behavior is somewhat unexpected.
 
-               Menu := Editor_Contextual_Menu
-                 (Editor, Line, Editor.Buffer (Start_Index + 1 .. Index - 1));
+               if Get_Has_Selection (Editor.Text)
+                 and then Min <= Gint (Start_Index)
+                 and then Gint (Start_Index) <= Max
+               then
+                  --  Keep only the first line of the selection.
+                  --  This avoids having too long menus, and since the debugger
+                  --  can not handle multiple line commands anyway is not a big
+                  --  problem.
+                  --  We do not use Editor.Buffer directly, so that we
+                  --  don't have to take into account the presence of line
+                  --  numbers.
+
+                  declare
+                     S : String := Get_Chars (Editor.Text, Min, Max);
+                  begin
+                     for J in S'Range loop
+                        if S (J) = ASCII.LF then
+                           Max := Gint (J - S'First) + Min;
+                           exit;
+                        end if;
+                     end loop;
+
+                     --  Use the selection...
+                     Menu := Editor_Contextual_Menu
+                       (Editor, Line, Get_Chars (Editor.Text, Min, Max));
+                  end;
+               else
+                  if Index < 0 then
+                     Menu := Editor_Contextual_Menu (Editor, Line, "");
+                  else
+                     --  Find the beginning of the entity
+                     Start_Index := Index;
+                     while Start_Index >= Editor.Buffer'First
+                       and then (Is_Letter (Editor.Buffer (Start_Index))
+                                 or else
+                                 Is_Digit (Editor.Buffer (Start_Index))
+                                 or else
+                                 Editor.Buffer (Start_Index) = '_')
+                     loop
+                        Start_Index := Start_Index - 1;
+                     end loop;
+
+                     --  Find the end of the entity
+                     while Index <= Editor.Buffer'Last
+                       and then (Is_Letter (Editor.Buffer (Index))
+                                 or else
+                                 Is_Digit (Editor.Buffer (Index))
+                                 or else
+                                 Editor.Buffer (Index) = '_')
+                     loop
+                        Index := Index + 1;
+                     end loop;
+
+                     Menu := Editor_Contextual_Menu
+                       (Editor, Line, Editor.Buffer (Start_Index
+                                                     + 1 .. Index - 1));
+                  end if;
+               end if;
+
+               Popup (Menu,
+                   Button            => Gdk.Event.Get_Button (Event),
+                      Activate_Time     => Gdk.Event.Get_Time (Event));
+               --  Stop the event so that the contextual menu is handled
+               --  correctly (ie hidden when the mouse button is
+               --  released, and the selection is not unselected).
+
+               Emit_Stop_By_Name (Editor.Text, "button_press_event");
+
+               return True;
             end if;
-         end if;
+            return False;
 
-         Popup (Menu,
-                Button            => Gdk.Event.Get_Button (Event),
-                Activate_Time     => Gdk.Event.Get_Time (Event));
-         --  Stop the event so that the contextual menu is handled correctly
-         --  (ie hidden when the mouse button is releases, and the selection
-         --  is not unselected).
-         Emit_Stop_By_Name (Editor.Text, "button_press_event");
-         return True;
-      end if;
-      return False;
+         when 4 =>
+            Set_Value (Get_Vadj (Editor.Text),
+                             Get_Value (Get_Vadj
+                                        (Editor.Text))
+                       - Get_Page_Increment
+                       (Get_Vadj (Editor.Text)));
+            return True;
+         when  5 =>
+            Set_Value (Get_Vadj (Editor.Text),
+                       Get_Value (Get_Vadj
+                                  (Editor.Text))
+                       + Get_Page_Increment
+                       (Get_Vadj (Editor.Text)));
+            return True;
+         when others => return False;
+      end case;
+
    end Button_Press_Cb;
 
    -----------
@@ -1217,7 +1362,7 @@ package body Odd.Code_Editors is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Breakpoint_Record) is
    begin
-      Break_Source (Br.Process.Debugger, Br.File, Br.Line);
+      Break_Source (Br.Process.Debugger, Br.File, Br.Line, Display => True);
    end Set_Breakpoint;
 
    ---------------------
