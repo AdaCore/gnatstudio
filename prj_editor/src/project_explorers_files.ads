@@ -21,7 +21,6 @@
 --  This package contains the files view for the explorer,
 
 with Glide_Kernel;
-with Gdk.Pixbuf;
 with Gtk.Main;
 with Gtk.Handlers;
 with Gtk.Scrolled_Window;
@@ -30,7 +29,6 @@ with Gtk.Tree_View;
 with Gtk.Tree_Store;
 
 with Generic_List;
-with Language;
 
 package Project_Explorers_Files is
 
@@ -49,12 +47,6 @@ package Project_Explorers_Files is
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
-   function Filter_Category
-     (Category : Language.Language_Category) return Language.Language_Category;
-   --  Return the category to use when an entity is Category.
-   --  This is used to group subprograms (procedures and functions together),
-   --  or remove unwanted categories (in which case Cat_Unknown is returned).
-
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
@@ -70,20 +62,6 @@ package Project_Explorers_Files is
 
 private
 
-   type Node_Types is
-     (Project_Node,
-      Extends_Project_Node,
-      Directory_Node,
-      Obj_Directory_Node,
-      File_Node,
-      Category_Node,
-      Entity_Node,
-      Modified_Project_Node);
-   --  The kind of nodes one might find in the tree
-   --  ??? Should be shared with Project_Explorers
-
-   subtype Real_Node_Types is Node_Types range Project_Node .. Entity_Node;
-
    type Append_Directory_Idle_Data;
    type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
    --  Custom data for the asynchronous fill function.
@@ -95,8 +73,6 @@ private
 
    package Timeout_Id_List is new Generic_List (Gtk.Main.Timeout_Handler_Id);
 
-   type Pixbuf_Array is array (Node_Types) of Gdk.Pixbuf.Gdk_Pixbuf;
-
    type Project_Explorer_Files_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
    record
@@ -104,9 +80,6 @@ private
       File_Tree  : Gtk.Tree_View.Gtk_Tree_View;
       File_Model : Gtk.Tree_Store.Gtk_Tree_Store;
       Expanding  : Boolean := False;
-
-      Open_Pixbufs  : Pixbuf_Array;
-      Close_Pixbufs : Pixbuf_Array;
 
       Scroll_To_Directory : Boolean := False;
       Path                : Gtk.Tree_Model.Gtk_Tree_Path;

@@ -30,7 +30,6 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
@@ -40,7 +39,6 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
-with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -54,42 +52,20 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Intl;               use Glide_Intl;
-with Language.Unknown;         use Language.Unknown;
-with Language;                 use Language;
-with Language_Handlers.Glide;  use Language_Handlers.Glide;
-with Pixmaps_IDE;              use Pixmaps_IDE;
-with Pixmaps_Prj;              use Pixmaps_Prj;
 with Project_Explorers;        use Project_Explorers;
 with Prj_API;                  use Prj_API;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with File_Utils;               use File_Utils;
 with Traces;                   use Traces;
-with Src_Info;
+
+with Project_Explorers_Common; use Project_Explorers_Common;
 
 package body Project_Explorers_Files is
 
    Me : constant Debug_Handle := Create ("Project_Files");
 
-   function Columns_Types return GType_Array;
-   --  Returns the types for the columns in the Model.
-   --  This is not implemented as
-   --       Columns_Types : constant GType_Array ...
-   --  because Gdk.Pixbuf.Get_Type cannot be called before
-   --  Gtk.Main.Init.
-
-   --  The following list must be synchronized with the array of types
-   --  in Columns_Types.
-
    Explorer_Files_Module_Id   : Glide_Kernel.Module_ID := null;
-
-   Icon_Column          : constant := 0;
-   Base_Name_Column     : constant := 1;
-   Absolute_Name_Column : constant := 2;
-   Node_Type_Column     : constant := 3;
-   User_Data_Column     : constant := 4;
-   Line_Column          : constant := 5;
-   Column_Column        : constant := 6;
 
    type Append_Directory_Idle_Data is record
       Explorer      : Project_Explorer_Files;
@@ -114,37 +90,6 @@ package body Project_Explorers_Files is
    function Parse_Path
      (Path : String) return String_List_Utils.String_List.List;
    --  Parse a path string and return a list of all directories in it.
-
-   function File_Append_Category_Node
-     (Explorer    : access Project_Explorer_Files_Record'Class;
-      Category    : Language_Category;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
-   --  Add a category node in the file view.
-
-   function File_Append_Entity_Node
-     (Explorer    : access Project_Explorer_Files_Record'Class;
-      File        : String;
-      Construct   : Construct_Information;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
-   --  Add an entity node in the file view.
-
-   procedure File_Append_File_Info
-     (Explorer  : access Project_Explorer_Files_Record'Class;
-      Node      : Gtk_Tree_Iter;
-      File_Name : String);
-   --  Add info to a file node in the file view.
-
-   procedure File_Append_Dummy_Iter
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Base     : Gtk_Tree_Iter);
-   --  Add an empty item to an iter in the file view.
-
-   procedure File_Append_File
-     (Explorer  : access Project_Explorer_Files_Record'Class;
-      Base      : Gtk_Tree_Iter;
-      File      : String);
-   --  Append a file node to Base in the file view.
-   --  File must be an absolute file name.
 
    procedure File_Append_Directory
      (Explorer      : access Project_Explorer_Files_Record'Class;
@@ -183,13 +128,6 @@ package body Project_Explorers_Files is
    procedure File_Remove_Idle_Calls
      (Explorer : access Project_Explorer_Files_Record'Class);
    --  Remove the idle calls for filling the file view.
-
-   function Find_Iter_For_Event
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Event    : Gdk_Event)
-      return Gtk_Tree_Iter;
-   --  Get the iter in the file view under the cursor corresponding to Event,
-   --  if any.
 
    function File_Button_Press
      (Explorer : access Gtk_Widget_Record'Class;
@@ -245,249 +183,6 @@ package body Project_Explorers_Files is
       Kernel       : Kernel_Handle);
    --  Raise the existing explorer, or open a new one.
 
-   -------------------
-   -- Columns_Types --
-   -------------------
-
-   function Columns_Types return GType_Array is
-   begin
-      return GType_Array'
-        (Icon_Column          => Gdk.Pixbuf.Get_Type,
-         Absolute_Name_Column => GType_String,
-         Base_Name_Column     => GType_String,
-         Node_Type_Column     => GType_Int,
-         User_Data_Column     => GType_Pointer,
-         Line_Column          => GType_Int,
-         Column_Column        => GType_Int);
-   end Columns_Types;
-
-   -------------------------------
-   -- File_Append_Category_Node --
-   -------------------------------
-
-   function File_Append_Category_Node
-     (Explorer    : access Project_Explorer_Files_Record'Class;
-      Category    : Language_Category;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
-   is
-      N       : Gtk_Tree_Iter;
-      Sibling : Gtk_Tree_Iter;
-      Name    : constant String := Category_Name (Category);
-   begin
-      --  ??? code duplication from Add_Category_Node
-      Sibling := Children (Explorer.File_Model, Parent_Iter);
-
-      if Sibling = Null_Iter then
-         Append (Explorer.File_Model, N, Parent_Iter);
-      else
-         while Sibling /= Null_Iter
-           and then Get_String (Explorer.File_Model, Sibling, Base_Name_Column)
-           <= Name
-         loop
-            Next (Explorer.File_Model, Sibling);
-         end loop;
-
-         if Sibling = Null_Iter then
-            Append (Explorer.File_Model, N, Parent_Iter);
-         else
-            Insert_Before (Explorer.File_Model, N, Parent_Iter, Sibling);
-         end if;
-      end if;
-
-      Set (Explorer.File_Model, N, Absolute_Name_Column, "");
-      Set (Explorer.File_Model, N, Base_Name_Column, Name);
-      Set (Explorer.File_Model, N, Icon_Column,
-           C_Proxy (Explorer.Close_Pixbufs (Category_Node)));
-      Set (Explorer.File_Model, N, Node_Type_Column,
-           Gint (Node_Types'Pos (Category_Node)));
-
-      return N;
-   end File_Append_Category_Node;
-
-   -----------------------------
-   -- File_Append_Entity_Node --
-   -----------------------------
-
-   function File_Append_Entity_Node
-     (Explorer    : access Project_Explorer_Files_Record'Class;
-      File        : String;
-      Construct   : Construct_Information;
-      Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
-   is
-      N       : Gtk_Tree_Iter;
-      Sibling : Gtk_Tree_Iter;
-   begin
-      Sibling := Children (Explorer.File_Model, Parent_Iter);
-
-      if Sibling = Null_Iter then
-         Append (Explorer.File_Model, N, Parent_Iter);
-      else
-         while Sibling /= Null_Iter
-           and then Get_String (Explorer.File_Model, Sibling, Base_Name_Column)
-           <= Construct.Name.all
-         loop
-            Next (Explorer.File_Model, Sibling);
-         end loop;
-
-         if Sibling = Null_Iter then
-            Append (Explorer.File_Model, N, Parent_Iter);
-         else
-            Insert_Before (Explorer.File_Model, N, Parent_Iter, Sibling);
-         end if;
-      end if;
-
-      Set (Explorer.File_Model, N, Absolute_Name_Column, File);
-
-      if Construct.Is_Declaration then
-         if Construct.Profile /= null then
-            Set (Explorer.File_Model, N, Base_Name_Column,
-                 Construct.Name.all & " (spec) " &
-                 Reduce (Construct.Profile.all));
-         else
-            Set (Explorer.File_Model, N, Base_Name_Column,
-                 Construct.Name.all & " (spec)");
-
-         end if;
-
-      elsif Construct.Profile /= null then
-         Set (Explorer.File_Model, N, Base_Name_Column,
-              Construct.Name.all & " " & Reduce (Construct.Profile.all));
-      else
-         Set (Explorer.File_Model, N, Base_Name_Column,
-              Construct.Name.all);
-      end if;
-
-      Set (Explorer.File_Model, N, Icon_Column,
-           C_Proxy (Explorer.Close_Pixbufs (Entity_Node)));
-      Set (Explorer.File_Model, N, Node_Type_Column,
-           Gint (Node_Types'Pos (Entity_Node)));
-
-      Set (Explorer.File_Model, N,
-           Line_Column, Gint (Construct.Sloc_Entity.Line));
-      Set (Explorer.File_Model, N,
-           Column_Column, Gint (Construct.Sloc_Entity.Line));
-      return N;
-   end File_Append_Entity_Node;
-
-   ---------------------------
-   -- File_Append_File_Info --
-   ---------------------------
-
-   procedure File_Append_File_Info
-     (Explorer  : access Project_Explorer_Files_Record'Class;
-      Node      : Gtk_Tree_Iter;
-      File_Name : String)
-   is
-      use Src_Info;
-
-      N          : Gtk_Tree_Iter;
-      pragma Unreferenced (N);
-
-      Lang       : Language_Access;
-      Constructs : Construct_List;
-      Category   : Language_Category;
-
-      type Gtk_Tree_Iter_Array is array (Language_Category'Range)
-        of Gtk_Tree_Iter;
-      Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
-      Languages  : constant Glide_Language_Handler :=
-        Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel));
-      Handler    : constant Src_Info.LI_Handler :=
-        Get_LI_Handler_From_File (Languages, File_Name);
-
-   begin
-      Push_State (Explorer.Kernel, Busy);
-
-      Lang := Get_Language_From_File
-        (Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel)),
-         File_Name);
-
-      if Lang /= null then
-         Parse_File_Constructs
-           (Handler, Get_Project_View (Explorer.Kernel),
-            Languages, File_Name, Constructs);
-
-         Constructs.Current := Constructs.First;
-
-         while Constructs.Current /= null loop
-            if Constructs.Current.Name /= null then
-               Category := Filter_Category (Constructs.Current.Category);
-
-               if Category /= Cat_Unknown then
-                  if Categories (Category) = Null_Iter then
-                     Categories (Category) := File_Append_Category_Node
-                       (Explorer,
-                        Category    => Category,
-                        Parent_Iter => Node);
-                  end if;
-
-                  N := File_Append_Entity_Node
-                    (Explorer, File_Name,
-                     Constructs.Current.all, Categories (Category));
-               end if;
-            end if;
-
-            Constructs.Current := Constructs.Current.Next;
-         end loop;
-
-         Free (Constructs);
-      end if;
-
-      Pop_State (Explorer.Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Free (Constructs);
-         Pop_State (Explorer.Kernel);
-   end File_Append_File_Info;
-
-   ----------------------------
-   -- File_Append_Dummy_Iter --
-   ----------------------------
-
-   procedure File_Append_Dummy_Iter
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Base     : Gtk_Tree_Iter)
-   is
-      Iter      : Gtk_Tree_Iter;
-   begin
-      Append (Explorer.File_Model, Iter, Base);
-   end File_Append_Dummy_Iter;
-
-   ----------------------
-   -- File_Append_File --
-   ----------------------
-
-   procedure File_Append_File
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Base     : Gtk_Tree_Iter;
-      File     : String)
-   is
-      Iter : Gtk_Tree_Iter;
-      Lang : Language_Access;
-
-   begin
-      Append (Explorer.File_Model, Iter, Base);
-
-      Set (Explorer.File_Model, Iter, Absolute_Name_Column, File);
-
-      Set (Explorer.File_Model, Iter, Base_Name_Column, Base_Name (File));
-
-      Set (Explorer.File_Model, Iter, Icon_Column,
-           C_Proxy (Explorer.Close_Pixbufs (File_Node)));
-      Set (Explorer.File_Model, Iter, Node_Type_Column,
-           Gint (Node_Types'Pos (File_Node)));
-
-      Lang := Get_Language_From_File
-        (Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel)),
-         File);
-
-      if Lang /= Unknown_Lang then
-         File_Append_Dummy_Iter (Explorer, Iter);
-      end if;
-   end File_Append_File;
-
    --------------------
    -- Read_Directory --
    --------------------
@@ -519,15 +214,15 @@ package body Project_Explorers_Files is
 
          if D.Physical_Read then
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+                 C_Proxy (Open_Pixbufs (Directory_Node)));
             D.Base := Iter;
 
             return Read_Directory (D);
 
          else
-            File_Append_Dummy_Iter (D.Explorer, Iter);
+            Append_Dummy_Iter (D.Explorer.File_Model, Iter);
             Set (D.Explorer.File_Model, Iter, Icon_Column,
-                 C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
+                 C_Proxy (Close_Pixbufs (Directory_Node)));
             Pop_State (D.Explorer.Kernel);
             New_D := D;
             Free (New_D);
@@ -573,7 +268,7 @@ package body Project_Explorers_Files is
 
       if Is_Empty (D.Dirs) and then Is_Empty (D.Files) then
          Set (D.Explorer.File_Model, D.Base, Icon_Column,
-              C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
+              C_Proxy (Close_Pixbufs (Directory_Node)));
       end if;
 
       while not Is_Empty (D.Dirs) loop
@@ -628,7 +323,7 @@ package body Project_Explorers_Files is
                   D.Explorer.Expanding := Expanding;
 
                   Set (D.Explorer.File_Model, D.Base, Icon_Column,
-                       C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+                       C_Proxy (Open_Pixbufs (Directory_Node)));
 
                   Path_Free (Path);
                end;
@@ -658,7 +353,7 @@ package body Project_Explorers_Files is
                      D.Explorer.Expanding := Expanding;
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
-                          C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+                          C_Proxy (Open_Pixbufs (Directory_Node)));
                      D.Explorer.Scroll_To_Directory := True;
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
@@ -673,10 +368,10 @@ package body Project_Explorers_Files is
                end if;
 
             else
-               File_Append_Dummy_Iter (D.Explorer, Iter);
+               Append_Dummy_Iter (D.Explorer.File_Model, Iter);
 
                Set (D.Explorer.File_Model, Iter, Icon_Column,
-                    C_Proxy (D.Explorer.Close_Pixbufs (Directory_Node)));
+                    C_Proxy (Close_Pixbufs (Directory_Node)));
             end if;
 
             Next (D.Dirs);
@@ -684,8 +379,11 @@ package body Project_Explorers_Files is
       end loop;
 
       while not Is_Empty (D.Files) loop
-         File_Append_File
-           (D.Explorer, D.Base, D.Norm_Dir.all & Head (D.Files));
+         Append_File
+           (D.Explorer.Kernel,
+            D.Explorer.File_Model,
+            D.Base,
+            D.Norm_Dir.all & Head (D.Files));
          Next (D.Files);
       end loop;
 
@@ -854,34 +552,7 @@ package body Project_Explorers_Files is
          ID              => Explorer_Module_ID,
          Context_Func    => Explorer_Context_Factory'Access);
 
-      Explorer.Open_Pixbufs (Project_Node)  :=
-        Gdk_New_From_Xpm_Data (project_xpm);
-      Explorer.Close_Pixbufs (Project_Node) :=
-        Gdk_New_From_Xpm_Data (project_closed_xpm);
-      Explorer.Open_Pixbufs (Modified_Project_Node)  :=
-        Gdk_New_From_Xpm_Data (project_modified_xpm);
-      Explorer.Close_Pixbufs (Modified_Project_Node) :=
-        Gdk_New_From_Xpm_Data (project_modified_closed_xpm);
-      Explorer.Open_Pixbufs (Extends_Project_Node)  :=
-        Gdk_New_From_Xpm_Data (project_ext_xpm);
-      Explorer.Close_Pixbufs (Extends_Project_Node) :=
-        Gdk_New_From_Xpm_Data (project_ext_closed_xpm);
-      Explorer.Open_Pixbufs (Directory_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_ofolder_xpm);
-      Explorer.Close_Pixbufs (Directory_Node) :=
-        Gdk_New_From_Xpm_Data (mini_folder_xpm);
-      Explorer.Open_Pixbufs (Obj_Directory_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_folder_object_xpm);
-      Explorer.Close_Pixbufs (Obj_Directory_Node) :=
-        Gdk_New_From_Xpm_Data (mini_folder_object_xpm);
-      Explorer.Open_Pixbufs (File_Node)  :=
-        Gdk_New_From_Xpm_Data (mini_page_xpm);
-      Explorer.Close_Pixbufs (File_Node) :=
-        Gdk_New_From_Xpm_Data (mini_page_xpm);
-      Explorer.Open_Pixbufs (Category_Node)  :=
-        Gdk_New_From_Xpm_Data (var_xpm);
-      Explorer.Close_Pixbufs (Category_Node) :=
-        Gdk_New_From_Xpm_Data (var_xpm);
+      Init_Graphics;
 
       Refresh (Kernel, Explorer);
 
@@ -914,7 +585,8 @@ package body Project_Explorers_Files is
       T         : constant Project_Explorer_Files :=
         Project_Explorer_Files (Object);
       Context   : Selection_Context_Access;
-      Iter      : constant Gtk_Tree_Iter := Find_Iter_For_Event (T, Event);
+      Iter      : constant Gtk_Tree_Iter :=
+        Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
       File      : GNAT.OS_Lib.String_Access := null;
       Node_Type : Node_Types;
    begin
@@ -975,18 +647,6 @@ package body Project_Explorers_Files is
         Project_Explorer_Files (Explorer);
    begin
       File_Remove_Idle_Calls (E);
-
-      for P in E.Open_Pixbufs'Range loop
-         if E.Open_Pixbufs (P) /= null then
-            Unref (E.Open_Pixbufs (P));
-         end if;
-      end loop;
-
-      for P in E.Close_Pixbufs'Range loop
-         if E.Close_Pixbufs (P) /= null then
-            Unref (E.Close_Pixbufs (P));
-         end if;
-      end loop;
    end On_File_Destroy;
 
    -------------------------------
@@ -1014,7 +674,7 @@ package body Project_Explorers_Files is
          begin
             if Is_Directory (Iter_Name) then
                Set (T.File_Model, Iter, Icon_Column,
-                    C_Proxy (T.Close_Pixbufs (Directory_Node)));
+                    C_Proxy (Close_Pixbufs (Directory_Node)));
             end if;
          end;
       end if;
@@ -1080,7 +740,7 @@ package body Project_Explorers_Files is
          declare
             Iter_Name : constant String :=
               Get_String (T.File_Model, Iter, Absolute_Name_Column);
-            N_Type : constant Real_Node_Types := Node_Types'Val
+            N_Type : constant Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
          begin
@@ -1088,12 +748,12 @@ package body Project_Explorers_Files is
                when Directory_Node =>
                   Free_Children (T, Iter);
                   Set (T.File_Model, Iter, Icon_Column,
-                       C_Proxy (T.Open_Pixbufs (Directory_Node)));
+                       C_Proxy (Open_Pixbufs (Directory_Node)));
                   File_Append_Directory (T, Iter_Name, Iter, 1);
 
                when File_Node =>
                   Free_Children (T, Iter);
-                  File_Append_File_Info (T, Iter, Iter_Name);
+                  Append_File_Info (T.Kernel, T.File_Model, Iter, Iter_Name);
 
                when Project_Node | Extends_Project_Node =>
                   null;
@@ -1102,6 +762,9 @@ package body Project_Explorers_Files is
                   null;
 
                when Obj_Directory_Node =>
+                  null;
+
+               when Modified_Project_Node =>
                   null;
             end case;
          end;
@@ -1138,54 +801,6 @@ package body Project_Explorers_Files is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Selection_Changed;
 
-   -------------------------
-   -- Find_Iter_For_Event --
-   -------------------------
-
-   function Find_Iter_For_Event
-     (Explorer : access Project_Explorer_Files_Record'Class;
-      Event    : Gdk_Event) return Gtk_Tree_Iter
-   is
-      X         : Gdouble;
-      Y         : Gdouble;
-      Buffer_X  : Gint;
-      Buffer_Y  : Gint;
-      Row_Found : Boolean;
-      Path      : Gtk_Tree_Path;
-      Column    : Gtk_Tree_View_Column := null;
-      Iter      : Gtk_Tree_Iter := Null_Iter;
-      Model     : Gtk_Tree_Model;
-   begin
-      if Event /= null then
-         X := Get_X (Event);
-         Y := Get_Y (Event);
-         Path := Gtk_New;
-         Get_Path_At_Pos
-           (Explorer.File_Tree,
-            Gint (X),
-            Gint (Y),
-            Path,
-            Column,
-            Buffer_X,
-            Buffer_Y,
-            Row_Found);
-
-         if Path = null then
-            return Iter;
-         end if;
-
-         Select_Path (Get_Selection (Explorer.File_Tree), Path);
-         Iter := Get_Iter (Explorer.File_Model, Path);
-         Path_Free (Path);
-      else
-         Get_Selected (Get_Selection (Explorer.File_Tree),
-                       Model,
-                       Iter);
-      end if;
-
-      return Iter;
-   end Find_Iter_For_Event;
-
    -----------------------
    -- File_Button_Press --
    -----------------------
@@ -1196,68 +811,9 @@ package body Project_Explorers_Files is
    is
       T    : constant Project_Explorer_Files :=
         Project_Explorer_Files (Explorer);
-      Iter : Gtk_Tree_Iter;
-      Line, Column : Gint;
    begin
-      if Get_Button (Event) = 1 then
-         Iter := Find_Iter_For_Event (T, Event);
-
-         if Iter /= Null_Iter then
-            case Node_Types'Val
-              (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column))) is
-
-               when Directory_Node =>
-                  if Get_Event_Type (Event) = Gdk_2button_Press then
-                     declare
-                        Path    : Gtk_Tree_Path;
-                        Success : Boolean;
-                        pragma Unreferenced (Success);
-                     begin
-                        Path := Get_Path (T.File_Model, Iter);
-
-                        if Row_Expanded (T.File_Tree, Path) then
-                           Success := Collapse_Row (T.File_Tree, Path);
-                        else
-                           File_Append_Dummy_Iter (T, Iter);
-                           Success := Expand_Row
-                             (T.File_Tree, Path, False);
-                        end if;
-
-                        Path_Free (Path);
-                     end;
-                  end if;
-
-                  return False;
-
-               when File_Node =>
-                  if (Get_Event_Type (Event) = Gdk_2button_Press
-                      or else Get_Event_Type (Event) = Gdk_3button_Press)
-                  then
-                     Open_File_Editor
-                       (T.Kernel,
-                        Get_String (T.File_Model, Iter, Absolute_Name_Column));
-                     return True;
-                  end if;
-
-               when Entity_Node =>
-                  Line := Get_Int (T.File_Model, Iter, Line_Column);
-                  Column := Get_Int (T.File_Model, Iter, Column_Column);
-
-                  Open_File_Editor
-                    (T.Kernel,
-                     Get_String (T.File_Model, Iter, Absolute_Name_Column),
-                     Line   => Natural (Line),
-                     Column => Natural (Column));
-                  return False;
-
-               when others =>
-                  return False;
-            end case;
-
-         end if;
-      end if;
-
-      return False;
+      return On_Button_Press
+        (T.Kernel, T.File_Tree, T.File_Model, Event, True);
 
    exception
       when E : others =>
@@ -1470,36 +1026,6 @@ package body Project_Explorers_Files is
             .. Greatest_Prefix_First + Greatest_Prefix_Length - 1);
       end;
    end Greatest_Common_Path;
-
-   ---------------------
-   -- Filter_Category --
-   ---------------------
-
-   function Filter_Category
-     (Category : Language_Category) return Language_Category is
-   begin
-      --  No "with", "use", "#include"
-      --  No constructs ("loop", "if", ...)
-
-      if Category in Dependency_Category
-        or else Category in Construct_Category
-        or else Category = Cat_Representation_Clause
-        or else Category = Cat_Local_Variable
-      then
-         return Cat_Unknown;
-
-         --  All subprograms are grouped together
-
-      elsif Category in Subprogram_Explorer_Category then
-         return Cat_Procedure;
-
-      elsif Category in Type_Category then
-         return Cat_Type;
-
-      end if;
-
-      return Category;
-   end Filter_Category;
 
    -------------------
    -- Free_Children --
