@@ -76,7 +76,8 @@ package Codefix.Graphics is
       Corrector       : Ptr_Correction_Manager;
       Fixed_Cb        : Fix_Action := null;
       Unfixed_Cb      : Fix_Action := null);
-   --  Creates a new Graphic_Codefix.
+   --  Creates a new Graphic_Codefix. Fixed_Cb will be called after a fix, and
+   --  Unfix_Cb after an Undo.
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
@@ -92,7 +93,7 @@ package Codefix.Graphics is
    --  Free the memory associated to a Graphic_Codefix.
 
    procedure Quit (Graphic_Codefix : access Graphic_Codefix_Record'Class);
-   --  Terminate the programm.
+   --  Terminate the window.
 
    procedure Next_Choice
      (Graphic_Codefix : access Graphic_Codefix_Record'Class);
