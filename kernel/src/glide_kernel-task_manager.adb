@@ -77,6 +77,18 @@ package body Glide_Kernel.Task_Manager is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->Task Manager.
 
+   type Wrapper_Command is new Root_Command with record
+      Command : Command_Access;
+   end record;
+   type Wrapper_Command_Access is access all Wrapper_Command'Class;
+   function Execute
+     (Command : access Wrapper_Command) return Command_Return_Type;
+   --  A wrapper for commands, so that they are not destroyed on exit.
+
+   function Create_Wrapper
+     (Command : access Root_Command'Class) return Command_Access;
+   --  Create a new wrapper
+
    ---------------------
    -- On_Task_Manager --
    ---------------------
@@ -184,19 +196,47 @@ package body Glide_Kernel.Task_Manager is
       return Kernel.Tasks;
    end Get_Task_Manager;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Wrapper_Command) return Command_Return_Type is
+   begin
+      return Execute (Command.Command);
+   end Execute;
+
+   --------------------
+   -- Create_Wrapper --
+   --------------------
+
+   function Create_Wrapper
+     (Command : access Root_Command'Class) return Command_Access
+   is
+      C : Wrapper_Command_Access := new Wrapper_Command;
+   begin
+      C.Command := Command_Access (Command);
+      return Command_Access (C);
+   end Create_Wrapper;
+
    -------------------------------
    -- Launch_Background_Command --
    -------------------------------
 
    procedure Launch_Background_Command
      (Kernel   : access Kernel_Handle_Record'Class;
-      Command  : Command_Access;
+      Command  : access Root_Command'Class;
       Active   : Boolean;
-      Queue_Id : String := "")
+      Queue_Id : String := "";
+      Destroy_On_Exit : Boolean := True)
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
    begin
-      Add_Command (Manager, Command, Active, Queue_Id);
+      if Destroy_On_Exit then
+         Add_Command (Manager, Command_Access (Command), Active, Queue_Id);
+      else
+         Add_Command (Manager, Create_Wrapper (Command), Active, Queue_Id);
+      end if;
    end Launch_Background_Command;
 
    ---------------------

@@ -29,9 +29,10 @@ package Glide_Kernel.Task_Manager is
 
    procedure Launch_Background_Command
      (Kernel   : access Kernel_Handle_Record'Class;
-      Command  : Command_Access;
+      Command  : access Root_Command'Class;
       Active   : Boolean;
-      Queue_Id : String := "");
+      Queue_Id : String := "";
+      Destroy_On_Exit : Boolean := True);
    --  Add a command to the Task_Manager.
    --  If Queue_Id is not empty, the queue will be appended at the end of the
    --  queue corresponding to the Id if it exists, or a new queue with this
@@ -39,7 +40,7 @@ package Glide_Kernel.Task_Manager is
    --  If Active is True, the command will be launched in active mode,
    --  otherwise it will be launched in background mode.
    --  Memory associated to Command will be freed by the Task Manager
-   --  after execution.
+   --  after execution, unless Destroy_On_Exit is false.
    --  See comments in task_manager.ads for details.
 
    procedure Register_Module
