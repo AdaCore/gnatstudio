@@ -1083,7 +1083,6 @@ package body Builder_Module is
            (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1));
       end if;
 
-      Compilation_Finished (Kernel, "");
       Free (Buffer);
 
       return True;
