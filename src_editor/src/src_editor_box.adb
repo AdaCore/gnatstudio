@@ -20,7 +20,7 @@
 
 with Ada.Exceptions;             use Ada.Exceptions;
 with Glib;                       use Glib;
-with Glib.Object;
+with Glib.Object;                use Glib.Object;
 with Glib.Values;
 with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
@@ -43,6 +43,7 @@ with Gtk.Menu;                   use Gtk.Menu;
 with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
+with Gtk.Widget;                 use Gtk.Widget;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
@@ -72,10 +73,10 @@ package body Src_Editor_Box is
      (Widget_Type => Glib.Object.GObject_Record,
       User_Type   => Source_Editor_Box);
 
-   package Return_Callback is new Gtk.Handlers.User_Return_Callback
-     (Widget_Type => Source_View_Record,
-      Return_Type => Boolean,
-      User_Type   => Source_Editor_Box);
+   --  package Return_Callback is new Gtk.Handlers.User_Return_Callback
+   --    (Widget_Type => Source_View_Record,
+   --     Return_Type => Boolean,
+   --     User_Type   => Source_Editor_Box);
 
    --------------------------
    -- Forward declarations --
@@ -146,14 +147,16 @@ package body Src_Editor_Box is
    --  Used to register contextual menus with a user data.
 
    function Get_Contextual_Menu
-     (Editor : Source_Editor_Box;
-      Event  : Gdk_Event) return Gtk_Menu;
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Return the contextual menu to use for the source box.
 
    procedure On_Goto_Declaration_Or_Body
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Editor : Source_Editor_Box);
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
    --  Callback for the "Goto Declaration<->Body" contextual menu
 
    procedure Entity_At_Cursor
@@ -455,7 +458,7 @@ package body Src_Editor_Box is
       Data           : Editor_Tooltip_Data;
 
    begin
-      Box.Kernel := Kernel;
+      Glib.Object.Initialize (Box);
       Gtk_New_Vbox (Box.Root_Container, Homogeneous => False);
 
       Gtk_New (Frame);
@@ -532,8 +535,12 @@ package body Src_Editor_Box is
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
       --  The Contextual Menu handling
-      CMenu.Register_Contextual_Menu
-        (Box.Source_View, Source_Editor_Box (Box), Get_Contextual_Menu'Access);
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Box.Source_View,
+         Object          => Box,
+         ID              => Src_Editor_Module_Id,
+         Context_Func    => Get_Contextual_Menu'Access);
    end Initialize_Box;
 
    ----------------------
@@ -587,89 +594,88 @@ package body Src_Editor_Box is
    -------------------------
 
    function Get_Contextual_Menu
-     (Editor : Source_Editor_Box;
-      Event  : Gdk_Event) return Gtk_Menu
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
+      Editor     : Source_Editor_Box := Source_Editor_Box (Object);
       V          : Source_View := Editor.Source_View;
       Line       : Gint;
       Column     : Gint;
+      L, C       : Integer;
       Item       : Gtk_Menu_Item;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+      Context    : Entity_Selection_Context_Access;
    begin
+      Context := new Entity_Selection_Context;
+      Set_Context_Information
+        (Context => Context,
+         Kernel  => Kernel,
+         Creator => Src_Editor_Module_Id);
+      Set_File_Name_Information
+        (Context,
+         Directory => Dir_Name (Editor.Filename.all),
+         File_Name => Base_Name (Editor.Filename.all));
+
       if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
-         if Editor.Left_Contextual_Menu /= null then
-            Destroy (Editor.Left_Contextual_Menu);
-         end if;
-
-         Gtk_New (Editor.Left_Contextual_Menu);
          Gtk_New (Item, -"Go to line...");
-         Add (Editor.Left_Contextual_Menu, Item);
+         Add (Menu, Item);
          Gtk_New (Item, -"Go to previous reference");
-         Add (Editor.Left_Contextual_Menu, Item);
+         Add (Menu, Item);
          Gtk_New (Item, -"Go to file spec/body");
-         Add (Editor.Left_Contextual_Menu, Item);
+         Add (Menu, Item);
          Gtk_New (Item, -"Go to parent unit");
-         Add (Editor.Left_Contextual_Menu, Item);
-
-         return Editor.Left_Contextual_Menu;
+         Add (Menu, Item);
 
       else
-         if Editor.Contextual_Menu /= null then
-            Destroy (Editor.Contextual_Menu);
-         end if;
-
-         Gtk_New (Editor.Contextual_Menu);
-
          Event_To_Buffer_Coords (Editor.Source_View, Event, Line, Column);
-         Editor.Menu_Line_Pos := To_Box_Line (Line);
-         Editor.Menu_Col_Pos  := To_Box_Column (Column);
+         L := To_Box_Line (Line);
+         C := To_Box_Column (Column);
 
-         if Editor.Menu_Line_Pos = 0 or else Editor.Menu_Col_Pos = 0 then
+         if L = 0 or else C = 0 then
             --  Invalid position: the cursor is outside the text.
-
             Get_Start_Iter (Editor.Source_Buffer, Start_Iter);
             Get_Start_Iter (Editor.Source_Buffer, End_Iter);
 
          else
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter,
-               To_Buffer_Line (Editor.Menu_Line_Pos),
-               To_Buffer_Column (Editor.Menu_Col_Pos));
+               To_Buffer_Line (L), To_Buffer_Column (C));
             Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
+            Set_Entity_Information
+              (Context, Get_Text (Start_Iter, End_Iter), L, C);
          end if;
 
          Gtk_New (Item, -"Go to previous reference");
-         Add (Editor.Contextual_Menu, Item);
+         Add (Menu, Item);
 
-         declare
-            Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
-         begin
-            Gtk_New (Item, -"Go to declaration/body of " & Entity_Name);
-            Add (Editor.Contextual_Menu, Item);
-            if Entity_Name'Length = 0 then
-               Set_State (Item, State_Insensitive);
-            end if;
-         end;
-         Widget_Callback.Connect
-           (Widget    => Item,
-            Name      => "activate",
-            Cb        => On_Goto_Declaration_Or_Body'Access,
-            User_Data => Editor,
-            After     => True);
+         if Has_Entity_Name_Information (Context) then
+            Gtk_New (Item, -"Go to declaration/body of "
+                     & Entity_Name_Information (Context));
+            Add (Menu, Item);
+            Context_Callback.Object_Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Goto_Declaration_Or_Body'Access),
+               User_Data => Selection_Context_Access (Context),
+               Slot_Object => Editor, After => True);
+         end if;
 
          Gtk_New (Item, -"Go to body");
-         Add (Editor.Contextual_Menu, Item);
+         Add (Menu, Item);
          Gtk_New (Item, -"List references");
-         Add (Editor.Contextual_Menu, Item);
+         Add (Menu, Item);
          Gtk_New (Item);
-         Add (Editor.Contextual_Menu, Item);
+         Add (Menu, Item);
          Gtk_New (Item, -"Go to file spec/body");
-         Add (Editor.Contextual_Menu, Item);
+         Add (Menu, Item);
          Gtk_New (Item, -"Go to parent unit");
-         Add (Editor.Contextual_Menu, Item);
-         return Editor.Contextual_Menu;
+         Add (Menu, Item);
       end if;
+      return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
 
    ---------------------------------
@@ -677,12 +683,15 @@ package body Src_Editor_Box is
    ---------------------------------
 
    procedure On_Goto_Declaration_Or_Body
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Editor : Source_Editor_Box) is
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      C : Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
    begin
       Goto_Declaration_Or_Body
-        (Editor.Kernel, Editor.Menu_Line_Pos, Editor.Menu_Col_Pos);
+        (Get_Kernel (Context),
+         Line_Information (C), Column_Information (C));
    end On_Goto_Declaration_Or_Body;
 
    -------------
@@ -716,11 +725,13 @@ package body Src_Editor_Box is
 
    procedure Create_New_View
      (Box    : out Source_Editor_Box;
+      Kernel : access Kernel_Handle_Record'Class;
       Source : access Source_Editor_Box_Record) is
    begin
       Box := new Source_Editor_Box_Record;
       Initialize_Box
-        (Box, Source.Kernel, Source.Source_Buffer, Get_Language (Source));
+        (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
+         Get_Language (Source));
    end Create_New_View;
 
    -------------
@@ -772,17 +783,6 @@ package body Src_Editor_Box is
       Ref (Box.Root_Container);
       Remove (Parent, Box.Root_Container);
    end Detach;
-
-   ----------------
-   -- Get_Kernel --
-   ----------------
-
-   function Get_Kernel
-     (Editor : access Source_Editor_Box_Record)
-      return Glide_Kernel.Kernel_Handle is
-   begin
-      return Editor.Kernel;
-   end Get_Kernel;
 
    ------------------
    -- Set_Filename --

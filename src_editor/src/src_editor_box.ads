@@ -28,13 +28,13 @@
 --  </description>
 
 with Glib;
+with Glib.Object;
 with Gdk.Rectangle;
 with GVD.Tooltips;
 
 with Gtk.Box;
 with Gtk.Container;
 with Gtk.Label;
-with Gtk.Menu;
 
 with Language;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -44,7 +44,8 @@ with Src_Editor_View;
 
 package Src_Editor_Box is
 
-   type Source_Editor_Box_Record is private;
+   type Source_Editor_Box_Record is new Glib.Object.GObject_Record
+     with private;
    type Source_Editor_Box is access all Source_Editor_Box_Record;
 
    procedure Gtk_New
@@ -62,6 +63,7 @@ package Src_Editor_Box is
 
    procedure Create_New_View
      (Box    : out Source_Editor_Box;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Source : access Source_Editor_Box_Record);
    --  Create a new view of the given box.
    --  ??? Do we want to copy the font attributes as well, or do we want
@@ -82,11 +84,6 @@ package Src_Editor_Box is
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
-
-   function Get_Kernel
-     (Editor : access Source_Editor_Box_Record)
-      return Glide_Kernel.Kernel_Handle;
-   --  ??? Temporary function for testing purposes... Should be removed.
 
    procedure Set_Filename
      (Editor   : access Source_Editor_Box_Record;
@@ -366,17 +363,11 @@ private
    package Editor_Tooltips is new GVD.Tooltips
      (Editor_Tooltip_Data, Src_Editor_View.Source_View_Record, Draw_Tooltip);
 
-   type Source_Editor_Box_Record is record
+   type Source_Editor_Box_Record is new Glib.Object.GObject_Record with record
       Root_Container       : Gtk.Box.Gtk_Box;
       Never_Attached       : Boolean := True;
-      Kernel               : Glide_Kernel.Kernel_Handle;
       Source_View          : Src_Editor_View.Source_View;
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
-      --  Contextual menus
-      Menu_Line_Pos        : Natural;
-      Menu_Col_Pos         : Natural;
-      Contextual_Menu      : Gtk.Menu.Gtk_Menu;
-      Left_Contextual_Menu : Gtk.Menu.Gtk_Menu;
       --  The status bar
       Filename_Label       : Gtk.Label.Gtk_Label;
       Cursor_Line_Label    : Gtk.Label.Gtk_Label;
