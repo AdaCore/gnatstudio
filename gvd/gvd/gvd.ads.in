@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,9 @@
 package GVD is
    pragma Pure;
 
+   type Host_Type is (Windows, Unix, VMS, Unknown);
+   --  Possible kind of host where GPS is built.
+
    ---------------
    -- Constants --
    ---------------
@@ -38,6 +41,9 @@ package GVD is
    --  Default prefix used e.g for finding support files like po files.
    --  Note that this prefix can be overriden by using the GVD_ROOT or
    --  GNAT_ROOT environment variables.
+
+   Host : constant Host_Type := @HOST_TYPE@;
+   --  Host kind where GPS is built.
 
    Source_Date : constant String := "unknown date";
 
@@ -92,9 +98,5 @@ package GVD is
 
    Default_Opaque_MDI : constant Boolean := @OPAQUE_MDI@;
    --  Default value for the MDI opaque preference.
-
-   Gtk_Extra_Refresh : constant Boolean := @GTK_EXTRA_REFRESH@;
-   --  True if Gtk+ does not perform all necessary refresh, and manual updates
-   --  are sometimes needed.
 
 end GVD;
