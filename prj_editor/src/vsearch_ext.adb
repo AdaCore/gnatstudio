@@ -572,9 +572,8 @@ package body Vsearch_Ext is
          Set_Sensitive (Vsearch.Next_Menu_Item, True);
 
       else
-         null;
-         --  Set_Label (Vsearch.Search_Next_Button, Stock_Find);
-         --  Set_Sensitive (Vsearch.Next_Menu_Item, False);
+         Set_Label (Vsearch.Search_Next_Button, Stock_Find);
+         Set_Sensitive (Vsearch.Next_Menu_Item, False);
       end if;
    end Set_First_Next_Mode;
 
