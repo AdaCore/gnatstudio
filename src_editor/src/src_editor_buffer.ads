@@ -136,13 +136,13 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
       Column : Natural := 1) return Boolean;
+   pragma Inline (Is_Valid_Position);
    --  Return True if the given cursor position is valid. If Column is
    --  set to 0, then this function just verifies the given line number
    --  (column 0 of a given line always exists).
    --
    --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
    --  available when only the Line number needs to be checked.
-
 
    procedure Set_Cursor_Position
      (Buffer  : access Source_Buffer_Record;
@@ -385,10 +385,8 @@ package Src_Editor_Buffer is
    --  Takes Tabs into account when Expand_Tabs = True.
 
    procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter);
-   --  This is a temporary implementation of Gtk.Text_Iter.Forward_To_Line_End
-   --  because the gtk+ one is broken at the moment, and causes Critical
-   --  warnings.
-   --  ??? Remove this procedure when the problem is fixed.
+   pragma Inline (Forward_To_Line_End);
+   --  Same as Gtk_Text_Buffer.Forward_To_Line_End, but ignores the result.
 
    procedure External_End_Action (Buffer : access Source_Buffer_Record);
    --  This procedure should be called every time that an external
@@ -715,6 +713,7 @@ package Src_Editor_Buffer is
    function Get_Buffer_Line
      (Buffer : access Source_Buffer_Record;
       Line   : Editable_Line_Type) return Buffer_Line_Type;
+   pragma Inline (Get_Buffer_Line);
    --  Get the buffer line corresponding to Line.
    --  Return 0 if no buffer line was found.
    --  Note: Buffer lines are indexes in Buffer.Line_Data, ie are equal to
