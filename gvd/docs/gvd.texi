@@ -758,6 +758,8 @@ Show only the type of each field for the item.
      @item Show Value+Type
 Show both the value and the type of the item.
 
+@c  Should have screenshot with value + type
+
      @item Auto refresh
 Enable or disable the automatic refreshing of the item upon program execution
 (e.g step, next).
@@ -789,6 +791,18 @@ the items already displayed on the canvas and compares their addresses with
 the address of the new item to display. If they match, GVD will not
 create a new item, but it will create a link (if you tried to dereference
 a pointer).
+
+     @item Zoom in
+Redisplay the items in the data window with a bigger font
+
+     @item Zoom out
+Display the items in the data window with smaller fonts and pixmaps. This
+can be used when you have several items in the window and you can't see all
+of them at the same time (for instance if you are displaying a tree and
+want to clearly see its structure).
+
+     @item Zoom
+This allows you to choose the zoom level directly from a menu.
 
    @end table
 
