@@ -1173,10 +1173,13 @@ package body String_Utils is
      (Arg_String : String)
       return       Argument_List_Access
    is
-      Max_Args : constant Integer := Arg_String'Length;
-      New_Argv : Argument_List (1 .. Max_Args);
+      Max_Args : Integer := 128;
+      New_Argv : Argument_List_Access := new Argument_List (1 .. Max_Args);
       New_Argc : Natural := 0;
       Idx      : Integer;
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Argument_List, Argument_List_Access);
 
    begin
       Idx := Arg_String'First;
@@ -1255,6 +1258,19 @@ package body String_Utils is
 
             New_Argc := New_Argc + 1;
 
+            --  Resize the table if needed
+            if New_Argc > Max_Args then
+               declare
+                  New_New_Argv : Argument_List (1 .. Max_Args * 2);
+               begin
+                  New_New_Argv (1 .. Max_Args) := New_Argv.all;
+                  Unchecked_Free (New_Argv);
+                  New_Argv := new Argument_List'(New_New_Argv);
+               end;
+
+               Max_Args := Max_Args * 2;
+            end if;
+
             if Triple_Quoted then
                New_Argv (New_Argc) :=
                  new String'(Arg_String (Old_Idx .. Idx - 4));
@@ -1271,7 +1287,12 @@ package body String_Utils is
          end;
       end loop;
 
-      return new Argument_List'(New_Argv (1 .. New_Argc));
+      declare
+         Result : constant Argument_List := New_Argv (1 .. New_Argc);
+      begin
+         Unchecked_Free (New_Argv);
+         return new Argument_List'(Result);
+      end;
    end Argument_String_To_List_With_Triple_Quotes;
 
    -------------
