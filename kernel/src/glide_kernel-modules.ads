@@ -224,6 +224,8 @@ package Glide_Kernel.Modules is
    --     second : line to display initially (use Get_Int). Ignored if 0
    --     third  : column to display initially (use Get_Int). Ignored if 0
    --     fourth : True if the line should be highlighted (use Get_Boolean)
+   --     fifth  : True if the location should be stored for navigation
+   --              with Back/Forward.
    --  See also the function Open_File_Editor.
 
    Mime_Html_File : constant String := "glide/html";
@@ -251,12 +253,16 @@ package Glide_Kernel.Modules is
    --  If any of the module was able to, True is returned.
 
    procedure Open_File_Editor
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Filename       : String;
-      Line           : Natural := 0;
-      Column         : Natural := 0;
-      Highlight_Line : Boolean := True);
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : String;
+      Line              : Natural := 0;
+      Column            : Natural := 0;
+      Highlight_Line    : Boolean := True;
+      Enable_Navigation : Boolean := True);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
+   --  If Enable_Navigation is True, then the location visited will be
+   --  stored in the history for Back/Forward navigation
+   --  (Mime_Source_File_Navigate type).
 
    procedure Open_Html
      (Kernel         : access Kernel_Handle_Record'Class;
