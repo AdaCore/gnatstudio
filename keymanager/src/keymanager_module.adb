@@ -135,7 +135,7 @@ package body KeyManager_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Keymap_Record, Keymap_Access);
 
-   type Key_Manager_Record is new Glide_Kernel.Key_Handler_Record with record
+   type Key_Manager_Record is record
       Kernel : Kernel_Handle;
       Table  : Key_Htable.HTable;
 
@@ -146,17 +146,33 @@ package body KeyManager_Module is
       --  Whether the key manager should process the key events. This is only
       --  deactivated while editing the key bindings through the GUI.
    end record;
-   type Key_Manager_Access is access all Key_Manager_Record'Class;
+   type Key_Manager_Access is access all Key_Manager_Record;
+
+   type Keymanager_Module_Record is new Module_ID_Record with record
+      Key_Manager : Key_Manager_Access;
+   end record;
+   type Keymanager_Module_ID is access all Keymanager_Module_Record'Class;
+
+   procedure Destroy (Module : in out Keymanager_Module_Record);
+   --  See doc for inherited subprogram
+
+   --  ??? Global variable, could be queries from the kernel
+   Keymanager_Module : Keymanager_Module_ID;
 
    procedure Bind_Default_Key
      (Handler        : access Key_Manager_Record;
       Action         : String;
       Default_Key    : String);
+   --  Bind Default_Key to Action, see doc in Glide_Kernel.Bind_Default_Key
+
    function Process_Event
      (Handler  : access Key_Manager_Record;
+      Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk_Event) return Boolean;
+   --  Process the event and call the appropriate actions if needed
+
    procedure Free (Handler : in out Key_Manager_Record);
-   --  See documentation for imported subprograms
+   --  Free the memoru occupied by the key manager
 
    procedure Bind_Default_Key_Internal
      (Table          : in out Key_Htable.HTable;
@@ -167,7 +183,7 @@ package body KeyManager_Module is
    --  Internal version that allows setting the Changed attribute.
 
    procedure Bind_Default_Key_Internal
-     (Handler        : access Key_Manager_Record'Class;
+     (Handler        : access Key_Manager_Record;
       Action         : String;
       Default_Key    : String;
       Changed        : Boolean := False);
@@ -176,7 +192,7 @@ package body KeyManager_Module is
 
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class;
-      Manager : access Key_Manager_Record'Class);
+      Manager : access Key_Manager_Record);
    --  Load the customized key bindings
 
    procedure On_Edit_Keys
@@ -221,7 +237,7 @@ package body KeyManager_Module is
    --  Add a new line into the model
 
    procedure Lookup_Command_By_Name
-     (Handler : access Key_Manager_Record'Class;
+     (Handler : access Key_Manager_Record;
       Action  : String;
       Keymap  : out Keymap_Access;
       Key     : out Key_Binding;
@@ -245,6 +261,16 @@ package body KeyManager_Module is
    --  Find the parent node for Context.
    --  Returns null if there is no such node
 
+   function Convert is new Ada.Unchecked_Conversion
+     (Kernel_Handle, System.Address);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Kernel_Handle);
+
+   procedure General_Event_Handler
+     (Event : Gdk_Event; Kernel : System.Address);
+   --  Event handler called before even gtk can do its dispatching. This
+   --  intercepts all events going through the application
+
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
       Node   : Node_Ptr;
@@ -255,6 +281,39 @@ package body KeyManager_Module is
    Action_Column  : constant := 0;
    Key_Column     : constant := 1;
    Changed_Column : constant := 2;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Keymanager_Module_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Key_Manager_Record, Key_Manager_Access);
+   begin
+      Free (Module.Key_Manager.all);
+      Unchecked_Free (Module.Key_Manager);
+   end Destroy;
+
+   ---------------------------
+   -- General_Event_Handler --
+   ---------------------------
+
+   procedure General_Event_Handler
+     (Event : Gdk_Event; Kernel : System.Address) is
+   begin
+      if (Get_Event_Type (Event) = Key_Press
+          or else Get_Event_Type (Event) = Key_Release)
+      then
+         if Process_Event
+           (Keymanager_Module.Key_Manager, Convert (Kernel), Event)
+         then
+            return;
+         end if;
+      end if;
+
+      --  Dispatch the event in the standard gtk+ main loop
+      Gtk.Main.Do_Event (Event);
+   end General_Event_Handler;
 
    ----------
    -- Next --
@@ -325,7 +384,7 @@ package body KeyManager_Module is
    ----------------------------
 
    procedure Lookup_Command_By_Name
-     (Handler : access Key_Manager_Record'Class;
+     (Handler : access Key_Manager_Record;
       Action  : String;
       Keymap  : out Keymap_Access;
       Key     : out Key_Binding;
@@ -427,7 +486,7 @@ package body KeyManager_Module is
    -------------------------------
 
    procedure Bind_Default_Key_Internal
-     (Handler        : access Key_Manager_Record'Class;
+     (Handler        : access Key_Manager_Record;
       Action         : String;
       Default_Key    : String;
       Changed        : Boolean := False)
@@ -526,6 +585,7 @@ package body KeyManager_Module is
 
    function Process_Event
      (Handler  : access Key_Manager_Record;
+      Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean
    is
       Key     : constant Gdk_Key_Type      := Get_Key_Val (Event);
@@ -552,7 +612,7 @@ package body KeyManager_Module is
                return True;
 
             else
-               Command := Lookup_Action (Handler.Kernel, Binding.Action.all);
+               Command := Lookup_Action (Kernel, Binding.Action.all);
 
                if Command.Command /= null then
                   --  We'll have to test last the commands that apply anywhere,
@@ -563,7 +623,7 @@ package body KeyManager_Module is
                      Trace (Me, "Candidate action in any context: "
                             & Binding.Action.all);
 
-                  elsif Context_Matches (Command.Context, Handler.Kernel) then
+                  elsif Context_Matches (Command.Context, Kernel) then
                      Trace (Me, "Executing action " & Binding.Action.all);
                      if Execute (Command.Command, Event) = Success then
                         return True;
@@ -657,7 +717,7 @@ package body KeyManager_Module is
 
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class;
-      Manager : access Key_Manager_Record'Class)
+      Manager : access Key_Manager_Record)
    is
       Filename : constant String := Get_Home_Dir (Kernel) & "keys.xml";
       File, Child : Node_Ptr;
@@ -755,8 +815,7 @@ package body KeyManager_Module is
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class) is
       Menu_Iter : Gtk_Tree_Iter;
-      Handler      : constant Key_Manager_Access := Key_Manager_Access
-        (Get_Key_Handler (Editor.Kernel));
+      Handler   : constant Key_Manager_Access := Keymanager_Module.Key_Manager;
 
       procedure Process_Menu_Binding
         (Data       : System.Address;
@@ -918,8 +977,7 @@ package body KeyManager_Module is
    -----------------
 
    procedure Save_Editor (Editor : access Keys_Editor_Record'Class) is
-      Handler      : constant Key_Manager_Access := Key_Manager_Access
-        (Get_Key_Handler (Editor.Kernel));
+      Handler   : constant Key_Manager_Access := Keymanager_Module.Key_Manager;
       Context_Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Model);
       Child        : Gtk_Tree_Iter;
       Key          : Gdk_Key_Type;
@@ -1048,8 +1106,7 @@ package body KeyManager_Module is
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class) is
       Ed        : constant Keys_Editor := Keys_Editor (Editor);
-      Handler   : constant Key_Manager_Access :=
-        Key_Manager_Access (Get_Key_Handler (Ed.Kernel));
+      Handler   : constant Key_Manager_Access := Keymanager_Module.Key_Manager;
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
@@ -1327,7 +1384,7 @@ package body KeyManager_Module is
                end if;
 
                Bind_Default_Key
-                 (Get_Key_Handler (Kernel),
+                 (Keymanager_Module.Key_Manager,
                   Action      => Action,
                   Default_Key => N.Value.all);
             end;
@@ -1346,15 +1403,20 @@ package body KeyManager_Module is
    is
       Manager : constant Key_Manager_Access := new Key_Manager_Record;
       Edit    : constant String := "/" & (-"Edit");
-      Module  : Module_ID;
    begin
       Manager.Kernel := Kernel_Handle (Kernel);
       Load_Custom_Keys (Kernel, Manager);
-      Set_Key_Handler (Kernel, Manager);
 
+      Keymanager_Module := new Keymanager_Module_Record;
+      Keymanager_Module.Key_Manager := Manager;
       Register_Module
-        (Module, Kernel, "keymanager",
+        (Module_ID (Keymanager_Module), Kernel, "keymanager",
          Customization_Handler => Customize'Access);
+
+      --  ??? Should save the previous handler and call it as appropriate.
+      --  Or let the kernel handle the queue.
+      Event_Handler_Set (General_Event_Handler'Access,
+                         Convert (Kernel_Handle (Kernel)));
 
       Register_Menu
         (Kernel, Edit, -"_Key shortcuts",
