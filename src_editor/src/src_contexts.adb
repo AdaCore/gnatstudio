@@ -1080,18 +1080,14 @@ package body Src_Contexts is
      (Selector : out Scope_Selector;
       Kernel   : access Kernel_Handle_Record'Class)
    is
-      Box   : Gtk_Box;
-      Label : Gtk_Label;
+      Box : Gtk_Box;
    begin
       Selector := new Scope_Selector_Record;
       Gtk.Frame.Initialize (Selector);
+      Set_Label (Selector, -"Scope");
 
       Gtk_New_Hbox (Box, False, 0);
       Add (Selector, Box);
-
-      Gtk_New (Label, -"Scope:");
-      Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Box, Label, False, False, 2);
 
       Gtk_New (Selector.Combo);
       Pack_Start (Box, Selector.Combo, True, True, 2);
@@ -1112,7 +1108,7 @@ package body Src_Contexts is
       Files_Extra_Info_Pkg.Initialize (Extra, Kernel);
 
       Gtk_New (Label, -"Scope:");
-      Set_Alignment (Label, 0.0, 0.0);
+      Set_Alignment (Label, 0.0, 0.5);
       Attach (Extra.Files_Table, Label, 0, 1, 2, 3, Fill, 0);
 
       Gtk_New (Extra.Combo);
