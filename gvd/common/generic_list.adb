@@ -180,7 +180,10 @@ package body Generic_List is
 
    procedure Concat
      (L1 : in out List;
-      L2 : List) is
+      L2 : List)
+   is
+      F1 : List_Node_Access := L2.First;
+      F2 : List_Node_Access := L2.Last;
    begin
       if Is_Empty (L1) then
          L1.First.all := L2.First.all;
@@ -189,6 +192,9 @@ package body Generic_List is
          L1.Last.all.Next := L2.First.all;
          L1.Last.all      := L2.Last.all;
       end if;
+
+      Free_Node_Access (F1);
+      Free_Node_Access (F2);
    end Concat;
 
    ------------------
@@ -387,6 +393,14 @@ package body Generic_List is
 
          Free_Element (First.Element);
          Free_Node (First);
+
+         if L.First.all = null then
+            Free_Node_Access (L.First);
+         end if;
+
+         if L.Last.all = null then
+            Free_Node_Access (L.Last);
+         end if;
       end if;
    end Next;
 
