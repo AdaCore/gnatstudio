@@ -3460,6 +3460,7 @@ package body Gtkada.MDI is
                      when Normal    => null;
                   end case;
 
+                  Set_Size_Request (Child, Gint (Width), Gint (Height));
                   Alloc := (Child.X, Child.Y, Gint (Width), Gint (Height));
                   Size_Allocate (Child, Alloc);
                end if;
