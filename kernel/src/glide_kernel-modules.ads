@@ -134,7 +134,6 @@ with Gtk.Menu_Item;
 with Gtk.Widget;
 with Gtkada.MDI;
 with Src_Info;
-with Language;
 with Basic_Types; use Basic_Types;
 with Commands; use Commands;
 with Src_Info.Queries;  use Src_Info.Queries;
@@ -643,7 +642,9 @@ package Glide_Kernel.Modules is
       Directory         : String := "";
       File_Name         : String := "";
       Project           : Projects.Project_Type := Projects.No_Project;
-      Importing_Project : Projects.Project_Type := Projects.No_Project);
+      Importing_Project : Projects.Project_Type := Projects.No_Project;
+      Line              : Integer := 0;
+      Column            : Integer := 0);
    --  Set the information in this context.
 
    function Has_Directory_Information
@@ -665,6 +666,23 @@ package Glide_Kernel.Modules is
    --  Return the information about the selected file. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file
+
+   function Has_Line_Information
+     (Context : access File_Selection_Context) return Boolean;
+   function Line_Information
+     (Context : access File_Selection_Context) return Integer;
+   --  Check whether there is some line information, and return it. This is the
+   --  location of the cursor in the file, when in an editor, or the location
+   --  in the file from the messages window or the explorer for instance.
+
+   function Has_Column_Information
+     (Context : access File_Selection_Context) return Boolean;
+   function Column_Information
+     (Context : access File_Selection_Context) return Integer;
+   --  Check whether there is some column information, and return it. Same
+   --  comment as for Line_Information.
+   --  Column is the index of the character in the string representing the
+   --  line. This means that tabs only count as one, and are not expanded.
 
    function Has_Project_Information
      (Context : access File_Selection_Context) return Boolean;
@@ -711,43 +729,32 @@ package Glide_Kernel.Modules is
       End_Line   : out Integer);
    --  Return the area information in Context.
 
-   ----------------------------
-   -- File_Location contexts --
-   ----------------------------
+   ---------------------
+   -- Message_Context --
+   ---------------------
+   --  This context is emitted when the user clicks in the location. It is
+   --  mostly used for error messages. The line and column information are
+   --  the references in the error message.
 
-   type File_Location_Context is new File_Selection_Context with private;
-   type File_Location_Context_Access is access all File_Location_Context;
+   type Message_Context is new File_Selection_Context with private;
+   type Message_Context_Access is access all Message_Context;
 
-   procedure Set_Location_Information
-     (Context     : access File_Location_Context;
+   procedure Set_Message_Information
+     (Context     : access Message_Context;
       Category    : String := "";
-      Message     : String := "";
-      Line        : Integer := 0;
-      Column      : Integer := 0);
+      Message     : String := "");
    --  Set the information in the context
 
-   function Has_Line_Information
-     (Context : access File_Location_Context) return Boolean;
-   function Line_Information
-     (Context : access File_Location_Context) return Integer;
-   --  Check whether there is some line information, and return it.
-
-   function Has_Column_Information
-     (Context : access File_Location_Context) return Boolean;
-   function Column_Information
-     (Context : access File_Location_Context) return Integer;
-   --  Check whether there is some column information, and return it.
-
    function Has_Category_Information
-     (Context : access File_Location_Context) return Boolean;
+     (Context : access Message_Context) return Boolean;
    function Category_Information
-     (Context : access File_Location_Context) return String;
+     (Context : access Message_Context) return String;
    --  Check whether there is some category information, and return it.
 
    function Has_Message_Information
-     (Context : access File_Location_Context) return Boolean;
+     (Context : access Message_Context) return Boolean;
    function Message_Information
-     (Context : access File_Location_Context) return String;
+     (Context : access Message_Context) return String;
    --  Check whether there is some message information, and return it.
 
    ---------------------
@@ -761,10 +768,12 @@ package Glide_Kernel.Modules is
    procedure Set_Entity_Information
      (Context     : access Entity_Selection_Context;
       Entity_Name : String := "";
-      Line        : Integer := 0;
-      Column      : Integer := 0;
-      Category    : Language.Language_Category := Language.Cat_Unknown);
-   --  Set the information in the context
+      Entity_Column : Integer := 0);
+   --  Set the information in the context.
+   --  Entity_Column should be the column on which the entity starts, not the
+   --  current location of the cursor.
+   --  The line at which the entity starts is the line set in
+   --  Set_File_Information
 
    function Has_Entity_Name_Information
      (Context : access Entity_Selection_Context) return Boolean;
@@ -772,24 +781,13 @@ package Glide_Kernel.Modules is
      (Context : access Entity_Selection_Context) return String;
    --  Check whether there is some entity information, and return it.
 
-   function Has_Line_Information
+   function Has_Entity_Column_Information
      (Context : access Entity_Selection_Context) return Boolean;
-   function Line_Information
-     (Context : access Entity_Selection_Context) return Integer;
-   --  Check whether there is some line information, and return it.
-
-   function Has_Column_Information
-     (Context : access Entity_Selection_Context) return Boolean;
-   function Column_Information
+   function Entity_Column_Information
      (Context : access Entity_Selection_Context) return Integer;
    --  Check whether there is some column information, and return it.
-
-   function Has_Category_Information
-     (Context : access Entity_Selection_Context) return Boolean;
-   function Category_Information
-     (Context : access Entity_Selection_Context)
-      return Language.Language_Category;
-   --  Return the category for the entity
+   --  The column returned is the column on which the entity starts, not the
+   --  column on which the cursor currently is.
 
    function Get_Entity
      (Context : access Entity_Selection_Context)
@@ -813,16 +811,16 @@ private
       File_Name         : GNAT.OS_Lib.String_Access := null;
       Project           : Projects.Project_Type     := Projects.No_Project;
       Importing_Project : Projects.Project_Type     := Projects.No_Project;
+      Line, Column      : Integer := 0;
 
       Creator_Provided_Project : Boolean := False;
       --  Set to True if the project_view was given by the creator, instead of
       --  being computed automatically
    end record;
 
-   type File_Location_Context is new File_Selection_Context with record
+   type Message_Context is new File_Selection_Context with record
       Category_Name : GNAT.OS_Lib.String_Access := null;
       Message       : GNAT.OS_Lib.String_Access := null;
-      Line, Column  : Integer := 0;
    end record;
 
    type File_Area_Context is new File_Selection_Context with record
@@ -831,9 +829,8 @@ private
    end record;
 
    type Entity_Selection_Context is new File_Selection_Context with record
-      Category      : Language.Language_Category := Language.Cat_Unknown;
       Entity_Name   : GNAT.OS_Lib.String_Access := null;
-      Line, Column  : Integer := 0;
+      Entity_Column : Integer := 0;
       Entity        : Src_Info.Queries.Entity_Information :=
         Src_Info.Queries.No_Entity_Information;
    end record;
@@ -850,4 +847,6 @@ private
    pragma Inline (Line_Information);
    pragma Inline (Has_Column_Information);
    pragma Inline (Column_Information);
+   pragma Inline (Has_Entity_Column_Information);
+   pragma Inline (Entity_Column_Information);
 end Glide_Kernel.Modules;

@@ -44,7 +44,6 @@ with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
 with Gtk.Toolbar;       use Gtk.Toolbar;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
-with Language;          use Language;
 with Projects;          use Projects;
 with Projects.Registry; use Projects.Registry;
 with Src_Info;          use Src_Info;
@@ -288,7 +287,9 @@ package body Glide_Kernel.Modules is
       Directory : String := "";
       File_Name : String := "";
       Project           : Projects.Project_Type := Projects.No_Project;
-      Importing_Project : Projects.Project_Type := Projects.No_Project) is
+      Importing_Project : Projects.Project_Type := Projects.No_Project;
+      Line      : Integer := 0;
+      Column    : Integer := 0) is
    begin
       Free (Context.Directory);
       Free (Context.File_Name);
@@ -301,6 +302,8 @@ package body Glide_Kernel.Modules is
          Context.File_Name := new String'(File_Name);
       end if;
 
+      Context.Line := Line;
+      Context.Column := Column;
       Context.Creator_Provided_Project := Project /= No_Project;
       Context.Project := Project;
       Context.Importing_Project := Importing_Project;
@@ -400,16 +403,14 @@ package body Glide_Kernel.Modules is
       return Context.Importing_Project;
    end Importing_Project_Information;
 
-   ------------------------------
-   -- Set_Location_Information --
-   ------------------------------
+   -----------------------------
+   -- Set_Message_Information --
+   -----------------------------
 
-   procedure Set_Location_Information
-     (Context     : access File_Location_Context;
+   procedure Set_Message_Information
+     (Context     : access Message_Context;
       Category    : String := "";
-      Message     : String := "";
-      Line        : Integer := 0;
-      Column      : Integer := 0) is
+      Message     : String := "") is
    begin
       Free (Context.Category_Name);
       if Category /= "" then
@@ -421,16 +422,14 @@ package body Glide_Kernel.Modules is
          Context.Message := new String'(Message);
       end if;
 
-      Context.Line := Line;
-      Context.Column := Column;
-   end Set_Location_Information;
+   end Set_Message_Information;
 
    --------------------------
    -- Has_Line_Information --
    --------------------------
 
    function Has_Line_Information
-     (Context : access File_Location_Context) return Boolean is
+     (Context : access File_Selection_Context) return Boolean is
    begin
       return Context.Line /= 0;
    end Has_Line_Information;
@@ -440,7 +439,7 @@ package body Glide_Kernel.Modules is
    ----------------------
 
    function Line_Information
-     (Context : access File_Location_Context) return Integer is
+     (Context : access File_Selection_Context) return Integer is
    begin
       return Context.Line;
    end Line_Information;
@@ -450,7 +449,7 @@ package body Glide_Kernel.Modules is
    ----------------------------
 
    function Has_Column_Information
-     (Context : access File_Location_Context) return Boolean is
+     (Context : access File_Selection_Context) return Boolean is
    begin
       return Context.Column /= 0;
    end Has_Column_Information;
@@ -460,7 +459,7 @@ package body Glide_Kernel.Modules is
    ------------------------
 
    function Column_Information
-     (Context : access File_Location_Context) return Integer is
+     (Context : access File_Selection_Context) return Integer is
    begin
       return Context.Column;
    end Column_Information;
@@ -470,7 +469,7 @@ package body Glide_Kernel.Modules is
    ------------------------------
 
    function Has_Category_Information
-     (Context : access File_Location_Context) return Boolean is
+     (Context : access Message_Context) return Boolean is
    begin
       return Context.Category_Name /= null;
    end Has_Category_Information;
@@ -480,7 +479,7 @@ package body Glide_Kernel.Modules is
    --------------------------
 
    function Category_Information
-     (Context : access File_Location_Context) return String is
+     (Context : access Message_Context) return String is
    begin
       return Context.Category_Name.all;
    end Category_Information;
@@ -490,7 +489,7 @@ package body Glide_Kernel.Modules is
    -----------------------------
 
    function Has_Message_Information
-     (Context : access File_Location_Context) return Boolean is
+     (Context : access Message_Context) return Boolean is
    begin
       return Context.Message /= null;
    end Has_Message_Information;
@@ -500,7 +499,7 @@ package body Glide_Kernel.Modules is
    -------------------------
 
    function Message_Information
-     (Context : access File_Location_Context) return String is
+     (Context : access Message_Context) return String is
    begin
       return Context.Message.all;
    end Message_Information;
@@ -512,18 +511,14 @@ package body Glide_Kernel.Modules is
    procedure Set_Entity_Information
      (Context     : access Entity_Selection_Context;
       Entity_Name : String := "";
-      Line        : Integer := 0;
-      Column      : Integer := 0;
-      Category    : Language.Language_Category := Language.Cat_Unknown) is
+      Entity_Column : Integer := 0) is
    begin
       Free (Context.Entity_Name);
       if Entity_Name /= "" then
          Context.Entity_Name := new String'(Entity_Name);
       end if;
 
-      Context.Category := Category;
-      Context.Line := Line;
-      Context.Column := Column;
+      Context.Entity_Column := Entity_Column;
    end Set_Entity_Information;
 
    ---------------------------------
@@ -550,66 +545,25 @@ package body Glide_Kernel.Modules is
       end if;
    end Entity_Name_Information;
 
-   --------------------------
-   -- Has_Line_Information --
-   --------------------------
+   -----------------------------------
+   -- Has_Entity_Column_Information --
+   -----------------------------------
 
-   function Has_Line_Information
+   function Has_Entity_Column_Information
      (Context : access Entity_Selection_Context) return Boolean is
    begin
-      return Context.Line /= 0;
-   end Has_Line_Information;
+      return Context.Entity_Column /= 0;
+   end Has_Entity_Column_Information;
 
-   ----------------------
-   -- Line_Information --
-   ----------------------
+   -------------------------------
+   -- Entity_Column_Information --
+   -------------------------------
 
-   function Line_Information
+   function Entity_Column_Information
      (Context : access Entity_Selection_Context) return Integer is
    begin
-      return Context.Line;
-   end Line_Information;
-
-   ----------------------------
-   -- Has_Column_Information --
-   ----------------------------
-
-   function Has_Column_Information
-     (Context : access Entity_Selection_Context) return Boolean is
-   begin
-      return Context.Column /= 0;
-   end Has_Column_Information;
-
-   ------------------------
-   -- Column_Information --
-   ------------------------
-
-   function Column_Information
-     (Context : access Entity_Selection_Context) return Integer is
-   begin
-      return Context.Column;
-   end Column_Information;
-
-   ------------------------------
-   -- Has_Category_Information --
-   ------------------------------
-
-   function Has_Category_Information
-     (Context : access Entity_Selection_Context) return Boolean is
-   begin
-      return Context.Category /= Cat_Unknown;
-   end Has_Category_Information;
-
-   --------------------------
-   -- Category_Information --
-   --------------------------
-
-   function Category_Information
-     (Context : access Entity_Selection_Context)
-      return Language.Language_Category is
-   begin
-      return Context.Category;
-   end Category_Information;
+      return Context.Entity_Column;
+   end Entity_Column_Information;
 
    -------------
    -- Destroy --
@@ -1761,7 +1715,7 @@ package body Glide_Kernel.Modules is
                File_Name   => File_Information (Context),
                Entity_Name => Entity_Name_Information (Context),
                Line        => Line_Information (Context),
-               Column      => Column_Information (Context),
+               Column      => Entity_Column_Information (Context),
                Entity      => Context.Entity,
                Status      => Status);
 
