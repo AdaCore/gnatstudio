@@ -243,8 +243,8 @@ private
    --  or in one of its include files.
 
 
-   --  Renaming entities
-   --  =================
+   --  Renaming entities and typedef
+   --  =============================
    --
    --  Some languages, like Ada, have the capacity to provide name aliases for
    --  other entities, possibly entities defined in other packages or
