@@ -1771,7 +1771,6 @@ package body Src_Editor_View is
             External_End_Action (Buffer);
 
             --  If there is a selection, delete it.
-            --  It makes little sense to perforn
 
             if Selection_Exists (Buffer) then
                Result := Delete_Selection (Buffer, True, True);
