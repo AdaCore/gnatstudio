@@ -293,6 +293,7 @@ package body Language.Custom is
 
          exception
             when Constraint_Error =>
+               --  ??? Should display an error instead.
                Lang.Categories (J) := (Cat_Unknown, null, 0, null, null);
          end;
 

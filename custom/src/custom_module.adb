@@ -224,6 +224,8 @@ package body Custom_Module is
       end if;
 
       File_Node := Parse (File).Child;
+      --  ??? Should catch Assert_Failure and display a parse error
+
       Node := File_Node;
 
       Register_Module
