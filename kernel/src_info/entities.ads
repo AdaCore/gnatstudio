@@ -488,6 +488,7 @@ package Entities is
 
    function Get_Name
      (Entity : Entity_Information) return GNAT.OS_Lib.String_Access;
+   pragma Inline (Get_Name);
    --  Return the name of the entity
 
    function Get_Declaration_Of
