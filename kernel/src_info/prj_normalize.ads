@@ -1,0 +1,114 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
+--  <description>
+--
+--  Project files can be written freely by the user (through any standard
+--  editor). However, although we are able to import them whatever form they
+--  have, these can'be easily manipulated, and a different form needs to be
+--  used, called normalized project files.
+--
+--  Projects are normalized only the first time they are actually modified (ie
+--  if they are open in the project browser but never modified, then we don't
+--  need to modify what the user did, since Prj.Proc.Process can of course work
+--  with any form of projects).
+--
+--  However, the normalized projects are needed, so that we know exactly where
+--  to add new statements depending on the current scenario.
+--
+--  The following format is used for normalized projects:
+--
+--      Project_Header
+--      [Variable_Declarations]
+--      [Common_Section]
+--      [Nested_Case]
+--      [Package_Declaration
+--         [Common_Section]
+--         [Nested_Case]
+--      ]*
+--
+--  Where:
+--     Project_Header is the standard header, including importing other
+--     projects, declaring the name of the current project, ...
+--
+--     Variable_Declarations is the list of scenario variables, including their
+--     types. There can be no variable declaration outside of this section,
+--     including in packages.
+--     ??? Not two variables can reference the same external variables.
+--
+--     Common_Section is the list of statements that need to be executed in all
+--     scenarios (like common source directories, common switches when inside a
+--     package, ...). This section can not include any case statement.
+--
+--     Nested_Case is one big case statement, including other nested cases (one
+--     case per scenario variables). Its format is similar to:
+--
+--           case Var1 is
+--              when Value1 =>
+--                 case Var2 is
+--                    when Value1_1 => ...;
+--                    when Value1_2 => ...;
+--                 end case;
+--              when Value2 =>
+--                 case Var2 is
+--                    when Value2_1 => ...;
+--                    when Value2_2 => ...;
+--                 end case;
+--           end case;
+--
+--     The "when others" section is not allowed in the nested cases, and are
+--     replaced by the appropriate list of "when" statements.
+--
+--     However, actual statements like variable assignments can only appear
+--     inside the deeper-nested case. It is then easy to find where new
+--     statements should be added based on the current scenario.
+--
+--  </description>
+
+with Prj.Tree;
+
+package Prj_Normalize is
+
+   procedure Normalize_Project (Project : Prj.Tree.Project_Node_Id);
+   --  Converts Project to a normalized form.
+   --
+   --  The following constructs can not currently be normalized:
+   --
+   --  - Case statements based on a non-external variable.
+   --
+   --  - ???  Order is sometimes incorrectly respected:
+   --          case Var1 is
+   --              when Value1 => A := "a";
+   --          end case;
+   --          A := A & "b";
+   --    will be incorrect (non-normalied => would return "ab", normalize =>
+   --    "a")
+   --
+   --  - ???  "when others" is partially incorrect.
+
+end Prj_Normalize;
