@@ -995,7 +995,7 @@ package body GVD.Process is
       Child := Put
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
          Default_Width  => Default_Widget_Width,
-         Default_Height => Default_Widget_Height,
+         Default_Height => 100,
          Flags => Iconify_Button or Maximize_Button);
       Set_Focus_Child (Child);
 
