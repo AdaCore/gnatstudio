@@ -297,7 +297,7 @@ package body Project_Explorers_Common is
       --  Mark the file information as up-to-date
 
       Set (Model, Node, Timestamp_Column,
-           Gint (To_Timestamp (File_Time_Stamp (Full_Name (File_Name)))));
+           Gint (To_Timestamp (File_Time_Stamp (File_Name))));
 
       --  Remove any previous information for this file.
 

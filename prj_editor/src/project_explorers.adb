@@ -1155,9 +1155,10 @@ package body Project_Explorers is
       Dir     : constant String :=
         Get_Directory_From_Node (Explorer.Tree.Model, Node);
       Files     : String_List_Utils.String_List.List;
-      File_Node : List_Node;
       Src       : constant Name_Id_Array :=
         Get_Source_Files (Project, Recursive => False);
+      File_Node : File_Array (Src'Range);
+      File_Node_Index : Integer := File_Node'First;
 
    begin
       for S in Src'Range loop
@@ -1165,13 +1166,12 @@ package body Project_Explorers is
          --  name can appear in the hiearchy, for instance when using extending
          --  projects, and Get_Full_Path_From_File would only return the first
          --  instance of the file
-         declare
-            F : constant String := Dir & Get_String (Src (S));
-         begin
-            if Is_Regular_File (F) then
-               Append (Files, F);
-            end if;
-         end;
+
+         File_Node (File_Node_Index) := Create
+           (Full_Filename => Dir & Get_String (Src (S)));
+         if Is_Regular_File (File_Node (File_Node_Index)) then
+            File_Node_Index := File_Node_Index + 1;
+         end if;
       end loop;
 
       if Filenames_Are_Case_Sensitive then
@@ -1180,18 +1180,15 @@ package body Project_Explorers is
          String_List_Utils.Sort_Case_Insensitive (Files);
       end if;
 
-      File_Node := First (Files);
-
-      while File_Node /= Null_Node loop
+      File_Node_Index := File_Node_Index - 1;
+      while File_Node_Index >= File_Node'First loop
          Append_File
            (Kernel => Explorer.Kernel,
             Model  => Explorer.Tree.Model,
-            File   => Create (Full_Filename => Data (File_Node)),
+            File   => File_Node (File_Node_Index),
             Base   => Node);
-         File_Node := Next (File_Node);
+         File_Node_Index := File_Node_Index - 1;
       end loop;
-
-      Free (Files);
    end Expand_Directory_Node;
 
    ----------------------
