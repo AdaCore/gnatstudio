@@ -224,6 +224,37 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Paste_Profile_Cmd);
    --  Free the memory associated to a Paste_Profile_Cmd.
 
+   ---------------------------------
+   -- Get_Visible_Declaration_Cmd --
+   ---------------------------------
+
+   type Get_Visible_Declaration_Cmd is new Text_Command with private;
+
+   procedure Add_Use
+     (This             : out Get_Visible_Declaration_Cmd;
+      Current_Text     : Text_Navigator_Abstr'Class;
+      Source_Position  : File_Cursor'Class;
+      File_Destination : String;
+      With_Could_Miss  : Boolean);
+   --  Set all the marks that will be needed to add an use later.
+
+   procedure Prefix_Object
+     (This            : out Get_Visible_Declaration_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Source_Position : File_Cursor'Class;
+      Object_Position : File_Cursor'Class;
+      With_Could_Miss : Boolean);
+   --  Set all the marks that will be needed to prefix the object later.
+
+   procedure Execute
+     (This         : Get_Visible_Declaration_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the declaration made visible.
+
+   procedure Free (This : in out Get_Visible_Declaration_Cmd);
+   --  Free the memory associated to a Get_Visible_Declaration.
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -279,6 +310,13 @@ private
    type Paste_Profile_Cmd is new Text_Command with record
       Destination_Begin, Destination_End : Ptr_Mark;
       Source_Begin, Source_End           : Ptr_Mark;
+   end record;
+
+   type Get_Visible_Declaration_Cmd is new Text_Command with record
+      Insert_With         : Add_Line_Cmd;
+      Prefix_Obj          : Insert_Word_Cmd;
+      Insert_With_Enabled : Boolean := False;
+      Prefix_Obj_Enabled  : Boolean := False;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;
