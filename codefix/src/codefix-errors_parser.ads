@@ -716,6 +716,29 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'ambiguous expression (cannot resolve "Sth")'
 
+   type Hidden_Declaration is new Error_Parser (Ambiguous_Expression, 1)
+   with record
+      Check_Possible : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("multiple use clauses cause hiding"));
+      Get_From_Current_File : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("hidden declaration at line ([\d]+)"));
+      Get_From_Other_File : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("hidden declaration at ([^:]+):([\d]+)"));
+   end record;
+
+   procedure Initialize (This : in out Hidden_Declaration);
+
+   procedure Free (This : in out Hidden_Declaration);
+
+   procedure Fix
+     (This         : Hidden_Declaration;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'multiple use clause hiding'
+
    type Redundant_Conversion is new Error_Parser (Useless_Conversion, 1)
      with null record;
 
