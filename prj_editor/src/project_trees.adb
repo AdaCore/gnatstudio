@@ -49,6 +49,7 @@ with Types;                use Types;
 with Prj_API;              use Prj_API;
 with Prj_Manager;          use Prj_Manager;
 with Pixmaps_IDE;          use Pixmaps_IDE;
+with Pixmaps_Prj;          use Pixmaps_Prj;
 
 package body Project_Trees is
 
@@ -105,7 +106,8 @@ package body Project_Trees is
    function Add_Project_Node
      (Tree         : access Project_Tree_Record'Class;
       Project      : Project_Id;
-      Parent_Node  : Gtk_Ctree_Node := null) return Gtk_Ctree_Node;
+      Parent_Node  : Gtk_Ctree_Node := null;
+      Modified_Project : Boolean := False) return Gtk_Ctree_Node;
    --  Add a new project (and its dependencies) in the tree.
    --  Parent_Node is the parent of the project in the tree. If this is null,
    --  the new node is added at the root level of the tree.
@@ -181,19 +183,30 @@ package body Project_Trees is
       Gtk.Ctree.Initialize (Tree, Number_Of_Columns, Tree_Column);
 
       Create_From_Xpm_D
-        (Tree.Folder_Open_Pixmap,
-         Window      => null,
-         Colormap    => Get_System,
-         Mask        => Tree.Folder_Open_Mask,
-         Transparent => Null_Color,
-         Data        => mini_ofolder_xpm);
+        (Tree.Project_Open_Pixmap, null, Get_System,
+         Tree.Project_Open_Mask, Null_Color, project_xpm);
       Create_From_Xpm_D
-        (Tree.Folder_Pixmap,
-         Window      => null,
-         Colormap    => Get_System,
-         Mask        => Tree.Folder_Mask,
-         Transparent => Null_Color,
-         Data        => mini_folder_xpm);
+        (Tree.Project_Closed_Pixmap, null, Get_System,
+         Tree.Project_Closed_Mask, Null_Color, project_closed_xpm);
+      Create_From_Xpm_D
+        (Tree.Modified_Project_Open_Pixmap, null, Get_System,
+         Tree.Modified_Project_Open_Mask, Null_Color, project_modified_xpm);
+      Create_From_Xpm_D
+        (Tree.Modified_Project_Closed_Pixmap, null, Get_System,
+         Tree.Modified_Project_Closed_Mask, Null_Color, project_closed_xpm);
+      Create_From_Xpm_D
+        (Tree.Directory_Open_Pixmap, null, Get_System,
+         Tree.Directory_Open_Mask, Null_Color, mini_ofolder_xpm);
+      Create_From_Xpm_D
+        (Tree.Directory_Closed_Pixmap, null, Get_System,
+         Tree.Directory_Closed_Mask, Null_Color, mini_folder_xpm);
+      Create_From_Xpm_D
+        (Tree.Obj_Directory_Open_Pixmap, null, Get_System,
+         Tree.Obj_Directory_Open_Mask, Null_Color, mini_folder_object_xpm);
+      Create_From_Xpm_D
+        (Tree.Obj_Directory_Closed_Pixmap, null, Get_System,
+         Tree.Obj_Directory_Closed_Mask, Null_Color, mini_folder_object_xpm);
+
 
       Set_Line_Style (Tree, Ctree_Lines_Solid);
 
@@ -242,7 +255,8 @@ package body Project_Trees is
    function Add_Project_Node
      (Tree         : access Project_Tree_Record'Class;
       Project      : Project_Id;
-      Parent_Node  : Gtk_Ctree_Node := null) return Gtk_Ctree_Node
+      Parent_Node  : Gtk_Ctree_Node := null;
+      Modified_Project : Boolean := False) return Gtk_Ctree_Node
    is
       N : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean :=
@@ -250,19 +264,35 @@ package body Project_Trees is
         and then (not Show_Directories
                   or else Projects.Table (Project).Source_Dirs = Nil_String);
    begin
-      N := Insert_Node
-        (Ctree         => Tree,
-         Parent        => Parent_Node,
-         Sibling       => null,
-         Text          => Create_Line_Text
-           (Get_Name_String (Projects.Table (Project).Name)),
-         Spacing       => 5,
-         Pixmap_Closed => Tree.Folder_Pixmap,
-         Mask_Closed   => Tree.Folder_Mask,
-         Pixmap_Opened => Tree.Folder_Open_Pixmap,
-         Mask_Opened   => Tree.Folder_Open_Mask,
-         Is_Leaf       => Is_Leaf,
-         Expanded      => False);
+      if Modified_Project then
+         N := Insert_Node
+           (Ctree         => Tree,
+            Parent        => Parent_Node,
+            Sibling       => null,
+            Text          => Create_Line_Text
+              (Get_Name_String (Projects.Table (Project).Name)),
+            Spacing       => 5,
+            Pixmap_Closed => Tree.Modified_Project_Closed_Pixmap,
+            Mask_Closed   => Tree.Modified_Project_Closed_Mask,
+            Pixmap_Opened => Tree.Modified_Project_Open_Pixmap,
+            Mask_Opened   => Tree.Modified_Project_Open_Mask,
+            Is_Leaf       => Is_Leaf,
+            Expanded      => False);
+      else
+         N := Insert_Node
+           (Ctree         => Tree,
+            Parent        => Parent_Node,
+            Sibling       => null,
+            Text          => Create_Line_Text
+              (Get_Name_String (Projects.Table (Project).Name)),
+            Spacing       => 5,
+            Pixmap_Closed => Tree.Project_Closed_Pixmap,
+            Mask_Closed   => Tree.Project_Closed_Mask,
+            Pixmap_Opened => Tree.Project_Open_Pixmap,
+            Mask_Opened   => Tree.Project_Open_Mask,
+            Is_Leaf       => Is_Leaf,
+            Expanded      => False);
+      end if;
 
       Node_Set_Row_Data
         (Tree, N,
@@ -397,12 +427,13 @@ package body Project_Trees is
    is
       N           : Gtk_Ctree_Node := null;
       Dir         : String_List_Id;
+      Obj         : Name_Id;
       Current_Dir : constant String := String (Get_Current_Dir);
    begin
       --  Insert the directories in the project file
       if Show_Directories then
 
-         --  ??? need a special icon for the object directory
+         --  Source directories
 
          Dir := Projects.Table (Project_View).Source_Dirs;
          while Dir /= Nil_String loop
@@ -425,10 +456,10 @@ package body Project_Trees is
                Text          =>
                  Create_Line_Text (Name_Buffer (1 .. Name_Len)),
                Spacing       => 5,
-               Pixmap_Closed => Null_Pixmap,
-               Mask_Closed   => Null_Bitmap,
-               Pixmap_Opened => Null_Pixmap,
-               Mask_Opened   => Null_Bitmap,
+               Pixmap_Closed => Tree.Directory_Closed_Pixmap,
+               Mask_Closed   => Tree.Directory_Closed_Mask,
+               Pixmap_Opened => Tree.Directory_Open_Pixmap,
+               Mask_Opened   => Tree.Directory_Open_Mask,
                Is_Leaf       => True,
                Expanded      => True);
             Node_Set_Row_Data
@@ -436,6 +467,38 @@ package body Project_Trees is
                (Directory_Node, String_Elements.Table (Dir).Value));
             Dir := String_Elements.Table (Dir).Next;
          end loop;
+
+         --  Object directory
+
+         Obj := Projects.Table (Project_View).Object_Directory;
+         Get_Name_String (Obj);
+
+         if Absolute_Directories
+           and then not Is_Absolute_Path (Name_Buffer (1 .. Name_Len))
+         then
+            Name_Buffer
+              (Current_Dir'Length + 1 .. Current_Dir'Length + Name_Len)
+              := Name_Buffer (1 .. Name_Len);
+            Name_Buffer (1 .. Current_Dir'Length) := Current_Dir;
+            Name_Len := Current_Dir'Length + Name_Len;
+         end if;
+
+         N := Insert_Node
+           (Ctree         => Tree,
+            Parent        => Project_Node,
+            Sibling       => N,
+            Text          =>
+              Create_Line_Text (Name_Buffer (1 .. Name_Len)),
+            Spacing       => 5,
+            Pixmap_Closed => Tree.Obj_Directory_Closed_Pixmap,
+            Mask_Closed   => Tree.Obj_Directory_Closed_Mask,
+            Pixmap_Opened => Tree.Obj_Directory_Open_Pixmap,
+            Mask_Opened   => Tree.Obj_Directory_Open_Mask,
+            Is_Leaf       => True,
+            Expanded      => True);
+         Start_String;
+         Store_String_Chars (Get_Name_String (Obj));
+         Node_Set_Row_Data (Tree, N, (Directory_Node, End_String));
       end if;
    end Add_Node_Directories;
 
@@ -462,12 +525,13 @@ package body Project_Trees is
          Remove_Node (Tree, Row_Get_Children (Node_Get_Row (Project_Node)));
 
 
-         --  ??? Should have a special handling for the modified project files,
-         --  ??? since some of its settings are overriden.
+         --  Should have a special handling for the modified project files,
+         --  since some of its settings are overriden.
 
-         --  if Projects.Table (Project).Modifies /= No_Project then
-         --     Add_Node (Tree, N, Projects.Table (Project).Modifies);
-         --  end if;
+         if Projects.Table (Project).Modifies /= No_Project then
+            N := Add_Project_Node
+              (Tree, Projects.Table (Project).Modifies, Project_Node, True);
+         end if;
 
          --  Imported projects
 

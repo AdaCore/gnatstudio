@@ -98,9 +98,25 @@ package Project_Trees is
 private
    type Project_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Manager            : Prj_Manager.Project_Manager;
-      Folder_Open_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Folder_Open_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-      Folder_Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
-      Folder_Mask        : Gdk.Bitmap.Gdk_Bitmap;
+      Project_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
+      Project_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
+      Project_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Project_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+
+      Modified_Project_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
+      Modified_Project_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
+      Modified_Project_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Modified_Project_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+
+      Directory_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
+      Directory_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
+      Directory_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Directory_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+
+      Obj_Directory_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
+      Obj_Directory_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
+      Obj_Directory_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Obj_Directory_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+
    end record;
 end Project_Trees;
