@@ -162,6 +162,46 @@ package body Src_Editor_View is
    --  Return the side information corresponding to Line, Column in the
    --  Side window.
 
+   function On_Delete
+     (View     : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean;
+   --  Callback for the "delete_event" signal.
+
+   procedure Remove_Line_Information_Column
+     (View    : access Source_View_Record'Class;
+      Column  : Integer);
+   --  Remove the column from the side window information in View.
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete (View : access Source_View_Record) is
+      procedure Free is new Unchecked_Deallocation
+        (Natural_Array, Natural_Array_Access);
+   begin
+      while View.Line_Info'Length > 0 loop
+         Remove_Line_Information_Column (View, View.Line_Info'Last);
+      end loop;
+
+      Free (View.Real_Lines);
+   end Delete;
+
+   ---------------
+   -- On_Delete --
+   ---------------
+
+   function On_Delete
+     (View     : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+      The_View : Source_View := Source_View (View);
+   begin
+      Delete (The_View);
+      return False;
+   end On_Delete;
+
    ----------------
    -- Realize_Cb --
    ----------------
@@ -486,7 +526,7 @@ package body Src_Editor_View is
 
       View.Line_Info := new Line_Info_Display_Array (1 .. 0);
       View.Real_Lines := new Natural_Array (1 .. 1);
-      --  ??? when is this freed ?
+      View.Real_Lines (1) := 0;
 
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
@@ -538,6 +578,14 @@ package body Src_Editor_View is
          Cb        => Delete_Range_Handler'Access,
          User_Data => Source_View (View),
          After     => False);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (View,
+         "delete_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (On_Delete'Access),
+         View,
+         After => False);
    end Initialize;
 
    --------------
@@ -993,42 +1041,38 @@ package body Src_Editor_View is
    ------------------------------------
 
    procedure Remove_Line_Information_Column
-     (View           : access Source_View_Record;
-      Identifier     : String)
+     (View    : access Source_View_Record'Class;
+      Column  : Integer)
    is
-      Col   : Integer;
       Width : Integer;
 
       procedure Free is new Unchecked_Deallocation
         (Line_Info_Width_Array, Line_Info_Width_Array_Access);
       procedure Free is new Unchecked_Deallocation
         (Line_Info_Display_Record, Line_Info_Display_Access);
-
    begin
-      Get_Column_For_Identifier (View, Identifier, -1, Col);
+      Width := View.Line_Info (Column).Width;
 
-      Width := View.Line_Info (Col).Width;
-
-      for J in View.Line_Info (Col).Column_Info'Range loop
-         Free (View.Line_Info (Col).Column_Info (J));
+      for J in View.Line_Info (Column).Column_Info'Range loop
+         Free (View.Line_Info (Column).Column_Info (J));
       end loop;
 
-      Free (View.Line_Info (Col).Identifier);
-      Free (View.Line_Info (Col).Column_Info);
-      Free (View.Line_Info (Col));
+      Free (View.Line_Info (Column).Identifier);
+      Free (View.Line_Info (Column).Column_Info);
+      Free (View.Line_Info (Column));
 
       declare
          A : Line_Info_Display_Array
            (View.Line_Info.all'First .. View.Line_Info.all'Last - 1);
       begin
-         A (View.Line_Info.all'First .. Col - 1) :=
-           View.Line_Info (View.Line_Info.all'First .. Col - 1);
-         A (Col .. View.Line_Info.all'Last - 1) :=
-           View.Line_Info (Col + 1 .. View.Line_Info.all'Last);
+         A (View.Line_Info.all'First .. Column - 1) :=
+           View.Line_Info (View.Line_Info.all'First .. Column - 1);
+         A (Column .. View.Line_Info.all'Last - 1) :=
+           View.Line_Info (Column + 1 .. View.Line_Info.all'Last);
          View.Line_Info := new Line_Info_Display_Array' (A);
       end;
 
-      for J in Col .. View.Line_Info.all'Last loop
+      for J in Column .. View.Line_Info.all'Last loop
          View.Line_Info (J).Starting_X
            := View.Line_Info (J).Starting_X - Width - 2;
       end loop;
@@ -1036,6 +1080,21 @@ package body Src_Editor_View is
       View.Total_Column_Width := View.Total_Column_Width - Width - 2;
       Set_Border_Window_Size (View, Enums.Text_Window_Left,
                               Gint (View.Total_Column_Width));
+   end Remove_Line_Information_Column;
+
+   ------------------------------------
+   -- Remove_Line_Information_Column --
+   ------------------------------------
+
+   procedure Remove_Line_Information_Column
+     (View           : access Source_View_Record;
+      Identifier     : String)
+   is
+      Col   : Integer;
+
+   begin
+      Get_Column_For_Identifier (View, Identifier, -1, Col);
+      Remove_Line_Information_Column (View, Col);
 
       Redraw_Columns (View);
    end Remove_Line_Information_Column;
