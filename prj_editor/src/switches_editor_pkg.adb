@@ -819,7 +819,7 @@ begin
    Set_Case_Sensitive (Switches_Editor.Pragma_Casing, False);
    Set_Use_Arrows (Switches_Editor.Pragma_Casing, True);
    Set_Use_Arrows_Always (Switches_Editor.Pragma_Casing, False);
-   String_List.Append (Pragma_Casing_Items, -"Capitalized");
+   String_List.Append (Pragma_Casing_Items, -"Mixed case");
    String_List.Append (Pragma_Casing_Items, -"Lower case");
    String_List.Append (Pragma_Casing_Items, -"Upper case");
    Combo.Set_Popdown_Strings (Switches_Editor.Pragma_Casing, Pragma_Casing_Items);
@@ -831,7 +831,7 @@ begin
    Switches_Editor.Pragma_Casing_Entry := Get_Entry (Switches_Editor.Pragma_Casing);
    Set_Editable (Switches_Editor.Pragma_Casing_Entry, True);
    Set_Max_Length (Switches_Editor.Pragma_Casing_Entry, 0);
-   Set_Text (Switches_Editor.Pragma_Casing_Entry, -"Capitalized");
+   Set_Text (Switches_Editor.Pragma_Casing_Entry, -"Mixed case");
    Set_Visibility (Switches_Editor.Pragma_Casing_Entry, True);
    Widget_Callback.Object_Connect
      (Switches_Editor.Pragma_Casing_Entry, "changed",
@@ -842,7 +842,7 @@ begin
    Set_Use_Arrows (Switches_Editor.References_Casing, True);
    Set_Use_Arrows_Always (Switches_Editor.References_Casing, False);
    String_List.Append (References_Casing_Items, -"As declared");
-   String_List.Append (References_Casing_Items, -"Capitalized");
+   String_List.Append (References_Casing_Items, -"Mixed case");
    Combo.Set_Popdown_Strings (Switches_Editor.References_Casing, References_Casing_Items);
    Free_String_List (References_Casing_Items);
    Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.References_Casing, 1, 2, 2, 3,
@@ -862,7 +862,7 @@ begin
    Set_Case_Sensitive (Switches_Editor.Attribute_Casing, False);
    Set_Use_Arrows (Switches_Editor.Attribute_Casing, True);
    Set_Use_Arrows_Always (Switches_Editor.Attribute_Casing, False);
-   String_List.Append (Attribute_Casing_Items, -"Capitalized");
+   String_List.Append (Attribute_Casing_Items, -"Mixed case");
    String_List.Append (Attribute_Casing_Items, -"Lower case");
    String_List.Append (Attribute_Casing_Items, -"Upper case");
    Combo.Set_Popdown_Strings (Switches_Editor.Attribute_Casing, Attribute_Casing_Items);
@@ -874,7 +874,7 @@ begin
    Switches_Editor.Attribute_Casing_Entry := Get_Entry (Switches_Editor.Attribute_Casing);
    Set_Editable (Switches_Editor.Attribute_Casing_Entry, True);
    Set_Max_Length (Switches_Editor.Attribute_Casing_Entry, 0);
-   Set_Text (Switches_Editor.Attribute_Casing_Entry, -"Capitalized");
+   Set_Text (Switches_Editor.Attribute_Casing_Entry, -"Mixed case");
    Set_Visibility (Switches_Editor.Attribute_Casing_Entry, True);
    Widget_Callback.Object_Connect
      (Switches_Editor.Attribute_Casing_Entry, "changed",
