@@ -1846,6 +1846,7 @@ package body Src_Info.ALI is
       Project                : Project_Type) return Virtual_File
    is
       pragma Unreferenced (Handler);
+      Result : Virtual_File := VFS.No_File;
    begin
       case Get_Unit_Part_From_Filename (Project, Source_Filename) is
          when Unit_Body | Unit_Separate =>
@@ -1859,32 +1860,31 @@ package body Src_Info.ALI is
                  (Get_ALI_Filename (Base_Name (Source_Filename)), Project);
             begin
                if Body_LI /= "" then
-                  return Create (Body_LI);
-               end if;
-            end;
+                  Result := Create (Body_LI);
 
-            declare
-               Unit : constant String := Get_Unit_Name_From_Filename
-                 (Project, Source_Filename);
-               Last : Integer := Unit'Last;
-            begin
-               while Last >= Unit'First
-                 and then Unit (Last) /= '.'
-               loop
-                  Last := Last - 1;
-               end loop;
-
-               if Last >= Unit'First then
-                  return Create
-                    (Locate_ALI
-                       (Get_ALI_Filename
-                          (Get_Filename_From_Unit
-                             (Project,
-                              Unit (Unit'First .. Last - 1),
-                              Unit_Body)),
-                        Project));
                else
-                  return VFS.No_File;
+                  declare
+                     Unit : constant String := Get_Unit_Name_From_Filename
+                       (Project, Source_Filename);
+                     Last : Integer := Unit'Last;
+                  begin
+                     while Last >= Unit'First
+                       and then Unit (Last) /= '.'
+                     loop
+                        Last := Last - 1;
+                     end loop;
+
+                     if Last >= Unit'First then
+                        Result := Create
+                          (Locate_ALI
+                             (Get_ALI_Filename
+                                (Get_Filename_From_Unit
+                                   (Project,
+                                    Unit (Unit'First .. Last - 1),
+                                    Unit_Body)),
+                              Project));
+                     end if;
+                  end;
                end if;
             end;
 
@@ -1898,15 +1898,27 @@ package body Src_Info.ALI is
                   Project);
             begin
                if Body_LI /= "" then
-                  return Create (Body_LI);
+                  Result := Create (Body_LI);
                else
-                  return Create
-                    (Locate_ALI
+                  declare
+                     LI_Base : constant String := Locate_ALI
                        (Get_ALI_Filename (Base_Name (Source_Filename)),
-                        Project));
+                        Project);
+                  begin
+                     if LI_Base /= "" then
+                        Result := Create (LI_Base);
+                     end if;
+                  end;
                end if;
             end;
       end case;
+
+      if Result = VFS.No_File then
+         return Create_From_Base
+           (Get_ALI_Filename (Base_Name (Source_Filename)));
+      else
+         return Result;
+      end if;
    end LI_Filename_From_Source;
 
    ---------------------------
