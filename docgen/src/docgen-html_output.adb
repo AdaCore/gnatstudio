@@ -513,7 +513,7 @@ package body Docgen.Html_Output is
       Is_Body          : Boolean;
       Process_Body     : Boolean;
       Do_Check_Pack    : Boolean) is
-      pragma Unreferenced (Do_Check_Pack);
+      pragma Unreferenced (Do_Check_Pack, Entity_Name);
 
       --  global variables for the callback function
       Last_Index, Last_Line : Natural;
@@ -748,20 +748,6 @@ package body Docgen.Html_Output is
                          (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
                           or Get_Kind (Entity_Info).Kind = Procedure_Kind
                           or Get_Kind (Entity_Info).Kind =
-                          Function_Or_Operator)))
-            --  if in the spec: no links for entities defined in supbrogram
-            --  or within types
-              and (Is_Body or
-                     not (Is_Defined_In_Subprogram
-                       (Entity_Name,
-                        Get_Name (Entity_Info),
-                        Get_Unit_Name (LI_Unit,
-                                       GNAT.Directory_Operations.File_Name
-                                         (File_Name)))
-                   and
-                   (Get_Kind (Entity_Info).Kind = Entry_Or_Entry_Family
-                          or Get_Kind (Entity_Info).Kind = Procedure_Kind
-                          or Get_Kind (Entity_Info).Kind =
                           Function_Or_Operator)));
          end Link_Should_Be_Set;
 
@@ -928,13 +914,6 @@ package body Docgen.Html_Output is
       --  check if should set a link to the body file
       if Info.Header_Link and
         Is_Spec_File (Info.Header_File.all) then
---           Put_Line (Info.Header_File.all & "   "  &
---                     File_Name_Without_Suffix (Info.Header_File.all) &
---                     "   gibt body suffix:  " &
---                     Body_Suffix (Info.Header_File.all)
---                     & "  weil spec ist:  " &
---                     Boolean'Image (Is_Spec_File
---                                      (Info.Header_File.all)));
          Body_File_Name :=
            new String '(File_Name_Without_Suffix (Info.Header_File.all)
                         & "_" &
