@@ -1314,6 +1314,12 @@ number, and if available, the status of the file.
 The second box shows the writable state of the file.
 You can change this state by clicking on the label directly: this will
 switch between @i{writable} and @i{read-only}.
+Note that this will not change the permissions of the file on disk, it will
+only change the writable state of the source editor within GPS.
+
+When trying to save a file which is read only on the disk, GPS will ask for
+confirmation, and if possible, will force saving of the file, keeping its read
+only state.
 
 The third box shows whether the file has been modified since the last
 save. The three possible states are:
