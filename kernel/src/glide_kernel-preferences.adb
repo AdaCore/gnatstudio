@@ -922,8 +922,8 @@ package body Glide_Kernel.Preferences is
         (Name    => "Prj-Editor-Trusted-Mode",
          Default => True,
          Blurb   => -("Whether a fast algorithm should be used to load Ada"
-                      & " projects. However, this algorithm assumes several"
-                      & " things about your project:" & ASCII.LF
+                      & " projects. This algorithm assumes the following "
+                      & "about your project:" & ASCII.LF
                       & "   - no symbolic links are used to point to other"
                       & " files in the project" & ASCII.LF
                       & "   - no directory has a name which is a valid source"
