@@ -31,7 +31,6 @@ with Glib;
 with Glib.Object;
 with Gdk.Rectangle;
 with Gdk.Event;
-with Gdk.Font;
 
 with Gtk.Box;
 with Gtk.Button;
@@ -471,7 +470,6 @@ private
       Saved_Position       : Integer := 0;
 
       Default_GC, Bg_GC    : Gdk.Gdk_GC;
-      Tooltip_Font         : Gdk.Font.Gdk_Font;
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
