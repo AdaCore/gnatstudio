@@ -64,37 +64,33 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      --  Since lists start at 0, increment the value.
-      --  ??? This will only work with info tasks where there are no
-      --  holes, but info threads can have holes when e.g threads are
-      --  terminated, see 9019-008.
-
-      Index         : constant Gint := To_Gint (Params, 1);
-      Str           : constant String :=
+      Index       : constant Gint := To_Gint (Params, 1);
+      Str         : constant String :=
         Get_Text (Gtk_Clist (Object), Index, 0);
-      Top           : constant GVD_Dialog :=
-        GVD_Dialog (Get_Toplevel (Object));
+      Top         : constant GVD_Dialog := GVD_Dialog (Get_Toplevel (Object));
 
-      Main_Window   : constant GVD_Main_Window :=
+      Main_Window : constant GVD_Main_Window :=
         GVD_Main_Window (Top.Main_Window);
 
       --  Get the process notebook from the main window which is associated
       --  with the task dialog (toplevel (object)).
 
-      Notebook      : constant Gtk_Notebook := Main_Window.Process_Notebook;
+      Notebook    : constant Gtk_Notebook := Main_Window.Process_Notebook;
 
       --  Get the current page in the process notebook.
 
-      Process       : constant Debugger_Process_Tab :=
+      Process     : constant Debugger_Process_Tab :=
         Process_User_Data.Get (Get_Nth_Page
           (Notebook, Get_Current_Page (Notebook)));
-
-      Matched       : Match_Array (0 .. 0);
-
-      Info          : PD_Information_Array (1 .. Max_PD);
-      Len           : Natural;
+      Matched     : Match_Array (0 .. 0);
+      Info        : PD_Information_Array (1 .. Max_PD);
+      Len         : Natural;
 
    begin
+      if Process.Debugger = null then
+         Hide (Top);
+      end if;
+
       if Top = GVD_Dialog (Main_Window.Thread_Dialog) then
          Match ("[0-9]+", Str, Matched);
          Thread_Switch
@@ -133,6 +129,11 @@ package body GVD.Dialogs.Callbacks is
       else
          raise Program_Error;
       end if;
+
+   exception
+      when others =>
+         ---  ??? Should log unexpected exception
+         null;
    end On_Task_List_Select_Row;
 
    -----------------------------
