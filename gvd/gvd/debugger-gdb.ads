@@ -31,12 +31,11 @@ package Debugger.Gdb is
    --  The Gdb_Debugger class should directly know how to communicate with the
    --  external process, so that it can make the requests itself.
 
-
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
-   function Parse_Type (Debugger  : Gdb_Debugger;
-                        Entity    : String)
-                       return Generic_Values.Generic_Type_Access;
+   function Parse_Type
+     (Debugger  : Gdb_Debugger;
+      Entity    : String) return Generic_Values.Generic_Type_Access;
    --  Parse the definition of type for Entity.
 
    procedure Parse_Value
