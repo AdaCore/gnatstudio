@@ -33,13 +33,13 @@ with Gtk.Widget;
 
 package GVD.Dialogs is
 
-   type Odd_Dialog_Record is new Gtk_Dialog_Record with private;
-   type Odd_Dialog is access all Odd_Dialog_Record'Class;
+   type GVD_Dialog_Record is new Gtk_Dialog_Record with private;
+   type GVD_Dialog is access all GVD_Dialog_Record'Class;
 
-   type Task_Dialog_Record is new Odd_Dialog_Record with private;
+   type Task_Dialog_Record is new GVD_Dialog_Record with private;
    type Task_Dialog_Access is access all Task_Dialog_Record'Class;
 
-   type Question_Dialog_Record is new Odd_Dialog_Record with private;
+   type Question_Dialog_Record is new GVD_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
 
    type History_Dialog_Record is new Gtk_Dialog_Record with private;
@@ -168,7 +168,7 @@ package GVD.Dialogs is
    --  These procedures are used to lock the list of commands.
 
 private
-   type Odd_Dialog_Record is new Gtk_Dialog_Record with record
+   type GVD_Dialog_Record is new Gtk_Dialog_Record with record
       Main_Window     : Gtk_Window;
       Vbox1           : Gtk_Vbox;
       Scrolledwindow1 : Gtk_Scrolled_Window;
@@ -180,28 +180,28 @@ private
    --  ??? Why not store directly the Debugger_Process_Tab in this record,
    --  instead of having to convert in the callbacks ?
 
-   type Task_Dialog_Record is new Odd_Dialog_Record with null record;
+   type Task_Dialog_Record is new GVD_Dialog_Record with null record;
 
-   type Question_Dialog_Record is new Odd_Dialog_Record with record
-      Debugger        : Debugger_Access;
+   type Question_Dialog_Record is new GVD_Dialog_Record with record
+      Debugger : Debugger_Access;
    end record;
    --  We have to store the debugger for this dialog, since the user's choice
    --  should be sent to the right debugger, even if the user has switched
    --  tabs in between.
 
    type History_Dialog_Record is new Gtk_Dialog_Record with record
-      Vbox1 : Gtk_Vbox;
-      Scrolledwindow1 : Gtk_Scrolled_Window;
-      List : Gtk_List;
-      Hbuttonbox1 : Gtk_Hbutton_Box;
+      Vbox1            : Gtk_Vbox;
+      Scrolledwindow1  : Gtk_Scrolled_Window;
+      List             : Gtk_List;
+      Hbuttonbox1      : Gtk_Hbutton_Box;
       Replay_Selection : Gtk_Button;
-      Cancel : Gtk_Button;
-      Help : Gtk_Button;
+      Cancel           : Gtk_Button;
+      Help             : Gtk_Button;
 
-      Window : Gtk_Window;
+      Window           : Gtk_Window;
       --  This is in fact the main debug window.
 
-      Freeze_Count : Integer;
+      Freeze_Count     : Integer;
       --  Used to lock the History_Dialog while replaying commands.
    end record;
 

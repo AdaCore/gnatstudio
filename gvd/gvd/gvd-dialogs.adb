@@ -50,7 +50,7 @@ with GVD.Preferences;       use GVD.Preferences;
 
 package body GVD.Dialogs is
 
-   type Odd_Dialog_Access is access all Odd_Dialog;
+   type GVD_Dialog_Access is access all GVD_Dialog;
 
    Question_Titles : constant Chars_Ptr_Array := "" + "Choice";
    --  ??? Should be translatable.
@@ -72,7 +72,7 @@ package body GVD.Dialogs is
      (Simple_Entry_Dialog_Access);
 
    procedure Initialize
-     (Dialog      : access Odd_Dialog_Record'Class;
+     (Dialog      : access GVD_Dialog_Record'Class;
       Title       : String;
       Main_Window : Gtk_Window);
    --  Create a standard dialog.
@@ -364,7 +364,7 @@ package body GVD.Dialogs is
    ----------------
 
    procedure Initialize
-     (Dialog      : access Odd_Dialog_Record'Class;
+     (Dialog      : access GVD_Dialog_Record'Class;
       Title       : String;
       Main_Window : Gtk_Window) is
    begin
