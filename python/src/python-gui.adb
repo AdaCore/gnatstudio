@@ -450,9 +450,21 @@ package body Python.GUI is
                      S := PyObject_GetAttrString (Occurrence, "msg");
                   end if;
 
-                  Interpreter.Use_Secondary_Prompt :=
-                    S /= null and then PyString_AsString (S) =
-                    "unexpected EOF while parsing";
+                  if S = null then
+                     Interpreter.Use_Secondary_Prompt := False;
+                  else
+                     declare
+                        Msg : constant String := PyString_AsString (S);
+                     begin
+                        --  Second message appears when typing:
+                        --    >>> if 1:
+                        --    ...   pass
+                        --    ... else:
+                        Interpreter.Use_Secondary_Prompt :=
+                          Msg = "unexpected EOF while parsing"
+                          or else Msg = "expected an indented block";
+                     end;
+                  end if;
 
                   if not Interpreter.Use_Secondary_Prompt then
                      PyErr_Restore (Typ, Occurrence, Traceback);
