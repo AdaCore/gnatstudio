@@ -557,11 +557,53 @@ package body Vdiff2_Module.Utils is
       Curr_Node : Diff_Head_List.List_Node;
    begin
       Curr_Node := Is_In_Diff_List (Item.File1, Diff_List.all);
+
       if  Curr_Node /= Diff_Head_List.Null_Node then
          Show_Differences3 (Kernel, Item);
+         Item.Current_Node := First (Item.List);
+         Set_Data (Curr_Node, Item);
          Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
       end if;
    end Modify_Differences;
+
+   -----------------
+   -- Visual_Diff --
+   -----------------
+
+   procedure Visual_Diff
+     (File1 : Virtual_File;
+      File2 : Virtual_File;
+      File3 : Virtual_File := VFS.No_File)
+   is
+      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
+      Result : Diff_List;
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+      Item   : Diff_Head;
+
+   begin
+      if File3 /= VFS.No_File then
+         Result := Diff3 (Id.Kernel, File1, File2, File3);
+      else
+         Result := Diff (Id.Kernel, File1, File2);
+      end if;
+
+      if Result = Diff_Chunk_List.Null_List then
+         Button := Message_Dialog
+           (Msg         => -"No differences found.",
+            Buttons     => Button_OK,
+            Parent      => Get_Main_Window (Id.Kernel));
+         return;
+      end if;
+
+      Item := (List => Result,
+               File1 => File1,
+               File2 => File2,
+               File3 => VFS.No_File,
+               Current_Node => First (Result),
+               Ref_File => 2);
+      Process_Differences (Id.Kernel, Item, Id.List_Diff);
+   end Visual_Diff;
 
    -------------------------
    -- Process_Differences --
@@ -569,25 +611,27 @@ package body Vdiff2_Module.Utils is
 
    procedure Process_Differences
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : in out Diff_Head;
+      Item      : Diff_Head;
       Diff_List : Diff_Head_List_Access)
    is
-      Button : Message_Dialog_Buttons;
+      Item_Local : Diff_Head := Item;
+      Button     : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
 
    begin
-      if Is_In_Diff_List (Item.File1, Diff_List.all) =
+      if Is_In_Diff_List (Item_Local.File1, Diff_List.all) =
         Diff_Head_List.Null_Node
         and then
-          Is_In_Diff_List (Item.File2, Diff_List.all) =
+          Is_In_Diff_List (Item_Local.File2, Diff_List.all) =
           Diff_Head_List.Null_Node
           and then
-            Is_In_Diff_List (Item.File3, Diff_List.all) =
+            Is_In_Diff_List (Item_Local.File3, Diff_List.all) =
             Diff_Head_List.Null_Node
       then
-         Append (Diff_List.all, Item);
-         Show_Differences3 (Kernel, Item);
-         Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
+         Append (Diff_List.all, Item_Local);
+         Show_Differences3 (Kernel, Item_Local);
+         Goto_Difference (Kernel_Handle (Kernel),
+                          Data (Item_Local.Current_Node));
       else
          Button := Message_Dialog
            (Msg         => -"One of this file is already used in VDiff.",
