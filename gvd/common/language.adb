@@ -35,8 +35,9 @@ package body Language is
 
    Language_Detection : Language_Detection_Access;
    --  Global table that indicates which languages to associate with file
-   --  names, so that one can find the best language associates with a
+   --  names, so that one can find the best language associated with a
    --  given file name.
+   --  Note that this variable is not thread-safe.
 
    ---------------------
    -- Break_Exception --
@@ -55,10 +56,7 @@ package body Language is
    -- Start --
    -----------
 
-   function Start
-     (Debugger  : access Language_Root)
-     return String
-   is
+   function Start (Debugger  : access Language_Root) return String is
    begin
       return "";
    end Start;
@@ -92,8 +90,8 @@ package body Language is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps (Lang : access Language_Root)
-                             return Explorer_Categories
+   function Explorer_Regexps
+     (Lang : access Language_Root) return Explorer_Categories
    is
       E : Explorer_Categories (1 .. 0);
    begin
@@ -116,10 +114,8 @@ package body Language is
    --------------------
 
    function Is_System_File
-     (Lang : access Language_Root;
-      File_Name : String)
-     return Boolean
-   is
+     (Lang      : access Language_Root;
+      File_Name : String) return Boolean is
    begin
       return False;
    end Is_System_File;
@@ -173,6 +169,7 @@ package body Language is
       Table_Index : Positive := Positive'Last;
       Tmp         : Language_Detection_Access;
       T           : String_Access;
+
    begin
       --  Do we already have this language in the table
       if Language_Detection /= null then
@@ -185,6 +182,7 @@ package body Language is
       end if;
 
       --  If not, extend the table
+
       if Table_Index = Positive'Last then
          if Language_Detection = null then
             Tmp := new Language_Detection_Array (1 .. 1);
@@ -205,6 +203,7 @@ package body Language is
       if Language_Detection (Table_Index).Pattern = null then
          Language_Detection (Table_Index).Pattern :=
            new String'("(" & Pattern & ")");
+
       else
          T := Language_Detection (Table_Index).Pattern;
          Language_Detection (Table_Index).Pattern :=
@@ -217,9 +216,8 @@ package body Language is
    -- Get_Language_From_File --
    ----------------------------
 
-   function Get_Language_From_File (File_Name : String)
-     return Language_Access
-   is
+   function Get_Language_From_File
+     (File_Name : String) return Language_Access is
    begin
       if Language_Detection /= null then
          for Index in Language_Detection'Range loop
@@ -228,6 +226,7 @@ package body Language is
             end if;
          end loop;
       end if;
+
       return null;
    end Get_Language_From_File;
 

@@ -117,8 +117,8 @@ package body Language.Debugger is
    -- Get_Language_Context --
    --------------------------
 
-   function Get_Language_Context (Lang : access Language_Debugger)
-                                 return Language_Context
+   function Get_Language_Context
+     (Lang : access Language_Debugger) return Language_Context
    is
       L : Language_Context (1);
    begin

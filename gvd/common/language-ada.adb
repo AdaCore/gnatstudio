@@ -207,7 +207,7 @@ package body Language.Debugger.Ada is
          return;
       end if;
 
-      --  If no, skip to the next meaningfull character
+      --  If no, skip to the next meaningful character
 
       Next_Char := Buffer'First + 1;
 
@@ -258,10 +258,8 @@ package body Language.Debugger.Ada is
    -- Dereference_Name --
    ----------------------
 
-   function Dereference_Name (Lang : access Ada_Language;
-                              Name : String)
-                             return String
-   is
+   function Dereference_Name
+     (Lang : access Ada_Language; Name : String) return String is
    begin
       return Name & ".all";
    end Dereference_Name;
@@ -270,13 +268,13 @@ package body Language.Debugger.Ada is
    -- Array_Item_Name --
    ---------------------
 
-   function Array_Item_Name (Lang  : access Ada_Language;
-                             Name  : String;
-                             Index : String)
-                            return String
-   is
+   function Array_Item_Name
+     (Lang  : access Ada_Language;
+      Name  : String;
+      Index : String) return String is
    begin
       --  Simplify the expression by getting rid of unnecessary ".all"
+
       if Name'Length > 4
         and then Name (Name'Last - 3 .. Name'Last) = ".all"
       then
@@ -290,13 +288,13 @@ package body Language.Debugger.Ada is
    -- Record_Field_Name --
    -----------------------
 
-   function Record_Field_Name (Lang  : access Ada_Language;
-                               Name  : String;
-                               Field : String)
-                              return String
-   is
+   function Record_Field_Name
+     (Lang  : access Ada_Language;
+      Name  : String;
+      Field : String) return String is
    begin
       --  Simplify the expression by getting rid of unnecessary ".all"
+
       if Name'Length > 4
         and then Name (Name'Last - 3 .. Name'Last) = ".all"
       then
@@ -310,10 +308,7 @@ package body Language.Debugger.Ada is
    -- Start --
    -----------
 
-   function Start
-     (Debugger  : access Ada_Language)
-     return String
-   is
+   function Start (Debugger  : access Ada_Language) return String is
    begin
       return "begin";
    end Start;
@@ -322,9 +317,8 @@ package body Language.Debugger.Ada is
    -- Explorer_Regexps --
    ----------------------
 
-   function Explorer_Regexps (Lang : access Ada_Language)
-                             return Explorer_Categories
-   is
+   function Explorer_Regexps
+     (Lang : access Ada_Language) return Explorer_Categories is
    begin
       return Ada_Explorer_Categories;
    end Explorer_Regexps;
@@ -334,9 +328,9 @@ package body Language.Debugger.Ada is
    ---------------------------
 
    function Make_Entry_Subprogram
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String
-   is
+     (Str     : String;
+      Matched : Match_Array;
+      Category : access Category_Index) return String is
    begin
       if Str (Matched (6).First) = ';' then
          Category.all := 2;  --  specs
@@ -345,8 +339,9 @@ package body Language.Debugger.Ada is
       if Matched (4) = No_Match then
          return Str (Matched (2).First .. Matched (2).Last);
       else
-         return (Str (Matched (2).First .. Matched (2).Last) & ' ' &
-                 Reduce (Str (Matched (3).First .. Matched (3).Last)));
+         return
+           Str (Matched (2).First .. Matched (2).Last) & ' ' &
+                Reduce (Str (Matched (3).First .. Matched (3).Last));
       end if;
    end Make_Entry_Subprogram;
 
@@ -355,9 +350,9 @@ package body Language.Debugger.Ada is
    ------------------------
 
    function Make_Entry_Package
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String
-   is
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String is
    begin
       return Str (Matched (3).First .. Matched (3).Last);
    end Make_Entry_Package;
@@ -367,9 +362,9 @@ package body Language.Debugger.Ada is
    ---------------------
 
    function Make_Entry_Type
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String
-   is
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String is
    begin
       return Str (Matched (2).First .. Matched (2).Last);
    end Make_Entry_Type;
@@ -379,13 +374,15 @@ package body Language.Debugger.Ada is
    --------------------------
 
    function Make_Entry_Protected
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String
    is
       First, Last : Natural;
    begin
       First := Matched (2).First;
       Last := Matched (2).Last;
+
       if First < Str'First then
          First := Str'First;
       end if;
@@ -399,13 +396,15 @@ package body Language.Debugger.Ada is
    ---------------------
 
    function Make_Entry_Task
-     (Str : String; Matched : Match_Array; Category : access Category_Index)
-     return String
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String
    is
       First, Last : Natural;
    begin
       First := Matched (2).First;
       Last := Matched (2).Last;
+
       if First < Str'First then
          First := Str'First;
       end if;
@@ -420,17 +419,17 @@ package body Language.Debugger.Ada is
 
    function Is_System_File
      (Lang : access Ada_Language;
-      File_Name : String)
-     return Boolean
+      File_Name : String) return Boolean
    is
       Name : constant String := Base_File_Name (File_Name);
    begin
-      return (Name'Length > 2
-              and then Name (Name'First + 1) = '-'
-              and then (Name (Name'First) = 'a'
-                        or else Name (Name'First) = 'g'
-                        or else Name (Name'First) = 's'
-                        or else Name (Name'First) = 'i'))
+      return
+        (Name'Length > 2
+         and then Name (Name'First + 1) = '-'
+         and then (Name (Name'First) = 'a'
+                   or else Name (Name'First) = 'g'
+                   or else Name (Name'First) = 's'
+                   or else Name (Name'First) = 'i'))
         or else Name = "gnat.ads"
         or else Name = "ada.ads"
         or else Name = "interfac.ads"

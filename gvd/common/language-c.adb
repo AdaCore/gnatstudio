@@ -103,12 +103,14 @@ package body Language.Debugger.C is
       then
          Entity := Comment_Text;
          Next_Char := Buffer'First + 1;
+
          while Next_Char < Buffer'Last
            and then (Buffer (Next_Char) /= '*'
                      or else Buffer (Next_Char + 1) /= '/')
          loop
             Next_Char := Next_Char + 1;
          end loop;
+
          Next_Char := Next_Char + 2;
          return;
       end if;
@@ -118,12 +120,14 @@ package body Language.Debugger.C is
       if Buffer (Buffer'First) = '"' then
          Entity := String_Text;
          Next_Char := Buffer'First + 1;
+
          while Next_Char <= Buffer'Last
            and then (Buffer (Next_Char) /= '"'
                      or else Buffer (Next_Char - 1) = '\')
          loop
             Next_Char := Next_Char + 1;
          end loop;
+
          Next_Char := Next_Char + 1;
          return;
       end if;
@@ -204,7 +208,17 @@ package body Language.Debugger.C is
       Name  : String;
       Field : String) return String is
    begin
-      return Name & '.' & Field;
+      --  Simplify the expression by replacing (*foo).bar by foo->bar
+
+      if Name'Length > 3
+        and then Name (Name'First) = '('
+        and then Name (Name'First + 1) = '*'
+        and then Name (Name'Last) = ')'
+      then
+         return Name (Name'First + 2 .. Name'Last - 1) & "->" & Field;
+      else
+         return Name & '.' & Field;
+      end if;
    end Record_Field_Name;
 
    -----------
