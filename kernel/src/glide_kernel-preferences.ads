@@ -159,6 +159,7 @@ package Glide_Kernel.Preferences is
    Ada_Indentation_Level     : Param_Spec_Int;
    Ada_Continuation_Level    : Param_Spec_Int;
    Ada_Declaration_Level     : Param_Spec_Int;
+   Ada_Indent_Case_Extra     : Param_Spec_Boolean;
    C_Automatic_Indentation   : Param_Spec_Boolean;
    C_Use_Tabs                : Param_Spec_Boolean;
    C_Indentation_Level       : Param_Spec_Int;
