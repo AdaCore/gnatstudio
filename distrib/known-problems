@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.0.2
 
+- Bad handling of line terminator under Windows when saving file
+  Problem:    When saving files containing trailing spaces under Windows,
+              some lines with only a LF (and no CR) character will be
+              created.
+  Workaround: Disable the preferences Editor->Strip Blanks
+
 - B823-009 Crash at startup for project referencing external variables
   Problem:    If a project other than the root project references an external
               variable, and this variable isn't also referenced in the root
