@@ -22,11 +22,6 @@
 
 package Glide_Kernel.Help is
 
-   procedure Display_Help
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : String);
-   --  Display HTML Help file
-
    function Search
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
@@ -39,5 +34,8 @@ package Glide_Kernel.Help is
    function Search_Next
      (Kernel : access Kernel_Handle_Record'Class) return Boolean;
    --  Search in the current help file the next occurrence.
+
+   procedure Register_Module;
+   --  Register the module in the list
 
 end Glide_Kernel.Help;

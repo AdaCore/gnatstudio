@@ -18,23 +18,28 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gint_Xml;                  use Gint_Xml;
+with Glib;                      use Glib;
 with Glib.Values;               use Glib.Values;
 with Csc_HTML_Widget;           use Csc_HTML_Widget;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Window;                use Gtk.Window;
+with Gtk.Widget;                use Gtk.Widget;
 with Glide_Intl;                use Glide_Intl;
 with Traces;                    use Traces;
 with OS_Utils;                  use OS_Utils;
-with GUI_Utils;                 use GUI_Utils;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 package body Glide_Kernel.Help is
 
    Me : Debug_Handle := Create ("Glide_Kernel.Help");
+
+   Html_Module_Id : Module_ID;
+   Html_Module_Name : constant String := "Help_Viewer";
 
    --  ??? Preferences
    Default_Width  : constant := 400;
@@ -75,6 +80,31 @@ package body Glide_Kernel.Help is
       Kernel : Kernel_Handle);
    --  Handler for the link_clicked signal
 
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget;
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Support functions for the MDI
+
+   function Mime_Action
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Mime_Type : String;
+      Data      : GValue_Array;
+      Mode      : Mime_Mode := Read_Write) return Boolean;
+   --  Process, if possible, the data sent by the kernel
+
+   function Create_Html_Editor
+     (Kernel : access Kernel_Handle_Record'Class; File : String)
+      return Help_Browser;
+   --  Create a new html editor that edits File.
+
+   procedure Display_Help
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Help_File : String);
+   --  Display HTML Help file
+
    ---------------
    -- Load_File --
    ---------------
@@ -86,8 +116,10 @@ package body Glide_Kernel.Help is
    is
       Buffer   : String_Access;
       Stream   : Csc_HTML_Stream;
+      Success  : Boolean;
 
    begin
+      Set_Busy (Kernel_Handle (Kernel), True);
       Buffer := Read_File (File);
 
       if Buffer /= null then
@@ -98,12 +130,14 @@ package body Glide_Kernel.Help is
          HTML_Write (Html.Csc, Stream, Buffer.all);
          HTML_End (Html.Csc, Stream, Stream_OK);
          Free (Buffer);
-         return True;
-
+         Success := True;
       else
          Trace (Me, "link not found");
-         return False;
+         Success := False;
       end if;
+
+      Set_Busy (Kernel_Handle (Kernel), False);
+      return Success;
    end Load_File;
 
    -------------------
@@ -148,9 +182,9 @@ package body Glide_Kernel.Help is
       Kernel : Kernel_Handle)
    is
       --  Html     : Help_Browser := Help_Browser (Object);
-      Url : constant String := Get_String (Nth (Params, 1));
+      --  Url : constant String := Get_String (Nth (Params, 1));
    begin
-      Trace (Me, "on url: " & Url);
+      null;
    end On_Url;
 
    ------------------
@@ -174,13 +208,15 @@ package body Glide_Kernel.Help is
          Anchor := Url'Last + 1;
       end if;
 
+      Trace (Me, "Link_Clicked: " & Url & " Anchor=" & Anchor'Img);
+
       if Is_Absolute_Path (Url) then
          if Url /= Html.Current_Help_File.all then
             Result := Load_File
               (Kernel, Html, Url (Url'First .. Anchor - 1));
          end if;
 
-      elsif Url /= Basename then
+      elsif Url (Url'First .. Anchor - 1) /= Basename then
          Result := Load_File
            (Kernel, Html,
             Base_Dir & Url (Url'First .. Anchor - 1));
@@ -193,6 +229,40 @@ package body Glide_Kernel.Help is
       end if;
    end Link_Clicked;
 
+   ------------------------
+   -- Create_Html_Editor --
+   ------------------------
+
+   function Create_Html_Editor
+     (Kernel : access Kernel_Handle_Record'Class; File : String)
+      return Help_Browser
+   is
+      Html   : Help_Browser;
+      Result : Boolean;
+   begin
+      Html := new Help_Browser_Record;
+      Gtk.Scrolled_Window.Initialize (Html);
+      Set_Policy (Html, Policy_Automatic, Policy_Always);
+      Gtk_New (Html.Csc);
+      Add (Html, Html.Csc);
+      Set_Size_Request (Html, Default_Width, Default_Height);
+      Kernel_Callback.Object_Connect
+        (Html.Csc, "url_requested",
+         Url_Requested'Access, User_Data => Kernel_Handle (Kernel),
+         Slot_Object => Html);
+      Kernel_Callback.Object_Connect
+        (Html.Csc, "link_clicked",
+         Link_Clicked'Access, User_Data => Kernel_Handle (Kernel),
+         Slot_Object => Html);
+      Kernel_Callback.Object_Connect
+        (Html.Csc, "on_url",
+         On_Url'Access, User_Data => Kernel_Handle (Kernel),
+         Slot_Object => Html);
+
+      Result := Load_File (Kernel, Html, File);
+      return Html;
+   end Create_Html_Editor;
+
    ------------------
    -- Display_Help --
    ------------------
@@ -204,40 +274,19 @@ package body Glide_Kernel.Help is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
       Scrolled : Help_Browser;
       Child    : MDI_Child;
-      Result   : Boolean;
+      Result : Boolean;
    begin
-      Set_Busy_Cursor (Get_Window (Get_Main_Window (Kernel)), True, True);
       Child := Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
 
       if Child = null then
-         Scrolled := new Help_Browser_Record;
-         Gtk.Scrolled_Window.Initialize (Scrolled);
-         Set_Policy (Scrolled, Policy_Automatic, Policy_Always);
-         Gtk_New (Scrolled.Csc);
-         Add (Scrolled, Scrolled.Csc);
-         Set_Size_Request (Scrolled, Default_Width, Default_Height);
+         Scrolled := Create_Html_Editor (Kernel, Help_File);
          Child := Put (MDI, Scrolled);
-
          Set_Title (Child, -"Help");
          Show_All (Scrolled);
-         Kernel_Callback.Object_Connect
-           (Scrolled.Csc, "url_requested",
-            Url_Requested'Access, User_Data => Kernel_Handle (Kernel),
-            Slot_Object => Scrolled);
-         Kernel_Callback.Object_Connect
-           (Scrolled.Csc, "link_clicked",
-            Link_Clicked'Access, User_Data => Kernel_Handle (Kernel),
-            Slot_Object => Scrolled);
-         Kernel_Callback.Object_Connect
-           (Scrolled.Csc, "on_url",
-            On_Url'Access, User_Data => Kernel_Handle (Kernel),
-            Slot_Object => Scrolled);
       else
          Scrolled := Help_Browser (Get_Widget (Child));
+         Result := Load_File (Kernel, Scrolled, Help_File);
       end if;
-
-      Result := Load_File (Kernel, Scrolled, Help_File);
-      Set_Busy_Cursor (Get_Window (Get_Main_Window (Kernel)), False);
    end Display_Help;
 
    ------------
@@ -285,5 +334,92 @@ package body Glide_Kernel.Help is
       Scrolled := Help_Browser (Get_Widget (Child));
       return Search_Next (Get_Engine (Scrolled.Csc));
    end Search_Next;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
+      return Gtk_Widget
+   is
+      Editor : Help_Browser;
+      File : Glib.String_Ptr;
+   begin
+      if Node.Tag.all = "Help_Browser" then
+         File := Get_Field (Node, "File");
+         if File /= null then
+            Editor := Create_Html_Editor (User, File.all);
+         end if;
+
+         return Gtk_Widget (Editor);
+      end if;
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N, Child : Node_Ptr;
+   begin
+      if Widget.all in Help_Browser_Record'Class then
+         N := new Node;
+         N.Tag := new String' ("Help_Browser");
+
+         Child := new Node;
+         Child.Tag := new String' ("File");
+         Child.Value := new String'
+           (Help_Browser (Widget).Current_Help_File.all);
+         Add_Child (N, Child);
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
+
+   -----------------
+   -- Mime_Action --
+   -----------------
+
+   function Mime_Action
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Mime_Type : String;
+      Data      : GValue_Array;
+      Mode      : Mime_Mode := Read_Write) return Boolean
+   is
+   begin
+      if Mime_Type = Mime_Html_File then
+         declare
+            File : constant String := Get_String (Data (Data'First));
+         begin
+            Display_Help (Kernel, File);
+         end;
+
+         return True;
+      end if;
+      return False;
+   end Mime_Action;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      Html_Module_Id := Register_Module
+        (Module_Name             => Html_Module_Name,
+         Priority                => Default_Priority,
+         Initializer             => null,
+         Contextual_Menu_Handler => null,
+         Mime_Handler            => Mime_Action'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+   end Register_Module;
 
 end Glide_Kernel.Help;
