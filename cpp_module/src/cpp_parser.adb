@@ -39,7 +39,7 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Types;                     use Types;
 with Snames;                    use Snames;
 with Language_Handlers;         use Language_Handlers;
-with Language;
+with Language;                  use Language;
 
 pragma Warnings (Off);
 with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
@@ -151,7 +151,6 @@ package body CPP_Parser is
       Recursive     : Boolean := False) return LI_Handler_Iterator'Class;
    procedure Parse_File_Constructs
      (Handler      : access CPP_Handler_Record;
-      Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
       File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List);
@@ -2374,20 +2373,15 @@ package body CPP_Parser is
       for F in Iterator.Current_Files'Range loop
          declare
             File   : constant Virtual_File := Iterator.Current_Files (F);
-            Source : Source_File;
             Lang   : constant Name_Id := Get_Language_From_File
               (Project_Registry (Get_Registry (Project)), File);
             Xref_File_Name : constant String :=
               DB_Dir & Base_Name (File) & Xref_Suffix;
          begin
             if Lang = Name_C or else Lang = Name_C_Plus_Plus then
-               Source := Get_Or_Create
-                 (Db           => Iterator.Handler.Db,
-                  File         => File,
-                  Allow_Create => False);
 
-               if Source = null
-                 or else Get_Time_Stamp (Source) < File_Time_Stamp (File)
+               if File_Time_Stamp (Xref_File_Name) <
+                 File_Time_Stamp (File)
                then
                   Num_C_Files := Num_C_Files + 1;
 
@@ -2585,16 +2579,166 @@ package body CPP_Parser is
 
    procedure Parse_File_Constructs
      (Handler      : access CPP_Handler_Record;
-      Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
       File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List)
    is
-      pragma Unreferenced (Handler, Root_Project, Languages, File_Name,
-                           Result);
+      pragma Unreferenced (Languages);
+
+      Constructs      : Language.Construct_List;
+      P               : Pair;
+      Sym             : FIL_Table;
+      Info            : Construct_Access;
+      C               : Construct_Access;
+      Iter            : LI_Handler_Iterator'Class := Generate_LI_For_Project
+        (Handler,
+         Project   => Get_Project_From_File
+           (Handler.Registry, File_Name),
+         Recursive => False);
+      Finished        : Boolean;
+
    begin
-      --  ??? to be implemented
-      null;
+      --  In C/C++, it is the same cost to do it for one file or the whole
+      --  project
+      loop
+         Continue (Iter, Finished);
+         exit when Finished;
+      end loop;
+      Destroy (Iter);
+
+      if not Is_Open (Handler.SN_Table (FIL)) then
+         Open_DB_Files (Handler);
+      end if;
+
+      Set_Cursor
+        (Handler.SN_Table (FIL),
+         Position    => By_Key,
+         Key         => Full_Name (File_Name).all & Field_Sep,
+         Exact_Match => False);
+
+      loop
+         Get_Pair (Handler.SN_Table (FIL), Next_By_Key, Result => P);
+         exit when P = No_Pair;
+
+         Info := null;
+         C    := null;
+
+         Parse_Pair (P, Sym);
+
+         --  Build the next construct
+
+         case Sym.Symbol is
+            when CL | CON | E | IU | T | TA | UN | GV | IV | LV
+               | FD | FU | MA | MD | MI =>
+               --  Build the constructs
+               --  Use subtype instead ???
+
+               Info := Constructs.Current;
+               Constructs.Current := new Construct_Information;
+               C := Constructs.Current;
+               C.Is_Declaration := False;
+
+               --  Link
+
+               if Constructs.First = null then
+                  Constructs.First := Constructs.Current;
+               else
+                  Constructs.Current.Prev := Info;
+                  Constructs.Current.Next := Info.Next;
+                  Info.Next               := Constructs.Current;
+               end if;
+
+               --  Set name and location, common to all categories
+
+               C.Name := new String'
+                 (String (Sym.Key
+                            (Sym.Identifier.First .. Sym.Identifier.Last)));
+
+               --  ??? For now, do not set the third field (absolute source
+               --  location), since the explorer does not use it and
+               --  computing it is not simple.
+
+               C.Sloc_Start := (Sym.Start_Position.Line,
+                                Sym.Start_Position.Column,
+                                0);
+               C.Sloc_End := (Sym.End_Position.Line,
+                              Sym.End_Position.Column,
+                              0);
+               C.Sloc_Entity := (Sym.Start_Position.Line,
+                                 Sym.Start_Position.Column,
+                                 0);
+            when others =>
+               null;
+         end case;
+
+         --  Set the category
+
+         case Sym.Symbol is
+            when CL | TA =>
+               --  ??? make the distinction between struct and classes
+               --  which category for templates ???
+
+               C.Category := Cat_Structure;
+            when CON | GV =>
+               C.Category := Cat_Variable;
+            when IV | LV =>
+               C.Category := Cat_Local_Variable;
+            when E | T =>
+               C.Category := Cat_Type;
+            when IU =>
+               C.Category := Cat_Include;
+            when UN =>
+               C.Category := Cat_Union;
+            when FD =>
+               C.Category := Cat_Function;
+               C.Is_Declaration := True;
+            when FU =>
+               C.Category := Cat_Function;
+            when MA =>
+               --  Macros can either be "constants" (#define a 0)
+               --  or "functions" (#define f(a) ((a) == 0))
+               --  For now, only consider macros with arguments as
+               --  pseudo functions.
+
+               if Length (Sym.Types_Of_Arguments) > 0 then
+                  C.Category := Cat_Function;
+               else
+                  C.Category := Cat_Unknown;
+               end if;
+
+            when MD =>
+               C.Category := Cat_Method;
+               C.Is_Declaration := True;
+            when MI =>
+               C.Category := Cat_Method;
+            when others =>
+               null;
+         end case;
+
+         --  For functions and methods, get the profile
+         case Sym.Symbol is
+            when FD | FU | MA | MD | MI =>
+               --  Generate the profile
+
+               if Length (Sym.Types_Of_Arguments) > 0 then
+                  C.Profile := new String'
+                    ('('
+                     & String (Sym.Data (Sym.Types_Of_Arguments.First ..
+                                           Sym.Types_Of_Arguments.Last))
+                     & ')');
+               end if;
+
+            when others =>
+               null;
+         end case;
+      end loop;
+
+      Result := Constructs;
+      Release_Cursor (Handler.SN_Table (FIL));
+
+   exception
+      when E : others   =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Parse_File_Constructs;
 
 end CPP_Parser;
