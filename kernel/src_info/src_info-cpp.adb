@@ -426,7 +426,8 @@ package body Src_Info.CPP is
       List         : in out LI_File_List;
       Project_View : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List;
-      Decl_Info    : out E_Declaration_Info_List);
+      Decl_Info    : out E_Declaration_Info_List;
+      Strict       : Boolean := False);
    --  Attempts to find/create the first forward declaration
    --  for the method. Returns null if not found
 
@@ -439,7 +440,8 @@ package body Src_Info.CPP is
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
       List         : in out LI_File_List;
-      Decl_Info    : out E_Declaration_Info_List);
+      Decl_Info    : out E_Declaration_Info_List;
+      Strict       : Boolean := False);
    --  Attempts to find/create the first forward declaration
    --  for the function. Returns null if not found
 
@@ -1093,7 +1095,8 @@ package body Src_Info.CPP is
       List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
       Module_Type_Defs : Module_Typedefs_List;
-      Decl_Info        : out E_Declaration_Info_List)
+      Decl_Info        : out E_Declaration_Info_List;
+      Strict           : Boolean := False)
    is
       P            : Pair_Ptr;
       MD_Tab       : MD_Table;
@@ -1134,7 +1137,8 @@ package body Src_Info.CPP is
             MD_Tab.Arg_Types,
             Arg_Types,
             MD_Tab.Return_Type,
-            Return_Type);
+            Return_Type,
+            Strict => Strict);
          Free (MD_Tab);
       end loop;
 
@@ -1163,7 +1167,8 @@ package body Src_Info.CPP is
                MD_Tab.Arg_Types,
                MD_Tab_Tmp.Arg_Types,
                MD_Tab.Return_Type,
-               MD_Tab_Tmp.Return_Type)
+               MD_Tab_Tmp.Return_Type,
+               Strict => Strict)
             and then ((First_MD_Pos = Invalid_Point)
             or else MD_Tab_Tmp.Start_Position < First_MD_Pos) then
             First_MD_Pos := MD_Tab_Tmp.Start_Position;
@@ -1252,7 +1257,8 @@ package body Src_Info.CPP is
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
       List         : in out LI_File_List;
-      Decl_Info    : out E_Declaration_Info_List)
+      Decl_Info    : out E_Declaration_Info_List;
+      Strict       : Boolean := False)
    is
       P            : Pair_Ptr;
       FD_Tab       : FD_Table;
@@ -1292,7 +1298,8 @@ package body Src_Info.CPP is
                FD_Tab.Arg_Types,
                Arg_Types,
                FD_Tab.Return_Type,
-               Return_Type);
+               Return_Type,
+               Strict => Strict);
          Free (FD_Tab);
       end loop;
 
@@ -1329,7 +1336,8 @@ package body Src_Info.CPP is
             FD_Tab.Arg_Types,
             FD_Tab_Tmp.Arg_Types,
             FD_Tab.Return_Type,
-            FD_Tab_Tmp.Return_Type);
+            FD_Tab_Tmp.Return_Type,
+            Strict => Strict);
 
          if Match and then FD_Tab_Tmp.Start_Position < First_FD_Pos then
             First_FD_Pos := FD_Tab_Tmp.Start_Position;
@@ -2087,7 +2095,7 @@ package body Src_Info.CPP is
       --  Info ("Fu_To_Fu_Handler: " & Ref_Id);
 
       if Is_Open (Handler.SN_Table (FD)) then
-         Set_Cursor (Handler.SN_Table (FD), By_Key, Ref_Id, False);
+         Set_Cursor (Handler.SN_Table (FD), By_Key, Ref_Id & Field_Sep, False);
 
          loop
             P := Get_Pair (Handler.SN_Table (FD), Next_By_Key);
@@ -2102,7 +2110,8 @@ package body Src_Info.CPP is
                   (FDecl.Buffer,
                    FDecl_Tmp.Buffer,
                    FDecl.Arg_Types,
-                   FDecl_Tmp.Arg_Types);
+                   FDecl_Tmp.Arg_Types,
+                   Strict => True);
                Free (FDecl_Tmp);
                exit when Overloaded;
             end if;
@@ -2114,7 +2123,7 @@ package body Src_Info.CPP is
          --  Forward declarations may be overloaded by inline implementations
          --  this is what we check here. If no forward declaration was found
          --  above we search for a suitable function body
-         Set_Cursor (Handler.SN_Table (FU), By_Key, Ref_Id, False);
+         Set_Cursor (Handler.SN_Table (FU), By_Key, Ref_Id & Field_Sep, False);
 
          loop
             P := Get_Pair (Handler.SN_Table (FU), Next_By_Key);
@@ -2138,7 +2147,8 @@ package body Src_Info.CPP is
                   (Fn_Tmp.Buffer,
                    FDecl.Buffer,
                    Fn_Tmp.Arg_Types,
-                   FDecl.Arg_Types);
+                   FDecl.Arg_Types,
+                   Strict => True);
                if not Overloaded then -- we found the body!
                   No_Body := False;
                   Fn      := Fn_Tmp;
@@ -2194,7 +2204,8 @@ package body Src_Info.CPP is
                Handler,
                File,
                List,
-               Decl_Info);
+               Decl_Info,
+               Strict => True);
          else -- when only body is available
             Decl_Info := Find_Declaration
               (File        => File,
@@ -2545,7 +2556,8 @@ package body Src_Info.CPP is
               (MDecl_Tmp.Buffer,
                MDecl.Buffer,
                MDecl_Tmp.Arg_Types,
-               MDecl.Arg_Types);
+               MDecl.Arg_Types,
+               Strict => True);
             Free (MDecl_Tmp);
             exit when Overloaded;
          end if;
@@ -2578,7 +2590,8 @@ package body Src_Info.CPP is
               (MDecl.Buffer,
                Fn.Buffer,
                MDecl.Arg_Types,
-               Fn.Arg_Types);
+               Fn.Arg_Types,
+               Strict => True);
             Init := True;
             Free (Fn);
          end loop;
@@ -2615,7 +2628,8 @@ package body Src_Info.CPP is
             List,
             Project_View,
             Module_Type_Defs,
-            Decl_Info);
+            Decl_Info,
+            Strict => True);
 
          if Decl_Info = null then
             --  method is used before
@@ -3390,7 +3404,8 @@ package body Src_Info.CPP is
             FD_Tab.Arg_Types,
             FD_Tab_Tmp.Arg_Types,
             FD_Tab.Return_Type,
-            FD_Tab_Tmp.Return_Type);
+            FD_Tab_Tmp.Return_Type,
+            Strict => True);
 
          if (Match and then First_FD_Pos = Invalid_Point)
                or else FD_Tab_Tmp.Start_Position < First_FD_Pos then
@@ -3456,7 +3471,8 @@ package body Src_Info.CPP is
                 FD_Tab.Arg_Types,
                 FU_Tab.Arg_Types,
                 FD_Tab.Return_Type,
-                FU_Tab.Return_Type);
+                FU_Tab.Return_Type,
+                Strict => True);
             exit when Match;
             Free (FU_Tab);
          end loop;
@@ -3654,7 +3670,8 @@ package body Src_Info.CPP is
             List,
             Project_View,
             Module_Type_Defs,
-            Decl_Info);
+            Decl_Info,
+            Strict => True);
          if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
             Body_Position := Sym.Start_Position;
          end if;
@@ -3669,7 +3686,8 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
-            Decl_Info);
+            Decl_Info,
+            Strict => True);
          if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
             Body_Position := Sym.Start_Position;
          end if;
@@ -4116,7 +4134,8 @@ package body Src_Info.CPP is
                MD_Tab.Arg_Types,
                MD_Tab_Tmp.Arg_Types,
                MD_Tab.Return_Type,
-               MD_Tab_Tmp.Return_Type)
+               MD_Tab_Tmp.Return_Type,
+               Strict => True)
             and then ((First_MD_Pos = Invalid_Point)
             or else MD_Tab_Tmp.Start_Position < First_MD_Pos) then
             First_MD_Pos := MD_Tab_Tmp.Start_Position;
@@ -4220,7 +4239,8 @@ package body Src_Info.CPP is
                 MD_Tab.Arg_Types,
                 MI_Tab.Arg_Types,
                 MD_Tab.Return_Type,
-                MI_Tab.Return_Type);
+                MI_Tab.Return_Type,
+                Strict => True);
             exit when Found;
             Free (MI_Tab);
          end loop;
