@@ -203,6 +203,7 @@ package body Navigation_Module is
          "Editor.cursor_set_position",
          (Full_Name (File).all'Unrestricted_Access,
           Line_Img'Unchecked_Access));
+
       if Center then
          Execute_GPS_Shell_Command
            (Kernel,
@@ -740,11 +741,11 @@ package body Navigation_Module is
       Register_Menu (Kernel, Navigate, -"_End Of Statement",
                      Stock_Go_Down, On_End_Statement'Access,
                      null, GDK_Down, Mod1_Mask);
-      Register_Menu (Kernel, Navigate, -"Next Subprogram", "",
-                     On_Next_Subprogram'Access, null, GDK_Down, Control_Mask);
       Register_Menu (Kernel, Navigate, -"Previous Subprogram", "",
                      On_Previous_Subprogram'Access, null,
                      GDK_Up, Control_Mask);
+      Register_Menu (Kernel, Navigate, -"Next Subprogram", "",
+                     On_Next_Subprogram'Access, null, GDK_Down, Control_Mask);
 
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
