@@ -1865,7 +1865,7 @@ package body Switches_Editors is
          File_Name : String)
       is
          Language : constant Name_Id := Get_String (Page.Lang.all);
-         Args     : Argument_List := Get_Switches (Page, Normalize => True);
+         Args     : Argument_List := Get_Switches (Page, Normalize => False);
          Value    : Prj.Variable_Value;
          Is_Default_Value : Boolean;
          Rename_Prj : Project_Type;
