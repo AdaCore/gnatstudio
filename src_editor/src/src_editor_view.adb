@@ -547,11 +547,21 @@ package body Src_Editor_View is
             procedure Draw_Block (L : Integer; B : Block_Record);
             --  Draw block B at line L.
 
+            ----------------
+            -- Draw_Block --
+            ----------------
+
             procedure Draw_Block (L : Integer; B : Block_Record) is
                Block_Begin_Y : Gint;
                Y             : Gint;
                Height        : Gint;
                X             : Gint;
+
+               Bracket_Length : constant := 6;
+               --  The length of upper and lower parts of the barcket.
+
+               Bracket_Offset : constant := 2;
+               --  The distance between brackets and text.
 
             begin
                Get_Iter_At_Line_Offset
@@ -568,13 +578,15 @@ package body Src_Editor_View is
                  (View,
                   Text_Window_Text, Dummy, Block_Begin_Y, Dummy, Y);
 
-               X := Gint (Block.Offset - 1) * View.Char_Width - 2;
+               X := Gint (Block.Offset - 1) * View.Char_Width - Bracket_Offset;
 
                Draw_Line (Window, View.Current_Block_GC, X, Y, X, Y + Height);
-               Draw_Line (Window, View.Current_Block_GC, X, Y, X + 6, Y);
+               Draw_Line
+                 (Window, View.Current_Block_GC, X, Y, X + Bracket_Length, Y);
                Draw_Line
                  (Window,
-                  View.Current_Block_GC, X, Y + Height, X + 6, Y + Height);
+                  View.Current_Block_GC,
+                  X, Y + Height, X + Bracket_Length, Y + Height);
             end Draw_Block;
 
          begin
