@@ -1101,8 +1101,7 @@ package body Vdiff2_Module.Utils is
          File2        => File2,
          File3        => File3,
          Current_Node => First (Result),
-         Ref_File     => 2,
-         Tmp_File     => VFS.No_File);
+         Ref_File     => 2);
       Process_Differences (Kernel, Item, Id.List_Diff);
    end Visual_Diff;
 
@@ -1114,8 +1113,7 @@ package body Vdiff2_Module.Utils is
      (Orig_File : VFS.Virtual_File;
       New_File  : VFS.Virtual_File;
       Diff_File : VFS.Virtual_File;
-      Revert    : Boolean := False;
-      Tmp_File  : VFS.Virtual_File := VFS.No_File) return Boolean
+      Revert    : Boolean := False) return Boolean
    is
       Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
       Kernel : constant Kernel_Handle := Get_Kernel (Id.all);
@@ -1141,9 +1139,9 @@ package body Vdiff2_Module.Utils is
          File2        => New_File,
          File3        => VFS.No_File,
          Current_Node => First (Result),
-         Ref_File     => 1,
-         Tmp_File     => Tmp_File);
+         Ref_File     => 1);
       Process_Differences (Kernel, Item, Id.List_Diff);
+
       return True;
    end Visual_Patch;
 
