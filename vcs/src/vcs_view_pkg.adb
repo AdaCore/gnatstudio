@@ -397,7 +397,7 @@ package body VCS_View_Pkg is
       Set_Value (Explorer.Model, Iter, Selected_Column, Bool_Value);
 
       Set_String  (String_Value,
-                   Base_File_Name (Head (Status_Record.File_Name)));
+                   Base_Name (Head (Status_Record.File_Name)));
       Set_Value (Explorer.Model, Iter, Name_Column, String_Value);
 
       if not Is_Empty (Status_Record.Working_Revision) then
@@ -1018,7 +1018,7 @@ package body VCS_View_Pkg is
             while not File_Status_List.Is_Empty (Result) loop
                Iter := Get_Iter_From_Name
                  (Explorer,
-                  Base_File_Name
+                  Base_Name
                     (Head (File_Status_List.Head (Result).File_Name)));
 
                if Iter /= Null_Iter then
