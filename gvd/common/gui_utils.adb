@@ -61,7 +61,7 @@ package body GUI_Utils is
 
    procedure Add_Unique_List_Entry
      (List : access Gtk.List.Gtk_List_Record'Class;
-      Text  : String)
+      Text : String)
    is
       use Widget_List;
 
