@@ -2133,8 +2133,7 @@ package body Debugger.Gdb is
    procedure Put_Memory_Byte
      (Debugger : access Gdb_Debugger;
       Address  : in String;
-      Byte     : in String)
-   is
+      Byte     : in String) is
    begin
       Send (Debugger, "set {byte}" & Address & " := 0x" & Byte,
             Mode => Internal);
@@ -2148,13 +2147,14 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Variable  : in String) return String
    is
-      S : constant String := Send
+      S         : constant String := Send
         (Debugger, "print &(" & Variable & ")", Mode => Internal);
-      Index : Integer := S'Last;
-      SNF : constant String := -"No ";
+      Index     : Integer := S'Last;
+      Error_Msg : constant String := "No ";
       --  Error messages can be "No definition..." or "No symbol..."
+
    begin
-      if S (S'First .. S'First + SNF'Length - 1) = SNF then
+      if S (S'First .. S'First + Error_Msg'Length - 1) = Error_Msg then
          return "";
       end if;
 
@@ -2169,6 +2169,7 @@ package body Debugger.Gdb is
 
          exit when S (Index - 1) = '0';
       end loop;
+
       return S (Index - 1 .. S'Last);
    end Get_Variable_Address;
 
