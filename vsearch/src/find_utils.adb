@@ -697,7 +697,7 @@ package body Find_Utils is
    function Context_As_Regexp (Context : access Search_Context)
       return GNAT.Regpat.Pattern_Matcher
    is
-      Flags : Regexp_Flags := No_Flags;
+      Flags : Regexp_Flags := Multiple_Lines;
       WD    : constant String := "\b";  -- Word_Delimiter
    begin
       if Context.RE_Matcher = null then
@@ -706,7 +706,7 @@ package body Find_Utils is
          end if;
 
          if not Context.Options.Case_Sensitive then
-            Flags := Case_Insensitive;
+            Flags := Flags or Case_Insensitive;
          end if;
 
          if Context.Options.Whole_Word then
