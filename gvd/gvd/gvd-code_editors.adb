@@ -437,4 +437,22 @@ package body GVD.Code_Editors is
       end if;
    end On_Executable_Changed;
 
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Edit : constant Code_Editor := Code_Editor (Editor);
+   begin
+      if Edit.Mode = Source_Only or else Edit.Mode = Source_Asm then
+         GVD.Source_Editors.Preferences_Changed (Edit.Source);
+      end if;
+
+--        if Edit.Mode = Asm_Only or else Edit.Mode = Source_Asm then
+--           Preferences_Changed (Edit.Asm);
+--        end if;
+   end Preferences_Changed;
+
 end GVD.Code_Editors;

@@ -157,6 +157,11 @@ package GVD.Code_Editors is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Called when the executable associated with the editor has changed.
 
+   procedure Preferences_Changed
+     (Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the preferences have changed, and the editor should be
+   --  redisplayed with the new setup.
+
 private
 
    type View_Mode is (Source_Only, Asm_Only, Source_Asm);
