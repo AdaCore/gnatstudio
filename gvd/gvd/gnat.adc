@@ -956,7 +956,6 @@ pragma Eliminate (Gtk.Widget, Has_Grab_Is_Set);
 pragma Eliminate (Gtk.Widget, Rc_Style_Is_Set);
 pragma Eliminate (Gtk.Widget, Generate);
 pragma Eliminate (Gtk.Widget, Widget_List.Alloc);
-pragma Eliminate (Gtk.Widget, Widget_List.Append);
 pragma Eliminate (Gtk.Widget, Widget_List.Concat);
 pragma Eliminate (Gtk.Widget, Widget_List.Insert);
 pragma Eliminate (Gtk.Widget, Widget_List.Find);
