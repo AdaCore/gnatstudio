@@ -1,3 +1,11 @@
+Known Problems fixed in GPS 1.2.1
+
+- C425-015 Tooltip flashing under Windows
+  Problem:    Under Windows only, when you move the mouse on the menu
+              Project->Recompute Project, a tooltip is displayed and
+              immediately removed, continuousely.
+  Workaround: Mouse the mouse to another menu item.
+
 Known Problems fixed in GPS 1.2.0
 
 - C404-010 Bad indentation of task specs in some cases
