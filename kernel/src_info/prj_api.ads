@@ -190,6 +190,8 @@ package Prj_API is
    --  Is_Default_Value is set to true if file-specific switches were not
    --  specified, and Value is in fact the list of default switches defined
    --  at the package level.
+   --  File can be No_Name if you want to find the default switches to use for
+   --  all files in the project.
 
    function Length (Value : Variable_Value) return Integer;
    --  Return the number of elements in Value (1 if Value is of kind Single)
