@@ -204,33 +204,60 @@ package body Codefix.Errors_Manager is
       Solutions       : Solution_List;
       New_Error       : Error_Id;
       Category        : String_Access;
+      Previous_Message : Error_Message := Invalid_Error_Message;
    begin
       while not No_More_Messages (Errors_List) loop
          Get_Message (Errors_List, Source_Text, Current_Message);
 
          if Current_Message /= Invalid_Error_Message then
+            --  Ignore style and warning errors if there are already standard
+            --  errors on the same line. The latter needs to be fixed first,
+            --  since their correction will often make the fix for the
+            --  standard error irrelevant.
+            --
+            --  We are assuming that style errors and/or warnings are grouped
+            --  together.
 
-            Solutions := Solution_List (Command_List.Null_List);
-            Get_Solutions
-              (Source_Text,
-               Errors_List,
-               Current_Message,
-               Category,
-               Solutions);
+            if Previous_Message /= Invalid_Error_Message
+              and then Is_Style_Or_Warning (Previous_Message)
+              and then not Is_Style_Or_Warning (Current_Message)
+            then
+               --  Remove previous from list
+               Memorized_Corrections.Remove_Nodes
+                 (This.Potential_Corrections,
+                  Prev (This.Potential_Corrections,
+                        Last (This.Potential_Corrections)));
 
-            if Length (Solutions) > 0 then
-               Add_Error
-                 (This, Current_Message, Solutions, Category.all, New_Error);
+            elsif Previous_Message /= Invalid_Error_Message
+              and then Is_Style_Or_Warning (Current_Message)
+              and then not Is_Style_Or_Warning (Previous_Message)
+            then
+               --  Ignore this error
+               null;
 
-               if Callback /= null then
-                  Callback
-                    (New_Error,
-                     Source_Text,
-                     This);
+            else
+               Solutions := Solution_List (Command_List.Null_List);
+               Get_Solutions
+                 (Source_Text,
+                  Errors_List,
+                  Current_Message,
+                  Category,
+                  Solutions);
+
+               if Length (Solutions) > 0 then
+                  Add_Error
+                    (This, Current_Message, Solutions,
+                     Category.all, New_Error);
+
+                  if Callback /= null then
+                     Callback (New_Error, Source_Text, This);
+                  end if;
+
+                  Previous_Message := Current_Message;
                end if;
-            end if;
 
-            Free (Category);
+               Free (Category);
+            end if;
          end if;
 
          Free (Current_Message);
