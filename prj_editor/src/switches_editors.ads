@@ -32,6 +32,7 @@ with Gtk.Table;        use Gtk.Table;
 with Gtk.GEntry;
 with Gtk.Notebook;     use Gtk.Notebook;
 with Gtk.Size_Group;
+with Gtk.Tooltips;
 with Gtk.Widget;
 with GNAT.OS_Lib;
 with Glib.Object;
@@ -52,7 +53,8 @@ package Switches_Editors is
       Title           : String;
       Project_Package : String;
       Language        : String;
-      Lines, Cols     : Glib.Guint);
+      Lines, Cols     : Glib.Guint;
+      Tips            : access Gtk.Tooltips.Gtk_Tooltips_Record'Class);
    --  Create a new page, that should be displayed when a file with the given
    --  language is displayed. The page is setup as a table of (Line + 1) x
    --  Cols, the last line being automatically created for the command line.
@@ -65,7 +67,8 @@ package Switches_Editors is
      (Page   : access Switches_Editor_Page_Record;
       Box    : access Gtk.Box.Gtk_Box_Record'Class;
       Label  : String;
-      Switch : String);
+      Switch : String;
+      Tip    : String := "");
    --  Create a new check button for a simple switch in Page.
    --  The new button is added at the end of Box.
    --  Switch is the switch to put on the command line when the button is
@@ -76,7 +79,8 @@ package Switches_Editors is
       Box               : access Gtk.Box.Gtk_Box_Record'Class;
       Label             : String;
       Switch            : String;
-      Min, Max, Default : Integer);
+      Min, Max, Default : Integer;
+      Tip               : String := "");
    --  Create a new spin button for a switch with multiple levels.
    --  The actual switch on the command line is "-" & Switch & Leve, as in
    --  "-j2".
@@ -88,6 +92,7 @@ package Switches_Editors is
    type Radio_Switch is record
       Label  : Cst_String_Access;
       Switch : Cst_String_Access;
+      Tip    : Cst_String_Access := null;
    end record;
 
    type Radio_Switch_Array is array (Positive range <>) of Radio_Switch;
@@ -113,6 +118,7 @@ package Switches_Editors is
       Default_No_Switch    : String;
       Default_No_Digit     : String;
       Buttons              : Combo_Switch_Array;
+      Tip                  : String := "";
       Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null)
       return Gtk.Widget.Gtk_Widget;
    --  Create a new combo button. Switch is displayed on the left of the combo
@@ -199,7 +205,9 @@ package Switches_Editors is
    type Switches_Edit_Record is new Gtk_Notebook_Record with private;
    type Switches_Edit is access all Switches_Edit_Record'Class;
 
-   procedure Gtk_New (Editor : out Switches_Edit);
+   procedure Gtk_New
+     (Editor : out Switches_Edit;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new switches editor.
 
    procedure Set_Visible_Pages
@@ -292,6 +300,7 @@ private
       Pkg      : GNAT.OS_Lib.String_Access;
       Switches : Widget_Array_Access;
       Cmd_Line : Gtk.GEntry.Gtk_Entry;
+      Tips     : Gtk.Tooltips.Gtk_Tooltips;
 
       Coalesce_Switches : GNAT.OS_Lib.String_List_Access;
       --  List of coalesce switches (see Add_Coalesce_Switch). This is never
