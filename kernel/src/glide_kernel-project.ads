@@ -189,6 +189,12 @@ package Glide_Kernel.Project is
    --  project.
    --  Short_File_Name shouldn't include any directory specification.
 
+   procedure Change_Project_Dir
+     (Handle : access Kernel_Handle_Record'Class;
+      Dir    : String);
+   --  Change the current directory, and update the project source directory
+   --  if the current project is the default project.
+
    --------------
    -- Scenarii --
    --------------

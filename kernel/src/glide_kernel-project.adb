@@ -64,6 +64,35 @@ package body Glide_Kernel.Project is
    --  Compute the predefined source and object paths, given the current
    --  project view associated with Handle.
 
+   ------------------------
+   -- Change_Project_Dir --
+   ------------------------
+
+   procedure Change_Project_Dir
+     (Handle : access Kernel_Handle_Record'Class;
+      Dir    : String)
+   is
+      Project : Project_Node_Id;
+      Default : constant String := "default";
+
+   begin
+      Change_Dir (Dir);
+
+      if Get_Project_File_Name (Handle) = "" then
+         Project := Default_Project_Node (N_Project);
+
+         --  Adding the project path
+         Name_Len := Dir'Length;
+         Name_Buffer (1 .. Name_Len) := Dir;
+         Set_Directory_Of (Project, Name_Enter);
+
+         Name_Len := Name_Len + Default'Length;
+         Name_Buffer (Name_Len - Default'Length + 1 .. Name_Len) := Default;
+         Set_Path_Name_Of (Project, Name_Enter);
+         Recompute_View (Handle);
+      end if;
+   end Change_Project_Dir;
+
    ----------------------
    -- Find_Source_File --
    ----------------------
@@ -373,9 +402,8 @@ package body Glide_Kernel.Project is
 
    begin
       --  To avoid any problem with invalid variable values, we need to provide
-      --  a current value when no default value is provided by the user
-      --  ??? Is this really needed, when GPS should always have a value for
-      --  the variable, set through the combo boxes.
+      --  a current value when no default value is provided by the user.
+      --  This is needed at least for hand written projects.
 
       for J in Scenario_Vars'Range loop
          if External_Default (Scenario_Vars (J)) = Empty_Node then
