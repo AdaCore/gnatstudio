@@ -23,7 +23,6 @@
 --  to handle a set of casing exceptions.
 
 with String_Hash;
-with Traces;      use Traces;
 
 package Case_Handling is
 
@@ -103,9 +102,6 @@ package Case_Handling is
    procedure Destroy (C : in out Casing_Exceptions);
    --  Destroy the case exceptions handler, release all memory associated
    --  with this object.
-
-   On_The_Fly_Casing : constant Debug_Handle :=
-                         Create ("on_the_fly_casing", Off);
 
 private
 
