@@ -554,8 +554,7 @@ procedure GPS.Main is
       Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
              ") hosted on " & Config.Target);
 
-      Gtk_New
-        (GPS_Main, "<gps>", GPS.Menu.GPS_Menu_Items.all, Dir.all, Prefix.all);
+      Gtk_New (GPS_Main, Dir.all, Prefix.all);
 
       About_Contents := Read_File
         (Format_Pathname (GPS_Main.Prefix_Directory.all &
