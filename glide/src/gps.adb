@@ -90,6 +90,7 @@ with Vsearch_Ext;
 with Help_Module;
 with Codefix_Module;
 with Python_Module;
+with KeyManager_Module;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -532,6 +533,12 @@ procedure GPS is
       Shell_Script.Register_Module (GPS.Kernel);
       Python_Module.Register_Module (GPS.Kernel);
       Register_Default_Script_Commands (GPS.Kernel);
+
+      --  We then must register the keymanager, so that other modules can
+      --  register their keys
+
+      KeyManager_Module.Register_Module (GPS.Kernel);
+      Register_Keys (GPS);
 
       Vsearch_Ext.Register_Module (GPS.Kernel);
       Help_Module.Register_Module (GPS.Kernel);
