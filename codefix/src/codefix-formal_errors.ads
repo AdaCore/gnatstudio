@@ -135,6 +135,12 @@ package Codefix.Formal_Errors is
       Cursor       : File_Cursor'Class;
       Name         : String) return Ada_List;
 
+   function Resolve_Ambiguity
+     (Current_Text    : Text_Navigator_Abstr'Class;
+      Error_Cursor    : File_Cursor'Class;
+      Solution_Cursor : File_Cursor'Class;
+      Name            : String) return Extract;
+
 private
 
    type Error_Message is new File_Cursor with record
