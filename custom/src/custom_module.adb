@@ -812,7 +812,10 @@ package body Custom_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Process_Class       : constant Class_Type := New_Class
+        (Kernel, "Process", "Interface to expect-related commands");
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -827,7 +830,7 @@ package body Custom_Module is
 
       Register_Command
         (Kernel,
-         Command => "Process.spawn",
+         Command => "spawn",
          Params  => "(command, regexp, on_match_action, on_exit_action)",
          Minimum_Args => 4,
          Maximum_Args => 4,
@@ -849,47 +852,55 @@ package body Custom_Module is
            & "  $2 = the exit status" & ASCII.LF
            & "  $3 = the entire output of the process" & ASCII.LF
            & "" & ASCII.LF),
-         Handler => Custom_Spawn_Handler'Access);
+         Class         => Process_Class,
+         Static_Method => True,
+         Handler       => Custom_Spawn_Handler'Access);
       --  ??? should specify profiles of on_match_action and on_exit_action.
       --  ??? should document return value
 
       Register_Command
         (Kernel,
-         Command => "Process.send",
-         Params  => "(id, command, add_lf[=TRUE])",
-         Minimum_Args => 2,
-         Maximum_Args => 3,
-         Return_Value => "(null)",
-         Description  =>
+         Command       => "send",
+         Params        => "(id, command, add_lf[=TRUE])",
+         Minimum_Args  => 2,
+         Maximum_Args  => 3,
+         Return_Value  => "(null)",
+         Description   =>
          -("Send a line of text to process controlled by GPS."),
-         Handler => Custom_Spawn_Handler'Access);
+         Class         => Process_Class,
+         Static_Method => True,
+         Handler       => Custom_Spawn_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "Process.interrupt",
-         Params  => "(id)",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Return_Value => "(null)",
-         Description  =>
+         Command       => "interrupt",
+         Params        => "(id)",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Return_Value  => "(null)",
+         Description   =>
          -("Interrupt a process controlled by GPS."),
-         Handler => Custom_Spawn_Handler'Access);
+         Class         => Process_Class,
+         Static_Method => True,
+         Handler       => Custom_Spawn_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "Process.kill",
-         Params  => "(id)",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Return_Value => "(null)",
-         Description  =>
+         Command       => "kill",
+         Params        => "(id)",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Return_Value  => "(null)",
+         Description   =>
          -("Terminate a process controlled by GPS."),
-         Handler => Custom_Spawn_Handler'Access);
+         Class         => Process_Class,
+         Static_Method => True,
+         Handler       => Custom_Spawn_Handler'Access);
 
       Register_Command
         (Kernel,
-         Command => "Process.expect",
-         Params  => "(id, regexp, expect_action)",
+         Command      => "expect",
+         Params       => "(id, regexp, expect_action)",
          Minimum_Args => 3,
          Maximum_Args => 3,
          Return_Value => "(null)",
@@ -902,7 +913,9 @@ package body Custom_Module is
            & "  $1 = the ID of the process" & ASCII.LF
            & "  $2 = the string which matched the regexp" & ASCII.LF
            & "  $3 = the string since the last match" & ASCII.LF),
-         Handler => Custom_Spawn_Handler'Access);
+         Class         => Process_Class,
+         Static_Method => True,
+         Handler       => Custom_Spawn_Handler'Access);
    end Register_Module;
 
    ----------
