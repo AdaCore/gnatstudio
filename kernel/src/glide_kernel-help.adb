@@ -29,6 +29,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Glide_Intl;                use Glide_Intl;
 with Traces;                    use Traces;
 with OS_Utils;                  use OS_Utils;
@@ -61,17 +62,15 @@ package body Glide_Kernel.Help is
    --  Kernel. Return True if the file could be successfully read.
 
    procedure Url_Requested
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Kernel : Kernel_Handle);
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
    --  Handler for the url_requested signal
    --  Called when loading a url as part of another page display (e.g an
    --  image).
 
    procedure On_Url
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Kernel : Kernel_Handle);
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
    --  Handler for the on_url signal
 
    procedure Link_Clicked
@@ -151,9 +150,8 @@ package body Glide_Kernel.Help is
    -------------------
 
    procedure Url_Requested
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Kernel : Kernel_Handle)
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
    is
       Html     : Help_Browser := Help_Browser (Object);
       Url      : constant String := Get_String (Nth (Params, 1));
@@ -183,10 +181,10 @@ package body Glide_Kernel.Help is
    ------------
 
    procedure On_Url
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Kernel : Kernel_Handle)
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
    is
+      pragma Unreferenced (Object);
       --  Html     : Help_Browser := Help_Browser (Object);
       Url : constant String := Get_String (Nth (Params, 1));
    begin
@@ -244,6 +242,7 @@ package body Glide_Kernel.Help is
       Params : Glib.Values.GValues;
       Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Object);
       Title : constant String := Get_String (Nth (Params, 1));
       MDI   : constant MDI_Window := Get_MDI (Kernel);
       Child : MDI_Child;
@@ -274,18 +273,14 @@ package body Glide_Kernel.Help is
       Add (Html, Html.Csc);
       Set_Size_Request (Html, Default_Width, Default_Height);
 
-      Kernel_Callback.Object_Connect
-        (Html.Csc, "url_requested",
-         Url_Requested'Access, User_Data => Kernel_Handle (Kernel),
-         Slot_Object => Html);
+      Widget_Callback.Object_Connect
+        (Html.Csc, "url_requested", Url_Requested'Access, Slot_Object => Html);
       Kernel_Callback.Object_Connect
         (Html.Csc, "link_clicked",
          Link_Clicked'Access, User_Data => Kernel_Handle (Kernel),
          Slot_Object => Html);
-      Kernel_Callback.Object_Connect
-        (Html.Csc, "on_url",
-         On_Url'Access, User_Data => Kernel_Handle (Kernel),
-         Slot_Object => Html);
+      Widget_Callback.Object_Connect
+        (Html.Csc, "on_url", On_Url'Access, Slot_Object => Html);
       Kernel_Callback.Object_Connect
         (Html.Csc, "title_changed",
          Title_Changed'Access, User_Data => Kernel_Handle (Kernel),
@@ -432,7 +427,9 @@ package body Glide_Kernel.Help is
      (Kernel    : access Kernel_Handle_Record'Class;
       Mime_Type : String;
       Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean is
+      Mode      : Mime_Mode := Read_Write) return Boolean
+   is
+      pragma Unreferenced (Mode);
    begin
       if Mime_Type = Mime_Html_File then
          declare
