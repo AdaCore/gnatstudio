@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1177,6 +1177,7 @@ package body Project_Explorers_Files is
            (Child, -"Project Explorer - File View",  -"File View");
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
+         Raise_Child (Child);
       else
          Raise_Child (Child);
          Set_Focus_Child (Get_MDI (Kernel), Child);
