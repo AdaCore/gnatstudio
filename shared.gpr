@@ -14,4 +14,15 @@ project Shared is
       for VCS_File_Check use "ci_check";
    end IDE;
 
+   package Compiler is
+      case Build is
+         when "Debug" =>
+            for Default_Switches ("Ada") use
+              ("-g", "-O0", "-gnata", "-gnatVa", "-gnatQ", "-gnaty",
+               "-gnatwbeurk");
+         when "Production" =>
+            for Default_Switches ("Ada") use ("-O2", "-gnatws");
+      end case;
+   end Compiler;
+
 end Shared;
