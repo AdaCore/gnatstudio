@@ -74,8 +74,6 @@ package GVD.Status_Bar is
      (Status : access GVD_Status_Bar_Record) return Gtk.Box.Gtk_Hbox;
    --  Return the area to which you can add progress bars, using Pack_End.
    --  Calling this function hides the integrated progress bar.
-   --  This destroys the internal toolbar, making the functions Set_Fraction
-   --  and Set_Progress_Text unusable.
 
 private
    type Id_Array is array (Category'Range) of Gtk.Status_Bar.Context_Id;

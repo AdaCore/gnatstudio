@@ -348,7 +348,6 @@ package body GVD.Status_Bar is
      (Status : access GVD_Status_Bar_Record) return Gtk.Box.Gtk_Hbox
    is
    begin
-      Destroy (Status.Progress);
       return Gtk_Hbox (Status);
    end Get_Progress_Area;
 
