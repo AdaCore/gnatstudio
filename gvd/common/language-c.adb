@@ -45,17 +45,17 @@ package body Language.Debugger.C is
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
-     ("^\w+\s+"           --  type specs; there can be no
---        & "([\w_*]+\s+)?"   --  more than 3 tokens, right?
---        & "([\w_*]+\s+)?"
-      & "([*&]+\s*)?"     --  pointer
-      & "([\w_*]+)\s*\(",  --  Name
-      Multiple_Lines);
+       ("^\w+\s+"           --  type specs; there can be no
+        & "([\w_*]+\s+)?"   --  more than 3 tokens, right?
+        & "([\w_*]+\s+)?"
+        & "([*&]+\s*)?"     --  pointer
+        & "([\w_*]+)\s*\(", --  Name
+        Multiple_Lines);
 
    C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
      (1 => (Name           => new String'("Functions"),
             Regexp         => Subprogram_RE'Access,
-            Position_Index => 2,
+            Position_Index => 4,
             Icon           => Subprogram_Xpm'Unrestricted_Access,
             Make_Entry     => Make_Entry_Subprogram'Access)
       );
@@ -244,7 +244,7 @@ package body Language.Debugger.C is
      return String
    is
    begin
-      return Str (Matched (2).First .. Matched (2).Last);
+      return Str (Matched (4).First .. Matched (4).Last);
    end Make_Entry_Subprogram;
 
 end Language.Debugger.C;
