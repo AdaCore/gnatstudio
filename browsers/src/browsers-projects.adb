@@ -35,9 +35,6 @@ package body Browsers.Projects is
 
    Margin : constant := 2;
 
-   Project_Extension : constant String := ".gpr";
-   --  ??? Should be read from GNAT's sources
-
    procedure Update_Display
      (Browser : access Glide_Browser_Record'Class;
       Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
@@ -74,7 +71,7 @@ package body Browsers.Projects is
          Margin,
          Get_Ascent (Get_Text_Font (Browser)) + Margin,
          Get_Name_String (Project_Name (Browser_Project_Vertex_Access (Item)))
-         & Project_Extension);
+         & Prj.Project_File_Extension);
    end Update_Display;
 
    -------------------------------
@@ -121,7 +118,7 @@ package body Browsers.Projects is
       begin
          Height := Get_Ascent (Font) + Get_Descent (Font) + 2 * Margin;
          Width := String_Width (Font, Get_Name_String (Project_Name)
-                                & Project_Extension) + 2 * Margin;
+                                & Prj.Project_File_Extension) + 2 * Margin;
 
          Set_Project_Name (V, Project_Name);
          V.Browser := Glide_Browser (In_Browser);
