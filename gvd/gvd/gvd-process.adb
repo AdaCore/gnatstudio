@@ -30,6 +30,7 @@ with Gdk.Event;           use Gdk.Event;
 with Gtk;                 use Gtk;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Container;       use Gtk.Container;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -77,6 +78,7 @@ with GVD.Preferences;            use GVD.Preferences;
 with GVD.Window_Settings;        use GVD.Window_Settings;
 with GVD.Status_Bar;             use GVD.Status_Bar;
 with GVD.Utils;                  use GVD.Utils;
+with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with Dock_Paned;                 use Dock_Paned;
 
@@ -1650,6 +1652,7 @@ package body GVD.Process is
       F       : constant Gdk_Font :=
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
       C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
+      Parent  : Gtk_Container;
 
    begin
       if F /= Process.Debugger_Text_Font
@@ -1675,6 +1678,9 @@ package body GVD.Process is
       end if;
 
       if Process.Separate_Data /= Get_Pref (Separate_Data) then
+         Parent := Gtk_Container
+           (Get_Parent (Get_Widget (Get_Source (Process.Editor_Text))));
+         Detach (Get_Source (Process.Editor_Text));
          Process.Separate_Data := not Process.Separate_Data;
          if Process.Separate_Data then
             Ref (Process.Data_Paned);
@@ -1689,6 +1695,7 @@ package body GVD.Process is
             Add1 (Process.Data_Editor_Paned, Process.Data_Paned);
             Unref (Process.Data_Paned);
          end if;
+         Attach (Get_Source (Process.Editor_Text), Parent);
       end if;
    end Preferences_Changed;
 
