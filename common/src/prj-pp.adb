@@ -384,6 +384,7 @@ package body Prj.PP is
 
                   begin
                      while Case_Item /= Empty_Node loop
+                        pragma Assert (Kind_Of (Case_Item) = N_Case_Item);
                         Print (Case_Item, Indent + Increment);
                         Case_Item := Next_Case_Item (Case_Item);
                      end loop;
@@ -419,6 +420,18 @@ package body Prj.PP is
                   end if;
 
                   Write_Line (" =>");
+                  if First_Declarative_Item_Of (Node) = Empty_Node then
+                     Write_Line ("NULL;");
+
+                  elsif Kind_Of (First_Declarative_Item_Of (Node)) /=
+                    N_Declarative_Item
+                  then
+                     Write_Line ("EXPECTING N_DECLARATIVE_ITEM");
+                     Write_Line
+                       ("Got " &
+                        Kind_Of (First_Declarative_Item_Of (Node))'Img);
+                     Output.Write_Eol;
+                  end if;
                   Print (First_Declarative_Item_Of (Node), Indent + Increment);
             end case;
          end if;
