@@ -555,4 +555,13 @@ package body Glide_Kernel is
       return Get (Iter);
    end Find_MDI_Child_By_Tag;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Context : in out Selection_Context) is
+   begin
+      null;
+   end Destroy;
+
 end Glide_Kernel;
