@@ -247,7 +247,6 @@ package body Builder_Module is
       Buffer       : String_Access := new String (1 .. 1024);
       Buffer_Pos   : Natural := Buffer'First;
       Tmp          : String_Access;
-      Status       : Integer;
 
    begin
       if Top.Interrupted then
