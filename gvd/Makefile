@@ -1,4 +1,5 @@
 CFLAGS = -g -O2
+TARGET =
 
 subdirs= pixmaps gnat gvd po tests docs
 
@@ -12,7 +13,10 @@ maintainer_clean_subdirs=${subdirs:%=maintainer_clean_%}
 
 all: ${subdirs}
 ${subdirs}: force
-	$(MAKE) CFLAGS="$(CFLAGS)" -C $@
+	$(MAKE) CFLAGS="$(CFLAGS)" -C $@ $(TARGET)
+
+static:
+	$(MAKE) TARGET=$@
 
 install: ${install_subdirs}
 ${install_subdirs}: force
