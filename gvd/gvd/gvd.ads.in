@@ -69,4 +69,7 @@ package GVD is
    --  True if gvd can print text on standard output/error, false if gvd
    --  is a GUI only process (e.g under windows).
 
+   Layout_Width : constant := 20;
+   --  Width for the area reserved for the buttons in the source/asm editor.
+
 end GVD;

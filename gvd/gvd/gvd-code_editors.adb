@@ -50,9 +50,6 @@ package body GVD.Code_Editors is
    Explorer_Width : constant := 200;
    --  Width of the area reserved for the explorer.
 
-   Layout_Width : constant := 20;
-   --  Width for the area reserved for the buttons in the source/asm editor.
-
    --------------------
    -- Local packages --
    --------------------
