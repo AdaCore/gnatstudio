@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  Case support for non case sensistive languages. This package has
+--  Case support for case insensitive languages. This package has
 --  services to change the casing of a word (identifier or keyword) and
 --  to handle a set of casing exceptions.
 
