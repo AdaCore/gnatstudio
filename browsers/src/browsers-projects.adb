@@ -20,7 +20,6 @@
 
 with Browsers.Canvas;      use Browsers.Canvas;
 with Gint_Xml;             use Gint_Xml;
-with GUI_Utils;            use GUI_Utils;
 with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
 with Gdk.Font;             use Gdk.Font;
@@ -33,7 +32,6 @@ with Glide_Intl;           use Glide_Intl;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Window;           use Gtk.Window;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.MDI;           use Gtkada.MDI;
 with Namet;                use Namet;
@@ -190,16 +188,14 @@ package body Browsers.Projects is
    is
       Browser : MDI_Child;
    begin
-      Set_Busy_Cursor
-        (Get_Window (Get_Main_Window (Get_Kernel (Context))), True, True);
+      Set_Busy (Get_Kernel (Context), True);
       Browser := Open_Project_Browser (Get_Kernel (Context));
       Examine_Project_Hierarchy
         (Get_Kernel (Context),
          Glide_Browser (Get_Widget (Browser)),
          Get_Project_From_View
          (Project_Information (File_Selection_Context_Access (Context))));
-      Set_Busy_Cursor
-        (Get_Window (Get_Main_Window (Get_Kernel (Context))), False);
+      Set_Busy (Get_Kernel (Context), False);
    end On_Examine_Prj_Hierarchy;
 
    ------------------------
