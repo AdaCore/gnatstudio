@@ -267,7 +267,8 @@ package body Docgen is
       Entity_Node      : Type_Entity_List.List_Node;
       Entity_Node_Succ : Type_Entity_List.List_Node;
       Exist            : Boolean;
-
+      --  Used to delete from Entity_List identifiers contained in inner
+      --  packages
       procedure Get_Declaration
         (Text   : String;
          E_I    : in out Src_Info.Queries.Entity_Information;
@@ -290,8 +291,8 @@ package body Docgen is
          if List_Reference_In_File.Data (E_L_I).Line = Line
            and then
              To_Lower (Text) = List_Reference_In_File.Data (E_L_I).Name.all
-         --             and then
-         --       List_Reference_In_File.Data (E_L_I).Column = Column
+         --  and then
+         --  List_Reference_In_File.Data (E_L_I).Column = Column
          --  ??? perhaps problems with Parse_Entites about columns
          then
             Result := True;
@@ -321,8 +322,7 @@ package body Docgen is
 
             if Is_Spec_File (Kernel, File_Name) and then
               (Info.Info_Type = Package_Info) then
-
-               --  We are parsing a package
+               --  Only if we are parsing a package
                Entity_Node := Type_Entity_List.First (Entity_List);
                Entity_Node_Succ := Type_Entity_List.Null_Node;
                Exist := False;
@@ -333,9 +333,11 @@ package body Docgen is
                       (Get_Declaration_Line_Of (Data (Entity_Node).Entity) =
                          Start_Line + Entity_Line - 1)
                   then
+                     --  This identifier is a declaration.
                      Exist := True;
                   end if;
                   if Exist then
+                     --  Identifier removed. It won't be duplicated.
                      Type_Entity_List.Remove_Nodes
                        (Entity_List,
                         Entity_Node_Succ,
@@ -354,7 +356,7 @@ package body Docgen is
 
             --  Text(Loc_Start .. Loc_End) is a reference.
             --  We search it in the list we have made before in order to
-            --     find its declaration.
+            --  find its declaration.
             while Ref_List_Info /= List_Reference_In_File.Null_Node loop
 
                Get_Declaration
