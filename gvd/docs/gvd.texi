@@ -447,6 +447,14 @@ This specification is superseded by the environment variable
 @code{GVD_EDITOR} if it exists (see also @ref{GVD_EDITOR}).
 Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
+On windows system, you need to use the following syntax to start a
+batch script (@file{.bat} files):
+@smallexample
+  cmd /c script.bat %f
+@end smallexample
+In particular, you need to us this syntax if you want to start
+glide.bat, as provided by ACT.
+
 @item List Processes
 This command generates a list of processes
 suitable for process actions such as attach. Under Windows, a stand alone
