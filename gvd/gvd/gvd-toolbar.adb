@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -152,7 +152,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Run (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Run;
@@ -167,7 +167,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Start (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Start;
@@ -182,7 +182,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Step_Into (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Step;
@@ -197,7 +197,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Step_Into_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Step_Instruction;
@@ -212,7 +212,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Step_Over (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Next;
@@ -227,7 +227,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Step_Over_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Next_Instruction;
@@ -242,7 +242,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Finish (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Finish;
@@ -257,7 +257,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Continue (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Continue;
@@ -272,7 +272,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Stack_Up (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Up;
@@ -287,7 +287,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab /= null then
+      if Tab /= null and then Tab.Debugger /= null then
          Stack_Down (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Down;
@@ -302,7 +302,7 @@ package body GVD.Toolbar is
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      if Tab = null then
+      if Tab = null or else Tab.Debugger = null then
          return;
       end if;
 
