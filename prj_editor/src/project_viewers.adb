@@ -1645,6 +1645,8 @@ package body Project_Viewers is
             Changed := not Is_Equal (Old_Mains, New_Mains);
             Free (Old_Mains);
          end;
+      else
+         Changed := True;
       end if;
 
       if Changed then
