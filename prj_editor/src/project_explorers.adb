@@ -2444,7 +2444,8 @@ package body Project_Explorers is
             if not Search (C, Kernel, Search_Backward => False) then
                Insert (Kernel,
                        -"File not found in the explorer: "
-                       & File_Information (File_C));
+                       & File_Information (File_C),
+                       Mode => Glide_Kernel.Console.Error);
             end if;
 
             Free (C);
