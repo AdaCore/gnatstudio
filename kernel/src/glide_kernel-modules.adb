@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -460,6 +460,53 @@ package body Glide_Kernel.Modules is
          Menu_Destroy => Destroy_Contextual_Menu'Access);
    end Register_Contextual_Menu;
 
+   --------------------
+   -- Find_Menu_Item --
+   --------------------
+
+   function Find_Menu_Item
+     (Kernel : access Kernel_Handle_Record'Class;
+      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item
+   is
+      First, Last : Natural := Path'First + 1;
+      Parent      : Gtk_Menu := null;
+      Menu_Item   : Gtk_Menu_Item;
+      Index       : Gint;
+
+   begin
+      pragma Assert (Path (Path'First) = '/');
+
+      --  Find the existing parents
+
+      loop
+         Last := First + 1;
+         Skip_To_Char (Path, Last, '/');
+
+         Find_Menu_Item_By_Name
+           (Glide_Window (Kernel.Main_Window).Menu_Bar,
+            Parent,
+            Path (First .. Last - 1),
+            Menu_Item,
+            Index);
+
+         if Menu_Item = null then
+            return null;
+         end if;
+
+         First := Last + 1;
+
+         exit when First > Path'Last;
+
+         if Get_Submenu (Menu_Item) = null then
+            return null;
+         end if;
+
+         Parent := Gtk_Menu (Get_Submenu (Menu_Item));
+      end loop;
+
+      return Menu_Item;
+   end Find_Menu_Item;
+
    ----------------------------
    -- Find_Menu_Item_By_Name --
    ----------------------------
@@ -638,11 +685,13 @@ package body Glide_Kernel.Modules is
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True)
+      Add_Before  : Boolean := True;
+      Sensitive   : Boolean := True)
    is
-      Item : Gtk_Menu_Item;
+      Item  : Gtk_Menu_Item;
       Image : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
+
    begin
       if Stock_Image = "" then
          Gtk_New_With_Mnemonic (Item, Text);
@@ -652,6 +701,8 @@ package body Glide_Kernel.Modules is
          Set_Image (Image, Pix);
          Item := Gtk_Menu_Item (Image);
       end if;
+
+      Set_Sensitive (Item, Sensitive);
 
       if Guint (Accel_Key) > 0 then
          Add_Accelerator

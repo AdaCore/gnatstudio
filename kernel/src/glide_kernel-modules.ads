@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -200,9 +200,18 @@ package Glide_Kernel.Modules is
       Accel_Key   : Gdk.Types.Gdk_Key_Type := 0;
       Accel_Mods  : Gdk.Types.Gdk_Modifier_Type := 0;
       Ref_Item    : String := "";
-      Add_Before  : Boolean := True);
+      Add_Before  : Boolean := True;
+      Sensitive   : Boolean := True);
    --  Same as the above, but creates the menu item directly, and connects the
    --  appropriate callback.
+   --  Sensitive indicates whether the menu item is created sensitive or not.
+
+   function Find_Menu_Item
+     (Kernel : access Kernel_Handle_Record'Class;
+      Path   : String) return Gtk.Menu_Item.Gtk_Menu_Item;
+   --  Given an absolute path (see Register_Menu) for a menu item, return
+   --  the underlying gtk menu item. Useful in particular to check or change
+   --  the state of a menu item.
 
    --------------------
    -- Mime callbacks --
