@@ -84,6 +84,8 @@ package body Glide_Kernel.Task_Manager is
    type Wrapper_Command_Access is access all Wrapper_Command'Class;
    function Execute
      (Command : access Wrapper_Command) return Command_Return_Type;
+   function Name (Command : access Wrapper_Command) return String;
+   function Progress (Command : access Wrapper_Command) return Progress_Record;
    --  A wrapper for commands, so that they are not destroyed on exit.
 
    function Create_Wrapper
@@ -207,6 +209,25 @@ package body Glide_Kernel.Task_Manager is
       return Execute (Command.Command);
    end Execute;
 
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Command : access Wrapper_Command) return String is
+   begin
+      return Name (Command.Command);
+   end Name;
+
+   --------------
+   -- Progress --
+   --------------
+
+   function Progress
+     (Command : access Wrapper_Command) return Progress_Record is
+   begin
+      return Progress (Command.Command);
+   end Progress;
+
    --------------------
    -- Create_Wrapper --
    --------------------
@@ -273,9 +294,10 @@ package body Glide_Kernel.Task_Manager is
 
       Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
       Create
-        (Push_Command, Kernel_Handle (Kernel), "set_busy", Script);
+        (Push_Command, "set_busy", Kernel_Handle (Kernel), "set_busy", Script);
       Create
-        (Pop_Command, Kernel_Handle (Kernel), "unset_busy", Script);
+        (Pop_Command, "unset_busy",
+         Kernel_Handle (Kernel), "unset_busy", Script);
 
       Set_Busy_Commands
         (Get_Task_Manager (Kernel),
