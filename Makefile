@@ -42,6 +42,8 @@ gvd: force
 	@echo "----------------------------------"
 	@echo "--------- Compiling $@"
 	@echo "----------------------------------"
+	make -C gvd/pixmaps
+	make -C gvd/gnat
 	make -C gvd/gvd
 
 ${DEPENDENCIES}: force
