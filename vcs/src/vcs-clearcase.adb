@@ -22,7 +22,6 @@ with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
 
 with GNAT.OS_Lib;
@@ -37,6 +36,7 @@ pragma Warnings (On);
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
+with OS_Utils;                  use OS_Utils;
 
 with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
@@ -128,9 +128,7 @@ package body VCS.ClearCase is
 
       Current_File : constant String := String_List.Head (Head);
       Base         : constant String := Base_Name (Current_File);
-      Patch_File   : constant String :=
-        String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
-        Base & "$difs";
+      Patch_File   : constant String := Get_Tmp_Dir & Base & "$difs";
       File         : File_Type;
 
    begin

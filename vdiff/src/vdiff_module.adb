@@ -34,7 +34,7 @@ with Glide_Intl;                use Glide_Intl;
 with Diff_Utils;                use Diff_Utils;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Utils;               use Vdiff_Utils;
-with String_Utils;
+with OS_Utils;                  use OS_Utils;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -155,9 +155,7 @@ package body Vdiff_Module is
 
                declare
                   Base     : constant String := Base_Name (New_File);
-                  Ref_File : constant String :=
-                    String_Utils.Name_As_Directory
-                      (Get_Pref (Kernel, Tmp_Dir)) & Base & "$ref";
+                  Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
 
                begin
                   Result := Diff
@@ -188,9 +186,7 @@ package body Vdiff_Module is
 
                declare
                   Base     : constant String := Base_Name (Orig_File);
-                  Ref_File : constant String :=
-                    String_Utils.Name_As_Directory
-                      (Get_Pref (Kernel, Tmp_Dir)) & Base & "$ref";
+                  Ref_File : constant String := Get_Tmp_Dir & Base & "$ref";
 
                begin
                   Result := Diff (Kernel, Orig_File, Ref_File, Diff_File);

@@ -31,6 +31,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO;               use Ada.Text_IO;
 
 with String_Utils;              use String_Utils;
+with OS_Utils;                  use OS_Utils;
 
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
@@ -927,9 +928,7 @@ package body VCS.CVS is
 
       Current_File : constant String := String_List.Head (Head);
       Base         : constant String := Base_Name (Current_File);
-      Patch_File   : constant String :=
-        String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
-        Base & "$difs";
+      Patch_File   : constant String := Get_Tmp_Dir & Base & "$difs";
       File         : File_Type;
 
    begin
@@ -1009,11 +1008,11 @@ package body VCS.CVS is
          Append (Args, Version_1);
 
          declare
-            C_2               : External_Command_Access;
-            Args_2            : List;
-            Orig_File   : constant String :=
-              String_Utils.Name_As_Directory (Get_Pref (Rep.Kernel, Tmp_Dir)) &
-            Base_Name (File) & "$orig";
+            C_2       : External_Command_Access;
+            Args_2    : List;
+            Orig_File : constant String :=
+              Get_Tmp_Dir & Base_Name (File) & "$orig";
+
          begin
             Append (Command_Head, Orig_File);
 
@@ -1147,9 +1146,7 @@ package body VCS.CVS is
       Success : Boolean;
 
       Current_File : constant String := String_List.Head (Head);
-      Text_File    : constant String :=
-        String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
-        Base_Name (Current_File);
+      Text_File    : constant String := Get_Tmp_Dir & Base_Name (Current_File);
       File         : File_Type;
 
    begin
