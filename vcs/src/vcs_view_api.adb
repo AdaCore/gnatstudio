@@ -44,6 +44,8 @@ with Log_Utils;                 use Log_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
+with GVD.Dialogs;               use GVD.Dialogs;
+
 with Basic_Types;               use Basic_Types;
 
 with Projects.Registry;         use Projects, Projects.Registry;
@@ -196,6 +198,10 @@ package body VCS_View_API is
       Context : Selection_Context_Access);
 
    procedure On_Menu_Diff_Working_Head
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Diff_Specific
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
@@ -534,6 +540,25 @@ package body VCS_View_API is
       end if;
    end View_Work_Head_Diff;
 
+   ------------------------
+   -- View_Specific_Diff --
+   ------------------------
+
+   procedure View_Specific_Diff
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+   begin
+      if Context = null then
+         Console.Insert
+           (Kernel, -"VCS: No file selected, cannot diff", Mode => Error);
+      else
+         On_Menu_Diff_Specific (Widget, Context);
+      end if;
+   end View_Specific_Diff;
+
    --------------
    -- View_Log --
    --------------
@@ -742,6 +767,15 @@ package body VCS_View_API is
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                     (On_Menu_Diff_Working_Head'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item, Label =>
+                        -"Compare against specific rev.");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Menu_Diff_Specific'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item);
@@ -2351,6 +2385,57 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff_Working_Head;
+
+   ---------------------------
+   -- On_Menu_Diff_Specific --
+   ---------------------------
+
+   procedure On_Menu_Diff_Specific
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      use String_List;
+      pragma Unreferenced (Widget);
+
+      Files  : String_List.List;
+      Ref    : constant VCS_Access := Get_Current_Ref (Context);
+
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+            Mode => Error);
+         return;
+      end if;
+
+      if not Save_Files (Get_Kernel (Context), Files) then
+         return;
+      end if;
+
+      declare
+         Str : constant String :=
+           Simple_Entry_Dialog
+             (Get_Main_Window (Get_Kernel (Context)),
+              -"Compare against revision...",
+              -"Enter revision: ");
+      begin
+         if Str /= "" then
+            Diff
+              (Ref,
+               Create (Full_Filename => Head (Files)),
+               Str,
+               "");
+         end if;
+      end;
+
+      String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Diff_Specific;
 
    ------------------------
    -- On_Menu_Diff_Local --
