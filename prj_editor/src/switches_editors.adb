@@ -296,7 +296,7 @@ package body Switches_Editors is
 
       Num_Switches : Natural;
 
-   begin
+   begin  --  Get_Switches_From_GUI
       case Tool is
          when Gnatmake     => Num_Switches :=  6 + 1;  --  +1 is for arg to -j
          when Ada_Compiler => Num_Switches := 22;
@@ -571,13 +571,21 @@ package body Switches_Editors is
                  and then Switches (J) (Switches (J)'First + 1) = 'j'
                then
                   Set_Active (Editor.Make_Multiprocessing, True);
-                  if Switches (J)'Length > 2 then
-                     Set_Value
-                       (Editor.Num_Processes, Grange_Float'Value (Switches (J)
-                          (Switches (J)'First + 2 .. Switches  (J)'Last)));
-                  else
-                     Set_Value (Editor.Num_Processes, 0.0);
-                  end if;
+
+                  begin
+                     if Switches (J)'Length > 2 then
+                        Set_Value
+                          (Editor.Num_Processes,
+                           Grange_Float'Value (Switches (J)
+                             (Switches (J)'First + 2 .. Switches  (J)'Last)));
+
+                     else
+                        Set_Value (Editor.Num_Processes, 0.0);
+                     end if;
+
+                  exception
+                     when Constraint_Error =>
+                        Set_Value (Editor.Num_Processes, 0.0);
                end if;
             end loop;
 
