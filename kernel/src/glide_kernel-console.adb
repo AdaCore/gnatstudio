@@ -23,8 +23,6 @@ with GNAT.Calendar;            use GNAT.Calendar;
 with GNAT.Calendar.Time_IO;    use GNAT.Calendar.Time_IO;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 
 with Interactive_Consoles;     use Interactive_Consoles;
@@ -34,7 +32,6 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with GNAT.IO;                  use GNAT.IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GNAT.Regpat;              use GNAT.Regpat;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtkada.File_Selector;     use Gtkada.File_Selector;
@@ -42,11 +39,11 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
-with Glide_Result_View;        use Glide_Result_View;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Histories;                use Histories;
 with Gtk.Widget;               use Gtk.Widget;
 with VFS;                      use VFS;
+with Basic_Types;
 
 package body Glide_Kernel.Console is
 
@@ -68,33 +65,6 @@ package body Glide_Kernel.Console is
    Console_Module_Name : constant String := "Glide_Kernel.Console";
 
    Me : constant Debug_Handle := Create (Console_Module_Name);
-
-   Output_Cst        : aliased constant String := "output";
-   Category_Cst      : aliased constant String := "category";
-   Regexp_Cst        : aliased constant String := "regexp";
-   File_Index_Cst    : aliased constant String := "file_index";
-   Line_Index_Cst    : aliased constant String := "line_index";
-   Col_Index_Cst     : aliased constant String := "column_index";
-   Msg_Index_Cst     : aliased constant String := "msg_index";
-   Style_Index_Cst   : aliased constant String := "style_index";
-   Warning_Index_Cst : aliased constant String := "warning_index";
-
-   Parse_Location_Parameters : constant Cst_Argument_List :=
-     (1 => Output_Cst'Access,
-      2 => Category_Cst'Access,
-      3 => Regexp_Cst'Access,
-      4 => File_Index_Cst'Access,
-      5 => Line_Index_Cst'Access,
-      6 => Col_Index_Cst'Access,
-      7 => Msg_Index_Cst'Access,
-      8 => Style_Index_Cst'Access,
-      9 => Warning_Index_Cst'Access);
-   Remove_Category_Parameters : constant Cst_Argument_List :=
-     (1 => Category_Cst'Access);
-
-   procedure Default_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String);
-   --  Interactive shell command handler.
 
    procedure Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
@@ -127,67 +97,6 @@ package body Glide_Kernel.Console is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
-
-   function Get_Or_Create_Result_View_MDI
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return MDI_Child;
-   --  Internal version of Get_Or_Create_Result_View
-
-   -------------------------------
-   -- Get_Or_Create_Result_View --
-   -------------------------------
-
-   function Get_Or_Create_Result_View
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return Result_View
-   is
-      Child : MDI_Child;
-   begin
-      Child := Get_Or_Create_Result_View_MDI (Kernel, Allow_Creation);
-      if Child = null then
-         return null;
-      else
-         return Result_View (Get_Widget (Child));
-      end if;
-   end Get_Or_Create_Result_View;
-
-   -----------------------------------
-   -- Get_Or_Create_Result_View_MDI --
-   -----------------------------------
-
-   function Get_Or_Create_Result_View_MDI
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return MDI_Child
-   is
-      Child   : MDI_Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Result_View_Record'Tag);
-      Results : Result_View;
-   begin
-      if Child = null then
-         if not Allow_Creation then
-            return null;
-         end if;
-
-         Gtk_New (Results, Kernel_Handle (Kernel),
-                  Module_ID (Console_Module_Id));
-         Child := Put
-           (Kernel, Results,
-            Module              => Console_Module_Id,
-            Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
-            Desktop_Independent => True);
-         Set_Focus_Child (Child);
-
-         Set_Title (Child, -"Locations");
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
-      end if;
-
-      return Child;
-   end Get_Or_Create_Result_View_MDI;
 
    -----------------
    -- Get_Console --
@@ -243,166 +152,6 @@ package body Glide_Kernel.Console is
       end if;
    end Insert;
 
-   --------------------------
-   -- Parse_File_Locations --
-   --------------------------
-
-   procedure Parse_File_Locations
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
-      Category                : String;
-      Highlight               : Boolean := False;
-      Style_Category          : String := "";
-      Warning_Category        : String := "";
-      File_Location_Regexp    : String := "";
-      File_Index_In_Regexp    : Integer := -1;
-      Line_Index_In_Regexp    : Integer := -1;
-      Col_Index_In_Regexp     : Integer := -1;
-      Msg_Index_In_Regexp     : Integer := -1;
-      Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1)
-   is
-      function Get_File_Location return Pattern_Matcher;
-      --  Return the pattern matcher for the file location
-
-      function Get_Index
-        (Pref : Param_Spec_Int; Value : Integer) return Integer;
-      --  If Value is -1, return Pref, otherwise return Value
-
-      function Get_Message (Last : Natural) return String;
-      --  Return the error message. For backward compatibility with existing
-      --  preferences file, we check that the message Index is still good.
-      --  Otherwise, we return the last part of the regexp
-
-      function Get_File_Location return Pattern_Matcher is
-      begin
-         if File_Location_Regexp = "" then
-            return Compile (Get_Pref (Kernel, File_Pattern));
-         else
-            return Compile (File_Location_Regexp);
-         end if;
-      end Get_File_Location;
-
-      Max : Integer := 0;
-      --  Maximal value for the indexes
-
-      function Get_Index
-        (Pref : Param_Spec_Int; Value : Integer) return Integer
-      is
-         Result : Integer;
-      begin
-         if Value = -1 then
-            Result := Integer (Get_Pref (Kernel, Pref));
-         else
-            Result := Value;
-         end if;
-
-         Max := Integer'Max (Max, Result);
-         return Result;
-      end Get_Index;
-
-      File_Location : constant Pattern_Matcher := Get_File_Location;
-      File_Index    : constant Integer :=
-        Get_Index (File_Pattern_Index, File_Index_In_Regexp);
-      Line_Index    : constant Integer :=
-        Get_Index (Line_Pattern_Index, Line_Index_In_Regexp);
-      Col_Index     : constant Integer :=
-        Get_Index (Column_Pattern_Index, Col_Index_In_Regexp);
-      Msg_Index     : constant Integer :=
-        Get_Index (Message_Pattern_Index, Msg_Index_In_Regexp);
-      Style_Index  : constant Integer :=
-        Get_Index (Style_Pattern_Index, Style_Index_In_Regexp);
-      Warning_Index : constant Integer :=
-        Get_Index (Warning_Pattern_Index, Warning_Index_In_Regexp);
-      Matched    : Match_Array (0 .. Max);
-      Start      : Natural := Text'First;
-      Last       : Natural;
-      Real_Last  : Natural;
-      Line       : Natural := 1;
-      Column     : Natural := 1;
-      C          : String_Access;
-
-      function Get_Message (Last : Natural) return String is
-      begin
-         if Matched (Msg_Index) /= No_Match then
-            return Text
-              (Matched (Msg_Index).First .. Matched (Msg_Index).Last);
-         else
-            return Text (Last + 1 .. Real_Last);
-         end if;
-      end Get_Message;
-
-   begin
-      while Start <= Text'Last loop
-         --  Parse Text line by line and look for file locations
-
-         while Start < Text'Last
-           and then (Text (Start) = ASCII.CR
-                     or else Text (Start) = ASCII.LF)
-         loop
-            Start := Start + 1;
-         end loop;
-
-         Real_Last := Start;
-
-         while Real_Last < Text'Last
-           and then Text (Real_Last + 1) /= ASCII.CR
-           and then Text (Real_Last + 1) /= ASCII.LF
-         loop
-            Real_Last := Real_Last + 1;
-         end loop;
-
-         Match (File_Location, Text (Start .. Real_Last), Matched);
-
-         if Matched (0) /= No_Match then
-            if Matched (Line_Index) /= No_Match then
-               Line := Integer'Value
-                 (Text
-                    (Matched (Line_Index).First .. Matched (Line_Index).Last));
-
-               if Line <= 0 then
-                  Line := 1;
-               end if;
-            end if;
-
-            if Matched (Col_Index) = No_Match then
-               Last := Matched (Line_Index).Last;
-            else
-               Last := Matched (Col_Index).Last;
-               Column := Integer'Value
-                 (Text (Matched (Col_Index).First ..
-                            Matched (Col_Index).Last));
-
-               if Column <= 0 then
-                  Column := 1;
-               end if;
-            end if;
-
-            if Matched (Warning_Index) /= No_Match then
-               C := Warning_Category'Unrestricted_Access;
-            elsif  Matched (Style_Index) /= No_Match then
-               C := Style_Category'Unrestricted_Access;
-            else
-               C := Category'Unrestricted_Access;
-            end if;
-
-            Insert_Result
-              (Kernel,
-               Category,
-               Create
-                 (Text (Matched
-                          (File_Index).First .. Matched (File_Index).Last),
-                  Kernel),
-               Get_Message (Last),
-               Positive (Line), Positive (Column), 0,
-               Highlight,
-               C.all);
-         end if;
-
-         Start := Real_Last + 1;
-      end loop;
-   end Parse_File_Locations;
-
    -------------------
    -- Raise_Console --
    -------------------
@@ -416,47 +165,6 @@ package body Glide_Kernel.Console is
          Raise_Child (Child);
       end if;
    end Raise_Console;
-
-   -------------------
-   -- Insert_Result --
-   -------------------
-
-   procedure Insert_Result
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Category           : String;
-      File               : VFS.Virtual_File;
-      Text               : String;
-      Line               : Positive;
-      Column             : Positive;
-      Length             : Natural := 0;
-      Highlight          : Boolean := False;
-      Highlight_Category : String := "")
-   is
-      View : constant Result_View := Get_Or_Create_Result_View (Kernel);
-   begin
-      if View /= null then
-         Insert
-           (View, Category, File, Line, Column, Text, Length,
-            Highlight, Highlight_Category);
-         Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
-      end if;
-   end Insert_Result;
-
-   ----------------------------
-   -- Remove_Result_Category --
-   ----------------------------
-
-   procedure Remove_Result_Category
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String)
-   is
-      View : constant Result_View :=
-        Get_Or_Create_Result_View (Kernel, Allow_Creation => False);
-   begin
-      if View /= null then
-         Remove_Category (View, Category);
-      end if;
-   end Remove_Result_Category;
 
    -----------------------
    -- Console_Destroyed --
@@ -552,10 +260,14 @@ package body Glide_Kernel.Console is
 
          declare
             S : constant String := Strip_CR (Contents.all);
+            Args : Argument_List :=
+              (1 => new String'(S),
+               2 => new String'(-"Loaded contents"));
          begin
             Insert (Console, S);
             Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
-            Parse_File_Locations (Kernel, S, -"Loaded contents");
+            Execute_GPS_Shell_Command (Kernel, "locations_parse", Args);
+            Basic_Types.Free (Args);
          end;
 
          Free (Contents);
@@ -643,50 +355,6 @@ package body Glide_Kernel.Console is
          Return_Callback.To_Marshaller (Console_Delete_Event'Access));
    end Initialize_Console;
 
-   ------------------
-   -- Mime_Handler --
-   ------------------
-
-   function Mime_Handler
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
-
-   function Mime_Handler
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
-   is
-      View : Result_View;
-      pragma Unreferenced (Mode);
-   begin
-      if Mime_Type = Mime_Location_Action then
-         View := Get_Or_Create_Result_View (Kernel, False);
-         declare
-            Identifier : constant String := Get_String (Data (Data'First));
-            Category   : constant String := Get_String (Data (Data'First + 1));
-            File       : constant Virtual_File :=
-              Get_File (Data (Data'First + 2));
-            Line       : constant Gint   := Get_Int (Data (Data'First + 3));
-            Column     : constant Gint   := Get_Int (Data (Data'First + 4));
-            Message    : constant String := Get_String (Data (Data'First + 5));
-            Action     : constant Action_Item := To_Action_Item
-              (Get_Address (Data (Data'First + 6)));
-         begin
-            Add_Action_Item
-              (View, Identifier, Category, "", File,
-               Integer (Line), Integer (Column),
-               Message, Action);
-         end;
-
-         return True;
-      end if;
-
-      return False;
-   end Mime_Handler;
-
    --------------------------------
    -- Create_Interactive_Console --
    --------------------------------
@@ -748,9 +416,7 @@ package body Glide_Kernel.Console is
    is
       pragma Unreferenced (MDI);
    begin
-      if Node.Tag.all = "Result_View_Record" then
-         return Get_Or_Create_Result_View_MDI (User, Allow_Creation => True);
-      elsif Node.Tag.all = "Message_Window" then
+      if Node.Tag.all = "Message_Window" then
          if Console_Module_Id.Console = null then
             Initialize_Console (User);
          end if;
@@ -770,11 +436,7 @@ package body Glide_Kernel.Console is
    is
       N : Node_Ptr;
    begin
-      if Widget.all in Result_View_Record'Class then
-         N := new Node;
-         N.Tag := new String'("Result_View_Record");
-         return N;
-      elsif Widget.all in GPS_Message_Record'Class then
+      if Widget.all in GPS_Message_Record'Class then
          N := new Node;
          N.Tag := new String'("Message_Window");
          return N;
@@ -782,34 +444,6 @@ package body Glide_Kernel.Console is
 
       return null;
    end Save_Desktop;
-
-   -----------------------------
-   -- Default_Command_Handler --
-   -----------------------------
-
-   procedure Default_Command_Handler
-     (Data : in out Callback_Data'Class; Command : String) is
-   begin
-      if Command = "locations_parse" then
-         Name_Parameters (Data, Parse_Location_Parameters);
-         Parse_File_Locations
-           (Get_Kernel (Data),
-            Text                    => Nth_Arg (Data, 1),
-            Category                => Nth_Arg (Data, 2),
-            File_Location_Regexp    => Nth_Arg (Data, 3, ""),
-            File_Index_In_Regexp    => Nth_Arg (Data, 4, -1),
-            Line_Index_In_Regexp    => Nth_Arg (Data, 5, -1),
-            Col_Index_In_Regexp     => Nth_Arg (Data, 6, -1),
-            Style_Index_In_Regexp   => Nth_Arg (Data, 7, -1),
-            Warning_Index_In_Regexp => Nth_Arg (Data, 8, -1));
-
-      elsif Command = "locations_remove_category" then
-         Name_Parameters (Data, Remove_Category_Parameters);
-         Remove_Result_Category
-           (Get_Kernel (Data),
-            Category => Nth_Arg (Data, 1));
-      end if;
-   end Default_Command_Handler;
 
    ---------------------
    -- Register_Module --
@@ -828,8 +462,7 @@ package body Glide_Kernel.Console is
         (Module       => Module_ID (Console_Module_Id),
          Kernel       => Kernel,
          Module_Name  => Console_Module_Name,
-         Priority     => Default_Priority,
-         Mime_Handler => Mime_Handler'Access);
+         Priority     => Default_Priority);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
@@ -857,45 +490,5 @@ package body Glide_Kernel.Console is
       Gtk_New (Mitem);
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;
-
-   -----------------------
-   -- Register_Commands --
-   -----------------------
-
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
-   begin
-      Register_Command
-        (Kernel,
-         Command      => "locations_parse",
-         Params       =>
-           Parameter_Names_To_Usage (Parse_Location_Parameters, 7),
-         Description  =>
-           -("Parse the contents of the string, which is supposedly the"
-             & " output of some tool, and add the errors and warnings to the"
-             & " locations window. A new category is created in the locations"
-             & " window if it doesn't exist. Preexisting contents for that"
-             & " category is not removed, see locations_remove_category."
-             & ASCII.LF
-             & "The regular expression specifies how locations are recognized."
-             & " By default, it matches file:line:column. The various indexes"
-             & " indicate the index of the opening parenthesis that contains"
-             & " the relevant information in the regular expression. Set it"
-             & " to 0 if that information is not available. Style_Index and"
-             & " Warning_Index, if they match, force the error message in a"
-             & " specific category."),
-         Minimum_Args => 2,
-         Maximum_Args => 9,
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "locations_remove_category",
-         Params       => Parameter_Names_To_Usage (Remove_Category_Parameters),
-         Description  =>
-           -("Remove a category from the location window. This removes all"
-             & " associated files"),
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => Default_Command_Handler'Access);
-   end Register_Commands;
 
 end Glide_Kernel.Console;

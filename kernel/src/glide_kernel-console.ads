@@ -19,8 +19,6 @@
 -----------------------------------------------------------------------
 
 with Interactive_Consoles; use Interactive_Consoles;
-with Glide_Result_View;
-with VFS;
 
 package Glide_Kernel.Console is
 
@@ -33,11 +31,6 @@ package Glide_Kernel.Console is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the console module into the list
-
-   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class);
-   --  Register the shell commands for this module. This must be a separate
-   --  subprogram, since the console is loaded before all other modules,
-   --  including the scripting languages
 
    procedure Initialize_Console
      (Kernel : access Kernel_Handle_Record'Class);
@@ -54,48 +47,8 @@ package Glide_Kernel.Console is
    --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
 
-   procedure Parse_File_Locations
-     (Kernel                  : access Kernel_Handle_Record'Class;
-      Text                    : String;
-      Category                : String;
-      Highlight               : Boolean := False;
-      Style_Category          : String := "";
-      Warning_Category        : String := "";
-      File_Location_Regexp    : String := "";
-      File_Index_In_Regexp    : Integer := -1;
-      Line_Index_In_Regexp    : Integer := -1;
-      Col_Index_In_Regexp     : Integer := -1;
-      Msg_Index_In_Regexp     : Integer := -1;
-      Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1);
-   --  Perform a basic parsing on Text, and add any found file locations
-   --  to the results view in Category.
-   --  If Highlighting is True, attempt to highlight the corresponding
-   --  locations using Category as highlighting identifier.
-   --  File_Location_Regexp indicates how file locations should be recognized.
-   --  The default blank value will matches locations reported by gcc or GNAT,
-   --  ie "file:line:column message". The various index parameters indicate the
-   --  relevant parenthesis pair in the regexp.
-
    procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class);
    --  If the message window is present in the MDI, raise it.
-
-   procedure Insert_Result
-     (Kernel             : access Kernel_Handle_Record'Class;
-      Category           : String;
-      File               : VFS.Virtual_File;
-      Text               : String;
-      Line               : Positive;
-      Column             : Positive;
-      Length             : Natural := 0;
-      Highlight          : Boolean := False;
-      Highlight_Category : String := "");
-   --  Insert a new location in the result view.
-
-   procedure Remove_Result_Category
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Category : String);
-   --  Remove Category from the results view, if it exists.
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class);
    --  Clear all the text in the Console.
@@ -114,11 +67,5 @@ package Glide_Kernel.Console is
      (Kernel : access Kernel_Handle_Record'Class)
       return Interactive_Console;
    --  Return the interactive console associated with the kernel.
-
-   function Get_Or_Create_Result_View
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True) return Glide_Result_View.Result_View;
-   --  Return the results view widget. Create it if it doesn't exist and
-   --  Allow_Creation is true.
 
 end Glide_Kernel.Console;
