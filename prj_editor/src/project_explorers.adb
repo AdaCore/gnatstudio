@@ -790,7 +790,8 @@ package body Project_Explorers is
       Ref       : Gtk_Tree_Iter := Null_Iter;
       Is_Leaf   : constant Boolean :=
         not Has_Imported_Projects (Project)
-        and then Direct_Sources_Count (Project) = 0;
+        and then Get_Attribute_Value (Project, Obj_Dir_Attribute) = ""
+        and then Source_Dirs (Project)'Length = 0;
       Node_Type : Node_Types := Project_Node;
       Node_Text : constant String := Project_Name (Project);
 
