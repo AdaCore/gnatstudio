@@ -1192,14 +1192,13 @@ package body VCS_View_Pkg is
    ---------------------
 
    function Get_Current_Ref
-     (Explorer : access VCS_View_Record)
-     return VCS_Access
+     (Explorer : access VCS_View_Record) return VCS_Access
    is
-      Page     : VCS_Page_Access;
+      Page : VCS_Page_Access;
    begin
       Page := VCS_Page_Access
-        (Get_Nth_Page (Explorer.Notebook,
-                       Get_Current_Page (Explorer.Notebook)));
+        (Get_Nth_Page
+          (Explorer.Notebook, Get_Current_Page (Explorer.Notebook)));
 
       if Page /= null then
          return Page.Reference;
@@ -1371,8 +1370,8 @@ package body VCS_View_Pkg is
    -- Get_Kernel --
    ----------------
 
-   function Get_Kernel (VCS_View : access VCS_View_Record)
-      return Glide_Kernel.Kernel_Handle is
+   function Get_Kernel
+     (VCS_View : access VCS_View_Record) return Glide_Kernel.Kernel_Handle is
    begin
       return VCS_View.Kernel;
    end Get_Kernel;
