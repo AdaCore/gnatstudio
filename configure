@@ -3810,6 +3810,7 @@ echo $ECHO_N "checking for GtkAda - version >= $min_gtk_version... $ECHO_C" >&6
     no_gtk=yes
   else
     GTK_CFLAGS=`$GTK_CONFIG --cflags`
+    GTKADA_SRC=`echo $GTK_CFLAGS | sed -e 's/-I//'`
     GTK_LIBS=`$GTK_CONFIG --libs`
     GTK_STATIC_LIBS=`$GTK_CONFIG --libs --static`
     gtk_major_version=`$GTK_CONFIG --version | \
@@ -3911,12 +3912,14 @@ echo "${ECHO_T}no" >&6
        fi
      fi
      GTK_CFLAGS=""
+     GTKADA_SRC=""
      GTK_LIBS=""
      GTK_STATIC_LIBS=""
      { { echo "$as_me:$LINENO: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&5
 echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >&2;}
    { (exit 1); exit 1; }; }
   fi
+
 
 
 
@@ -3967,7 +3970,7 @@ echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo ""
 
-ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr"
+ac_config_files="$ac_config_files Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -4475,6 +4478,7 @@ do
   "gvd/gvd/gvd.ads" ) CONFIG_FILES="$CONFIG_FILES gvd/gvd/gvd.ads" ;;
   "python/Makefile.python" ) CONFIG_FILES="$CONFIG_FILES python/Makefile.python" ;;
   "python/python.gpr" ) CONFIG_FILES="$CONFIG_FILES python/python.gpr" ;;
+  "gtkada/gtkada.gpr" ) CONFIG_FILES="$CONFIG_FILES gtkada/gtkada.gpr" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -4589,6 +4593,7 @@ s,@TEXI2DVI@,$TEXI2DVI,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GTK_CONFIG@,$GTK_CONFIG,;t t
 s,@GTK_PREFIX@,$GTK_PREFIX,;t t
+s,@GTKADA_SRC@,$GTKADA_SRC,;t t
 s,@GTK_CFLAGS@,$GTK_CFLAGS,;t t
 s,@GTK_LIBS@,$GTK_LIBS,;t t
 s,@GTK_STATIC_LIBS@,$GTK_STATIC_LIBS,;t t
