@@ -319,9 +319,8 @@ package body Prj_Normalize is
       Print_Error : Prj.Put_Line_Access := null;
       Recurse     : Boolean := False)
    is
-      Values       : External_Variable_Value_Array_Access :=
-        new External_Variable_Value_Array (1 .. 50);
-      Last_Values  : Natural := Values'First - 1;
+      Values       : External_Variable_Value_Array_Access := null;
+      Last_Values  : Natural;
       --  Representation of the state of the case construction that is being
       --  parsed.
       --  Each time a new case item is seen in the original project, an entry
@@ -543,6 +542,8 @@ package body Prj_Normalize is
    begin
       while Current (Iter) /= Empty_Node loop
          Project := Current (Iter);
+         Values := new External_Variable_Value_Array (1 .. 50);
+         Last_Values := Values'First - 1;
 
          Project_Norm := Clone_Project (Project);
          Current_Pkg := Empty_Node;
@@ -561,6 +562,7 @@ package body Prj_Normalize is
             Case_Stmt => Case_Stmt);
 
          if Last_Values /= Values'First - 1 then
+            Free (Values);
             raise Normalize_Error;
          end if;
 
@@ -577,6 +579,7 @@ package body Prj_Normalize is
                To        => Current_Pkg,
                Case_Stmt => Case_Stmt);
             if Last_Values /= Values'First - 1 then
+               Free (Values);
                raise Normalize_Error;
             end if;
 
