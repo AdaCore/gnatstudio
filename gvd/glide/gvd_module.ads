@@ -21,6 +21,7 @@
 --  This package defines the GLIDE module for communication with GVD.
 
 with Glide_Kernel;
+with Glib.Object;
 
 package GVD_Module is
 
@@ -34,5 +35,12 @@ package GVD_Module is
    procedure Initialize_Debugger
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Initialize the debugger if needed.
+
+   procedure On_Assembly
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : Glide_Kernel.Kernel_Handle);
+   --  Display the assembly view.
+   --  Used e.g. for implementing menu Debug->Data->Assembly
+   --  Widget paramter is ignored.
 
 end GVD_Module;
