@@ -155,6 +155,8 @@ package body Odd.Explorer is
       Gtk_New (Tree, 1);
       Realize (Window);
 
+      Freeze (Tree);
+
       Tree_Cb.Connect
         (Tree, "tree_select_row", Tree_Cb.To_Marshaller (First_Handler'Access),
          (Handler, Window.all'Access));
@@ -355,6 +357,7 @@ package body Odd.Explorer is
          First := Matches (0).Last;
       end loop;
 
+      Thaw (Tree);
       return Tree;
    end Explore;
 
