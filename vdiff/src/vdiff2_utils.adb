@@ -341,7 +341,7 @@ package body Vdiff2_Utils is
          else
             VRange (J).Mark := new String'
               (Mark_Diff_Block (Kernel, VFile (J).all,
-                                VRange (I).First));
+                                VRange (J).First));
             Free (Tmp);
          end if;
       end loop;
