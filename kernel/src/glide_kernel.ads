@@ -28,6 +28,7 @@ with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Menu;
+with Gtk.Tooltips;
 with Gtk.Window;
 with Gtkada.MDI;
 with Prj.Tree;
@@ -132,6 +133,10 @@ package Glide_Kernel is
    --  Return the main window associated with the kernel.
    --  The main usage for this function should be to display the dialogs
    --  centered with regards to this window.
+
+   function Get_Tooltips (Handle : access Kernel_Handle_Record)
+      return Gtk.Tooltips.Gtk_Tooltips;
+   --  Return the widget used to register tooltips for the graphical interface.
 
    function Find_MDI_Child_By_Tag
      (Handle : access Kernel_Handle_Record; Tag : Ada.Tags.Tag)
@@ -310,6 +315,9 @@ private
 
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main glide window
+
+      Tooltips : Gtk.Tooltips.Gtk_Tooltips;
+      --  The widget used to register all tooltips
 
       Predefined_Source_Path : GNAT.OS_Lib.String_Access;
       --  The path of the sources used to compile the project which are not

@@ -21,6 +21,7 @@
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
@@ -138,6 +139,8 @@ package body Glide_Kernel is
       Handle.Project_Is_Default := True;
       Recompute_View (Handle);
       Reset_Source_Info_List (Handle);
+
+      Gtk_New (Handle.Tooltips);
 
       Set_Predefined_Source_Path
         (Handle, ".:" &
@@ -571,5 +574,15 @@ package body Glide_Kernel is
    begin
       return Handle.Main_Window;
    end Get_Main_Window;
+
+   ------------------
+   -- Get_Tooltips --
+   ------------------
+
+   function Get_Tooltips (Handle : access Kernel_Handle_Record)
+      return Gtk.Tooltips.Gtk_Tooltips is
+   begin
+      return Handle.Tooltips;
+   end Get_Tooltips;
 
 end Glide_Kernel;
