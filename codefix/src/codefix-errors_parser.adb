@@ -1070,7 +1070,7 @@ package body Codefix.Errors_Parser is
          Assign (Unallowed_Characters, (1 => ASCII.FF));
          Format_Str := Text_Ascii;
       elsif Word_Read.all = "vertical tab" then
-         Assign (Unallowed_Characters, (1 => ASCII.HT));
+         Assign (Unallowed_Characters, (1 => ASCII.VT));
          Format_Str := Text_Ascii;
       elsif Word_Read.all = "trailing spaces" then
          Assign (Unallowed_Characters, "([\s]+)");
