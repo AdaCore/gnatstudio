@@ -124,7 +124,8 @@ package body GVD.Code_Editors is
       Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
       Child := Put (Tab.Process_Mdi, Editor.Explorer_Scroll);
       Set_Title (Child, "Explorer");
-      Dock_Child (Child, Side => Left);
+      Set_Dock_Side (Child, Left);
+      Dock_Child (Child);
 
       Gtk_New (Editor.Explorer, Editor);
       Add (Editor.Explorer_Scroll, Editor.Explorer);
@@ -320,19 +321,6 @@ package body GVD.Code_Editors is
       end if;
 
       Attach (Editor.Source, Editor);
-
-      --  ??? Why did we need to update the title of the frame when the size
-      --  ??? was changed ? This also generates an infinite loop in the MDI
-
-      --  Widget_Callback.Object_Connect
-      --    (Get_Widget (Editor.Source), "size_allocate",
-      --     Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
-      --     Editor, After => True);
-
-      --  Widget_Callback.Object_Connect
-      --    (Editor.Asm, "size_allocate",
-      --     Widget_Callback.To_Marshaller (Update_Editor_Frame'Access),
-      --     Editor, After => True);
    end Configure;
 
    ----------------------

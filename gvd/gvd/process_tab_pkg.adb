@@ -158,7 +158,8 @@ begin
    Set_Policy (Process_Tab.Command_Scrolledwindow, Policy_Never, Policy_Always);
    Child := Put (Process_Tab.Process_Mdi, Process_Tab.Command_Scrolledwindow);
    Set_Title (Child, "Console");
-   Dock_Child (Child, Side => Bottom);
+   Set_Dock_Side (Child, Bottom);
+   Dock_Child (Child);
    Return_Callback.Object_Connect
      (Process_Tab.Command_Scrolledwindow, "delete_event", On_Command_Scrolledwindow_Delete_Event'Access, Process_Tab);
 

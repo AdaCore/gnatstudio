@@ -956,7 +956,8 @@ package body GVD.Process is
 
       Child := Put (Process.Process_Mdi, Process.Data_Paned);
       Set_Title (Child, "Data");
-      Dock_Child (Child, Side => Top);
+      Set_Dock_Side (Child, Top);
+      Dock_Child (Child);
 
       Realize (Process.Data_Canvas);
       Init_Graphics (GVD_Canvas (Process.Data_Canvas));
