@@ -1,0 +1,8 @@
+Should use "[wW][hH][eE][nN]" instead of "when"
+
+exception handlers & case alternatives         \bwhen\s+((\w+)\s+:\s+)?(\w+)\s+=>
+empty lines                                    ^()$
+array types                                    \btype\s+(\w+)\s+is\s+array\s+\((.*?)\)\s+of\s+(\w+)\s+;
+subtypes and types with(out) discriminant(s)   \b((sub)?type\s+(\w+)\s|type\s+(\w+)\s+\((.*?)\))\s+is\b
+discriminated types                            \btype\s+(\w+)\s+\((.*?)\)\s+is\b
+for loops                                      \bfor\s+(\w+)\s+in\s+(reverse\s+)?(.+?)(\s+range\s+(.*?))?\s+loop\b
