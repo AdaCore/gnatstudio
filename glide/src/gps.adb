@@ -173,9 +173,19 @@ begin
    Maximize (Glide);
 
    declare
+      System_Rc : constant String :=
+        Format_Pathname (Prefix.all & "/bin/gtkrc");
+
       Rc : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
    begin
+      --  Parse the system's RC file
+      Trace (Me, "Parsing System RC file " & System_Rc);
+      if Is_Regular_File (System_Rc) then
+         Gtk.Rc.Parse (System_Rc);
+      end if;
+
+      --  Parse the user's RC file
       Trace (Me, "Parsing RC file " & Rc);
       if Is_Regular_File (Rc) then
          Gtk.Rc.Parse (Rc);
