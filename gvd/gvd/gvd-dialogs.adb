@@ -42,7 +42,6 @@ with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Combo;             use Gtk.Combo;
 with Gtk.Handlers;
 with Gtk.List_Item;         use Gtk.List_Item;
-with Gtk.Object;            use Gtk.Object;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
 with Process_Proxies;       use Process_Proxies;
