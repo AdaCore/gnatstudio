@@ -138,6 +138,9 @@ package GVD.Dialogs is
       Multiple_Selection_Allowed : Boolean;
       Questions                  : Question_Array;
       Question_Description       : String := "");
+   --  Create a question dialog with a list of questions.
+   --  If Questions consists of two choices "y" and "n" then display
+   --  only a basic Yes/No dialog.
 
    procedure Initialize
      (Question_Dialog            : access Question_Dialog_Record'Class;

@@ -108,6 +108,66 @@ package body GVD.Dialogs.Callbacks is
       Hide (Get_Toplevel (Object));
    end On_Close_Button_Clicked;
 
+   -----------------------------
+   -- On_Question_Yes_Clicked --
+   -----------------------------
+
+   procedure On_Question_Yes_Clicked
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      use type Gint_List.Glist;
+
+      Dialog    : constant Question_Dialog_Access :=
+        Question_Dialog_Access (Get_Toplevel (Object));
+
+      Debugger  : constant Debugger_Process_Tab :=
+        Convert (Dialog.Main_Window, Dialog.Debugger);
+
+   begin
+      --  Unregister the dialog, since Send will not take care of it when
+      --  Wait_For_Prompt is false
+
+      Unregister_Dialog (Debugger);
+      Set_Busy_Cursor (Debugger, False);
+
+      Send (Dialog.Debugger,
+            "y",
+            Mode => GVD.Types.Visible,
+            Empty_Buffer => False,
+            Wait_For_Prompt => False);
+   end On_Question_Yes_Clicked;
+
+   -----------------------------
+   -- On_Question_No_Clicked --
+   -----------------------------
+
+   procedure On_Question_No_Clicked
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      use type Gint_List.Glist;
+
+      Dialog    : constant Question_Dialog_Access :=
+        Question_Dialog_Access (Get_Toplevel (Object));
+
+      Debugger  : constant Debugger_Process_Tab :=
+        Convert (Dialog.Main_Window, Dialog.Debugger);
+
+   begin
+      --  Unregister the dialog, since Send will not take care of it when
+      --  Wait_For_Prompt is false
+
+      Unregister_Dialog (Debugger);
+      Set_Busy_Cursor (Debugger, False);
+
+      Send (Dialog.Debugger,
+            "n",
+            Mode => GVD.Types.Visible,
+            Empty_Buffer => False,
+            Wait_For_Prompt => False);
+   end On_Question_No_Clicked;
+
    ----------------------------
    -- On_Question_OK_Clicked --
    ----------------------------

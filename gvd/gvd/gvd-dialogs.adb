@@ -154,6 +154,7 @@ package body GVD.Dialogs is
       Question_Description       : String := "") is
    begin
       Question_Dialog := new Question_Dialog_Record;
+
       Initialize
         (Question_Dialog, Main_Window, Debugger,
          Multiple_Selection_Allowed, Questions,
@@ -544,66 +545,97 @@ package body GVD.Dialogs is
 
    begin
       Initialize (Question_Dialog, "Question", Main_Window);
+      Question_Dialog.Debugger := Debugger;
+
       Widget_Callback.Connect
         (Question_Dialog.Close_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Question_Close_Clicked'Access));
-
-      Question_Dialog.Debugger := Debugger;
 
       if Question_Description /= "" then
          Gtk_New (Label, Question_Description);
          Pack_Start (Question_Dialog.Vbox1, Label, False, False, 5);
       end if;
 
-      Gtk_New (Question_Dialog.Scrolledwindow1);
-      Pack_Start
-        (Question_Dialog.Vbox1, Question_Dialog.Scrolledwindow1,
-         True, True, 0);
-      Set_Policy
-        (Question_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
+      --  Detect if only choices are "Yes" and "No"
+      if Questions'Length = 2
+        and then Questions (Questions'First).Choice /= null
+        and then Questions (Questions'Last).Choice /= null
+        and then
+          ((Questions (Questions'Last).Choice.all = "y"
+            and then Questions (Questions'First).Choice.all = "n")
+          or else
+           (Questions (Questions'Last).Choice.all = "n"
+            and then Questions (Questions'First).Choice.all = "y"))
+      then
+         Set_Default_Size (Question_Dialog, 100, 50);
+         Gtk_New (OK_Button, -"Yes");
+         Add (Question_Dialog.Hbuttonbox1, OK_Button);
+         Widget_Callback.Connect
+           (OK_Button,
+            "clicked",
+            On_Question_Yes_Clicked'Access);
 
-      --  Make sure the Cancel button is on the right, for homogeneity
-      Ref (Question_Dialog.Close_Button);
-      Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
-      Gtk_New (OK_Button, -"OK");
-      Add (Question_Dialog.Hbuttonbox1, OK_Button);
-      Widget_Callback.Connect
-        (OK_Button,
-         "clicked",
-         On_Question_OK_Clicked'Access);
-      Add (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
-      Unref (Question_Dialog.Close_Button);
+         Gtk_New (OK_Button, -"No");
+         Add (Question_Dialog.Hbuttonbox1, OK_Button);
+         Widget_Callback.Connect
+           (OK_Button,
+            "clicked",
+            On_Question_No_Clicked'Access);
 
-      Gtk_New (Question_Dialog.List, 2, Question_Titles);
-      Add (Question_Dialog.Scrolledwindow1, Question_Dialog.List);
-
-      if Multiple_Selection_Allowed then
-         Set_Selection_Mode (Question_Dialog.List, Selection_Multiple);
+         Ref (Question_Dialog.Close_Button);
+         Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
       else
-         Set_Selection_Mode (Question_Dialog.List, Selection_Single);
+         Gtk_New (Question_Dialog.Scrolledwindow1);
+         Pack_Start
+           (Question_Dialog.Vbox1, Question_Dialog.Scrolledwindow1,
+            True, True, 0);
+         Set_Policy
+           (Question_Dialog.Scrolledwindow1, Policy_Automatic,
+            Policy_Automatic);
+
+         --  Make sure the Cancel button is on the right, for homogeneity
+         Ref (Question_Dialog.Close_Button);
+         Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
+         Gtk_New (OK_Button, -"OK");
+         Add (Question_Dialog.Hbuttonbox1, OK_Button);
+         Widget_Callback.Connect
+           (OK_Button,
+            "clicked",
+            On_Question_OK_Clicked'Access);
+         Add (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
+         Unref (Question_Dialog.Close_Button);
+
+         Gtk_New (Question_Dialog.List, 2, Question_Titles);
+         Add (Question_Dialog.Scrolledwindow1, Question_Dialog.List);
+
+         if Multiple_Selection_Allowed then
+            Set_Selection_Mode (Question_Dialog.List, Selection_Multiple);
+         else
+            Set_Selection_Mode (Question_Dialog.List, Selection_Single);
+         end if;
+
+         for J in Questions'Range loop
+            Temp (0) := Strings.New_String (Questions (J).Choice.all);
+            Temp (1) := Strings.New_String (Questions (J).Description.all);
+            Row := Append (Question_Dialog.List, Temp);
+            Free (Temp);
+         end loop;
+
+         Set_Column_Width
+           (Question_Dialog.List, 0,
+            Optimal_Column_Width (Question_Dialog.List, 0));
+         Set_Column_Width
+           (Question_Dialog.List, 1,
+            Gint'Min (Optimal_Column_Width (Question_Dialog.List, 1),
+                      Max_Column_Width));
+         Set_Column_Auto_Resize (Question_Dialog.List, 0, True);
+         Set_Column_Auto_Resize (Question_Dialog.List, 1, True);
+
+         Width := Optimal_Column_Width (Question_Dialog.List, 0)
+           + Optimal_Column_Width (Question_Dialog.List, 1)
+           + 20;
+         Set_Default_Size (Question_Dialog, Gint'Min (Width, 500), 200);
       end if;
-
-      for J in Questions'Range loop
-         Temp (0) := Strings.New_String (Questions (J).Choice.all);
-         Temp (1) := Strings.New_String (Questions (J).Description.all);
-         Row := Append (Question_Dialog.List, Temp);
-         Free (Temp);
-      end loop;
-
-      Set_Column_Width
-        (Question_Dialog.List, 0,
-         Optimal_Column_Width (Question_Dialog.List, 0));
-      Set_Column_Width
-        (Question_Dialog.List, 1,
-         Gint'Min (Optimal_Column_Width (Question_Dialog.List, 1),
-                   Max_Column_Width));
-      Set_Column_Auto_Resize (Question_Dialog.List, 0, True);
-      Set_Column_Auto_Resize (Question_Dialog.List, 1, True);
-
-      Width := Optimal_Column_Width (Question_Dialog.List, 0)
-        + Optimal_Column_Width (Question_Dialog.List, 1)
-        + 20;
-      Set_Default_Size (Question_Dialog, Gint'Min (Width, 500), 200);
 
       Register_Dialog (Convert (Main_Window, Debugger), Question_Dialog);
    end Initialize;
