@@ -5,6 +5,7 @@ CP=cp -p
 
 build:
 	cd standalone_obj; gcc -c ../common/file-utils.c
+	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone test_parse $(LARGS) `gtkada-config`
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali $(LARGS) `gtkada-config`
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_many_ali $(LARGS) `gtkada-config`
 	gnatmake -m -a ${GNATMAKE_FLAGS} -Pstandalone read_ali_twice $(LARGS) `gtkada-config`
@@ -17,6 +18,8 @@ build:
 distrib:
 	@-mkdir -p gvd gnat > /dev/null 2>&1
 	$(CP) ../../common/src/sdefault.adb common
+	$(CP) ../../common/src/tries.ad? common
+	$(CP) ../../common/src/dynamic_arrays.ad? common
 	$(CP) ../../gvd/common/file_utils.ad? common
 	$(CP) ../../gvd/common/file-utils.c common
 	$(CP) ../../gvd/common/htables.ad? common
@@ -31,6 +34,7 @@ distrib:
 	$(CP) ../../gvd/common/language-unknown.ad? gvd
 	$(CP) ../../gvd/common/language.ad? gvd
 	$(CP) ../../gvd/common/odd_intl.ad? gvd
+	$(CP) ../../ada_module/src/ali_parser.ad? common
 	$(CP) ../../ada_module/src/src_info-* common
 	$(CP) ../../cpp_module/src/src_info-* common
 	$(CP) ../../gvd/gnat/g-exptty.ad? gvd
