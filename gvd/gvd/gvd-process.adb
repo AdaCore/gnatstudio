@@ -77,7 +77,7 @@ with Basic_Types;                use Basic_Types;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Window_Settings;        use GVD.Window_Settings;
-with GVD.Utils;                  use GVD.Utils;
+with GUI_Utils;                  use GUI_Utils;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with Dock_Paned;                 use Dock_Paned;

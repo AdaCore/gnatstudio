@@ -26,7 +26,7 @@ with Debugger;           use Debugger;
 with Odd_Intl;           use Odd_Intl;
 with Gtk.Enums;          use Gtk.Enums;
 with Gtk.Combo;          use Gtk.Combo;
-with GVD.Utils;          use GVD.Utils;
+with GUI_Utils;          use GUI_Utils;
 with GVD.Code_Editors;   use GVD.Code_Editors;
 with Gdk.Event;          use Gdk.Event;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;

@@ -253,8 +253,11 @@ procedure GVD_Main is
       end if;
    end Clean_Parameter;
 
+   procedure G_Type_Init (Debug_Flags : Gint);
+   pragma Import (C, G_Type_Init, "g_type_init");
 begin
    Gtk.Main.Set_Locale;
+   --  G_Type_Init (1 + 2);
    Gtk.Main.Init;
    Init;
    Gtk_New (Main_Debug_Window, "<gvd>", GVD_Menu_Items.all);

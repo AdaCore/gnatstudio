@@ -52,7 +52,7 @@ with GVD.Code_Editors; use GVD.Code_Editors;
 with String_Utils;     use String_Utils;
 with GVD.Process;      use GVD.Process;
 with GVD.Types;        use GVD.Types;
-with GVD.Utils;        use GVD.Utils;
+with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 
 package body Breakpoints_Editor is

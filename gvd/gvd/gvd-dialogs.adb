@@ -48,7 +48,7 @@ with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
 with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Types;             use GVD.Types;
-with GVD.Utils;             use GVD.Utils;
+with GUI_Utils;             use GUI_Utils;
 
 package body GVD.Dialogs is
 
