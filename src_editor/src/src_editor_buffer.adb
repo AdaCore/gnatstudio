@@ -1553,7 +1553,7 @@ package body Src_Editor_Buffer is
       Entity_Start        : Gtk_Text_Iter;
       Entity_End          : Gtk_Text_Iter;
       Tags                : Highlighting_Tags renames Buffer.Syntax_Tags;
-      Slice_Offset_Line   : Gint;
+      Slice_Offset_Line   : Natural;
       Slice_Offset_Column : Gint;
       Result              : Boolean;
 
@@ -1606,15 +1606,18 @@ package body Src_Editor_Buffer is
          end if;
 
          Buffer_Line :=
-           Get_Buffer_Line (Buffer, Editable_Line_Type (Sloc_Start.Line));
+           Get_Buffer_Line
+             (Buffer,
+              Editable_Line_Type (Sloc_Start.Line + Slice_Offset_Line));
 
          if Buffer_Line = 0 then
             return False;
          end if;
 
-         Line := Gint (Buffer_Line - 1) + Slice_Offset_Line;
+         Line := Gint (Buffer_Line - 1);
 
          if not Is_Valid_Position (Buffer, Line, Col) then
+            Trace (Me, "invalid position");
             return False;
          end if;
 
@@ -1624,14 +1627,16 @@ package body Src_Editor_Buffer is
          --  previous line.
 
          Buffer_Line :=
-           Get_Buffer_Line (Buffer, Editable_Line_Type (Sloc_End.Line));
+           Get_Buffer_Line
+             (Buffer, Editable_Line_Type (Sloc_End.Line + Slice_Offset_Line));
 
          if Buffer_Line = 0 then
             return False;
          end if;
 
+         Line := Gint (Buffer_Line - 1);
+
          if Sloc_End.Column = 0 then
-            Line := Gint (Buffer_Line - 1) + Slice_Offset_Line + 1;
             Get_Iter_At_Line_Index (Buffer, Entity_End, Line, 0);
             Backward_Char (Entity_End, Success);
 
@@ -1642,7 +1647,11 @@ package body Src_Editor_Buffer is
                Col := Gint (Sloc_End.Column) - 1;
             end if;
 
-            Line := Gint (Buffer_Line - 1) + Slice_Offset_Line;
+            if not Is_Valid_Position (Buffer, Line, Col) then
+               Trace (Me, "invalid position");
+               return False;
+            end if;
+
             Get_Iter_At_Line_Index (Buffer, Entity_End, Line, Col);
             Forward_Char (Entity_End, Success);
          end if;
@@ -1676,7 +1685,7 @@ package body Src_Editor_Buffer is
 
       begin
          Highlight_Complete := True;
-         Slice_Offset_Line   := Get_Line (Entity_Start);
+         Slice_Offset_Line   := Natural (Get_Line (Entity_Start));
          Slice_Offset_Column := Get_Line_Index (Entity_Start);
 
          --  First, un-apply all the style tags...
