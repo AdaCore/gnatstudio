@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                    use Glib;
+with Glib.Convert;            use Glib.Convert;
 with Glib.Xml_Int;            use Glib.Xml_Int;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Image;               use Gtk.Image;
@@ -69,7 +70,9 @@ package body Custom_Module is
          Current_Title  : String_Access;
          Current_Pixmap : String_Access;
          Item           : Gtk_Menu_Item;
+         Image          : Gtk_Image;
          Menuitem       : Boolean := False;
+
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -87,8 +90,7 @@ package body Custom_Module is
                Current_Child_Child := Current_Child.Next;
 
                while Current_Child_Child /= null loop
-                  Add_Child (Current_Title.all,
-                             Current_Child_Child);
+                  Add_Child (Current_Title.all, Current_Child_Child);
                   Current_Child_Child := Current_Child_Child.Next;
                end loop;
             end if;
@@ -168,33 +170,28 @@ package body Custom_Module is
                if Menuitem then
                   Register_Menu
                     (Kernel,
-                     Parent_Path,
-                     Current_Title.all,
+                     Locale_To_UTF8 (Parent_Path),
+                     Locale_To_UTF8 (Current_Title.all),
                      "",
                      null,
                      Command);
                else
-                  declare
-                     Image  : Gtk_Image;
+                  if Current_Pixmap /= null
+                    and then Is_Regular_File (Current_Pixmap.all)
+                  then
+                     Gtk_New (Image, Current_Pixmap.all);
+                  end if;
 
-                  begin
-                     if Current_Pixmap /= null
-                       and then Is_Regular_File (Current_Pixmap.all)
-                     then
-                        Gtk_New (Image, Current_Pixmap.all);
-                     end if;
-
-                     Register_Button
-                       (Kernel,
-                        Current_Title.all,
-                        Command,
-                        Image);
-                  end;
+                  Register_Button
+                    (Kernel,
+                     Locale_To_UTF8 (Current_Title.all),
+                     Command,
+                     Image);
                end if;
             else
                if Menuitem then
                   Gtk_New (Item);
-                  Register_Menu (Kernel, Parent_Path, Item);
+                  Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
                else
                   Append_Space (Get_Toolbar (Kernel));
                end if;
