@@ -1475,6 +1475,8 @@ package body GVD.Process is
       Geometry_Info : Process_Tab_Geometry;
       Buttons       : Message_Dialog_Buttons;
 
+      WTX_Version   : Natural := 0;
+
    begin
       pragma Assert (Process.Command_Scrolledwindow = null);
       pragma Assert (Process.Data_Paned = null);
@@ -1600,6 +1602,17 @@ package body GVD.Process is
       --  file.
 
       Initialize (Process.Debugger);
+
+      --  Hide gdb-AE specific capabilities if we are not using a
+      --  debugger targeted to VxWorks AE
+
+      Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
+      Info_WTX (Process.Debugger, WTX_Version);
+
+      if WTX_Version /= 3 then
+         Set_Sensitive (Widget, False);
+      end if;
+
       Success := True;
 
    exception
