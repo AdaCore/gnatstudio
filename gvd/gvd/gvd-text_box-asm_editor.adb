@@ -51,10 +51,6 @@ with GNAT.Regpat;      use GNAT.Regpat;
 
 package body GVD.Asm_Editors is
 
-   Getting_Assembly_Msg : constant String_Access :=
-     new String' (-"Getting assembly code...");
-   --  Message displayed when GVD is getting the assembly code.
-
    package Editor_Cb is new Callback (Asm_Editor_Record);
    package Editor_Event_Cb is new Return_Callback (Asm_Editor_Record, Boolean);
 
@@ -65,8 +61,8 @@ package body GVD.Asm_Editors is
    --  0 is returned if the address was not found.
 
    function Address_From_Line
-     (Editor  : access Asm_Editor_Record'Class;
-      Line    : Natural) return String;
+     (Editor : access Asm_Editor_Record'Class;
+      Line   : Natural) return String;
    --  Return the address associated with a given line in the text widget.
    --  "" is returned if no address was found.
 
@@ -95,8 +91,8 @@ package body GVD.Asm_Editors is
    --  displayed.
 
    function In_Range
-     (Pc     : String;
-      R      : Cache_Data_Access) return Boolean;
+     (Pc : String;
+      R  : Cache_Data_Access) return Boolean;
    --  Return True if PC is in the range of address described by R.
 
    function Find_In_Cache
@@ -192,19 +188,24 @@ package body GVD.Asm_Editors is
       Pc     : String;
       End_Pc : String)
    is
-      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      S, S2, S3 : String_Access;
-      Start,
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Editor.Process);
+      S       : String_Access;
+      S2      : String_Access;
+      S3      : String_Access;
+      Start   : Address_Type;
       Last    : Address_Type;
-      Start_End, Last_End : Natural;
+      Start_End, Last_End   : Natural;
       Low_Range, High_Range : String_Access;
-      Pc_In_Range : constant Boolean := In_Range (Pc, Editor.Current_Range);
+      Pc_In_Range     : constant Boolean :=
+        In_Range (Pc, Editor.Current_Range);
       Pc_End_In_Range : constant Boolean :=
         In_Range (End_Pc, Editor.Current_Range);
       S_First : Natural;
 
    begin
       --  Is the range already visible ?
+
       if Pc_In_Range and then Pc_End_In_Range then
          return;
       end if;
@@ -806,18 +807,20 @@ package body GVD.Asm_Editors is
 
    function Add_Address (Addr : String; Offset : Integer) return String is
       Convert : constant String := "0123456789abcdef";
-      Str : constant String :=
+      Str     : constant String :=
         "16#" & Addr (Addr'First + 2 .. Addr'Last) & '#';
-      Value : Long_Long_Integer := Long_Long_Integer'Value (Str)
-        + Long_Long_Integer (Offset);
-      Buffer : String (1 .. 32);
-      Pos : Natural := Buffer'Last;
+      Value   : Long_Long_Integer := Long_Long_Integer'Value (Str) +
+        Long_Long_Integer (Offset);
+      Buffer  : String (1 .. 32);
+      Pos     : Natural := Buffer'Last;
+
    begin
       while Value > 0 loop
          Buffer (Pos) := Convert (Integer (Value mod 16) + Convert'First);
          Pos := Pos - 1;
          Value := Value / 16;
       end loop;
+
       return "0x" & Buffer (Pos + 1 .. Buffer'Last);
    end Add_Address;
 
@@ -844,14 +847,14 @@ package body GVD.Asm_Editors is
    ---------------
 
    function Key_Press
-     (Box : access Asm_Editor_Record'Class; Event : Gdk_Event)
-      return Boolean
+     (Box : access Asm_Editor_Record'Class; Event : Gdk_Event) return Boolean
    is
       Scroll : constant Gtk_Adjustment := Get_Vadj (Get_Child (Box));
    begin
       case Get_Key_Val (Event) is
          when GDK_Page_Down =>
             --  Only scroll if we are on the last page
+
             if Get_Value (Scroll)
               >= Get_Upper (Scroll) - Get_Page_Size (Scroll)
             then
@@ -861,6 +864,7 @@ package body GVD.Asm_Editors is
 
          when GDK_Page_Up =>
             --  Only scroll if we are on the first page
+
             if Get_Value (Scroll) = 0.0 then
                Meta_Scroll (Box, Down => False);
                return True;
@@ -868,6 +872,7 @@ package body GVD.Asm_Editors is
 
          when others => null;
       end case;
+
       return False;
    end Key_Press;
 end GVD.Asm_Editors;
