@@ -532,6 +532,15 @@ package Entities is
    function "<" (Entity1, Entity2 : Entity_Information) return Boolean;
    --  sort two entities alphabetically
 
+   function Get_Documentation
+     (Entity                    : Entity_Information;
+      Declaration_File_Contents : String := "") return String;
+   --  Return the documentation for Entity. This is the block of comments
+   --  just before or just after the declaration of the entity.
+   --  Declaration_File_Contents can be provided to save loading the file from
+   --  the disk. However, if not specified, the contents of the file will be
+   --  read from the disk as appropriate.
+
    ----------------------
    -- Setting entities --
    ----------------------
@@ -759,11 +768,14 @@ private
 
    procedure Destroy (D : in out Entity_Information_List_Access);
 
+   --  Warnings(Off) for the storage_pool
+   pragma Warnings (Off);
    package Entities_Tries is new Tries
      (Data_Type => Entity_Information_List_Access,
       No_Data   => null,
       Get_Index => Get_Name,
       Free      => Destroy);
+   pragma Warnings (On);
    --  Each node in the tree contains all the entities with the same name.
 
    ------------------------

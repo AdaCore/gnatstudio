@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,6 +32,9 @@ with File_Utils;              use File_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Glide_Intl;              use Glide_Intl;
 with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
+with Language;                use Language;
+with String_Utils;            use String_Utils;
+with Entities.Queries;        use Entities.Queries;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -104,6 +107,21 @@ package body Entities is
      (Tree : in out Entities_Tries.Trie_Tree; File : Source_File);
    --  Remove from Tree all the entities declared in File and that are marked
    --  as valid. These entities are about to be removed from memory anyway
+
+   procedure Get_Documentation_Before
+     (Context       : Language_Context;
+      Buffer        : String;
+      Decl_Index    : Natural;
+      Comment_Start : out Natural;
+      Comment_End   : out Natural);
+   procedure Get_Documentation_After
+     (Context       : Language_Context;
+      Buffer        : String;
+      Decl_Index    : Natural;
+      Comment_Start : out Natural;
+      Comment_End   : out Natural);
+   --  Get the comment just before or just after Decl_Index, skipping code
+   --  lines as needed.
 
    function Internal_Get_Or_Create
      (Db            : Entities_Database;
@@ -2194,4 +2212,158 @@ package body Entities is
    begin
       Sort.Sort (Integer (Last (Sources)) - First);
    end Sort;
+
+   ------------------------------
+   -- Get_Documentation_Before --
+   ------------------------------
+
+   procedure Get_Documentation_Before
+     (Context       : Language_Context;
+      Buffer        : String;
+      Decl_Index    : Natural;
+      Comment_Start : out Natural;
+      Comment_End   : out Natural)
+   is
+      Current : Integer;
+   begin
+      Current := Decl_Index;
+      Skip_Lines (Buffer, -1, Current);
+      Comment_Start := Current;
+      Skip_To_Current_Comment_Block_Start (Context, Buffer, Comment_Start);
+
+      if Comment_Start = Current then
+         Comment_Start := 0;
+      else
+         Comment_End := Line_End (Buffer, Current);
+         Trace (Assert_Me,
+                "Get_Documentation: Found a comment before the entity,"
+                & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+      end if;
+   end Get_Documentation_Before;
+
+   -----------------------------
+   -- Get_Documentation_After --
+   -----------------------------
+
+   procedure Get_Documentation_After
+     (Context       : Language_Context;
+      Buffer        : String;
+      Decl_Index    : Natural;
+      Comment_Start : out Natural;
+      Comment_End   : out Natural) is
+   begin
+      --  Else look after the comment after the declaration (which is the
+      --  first block of comments after the declaration line, and not
+      --  separated by a blank line)
+      Comment_Start := Decl_Index;
+      Skip_To_Next_Comment_Start (Context, Buffer, Comment_Start);
+
+      if Comment_Start /= 0 then
+         Comment_End := Comment_Start;
+         Skip_To_Current_Comment_Block_End (Context, Buffer, Comment_End);
+         Comment_End := Line_End (Buffer, Comment_End);
+         Trace (Assert_Me,
+                "Get_Documentation: Found a comment after the entity,"
+                & " from" & Comment_Start'Img & " to" & Comment_End'Img);
+      end if;
+   end Get_Documentation_After;
+
+   -----------------------
+   -- Get_Documentation --
+   -----------------------
+
+   function Get_Documentation
+     (Entity                    : Entity_Information;
+      Declaration_File_Contents : String := "") return String
+   is
+      Buffer       : String_Access :=
+        Declaration_File_Contents'Unrestricted_Access;
+      Index        : Natural := Declaration_File_Contents'First;
+      Declaration_File : constant Virtual_File :=
+        Get_Filename (Get_Declaration_Of (Entity).File);
+      Lang         : constant Language_Access := Get_Language_From_File
+        (Glide_Language_Handler (Entity.Declaration.File.Db.Lang),
+         Declaration_File);
+      Current, Beginning : Natural;
+      Context : Language_Context_Access;
+      Location : File_Location;
+      Must_Free_Buffer : Boolean := False;
+   begin
+      if Lang = null then
+         Trace (Assert_Me, "Get_Documentation language unknown for "
+                & Full_Name (Declaration_File).all);
+         return "";
+      end if;
+
+      Context := Get_Language_Context (Lang);
+
+      if Declaration_File_Contents = "" then
+         Buffer := Read_File (Declaration_File);
+         if Buffer = null then
+            Trace (Assert_Me, "Get_Documentation, no file found "
+                   & Full_Name (Declaration_File).all);
+            return "";
+         end if;
+         Must_Free_Buffer := True;
+         Index := Buffer'First;
+      end if;
+
+      Skip_Lines (Buffer.all, Get_Declaration_Of (Entity).Line - 1, Index);
+      Get_Documentation_Before
+        (Context       => Context.all,
+         Buffer        => Buffer.all,
+         Decl_Index    => Index,
+         Comment_Start => Beginning,
+         Comment_End   => Current);
+      if Beginning = 0 then
+         Get_Documentation_After
+           (Context       => Context.all,
+            Buffer        => Buffer.all,
+            Decl_Index    => Index,
+            Comment_Start => Beginning,
+            Comment_End   => Current);
+      end if;
+
+      --  If not found, check the comment just before the body
+      if Beginning = 0  then
+         if Must_Free_Buffer then
+            Free (Buffer);
+         end if;
+
+         Find_Next_Body (Entity, Location => Location);
+         if Location /= No_File_Location then
+            Buffer := Read_File (Get_Filename (Location.File));
+            Must_Free_Buffer := True;
+            Index := Buffer'First;
+
+            Skip_Lines (Buffer.all, Location.Line - 1, Index);
+            Get_Documentation_Before
+              (Context       => Context.all,
+               Buffer        => Buffer.all,
+               Decl_Index    => Index,
+               Comment_Start => Beginning,
+               Comment_End   => Current);
+         end if;
+      end if;
+
+      if Beginning /= 0 then
+         declare
+            Result : constant String := Buffer
+              (Line_Start (Buffer.all, Beginning) .. Current);
+         begin
+            if Must_Free_Buffer then
+               Free (Buffer);
+            end if;
+
+            return Result;
+         end;
+      else
+         if Must_Free_Buffer then
+            Free (Buffer);
+         end if;
+
+         return "";
+      end if;
+   end Get_Documentation;
+
 end Entities;
