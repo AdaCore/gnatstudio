@@ -29,7 +29,7 @@ package body Values is
          raise Except.User_Error;
       end if;
 
-      return new Value_Info'(E => Int_Val);
+      return new Value_Info'(Kind => Int, E => Int_Val);
       --  Allocate a new Value_Info (which is a record with one field)
       --  on the heap and initialize its only field "E" to be "Int_Val".
       --  NOTE: the ' in Value_Info'(...) must be there.
@@ -41,12 +41,17 @@ package body Values is
 
    function To_String (V : Value) return String is
    begin
-      return Integer'Image (V.E);
-      --  V is a pointer to a Value_Info record. V.all is the
-      --  actual Value_Info record pointed by V. Thus, strictly speaking,
-      --  we shoudl have written V.all.E above. However, Ada allows to
-      --  remove the ".all" because the meaning of expression "V.E" is
-      --  clear from its context.
+      case V.Kind is
+         when Int =>
+            return Integer'Image (V.E);
+            --  V is a pointer to a Value_Info record. V.all is the
+            --  actual Value_Info record pointed by V. Thus, strictly speaking,
+            --  we shoudl have written V.all.E above. However, Ada allows to
+            --  remove the ".all" because the meaning of expression "V.E" is
+            --  clear from its context.
+         when Matrix =>
+            return Print (V.M);
+      end case;
    end To_String;
 
 end Values;
