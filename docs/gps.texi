@@ -4166,6 +4166,15 @@ Recompute the cross-reference information for C and C++ source files.
 @item Interrupt
 Interrupt the current compilation or build.
 
+@item Clean
+Remove all object files and other compilation artifacts associated to the root
+project. It will not clean objects from other related projects and thus is
+mostly useful for single projects.
+
+@item Clean all
+Remove all object files and other compilation artifacts associated to all
+related projects. It allows to restart a complete build from scratch.
+
 @end table
 
 @c --------------------------------------------------------------------
