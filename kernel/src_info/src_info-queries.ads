@@ -141,11 +141,43 @@ package Src_Info.Queries is
       return Scope_Tree_Node;
    --  Return the declaration node for the entity Name at position Line, Column
 
-   function Get_Entity_Name (Node : Scope_Tree_Node) return String;
-   --  Return the name of the entity associated with Node
-
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean;
    --  Return True if Node is associated with a subprogram
+
+   -------------------------
+   --  Entity information --
+   -------------------------
+   --  This type groups information about entities that allow an exact
+   --  identification of that entity, including handling of overriding
+   --  subprograms,... This information has a life-cycle independent from the
+   --  tree itself, and thus can be kept independently in a browser.
+
+   type Entity_Information is private;
+
+   function Get_Entity (Tree : Scope_Tree; Node : Scope_Tree_Node)
+      return Entity_Information;
+   --  Return the information for the entity defined in Node.
+   --  You must to call Destroy on the returned information.
+
+   procedure Destroy (Entity : in out Entity_Information);
+   --  Free the memory associated with the entity;
+
+   function Get_Name (Entity : Entity_Information) return String;
+   --  Return the name of the entity associated with Node.
+
+   function Get_Declaration_Line_Of
+     (Entity : Entity_Information) return Positive;
+   function Get_Declaration_Column_Of
+     (Entity : Entity_Information) return Natural;
+   function Get_Declaration_File_Of
+     (Entity : Entity_Information) return String;
+   --  Return the location of the declaration for Entity. Note that this
+   --  location remains valid only until the source file are changed. It is not
+   --  magically updated when the source file is changed.
+
+   --------------------------
+   -- Scope tree iterators --
+   --------------------------
 
    type Scope_Tree_Node_Iterator is private;
 
@@ -170,20 +202,28 @@ private
    --  declaration, with subranges or subdeclarations, or a reference to
    --  another entity.
 
+   type Entity_Information is record
+      Name        : String_Access;
+      Decl_Line   : Positive;
+      Decl_Column : Natural;
+      Decl_File   : String_Access;
+   end record;
+
    type Scope_Node;
    type Scope_List is access Scope_Node;
    type Scope_Node (Typ : Scope_Type) is record
       Sibling : Scope_List;
       --  Pointer to the next item at the same level.
 
+      Decl : E_Declaration_Access;
+      --  The declaration of the entity
+
       case Typ is
          when Declaration =>
-            Decl : E_Declaration_Access;
             Start_Of_Scope : File_Location;
             Contents : Scope_List;
 
          when Reference =>
-            Entity_Decl : E_Declaration_Access;
             Ref : E_Reference_Access;
       end case;
    end record;

@@ -507,35 +507,27 @@ package body Src_Info.Queries is
       L : Scope_List := Scope;
    begin
       while L /= null loop
-         case L.Typ is
-            when Declaration =>
-               if L.Decl.Kind = Generic_Function_Or_Operator
-                  --  or else L.Decl.Kind = Generic_Package
-                 or else L.Decl.Kind = Generic_Procedure
-                 or else L.Decl.Kind = Non_Generic_Function_Or_Operator
-                  --  or else L.Decl.Kind = Non_Generic_Package
-                 or else L.Decl.Kind = Non_Generic_Procedure
-               then
+         if L.Decl.Kind = Generic_Function_Or_Operator
+            --  or else L.Decl.Kind = Generic_Package
+           or else L.Decl.Kind = Generic_Procedure
+           or else L.Decl.Kind = Non_Generic_Function_Or_Operator
+            --  or else L.Decl.Kind = Non_Generic_Package
+           or else L.Decl.Kind = Non_Generic_Procedure
+         then
+            case L.Typ is
+               when Declaration =>
                   Trace (Handler, Prefix & "Decl: " & L.Decl.Name.all
                          & " range=" & L.Start_Of_Scope.Line'Img
                          & L.Decl.End_Of_Scope.Location.Line'Img
                          & "," & L.Decl.End_Of_Scope.Location.Column'Img);
                   Trace_Dump (Handler, L.Contents, Prefix & "  ");
-               end if;
 
-            when Reference =>
-               if L.Entity_Decl.Kind = Generic_Function_Or_Operator
-                  --  or else L.Entity_Decl.Kind = Generic_Package
-                 or else L.Entity_Decl.Kind = Generic_Procedure
-                 or else L.Entity_Decl.Kind = Non_Generic_Function_Or_Operator
-                  --  or else L.Entity_Decl.Kind = Non_Generic_Package
-                 or else L.Entity_Decl.Kind = Non_Generic_Procedure
-               then
-                  Trace (Handler, Prefix & "Ref: " & L.Entity_Decl.Name.all
+               when Reference =>
+                  Trace (Handler, Prefix & "Ref: " & L.Decl.Name.all
                          & " line=" & L.Ref.Location.Line'Img
                          & " col=" & L.Ref.Location.Column'Img);
-               end if;
-         end case;
+            end case;
+         end if;
          L := L.Sibling;
       end loop;
    end Trace_Dump;
@@ -559,13 +551,8 @@ package body Src_Info.Queries is
    -------------------
 
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean is
-      K : E_Kind;
+      K : E_Kind := Node.Decl.Kind;
    begin
-      case Node.Typ is
-         when Declaration => K := Node.Decl.Kind;
-         when Reference   => K := Node.Entity_Decl.Kind;
-      end case;
-
       return K = Generic_Function_Or_Operator
         or else K = Generic_Procedure
         or else K = Non_Generic_Function_Or_Operator
@@ -668,14 +655,12 @@ package body Src_Info.Queries is
          L : File_Location;
       begin
          case Loc.Typ is
-            when Declaration =>
-               L := Loc.Decl.Location;
-            when Reference =>
-               L := Loc.Ref.Location;
+            when Declaration => L := Loc.Decl.Location;
+            when Reference   => L := Loc.Ref.Location;
          end case;
 
          if L.File.LI /= Lib_Info
-           or else L.File.Part /= Unit_Body
+           or else (Loc.Typ = Reference and then L.File.Part /= Unit_Body)
          then
             return -2;
 
@@ -811,7 +796,7 @@ package body Src_Info.Queries is
                New_Item := new Scope_Node'
                  (Typ         => Reference,
                   Sibling     => null,
-                  Entity_Decl => Decl.Declaration'Unrestricted_Access,
+                  Decl        => Decl.Declaration'Unrestricted_Access,
                   Ref         => R.Value'Unrestricted_Access);
                Add_Single_Entity (New_Item, L);
             end if;
@@ -908,13 +893,6 @@ package body Src_Info.Queries is
                return Scope_Tree_Node (L);
             end if;
 
-            if L.Decl.Name.all = Name then
-               Trace (Me, "Entity found : "
-                      & L.Decl.Name.all
-                      & L.Decl.Location.Line'Img
-                      & L.Decl.Location.Column'Img);
-            end if;
-
             Result := Find_Entity_Declaration
               (L.Contents, Name, Line, Column);
             if Result /= null then
@@ -968,19 +946,68 @@ package body Src_Info.Queries is
       return Scope_Tree_Node (Iter);
    end Get;
 
-   ---------------------
-   -- Get_Entity_Name --
-   ---------------------
+   --------------
+   -- Get_Name --
+   --------------
 
-   function Get_Entity_Name (Node : Scope_Tree_Node) return String is
+   function Get_Name (Entity : Entity_Information) return String is
    begin
-      case Node.Typ is
-         when Declaration =>
-            return Node.Decl.Name.all;
+      return Entity.Name.all;
+   end Get_Name;
 
-         when Reference =>
-            return Node.Entity_Decl.Name.all;
-      end case;
-   end Get_Entity_Name;
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity (Tree : Scope_Tree; Node : Scope_Tree_Node)
+      return Entity_Information is
+   begin
+      return Entity_Information'
+        (Name        => new String' (Node.Decl.Name.all),
+         Decl_Line   => Node.Decl.Location.Line,
+         Decl_Column => Node.Decl.Location.Column,
+         Decl_File   => new String'
+           (Get_Source_Filename (Node.Decl.Location.File)));
+   end Get_Entity;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Entity : in out Entity_Information) is
+   begin
+      Free (Entity.Decl_File);
+      Free (Entity.Name);
+   end Destroy;
+
+   -----------------------------
+   -- Get_Declaration_Line_Of --
+   -----------------------------
+
+   function Get_Declaration_Line_Of (Entity : Entity_Information)
+      return Positive is
+   begin
+      return Entity.Decl_Line;
+   end Get_Declaration_Line_Of;
+
+   -------------------------------
+   -- Get_Declaration_Column_Of --
+   -------------------------------
+
+   function Get_Declaration_Column_Of (Entity : Entity_Information)
+      return Natural is
+   begin
+      return Entity.Decl_Column;
+   end Get_Declaration_Column_Of;
+
+   -----------------------------
+   -- Get_Declaration_File_Of --
+   -----------------------------
+
+   function Get_Declaration_File_Of (Entity : Entity_Information)
+      return String is
+   begin
+      return Entity.Decl_File.all;
+   end Get_Declaration_File_Of;
 
 end Src_Info.Queries;
