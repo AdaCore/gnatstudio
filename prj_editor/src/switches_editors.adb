@@ -90,8 +90,9 @@ package body Switches_Editors is
       Directory : String_Id;
    end record;
 
-   package Switch_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Switch_Editor_User_Data);
+   procedure Setup (Data : Switch_Editor_User_Data; Id : Handler_Id);
+   package Switch_Callback is new Gtk.Handlers.User_Callback_With_Setup
+     (Gtk_Widget_Record, Switch_Editor_User_Data, Setup);
 
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
@@ -133,6 +134,15 @@ package body Switches_Editors is
    function Get_Pages
      (Editor : access Switches_Edit_Record'Class) return Page_Filter;
    --  Return the list of pages that are visible in the switches editor.
+
+   -----------
+   -- Setup --
+   -----------
+
+   procedure Setup (Data : Switch_Editor_User_Data; Id : Handler_Id) is
+   begin
+      Add_Watch (Id, Data.Switches);
+   end Setup;
 
    -------------
    -- Gtk_New --
