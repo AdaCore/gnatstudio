@@ -1902,6 +1902,7 @@ package body Gtkada.MDI is
       Pix       : Gdk_Pixmap;
       Mask      : Gdk_Bitmap;
       Pixmap    : Gtk_Pixmap;
+      Event     : Gtk_Event_Box;
 
    begin
       Gtk.Event_Box.Initialize (Child);
@@ -1949,7 +1950,7 @@ package body Gtkada.MDI is
       Pack_Start (Box, Box2, Expand => False, Fill => False);
 
       Set_Border_Width (Box, Border_Thickness);
-      Set_Size_Request (Box2, -1, Title_Bar_Height);
+      Set_USize (Box2, -1, Title_Bar_Height);
 
       Gdk.Pixmap.Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, Close_Xpm);
@@ -1982,20 +1983,22 @@ package body Gtkada.MDI is
         (Child.Minimize_Button, "clicked",
          Widget_Callback.To_Marshaller (Iconify_Child'Access), Child);
 
+      Gtk_New (Event);
+      Pack_Start (Box, Event, Expand => True, Fill => True, Padding => 0);
+
       --  The child widget
 
       if Widget.all in Gtk_Window_Record'Class then
          pragma Assert (Get_Child (Gtk_Window (Widget)) /= null);
          Child.Initial_Child := Get_Child (Gtk_Window (Widget));
-         Reparent (Child.Initial_Child, Box);
+         Reparent (Child.Initial_Child, Event);
          Widget_Callback.Object_Connect
            (Widget, "destroy",
             Widget_Callback.To_Marshaller (Destroy_Initial_Window'Access),
             Child);
       else
          Child.Initial_Child := Gtk_Widget (Widget);
-         Pack_Start
-           (Box, Widget, Expand => True, Fill => True, Padding => 0);
+         Add (Event, Widget);
       end if;
       Widget_Callback.Object_Connect
         (Child.Initial_Child, "destroy",
