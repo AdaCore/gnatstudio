@@ -217,18 +217,24 @@ package Prj_API is
    function Project_Path (Project_View : Project_Id) return String;
    --  Return the full path name to the project file
 
+   function Project_Path (Project : Project_Node_Id) return String;
+   --  Return the directory that contains the project file.
+
    function Create_Default_Project (Name, Path : String)
       return Project_Node_Id;
    --  Create a new project, whose source directory and object directory are is
    --  Path.
 
-   procedure Convert_Paths_To_Absolute
-     (Project : Project_Node_Id; Update_With_Statements : Boolean := False);
-   --  Convert all the paths (source path, object path) to absolute
-   --  directories in Project. This should always be used before moving a
-   --  project file.
+   function Convert_Paths
+     (Project                : Project_Node_Id;
+      Use_Relative_Paths     : Boolean := False;
+      Update_With_Statements : Boolean := False) return Boolean;
+   --  Convert all the paths (source path, object path) to absolute directories
+   --  (if Use_Relative_Paths if False) or relative directories.
+   --  This should always be used before moving a project file.
    --  This doesn't modify the with statements however if
    --  Update_With_Statements is False.
+   --  Return value is True if at least one of the paths has changed.
 
    procedure Rename_And_Move
      (Root_Project  : Project_Node_Id;
@@ -328,12 +334,13 @@ package Prj_API is
    -- Imported projects --
    -----------------------
 
-   procedure Add_Imported_Project
+   function Add_Imported_Project
      (Project : Project_Node_Id;
       Imported_Project_Location : String;
-      Report_Errors  : Output.Output_Proc := null);
+      Report_Errors  : Output.Output_Proc := null) return Boolean;
    --  Add a new with_statement for Imported_Project.
    --  Errors while parsing the project file are sent to Report_Errors.
+   --  True is returned if the project was modified with success
 
    procedure Remove_Imported_Project
      (Project : Project_Node_Id; Imported_Project : String);
@@ -579,7 +586,7 @@ package Prj_API is
    --  Return the name of the VCS system to use for the source files in
    --  Project_View.
    --  The empty string is returned if this attribute wasn't defined
-   --  explicitely by the user.
+   --  explicitely by the user or Project_View is No_Project.
 
    function Executables_Directory (Project_View : Prj.Project_Id)
       return String;

@@ -24,6 +24,7 @@ pragma Elaborate_All (Prj);
 with Prj.Tree;         use Prj.Tree;
 with Prj.Part;         use Prj.Part;
 with Prj.Attr;         use Prj.Attr;
+with Prj.Com;          use Prj.Com;
 with Prj.Util;         use Prj.Util;
 with Prj.Env;          use Prj.Env;
 with Prj.Ext;          use Prj.Ext;
@@ -1240,12 +1241,24 @@ package body Prj_API is
    -- Add_Imported_Project --
    --------------------------
 
-   procedure Add_Imported_Project
+   function Add_Imported_Project
      (Project                   : Project_Node_Id;
       Imported_Project_Location : String;
-      Report_Errors             : Output.Output_Proc := null)
+      Report_Errors             : Output.Output_Proc := null) return Boolean
    is
       use Prj.Tree.Tree_Private_Part;
+
+      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "");
+      --  Replaces Osint.Fail
+
+      ----------
+      -- Fail --
+      ----------
+
+      procedure Fail (S1 : String; S2 : String := ""; S3 : String := "") is
+      begin
+         Report_Errors (S1 & S2 & S3);
+      end Fail;
 
       With_Clause      : Project_Node_Id := First_With_Clause_Of (Project);
       Imported_Project : Project_Node_Id;
@@ -1259,6 +1272,7 @@ package body Prj_API is
 
    begin
       Output.Set_Special_Output (Report_Errors);
+      Prj.Com.Fail := Fail'Unrestricted_Access;
 
       Name_Len := Basename'Length;
       Name_Buffer (1 .. Name_Len) := Basename;
@@ -1273,7 +1287,9 @@ package body Prj_API is
             Report_Errors
               (-"A different project with the same name"
                & " already exists in the project tree.");
-            return;
+            Output.Set_Special_Output (null);
+            Prj.Com.Fail := null;
+            return False;
          else
             Imported_Project := Dep_Name.Node;
          end if;
@@ -1282,12 +1298,20 @@ package body Prj_API is
                          Always_Errout_Finalize => True);
       end if;
 
+      if Imported_Project = Empty_Node then
+         Output.Set_Special_Output (null);
+         Prj.Com.Fail := null;
+         return False;
+      end if;
+
       --  Make sure we are not trying to import ourselves, since otherwise it
       --  would result in an infinite loop when manipulating the project
 
       if Prj.Tree.Name_Of (Project) = Prj.Tree.Name_Of (Imported_Project) then
          Report_Errors (-"Cannot add dependency to self");
-         return;
+         Output.Set_Special_Output (null);
+         Prj.Com.Fail := null;
+         return False;
       end if;
 
       --  Check if it is already there. If we have the same name but not the
@@ -1298,7 +1322,9 @@ package body Prj_API is
            Prj.Tree.Name_Of (Imported_Project)
          then
             Report_Errors (-"This dependency already exists");
-            return;
+            Output.Set_Special_Output (null);
+            Prj.Com.Fail := null;
+            return False;
          end if;
          With_Clause := Next_With_Clause_Of (With_Clause);
       end loop;
@@ -1319,14 +1345,19 @@ package body Prj_API is
          Set_First_With_Clause_Of (Project, Next_With_Clause_Of (With_Clause));
          Report_Errors
            (-"Circular dependency detected in the project hierarchy");
-         return;
+         Output.Set_Special_Output (null);
+         Prj.Com.Fail := null;
+         return False;
       end if;
 
       Output.Set_Special_Output (null);
+      Prj.Com.Fail := null;
+      return True;
 
    exception
       when others =>
          Output.Set_Special_Output (null);
+         Prj.Com.Fail := null;
          raise;
    end Add_Imported_Project;
 
@@ -1762,7 +1793,7 @@ package body Prj_API is
 
       List := Default_Project_Node (N_Literal_String_List, Prj.List);
 
-      for A in Values'Range loop
+      for A in reverse Values'Range loop
          Start_String;
          Store_String_Chars (Values (A).all);
          Expr := String_As_Expression (End_String);
@@ -3150,6 +3181,15 @@ package body Prj_API is
       return Get_Name_String (Projects.Table (Project_View).Path_Name);
    end Project_Path;
 
+   ------------------
+   -- Project_Path --
+   ------------------
+
+   function Project_Path (Project : Project_Node_Id) return String is
+   begin
+      return Get_Name_String (Directory_Of (Project));
+   end Project_Path;
+
    ----------------------------
    -- Create_Default_Project --
    ----------------------------
@@ -3369,7 +3409,8 @@ package body Prj_API is
    -- Start --
    -----------
 
-   function Start (Root_Project : Project_Node_Id; Recursive : Boolean := True)
+   function Start
+     (Root_Project : Project_Node_Id;  Recursive : Boolean := True)
       return Imported_Project_Iterator is
    begin
       if Recursive then
@@ -3687,15 +3728,55 @@ package body Prj_API is
       return Prj.Tree.Tree_Private_Part.Projects_Htable.Get (Name).Node;
    end Get_Project_From_Name;
 
-   -------------------------------
-   -- Convert_Paths_To_Absolute --
-   -------------------------------
+   -------------------
+   -- Convert_Paths --
+   -------------------
 
-   procedure Convert_Paths_To_Absolute
-     (Project : Project_Node_Id; Update_With_Statements : Boolean := False)
+   function Convert_Paths
+     (Project                : Project_Node_Id;
+      Use_Relative_Paths     : Boolean := False;
+      Update_With_Statements : Boolean := False) return Boolean
    is
+      procedure Convert_Path (Node : Project_Node_Id);
+      --  Convert the path to an absolute path
+
       procedure Convert_In_Section (Node : Project_Node_Id);
       --  Convert the paths found under Node
+
+      Base : constant String := Get_Name_String (Directory_Of (Project));
+      Changed : Boolean := False;
+
+      ------------------
+      -- Convert_Path --
+      ------------------
+
+      procedure Convert_Path (Node : Project_Node_Id) is
+         Old : constant String := Get_String (String_Value_Of (Node));
+      begin
+         if Use_Relative_Paths then
+            declare
+               Conv : constant String := Relative_Path_Name (Old, Base);
+            begin
+               if Conv /= Old then
+                  Start_String;
+                  Store_String_Chars (Conv);
+                  Set_String_Value_Of (Node, End_String);
+                  Changed := True;
+               end if;
+            end;
+         else
+            declare
+               Conv : constant String := Normalize_Pathname (Old, Base);
+            begin
+               if Conv /= Old then
+                  Start_String;
+                  Store_String_Chars (Conv);
+                  Set_String_Value_Of (Node, End_String);
+                  Changed := True;
+               end if;
+            end;
+         end if;
+      end Convert_Path;
 
       ------------------------
       -- Convert_In_Section --
@@ -3724,13 +3805,7 @@ package body Prj_API is
                         Assert (Me, Kind_Of (Str) = N_Literal_String,
                                 "First term in src_dir isn't literal string");
 
-                        Start_String;
-                        Store_String_Chars
-                          (Normalize_Pathname
-                           (Get_String (String_Value_Of (Str)),
-                            Get_Name_String (Directory_Of (Project))));
-                        Set_String_Value_Of (Str, End_String);
-
+                        Convert_Path (Str);
                         Expr := Next_Expression_In_List (Expr);
                      end loop;
 
@@ -3740,13 +3815,7 @@ package body Prj_API is
                      Str := Current_Term (First_Term (Expr));
                      Assert (Me, Kind_Of (Str) = N_Literal_String,
                              "First term in obj_dir isn't literal string");
-
-                     Start_String;
-                     Store_String_Chars
-                       (Normalize_Pathname
-                        (Get_String (String_Value_Of (Str)),
-                         Get_Name_String (Directory_Of (Project))));
-                     Set_String_Value_Of (Str, End_String);
+                     Convert_Path (Str);
                   end if;
 
                when others =>
@@ -3758,29 +3827,21 @@ package body Prj_API is
          end loop;
       end Convert_In_Section;
 
-
       With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
    begin
       --  First replace the with clauses
       if Update_With_Statements then
          while With_Clause /= Empty_Node loop
-            declare
-               Path : constant String := Normalize_Pathname
-                 (Get_String (String_Value_Of (With_Clause)),
-                  Get_Name_String (Directory_Of (Project)));
-            begin
-               Start_String;
-               Store_String_Chars (Path);
-               Set_String_Value_Of (With_Clause, End_String);
-            end;
-
+            Convert_Path (With_Clause);
             With_Clause := Next_With_Clause_Of (With_Clause);
          end loop;
       end if;
 
       --  Then replace all the paths
       Convert_In_Section (Project_Declaration_Of (Project));
-   end Convert_Paths_To_Absolute;
+
+      return Changed;
+   end Convert_Paths;
 
    -----------------------
    -- Check_Suffix_List --
@@ -4161,10 +4222,14 @@ package body Prj_API is
 
    function Get_Vcs_Kind (Project_View : Project_Id) return String is
    begin
-      return Get_Attribute_Value
-        (Project_View,
-         Attribute_Name => Vcs_Kind_Attribute,
-         Package_Name   => Ide_Package);
+      if Project_View = No_Project then
+         return "";
+      else
+         return Get_Attribute_Value
+           (Project_View,
+            Attribute_Name => Vcs_Kind_Attribute,
+            Package_Name   => Ide_Package);
+      end if;
    end Get_Vcs_Kind;
 
    ----------------
