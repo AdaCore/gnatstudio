@@ -163,7 +163,7 @@ package body Project_Explorers is
    --    - No_Match: the node doesn't match and neither do its chidlren.
 
    procedure Nop (X : in out Search_Status);
-   --  Do nothing, required for instanciation of string_boolean_hash
+   --  Do nothing, required for instantiation of string_boolean_hash
 
    package String_Status_Hash is new String_Hash
      (Data_Type => Search_Status,
