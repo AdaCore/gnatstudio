@@ -55,6 +55,7 @@ with Ada.Unchecked_Deallocation;
 with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
 with Histories;                    use Histories;
 with Glide_Kernel.Scripts;         use Glide_Kernel.Scripts;
+with VFS;                          use VFS;
 
 package body Help_Module is
 
@@ -74,7 +75,7 @@ package body Help_Module is
      (1 => Url_Cst'Access, 2 => Anchor_Cst'Access);
 
    type Help_File_Record is record
-      File  : GNAT.OS_Lib.String_Access;
+      File  : VFS.Virtual_File;
       Descr : GNAT.OS_Lib.String_Access;
    end record;
 
@@ -94,7 +95,7 @@ package body Help_Module is
 
    type Help_Browser_Record is new Gtk_Scrolled_Window_Record with record
       Kernel : Kernel_Handle;
-      Current_Help_File : GNAT.OS_Lib.String_Access;
+      Current_Help_File : VFS.Virtual_File;
       --  The current help file displayed. Used to find relative (hyper) links.
 
       Csc : Csc_HTML;
@@ -113,7 +114,7 @@ package body Help_Module is
    function Load_File
      (Kernel : access Kernel_Handle_Record'Class;
       Html   : access Help_Browser_Record'Class;
-      File   : String) return Boolean;
+      File   : VFS.Virtual_File) return Boolean;
    --  Load File in HTML widget, and set File as the Current_Help_File for
    --  Kernel. Return True if the file could be successfully read.
 
@@ -154,21 +155,18 @@ package body Help_Module is
 
    function Create_Html_Editor
      (Kernel : access Kernel_Handle_Record'Class;
-      File : String) return Help_Browser;
+      File   : VFS.Virtual_File) return Help_Browser;
    --  Create a new html editor that edits File.
 
    function Display_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : String) return Help_Browser;
+      Help_File : VFS.Virtual_File) return Help_Browser;
    --  Display HTML Help file.
 
    function Key_Press
      (Html : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean;
    --  Handles the scrolling through the keyboard keys
-
-   procedure On_Destroy (Html : access Gtk_Widget_Record'Class);
-   --  Called when an html browser is destroyed.
 
    procedure On_Load_Done (Html : access Gtk_Widget_Record'Class);
    --  Called when a file has been loaded.
@@ -190,7 +188,7 @@ package body Help_Module is
 
    procedure Register_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      HTML_File : String;
+      HTML_File : VFS.Virtual_File;
       Descr     : String;
       Category  : String;
       Menu_Path : String);
@@ -204,7 +202,7 @@ package body Help_Module is
 
    procedure Open_HTML_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : String;
+      File   : VFS.Virtual_File;
       Anchor : String := "");
    --  Open an HTML file.
 
@@ -255,7 +253,7 @@ package body Help_Module is
       Name_Parameters (Data, Help_Cmd_Parameters);
       Open_HTML_File
         (Get_Kernel (Data),
-         File   => Nth_Arg (Data, 1),
+         File   => Create_Html (Nth_Arg (Data, 1), Get_Kernel (Data)),
          Anchor => Nth_Arg (Data, 2, Default => ""));
    end Command_Handler;
 
@@ -265,7 +263,7 @@ package body Help_Module is
 
    procedure Activate (Callback : access On_Recent; Item : String) is
    begin
-      Open_Html (Callback.Kernel, Item);
+      Open_Html (Callback.Kernel, Create_Html (Item, Callback.Kernel));
 
    exception
       when E : others =>
@@ -278,7 +276,6 @@ package body Help_Module is
 
    procedure Free (Data : in out Help_File_Record) is
    begin
-      Free (Data.File);
       Free (Data.Descr);
    end Free;
 
@@ -351,7 +348,7 @@ package body Help_Module is
    is
       Item : constant String_Menu_Item := String_Menu_Item (Widget);
    begin
-      Open_Html (Kernel, Item.File);
+      Open_Html (Kernel, Create_Html (Item.File, Kernel));
 
    exception
       when E : others =>
@@ -364,26 +361,25 @@ package body Help_Module is
 
    procedure Register_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      HTML_File : String;
+      HTML_File : Virtual_File;
       Descr     : String;
       Category  : String;
       Menu_Path : String)
    is
-      File : constant String := Locate_Html_File (Kernel, HTML_File);
+      Full : constant String := Full_Name (HTML_File);
       Item : String_Menu_Item;
       Node : Help_Category_List.List_Node;
       Cat  : Help_Category_Access;
    begin
-      if Menu_Path /= "" then
-         Item := new String_Menu_Item_Record (HTML_File'Length);
+      if Menu_Path /= "" and then HTML_File /= VFS.No_File then
+         Item := new String_Menu_Item_Record (Full'Length);
          Gtk.Menu_Item.Initialize_With_Mnemonic (Item, Base_Name (Menu_Path));
-         Item.File := HTML_File;
+         Item.File := Full;
 
          Register_Menu
            (Kernel      => Kernel,
             Parent_Path => Dir_Name (Menu_Path),
             Item        => Gtk_Menu_Item (Item));
-         Set_Sensitive (Item, File /= "");
 
          Kernel_Callback.Connect
            (Item, "activate",
@@ -405,7 +401,7 @@ package body Help_Module is
       end if;
 
       Append (Cat.Files,
-              (File  => new String'(HTML_File),
+              (File  => HTML_File,
                Descr => new String'(Descr)));
    end Register_Help;
 
@@ -416,7 +412,7 @@ package body Help_Module is
    function Load_File
      (Kernel : access Kernel_Handle_Record'Class;
       Html   : access Help_Browser_Record'Class;
-      File   : String) return Boolean
+      File   : VFS.Virtual_File) return Boolean
    is
       Buffer   : GNAT.OS_Lib.String_Access;
       Stream   : Csc_HTML_Stream;
@@ -429,19 +425,19 @@ package body Help_Module is
 
    begin
       if not Is_Regular_File (File) then
-         Insert (Kernel, File & (-": File not found"), Mode => Error);
+         Insert (Kernel, Full_Name (File) & (-": File not found"),
+                 Mode => Error);
          return False;
       end if;
 
-      Add_To_History (Kernel, Help_History_Key, File);
+      Add_To_History (Kernel, Help_History_Key, Full_Name (File));
 
       Push_State (Kernel_Handle (Kernel), Busy);
       Buffer := Read_File (File);
 
       if Buffer /= null then
-         Trace (Me, "loading file: " & File);
-         Free (Html.Current_Help_File);
-         Html.Current_Help_File := new String'(File);
+         Trace (Me, "loading file: " & Full_Name (File));
+         Html.Current_Help_File := File;
          Stream := HTML_Begin (Html.Csc);
 
          if Base_Name (File) /= Template_Index then
@@ -472,7 +468,7 @@ package body Help_Module is
                F := First (Data (Cat).Files);
                while F /= Help_File_List.Null_Node loop
                   Append (Str,
-                          "<tr><td><a href=""" & Data (F).File.all
+                          "<tr><td><a href=""" & Full_Name (Data (F).File)
                           & """>" & Data (F).Descr.all
                           & "</a></td></tr>");
                   F := Next (F);
@@ -493,7 +489,7 @@ package body Help_Module is
          Success := True;
 
       else
-         Trace (Me, "link not found: " & File);
+         Trace (Me, "link not found: " & Full_Name (File));
          Success := False;
       end if;
 
@@ -523,10 +519,9 @@ package body Help_Module is
          Buffer := Read_File (Url);
       else
          declare
-            Base_Dir : constant String :=
-              Dir_Name (Html.Current_Help_File.all);
+            Base_Dir : constant String := Dir_Name (Html.Current_Help_File);
          begin
-            Buffer := Read_File (Base_Dir & Url);
+            Buffer := Read_File (Create (Full_Filename => Base_Dir & Url));
             Trace (Me, "url normalized: " & Base_Dir & Url);
          end;
       end if;
@@ -559,15 +554,17 @@ package body Help_Module is
       Trace (Me, "Link_Clicked: " & Url);
 
       if Is_Absolute_Path (Url) then
-         Open_Html (Kernel, Url);
+         Open_Html (Kernel, Create_Html (Url, Kernel));
 
       elsif Url (Url'First) = '#' then
-         Open_Html (Kernel, Html.Current_Help_File.all & Url);
+         Open_Html
+           (Kernel,
+            Create_Html (Full_Name (Html.Current_Help_File) & Url, Kernel));
 
       else
          Open_Html
-           (Kernel, Normalize_Pathname
-            (Url, Directory => Dir_Name (Html.Current_Help_File.all)));
+           (Kernel,
+            Create_Html (Dir_Name (Html.Current_Help_File) & Url, Kernel));
       end if;
    exception
       when E : others =>
@@ -656,18 +653,6 @@ package body Help_Module is
          return True;
    end Key_Press;
 
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Html : access Gtk_Widget_Record'Class) is
-   begin
-      Free (Help_Browser (Html).Current_Help_File);
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Destroy;
-
    -------------
    -- On_Copy --
    -------------
@@ -718,7 +703,7 @@ package body Help_Module is
 
       --  Force a reload of the file to show the new font.
       Help := Help_Browser (Get_Widget (Child));
-      Success := Load_File (Kernel, Help, Help.Current_Help_File.all);
+      Success := Load_File (Kernel, Help, Help.Current_Help_File);
    end On_Zoom_In;
 
    -----------------
@@ -750,7 +735,7 @@ package body Help_Module is
 
       --  Force a reload of the file to show the new font.
       Help := Help_Browser (Get_Widget (Child));
-      Success := Load_File (Kernel, Help, Help.Current_Help_File.all);
+      Success := Load_File (Kernel, Help, Help.Current_Help_File);
    end On_Zoom_Out;
 
    ------------------------
@@ -759,7 +744,7 @@ package body Help_Module is
 
    function Create_Html_Editor
      (Kernel : access Kernel_Handle_Record'Class;
-      File : String) return Help_Browser
+      File   : VFS.Virtual_File) return Help_Browser
    is
       Html   : Help_Browser;
       Result : Boolean;
@@ -786,9 +771,6 @@ package body Help_Module is
       Return_Callback.Object_Connect
         (Html.Csc, "key_press_event",
          Return_Callback.To_Marshaller (Key_Press'Access), Html);
-      Widget_Callback.Connect
-        (Html, "destroy",
-         Widget_Callback.To_Marshaller (On_Destroy'Access));
       Widget_Callback.Object_Connect
         (Html.Csc, "load_done",
          Widget_Callback.To_Marshaller (On_Load_Done'Access), Html);
@@ -813,7 +795,7 @@ package body Help_Module is
 
    function Display_Help
      (Kernel    : access Kernel_Handle_Record'Class;
-      Help_File : String) return Help_Browser
+      Help_File : VFS.Virtual_File) return Help_Browser
    is
       MDI      : constant MDI_Window := Get_MDI (Kernel);
       Scrolled : Help_Browser;
@@ -823,7 +805,8 @@ package body Help_Module is
 
    begin
       if not Is_Regular_File (Help_File) then
-         Insert (Kernel, Help_File & (-": File not found"), Mode => Error);
+         Insert (Kernel,
+                 Full_Name (Help_File) & (-": File not found"), Mode => Error);
          return null;
       end if;
 
@@ -846,8 +829,8 @@ package body Help_Module is
       else
          Scrolled := Help_Browser (Get_Widget (Child));
 
-         if Scrolled.Current_Help_File = null
-           or else Help_File /= Scrolled.Current_Help_File.all
+         if Scrolled.Current_Help_File = VFS.No_File
+           or else Help_File /= Scrolled.Current_Help_File
          then
             Result := Load_File (Kernel, Scrolled, Help_File);
          end if;
@@ -874,7 +857,7 @@ package body Help_Module is
       if Node.Tag.all = "Help_Browser" then
          File := Get_Field (Node, "File");
          if File /= null then
-            Editor := Create_Html_Editor (User, File.all);
+            Editor := Create_Html_Editor (User, Create_Html (File.all, User));
 
             return Put
               (User, Gtk_Widget (Editor),
@@ -906,12 +889,8 @@ package body Help_Module is
          Child := new Node;
          Child.Tag := new String'("File");
 
-         if Help_Browser (Widget).Current_Help_File = null then
-            Child.Value := new String'("");
-         else
-            Child.Value := new String'
-              (Help_Browser (Widget).Current_Help_File.all);
-         end if;
+         Child.Value := new String'
+           (Full_Name (Help_Browser (Widget).Current_Help_File));
 
          Add_Child (N, Child);
          return N;
@@ -926,7 +905,7 @@ package body Help_Module is
 
    procedure Open_HTML_File
      (Kernel : access Kernel_Handle_Record'Class;
-      File   : String;
+      File   : VFS.Virtual_File;
       Anchor : String := "")
    is
       Html   : Help_Browser;
@@ -966,7 +945,7 @@ package body Help_Module is
             Navigate : constant Boolean := Get_Boolean (Data (Data'First + 1));
             Args     : Argument_List (1 .. 3);
          begin
-            Open_HTML_File (Kernel, File, Anchor);
+            Open_HTML_File (Kernel, Create_Html (File, Kernel), Anchor);
 
             if Navigate then
                Args (1) := new String'("html_browse");
@@ -1037,7 +1016,7 @@ package body Help_Module is
 
       begin
          if Filename /= "" then
-            Open_Html (Kernel, Filename);
+            Open_Html (Kernel, Create_Html (Filename, Kernel));
          end if;
       end;
 
@@ -1105,7 +1084,7 @@ package body Help_Module is
    procedure Show_Tutorial
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      Open_Html (Kernel, "gps-tutorial.html");
+      Open_Html (Kernel, Create_Html ("gps-tutorial.html", Kernel));
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1197,7 +1176,7 @@ package body Help_Module is
                      Trace (Me, "Adding " & Name.all & ' ' & Menu.all);
                      Register_Help
                        (Kernel,
-                        HTML_File => Name.all,
+                        HTML_File => Create_Html (Name.all, Kernel),
                         Descr     => Descr.all,
                         Category  => Cat.all,
                         Menu_Path => Menu.all);
