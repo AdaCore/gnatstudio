@@ -98,6 +98,7 @@ package body Glide_Result_View is
    Color_Column         : constant := 10;
    Button_Column        : constant := 11;
    Action_Column        : constant := 12;
+   Highlight_Column     : constant := 13;
 
    -----------------------
    -- Local subprograms --
@@ -129,17 +130,19 @@ package body Glide_Result_View is
       Line          : String;
       Column        : String;
       Length        : String;
+      Highlighting  : Boolean;
       Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf);
    --  Fill information in Iter.
 
    procedure Add_Location
-     (View     : access Result_View_Record'Class;
-      Category : String;
-      File     : String;
-      Line     : Positive;
-      Column   : Positive;
-      Length   : Natural;
-      Message  : String);
+     (View      : access Result_View_Record'Class;
+      Category  : String;
+      File      : String;
+      Line      : Positive;
+      Column    : Positive;
+      Length    : Natural;
+      Highlight : Boolean;
+      Message   : String);
    --  Add a file locaton in Category.
    --  File is an absolute file name. If File is not currently open, do not
    --  create marks for File, but add it to the list of unresolved files
@@ -153,6 +156,11 @@ package body Glide_Result_View is
 
    procedure Goto_Location (Object   : access Gtk_Widget_Record'Class);
    --  Goto the selected location in the Result_View.
+
+   procedure Remove_Category_Or_File_Iter
+     (View : Result_View;
+      Iter : in out Gtk_Tree_Iter);
+   --  Clear all the marks and highlightings in file or category.
 
    procedure Remove_Category (Object   : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Result_View.
@@ -208,6 +216,92 @@ package body Glide_Result_View is
       end;
    end Goto_Location;
 
+   ----------------------------------
+   -- Remove_Category_Or_File_Iter --
+   ----------------------------------
+
+   procedure Remove_Category_Or_File_Iter
+     (View : Result_View;
+      Iter : in out Gtk_Tree_Iter)
+   is
+      File_Iter : Gtk_Tree_Iter;
+      File_Path : Gtk_Tree_Path;
+      Line_Iter : Gtk_Tree_Iter;
+      Category  : GNAT.OS_Lib.String_Access;
+   begin
+      --  Unhighight all the lines and remove all marks in children of the
+      --  category / file.
+
+      if Iter = Null_Iter then
+         return;
+      end if;
+
+      Iter_Copy (Iter, File_Iter);
+
+      File_Path := Get_Path (View.Tree.Model, File_Iter);
+
+      if Get_Depth (File_Path) = 1 then
+         Category  := new String'
+           (Get_String (View.Tree.Model, File_Iter, Base_Name_Column));
+         File_Iter := Children (View.Tree.Model, File_Iter);
+      elsif Get_Depth (File_Path) = 2 then
+         Category := new String'
+           (Get_String
+              (View.Tree.Model,
+               Parent (View.Tree.Model, File_Iter),
+               Base_Name_Column));
+      else
+         Path_Free (File_Path);
+         return;
+      end if;
+
+      Path_Free (File_Path);
+
+      while File_Iter /= Null_Iter loop
+         Line_Iter := Children (View.Tree.Model, File_Iter);
+
+         while Line_Iter /= Null_Iter loop
+            declare
+               Mark : constant String :=
+                 Get_String (View.Tree.Model, Line_Iter, Mark_Column);
+            begin
+               --  ??? Should remove the mark here !
+
+               if Get_Boolean
+                 (View.Tree.Model, Line_Iter, Highlight_Column)
+               then
+                  declare
+                     Line_Str : constant String :=
+                       Interpret_Command (View.Kernel, "get_line " & Mark);
+                     Line     : Natural;
+                  begin
+                     Line := Natural'Value (Line_Str);
+
+                     Highlight_Line
+                       (View.Kernel,
+                        Get_String
+                          (View.Tree.Model, Line_Iter, Absolute_Name_Column),
+                        Line, Category.all, False);
+                  exception
+                     when others =>
+                        Trace
+                          (Me,
+                             -"Could not get the line corresponding to mark "
+                           & Mark & ".");
+                  end;
+               end if;
+            end;
+
+            Next (View.Tree.Model, Line_Iter);
+         end loop;
+
+         Next (View.Tree.Model, File_Iter);
+      end loop;
+
+      GNAT.OS_Lib.Free (Category);
+      Remove (View.Tree.Model, Iter);
+   end Remove_Category_Or_File_Iter;
+
    ---------------------
    -- Remove_Category --
    ---------------------
@@ -216,12 +310,10 @@ package body Glide_Result_View is
       View  : constant Result_View := Result_View (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
+
    begin
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
-
-      if Iter /= Null_Iter then
-         Remove (View.Tree.Model, Iter);
-      end if;
+      Remove_Category_Or_File_Iter (View, Iter);
    end Remove_Category;
 
    ---------------
@@ -238,6 +330,7 @@ package body Glide_Result_View is
       Line          : String;
       Column        : String;
       Length        : String;
+      Highlighting  : Boolean;
       Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
    is
       function To_Proxy is new
@@ -256,6 +349,7 @@ package body Glide_Result_View is
       Set (Model, Iter, Column_Column, Column);
       Set (Model, Iter, Length_Column, Length);
       Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
+      Set (Model, Iter, Highlight_Column, Highlighting);
 
       if Line = "" then
          Set (Model, Iter, Weight_Column, 400);
@@ -400,7 +494,7 @@ package body Glide_Result_View is
          if Create then
             Append (View.Tree.Model, Category_Iter, Null_Iter);
             Fill_Iter (View, Category_Iter, Category, "", "", "", "", "", "",
-                       View.Category_Pixbuf);
+                       False, View.Category_Pixbuf);
             New_Category := True;
          else
             return;
@@ -429,7 +523,7 @@ package body Glide_Result_View is
          Append (View.Tree.Model, File_Iter, Category_Iter);
          Fill_Iter
            (View, File_Iter, Base_Name (File), File, "", "", "", "", "",
-            View.File_Pixbuf);
+            False, View.File_Pixbuf);
       end if;
 
       return;
@@ -440,13 +534,14 @@ package body Glide_Result_View is
    ------------------
 
    procedure Add_Location
-     (View     : access Result_View_Record'Class;
-      Category : String;
-      File     : String;
-      Line     : Positive;
-      Column   : Positive;
-      Length   : Natural;
-      Message  : String)
+     (View      : access Result_View_Record'Class;
+      Category  : String;
+      File      : String;
+      Line      : Positive;
+      Column    : Positive;
+      Length    : Natural;
+      Highlight : Boolean;
+      Message   : String)
    is
       Category_Iter    : Gtk_Tree_Iter;
       File_Iter        : Gtk_Tree_Iter;
@@ -455,12 +550,16 @@ package body Glide_Result_View is
       Dummy            : Boolean;
       pragma Unreferenced (Dummy);
 
-      Path             : Gtk_Tree_Path;
+      Path               : Gtk_Tree_Path;
    begin
       Get_Category_File
         (View, Category, File, Category_Iter, File_Iter, Category_Created);
 
       Append (View.Tree.Model, Iter, File_Iter);
+
+      if Highlight then
+         Highlight_Line (View.Kernel, File, Line, Category);
+      end if;
 
       declare
          Output : constant String := Create_Mark
@@ -469,7 +568,7 @@ package body Glide_Result_View is
          Fill_Iter
            (View, Iter, Image (Line) & ":" & Image (Column),
             File, Message, Output,
-            Image (Line), Image (Column), Image (Length));
+            Image (Line), Image (Column), Image (Length), Highlight);
       end;
 
       if Category_Created then
@@ -562,7 +661,8 @@ package body Glide_Result_View is
          Weight_Column             => GType_Int,
          Color_Column              => Gdk_Color_Type,
          Button_Column             => Gdk.Pixbuf.Get_Type,
-         Action_Column             => GType_Pointer);
+         Action_Column             => GType_Pointer,
+         Highlight_Column          => GType_Boolean);
    end Columns_Types;
 
    ----------------
@@ -765,14 +865,15 @@ package body Glide_Result_View is
       Source_Line   : Positive;
       Source_Column : Positive;
       Message       : String;
-      Length        : Natural) is
+      Length        : Natural;
+      Highlight     : Boolean := False) is
    begin
       --  Transform Source_File in an absolute file name if needed.
 
       if GNAT.OS_Lib.Is_Absolute_Path (Source_File) then
          Add_Location
            (View, Identifier, Source_File,
-            Source_Line, Source_Column, Length, Message);
+            Source_Line, Source_Column, Length, Highlight, Message);
 
       else
          declare
@@ -785,7 +886,7 @@ package body Glide_Result_View is
             if GNAT.OS_Lib.Is_Absolute_Path (F) then
                Add_Location
                  (View, Identifier, F,
-                  Source_Line, Source_Column, Length, Message);
+                  Source_Line, Source_Column, Length, Highlight, Message);
             end if;
          end;
       end if;
@@ -804,10 +905,7 @@ package body Glide_Result_View is
       Dummy      : Boolean;
    begin
       Get_Category_File (View, Identifier, "", Iter, Dummy_Iter, Dummy);
-
-      if Iter /= Null_Iter then
-         Remove (View.Tree.Model, Iter);
-      end if;
+      Remove_Category_Or_File_Iter (Result_View (View), Iter);
    end Remove_Category;
 
    ------------------
