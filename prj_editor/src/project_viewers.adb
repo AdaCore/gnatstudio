@@ -113,8 +113,6 @@ package body Project_Viewers is
      (Naming_Pages_Array, Naming_Pages_Array_Access);
 
    type Prj_Editor_Module_Id_Record is new Module_ID_Record with record
-      Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
-
       Project_Editor_Pages : Project_Editor_Page_Array_Access;
       --  The pages to be added in the project properties editor and the
       --  project creation wizard.
@@ -185,13 +183,6 @@ package body Project_Viewers is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Project_Editor_Page_Array, Project_Editor_Page_Array_Access);
    --  Free the memory used by Pages
-
-   procedure Refresh_Reopen_Menu (Kernel : access Kernel_Handle_Record'Class);
-   --  Fill the reopen menu.
-
-   procedure On_Reopen
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Project->Reopen menu
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
@@ -335,6 +326,11 @@ package body Project_Viewers is
    procedure On_Project_Changed
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the project has just changed
+
+   type On_Reopen is new Menu_Callback_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   procedure Activate (Callback : access On_Reopen; Item : String);
 
    --------------------------
    -- Project editor pages --
@@ -486,69 +482,24 @@ package body Project_Viewers is
       Destroy (Module_ID_Record (Module));
    end Destroy;
 
-   ---------------
-   -- On_Reopen --
-   ---------------
+   --------------
+   -- Activate --
+   --------------
 
-   procedure On_Reopen
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Mitem    : constant Full_Path_Menu_Item := Full_Path_Menu_Item (Widget);
-      Filename : constant String := Get_Path (Mitem);
-      Dir      : constant String := Dir_Name (Filename);
-
+   procedure Activate (Callback : access On_Reopen; Item : String) is
+      Dir      : constant String := Dir_Name (Item);
    begin
       Change_Dir (Dir);
-      Load_Project (Kernel, Filename);
+      Load_Project (Callback.Kernel, Item);
 
    exception
       when Directory_Error =>
-         Console.Insert (Kernel, -"Invalid directory " & Dir,
+         Console.Insert (Callback.Kernel, -"Invalid directory " & Dir,
                          Mode => Console.Error);
 
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Reopen;
-
-   -------------------------
-   -- Refresh_Reopen_Menu --
-   -------------------------
-
-   procedure Refresh_Reopen_Menu
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Value       : constant String_List_Access := Get_History
-        (Get_History (Kernel).all, Project_History_Key);
-      Reopen_Menu : Gtk_Menu;
-   begin
-      if Get_Submenu (Prj_Editor_Module_ID.Reopen_Menu) /= null then
-         Remove_Submenu (Prj_Editor_Module_ID.Reopen_Menu);
-      end if;
-
-      Gtk_New (Reopen_Menu);
-      Set_Submenu (Prj_Editor_Module_ID.Reopen_Menu, Gtk_Widget (Reopen_Menu));
-
-      if Value /= null then
-         for V in Value'Range loop
-            declare
-               Path  : constant String := Value (V).all;
-               Mitem : Full_Path_Menu_Item;
-            begin
-               Gtk_New (Mitem, Shorten (Path), Path);
-               Append (Reopen_Menu, Mitem);
-
-               Kernel_Callback.Connect
-                 (Mitem,
-                  "activate",
-                  Kernel_Callback.To_Marshaller (On_Reopen'Access),
-                  Kernel_Handle (Kernel));
-
-            end;
-         end loop;
-
-         Show_All (Reopen_Menu);
-      end if;
-   end Refresh_Reopen_Menu;
+   end Activate;
 
    -------------------------
    -- Project_Viewers_Set --
@@ -2442,7 +2393,6 @@ package body Project_Viewers is
    begin
       if Filename /= "" then
          Add_To_History (Kernel, Project_History_Key, Filename);
-         Refresh_Reopen_Menu (Kernel);
       end if;
    end On_Project_Changed;
 
@@ -2727,6 +2677,7 @@ package body Project_Viewers is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
+      Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
    begin
       Prj_Editor_Module_ID := new Prj_Editor_Module_Id_Record;
       Register_Module
@@ -2743,10 +2694,15 @@ package body Project_Viewers is
       Register_Menu (Kernel, Project, -"_New...", "", On_New_Project'Access,
                      Ref_Item => -"Open...", Add_Before => True);
 
-      Prj_Editor_Module_ID.Reopen_Menu := Register_Menu
+
+      Reopen_Menu := Register_Menu
         (Kernel, Project, -"_Recent", "",
          null, Ref_Item => -"Open...", Add_Before => False);
-      Refresh_Reopen_Menu (Kernel);
+      Associate (Get_History (Kernel).all,
+                 Project_History_Key,
+                 Reopen_Menu,
+                 new On_Reopen'(Menu_Callback_Record with
+                                Kernel => Kernel_Handle (Kernel)));
 
       Kernel_Callback.Connect
         (Kernel, Project_Changed_Signal,
