@@ -151,10 +151,13 @@ package body Glide_Kernel is
       Load_Preferences
         (Handle, Get_Home_Directory & Directory_Separator & "preferences");
 
+      --  ??? Shouldn't use naming schemes instead ? This duplicates the
+      --  ??? information uselessly.
       Reset_File_Extensions;
       Add_File_Extensions (Ada_Lang, Get_Pref (Handle, Ada_Extensions));
       Add_File_Extensions (C_Lang,   Get_Pref (Handle, C_Extensions));
       Add_File_Extensions (Cpp_Lang, Get_Pref (Handle, Cpp_Extensions));
+      Register_Default_Naming_Schemes;
 
       Handle.Explorer_Context := new File_Selection_Context;
       Set_Context_Information (Handle.Explorer_Context, Handle, null);
