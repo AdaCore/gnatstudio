@@ -871,9 +871,11 @@ package body Python.GUI is
                   declare
                      S : constant String := PyString_AsString (Item);
                   begin
-                     if Last >= Input'Last
-                       or else Input (Last + 1 .. Input'Last)
-                         = S (S'First .. S'First + Input'Last - Last - 1)
+                     if S'First + Input'Last - Last - 1 <= S'Last
+                       and then
+                         (Last >= Input'Last
+                          or else Input (Last + 1 .. Input'Last)
+                          = S (S'First .. S'First + Input'Last - Last - 1))
                      then
                         Prepend
                           (List, Input (Input'First .. Last - 1) & '.' & S);
