@@ -21,7 +21,11 @@
 with GNAT.Expect;           use GNAT.Expect;
 with GNAT.Regpat;           use GNAT.Regpat;
 with Gtk.Main;              use Gtk.Main;
+with Gdk.Event;             use Gdk.Event;
+with System;                use System;
 with Unchecked_Deallocation;
+
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Process_Proxies is
 
@@ -155,8 +159,9 @@ package body Process_Proxies is
                    Pattern : GNAT.Regpat.Pattern_Matcher;
                    Timeout : Integer := 20)
    is
-      Tmp : Boolean;
-      Num : Integer := 1;
+      Tmp   : Boolean;
+      Num   : Integer := 1;
+      Event : Gdk_Event;
    begin
       Proxy.Command_In_Process.all := True;
 
@@ -189,6 +194,9 @@ package body Process_Proxies is
                --  Process the X events, and loop again.
 
                while Gtk.Main.Events_Pending loop
+                  --  Avoid waiting for ever on null events
+                  Peek (Event);
+                  exit when To_Address (Event) = System.Null_Address;
                   Tmp := Gtk.Main.Main_Iteration;
                end loop;
 
