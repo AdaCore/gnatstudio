@@ -395,7 +395,6 @@ package body GVD.Code_Editors is
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
                            Mode   => Source));
       Append (Show_Submenu, Radio);
-      Set_Always_Show_Toggle (Radio, True);
 
       Gtk_New (Radio, Group (Radio), -"Asm Code");
       Set_Active (Radio, Editor.Mode = Asm);
@@ -405,7 +404,6 @@ package body GVD.Code_Editors is
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
                            Mode   => Asm));
       Append (Show_Submenu, Radio);
-      Set_Always_Show_Toggle (Radio, True);
 
       Gtk_New (Radio, Group (Radio), -"Asm and Source");
       Set_Active (Radio, Editor.Mode = Source_Asm);
@@ -415,7 +413,6 @@ package body GVD.Code_Editors is
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
                            Mode   => Source_Asm));
       Append (Show_Submenu, Radio);
-      Set_Always_Show_Toggle (Radio, True);
 
       --  Insert a separator followed by the submenu at the end
       --  of the contextual menu

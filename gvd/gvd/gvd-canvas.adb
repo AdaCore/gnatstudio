@@ -568,7 +568,6 @@ package body GVD.Canvas is
       Append (Canvas.Contextual_Background_Menu, Mitem);
 
       Gtk_New (Check, Label => -"Align On Grid");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Align_On_Grid (Canvas));
       Append (Canvas.Contextual_Background_Menu, Check);
       Check_Canvas_Handler.Connect
@@ -577,7 +576,6 @@ package body GVD.Canvas is
          GVD_Canvas (Canvas));
 
       Gtk_New (Check, Label => -"Detect Aliases");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Detect_Aliases (Canvas));
       Append (Canvas.Contextual_Background_Menu, Check);
       Check_Canvas_Handler.Connect
@@ -826,7 +824,6 @@ package body GVD.Canvas is
                       Mode           => Value,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Radio);
-      Set_Always_Show_Toggle (Radio, True);
 
       Gtk_New (Radio, Group (Radio), -"Show Type");
       Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
@@ -841,7 +838,6 @@ package body GVD.Canvas is
                       Mode           => Type_Only,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Radio);
-      Set_Always_Show_Toggle (Radio, True);
 
       Gtk_New (Radio, Group (Radio), -"Show Value + Type");
       Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
@@ -856,7 +852,6 @@ package body GVD.Canvas is
                       Mode           => Type_Value,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Radio);
-      Set_Always_Show_Toggle (Radio, True);
 
       --  Display a separator
 
@@ -867,7 +862,6 @@ package body GVD.Canvas is
 
       Gtk_New (Check, "Auto refresh");
       Set_Active (Check, Get_Auto_Refresh (Display_Item (Item)));
-      Set_Show_Toggle (Check, True);
 
       Item_Handler.Connect
         (Check, "activate",
