@@ -805,7 +805,9 @@ package body GVD.Text_Boxes is
       From, To    : Glib.Gint;
       Widget_From : Glib.Gint;
       Fore        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color) is
+      Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color)
+   is
+      WFrom : Gint := Widget_From;
    begin
       --  If this range is currently highlighted, do nothing for efficiency
 
@@ -815,19 +817,27 @@ package body GVD.Text_Boxes is
          return;
       end if;
 
-      --  Restore the previous range tothe default color
+      --  Restore the previous range to the default color
 
       if Box.Highlight_Start /= 0 then
-         Freeze (Box.Child);
-         Delete_Text (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
-         Set_Point (Box.Child, Guint (Box.Highlight_Index));
+         declare
+            S : constant String := Do_Tab_Expansion
+              ((Box.Buffer (Integer (Box.Highlight_Start)
+                            .. Integer (Box.Highlight_End) - 1)));
+         begin
+            pragma Assert
+              (S'Length = Box.Highlight_Index_End - Box.Highlight_Index);
 
-         --  Redisplay the line with its proper color highlighting
-         Insert_Buffer (GVD_Text_Box (Box),
-                        Box.Buffer (Integer (Box.Highlight_Start)
-                                    .. Integer (Box.Highlight_End) - 1));
-         Box.Highlight_Start := 0;
-         Thaw (Box.Child);
+            Freeze (Box.Child);
+            Delete_Text
+              (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
+            Set_Point (Box.Child, Guint (Box.Highlight_Index));
+
+            --  Redisplay the line with its proper color highlighting
+            Insert_Buffer (GVD_Text_Box (Box), S);
+            Box.Highlight_Start := 0;
+            Thaw (Box.Child);
+         end;
       end if;
 
       --  Highlight the new range
@@ -839,8 +849,8 @@ package body GVD.Text_Boxes is
             Freeze (Box.Child);
             Box.Highlight_Start := From;
             Box.Highlight_End   := To;
-            Box.Highlight_Index := Widget_From;
-            Box.Highlight_Index_End := Widget_From + S'Length;
+            Box.Highlight_Index := WFrom;
+            Box.Highlight_Index_End := WFrom + S'Length;
 
             Delete_Text
               (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
