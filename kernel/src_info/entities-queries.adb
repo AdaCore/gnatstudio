@@ -1567,6 +1567,8 @@ package body Entities.Queries is
          return;
       end if;
 
+      Update_Xref (File);
+
       Add_To_Tree (Tree, File.Entities);
       Add_To_Tree (Tree, File.All_Entities);
 
