@@ -347,7 +347,7 @@ package body Debugger.Gdb.Ada is
 
             --  Skip initial '(' if we are still looking at it (we might not
             --  if we are parsing a variant part)
-            if Type_Str (Index) = '(' then
+            if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
                Index := Index + 1;
             end if;
 
@@ -656,6 +656,14 @@ package body Debugger.Gdb.Ada is
                Set_Value (Item  => R.all,
                           Value => New_Simple_Type,
                           Field => Fields);
+
+            elsif Tmp_Index + 6 <= Type_Str'Last
+              and then Type_Str (Tmp_Index .. Tmp_Index + 6) = "access "
+            then
+               Set_Value (Item  => R.all,
+                          Value => New_Access_Type,
+                          Field => Fields);
+
             else
                Set_Value (R.all,
                           Parse_Type (Get_Debugger (Lang),
