@@ -49,6 +49,14 @@ package Odd.Strings is
    --  Skip every character until an occurence of Substring is found.
    --  Index is set to the first character of the occurence.
 
+   procedure Skip_Word (Type_Str : String;
+                        Index    : in out Natural;
+                        Step     : Integer := 1);
+   --  Skip the word starting at Index (at least one character, even if there
+   --  is no word).
+   --  Currently, a word is defined as any string made of alphanumeric
+   --  character or underscore.
+
    procedure Parse_Num (Type_Str : String;
                         Index    : in out Natural;
                         Result   : out Long_Integer);
@@ -87,6 +95,9 @@ package Odd.Strings is
    --  in "((1, 2), (3, 4))".
    --  Repeat_Item_Start if the character that starts a repeat statements, as
    --  in "<repeats .. times>"
+
+   function Base_File_Name (File_Name : String) return String;
+   --  Return the base name of File_Name (ie without any directory indication)
 
 private
    pragma Inline (Looking_At);
