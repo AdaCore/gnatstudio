@@ -172,8 +172,25 @@ package Glide_Kernel.Preferences is
    --  ??? not used
 
    Default_Source_Editor_Font : constant Property_Font :=
-     Register_Property ("Src_Editor:Default_Font", "Courier 12");
+     Register_Property ("Src_Editor:Default_Font", "Courier 10");
    --  The font used in the source editor.
+
+   ---------------------
+   -- External editor --
+   ---------------------
+
+   Default_External_Editor : constant Glib.Properties.Property_String :=
+     Register_Property ("External_Editor:Default_Editor", "");
+   --  The default external editor to use. It should be a value from
+   --  External_Editor_Module.Supported_Clients, or the empty string, in which
+   --  case gps will automatically select the first available client
+
+   Always_Use_External_Editor : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("External_Editor:Always_Use_External_Editor", False);
+   --  True if all editions should be done with the external editor. This will
+   --  deactivate completely the internal editor. On the other hand, if this is
+   --  False, then the external editor will need to be explicitely selected by
+   --  the user.
 
    --------------------
    -- Project Editor --
@@ -210,7 +227,7 @@ package Glide_Kernel.Preferences is
    --  Color to use to highlight strings in the TOC.
 
    Wizard_Title_Font : constant Glib.Properties.Property_String :=
-     Register_Property ("Wizard:Title_Font", "helvetica bold oblique 14");
+     Register_Property ("Wizard:Title_Font", "helvetica bold oblique 10");
    --  Font to use for the title of the pages in the wizard
 
    --------------
@@ -218,7 +235,7 @@ package Glide_Kernel.Preferences is
    --------------
 
    Browsers_Link_Font : constant Property_Font :=
-     Register_Property ("Browsers:Link_Font", "Helvetica 12");
+     Register_Property ("Browsers:Link_Font", "Helvetica 10");
    --  Font used to draw the links in the items
 
    Browsers_Link_Color : constant Property_Color :=
