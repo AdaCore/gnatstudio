@@ -826,7 +826,7 @@ package body Glide_Kernel.Modules is
             C := C.Next;
          end loop;
 
-         Destroy (Context);
+         Unref (Context);
       end if;
 
       Pop_State (User.Kernel);
