@@ -940,7 +940,7 @@ package body Entities is
       Append (Entity.Parent_Types, Is_Of_Type);
 
       if Entity.Kind.Is_Type then
-         Append (Entity.Child_Types, Is_Of_Type);
+         Append (Is_Of_Type.Child_Types, Entity);
       end if;
 
       Add_All_Entities (Entity.Declaration.File, Is_Of_Type);
@@ -1162,6 +1162,7 @@ package body Entities is
 
       if File_Extension (Source_Filename) = ".c"
         or else File_Extension (Source_Filename) = ".h"
+        or else File_Extension (Source_Filename) = ".cc"
         or else File_Extension (Source_Filename) = ".cpp"
       then
          return Db.CPP_Handlers;
