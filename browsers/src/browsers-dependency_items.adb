@@ -25,9 +25,13 @@ with Glib.Object;          use Glib.Object;
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gdk.Event;            use Gdk.Event;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Image;            use Gtk.Image;
+with Gtk.Image_Menu_Item;  use Gtk.Image_Menu_Item;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
+with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
@@ -256,7 +260,7 @@ package body Browsers.Dependency_Items is
       Browser : Dependency_Browser;
    begin
       Browser := new Dependency_Browser_Record;
-      Initialize (Browser, Kernel);
+      Initialize (Browser, Kernel, Create_Toolbar => False);
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => Browser,
@@ -1146,7 +1150,8 @@ package body Browsers.Dependency_Items is
       Filename : constant String := Get_Source_Filename (Src);
       Full_Name : constant String := Find_Source_File
         (Get_Kernel (Browser), Filename, True);
-      Mitem : Gtk_Menu_Item;
+      Mitem : Gtk_Image_Menu_Item;
+      Pix   : Gtk_Image;
    begin
       Set_File_Information
         (File_Selection_Context_Access (Context),
@@ -1164,23 +1169,27 @@ package body Browsers.Dependency_Items is
             Slot_Object => Browser);
 
          Gtk_New (Mitem, Label => (-"Examine dependencies for ") & Filename);
+         Gtk_New (Pix, Stock_Go_Forward, Icon_Size_Menu);
+         Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
            (Mitem, "activate",
             Context_Callback.To_Marshaller
               (Edit_Dependencies_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
+         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
 
          Gtk_New
            (Mitem, Label => (-"Examining files depending on ") & Filename);
+         Gtk_New (Pix, Stock_Go_Back, Icon_Size_Menu);
+         Set_Image (Mitem, Pix);
          Append (Menu, Mitem);
          Context_Callback.Connect
            (Mitem, "activate",
             Context_Callback.To_Marshaller
               (Edit_Ancestor_Dependencies_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
+         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
       end if;
 
       return Context;
