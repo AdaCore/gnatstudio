@@ -80,9 +80,9 @@ begin
    Gtk_New (Main_Debug_Window.Edit_Source1, -"Edit Source...");
    Add_Accelerator (Main_Debug_Window.Edit_Source1, "activate",
      The_Accel_Group, GDK_e, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Edit_Source1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Edit_Source1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Edit_Source1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Edit_Source1);
    Set_Right_Justify (Main_Debug_Window.Edit_Source1, False);
 

@@ -126,6 +126,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_edit_source1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:41:47 GMT</last_modification_time>
 	    </signal>
 	    <label>Edit Source...</label>
