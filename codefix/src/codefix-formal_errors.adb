@@ -263,10 +263,19 @@ package body Codefix.Formal_Errors is
       Line          : Integer := Get_Line (Second_Cursor);
 
    begin
+      --  ??? This code is incomplete and does not work properly for
+      --  e.g. "test.ads:2:18: "abstract" must come before "new", not after"
+
       loop
          Match (Matcher, Get_Line (Current_Text, Second_Cursor), Matches);
          exit when Matches (1) /= No_Match;
          Line := Line - 1;
+
+         if Line = 0 then
+            return Result;
+         end if;
+
+         Set_Location (Second_Cursor, Line, 1);
       end loop;
 
       Set_Location (Second_Cursor, Line, Matches (1).First);
