@@ -647,15 +647,11 @@ package body C_Analyzer is
          Item   : Token_Stack.Generic_Type_Access;
 
       begin
-         --  Never pop the initial value
-         --  ??? The above comment is now an orphan, it was referring
-         --  to a loop that has been replaced by Pop_To_Construct,
-         --  Update and check this when the ??? comment below is also addressed
-
          Pop_To_Construct (Stack, Item);
 
          if Item.Token = No_Token then
-            --  ??? Value is uninitialized at this point
+            --  No more token on the stack
+            Value := Item.all;
             return;
          else
             --  There is an item on the stack, read it now
