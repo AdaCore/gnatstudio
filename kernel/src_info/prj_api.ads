@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -77,7 +77,7 @@ package Prj_API is
       return Prj.Project_Id;
    --  Return the project to which Source_Filename belongs.
    --  If the file was not found in any of the imported projects either,
-   --  Root_Project is returned.
+   --  No_Project is returned.
    --  ??? Should we have a cache
 
    function Get_Project_From_Directory
@@ -326,6 +326,8 @@ package Prj_API is
       return Project_Id_Array;
    --  Return the list of all the projects that import Project, either directly
    --  or indirectly.
+   --  If Project is No_Project, the resulting array contains all the project
+   --  in the hierarchy.
 
    -------------------
    -- Finding nodes --

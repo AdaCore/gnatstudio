@@ -1011,7 +1011,11 @@ package body Prj_API is
    function Get_Project_View_From_Project
      (Project : Project_Node_Id) return Project_Id is
    begin
-      return Get_Project_View_From_Name (Prj.Tree.Name_Of (Project));
+      if Project = Empty_Node then
+         return No_Project;
+      else
+         return Get_Project_View_From_Name (Prj.Tree.Name_Of (Project));
+      end if;
    end Get_Project_View_From_Project;
 
    ---------------------------
@@ -1079,12 +1083,7 @@ package body Prj_API is
       Result : Project_Id := No_Project;
    begin
       For_All_Projects (Root_Project_View, Result);
-
-      if Result /= No_Project then
-         return Result;
-      else
-         return Root_Project_View;
-      end if;
+      return Result;
    end Get_Project_From_File;
 
    --------------------------------
@@ -3232,46 +3231,57 @@ package body Prj_API is
       List : Name_Id_Array := Topological_Sort (Root_Project);
       Include : Boolean_Array (List'Range) := (others => False);
       Result : Project_Id_Array (List'Range);
-      Name : constant Name_Id := Projects.Table (Project).Name;
+      Name : Name_Id := No_Name;
       Index : Integer := List'Last;
       Prj : Project_List;
    begin
-      --  We first start by the lower possible project, then go up to the root
-      --  project. Note that no project that appears before Project can import
-      --  it, so we can save some time.
 
-      while Index >= List'First loop
-         if Name = List (Index) then
-            Include (Index) := True;
-            Result (Index) := Project;
-            exit;
-         end if;
-         Index := Index - 1;
-      end loop;
+      if Project /= No_Project then
+         Name := Projects.Table (Project).Name;
 
-      Index := Index - 1;
+         --  We first start by the lower possible project, then go up to the
+         --  root project. Note that no project that appears before Project can
+         --  import it, so we can save some time.
 
-      while Index >= List'First loop
-         Result (Index) := Get_Project_View_From_Name (List (Index));
-         Prj := Projects.Table (Result (Index)).Imported_Projects;
-
-         Imported_Projects_Loop :
-         while Prj /= Empty_Project_List loop
-            for N in Index + 1 .. Include'Last loop
-               if Include (N)
-                 and then List (N) = Projects.Table
-                 (Project_Lists.Table (Prj).Project).Name
-               then
-                  Include (Index) := True;
-                  exit Imported_Projects_Loop;
-               end if;
-            end loop;
-
-            Prj := Project_Lists.Table (Prj).Next;
-         end loop Imported_Projects_Loop;
+         while Index >= List'First loop
+            if Name = List (Index) then
+               Include (Index) := True;
+               Result (Index) := Project;
+               exit;
+            end if;
+            Index := Index - 1;
+         end loop;
 
          Index := Index - 1;
-      end loop;
+
+         while Index >= List'First loop
+            Result (Index) := Get_Project_View_From_Name (List (Index));
+            Prj := Projects.Table (Result (Index)).Imported_Projects;
+
+            Imported_Projects_Loop :
+            while Prj /= Empty_Project_List loop
+               for N in Index + 1 .. Include'Last loop
+                  if Include (N)
+                    and then List (N) = Projects.Table
+                    (Project_Lists.Table (Prj).Project).Name
+                  then
+                     Include (Index) := True;
+                     exit Imported_Projects_Loop;
+                  end if;
+               end loop;
+
+               Prj := Project_Lists.Table (Prj).Next;
+            end loop Imported_Projects_Loop;
+
+            Index := Index - 1;
+         end loop;
+
+      else
+         Include := (others => True);
+         for J in Result'Range loop
+            Result (J) := Get_Project_View_From_Name (List (J));
+         end loop;
+      end if;
 
       Index := Result'First;
       for N in Include'Range loop
@@ -3360,39 +3370,7 @@ package body Prj_API is
 
    function Include_Path
      (Project_View : Prj.Project_Id; Recursive : Boolean) return String
-   is
-      Current : String_List_Id;
-      Dir : String_Element;
-      Length : Natural := 0;
-   begin
-      if Recursive then
-         return Prj.Env.Ada_Include_Path (Project_View).all;
-      else
-         Current := Projects.Table (Project_View).Source_Dirs;
-         while Current /= Nil_String loop
-            Dir := String_Elements.Table (Current);
-            Length := Length + Natural (String_Length (Dir.Value)) + 1;
-            Current := Dir.Next;
-         end loop;
-
-         declare
-            Path : String (1 .. Length);
-            Index : Natural := Path'First;
-         begin
-            Current := Projects.Table (Project_View).Source_Dirs;
-            while Current /= Nil_String loop
-               Dir := String_Elements.Table (Current);
-               String_To_Name_Buffer (Dir.Value);
-               Path (Index .. Index + Name_Len - 1) :=
-                 Name_Buffer (1 .. Name_Len);
-               Index := Index + Name_Len + 1;
-               Path (Index - 1) := Path_Separator;
-               Current := Dir.Next;
-            end loop;
-            return Path;
-         end;
-      end if;
-   end Include_Path;
+     renames Prj.Env.Ada_Include_Path;
 
    -----------------
    -- Object_Path --
