@@ -2619,12 +2619,6 @@ package body Src_Editor_Box is
                   Column      => 1,
                   Entity      => Entity,
                   Status      => Status);
-               Trace (Me, "Get_Subprogram: Enclosing subprogram for line"
-                      & Line'Img & " is " & Block.Name.all
-                      & " found at line"
-                      & Get_Editable_Line (Editor.Source_Buffer, L)'Img
-                      & " entity_is_null=" & Boolean'Image (Entity = null)
-                      & " status=" & Status'Img);
                return Entity;
             else
                return null;
