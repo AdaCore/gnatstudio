@@ -812,12 +812,11 @@ package body KeyManager_Module is
                      Launch_Background_Command
                        (Kernel,
                         Create_Proxy
-                          (Command.Command, (Event, null, null, null)),
+                          (Command.Command, (Event, Context, null, null)),
                         Destroy_On_Exit => False,
                         Active          => False,
                         Show_Bar        => False,
                         Queue_Id        => "");
-                     Unref (Context);
                      return True;
                   end if;
                end if;
@@ -826,20 +825,20 @@ package body KeyManager_Module is
             Binding := Next (Binding);
          end loop;
 
-         Unref (Context);
-
          if Any_Context_Command /= No_Action then
             Trace (Me, "Executing any context action");
             Launch_Background_Command
               (Kernel,
                Create_Proxy
-                 (Any_Context_Command.Command, (Event, null, null, null)),
+                 (Any_Context_Command.Command, (Event, Context, null, null)),
                Destroy_On_Exit => False,
                Active          => False,
                Show_Bar        => False,
                Queue_Id        => "");
             return True;
          end if;
+
+         Unref (Context);
       end if;
 
       --  Never pass through an event from a secondary keymap
