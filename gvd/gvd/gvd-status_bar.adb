@@ -75,6 +75,7 @@ package body GVD.Status_Bar is
       Event : Gtk_Event_Box;
    begin
       Initialize_Hbox (Status, Homogeneous => False, Spacing => 4);
+      Set_Size_Request (Status, 0, -1);
 
       Gtk_New (Event);
       Gtk_New (Status.Arrow_Button);
