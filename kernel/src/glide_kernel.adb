@@ -894,6 +894,7 @@ package body Glide_Kernel is
          then
             Timeout_Remove (Window.Timeout_Id);
             Window.Timeout_Id := 0;
+            Display_Default_Image (Handle);
          end if;
       end if;
    end Pop_State;
