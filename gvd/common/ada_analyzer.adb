@@ -588,6 +588,7 @@ package body Ada_Analyzer is
       Replace          : Replace_Text_Callback := null;
       Constructs       : Construct_List_Access := null;
       Callback         : Entity_Callback       := null;
+      Indent_Offset    : Natural               := 0;
       Case_Exceptions  : Casing_Exceptions     := No_Casing_Exception)
    is
       ---------------
@@ -806,7 +807,7 @@ package body Ada_Analyzer is
          end loop;
 
          if Top (Indents).Level = None then
-            Indentation := Num_Spaces;
+            Indentation := Num_Spaces + Indent_Offset;
          else
             Indentation := Top (Indents).Level;
          end if;
