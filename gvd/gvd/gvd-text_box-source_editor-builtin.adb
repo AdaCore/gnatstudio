@@ -486,6 +486,9 @@ package body Odd.Source_Editors is
                      Looking_At (Editor.Lang,
                                  Buffer (Index .. Buffer'Last),
                                  Entity, Next_Char);
+                     if Next_Char > Buffer'Last then
+                        Next_Char := Buffer'Last + 1;
+                     end if;
                   else
                      Next_Char := Index + 1;
                      Entity := Normal_Text;
