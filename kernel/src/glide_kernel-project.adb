@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                              G P S                                --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -127,8 +127,12 @@ package body Glide_Kernel.Project is
       else
          Project := Get_Project_From_View
            (Get_Project_From_File (Handle.Project_View, File_Name));
-         return Get_Name_String (Directory_Of (Project))
-           & Get_Name_String (Prj.Tree.Name_Of (Project));
+         if Project = Empty_Node then
+            return "";
+         else
+            return Get_Name_String (Directory_Of (Project))
+              & Get_Name_String (Prj.Tree.Name_Of (Project));
+         end if;
       end if;
    end Get_Subproject_Name;
 
