@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Cursor;    use Gdk.Cursor;
---  ??? needed with GtkAda 11.2 but not GtkAda 2.0
+--  ??? needed with GtkAda 1.2 but not GtkAda 2.0
 pragma Warnings (Off);
 with Gdk.Types;     use Gdk.Types;
 pragma Warnings (On);
