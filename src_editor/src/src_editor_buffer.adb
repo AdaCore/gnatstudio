@@ -2118,9 +2118,6 @@ package body Src_Editor_Buffer is
       Command : constant Editor_Command :=
         Editor_Command (Buffer.Current_Command);
 
-      --  Iter    : Gtk_Text_Iter;
-      --  Prev    : Gtk_Text_Iter;
-      --  Success : Boolean := True;
    begin
       End_Action_Hook (Buffer);
 
