@@ -693,8 +693,7 @@ package body Src_Editor_View is
          end loop;
 
          Real_Lines (Max + 1 .. Max * 2) := (others => 0);
---           View.Original_Lines_Number := Max;
---  ????
+
          Set_Real_Lines (Source_Buffer (Get_Buffer (View)), Real_Lines);
          Redraw_Columns (View);
       end if;
