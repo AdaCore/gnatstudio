@@ -75,13 +75,27 @@ package body Docgen.Work_On_File is
    --  lists of these entities by calling the procedures Process_Type_Index,
    --  Process_Subprogram_Index and Process_Unit_Index (the latter for the
    --  source file list) in the package Docgen.Work_On_File.
-   --  Tagged_Types_List is the list of all tagged types declared in the files
-   --  we are processing.
-   --  All_Tagged_Types_List contains all the tagged types that are used for
-   --  tagged types index: those declared in the processed files but also the
-   --  parents and the children even if they aren't declared in the processed
+   --  Source_File_List : list of source files that must be processed.
+   --  Options          : options set by preferences.
+   --  Process_Body_File: indicate if body files are also processed.
+   --  Type_Index_List  : list of all public types contained in all files.
+   --  Private_Type_Index_List  : list of all private types contained in all
    --  files.
-   --  Still_Warned indicates that a message still has been put on the console
+   --  Subprogram_Index_List    : list of all public subprograms contained in
+   --  all files.
+   --  Private_Subprogram_Index_List : list of all private subprograms
+   --  contained in all files.
+   --  Tagged_Types_List        : list of all public tagged types contained in
+   --  all files.
+   --  Private_Tagged_Types_List: list of all private tagged types contained
+   --  in all files.
+   --  All_Tagged_Types_List    : contains all the tagged types. Those that
+   --  are declared in the processed files but also the parents and the
+   --  children even if they aren't declared in the processed files.
+   --  Converter : indicates what format the documentation should be generated
+   --  in.
+   --  Still_Warned : indicate that a message still has been put on the
+   --  console.
 
    -------------------
    -- Process_Files --
@@ -340,22 +354,25 @@ package body Docgen.Work_On_File is
       Father_Info      : Entity_Handle;
       Father           : Entity_Information;
       Son              : Entity_Information;
-      Son_Hidden       : Entity_Information;
+      Global_Son       : Entity_Information;
       Child            : Child_Type_Iterator;
-      Child_Hidden     : Child_Type_Iterator;
+      Global_Child     : Child_Type_Iterator;
       Parent           : Parent_Iterator;
       Children_Iter    : Entity_Reference_Iterator;
       Tag_Elem_Me      : Tagged_Element_Handle;
       Tag_Elem_Parent  : Tagged_Element_Handle;
       Tag_Elem_Child   : Tagged_Element_Handle;
-      Found            : Boolean := False;
+      Entity_Is_Tagged : Boolean := False;
+      Found_Global     : Boolean := False;
       LI               : LI_File_Ptr;
-      --  The 15 variables above are used to find tagged types, their children
+      --  The 16 variables above are used to find tagged types, their children
       --  and their parents
 
       Level : Natural;
       --  Stores the level of the current package in which we are
       --  processing types, subprograms...
+
+      use List_Reference_In_File;
 
       procedure Process_Subprogram
         (Source_Filename : Virtual_File;
@@ -377,9 +394,16 @@ package body Docgen.Work_On_File is
          Parent_Node : Scope_Tree_Node);
       --  Append to Calls_List the list of subprograms called by Parent_Node.
 
-      procedure Hidden_Children
+      procedure Global_Children
         (Found : in out Boolean;
          Iter  : in out Entity_Reference_Iterator);
+
+      procedure Is_Tagged_Type
+        (Entity_Is_Tagged : in out Boolean;
+         Found_Global     : in out Boolean;
+         Iter             : in out Entity_Reference_Iterator;
+         Info             : in Entity_Information;
+         LI_Unit          : in LI_File_Ptr);
 
       --------------------------
       -- Add_Calls_References --
@@ -610,17 +634,17 @@ package body Docgen.Work_On_File is
       end Process_Type;
 
       ---------------------
-      -- Hidden_Children --
+      -- Global_Children --
       ---------------------
 
-      procedure Hidden_Children
+      procedure Global_Children
         (Found : in out Boolean;
          Iter  : in out Entity_Reference_Iterator)
       is
          LI           : LI_File_Ptr;
          Child        : Child_Type_Iterator;
          C            : Entity_Information;
-         Found_Hidden : Boolean := False;
+         Found_Global : Boolean := False;
       begin
 
          Find_All_References
@@ -644,20 +668,62 @@ package body Docgen.Work_On_File is
                --  we don't make a loop in order to parse all the children
                --  We want to know if Info has at least one child
                if C /= No_Entity_Information then
-                  Found_Hidden := True;
+                  Found_Global := True;
                   Destroy (C);
                end if;
 
                Destroy (Child);
 
-               exit when Found_Hidden;
+               exit when Found_Global;
                Next (Get_Language_Handler (Kernel),
                      Iter,
                      LI_List);
             end loop;
-            Found := Found_Hidden;
+            Found := Found_Global;
          end if;
-      end Hidden_Children;
+      end Global_Children;
+
+      --------------------
+      -- Is_Tagged_Type --
+      --------------------
+
+      procedure Is_Tagged_Type
+        (Entity_Is_Tagged : in out Boolean;
+         Found_Global     : in out Boolean;
+         Iter             : in out Entity_Reference_Iterator;
+         Info             : in Entity_Information;
+         LI_Unit          : in LI_File_Ptr) is
+      begin
+         if Get_Kind (Info).Is_Type
+           and then
+             (Get_Kind (Info).Kind = Record_Kind
+               --  In Ada, tagged type are classified as Record
+               --  The only way to distinguish them to classic
+               --  record is to search for parent and children.
+               --  ??? tagged types without child and without
+               --  parent don't appear in the list
+              or else Get_Kind (Info).Kind = Class
+              or else Get_Kind (Info).Kind = Class_Wide)
+         then
+
+            Global_Children (Found_Global, Iter);
+
+            if Get (Get_Parent_Types (LI_Unit, Info))
+              /= No_Entity_Information
+              or else
+                Get (Get_Children_Types (LI_Unit, Info))
+              /= No_Entity_Information
+              or else
+                Found_Global
+            then
+               Entity_Is_Tagged := True;
+            else
+               Entity_Is_Tagged := False;
+            end if;
+         else
+            Entity_Is_Tagged := False;
+         end if;
+      end Is_Tagged_Type;
 
    begin
       LI_Unit := Locate_From_Source_And_Complete (Kernel, Source_Filename);
@@ -690,13 +756,61 @@ package body Docgen.Work_On_File is
 
                else
                   --  New reference on the current entity
-                  List_Reference_In_File.Append
-                    (List_Ref_In_File,
-                     (Name   =>
-                        new String'(Get_Name (Get (Entity_Iter))),
-                      Line   => Get_Line (Get_Location (Ref_In_File)),
-                      Column => Get_Column (Get_Location (Ref_In_File)),
-                      Entity => Ent_Handle));
+
+                  if Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '='
+                    and then
+                      Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '>'
+                    and then
+                      Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '+'
+                    and then
+                      Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '-'
+                    and then
+                      Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '*'
+                    and then
+                      Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '/'
+                    and then
+                      Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '<'
+                    and then
+                      Get_Name (Get (Entity_Iter))
+                    (Get_Name (Get (Entity_Iter))'First) /= '&'
+                    and then
+                      Get_Name (Get (Entity_Iter)) /= "/="
+                    and then
+                      Get_Name (Get (Entity_Iter)) /= "and"
+                    and then
+                      Get_Name (Get (Entity_Iter)) /= "or"
+                  then
+                     --  ??? Temporary solution: operators are not added.
+                     --  In fact, it seems that Parse_Entity don't return
+                     --  them as identifiers. So, if we add them in the
+                     --  references list, they won't be matched and as a
+                     --  concequence all the following references also.
+                     --  NB: for spec file, there isn't this problem because
+                     --  we must search in the whole list of references: so
+                     --  no link is lost (we only have "too much" reference
+                     --  nodes).
+                     --  If there's some operators missing in the test above
+                     --  it will explain the lost of links for body files
+                     --  Bug of GNAT: in src_info-queries.adb, a reference
+                     --  "finalize" is returned instead of "Full_Name" line
+                     --  1907: after this point, all links are lost for the
+                     --  reason seen before.
+
+                     List_Reference_In_File.Append
+                       (List_Ref_In_File,
+                        (Name   =>
+                         new String'(Get_Name (Get (Entity_Iter))),
+                         Line   => Get_Line (Get_Location (Ref_In_File)),
+                         Column => Get_Column (Get_Location (Ref_In_File)),
+                         Entity => Ent_Handle));
+                  end if;
                end if;
 
                --  Get next entity (or reference) in this file
@@ -935,32 +1049,17 @@ package body Docgen.Work_On_File is
                            Entity_Node.Kind := Other_Entity;
                      end case;
 
-                     if (Options.Tagged_Types
-                         and then Get_Kind (Info).Is_Type
-                         and then
-                           (Get_Kind (Info).Kind = Record_Kind
-                        --  In Ada, tagged type are classified as Record
-                        --  The only way to distinguish them to classic
-                        --  record is to search for parent and children.
-                        --  ??? tagged types without child and without
-                        --  parent don't appear in the list
-                            or else Get_Kind (Info).Kind = Class
-                            or else Get_Kind (Info).Kind = Class_Wide))
-                     then
+                     if Options.Tagged_Types then
+                        Entity_Is_Tagged := False;
+                        Found_Global     := False;
+                        Is_Tagged_Type (Entity_Is_Tagged,
+                                        Found_Global,
+                                        Children_Iter,
+                                        Info, LI_Unit);
+                        if Entity_Is_Tagged then
 
-                        Found := False;
-                        Hidden_Children (Found, Children_Iter);
-
-                        if Get (Get_Parent_Types (LI_Unit, Info))
-                          /= No_Entity_Information
-                          or else
-                            Get (Get_Children_Types (LI_Unit, Info))
-                          /= No_Entity_Information
-                          or else
-                            Found
-                        then
-                           Me_Info := Find_In_List
-                             (All_Tagged_Types_List, Info);
+                           Me_Info := Find_In_List (All_Tagged_Types_List,
+                                                    Info);
                            if Me_Info /= null then
                               --  This tagged type has still been met.
                               --  During the update of the lists, the local
@@ -1180,28 +1279,29 @@ package body Docgen.Work_On_File is
                                  Next (Child);
                               end loop;
 
-                              --  Search for hidden chidren
-                              if Found then
+                              --  Search for all chidren (those who don't
+                              --  appear in current file)
+                              if Found_Global then
 
                                  while Get (Children_Iter) /= No_Reference loop
                                     LI := Get_LI (Children_Iter);
 
-                                    Child_Hidden := Get_Children_Types (LI,
+                                    Global_Child := Get_Children_Types (LI,
                                                                         Info);
                                     loop
-                                       Son_Hidden := Get (Child_Hidden);
-                                       exit when Son_Hidden
+                                       Global_Son := Get (Global_Child);
+                                       exit when Global_Son
                                          = No_Entity_Information;
 
                                        --  New child
                                        Son_Info := Find_In_List
-                                         (All_Tagged_Types_List, Son_Hidden);
+                                         (All_Tagged_Types_List, Global_Son);
 
                                        if Son_Info = null then
                                           --  Child seen for the first time
                                           Son_Info
                                             := new Entity_Information'
-                                              (Son_Hidden);
+                                              (Global_Son);
                                           List_Entity_Handle.Append
                                             (All_Tagged_Types_List, Son_Info);
 
@@ -1299,10 +1399,10 @@ package body Docgen.Work_On_File is
                                        --  with the local child.
                                        --  Update also the number of children
 
-                                       Next (Child_Hidden);
+                                       Next (Global_Child);
                                     end loop;
 
-                                    Destroy (Child_Hidden);
+                                    Destroy (Global_Child);
                                     Next (Get_Language_Handler (Kernel),
                                           Children_Iter,
                                           LI_List);
@@ -1322,9 +1422,9 @@ package body Docgen.Work_On_File is
                               Tag_Elem_Me.Number_Of_Parents := 0;
 
                               if Source_File_In_List
-                                      (Source_File_List,
-                                       Get_Declaration_File_Of
-                                         (Me_Info.all))then
+                                (Source_File_List,
+                                 Get_Declaration_File_Of
+                                   (Me_Info.all))then
                                  --  If this tagged type is declared, we
                                  --  indicate that we must print it in
                                  --  the doc file
@@ -1501,13 +1601,13 @@ package body Docgen.Work_On_File is
                                          (Tagged_Types_List,
                                           Tag_Elem_Child.all);
                                     end if;
-                                       --  We don't need to indicate now
-                                       --  information about the father of this
-                                       --  child (in fact, Me_Info is one)
-                                       --  because this field will be update
-                                       --  when the child will be studied as
-                                       --  main tagged type (not as a son or
-                                       --  parent)
+                                    --  We don't need to indicate now
+                                    --  information about the father of this
+                                    --  child (in fact, Me_Info is one)
+                                    --  because this field will be update
+                                    --  when the child will be studied as
+                                    --  main tagged type (not as a son or
+                                    --  parent)
 
                                  else
                                     if Options.Process_Body_Files
@@ -1544,27 +1644,28 @@ package body Docgen.Work_On_File is
                                  Next (Child);
                               end loop;
 
-                              --  Search for hidden chidren
-                              if Found then
+                              --  Search for all chidren (those who don't
+                              --  appear in current file)
+                              if Found_Global then
 
                                  while Get (Children_Iter) /= No_Reference loop
                                     LI := Get_LI (Children_Iter);
 
-                                    Child_Hidden := Get_Children_Types (LI,
+                                    Global_Child := Get_Children_Types (LI,
                                                                         Info);
                                     loop
-                                       Son_Hidden := Get (Child_Hidden);
-                                       exit when Son_Hidden
+                                       Global_Son := Get (Global_Child);
+                                       exit when Global_Son
                                          = No_Entity_Information;
 
                                        --  New Child
                                        Son_Info := Find_In_List
-                                         (All_Tagged_Types_List, Son_Hidden);
+                                         (All_Tagged_Types_List, Global_Son);
                                        if Son_Info = null then
                                           --  Child seen for the first time
                                           Son_Info
                                             := new Entity_Information'
-                                              (Son_Hidden);
+                                              (Global_Son);
                                           List_Entity_Handle.Append
                                             (All_Tagged_Types_List, Son_Info);
 
@@ -1662,10 +1763,10 @@ package body Docgen.Work_On_File is
                                          Tag_Elem_Me.Number_Of_Children + 1;
                                        --  Update of the number of parents
 
-                                       Next (Child_Hidden);
+                                       Next (Global_Child);
                                     end loop;
 
-                                    Destroy (Child_Hidden);
+                                    Destroy (Global_Child);
                                     Next (Get_Language_Handler (Kernel),
                                           Children_Iter,
                                           LI_List);
@@ -1703,7 +1804,7 @@ package body Docgen.Work_On_File is
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Name   =>
-                        new String'(Get_Name (Get (Entity_Iter))),
+                      new String'(Get_Name (Get (Entity_Iter))),
                       Line   => Get_Line (Get_Location (Ref_In_File)),
                       Column => Get_Column (Get_Location (Ref_In_File)),
                       Entity => Ent_Handle));
@@ -1714,6 +1815,7 @@ package body Docgen.Work_On_File is
             end loop;
 
             Sort_List_By_Line_And_Column (List_Ref_In_File);
+
             Free (Tree);
 
             --  Process the documentation of this file
@@ -1743,7 +1845,6 @@ package body Docgen.Work_On_File is
          end if;
 
          --  If body files are not being processed, free directly here
-
          if not Options.Process_Body_Files then
             TEL.Free (Entity_List);
          end if;
