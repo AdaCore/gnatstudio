@@ -121,6 +121,28 @@ package body Switches_Editor_Pkg.Callbacks is
       Update_Gui_From_Cmdline (Switches_Edit (Object), Cpp_Compiler);
    end On_Cpp_Switches_Entry_Changed;
 
+   ----------------------------------
+   -- On_Pp_Switches_Entry_Changed --
+   ----------------------------------
+
+   procedure On_Pp_Switches_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Update_Gui_From_Cmdline (Switches_Edit (Object), Pretty_Printer);
+   end On_Pp_Switches_Entry_Changed;
+
+   -------------------------
+   -- Refresh_Pp_Switches --
+   -------------------------
+
+   procedure Refresh_Pp_Switches
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Update_Cmdline (Switches_Edit (Object), Pretty_Printer);
+   end Refresh_Pp_Switches;
+
    --------------------------------------
    -- On_Binder_Switches_Entry_Changed --
    --------------------------------------

@@ -46,6 +46,12 @@ package Switches_Editor_Pkg.Callbacks is
    procedure On_Cpp_Switches_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
 
+   procedure On_Pp_Switches_Entry_Changed
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure Refresh_Pp_Switches
+     (Object : access Gtk_Widget_Record'Class);
+
    procedure On_Binder_Switches_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
 

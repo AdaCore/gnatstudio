@@ -43,6 +43,14 @@ procedure Initialize (Switches_Editor : access Switches_Editor_Record'Class) is
    Ada_Optimization_Level_Items : String_List.Glist;
    C_Optimization_Level_Items : String_List.Glist;
    Cpp_Optimization_Level_Items : String_List.Glist;
+   Pragma_Casing_Items : String_List.Glist;
+   References_Casing_Items : String_List.Glist;
+   Attribute_Casing_Items : String_List.Glist;
+   Keyword_Casing_Items : String_List.Glist;
+   Construct_Layout_Items : String_List.Glist;
+   Comments_Layout_Items : String_List.Glist;
+   Indent_Level_Adj : Gtk_Adjustment;
+   Max_Line_Length_Adj : Gtk_Adjustment;
    Vbox27_Group : Widget_SList.GSList;
 
 begin
@@ -730,6 +738,345 @@ begin
    Set_Line_Wrap (Switches_Editor.Label57, False);
    Set_Tab (Switches_Editor.Notebook, 3, Switches_Editor.Label57);
 
+   Gtk_New (Switches_Editor.Pp_Switches, 6, 2, False);
+   Set_Row_Spacings (Switches_Editor.Pp_Switches, 0);
+   Set_Col_Spacings (Switches_Editor.Pp_Switches, 0);
+   Add (Switches_Editor.Notebook, Switches_Editor.Pp_Switches);
+
+   Gtk_New (Switches_Editor.Pp_Switches_Entry);
+   Set_Editable (Switches_Editor.Pp_Switches_Entry, True);
+   Set_Max_Length (Switches_Editor.Pp_Switches_Entry, 0);
+   Set_Text (Switches_Editor.Pp_Switches_Entry, -"");
+   Set_Visibility (Switches_Editor.Pp_Switches_Entry, True);
+   Attach (Switches_Editor.Pp_Switches, Switches_Editor.Pp_Switches_Entry, 0, 2, 5, 6,
+     Expand or Fill, 0,
+     0, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Pp_Switches_Entry, "changed",
+      Widget_Callback.To_Marshaller (On_Pp_Switches_Entry_Changed'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Pp_Align_Frame, -"Alignments");
+   Set_Border_Width (Switches_Editor.Pp_Align_Frame, 5);
+   Set_Shadow_Type (Switches_Editor.Pp_Align_Frame, Shadow_Etched_In);
+   Attach (Switches_Editor.Pp_Switches, Switches_Editor.Pp_Align_Frame, 0, 2, 3, 4,
+     Fill, Expand or Fill,
+     0, 0);
+
+   Gtk_New_Vbox (Switches_Editor.Vbox55, False, 0);
+   Add (Switches_Editor.Pp_Align_Frame, Switches_Editor.Vbox55);
+
+   Gtk_New (Switches_Editor.Align_Colons, -"Colons in declarations");
+   Set_Active (Switches_Editor.Align_Colons, False);
+   Pack_Start (Switches_Editor.Vbox55, Switches_Editor.Align_Colons, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Align_Colons, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Align_Assign_Decl, -"Assignments in declarations");
+   Set_Active (Switches_Editor.Align_Assign_Decl, False);
+   Pack_Start (Switches_Editor.Vbox55, Switches_Editor.Align_Assign_Decl, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Align_Assign_Decl, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Align_Assign_Stmt, -"Assignments in statements");
+   Set_Active (Switches_Editor.Align_Assign_Stmt, False);
+   Pack_Start (Switches_Editor.Vbox55, Switches_Editor.Align_Assign_Stmt, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Align_Assign_Stmt, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Align_Arrow, -"Arrow delimiters in associations");
+   Set_Active (Switches_Editor.Align_Arrow, False);
+   Pack_Start (Switches_Editor.Vbox55, Switches_Editor.Align_Arrow, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Align_Arrow, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Set_Labels, -"Set missing end/exit labels");
+   Set_Border_Width (Switches_Editor.Set_Labels, 3);
+   Set_Active (Switches_Editor.Set_Labels, True);
+   Attach (Switches_Editor.Pp_Switches, Switches_Editor.Set_Labels, 0, 2, 4, 5,
+     Fill, 0,
+     0, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Set_Labels, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Pp_Casing_Frame, -"Casing");
+   Set_Border_Width (Switches_Editor.Pp_Casing_Frame, 5);
+   Set_Shadow_Type (Switches_Editor.Pp_Casing_Frame, Shadow_Etched_In);
+   Attach (Switches_Editor.Pp_Switches, Switches_Editor.Pp_Casing_Frame, 0, 2, 1, 2,
+     Fill, Expand or Fill,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Pp_Casing_Table, 4, 2, False);
+   Set_Row_Spacings (Switches_Editor.Pp_Casing_Table, 0);
+   Set_Col_Spacings (Switches_Editor.Pp_Casing_Table, 0);
+   Add (Switches_Editor.Pp_Casing_Frame, Switches_Editor.Pp_Casing_Table);
+
+   Gtk_New (Switches_Editor.Pragma_Casing);
+   Set_Case_Sensitive (Switches_Editor.Pragma_Casing, False);
+   Set_Use_Arrows (Switches_Editor.Pragma_Casing, True);
+   Set_Use_Arrows_Always (Switches_Editor.Pragma_Casing, False);
+   String_List.Append (Pragma_Casing_Items, -"Capitalized");
+   String_List.Append (Pragma_Casing_Items, -"Lower case");
+   String_List.Append (Pragma_Casing_Items, -"Upper case");
+   Combo.Set_Popdown_Strings (Switches_Editor.Pragma_Casing, Pragma_Casing_Items);
+   Free_String_List (Pragma_Casing_Items);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Pragma_Casing, 1, 2, 3, 4,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.Pragma_Casing_Entry := Get_Entry (Switches_Editor.Pragma_Casing);
+   Set_Editable (Switches_Editor.Pragma_Casing_Entry, True);
+   Set_Max_Length (Switches_Editor.Pragma_Casing_Entry, 0);
+   Set_Text (Switches_Editor.Pragma_Casing_Entry, -"Capitalized");
+   Set_Visibility (Switches_Editor.Pragma_Casing_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Pragma_Casing_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.References_Casing);
+   Set_Case_Sensitive (Switches_Editor.References_Casing, False);
+   Set_Use_Arrows (Switches_Editor.References_Casing, True);
+   Set_Use_Arrows_Always (Switches_Editor.References_Casing, False);
+   String_List.Append (References_Casing_Items, -"As declared");
+   String_List.Append (References_Casing_Items, -"Capitalized");
+   Combo.Set_Popdown_Strings (Switches_Editor.References_Casing, References_Casing_Items);
+   Free_String_List (References_Casing_Items);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.References_Casing, 1, 2, 2, 3,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.References_Casing_Entry := Get_Entry (Switches_Editor.References_Casing);
+   Set_Editable (Switches_Editor.References_Casing_Entry, True);
+   Set_Max_Length (Switches_Editor.References_Casing_Entry, 0);
+   Set_Text (Switches_Editor.References_Casing_Entry, -"As declared");
+   Set_Visibility (Switches_Editor.References_Casing_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.References_Casing_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Attribute_Casing);
+   Set_Case_Sensitive (Switches_Editor.Attribute_Casing, False);
+   Set_Use_Arrows (Switches_Editor.Attribute_Casing, True);
+   Set_Use_Arrows_Always (Switches_Editor.Attribute_Casing, False);
+   String_List.Append (Attribute_Casing_Items, -"Capitalized");
+   String_List.Append (Attribute_Casing_Items, -"Lower case");
+   String_List.Append (Attribute_Casing_Items, -"Upper case");
+   Combo.Set_Popdown_Strings (Switches_Editor.Attribute_Casing, Attribute_Casing_Items);
+   Free_String_List (Attribute_Casing_Items);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Attribute_Casing, 1, 2, 1, 2,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.Attribute_Casing_Entry := Get_Entry (Switches_Editor.Attribute_Casing);
+   Set_Editable (Switches_Editor.Attribute_Casing_Entry, True);
+   Set_Max_Length (Switches_Editor.Attribute_Casing_Entry, 0);
+   Set_Text (Switches_Editor.Attribute_Casing_Entry, -"Capitalized");
+   Set_Visibility (Switches_Editor.Attribute_Casing_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Attribute_Casing_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Keyword_Casing);
+   Set_Case_Sensitive (Switches_Editor.Keyword_Casing, False);
+   Set_Use_Arrows (Switches_Editor.Keyword_Casing, True);
+   Set_Use_Arrows_Always (Switches_Editor.Keyword_Casing, False);
+   String_List.Append (Keyword_Casing_Items, -"Lower case");
+   String_List.Append (Keyword_Casing_Items, -"Upper case");
+   Combo.Set_Popdown_Strings (Switches_Editor.Keyword_Casing, Keyword_Casing_Items);
+   Free_String_List (Keyword_Casing_Items);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Keyword_Casing, 1, 2, 0, 1,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.Keyword_Casing_Entry := Get_Entry (Switches_Editor.Keyword_Casing);
+   Set_Editable (Switches_Editor.Keyword_Casing_Entry, True);
+   Set_Max_Length (Switches_Editor.Keyword_Casing_Entry, 0);
+   Set_Text (Switches_Editor.Keyword_Casing_Entry, -"Lower case");
+   Set_Visibility (Switches_Editor.Keyword_Casing_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Keyword_Casing_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Label67, -("Keyword:"));
+   Set_Alignment (Switches_Editor.Label67, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label67, 5, 0);
+   Set_Justify (Switches_Editor.Label67, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label67, False);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label67, 0, 1, 0, 1,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Label68, -("Attribute:"));
+   Set_Alignment (Switches_Editor.Label68, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label68, 5, 0);
+   Set_Justify (Switches_Editor.Label68, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label68, False);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label68, 0, 1, 1, 2,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Label69, -("Reference:"));
+   Set_Alignment (Switches_Editor.Label69, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label69, 5, 0);
+   Set_Justify (Switches_Editor.Label69, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label69, False);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label69, 0, 1, 2, 3,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Label70, -("Pragma:"));
+   Set_Alignment (Switches_Editor.Label70, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label70, 5, 0);
+   Set_Justify (Switches_Editor.Label70, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label70, False);
+   Attach (Switches_Editor.Pp_Casing_Table, Switches_Editor.Label70, 0, 1, 3, 4,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Pp_Layout_Frame, -"Layout");
+   Set_Border_Width (Switches_Editor.Pp_Layout_Frame, 5);
+   Set_Shadow_Type (Switches_Editor.Pp_Layout_Frame, Shadow_Etched_In);
+   Attach (Switches_Editor.Pp_Switches, Switches_Editor.Pp_Layout_Frame, 0, 2, 2, 3,
+     Fill, Expand or Fill,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Pp_Layout_Table, 2, 2, False);
+   Set_Row_Spacings (Switches_Editor.Pp_Layout_Table, 0);
+   Set_Col_Spacings (Switches_Editor.Pp_Layout_Table, 0);
+   Add (Switches_Editor.Pp_Layout_Frame, Switches_Editor.Pp_Layout_Table);
+
+   Gtk_New (Switches_Editor.Label65, -("Construct:"));
+   Set_Alignment (Switches_Editor.Label65, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label65, 5, 0);
+   Set_Justify (Switches_Editor.Label65, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label65, False);
+   Attach (Switches_Editor.Pp_Layout_Table, Switches_Editor.Label65, 0, 1, 0, 1,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Label66, -("Comment:"));
+   Set_Alignment (Switches_Editor.Label66, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label66, 5, 0);
+   Set_Justify (Switches_Editor.Label66, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label66, False);
+   Attach (Switches_Editor.Pp_Layout_Table, Switches_Editor.Label66, 0, 1, 1, 2,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Construct_Layout);
+   Set_Case_Sensitive (Switches_Editor.Construct_Layout, False);
+   Set_Use_Arrows (Switches_Editor.Construct_Layout, True);
+   Set_Use_Arrows_Always (Switches_Editor.Construct_Layout, False);
+   String_List.Append (Construct_Layout_Items, -"GNAT style");
+   String_List.Append (Construct_Layout_Items, -"Compact");
+   String_List.Append (Construct_Layout_Items, -"Uncompact");
+   Combo.Set_Popdown_Strings (Switches_Editor.Construct_Layout, Construct_Layout_Items);
+   Free_String_List (Construct_Layout_Items);
+   Attach (Switches_Editor.Pp_Layout_Table, Switches_Editor.Construct_Layout, 1, 2, 0, 1,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.Construct_Layout_Entry := Get_Entry (Switches_Editor.Construct_Layout);
+   Set_Editable (Switches_Editor.Construct_Layout_Entry, True);
+   Set_Max_Length (Switches_Editor.Construct_Layout_Entry, 0);
+   Set_Text (Switches_Editor.Construct_Layout_Entry, -"GNAT style");
+   Set_Visibility (Switches_Editor.Construct_Layout_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Construct_Layout_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Comments_Layout);
+   Set_Case_Sensitive (Switches_Editor.Comments_Layout, False);
+   Set_Use_Arrows (Switches_Editor.Comments_Layout, True);
+   Set_Use_Arrows_Always (Switches_Editor.Comments_Layout, False);
+   String_List.Append (Comments_Layout_Items, -"GNAT style line indentation");
+   String_List.Append (Comments_Layout_Items, -"Standard line indentation");
+   String_List.Append (Comments_Layout_Items, -"GNAT style comment beginning");
+   String_List.Append (Comments_Layout_Items, -"Reformat blocks");
+   Combo.Set_Popdown_Strings (Switches_Editor.Comments_Layout, Comments_Layout_Items);
+   Free_String_List (Comments_Layout_Items);
+   Attach (Switches_Editor.Pp_Layout_Table, Switches_Editor.Comments_Layout, 1, 2, 1, 2,
+     Expand or Fill, 0,
+     0, 0);
+
+   Switches_Editor.Comments_Layout_Entry := Get_Entry (Switches_Editor.Comments_Layout);
+   Set_Editable (Switches_Editor.Comments_Layout_Entry, True);
+   Set_Max_Length (Switches_Editor.Comments_Layout_Entry, 0);
+   Set_Text (Switches_Editor.Comments_Layout_Entry, -"GNAT style line indentation");
+   Set_Visibility (Switches_Editor.Comments_Layout_Entry, True);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Comments_Layout_Entry, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Pp_Spacing_Frame, -"Spacing");
+   Set_Border_Width (Switches_Editor.Pp_Spacing_Frame, 5);
+   Set_Shadow_Type (Switches_Editor.Pp_Spacing_Frame, Shadow_Etched_In);
+   Attach (Switches_Editor.Pp_Switches, Switches_Editor.Pp_Spacing_Frame, 0, 2, 0, 1,
+     Fill, Expand or Fill,
+     0, 0);
+
+   Gtk_New (Switches_Editor.Table5, 1, 4, False);
+   Set_Row_Spacings (Switches_Editor.Table5, 0);
+   Set_Col_Spacings (Switches_Editor.Table5, 0);
+   Add (Switches_Editor.Pp_Spacing_Frame, Switches_Editor.Table5);
+
+   Gtk_New (Switches_Editor.Label63, -("Indentation:"));
+   Set_Alignment (Switches_Editor.Label63, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label63, 5, 0);
+   Set_Justify (Switches_Editor.Label63, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label63, False);
+   Attach (Switches_Editor.Table5, Switches_Editor.Label63, 0, 1, 0, 1,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Indent_Level_Adj, 3.0, 1.0, 9.0, 1.0, 3.0, 3.0);
+   Gtk_New (Switches_Editor.Indent_Level, Indent_Level_Adj, 1.0, 0);
+   Set_Numeric (Switches_Editor.Indent_Level, False);
+   Set_Snap_To_Ticks (Switches_Editor.Indent_Level, False);
+   Set_Update_Policy (Switches_Editor.Indent_Level, Update_Always);
+   Set_Value (Switches_Editor.Indent_Level, 3.0);
+   Set_Wrap (Switches_Editor.Indent_Level, False);
+   Attach (Switches_Editor.Table5, Switches_Editor.Indent_Level, 1, 2, 0, 1,
+     Expand, 0,
+     0, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Indent_Level, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Label71, -("Maximum line length:"));
+   Set_Alignment (Switches_Editor.Label71, 0.0, 0.5);
+   Set_Padding (Switches_Editor.Label71, 5, 0);
+   Set_Justify (Switches_Editor.Label71, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label71, False);
+   Attach (Switches_Editor.Table5, Switches_Editor.Label71, 2, 3, 0, 1,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (Max_Line_Length_Adj, 79.0, 23.0, 256.0, 1.0, 10.0, 10.0);
+   Gtk_New (Switches_Editor.Max_Line_Length, Max_Line_Length_Adj, 1.0, 0);
+   Set_Numeric (Switches_Editor.Max_Line_Length, False);
+   Set_Snap_To_Ticks (Switches_Editor.Max_Line_Length, False);
+   Set_Update_Policy (Switches_Editor.Max_Line_Length, Update_Always);
+   Set_Value (Switches_Editor.Max_Line_Length, 79.0);
+   Set_Wrap (Switches_Editor.Max_Line_Length, False);
+   Attach (Switches_Editor.Table5, Switches_Editor.Max_Line_Length, 3, 4, 0, 1,
+     Expand, 0,
+     0, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Max_Line_Length, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
+
+   Gtk_New (Switches_Editor.Label62, -("Pretty Printer"));
+   Set_Alignment (Switches_Editor.Label62, 0.5, 0.5);
+   Set_Padding (Switches_Editor.Label62, 0, 0);
+   Set_Justify (Switches_Editor.Label62, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Label62, False);
+   Set_Tab (Switches_Editor.Notebook, 4, Switches_Editor.Label62);
+
    Gtk_New (Switches_Editor.Binder_Switches, 2, 1, False);
    Set_Row_Spacings (Switches_Editor.Binder_Switches, 0);
    Set_Col_Spacings (Switches_Editor.Binder_Switches, 0);
@@ -784,7 +1131,7 @@ begin
    Set_Padding (Switches_Editor.Label19, 0, 0);
    Set_Justify (Switches_Editor.Label19, Justify_Center);
    Set_Line_Wrap (Switches_Editor.Label19, False);
-   Set_Tab (Switches_Editor.Notebook, 4, Switches_Editor.Label19);
+   Set_Tab (Switches_Editor.Notebook, 5, Switches_Editor.Label19);
 
    Gtk_New (Switches_Editor.Linker_Switches, 2, 1, False);
    Set_Row_Spacings (Switches_Editor.Linker_Switches, 0);
@@ -835,7 +1182,7 @@ begin
    Set_Padding (Switches_Editor.Label20, 0, 0);
    Set_Justify (Switches_Editor.Label20, Justify_Center);
    Set_Line_Wrap (Switches_Editor.Label20, False);
-   Set_Tab (Switches_Editor.Notebook, 5, Switches_Editor.Label20);
+   Set_Tab (Switches_Editor.Notebook, 6, Switches_Editor.Label20);
 
    Gtk_New (Switches_Editor.Hbuttonbox1);
    Set_Spacing (Switches_Editor.Hbuttonbox1, 30);
