@@ -334,6 +334,27 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Invalid_Variable_Ref_Background),
          -"Project");
 
+      Generate_Relative_Paths := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Prj-Editor-Generate-Relative-Paths",
+         Default => True,
+         Blurb   => -("Whether paths should be absolute or relative when the"
+                      & " projects are modified"),
+         Nick    => -"Relative Paths"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"Project");
+
+      Selector_Show_Project_Hierarchy := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Prj-Editor-Selector-Show-Project-Hierarchy",
+         Default => False,
+         Blurb   => -("Whether the list of projects to modify through the"
+                      & " project properties dialog should be displayed"
+                      & " as a hierarchy of projects, or a simple sorted"
+                      & " list"),
+         Nick    => -"Show project hierarchy"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Selector_Show_Project_Hierarchy),
+         -"Project");
+
       -- Wizards --
 
       Wizard_Toc_Highlight_Color := Param_Spec_Color (Gnew_Color
@@ -364,7 +385,8 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Font used to draw the links between items",
          Nick    => -"Links font"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Link_Font), -"Browsers");
+        (Kernel.Preferences, Param_Spec (Browsers_Link_Font),
+         -"Browsers:General");
 
       Browsers_Link_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Link-Color",
@@ -372,7 +394,8 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Color used to draw the links between unselected items",
          Nick    => -"Link color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Link_Color), -"Browsers");
+        (Kernel.Preferences, Param_Spec (Browsers_Link_Color),
+         -"Browsers:General");
 
       Selected_Link_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Selected-Link-Color",
@@ -380,7 +403,8 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Color to use for links between selected items",
          Nick    => -"Selected link color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Selected_Link_Color), -"Browsers");
+        (Kernel.Preferences, Param_Spec (Selected_Link_Color),
+         -"Browsers:General");
 
       Selected_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Selected-Item-Color",
@@ -388,7 +412,8 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Color to use to draw the selected item",
          Nick    => -"Selected item color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Selected_Item_Color), -"Browsers");
+        (Kernel.Preferences, Param_Spec (Selected_Item_Color),
+         -"Browsers:General");
 
       Parent_Linked_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Linked-Item-Color",
@@ -398,7 +423,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Ancestor items color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Parent_Linked_Item_Color),
-         -"Browsers");
+         -"Browsers:General");
 
       Child_Linked_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Child-Linked-Item-Color",
@@ -408,7 +433,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Offspring items color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Child_Linked_Item_Color),
-         -"Browsers");
+         -"Browsers:General");
 
       Browsers_Vertical_Layout := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Browsers-Vertical-Layout",
@@ -418,7 +443,28 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Vertical layout"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Vertical_Layout),
-         -"Browsers");
+         -"Browsers:General");
+
+      Dep_Browser_Show_System_Files := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-System-Files",
+         Default => False,
+         Blurb   => -("Whether the system files (Ada runtime or standard C"
+                      & " include files) should be visible in the browser"),
+         Nick    => -"Show system files"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_System_Files),
+         -"Browsers:File Dependencies");
+
+      Dep_Browser_Show_Implicit_Dep := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-Implicit-Dep",
+         Default => False,
+         Blurb   => -("If False, then only the explicit dependencies"
+                      & " are shown in the browser. Otherwise, all"
+                      & " dependencies, even implicit, are displayed"),
+         Nick    => -"Show implicit dependencies"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Dep_Browser_Show_Implicit_Dep),
+         -"Browsers:File Dependencies");
 
       -- VCS --
 

@@ -121,6 +121,8 @@ package Glide_Kernel.Preferences is
    Switches_Editor_Title_Font      : Param_Spec_Font;
    Variable_Ref_Background         : Param_Spec_Color;
    Invalid_Variable_Ref_Background : Param_Spec_Color;
+   Generate_Relative_Paths         : Param_Spec_Boolean;
+   Selector_Show_Project_Hierarchy : Param_Spec_Boolean;
 
    -- Wizards --
    Wizard_Toc_Highlight_Color : Param_Spec_Color;
@@ -134,6 +136,9 @@ package Glide_Kernel.Preferences is
    Parent_Linked_Item_Color : Param_Spec_Color;
    Child_Linked_Item_Color  : Param_Spec_Color;
    Browsers_Vertical_Layout : Param_Spec_Boolean;
+
+   Dep_Browser_Show_System_Files : Param_Spec_Boolean;
+   Dep_Browser_Show_Implicit_Dep : Param_Spec_Boolean;
 
    -- VCS --
    VCS_Commit_File_Check : Param_Spec_String;
