@@ -33,6 +33,8 @@ with Gtkada.Handlers;         use Gtkada.Handlers;
 with GVD.Utils;               use GVD.Utils;
 with GVD.Code_Editors;        use GVD.Code_Editors;
 with Gtk.Text;                use Gtk.Text;
+with Gdk.Event;               use Gdk.Event;
+with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 
 package body Breakpoints_Pkg.Callbacks is
 
@@ -92,12 +94,13 @@ package body Breakpoints_Pkg.Callbacks is
    function Get_Selection_Index (Editor : Breakpoints_Access) return Integer
    is
       use Gint_List;
-      Selection : constant Gint_List.Glist := Get_Selection (Editor.Clist1);
+      Selection : constant Gint_List.Glist :=
+        Get_Selection (Editor.Breakpoint_List);
       Br_Num  : Breakpoint_Identifier;
    begin
       if Selection /= Null_List then
          Br_Num := Breakpoint_Identifier'Value
-           (Get_Text (Editor.Clist1, Get_Data (First (Selection)), 0));
+           (Get_Text (Editor.Breakpoint_List, Get_Data (First (Selection)), 0));
 
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Br_Num then
@@ -203,6 +206,23 @@ package body Breakpoints_Pkg.Callbacks is
       Hide (Object);
       return True;
    end On_Breakpoints_Delete_Event;
+
+   ------------------------------------
+   -- On_Breakpoints_Key_Press_Event --
+   ------------------------------------
+
+   function On_Breakpoints_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Event : Gdk_Event := To_Event (Params, 1);
+      use type Gdk.Types.Gdk_Key_Type;
+   begin
+      if Get_Key_Val (Event) = GDK_Delete then
+         On_Remove_Clicked (Object);
+      end if;
+      return False;
+   end On_Breakpoints_Key_Press_Event;
 
    ----------------------------------
    -- On_Location_Selected_Toggled --
@@ -447,7 +467,7 @@ package body Breakpoints_Pkg.Callbacks is
 
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Num then
-               Select_Row (Editor.Clist1, Gint (B) - 1, -1);
+               Select_Row (Editor.Breakpoint_List, Gint (B) - 1, -1);
                exit;
             end if;
          end loop;
@@ -649,7 +669,7 @@ package body Breakpoints_Pkg.Callbacks is
 
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Num then
-               Select_Row (Editor.Clist1, Gint (B), -1);
+               Select_Row (Editor.Breakpoint_List, Gint (B), -1);
                exit;
             end if;
          end loop;
@@ -679,12 +699,12 @@ package body Breakpoints_Pkg.Callbacks is
       Editor    : constant Breakpoints_Access := Breakpoints_Access (Object);
       Selection : Gint;
    begin
-      if Get_Selection (Editor.Clist1) /= Null_List then
-         Selection := Get_Data (Get_Selection (Editor.Clist1));
+      if Get_Selection (Editor.Breakpoint_List) /= Null_List then
+         Selection := Get_Data (Get_Selection (Editor.Breakpoint_List));
          Remove_Breakpoint
            (Editor.Process.Debugger,
             Breakpoint_Identifier'Value
-              (Get_Text (Editor.Clist1, Selection, 0)),
+              (Get_Text (Editor.Breakpoint_List, Selection, 0)),
             Mode => GVD.Types.Visible);
       end if;
    end On_Remove_Clicked;
@@ -759,26 +779,26 @@ package body Breakpoints_Pkg.Callbacks is
          --  only the state of one of them as changed and we know all about
          --  it.
 
-         Freeze (Editor.Clist1);
+         Freeze (Editor.Breakpoint_List);
 
          if Toggle_Breakpoint_State
            (Editor.Process,
             Breakpoint_Num => Breakpoint_Identifier'Value
-              (Get_Text (Editor.Clist1, Row, 0)))
+              (Get_Text (Editor.Breakpoint_List, Row, 0)))
          then
             Set_Pixmap
-              (Editor.Clist1, Row, Enable_Column,
+              (Editor.Breakpoint_List, Row, Enable_Column,
                Editor.Enabled_Pixmap, Editor.Enabled_Mask);
          else
-            Set_Text (Editor.Clist1, Row, Enable_Column, "");
+            Set_Text (Editor.Breakpoint_List, Row, Enable_Column, "");
          end if;
 
          --  Make sure the row is selected
 
-         Emit_Stop_By_Name (Editor.Clist1, "select_row");
-         Unselect_Row (Editor.Clist1, Row, -1);
+         Emit_Stop_By_Name (Editor.Breakpoint_List, "select_row");
+         Unselect_Row (Editor.Breakpoint_List, Row, -1);
 
-         Thaw (Editor.Clist1);
+         Thaw (Editor.Breakpoint_List);
 
       --  Otherwise, display the information in the correct tab
 
@@ -786,7 +806,7 @@ package body Breakpoints_Pkg.Callbacks is
          --  Get the information on the breakpoint
 
          Br_Num := Breakpoint_Identifier'Value
-           (Get_Text (Editor.Clist1, Row, 0));
+           (Get_Text (Editor.Breakpoint_List, Row, 0));
 
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Br_Num then
@@ -849,7 +869,7 @@ package body Breakpoints_Pkg.Callbacks is
       Br   : Breakpoint_Data;
       Size : Gint;
    begin
-      Clear (Editor.Clist1);
+      Clear (Editor.Breakpoint_List);
 
       if Selection /= -1 then
          Selected := Editor.Process.Breakpoints  (Selection).Num;
@@ -860,11 +880,11 @@ package body Breakpoints_Pkg.Callbacks is
       then
          --  Put at least one empty line, so that the columns are resized
          --  correctly.
-         Set_Text (Editor.Clist1, 0, 0, Natural'Image (1));
+         Set_Text (Editor.Breakpoint_List, 0, 0, Natural'Image (1));
          return;
       end if;
 
-      Freeze (Editor.Clist1);
+      Freeze (Editor.Breakpoint_List);
 
       for B in Editor.Process.Breakpoints'Range loop
          Br := Editor.Process.Breakpoints (B);
@@ -873,68 +893,74 @@ package body Breakpoints_Pkg.Callbacks is
          --  WARNING: We must have at least as many elements as there are
          --  columns in the clist.
          Row := Append
-           (Editor.Clist1, "" + "" + "" + "" + "" + "" + "" + "");
+           (Editor.Breakpoint_List, "" + "" + "" + "" + "" + "" + "" + "");
 
          Set_Text
-           (Editor.Clist1, Row, 0, Breakpoint_Identifier'Image (Br.Num));
+           (Editor.Breakpoint_List, Row, 0,
+            Breakpoint_Identifier'Image (Br.Num));
          if Selection /= -1 and then Br.Num = Selected then
             Selected_Row := Row;
          end if;
 
          if Br.Enabled then
-            Set_Pixmap (Editor.Clist1, Row, Enable_Column,
+            Set_Pixmap (Editor.Breakpoint_List, Row, Enable_Column,
                         Editor.Enabled_Pixmap, Editor.Enabled_Mask);
          end if;
 
          case Br.The_Type is
-            when Breakpoint => Set_Text (Editor.Clist1, Row, 2, -"break");
-            when Watchpoint => Set_Text (Editor.Clist1, Row, 2, -"watch");
+            when Breakpoint =>
+              Set_Text (Editor.Breakpoint_List, Row, 2, -"break");
+            when Watchpoint =>
+              Set_Text (Editor.Breakpoint_List, Row, 2, -"watch");
          end case;
 
          case Br.Disposition is
-            when Delete  => Set_Text (Editor.Clist1, Row, 3, -"delete");
-            when Disable => Set_Text (Editor.Clist1, Row, 3, -"disable");
-            when Keep    => Set_Text (Editor.Clist1, Row, 3, -"keep");
+            when Delete =>
+              Set_Text (Editor.Breakpoint_List, Row, 3, -"delete");
+            when Disable =>
+              Set_Text (Editor.Breakpoint_List, Row, 3, -"disable");
+            when Keep =>
+              Set_Text (Editor.Breakpoint_List, Row, 3, -"keep");
          end case;
 
          if Br.Expression /= null then
             Set_Text
-              (Editor.Clist1, Row, 4, Br.Expression.all);
+              (Editor.Breakpoint_List, Row, 4, Br.Expression.all);
          end if;
 
          if Br.File /= null then
-            Set_Text (Editor.Clist1, Row, 4, Br.File.all);
-            Set_Text (Editor.Clist1, Row, 5, Integer'Image (Br.Line));
+            Set_Text (Editor.Breakpoint_List, Row, 4, Br.File.all);
+            Set_Text (Editor.Breakpoint_List, Row, 5, Integer'Image (Br.Line));
          end if;
 
          if Br.Except /= null then
-            Set_Text (Editor.Clist1, Row, 6, Br.Except.all);
+            Set_Text (Editor.Breakpoint_List, Row, 6, Br.Except.all);
          end if;
 
          if Br.Subprogram /= null then
             Set_Text
-              (Editor.Clist1, Row, 7, Br.Subprogram.all);
+              (Editor.Breakpoint_List, Row, 7, Br.Subprogram.all);
          end if;
       end loop;
 
-      Set_Column_Min_Width (Editor.Clist1, 1, 20);
-      Set_Column_Justification (Editor.Clist1, 1, Justify_Center);
-      Size := Columns_Autosize (Editor.Clist1);
+      Set_Column_Min_Width (Editor.Breakpoint_List, 1, 20);
+      Set_Column_Justification (Editor.Breakpoint_List, 1, Justify_Center);
+      Size := Columns_Autosize (Editor.Breakpoint_List);
 
       Widget_Callback.Object_Connect
-        (Editor.Clist1, "select_row",
+        (Editor.Breakpoint_List, "select_row",
          Breakpoint_Row_Selected'Access,
          Slot_Object => Editor);
       Widget_Callback.Object_Connect
-        (Editor.Clist1, "unselect_row",
+        (Editor.Breakpoint_List, "unselect_row",
          Breakpoint_Row_Unselected'Access,
          Slot_Object => Editor);
 
-      Thaw (Editor.Clist1);
+      Thaw (Editor.Breakpoint_List);
 
       --  Reselect the same item as before
       if Selected_Row /= -1 then
-         Select_Row (Editor.Clist1, Selected_Row, -1);
+         Select_Row (Editor.Breakpoint_List, Selected_Row, -1);
       end if;
    end Update_Breakpoint_List;
 
