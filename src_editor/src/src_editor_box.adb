@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -270,31 +270,37 @@ package body Src_Editor_Box is
 
       --  Extra safety check, verify that Filename is not null before starting
       --  dereferencing it. That would be a programing error
+
       if Filename = null then
          Console.Insert
            (Kernel, "Internal error detected.", Highlight_Sloc => False);
+
          --  Note that the error message is different from the internal error
          --  message above. This will help us pin-pointing the location of
          --  the error message without any doubt, thus helping us debug the
          --  situation, should this happen. (but it won't, of course :-)
+
          Free (Filename);
          return;
       end if;
 
       --  Open the file, and reset Source to the new editor in order to
       --  highlight the region returned by the Xref query.
+
       Open_File_Editor
         (Kernel,
-         Find_Source_File (Kernel, Filename.all,
-                           Use_Predefined_Source_Path => True),
+         Find_Source_File
+           (Kernel, Filename.all, Use_Predefined_Source_Path => True),
          Start_Line, Start_Column, False);
       Source := Find_Current_Editor (Kernel);
 
       --  Abort if we failed to go to the xref location. An error message
       --  has already been printed, so just bail-out.
+
       if Source /= null then
          --  Get the source box that was just opened/raised, and highlight
          --  the target entity.
+
          Unhighlight_All (Source);
          Highlight_Region
            (Source, Start_Line, Start_Column, End_Line, End_Column);
@@ -407,11 +413,24 @@ package body Src_Editor_Box is
         Natural (Get_Line_Count (Box.Source_Buffer));
       Nb_Digits_For_Line_Number : constant Positive :=
         Positive'Max (Number_Of_Digits (Nb_Lines), Min_Line_Number_Width);
+      Modified_Buffer           : constant Boolean :=
+        Get_Modified (Box.Source_Buffer);
 
    begin
+      if Modified_Buffer /= Box.Modified then
+         if Modified_Buffer then
+            Set_Text (Box.Modified_Label, -"Modified");
+         else
+            Set_Text (Box.Modified_Label, -"Unmodified");
+         end if;
+
+         Box.Modified := Modified_Buffer;
+      end if;
+
       --  In the source buffer, the Line and Column indexes start from
       --  0. It is more natural to start from one, so the Line and Column
       --  number displayed are incremented by 1 to start from 1.
+
       Set_Text
         (Box.Cursor_Line_Label,
          Image (To_Box_Line (Line), Nb_Digits_For_Line_Number));
@@ -495,6 +514,20 @@ package body Src_Editor_Box is
       Pack_Start (Hbox, Frame, Expand => True, Fill => True);
       --  Gtk_New (Box.Filename_Label);
       --  ??? Commented out as not used for the moment.
+
+      --  Read only file area...
+      Gtk_New (Frame);
+      Set_Shadow_Type (Frame, Shadow_In);
+      Pack_Start (Hbox, Frame, Expand => False, Fill => True);
+      Gtk_New (Box.Read_Only_Label);
+      Add (Frame, Box.Read_Only_Label);
+
+      --  Modified file area...
+      Gtk_New (Frame);
+      Set_Shadow_Type (Frame, Shadow_In);
+      Pack_Start (Hbox, Frame, Expand => False, Fill => True);
+      Gtk_New (Box.Modified_Label);
+      Add (Frame, Box.Modified_Label);
 
       --  Line number area...
       Gtk_New (Frame);
@@ -599,11 +632,13 @@ package body Src_Editor_Box is
       V          : Source_View := Editor.Source_View;
       Line       : Gint;
       Column     : Gint;
+      X, Y       : Gint;
       L, C       : Integer;
       Item       : Gtk_Menu_Item;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Context    : Entity_Selection_Context_Access;
+
    begin
       Context := new Entity_Selection_Context;
       Set_Context_Information
@@ -616,6 +651,14 @@ package body Src_Editor_Box is
          File_Name => Base_Name (Editor.Filename.all));
 
       if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
+         Window_To_Buffer_Coords
+           (Editor.Source_View, Text_Window_Left,
+            Gint (Get_X (Event)), Gint (Get_Y (Event)),
+            X, Y);
+         Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
+         Line := Get_Line (Start_Iter);
+         Set_Entity_Information (Context, Line => To_Box_Line (Line));
+
          Gtk_New (Item, -"Go to line...");
          Add (Menu, Item);
          Gtk_New (Item, -"Go to previous reference");
@@ -632,9 +675,13 @@ package body Src_Editor_Box is
 
          if L = 0 or else C = 0 then
             --  Invalid position: the cursor is outside the text.
+
             Get_Start_Iter (Editor.Source_Buffer, Start_Iter);
             Get_Start_Iter (Editor.Source_Buffer, End_Iter);
 
+            if L /= 0 then
+               Set_Entity_Information (Context, Line => L);
+            end if;
          else
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter,
@@ -660,9 +707,10 @@ package body Src_Editor_Box is
             Context_Callback.Object_Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
-               (On_Goto_Declaration_Or_Body'Access),
-               User_Data => Selection_Context_Access (Context),
-               Slot_Object => Editor, After => True);
+                 (On_Goto_Declaration_Or_Body'Access),
+               User_Data   => Selection_Context_Access (Context),
+               Slot_Object => Editor,
+               After       => True);
          end if;
 
          Gtk_New (Item, -"Go to body");
@@ -676,6 +724,7 @@ package body Src_Editor_Box is
          Gtk_New (Item, -"Go to parent unit");
          Add (Menu, Item);
       end if;
+
       return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
 
@@ -687,12 +736,21 @@ package body Src_Editor_Box is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      C : Entity_Selection_Context_Access :=
+      C      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+
    begin
+      Push_State (Kernel, Busy);
       Goto_Declaration_Or_Body
         (Get_Kernel (Context),
          Line_Information (C), Column_Information (C));
+      Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration_Or_Body;
 
    -------------
@@ -733,6 +791,21 @@ package body Src_Editor_Box is
       Initialize_Box
         (Box, Kernel_Handle (Kernel), Source.Source_Buffer,
          Get_Language (Source));
+      Box.Writable := Source.Writable;
+      Box.Modified := Source.Modified;
+
+      if Source.Filename /= null then
+         Box.Filename := new String' (Source.Filename.all);
+      end if;
+
+      Set_Text (Box.Modified_Label, Get_Text (Source.Modified_Label));
+
+      if Box.Writable then
+         Set_Text (Box.Read_Only_Label, -"Writable");
+      else
+         Set_Text (Box.Read_Only_Label, -"Read Only");
+         Set_Editable (Box.Source_View, False);
+      end if;
    end Create_New_View;
 
    -------------
@@ -826,10 +899,16 @@ package body Src_Editor_Box is
 
       if Success then
          Editor.Filename := new String' (Filename);
-         --  ??? Not sure whether we should store the basename or not. For the
-         --  moment we store the full path, but this might be an error,
-         --  expecially if we change the cwd inside GLIDE. Should not
-         --  happen though.
+         Set_Text (Editor.Modified_Label, -"Unmodified");
+         Editor.Modified := False;
+         Editor.Writable := Is_Writable_File (Filename);
+
+         if Editor.Writable then
+            Set_Text (Editor.Read_Only_Label, -"Writable");
+         else
+            Set_Text (Editor.Read_Only_Label, -"Read Only");
+            Set_Editable (Editor.Source_View, False);
+         end if;
       end if;
    end Load_File;
 
@@ -842,6 +921,11 @@ package body Src_Editor_Box is
       Filename : String := "";
       Success  : out Boolean) is
    begin
+      if not Editor.Writable then
+         Success := False;
+         return;
+      end if;
+
       if Filename = "" then
          if Editor.Filename = null then
             Success := False;
@@ -850,6 +934,11 @@ package body Src_Editor_Box is
          end if;
       else
          Save_To_File (Editor.Source_Buffer, Filename, Success);
+      end if;
+
+      if Success then
+         Set_Text (Editor.Modified_Label, -"Saved");
+         Editor.Modified := False;
       end if;
    end Save_To_File;
 
