@@ -853,14 +853,18 @@ package body Prj_API is
       Parse_Imported : Boolean := True) return Project_Node_Array
    is
       function Count_Vars (In_Project : Project_Node_Id) return Natural;
-      --  Return the number of scenario variables in In_Project, its
-      --  packages and imported projects
+      --  Return the number of scenario variables in In_Project, its packages
 
-      procedure Register_Vars (In_Project : Project_Node_Id);
-      --  Register all the scenario variables from In_Projects, its
-      --  packages and imported projects in List.
+      procedure Register_Vars
+        (In_Project : Project_Node_Id;
+         List       : in out Project_Node_Array;
+         Current    : in out Positive);
+      --  Register all the scenario variables from In_Projects, its packages
 
-      procedure Add_If_Not_In_List (Var : Project_Node_Id);
+      procedure Add_If_Not_In_List
+        (Var     : Project_Node_Id;
+         List    : in out Project_Node_Array;
+         Current : in out Positive);
       --  Add Var in the list of scenario if it is not already there (see the
       --  documentation for Find_Scenario_Variables for the exact rules used to
       --  detect aliases).
@@ -870,7 +874,6 @@ package body Prj_API is
       ----------------
 
       function Count_Vars (In_Project : Project_Node_Id) return Natural is
-         Prj : Project_Node_Id;
          Count : Natural := 0;
          Pkg : Project_Node_Id := In_Project;
          Var : Project_Node_Id;
@@ -895,33 +898,18 @@ package body Prj_API is
             end if;
          end loop;
 
-         if Parse_Imported then
-            --  Add the modified project
-            Prj := Modified_Project_Of (Project_Declaration_Of (In_Project));
-            if  Prj /= Empty_Node then
-               Count := Count + Count_Vars (Prj);
-            end if;
-
-            --  For all the imported projects
-            Prj := First_With_Clause_Of (In_Project);
-            while Prj /= Empty_Node loop
-               Count := Count + Count_Vars (Project_Node_Of (Prj));
-               Prj := Next_With_Clause_Of (Prj);
-            end loop;
-         end if;
-
          return Count;
       end Count_Vars;
-
-
-      List : Project_Node_Array (1 .. Count_Vars (Project));
-      Current : Positive := 1;
 
       ------------------------
       -- Add_If_Not_In_List --
       ------------------------
 
-      procedure Add_If_Not_In_List (Var : Project_Node_Id) is
+      procedure Add_If_Not_In_List
+        (Var     : Project_Node_Id;
+         List    : in out Project_Node_Array;
+         Current : in out Positive)
+      is
          V : constant String_Id := External_Reference_Of (Var);
       begin
          for Index in 1 .. Current - 1 loop
@@ -937,8 +925,11 @@ package body Prj_API is
       -- Register_Vars --
       -------------------
 
-      procedure Register_Vars (In_Project : Project_Node_Id) is
-         Prj : Project_Node_Id;
+      procedure Register_Vars
+        (In_Project : Project_Node_Id;
+         List : in out Project_Node_Array;
+         Current : in out Positive)
+      is
          Pkg : Project_Node_Id := In_Project;
          Var : Project_Node_Id;
       begin
@@ -949,7 +940,7 @@ package body Prj_API is
                if Kind_Of (Var) = N_Typed_Variable_Declaration
                  and then Is_External_Variable (Var)
                then
-                  Add_If_Not_In_List (Var);
+                  Add_If_Not_In_List (Var, List, Current);
                end if;
 
                Var := Next_Variable (Var);
@@ -961,28 +952,28 @@ package body Prj_API is
                Pkg := Next_Package_In_Project (Pkg);
             end if;
          end loop;
-
-         if Parse_Imported then
-            --  Add the modified project
-            Prj := Modified_Project_Of (Project_Declaration_Of (In_Project));
-            if  Prj /= Empty_Node then
-               Register_Vars (Prj);
-            end if;
-
-            --  For all the imported projects
-            --  ??? Should avoid parsing again the projects we have already
-            --  ??? parsed.
-            Prj := First_With_Clause_Of (In_Project);
-            while Prj /= Empty_Node loop
-               Register_Vars (Project_Node_Of (Prj));
-               Prj := Next_With_Clause_Of (Prj);
-            end loop;
-         end if;
       end Register_Vars;
 
+      Count : Natural := 0;
+      Curr  : Positive := 1;
+      Iter : Imported_Project_Iterator := Start (Project, Parse_Imported);
    begin
-      Register_Vars (Project);
-      return List (1 .. Current - 1);
+      while Current (Iter) /= Empty_Node loop
+         Count := Count + Count_Vars (Current (Iter));
+         Next (Iter);
+      end loop;
+
+      Reset (Iter);
+
+      declare
+         List : Project_Node_Array (1 .. Count);
+      begin
+         while Current (Iter) /= Empty_Node loop
+            Register_Vars (Current (Iter), List, Curr);
+            Next (Iter);
+         end loop;
+         return List (1 .. Curr - 1);
+      end;
    end Find_Scenario_Variables;
 
    ---------------------------
@@ -2244,23 +2235,16 @@ package body Prj_API is
      (Root_Project : Project_Node_Id; Name : Types.Name_Id)
       return Project_Node_Id
    is
-      With_Clause : Project_Node_Id;
-      Result : Project_Node_Id := Empty_Node;
+      Iter : Imported_Project_Iterator := Start (Root_Project);
    begin
-      if Prj.Tree.Name_Of (Root_Project) = Name then
-         Result := Root_Project;
-      else
-         With_Clause := First_With_Clause_Of (Root_Project);
-         while With_Clause /= Empty_Node loop
-            Result := Find_Project_In_Hierarchy
-              (Project_Node_Of (With_Clause), Name);
-            exit when Result /= Empty_Node;
+      while Current (Iter) /= Empty_Node loop
+         if Prj.Tree.Name_Of (Current (Iter)) = Name then
+            return Current (Iter);
+         end if;
 
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
-      end if;
-
-      return Result;
+         Next (Iter);
+      end loop;
+      return Empty_Node;
    end Find_Project_In_Hierarchy;
 
    ------------
@@ -2291,8 +2275,8 @@ package body Prj_API is
       function Substitute (Str : String) return String is
          Dir  : constant String := Dir_Name (Str);
       begin
-         if Dir /= "" then
-            return Dir_Name (Str) & Directory_Separator & New_Name;
+         if Dir /= "./" then
+            return Dir & New_Name;
          else
             return New_Name;
          end if;
@@ -2367,28 +2351,27 @@ package body Prj_API is
       External_Variable_Name : String_Id;
       Values                 : String_Id_Array)
    is
-      Type_Node, With_Clause, Var : Project_Node_Id;
+      Type_Node, Var : Project_Node_Id;
+      Iter : Imported_Project_Iterator := Start (Root_Project);
    begin
-      Var := Find_Scenario_Variable (Root_Project, External_Variable_Name);
+      while Current (Iter) /= Empty_Node loop
+         Var := Find_Scenario_Variable
+           (Current (Iter), External_Variable_Name);
 
-      --  If variable is defined in the current project, then modify the type
-      --  to Values.
+         --  If variable is defined in the current project, then modify the
+         --  type to Values.
 
-      if Var /= Empty_Node then
-         Type_Node := String_Type_Of (Var);
-         pragma Assert (Type_Node /= Empty_Node);
-         --  Set_First_Literal_String (Type_Node, Empty_Node);
+         if Var /= Empty_Node then
+            Type_Node := String_Type_Of (Var);
+            pragma Assert (Type_Node /= Empty_Node);
+            --  Set_First_Literal_String (Type_Node, Empty_Node);
 
-         for J in Values'Range loop
-            Add_Possible_Value (Type_Node, Values (J));
-         end loop;
-      end if;
+            for J in Values'Range loop
+               Add_Possible_Value (Type_Node, Values (J));
+            end loop;
+         end if;
 
-      With_Clause := First_With_Clause_Of (Root_Project);
-      while With_Clause /= Empty_Node loop
-         Add_Scenario_Variable_Values
-           (Project_Node_Of (With_Clause), External_Variable_Name, Values);
-         With_Clause := Next_With_Clause_Of (With_Clause);
+         Next (Iter);
       end loop;
    end Add_Scenario_Variable_Values;
 
@@ -2408,10 +2391,12 @@ package body Prj_API is
       --  List of all the variables that reference Ext_Variable_Name
       --  in the current project.
 
-      procedure Process_Expression (Expression : Project_Node_Id);
+      procedure Process_Expression
+        (Project : Project_Node_Id; Expression : Project_Node_Id);
       --  Delete all references to the variable in Expr
 
-      procedure Recurse_In_Project (Pkg_Or_Case_Item : Project_Node_Id);
+      procedure Recurse_In_Project
+        (Project : Project_Node_Id; Pkg_Or_Case_Item : Project_Node_Id);
       --  Delete the scenario variable in a specific part of Root_Project
       --  (either the project itself, if Pkg_Or_Case_Item is Empty_Node,
       --  or a package or a case item.
@@ -2455,7 +2440,9 @@ package body Prj_API is
       -- Process_Expression --
       ------------------------
 
-      procedure Process_Expression (Expression : Project_Node_Id) is
+      procedure Process_Expression
+        (Project : Project_Node_Id; Expression : Project_Node_Id)
+      is
          Expr : Project_Node_Id := Expression;
          Term : Project_Node_Id;
       begin
@@ -2467,13 +2454,14 @@ package body Prj_API is
                   --  Handles ("-g" & A, "-O2" & external ("A"))
                   when N_Literal_String_List =>
                      Process_Expression
-                       (First_Expression_In_List (Current_Term (Term)));
+                       (Project,
+                        First_Expression_In_List (Current_Term (Term)));
 
                   --  Handles "-g" & external ("A")
                   --  Replace A by the constant string representing its value
                   when N_External_Value =>
                      if Is_Reference_To_Ext (Current_Term (Term)) then
-                        Action (Root_Project, Term, Current_Term (Term),
+                        Action (Project, Term, Current_Term (Term),
                                 Empty_Node);
                      end if;
 
@@ -2481,7 +2469,7 @@ package body Prj_API is
                   --  Where Var is a reference to the external variable
                   when N_Variable_Reference =>
                      if Is_Reference_To_Ext (Current_Term (Term)) then
-                        Action (Root_Project, Term, Current_Term (Term),
+                        Action (Project, Term, Current_Term (Term),
                                 Empty_Node);
                      end if;
 
@@ -2500,7 +2488,9 @@ package body Prj_API is
       -- Recurse_In_Project --
       ------------------------
 
-      procedure Recurse_In_Project (Pkg_Or_Case_Item : Project_Node_Id) is
+      procedure Recurse_In_Project
+        (Project : Project_Node_Id; Pkg_Or_Case_Item : Project_Node_Id)
+      is
          Decl, Current, Case_Item, Choice : Project_Node_Id;
          Match : Boolean;
       begin
@@ -2508,7 +2498,7 @@ package body Prj_API is
             Decl := First_Declarative_Item_Of (Pkg_Or_Case_Item);
          else
             Decl := First_Declarative_Item_Of
-              (Project_Declaration_Of (Root_Project));
+              (Project_Declaration_Of (Project));
          end if;
 
          while Decl /= Empty_Node loop
@@ -2524,12 +2514,12 @@ package body Prj_API is
                        (Variable_Nodes, Variable_Nodes_Last, Current);
 
                      Action
-                       (Root_Project, Empty_Node, String_Type_Of (Current),
+                       (Project, Empty_Node, String_Type_Of (Current),
                         Empty_Node);
-                     Action (Root_Project, Decl, Current, Empty_Node);
+                     Action (Project, Decl, Current, Empty_Node);
                   end if;
 
-                  Process_Expression (Expression_Of (Current));
+                  Process_Expression (Project, Expression_Of (Current));
 
                when N_Case_Construction =>
                   if Is_Reference_To_Ext
@@ -2560,27 +2550,27 @@ package body Prj_API is
                         end if;
 
                         if Match then
-                           Action (Root_Project, Decl, Case_Item, Choice);
+                           Action (Project, Decl, Case_Item, Choice);
                         end if;
 
-                        Recurse_In_Project (Case_Item);
+                        Recurse_In_Project (Project, Case_Item);
                         Case_Item := Next_Case_Item (Case_Item);
                      end loop;
 
                   else
                      Case_Item := First_Case_Item_Of (Current);
                      while Case_Item /= Empty_Node loop
-                        Recurse_In_Project (Case_Item);
+                        Recurse_In_Project (Project, Case_Item);
                         Case_Item := Next_Case_Item (Case_Item);
                      end loop;
                   end if;
 
                when N_Package_Declaration =>
-                  Recurse_In_Project (Current);
+                  Recurse_In_Project (Project, Current);
 
                when N_Variable_Declaration
                  |  N_Attribute_Declaration =>
-                  Process_Expression (Expression_Of (Current));
+                  Process_Expression (Project, Expression_Of (Current));
 
                when others =>
                   null;
@@ -2590,20 +2580,12 @@ package body Prj_API is
          end loop;
       end Recurse_In_Project;
 
-      With_Clause              : Project_Node_Id;
+      Iter : Imported_Project_Iterator := Start (Root_Project);
    begin
-      Recurse_In_Project (Empty_Node);
-
-      With_Clause := First_With_Clause_Of (Root_Project);
-      while With_Clause /= Empty_Node loop
-         For_Each_Environment_Variable
-           (Project_Node_Of (With_Clause),
-            Ext_Variable_Name,
-            Specific_Choice,
-            Action);
-         With_Clause := Next_With_Clause_Of (With_Clause);
+      while Current (Iter) /= Empty_Node loop
+         Recurse_In_Project (Current (Iter), Empty_Node);
+         Next (Iter);
       end loop;
-
       Free (Variable_Nodes);
    end For_Each_Environment_Variable;
 
@@ -2626,6 +2608,7 @@ package body Prj_API is
          end if;
       end Callback;
 
+      N : Name_Id;
    begin
       For_Each_Environment_Variable
         (Root_Project, Old_Name, "", Callback'Unrestricted_Access);
@@ -2634,7 +2617,10 @@ package body Prj_API is
       --  the project.
       Name_Len := Old_Name'Length;
       Name_Buffer (1 .. Name_Len) := Old_Name;
-      Add (Get_String (New_Name), Get_String (Value_Of (Name_Find)));
+      N := Name_Find;
+      if Value_Of (N) /= No_String then
+         Add (Get_String (New_Name), Get_String (Value_Of (N)));
+      end if;
    end Rename_External_Variable;
 
    ----------------------
@@ -2833,6 +2819,7 @@ package body Prj_API is
          end case;
       end Callback;
 
+      N : Name_Id;
    begin
       For_Each_Environment_Variable
         (Root_Project, Ext_Variable_Name, Old_Value_Name,
@@ -2840,8 +2827,11 @@ package body Prj_API is
 
       Name_Len := Ext_Variable_Name'Length;
       Name_Buffer (1 .. Name_Len) := Ext_Variable_Name;
+      N := Name_Find;
 
-      if Get_String (Value_Of (Name_Find)) = Old_Value_Name then
+      if Value_Of (N) /= No_String
+        and then Get_String (Value_Of (N)) = Old_Value_Name
+      then
          Add (Ext_Variable_Name, Get_String (New_Value_Name));
       end if;
    end Rename_Value_For_External_Variable;
@@ -3076,26 +3066,80 @@ package body Prj_API is
          Put (File, S);
       end Internal_Write_Str;
 
-      With_Clause : Project_Node_Id;
       Name : constant String := Get_Name_String (Path_Name_Of (Project));
+      Iter : Imported_Project_Iterator := Start (Project, Recursive);
 
    begin
-      Create (File, Mode => Out_File, Name => Name);
-      Pretty_Print
-        (Project => Project,
-         Eliminate_Null_Statements => True,
-         W_Char => Internal_Write_Char'Unrestricted_Access,
-         W_Str  => Internal_Write_Str'Unrestricted_Access);
-      Close (File);
+      while Current (Iter) /= Empty_Node loop
+         Create (File, Mode => Out_File, Name => Name);
+         Pretty_Print
+           (Project => Current (Iter),
+            Eliminate_Null_Statements => True,
+            W_Char => Internal_Write_Char'Unrestricted_Access,
+            W_Str  => Internal_Write_Str'Unrestricted_Access);
+         Close (File);
 
-      if Recursive then
-         With_Clause := First_With_Clause_Of (Project);
-         while With_Clause /= Empty_Node loop
-            Save_Project (Project_Node_Of (With_Clause), Recursive);
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
-      end if;
+         Next (Iter);
+      end loop;
    end Save_Project;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Root_Project : Project_Node_Id; Recursive : Boolean := True)
+      return Imported_Project_Iterator
+   is
+   begin
+      if Recursive then
+         declare
+            List : Name_Id_Array := Topological_Sort (Root_Project);
+            Iter : Imported_Project_Iterator (List'Length);
+         begin
+            Iter.List := List;
+            Iter.Current := Iter.List'First;
+            return Iter;
+         end;
+      else
+         return Imported_Project_Iterator'
+           (Number => 1,
+            List   => (1 => Prj.Tree.Name_Of (Root_Project)),
+            Current => 1);
+      end if;
+   end Start;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (Iterator : Imported_Project_Iterator)
+      return Project_Node_Id is
+   begin
+      if Iterator.Current > Iterator.List'Last then
+         return Empty_Node;
+      else
+         return Prj.Tree.Tree_Private_Part.Projects_Htable.Get
+           (Iterator.List (Iterator.Current)).Node;
+      end if;
+   end Current;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iterator : in out Imported_Project_Iterator) is
+   begin
+      Iterator.Current := Iterator.Current + 1;
+   end Next;
+
+   -----------
+   -- Reset --
+   -----------
+
+   procedure Reset (Iterator : in out Imported_Project_Iterator) is
+   begin
+      Iterator.Current := Iterator.List'First;
+   end Reset;
 
    -------------------------------------
    -- Register_Default_Naming_Schemes --

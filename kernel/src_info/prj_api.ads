@@ -33,6 +33,7 @@ with GNAT.OS_Lib;
 with Prj;        use Prj;
 with Prj.Tree;   use Prj.Tree;
 with Src_Info;   use Src_Info;
+with Project_Browsers;
 
 package Prj_API is
 
@@ -72,17 +73,6 @@ package Prj_API is
    --
    --  ??? Should always create, since we can use a find_* function to get an
    --  existing one.
-
-   procedure Add_Imported_Project
-     (Project : Project_Node_Id;
-      Imported_Project_Location : String);
-   --  Add a new with_statement for Imported_Project.
-
-   procedure Remove_Imported_Project
-     (Project : Project_Node_Id; Imported_Project : String);
-   --  Remove a dependency from Project.
-   --  If Imported_Project is not already a dependency, then this subprogram
-   --  does nothing.
 
    procedure Add_At_End
      (Parent                       : Project_Node_Id;
@@ -216,6 +206,48 @@ package Prj_API is
    function Create_Literal_String (Str : Types.String_Id)
       return Project_Node_Id;
    --  Create a literal string whose value is Str.
+
+   -----------------------
+   -- Imported projects --
+   -----------------------
+
+   procedure Add_Imported_Project
+     (Project : Project_Node_Id;
+      Imported_Project_Location : String);
+   --  Add a new with_statement for Imported_Project.
+
+   procedure Remove_Imported_Project
+     (Project : Project_Node_Id; Imported_Project : String);
+   --  Remove a dependency from Project.
+   --  If Imported_Project is not already a dependency, then this subprogram
+   --  does nothing.
+
+   type Imported_Project_Iterator (<>) is private;
+
+   function Start (Root_Project : Project_Node_Id; Recursive : Boolean := True)
+      return Imported_Project_Iterator;
+   --  Initialize the iterator to start at Root_Project.
+   --  It will process Root_Project and all its subprojects, recursively, but
+   --  without processing the same project twice.
+   --  The project nodes are returned sorted topologically (ie first the
+   --  projects that don't depend on anything, then their parents, and so on
+   --  until the root project).
+   --
+   --  If Recursive is False, then the only project ever returned is
+   --  Root_Project. This is provided only to simplify the caller's code
+   --
+   --  ??? Should also process modified projects
+
+   procedure Reset (Iterator : in out Imported_Project_Iterator);
+   --  Reset the iterator to point to the first project node in the list
+
+   function Current (Iterator : Imported_Project_Iterator)
+      return Project_Node_Id;
+   --  Return the project currently pointed to by the iterator.
+   --  Empty_Node is returned if there are no more projects to process.
+
+   procedure Next (Iterator : in out Imported_Project_Iterator);
+   --  Move to the next imported project.
 
    -------------------
    -- Finding nodes --
@@ -563,5 +595,10 @@ private
    type String_List_Iterator is record
       Current : Project_Node_Id;
       --  pointer to N_Literal_String or N_Expression
+   end record;
+
+   type Imported_Project_Iterator (Number : Natural) is record
+      List    : Project_Browsers.Name_Id_Array (1 .. Number);
+      Current : Natural;
    end record;
 end Prj_API;
