@@ -1508,7 +1508,7 @@ remove this file.
 Directory containing the debugging sessions.
 
    @item $HOME/.gps/history
-Contains all the histories for the @code{Files->Reopen} and
+Contains all the histories for the @code{File->Reopen} and
 @code{Project->Reopen} menus, and for the combo boxes
 
    @item $HOME/.gps/gtkrc
