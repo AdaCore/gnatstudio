@@ -563,6 +563,13 @@ package Glide_Kernel.Scripts is
       Name    : String) return Scripting_Language;
    --  Lookup one of the registered languages by name.
 
+   type Scripting_Language_Array is
+     array (Natural range <>) of Scripting_Language;
+   function Get_Scripting_Languages
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Scripting_Language_Array;
+   --  Return the list of all registered languages.
+
    No_Args : constant GNAT.OS_Lib.Argument_List := (1 .. 0 => null);
 
    function Execute_GPS_Shell_Command

@@ -233,6 +233,38 @@ package body Glide_Kernel.Scripts is
       return null;
    end Lookup_Scripting_Language;
 
+   -----------------------------
+   -- Get_Scripting_Languages --
+   -----------------------------
+
+   function Get_Scripting_Languages
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Scripting_Language_Array
+   is
+      Tmp : Scripting_Language_List :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages;
+      Count : Natural := 0;
+   begin
+      while Tmp /= null loop
+         Count := Count + 1;
+         Tmp := Tmp.Next;
+      end loop;
+
+      declare
+         Result : Scripting_Language_Array (1 .. Count);
+      begin
+         Count := Result'First;
+         Tmp := Scripting_Data (Kernel.Scripts).Scripting_Languages;
+         while Tmp /= null loop
+            Result (Count) := Tmp.Script;
+            Count := Count + 1;
+            Tmp := Tmp.Next;
+         end loop;
+
+         return Result;
+      end;
+   end Get_Scripting_Languages;
+
    ----------------------
    -- Register_Command --
    ----------------------
