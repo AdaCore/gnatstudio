@@ -407,6 +407,7 @@ package body Src_Info.ALI is
       Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
       Part        : Unit_Part;
       Iter : Imported_Project_Iterator := Start (Project, Recursive => True);
+      Count : Natural := 0;
    begin
       --  Check that the '%' marker is there
       if Unit'Length < Part_Marker_Len + 1
@@ -424,19 +425,40 @@ package body Src_Info.ALI is
          when others => return "";  --  Incorrect unit name
       end case;
 
+      --  We have to parse the imported projects in the reverse order returned
+      --  by Start, since we must find the unit in the top-most project, for
+      --  instance in case it was overriden in extending projects
+
       while Current (Iter) /= No_Project loop
-         declare
-            N : constant String := Get_Filename_From_Unit
-              (Current (Iter),
-               Unit (1 .. Unit'Last - Part_Marker_Len),
-               Part);
-         begin
-            if N /= "" then
-               return N;
-            end if;
-         end;
+         Count := Count + 1;
          Next (Iter);
       end loop;
+
+      declare
+         type Project_Array is array (1 .. Count) of Project_Type;
+         Projects : Project_Array;
+      begin
+         Count := Projects'First;
+         Iter := Start (Project, Recursive => True);
+         while Current (Iter) /= No_Project loop
+            Projects (Count) := Current (Iter);
+            Count := Count + 1;
+            Next (Iter);
+         end loop;
+
+         for P in reverse Projects'Range loop
+            declare
+               N : constant String := Get_Filename_From_Unit
+                 (Projects (P),
+                  Unit (1 .. Unit'Last - Part_Marker_Len),
+                  Part);
+            begin
+               if N /= "" then
+                  return N;
+               end if;
+            end;
+         end loop;
+      end;
 
       --  We end up here for the runtime files, so we just try to append the
       --  standard GNAT extensions. The name will be krunched appropriately by
