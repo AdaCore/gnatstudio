@@ -95,7 +95,7 @@ package GVD.Strings is
    --  special case, if Str'Length = 0 then no attempt is done to fill up
    --  the string, and only Length is computed.
    --
-   --  Length is set to the number of characters parsed in the string.
+   --  Index is set to the number of characters parsed in the string.
 
    procedure Skip_Simple_Value
      (Type_Str             : in String;

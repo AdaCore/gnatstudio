@@ -312,6 +312,19 @@ package body GVD.Strings is
                   end if;
 
                   S_Index := S_Index + 1;
+
+               --  ',' is still part of the string output only if it is
+               --  followed by a constant string or character (repeats).
+               --  Otherwise, ',' simply denotes the end of a struct field,
+               --  as in "field3 = "ab", field4 = 1"
+               elsif Type_Str (Index) = ','
+                 and then
+                 (Index >= Type_Str'Last - 1
+                  or else (Type_Str (Index + 2) /= '''
+                           and then Type_Str (Index + 2) /= '"'))
+               then
+                  Index := Index + 1;
+                  return;
                end if;
 
                Index := Index + 1;
