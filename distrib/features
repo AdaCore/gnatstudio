@@ -1,5 +1,8 @@
 New features in GPS 1.0.1
 
+- When opening a file, the focus is automatically set on the editor
+- The menus File->Open & File->Save As... now remember the last directory
+  selected
 - It is now possible to configure the configuration pragma files (aka gnat.adc)
   in the project editor.
 - The auto-indentation key in the editor can now be configured
@@ -10,4 +13,3 @@ New features in GPS 1.0.1
   generated files such as b~* or *.dg files to be found
 - Matching parenthesis are now highlighted in the editor
 - The font "tahoma" is used under Windows by default
-
