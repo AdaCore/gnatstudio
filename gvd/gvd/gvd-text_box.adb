@@ -88,7 +88,7 @@ package body GVD.Text_Boxes is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Box   : access Odd_Text_Box_Record'Class) is
+   procedure Initialize (Box : access Odd_Text_Box_Record'Class) is
       Scrollbar : Gtk_Vscrollbar;
    begin
       Gtk.Box.Initialize_Hbox (Box, Homogeneous => False);
