@@ -165,7 +165,8 @@ package VCS_View_API is
       Context : Selection_Context_Access);
    function Open_Explorer
      (Kernel  : Kernel_Handle;
-      Context : Selection_Context_Access) return Gtkada.MDI.MDI_Child;
+      Context : Selection_Context_Access;
+      Visible : Boolean := True) return Gtkada.MDI.MDI_Child;
    --  If the VCS Explorer is not displayed, display it.
    --  Both suprograms accept a null context
 
@@ -193,9 +194,6 @@ package VCS_View_API is
 
    function Get_Current_Ref (Project : Project_Type) return VCS_Access;
    --  Return the VCS reference registered in Project.
-
-   function Get_Status_Name (Status : File_Status) return String;
-   --  Return an explicit description of Status.
 
    procedure Display_Editor_Status
      (Kernel : access Kernel_Handle_Record'Class;
