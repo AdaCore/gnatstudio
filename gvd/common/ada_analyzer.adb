@@ -405,7 +405,6 @@ package body Ada_Analyzer is
       Str_Len             : Natural           := 0;
       Current             : Natural;
       Prec                : Natural           := Buffer'First;
-      Token_Prec          : Natural           := 0;
       Start_Of_Line       : Natural;
       Prev_Spaces         : Integer           := 0;
       Num_Spaces          : Integer           := 0;
@@ -417,6 +416,9 @@ package body Ada_Analyzer is
       In_Generic          : Boolean           := False;
       Subprogram_Decl     : Boolean           := False;
       Syntax_Error        : Boolean           := False;
+      --  Not used for now, but may be useful in the future.
+      pragma Unreferenced (Syntax_Error);
+
       Started             : Boolean           := False;
       Token               : Token_Type;
       Prev_Token          : Token_Type        := No_Token;
@@ -2023,7 +2025,6 @@ package body Ada_Analyzer is
             Started := True;
          end if;
 
-         Token_Prec := Prec;
          Prec       := Current + 1;
          Prev_Token := Token;
 
