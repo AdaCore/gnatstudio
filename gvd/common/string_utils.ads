@@ -155,14 +155,16 @@ package String_Utils is
 
    function Base_File_Name (File_Name : String) return String;
    --  Return the base name of File_Name (ie without any directory indication)
+   --  This function is now obsolete, and you should use
+   --  GNAT.Directories.Base_Name instead. it is kept for compatibility
+   --  with 3.14p only.
 
    function File_Extension (File_Name : String) return String;
    --  Return the extension of the file (ie the part after the last '.'),
    --  or "" if there is none.
-
-   function File_Name_Sans_Extension (File_Name : String) return String;
-   --  Return the file name, after removing the extension (including the last
-   --  '.')
+   --  This function is now obsolete, and you should use
+   --  GNAT.Directories.File_Extension instead. it is kept for compatibility
+   --  with 3.14p only.
 
    function Suffix_Matches
      (File_Name : String; Suffix : String) return Boolean;
@@ -181,6 +183,9 @@ package String_Utils is
 
    function To_Host_Pathname (Path : String) return String;
    --  Convert all occurences of '/' to Directory_Separator.
+   --  This function is now obsolete, and you should use
+   --  GNAT.Directories.Normalize_Pathname instead. it is kept for
+   --  compatibility with 3.14p only.
 
    function To_File_Name (Name : in String) return String;
    --  Returns a file name from an ada subprogram/package name (ie converts '.'
