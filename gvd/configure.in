@@ -15,6 +15,8 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 COLOR_SELECTION="#000000"
 EXEC_COMMAND="sh -c"
+NATIVE_PS="stub"
+LN="ln -f -s"
 
 AC_CANONICAL_SYSTEM
 
@@ -154,6 +156,8 @@ case "${host}" in
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c"
+	NATIVE_PS="winnt"
+	LN="cp -p"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -172,6 +176,8 @@ AC_SUBST(opsysfile)
 AM_PATH_GTK(1.2.11,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 # Set the version number of GVD
+AC_SUBST(GVD_VERSION)
+
 AC_SUBST(STRIP_CR)
 AC_SUBST(USE_PTYS)
 AC_SUBST(ASYNC_COMMANDS)
@@ -179,11 +185,11 @@ AC_SUBST(CAN_OUTPUT)
 AC_SUBST(LINK_SIZE)
 AC_SUBST(FONT_SIZE)
 AC_SUBST(COLOR_SELECTION)
-AC_SUBST(GVD_VERSION)
 AC_SUBST(TARGET_CFLAGS)
 AC_SUBST(TARGET_LFLAGS)
 AC_SUBST(TARGET)
 AC_SUBST(EXEC_COMMAND)
+AC_SUBST(NATIVE_PS)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
