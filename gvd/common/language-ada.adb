@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -35,20 +35,20 @@ package body Language.Ada is
    --  Make_Entry functions for the explorer.
 
    function Make_Entry_Subprogram
-     (Str      : String;
-      Matched  : Match_Array) return String;
+     (Str     : String;
+      Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for subprograms.
    --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Task
-     (Str      : String;
-      Matched  : Match_Array) return String;
+     (Str     : String;
+      Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for tasks.
    --  See the description of Explorer_Categories for more information.
 
    function Make_Entry_Protected
-     (Str      : String;
-      Matched  : Match_Array) return String;
+     (Str     : String;
+      Matched : Match_Array) return String;
    --  Function used to create an entry in the explorer, for protected objects
    --  and types.
    --  See the description of Explorer_Categories for more information.
@@ -273,8 +273,8 @@ package body Language.Ada is
    ---------------------------
 
    function Make_Entry_Subprogram
-     (Str      : String;
-      Matched  : Match_Array) return String is
+     (Str     : String;
+      Matched : Match_Array) return String is
    begin
       if Matched (3) = No_Match then
          if Matched (4) = No_Match then
@@ -306,8 +306,8 @@ package body Language.Ada is
    --------------------------
 
    function Make_Entry_Protected
-     (Str      : String;
-      Matched  : Match_Array) return String
+     (Str     : String;
+      Matched : Match_Array) return String
    is
       First, Last : Natural;
    begin
@@ -386,17 +386,17 @@ package body Language.Ada is
    Comment_Start_Pattern : aliased Pattern_Matcher := Compile ("^--");
 
    Ada_Context : aliased Language_Context :=
-     (Comment_Start_Length          => 0,
-      Comment_End_Length            => 0,
-      Comment_Start                 => "",
-      Comment_End                   => "",
-      New_Line_Comment_Start        => Comment_Start_Pattern'Access,
-      String_Delimiter              => '"',
-      Quote_Character               => ASCII.NUL,
-      Constant_Character            => ''',
-      Can_Indent                    => True,
-      Syntax_Highlighting           => True,
-      Case_Sensitive                => False);
+     (Comment_Start_Length   => 0,
+      Comment_End_Length     => 0,
+      Comment_Start          => "",
+      Comment_End            => "",
+      New_Line_Comment_Start => Comment_Start_Pattern'Access,
+      String_Delimiter       => '"',
+      Quote_Character        => ASCII.NUL,
+      Constant_Character     => ''',
+      Can_Indent             => True,
+      Syntax_Highlighting    => True,
+      Case_Sensitive         => False);
 
    function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access
