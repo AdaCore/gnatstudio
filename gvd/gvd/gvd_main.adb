@@ -40,6 +40,7 @@ with Language.Debugger.Ada; use Language.Debugger.Ada;
 with Language.Debugger.C;   use Language.Debugger.C;
 with Language;              use Language;
 with Display_Items;         use Display_Items;
+with Odd.Strings;           use Odd.Strings;
 
 procedure Odd_Main is
    Process_Tab       : Debugger_Process_Tab;
@@ -93,38 +94,40 @@ procedure Odd_Main is
 
       if Home.all /= "" then
          Dir := new String' (Home.all & Directory_Separator & ".gvd");
-
-         begin
-            if not Is_Directory (Dir.all) then
-               Make_Dir (Dir.all);
-               Button := Message_Dialog
-                 ((-"Created config directory ") & Dir.all,
-                  Information, Button_OK, Justification => Justify_Left);
-               Dir_Created := True;
-            end if;
-
-            if not
-              Is_Directory (Dir.all & Directory_Separator & "sessions")
-            then
-               Make_Dir (Dir.all & Directory_Separator & "sessions");
-               if not Dir_Created then
-                  Button := Message_Dialog
-                    ((-"Created config directory ")
-                     & Dir.all & Directory_Separator & "sessions",
-                     Information, Button_OK, Justification => Justify_Left);
-               end if;
-            end if;
-
-         exception
-            when Directory_Error =>
-               Button := Message_Dialog
-                 ((-"Cannot create config directory ") & Dir.all & ASCII.LF &
-                    (-"Exiting..."),
-                  Error, Button_OK,
-                  Justification => Justify_Left);
-               OS_Exit (1);
-         end;
+      else
+         Dir := new String'(Directory_Separator & ".gvd"); -- ??? Is this right
       end if;
+
+      begin
+         if not Is_Directory (Dir.all) then
+            Make_Dir (Dir.all);
+            Button := Message_Dialog
+              ((-"Created config directory ") & Dir.all,
+               Information, Button_OK, Justification => Justify_Left);
+            Dir_Created := True;
+         end if;
+
+         if not
+           Is_Directory (Dir.all & Directory_Separator & "sessions")
+         then
+            Make_Dir (Dir.all & Directory_Separator & "sessions");
+            if not Dir_Created then
+               Button := Message_Dialog
+                 ((-"Created config directory ")
+                  & Dir.all & Directory_Separator & "sessions",
+                  Information, Button_OK, Justification => Justify_Left);
+            end if;
+         end if;
+
+      exception
+         when Directory_Error =>
+            Button := Message_Dialog
+              ((-"Cannot create config directory ") & Dir.all & ASCII.LF &
+               (-"Exiting..."),
+               Error, Button_OK,
+               Justification => Justify_Left);
+            OS_Exit (1);
+      end;
 
       --  ??? This should be moved in a future "preferences" package, so as to
       --  accomodate user's specific extensions
@@ -160,15 +163,15 @@ procedure Odd_Main is
          end if;
       end loop;
 
-      return S;
+      return Strip_Control_M (S);
    end Format;
 
    procedure Bug_Dialog (E : Exception_Occurrence) is
    begin
       Put_Line (Standard_Error, -"Bug detected in GVD");
       Put_Line (Standard_Error,
-        "Please report with the contents of the file " &
-        Dir.all & Directory_Separator & "log");
+                "Please report with the contents of the file " &
+                Dir.all & Directory_Separator & "log");
       Put_Line (Standard_Error, "and the following information:");
       Put_Line (Standard_Error, "Version: " & Odd.Version);
       Put_Line (Standard_Error, Exception_Information (E));
