@@ -1,5 +1,0 @@
-project Child2 modifying "child3"
-is
-   for Source_Files use ("child2_src.adb");
-   for Source_Dirs use ("child2_sources");
-end Child2;
