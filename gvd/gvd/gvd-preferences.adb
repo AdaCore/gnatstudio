@@ -84,7 +84,7 @@ package body GVD.Preferences is
         (Name      => XML_Prefix & "Fixed-Font",
          Nick      => -"Fixed font",
          Blurb     => -"Fixed font used to display e.g. debugger commands",
-         Default   => "Courier 12"));
+         Default   => "Courier 10"));
       Register_Property (Prefs, Param_Spec (Fixed_Font), General);
 
       Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
