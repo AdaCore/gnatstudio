@@ -20,6 +20,8 @@
 
 with Glib;                    use Glib;
 with Glib.Xml_Int;            use Glib.Xml_Int;
+with Gtk.Menu_Item;           use Gtk.Menu_Item;
+
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Ada.Exceptions;          use Ada.Exceptions;
 
@@ -45,8 +47,6 @@ package body Custom_Module is
       File      : constant String :=
         String_Utils.Name_As_Directory (Get_Home_Dir (Kernel)) & "custom";
       Node      : Node_Ptr;
-      Child     : Node_Ptr;
-      Current_Path : String_Access;
 
       procedure Add_Child
         (Parent_Path  : String;
@@ -62,6 +62,7 @@ package body Custom_Module is
          Current_Child_Child : Node_Ptr;
          Command       : Command_Access := null;
          Current_Title : String_Access;
+         Item          : Gtk_Menu_Item;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -124,12 +125,17 @@ package body Custom_Module is
                Current_Child := Current_Child.Next;
             end loop;
 
-            Register_Menu (Kernel,
-                           Parent_Path,
-                           Current_Title.all,
-                           "",
-                           null,
-                           Command);
+            if Current_Title /= null and then Current_Title.all /= "" then
+               Register_Menu (Kernel,
+                              Parent_Path,
+                              Current_Title.all,
+                              "",
+                              null,
+                              Command);
+            else
+               Gtk_New (Item);
+               Register_Menu (Kernel, Parent_Path, Item);
+            end if;
          end if;
 
          Free (Current_Title);
@@ -150,23 +156,9 @@ package body Custom_Module is
          Contextual_Menu_Handler => null);
 
       while Node /= null loop
-         if Node.Tag.all = "Menu" then
-            Child := Node.Child;
-
-            if Child.Tag.all = "Title" then
-               Current_Path := new String' (Child.Value.all);
-
-               while Child /= null loop
-                  Add_Child ("/" & Current_Path.all, Child);
-                  Child := Child.Next;
-               end loop;
-            end if;
-         end if;
-
+         Add_Child ("", Node);
          Node := Node.Next;
       end loop;
-
-      Free (Current_Path);
 
    exception
       when E : others =>
