@@ -39,11 +39,11 @@ package body Log_Editor_Window_Pkg is
    is
       Label : Gtk_Label;
    begin
-      if not Is_Empty (Log_Editor_Window.Files) then
+      if not String_List.Is_Empty (Log_Editor_Window.Files) then
          Set_Text (Log_Editor_Window.Files_Label, -"Edit log for files:");
       end if;
 
-      Append (Log_Editor_Window.Files, File_Name);
+      String_List.Append (Log_Editor_Window.Files, File_Name);
 
       Gtk_New (Label, File_Name);
       Set_Alignment (Log_Editor_Window.Files_Label, 0.0, 0.5);
@@ -159,10 +159,10 @@ package body Log_Editor_Window_Pkg is
    -- Close --
    -----------
 
-   procedure Close (Log_Editor_Window : access Log_Editor_Window_Record'Class)
-   is
+   procedure Close
+     (Log_Editor_Window : access Log_Editor_Window_Record'Class) is
    begin
-      Free (Log_Editor_Window.Files);
+      String_List.Free (Log_Editor_Window.Files);
       Destroy (Log_Editor_Window);
    end Close;
 

@@ -41,10 +41,9 @@ with Prj_API;                 use Prj_API;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with VCS;                     use VCS;
+with String_List;
 
 package body VCS_Module is
-
-   use VCS.String_List;
 
    VCS_Module_ID : Module_ID;
 
@@ -134,23 +133,24 @@ package body VCS_Module is
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle)
    is
-      Files   : List;
-      Dirs    : List;
+      Files   : String_List.List;
+      Dirs    : String_List.List;
       Status  : File_Status_List.List;
       Ref     : VCS_Access;
       Child   : MDI_Child;
-
       Dir     : String := Get_Current_Dir (Kernel);
+
    begin
       if Dir /= "" then
          Ref := Get_Ref_From_Directory (Dir);
-         Append (Dirs, Dir);
+         String_List.Append (Dirs, Dir);
 
          Status := Local_Get_Status (Ref, Dirs);
 
          while not  File_Status_List.Is_Empty (Status) loop
-            Append (Files,
-                    Head (File_Status_List.Head (Status).File_Name));
+            String_List.Append
+              (Files,
+               String_List.Head (File_Status_List.Head (Status).File_Name));
             File_Status_List.Tail (Status);
          end loop;
 
@@ -164,9 +164,9 @@ package body VCS_Module is
               (VCS_View_Access (Get_Widget (Child)), Kernel, Files, Ref);
          end if;
 
-         Free (Dirs);
+         String_List.Free (Dirs);
          Free (Ref);
-         Free (Files);
+         String_List.Free (Files);
       end if;
    end Update_Files_In_Current_Dir;
 
