@@ -42,6 +42,7 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.MDI;                use Gtkada.MDI;
 with GVD.Types;
 with OS_Utils;                  use OS_Utils;
 with GNAT.Command_Line;         use GNAT.Command_Line;
@@ -423,6 +424,17 @@ procedure GPS is
 
       --  Call Show_All before displaying the help so that the help window will
       --  have the focus.
+
+      if not File_Opened
+        and then not Has_User_Desktop (GPS.Kernel)
+      then
+         Open_Html
+           (GPS.Kernel,
+            Format_Pathname
+              (GPS.Prefix_Directory.all &
+               "/doc/gps/html/gps-welcome.html"));
+         Maximize_Children (Get_MDI (GPS.Kernel));
+      end if;
 
       Show_All (GPS);
 
