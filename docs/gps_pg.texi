@@ -53,6 +53,7 @@ unmodified in any copy.
 @menu
 * Introduction::
 * System Setup::
+* The GPS modules::
 * Hello World Walk Through::
 * The GPS Kernel::
 * Documenting your module::
@@ -98,8 +99,8 @@ through programming languages.
 
 At this point, GPS can only be extended by programming in
 @b{Ada}. In addition, it is planned for the near future that extensions
-in @b{C} or @b{C++} can be done, and that GPS should even have a full
-scripting languages permitting most of the extensions described below.
+in @b{C} or @b{C++} can be done. Work is under way to extend python scripting
+in GPS.
 
 Likewise, adding basic support for new languages will be made easier,
 and doable through external text files, requiring no
@@ -145,6 +146,33 @@ although the dynamic loading hasn't been fully tested yet and might
 not work on all platforms.
 
 @c --------------------------------------------------------------------
+@node The GPS modules
+@chapter The GPS modules
+@c --------------------------------------------------------------------
+
+@noindent
+GPS is organized around the concept of modules. The only part of GPS that
+is mandatory is its kernel (@pxref{The GPS Kernel}), all the other tools,
+menus and features are provided in optional modules.
+
+Although currently all modules have to be loaded at startup, some proof of
+concept for dynamically loadable module was implemented, and will most likely
+be part of a future version of GPS.
+
+Every new feature you implement will be part of one or more modules. We will
+go through the details of creating new modules all along this manual, starting
+from a simple Hello World module to more advanced features like providing
+new shell or python commands.
+
+Generally speaking, a module provides a limited set of features, and adds
+new GUI features in the GPS interface, like menus, toolbar buttons, contextual
+menu entries, new windows,@dots As much as possible, a menu shouldn't directly
+depend on any other module, only on the GPS kernel itself.
+
+See the file @file{glide_kernel-modules.ads} for more information on modules.
+
+
+@c --------------------------------------------------------------------
 @node Hello World Walk Through
 @chapter Hello World walk through
 @c --------------------------------------------------------------------
@@ -155,14 +183,128 @@ classical and simple example ``hello world''. This example will be
 refined as new extension possibilities are described later on in this
 document.
 
+@section Declaring the module
 
-@c Registering the module: gps.adb or dynamic loading
-@c Adding new modules dynamically
+@noindent
+A module is generally implemented in a separate source file, at this point
+an Ada package. The first thing that needs to be done is to create the specs
+of this package. Most of the time, a single function has to be exported,
+which is called Register_Module by convention. Therefore, we have to create
+a new directory to contain the module (we'll call it @file{hello_world}), at
+the same level as other modules like the source editor.
+
+Still by convention, the sources are put in a directory called @file{src}, and
+the object files are kept in a separate directory called @file{obj}.
+
+@smallexample
+mkdir hello_world
+mkdir hello_world/src
+mkdir hello_world/obj
+@end smallexample
+
+In the source directory, we create the file @file{hello_world.ads}, which
+contains the declaration of the @code{Register_Module} subprogram.
+
+@smallexample
+@b{with} Glide_Kernel;
+@b{package} Hello_World @b{is}
+   @b{procedure} Register_Module
+      (Kernel : @b{access} Glide_Kernel.Kernel_Handle_Record'Class);
+@b{end} Hello_World;
+@end smallexample
+
+Before going over the details of the implementation of @code{Register_Module},
+we have to make sure that the rest of GPS knows about this module, and that
+we know how to compile it
+
+@section Publicizing your module
+
+@noindent
+Until GPS provides dynamic modules, you have to modify the main subprogram of
+GPS to make it aware of your module.
+
+This is done by modifying the file @file{gps.adb}, and adding two statements
+in there: a @code{with} statement that imports @file{hello_world}.ads, and
+a call to @code{Hello_World.Register_Module}. See for instance how this is
+done for the keymanager module.
+
+@section Compiling your module
+
+@noindent
+However, after the addition of the two statements in @file{gps.adb}, the file
+@file{hello_world.ads} will not be found automatically by GPS. Therefore,
+you need to create a project file for your new module (we'll call it
+@file{hello_world.gpr}), and add a dependency to it in the root project file
+of GPS (@file{glide/gps.gpr}), as is currently done for all other modules.
+
+The project file @file{hello_world.gpr} is best created by copying the
+project file from any other module, for instance the aliases module
+(@file{aliases/aliases.gpr}), and changing the name of the project to
+@code{Hello_World}.
+
+You must also create a set of two Makfiles, which are used to add files other
+than Ada, even if your module only uses Ada files.
+Once again, this is best done by copying the two Makefiles from the
+directory @file{aliases}, renaming them into @file{Makefile} and
+@file{Makefile.hello_world}, and replacing the strings @code{aliases} and
+@code{ALIASES} by resp. @code{hello_world} and @code{HELLO_WORLD}.
+
+These steps will be made easier in the near future, but in any case are
+relatively straightforward, and only need to be done once per module. The
+resulting setup automatically takes into account all sources files that will
+be added later on to the module, either C or Ada, and compile them with the
+appropriate compiler.
+
+You might also prefer in your first attempt at creating a new module to add
+your new files into the @file{src} directory of an existing module. In this
+case, you don't have to create any of the project files or Makefile, nor to
+modify the @file{gps.adb} file.
+
+Once the project file has been created, and a dependency added in
+@file{gps.gpr}, you might want to reload the GPS project in GPS, so that the
+editing of your sources can be done in an Ada-friendly context.
+
+@section Registering the module
+
+@noindent
+Back to the source files of your modules. We now need to create a body for
+the procedure @code{Register_Module}. The minimal thing this function has to
+do is indicate to the GPS kernel that a new module is being declared, and
+give it a name. If you only do that, there is no direct impact on the rest
+of GPS. However, as we will see during in this guide, having a specific
+@code{Module_Id} is mandatory for some of the advanced feature, so it is
+cleaner to always declare one from the start.
+
+This is done by creating the file @file{hello_world.adb}, with the following
+contents.
+
+@smallexample
+@b{with} Glide_Kernel.Modules;  @b{use} Glide_Kernel, Glide_Kernel.Modules;
+
+@b{package} Hello_World @b{is}
+   @b{procedure} Register_Module
+      (Kernel : @b{access} Glide_Kernel.Kernel_Handle_Record'Class)
+   @b{is}
+      Module : Module_ID;
+   @b{begin}
+      Glide_Kernel.Modules.Register_Module
+         (Module, Kernel, Module_Name => "hello_world");
+   @b{end} Register_Module;
+
+@b{end} Hello_World;
+@end smallexample
+
+At this point, the hello_world module is compilable, only it won't do anything
+but be loaded in GPS.
+
+The following sections will show how new features can be provided to the
+rest of GPS.
+
+
 @c Adding new contextual menu: display "hello <file>" when a file is
 @c   selected.
 @c Adding new window in the MDI
 @c Adding messages to the console
-@c Compiling the module: project files,...
 
 @c --------------------------------------------------------------------
 @node The GPS Kernel
@@ -210,7 +352,7 @@ other tooltips.
 @item extended documentation
 Extended documentation should be written in HTML.
 See the GPS user's guide on how to make new documentation available to
-users. 
+users.
 
 @end itemize
 
@@ -260,7 +402,7 @@ These variables are the following:
 @smallexample
 export GTK_DEBUG=misc:plugsocket:text:tree:updates:keybindings;
 export GDK_DEBUG=updates:nograbs:events:dnd:misc:xim:colormap:gdkrb:gc:pixmap:image:input:cursor;
-export GOBJECT_DEBUG=objects:signals; 
+export GOBJECT_DEBUG=objects:signals;
 @end smallexample
 
 Some of the values for these variables can be omitted. The exact
