@@ -935,37 +935,37 @@ package body Display_Items is
    begin
       --  Unselect the current selection
 
-      if Item.Debugger.Selected_Item /= null
-        and then Item.Debugger.Selected_Component /= Component
-      then
-         Set_Selected (Item.Debugger.Selected_Component, False);
-         Update_Component
-           (Display_Item (Item.Debugger.Selected_Item),
-            Item.Debugger.Selected_Component);
+      if Has_New_Selection then
+         if Item.Debugger.Selected_Component /= null then
+            Set_Selected (Item.Debugger.Selected_Component, False);
+            Update_Component
+              (Display_Item (Item.Debugger.Selected_Item),
+               Item.Debugger.Selected_Component);
 
-         if Item.Debugger.Selected_Item /= Canvas_Item (Item)
-           or else Component = null
-         then
-            Item_Updated
-              (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
+            --  Avoid refreshing the same item twice, if we're going to do it
+            --  in the second part of this procedure anyway.
+            if Component = null then
+               Item_Updated
+                 (Item.Debugger.Data_Canvas, Item.Debugger.Selected_Item);
+            end if;
          end if;
-      end if;
 
-      --  Select the new one
+         if Component /= null then
+            --  Select the new one
+            Set_Selected (Component, not Get_Selected (Component));
 
-      if Has_New_Selection and then Component /= null then
-         Set_Selected (Component, not Get_Selected (Component));
-         Update_Component (Item, Component);
-         Item_Updated (Item.Debugger.Data_Canvas, Item);
+            Update_Component (Item, Component);
+            Item_Updated (Item.Debugger.Data_Canvas, Item);
 
-         if Get_Selected (Component) then
-            Item.Debugger.Selected_Item := Canvas_Item (Item);
-            Item.Debugger.Selected_Component := Component;
+            if Get_Selected (Component) then
+               Item.Debugger.Selected_Item := Canvas_Item (Item);
+               Item.Debugger.Selected_Component := Component;
+            else
+               Item.Debugger.Selected_Item := null;
+            end if;
          else
             Item.Debugger.Selected_Item := null;
          end if;
-      else
-         Item.Debugger.Selected_Item := null;
       end if;
    end Select_Item;
 
