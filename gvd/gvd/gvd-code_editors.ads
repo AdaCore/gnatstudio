@@ -44,8 +44,8 @@ with Gtk.Widget;
 with Gtk.Box;
 with Gtkada.Types;
 with Language;
-with GVD.Text_Box.Asm_Editor;
 with GVD.Explorer;
+with GVD.Text_Box.Asm_Editor;
 with GVD.Text_Box.Source_Editor;
 with GVD.Types;
 with Basic_Types;
@@ -146,19 +146,10 @@ package GVD.Code_Editors is
       return GVD.Text_Box.Source_Editor.Source_Editor;
    --  Return the widget used to display the source code
 
-   function Get_Editor_Container
-     (Editor : access Code_Editor_Record'Class) return Gtk.Box.Gtk_Hbox;
-   --  Return the box that contains the source editor.
-
    function Get_Explorer_Scroll
      (Editor : access Code_Editor_Record'Class)
       return Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    --  Return the window containing the Explorer.
-
-   function Get_Explorer_Editor_Pane
-     (Editor : access Code_Editor_Record'Class)
-     return Gtk.Paned.Gtk_Paned;
-   --  Return the main Pane.
 
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
@@ -202,24 +193,16 @@ package GVD.Code_Editors is
 private
 
    type Code_Editor_Record is new Gtk.Box.Gtk_Hbox_Record with record
-      --  Contains either Explorer_Editor_Pane or Editor_Container.
+      Source           : GVD.Text_Box.Source_Editor.Source_Editor;
+      Asm              : GVD.Text_Box.Asm_Editor.Asm_Editor;
+      Source_Asm_Pane  : Gtk.Paned.Gtk_Paned;
 
-      Explorer_Editor_Pane : Gtk.Paned.Gtk_Paned;
-      --  Contains Explorer_Scroll and Editor_Container.
+      Mode             : View_Mode := GVD.Code_Editors.Source;
 
-      Editor_Container     : Gtk.Box.Gtk_Hbox;
-      --  Contains either Source, Asm or Source_Asm_Pane.
+      Source_Line      : Natural;
+      Asm_Address      : Basic_Types.String_Access;
 
-      Source          : GVD.Text_Box.Source_Editor.Source_Editor;
-      Asm             : GVD.Text_Box.Asm_Editor.Asm_Editor;
-      Source_Asm_Pane : Gtk.Paned.Gtk_Paned;
-
-      Mode            : View_Mode := GVD.Code_Editors.Source;
-
-      Source_Line     : Natural;
-      Asm_Address     : Basic_Types.String_Access;
-
-      Process         : Gtk.Widget.Gtk_Widget;
+      Process          : Gtk.Widget.Gtk_Widget;
       --  The process tab in which the editor is found.
 
       Explorer        : GVD.Explorer.Explorer_Access;

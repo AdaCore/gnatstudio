@@ -20,7 +20,6 @@
 
 with Glib;                use Glib;
 with Gtk.Box;             use Gtk.Box;
-with Gtk.Container;       use Gtk.Container;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Menu;            use Gtk.Menu;
@@ -30,6 +29,7 @@ with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.MDI;          use Gtkada.MDI;
 
 with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
@@ -106,42 +106,35 @@ package body GVD.Code_Editors is
    ----------------
 
    procedure Initialize
-     (Editor      : access Code_Editor_Record'Class;
-      Process     : access Gtk.Widget.Gtk_Widget_Record'Class) is
+     (Editor  : access Code_Editor_Record'Class;
+      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Tab   : constant Debugger_Process_Tab := Debugger_Process_Tab (Process);
+      Child : MDI_Child;
+
    begin
       Initialize_Hbox (Editor);
 
-      Gtk_New_Hpaned (Editor.Explorer_Editor_Pane);
-      Gtk_New_Hbox (Editor.Editor_Container);
-
       Editor.Process := Gtk_Widget (Process);
-
       Gtk_New (Editor.Asm, Process);
       Gtk_New_Vpaned (Editor.Source_Asm_Pane);
 
       Gtk_New (Editor.Explorer_Scroll);
-      Set_Policy (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
+      Set_Policy
+        (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
       Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
+      Child := Put (Tab.Process_Mdi, Editor.Explorer_Scroll);
+      Set_Title (Child, "Explorer");
+      Dock_Child (Child, Side => Left);
 
       Gtk_New (Editor.Explorer, Editor);
       Add (Editor.Explorer_Scroll, Editor.Explorer);
-
-      if Get_Pref (Display_Explorer) then
-         Add (Editor, Editor.Explorer_Editor_Pane);
-         Add1 (Editor.Explorer_Editor_Pane, Editor.Explorer_Scroll);
-         Add2 (Editor.Explorer_Editor_Pane, Editor.Editor_Container);
-
-      else
-         Ref (Editor.Explorer_Editor_Pane);
-         Add (Editor, Editor.Editor_Container);
-      end if;
 
       --  Since we are sometimes unparenting these widgets, We need to
       --  make sure they are not automatically destroyed by reference
       --  counting.
       --  ??? Should add a "destroy" callback to the editor to free the
       --  memory.
-      Ref (Editor.Editor_Container);
       Ref (Editor.Asm);
       Ref (Editor.Source_Asm_Pane);
       Show_All (Editor);
@@ -175,16 +168,6 @@ package body GVD.Code_Editors is
       end if;
 
    end Set_Line;
-
-   --------------------------
-   -- Get_Editor_Container --
-   --------------------------
-
-   function Get_Editor_Container
-     (Editor : access Code_Editor_Record'Class) return Gtk.Box.Gtk_Hbox is
-   begin
-      return Editor.Editor_Container;
-   end Get_Editor_Container;
 
    --------------
    -- Get_Line --
@@ -235,17 +218,6 @@ package body GVD.Code_Editors is
    begin
       return Editor.Explorer_Scroll;
    end Get_Explorer_Scroll;
-
-   ------------------------------
-   -- Get_Explorer_Editor_Pane --
-   ------------------------------
-
-   function Get_Explorer_Editor_Pane
-     (Editor : access Code_Editor_Record'Class)
-     return Gtk.Paned.Gtk_Paned is
-   begin
-      return Editor.Explorer_Editor_Pane;
-   end Get_Explorer_Editor_Pane;
 
    -------------
    -- Get_Asm --
@@ -337,7 +309,7 @@ package body GVD.Code_Editors is
          Editor.Source := Source_Editor (External_Source);
       end if;
 
-      Attach (Editor.Source, Editor.Editor_Container);
+      Attach (Editor.Source, Editor);
 
       Widget_Callback.Object_Connect
         (Get_Widget (Editor.Source), "size_allocate",
@@ -444,18 +416,18 @@ package body GVD.Code_Editors is
          when Source =>
             Detach (Editor.Source);
          when Asm =>
-            Remove (Editor.Editor_Container, Editor.Asm);
+            Remove (Editor, Editor.Asm);
          when Source_Asm =>
             Detach (Editor.Source);
             Remove (Editor.Source_Asm_Pane, Editor.Asm);
-            Remove (Editor.Editor_Container, Editor.Source_Asm_Pane);
+            Remove (Editor, Editor.Source_Asm_Pane);
       end case;
 
       Editor.Mode := Mode;
 
       case Editor.Mode is
          when Source =>
-            Attach (Editor.Source, Editor.Editor_Container);
+            Attach (Editor.Source, Editor);
             Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True);
 
             if Process.Breakpoints /= null then
@@ -463,7 +435,7 @@ package body GVD.Code_Editors is
             end if;
 
          when Asm =>
-            Add (Editor.Editor_Container, Editor.Asm);
+            Add (Editor, Editor.Asm);
             Show_All (Editor.Asm);
 
             if Editor.Asm_Address /= null then
@@ -477,7 +449,7 @@ package body GVD.Code_Editors is
             end if;
 
          when Source_Asm =>
-            Add (Editor.Editor_Container, Editor.Source_Asm_Pane);
+            Add (Editor, Editor.Source_Asm_Pane);
             Attach (Editor.Source, Editor.Source_Asm_Pane);
             Add2 (Editor.Source_Asm_Pane, Editor.Asm);
             Show_All (Editor.Source_Asm_Pane);
@@ -553,9 +525,7 @@ package body GVD.Code_Editors is
    procedure Preferences_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Edit   : constant Code_Editor := Code_Editor (Editor);
-      Parent : Gtk_Container;
-
+      Edit : constant Code_Editor := Code_Editor (Editor);
    begin
       if Edit.Mode = Source or else Edit.Mode = Source_Asm then
          GVD.Text_Box.Source_Editor.Preferences_Changed (Edit.Source);
@@ -564,39 +534,6 @@ package body GVD.Code_Editors is
       if Edit.Mode = Asm or else Edit.Mode = Source_Asm then
          GVD.Text_Box.Asm_Editor.Preferences_Changed (Edit.Asm);
          Highlight_Address_Range (Edit.Asm, Edit.Source_Line);
-      end if;
-
-      Parent := Gtk_Container (Get_Parent (Get_Widget (Edit.Source)));
-
-      if Get_Pref (Display_Explorer) then
-         if Get_Parent (Edit.Explorer_Editor_Pane) = null then
-            Detach (Edit.Source);
-            Ref (Edit.Editor_Container);
-            Remove (Edit, Edit.Editor_Container);
-
-            Add (Edit, Edit.Explorer_Editor_Pane);
-            Add1 (Edit.Explorer_Editor_Pane, Edit.Explorer_Scroll);
-            Add2 (Edit.Explorer_Editor_Pane, Edit.Editor_Container);
-            Attach (Edit.Source, Parent);
-            Show_All (Edit);
-         end if;
-
-         GVD.Explorer.Preferences_Changed (Edit.Explorer);
-         Set_Current_File (Edit.Explorer, Get_Current_File (Edit.Source));
-
-      else
-         if Get_Parent (Edit.Explorer_Editor_Pane) /= null then
-            Detach (Edit.Source);
-            Ref (Edit.Explorer_Editor_Pane);
-            Remove (Edit, Edit.Explorer_Editor_Pane);
-
-            Ref (Edit.Editor_Container);
-            Remove (Edit.Explorer_Editor_Pane, Edit.Editor_Container);
-
-            Add (Edit, Edit.Editor_Container);
-            Attach (Edit.Source, Parent);
-            Show_All (Edit);
-         end if;
       end if;
    end Preferences_Changed;
 
