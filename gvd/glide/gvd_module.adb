@@ -23,6 +23,7 @@ with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gtk.Bin;                 use Gtk.Bin;
 with Gtk.Enums;               use Gtk.Enums;
+with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
@@ -281,6 +282,13 @@ package body GVD_Module is
    --  Callback for the "start/continue" button
 
    --------------------
+   -- Misc Callbacks --
+   --------------------
+
+   procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal to clean up the debugger.
+
+   --------------------
    -- GVD_Contextual --
    --------------------
 
@@ -293,6 +301,7 @@ package body GVD_Module is
 
       Entity   : Entity_Selection_Context_Access;
       Mitem    : Gtk_Menu_Item;
+      Submenu  : Gtk_Menu;
       Line     : Integer;
       Debugger : Debugger_Access;
       Lang     : Language_Access;
@@ -308,20 +317,23 @@ package body GVD_Module is
             --  ??? Should query the project module instead of the debugger
             --  Lang := Get_Language (File_Information (Entity));
 
+            Gtk_New (Mitem, Label => -"Debug");
+            Gtk_New (Submenu);
+            Set_Submenu (Mitem, Gtk_Widget (Submenu));
+            Append (Menu, Mitem);
+
             if Has_Entity_Name_Information (Entity) then
                declare
                   Ent : constant String := Entity_Name_Information (Entity);
                begin
-                  Gtk_New (Mitem);
-                  Append (Menu, Mitem);
                   Gtk_New (Mitem, -"Print " & Ent);
-                  Append (Menu, Mitem);
+                  Append (Submenu, Mitem);
                   Context_Callback.Connect
                     (Mitem, "activate",
                      Context_Callback.To_Marshaller (Print_Variable'Access),
                      Selection_Context_Access (Context));
                   Gtk_New (Mitem, -"Display " & Ent);
-                  Append (Menu, Mitem);
+                  Append (Submenu, Mitem);
                   Context_Callback.Connect
                     (Mitem, "activate",
                      Context_Callback.To_Marshaller
@@ -334,14 +346,14 @@ package body GVD_Module is
                           Dereference_Name (Lang, Ent);
                      begin
                         Gtk_New (Mitem, -"Print " & Ent_Deref);
-                        Append (Menu, Mitem);
+                        Append (Submenu, Mitem);
                         Context_Callback.Connect
                           (Mitem, "activate",
                            Context_Callback.To_Marshaller
                              (Print_Variable'Access),
                            Selection_Context_Access (Context));
                         Gtk_New (Mitem, -"Display " & Ent_Deref);
-                        Append (Menu, Mitem);
+                        Append (Submenu, Mitem);
                         Context_Callback.Connect
                           (Mitem, "activate",
                            Context_Callback.To_Marshaller
@@ -351,15 +363,15 @@ package body GVD_Module is
                   end if;
 
                   Gtk_New (Mitem, -"View Memory at &" & Ent);
-                  Append (Menu, Mitem);
+                  Append (Submenu, Mitem);
                   Context_Callback.Connect
                     (Mitem, "activate",
                      Context_Callback.To_Marshaller (View_Into_Memory'Access),
                      Selection_Context_Access (Context));
                   Gtk_New (Mitem);
-                  Append (Menu, Mitem);
+                  Append (Submenu, Mitem);
                   Gtk_New (Mitem, -"Set breakpoint on " & Ent);
-                  Append (Menu, Mitem);
+                  Append (Submenu, Mitem);
                   Context_Callback.Connect
                     (Mitem, "activate",
                      Context_Callback.To_Marshaller
@@ -369,30 +381,25 @@ package body GVD_Module is
             end if;
 
             if Has_Line_Information (Entity) then
-               if not Has_Entity_Name_Information (Entity) then
-                  Gtk_New (Mitem);
-                  Append (Menu, Mitem);
-               end if;
-
                Line := Line_Information (Entity);
                Gtk_New (Mitem, -"Set breakpoint on line" & Line'Img);
-               Append (Menu, Mitem);
+               Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
                   Context_Callback.To_Marshaller (Set_Breakpoint'Access),
                   Selection_Context_Access (Context));
                Gtk_New (Mitem, -"Continue until line" & Line'Img);
-               Append (Menu, Mitem);
+               Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
                   Context_Callback.To_Marshaller (Till_Breakpoint'Access),
                   Selection_Context_Access (Context));
+               Gtk_New (Mitem);
+               Append (Submenu, Mitem);
             end if;
 
-            Gtk_New (Mitem);
-            Append (Menu, Mitem);
             Gtk_New (Mitem, -"Show Current Location");
-            Append (Menu, Mitem);
+            Append (Submenu, Mitem);
             Context_Callback.Connect
               (Mitem, "activate",
                Context_Callback.To_Marshaller (Show_Current_Line_Menu'Access),
@@ -401,7 +408,7 @@ package body GVD_Module is
       end if;
    end GVD_Contextual;
 
-----------------------
+   -------------------
    -- Set_Sensitive --
    -------------------
 
@@ -490,7 +497,7 @@ package body GVD_Module is
 
    -------------------
    -- On_Debug_Init --
-   --------------------
+   -------------------
 
    procedure On_Debug_Init
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
@@ -507,6 +514,10 @@ package body GVD_Module is
          Push_State (Kernel, Busy);
          Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
          Set_Sensitive (Kernel, True);
+         Page.Destroy_Id := Widget_Callback.Object_Connect
+           (Top, "destroy",
+            Widget_Callback.To_Marshaller (On_Destroy_Window'Access),
+            Page);
          Pop_State (Kernel);
       end if;
 
@@ -534,6 +545,7 @@ package body GVD_Module is
 
    begin
       if Page.Debugger /= null then
+         Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
          Push_State (Kernel, Busy);
          Close (Page.Debugger);
          Page.Debugger := null;
@@ -738,6 +750,16 @@ package body GVD_Module is
    end On_Start_Continue;
 
    -----------------------
+   -- On_Destroy_Window --
+   -----------------------
+
+   procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class) is
+      Page : constant Glide_Page.Glide_Page := Glide_Page.Glide_Page (Object);
+   begin
+      Close (Page.Debugger);
+   end On_Destroy_Window;
+
+   -----------------------
    -- Initialize_Module --
    -----------------------
 
@@ -855,6 +877,7 @@ package body GVD_Module is
          Widget_Callback.To_Marshaller (On_Start_Continue'Access),
          Window);
       Set_Sensitive (Top.Cont_Button, False);
+
       Top.Step_Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -865,6 +888,7 @@ package body GVD_Module is
         (Top.Step_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Step'Access), Window);
       Set_Sensitive (Top.Step_Button, False);
+
       Top.Next_Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -874,6 +898,7 @@ package body GVD_Module is
         (Top.Next_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Next'Access), Window);
       Set_Sensitive (Top.Next_Button, False);
+
       Top.Finish_Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
