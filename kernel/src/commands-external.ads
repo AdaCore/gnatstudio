@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -55,6 +55,7 @@ package Commands.External is
    --  the result of which determines the success of the execution.
    --  If Handler is null, the output of the command is discarded, and
    --  the commands always executes successfully.
+   --  If Dir is empty, the current directory will be used.
 
    function Execute (Command : access External_Command) return Boolean;
    --  Execute Command, and launch the associated Handler.
