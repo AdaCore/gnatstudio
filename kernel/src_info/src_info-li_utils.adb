@@ -203,7 +203,7 @@ package body Src_Info.LI_Utils is
 
          if Dep_Ptr.Value.File = No_Source_File then
             Put_Line ("No_Source_File encountered in the Dep_Info list for "
-                      & Full_Name (Get_LI_Filename (File)));
+                      & Full_Name (Get_LI_Filename (File)).all);
          end if;
 
          exit when Get_Source_Filename (Dep_Ptr.Value.File) = Filename;
@@ -296,7 +296,7 @@ package body Src_Info.LI_Utils is
       File := new LI_File_Constrained'
         (LI =>  (Parsed        => False,
                  Handler       => Handler,
-                 LI_Filename_Key => new String'(Base_Name (LI_Filename)),
+                 LI_Filename_Key => new String'(Base_Name (LI_Filename).all),
                  LI_Filename   => LI_Filename,
                  Project       => Project,
                  Body_Info     => null,
@@ -316,7 +316,7 @@ package body Src_Info.LI_Utils is
       Set_Time_Stamp : Boolean := True;
       Unit_Name      : String := "")
    is
-      Directory_Name : constant String := Dir_Name (Full_Filename);
+      Directory_Name : constant String := Dir_Name (Full_Filename).all;
       Dir : GNAT.OS_Lib.String_Access;
       Unit : GNAT.OS_Lib.String_Access;
       Time : Timestamp := 0;
@@ -338,7 +338,7 @@ package body Src_Info.LI_Utils is
 
       FI_Ptr := new File_Info'
         (Unit_Name         => Unit,
-         Source_Filename   => new String'(Base_Name (Full_Filename)),
+         Source_Filename   => new String'(Base_Name (Full_Filename).all),
          Directory_Name    => Dir,
          File_Timestamp    => Time,
          Original_Filename => null,

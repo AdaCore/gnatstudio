@@ -576,7 +576,8 @@ package body Src_Info.Queries is
          Entity := No_Entity_Information;
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
-                & " file=" & Base_Name (File_Name) & " Status=" & Status'Img);
+                & " file=" & Base_Name (File_Name).all
+                & " Status=" & Status'Img);
       end if;
 
    exception
@@ -681,7 +682,7 @@ package body Src_Info.Queries is
       else
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
-                & " file=" & Base_Name (File_Name));
+                & " file=" & Base_Name (File_Name).all);
       end if;
 
    exception
@@ -724,7 +725,7 @@ package body Src_Info.Queries is
       List        : File_Info_Ptr_List;
       Part        : Unit_Part;
       B, S        : Boolean;
-      Base        : constant String := Base_Name (Source_Filename);
+      Base        : constant String := Base_Name (Source_Filename).all;
    begin
       if Lib_Info = null then
          Dependencies := null;
@@ -804,7 +805,7 @@ package body Src_Info.Queries is
                Dependencies := null;
                Status := Internal_Error;
                Trace (Me, "Couldn't find the File_Info_Ptr for "
-                        & Full_Name (Get_LI_Filename (Lib_Info)));
+                        & Full_Name (Get_LI_Filename (Lib_Info)).all);
                return;
             end if;
 
@@ -923,7 +924,7 @@ package body Src_Info.Queries is
       Subprograms_Pkg_Only : Boolean := True) is
    begin
       if Tree /= Null_Scope_Tree then
-         Trace (Handler, "Scope tree for " & Base_Name (Tree.LI_Filename));
+         Trace (Handler, "Scope tree for " & Base_Name (Tree.LI_Filename).all);
          if Node = Null_Scope_Tree_Node then
             Trace (Handler, "Part= BODY");
             Trace_Dump (Handler, Tree.Body_Tree, "",
@@ -2284,7 +2285,7 @@ package body Src_Info.Queries is
       begin
          if not Get
            (Iterator.Examined,
-            Base_Name (Iterator.Source_Files (Iterator.Current_File)))
+            Base_Name (Iterator.Source_Files (Iterator.Current_File)).all)
          then
             Handler := Get_LI_Handler_From_File
               (Glide_Language_Handler (Lang_Handler),
@@ -2309,10 +2310,11 @@ package body Src_Info.Queries is
                      List                   => List,
                      Project                => Current (Iterator.Importing));
 
-                  Assert (Me, LI = null or else LI.LI.Parsed,
-                          "Unparsed LI returned for file "
-                          & Base_Name
-                            (Iterator.Source_Files (Iterator.Current_File)));
+                  Assert
+                    (Me, LI = null or else LI.LI.Parsed,
+                     "Unparsed LI returned for file "
+                     & Base_Name
+                       (Iterator.Source_Files (Iterator.Current_File)).all);
                end if;
 
                if LI /= null then
@@ -2343,7 +2345,6 @@ package body Src_Info.Queries is
                      Sep_List := Sep_List.Next;
                   end loop;
 
-                  Trace (Me, "Check_File: " & Full_Name (LI.LI.LI_Filename));
                   return Check_LI (LI);
                end if;
             end if;
@@ -2367,7 +2368,7 @@ package body Src_Info.Queries is
 
          if Iterator.Current_Separate /= null
            and then Iterator.Current_Separate.Value.Source_Filename.all =
-             Base_Name (Iterator.Source_Filename)
+             Base_Name (Iterator.Source_Filename).all
          then
             Iterator.Current_Separate := Iterator.Current_Separate.Next;
          end if;
@@ -2394,7 +2395,7 @@ package body Src_Info.Queries is
             if Iterator.Include_Self
               and then Iterator.LI.LI.Spec_Info /= null
               and then Iterator.LI.LI.Spec_Info.Source_Filename.all =
-                Base_Name (Iterator.Source_Filename)
+                Base_Name (Iterator.Source_Filename).all
             then
                Trace (Me, "Check_LI: spec matches");
                Iterator.Current_Part := Unit_Spec;
@@ -2406,7 +2407,7 @@ package body Src_Info.Queries is
             if Iterator.LI.LI.Body_Info /= null
               and then (Iterator.Include_Self
                         or else Iterator.LI.LI.Body_Info.Source_Filename.all /=
-                          Base_Name (Iterator.Source_Filename))
+                          Base_Name (Iterator.Source_Filename).all)
             then
                Trace (Me, "Check_LI: body matches "
                       & Iterator.LI.LI.Body_Info.Source_Filename.all);
@@ -2433,8 +2434,8 @@ package body Src_Info.Queries is
                or else Dep.Value.Dep_Info.Depends_From_Spec
                or else Dep.Value.Dep_Info.Depends_From_Body)
               and then Dep.Value.File.LI = Iterator.Decl_LI
-              and then Get_Source_Filename (Dep.Value.File) =
-              Iterator.Source_Filename;
+              and then Get_File_Info (Dep.Value.File).Source_Filename.all =
+                Base_Name (Iterator.Source_Filename).all;
             Dep := Dep.Next;
          end loop;
 
@@ -2537,7 +2538,7 @@ package body Src_Info.Queries is
 
    begin
       Trace (Me, "Find_Ancestor_Dependencies: "
-             & Base_Name (Source_Filename)
+             & Full_Name (Source_Filename).all
              & " self="   & Boolean'Image (Include_Self)
              & " single=" & Boolean'Image (Single_Source_File));
 
@@ -2580,7 +2581,7 @@ package body Src_Info.Queries is
 
       Assert (Me,
               Iterator.Decl_LI /= null,
-              "LI file not found for " & Base_Name (Source_Filename));
+              "LI file not found for " & Base_Name (Source_Filename).all);
 
       if Single_Source_File then
          Iterator.Importing := Start (Decl_Project, Recursive => False);
@@ -2836,7 +2837,7 @@ package body Src_Info.Queries is
          return Source_File'
            (LI => LI, Part => Part,
             Source_Filename => new String'
-              (Base_Name (Get_Declaration_File_Of (Entity))));
+              (Base_Name (Get_Declaration_File_Of (Entity)).all));
       end if;
    end Get_Source_File;
 
@@ -2877,7 +2878,7 @@ package body Src_Info.Queries is
      (Lib_Info : LI_File_Ptr; File_Name : VFS.Virtual_File)
       return E_Declaration_Info_List
    is
-      Base : constant String := Base_Name (File_Name);
+      Base : constant String := Base_Name (File_Name).all;
       Sep : File_Info_Ptr_List;
    begin
       if Lib_Info.LI.Body_Info /= null
@@ -3371,10 +3372,10 @@ package body Src_Info.Queries is
 
       Trace (Me, "Process_Parents: Declaration not found for "
              & Get_Name (Entity) & ' '
-             & Base_Name (Get_Declaration_File_Of (Entity))
+             & Base_Name (Get_Declaration_File_Of (Entity)).all
              & Get_Declaration_Line_Of (Entity)'Img
              & Get_Declaration_Column_Of (Entity)'Img
-             & ' ' & Full_Name (Get_LI_Filename (Lib_Info)));
+             & ' ' & Full_Name (Get_LI_Filename (Lib_Info)).all);
       return No_Entity_Information;
    end Process_Parents;
 

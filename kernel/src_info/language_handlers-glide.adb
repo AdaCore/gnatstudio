@@ -354,7 +354,7 @@ package body Language_Handlers.Glide is
       else
          if Index /= 0 then
             Trace (Me, "No LI_Handler for language "
-                   & Full_Name (Source_Filename)
+                   & Full_Name (Source_Filename).all
                    & " Index=" & Index'Img);
          end if;
 
