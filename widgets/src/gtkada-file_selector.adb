@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001 ACT-Europe                   --
+--                   Copyright (C) 2001-2002 ACT-Europe              --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -85,34 +85,28 @@ package body Gtkada.File_Selector is
    -- Callbacks --
    ---------------
 
-   procedure Realize
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+   procedure Realized
+     (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure On_Back_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+     (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure On_Up_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+     (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure On_Home_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+     (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure On_Refresh_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+     (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure On_Forward_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+     (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure Directory_Selected (Object : access Gtk_Widget_Record'Class);
@@ -127,8 +121,7 @@ package body Gtkada.File_Selector is
    --  ???
 
    procedure On_Explorer_Tree_Select_Row
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
+     (Object : access Gtk_Widget_Record'Class);
    --  ???
 
    procedure On_File_List_End_Selection
@@ -214,7 +207,7 @@ package body Gtkada.File_Selector is
    is
       File_Selector_Window : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector_Window, "/", Base_Directory, "Select a file");
+      Gtk_New (File_Selector_Window, "/", Base_Directory, Title);
       return Select_File (File_Selector_Window);
    end Select_File;
 
@@ -260,19 +253,16 @@ package body Gtkada.File_Selector is
       end if;
    end Select_File;
 
-   -------------
-   -- Realize --
-   -------------
+   --------------
+   -- Realized --
+   --------------
 
-   procedure Realize
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure Realized (Object : access Gtk_Widget_Record'Class) is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
    begin
       Refresh_Files (Win);
-   end Realize;
+   end Realized;
 
    ------------------
    -- Display_File --
@@ -421,7 +411,9 @@ package body Gtkada.File_Selector is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access) is
+      Text      : out String_Access)
+   is
+      pragma Unreferenced (File, Dir, Win, Filter);
    begin
       State  := Normal;
       Mask   := Gdk.Bitmap.Null_Bitmap;
@@ -549,8 +541,7 @@ package body Gtkada.File_Selector is
    ----------------------------
 
    procedure On_Back_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
@@ -581,8 +572,7 @@ package body Gtkada.File_Selector is
    ----------------------------
 
    procedure On_Home_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
@@ -596,8 +586,7 @@ package body Gtkada.File_Selector is
    --------------------------
 
    procedure On_Up_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class)
    is
       use type Node_List.Glist;
 
@@ -614,8 +603,7 @@ package body Gtkada.File_Selector is
    -------------------------------
 
    procedure On_Refresh_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class)
    is
       use type Node_List.Glist;
 
@@ -631,8 +619,7 @@ package body Gtkada.File_Selector is
    -------------------------------
 
    procedure On_Forward_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
@@ -708,8 +695,7 @@ package body Gtkada.File_Selector is
    ---------------------------------
 
    procedure On_Explorer_Tree_Select_Row
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
+     (Object : access Gtk_Widget_Record'Class)
    is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
@@ -755,7 +741,9 @@ package body Gtkada.File_Selector is
    --------------------------------
 
    procedure On_Selection_Entry_Changed
-     (Object : access Gtk_Widget_Record'Class) is
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Object);
    begin
       null;
    end On_Selection_Entry_Changed;
@@ -765,7 +753,9 @@ package body Gtkada.File_Selector is
    ---------------------
 
    procedure Quit_Main_Loop
-     (Object : access Gtk_Widget_Record'Class) is
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Object);
    begin
       Main_Quit;
    end Quit_Main_Loop;
@@ -1072,7 +1062,7 @@ package body Gtkada.File_Selector is
 
       Widget_Callback.Connect
         (File_Selector_Window.Back_Button, "clicked",
-         On_Back_Button_Clicked'Access);
+         Widget_Callback.To_Marshaller (On_Back_Button_Clicked'Access));
 
       Gtk_New (File_Selector_Window.Up_Icon, Stock_Go_Up, Icon_Size_Button);
       File_Selector_Window.Up_Button := Append_Element
@@ -1081,7 +1071,7 @@ package body Gtkada.File_Selector is
          Icon => Gtk_Widget (File_Selector_Window.Up_Icon));
       Widget_Callback.Connect
         (File_Selector_Window.Up_Button, "clicked",
-         On_Up_Button_Clicked'Access);
+         Widget_Callback.To_Marshaller (On_Up_Button_Clicked'Access));
 
       File_Selector_Window.Forward_Button := Insert_Stock
         (Toolbar => Toolbar1,
@@ -1091,7 +1081,7 @@ package body Gtkada.File_Selector is
 
       Widget_Callback.Connect
         (File_Selector_Window.Forward_Button, "clicked",
-         On_Forward_Button_Clicked'Access);
+         Widget_Callback.To_Marshaller (On_Forward_Button_Clicked'Access));
 
       Gtk_New
         (File_Selector_Window.Refresh_Icon, Stock_Refresh, Icon_Size_Button);
@@ -1101,7 +1091,7 @@ package body Gtkada.File_Selector is
          Icon => Gtk_Widget (File_Selector_Window.Refresh_Icon));
       Widget_Callback.Connect
         (File_Selector_Window.Refresh_Button, "clicked",
-         On_Refresh_Button_Clicked'Access);
+         Widget_Callback.To_Marshaller (On_Refresh_Button_Clicked'Access));
 
       File_Selector_Window.Home_Button := Insert_Stock
         (Toolbar => Toolbar1,
@@ -1110,7 +1100,7 @@ package body Gtkada.File_Selector is
       Set_Sensitive (File_Selector_Window.Home_Button, True);
       Widget_Callback.Connect
         (File_Selector_Window.Home_Button, "clicked",
-         On_Home_Button_Clicked'Access);
+         Widget_Callback.To_Marshaller (On_Home_Button_Clicked'Access));
 
       Pack_Start (Hbox3, Toolbar1, True, True, 3);
 
@@ -1166,7 +1156,7 @@ package body Gtkada.File_Selector is
       Set_Column_Width (File_Selector_Window.Explorer_Tree, 2, 80);
       Widget_Callback.Connect
         (File_Selector_Window.Explorer_Tree, "tree_select_row",
-         On_Explorer_Tree_Select_Row'Access);
+         Widget_Callback.To_Marshaller (On_Explorer_Tree_Select_Row'Access));
       Add (File_Selector_Window.Explorer_Tree_Scrolledwindow,
            File_Selector_Window.Explorer_Tree);
 
@@ -1278,7 +1268,8 @@ package body Gtkada.File_Selector is
       Add (Hbuttonbox1, File_Selector_Window.Cancel_Button);
 
       Widget_Callback.Connect
-        (File_Selector_Window, "realize", Realize'Access);
+        (File_Selector_Window, "realize",
+         Widget_Callback.To_Marshaller (Realized'Access));
 
       Realize (File_Selector_Window);
 
@@ -1313,6 +1304,7 @@ package body Gtkada.File_Selector is
    ----------
 
    procedure Free (S : in out String) is
+      pragma Unreferenced (S);
    begin
       null;
    end Free;
