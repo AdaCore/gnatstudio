@@ -26,6 +26,7 @@ with Gdk.Window;
 with Gtk.Combo;
 with Gtk.List;
 with Gtk.Menu;
+with Gtk.Handlers;
 with Gtk.Widget;
 
 package GUI_Utils is
@@ -65,5 +66,30 @@ package GUI_Utils is
    --  popped up when the right mouse button is pressed.
    --  This contextual menu can be fully dynamic, since it is created through
    --  the function Menu_Create.
+
+   generic
+      type User_Data is private;
+   package User_Contextual_Menus is
+
+      type Contextual_Menu_Create is access function
+        (User  : User_Data; Event : Gdk.Event.Gdk_Event)
+        return Gtk.Menu.Gtk_Menu;
+
+      type Callback_User_Data is record
+         Menu_Create : Contextual_Menu_Create;
+         User        : User_Data;
+      end record;
+
+      package Contextual_Callback is new Gtk.Handlers.User_Return_Callback
+        (Gtk.Widget.Gtk_Widget_Record, Boolean, Callback_User_Data);
+
+      procedure Register_Contextual_Menu
+        (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;
+         User        : User_Data;
+         Menu_Create : Contextual_Menu_Create);
+   end User_Contextual_Menus;
+   --  Same as the procedure Register_Contextual_Menu, but the callbacks for
+   --  the menu creation takes any type as input.
+   --  This package must be instantiated as library level.
 
 end GUI_Utils;

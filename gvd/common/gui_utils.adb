@@ -156,4 +156,54 @@ package body GUI_Utils is
          Menu_Create);
    end Register_Contextual_Menu;
 
+   ---------------------------
+   -- User_Contextual_Menus --
+   ---------------------------
+
+   package body User_Contextual_Menus is
+
+      --------------------------------------
+      -- Button_Press_For_Contextual_Menu --
+      --------------------------------------
+
+      function Button_Press_For_Contextual_Menu
+        (Widget : access Gtk_Widget_Record'Class;
+         Event  : Gdk.Event.Gdk_Event;
+         User   : Callback_User_Data) return Boolean
+      is
+         Menu : Gtk_Menu;
+      begin
+         if Get_Button (Event) = 3
+           and then Get_Event_Type (Event) = Button_Press
+         then
+            Menu := User.Menu_Create (User.User, Event);
+            Show_All (Menu);
+            Popup (Menu,
+                   Button        => Gdk.Event.Get_Button (Event),
+                   Activate_Time => Gdk.Event.Get_Time (Event));
+            Emit_Stop_By_Name (Widget, "button_press_event");
+            return True;
+         end if;
+         return False;
+      end Button_Press_For_Contextual_Menu;
+
+      ------------------------------
+      -- Register_Contextual_Menu --
+      ------------------------------
+
+      procedure Register_Contextual_Menu
+        (Widget      : access Gtk.Widget.Gtk_Widget_Record'Class;
+         User        : User_Data;
+         Menu_Create : Contextual_Menu_Create) is
+      begin
+         Add_Events (Widget, Button_Press_Mask or Button_Release_Mask);
+         Contextual_Callback.Connect
+           (Widget, "button_press_event",
+            Contextual_Callback.To_Marshaller
+            (User_Contextual_Menus.Button_Press_For_Contextual_Menu'
+              Unrestricted_Access),
+            (Menu_Create => Menu_Create, User => User));
+      end Register_Contextual_Menu;
+   end User_Contextual_Menus;
+
 end GUI_Utils;
