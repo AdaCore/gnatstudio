@@ -822,4 +822,34 @@ package body Scenario_Selectors is
       return Result;
    end Current;
 
+   --------------------------
+   -- Get_Current_Scenario --
+   --------------------------
+
+   function Get_Current_Scenario (Variables : Prj_API.Project_Node_Array)
+      return GNAT.OS_Lib.Argument_List
+   is
+      Values : Argument_List (Variables'Range);
+   begin
+      for V in Values'Range loop
+         String_To_Name_Buffer (External_Reference_Of (Variables (V)));
+         Values (V) := new String'(Get_String (Value_Of (Name_Find)));
+      end loop;
+      return Values;
+   end Get_Current_Scenario;
+
+   ---------------------
+   -- Set_Environment --
+   ---------------------
+
+   procedure Set_Environment
+     (Variables : Prj_API.Project_Node_Array;
+      Values    : GNAT.OS_Lib.Argument_List) is
+   begin
+      for V in Variables'Range loop
+         Add (Get_String (External_Reference_Of (Variables (V))),
+              Values (V).all);
+      end loop;
+   end Set_Environment;
+
 end Scenario_Selectors;

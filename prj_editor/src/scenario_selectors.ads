@@ -97,7 +97,7 @@ package Scenario_Selectors is
 
    function Start (Selector : access Scenario_Selector_Record'Class)
       return Scenario_Iterator;
-   --  Return a new iterator that will iterate over all the selected projects
+   --  Return a new iterator that will iterate over all the selected scenarios
    --  in Selector.
 
    function Has_Multiple_Scenario (Iter : Scenario_Iterator) return Boolean;
@@ -114,6 +114,18 @@ package Scenario_Selectors is
    --  Return the current scenario. The order of the variables is the same as
    --  in Glide_Kernel.Scenario_Variables.
    --  The returned value must be freed by the caller.
+
+   function Get_Current_Scenario (Variables : Prj_API.Project_Node_Array)
+      return GNAT.OS_Lib.Argument_List;
+   --  Return the current values of the environment variables in Variables.
+   --  The returned array must be freed by the caller.
+
+   procedure Set_Environment
+     (Variables : Prj_API.Project_Node_Array;
+      Values    : GNAT.OS_Lib.Argument_List);
+   --  Set the value of each variable described in Variables to the value at
+   --  the matching index in Values. This directly modifies the environment
+   --  variables. Values can be the result of Current above.
 
 
 private
