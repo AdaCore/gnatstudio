@@ -166,11 +166,6 @@ package body Glide_Kernel.Help is
    begin
       Trace (Me, "url requested: " & Url);
 
-      if not Is_Regular_File (Url) then
-         Insert (Html.Kernel, Url & (-": File not found"), Mode => Error);
-         return;
-      end if;
-
       if Is_Absolute_Path (Url) then
          Buffer := Read_File (Url);
       else
@@ -186,6 +181,8 @@ package body Glide_Kernel.Help is
       if Buffer /= null then
          Stream_Write (Stream, Buffer.all);
          Free (Buffer);
+      else
+         Insert (Html.Kernel, Url & (-": File not found"), Mode => Error);
       end if;
 
    exception
