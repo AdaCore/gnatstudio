@@ -647,6 +647,10 @@ package body Variable_Editors is
       end loop;
 
       Destroy (Edit);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Add_Variable;
 
 end Variable_Editors;
