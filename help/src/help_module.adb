@@ -497,12 +497,23 @@ package body Help_Module is
       Params : Glib.Values.GValues;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Object);
-      Url : constant String := Get_String (Nth (Params, 1));
+      Html : constant Help_Browser := Help_Browser (Object);
+      Url  : constant String := Get_String (Nth (Params, 1));
 
    begin
       Trace (Me, "Link_Clicked: " & Url);
-      Open_Html (Kernel, Url);
+
+      if Is_Absolute_Path (Url) then
+         Open_Html (Kernel, Url);
+
+      elsif Url (Url'First) = '#' then
+         Open_Html (Kernel, Html.Current_Help_File.all & Url);
+
+      else
+         Open_Html
+           (Kernel, Normalize_Pathname
+            (Url, Directory => Dir_Name (Html.Current_Help_File.all)));
+      end if;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
