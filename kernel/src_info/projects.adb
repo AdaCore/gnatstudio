@@ -1216,7 +1216,7 @@ package body Projects is
       if Root_Project.Data.Imported_Projects = null then
          Root_Project.Data.Imported_Projects := new Name_Id_Array'
            (Topological_Sort (Root_Project.Node));
-         Trace (Me, "Start: recomputing dependencies for "
+         Trace (Me, "Start: compute deps for "
                 & Project_Name (Root_Project));
 
          --  Trace (Me, "Start: " & Project_Name (Root_Project));
@@ -1304,7 +1304,7 @@ package body Projects is
                    & Project_Name (Root_Project));
          end if;
 
-         Trace (Me, "Start: recomputing parent dependencies for "
+         Trace (Me, "Start: compute parent depends for "
                 & Project_Name (Project));
 
          declare
