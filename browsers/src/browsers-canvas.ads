@@ -35,7 +35,6 @@ with Gtk.Stock;
 with Gtk.Widget;
 with Pango.Layout;
 with Ada.Unchecked_Deallocation;
-with GNAT.Strings;
 with GNAT.OS_Lib;
 
 package Browsers.Canvas is
@@ -114,6 +113,9 @@ package Browsers.Canvas is
    --  need.
    --  Should return True if the event was handled, False otherwise. In the
    --  latter case, the even is transmitted to the parent area
+
+   type Active_Area_Cb_Array is array (Natural range <>) of Active_Area_Cb;
+   Empty_Cb_Array : constant Active_Area_Cb_Array;
 
    procedure Destroy (Callback : in out Active_Area_Callback);
    --  Destroy the callback
@@ -323,14 +325,23 @@ package Browsers.Canvas is
    procedure Add_Line
      (List     : in out Xref_List;
       Str      : String;
-      Length1  : Natural        := Natural'Last;
-      Callback : Active_Area_Cb := null);
+      Length1  : Natural              := Natural'Last;
+      Callback : Active_Area_Cb_Array := Empty_Cb_Array);
    --  Add a new line that will be displayed in a layout.
-   --  Str can contain one substring delimited by @...@. When the user
-   --  clicks on that zone, Callback will be called. It must be UTF8-encoded.
+   --  Str can contain any number of substrings delimited by @...@. When the
+   --  user clicks on that zone, the matching callback will be called. It must
+   --  be UTF8-encoded.
    --  Length1 is the number of characters in the first column. The first
    --  character in the second column will always be aligned. Set to
    --  Natural'Last if there is only one column.
+
+   procedure Expand_Line
+     (List     : in out Xref_List;
+      Num      : Positive;
+      Str      : String;
+      Callback : Active_Area_Cb_Array := Empty_Cb_Array);
+   --  Add some contents to an existing line.
+   --  A new line is appended if there is no such line already.
 
    procedure Display_Lines
      (Item          : access Browser_Item_Record'Class;
@@ -365,11 +376,13 @@ package Browsers.Canvas is
    procedure Get_Line
      (List     : Xref_List;
       Num      : Positive;
+      Num_In_Line : Positive := 1;
       Callback : out Active_Area_Cb;
       Text     : out GNAT.OS_Lib.String_Access);
-   --  Return the contents of the Nth line in List. Text is set to null if
-   --  there is no such line.
-   --  Do not free Text
+   --  Return the contents of the Nth line in the list in Text. This is set to
+   --  null if there is no such line. Do not free Text.
+   --  It also returns the num_in_line-th link in this line in Callback or null
+   --  if there is no such callback
 
    procedure Remove_Line (List : in out Xref_List; Num : Positive);
    --  Remove the Nth line from List
@@ -574,22 +587,26 @@ private
       Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  See doc for inherited Call
 
-   type Active_Area_Cb_Array is array (Natural range <>) of Active_Area_Cb;
    type Active_Area_Cb_Array_Access is access Active_Area_Cb_Array;
-   type Natural_Array is array (Natural range <>) of Natural;
-   type Natural_Array_Access is access Natural_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Active_Area_Cb_Array, Active_Area_Cb_Array_Access);
+
+   Empty_Cb_Array : constant Active_Area_Cb_Array (1 .. 0) := (others => null);
+
+   type Xref_Line is record
+      Text      : GNAT.OS_Lib.String_Access;
+      Callbacks : Active_Area_Cb_Array_Access;
+      Length    : Natural;
+   end record;
+   type Xref_Line_Array is array (Natural range <>) of Xref_Line;
+   type Xref_Line_Array_Access is access Xref_Line_Array;
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Natural_Array, Natural_Array_Access);
+     (Xref_Line_Array, Xref_Line_Array_Access);
 
    type Xref_List is record
-      Lines      : GNAT.Strings.String_List_Access;
-      Callbacks  : Active_Area_Cb_Array_Access;
-      Lengths    : Natural_Array_Access;
+      Lines      : Xref_Line_Array_Access;
    end record;
 
    pragma Inline (Get_Canvas);
