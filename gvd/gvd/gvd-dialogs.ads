@@ -169,6 +169,10 @@ package Odd.Dialogs is
    --  a variable name or a generic expression (to be displayed with
    --  "graph print `...`")
 
+   procedure Freeze (Dialog : History_Dialog_Access);
+   procedure Thaw (Dialog : History_Dialog_Access);
+   --  These procedures are used to lock the list of commands.
+
 private
    type Odd_Dialog_Record is new Gtk_Dialog_Record with record
       Main_Window     : Gtk_Window;
@@ -204,6 +208,8 @@ private
       Window : Gtk_Window;
       --  This is in fact the main debug window.
 
+      Freeze_Count : Integer;
+      --  Used to lock the History_Dialog while replaying commands.
    end record;
 
 end Odd.Dialogs;
