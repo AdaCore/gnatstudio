@@ -38,24 +38,10 @@ package GVD.Explorer is
    type Explorer_Record is new Gtk.Ctree.Gtk_Ctree_Record with private;
    type Explorer_Access is access all Explorer_Record'Class;
 
-   type Position_Type is new Natural;
-   --  Indicates the position in a file.
-   --  Note that these positions are relative to the real contents of the
-   --  editor, not necessarily the positions visible to the user (which
-   --  might be different because of ASCII.HT handling)
-
    procedure Gtk_New
      (Explorer    : out Explorer_Access;
       Code_Editor : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Create a new explorer
-
-   procedure Configure
-     (Explorer : access Explorer_Record;
-      TTY_Mode : Boolean);
-   --  Configure Explorer.
-   --  TTY_Mode is True when GVD is launched with TTY emulation, in which case
-   --  the explorer will try to send file position instructions when browsing
-   --  files.
 
    procedure Add_File_Node
      (Tree      : access Explorer_Record;

@@ -47,7 +47,7 @@ with GVD.Code_Editors;      use GVD.Code_Editors;
 with GVD.Pixmaps;           use GVD.Pixmaps;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
-with GVD.Source_Editors;    use GVD.Source_Editors;
+with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Strings;           use GVD.Strings;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
@@ -158,17 +158,6 @@ package body GVD.Explorer is
    --  the user can expand its contents. The contents (entities,...) is
    --  calculated lazily only the first time the user wants to see it.
    --  Data is the user_data associated with To_Node.
-
-   ---------------
-   -- Configure --
-   ---------------
-
-   procedure Configure
-     (Explorer : access Explorer_Record;
-      TTY_Mode : Boolean) is
-   begin
-      Explorer.TTY_Mode := TTY_Mode;
-   end Configure;
 
    -------------
    -- Gtk_New --
@@ -359,13 +348,6 @@ package body GVD.Explorer is
            (Get_Source (Code_Editor (Explorer.Code_Editor)),
             Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node));
 
-         if Explorer.TTY_Mode then
-            Print_File_Location
-              (Find_File (Tab.Debugger, Data.Extension),
-               Get_Buffer (Get_Source (Code_Editor (Explorer.Code_Editor))), 0,
-               Natural (Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node)));
-         end if;
-
       --  Else if a file was selected
 
       else
@@ -390,11 +372,6 @@ package body GVD.Explorer is
             else
                Set_Line (Code_Editor (Explorer.Code_Editor), Line,
                          Set_Current => False);
-            end if;
-
-            if Explorer.TTY_Mode then
-               Print_File_Location
-                 (Find_File (Tab.Debugger, Data.Extension), null, Line, 0);
             end if;
          end if;
       end if;
