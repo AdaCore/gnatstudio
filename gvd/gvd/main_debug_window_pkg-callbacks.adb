@@ -815,13 +815,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
             if Get_Active (Top.Call_Stack) then
                --  Put back the canvas into the data/editor paned.
-               Ref (Process.Data_Scrolledwindow);
                Parent :=
                  Gtk_Container (Get_Parent (Process.Data_Scrolledwindow));
-               Remove (Parent, Process.Data_Scrolledwindow);
-               Add (Process.Data_Paned, Process.Data_Scrolledwindow);
-               Unref (Process.Data_Scrolledwindow);
-
+               Reparent (Process.Data_Scrolledwindow, Process.Data_Paned);
                Add (Parent, Process.Data_Paned);
                Unref (Process.Data_Paned);
             else
@@ -829,11 +825,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Ref (Process.Data_Paned);
                Parent := Gtk_Container (Get_Parent (Process.Data_Paned));
                Remove (Parent, Process.Data_Paned);
-
-               Ref (Process.Data_Scrolledwindow);
-               Remove (Process.Data_Paned, Process.Data_Scrolledwindow);
-               Add (Parent, Process.Data_Scrolledwindow);
-               Show_All (Process.Data_Scrolledwindow);
+               Reparent (Process.Data_Scrolledwindow, Parent);
             end if;
          end if;
       end loop;
