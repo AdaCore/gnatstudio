@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -54,9 +54,9 @@ package DB_API is
    --  ("data base thang" in terms of SN team).
 
    type Pair is record
-      Key    : Interfaces.C.Strings.chars_ptr;
-      Data   : Interfaces.C.Strings.chars_ptr;
-      DBI    : Integer;
+      Key  : Interfaces.C.Strings.chars_ptr;
+      Data : Interfaces.C.Strings.chars_ptr;
+      DBI  : Integer;
    end record;
    --  Type for key/data pair retrieved from database by Get_Pair
    --  operation.
@@ -120,9 +120,9 @@ package DB_API is
    --    Previous key/data pair, if Movement is Prev.
    --    Next key/data pair, where key is satisfying conditions set by
    --    Set_Cursor operations, if Movement is Next_By_Key.
-   --  Returns null if there are no key/data pairs more.
+   --  Set Result to No_Pair if there are no key/data pairs more.
    --  If Movement is Next_By_Key and cursor was not set by Set_Cursor
-   --  with Position = By_Key then Get_Pair returns null;
+   --  with Position = By_Key then Get_Pair set Result to No_Pair;
    --  Throws DB_Error if DB was not opened or error occurred.
 
    procedure CSF_Init (Str : Interfaces.C.Strings.chars_ptr; Result : out CSF);
