@@ -115,12 +115,6 @@ package body Project_Properties is
       File   : String);
    --  Add a new file entry in the list of main units.
 
-   function Is_Equal
-     (List1, List2   : Argument_List;
-      Case_Sensitive : Boolean := True) return Boolean;
-   --  Return True if List1 has the same contents of List2 (no matter the order
-   --  of the strings in both arrays).
-
    -------------
    -- Gtk_New --
    -------------
@@ -194,8 +188,7 @@ package body Project_Properties is
       Table, Lang  : Gtk_Table;
       Languages : String_Array := Known_Languages
         (Get_Language_Handler (Kernel));
-      Project_Languages : Argument_List :=
-        Get_Attribute_Value (Project_View, Languages_Attribute);
+      Project_Languages : Argument_List :=  Get_Languages (Project_View);
       Ent     : Gtk_GEntry;
       Box     : Gtk_Box;
       Bbox    : Gtk_Vbutton_Box;
@@ -426,44 +419,6 @@ package body Project_Properties is
       end if;
    end Browse_Location;
 
-   --------------
-   -- Is_Equal --
-   --------------
-
-   function Is_Equal
-     (List1, List2   : Argument_List;
-      Case_Sensitive : Boolean := True) return Boolean is
-   begin
-      if List1'Length /= List2'Length then
-         return False;
-
-      else
-         declare
-            L1 : Argument_List := List1;
-            L2 : Argument_List := List2;
-         begin
-            for A in L1'Range loop
-               for B in L2'Range loop
-                  if L2 (B) /= null and then
-                    ((Case_Sensitive and then L1 (A).all = L2 (B).all)
-                     or else
-                     (not Case_Sensitive
-                      and then To_Lower (L1 (A).all) =
-                               To_Lower (L2 (B).all)))
-                  then
-                     L1 (A) := null;
-                     L2 (B) := null;
-                     exit;
-                  end if;
-               end loop;
-            end loop;
-
-            return L1 = (L1'Range => null)
-              and then L2 = (L2'Range => null);
-         end;
-      end if;
-   end Is_Equal;
-
    ---------------------
    -- Edit_Properties --
    ---------------------
@@ -475,8 +430,7 @@ package body Project_Properties is
       Editor  : Properties_Editor;
       Changed : Boolean := False;
       Project : Project_Node_Id;
-      Project_Languages : Argument_List :=
-        Get_Attribute_Value (Project_View, Languages_Attribute);
+      Project_Languages : Argument_List := Get_Languages (Project_View);
       Num_Languages : Natural;
       Languages : String_Array := Known_Languages
         (Get_Language_Handler (Kernel));
