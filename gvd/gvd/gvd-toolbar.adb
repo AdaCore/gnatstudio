@@ -52,7 +52,8 @@ package body GVD.Toolbar is
          Tooltip_Text => -"Start the debugged program",
          Icon => Gtk_Widget (Create_Pixmap (run_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Run'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Run'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -62,7 +63,8 @@ package body GVD.Toolbar is
            (-"stopping at the beginning of the main procedure"),
          Icon => Gtk_Widget (Create_Pixmap (start_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Start'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Start'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -71,7 +73,8 @@ package body GVD.Toolbar is
            -"Step program until it reaches a different source line",
          Icon => Gtk_Widget (Create_Pixmap (step_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Step'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Step'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -79,7 +82,8 @@ package body GVD.Toolbar is
          Tooltip_Text => -"Step one instruction exactly",
          Icon => Gtk_Widget (Create_Pixmap (stepi_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Step_Instruction'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Step_Instruction'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -87,7 +91,8 @@ package body GVD.Toolbar is
          Tooltip_Text => -"Step program, proceeding through subroutine calls",
          Icon => Gtk_Widget (Create_Pixmap (next_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Next'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Next'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -96,7 +101,8 @@ package body GVD.Toolbar is
            -"Step one instruction, but proceed through subroutine calls",
          Icon => Gtk_Widget (Create_Pixmap (nexti_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Next_Instruction'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Next_Instruction'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -104,7 +110,8 @@ package body GVD.Toolbar is
          Tooltip_Text => -"Execute until selected stack frame returns",
          Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Finish'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Finish'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -113,7 +120,8 @@ package body GVD.Toolbar is
            -"Continue program being debugged, after signal or breakpoint",
          Icon => Gtk_Widget (Create_Pixmap (cont_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Continue'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Continue'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -121,7 +129,8 @@ package body GVD.Toolbar is
          Tooltip_Text => -"Select and print stack frame that called this one",
          Icon => Gtk_Widget (Create_Pixmap (up_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Up'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Up'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -129,7 +138,8 @@ package body GVD.Toolbar is
          Tooltip_Text => -"Select and print stack frame called by this one",
          Icon => Gtk_Widget (Create_Pixmap (down_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Down'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Down'Access), Window);
       Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
@@ -137,7 +147,8 @@ package body GVD.Toolbar is
          Tooltip_Text => -"Interrupt debugged program",
          Icon => Gtk_Widget (Create_Pixmap (interrupt_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Button, "clicked", On_Interrupt'Access, Window);
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Interrupt'Access), Window);
 
       return Toolbar;
    end Create_Toolbar;
@@ -146,10 +157,7 @@ package body GVD.Toolbar is
    -- On_Run --
    ------------
 
-   procedure On_Run
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Run (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -161,10 +169,7 @@ package body GVD.Toolbar is
    -- On_Start --
    --------------
 
-   procedure On_Start
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Start (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -176,10 +181,7 @@ package body GVD.Toolbar is
    -- On_Step --
    -------------
 
-   procedure On_Step
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Step (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -191,10 +193,7 @@ package body GVD.Toolbar is
    -- On_Step_Instruction --
    -------------------------
 
-   procedure On_Step_Instruction
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Step_Instruction (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -206,10 +205,7 @@ package body GVD.Toolbar is
    -- On_Next --
    -------------
 
-   procedure On_Next
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Next (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -221,10 +217,7 @@ package body GVD.Toolbar is
    -- On_Next_Instruction --
    -------------------------
 
-   procedure On_Next_Instruction
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Next_Instruction (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -236,10 +229,7 @@ package body GVD.Toolbar is
    -- On_Finish --
    ---------------
 
-   procedure On_Finish
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Finish (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -251,10 +241,7 @@ package body GVD.Toolbar is
    -- On_Continue --
    -----------------
 
-   procedure On_Continue
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Continue (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -266,10 +253,7 @@ package body GVD.Toolbar is
    -- On_Up --
    -----------
 
-   procedure On_Up
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Up (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -281,10 +265,7 @@ package body GVD.Toolbar is
    -- On_Down --
    -------------
 
-   procedure On_Down
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Down (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
@@ -296,10 +277,7 @@ package body GVD.Toolbar is
    -- On_Interrupt --
    ------------------
 
-   procedure On_Interrupt
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
+   procedure On_Interrupt (Object : access Gtk_Widget_Record'Class) is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab = null or else Tab.Debugger = null then
