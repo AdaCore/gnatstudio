@@ -93,14 +93,15 @@ package body Src_Info.CPP is
 
    type To_Handler is access procedure (Ref : TO_Table);
 
-   --  procedure Fu_To_Gv_Handler (Ref : TO_Table);
+   procedure Fu_To_Gv_Handler (Ref : TO_Table);
 
    -------------------
    --  To_Handlers  --
    -------------------
 
    Fu_To_Handlers : array (Symbol_Type) of To_Handler :=
-     (others => null);
+     (GV     => Fu_To_Gv_Handler'Access,
+      others => null);
 
    function Ext (S : String) return String;
    --  Used to fill Table_Type_To_Ext array
@@ -130,6 +131,7 @@ package body Src_Info.CPP is
       GV     => Ext ("gv"),
       E      => Ext ("e"),
       EC     => Ext ("ec"),
+      TO     => Ext ("to"),
       IV     => Ext ("iv"),
       others => Ext (""));
 
@@ -643,7 +645,7 @@ package body Src_Info.CPP is
    procedure Sym_MA_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_IV_Handler      (Sym : FIL_Table) is separate;
 
-   --  procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
+   procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
 
 end Src_Info.CPP;
 
