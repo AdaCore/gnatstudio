@@ -312,6 +312,86 @@ package body Glide_Result_View is
      (Widget : access Gtk_Widget_Record'Class);
    --  Callback for the activation of the sort contextual menu item.
 
+   -----------
+   -- Hooks --
+   -----------
+
+   type File_Edited_Hook_Record is new Hook_Args_Record with record
+      View : Result_View;
+   end record;
+   type File_Edited_Hook is access File_Edited_Hook_Record'Class;
+   procedure Execute
+     (Hook   : File_Edited_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
+   --  Callback for the "file_edited" hook.
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Hook   : File_Edited_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
+   is
+      View : Result_View renames Hook.View;
+      File : constant VFS.Virtual_File := File_Hooks_Args (Data).File;
+
+
+      Category_Iter : Gtk_Tree_Iter;
+      File_Iter     : Gtk_Tree_Iter;
+      Line_Iter     : Gtk_Tree_Iter;
+   begin
+      --  Loop on the files in the result view and highlight lines as
+      --  necessary.
+
+
+      Category_Iter := Get_Iter_First (View.Tree.Model);
+
+      while Category_Iter /= Null_Iter loop
+         File_Iter := Children (View.Tree.Model, Category_Iter);
+
+         while File_Iter /= Null_Iter loop
+            if File = Create
+              (Full_Filename => Get_String
+                 (View.Tree.Model, File_Iter, Absolute_Name_Column))
+            then
+               --  The file which has just been opened was in the locations
+               --  view, highlight lines as necessary.
+               Line_Iter := Children (View.Tree.Model, File_Iter);
+
+               while Line_Iter /= Null_Iter loop
+                  Highlight_Line
+                    (Kernel,
+                     File,
+                     Integer
+                       (Get_Int (View.Tree.Model, Line_Iter, Line_Column)),
+                     Integer
+                       (Get_Int (View.Tree.Model, Line_Iter, Column_Column)),
+                     Integer
+                       (Get_Int (View.Tree.Model, Line_Iter, Length_Column)),
+                     Get_String
+                       (View.Tree.Model,
+                        File_Iter,
+                        Highlight_Category_Column));
+
+                  Next (View.Tree.Model, Line_Iter);
+               end loop;
+            end if;
+
+            Next (View.Tree.Model, File_Iter);
+         end loop;
+
+         Next (View.Tree.Model, Category_Iter);
+      end loop;
+
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Execute;
+
    -----------------
    -- Idle_Redraw --
    -----------------
@@ -1231,6 +1311,8 @@ package body Glide_Result_View is
    is
       Scrolled : Gtk_Scrolled_Window;
       Success  : Boolean;
+
+      File_Hook : File_Edited_Hook;
    begin
       Initialize_Hbox (View);
 
@@ -1278,6 +1360,14 @@ package body Glide_Result_View is
          View,
          Module,
          Context_Func'Access);
+
+      File_Hook := new File_Edited_Hook_Record;
+      File_Hook.View := Result_View (View);
+      Add_Hook
+        (View.Kernel,
+         Glide_Kernel.File_Edited_Hook,
+         File_Hook,
+         Watch => GObject (View));
    end Initialize;
 
    ---------------------
