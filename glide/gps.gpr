@@ -60,4 +60,13 @@ project GPS is
 
    package IDE renames Shared.IDE;
 
+   package Linker is
+      case OS is
+         when Windows_NT =>
+            for Default_Switches ("Ada") use ("-luser32");
+         when unix =>
+            null;
+      end case;
+   end Linker;
+
 end GPS;
