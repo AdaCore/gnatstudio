@@ -201,6 +201,7 @@ package body Odd.Dialogs.Callbacks is
       type List_Link is access List_Node;
       type List_Node is record
          Command : Odd.Types.String_Access;
+         Number  : Gint;
          Next    : List_Link;
       end record;
 
@@ -223,18 +224,52 @@ package body Odd.Dialogs.Callbacks is
       First_Item : List_Link;
 
    begin
-      while Selected /= Null_List loop
-         if First_Item = null then
-            First_Item := new List_Node;
-            New_List := First_Item;
-         else
-            New_List.Next := new List_Node;
-            New_List := New_List.Next;
-         end if;
 
-         New_List.Command :=
-           new String' (Get (Gtk_Label (Get_Data (Children (Gtk_Container
-             (Get_Data (Selected)))))));
+      --  Processing the first command might provoke an Update on that widget,
+      --  which will discard the selection. Therefore, we must build a list of
+      --  commands to be sent prior to sending them.
+
+      --  Elements are inserted in this list with respect to their position in
+      --  the main list.
+
+      while Selected /= Null_List loop
+
+         declare
+            Previous : List_Link := null;
+            Buffer   : List_Link := null;
+            Current  : List_Link := First_Item;
+            N        : Gint := Child_Position (List, Get_Data (Selected));
+         begin
+            Buffer := new List_Node;
+            Buffer.Command := new String'
+              (Get (Gtk_Label
+                     (Get_Data
+                       (Children (Gtk_Container (Get_Data (Selected)))))));
+            Buffer.Number := N;
+            Buffer.Next := null;
+
+            if First_Item = null then
+               First_Item := Buffer;
+            else
+               while Current /= null
+                 and then Current.Number < N
+               loop
+                  Previous := Current;
+                  Current := Current.Next;
+               end loop;
+
+               if Previous = null then
+                  Buffer.Next := Current;
+                  First_Item := Buffer;
+               elsif Current = null then
+                  Previous.Next := Buffer;
+               else
+                  Buffer.Next := Current;
+                  Previous.Next := Buffer;
+               end if;
+            end if;
+         end;
+
          Selected := Prev (Selected);
       end loop;
 
@@ -251,8 +286,6 @@ package body Odd.Dialogs.Callbacks is
       end loop;
 
       Update (Top.History_Dialog, Gtk_Widget (Tab));
-      --  This does not take into account the fact that the selection can be
-      --  done in an arbitrary order ???
    end On_Replay_Selection_Clicked;
 
    -------------------------------
