@@ -1323,6 +1323,27 @@ package body Src_Info.Queries is
       function Check_Decl_File return E_Reference_List;
       --  Check the next declaration list in Iterator.LI
 
+      function Next_Reference (Ref : E_Reference_List) return E_Reference_List;
+      --  Return the next element in Ref that is a real reference to the entity
+
+      --------------------
+      -- Next_Reference --
+      --------------------
+
+      function Next_Reference (Ref : E_Reference_List)
+         return E_Reference_List
+      is
+         R : E_Reference_List := Ref;
+      begin
+         while R /= null loop
+            if Is_Real_Reference (R.Value.Kind) then
+               return R;
+            end if;
+            R := R.Next;
+         end loop;
+         return null;
+      end Next_Reference;
+
       ------------------------
       -- Check_Declarations --
       ------------------------
@@ -1336,7 +1357,7 @@ package body Src_Info.Queries is
             if Is_Same_Entity
               (D.Value.Declaration, Iterator.Entity)
             then
-               return D.Value.References;
+               return Next_Reference (D.Value.References);
             end if;
 
             D := D.Next;
@@ -1426,7 +1447,7 @@ package body Src_Info.Queries is
 
       --  If there are still some references
       if Iterator.References /= null then
-         Iterator.References := Iterator.References.Next;
+         Iterator.References := Next_Reference (Iterator.References.Next);
       end if;
 
       if Iterator.References = null then
@@ -1697,14 +1718,6 @@ package body Src_Info.Queries is
    is
       S : GNAT.OS_Lib.String_Access;
    begin
-      if Iterator.LI = Iterator.Decl_LI then
-         return
-           (File => Internal_File'
-              (File_Name => new String' (""),
-               LI_Name   => new String' (Iterator.Decl_LI.LI.LI_Filename.all)),
-            Dep => (False, False));
-      end if;
-
       if Iterator.Current_Decl.Value.Dep_Info.Depends_From_Spec
         and then Iterator.LI.LI.Spec_Info /= null
       then
@@ -1723,6 +1736,14 @@ package body Src_Info.Queries is
 
       else
          S := new String' ("");
+      end if;
+
+      if Iterator.LI = Iterator.Decl_LI then
+         return
+           (File => Internal_File'
+              (File_Name => S,
+               LI_Name   => new String' (Iterator.Decl_LI.LI.LI_Filename.all)),
+            Dep => (False, False));
       end if;
 
       return
