@@ -1,4 +1,4 @@
-project GNAT_GVD modifying "../gnat" is
+project GNAT_GVD extends "../gnat" is
 
   for Source_Dirs use ("gnat");
   for Object_Dir use "gnat";
