@@ -1782,7 +1782,11 @@ package body Src_Editor_Module is
                   The_Child := Get (Iterator);
 
                   while The_Child /= null loop
-                     if Get_Filename (The_Child) = "" then
+                     if The_Child /= Child
+                       and then Get_Widget (The_Child).all in
+                         Source_Box_Record'Class
+                       and then Get_Filename (The_Child) = ""
+                     then
                         Nb_Untitled := Nb_Untitled + 1;
                      end if;
 
@@ -2898,14 +2902,36 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      File : constant File_Selection_Context_Access :=
+      File     : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
+      Location : File_Location_Context_Access;
+      Line     : Natural;
+
    begin
       Trace (Me, "On_Edit_File: " & File_Information (File));
-      Open_File_Editor
-        (Get_Kernel (Context),
-         Directory_Information (File) & File_Information (File),
-         From_Path => False);
+
+      if File.all in File_Location_Context'Class then
+         Location := File_Location_Context_Access (File);
+
+         if Has_Line_Information (Location) then
+            Line := Line_Information (Location);
+         else
+            Line := 1;
+         end if;
+
+         Open_File_Editor
+           (Get_Kernel (Context),
+            Directory_Information (File) & File_Information (File),
+            Line      => Line,
+            Column    => Column_Information (Location),
+            From_Path => False);
+
+      else
+         Open_File_Editor
+           (Get_Kernel (Context),
+            Directory_Information (File) & File_Information (File),
+            From_Path => False);
+      end if;
 
    exception
       when E : others =>
