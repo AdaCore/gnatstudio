@@ -120,6 +120,7 @@ package body Source_Analyzer is
       P               : in out Natural;
       Num_Parens      : in out Integer;
       Line_Count      : in out Natural;
+      Tokens          : Token_Stack.Simple_Stack;
       Indents         : in out Indent_Stack.Simple_Stack;
       Num_Spaces      : Integer;
       Indent_Continue : Natural;
@@ -485,6 +486,7 @@ package body Source_Analyzer is
       P               : in out Natural;
       Num_Parens      : in out Integer;
       Line_Count      : in out Natural;
+      Tokens          : Token_Stack.Simple_Stack;
       Indents         : in out Indent_Stack.Simple_Stack;
       Num_Spaces      : Integer;
       Indent_Continue : Natural;
@@ -595,14 +597,36 @@ package body Source_Analyzer is
                Num_Parens := Num_Parens - 1;
 
             when '"' =>
-               Prev_Token := Tok_String_Literal;
-               P := Next_Char (P);
+               declare
+                  First : Natural := P;
+                  Len   : Natural;
+                  Val   : Token_Stack.Generic_Type_Access;
 
-               while P <= End_Of_Line
-                 and then Buffer (P) /= '"'
-               loop
+               begin
                   P := Next_Char (P);
-               end loop;
+
+                  while P <= End_Of_Line
+                    and then Buffer (P) /= '"'
+                  loop
+                     P := Next_Char (P);
+                  end loop;
+
+                  Val := Top (Tokens);
+
+                  if Val.Token in Token_Class_Declk
+                    and then Val.Ident_Len = 0
+                  then
+                     --  This is an operator symbol, e.g function ">=" (...);
+
+                     Prev_Token := Tok_Operator_Symbol;
+                     Len := P - First + 1;
+                     Val.Identifier (1 .. Len) := Buffer (First .. P);
+                     Val.Ident_Len := Len;
+
+                  else
+                     Prev_Token := Tok_String_Literal;
+                  end if;
+               end;
 
             when '&' | '+' | '-' | '*' | '/' | ':' | '<' | '>' | '=' |
                  '|' | '.'
@@ -1172,8 +1196,8 @@ package body Source_Analyzer is
       Push (Indents, None);
 
       Next_Word
-        (Buffer, New_Buffer, Prec, Num_Parens,
-         Line_Count, Indents, Indent_Continue, Num_Spaces,
+        (Buffer, New_Buffer, Prec, Num_Parens, Line_Count,
+         Tokens, Indents, Indent_Continue, Num_Spaces,
          Indent_Done, Prev_Token);
       Current := End_Of_Word (Buffer, Prec);
 
@@ -1268,8 +1292,8 @@ package body Source_Analyzer is
          Prec            := Current + 1;
          Prev_Token      := Token;
          Next_Word
-           (Buffer, New_Buffer, Prec, Num_Parens,
-            Line_Count, Indents, Indent_Continue, Num_Spaces,
+           (Buffer, New_Buffer, Prec, Num_Parens, Line_Count,
+            Tokens, Indents, Indent_Continue, Num_Spaces,
             Indent_Done, Prev_Token);
 
          Syntax_Error :=
