@@ -58,7 +58,8 @@ package body Commands.Builder is
       Category         : String;
       Warning_Category : String;
       Style_Category   : String;
-      Output           : String);
+      Output           : String;
+      Quiet            : Boolean := False);
    --  Parse the output of build engine and insert the result
    --    - in the GPS results view if it corresponds to a file location
    --    - in the GPS console if it is a general message.
@@ -71,12 +72,22 @@ package body Commands.Builder is
    ------------
 
    procedure Create
-     (Item : out Build_Command_Access;
-      Data : Process_Data)
+     (Item  : out Build_Command_Access;
+      Data  : Process_Data;
+      Quiet : Boolean := False;
+      Files : File_Array_Access := null)
    is
    begin
       Item := new Build_Command;
       Item.Data := Data;
+      Item.Quiet := Quiet;
+      Item.Files := Files;
+
+      if Quiet then
+         Item.Main_Error_Category := new String'(-Shadow_Category);
+      else
+         Item.Main_Error_Category := new String'(-Error_Category);
+      end if;
    end Create;
 
    ---------------------------
@@ -88,14 +99,24 @@ package body Commands.Builder is
       Category         : String;
       Warning_Category : String;
       Style_Category   : String;
-      Output           : String) is
+      Output           : String;
+      Quiet            : Boolean := False) is
    begin
-      Insert (Kernel, Output, Add_LF => False);
+      if not Quiet then
+         Insert (Kernel, Output, Add_LF => False);
+      end if;
+
       String_List_Utils.String_List.Append
         (Builder_Module_ID_Access (Builder_Module_ID).Output,
          Output);
       Parse_File_Locations
-        (Kernel, Output, Category, True, Style_Category, Warning_Category);
+        (Kernel,
+         Output,
+         Category,
+         True,
+         Style_Category,
+         Warning_Category,
+         Quiet => Quiet);
 
    exception
       when E : others =>
@@ -121,6 +142,20 @@ package body Commands.Builder is
             Free (Data.Descriptor);
          end if;
       end if;
+
+      --  Delete the associated files.
+
+      if D.Files /= null then
+         for J in D.Files'Range loop
+            if Is_Regular_File (D.Files (J)) then
+               Delete (D.Files (J));
+            end if;
+         end loop;
+
+         Unchecked_Free (D.Files);
+      end if;
+
+      Free (D.Main_Error_Category);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -209,10 +244,11 @@ package body Commands.Builder is
       if Buffer_Pos /= Buffer'First then
          Parse_Compiler_Output
            (Kernel,
-            -Error_Category,
+            Command.Main_Error_Category.all,
             -Warning_Category,
             -Style_Category,
-            Buffer (Buffer'First .. Buffer_Pos - 1));
+            Buffer (Buffer'First .. Buffer_Pos - 1),
+            Command.Quiet);
       end if;
 
       Free (Buffer);
@@ -224,28 +260,33 @@ package body Commands.Builder is
          if Buffer_Pos /= Buffer'First then
             Parse_Compiler_Output
               (Kernel,
-               -Error_Category,
+               Command.Main_Error_Category.all,
                -Warning_Category,
                -Style_Category,
-               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd));
+               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd),
+               Command.Quiet);
          end if;
 
          Free (Buffer);
          Parse_Compiler_Output
            (Kernel,
-            -Error_Category,
+            Command.Main_Error_Category.all,
             -Warning_Category,
             -Style_Category,
-            Expect_Out (Fd));
+            Expect_Out (Fd),
+            Command.Quiet);
          Close (Fd, Status);
 
-         if Status = 0 then
-            Console.Insert
-              (Kernel, ASCII.LF & (-"successful compilation/build"));
-         else
-            Console.Insert
-              (Kernel,
-               ASCII.LF & (-"process exited with status ") & Image (Status));
+         if not Command.Quiet then
+            if Status = 0 then
+               Console.Insert
+                 (Kernel, ASCII.LF & (-"successful compilation/build"));
+            else
+               Console.Insert
+                 (Kernel,
+                  ASCII.LF
+                  & (-"process exited with status ") & Image (Status));
+            end if;
          end if;
 
          Pop_State (Kernel);
