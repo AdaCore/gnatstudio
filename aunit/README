@@ -12,13 +12,9 @@ Build:
 
 Installation:
 
-1.  After building the three programs:
-
-aunit_make_harness
-aunit_make_suite
-aunit_make_test
-
-Move them into the gnat/bin directory.
+1.  After building the aunit_gui executable, copy it in the gnat/bin
+    directory.
 
 2.  When building test cases etc, aunit-1.01/aunit/* needs to be in the source
     and object paths.
+
