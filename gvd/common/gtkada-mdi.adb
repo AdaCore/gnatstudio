@@ -377,6 +377,8 @@ package body Gtkada.MDI is
       No_Signals : chars_ptr_array (1 .. 0) := (others => Null_Ptr);
    begin
       Gtk.Fixed.Initialize (MDI);
+      Set_Has_Window (MDI, True);
+
       Gtk.Object.Initialize_Class_Record
         (MDI,
          Signals      => No_Signals,
