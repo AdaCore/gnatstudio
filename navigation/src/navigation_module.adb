@@ -124,11 +124,11 @@ package body Navigation_Module is
       The_Command : Generic_Location_Command;
       N_Data : constant Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
-      Args : Argument_List (1 .. Number_Of_Arguments (Data) - 1);
+      Args : Argument_List (1 .. Number_Of_Arguments (Data));
 
    begin
-      for Index in 2 .. Number_Of_Arguments (Data) loop
-         Args (Index - 1) := new String'(Nth_Arg (Data, Index));
+      for Index in Args'Range loop
+         Args (Index) := new String'(Nth_Arg (Data, Index));
       end loop;
 
       Create (The_Command, Get_Kernel (Data), Args);
