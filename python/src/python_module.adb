@@ -33,6 +33,7 @@ with Python.Ada;               use Python.Ada;
 with Glide_Intl;               use Glide_Intl;
 with Gtk.Enums;                use Gtk.Enums;
 with Interfaces.C.Strings;     use Interfaces.C, Interfaces.C.Strings;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -583,6 +584,59 @@ package body Python_Module is
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel));
    end Register_Module;
+
+   -------------------------------
+   -- Load_Python_Startup_Files --
+   -------------------------------
+
+   procedure Load_Python_Startup_Files
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Dir : constant String := Get_Home_Dir (Kernel) & "python_startup";
+      D   : Dir_Type;
+      File : String (1 .. 1024);
+      Last : Natural;
+   begin
+      if Python_Module_Id = null then
+         return;
+      end if;
+
+      if Is_Directory (Dir) then
+         Trace (Me, "Load python files from " & Dir);
+
+         Run_Command
+           (Python_Module_Id.Script.Interpreter,
+            "sys.path=['" & Dir & "']+sys.path",
+            Hide_Output => True);
+
+         Open (D, Dir);
+
+         loop
+            Read (D, File, Last);
+            exit when Last = 0;
+
+            if File (1 .. Last) /= "."
+              and then File (1 .. Last) /= ".."
+              and then Last > 4 and then File (Last - 3 .. Last) /= ".pyc"
+            then
+               declare
+                  Cmd : constant String :=
+                    "import " & Base_Name (File (1 .. Last), ".py")
+                  & ASCII.LF;
+               begin
+                  Insert_Text (Python_Module_Id.Script.Interpreter, Cmd);
+                  Run_Command
+                    (Python_Module_Id.Script.Interpreter, Cmd,
+                     Hide_Output => False);
+               end;
+            end if;
+         end loop;
+
+         Close (D);
+      else
+         Make_Dir (Dir);
+      end if;
+   end Load_Python_Startup_Files;
 
    ---------------------------------
    -- Python_File_Command_Handler --
