@@ -451,10 +451,10 @@ package body GVD.Explorer is
                   Lang := Get_Language_From_File (Full_Name);
 
                   if Lang /= null then
-                     if Need_To_Strip_Control_M then
+                     if Get_Pref (Should_Strip_CR) then
                         Explore
                           (Explorer, Node, Explorer,
-                           Strip_Control_M (S), Lang, Full_Name);
+                           Strip_CR (S), Lang, Full_Name);
 
                      else
                         Explore (Explorer, Node, Explorer, S, Lang, Full_Name);
@@ -499,13 +499,9 @@ package body GVD.Explorer is
          Show_All (Explorer);
       end if;
 
-      --  This is a workaround for a horizontal scrollbar problem: When the
+      --  ??? This is a workaround for a horizontal scrollbar problem: When the
       --  ctree is put in a scrolled window, and if this is not called, the
       --  scrollbar does not allow us to scroll as far right as possible...
-      --  ??? Note that this is too expensive to call it during tree creating
-      --  when the tree contains lots of items since a complete tree traversal
-      --  is done for each item added. Instead, set the resize attribute
-      --  only after the first expand.
 
       Set_Column_Auto_Resize (Explorer, 0, True);
 
@@ -768,10 +764,8 @@ package body GVD.Explorer is
       List : GVD.Types.String_Array := Source_Files_List (Tab.Debugger);
 
    begin
-      Set_Column_Auto_Resize (Explorer, 0, False);
       Clear_Explorer (Explorer);
       Add_List_Of_Files (Explorer, List);
-      Set_Column_Auto_Resize (Explorer, 0, True);
       GVD.Types.Free (List);
    end On_Executable_Changed;
 
