@@ -50,23 +50,24 @@ package body Codefix_Module is
    procedure On_Fix
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-   --  ???
+   --  Fixes the error that is proposed on a Menu_Item of Codefix.
 
    procedure Codefix_Handler
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  ???
+   --  Creates and shows the Codefix window.
 
    procedure Codefix_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
-   --  ???
+   --  Check is the current location is a fixable error, and propose the fix
+   --  if possible.
 
    procedure Compilation_Finished_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
       Kernel  : Kernel_Handle);
-   --  ???
+   --  Initializes the fix list of Codefix.
 
    type GPS_Navigator is new Text_Navigator_Abstr with record
       Kernel : Kernel_Handle;
@@ -131,6 +132,16 @@ package body Codefix_Module is
    begin
       Free (Codefix_Module_ID.Errors_Found.all);
       Free (Codefix_Module_ID.Corrector.all);
+      Free (Codefix_Module_ID.Current_Text.all);
+      --  Free (Codefix_Module_ID.Errors_Found);
+      --  Free (Codefix_Module_ID.Corrector);
+      --  Free (Codefix_Module_ID.Current_Text);
+
+      Codefix_Module_ID.Errors_Found := new Compilation_Output;
+      Codefix_Module_ID.Corrector := new Correction_Manager;
+      Codefix_Module_ID.Current_Text := new GPS_Navigator;
+
+      GPS_Navigator (Codefix_Module_ID.Current_Text.all).Kernel := Kernel;
 
       Get_Last_Output
         (Compilation_Output
@@ -212,7 +223,8 @@ package body Codefix_Module is
 
          Error := Search_Error
            (Codefix_Module_ID.Corrector.all, Error_Caption.all);
-         if Error /= Null_Error_Id then
+
+         if Error /= Null_Error_Id and then not Is_Fixed (Error) then
             Solution_Node := First (Get_Solutions (Error));
 
             while Solution_Node /= Command_List.Null_Node loop
@@ -256,6 +268,7 @@ package body Codefix_Module is
       Codefix_Module_ID.Current_Text := new GPS_Navigator;
       Codefix_Module_ID.Errors_Found := new Compilation_Output;
       Codefix_Module_ID.Corrector := new Correction_Manager;
+
       GPS_Navigator (Codefix_Module_ID.Current_Text.all).Kernel :=
         Kernel_Handle (Kernel);
 
