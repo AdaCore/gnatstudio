@@ -903,12 +903,13 @@ package body VCS_View_Pkg is
    --------------------------
 
    function Get_Files_In_Project
-     (Project_View : Project_Id) return String_List.List
+     (Project_View : Project_Id;
+      Recursive    : Boolean := True) return String_List.List
    is
       Result  : String_List.List;
       Files   : String_Array_Access;
    begin
-      Files   := Get_Source_Files (Project_View, True);
+      Files   := Get_Source_Files (Project_View, Recursive);
 
       for J in reverse Files.all'Range loop
          String_List.Prepend (Result, Files.all (J).all);
