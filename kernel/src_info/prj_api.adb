@@ -186,12 +186,12 @@ package body Prj_API is
 
    function Get_String (Id : Types.Name_Id) return String is
    begin
-      if Id in Name_Entries.First .. Name_Entries.Last then
-         return Get_Name_String (Id);
-      else
-         Trace (Me, "Invalid string requested, returning null string instead");
+      return Get_Name_String (Id);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return "";
-      end if;
    end Get_String;
 
    --------------------
