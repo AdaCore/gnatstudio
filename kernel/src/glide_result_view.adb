@@ -32,6 +32,7 @@ with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Enums;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf; use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Widget;               use Gtk.Widget;
@@ -95,6 +96,7 @@ package body Glide_Result_View is
      return Gtk_Tree_Iter;
    --  Return the iter corresponding to Category, create it if
    --  necessary.
+   --  If File is "", then the category iter will be returned.
 
    procedure Fill_Iter
      (View          : access Result_View_Record'Class;
@@ -299,8 +301,22 @@ package body Glide_Result_View is
            Get_String (Model, Iter, Absolute_Name_Column);
       begin
          if File /= "" then
-            Open_File_Editor (View.Kernel, File, 0, 0);
-            File_Opened (View, File);
+            if not Is_Open (View.Kernel, File) then
+               declare
+                  Line   :  constant String :=
+                    Get_String (Model, Iter, Line_Column);
+                  Column :  constant String :=
+                    Get_String (Model, Iter, Column_Column);
+               begin
+                  Open_File_Editor
+                    (View.Kernel,
+                     File,
+                     Natural'Value (Line (Line'First + 1 .. Line'Last)),
+                     Natural'Value
+                       (Column (Column'First + 1 .. Column'Last)));
+                  File_Opened (View, File);
+               end;
+            end if;
          end if;
       end;
 
@@ -377,6 +393,10 @@ package body Glide_Result_View is
       if Iter = Null_Iter then
          Append (View.Model, Iter, Null_Iter);
          Fill_Iter (View, Iter, Category, "", "", "", "", "");
+      end if;
+
+      if File = "" then
+         return Iter;
       end if;
 
       Child := Children (View.Model, Iter);
@@ -521,6 +541,9 @@ package body Glide_Result_View is
       Set_Headers_Visible (View.Tree, False);
 
       Gtk_New (Scrolled);
+      Set_Policy
+        (Scrolled,
+         Gtk.Enums.Policy_Automatic, Gtk.Enums.Policy_Always);
       Add (Scrolled, View.Tree);
 
       Add (View, Scrolled);
@@ -556,7 +579,10 @@ package body Glide_Result_View is
       Source_File   : String;
       Source_Line   : Natural;
       Source_Column : Natural;
-      Message       : String) is
+      Message       : String;
+      Length        : Natural)
+   is
+      pragma Unreferenced (Length);
    begin
       --  Transform Source_File in an absolute file name if needed.
 
@@ -578,6 +604,23 @@ package body Glide_Result_View is
          end;
       end if;
    end Insert;
+
+   ---------------------
+   -- Remove_Category --
+   ---------------------
+
+   procedure Remove_Category
+     (View          : access Result_View_Record'Class;
+      Identifier    : String)
+   is
+      Iter : Gtk_Tree_Iter;
+   begin
+      Iter := Get_Category_File (View, Identifier, "");
+
+      if Iter /= Null_Iter then
+         Remove (View.Model, Iter);
+      end if;
+   end Remove_Category;
 
    ------------------
    -- Button_Press --
