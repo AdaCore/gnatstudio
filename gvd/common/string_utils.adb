@@ -487,7 +487,7 @@ package body GVD.Strings is
       for J in Result'Range loop
          if Path (J) = '/' then
             Result (J) := GNAT.OS_Lib.Directory_Separator;
-         else 
+         else
             Result (J) := Path (J);
          end if;
       end loop;
