@@ -48,7 +48,7 @@ package Docgen is
    function Compare_Elements (X, Y : Source_File_Information) return Boolean;
    procedure Sort_List_Name is
      new Sort (Type_Source_File_List, "<" => Compare_Elements);
-   --  sort elements by name (BUT: the spec files in front of body files)
+   --  sort elements by name (BUT: the spec file in front of body file)
 
    type Reference_List_Information is record
       File_Name       : GNAT.OS_Lib.String_Access;
@@ -135,6 +135,9 @@ package Docgen is
    --  when a new output format should be added
    type Doc_Info (Info_Type : Info_Types) is
       record
+
+         Process_Body : Boolean;
+
          case Info_Type is
 
                --  used to at the very beginning of the file
