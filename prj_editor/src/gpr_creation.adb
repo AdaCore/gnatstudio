@@ -662,9 +662,10 @@ package body GPR_Creation is
       Obj_Dirs        : Object_Directory_Info_Array (Object_Dirs'Range);
       Src_Files       : File_Htables.HTable;
       Obj_Files_Count : Natural;
-      Single_Obj_Dir  : Boolean;
+      Single_Obj_Dir, Tmp  : Boolean;
       Related_To      : Is_Related_To (Source_Dirs'Range, Object_Dirs'Range) :=
         (others => (others => False));
+      pragma Unreferenced (Tmp);
    begin
       Parse_Source_Dirs (Source_Dirs, Src_Files);
       Parse_Object_Dirs
@@ -713,7 +714,7 @@ package body GPR_Creation is
             Cross_Prefix      => Cross_Prefix,
             Spec_Extension    => Spec_Extension,
             Body_Extension    => Body_Extension);
-         Save_Project (Project);
+         Tmp := Save_Project (Project);
 
       else
          Single_Obj_Dir := Src_Dirs_Have_Unique_Obj_Dir (Related_To);
@@ -765,7 +766,7 @@ package body GPR_Creation is
                   Spec_Extension    => Spec_Extension,
                   Body_Extension    => Body_Extension);
 
-               Save_Project (Projects (P));
+               Tmp := Save_Project (Projects (P));
             end loop;
          end;
       end if;
