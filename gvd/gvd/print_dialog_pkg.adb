@@ -21,7 +21,6 @@
 with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Callbacks_Odd; use Callbacks_Odd;
 with Print_Dialog_Pkg.Callbacks; use Print_Dialog_Pkg.Callbacks;
 
 package body Print_Dialog_Pkg is
