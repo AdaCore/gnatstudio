@@ -1269,7 +1269,7 @@ package body Project_Explorers is
    begin
       if Node.Tag.all = "Project_Explorer" then
          Gtk_New (Explorer, User);
-         Refresh (GObject (User), GObject (Explorer));
+         Refresh (User, GObject (Explorer));
          return Gtk_Widget (Explorer);
       end if;
 
@@ -3135,6 +3135,7 @@ package body Project_Explorers is
         (Get_MDI (Kernel), Project_Explorer_Record'Tag);
       if Child = null then
          Gtk_New (Explorer, Kernel);
+         Refresh (Kernel, GObject (Explorer));
          Child := Put (Get_MDI (Kernel), Explorer);
          Set_Title (Child, -"Project Explorer");
          Set_Dock_Side (Child, Left);
