@@ -152,6 +152,24 @@ check_prj_editor: force
 	@[ -f ${PRJ_EDITOR_SRC}/src/wizards.ads ] || \
 	   (echo "prj editor sources not found in ${PRJ_EDITOR_SRC}, see README"; false)
 
+##########################
+## Source Editor module ##
+##########################
+
+ifneq (,$(findstring src_editor,$(MODULES)))
+
+# Location of src_editor sources. See the README file at the top-level for
+# information on how to setup the required links
+SRC_EDITOR_SRC=../../src_editor
+
+MODULE_INCLUDE+=-I${SRC_EDITOR_SRC}/src
+endif
+
+.PHONY: check_src_editor
+check_src_editor: force
+	@[ -f ${SRC_EDITOR_SRC}/src/src_editor.ads ] || \
+	   (echo "src editor sources not found in ${SRC_EDITOR_SRC}, see README"; false)
+
 ######################
 ## hypergrep module ##
 ######################
