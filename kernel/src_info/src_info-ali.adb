@@ -1170,6 +1170,8 @@ package body Src_Info.ALI is
       Col           : Natural := Natural (Xref_Ent.Col);
       Is_Operator   : constant Boolean := Ent (Ent'First) = '"';
 
+      List_Subprograms, List_Ref : E_Reference_List;
+
    begin
       if Is_Operator then
          Decl.Name := new String'(Ent (Ent'First + 1 .. Ent'Last - 1));
@@ -1263,10 +1265,19 @@ package body Src_Info.ALI is
          end loop Sect_Loop;
       end if;
 
-      --  ??? Note that in the part of this procedure that follows, we assume
-      --  that there is always at least one xref. To be verified.
-
       Current_Sfile := Sfile;
+
+      List_Subprograms := Decl_Info.Declaration.Primitive_Subprograms;
+
+      --  ??? Is this loop really needed, since we are processing a new entity
+      --  while List_Subprograms.Next /= null loop
+      --     List_Subprograms := List_Subprograms.Next;
+      --  end loop;
+
+      List_Ref := Decl_Info.References;
+      --  while List_Ref.Next /= null loop
+      --     List_Ref := List_Ref.Next;
+      --  end loop;
 
       --  We don't make a deep copy for Current_Sfile since it is
       --  a temporary variable used for context information but not
@@ -1277,67 +1288,85 @@ package body Src_Info.ALI is
          declare
             Current_Xref : Xref_Record renames Xref.Table (Xref_Id);
             E_Ref        : E_Reference;
-            List         : E_Reference_List;
          begin
             E_Ref.Kind := Char_To_R_Kind (Current_Xref.Rtype);
 
-            --  Set Kind before any other field, especially the source
-            --  file. If an exception is raised, we don't have to deallocate
-            --  the memory we just allocated.
+            --  ??? For the moment, we shall ignore the reference to the
+            --  instantiations. This generates invalid references in the
+            --  various such algorithms, and we do not have a good structure to
+            --  store them. The simple scheme of adding a File_Location field
+            --  to E_Reference goes from 50M to 60M on a "find all references"
+            --  to Object_Connect:gtk-handlers.ads:827
 
-            if Current_Xref.File_Num /= No_Sdep_Id then
-               Current_Sfile := Sfiles (Current_Xref.File_Num);
-            end if;
+            if E_Ref.Kind /= Instantiation_Reference then
+               --  Set Kind before any other field, especially the source
+               --  file. If an exception is raised, we don't have to deallocate
+               --  the memory we just allocated.
 
-            E_Ref.Location :=
-              (File   => Copy (Current_Sfile),
-               Line   => Positive (Current_Xref.Line),
-               Column => Natural (Current_Xref.Col));
-
-            --  Insert the new Xref in the list of references
-            --  (except if it is an end reference, in which case it is stored
-            --  in a special location)
-
-            if Is_End_Reference (E_Ref.Kind) then
-               Decl.End_Of_Scope := E_Ref;
-
-               --  For an operator, ignore the quotes
-               if Is_Operator then
-                  E_Ref.Location.Column := E_Ref.Location.Column + 1;
+               if Current_Xref.File_Num /= No_Sdep_Id then
+                  Current_Sfile := Sfiles (Current_Xref.File_Num);
                end if;
 
-            elsif (E_Ref.Kind = Primitive_Operation
-                   or else E_Ref.Kind = Overriding_Primitive_Operation)
-              and then Decl_Info.Declaration.Primitive_Subprograms = null
-            then
-               Decl_Info.Declaration.Primitive_Subprograms :=
-                 new E_Reference_Node'(Value => E_Ref, Next => null);
+               E_Ref.Location :=
+                 (File   => Copy (Current_Sfile),
+                  Line   => Positive (Current_Xref.Line),
+                  Column => Natural (Current_Xref.Col));
 
-            elsif (E_Ref.Kind /= Primitive_Operation
-                   and then E_Ref.Kind /= Overriding_Primitive_Operation)
-              and then Decl_Info.References = null
-            then
-               Decl_Info.References := new E_Reference_Node'
-                 (Value => E_Ref, Next => null);
-            else
-               --  Insert at the end, so that the result of
-               --  "Find_All_References" is properly sorted.
-               --  ??? Could optimize by keeping a pointer to the last element
+               --  Insert the new Xref in the list of references (except if it
+               --  is an end reference, in which case it is stored in a special
+               --  location)
 
-               if (E_Ref.Kind = Primitive_Operation
-                   or else E_Ref.Kind = Overriding_Primitive_Operation)
+               if Is_End_Reference (E_Ref.Kind) then
+                  Decl.End_Of_Scope := E_Ref;
+
+                  --  For an operator, ignore the quotes
+                  if Is_Operator then
+                     E_Ref.Location.Column := E_Ref.Location.Column + 1;
+                  end if;
+
+               elsif (E_Ref.Kind = Primitive_Operation
+                      or else E_Ref.Kind = Overriding_Primitive_Operation)
+                 and then Decl_Info.Declaration.Primitive_Subprograms = null
                then
-                  List := Decl_Info.Declaration.Primitive_Subprograms;
+                  Decl_Info.Declaration.Primitive_Subprograms :=
+                    new E_Reference_Node'(Value => E_Ref, Next => null);
+
+               elsif (E_Ref.Kind /= Primitive_Operation
+                      and then E_Ref.Kind /= Overriding_Primitive_Operation)
+                 and then Decl_Info.References = null
+               then
+                  Decl_Info.References := new E_Reference_Node'
+                    (Value => E_Ref, Next => null);
                else
-                  List := Decl_Info.References;
+                  --  Insert at the end, so that the result of
+                  --  "Find_All_References" is properly sorted.
+
+                  if (E_Ref.Kind = Primitive_Operation
+                      or else E_Ref.Kind = Overriding_Primitive_Operation)
+                  then
+                     if List_Subprograms = null then
+                        Decl_Info.Declaration.Primitive_Subprograms :=
+                          new E_Reference_Node'
+                          (Value => E_Ref, Next => null);
+                        List_Subprograms :=
+                          Decl_Info.Declaration.Primitive_Subprograms;
+                     else
+                        List_Subprograms.Next := new E_Reference_Node'
+                          (Value => E_Ref, Next => null);
+                        List_Subprograms := List_Subprograms.Next;
+                     end if;
+                  else
+                     if List_Ref = null then
+                        Decl_Info.References := new E_Reference_Node'
+                          (Value => E_Ref, Next => null);
+                        List_Ref := Decl_Info.References;
+                     else
+                        List_Ref.Next := new E_Reference_Node'
+                          (Value => E_Ref, Next => null);
+                        List_Ref := List_Ref.Next;
+                     end if;
+                  end if;
                end if;
-
-               while List.Next /= null loop
-                  List := List.Next;
-               end loop;
-
-               List.Next := new E_Reference_Node'
-                 (Value => E_Ref, Next => null);
             end if;
          end Xref_Block;
       end loop;
