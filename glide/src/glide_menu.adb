@@ -319,7 +319,7 @@ package body Glide_Menu is
    is
       File_Selector   : File_Selector_Window_Access;
    begin
-      Gtk_New (File_Selector, Get_Current_Dir, "Open Project");
+      Gtk_New (File_Selector, "/", Get_Current_Dir, "Open Project");
       Register_Filter (File_Selector, Prj_File_Filter);
 
       declare
