@@ -20,7 +20,7 @@
 
 with Gdk.Event;
 with Gdk.Window;
-with Gtkada.Canvas;
+with Gtk.Menu;
 
 with Src_Info;
 with Glide_Kernel;
@@ -33,7 +33,7 @@ package Browsers.Dependency_Items is
    ----------------
    --  These items represent source files from the application.
 
-   type File_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   type File_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
      with private;
    type File_Item is access all File_Item_Record'Class;
 
@@ -73,6 +73,13 @@ package Browsers.Dependency_Items is
    procedure Destroy (Item : in out File_Item_Record);
    --  Free the memory associated with the item
 
+   function Contextual_Factory
+     (Item  : access File_Item_Record;
+      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+   --  Return the context to use for this item
+
    ----------------------
    -- Dependency links --
    ----------------------
@@ -88,7 +95,7 @@ package Browsers.Dependency_Items is
 
 
 private
-   type File_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
+   type File_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
    with record
       Source : Src_Info.Internal_File;
       Kernel : Glide_Kernel.Kernel_Handle;

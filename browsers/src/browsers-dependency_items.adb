@@ -28,6 +28,7 @@ with Gtkada.Canvas;     use Gtkada.Canvas;
 with Src_Info;                 use Src_Info;
 with Src_Info.ALI;             use Src_Info.ALI;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel;             use Glide_Kernel;
 with Browsers.Canvas;          use Browsers.Canvas;
 with Browsers.Module;          use Browsers.Module;
@@ -225,5 +226,25 @@ package body Browsers.Dependency_Items is
    begin
       Destroy (Item.Source);
    end Destroy;
+
+   ------------------------
+   -- Contextual_Factory --
+   ------------------------
+
+   function Contextual_Factory
+     (Item  : access File_Item_Record;
+      Browser : access Glide_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+   is
+      Context : Selection_Context_Access := new File_Selection_Context;
+      Src        : Src_Info.Internal_File;
+   begin
+      Src := Get_Source (Item);
+      Set_File_Information
+        (File_Selection_Context_Access (Context),
+         File_Name => Get_Source_Filename (Src));
+      return Context;
+   end Contextual_Factory;
 
 end Browsers.Dependency_Items;
