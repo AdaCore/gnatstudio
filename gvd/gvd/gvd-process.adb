@@ -335,6 +335,7 @@ package body GVD.Process is
    is
       Top : constant Visual_Debugger := Visual_Debugger (Object);
    begin
+      Top.Interactive_Command := True;
       Process_User_Command (Top, Input, Mode => User);
       return "";
    end Interpret_Command_Handler;
@@ -731,6 +732,14 @@ package body GVD.Process is
 
       Process.Post_Processing := False;
       Free (Process.Current_Output);
+
+      --  Preserve the focus in the console for interactive execution
+      if Process.Interactive_Command then
+         Set_Focus_Child
+           (Find_MDI_Child
+              (Process.Window.Process_Mdi, Process.Debugger_Text));
+         Process.Interactive_Command := False;
+      end if;
    end Final_Post_Process;
 
    ------------------------------

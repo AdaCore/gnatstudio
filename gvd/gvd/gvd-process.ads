@@ -196,6 +196,10 @@ package GVD.Process is
       Current_File            : String_Access;
       --  The file containing the current location.
 
+      Interactive_Command    : Boolean := False;
+      --  True if the current command was typed manually by the user in the
+      --  console.
+
       Current_Line            : Integer := 0;
       --  The current line in Current_File.
    end record;
