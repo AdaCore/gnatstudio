@@ -1,7 +1,6 @@
 Known Problems fixed in GVD 1.2.0
 
 - Load a module on the debugger console does not update the explorer
-
   Problem:    When using the load or file command in the debugger console
               window, the source explorer is not updated.
 
@@ -9,7 +8,6 @@ Known Problems fixed in GVD 1.2.0
               "Reload Sources" in the explorer contextual menu.
 
 - Displaying list of tasks on a non running program.
-
   Problem:    Opening the menu Data->Tasks... will generate a bug box when the
               program being debugged has not been started or is terminated.
 
@@ -18,33 +16,37 @@ Known Problems fixed in GVD 1.2.0
 - [8715-002] Explorer does not handle files starting with no comment/blank line
   Problem:    GVD will generate a bug box when trying to open in the explorer
               window a package that starts with no blank or comment line.
+
   Workaround: Add a comment or blank line at the beginning of the package.
 
 - Parsing Ada exported variables in C
   Problem:    GVD will generate a bug box when trying to display in C mode
               a variable declared in Ada.
-  Workaround: Set the language to Ada before displaying the variable.
 
-Known Problems fixed in GVD 1.1.1
+  Workaround: Set the language to Ada before displaying the variable.
 
 - Parsing unconstrained Ada arrays
   Problem:    Some arrays are incorrectly displayed by GVD, and all the items
               appear to have an index equal to 0.
+
   Workaround: Try to display a slice of the array ("graph display A(2..5)")
 
 - Display the manual with no open debugger
   Problem:    It isn't possible to display the GVD manual (from the menu
               Help->Manual) when no debugger is currently open.
+
   Workaround: Open a new debugger with the menu Files->Open Debugger
 
 - Parsing C++ classes with virtual methods
   Problem:    When a class defines virtual methods, it has an extra invisible
               fields that breaks the display in the canvas.
+
   Workaround: Use the tooltips to examine the class
 
 - Parsing C++ classes with no field
   Problem:    Gvd isn't able to correctly parse C++ classes that do not define
               any new field, but only methods.
+
   Workaround: Use the tooltips to examine the class
 
 
@@ -139,6 +141,7 @@ Known Problems fixed in GVD 1.1.0
 
   Workaround: No workaround for this problem, fixed in GVD 1.1.0.
 
+
 Known Problems fixed in GVD 1.0.2
 
 - [8325-005] Interrupt button does not work under Windows
@@ -220,6 +223,7 @@ Known Problems fixed in GVD 1.0.2
               windows systems, gvd starts and nothing happens.
 
   Workaround: No work around, either ignore this minor problem or use 1.0.2
+
 
 Known Problems fixed in GVD 1.0.1
 
