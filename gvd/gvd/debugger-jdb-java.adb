@@ -27,7 +27,7 @@ package body Debugger.Jdb.Java is
    ----------------
 
    procedure Parse_Type
-     (Lang     : Jdb_Java_Language;
+     (Lang     : access Jdb_Java_Language;
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
@@ -41,7 +41,7 @@ package body Debugger.Jdb.Java is
    -----------------
 
    procedure Parse_Value
-     (Lang       : Jdb_Java_Language;
+     (Lang       : access Jdb_Java_Language;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Generic_Values.Generic_Type_Access;
@@ -56,7 +56,7 @@ package body Debugger.Jdb.Java is
    ----------------------
 
    procedure Parse_Array_Type
-     (Lang      : Jdb_Java_Language;
+     (Lang      : access Jdb_Java_Language;
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
@@ -71,7 +71,7 @@ package body Debugger.Jdb.Java is
    -----------------------
 
    procedure Parse_Record_Type
-     (Lang      : Jdb_Java_Language;
+     (Lang      : access Jdb_Java_Language;
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
@@ -87,7 +87,7 @@ package body Debugger.Jdb.Java is
    -----------------------
 
    procedure Parse_Array_Value
-     (Lang     : Jdb_Java_Language;
+     (Lang     : access Jdb_Java_Language;
       Type_Str : String;
       Index    : in out Natural;
       Result   : in out Array_Type_Access)

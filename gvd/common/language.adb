@@ -18,22 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-package Language.Debugger.Java is
+with Unchecked_Deallocation;
 
-   type Java_Language is abstract new Language_Debugger with private;
+package body Language is
+   ----------
+   -- Free --
+   ----------
 
-   function Is_Simple_Type (Lang : access Java_Language;
-                            Str : String)
-                           return Boolean;
-   --  Return True if Str is a simple type, like integer, ...
+   procedure Free (Lang : in out Language_Access) is
+      procedure Internal is new Unchecked_Deallocation
+        (Language_Root'Class, Language_Access);
+   begin
+      Internal (Lang);
+   end Free;
 
-   procedure Looking_At (Lang    : access Java_Language;
-                         Buffer  : String;
-                         Entity  : out Language_Entity;
-                         To_Skip : out Positive);
-
-private
-
-   type Java_Language is abstract new Language_Debugger with null record;
-
-end Language.Debugger.Java;
+end Language;

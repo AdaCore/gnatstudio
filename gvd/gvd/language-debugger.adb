@@ -21,14 +21,14 @@
 package body Language.Debugger is
 
    procedure Set_Debugger
-     (The_Language : out Language_Debugger;
+     (The_Language : access Language_Debugger;
       The_Debugger : Debugger_Access) is
    begin
       The_Language.The_Debugger := The_Debugger;
    end Set_Debugger;
 
    function Get_Debugger
-     (The_Language : Language_Debugger) return Debugger_Access is
+     (The_Language : access Language_Debugger) return Debugger_Access is
    begin
       return The_Language.The_Debugger;
    end Get_Debugger;

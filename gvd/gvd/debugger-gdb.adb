@@ -50,20 +50,20 @@ package body Debugger.Gdb is
    -- Type_Of --
    -------------
 
-   function Type_Of (Debugger : Gdb_Debugger; Entity : String) return String is
-      Result : Expect_Match;
+   function Type_Of (Debugger : access Gdb_Debugger;
+                     Entity : String)
+                    return String
+   is
    begin
-      --  Empty the buffer.
-      Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
-
-      Send (Get_Process (Debugger), "ptype " & Entity);
+      Send (Get_Process (Debugger), "ptype " & Entity, Empty_Buffer => True);
       Wait_Prompt (Debugger);
 
       declare
          S : String := Expect_Out (Get_Process (Debugger));
       begin
-         if S'Length > 14
-           and then S (S'First .. S'First + 12) /= "No definition"
+         if S'Length > Prompt_Length
+           and then (S'Length <= 14
+                     or else S (S'First .. S'First + 12) /= "No definition")
          then
             return S (S'First + 7 .. S'Last - Prompt_Length);
          else
@@ -77,7 +77,7 @@ package body Debugger.Gdb is
    --------------
 
    function Value_Of
-     (Debugger : Gdb_Debugger;
+     (Debugger : access Gdb_Debugger;
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
@@ -109,7 +109,7 @@ package body Debugger.Gdb is
    -- Spawn --
    -----------
 
-   procedure Spawn (Debugger       : in out Gdb_Debugger;
+   procedure Spawn (Debugger       : access Gdb_Debugger;
                     Arguments      : Argument_List;
                     Proxy          : Process_Proxies.Process_Proxy_Access;
                     Remote_Machine : String := "")
@@ -127,6 +127,9 @@ package body Debugger.Gdb is
       for J in 1 .. Num_Options - 1 loop
          Last := Index (Gdb_Options (First .. Gdb_Options'Last), " ");
          Local_Arguments (J) := new String' (Gdb_Options (First .. Last - 1));
+
+         --  ???We should also skip all the blanks, there is a CE if there
+         --  are multiple blanks in the string.
          First := Index_Non_Blank (Gdb_Options (Last .. Gdb_Options'Last));
       end loop;
 
@@ -136,8 +139,10 @@ package body Debugger.Gdb is
 
       General_Spawn
         (Debugger, Local_Arguments, Gdb_Command, Proxy, Remote_Machine);
-      --  Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
-      --  Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
+--        Add_Output_Filter (Get_Descriptor (Debugger.Process.all).all,
+--                           Trace_Filter'Access);
+--        Add_Input_Filter (Get_Descriptor (Debugger.Process.all).all,
+--                          Trace_Filter'Access);
    end Spawn;
 
    ----------------
@@ -148,31 +153,33 @@ package body Debugger.Gdb is
       Result     : Expect_Match;
       Matched    : GNAT.Regpat.Match_Array (0 .. 2);
       Descriptor : Process_Descriptor_Access := Get_Descriptor
-        (Get_Process (Debugger.all));
+        (Get_Process (Debugger));
    begin
-      --  Wait for initial prompt
-      Wait_Prompt (Debugger.all);
+      --  Wait for initial prompt (and display it in the window)
+      Set_Internal_Command (Get_Process (Debugger), False);
+      Wait_Prompt (Debugger);
+      Set_Internal_Command (Get_Process (Debugger), True);
 
-      Send (Get_Process (Debugger.all), "set prompt (gdb) ");
-      Wait_Prompt (Debugger.all);
-      Send (Get_Process (Debugger.all), "set width 0");
-      Wait_Prompt (Debugger.all);
-      Send (Get_Process (Debugger.all), "set height 0");
-      Wait_Prompt (Debugger.all);
-      Send (Get_Process (Debugger.all), "set annotate 1");
-      Wait_Prompt (Debugger.all);
-      Send (Get_Process (Debugger.all), "show lang");
+      Send (Get_Process (Debugger), "set prompt (gdb) ");
+      Wait_Prompt (Debugger);
+      Send (Get_Process (Debugger), "set width 0");
+      Wait_Prompt (Debugger);
+      Send (Get_Process (Debugger), "set height 0");
+      Wait_Prompt (Debugger);
+      Send (Get_Process (Debugger), "set annotate 1");
+      Wait_Prompt (Debugger);
+      Send (Get_Process (Debugger), "show lang");
       Expect
         (Descriptor.all, Result,
          "The current source language is ""(auto; currently )?([^""]+)""",
          Matched);
 
       declare
-         S        : constant String := Expect_Out (Get_Process (Debugger.all));
+         S        : constant String := Expect_Out (Get_Process (Debugger));
          Lang     : String := S (Matched (2).First .. Matched (2).Last);
          Language : Language_Access;
       begin
-         Wait_Prompt (Debugger.all);
+         Wait_Prompt (Debugger);
          if Lang = "ada" then
             Language := new Gdb_Ada_Language;
          elsif Lang = "c" then
@@ -182,9 +189,9 @@ package body Debugger.Gdb is
             raise Program_Error;
          end if;
 
-         Set_Language (Debugger.all, Language);
-         Set_Debugger
-           (Language_Debugger (Language.all), Debugger.all'Access);
+         Set_Language (Debugger, Language);
+         Set_Debugger (Language_Debugger_Access (Language),
+                       Debugger.all'Access);
       end;
    end Initialize;
 
@@ -192,7 +199,7 @@ package body Debugger.Gdb is
    -- Close --
    -----------
 
-   procedure Close (Debugger : in out Gdb_Debugger) is
+   procedure Close (Debugger : access Gdb_Debugger) is
       Result : Expect_Match;
    begin
       Send (Get_Process (Debugger), "quit");
@@ -209,7 +216,9 @@ package body Debugger.Gdb is
    -- Set_Executable --
    --------------------
 
-   procedure Set_Executable (Debugger : Gdb_Debugger; Executable : String) is
+   procedure Set_Executable (Debugger : access Gdb_Debugger;
+                             Executable : String)
+   is
    begin
       Send (Get_Process (Debugger), "file " & Executable);
       Wait_Prompt (Debugger);
@@ -219,7 +228,7 @@ package body Debugger.Gdb is
    -- Wait_Prompt --
    -----------------
 
-   procedure Wait_Prompt (Debugger : Gdb_Debugger) is
+   procedure Wait_Prompt (Debugger : access Gdb_Debugger) is
       Num : Expect_Match;
    begin
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Timeout => -1);
@@ -229,7 +238,7 @@ package body Debugger.Gdb is
    -- Run --
    ---------
 
-   procedure Run (Debugger : Gdb_Debugger) is
+   procedure Run (Debugger : access Gdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "run");
       Wait_Prompt (Debugger);
@@ -239,7 +248,7 @@ package body Debugger.Gdb is
    -- Start --
    -----------
 
-   procedure Start (Debugger : Gdb_Debugger) is
+   procedure Start (Debugger : access Gdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "begin");
    end Start;
@@ -248,7 +257,7 @@ package body Debugger.Gdb is
    -- Step_Into --
    ---------------
 
-   procedure Step_Into (Debugger : Gdb_Debugger) is
+   procedure Step_Into (Debugger : access Gdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "step");
       Wait_Prompt (Debugger);
@@ -258,7 +267,7 @@ package body Debugger.Gdb is
    -- Step_Over --
    ---------------
 
-   procedure Step_Over (Debugger : Gdb_Debugger) is
+   procedure Step_Over (Debugger : access Gdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "next");
       Wait_Prompt (Debugger);
@@ -268,7 +277,7 @@ package body Debugger.Gdb is
    -- Break_Exception --
    ---------------------
 
-   procedure Break_Exception (Debugger  : Gdb_Debugger;
+   procedure Break_Exception (Debugger  : access Gdb_Debugger;
                               Name      : String  := "";
                               Unhandled : Boolean := False)
    is
@@ -288,7 +297,7 @@ package body Debugger.Gdb is
    -- Backtrace --
    ---------------
 
-   function Backtrace (Debugger : Gdb_Debugger) return String is
+   function Backtrace (Debugger : access Gdb_Debugger) return String is
       Result : Expect_Match;
    begin
       Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
@@ -306,7 +315,7 @@ package body Debugger.Gdb is
    ----------------------
 
    procedure Break_Subprogram
-     (Debugger : Gdb_Debugger; Name : String) is
+     (Debugger : access Gdb_Debugger; Name : String) is
    begin
       Send (Get_Process (Debugger), "break " & Name);
       Wait_Prompt (Debugger);
@@ -316,7 +325,7 @@ package body Debugger.Gdb is
    -- Finish --
    ------------
 
-   procedure Finish (Debugger : Gdb_Debugger) is
+   procedure Finish (Debugger : access Gdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "finish");
       Wait_Prompt (Debugger);
@@ -327,7 +336,7 @@ package body Debugger.Gdb is
    ------------------------
 
    function Line_Contains_Code
-     (Debugger : Gdb_Debugger;
+     (Debugger : access Gdb_Debugger;
       File     : String;
       Line     : Positive) return Boolean
    is
@@ -335,6 +344,9 @@ package body Debugger.Gdb is
    begin
       --  Empty the buffer.
       Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
+
+      --  ??? Warning: the 'Image inserts a space between the colon and the
+      --  line number, which might be a problem...
 
       Send (Get_Process (Debugger), "info line " & File & ':' &
         Positive'Image (Line));

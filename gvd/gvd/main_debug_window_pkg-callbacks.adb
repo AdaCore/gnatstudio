@@ -52,7 +52,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
          Page_Num := Page_Num + 1;
          Tab := Process_User_Data.Get (Page);
-         Close (Tab.Debugger.all);
+         Close (Tab.Debugger);
       end loop;
    end Cleanup_Debuggers;
 
@@ -422,12 +422,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
 
-      if Command_In_Process (Get_Process (Tab.Debugger.all)) then
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
          return;
       end if;
 
       Put_Line ("RUN");
-      Run (Tab.Debugger.all);
+      Run (Tab.Debugger);
    end On_Run1_Activate;
 
    ----------------------------
@@ -453,7 +453,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Start (Tab.Debugger.all);
+      Start (Tab.Debugger);
    end On_Start1_Activate;
 
    ------------------------------------------

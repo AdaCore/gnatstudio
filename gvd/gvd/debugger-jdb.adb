@@ -43,7 +43,10 @@ package body Debugger.Jdb is
    -- Type_Of --
    -------------
 
-   function Type_Of (Debugger : Jdb_Debugger; Entity : String) return String is
+   function Type_Of (Debugger : access Jdb_Debugger;
+                     Entity : String)
+                    return String
+   is
    begin
       return "";
    end Type_Of;
@@ -53,7 +56,7 @@ package body Debugger.Jdb is
    --------------
 
    function Value_Of
-     (Debugger : Jdb_Debugger;
+     (Debugger : access Jdb_Debugger;
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
@@ -86,7 +89,7 @@ package body Debugger.Jdb is
    -- Spawn --
    -----------
 
-   procedure Spawn (Debugger       : in out Jdb_Debugger;
+   procedure Spawn (Debugger       : access Jdb_Debugger;
                     Arguments      : Argument_List;
                     Proxy          : Process_Proxies.Process_Proxy_Access;
                     Remote_Machine : String := "") is
@@ -104,17 +107,17 @@ package body Debugger.Jdb is
       Language   : Language_Access;
    begin
       --  Wait for initial prompt
-      Wait_Prompt (Debugger.all);
+      Wait_Prompt (Debugger);
       Language := new Jdb_Java_Language;
-      Set_Language (Debugger.all, Language);
-      Set_Debugger (Language_Debugger (Language.all), Debugger.all'Access);
+      Set_Language (Debugger, Language);
+      Set_Debugger (Language_Debugger_Access (Language), Debugger.all'Access);
    end Initialize;
 
    -----------
    -- Close --
    -----------
 
-   procedure Close (Debugger : in out Jdb_Debugger) is
+   procedure Close (Debugger : access Jdb_Debugger) is
       Result : Expect_Match;
    begin
       Send (Get_Process (Debugger), "quit");
@@ -131,7 +134,9 @@ package body Debugger.Jdb is
    -- Set_Executable --
    --------------------
 
-   procedure Set_Executable (Debugger : Jdb_Debugger; Executable : String) is
+   procedure Set_Executable (Debugger : access Jdb_Debugger;
+                             Executable : String)
+   is
    begin
       Send (Get_Process (Debugger), "load " & Executable);
       Wait_Prompt (Debugger);
@@ -141,7 +146,7 @@ package body Debugger.Jdb is
    -- Wait_Prompt --
    -----------------
 
-   procedure Wait_Prompt (Debugger : Jdb_Debugger) is
+   procedure Wait_Prompt (Debugger : access Jdb_Debugger) is
       Num : Expect_Match;
    begin
       Wait (Get_Process (Debugger), Num, Prompt_Regexp, Timeout => -1);
@@ -151,7 +156,7 @@ package body Debugger.Jdb is
    -- Run --
    ---------
 
-   procedure Run (Debugger : Jdb_Debugger) is
+   procedure Run (Debugger : access Jdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "run");
       Wait_Prompt (Debugger);
@@ -161,9 +166,9 @@ package body Debugger.Jdb is
    -- Start --
    -----------
 
-   procedure Start (Debugger : Jdb_Debugger) is
+   procedure Start (Debugger : access Jdb_Debugger) is
    begin
-      --  Send (Get_Process (Debugger), "run");
+      --  Send (Get_Process (Debugger).all, "run");
       null;
    end Start;
 
@@ -171,7 +176,7 @@ package body Debugger.Jdb is
    -- Step_Into --
    ---------------
 
-   procedure Step_Into (Debugger : Jdb_Debugger) is
+   procedure Step_Into (Debugger : access Jdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "step");
       Wait_Prompt (Debugger);
@@ -181,7 +186,7 @@ package body Debugger.Jdb is
    -- Step_Over --
    ---------------
 
-   procedure Step_Over (Debugger : Jdb_Debugger) is
+   procedure Step_Over (Debugger : access Jdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "next");
       Wait_Prompt (Debugger);
@@ -191,7 +196,7 @@ package body Debugger.Jdb is
    -- Break_Exception --
    ---------------------
 
-   procedure Break_Exception (Debugger  : Jdb_Debugger;
+   procedure Break_Exception (Debugger  : access Jdb_Debugger;
                               Name      : String  := "";
                               Unhandled : Boolean := False) is
    begin
@@ -208,7 +213,7 @@ package body Debugger.Jdb is
    -- Backtrace --
    ---------------
 
-   function Backtrace (Debugger : Jdb_Debugger) return String is
+   function Backtrace (Debugger : access Jdb_Debugger) return String is
       Result : Expect_Match;
    begin
       Wait (Get_Process (Debugger), Result, ".*", Timeout => 0);
@@ -226,7 +231,7 @@ package body Debugger.Jdb is
    ----------------------
 
    procedure Break_Subprogram
-     (Debugger : Jdb_Debugger; Name : String) is
+     (Debugger : access Jdb_Debugger; Name : String) is
    begin
       Send (Get_Process (Debugger), "stop in " & Name);
       Wait_Prompt (Debugger);
@@ -236,7 +241,7 @@ package body Debugger.Jdb is
    -- Finish --
    ------------
 
-   procedure Finish (Debugger : Jdb_Debugger) is
+   procedure Finish (Debugger : access Jdb_Debugger) is
    begin
       Send (Get_Process (Debugger), "step up");
       Wait_Prompt (Debugger);
@@ -247,7 +252,7 @@ package body Debugger.Jdb is
    ------------------------
 
    function Line_Contains_Code
-     (Debugger : Jdb_Debugger;
+     (Debugger : access Jdb_Debugger;
       File     : String;
       Line     : Positive) return Boolean is
    begin

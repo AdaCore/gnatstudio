@@ -28,52 +28,52 @@ package Debugger.Gdb is
 
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
-   procedure Spawn (Debugger       : in out Gdb_Debugger;
+   procedure Spawn (Debugger       : access Gdb_Debugger;
                     Arguments      : GNAT.OS_Lib.Argument_List;
                     Proxy          : Process_Proxies.Process_Proxy_Access;
                     Remote_Machine : String := "");
    procedure Initialize (Debugger : access Gdb_Debugger);
 
-   procedure Close (Debugger : in out Gdb_Debugger);
+   procedure Close (Debugger : access Gdb_Debugger);
 
-   procedure Wait_Prompt (Debugger : Gdb_Debugger);
+   procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 
    function Type_Of
-     (Debugger : Gdb_Debugger;
+     (Debugger : access Gdb_Debugger;
       Entity : String) return String;
 
    function Value_Of
-     (Debugger : Gdb_Debugger;
+     (Debugger : access Gdb_Debugger;
       Entity   : String;
       Format   : Value_Format := Decimal) return String;
 
    procedure Set_Executable
-     (Debugger : Gdb_Debugger;
+     (Debugger : access Gdb_Debugger;
       Executable : String);
 
-   procedure Run (Debugger : Gdb_Debugger);
+   procedure Run (Debugger : access Gdb_Debugger);
 
-   procedure Start (Debugger : Gdb_Debugger);
+   procedure Start (Debugger : access Gdb_Debugger);
 
-   procedure Step_Into (Debugger : Gdb_Debugger);
+   procedure Step_Into (Debugger : access Gdb_Debugger);
 
-   procedure Step_Over (Debugger : Gdb_Debugger);
+   procedure Step_Over (Debugger : access Gdb_Debugger);
 
    procedure Break_Exception
-     (Debugger  : Gdb_Debugger;
+     (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Unhandled : Boolean := False);
 
    procedure Break_Subprogram
-     (Debugger : Gdb_Debugger;
+     (Debugger : access Gdb_Debugger;
       Name     : String);
 
-   procedure Finish (Debugger : Gdb_Debugger);
+   procedure Finish (Debugger : access Gdb_Debugger);
 
-   function Backtrace (Debugger : Gdb_Debugger) return String;
+   function Backtrace (Debugger : access Gdb_Debugger) return String;
 
    function Line_Contains_Code
-     (Debugger : Gdb_Debugger;
+     (Debugger : access Gdb_Debugger;
       File     : String;
       Line     : Positive) return Boolean;
 

@@ -32,7 +32,7 @@ package Debugger is
    type Debugger_Access is access all Debugger_Root'Class;
 
    procedure Spawn
-     (Debugger       : in out Debugger_Root;
+     (Debugger       : access Debugger_Root;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Proxy          : Process_Proxies.Process_Proxy_Access;
       Remote_Machine : String := "") is abstract;
@@ -47,7 +47,7 @@ package Debugger is
    --  been created.
 
    procedure General_Spawn
-     (Debugger       : in out Debugger_Root'Class;
+     (Debugger       : access Debugger_Root'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access;
@@ -58,45 +58,46 @@ package Debugger is
    --  This is provided as a support for the implementation of the primitive
    --  subprogram Spawn, and should work with most debuggers.
 
-   procedure Initialize (Debugger : access  Debugger_Root) is abstract;
+   procedure Initialize (Debugger : access Debugger_Root) is abstract;
    --  Initialize the debugger.
    --  Spawn must have been called first.
 
-   procedure Close (Debugger : in out Debugger_Root) is abstract;
+   procedure Close (Debugger : access Debugger_Root) is abstract;
    --  Terminates the external process.
 
    function Get_Process
-     (Debugger : Debugger_Root) return Process_Proxies.Process_Proxy'Class;
+     (Debugger : access Debugger_Root)
+     return Process_Proxies.Process_Proxy_Access;
    --  Return the process descriptor associated with Debugger.
 
    procedure Set_Language
-     (Debugger     : out Debugger_Root;
+     (Debugger     : access Debugger_Root;
       The_Language : Language.Language_Access);
    --  Set the language associated with a debugger.
 
    function Get_Language
-     (Debugger : Debugger_Root) return Language.Language_Access;
+     (Debugger : access Debugger_Root) return Language.Language_Access;
    --  Return the current language associated with a debugger.
 
    function Parse_Type
-     (Debugger : Debugger_Root'Class;
+     (Debugger : access Debugger_Root'Class;
       Entity   : String) return Generic_Values.Generic_Type_Access;
    --  Parse the type definition for Entity, and return a
    --  tree as explained in Generic_Values.
 
    procedure Parse_Value
-     (Debugger  : Debugger_Root'Class;
+     (Debugger  : access Debugger_Root'Class;
       Entity    : String;
       Value     : in out Generic_Values.Generic_Type_Access);
    --  Parse the value of Entity.
    --  Value should contain the result of Parse_Type when this procedure is
    --  called, and it is completed to reflect the new value.
 
-   procedure Wait_Prompt (Debugger : Debugger_Root) is abstract;
+   procedure Wait_Prompt (Debugger : access Debugger_Root) is abstract;
    --  Wait for the prompt.
 
    function Type_Of
-     (Debugger : Debugger_Root;
+     (Debugger : access Debugger_Root;
       Entity   : String) return String is abstract;
    --  Return the type of the entity.
    --  An empty string is returned if the entity is not defined in the
@@ -108,7 +109,7 @@ package Debugger is
                          Hexadecimal,
                          Octal);
 
-   function Value_Of (Debugger : Debugger_Root;
+   function Value_Of (Debugger : access Debugger_Root;
                       Entity   : String;
                       Format   : Value_Format := Decimal)
                      return String
@@ -116,7 +117,7 @@ package Debugger is
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
 
-   procedure Set_Executable (Debugger : Debugger_Root;
+   procedure Set_Executable (Debugger : access Debugger_Root;
                              Executable : String)
       is abstract;
    --  Load an executable into the debugger.
@@ -124,27 +125,27 @@ package Debugger is
    --  Java, where Executable should be the name of the main class.
    --  GDB_COMMAND: "file"
 
-   procedure Run (Debugger : Debugger_Root) is abstract;
+   procedure Run (Debugger : access Debugger_Root) is abstract;
    --  Start the execution of the executable.
    --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
    --  immediately.
    --  GDB_COMMAND: "run"
 
-   procedure Start (Debugger : Debugger_Root) is abstract;
+   procedure Start (Debugger : access Debugger_Root) is abstract;
    --  Start the execution of the executable and stop at the first user line.
    --  The arguments must have been set by a call to Set_Arguments.
    --  GDB_COMMAND: "begin"
 
-   procedure Step_Into (Debugger : Debugger_Root) is abstract;
+   procedure Step_Into (Debugger : access Debugger_Root) is abstract;
    --  Step program until it reaches a different source line.
    --  GDB_COMMAND: "step"
 
-   procedure Step_Over (Debugger : Debugger_Root) is abstract;
+   procedure Step_Over (Debugger : access Debugger_Root) is abstract;
    --  Step program, proceeding over subroutines.
    --  GDB_COMMAND: "next"
 
-   procedure Break_Exception (Debugger  : Debugger_Root;
+   procedure Break_Exception (Debugger  : access Debugger_Root;
                               Name      : String  := "";
                               Unhandled : Boolean := False)
       is abstract;
@@ -158,21 +159,22 @@ package Debugger is
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
 
-   procedure Break_Subprogram (Debugger : Debugger_Root;
+   procedure Break_Subprogram (Debugger : access Debugger_Root;
                                Name     : String)
       is abstract;
    --  Break at the beginning of a specific subprogram.
    --  GDB_COMMAND: "break"
 
-   procedure Finish (Debugger : Debugger_Root) is abstract;
+   procedure Finish (Debugger : access Debugger_Root) is abstract;
    --  Finish executing the current frame.
    --  GDB_COMMAND: "finish"
 
-   function Backtrace (Debugger : Debugger_Root) return String is abstract;
+   function Backtrace (Debugger : access Debugger_Root) return String
+      is abstract;
    --  Return the current backtrace.
 
    function Line_Contains_Code
-     (Debugger : Debugger_Root;
+     (Debugger : access Debugger_Root;
       File     : String;
       Line     : Positive) return Boolean is abstract;
    --  Indicate whether a given file and line number contain executable code.

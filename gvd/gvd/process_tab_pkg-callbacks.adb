@@ -25,6 +25,8 @@ with Gtk.Handlers; use Gtk.Handlers;
 with Unchecked_Conversion;
 with Odd.Process; use Odd.Process;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Process_Tab_Pkg.Callbacks is
 
    use Gtk.Arguments;
@@ -72,7 +74,9 @@ package body Process_Tab_Pkg.Callbacks is
       Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
    begin
+      Put_Line ("On_Debugger_Text_Delete_Text");
       if Arg2 <= Gint (Top.Edit_Pos) then
+         Put_Line ("Reject");
          Emit_Stop_By_Name (Top.Debugger_Text, "delete_text");
       end if;
    end On_Debugger_Text_Delete_Text;

@@ -31,42 +31,42 @@ package body Debugger is
    ----------------
    -- Parse_Type --
    ----------------
- 
+
    function Parse_Type
-     (Debugger : Debugger_Root'Class;
+     (Debugger : access Debugger_Root'Class;
       Entity   : String) return Generic_Values.Generic_Type_Access
    is
       Result : Generic_Type_Access;
       Type_Str : String := Type_Of (Debugger, Entity);
       Index  : Natural := Type_Str'First;
- 
+
    begin
       if Type_Str'Length /= 0 then
          Language.Parse_Type
-           (Debugger.The_Language.all, Type_Str, Entity, Index, Result);
+           (Debugger.The_Language, Type_Str, Entity, Index, Result);
       end if;
- 
+
       return Result;
    end Parse_Type;
- 
+
    -----------------
    -- Parse_Value --
    -----------------
- 
+
    procedure Parse_Value
-     (Debugger  : Debugger_Root'Class;
+     (Debugger  : access Debugger_Root'Class;
       Entity    : String;
       Value     : in out Generic_Values.Generic_Type_Access)
    is
       Type_Str   : String := Value_Of (Debugger, Entity);
       Index      : Natural := Type_Str'First;
       Repeat_Num : Positive;
- 
+
    begin
       --  Clear the value previously parsed.
       Clear_Value (Value.all);
       Language.Parse_Value
-        (Debugger.The_Language.all, Type_Str, Index, Value, Repeat_Num);
+        (Debugger.The_Language, Type_Str, Index, Value, Repeat_Num);
    end Parse_Value;
 
    ------------------
@@ -74,7 +74,7 @@ package body Debugger is
    ------------------
 
    procedure Set_Language
-     (Debugger     : out Debugger_Root;
+     (Debugger     : access Debugger_Root;
       The_Language : Language.Language_Access) is
    begin
       Debugger.The_Language := The_Language;
@@ -85,7 +85,7 @@ package body Debugger is
    ------------------
 
    function Get_Language
-     (Debugger : Debugger_Root) return Language.Language_Access is
+     (Debugger : access Debugger_Root) return Language.Language_Access is
    begin
       return Debugger.The_Language;
    end Get_Language;
@@ -95,9 +95,9 @@ package body Debugger is
    -----------------
 
    function Get_Process
-     (Debugger : Debugger_Root) return Process_Proxy'Class is
+     (Debugger : access Debugger_Root) return Process_Proxy_Access is
    begin
-      return Debugger.Process.all;
+      return Debugger.Process;
    end Get_Process;
 
    -------------------
@@ -105,7 +105,7 @@ package body Debugger is
    -------------------
 
    procedure General_Spawn
-     (Debugger       : in out Debugger_Root'Class;
+     (Debugger       : access Debugger_Root'Class;
       Arguments      : GNAT.OS_Lib.Argument_List;
       Debugger_Name  : String;
       Proxy          : Process_Proxies.Process_Proxy_Access;
@@ -145,7 +145,7 @@ package body Debugger is
          end;
       end if;
 
-      Set_Descriptor (Debugger.Process.all, Descriptor);
+      Set_Descriptor (Debugger.Process, Descriptor);
    end General_Spawn;
 
 end Debugger;

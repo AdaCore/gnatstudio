@@ -28,52 +28,52 @@ package Debugger.Jdb is
 
    type Jdb_Debugger is new Debugger.Debugger_Root with private;
 
-   procedure Spawn (Debugger       : in out Jdb_Debugger;
+   procedure Spawn (Debugger       : access Jdb_Debugger;
                     Arguments      : GNAT.OS_Lib.Argument_List;
                     Proxy          : Process_Proxies.Process_Proxy_Access;
                     Remote_Machine : String := "");
    procedure Initialize (Debugger : access Jdb_Debugger);
 
-   procedure Close (Debugger : in out Jdb_Debugger);
+   procedure Close (Debugger : access Jdb_Debugger);
 
-   procedure Wait_Prompt (Debugger : Jdb_Debugger);
+   procedure Wait_Prompt (Debugger : access Jdb_Debugger);
 
    function Type_Of
-     (Debugger : Jdb_Debugger;
+     (Debugger : access Jdb_Debugger;
       Entity : String) return String;
 
    function Value_Of
-     (Debugger : Jdb_Debugger;
+     (Debugger : access Jdb_Debugger;
       Entity   : String;
       Format   : Value_Format := Decimal) return String;
 
    procedure Set_Executable
-     (Debugger : Jdb_Debugger;
+     (Debugger : access Jdb_Debugger;
       Executable : String);
 
-   procedure Run (Debugger : Jdb_Debugger);
+   procedure Run (Debugger : access Jdb_Debugger);
 
-   procedure Start (Debugger : Jdb_Debugger);
+   procedure Start (Debugger : access Jdb_Debugger);
 
-   procedure Step_Into (Debugger : Jdb_Debugger);
+   procedure Step_Into (Debugger : access Jdb_Debugger);
 
-   procedure Step_Over (Debugger : Jdb_Debugger);
+   procedure Step_Over (Debugger : access Jdb_Debugger);
 
    procedure Break_Exception
-     (Debugger  : Jdb_Debugger;
+     (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
       Unhandled : Boolean := False);
 
    procedure Break_Subprogram
-     (Debugger : Jdb_Debugger;
+     (Debugger : access Jdb_Debugger;
       Name     : String);
 
-   procedure Finish (Debugger : Jdb_Debugger);
+   procedure Finish (Debugger : access Jdb_Debugger);
 
-   function Backtrace (Debugger : Jdb_Debugger) return String;
+   function Backtrace (Debugger : access Jdb_Debugger) return String;
 
    function Line_Contains_Code
-     (Debugger : Jdb_Debugger;
+     (Debugger : access Jdb_Debugger;
       File     : String;
       Line     : Positive) return Boolean;
 

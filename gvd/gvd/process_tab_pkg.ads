@@ -23,11 +23,14 @@ with Gtk.Paned; use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Viewport; use Gtk.Viewport;
 with Gtk.Notebook; use Gtk.Notebook;
+with Gtk.Frame; use Gtk.Frame;
+with Gtk.Box; use Gtk.Box;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Button; use Gtk.Button;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
+
 package Process_Tab_Pkg is
 
    type Process_Tab_Record is new Gtk_Window_Record with record
@@ -36,6 +39,7 @@ package Process_Tab_Pkg is
       Scrolledwindow9 : Gtk_Scrolled_Window;
       Data_Canvas : Interactive_Canvas;
       Thread_Notebook : Gtk_Notebook;
+      Frame10 : Gtk_Frame;
       Editor_Text : Code_Editor;
       Label52 : Gtk_Label;
       Scrolledwindow7 : Gtk_Scrolled_Window;

@@ -23,14 +23,15 @@ with Debugger; use Debugger;
 package Language.Debugger is
 
    type Language_Debugger is abstract new Language_Root with private;
+   type Language_Debugger_Access is access all Language_Debugger'Class;
 
    procedure Set_Debugger
-     (The_Language : out Language_Debugger;
+     (The_Language : access Language_Debugger;
       The_Debugger : Debugger_Access);
    --  Set the debugger associated with a language.
 
    function Get_Debugger
-     (The_Language : Language_Debugger) return Debugger_Access;
+     (The_Language : access Language_Debugger) return Debugger_Access;
    --  Return the debugger associate with a language.
 
 private

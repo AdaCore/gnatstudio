@@ -25,7 +25,7 @@ package body Language.Debugger.Java is
    --------------------
 
    function Is_Simple_Type
-     (Lang : Java_Language; Str : String) return Boolean is
+     (Lang : access Java_Language; Str : String) return Boolean is
    begin
       return False;
    end Is_Simple_Type;
@@ -34,7 +34,7 @@ package body Language.Debugger.Java is
    -- Looking_At --
    ----------------
 
-   procedure Looking_At (Lang    : Java_Language;
+   procedure Looking_At (Lang    : access Java_Language;
                          Buffer  : String;
                          Entity  : out Language_Entity;
                          To_Skip : out Positive)

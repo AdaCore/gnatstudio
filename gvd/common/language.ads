@@ -30,7 +30,7 @@ package Language is
    procedure Free (Lang : in out Language_Access);
 
    procedure Parse_Type
-     (Lang     : Language_Root;
+     (Lang     : access Language_Root;
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
@@ -40,7 +40,7 @@ package Language is
    --  Entity is used to get the type of the fields or array items.
 
    procedure Parse_Value
-     (Lang       : Language_Root;
+     (Lang       : access Language_Root;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Generic_Values.Generic_Type_Access;
@@ -50,7 +50,7 @@ package Language is
    --  Repeat_Num is the number of times the item is repeated in the output.
 
    procedure Parse_Array_Type
-     (Lang      : Language_Root;
+     (Lang      : access Language_Root;
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
@@ -60,7 +60,7 @@ package Language is
    --  (ie "array " in gdb).
 
    procedure Parse_Record_Type
-     (Lang      : Language_Root;
+     (Lang      : access Language_Root;
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
@@ -72,11 +72,11 @@ package Language is
    --  This function is also used to parse the variant part of a record.
 
    function Is_Simple_Type
-     (Lang : Language_Root; Str : String) return Boolean is abstract;
+     (Lang : access Language_Root; Str : String) return Boolean is abstract;
    --  Return True if Str is a simple type, like integer, ...
 
    procedure Parse_Array_Value
-     (Lang     : Language_Root;
+     (Lang     : access Language_Root;
       Type_Str : String;
       Index    : in out Natural;
       Result   : in out Array_Type_Access) is abstract;
@@ -89,14 +89,14 @@ package Language is
    --  The entities found in a language, and that can have a different scheme
    --  for colors highlighting.
 
-   procedure Looking_At (Lang    : Language_Root;
-                         Buffer  : String;
-                         Entity  : out Language_Entity;
-                         To_Skip : out Positive) is abstract;
+   procedure Looking_At (Lang      : access Language_Root;
+                         Buffer    : String;
+                         Entity    : out Language_Entity;
+                         Next_Char : out Positive) is abstract;
    --  Should return the type of entity that is present at the first position
    --  in the buffer (ie starting at Buffer'First).
-   --  To_Skip should be set to the number of characters to advance in the
-   --  buffer to find the next entity.
+   --  Next_Char should be set to the index of the first character after the
+   --  entity.
 
 private
    type Language_Root is abstract tagged null record;
