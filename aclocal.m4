@@ -114,7 +114,7 @@ AC_DEFUN(AM_PATH_PYTHON,
       PYTHON_VERSION=2.2
       PYTHON_DIR=${PYTHON_BASE}/lib/python${PYTHON_VERSION}/config
    elif test -d ${PYTHON_BASE}/lib/python1.5 ; then
-      AC_MSG_ERROR(Incorrect version of python. You need 2.0 at least)
+      AC_MSG_ERROR(Incorrect version of python. You need 2.0 at least. Run with -without-python)
    fi
 
    if test ${PYTHON_BASE} = "no" ; then
