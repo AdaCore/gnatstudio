@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,6 +21,7 @@
 with Basic_Types;
 with Gtk.Box;
 with Gtk.Combo;
+with Gtk.GEntry;
 with Gtk.Tree_Store;
 with Gtk.Tree_View;
 
@@ -29,10 +30,16 @@ package Gtkada.Entry_Completion is
    type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Gtkada_Entry is access all Gtkada_Entry_Record'Class;
 
-   procedure Gtk_New (The_Entry : out Gtkada_Entry);
-   --  Create a new entry.
+   procedure Gtk_New
+     (The_Entry : out Gtkada_Entry;
+      Use_Combo : Boolean := True);
+   --  Create a new entry. If Use_Combo is true, then the top field will be
+   --  a combo box, to which you can associate a history. Otherwise, it will
+   --  be a simple entry field.
 
-   procedure Initialize (The_Entry : access Gtkada_Entry_Record'Class);
+   procedure Initialize
+     (The_Entry : access Gtkada_Entry_Record'Class;
+      Use_Combo : Boolean := True);
    --  Internal procedure
 
    function Get_Combo (The_Entry : access Gtkada_Entry_Record)
@@ -40,6 +47,12 @@ package Gtkada.Entry_Completion is
    --  Return the combo box used to store the history of previously selected
    --  values through this completion entry. It is the responsability of the
    --  user to add new items in this history list.
+   --  This returns null if the widget wasn't created as a combo.
+
+   function Get_Entry (The_Entry : access Gtkada_Entry_Record)
+      return Gtk.GEntry.Gtk_Entry;
+   --  Return the top entry, possibly the one inside the combo if there is a
+   --  combo
 
    procedure Set_Completions
      (The_Entry   : access Gtkada_Entry_Record;
@@ -51,6 +64,8 @@ package Gtkada.Entry_Completion is
 private
    type Gtkada_Entry_Record is new Gtk.Box.Gtk_Box_Record with record
       Combo            : Gtk.Combo.Gtk_Combo;
+      GEntry           : Gtk.GEntry.Gtk_Entry;
+         --  null if a combo was created.
       Completions      : Basic_Types.String_Array_Access;
       Last_Position    : Integer;
       Completion_Index : Integer := Integer'First;

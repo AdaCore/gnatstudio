@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,6 +38,7 @@ with Gtk.Tree_View_Column;   use Gtk.Tree_View_Column;
 with Gtk.Widget;             use Gtk.Widget;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Glide_Intl;             use Glide_Intl;
+with GUI_Utils;              use GUI_Utils;
 
 package body Gtkada.Entry_Completion is
 
@@ -57,17 +58,21 @@ package body Gtkada.Entry_Completion is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (The_Entry : out Gtkada_Entry) is
+   procedure Gtk_New
+     (The_Entry : out Gtkada_Entry; Use_Combo : Boolean := True) is
    begin
       The_Entry := new Gtkada_Entry_Record;
-      Gtkada.Entry_Completion.Initialize (The_Entry);
+      Gtkada.Entry_Completion.Initialize (The_Entry, Use_Combo);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (The_Entry : access Gtkada_Entry_Record'Class) is
+   procedure Initialize
+     (The_Entry : access Gtkada_Entry_Record'Class;
+      Use_Combo : Boolean := True)
+   is
       Renderer : Gtk_Cell_Renderer_Text;
       Col      : Gtk_Tree_View_Column;
       Num      : Gint;
@@ -75,13 +80,22 @@ package body Gtkada.Entry_Completion is
 
       Scrolled : Gtk_Scrolled_Window;
       Frame    : Gtk_Frame;
+      List : Widget_List.Glist := Widget_List.Null_List;
+
    begin
       Initialize_Vbox (The_Entry, Homogeneous => False, Spacing => 5);
-      Gtk_New (The_Entry.Combo);
-      Disable_Activate (The_Entry.Combo);
-      Set_Activates_Default (Get_Entry (The_Entry.Combo), True);
-      Set_Width_Chars (Get_Entry (The_Entry.Combo), 25);
-      Pack_Start (The_Entry, The_Entry.Combo, Expand => False);
+
+      if Use_Combo then
+         Gtk_New (The_Entry.Combo);
+         Disable_Activate (The_Entry.Combo);
+         Pack_Start (The_Entry, The_Entry.Combo, Expand => False);
+      else
+         Gtk_New (The_Entry.GEntry);
+         Pack_Start (The_Entry, The_Entry.GEntry, Expand => False);
+      end if;
+
+      Set_Activates_Default (Get_Entry (The_Entry), True);
+      Set_Width_Chars (Get_Entry (The_Entry), 25);
 
       Gtk_New (Frame);
       Pack_Start (The_Entry, Frame, Expand => True, Fill => True);
@@ -107,6 +121,13 @@ package body Gtkada.Entry_Completion is
       Pack_Start (Col, Renderer, False);
       Add_Attribute (Col, Renderer, "text", 0);
 
+      Clicked (Col);
+
+      Widget_List.Append (List, Gtk_Widget (Get_Entry (The_Entry)));
+      Widget_List.Append (List, Gtk_Widget (Frame));
+      Set_Focus_Chain (The_Entry, List);
+      Widget_List.Free (List);
+
       Widget_Callback.Object_Connect
         (Get_Selection (The_Entry.View), "changed",
          Widget_Callback.To_Marshaller (Selection_Changed'Access),
@@ -116,9 +137,23 @@ package body Gtkada.Entry_Completion is
         (The_Entry, "destroy",
          Widget_Callback.To_Marshaller (On_Destroy'Access));
       Return_Callback.Object_Connect
-        (Get_Entry (The_Entry.Combo), "key_press_event",
+        (Get_Entry (The_Entry), "key_press_event",
          Return_Callback.To_Marshaller (On_Entry_Tab'Access), The_Entry);
    end Initialize;
+
+   ---------------
+   -- Get_Entry --
+   ---------------
+
+   function Get_Entry (The_Entry : access Gtkada_Entry_Record)
+      return Gtk.GEntry.Gtk_Entry is
+   begin
+      if The_Entry.GEntry /= null then
+         return The_Entry.GEntry;
+      else
+         return Get_Entry (The_Entry.Combo);
+      end if;
+   end Get_Entry;
 
    -----------------------
    -- Selection_Changed --
@@ -139,9 +174,9 @@ package body Gtkada.Entry_Completion is
       --  list
 
       if Iter /= Null_Iter then
-         Set_Text (Get_Entry (Ent.Combo), Get_String (Model, Iter, 0));
+         Set_Text (Get_Entry (Ent), Get_String (Model, Iter, 0));
          Ent.Completion_Index := Integer'First;
-         Grab_Focus (Get_Entry (Ent.Combo));
+         Grab_Focus (Get_Entry (Ent));
       end if;
    end Selection_Changed;
 
@@ -221,10 +256,11 @@ package body Gtkada.Entry_Completion is
       then
          declare
             T                     : constant String :=
-              Get_Text (Get_Entry (GEntry.Combo));
+              Get_Text (Get_Entry (GEntry));
             Completion, Tmp       : String_Access;
             Index, S, First_Index : Integer;
             Iter                  : Gtk_Tree_Iter;
+            Col                   : constant Gint := Freeze_Sort (GEntry.List);
 
          begin
             --  If there is no current series of tab (ie the user has pressed a
@@ -232,7 +268,7 @@ package body Gtkada.Entry_Completion is
             if GEntry.Completion_Index = Integer'First then
                Clear (GEntry.List);
                GEntry.Last_Position := Integer
-                 (Get_Position (Get_Entry (GEntry.Combo)));
+                 (Get_Position (Get_Entry (GEntry)));
                First_Index := Next_Matching
                  (T, GEntry.Completions'First, GEntry.Completions'Last);
 
@@ -273,14 +309,15 @@ package body Gtkada.Entry_Completion is
 
                   if Completion'Length /= 0 then
                      GEntry.Completion_Index := Integer'First;
-                     Append_Text (Get_Entry (GEntry.Combo), Completion.all);
-                     Set_Position (Get_Entry (GEntry.Combo), -1);
+                     Append_Text (Get_Entry (GEntry), Completion.all);
+                     Set_Position (Get_Entry (GEntry), -1);
 
                   else
                      GEntry.Completion_Index := GEntry.Completions'First - 1;
                      Free (Completion);
                   end if;
 
+                  Thaw_Sort (GEntry.List, Col);
                   return True;
                end if;
 
@@ -292,7 +329,7 @@ package body Gtkada.Entry_Completion is
 
                if First_Index = Integer'First then
                   First_Index := GEntry.Completions'First - 1;
-                  Delete_Text (Get_Entry (GEntry.Combo),
+                  Delete_Text (Get_Entry (GEntry),
                                Gint (GEntry.Last_Position), -1);
                end if;
             end if;
@@ -300,10 +337,12 @@ package body Gtkada.Entry_Completion is
             GEntry.Completion_Index := First_Index;
 
             if First_Index >= GEntry.Completions'First then
-               Set_Text (Get_Entry (GEntry.Combo),
+               Set_Text (Get_Entry (GEntry),
                          GEntry.Completions (First_Index).all);
-               Set_Position (Get_Entry (GEntry.Combo), -1);
+               Set_Position (Get_Entry (GEntry), -1);
             end if;
+
+            Thaw_Sort (GEntry.List, Col);
          end;
 
          return True;
