@@ -27,14 +27,15 @@
 
 with Gtk.Menu;
 with Odd.Canvas;
-with Glib;
+with Gtk.Object;
 
-with Odd.Code_Editors;
 with Display_Items;
 with Items;
 with Odd.Process;
 
 package Odd.Menus is
+
+   package Menu_User_Data is new Gtk.Object.User_Data (Gtk.Menu.Gtk_Menu);
 
    function Contextual_Background_Menu
      (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class)
@@ -52,14 +53,6 @@ package Odd.Menus is
    --  component in an item is selected.
    --  Note that Component can be null if the user has clicked for instance
    --  on the title bar.
-
-   function Editor_Contextual_Menu
-     (Editor   : access Odd.Code_Editors.Code_Editor_Record'Class;
-      Line     : Glib.Gint;
-      Entity   : String)
-     return Gtk.Menu.Gtk_Menu;
-   --  Create (if necessary) and reset the contextual menu used when a specific
-   --  entity is selected in the code editor.
 
    function Debugger_Contextual_Menu
      (Process  : access Odd.Process.Debugger_Process_Tab_Record'Class)

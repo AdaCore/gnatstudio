@@ -32,8 +32,6 @@ with Gtk.Widget;          use Gtk.Widget;
 with Odd_Intl;            use Odd_Intl;
 with Display_Items;       use Display_Items;
 with Items;               use Items;
-with Odd.Code_Editors;    use Odd.Code_Editors;
-with Debugger;            use Debugger;
 with Odd.Process;         use Odd.Process;
 
 with Ada.Text_IO;         use Ada.Text_IO;
@@ -52,27 +50,12 @@ package body Odd.Menus is
    --  String used to store the item contextual menu  as a user data in the
    --  canvas.
 
-   Editor_Contextual_Menu_Name : constant String := "odd_editor_context";
-   --  String used to store the editor contextual menu as a user data
-
    Debugger_Contextual_Menu_Name : constant String := "odd_debugger_context";
    --  String used to store the debugger command window contextual menu.
 
    -----------------
    -- local types --
    -----------------
-
-   type Breakpoint_Record (File_Length : Natural) is record
-      Process : Debugger_Process_Tab;
-      File    : String (1 .. File_Length);
-      Line    : Integer;
-   end record;
-
-   type Variable_Record (Name_Length : Natural) is record
-      Process      : Debugger_Process_Tab;
-      Name         : String (1 .. Name_Length);
-      Auto_Refresh : Boolean;
-   end record;
 
    type Item_Record (Name_Length : Natural) is record
       Canvas         : Odd_Canvas;
@@ -86,32 +69,14 @@ package body Odd.Menus is
    -- local packages --
    --------------------
 
-   package Menu_User_Data is new Gtk.Object.User_Data (Gtk_Menu);
-
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, Odd_Canvas);
-   package Check_Editor_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Check_Menu_Item_Record, Odd.Code_Editors.Code_Editor);
-   package Widget_Breakpoint_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Breakpoint_Record);
-   package Widget_Variable_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Variable_Record);
    package Item_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Item_Record);
 
    ----------------------
    -- local procedures --
    ----------------------
-
-   procedure Set_Breakpoint
-     (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record);
-   --  Set a breakpoint on a specific line.
-
-   procedure Till_Breakpoint
-     (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record);
-   --  Set a temporary breakpoint on a line, and continue execution.
 
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
@@ -123,26 +88,10 @@ package body Odd.Menus is
       Canvas : Odd_Canvas);
    --  Callback for the "detect aliases" contextual menu item.
 
-   procedure Change_Line_Nums
-     (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Code_Editor);
-   --  Callback for the "show line numbers" contextual menu item.
-
-   procedure Print_Variable
-     (Widget : access Gtk_Widget_Record'Class;
-      Var    : Variable_Record);
-   --  Callback for the "print variable" or "display variable" contextual menu
-   --  items.
-
    procedure Update_Variable
      (Widget : access Gtk_Widget_Record'Class;
       Item   : Item_Record);
    --  Callback for the "update value" contextual menu item.
-
-   procedure Change_Lines_With_Code
-     (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Code_Editor);
-   --  Callback for the "show lines with code" contextual menu item.
 
    procedure Clone_Component
      (Widget  : access Gtk_Widget_Record'Class;
@@ -180,51 +129,6 @@ package body Odd.Menus is
       --  Recompute all the aliases
       Recompute_All_Aliases (Canvas);
    end Change_Detect_Aliases;
-
-   ----------------------
-   -- Change_Line_Nums --
-   ----------------------
-
-   procedure Change_Line_Nums
-     (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Code_Editor) is
-   begin
-      Set_Show_Line_Nums (Editor, Get_Active (Item));
-   end Change_Line_Nums;
-
-   ----------------------------
-   -- Change_Lines_With_Code --
-   ----------------------------
-
-   procedure Change_Lines_With_Code
-     (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Code_Editor) is
-   begin
-      Set_Show_Lines_With_Code (Editor, Get_Active (Item));
-   end Change_Lines_With_Code;
-
-   --------------------
-   -- Set_Breakpoint --
-   --------------------
-
-   procedure Set_Breakpoint
-     (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record) is
-   begin
-      Break_Source (Br.Process.Debugger, Br.File, Br.Line);
-   end Set_Breakpoint;
-
-   ---------------------
-   -- Till_Breakpoint --
-   ---------------------
-
-   procedure Till_Breakpoint
-     (Widget : access Gtk_Widget_Record'Class;
-      Br     : Breakpoint_Record) is
-   begin
-      Break_Source (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
-      Continue (Br.Process.Debugger, Display => True);
-   end Till_Breakpoint;
 
    ---------------------
    -- Update_Variable --
@@ -276,27 +180,6 @@ package body Odd.Menus is
             Output_Command => True);
       end if;
    end Clone_Component;
-
-   --------------------
-   -- Print_Variable --
-   --------------------
-
-   procedure Print_Variable
-     (Widget : access Gtk_Widget_Record'Class;
-      Var    : Variable_Record)
-   is
-      pragma Warnings (Off, Widget);
-   begin
-      if Var.Auto_Refresh then
-         Process_User_Command
-           (Var.Process, "graph display " & Var.Name,
-            Output_Command => True);
-      else
-         Process_User_Command
-           (Var.Process, "graph print " & Var.Name,
-            Output_Command => True);
-      end if;
-   end Print_Variable;
 
    --------------------------------
    -- Contextual_Background_Menu --
@@ -457,115 +340,6 @@ package body Odd.Menus is
       Menu_User_Data.Set (Canvas, Menu, Item_Contextual_Menu_Name);
       return Menu;
    end Item_Contextual_Menu;
-
-   ----------------------------
-   -- Editor_Contextual_Menu --
-   ----------------------------
-
-   function Editor_Contextual_Menu
-     (Editor   : access Odd.Code_Editors.Code_Editor_Record'Class;
-      Line     : Glib.Gint;
-      Entity   : String)
-     return Gtk.Menu.Gtk_Menu
-   is
-      Menu  : Gtk_Menu;
-      Mitem : Gtk_Menu_Item;
-      Check : Gtk_Check_Menu_Item;
-   begin
-      --  Destroy the previous menu (which we couldn't do earlier because
-      --  of the call to popup. We will change every item anyway.
-
-      begin
-         Menu := Menu_User_Data.Get (Editor, Editor_Contextual_Menu_Name);
-         Destroy (Menu);
-      exception
-         when Gtkada.Types.Data_Error => null;
-      end;
-
-      --  Create a new menu
-
-      Gtk_New (Menu);
-
-      Gtk_New (Mitem, Label => -"Print " & Entity);
-      Append (Menu, Mitem);
-      Widget_Variable_Handler.Connect
-        (Mitem, "activate",
-         Widget_Variable_Handler.To_Marshaller (Print_Variable'Access),
-         Variable_Record'(Name_Length  => Entity'Length,
-                          Name         => Entity,
-                          Auto_Refresh => False,
-                          Process      => Convert (Editor)));
-      if Entity'Length = 0 then
-         Set_State (Mitem, State_Insensitive);
-      end if;
-
-      Gtk_New (Mitem, Label => -"Display " & Entity);
-      Append (Menu, Mitem);
-      Widget_Variable_Handler.Connect
-        (Mitem, "activate",
-         Widget_Variable_Handler.To_Marshaller (Print_Variable'Access),
-         Variable_Record'(Name_Length  => Entity'Length,
-                          Name         => Entity,
-                          Auto_Refresh => True,
-                          Process      => Convert (Editor)));
-      if Entity'Length = 0 then
-         Set_State (Mitem, State_Insensitive);
-      end if;
-
-      --  Display a separator
-
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
-
-      --  Line specific items
-
-      Gtk_New (Mitem, Label => -"Set Breakpoint on Line" & Gint'Image (Line));
-      Append (Menu, Mitem);
-      Widget_Breakpoint_Handler.Connect
-        (Mitem, "activate",
-         Widget_Breakpoint_Handler.To_Marshaller (Set_Breakpoint'Access),
-         Breakpoint_Record'(File_Length  => Get_Current_File (Editor)'Length,
-                            Process      => Convert (Editor),
-                            File         => Get_Current_File (Editor),
-                            Line         => Integer (Line)));
-
-      Gtk_New (Mitem, Label => -"Continue Until Line" & Gint'Image (Line));
-      Append (Menu, Mitem);
-      Widget_Breakpoint_Handler.Connect
-        (Mitem, "activate",
-         Widget_Breakpoint_Handler.To_Marshaller (Till_Breakpoint'Access),
-         Breakpoint_Record'(File_Length  => Get_Current_File (Editor)'Length,
-                            Process      => Convert (Editor),
-                            File         => Get_Current_File (Editor),
-                            Line         => Integer (Line)));
-
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
-
-      --  Editor specific items
-
-      Gtk_New (Check, Label => -"Display Line Numbers");
-      Set_Always_Show_Toggle (Check, True);
-      Set_Active (Check, Get_Show_Line_Nums (Editor));
-      Append (Menu, Check);
-      Check_Editor_Handler.Connect
-        (Check, "activate",
-         Check_Editor_Handler.To_Marshaller (Change_Line_Nums'Access),
-         Code_Editor (Editor));
-
-      Gtk_New (Check, Label => -"Show lines with code");
-      Set_Always_Show_Toggle (Check, True);
-      Set_Active (Check, Get_Show_Lines_With_Code (Editor));
-      Append (Menu, Check);
-      Check_Editor_Handler.Connect
-        (Check, "activate",
-         Check_Editor_Handler.To_Marshaller (Change_Lines_With_Code'Access),
-         Code_Editor (Editor));
-
-      Show_All (Menu);
-      Menu_User_Data.Set (Editor, Menu, Editor_Contextual_Menu_Name);
-      return Menu;
-   end Editor_Contextual_Menu;
 
    ------------------------------
    -- Debugger_Contextual_Menu --
