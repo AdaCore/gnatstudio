@@ -25,9 +25,19 @@ with Glide_Menu;
 with Glide_Main_Window;
 with String_Utils; use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Editor; use Glide_Kernel.Editor;
 with Ada.Command_Line; use Ada.Command_Line;
+
+--  Just force the loading of the modules
+--  Removing any of the line below will not load the module in Glide, and thus
+--  the associated functionalities will not be available
+pragma Warnings (Off);
+with Project_Viewers;
+with Project_Explorers;
+with Aunit_Module;
+pragma Warnings (On);
 
 procedure Glide2 is
    use Glide_Main_Window;
@@ -49,6 +59,8 @@ begin
    Glide.Gvd_Home_Dir := new String' ("");
    Glide.Prefix_Directory := new String' ("");
    Glide_Page.Gtk_New (Page, Glide);
+
+   Initialize_All_Modules (Glide.Kernel);
 
    for J in 1 .. Argument_Count loop
       if String_Utils.File_Extension (Argument (J)) = "gpr" then
