@@ -599,7 +599,7 @@ package body Variable_Editors is
    ---------------------
 
    procedure On_Add_Variable
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       Edit : New_Var_Edit;

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 --  <description>
---  This package implements a new widget to interactively edit the switches
+--  Thi s package implements a new widget to interactively edit the switches
 --  for the GNAT tools (currently supported are gnatmake, gcc, gnatbind and
 --  gnatlink).
 --  A GUI is provided for the more common switches, but the user can always
@@ -31,6 +31,7 @@
 
 with Gtk.Widget;
 with GNAT.OS_Lib;
+with Glib.Object;
 with Glide_Kernel;
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 
@@ -126,14 +127,14 @@ package Switches_Editors is
    --  switches editor.
 
    procedure Edit_Switches
-     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Item : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access);
    --  Callback suitable for a contextual menu item.  If the file name is the
    --  empty string, then the default switches for the project are edited,
    --  otherwise the switches for the specific file are edited.
 
    procedure Edit_Default_Switches
-     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Item : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access);
    --  Same as Edit_Switches, but always edit the default switches for the
    --  project, even if there is a file information in Context.

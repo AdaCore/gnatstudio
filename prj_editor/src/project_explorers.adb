@@ -533,13 +533,14 @@ package body Project_Explorers is
          Importing_Project := Get_Project_From_Node (T, Parent);
       end if;
 
+      Set_File_Name_Information
+        (Context      => File_Selection_Context_Access (Context),
+         Directory    => Get_Directory_From_Node (T, Node),
+         File_Name    => Base_Name (Get_File_From_Node (T, Node)));
       Set_File_Information
         (Context      => File_Selection_Context_Access (Context),
          Project_View => Get_Project_From_Node (T, Node),
-         Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Base_Name (Get_File_From_Node (T, Node)),
          Importing_Project => Importing_Project);
-
       return Context;
    end Explorer_Context_Factory;
 
@@ -557,11 +558,13 @@ package body Project_Explorers is
    begin
       Context := new File_Selection_Context;
       Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
-      Set_File_Information
+      Set_File_Name_Information
         (Context,
-         Project_View => Get_Project_From_Node (T, Node),
          Directory    => Get_Directory_From_Node (T, Node),
          File_Name    => Base_Name (Get_File_From_Node (T, Node)));
+      Set_File_Information
+        (Context,
+         Project_View => Get_Project_From_Node (T, Node));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Free (Selection_Context_Access (Context));
    end Tree_Select_Row_Cb;

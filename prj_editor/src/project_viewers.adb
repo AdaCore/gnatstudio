@@ -236,12 +236,12 @@ package body Project_Viewers is
    --  modules.
 
    procedure Edit_Source_Dirs_From_Contextual
-     (Widget : access Gtk_Widget_Record'Class;
+     (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Callback for the contextual menu item to add some source directories
 
    procedure Change_Obj_Directory_From_Contextual
-     (Widget : access Gtk_Widget_Record'Class;
+     (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Change the object directory associated with a specific project
 
@@ -258,23 +258,23 @@ package body Project_Viewers is
    procedure On_Edit_Naming_Scheme
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    procedure On_Edit_Naming_Scheme
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Callbacks for Project->Edit Naming Scheme, or the contextual menu
 
    procedure On_Add_Dependency_From_Wizard
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Add a dependency to the project described in Context. The dependency is
    --  created from the wizard.
 
    procedure On_Add_Dependency_From_Existing
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Add a dependency to a default empty project.
 
    procedure Remove_Project_Dependency
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Remove the project dependency between the two projects in Context.
 
@@ -285,7 +285,7 @@ package body Project_Viewers is
    --  projects.
 
    procedure Save_Specific_Project
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Save the project described in the context.
 
@@ -571,11 +571,11 @@ package body Project_Viewers is
          File := new File_Selection_Context;
          Set_Context_Information
            (File, Kernel => V.Kernel, Creator => Prj_Editor_Module_ID);
-         Set_File_Information
+         Set_File_Name_Information
            (File,
-            Project_View => V.Project_Filter,
             Directory    => Get_String (User.Directory),
             File_Name    => Get_String (User.File_Name));
+         Set_File_Information (File, Project_View => V.Project_Filter);
 
          Callback (V, Column, File);
          Free (Selection_Context_Access (File));
@@ -737,7 +737,7 @@ package body Project_Viewers is
    --------------------------------------
 
    procedure Edit_Source_Dirs_From_Contextual
-     (Widget : access Gtk_Widget_Record'Class;
+     (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File_Context : File_Selection_Context_Access :=
@@ -791,7 +791,7 @@ package body Project_Viewers is
    ------------------------------------------
 
    procedure Change_Obj_Directory_From_Contextual
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       Selector : Directory_Selector;
@@ -918,7 +918,7 @@ package body Project_Viewers is
    ---------------------------
 
    procedure Save_Specific_Project
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access) is
    begin
       Save_Project
@@ -943,7 +943,7 @@ package body Project_Viewers is
    ---------------------------
 
    procedure On_Edit_Naming_Scheme
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File : File_Selection_Context_Access :=
@@ -964,7 +964,7 @@ package body Project_Viewers is
    -----------------------------------
 
    procedure On_Add_Dependency_From_Wizard
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File : File_Selection_Context_Access :=
@@ -994,7 +994,7 @@ package body Project_Viewers is
    -------------------------------
 
    procedure Remove_Project_Dependency
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File : File_Selection_Context_Access :=
@@ -1014,7 +1014,7 @@ package body Project_Viewers is
    -------------------------------------
 
    procedure On_Add_Dependency_From_Existing
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       File : File_Selection_Context_Access :=
@@ -1216,18 +1216,12 @@ package body Project_Viewers is
 
       User := Project_User_Data.Get (V.List, Row);
       if User.File_Name /= No_String then
-         Set_File_Information
+         Set_File_Name_Information
            (Context,
-            Project_View => V.Project_Filter,
             Directory    => Get_String (User.Directory),
             File_Name    => Get_String (User.File_Name));
-      else
-         Set_File_Information
-           (Context,
-            Project_View => V.Project_Filter,
-            Directory    => "",
-            File_Name    => "");
       end if;
+      Set_File_Information (Context, Project_View => V.Project_Filter);
 
       if V.Project_Filter /= No_Project then
          Gtk_New (Item, -"Edit default switches");

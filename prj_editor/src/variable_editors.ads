@@ -20,7 +20,7 @@
 
 with Gtk.Cell_Renderer_Text;
 with Gtk.Tree_Store;
-with Gtk.Widget;
+with Glib.Object;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
 with Prj.Tree;
 with Glide_Kernel;
@@ -49,7 +49,7 @@ package Variable_Editors is
    --  was some incorrect information.
 
    procedure On_Add_Variable
-     (Widget  : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Widget  : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access);
    --  Callback to add a new scenario variable to a project. The variable
    --  declaration is added to the project file associated with Context, but

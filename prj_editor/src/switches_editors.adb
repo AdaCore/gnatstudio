@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Glib.Object;         use Glib.Object;
 with Gtk.Box;             use Gtk.Box;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Check_Button;    use Gtk.Check_Button;
@@ -94,7 +95,7 @@ package body Switches_Editors is
    --  dialog.
 
    procedure Revert_To_Default
-     (Switches : access Gtk_Widget_Record'Class;
+     (Switches : access GObject_Record'Class;
       Context  : Selection_Context_Access);
    --  Revert to the default switches in the editor
    --  ??? Should this be specific to a page
@@ -111,7 +112,7 @@ package body Switches_Editors is
    procedure Gtk_New (Editor : out Switches_Edit) is
    begin
       Editor := new Switches_Edit_Record;
-      Initialize (Editor);
+      Switches_Editor_Pkg.Initialize (Editor);
    end Gtk_New;
 
    -------------------
@@ -938,7 +939,7 @@ package body Switches_Editors is
    -----------------------
 
    procedure Revert_To_Default
-     (Switches : access Gtk_Widget_Record'Class;
+     (Switches : access GObject_Record'Class;
       Context  : Selection_Context_Access) is
    begin
       Fill_Editor
@@ -1260,7 +1261,7 @@ package body Switches_Editors is
    -------------------
 
    procedure Edit_Switches
-     (Item    : access Gtk_Widget_Record'Class;
+     (Item    : access GObject_Record'Class;
       Context : Selection_Context_Access) is
    begin
       Edit_Switches_For_Context (Context, False);
@@ -1271,7 +1272,7 @@ package body Switches_Editors is
    ---------------------------
 
    procedure Edit_Default_Switches
-     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Item : access GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access) is
    begin
       Edit_Switches_For_Context (Context, True);
