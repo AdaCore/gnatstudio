@@ -292,6 +292,22 @@ package body Debugger.Jdb is
         or else Command = "next";
    end Is_Execution_Command;
 
+   ----------------------
+   -- Is_Break_Command --
+   ----------------------
+
+   function Is_Break_Command
+     (Debugger : access Jdb_Debugger;
+      Command : String) return Boolean
+   is
+   begin
+      return Is_Execution_Command (Debugger, Command)
+        or else (Command'Length >= 8
+          and then Command (Command'First .. Command'First + 7) = "break at")
+        or else (Command'Length >= 8
+          and then Command (Command'First .. Command'First + 7) = "break in");
+   end Is_Break_Command;
+
    ----------------
    -- Stack_Down --
    ----------------
@@ -489,5 +505,18 @@ package body Debugger.Jdb is
    begin
       Send (Debugger, "  ");
    end Display_Prompt;
+
+   ----------------------
+   -- List_Breakpoints --
+   ----------------------
+
+   function List_Breakpoints
+     (Debugger  : access Jdb_Debugger)
+     return Odd.Types.Breakpoint_Array
+   is
+      Br : Odd.Types.Breakpoint_Array (1 .. 0);
+   begin
+      return Br;
+   end List_Breakpoints;
 
 end Debugger.Jdb;

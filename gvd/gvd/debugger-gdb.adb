@@ -37,6 +37,7 @@ with Odd.Dialogs;       use Odd.Dialogs;
 with Language.Debugger; use Language.Debugger;
 with Generic_Values;    use Generic_Values;
 with Ada.Tags;          use Ada.Tags;
+with Odd.Types;         use Odd.Types;
 
 package body Debugger.Gdb is
 
@@ -80,6 +81,16 @@ package body Debugger.Gdb is
 
    Frame_Pattern : constant Pattern_Matcher := Compile
      ("^#(\d+) +((0x[0-9a-f]+) in )?(.+?)( at (.+))?$", Multiple_Lines);
+
+   Breakpoint_Pattern : constant Pattern_Matcher := Compile
+     ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
+      & "\s+(\S+)\s+(.*)",
+      Multiple_Lines);
+   --  Pattern to match a single line in "info breakpoint"
+
+   File_Name_In_Breakpoint : constant Pattern_Matcher := Compile
+     ("at ([-\w._]+):(\d+)");
+   --  How to find file names in the info given by "info breakpoint"
 
    procedure Language_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor;
@@ -591,6 +602,22 @@ package body Debugger.Gdb is
         or else Command = "begin"
         or else Command = "run";
    end Is_Execution_Command;
+
+   ----------------------
+   -- Is_Break_Command --
+   ----------------------
+
+   function Is_Break_Command
+     (Debugger : access Gdb_Debugger;
+      Command : String) return Boolean
+   is
+   begin
+      return Is_Execution_Command (Debugger, Command)
+        or else (Command'Length >= 5
+          and then Command (Command'First .. Command'First + 4) = "break")
+        or else (Command'Length >= 2
+          and then Command (Command'First .. Command'First + 1) = "b ");
+   end Is_Break_Command;
 
    ----------------
    -- Stack_Down --
@@ -1151,5 +1178,116 @@ package body Debugger.Gdb is
       end if;
 
    end Internal_Parse_Value;
+
+   ----------------------
+   -- List_Breakpoints --
+   ----------------------
+
+   function List_Breakpoints
+     (Debugger  : access Gdb_Debugger)
+     return Breakpoint_Array
+   is
+      Num_Breakpoints : Natural := 0;
+   begin
+      Push_Internal_Command_Status (Get_Process (Debugger), True);
+      Send (Debugger, "info breakpoints");
+      Pop_Internal_Command_Status (Get_Process (Debugger));
+
+      declare
+         S     : String := Expect_Out (Get_Process (Debugger));
+         Index : Natural := S'First;
+         Tmp   : Natural;
+      begin
+         --  Skip the first line (that indicates there is no breakpoints,
+         --  or that gives the title of each column).
+         --  A breakpoint exists for each line that starts with a number.
+
+         while Index <= S'Last loop
+            if S (Index) in '0' .. '9' then
+               Num_Breakpoints := Num_Breakpoints + 1;
+            end if;
+            Skip_To_Char (S, Index, ASCII.LF);
+            Index := Index + 1;
+         end loop;
+
+         --  Parse each line. The general format looks like:
+         --  Num Type           Disp Enb Address    What
+         --  1   breakpoint     keep y   0x08052c1f on unhandled exception
+         --                                         at a-except.adb:1460
+
+         declare
+            Br      : Breakpoint_Array (1 .. Num_Breakpoints);
+            Num     : Natural := 1;
+            Matched : Match_Array (0 .. 10);
+         begin
+            Index := S'First;
+            Skip_To_Char (S, Index, ASCII.LF);
+            Index := Index + 1;
+
+            while Num <= Num_Breakpoints loop
+               Match (Breakpoint_Pattern, S (Index .. S'Last), Matched);
+
+               if Matched (0) /= No_Match then
+                  Br (Num).Num :=
+                    Integer'Value (S (Matched (1).First .. Matched (1).Last));
+
+                  if S (Matched (2).First) = 'b' then
+                     Br (Num).The_Type := Breakpoint;
+                  else
+                     Br (Num).The_Type := Watchpoint;
+                  end if;
+
+                  case S (Matched (3).First) is
+                     when 'k' => Br (Num).Disposition := Keep;
+                     when 'd' => Br (Num).Disposition := Disable;
+                     when others => Br (Num).Disposition := Delete;
+                  end case;
+
+                  Br (Num).Enabled := S (Matched (4).First) = 'y';
+
+                  if Br (Num).The_Type = Breakpoint then
+                     Br (Num).Address :=
+                       new String'(S (Matched (5).First .. Matched (5).Last));
+                  else
+                     Br (Num).Expression :=
+                       new String'(S (Matched (5).First .. Matched (5).Last));
+                  end if;
+
+                  --  Go to beginning of next line.
+                  --  If we don't have a new breackpoint, add the line to the
+                  --  information.
+                  Tmp := Matched (6).First;
+                  Index := Tmp;
+               else
+                  Tmp := Index;
+               end if;
+
+               while Index <= S'Last
+                 and then not (S (Index) in '0' .. '9')
+               loop
+                  Skip_To_Char (S, Index, ASCII.LF);
+                  Index := Index + 1;
+               end loop;
+
+               if Matched (0) /= No_Match then
+                  Br (Num).Info := new String'(S (Tmp .. Index - 2));
+
+                  Match (File_Name_In_Breakpoint, Br (Num).Info.all, Matched);
+                  if Matched (0) /= No_Match then
+                     Br (Num).File := new String'
+                       (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+                     Br (Num).Line := Integer'Value
+                       (Br (Num).Info (Matched (2).First .. Matched (2).Last));
+                  end if;
+
+                  Num := Num + 1;
+
+               end if;
+            end loop;
+
+            return Br;
+         end;
+      end;
+   end List_Breakpoints;
 
 end Debugger.Gdb;

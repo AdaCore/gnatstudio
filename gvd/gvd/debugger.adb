@@ -260,6 +260,8 @@ package body Debugger is
             Context_Changed (Convert (Debugger.Window, Debugger));
          elsif Is_Execution_Command (Debugger, Cmd) then
             Process_Stopped (Convert (Debugger.Window, Debugger));
+         elsif Is_Break_Command (Debugger, Cmd) then
+            Update_Breakpoints (Convert (Debugger.Window, Debugger));
          end if;
       end if;
    end Send;

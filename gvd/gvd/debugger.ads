@@ -299,6 +299,13 @@ package Debugger is
    --  This is a superset of Is_Execution_Command (e.g includes also
    --  Thread_Switch).
 
+   function Is_Break_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean is abstract;
+   --  Return True if Command changes the list of breakpoints.
+   --  This is a superset of Is_Execution_COmmand, since some breakpoints might
+   --  be delete automatically when some breakpoints are reached.
+
    ----------------------
    -- Stack Management --
    ----------------------
@@ -382,6 +389,11 @@ package Debugger is
    --  Note all combinations are possible (for instance, Gdb in Ada mode can
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
+
+   function List_Breakpoints
+     (Debugger  : access Debugger_Root)
+     return Odd.Types.Breakpoint_Array is abstract;
+   --  Return the list of breakpoints set in the current session.
 
    --------------------
    -- Thread Support --

@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with Debugger;
 with Gtk.Window;
 with GNAT.Regpat;
+with Odd.Types;
 
 package Debugger.Jdb is
 
@@ -95,6 +96,10 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Command  : String) return Boolean;
 
+   function Is_Break_Command
+     (Debugger : access Jdb_Debugger;
+      Command : String) return Boolean;
+
    procedure Stack_Down
      (Debugger : access Jdb_Debugger;
       Display  : Boolean := False);
@@ -139,6 +144,10 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       File     : String;
       Line     : Positive) return Line_Kind;
+
+   function List_Breakpoints
+     (Debugger  : access Jdb_Debugger)
+     return Odd.Types.Breakpoint_Array;
 
 private
    type Jdb_Debugger is new Debugger.Debugger_Root with record

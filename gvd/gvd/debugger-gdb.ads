@@ -26,6 +26,7 @@ with Debugger;
 with GNAT.Regpat;
 with Gtk.Window;
 with Language.Debugger;
+with Odd.Types;
 
 package Debugger.Gdb is
 
@@ -111,6 +112,10 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Command  : String) return Boolean;
 
+   function Is_Break_Command
+     (Debugger : access Gdb_Debugger;
+      Command : String) return Boolean;
+
    procedure Stack_Down
      (Debugger : access Gdb_Debugger;
       Display  : Boolean := False);
@@ -155,6 +160,10 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       File     : String;
       Line     : Positive) return Line_Kind;
+
+   function List_Breakpoints
+     (Debugger  : access Gdb_Debugger)
+     return Odd.Types.Breakpoint_Array;
 
 private
 
