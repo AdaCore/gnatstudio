@@ -23,9 +23,16 @@ with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
+
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+with System;
+with Gtk.Object; use Gtk.Object;
 
 package body Process_Tab_Pkg is
+
+   Signals : Chars_Ptr_Array := (1 => New_String ("executable_changed"));
+   Class_Record : System.Address := System.Null_Address;
 
 pragma Suppress (All_Checks);
 --  Checks are expensive (in code size) in this unit, and not needed,
@@ -40,6 +47,8 @@ end Gtk_New;
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
+   Initialize_Class_Record (Process_Tab, Signals, Class_Record);
+
    --  Set_Title (Process_Tab, -"window1");
    --  Set_Policy (Process_Tab, False, True, False);
    --  Set_Position (Process_Tab, Win_Pos_None);
@@ -82,7 +91,7 @@ begin
    Add (Process_Tab.Thread_Notebook, Process_Tab.Frame10);
    Set_Shadow_Type (Process_Tab.Frame10, Shadow_Etched_In);
 
-   Gtk_New_Hbox (Process_Tab.Editor_Text, False, 0);
+   Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab, False, 0);
    Add (Process_Tab.Frame10, Process_Tab.Editor_Text);
 
    Gtk_New (Process_Tab.Label52, -("Current Thread"));
