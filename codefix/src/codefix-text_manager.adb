@@ -32,8 +32,10 @@ with Language;              use Language;
 with VFS;                   use VFS;
 
 with Codefix.Merge_Utils;   use Codefix.Merge_Utils;
+with Traces; use Traces;
 
 package body Codefix.Text_Manager is
+   Me : constant Debug_Handle := Create ("Codefix");
 
    ------------------
    -- Compare_Last --
@@ -838,7 +840,7 @@ package body Codefix.Text_Manager is
 
       Raise_Exception
         (Codefix_Panic'Identity,
-         "Cursor given is not at the beginning of a unit.");
+         "Cursor given is not at the beginning of an entity.");
    end Get_Unit;
 
    -----------------
@@ -1180,7 +1182,9 @@ package body Codefix.Text_Manager is
          New_Sloc     : Source_Location;
          Current_Name : GNAT.OS_Lib.String_Access;
       begin
-         Assign (Current_Name, Current_Info.Name.all);
+         if Current_Info.Name /= null then
+            Assign (Current_Name, Current_Info.Name.all);
+         end if;
 
          Current_Info := Current_Info.Prev;
 
@@ -1227,7 +1231,7 @@ package body Codefix.Text_Manager is
                   if Found then
                      Assign
                        (Result_Name,
-                        Current_Name.all & "." & Result_Name.all);
+                        Current_Name.all & '.' & Result_Name.all);
                      Free (Current_Name);
 
                      return;
@@ -1243,18 +1247,24 @@ package body Codefix.Text_Manager is
 
    begin
       Current_Info := Get_Structure (This).Last;
-      Seeker (Current_Info.Sloc_Start);
+      Result_Name := new String'("");
 
-      if Result_Name /= null then
-         declare
-            Result_Stack : constant String := Result_Name.all;
-         begin
-            Free (Result_Name);
-            return Result_Stack;
-         end;
-      else
-         return "";
-      end if;
+      declare
+         Start : constant String := Current_Info.Name.all;
+      begin
+         Seeker (Current_Info.Sloc_Start);
+
+         if Result_Name /= null then
+            declare
+               Result_Stack : constant String := Result_Name.all;
+            begin
+               Free (Result_Name);
+               return Result_Stack;
+            end;
+         else
+            return Start & "";
+         end if;
+      end;
    end Get_Extended_Unit_Name;
 
    ---------------------
@@ -1398,6 +1408,8 @@ package body Codefix.Text_Manager is
    begin
       if not This.Structure_Up_To_Date.all then
          Buffer := Read_File (This);
+
+         --  ??? Should be language independent
          Analyze_Ada_Source
            (Buffer           => Buffer.all,
             Indent_Params    => Default_Indent_Parameters,
@@ -3453,7 +3465,12 @@ package body Codefix.Text_Manager is
    begin
       Set_File     (Cursor, Get_File (Curs));
       Set_Location (Cursor, Get_Line (Curs), Get_Column (Curs));
-      Set_Word     (Cursor, Word.String_Match.all, Word.Mode);
+
+      if Word.String_Match = null then
+         Set_Word (Cursor, "", Word.Mode);
+      else
+         Set_Word (Cursor, Word.String_Match.all, Word.Mode);
+      end if;
    end Make_Word_Cursor;
 
    ----------
@@ -3525,17 +3542,27 @@ package body Codefix.Text_Manager is
      (This         : in out Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class;
+      New_Position : File_Cursor'Class;
       Add_Spaces   : Boolean := True;
-      Position     : Relative_Position := Specified) is
+      Position     : Relative_Position := Specified)
+   is
+      New_Word : Word_Cursor;
    begin
       This.Add_Spaces := Add_Spaces;
       This.Position := Position;
       Make_Word_Mark (Word, Current_Text, This.Word);
+
+      Set_File (New_Word, Get_File (New_Position));
+      Set_Location
+        (New_Word, Get_Line (New_Position), Get_Column (New_Position));
+      Set_Word (New_Word, "", Text_Ascii);
+      Make_Word_Mark (New_Word, Current_Text, This.New_Position);
    end Initialize;
 
    procedure Free (This : in out Insert_Word_Cmd) is
    begin
       Free (This.Word);
+      Free (This.New_Position);
       Free (Text_Command (This));
    end Free;
 
@@ -3548,19 +3575,36 @@ package body Codefix.Text_Manager is
       Line_Cursor  : File_Cursor;
       Space_Cursor : File_Cursor;
       Word         : Word_Cursor;
-
+      Length       : Integer;
+      New_Pos      : Word_Cursor;
    begin
       Make_Word_Cursor (This.Word, Current_Text, Word);
-      Line_Cursor := File_Cursor (Word);
+      Make_Word_Cursor (This.New_Position, Current_Text, New_Pos);
 
-      Assign (New_Str, Word.String_Match);
+      Line_Cursor := Clone (File_Cursor (New_Pos));
       Line_Cursor.Col := 1;
+
+      case Word.Mode is
+         when Regular_Expression =>
+            Get_Line (Current_Text, File_Cursor (Word), New_Extract);
+            declare
+               Str : constant String :=
+                 Get_String (New_Extract, Get_Column (Word));
+            begin
+               Length := Get_Word_Length
+                 (New_Extract, Word, Word.String_Match.all);
+               Assign (New_Str, Str (Str'First .. Str'First + Length - 1));
+            end;
+
+         when Text_Ascii =>
+            Assign (New_Str, Word.String_Match);
+      end case;
 
       if This.Position = Specified then
          Get_Line (Current_Text, Line_Cursor, New_Extract);
 
          if This.Add_Spaces then
-            Space_Cursor := File_Cursor (Word);
+            Space_Cursor := Clone (File_Cursor (New_Pos));
             Space_Cursor.Col := Space_Cursor.Col - 1;
 
             if Word.Col > 1
@@ -3602,16 +3646,10 @@ package body Codefix.Text_Manager is
      (This         : in out Move_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor'Class;
-      New_Position : File_Cursor'Class)
-   is
-      New_Word : Word_Cursor;
-      File     : File_Cursor;
+      New_Position : File_Cursor'Class) is
    begin
-      File := Clone (File_Cursor (New_Position));
-      New_Word := (File with
-                   Word.String_Match, Word.Mode);
+      Initialize (This.Step_Insert, Current_Text, Word, New_Position);
       Initialize (This.Step_Remove, Current_Text, Word);
-      Initialize (This.Step_Insert, Current_Text, New_Word);
    end Initialize;
 
    procedure Free (This : in out Move_Word_Cmd) is
@@ -3629,8 +3667,8 @@ package body Codefix.Text_Manager is
       Extract_Remove, Extract_Insert : Extract;
       Success                        : Boolean;
    begin
-      Execute (This.Step_Remove, Current_Text, Extract_Remove);
       Execute (This.Step_Insert, Current_Text, Extract_Insert);
+      Execute (This.Step_Remove, Current_Text, Extract_Remove);
       Merge_Extracts
         (New_Extract,
          Extract_Remove,
