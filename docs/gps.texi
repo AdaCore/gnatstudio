@@ -231,6 +231,7 @@ Python FAQ
 * Reloading a python file in GPS::
 * Printing the GPS Python documentation::
 * Automatically loading python files at startup::
+* Hiding contextual menus::
 @end ifset
 
 Environment
@@ -11574,6 +11575,7 @@ Python inside GPS. This is not a general Python discussion.
 * Reloading a python file in GPS::
 * Printing the GPS Python documentation::
 * Automatically loading python files at startup::
+* Hiding contextual menus::
 @end menu
 
 @c -------------------------------------------
@@ -11959,6 +11961,46 @@ you can also do the following using a windows @file{.bat} file
   export LD_LIBRARY_PATH
   gps --eval=python:'import support_autoexec.py' $*
 @end smallexample
+
+@c --------------------------------------------------------------------
+@node Hiding contextual menus
+@subsubsection Hiding contextual menus
+@cindex contextual menus
+
+@noindent
+GPS provides most of its tools through contextual menus, accessed by right
+clicking in various parts of GPS. Due to the number of tools provided by GPS,
+these contextual menus tend to be big, and you might want to control what
+should be displayed in them. There are several ways to control this:
+
+@itemize @bullet
+@item Define appropriate filters for your actions
+
+If you are creating your own contextual menus through customization files and
+XML, these menus are associated with actions (@code{<action>}) that you have
+created yourself most of the time. In this case, you need to define filters
+appropriately, through the @code{<filter>} tag, to decide when the action
+is relevant, and therefore when the contextual menu should be displayed.
+
+@item Use shell commands to hide the menus
+
+If you want to control the visibility of predefined contextual menus, or
+for menus where you cannot easily modify the associated filter, you can
+use shell and python commands to hide the menu entry. For this, you will
+need to find out the name of the menu, which can be done by checking the
+list returned by @code{GPS.Contextual.list()} and using the most likely
+entry. This name is also the value of the @code{<title>} tag for contextual
+menus that you have created yourself. Using this name, you can then disable
+the contextual menu by executing:
+
+@smallexample
+ GPS.Contextual ("name").hide()
+@end smallexample
+
+in the python console
+
+@end itemize
+
 
 @c --------------------------------------------------------------------
 @node Hooks
