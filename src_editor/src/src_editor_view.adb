@@ -42,6 +42,7 @@ with Gtk.Text_Attributes;         use Gtk.Text_Attributes;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Layout;             use Gtk.Text_Layout;
+with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Widget;                  use Gtk.Widget;
 with Src_Editor;                  use Src_Editor;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
@@ -422,5 +423,17 @@ package body Src_Editor_View is
    begin
       return View.Show_Line_Numbers;
    end Get_Show_Line_Numbers;
+
+   -------------------------------
+   -- Scroll_To_Cursor_Location --
+   -------------------------------
+
+   procedure Scroll_To_Cursor_Location (View : access Source_View_Record) is
+      Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
+   begin
+      Scroll_To_Mark
+        (View, Insert_Mark, Use_Align => False,
+         Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
+   end Scroll_To_Cursor_Location;
 
 end Src_Editor_View;

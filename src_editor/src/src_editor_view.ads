@@ -81,6 +81,10 @@ package Src_Editor_View is
      (View : access Source_View_Record) return Boolean;
    --  Returns True if the line numbers are displayed.
 
+   procedure Scroll_To_Cursor_Location (View : access Source_View_Record);
+   --  Scroll the Source View if the position of the insert cursor is not
+   --  within the part of the text currently visible.
+
 private
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
