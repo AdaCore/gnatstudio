@@ -145,6 +145,7 @@ package body Switches_Editors is
       Set_Width_Chars (Editor.Attribute_Casing_Entry, Default_Width);
       Set_Width_Chars (Editor.References_Casing_Entry, Default_Width);
       Set_Width_Chars (Editor.Pragma_Casing_Entry, Default_Width);
+      Set_Current_Page (Editor.Notebook, 0);
    end Gtk_New;
 
    -----------------------
@@ -172,6 +173,7 @@ package body Switches_Editors is
          end if;
       end Hide_Or_Show;
 
+      Current : Gint := Get_Current_Page (Editor.Notebook);
    begin
       Hide_Or_Show (Gnatmake_Page, Editor.Make_Switches);
       Hide_Or_Show (Ada_Page, Editor.Ada_Switches);
@@ -181,6 +183,15 @@ package body Switches_Editors is
       Hide_Or_Show (Binder_Page, Editor.Binder_Switches);
       Hide_Or_Show (Linker_Page, Editor.Linker_Switches);
       Editor.Pages := Pages;
+
+      --  Work around an apparent bug in gtk+: when the contents of a page is
+      --  hidden, and the shown again, it is always displayed on top of the
+      --  current page in the notebook. We thus see the contents of two or more
+      --  pages at the same time...
+      if Current = -1 then
+         Current := 0;
+      end if;
+      Set_Current_Page (Editor.Notebook, Current);
    end Set_Visible_Pages;
 
    -----------------------
