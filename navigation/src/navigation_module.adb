@@ -39,6 +39,7 @@ with Commands;                  use Commands;
 with Commands.Locations;        use Commands.Locations;
 with Traces;                    use Traces;
 with Basic_Types;               use Basic_Types;
+with String_Utils;              use String_Utils;
 with VFS;                       use VFS;
 with Language;                  use Language;
 
@@ -169,13 +170,16 @@ package body Navigation_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural
    is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File).all));
       S_Line : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "cursor_get_line", Args);
+        Execute_GPS_Shell_Command
+          (Kernel, "cursor_get_line",
+           (1 => Full_Name (File).all'Unrestricted_Access));
+
    begin
-      Free (Args);
-      return Positive'Value (S_Line);
+      return Natural'Value (S_Line);
+   exception
+      when Constraint_Error =>
+         return 0;
    end Get_Current_Line;
 
    ----------------------
@@ -187,14 +191,17 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural)
    is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Natural'Image (Line)));
-      S_Line : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "cursor_set_position", Args);
+      Line_Img : aliased String := Image (Line);
+      S_Line   : constant String :=
+        Execute_GPS_Shell_Command
+          (Kernel,
+           "cursor_set_position",
+           (Full_Name (File).all'Unrestricted_Access,
+            Line_Img'Unchecked_Access));
       pragma Unreferenced (S_Line);
+
    begin
-      Free (Args);
+      null;
    end Set_Current_Line;
 
    -------------------
@@ -205,13 +212,13 @@ package body Navigation_Module is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Natural
    is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File).all));
       S_Line : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "get_last_line", Args);
+        Execute_GPS_Shell_Command
+          (Kernel, "get_last_line",
+           (1 => Full_Name (File).all'Unrestricted_Access));
+
    begin
-      Free (Args);
-      return Positive'Value (S_Line);
+      return Natural'Value (S_Line);
    exception
       when Constraint_Error =>
          return 0;
@@ -226,13 +233,15 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Natural
    is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Positive'Image (Line)));
-      S_Line : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "block_get_end", Args);
+      Line_Img : aliased String := Image (Line);
+      S_Line   : constant String :=
+        Execute_GPS_Shell_Command
+          (Kernel,
+           "block_get_end",
+           (Full_Name (File).all'Unrestricted_Access,
+            Line_Img'Unchecked_Access));
+
    begin
-      Free (Args);
       return Natural'Value (S_Line);
    exception
       when Constraint_Error =>
@@ -248,13 +257,15 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Natural
    is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Positive'Image (Line)));
-      S_Line : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "block_get_start", Args);
+      Line_Img : aliased String := Image (Line);
+      S_Line   : constant String :=
+        Execute_GPS_Shell_Command
+          (Kernel,
+           "block_get_start",
+           (Full_Name (File).all'Unrestricted_Access,
+            Line_Img'Unchecked_Access));
+
    begin
-      Free (Args);
       return Natural'Value (S_Line);
    exception
       when Constraint_Error =>
@@ -270,13 +281,15 @@ package body Navigation_Module is
       File   : Virtual_File;
       Line   : Natural) return Language_Category
    is
-      Args : Argument_List :=
-        (1 => new String'(Full_Name (File).all),
-         2 => new String'(Positive'Image (Line)));
-      B_Type : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "block_get_type", Args);
+      Line_Img : aliased String := Image (Line);
+      B_Type   : constant String :=
+        Execute_GPS_Shell_Command
+          (Kernel,
+           "block_get_type",
+           (Full_Name (File).all'Unrestricted_Access,
+            Line_Img'Unchecked_Access));
+
    begin
-      Free (Args);
       return Language_Category'Value (B_Type);
    exception
       when Constraint_Error =>
