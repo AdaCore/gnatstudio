@@ -3,6 +3,9 @@ package SN.Browse is
    Spawn_Failure     : exception;
    Temp_File_Failure : exception;
 
+   DB_Dir_Name      : constant String := ".gpssnprj";
+   --  Name of directory where all SN files reside
+
    DB_File_Name     : constant String := "data";
    --  Name of the SN database files
 
@@ -19,7 +22,7 @@ package SN.Browse is
 
    procedure Generate_Xrefs (DB_Directory, DBUtils_Path : in String);
    --  Removes .by and .to tables in the DB_Directory and
-   --  executes "cat *.xref | dbimp" so that generated cross
+   --  does the same as  "cat *.xref | dbimp" so that generated cross
    --  reference tables should lie in the DB_Directory.
    --  NOTE: directory names should not contain trailing slashes
 end SN.Browse;
