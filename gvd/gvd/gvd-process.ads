@@ -143,6 +143,7 @@ package GVD.Process is
       Debuggee_TTY            : GNAT.TTY.TTY_Handle;
       Debuggee_Descriptor     : GNAT.Expect.TTY.TTY_Process_Descriptor;
       Debuggee_Id             : Gtk.Main.Timeout_Handler_Id := 0;
+      Cleanup_TTY             : Boolean := False;
 
       History                 : Histories.History;
       --  See Glide_Kernel.Get_History. This points to the same one as the GPS
