@@ -448,6 +448,8 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Box    : Source_Editor_Box)
    is
+      pragma Unreferenced (Buffer);
+
       Line : constant Gint := Values.Get_Int (Values.Nth (Params, 1));
       Col  : constant Gint := Values.Get_Int (Values.Nth (Params, 2));
    begin
@@ -596,6 +598,8 @@ package body Src_Editor_Box is
       Start_Iter   : in out Gtk_Text_Iter;
       End_Iter     : out Gtk_Text_Iter)
    is
+      pragma Unreferenced (Buffer);
+
       Ignored     : Boolean;
    begin
       --  Search forward the end of the entity...
@@ -628,6 +632,8 @@ package body Src_Editor_Box is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
+      pragma Unreferenced (Event_Widget);
+
       Editor     : Source_Editor_Box := Source_Editor_Box (Object);
       V          : Source_View := Editor.Source_View;
       Line       : Gint;
@@ -736,6 +742,8 @@ package body Src_Editor_Box is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
+
       C      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
