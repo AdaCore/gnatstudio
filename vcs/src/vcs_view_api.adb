@@ -527,10 +527,10 @@ package body VCS_View_API is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-      Item : Gtk_Menu_Item;
-
+      Item      : Gtk_Menu_Item;
+      Menu_Item : Gtk_Menu_Item;
+      Submenu   : Gtk_Menu;
       File_Name : File_Selection_Context_Access;
-
       Kernel    : constant Kernel_Handle := Get_Kernel (Context);
    begin
       if Context.all in File_Selection_Context'Class then
@@ -604,16 +604,21 @@ package body VCS_View_API is
                     (On_Menu_View_Log'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Compare against head revision");
-               Append (Menu, Item);
+               Gtk_New (Menu_Item, Label => -"Compare");
+               Append (Menu, Menu_Item);
+               Gtk_New (Submenu);
+               Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+
+               Gtk_New (Item, Label => -"Against head revision");
+               Append (Submenu, Item);
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                     (On_Menu_Diff'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Compare against working revision");
-               Append (Menu, Item);
+               Gtk_New (Item, Label => -"Against working revision");
+               Append (Submenu, Item);
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
@@ -621,8 +626,8 @@ package body VCS_View_API is
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label =>
-                        -"Compare working revision against head revision");
-               Append (Menu, Item);
+                        -"Working revision against head revision");
+               Append (Submenu, Item);
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
@@ -706,16 +711,21 @@ package body VCS_View_API is
       if File_Name /= null
         and then Has_Directory_Information (File_Name)
       then
-         Gtk_New (Item, Label => -"Query status for directory");
-         Append (Menu, Item);
+         Gtk_New (Menu_Item, Label => -"Directory");
+         Append (Menu, Menu_Item);
+         Gtk_New (Submenu);
+         Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+
+         Gtk_New (Item, Label => -"Query status");
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
             (On_Menu_Get_Status_Dir'Access),
             Selection_Context_Access (File_Name));
 
-         Gtk_New (Item, Label => -"Update directory");
-         Append (Menu, Item);
+         Gtk_New (Item, Label => -"Update");
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
@@ -734,8 +744,13 @@ package body VCS_View_API is
       if File_Name /= null
         and then Has_Project_Information (File_Name)
       then
+         Gtk_New (Menu_Item, Label => -"Project");
+         Append (Menu, Menu_Item);
+         Gtk_New (Submenu);
+         Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+
          Gtk_New (Item, Label => -"List all files in project");
-         Append (Menu, Item);
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
@@ -743,7 +758,7 @@ package body VCS_View_API is
             Selection_Context_Access (File_Name));
 
          Gtk_New (Item, Label => -"Query status for project");
-         Append (Menu, Item);
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
@@ -751,7 +766,7 @@ package body VCS_View_API is
             Selection_Context_Access (File_Name));
 
          Gtk_New (Item, Label => -"Update project");
-         Append (Menu, Item);
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
@@ -759,7 +774,7 @@ package body VCS_View_API is
             Selection_Context_Access (File_Name));
 
          Gtk_New (Item, Label => -"List all files in project and subprojects");
-         Append (Menu, Item);
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
@@ -767,7 +782,7 @@ package body VCS_View_API is
             Selection_Context_Access (File_Name));
 
          Gtk_New (Item, Label => -"Query status for project and subprojects");
-         Append (Menu, Item);
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
@@ -775,7 +790,7 @@ package body VCS_View_API is
             Selection_Context_Access (File_Name));
 
          Gtk_New (Item, Label => -"Update project and subprojects");
-         Append (Menu, Item);
+         Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
