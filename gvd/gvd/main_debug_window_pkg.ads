@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -21,18 +21,13 @@
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
-with Gtk.Frame; use Gtk.Frame;
-with Gtk.Notebook; use Gtk.Notebook;
 with GVD.Status_Bar; use GVD.Status_Bar;
-
 package Main_Debug_Window_Pkg is
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
       Vbox : Gtk_Vbox;
       Factory : Gtk_Item_Factory;
       Toolbar_Box : Gtk_Vbox;
-      Frame : Gtk_Frame;
-      Process_Notebook : Gtk_Notebook;
       Statusbar : GVD_Status_Bar;
    end record;
    type Main_Debug_Window_Access is access all Main_Debug_Window_Record'Class;

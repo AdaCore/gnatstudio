@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -51,23 +51,8 @@ begin
    Gtk_New_Vbox (Main_Debug_Window.Toolbar_Box, False, 0);
    Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Toolbar_Box, False, False, 0);
 
-   Gtk_New (Main_Debug_Window.Frame);
-   Set_Shadow_Type (Main_Debug_Window.Frame, Shadow_Etched_In);
-   Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Frame, True, True, 0);
-
-   Gtk_New (Main_Debug_Window.Process_Notebook);
-   Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
-   Set_Show_Border (Main_Debug_Window.Process_Notebook, True);
-   Set_Show_Tabs (Main_Debug_Window.Process_Notebook, False);
-   Set_Tab_Hborder (Main_Debug_Window.Process_Notebook, 2);
-   Set_Tab_Vborder (Main_Debug_Window.Process_Notebook, 2);
-   Set_Tab_Pos (Main_Debug_Window.Process_Notebook, Pos_Top);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Process_Notebook, "switch_page", On_Process_Notebook_Switch_Page'Access, Main_Debug_Window);
-   Add (Main_Debug_Window.Frame, Main_Debug_Window.Process_Notebook);
-
    Gtk_New (Main_Debug_Window.Statusbar);
-   Pack_Start (Main_Debug_Window.Vbox, Main_Debug_Window.Statusbar, False, False, 0);
+   Pack_End (Main_Debug_Window.Vbox, Main_Debug_Window.Statusbar, False, False, 0);
 
 end Initialize;
 

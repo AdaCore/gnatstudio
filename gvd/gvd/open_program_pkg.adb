@@ -144,6 +144,7 @@ begin
    Set_Visibility (Open_Program.Program_Entry, True);
 
    Gtk_New (Open_Program.Open_Button, -"...");
+   Set_Relief (Open_Program.Open_Button, Relief_Normal);
    Attach (Open_Program.Table7, Open_Program.Open_Button, 6, 7, 0, 1,
      0, 0,
      0, 0);
