@@ -1270,56 +1270,17 @@ package body Src_Editor_Buffer is
       Match_End_Line     : out Gint;
       Match_End_Column   : out Gint)
    is
-      Iter        : Gtk_Text_Iter;
-      Limit       : Gtk_Text_Iter;
-      Match_Start : Gtk_Text_Iter;
-      Match_End   : Gtk_Text_Iter;
+      pragma Unreferenced
+        (Buffer, Pattern, Case_Sensitive, Whole_Word,
+         Search_Forward, From_Line, From_Column);
 
    begin
-      pragma Assert (Is_Valid_Position (Buffer, From_Line, From_Column));
-
-      if not Case_Sensitive or else Whole_Word then
-         --  ??? These options are not supported yet.
-         --  Always return false for the moment.
-         Found := False;
-         Match_Start_Line   := 0;
-         Match_Start_Column := 0;
-         Match_End_Line     := 0;
-         Match_End_Column   := 0;
-         return;
-      end if;
-
-      Get_Iter_At_Line_Offset (Buffer, Iter, From_Line, From_Column);
-
-      if Search_Forward then
-         Get_End_Iter (Buffer, Limit);
-         Forward_Search
-           (Iter, Pattern,
-            Visible_Only => False,
-            Slice        => True,
-            Match_Start  => Match_Start,
-            Match_End    => Match_End,
-            Limit        => Limit,
-            Result       => Found);
-
-      else
-         Get_Start_Iter (Buffer, Limit);
-         Backward_Search
-           (Iter, Pattern,
-            Visible_Only => False,
-            Slice        => True,
-            Match_Start  => Match_Start,
-            Match_End    => Match_End,
-            Limit        => Limit,
-            Result       => Found);
-      end if;
-
-      if Found then
-         Match_Start_Line := Get_Line (Match_Start);
-         Match_Start_Column := Get_Line_Offset (Match_Start);
-         Match_End_Line := Get_Line (Match_End);
-         Match_End_Column := Get_Line_Offset (Match_End);
-      end if;
+      --  ??? Unimplemented
+      Found := False;
+      Match_Start_Line   := 0;
+      Match_Start_Column := 0;
+      Match_End_Line     := 0;
+      Match_End_Column   := 0;
    end Search;
 
    ---------------
