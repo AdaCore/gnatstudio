@@ -18,10 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;     use GNAT.Expect;
-with GNAT.OS_Lib;     use GNAT.OS_Lib;
-with Generic_Values;  use Generic_Values;
-with Process_Proxies; use Process_Proxies;
+with GNAT.Expect;       use GNAT.Expect;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with Generic_Values;    use Generic_Values;
+with Process_Proxies;   use Process_Proxies;
+with Language.Debugger; use Language.Debugger;
 
 package body Debugger is
 
@@ -42,8 +43,9 @@ package body Debugger is
 
    begin
       if Type_Str'Length /= 0 then
-         Language.Parse_Type
-           (Debugger.The_Language, Type_Str, Entity, Index, Result);
+         Parse_Type
+           (Language_Debugger_Access (Debugger.The_Language),
+            Type_Str, Entity, Index, Result);
       end if;
 
       return Result;
@@ -64,9 +66,10 @@ package body Debugger is
 
    begin
       --  Clear the value previously parsed.
-      Clear_Value (Value.all);
-      Language.Parse_Value
-        (Debugger.The_Language, Type_Str, Index, Value, Repeat_Num);
+      Free (Value, Only_Value => True);
+      Parse_Value
+        (Language_Debugger_Access (Debugger.The_Language),
+         Type_Str, Index, Value, Repeat_Num);
    end Parse_Value;
 
    ------------------
@@ -126,7 +129,6 @@ package body Debugger is
              (Debugger_Name, Arguments,
               Buffer_Size => 0,
               Err_To_Out => True));
-
       else
          declare
             Real_Arguments : Argument_List (1 .. Arguments'Length + 2);
@@ -144,6 +146,10 @@ package body Debugger is
             Free (Real_Arguments (1));
             Free (Real_Arguments (2));
          end;
+      end if;
+
+      if Get_Pid (Descriptor.all) = GNAT.Expect.Invalid_Pid then
+         raise Spawn_Error;
       end if;
 
       Set_Descriptor (Debugger.Process, Descriptor);
@@ -164,5 +170,18 @@ package body Debugger is
       Name_Last  := 1;
       Line       := 0;
    end Found_File_Name;
+
+   -----------------
+   -- Get_Uniq_Id --
+   -----------------
+
+   function Get_Uniq_Id
+     (Debugger : access Debugger_Root;
+      Entity   : String)
+     return String
+   is
+   begin
+      return Entity;
+   end Get_Uniq_Id;
 
 end Debugger;
