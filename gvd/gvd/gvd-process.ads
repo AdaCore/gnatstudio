@@ -42,6 +42,7 @@ with Items;
 with Odd.Code_Editors;
 with Odd.Histories;
 with Odd.Types;
+with Open_Program_Pkg; use Open_Program_Pkg;
 
 package Odd.Process is
 
@@ -140,6 +141,10 @@ package Odd.Process is
 
       Breakpoints : Odd.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
+
+      Descriptor : Program_Descriptor;
+      --  This is used to store the launching method.
+      --  (Added for handling sessions.)
 
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
