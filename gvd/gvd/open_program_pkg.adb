@@ -21,13 +21,10 @@
 with Gtk; use Gtk;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Menu;        use Gtk.Menu;
-with Gtk.Menu_Item;   use Gtk.Menu_Item;
 with Gtk.Main;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Open_Program_Pkg.Callbacks; use Open_Program_Pkg.Callbacks;
-with System;
 
 package body Open_Program_Pkg is
 
@@ -45,14 +42,13 @@ procedure Initialize (Open_Program : access Open_Program_Record'Class) is
    Table7_Group : Widget_SList.GSList;
    Program_Combo_Items : String_List.Glist;
    Host_Combo_Items : String_List.Glist;
-   Launch_Menu_Menu : Gtk_Menu;
-   The_Menu_Item : Gtk_Menu_Item;
-   Combo8_Items : String_List.Glist;
-   Combo7_Items : String_List.Glist;
+   Protocol_Combo_Items : String_List.Glist;
+   Program_Host_Combo_Items : String_List.Glist;
+   Debugger_Combo_Items : String_List.Glist;
 
 begin
    Gtk.Window.Initialize (Open_Program, Window_Toplevel);
-   Set_Title (Open_Program, -"Open Program");
+   Set_Title (Open_Program, -"Open Program in a New Debugger");
    Set_Policy (Open_Program, False, True, False);
    Set_Position (Open_Program, Win_Pos_Center);
    Set_Modal (Open_Program, True);
@@ -202,42 +198,20 @@ begin
    Set_Justify (Open_Program.Label56, Justify_Center);
    Set_Line_Wrap (Open_Program.Label56, False);
 
-   Gtk_New (Open_Program.Label58, -("Launch"));
-   Attach (Open_Program.Table7, Open_Program.Label58, 0, 1, 4, 5,
-     Fill, 0,
-     0, 0);
-   Set_Alignment (Open_Program.Label58, 7.45058e-09, 0.5);
-   Set_Padding (Open_Program.Label58, 0, 0);
-   Set_Justify (Open_Program.Label58, Justify_Center);
-   Set_Line_Wrap (Open_Program.Label58, False);
-
-   Gtk_New (Open_Program.Launch_Menu);
-   Attach (Open_Program.Table7, Open_Program.Launch_Menu, 1, 6, 4, 5,
-     Fill, 0,
-     0, 0);
-   Menu.Gtk_New (Launch_Menu_Menu);
-   Menu_Item.Gtk_New (The_Menu_Item, -"in the current debugger session");
-   Menu.Append (Launch_Menu_Menu, The_Menu_Item);
-   Menu_Item.Gtk_New (The_Menu_Item, -"in a new debugger session");
-   Menu.Append (Launch_Menu_Menu, The_Menu_Item);
-   Option_Menu.Set_Menu
-     (Gtk_Option_Menu (Open_Program.Launch_Menu),
-      Launch_Menu_Menu);
-
-   Gtk_New (Open_Program.Combo8);
-   Attach (Open_Program.Table7, Open_Program.Combo8, 4, 6, 2, 3,
+   Gtk_New (Open_Program.Protocol_Combo);
+   Attach (Open_Program.Table7, Open_Program.Protocol_Combo, 4, 6, 2, 3,
      Expand or Fill, 0,
      0, 0);
-   Set_Case_Sensitive (Open_Program.Combo8, False);
-   Set_Use_Arrows (Open_Program.Combo8, True);
-   Set_Use_Arrows_Always (Open_Program.Combo8, False);
-   String_List.Append (Combo8_Items, -"wtx");
-   String_List.Append (Combo8_Items, -"vxworks");
-   String_List.Append (Combo8_Items, -"remote");
-   Combo.Set_Popdown_Strings (Open_Program.Combo8, Combo8_Items);
-   Free_String_List (Combo8_Items);
+   Set_Case_Sensitive (Open_Program.Protocol_Combo, False);
+   Set_Use_Arrows (Open_Program.Protocol_Combo, True);
+   Set_Use_Arrows_Always (Open_Program.Protocol_Combo, False);
+   String_List.Append (Protocol_Combo_Items, -"wtx");
+   String_List.Append (Protocol_Combo_Items, -"vxworks");
+   String_List.Append (Protocol_Combo_Items, -"remote");
+   Combo.Set_Popdown_Strings (Open_Program.Protocol_Combo, Protocol_Combo_Items);
+   Free_String_List (Protocol_Combo_Items);
 
-   Open_Program.Protocol_Entry := Get_Entry (Open_Program.Combo8);
+   Open_Program.Protocol_Entry := Get_Entry (Open_Program.Protocol_Combo);
    Set_Editable (Open_Program.Protocol_Entry, True);
    Set_Max_Length (Open_Program.Protocol_Entry, 0);
    Set_Text (Open_Program.Protocol_Entry, -"");
@@ -252,18 +226,18 @@ begin
    Set_Justify (Open_Program.Label60, Justify_Center);
    Set_Line_Wrap (Open_Program.Label60, False);
 
-   Gtk_New (Open_Program.Combo7);
-   Attach (Open_Program.Table7, Open_Program.Combo7, 1, 3, 2, 3,
+   Gtk_New (Open_Program.Program_Host_Combo);
+   Attach (Open_Program.Table7, Open_Program.Program_Host_Combo, 1, 3, 2, 3,
      Expand or Fill, 0,
      0, 0);
-   Set_Case_Sensitive (Open_Program.Combo7, False);
-   Set_Use_Arrows (Open_Program.Combo7, True);
-   Set_Use_Arrows_Always (Open_Program.Combo7, False);
-   String_List.Append (Combo7_Items, -"");
-   Combo.Set_Popdown_Strings (Open_Program.Combo7, Combo7_Items);
-   Free_String_List (Combo7_Items);
+   Set_Case_Sensitive (Open_Program.Program_Host_Combo, False);
+   Set_Use_Arrows (Open_Program.Program_Host_Combo, True);
+   Set_Use_Arrows_Always (Open_Program.Program_Host_Combo, False);
+   String_List.Append (Program_Host_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Open_Program.Program_Host_Combo, Program_Host_Combo_Items);
+   Free_String_List (Program_Host_Combo_Items);
 
-   Open_Program.Target_Entry := Get_Entry (Open_Program.Combo7);
+   Open_Program.Target_Entry := Get_Entry (Open_Program.Program_Host_Combo);
    Set_Editable (Open_Program.Target_Entry, True);
    Set_Max_Length (Open_Program.Target_Entry, 0);
    Set_Text (Open_Program.Target_Entry, -"");
@@ -277,6 +251,32 @@ begin
    Set_Padding (Open_Program.Label59, 0, 0);
    Set_Justify (Open_Program.Label59, Justify_Center);
    Set_Line_Wrap (Open_Program.Label59, False);
+
+   Gtk_New (Open_Program.Label73, -("Debugger Name"));
+   Attach (Open_Program.Table7, Open_Program.Label73, 0, 1, 4, 5,
+     Fill, 0,
+     0, 0);
+   Set_Alignment (Open_Program.Label73, 0.0, 0.5);
+   Set_Padding (Open_Program.Label73, 0, 0);
+   Set_Justify (Open_Program.Label73, Justify_Center);
+   Set_Line_Wrap (Open_Program.Label73, False);
+
+   Gtk_New (Open_Program.Debugger_Combo);
+   Attach (Open_Program.Table7, Open_Program.Debugger_Combo, 1, 6, 4, 5,
+     Expand or Fill, 0,
+     0, 0);
+   Set_Case_Sensitive (Open_Program.Debugger_Combo, False);
+   Set_Use_Arrows (Open_Program.Debugger_Combo, True);
+   Set_Use_Arrows_Always (Open_Program.Debugger_Combo, False);
+   String_List.Append (Debugger_Combo_Items, -"");
+   Combo.Set_Popdown_Strings (Open_Program.Debugger_Combo, Debugger_Combo_Items);
+   Free_String_List (Debugger_Combo_Items);
+
+   Open_Program.Debugger_Entry := Get_Entry (Open_Program.Debugger_Combo);
+   Set_Editable (Open_Program.Debugger_Entry, True);
+   Set_Max_Length (Open_Program.Debugger_Entry, 0);
+   Set_Text (Open_Program.Debugger_Entry, -"");
+   Set_Visibility (Open_Program.Debugger_Entry, True);
 
    Gtk_New (Open_Program.Hbuttonbox7);
    Pack_Start (Open_Program.Vbox13, Open_Program.Hbuttonbox7, False, True, 0);
@@ -312,12 +312,6 @@ procedure Open_Program
   (Open       : in out Open_Program_Access;
    Descriptor : out Program_Descriptor)
 is
-   Menu  : System.Address;
-   Menu1 : Widget_List.Glist;
-
-   use Widget_List;
-   use type System.Address;
-
 begin
    if Open = null then
       Gtk_New (Open);
@@ -350,18 +344,8 @@ begin
    Descriptor.Remote_Host := new String' (Get_Text (Open.Host_Entry));
    Descriptor.Remote_Target := new String' (Get_Text (Open.Target_Entry));
    Descriptor.Protocol := new String' (Get_Text (Open.Protocol_Entry));
-
-   --  Retrieve the label associated with the selected option menu
-
-   Menu  := Get_Object (Get_Active (Get_Menu (Open.Launch_Menu)));
-   Menu1 := Children (Get_Menu (Open.Launch_Menu));
-   Descriptor.Launch := Launch_Method'Succ (None);
-
-   while Get_Object (Get_Data (Menu1)) /= Menu loop
-      Menu1 := Next (Menu1);
-      Descriptor.Launch := Launch_Method'Succ (Descriptor.Launch);
-   end loop;
-
+   Descriptor.Debugger_Name := new String' (Get_Text (Open.Debugger_Entry));
+   Descriptor.Launch := New_Debugger;
    Hide (Open);
 end Open_Program;
 
@@ -371,6 +355,7 @@ begin
    Free (Descriptor.Remote_Host);
    Free (Descriptor.Remote_Target);
    Free (Descriptor.Protocol);
+   Free (Descriptor.Debugger_Name);
 end Free;
 
 end Open_Program_Pkg;

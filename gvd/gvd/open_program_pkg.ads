@@ -27,7 +27,6 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Label; use Gtk.Label;
-with Gtk.Option_Menu; use Gtk.Option_Menu;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Debugger; use Debugger;
@@ -52,14 +51,15 @@ package Open_Program_Pkg is
       Label57 : Gtk_Label;
       Label55 : Gtk_Label;
       Label56 : Gtk_Label;
-      Label58 : Gtk_Label;
-      Launch_Menu : Gtk_Option_Menu;
-      Combo8 : Gtk_Combo;
+      Protocol_Combo : Gtk_Combo;
       Protocol_Entry : Gtk_Entry;
       Label60 : Gtk_Label;
-      Combo7 : Gtk_Combo;
+      Program_Host_Combo : Gtk_Combo;
       Target_Entry : Gtk_Entry;
       Label59 : Gtk_Label;
+      Label73 : Gtk_Label;
+      Debugger_Combo : Gtk_Combo;
+      Debugger_Entry : Gtk_Entry;
       Hbuttonbox7 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
@@ -73,6 +73,7 @@ package Open_Program_Pkg is
    type Program_Descriptor is record
       Program       : String_Access;
       Debugger      : Debugger_Type;
+      Debugger_Name : String_Access;
       Remote_Host   : String_Access;
       Remote_Target : String_Access;
       Protocol      : String_Access;
