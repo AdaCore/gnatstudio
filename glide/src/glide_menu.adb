@@ -24,6 +24,7 @@ with Gtk.Label;             use Gtk.Label;
 with Gtk.Main;              use Gtk.Main;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Text;              use Gtk.Text;
+with Gtk.Stock;             use Gtk.Stock;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.MDI;            use Gtkada.MDI;
@@ -76,6 +77,12 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  File->Open File menu
+
+   procedure On_New_View
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  File->New View menu
 
    procedure On_Open_Project
      (Object : Data_Type_Access;
@@ -154,12 +161,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Edit->Select All menu
-
-   procedure On_New_View
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->New View menu
 
    procedure On_Preferences
      (Object : Data_Type_Access;
@@ -1099,76 +1100,85 @@ package body Glide_Menu is
    begin
       return new Gtk_Item_Factory_Entry_Array'
         (Gtk_New (-"/_File", Item_Type => Branch),
-         Gtk_New (-"/_File/New File", "", On_New_File'Access),
+         Gtk_New (-"/_File/New File", "", Stock_New, On_New_File'Access),
+         Gtk_New (-"/_File/New View", "", On_New_View'Access),
          Gtk_New (-"/_File/New Project...", "", On_New_Project'Access),
          Gtk_New (-"/_File/sep1", Item_Type => Separator),
-         Gtk_New (-"/_File/Open...", "F3", On_Open_File'Access),
+         Gtk_New (-"/_File/Open...", "F3", Stock_Open, On_Open_File'Access),
          Gtk_New (-"/_File/Open From Path...", "", On_Open_File'Access),
          Gtk_New (-"/_File/Open Project...", "F3", On_Open_Project'Access),
          Gtk_New (-"/_File/Reopen", Item_Type => Branch),
          Gtk_New (-"/_File/sep2", Item_Type => Separator),
-         Gtk_New (-"/_File/Save", "", On_Save'Access),
-         Gtk_New (-"/_File/Save As...", "", On_Save_As'Access),
-         Gtk_New (-"/_File/Close", "", On_Close'Access),
+         Gtk_New (-"/_File/Save", "", Stock_Save, On_Save'Access),
+         Gtk_New (-"/_File/Save As...", "", Stock_Save_As, On_Save_As'Access),
+         Gtk_New (-"/_File/Close", "", Stock_Close, On_Close'Access),
          Gtk_New (-"/_File/Close All", "", null),
          Gtk_New (-"/_File/sep3", Item_Type => Separator),
-         Gtk_New (-"/_File/Print", "", null),
+         Gtk_New (-"/_File/Print", "", Stock_Print, null),
          Gtk_New (-"/_File/sep4", Item_Type => Separator),
-         Gtk_New (-"/_File/Exit", "<control>Q", On_Exit'Access),
+         Gtk_New (-"/_File/Exit", "<control>Q", Stock_Quit, On_Exit'Access),
 
          Gtk_New (-"/_Edit", Item_Type => Branch),
-         Gtk_New (-"/_Edit/Undo", "", On_Undo'Access),
-         Gtk_New (-"/_Edit/Redo", "", On_Redo'Access),
+         Gtk_New (-"/_Edit/Undo", "", Stock_Undo, On_Undo'Access),
+         Gtk_New (-"/_Edit/Redo", "", Stock_Redo, On_Redo'Access),
          Gtk_New (-"/_Edit/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Edit/Cut", "<shift>DEL", On_Cut'Access),
-         Gtk_New (-"/_Edit/Copy", "<control>INS", On_Copy'Access),
-         Gtk_New (-"/_Edit/Paste", "<shift>INS", On_Paste'Access),
+         Gtk_New (-"/_Edit/Cut", "<shift>DEL", Stock_Cut, On_Cut'Access),
+         Gtk_New (-"/_Edit/Copy", "<control>INS", Stock_Copy, On_Copy'Access),
+         Gtk_New (-"/_Edit/Paste", "<shift>INS", Stock_Paste, On_Paste'Access),
          Gtk_New (-"/_Edit/Select All", "<control>A", On_Select_All'Access),
          Gtk_New (-"/_Edit/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Edit/New View", "", On_New_View'Access),
-         Gtk_New (-"/_Edit/Preferences...", "", On_Preferences'Access),
+         Gtk_New (-"/_Edit/Preferences...", "",
+                  Stock_Preferences, On_Preferences'Access),
 
          Gtk_New (-"/_Search", Item_Type => Branch),
-         Gtk_New (-"/_Search/Search...", "", null),
-         Gtk_New (-"/_Search/Search Next", "", null),
-         Gtk_New (-"/_Search/Search Previous", "", null),
-         Gtk_New (-"/_Search/Search And Replace...", "", null),
+         Gtk_New (-"/_Search/Search...", "", Stock_Find, null),
+         Gtk_New (-"/_Search/Search Next", "", Stock_Go_Forward, null),
+         Gtk_New (-"/_Search/Search Previous", "", Stock_Go_Back, null),
+         Gtk_New (-"/_Search/Search And Replace...", "",
+                  Stock_Find_And_Replace, null),
          Gtk_New (-"/_Search/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Search/Goto Line...", "", null),
-         Gtk_New (-"/_Search/Goto Declaration<->Body", "", null),
-         Gtk_New (-"/_Search/Goto File Spec<->Body", "", null),
-         Gtk_New (-"/_Search/Goto Previous Reference", "", null),
-         Gtk_New (-"/_Search/Goto Parent Unit", "", null),
-         Gtk_New (-"/_Search/List References", "", null),
+         Gtk_New (-"/_Search/Goto Line...", "", Stock_Jump_To, null),
+         Gtk_New (-"/_Search/Goto Declaration<->Body", "", Stock_Home, null),
+         Gtk_New (-"/_Search/Goto File Spec<->Body", "", Stock_Convert, null),
+         Gtk_New (-"/_Search/Goto Previous Reference", "", Stock_Undo, null),
+         Gtk_New (-"/_Search/Goto Parent Unit", "", Stock_Go_Up, null),
+         Gtk_New (-"/_Search/List References", "", Stock_Index, null),
          Gtk_New (-"/_Search/Syntax", Item_Type => Branch),
-         Gtk_New (-"/_Search/Syntax/Start Of Statement", "", null),
-         Gtk_New (-"/_Search/Syntax/End Of Statement", "", null),
-         Gtk_New (-"/_Search/Syntax/Next Procedure", "", null),
-         Gtk_New (-"/_Search/Syntax/Previous Procedure", "", null),
+         Gtk_New (-"/_Search/Syntax/Start Of Statement", "",
+                  Stock_Go_Up, null),
+         Gtk_New (-"/_Search/Syntax/End Of Statement", "",
+                  Stock_Go_Down, null),
+         Gtk_New (-"/_Search/Syntax/Next Procedure", "",
+                  Stock_Go_Forward, null),
+         Gtk_New (-"/_Search/Syntax/Previous Procedure", "",
+                  Stock_Go_Back, null),
          Gtk_New (-"/_Search/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Search/Search in Files...", "",
+         Gtk_New (-"/_Search/Search in Files...", "", Stock_Find,
                   On_Search_Files'Access),
 
          Gtk_New (-"/_VCS", Item_Type => Branch),
-         Gtk_New (-"/_VCS/Check In", "", null),
-         Gtk_New (-"/_VCS/Check Out", "", null),
-         Gtk_New (-"/_VCS/Edit Revision History", "", null),
-         Gtk_New (-"/_VCS/Revert to Last Version", "", null),
-         Gtk_New (-"/_VCS/Undo Last Check-In", "", null),
+         Gtk_New (-"/_VCS/Check In", "", Stock_Goto_Last, null),
+         Gtk_New (-"/_VCS/Check Out", "", Stock_Goto_First, null),
+         Gtk_New (-"/_VCS/Edit Revision History", "", Stock_New, null),
+         Gtk_New (-"/_VCS/Revert to Last Version", "",
+                  Stock_Revert_To_Saved, null),
+         Gtk_New (-"/_VCS/Undo Last Check-In", "", Stock_Undelete, null),
          Gtk_New (-"/_VCS/sep1", Item_Type => Separator),
-         Gtk_New (-"/_VCS/Compare with Last Version", "", null),
-         Gtk_New (-"/_VCS/Annotate", "", null),
+         Gtk_New (-"/_VCS/Compare with Last Version", "",
+                  Stock_Sort_Ascending, null),
+         Gtk_New (-"/_VCS/Annotate", "", Stock_Preferences, null),
 
          Gtk_New (-"/_Project", Item_Type => Branch),
-         Gtk_New (-"/_Project/Edit Project...", "", On_Edit_Project'Access),
+         Gtk_New (-"/_Project/Edit Project...", "",
+                  Stock_Properties, On_Edit_Project'Access),
          Gtk_New (-"/_Project/Task Manager", "", null),
          Gtk_New (-"/_Project/sep1", Item_Type => Separator),
          Gtk_New (-"/_Project/Check File", "", null),
-         Gtk_New (-"/_Project/Compile File", "", null),
-         Gtk_New (-"/_Project/Build", "", On_Build'Access),
+         Gtk_New (-"/_Project/Compile File", "", Stock_Convert, null),
+         Gtk_New (-"/_Project/Build", "", Stock_Refresh, On_Build'Access),
          Gtk_New (-"/_Project/Build Library", "", On_Build'Access),
          Gtk_New (-"/_Project/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Project/Run...", "", On_Run'Access),
+         Gtk_New (-"/_Project/Run...", "", Stock_Execute, On_Run'Access),
 
          Gtk_New (-"/_Debug", Item_Type => Branch),
          Gtk_New (-"/_Debug/Start", "", On_Run'Access),
@@ -1178,9 +1188,10 @@ package body Glide_Menu is
          Gtk_New (-"/_Debug/Debug/Running Process...", "", null),
          Gtk_New (-"/_Debug/Debug/Core File...", "", null),
          Gtk_New (-"/_Debug/Session", Item_Type => Branch),
-         Gtk_New (-"/_Debug/Session/Open...", "", null),
-         Gtk_New (-"/_Debug/Session/Save As...", "", null),
-         Gtk_New (-"/_Debug/Session/Command History...", "", null),
+         Gtk_New (-"/_Debug/Session/Open...", "", Stock_Open, null),
+         Gtk_New (-"/_Debug/Session/Save As...", "", Stock_Save_As, null),
+         Gtk_New (-"/_Debug/Session/Command History...", "",
+                  Stock_Index, null),
          Gtk_New (-"/_Debug/Data", Item_Type => Branch),
          Gtk_New (-"/_Debug/Data/Call Stack", "", null, Check_Item),
          Gtk_New (-"/_Debug/Data/Threads", "", null),
@@ -1195,7 +1206,7 @@ package body Glide_Menu is
          Gtk_New (-"/_Debug/Data/Display Registers", "", null),
          Gtk_New (-"/_Debug/Data/Display Any Expression...", "", null),
          Gtk_New (-"/_Debug/Data/sep3", Item_Type => Separator),
-         Gtk_New (-"/_Debug/Data/Refresh", "<control>L", null),
+         Gtk_New (-"/_Debug/Data/Refresh", "<control>L", Stock_Refresh, null),
          Gtk_New (-"/_Debug/Data/Show", "", null),
          Gtk_New (-"/_Debug/sep2", Item_Type => Separator),
          Gtk_New (-"/_Debug/Step", "F5", On_Step'Access),
@@ -1206,7 +1217,7 @@ package body Glide_Menu is
                   On_Next_Instruction'Access),
          Gtk_New (-"/_Debug/Finish", "F7", On_Finish'Access),
          Gtk_New (-"/_Debug/Continue", "F8", On_Continue'Access),
-         Gtk_New (-"/_Debug/Interrupt", "ESC", null),
+         Gtk_New (-"/_Debug/Interrupt", "ESC", Stock_Stop, null),
          Gtk_New (-"/_Debug/Detach Process", "", null),
 
          Gtk_New (-"/_Tools", Item_Type => Branch),
@@ -1236,7 +1247,8 @@ package body Glide_Menu is
          Gtk_New (-"/_Window"),
 
          Gtk_New (-"/_Help", Item_Type => Branch),
-         Gtk_New (-"/_Help/Glide Manual...", "F1", On_Manual'Access),
+         Gtk_New (-"/_Help/Glide Manual...", "F1",
+                  Stock_Help, On_Manual'Access),
          Gtk_New (-"/_Help/About Glide...", "", On_About_Glide'Access));
    end Glide_Menu_Items;
 
