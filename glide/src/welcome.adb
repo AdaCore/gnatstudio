@@ -25,7 +25,6 @@ with Gtk.Radio_Button;     use Gtk.Radio_Button;
 with Gtk.Combo;            use Gtk.Combo;
 with Gtk.Dialog;           use Gtk.Dialog;
 with Gtk.Enums;            use Gtk.Enums;
-with Gtk.Frame;            use Gtk.Frame;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Separator;        use Gtk.Separator;
 with Gtk.Size_Group;       use Gtk.Size_Group;
@@ -120,7 +119,7 @@ package body Welcome is
       Gtk_New (Size);
 
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Add (Get_Contents (Screen), Box);
+      Pack_Start (Get_Contents (Screen), Box, Expand => True, Fill => True);
       Set_Border_Width (Box, 10);
 
       --  Default project
