@@ -32,6 +32,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System.Assertions;         use System.Assertions;
 
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;

@@ -34,6 +34,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;

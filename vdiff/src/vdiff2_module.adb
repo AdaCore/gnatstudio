@@ -22,6 +22,7 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;

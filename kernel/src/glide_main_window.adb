@@ -26,6 +26,7 @@ with Glib.Error;                use Glib.Error;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks;

@@ -137,6 +137,7 @@ with Gtk.Widget;
 with Gtkada.MDI;
 with Commands; use Commands;
 with Interfaces.C.Strings;
+with Glide_Kernel.Actions; use Glide_Kernel.Actions;
 
 package Glide_Kernel.Modules is
 
