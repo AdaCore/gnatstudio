@@ -152,15 +152,17 @@ package body Odd.Process is
    ------------------
 
    procedure Send_Command (Debugger : Debugger_Descriptor; Command : String) is
+
       Win    : Process_Tab_Access :=
         Process_Tab_Access (Debugger.Window);
       The_Type : Generic_Type_Access;
-      --  Item   : Display_Item;
+      Item   : Display_Item;
 
    begin
       if Command'Length > 6
         and then Command (Command'First .. Command'First + 5) = "graph "
       then
+
          --  Handle "graph" commands (print, display)
 
          if Command'Length > 11
@@ -173,11 +175,31 @@ package body Odd.Process is
 
                if The_Type /= null then
                   Parse_Value (Debugger.Debugger.all, Var, The_Type);
-                  --  Gtk_New (Item, Get_Window (Win.Data_Canvas), Var,
-                  --           ???);
-                  --  Put (Win.Data_Canvas, Item, 10, 10);
+
+                  Gtk_New (Item, Get_Window (Win.Data_Canvas),
+                           Var, The_Type, Auto_Refresh => False);
+                  Put (Win.Data_Canvas, Item);
                end if;
             end;
+
+         elsif Command'Length > 13
+           and then Command (Command'First + 6 .. Command'First + 12)
+           = "display"
+         then
+            declare
+               Var : String := Command (Command'First + 14 .. Command'Last);
+            begin
+               The_Type := Parse_Type (Debugger.Debugger.all, Var);
+
+               if The_Type /= null then
+                  Parse_Value (Debugger.Debugger.all, Var, The_Type);
+
+                  Gtk_New (Item, Get_Window (Win.Data_Canvas),
+                           Var, The_Type, Auto_Refresh => True);
+                  Put (Win.Data_Canvas, Item);
+               end if;
+            end;
+
          else
             Send (Get_Process (Debugger.Debugger.all).all,
               Command (Command'First + 6 .. Command'Last));

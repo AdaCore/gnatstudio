@@ -20,13 +20,17 @@
 
 with System;
 with Unchecked_Deallocation;
+with Glib;
+with Gdk.Pixmap;
+with Gdk.GC;
+with Gdk.Font;
 
 package Generic_Values is
 
    type String_Access is access all String;
    procedure Free is new Unchecked_Deallocation (String, String_Access);
 
-   --  Description of the types and values that we are parsed by Odd.
+   --  Description of the types and values that are parsed by Odd.
    --
    --  When a user wants to display an item in the canvas, its type is
    --  first parsed, and then the value itself is parsed.
@@ -65,6 +69,30 @@ package Generic_Values is
    --  Only the type-related fields are cloned, the value fields are reset to
    --  Null.
 
+   procedure Paint (Item   : Generic_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Glib.Gint := 0)
+      is abstract;
+   --  Paint the item on the pixmap, that will be used to show the item in the
+   --  canvas.
+   --  The item should be drawn so that its upper-left corner is at coordinates
+   --  (X, Y) in Pixmap.
+   --  Note also that the colors set in the GC need not be respected, and can
+   --  be freely changed. This is the responsability of this subprogram to
+   --  make sure the correct colors and/or font attributes are used.
+
+   procedure Size_Request (Item   : in out Generic_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint)
+      is abstract;
+   --  Request a specific size for the area where the item will be displayed
+   --  in the pixmap.
+   --  Note that the result might be cached in item for efficiency, thus
+   --  every time the font is changed this procedure should be called again.
+
    -----------------
    -- Simple_Type --
    -----------------
@@ -83,6 +111,17 @@ package Generic_Values is
    procedure Set_Value (Item : in out Simple_Type; Value : String);
    --  Assign a new value to Item.
    --  String is copied internally.
+
+   procedure Paint (Item   : Simple_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Glib.Gint := 0);
+
+   procedure Size_Request (Item   : in out Simple_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint);
 
    -----------------
    -- Range Types --
@@ -211,6 +250,17 @@ package Generic_Values is
    --  minimal size.
    --  This is never mandatory, but saves some memory in some cases.
 
+   procedure Paint (Item   : Array_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Glib.Gint := 0);
+
+   procedure Size_Request (Item   : in out Array_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint);
+
    -------------
    -- Records --
    -------------
@@ -281,6 +331,17 @@ package Generic_Values is
                        Field : Positive)
                       return Generic_Type_Access;
    --  Same as above, but for a specific field index.
+
+   procedure Paint (Item   : Record_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Glib.Gint := 0);
+
+   procedure Size_Request (Item   : in out Record_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint);
 
    ------------
    -- Unions --
@@ -366,6 +427,7 @@ private
       Values      : Array_Item_Array_Access := null;
       Item_Type   : Generic_Type_Access := null;
       Last_Value  : Natural := 0;
+
    end record;
    --  Last_Value is the last value that is relevant in Values, or 0 if the
    --  array is empty.
@@ -390,6 +452,19 @@ private
    procedure Clear_Value (Value : in out Repeat_Type);
    function Clone (Value : Repeat_Type) return Generic_Type_Access;
 
+   procedure Paint (Item   : Repeat_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Glib.Gint := 0);
+
+   procedure Size_Request (Item   : in out Repeat_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint);
+
+
+
 
    type Record_Type_Array;
    type Record_Type_Array_Access is access Record_Type_Array;
@@ -409,7 +484,11 @@ private
    --  list of all alternatives.
 
    type Record_Type (Num_Fields : Natural) is new Generic_Type with record
-      Fields     : Record_Field_Array (1 .. Num_Fields);
+      Fields           : Record_Field_Array (1 .. Num_Fields);
+
+      Gui_Fields_Width : Glib.Gint := 0;
+      --  Width allocated for the field names column when drawing the item
+      --  on a pixmap. This is calculated once when Size_Request is called.
    end record;
    --  Num_Fields can be 0 in case of a 'null record'. Thus, it has to be
    --  a Natural.

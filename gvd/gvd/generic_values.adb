@@ -21,7 +21,16 @@
 with GNAT.IO;  use GNAT.IO;
 with Ada.Tags; use Ada.Tags;
 
+with Glib;         use Glib;
+with Gdk.Font;     use Gdk.Font;
+with Gdk.Drawable; use Gdk.Drawable;
+
 package body Generic_Values is
+
+   Line_Spacing : constant Gint := 4;
+   --  Space between line in the display of items in a pixmap.
+   --  This is the extra space added between two lines of an array or two
+   --  fields of a record
 
    ---------------------
    -- New_Simple_Type --
@@ -772,5 +781,252 @@ package body Generic_Values is
       end loop;
       return Generic_Type_Access (R);
    end Clone;
+
+   -----------
+   -- Paint --
+   -----------
+
+   procedure Paint (Item   : Simple_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Gint := 0)
+   is
+      Lbearing,
+      Rbearing,
+      Width,
+      Ascent,
+      Descent : Gint;
+   begin
+      Text_Extents (Font, Item.Value.all,
+                    Lbearing, Rbearing, Width, Ascent, Descent);
+      Draw_Text (Pixmap,
+                 Font => Font,
+                 GC   => GC,
+                 X    => X,
+                 Y    => Y + Descent,
+                 Text => Item.Value.all);
+   end Paint;
+
+   -----------
+   -- Paint --
+   -----------
+
+   procedure Paint (Item   : Array_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Gint := 0)
+   is
+      Current_Y : Gint := Y;
+      W, H : Gint;
+   begin
+      for V in Item.Values'Range loop
+
+         Draw_Text (Pixmap,
+                    Font => Font,
+                    GC   => GC,
+                    X    => X,
+                    Y    => Current_Y,
+                    Text => "1 => ");
+         Size_Request (Item.Values (V).Value.all, Font, W, H);
+         Paint (Item.Values (V).Value.all, GC, Font, Pixmap,
+                X + 40, Current_Y);
+         Current_Y := Current_Y + H + Line_Spacing;
+      end loop;
+   end Paint;
+
+   -----------
+   -- Paint --
+   -----------
+
+   procedure Paint (Item   : Record_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Gint := 0)
+   is
+      Current_Y : Gint := Y;
+      W, H : Gint;
+   begin
+      for F in Item.Fields'Range loop
+
+         Draw_Text (Pixmap,
+                    Font => Font,
+                    GC   => GC,
+                    X    => X,
+                    Y    => Current_Y,
+                    Text => Item.Fields (F).Name.all & " => ");
+
+         --  not a variant part ?
+
+         if Item.Fields (F).Value /= null then
+            Size_Request (Item.Fields (F).Value.all, Font, W, H);
+            Paint (Item.Fields (F).Value.all, GC, Font, Pixmap,
+                   X + Item.Gui_Fields_Width, Current_Y);
+            Current_Y := Current_Y + H + Line_Spacing;
+         end if;
+
+         --  a variant part ?
+
+         if Item.Fields (F).Variant_Part /= null then
+            for V in Item.Fields (F).Variant_Part'Range loop
+               Size_Request (Item.Fields (F).Variant_Part (V).all, Font, W, H);
+               Paint (Item.Fields (F).Variant_Part (V).all, GC, Font, Pixmap,
+                      X + Item.Gui_Fields_Width, Current_Y);
+               Current_Y := Current_Y + H + Line_Spacing;
+            end loop;
+         end if;
+      end loop;
+   end Paint;
+
+   -----------
+   -- Paint --
+   -----------
+
+   procedure Paint (Item   : Repeat_Type;
+                    GC     : Gdk.GC.Gdk_GC;
+                    Font   : Gdk.Font.Gdk_Font;
+                    Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+                    X, Y   : Gint := 0)
+   is
+      Lbearing,
+      Rbearing,
+      Width,
+      Ascent,
+      Descent : Gint;
+      Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
+   begin
+      Text_Extents (Font, Str,
+                    Lbearing, Rbearing, Width, Ascent, Descent);
+      Draw_Text (Pixmap,
+                 Font => Font,
+                 GC   => GC,
+                 X    => X,
+                 Y    => Y + Descent,
+                 Text => Str);
+
+      Paint (Item.Value.all, GC, Font, Pixmap,
+             X + Width, Y);
+   end Paint;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request (Item   : in out Simple_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint)
+   is
+      Lbearing,
+      Rbearing,
+      W,
+      Ascent,
+      Descent : Gint;
+   begin
+      Text_Extents (Font, Item.Value.all,
+                    Lbearing, Rbearing, W, Ascent, Descent);
+      Width  := W;
+      Height := Ascent + Descent;
+   end Size_Request;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request (Item   : in out Array_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint)
+   is
+      W, H : Gint;
+      Total_Height, Total_Width : Gint := 0;
+   begin
+      for V in Item.Values'Range loop
+         Size_Request (Item.Values (V).Value.all, Font, W, H);
+         Total_Width  := Gint'Max (Total_Width, W);
+         Total_Height := Total_Height + H + Line_Spacing;
+      end loop;
+      Width  := Total_Width + 40; --  keep some space for the coordinates
+      Height := Total_Height;
+   end Size_Request;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request (Item   : in out Record_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint)
+   is
+      W, H : Gint;
+      Total_Height, Total_Width : Gint := 0;
+      Largest_Name : String_Access := null;
+      Total_Field_Width : Gint := 0;
+      Lbearing,
+      Rbearing,
+      Ascent,
+      Descent : Gint;
+   begin
+      for F in Item.Fields'Range loop
+
+         if Largest_Name = null
+           or else Item.Fields (F).Name.all'Length > Largest_Name'Length
+         then
+            Largest_Name := Item.Fields (F).Name;
+         end if;
+
+         --  not a variant part ?
+
+         if Item.Fields (F).Value /= null then
+            Size_Request (Item.Fields (F).Value.all, Font, W, H);
+            Total_Width  := Gint'Max (Total_Width, W);
+            Total_Height := Total_Height + H + Line_Spacing;
+         end if;
+
+         --  a variant part ?
+
+         if Item.Fields (F).Variant_Part /= null then
+            for V in Item.Fields (F).Variant_Part'Range loop
+               Size_Request (Item.Fields (F).Variant_Part (V).all, Font, W, H);
+               Total_Width  := Gint'Max (Total_Width, W);
+               Total_Height := Total_Height + H + Line_Spacing;
+            end loop;
+         end if;
+      end loop;
+
+      Text_Extents (Font, Largest_Name.all & " => ",
+                    Lbearing, Rbearing, Item.Gui_Fields_Width,
+                    Ascent, Descent);
+
+      Width  := Total_Width + Item.Gui_Fields_Width;
+      Height := Total_Height;
+   end Size_Request;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request (Item   : in out Repeat_Type;
+                           Font   : Gdk.Font.Gdk_Font;
+                           Width  : out Glib.Gint;
+                           Height : out Glib.Gint)
+   is
+      Lbearing,
+      Rbearing,
+      Wid,
+      Ascent,
+      Descent : Gint;
+      W, H    : Gint;
+      Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
+   begin
+      Text_Extents (Font, Str,
+                    Lbearing, Rbearing, Wid, Ascent, Descent);
+      Size_Request (Item.Value.all, Font, W, H);
+      Width := Wid + W;
+      Height := Gint'Max (H, Ascent + Descent);
+   end Size_Request;
 
 end Generic_Values;

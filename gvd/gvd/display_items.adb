@@ -6,6 +6,7 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Font;         use Gdk.Font;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
+with Generic_Values;   use Generic_Values;
 
 with Ada.Text_IO;      use Ada.Text_IO;
 
@@ -21,14 +22,16 @@ package body Display_Items is
    -------------
 
    procedure Gtk_New
-     (Item     : out Display_Item;
-      Win      : Gdk.Window.Gdk_Window;
-      Title    : String := "<No Title>";
-      Contents : String := "")
+     (Item          : out Display_Item;
+      Win           : Gdk.Window.Gdk_Window;
+      Variable_Name : String;
+      Entity        : Generic_Values.Generic_Type_Access;
+      Auto_Refresh  : Boolean := True)
    is
    begin
       Item := new Display_Item_Record;
-      Display_Items.Initialize (Item, Win, Title, Contents);
+      Display_Items.Initialize (Item, Win, Variable_Name, Entity,
+                                Auto_Refresh);
    end Gtk_New;
 
    ----------------
@@ -36,10 +39,11 @@ package body Display_Items is
    ----------------
 
    procedure Initialize
-     (Item     : access Display_Item_Record'Class;
-      Win      : Gdk.Window.Gdk_Window;
-      Title    : String := "<No Title>";
-      Contents : String := "")
+     (Item          : access Display_Item_Record'Class;
+      Win           : Gdk.Window.Gdk_Window;
+      Variable_Name : String;
+      Entity        : Generic_Values.Generic_Type_Access;
+      Auto_Refresh  : Boolean := True)
    is
       use type Gdk.GC.Gdk_GC;
       Alloc_Width  : Gint;
@@ -47,7 +51,16 @@ package body Display_Items is
       Height : Gint;
       Grey  : Gdk_Color;
 
+      Refresh_Button_Size    : constant Gint := 8;
+      Spacing : constant Gint := 2;
+      GC : Gdk_GC;
+      Color : Gdk_Color;
+
    begin
+      Item.Name   := new String'(Variable_Name);
+      Item.Auto_Refresh := Auto_Refresh;
+      Item.Entity := Entity;
+
       if White_GC = null then
          Gdk_New (White_GC, Win);
          Set_Foreground (White_GC, White (Get_Default_Colormap));
@@ -68,11 +81,15 @@ package body Display_Items is
 
       end if;
 
+      Size_Request (Entity.all, Font, Alloc_Width, Alloc_Height);
+      Height := Gint'Max (String_Height (Font, Item.Name.all) + 6,
+                          Refresh_Button_Size + 2 * Spacing);
+      Alloc_Height := Height + Alloc_Height;
+
       Alloc_Width :=
-        Gint'Max (String_Width (Font, Title),
-                  String_Width (Font, Contents)) + 8;
-      Height := String_Height (Font, Title) + 4;
-      Alloc_Height := Height * 2 + String_Height (Font, Contents);
+        Gint'Max (Alloc_Width,
+                  String_Width (Font, Item.Name.all) + Refresh_Button_Size)
+        + Spacing * 3;
 
       Gtkada.Canvas.Initialize (Item, Win, Alloc_Width, Alloc_Height);
 
@@ -110,18 +127,42 @@ package body Display_Items is
       Draw_Text (Pixmap (Item),
                  Font   => Font,
                  GC     => Black_GC,
-                 X      => 4,
+                 X      => Spacing,
                  Y      => Height - 4,
-                 Text   => Title);
+                 Text   => Item.Name.all);
 
-      if Contents /= "" then
-         Draw_Text
-           (Pixmap (Item),
-            Font   => Font,
-            GC     => Black_GC,
-            X      => 4,
-            Y      => Height + 8,
-            Text   => Contents);
+      Draw_Rectangle (Pixmap (Item),
+                      GC     => Black_GC,
+                      Filled => False,
+                      X      => Alloc_Width - Refresh_Button_Size - Spacing,
+                      Y      => Spacing,
+                      Width  => Refresh_Button_Size - 1,
+                      Height => Refresh_Button_Size - 1);
+
+      Gdk_New (GC, Win);
+      if Item.Auto_Refresh then
+         Color := Parse ("green");
+      else
+         Color := Parse ("red");
+      end if;
+      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+      Set_Foreground (GC, Color);
+
+      Draw_Rectangle (Pixmap (Item),
+                      GC     => GC,
+                      Filled => True,
+                      X      => Alloc_Width - Refresh_Button_Size -
+                                Spacing + 1,
+                      Y      => Spacing + 1,
+                      Width  => Refresh_Button_Size - 2,
+                      Height => Refresh_Button_Size - 2);
+      Destroy (GC);
+
+      if Item.Entity /= null then
+         Paint (Item.Entity.all, Black_Gc, Font,
+                Pixmap (Item),
+                X => 4,
+                Y => Height + 8);
       end if;
    end Initialize;
 
