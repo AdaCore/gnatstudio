@@ -436,7 +436,7 @@ package body Src_Editor_Buffer is
       --        from the begining of the previous region to the end of this
       --        region.
       --    - case Ends_Tag:
-      --        We are at the end of a highlighed region. We re-highlight from
+      --        We are at the end of a highlighted region. We re-highlight from
       --        the begining of this region to the end of the next region.
       --  I all three cases, the processing is the same...
 
@@ -496,137 +496,101 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter)
    is
-      Lang_Context : constant Language_Context :=
-        Get_Language_Context (Buffer.Lang);
-      Entity       : Language_Entity;
+      Last_Entity  : Language_Entity;
       Entity_Start : Gtk_Text_Iter;
       Entity_End   : Gtk_Text_Iter;
-      An_Iter      : Gtk_Text_Iter;
-      Ignored      : Boolean;
       Tags         : Highlighting_Tags renames Buffer.Syntax_Tags;
+      Slice_Offset : Gint;
+      Result       : Boolean;
 
-      procedure Local_Highlight (From : Gtk_Text_Iter; To : Gtk_Text_Iter);
-      --  Highlight the region exactly located between From and To.
+      function Highlight_Cb
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean;
+      --  Function called by Language.Parse_Entities for each entity found
+
+      procedure Local_Highlight;
+      --  Highlight the region exactly located between Entity_Start and
+      --  Entity_End.
       --  After this procedure is run, some variables are positioned to
       --  the following values:
-      --    - Entity is equal to the last entity kind found inside the
-      --      given region
-      --    - Entity_Start is set to the begining of the last region found
-      --      in the given buffer slice
-      --    - Entity_End is set to the end of the given buffer slice.
+      --    - Last_Entity is equal to the incomplete entity kind found inside
+      --      the given region, or to Normal_Text if all entities were complete
+      --    - Entity_Start is set to the begining of the incomplete region
+      --      found in the given buffer slice, if any.
 
-      procedure Local_Highlight (From : Gtk_Text_Iter; To : Gtk_Text_Iter) is
-         Slice               : constant String := Get_Slice (From, To);
-         Slice_Offset        : constant Gint := Get_Offset (From);
-         Entity_Start_Offset : Gint;
-         Entity_End_Offset   : Gint;
-         Entity_Length       : Gint;
-         Index               : Natural := Slice'First;
-         Next_Char           : Positive;
+      ------------------
+      -- Highlight_Cb --
+      ------------------
 
+      function Highlight_Cb
+        (Entity         : Language_Entity;
+         Sloc_Start     : Source_Location;
+         Sloc_End       : Source_Location;
+         Partial_Entity : Boolean) return Boolean is
       begin
+         Get_Iter_At_Offset
+           (Buffer, Entity_Start,
+            Gint (Sloc_Start.Index) + Slice_Offset - 1);
+         Get_Iter_At_Offset
+           (Buffer, Entity_End, Gint (Sloc_End.Index) + Slice_Offset);
+
+         if Partial_Entity then
+            Last_Entity := Entity;
+         end if;
+
+         if Entity in Standout_Language_Entity then
+            Apply_Tag (Buffer, Tags (Entity), Entity_Start, Entity_End);
+         end if;
+
+         return False;
+      end Highlight_Cb;
+
+      ---------------------
+      -- Local_Highlight --
+      ---------------------
+
+      procedure Local_Highlight is
+         Slice : constant Interfaces.C.Strings.chars_ptr :=
+           Get_Slice (Entity_Start, Entity_End);
+      begin
+         Last_Entity := Normal_Text;
+         Slice_Offset := Get_Offset (Entity_Start);
+
          --  First, un-apply all the style tags...
-         Kill_Highlighting (Buffer, From, To);
+         Kill_Highlighting (Buffer, Entity_Start, Entity_End);
 
          --  Now re-highlight the text...
-         Copy (Source => From, Dest => Entity_Start);
-         Entity_Start_Offset := Slice_Offset;
 
-         Highlight_Loop :
-         loop
-            exit Highlight_Loop when Index > Slice'Last;
-
-            Looking_At
-              (Buffer.Lang, Slice (Index .. Slice'Last), Entity, Next_Char);
-
-            Entity_Length := Gint (Next_Char - Index);
-            Entity_End_Offset := Entity_Start_Offset + Entity_Length;
-            Get_Iter_At_Offset (Buffer, Entity_End, Entity_End_Offset);
-
-            if Entity in Standout_Language_Entity then
-               Apply_Tag (Buffer, Tags (Entity), Entity_Start, Entity_End);
-            end if;
-
-            Index := Next_Char;
-            Entity_Start_Offset := Entity_End_Offset;
-            Copy (Source => Entity_End, Dest => Entity_Start);
-         end loop Highlight_Loop;
+         Parse_Entities
+           (Buffer.Lang,
+            Slice,
+            Natural (Strlen (Slice)),
+            Highlight_Cb'Unrestricted_Access);
+         g_free (Slice);
       end Local_Highlight;
 
    begin
-      Local_Highlight (From => Start_Iter, To => End_Iter);
+      Copy (Source => Start_Iter, Dest => Entity_Start);
+      Copy (Source => End_Iter, Dest => Entity_End);
 
-      --  Check the last entity found during the highlighting loop
-      case Entity is
-         when Normal_Text | Identifier_Text | Keyword_Text =>
-            --  Nothing to do in that case, the current highlighting is already
-            --  perfect.
-            null;
+      --  Highlight to the end of line, to avoid missing most of the
+      --  partial entities (strings, characters, ...)
 
-         when Comment_Text =>
-            if Lang_Context.New_Line_Comment_Start_Length /= 0 then
-               --  Apply the Comment_Text tag from the end of the current
-               --  highlighted area to the end of the current line.
+      Forward_Line (Entity_End, Result);
+      Local_Highlight;
 
-               Copy (Source => Entity_End, Dest => Entity_Start);
-               Forward_To_Line_End (Entity_End);
-               Kill_Highlighting (Buffer, Entity_Start, Entity_End);
-               Apply_Tag (Buffer, Tags (Entity), Entity_Start, Entity_End);
+      if Last_Entity /= Normal_Text then
+         --  In this case, we are in the middle of e.g a multi-line comment,
+         --  and we re-highlight the whole buffer since we do not know where
+         --  the comment started.
+         --  ??? would be nice to optimize here
 
-            elsif Lang_Context.Comment_End_Length /= 0 then
-               --  In this case, comments end with a defined string. check the
-               --  last characters if they match the end-of-comment string. If
-               --  they match, then verify that it is indeed an end-of-comment
-               --  string when the start-of-comment and end-of-comment strings
-               --  are identical (this is done by checking if the comments
-               --  tag is applied at the begining of the suposed end-of-comment
-               --  string). If the comment area is not closed, then
-               --  re-highlight up to the end of the buffer.
-
-               Copy (Source => Entity_End, Dest => An_Iter);
-               Backward_Chars
-                 (An_Iter, Gint (Lang_Context.Comment_End_Length), Ignored);
-
-               if Get_Slice (An_Iter, Entity_End) /= Lang_Context.Comment_End
-                 or else not
-                   (Lang_Context.Comment_Start = Lang_Context.Comment_End
-                    and then Has_Tag (An_Iter, Tags (Comment_Text)))
-               then
-                  Forward_To_End (Entity_End);
-                  Local_Highlight (From => Entity_Start, To => Entity_End);
-               end if;
-            end if;
-
-         when Character_Text =>
-            Copy (Source => Entity_End, Dest => An_Iter);
-            Backward_Char (An_Iter, Ignored);
-
-            if Get_Char (An_Iter) = Lang_Context.Constant_Character then
-               --  In this case, the text following this area is not
-               --  affected, so there is no more text to re-highlight.
-               return;
-            end if;
-
-            Forward_To_Line_End (Entity_End);
-            Local_Highlight (From => Entity_Start, To => Entity_End);
-
-         when String_Text =>
-            --  Verify that the string is closed by checking the last
-            --  character against the string delimiter. If we find it, then
-            --  make sure that we are indeed closing the string (as opposed to
-            --  opening it) by checking whether the String_Text tag is applied
-            --  at the position before the string delimiter.
-
-            Copy (Source => Entity_End, Dest => An_Iter);
-            Backward_Char (An_Iter, Ignored);
-
-            if Get_Char (An_Iter) /= Lang_Context.String_Delimiter or else
-              not Has_Tag (An_Iter, Tags (String_Text))
-            then
-               Forward_To_Line_End (Entity_End);
-               Local_Highlight (From => Entity_Start, To => Entity_End);
-            end if;
-      end case;
+         Set_Offset (Entity_Start, 0);
+         Forward_To_End (Entity_End);
+         Local_Highlight;
+      end if;
    end Highlight_Slice;
 
    -----------------------
@@ -1073,18 +1037,56 @@ package body Src_Editor_Buffer is
       Match_End_Line     : out Gint;
       Match_End_Column   : out Gint)
    is
-      pragma Unreferenced
-        (Pattern, Case_Sensitive, Whole_Word, Search_Forward);
+      Iter        : Gtk_Text_Iter;
+      Limit       : Gtk_Text_Iter;
+      Match_Start : Gtk_Text_Iter;
+      Match_End   : Gtk_Text_Iter;
+
    begin
       pragma Assert (Is_Valid_Position (Buffer, From_Line, From_Column));
 
-      Found := False;
-      Match_Start_Line   := 0;
-      Match_Start_Column := 0;
-      Match_End_Line     := 0;
-      Match_End_Column   := 0;
-      --  ??? This function is not implemented yet. Always return false
-      --  ??? for the moment.
+      if not Case_Sensitive or else Whole_Word then
+         --  ??? These options are not supported yet.
+         --  Always return false for the moment.
+         Found := False;
+         Match_Start_Line   := 0;
+         Match_Start_Column := 0;
+         Match_End_Line     := 0;
+         Match_End_Column   := 0;
+         return;
+      end if;
+
+      Get_Iter_At_Line_Offset (Buffer, Iter, From_Line, From_Column);
+
+      if Search_Forward then
+         Get_End_Iter (Buffer, Limit);
+         Forward_Search
+           (Iter, Pattern,
+            Visible_Only => False,
+            Slice        => True,
+            Match_Start  => Match_Start,
+            Match_End    => Match_End,
+            Limit        => Limit,
+            Result       => Found);
+
+      else
+         Get_Start_Iter (Buffer, Limit);
+         Backward_Search
+           (Iter, Pattern,
+            Visible_Only => False,
+            Slice        => True,
+            Match_Start  => Match_Start,
+            Match_End    => Match_End,
+            Limit        => Limit,
+            Result       => Found);
+      end if;
+
+      if Found then
+         Match_Start_Line := Get_Line (Match_Start);
+         Match_Start_Column := Get_Line_Offset (Match_Start);
+         Match_End_Line := Get_Line (Match_End);
+         Match_End_Column := Get_Line_Offset (Match_End);
+      end if;
    end Search;
 
    ---------------
