@@ -652,7 +652,7 @@ package body Entities.Debug is
          begin
             if not Entities_Only then
                Dump (Db.LIs);
-               Dump (Files, Show_Entities => False, Full => Full);
+               Dump (Files, Show_Entities => True, Full => Full);
             end if;
             Dump_Entities_From_Files (Files, Entities_Only);
          end;
