@@ -376,6 +376,8 @@ package body Creation_Wizard is
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
       Languages      : Argument_List := Get_Languages (Wiz);
       Project        : Project_Node_Id;
+      Changed        : Boolean;
+      pragma Unreferenced (Changed);
 
    begin
       Push_State (Wiz.Kernel, Processing);
@@ -388,6 +390,16 @@ package body Creation_Wizard is
          Scenario_Variables => (1 .. 0 => Empty_Node),
          Attribute_Name     => Get_String (Name_Languages),
          Values             => Languages);
+
+      for P in 1 .. Project_Editor_Pages_Count (Wiz.Kernel) loop
+         --  We are only interested in the side effect of Project_Editor
+         Changed := Project_Editor
+           (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
+            Project, No_Project,
+            Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P),
+            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Ref_Project => Project)'Length /= 0;
+      end loop;
 
       --  Mark the project as modified, otherwise it won't actually be saved
       --  in case we are overwritting an existing file.
