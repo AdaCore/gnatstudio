@@ -83,7 +83,7 @@ is
       if Found_URL then
          Args := Argument_String_To_List (Result);
       else
-         Args := Argument_String_To_List (Browser & URL);
+         Args := Argument_String_To_List (Browser & " " & URL);
       end if;
 
       --  Unprotect all arguments, since that is why the shell would normally
