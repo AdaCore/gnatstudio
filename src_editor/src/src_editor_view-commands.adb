@@ -143,6 +143,10 @@ package body Src_Editor_View.Commands is
       Result : Boolean;
 
    begin
+      if not Get_Editable (View) then
+         return Failure;
+      end if;
+
       Push_State (Command.Kernel, Busy);
       Result := Do_Indentation (Buffer, Force => True);
       Pop_State (Command.Kernel);
