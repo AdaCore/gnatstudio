@@ -1497,9 +1497,13 @@ package body GVD.Process is
          --  Regular debugger command, send it.
          --  If a dialog is currently displayed, do not wait for the debugger
          --  prompt, since the prompt won't be displayed before the user
-         --  answers the question...
+         --  answers the question... Same thing when the debugger is busy,
+         --  since the command might actually be an input for the program being
+         --  debugged.
 
-         if Debugger.Registered_Dialog /= null then
+         if Command_In_Process (Get_Process (Debugger.Debugger))
+           or else Debugger.Registered_Dialog /= null
+         then
             Send
               (Debugger.Debugger, Command,
                Wait_For_Prompt => False, Mode => Mode);
