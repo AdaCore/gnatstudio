@@ -1187,7 +1187,6 @@ package body Src_Editor_Box is
       Set_Shadow_Type (Frame, Shadow_None);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Overwrite_Label, -"Insert");
-      Add (Frame, Box.Overwrite_Label);
 
       --  ??? Using an Event_Box should not be necessary, but it avoids
       --  some overlaps when resizing the editor window
@@ -1207,8 +1206,8 @@ package body Src_Editor_Box is
       Pack_Start (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Function_Label);
 
-      --  ??? Using an Event_Box should not be necessary, but it avoids
-      --  some overlaps when resizing the editor window
+      --  Using an Event_Box to avoid some overlaps when resizing the editor
+      --  window. See also ??? comment above.
 
       Gtk_New (Event_Box);
       Add (Frame, Event_Box);
