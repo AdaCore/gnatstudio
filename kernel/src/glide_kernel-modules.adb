@@ -1329,6 +1329,11 @@ package body Glide_Kernel.Modules is
 
             Menu.Ref_Item := C;
 
+            if Ref_Item /= "" and then C = null then
+               Trace (Me, "Ref_Item not found (" & Ref_Item & ") when adding "
+                      & Menu.Name.all);
+            end if;
+
             if Add_Before and then Ref_Item /= "" then
                if Previous = null then
                   --  The first item is the reference
