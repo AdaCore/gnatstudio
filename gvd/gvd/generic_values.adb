@@ -1562,7 +1562,12 @@ package body Generic_Values is
       Item.X := X;
       Item.Y := Y;
 
-      if Item.Dimensions (1).First > Item.Dimensions (1).Last then
+      --  If we have a real empty array (ie the dimensions were not considered
+      --  as dynamic
+      if Item.Dimensions (1).First > Item.Dimensions (1).Last
+        and then Item.Dimensions (1).First /= Long_Integer'Last
+        and then Item.Dimensions (1).Last /= Long_Integer'First
+      then
          return;
       end if;
 
@@ -1875,8 +1880,12 @@ package body Generic_Values is
          return;
       end if;
 
-      --  Empty arrays
-      if Item.Dimensions (1).First > Item.Dimensions (1).Last then
+      --  If we have a real empty array (ie the dimensions were not considered
+      --  as dynamic
+      if Item.Dimensions (1).First > Item.Dimensions (1).Last
+        and then Item.Dimensions (1).First /= Long_Integer'Last
+        and then Item.Dimensions (1).Last /= Long_Integer'First
+      then
          Item.Width := 20;
          Item.Height := 0;
          return;
@@ -1965,8 +1974,12 @@ package body Generic_Values is
 
                Total_Width  :=
                  Gint'Max (Total_Width, Item.Fields (F).Value.Width);
-               Total_Height :=
-                 Total_Height + Item.Fields (F).Value.Height;
+
+               --  Keep at least enough space to print the field name
+               Item.Fields (F).Value.Height :=
+                 Gint'Max (Item.Fields (F).Value.Height,
+                           Get_Ascent (Font) + Get_Descent (Font));
+               Total_Height := Total_Height + Item.Fields (F).Value.Height;
             end if;
 
             --  a variant part ?

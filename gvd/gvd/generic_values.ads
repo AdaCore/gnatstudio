@@ -295,6 +295,9 @@ package Generic_Values is
    type Dimension is record
       First, Last : Long_Integer;
    end record;
+   --  If Last < First, and either First = Long_Integer'Last or
+   --  Last = Long_Integer'First, then the bounds are considered as dynamic,
+   --  ie the real bounds are not known until we parse the value itself.
 
    function New_Array_Type
      (Num_Dimensions : Positive) return Generic_Type_Access;
