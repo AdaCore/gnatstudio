@@ -162,7 +162,7 @@ package Codefix.Text_Manager is
       Cursor                 : File_Cursor'Class;
       Position               : Relative_Position := Specified;
       Category_1, Category_2 : Language_Category := Cat_Unknown)
-      return Construct_Information;
+     return Construct_Information;
    --  Get the Construct_Information found at the specified position, or the
    --  nearest before or after the position (depends on the value of
    --  Position_Expected.
@@ -221,7 +221,7 @@ package Codefix.Text_Manager is
    --  Update the changes previously made in the real text.
 
    function New_Text_Interface (This : Text_Navigator_Abstr)
-      return Ptr_Text is abstract;
+     return Ptr_Text is abstract;
    --  Create and initialise a new Text_Interface used by the text navigator.
 
    function Search_String
@@ -374,6 +374,7 @@ package Codefix.Text_Manager is
 
    procedure Remove
      (This, Prev : Ptr_Extract_Line; Container : in out Extract);
+   --  Remove the line This from the Container
 
    procedure Add_Element
      (This, Previous, Element : Ptr_Extract_Line;
@@ -586,6 +587,11 @@ package Codefix.Text_Manager is
       Success                    : out Boolean);
    --  Merge Str_1 and Str_2 into This. If no solution can be found,
    --  then success is false.
+
+   procedure Erase
+     (This        : in out Extract;
+      Start, Stop : File_Cursor'Class);
+   --  Erase the text from Start to Stop.
 
 private
 

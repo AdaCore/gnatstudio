@@ -2126,6 +2126,47 @@ package body Codefix.Text_Manager is
 
    end Reduce;
 
+   -----------
+   -- Erase --
+   -----------
+
+   procedure Erase
+     (This        : in out Extract;
+      Start, Stop : File_Cursor'Class)
+   is
+      Current_Line : Ptr_Extract_Line;
+      Line_Cursor  : File_Cursor := File_Cursor (Start);
+   begin
+      Line_Cursor.Col := 1;
+
+      if Start.Line = Stop.Line then
+         Current_Line := Get_Line (This, Line_Cursor);
+         Set_String
+           (Current_Line.all,
+            Current_Line.Content
+              (Current_Line.Content'First .. Start.Col - 1) &
+              Current_Line.Content (Stop.Col + 1 ..
+                                      Current_Line.Content'Last));
+      else
+         Current_Line := Get_Line (This, Line_Cursor);
+         Set_String
+           (Current_Line.all,
+            Current_Line.Content
+              (Current_Line.Content'First .. Start.Col - 1));
+
+         for J in Start.Line + 1 .. Stop.Line - 1 loop
+            Current_Line := Next (Current_Line.all);
+            Current_Line.Context := Line_Deleted;
+         end loop;
+         Current_Line := Next (Current_Line.all);
+
+         Set_String
+           (Current_Line.all,
+            Current_Line.Content (Stop.Col + 1 .. Current_Line.Content'Last));
+      end if;
+   end Erase;
+
+
    ----------------------------------------------------------------------------
    --  Merge functions and uilities
    ----------------------------------------------------------------------------
