@@ -4126,8 +4126,6 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
-      Buffer.Do_Not_Move_Cursor := True;
-
       Get_Indentation_Parameters
         (Lang         => Lang,
          Params       => Indent_Params,
@@ -4136,6 +4134,8 @@ package body Src_Editor_Buffer is
       if Indent_Style = None then
          return False;
       end if;
+
+      Buffer.Do_Not_Move_Cursor := True;
 
       --  Where is the cursor (so we can keep it on the same line)
 
