@@ -594,17 +594,18 @@ package body Items.Records is
    is
       W : constant Gint := Width - Item.Gui_Fields_Width - 2 * Border_Spacing
         - Left_Border;
+      Iter : Generic_Iterator'Class :=
+        Start (Generic_Type_Access'(Item'Unrestricted_Access));
+      It   : Generic_Type_Access;
    begin
       Item.Width := Width;
       if Item.Visible then
-         for F in Item.Fields'Range loop
-            if Item.Fields (F).Value /= null then
-               Propagate_Width (Item.Fields (F).Value.all, W);
-            else
-               for V in Item.Fields (F).Variant_Part'Range loop
-                  Propagate_Width (Item.Fields (F).Variant_Part (V).all, W);
-               end loop;
+         while not At_End (Iter) loop
+            It := Data (Iter);
+            if It /= null then
+               Propagate_Width (It.all, W);
             end if;
+            Next (Iter);
          end loop;
       end if;
    end Propagate_Width;
@@ -696,6 +697,8 @@ package body Items.Records is
       Tmp_Height   : Gint;
       Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
+      Iter         : Generic_Iterator'Class := Start (Item);
+      It           : Generic_Type_Access;
    begin
       if not Item.Valid or else not Item.Visible then
          return Generic_Type_Access (Item);
@@ -715,39 +718,22 @@ package body Items.Records is
 
       --  Else, find the relevant item
 
-      for F in Item.Fields'Range loop
-         if Item.Fields (F).Value /= null then
-            Tmp_Height := Total_Height + Item.Fields (F).Value.Height
-              + Line_Spacing;
+      while not At_End (Iter) loop
+         It := Data (Iter);
+         if It /= null then
+            Tmp_Height := Total_Height + It.Height + Line_Spacing;
             if Y <= Tmp_Height then
                if X < Field_Start then
-                  return Item.Fields (F).Value;
+                  return It;
                end if;
 
-               return Get_Component
-                 (Item.Fields (F).Value, X - Field_Start, Y - Total_Height);
+               return Get_Component (It, X - Field_Start, Y - Total_Height);
             end if;
             Total_Height := Tmp_Height;
          end if;
 
-         if Item.Fields (F).Variant_Part /= null then
-            for V in Item.Fields (F).Variant_Part'Range loop
-               Tmp_Height := Total_Height
-                 + Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
-               if Y <= Tmp_Height then
-                  if X < Field_Start then
-                     return Generic_Type_Access
-                       (Item.Fields (F).Variant_Part (V));
-                  end if;
-                  return Get_Component
-                    (Item.Fields (F).Variant_Part (V),
-                     X - Field_Start, Y - Total_Height);
-               end if;
-               Total_Height := Tmp_Height;
-            end loop;
-         end if;
+         Next (Iter);
       end loop;
-
       return Generic_Type_Access (Item);
    end Get_Component;
 
@@ -785,78 +771,6 @@ package body Items.Records is
       end loop;
       return null;
    end Replace;
-
-   --------------------
-   -- Set_Visibility --
-   --------------------
-
-   procedure Set_Visibility
-     (Item      : in out Record_Type;
-      Visible   : Boolean;
-      Recursive : Boolean := False) is
-   begin
-      Item.Visible := Visible;
-
-      if Recursive then
-         for F in Item.Fields'Range loop
-            if Item.Fields (F).Value /= null then
-               Set_Visibility (Item.Fields (F).Value.all, Visible, Recursive);
-            end if;
-
-            if Item.Fields (F).Variant_Part /= null then
-               for V in Item.Fields (F).Variant_Part'Range loop
-                  Set_Visibility
-                    (Item.Fields (F).Variant_Part (V).all, Visible, Recursive);
-               end loop;
-            end if;
-         end loop;
-      end if;
-   end Set_Visibility;
-
-   --------------------------
-   -- Component_Is_Visible --
-   --------------------------
-
-   procedure Component_Is_Visible
-     (Item       : access Record_Type;
-      Component  : access Generic_Type'Class;
-      Is_Visible : out Boolean;
-      Found      : out Boolean)
-   is
-      Fo : Boolean;
-   begin
-      if Generic_Type_Access (Component) = Generic_Type_Access (Item) then
-         Is_Visible := Item.Visible;
-         Found := True;
-         return;
-      end if;
-
-      for F in Item.Fields'Range loop
-         if Item.Fields (F).Value /= null then
-            Component_Is_Visible
-              (Item.Fields (F).Value, Component, Is_Visible, Fo);
-            if Fo then
-               Is_Visible := Is_Visible and then Item.Visible;
-               Found := True;
-               return;
-            end if;
-         end if;
-
-         if Item.Fields (F).Variant_Part /= null then
-            for V in Item.Fields (F).Variant_Part'Range loop
-               Component_Is_Visible
-                 (Item.Fields (F).Variant_Part (V),
-                  Component, Is_Visible, Fo);
-               if Fo then
-                  Is_Visible := Is_Visible and then Item.Visible;
-                  Found := True;
-                  return;
-               end if;
-            end loop;
-         end if;
-      end loop;
-      Found := False;
-   end Component_Is_Visible;
 
    -----------
    -- Start --

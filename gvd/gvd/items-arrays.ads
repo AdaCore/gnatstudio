@@ -182,15 +182,6 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
-   procedure Set_Visibility
-     (Item      : in out Array_Type;
-      Visible   : Boolean;
-      Recursive : Boolean := False);
-   procedure Component_Is_Visible
-     (Item       : access Array_Type;
-      Component  : access Generic_Type'Class;
-      Is_Visible : out Boolean;
-      Found      : out Boolean);
 
    type Array_Iterator is new Generic_Iterator with record
       Item  : Array_Type_Access;

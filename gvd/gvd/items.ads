@@ -180,7 +180,7 @@ package Items is
    --  Return the coordinates in the pixmap where the item was displayed.
 
    procedure Set_Visibility
-     (Item      : in out Generic_Type;
+     (Item      : access Generic_Type;
       Visible   : Boolean;
       Recursive : Boolean := False);
    --  Whether the item should be visible or not.

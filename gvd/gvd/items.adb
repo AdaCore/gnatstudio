@@ -109,12 +109,20 @@ package body Items is
    --------------------
 
    procedure Set_Visibility
-     (Item      : in out Generic_Type;
+     (Item      : access Generic_Type;
       Visible   : Boolean;
       Recursive : Boolean := False)
    is
+      Iter : Generic_Iterator'Class := Start (Generic_Type_Access (Item));
    begin
       Item.Visible := Visible;
+
+      if Recursive then
+         while not At_End (Iter) loop
+            Set_Visibility (Data (Iter), Visible, Recursive);
+            Next (Iter);
+         end loop;
+      end if;
    end Set_Visibility;
 
    --------------------
@@ -134,10 +142,29 @@ package body Items is
      (Item       : access Generic_Type;
       Component  : access Generic_Type'Class;
       Is_Visible : out Boolean;
-      Found      : out Boolean) is
+      Found      : out Boolean)
+   is
+      Iter : Generic_Iterator'Class := Start (Generic_Type_Access (Item));
+      F    : Boolean;
    begin
-      Found := Generic_Type_Access (Component) = Generic_Type_Access (Item);
-      Is_Visible := Component.Visible;
+      if Generic_Type_Access (Component) = Generic_Type_Access (Item) then
+         Is_Visible := Item.Visible;
+         Found := True;
+         return;
+      end if;
+
+      while not At_End (Iter) loop
+         Component_Is_Visible
+           (Data (Iter), Component, Is_Visible, F);
+         if F then
+            Is_Visible := Is_Visible and then Item.Visible;
+            Found := True;
+            return;
+         end if;
+         Next (Iter);
+      end loop;
+
+      Found := False;
    end Component_Is_Visible;
 
    --------------------
