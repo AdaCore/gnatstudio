@@ -1,5 +1,6 @@
 with "../gtkada/gtkada";
 with "../shared";
+with "../gnat";
 
 project GVD_Common is
 
