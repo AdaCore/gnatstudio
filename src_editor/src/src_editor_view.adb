@@ -901,25 +901,50 @@ package body Src_Editor_View is
       Lang     : Language_Access;
       New_Line : Boolean := True) return Boolean
    is
-      Pos          : Gtk_Text_Iter;
-      Iter         : Gtk_Text_Iter;
-      Indent       : Natural;
-      Next_Indent  : Natural;
-      Line, Col    : Gint;
-      Offset       : Integer;
-      --  Offset between cursor and end of line
+      Start         : Gtk_Text_Iter;
+      Pos           : Gtk_Text_Iter;
+      Iter          : Gtk_Text_Iter;
+      Indent        : Natural;
+      Next_Indent   : Natural;
+      Line, Col     : Gint;
+      Current_Line  : Gint;
+      Offset        : Integer;
+      Global_Offset : Integer := 0;
 
-      Blanks       : Natural;
-      C_Str        : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
-      Line_Ends    : Boolean := True;
-      Line_Start   : Natural;
-      Result       : Boolean;
-      Slice_Length : Natural;
-      Slice        : Unchecked_String_Access;
+      Blanks        : Natural;
+      C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
+      Line_Ends     : Boolean := True;
+      Line_Start    : Natural;
+      Line_End      : Natural;
+      Result        : Boolean;
+      Slice_Length  : Natural;
+      Slice         : Unchecked_String_Access;
       pragma Suppress (Access_Check, Slice);
-      Index        : Integer;
-      Replace_Cmd  : Editor_Replace_Slice;
-      Use_Tabs     : Boolean := False;
+      Index         : Integer;
+      Replace_Cmd   : Editor_Replace_Slice;
+      Use_Tabs      : Boolean := False;
+
+      procedure Find_Non_Blank (Last : Natural);
+      --  Set Index to the first non blank character in Slice (Index .. Last)
+      --  Also set Use_Tabs to True if any tab character is found.
+
+      ---------------------
+      -- First_Non_Blank --
+      ---------------------
+
+      procedure Find_Non_Blank (Last : Natural) is
+      begin
+         while Index <= Last
+           and then (Slice (Index) = ' '
+                     or else Slice (Index) = ASCII.HT)
+         loop
+            if Slice (Index) = ASCII.HT then
+               Use_Tabs := True;
+            end if;
+
+            Index := Index + 1;
+         end loop;
+      end Find_Non_Blank;
 
    begin
       if Lang = null
@@ -928,72 +953,66 @@ package body Src_Editor_View is
          return False;
       end if;
 
-      Get_Iter_At_Mark (Buffer, Pos, Get_Insert (Buffer));
+      Get_Selection_Bounds (Buffer, Start, Pos, Result);
       Copy (Pos, Iter);
 
-      --  Go to last char of the line pointed by Pos
+      --  Go to last char of the line pointed by Iter
 
       if not Ends_Line (Iter) then
          Forward_To_Line_End (Iter, Result);
          Line_Ends := False;
       end if;
 
-      Line   := Get_Line (Iter);
-      Col    := Get_Line_Offset (Iter);
-      Offset := Natural (Col - Get_Line_Offset (Pos));
+      Line := Get_Line (Iter);
+      Col  := Get_Line_Offset (Iter);
 
       --  We're spending most of our time getting this string.
       --  Consider saving the current line, indentation level and
       --  the stacks used by Next_Indentation to avoid parsing
       --  the buffer from scratch each time.
 
+      --  ??? Should take into account UTF-8 characters and do a conversion
+
       C_Str        := Get_Slice (Buffer, 0, 0, Line, Col);
       Slice        := To_Unchecked_String (C_Str);
       Slice_Length := Natural (Strlen (C_Str));
-      Blanks       := Slice_Length - Offset + 1;
-
-      if Line_Ends then
-         Slice_Length := Slice_Length + 1;
-         Slice (Slice_Length) := ASCII.LF;
-      end if;
-
-      while Blanks <= Slice_Length
-        and then (Slice (Blanks) = ' '
-                  or else Slice (Blanks) = ASCII.HT)
-      loop
-         Blanks := Blanks + 1;
-      end loop;
-
-      Next_Indentation
-        (Lang, Slice (1 .. Slice_Length), Result, Indent, Next_Indent);
-
-      if not Result then
-         return False;
-      end if;
-
-      Set_Line_Offset (Iter, 0);
-      Line_Start := Natural (Get_Offset (Iter)) + 1;
-      Index      := Line_Start;
-
-      while Index <= Slice_Length
-        and then (Slice (Index) = ' '
-                  or else Slice (Index) = ASCII.HT)
-      loop
-         if Slice (Index) = ASCII.HT then
-            Use_Tabs := True;
-         end if;
-
-         Index := Index + 1;
-      end loop;
-
-      --  Replace everything at once, important for efficiency
-      --  and also because otherwise, undo/redo won't work properly.
-
-      if Line_Ends then
-         Slice_Length := Slice_Length - 1;
-      end if;
 
       if New_Line then
+         Offset := Natural (Col - Get_Line_Offset (Pos));
+         Blanks := Slice_Length - Offset + 1;
+
+         if Line_Ends then
+            Slice_Length := Slice_Length + 1;
+            Slice (Slice_Length) := ASCII.LF;
+         end if;
+
+         while Blanks <= Slice_Length
+           and then (Slice (Blanks) = ' '
+                     or else Slice (Blanks) = ASCII.HT)
+         loop
+            Blanks := Blanks + 1;
+         end loop;
+
+         Next_Indentation
+           (Lang, Slice (1 .. Slice_Length), Result, Indent, Next_Indent);
+
+         if not Result then
+            return False;
+         end if;
+
+         Set_Line_Offset (Iter, 0);
+         Line_Start := Natural (Get_Offset (Iter)) + 1;
+         Index      := Line_Start;
+
+         Find_Non_Blank (Slice_Length);
+
+         --  Replace everything at once, important for efficiency
+         --  and also because otherwise, undo/redo won't work properly.
+
+         if Line_Ends then
+            Slice_Length := Slice_Length - 1;
+         end if;
+
          Create
            (Replace_Cmd,
             Buffer,
@@ -1005,23 +1024,62 @@ package body Src_Editor_View is
             Slice (Blanks .. Slice_Length));
          Enqueue (Get_Queue (Buffer), Replace_Cmd);
 
-      elsif Use_Tabs or else Index - Line_Start /= Indent then
-         --  Only indent if the current indentation is wrong
+         --  Need to recompute iter, since the slice replacement that
+         --  we just did has invalidated iter.
 
-         Create
-           (Replace_Cmd,
-            Buffer,
-            Integer (Line), 0,
-            Integer (Line), Index - Line_Start,
-            (1 .. Indent => ' '));
-         Enqueue (Get_Queue (Buffer), Replace_Cmd);
-      end if;
+         Get_Iter_At_Line_Offset
+           (Buffer, Pos, Line + 1, Gint (Next_Indent));
+         Place_Cursor (Buffer, Pos);
 
-      --  Need to recompute iter, since the slice replacement that
-      --  we just did has invalidated iter.
+      else
+         Current_Line := Get_Line (Start);
+         Set_Line_Offset (Start, 0);
 
-      if New_Line then
-         Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, Gint (Next_Indent));
+         --  In the loop below, Global_Offset contains the offset between
+         --  the modified buffer, and the original buffer, caused by the
+         --  buffer replacements.
+
+         loop
+            Line_Start := Natural (Get_Offset (Start)) + 1 - Global_Offset;
+            Index      := Line_Start;
+
+            if not Ends_Line (Start) then
+               Forward_To_Line_End (Start, Result);
+            end if;
+
+            Line_End := Natural (Get_Offset (Start)) + 1 - Global_Offset;
+            Next_Indentation
+              (Lang, Slice (1 .. Line_End), Result, Indent, Next_Indent);
+
+            if not Result then
+               return False;
+            end if;
+
+            Find_Non_Blank (Line_End);
+            Offset := Index - Line_Start;
+
+            if Use_Tabs or else Offset /= Indent then
+               --  Only indent if the current indentation is wrong
+               --  ??? Would be nice to indent the whole selection at once,
+               --  this would make the undo/redo behavior more intuitive.
+
+               Create
+                 (Replace_Cmd,
+                  Buffer,
+                  Integer (Current_Line), 0,
+                  Integer (Current_Line), Offset,
+                  (1 .. Indent => ' '));
+               Enqueue (Get_Queue (Buffer), Replace_Cmd);
+               Global_Offset := Global_Offset - Offset + Indent;
+            end if;
+
+            exit when Current_Line = Line;
+
+            Current_Line := Current_Line + 1;
+            Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
+         end loop;
+
+         Get_Iter_At_Line_Offset (Buffer, Pos, Line, Gint (Indent));
          Place_Cursor (Buffer, Pos);
       end if;
 
@@ -1048,29 +1106,27 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View   : constant Source_View := Source_View (Widget);
+      View   : constant Source_View   := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Key    : constant Gdk_Key_Type := Get_Key_Val (Event);
-      Value  : Boolean := False;
+      Key    : constant Gdk_Key_Type  := Get_Key_Val (Event);
 
    begin
+      if Key = GDK_Tab and then (Get_State (Event) and Control_Mask) /= 0 then
+         --  ??? Should use a preference for the key value
+         if Do_Indentation (Buffer, Get_Language (Buffer), False) then
+            return True;
+         end if;
+      end if;
+
       case Key is
-         when GDK_Return | GDK_Tab =>
-            if Key = GDK_Return then
-               Value := Do_Indentation (Buffer, Get_Language (Buffer), True);
-            elsif (Get_State (Event) and Control_Mask) /= 0 then
-               --  ??? Should use a preference for the key value
-
-               Value := Do_Indentation (Buffer, Get_Language (Buffer), False);
-            end if;
-
-            if Value then
+         when GDK_Return =>
+            if Do_Indentation (Buffer, Get_Language (Buffer), True) then
                return True;
             else
                End_Action (Buffer);
             end if;
 
-         when GDK_Linefeed |
+         when GDK_Linefeed | GDK_Tab |
            GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End | GDK_Begin |
            GDK_Up | GDK_Down | GDK_Left | GDK_Right
          =>
