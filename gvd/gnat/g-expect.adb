@@ -378,7 +378,7 @@ package body GNAT.Expect is
             end if;
          end;
 
-         Pid.Buffer_Index := 0;
+         Pid.Buffer_Index := Pid.Buffer'Last;
 
       else
          Pid.Buffer (1 .. Pid.Buffer_Index - Pid.Last_Match_End) :=
