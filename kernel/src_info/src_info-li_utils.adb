@@ -1,3 +1,4 @@
+with Text_IO; use Text_IO;
 package body Src_Info.LI_Utils is
 
    procedure Insert_Declaration_Internal
@@ -355,6 +356,10 @@ package body Src_Info.LI_Utils is
                Dep_Ptr.Next := new Dependency_File_Info_Node;
                Dep_Ptr.Next.Next := null;
                Dep_Ptr := Dep_Ptr.Next;
+               Dep_Ptr.Value.File.LI   := No_LI_File;
+               Dep_Ptr.Value.File.Part := Unit_Body;
+               Dep_Ptr.Value.File.Source_Filename
+                                       := new String'(Referred_Filename);
                exit;
             end if;
             Dep_Ptr := Dep_Ptr.Next;
@@ -566,6 +571,12 @@ package body Src_Info.LI_Utils is
          if Dep_Ptr = null then
             raise Declaration_Not_Found;
          end if;
+
+         if Dep_Ptr.Value.File = No_Source_File then
+            Put_Line ("No_Source_File encountered in the Dep_Info list for "
+               & Get_LI_Filename (File));
+         end if;
+
          exit when Dep_Ptr.Value.File.Source_Filename.all = Filename;
          Dep_Ptr := Dep_Ptr.Next;
       end loop;
