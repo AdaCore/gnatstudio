@@ -54,10 +54,7 @@ package body DB_API is
    -------------
 
    function Is_Null (DB : DB_File) return Boolean is
-      function Internal_Is_Null (DB : DB_File) return C.int;
-      pragma Import (C, Internal_Is_Null, "ada_db_is_null");
    begin
-      --  return Internal_Is_Null (DB) /= 0;
       return DB = null;
    end Is_Null;
 
