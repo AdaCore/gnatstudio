@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            AdaCore                                --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -167,7 +167,6 @@ package body Glide_Kernel.Modules is
 
    procedure Menu_Button_Press
      (Widget  : access GObject_Record'Class;
-      Event   : Gdk_Event;
       Data    : Menu_Factory_User_Data);
    --  Create a menu using the data in Factory.
 
@@ -1151,10 +1150,9 @@ package body Glide_Kernel.Modules is
 
    procedure Menu_Button_Press
      (Widget  : access GObject_Record'Class;
-      Event   : Gdk_Event;
       Data    : Menu_Factory_User_Data)
    is
-      pragma Unreferenced (Widget, Event);
+      pragma Unreferenced (Widget);
 
       procedure Remove_Item
         (Item : access Gtk.Widget.Gtk_Widget_Record'Class);
