@@ -90,12 +90,12 @@ package body Boyer_Moore is
       From_String : String;
       Case_Sensitive : Boolean := True)
    is
-      Prefix_Func : Offset_Array (From_String'Range);
-      Reverse_Prefix_Func : Offset_Array (From_String'Range);
-      Good_Suffix : Offset_Array (From_String'Range);
-      K, K2 : Natural;
-      Max : constant Natural := From_String'Last + From_String'First;
       Motif_First : constant := 1; --  Index of Motif.Motif'First
+      Prefix_Func : Offset_Array (Motif_First .. From_String'Length);
+      Reverse_Prefix_Func : Offset_Array (Motif_First .. From_String'Length);
+      Good_Suffix : Offset_Array (Motif_First .. From_String'Length);
+      K, K2 : Natural;
+      Max : constant Natural := From_String'Length + Motif_First;
    begin
       --  Compute the last occurence function
       --  Compute the two prefix functions (both from left-to-right and
@@ -148,8 +148,8 @@ package body Boyer_Moore is
          --  The suffix function
          loop
             if K2 < Motif_First then
-               if From_String (From_String'Length) = Motif.Motif (Max - Q) then
-                  K2 := From_String'First;
+               if From_String (From_String'Last) = Motif.Motif (Max - Q) then
+                  K2 := Motif_First;
                end if;
                exit;
 
