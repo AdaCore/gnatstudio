@@ -33,12 +33,12 @@ with Glib.Xml_Int;             use Glib.Xml_Int;
 with XML_Parsers;
 with Glib;                     use Glib;
 with Glib.Unicode;             use Glib.Unicode;
-with GPS.Kernel.Console;     use GPS.Kernel.Console;
-with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel;             use GPS.Kernel;
+with GPS.Kernel.Console;       use GPS.Kernel.Console;
+with GPS.Kernel.Scripts;       use GPS.Kernel.Scripts;
+with GPS.Kernel.MDI;           use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;       use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel;               use GPS.Kernel;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -78,9 +78,9 @@ with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with System.Assertions;
 with Glib.Object;              use Glib.Object;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with GPS.Intl;               use GPS.Intl;
+with GPS.Kernel.Preferences;   use GPS.Kernel.Preferences;
+with GPS.Kernel.Actions;       use GPS.Kernel.Actions;
+with GPS.Intl;                 use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with Commands.Interactive;     use Commands, Commands.Interactive;
@@ -145,9 +145,9 @@ package body Aliases_Module is
    type Expansion_Function_Record;
    type Expansion_Function_List is access Expansion_Function_Record;
    type Expansion_Function_Record (Length : Natural) is record
-      Descr : String (1 .. Length);
       Func : Alias_Expansion_Function;
       Next : Expansion_Function_List;
+      Descr : String (1 .. Length);
    end record;
 
    type Expansion_Function_Array is array (Character) of
@@ -191,8 +191,8 @@ package body Aliases_Module is
 
    type String_Menu_Item_Record (Length : Natural) is new Gtk_Menu_Item_Record
      with record
-        Special : String (1 .. Length);
         View    : Gtk_Text_View;
+        Special : String (1 .. Length);
      end record;
    type String_Menu_Item is access all String_Menu_Item_Record'Class;
 
@@ -2224,7 +2224,6 @@ package body Aliases_Module is
       Register_Menu
         (Kernel, Edit, -"_Aliases",
          Ref_Item   => -"Preferences",
-         Add_Before => False,
          Callback   => On_Edit_Aliases'Access);
 
       Parse_File
