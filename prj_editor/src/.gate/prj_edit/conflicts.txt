@@ -1,0 +1,4 @@
+Merge of some changes failed. It usually means that some modified code
+is obsolete in the current project file.
+Conflicts have been kept in the following files to help merging manually:
+

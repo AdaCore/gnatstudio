@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<GTK-Interface>
+
+<project>
+  <name>prj_edit</name>
+  <program_name>prj_edit</program_name>
+  <directory></directory>
+  <source_directory>.</source_directory>
+  <pixmaps_directory>.</pixmaps_directory>
+  <language>Ada 95</language>
+  <gnome_support>True</gnome_support>
+  <gettext_support>True</gettext_support>
+</project>
+
+<widget>
+  <class>GtkWindow</class>
+  <name>wizard_window</name>
+  <title></title>
+  <type>GTK_WINDOW_TOPLEVEL</type>
+  <position>GTK_WIN_POS_NONE</position>
+  <modal>False</modal>
+  <default_width>250</default_width>
+  <default_height>160</default_height>
+  <allow_shrink>False</allow_shrink>
+  <allow_grow>True</allow_grow>
+  <auto_shrink>False</auto_shrink>
+
+  <widget>
+    <class>GtkVBox</class>
+    <name>vbox1</name>
+    <homogeneous>False</homogeneous>
+    <spacing>0</spacing>
+
+    <widget>
+      <class>GtkHBox</class>
+      <name>page_box</name>
+      <border_width>4</border_width>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkEventBox</class>
+	<name>eventbox1</name>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>GtkVBox</class>
+	  <name>toc_box</name>
+	  <border_width>7</border_width>
+	  <homogeneous>False</homogeneous>
+	  <spacing>6</spacing>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkNotebook</class>
+	<name>notebook</name>
+	<show_tabs>False</show_tabs>
+	<show_border>False</show_border>
+	<tab_pos>GTK_POS_TOP</tab_pos>
+	<scrollable>False</scrollable>
+	<tab_hborder>2</tab_hborder>
+	<tab_vborder>2</tab_vborder>
+	<popup_enable>False</popup_enable>
+	<child>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
+	</child>
+
+	<widget>
+	  <class>Placeholder</class>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <child_name>Notebook:tab</child_name>
+	  <name>label1</name>
+	  <label>label1</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkHSeparator</class>
+      <name>hseparator1</name>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+    </widget>
+
+    <widget>
+      <class>GtkHButtonBox</class>
+      <name>hbuttonbox1</name>
+      <layout_style>GTK_BUTTONBOX_END</layout_style>
+      <spacing>30</spacing>
+      <child_min_width>85</child_min_width>
+      <child_min_height>27</child_min_height>
+      <child_ipad_x>7</child_ipad_x>
+      <child_ipad_y>0</child_ipad_y>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>previous</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<label>Previous</label>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>next</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<label>Next</label>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>finish</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<label>Finish</label>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<name>cancel</name>
+	<can_default>True</can_default>
+	<can_focus>True</can_focus>
+	<label>Cancel</label>
+      </widget>
+    </widget>
+  </widget>
+</widget>
+
+</GTK-Interface>
