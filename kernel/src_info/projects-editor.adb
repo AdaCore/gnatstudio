@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;            use Ada.Exceptions;
 with File_Utils;                use File_Utils;
 with GPS.Intl;                use GPS.Intl;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -3408,10 +3409,12 @@ package body Projects.Editor is
       end if;
 
       Set_Name_Of (Project.Node, Tree, Name);
-
       Set_Directory_Of (Project.Node, Tree, Get_String (New_Path));
-
       Set_Path_Name_Of (Project.Node, Tree, Get_String (D));
+
+      --  We do not want to reread the display_name from the source, which is
+      --  no longer up-to-date, so we'll force its refresh from the tree
+      Set_Location_Of (Project.Node, Tree, No_Location);
 
       --  Unregister the old name
       Prj.Tree.Tree_Private_Part.Projects_Htable.Set
@@ -3429,7 +3432,7 @@ package body Projects.Editor is
          Prj.Tree.Name_Of (Project.Node, Tree),
          Prj.Tree.Tree_Private_Part.Project_Name_And_Node'
          (Name           => Name,
-          Canonical_Path => Old_Name,
+          Canonical_Path => Get_String (D),
           Node           => Project.Node,
           Extended       => False));
 
@@ -3446,6 +3449,10 @@ package body Projects.Editor is
       --  the default project.
 
       Set_Status (Project, From_File);
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception "
+                & Exception_Information (E));
    end Rename_And_Move;
 
    ----------------------------
