@@ -2226,19 +2226,19 @@ package body Entities is
    is
       Current : Integer;
    begin
+
       Current := Decl_Index;
       Skip_Lines (Buffer, -1, Current);
       Comment_Start := Current;
       Skip_To_Current_Comment_Block_Start (Context, Buffer, Comment_Start);
 
-      if Comment_Start = Current then
-         Comment_Start := 0;
-      else
+      if Comment_Start /= 0 then
          Comment_End := Line_End (Buffer, Current);
          Trace (Assert_Me,
                 "Get_Documentation: Found a comment before the entity,"
                 & " from" & Comment_Start'Img & " to" & Comment_End'Img);
       end if;
+
    end Get_Documentation_Before;
 
    -----------------------------
@@ -2276,18 +2276,18 @@ package body Entities is
      (Entity                    : Entity_Information;
       Declaration_File_Contents : String := "") return String
    is
-      Buffer       : String_Access :=
+      Buffer           : String_Access :=
         Declaration_File_Contents'Unrestricted_Access;
-      Index        : Natural := Declaration_File_Contents'First;
+      Index            : Natural := Declaration_File_Contents'First;
       Declaration_File : constant Virtual_File :=
         Get_Filename (Get_Declaration_Of (Entity).File);
-      Lang         : constant Language_Access := Get_Language_From_File
+      Lang             : constant Language_Access := Get_Language_From_File
         (GPS_Language_Handler (Entity.Declaration.File.Db.Lang),
          Declaration_File);
       Current, Beginning : Natural;
-      Context : Language_Context_Access;
-      Location : File_Location;
-      Must_Free_Buffer : Boolean := False;
+      Context            : Language_Context_Access;
+      Location           : File_Location;
+      Must_Free_Buffer   : Boolean := False;
    begin
       if Lang = null then
          Trace (Assert_Me, "Get_Documentation language unknown for "
