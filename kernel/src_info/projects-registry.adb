@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -799,17 +799,17 @@ package body Projects.Registry is
    is
       Sources_Specified : Boolean := False;
 
-      procedure Record_Source (File : String; Lang : Name_Id);
+      procedure Record_Source (Dir, File : String; Lang : Name_Id);
       --  Add file to the list of source files for Project
 
       function File_In_Sources (File : String) return Boolean;
       --  Whether File belongs to the list of source files for this project
 
-      procedure Record_Source (File : String; Lang : Name_Id) is
+      procedure Record_Source (Dir, File : String; Lang : Name_Id) is
       begin
          String_Elements.Increment_Last;
          String_Elements.Table (String_Elements.Last) :=
-           (Value         => Get_String (File),
+           (Value         => Get_String (Dir & File),
             Display_Value => Get_String (File),
             Flag          => False,  --  Irrelevant for files
             Location      => No_Location,
@@ -972,7 +972,6 @@ package body Projects.Registry is
       --  Given the implementation in prj-nmsc, does this attribute apply for
       --  languages other than Ada ?
 
-
       --  Parse all directories to find the files that match the naming
       --  scheme.
 
@@ -1001,28 +1000,34 @@ package body Projects.Registry is
             --  Convert the file to UTF8
 
             declare
-               UTF8 : constant String := Locale_To_UTF8
-                 (Buffer (1 .. Length));
+               UTF8 : constant String := Locale_To_UTF8 (Buffer (1 .. Length));
                Part : Unit_Part;
                Unit_Name : Name_Id;
             begin
                --  Check if the file is in the list of sources for this,
-               --  project, as specified in the project file
-               --  Nothing to do if the file is already registered
+               --  project, as specified in the project file.
 
-               if File_In_Sources (UTF8)
-                 and then Get_Project_From_File
-                   (Registry          => Registry,
-                    Base_Name         => UTF8,
-                    Root_If_Not_Found => False) = No_Project
-               then
+               if File_In_Sources (UTF8) then
                   --  First check naming scheme in the project, in case the
                   --  naming scheme overrides GPS's default
                   Get_Unit_Part_And_Name_From_Filename
                     (UTF8, Project, Part, Unit_Name, Lang);
+
                   if Lang = No_Name then
-                     Lang := Languages_Htable.String_Hash_Table.Get
-                       (Registry.Data.Extensions, File_Extension (UTF8));
+                     declare
+                        Ext : constant String := File_Extension (UTF8);
+                     begin
+                        if Ext = "" then
+                           --  No extension, use Base_Name to find the
+                           --  proper language for this file. This is needed
+                           --  for makefile and ChangeLog files for example.
+                           Lang := Languages_Htable.String_Hash_Table.Get
+                             (Registry.Data.Extensions, To_Lower (UTF8));
+                        else
+                           Lang := Languages_Htable.String_Hash_Table.Get
+                             (Registry.Data.Extensions, Ext);
+                        end if;
+                     end;
                   end if;
 
                   --  Check if the returned language belongs to the supported
@@ -1033,7 +1038,7 @@ package body Projects.Registry is
                   then
                      for Index in Languages2'Range loop
                         if Languages2 (Index) = Lang then
-                           Record_Source (UTF8, Lang);
+                           Record_Source (Dirs (D).all, UTF8, Lang);
                            Has_File := True;
                            Languages3 (Index) := No_Name;
                            exit;
