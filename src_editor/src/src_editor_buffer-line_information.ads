@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                    Copyright (C) 2003 - 2004                      --
+--                    Copyright (C) 2003 - 2005                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -36,7 +36,6 @@ package Src_Editor_Buffer.Line_Information is
    procedure Create_Line_Information_Column
      (Buffer        : access Source_Buffer_Record'Class;
       Identifier    : String;
-      Stick_To_Data : Boolean;
       Every_Line    : Boolean);
    --  Add a column corresponding to Identifier in Buffer.
 
@@ -117,10 +116,10 @@ package Src_Editor_Buffer.Line_Information is
    --  and the following line.
 
    procedure Add_Block_Command
-     (Buffer      : access Source_Buffer_Record'Class;
-      Buffer_Line : Buffer_Line_Type;
-      Command     : Command_Access;
-      Image       : Gdk_Pixbuf);
+     (Buffer        : access Source_Buffer_Record'Class;
+      Editable_Line : Editable_Line_Type;
+      Command       : Command_Access;
+      Image         : Gdk_Pixbuf);
    --  Add a command in the block column information.
 
    procedure Fold_All (Buffer : access Source_Buffer_Record'Class);
@@ -184,5 +183,13 @@ package Src_Editor_Buffer.Line_Information is
    --  lines between those locations.
    --  If the area was already flat before calling this function, return
    --  False. Otherwise, return True.
+
+   procedure Recalculate_Side_Column_Width
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Recalculate the total width of the left column side.
+
+   procedure Side_Column_Configuration_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "side_column_configuration_changed" signal.
 
 end Src_Editor_Buffer.Line_Information;
