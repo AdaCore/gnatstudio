@@ -1279,34 +1279,6 @@ package body Project_Properties is
 
       if Response = Gtk_Response_OK then
          declare
-            New_Name : constant String := Get_Text (Editor.Name);
-            New_Path : constant String :=
-              Name_As_Directory (Get_Text (Editor.Path));
-         begin
-            if New_Name /= Project_Name (Project)
-              or else New_Path /= Project_Directory (Project)
-            then
-               Project_Renamed_Or_Moved := True;
-
-               Rename_And_Move
-                 (Root_Project  => Get_Project (Kernel),
-                  Project       => Project,
-                  New_Name      => New_Name,
-                  New_Path      => New_Path,
-                  Report_Errors => Report_Error'Unrestricted_Access);
-
-               --  Since we actually changed the project hierarchy (all modules
-               --  that stored the name of the projects are now obsolete), we
-               --  act as if a new project had been loaded.
-
-               Project_Changed (Kernel);
-
-               Changed := True;
-               Trace (Me, "Project was renamed or moved");
-            end if;
-         end;
-
-         declare
             Vars         : constant Scenario_Variable_Array :=
               Scenario_Variables (Kernel);
             Saved_Values : Argument_List := Get_Current_Scenario (Vars);
@@ -1373,6 +1345,39 @@ package body Project_Properties is
             --  Restore the scenario
             Set_Environment (Vars, Saved_Values);
             Free (Saved_Values);
+         end;
+
+
+         --  Rename the project last, since we need to recompute the view
+         --  immediately afterward before anything else can be done with the
+         --  project.
+
+         declare
+            New_Name : constant String := Get_Text (Editor.Name);
+            New_Path : constant String :=
+              Name_As_Directory (Get_Text (Editor.Path));
+         begin
+            if New_Name /= Project_Name (Project)
+              or else New_Path /= Project_Directory (Project)
+            then
+               Project_Renamed_Or_Moved := True;
+
+               Rename_And_Move
+                 (Root_Project  => Get_Project (Kernel),
+                  Project       => Project,
+                  New_Name      => New_Name,
+                  New_Path      => New_Path,
+                  Report_Errors => Report_Error'Unrestricted_Access);
+
+               --  Since we actually changed the project hierarchy (all modules
+               --  that stored the name of the projects are now obsolete), we
+               --  act as if a new project had been loaded.
+
+               Project_Changed (Kernel);
+
+               Changed := True;
+               Trace (Me, "Project was renamed or moved");
+            end if;
          end;
 
          if Changed then
