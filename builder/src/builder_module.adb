@@ -159,10 +159,10 @@ package body Builder_Module is
 
    begin
       if Context /= null
-        and then Context.all in File_Selection_Context'Class
+        and then Context.all in File_Name_Selection_Context'Class
       then
          Title := new String'
-           (File_Information (File_Selection_Context_Access (Context)));
+           (File_Information (File_Name_Selection_Context_Access (Context)));
          Project := new String' (Get_Subproject_Name (Kernel, Title.all));
          Cmd := new String'
            ("gnatmake -P" & Project.all & " " &
