@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D526-022 Custom switches pages not displayed in the project properties
+  Problem:    When defining custom tools using XML files, if the tool is not
+              defined as language-specific, the switches page is not shown
+              in the project properties.
+  Workaround: Add a child node <language>Ada</language> to the tool node.
+
 - D526-010 GPS crash when using an empty custom external editor
   Problem:    When using a custom external editor and specifying no custom
               editor command, GPS will end unexpectedly.
