@@ -112,8 +112,8 @@ package body KeyManager_Module is
    type Key_Description_List is access Key_Description;
    type Key_Description is record
       Action  : String_Access;
-      Changed : Boolean := False;
       Next    : Key_Description_List;
+      Changed : Boolean := False;
    end record;
    No_Key : constant Key_Description_List := null;
    --  Changed is set to True when the key was customized from within GPS
