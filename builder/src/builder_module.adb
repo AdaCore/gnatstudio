@@ -85,6 +85,8 @@ package body Builder_Module is
    Run_External_Key : constant History_Key := "run_external_terminal";
    --  The key in the history for the check button "run in external terminal"
 
+   Builder_Category : constant String := "builder_results";
+
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
@@ -251,7 +253,7 @@ package body Builder_Module is
    procedure Clear_Compilation_Output (Kernel : Kernel_Handle) is
    begin
       Console.Clear (Kernel);
-      Remove_Result_Category (Kernel, -"Builder Results");
+      Remove_Result_Category (Kernel, Builder_Category);
       String_List_Utils.String_List.Free
         (Builder_Module_ID_Access (Builder_Module_ID).Output);
    end Clear_Compilation_Output;
@@ -1661,9 +1663,10 @@ package body Builder_Module is
    is
       pragma Unreferenced (K);
       Args : Argument_List :=
-        (1 => new String'(-"Builder Results"),
+        (1 => new String'(Builder_Category),
          2 => new String'
            (To_String (Get_Pref (Kernel, Message_Src_Highlight))));
+
    begin
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Free (Args);
