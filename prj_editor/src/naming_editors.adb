@@ -29,8 +29,7 @@ with Gtk.Notebook;            use Gtk.Notebook;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Namet;                   use Namet;
-with Prj;                     use Prj;
-with Prj_API;                 use Prj_API;
+with Projects;                use Projects;
 with String_Utils;            use String_Utils;
 with Ada.Unchecked_Deallocation;
 
@@ -81,9 +80,9 @@ package body Naming_Editors is
    procedure Gtk_New
      (Editor       : out Naming_Editor;
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View : Prj.Project_Id)
+      Project      : Project_Type)
    is
-      Languages : Argument_List := Get_Languages (Project_View);
+      Languages : Argument_List := Get_Languages (Project);
    begin
       Gtk_New (Editor, Kernel, Languages);
       Free (Languages);
@@ -97,7 +96,7 @@ package body Naming_Editors is
      (Editor       : access Naming_Editor_Record;
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Languages    : GNAT.OS_Lib.Argument_List;
-      Project_View : Prj.Project_Id)
+      Project      : Projects.Project_Type)
    is
       procedure Create_Page (Name : String);
       --  Create a page for the language Name
@@ -161,9 +160,9 @@ package body Naming_Editors is
               (Editor, Get_Window (Editor.Pages (Last).Ada_Naming), Label);
             Show_All (Get_Window (Editor.Pages (Last).Ada_Naming));
 
-            if Project_View /= No_Project then
+            if Project /= No_Project then
                Show_Project_Settings
-                 (Editor.Pages (Last).Ada_Naming, Project_View, True);
+                 (Editor.Pages (Last).Ada_Naming, Project, True);
             end if;
 
          else
@@ -177,7 +176,7 @@ package body Naming_Editors is
 
             Show_Project_Settings
               (Editor.Pages (Last).Foreign_Naming,
-               Kernel, Project_View, True);
+               Kernel, Project, True);
          end if;
 
          Editor.Pages (Last).Is_Visible := True;
@@ -217,9 +216,8 @@ package body Naming_Editors is
 
    function Create_Project_Entry
      (Editor          : access Naming_Editor_Record;
-      Project         : Prj.Tree.Project_Node_Id;
-      Project_View    : Prj.Project_Id;
-      Scenario_Variables : Prj_API.Project_Node_Array) return Boolean
+      Project         : Projects.Project_Type;
+      Scenario_Variables : Scenario_Variable_Array) return Boolean
    is
       Changed : Boolean := False;
    begin
@@ -233,14 +231,12 @@ package body Naming_Editors is
            and then Editor.Pages (P).Is_Visible
          then
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Ada_Naming,
-               Project, Project_View, Scenario_Variables);
+              (Editor.Pages (P).Ada_Naming, Project, Scenario_Variables);
          elsif Editor.Pages (P).Foreign_Naming /= null
            and then Editor.Pages (P).Is_Visible
          then
             Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Foreign_Naming, Project,
-               Project_View, Scenario_Variables);
+              (Editor.Pages (P).Foreign_Naming, Project, Scenario_Variables);
          end if;
       end loop;
 
@@ -254,19 +250,19 @@ package body Naming_Editors is
    procedure Show_Project_Settings
      (Editor       : access Naming_Editor_Record;
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View : Prj.Project_Id;
+      Project      : Projects.Project_Type;
       Display_Exceptions : Boolean := True)
    is
-      Languages : Argument_List := Get_Languages (Project_View);
+      Languages : Argument_List := Get_Languages (Project);
    begin
       for P in Editor.Pages'Range loop
          if Editor.Pages (P).Ada_Naming /= null then
             Show_Project_Settings
-              (Editor.Pages (P).Ada_Naming, Project_View, Display_Exceptions);
+              (Editor.Pages (P).Ada_Naming, Project, Display_Exceptions);
          else
             Show_Project_Settings
               (Editor.Pages (P).Foreign_Naming, Kernel,
-               Project_View, Display_Exceptions);
+               Project, Display_Exceptions);
          end if;
       end loop;
 

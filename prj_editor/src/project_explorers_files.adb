@@ -53,7 +53,7 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Intl;               use Glide_Intl;
 with Project_Explorers;        use Project_Explorers;
-with Prj_API;                  use Prj_API;
+with Projects;                 use Projects;
 with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with File_Utils;               use File_Utils;
@@ -858,10 +858,8 @@ package body Project_Explorers_Files is
             Inc : String_List_Utils.String_List.List;
             Obj : String_List_Utils.String_List.List;
          begin
-            Inc := Parse_Path
-              (Include_Path (Get_Project_View (Kernel), True));
-            Obj := Parse_Path
-              (Object_Path (Get_Project_View (Kernel), True));
+            Inc := Parse_Path (Include_Path (Get_Project (Kernel), True));
+            Obj := Parse_Path (Object_Path (Get_Project (Kernel), True));
             String_List_Utils.String_List.Concat (Inc, Obj);
             File_Append_Directory
               (Explorer,

@@ -67,8 +67,7 @@ with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Basic_Types;               use Basic_Types;
 with GUI_Utils;                 use GUI_Utils;
-with Prj_API;                   use Prj_API;
-with Prj;                       use Prj;
+with Projects;                  use Projects;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Expect;
 with GNAT.OS_Lib;
@@ -1130,7 +1129,6 @@ package body GVD_Module is
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (K));
       Page         : GPS_Debugger;
-      Project_View : constant Prj.Project_Id := Get_Project_View (K);
       Module       : String_Access;
       Proxy        : Process_Proxy_Access;
       Success      : Boolean;
@@ -1166,7 +1164,7 @@ package body GVD_Module is
          declare
             Args : GNAT.OS_Lib.Argument_List_Access :=
               GNAT.OS_Lib.Argument_String_To_List (Get_Attribute_Value
-                (Project_View, Debugger_Command_Attribute,
+                (Get_Project (K), Debugger_Command_Attribute,
                  Ide_Package, Default => "gdb"));
 
          begin
@@ -1181,13 +1179,13 @@ package body GVD_Module is
                Executable_Args => "",
                Remote_Host     =>
                  Get_Attribute_Value
-                   (Project_View, Remote_Host_Attribute, Ide_Package),
+                   (Get_Project (K), Remote_Host_Attribute, Ide_Package),
                Remote_Target   =>
                  Get_Attribute_Value
-                   (Project_View, Program_Host_Attribute, Ide_Package),
+                   (Get_Project (K), Program_Host_Attribute, Ide_Package),
                Remote_Protocol =>
                  Get_Attribute_Value
-                   (Project_View, Protocol_Attribute, Ide_Package),
+                   (Get_Project (K), Protocol_Attribute, Ide_Package),
                Debugger_Name   => Args (1).all,
                History         => Get_History (K),
                Success => Success);
@@ -1906,7 +1904,7 @@ package body GVD_Module is
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Length  => 0,
-            Project => Get_Project_View (Kernel),
+            Project => Get_Project (Kernel),
             File    => ""));
       Show_All (Menu);
 

@@ -46,7 +46,7 @@ with Creation_Wizard;           use Creation_Wizard;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Prj;                       use Prj;
+with Projects;                  use Projects;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 
 package body Welcome is

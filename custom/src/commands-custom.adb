@@ -24,8 +24,7 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
 
 with Basic_Types;          use Basic_Types;
-with Prj;                  use Prj;
-with Prj_API;              use Prj_API;
+with Projects;             use Projects;
 
 with Ada.Text_IO;          use Ada.Text_IO;
 
@@ -75,7 +74,7 @@ package body Commands.Custom is
       Last     : Integer;
       Index    : Integer;
 
-      Project  : Project_Id := No_Project;
+      Project  : Project_Type := No_Project;
       List     : String_Array_Access;
       Recurse  : Boolean;
 
@@ -166,7 +165,7 @@ package body Commands.Custom is
                if Command.Args (J).all
                  (Command.Args (J)'First .. Command.Args (J)'First + 1) = "%P"
                then
-                  Project := Get_Project_View (Command.Kernel);
+                  Project := Get_Project (Command.Kernel);
                elsif Context /= null
                  and then Context.all in File_Selection_Context'Class
                then
@@ -199,7 +198,7 @@ package body Commands.Custom is
                      List := Get_Source_Files (Project, Recurse);
 
                   elsif Command.Args (J).all (Index) = 'd' then
-                     List := Get_Source_Dirs (Project, Recurse);
+                     List := Source_Dirs (Project, Recurse);
                   end if;
 
                   if List = null then

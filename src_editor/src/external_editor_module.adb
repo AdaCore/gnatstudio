@@ -42,7 +42,7 @@ with Traces;                   use Traces;
 with Unchecked_Deallocation;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.Generic_Properties;  use Glib.Generic_Properties;
-with Prj_API;                  use Prj_API;
+with Projects;                 use Projects;
 
 package body External_Editor_Module is
 
@@ -586,7 +586,7 @@ package body External_Editor_Module is
          if Path /= null then
             Substitute
               (Args,
-               P => Project_Name (Get_Project_View (Kernel)),
+               P => Project_Name (Get_Project (Kernel)),
                E => Clients
                  (External_Editor_Module_Id.Client).Server_Start_Command.all);
 
@@ -675,7 +675,7 @@ package body External_Editor_Module is
       end if;
 
       Substitute (Args,
-                  P => Project_Name (Get_Project_View (Kernel)),
+                  P => Project_Name (Get_Project (Kernel)),
                   F => File,
                   C => Col_Str (Col_Str'First + 1 .. Col_Str'Last),
                   L => Line_Str (Line_Str'First + 1 .. Line_Str'Last),

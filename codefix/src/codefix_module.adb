@@ -33,11 +33,10 @@ with Glib.Object;            use Glib.Object;
 with Glib.Values;            use Glib.Values;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
-with Glide_Kernel.Project;   use Glide_Kernel.Project;
 with Glide_Kernel.Console;   use Glide_Kernel.Console;
+with Glide_Kernel.Project;   use Glide_Kernel.Project;
 with Glide_Intl;             use Glide_Intl;
-with Prj;                    use Prj;
-with Prj_API;                use Prj_API;
+with Projects.Registry;      use Projects, Projects.Registry;
 
 with Traces;                 use Traces;
 with Basic_Types;            use Basic_Types;
@@ -108,12 +107,11 @@ package body Codefix_Module is
    function Get_Body_Or_Spec
      (Text : GPS_Navigator; File_Name : String) return String
    is
-      Project : constant Project_Id := Get_Project_From_File
-        (Get_Project_View (Text.Kernel), File_Name);
+      Project : constant Project_Type :=
+        Get_Project_From_File (Get_Registry (Text.Kernel), File_Name);
    begin
       return Find_On_Path
-        (Project   => Get_Project_From_View (Project),
-         View      => Project,
+        (Project   => Project,
          Filename  => Other_File_Name (Project, Base_Name (File_Name)),
          Recursive => False);
    end Get_Body_Or_Spec;

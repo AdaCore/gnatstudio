@@ -294,7 +294,7 @@ package body Project_Explorers_Common is
 
       if Lang /= null then
          Parse_File_Constructs
-           (Handler, Get_Project_View (Kernel),
+           (Handler, Get_Project (Kernel),
             Languages, File_Name, Constructs);
 
          Constructs.Current := Constructs.First;

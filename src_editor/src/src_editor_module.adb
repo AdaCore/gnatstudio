@@ -67,7 +67,7 @@ with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
-with Prj_API;                   use Prj_API;
+with Projects.Registry;         use Projects, Projects.Registry;
 with Src_Contexts;              use Src_Contexts;
 with Find_Utils;                use Find_Utils;
 with GUI_Utils;                 use GUI_Utils;
@@ -1909,9 +1909,9 @@ package body Src_Editor_Module is
 
       declare
          List1 : String_Array_Access := Get_Source_Files
-           (Project_View => Get_Project_View (Kernel),
-            Recursive    => True,
-            Full_Path    => False);
+           (Project   => Get_Project (Kernel),
+            Recursive => True,
+            Full_Path => False);
          List2 : String_Array_Access := Get_Predefined_Source_Files (Kernel);
       begin
          Set_Completions
@@ -2323,7 +2323,9 @@ package body Src_Editor_Module is
          end if;
 
          Args (1) := new String'("stub");
-         Args (2) := new String'("-P" & Get_Subproject_Name (Kernel, File));
+         Args (2) := new String'
+           ("-P" & Project_Name
+            (Get_Project_From_File (Get_Registry (Kernel), File)));
          Args (3) := new String'(File);
          Args (4) := new String'(Dir_Name (File));
 
@@ -2555,8 +2557,8 @@ package body Src_Editor_Module is
          Filename     : constant String := File_Information (File_Context);
          File         : constant String :=
            Directory_Information (File_Context) & Filename;
-         Project      : constant String :=
-           Get_Subproject_Name (Kernel, Filename);
+         Project      : constant String := Project_Name
+           (Get_Project_From_File (Get_Registry (Kernel), Filename));
          Success      : Boolean;
          Args, Vars   : Argument_List_Access;
          Lang         : String := Get_Language_From_File

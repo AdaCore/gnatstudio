@@ -37,18 +37,14 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Combo;    use Gtkada.Combo;
 with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
-with Prj_API;          use Prj_API;
+with Projects.Editor; use Projects, Projects.Editor;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Variable_Editors; use Variable_Editors;
 with Glide_Intl;    use Glide_Intl;
 
-with Prj;      use Prj;
-with Prj.Ext;  use Prj.Ext;
-with Prj.Tree; use Prj.Tree;
 with Stringt;  use Stringt;
 with Namet;    use Namet;
-with Types;    use Types;
 with Traces;   use Traces;
 
 package body Scenario_Views is
@@ -59,12 +55,13 @@ package body Scenario_Views is
    --  Callback when the current view of the project has changed
 
    procedure Add_Possible_Values
-     (List : access Gtk_List_Record'Class; Typ : Project_Node_Id);
+     (List : access Gtk_List_Record'Class;
+      Var  : Scenario_Variable);
    --  Add all the possible values for type Typ into the List.
 
    type Variable_User_Data is record
       View : Scenario_View;
-      Var  : Project_Node_Id;
+      Var  : Scenario_Variable;
    end record;
 
    procedure Variable_Value_Changed
@@ -150,14 +147,7 @@ package body Scenario_Views is
       Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
    begin
       if Value /= "" then
-         String_To_Name_Buffer (External_Reference_Of (User.Var));
-         declare
-            Name : constant String :=
-              Name_Buffer (Name_Buffer'First .. Name_Len);
-         begin
-            Prj.Ext.Add (Name, Value);
-         end;
-
+         Set_Value (User.Var, Value);
          User.View.Combo_Is_Open := True;
          Recompute_View (User.View.Kernel);
          User.View.Combo_Is_Open := False;
@@ -169,9 +159,9 @@ package body Scenario_Views is
    -------------------------
 
    procedure Add_Possible_Values
-     (List : access Gtk_List_Record'Class; Typ : Project_Node_Id)
+     (List : access Gtk_List_Record'Class; Var : Scenario_Variable)
    is
-      Iter : String_List_Iterator := Type_Values (Typ);
+      Iter : String_List_Iterator := Value_Of (Var);
       Item : Gtk_List_Item;
    begin
       while not Done (Iter) loop
@@ -212,9 +202,6 @@ package body Scenario_Views is
      (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data)
    is
       pragma Unreferenced (Button);
-      Ext_Variable : constant String :=
-        Get_String (External_Reference_Of (Data.Var));
-      Str : String_Id;
       Message : constant String :=
         "Doing so will remove all the configurations associated with"
         & ASCII.LF
@@ -222,7 +209,8 @@ package body Scenario_Views is
 
       Response : constant Message_Dialog_Buttons := Message_Dialog
         (Msg           => (-"Are you sure you want to remove the variable ")
-           & '"' & Ext_Variable & """?" & ASCII.LF & (-Message),
+           & '"' & External_Reference_Of (Data.Var)
+           & """?" & ASCII.LF & (-Message),
          Dialog_Type   => Confirmation,
          Buttons       => Button_OK or Button_Cancel,
          Title         => -"Deleting a variable",
@@ -230,35 +218,17 @@ package body Scenario_Views is
          Parent        => Get_Main_Window (Data.View.Kernel));
    begin
       if Response = Button_OK then
-         Name_Len := Ext_Variable'Length;
-         Name_Buffer (1 .. Name_Len) := Ext_Variable;
-         Str := Prj.Ext.Value_Of (Name_Find);
-
          Delete_External_Variable
            (Root_Project             => Get_Project (Data.View.Kernel),
-            Ext_Variable_Name        => Ext_Variable,
-            Keep_Choice              => Get_String (Str),
+            Ext_Variable_Name        => External_Reference_Of (Data.Var),
+            Keep_Choice              => Value_Of (Data.Var),
             Delete_Direct_References => False);
          Variable_Changed (Data.View.Kernel);
-
-         --  Mark all projects in the hierarchy as modified, since they are
-         --  potentially all impacted.
-
-         declare
-            Iterator : Imported_Project_Iterator := Start
-              (Get_Project (Data.View.Kernel), Recursive => True);
-         begin
-            while Current (Iterator) /= Empty_Node loop
-               Set_Project_Modified
-                 (Data.View.Kernel, Current (Iterator), True);
-               Next (Iterator);
-            end loop;
-         end;
 
          --  Recompute the view so that the explorer is updated graphically.
          Recompute_View (Data.View.Kernel);
 
-         Trace (Me, "Delete_Variable: " & Ext_Variable);
+         Trace (Me, "Delete_Variable: " & External_Reference_Of (Data.Var));
       end if;
    end Delete_Variable;
 
@@ -272,7 +242,6 @@ package body Scenario_Views is
       Label  : Gtk_Label;
       Combo  : Gtkada_Combo;
       Row    : Guint;
-      Str    : String_Id;
       Button : Gtk_Button;
       Pix    : Gtk_Image;
 
@@ -304,13 +273,13 @@ package body Scenario_Views is
 
 
       --  No project view => Clean up the scenario viewer
-      if Get_Project_View (V.Kernel) = No_Project then
+      if Get_Project (V.Kernel) = No_Project then
          Resize (V, Rows => 1, Columns => 4);
          Hide_All (V);
 
       else
          declare
-            Scenar_Var : constant Project_Node_Array :=
+            Scenar_Var : constant Scenario_Variable_Array :=
               Scenario_Variables (V.Kernel);
          begin
             Resize (V, Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
@@ -342,8 +311,7 @@ package body Scenario_Views is
                   View_Callback.To_Marshaller (Delete_Variable'Access),
                   (View => V, Var => Scenar_Var (J)));
 
-               Gtk_New
-                 (Label, Get_String (External_Reference_Of (Scenar_Var (J))));
+               Gtk_New (Label, External_Reference_Of (Scenar_Var (J)));
                Set_Alignment (Label, 0.0, 0.5);
                Attach (V, Label, 2, 3, Row, Row + 1, Xoptions => Fill,
                        Xpadding => 5);
@@ -353,28 +321,8 @@ package body Scenario_Views is
                Set_Width_Chars (Get_Entry (Combo), 0);
                Attach (V, Combo, 3, 4, Row, Row + 1);
 
-               Add_Possible_Values
-                 (Get_List (Combo), String_Type_Of (Scenar_Var (J)));
-
-               --  The variable necessarily has a current value set in
-               --  Prj.Ext, since this is done automatically by the kernel.
-               --  Thus we display this value (no need to look at the default
-               --  value here).
-
-               Str := External_Reference_Of (Scenar_Var (J));
-               pragma Assert
-                 (Str /= No_String,
-                  "Scenario variable is not an external reference");
-
-               String_To_Name_Buffer (Str);
-               Str := Prj.Ext.Value_Of (Name_Find);
-               pragma Assert
-                 (Str /= No_String, "Value not defined in Prj.Ext");
-
-               String_To_Name_Buffer (Str);
-               Set_Text
-                 (Get_Entry (Combo),
-                  Name_Buffer (Name_Buffer'First .. Name_Len));
+               Add_Possible_Values (Get_List (Combo), Scenar_Var (J));
+               Set_Text (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
 
                View_Callback.Connect
                  (Combo,

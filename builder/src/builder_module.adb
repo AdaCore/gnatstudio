@@ -42,8 +42,8 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
-with Prj_API;                   use Prj_API;
-with Prj;                       use Prj;
+with Projects.Editor;           use Projects, Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
 with Src_Info;                  use Src_Info;
 with Histories;                 use Histories;
 
@@ -155,7 +155,7 @@ package body Builder_Module is
 
    procedure Add_Build_Menu
      (Menu         : in out Gtk_Menu;
-      Project      : Project_Id;
+      Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Set_Shortcut : Boolean);
    --  Remove all entries in Menu, and add new entries for all the main
@@ -165,7 +165,7 @@ package body Builder_Module is
 
    procedure Add_Run_Menu
      (Menu         : in out Gtk_Menu;
-      Project      : Project_Id;
+      Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class);
    --  Same as Add_Build_Menu, but for the Run menu
 
@@ -486,11 +486,10 @@ package body Builder_Module is
       pragma Unreferenced (Id);
 
       Context      : Selection_Context_Access;
-      Prj          : Project_Id;
-      Project_View : constant Project_Id := Get_Project_View (K);
-      Project_Name : constant String := Get_Project_File_Name (K);
+      Prj          : Project_Type;
+      Project      : constant Project_Type := Get_Project (K);
       Langs        : Argument_List := Get_Languages
-        (Project_View, Recursive => True);
+        (Project, Recursive => True);
       Syntax       : Command_Syntax;
       State_Pushed : Boolean := False;
 
@@ -525,10 +524,10 @@ package body Builder_Module is
              (File_Selection_Context_Access (Context))
          then
             Prj := Get_Project_From_File
-              (Project_View,
+              (Get_Registry (K),
                File_Information (File_Selection_Context_Access (Context)));
 
-            if Prj = No_Project or else Project_Name = "" then
+            if Prj = No_Project or else Is_Default (Project) then
                Args := new Argument_List'
                  (Clone (Default_Builder_Switches)
                   & new String'(File_Information
@@ -550,7 +549,7 @@ package body Builder_Module is
       else
          --  Are we using the default internal project ?
 
-         if Get_Project_File_Name (K) = "" then
+         if Is_Default (Get_Project (K)) then
             case Syntax is
                when GNAT_Syntax =>
                   Args := new Argument_List'
@@ -577,7 +576,7 @@ package body Builder_Module is
       case Syntax is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
-              (Project_View, Compiler_Command_Attribute,
+              (Project, Compiler_Command_Attribute,
                Ide_Package, Default => "gnatmake", Index => "Ada"));
 
          when Make_Syntax =>
@@ -595,7 +594,7 @@ package body Builder_Module is
            Get_Pref (GVD_Prefs, Remote_Protocol),
          Remote_Host      =>
            Get_Attribute_Value
-             (Project_View, Remote_Host_Attribute, Ide_Package),
+             (Project, Remote_Host_Attribute, Ide_Package),
          Command          => Cmd.all,
          Arguments        => Args.all,
          Fd               => Fd);
@@ -650,10 +649,9 @@ package body Builder_Module is
            File_Selection_Context_Access (Context);
          File : constant String := Directory_Information (File_Context) &
            File_Information (File_Context);
-         View : constant Project_Id := Get_Project_View (Kernel);
          Cmd  : constant String :=
            Get_Attribute_Value
-             (View, Compiler_Command_Attribute,
+             (Get_Project (Kernel), Compiler_Command_Attribute,
               Ide_Package, Default => "gnatmake", Index => "Ada")
            & " -q -u -gnats " & File;
          Fd   : Process_Descriptor_Access;
@@ -732,9 +730,9 @@ package body Builder_Module is
       Arg2         : aliased String := "-u";
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Project      : constant String := Get_Subproject_Name (Kernel, File);
-      Project_View : constant Project_Id := Get_Project_View (Kernel);
-      Prj          : Project_Id;
+      Prj : constant Project_Type :=
+        Get_Project_From_File (Get_Registry (Kernel), File);
+      Project      : constant String := Project_Name (Prj);
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
       Local_File   : aliased String := File;
@@ -763,8 +761,6 @@ package body Builder_Module is
       if Save_All_MDI_Children (Kernel, Force => False) = False then
          return;
       end if;
-
-      Prj := Get_Project_From_File (Project_View, File);
 
       if Prj = No_Project then
          Console.Insert
@@ -927,7 +923,6 @@ package body Builder_Module is
    is
       pragma Unreferenced (Widget);
 
-      Project_View : constant Project_Id := Get_Project_View (Kernel);
       Cmd          : constant String := Simple_Entry_Dialog
         (Parent   => Get_Main_Window (Kernel),
          Title    => -"Custom Execution",
@@ -965,7 +960,7 @@ package body Builder_Module is
             Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
             Remote_Host      =>
               Get_Attribute_Value
-                (Project_View, Remote_Host_Attribute, Ide_Package),
+                (Project, Remote_Host_Attribute, Ide_Package),
             Cmd_Line         => Cmd,
             Fd               => Fd);
          Id := Process_Timeout.Add
@@ -1033,8 +1028,8 @@ package body Builder_Module is
             D.Iter.all := new LI_Handler_Iterator'Class'
               (Generate_LI_For_Project
                  (Handler      => LI,
-                  Root_Project => Get_Project_View (D.Kernel),
-                  Project      => Get_Project_View (D.Kernel),
+                  Root_Project => Get_Project (D.Kernel),
+                  Project      => Get_Project (D.Kernel),
                   Recursive    => True));
             Continue (D.Iter.all.all, Not_Finished);
          end if;
@@ -1366,7 +1361,7 @@ package body Builder_Module is
 
    procedure Add_Build_Menu
      (Menu         : in out Gtk_Menu;
-      Project      : Project_Id;
+      Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Set_Shortcut : Boolean)
    is
@@ -1434,7 +1429,7 @@ package body Builder_Module is
 
    procedure Add_Run_Menu
      (Menu         : in out Gtk_Menu;
-      Project      : Project_Id;
+      Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class)
    is
       Mains : constant Argument_List := Get_Attribute_Value
@@ -1494,12 +1489,12 @@ package body Builder_Module is
       --  Only add the shortcuts for the root project
       Add_Build_Menu
         (Menu         => Builder_Module.Make_Menu,
-         Project      => Get_Project_View (Kernel),
+         Project      => Get_Project (Kernel),
          Kernel       => Kernel,
          Set_Shortcut => True);
       Add_Run_Menu
         (Menu         => Builder_Module.Run_Menu,
-         Project      => Get_Project_View (Kernel),
+         Project      => Get_Project (Kernel),
          Kernel       => Kernel);
 
       --  No main program ?
@@ -1532,7 +1527,7 @@ package body Builder_Module is
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
            (Length  => All_Files'Length,
-            Project => Get_Project_View (Kernel),
+            Project => Get_Project (Kernel),
             File    => All_Files));
 
       Gtk_New (Mitem, -"Custom...");
@@ -1557,7 +1552,7 @@ package body Builder_Module is
          File_Project_Cb.To_Marshaller (On_Run'Access),
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
-           (Length => 0, Project => Get_Project_View (Kernel), File => ""));
+           (Length => 0, Project => Get_Project (Kernel), File => ""));
       Show_All (Menu1);
       Show_All (Menu2);
 

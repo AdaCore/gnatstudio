@@ -1864,12 +1864,12 @@ package body Src_Editor_Box is
                   New_Name := new String'
                     (Get_Source_Filename
                        (Info.Name.all & "%s",
-                        Get_Project_View (Editor.Kernel)));
+                        Get_Project (Editor.Kernel)));
                else
                   New_Name := new String'
                     (Get_Source_Filename
                        (Info.Name.all & "%b",
-                        Get_Project_View (Editor.Kernel)));
+                        Get_Project (Editor.Kernel)));
                end if;
             end if;
 

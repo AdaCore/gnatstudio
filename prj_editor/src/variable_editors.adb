@@ -40,18 +40,13 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with GUI_Utils;                use GUI_Utils;
 with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
-with Prj.Tree;                 use Prj.Tree;
-with Prj;                      use Prj;
-with Prj.Ext;                  use Prj.Ext;
-with Prj_Normalize;            use Prj_Normalize;
-
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Types;                    use Types;
 with Stringt;                  use Stringt;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with System;                   use System;
 
-with Prj_API;                  use Prj_API;
+with Projects.Editor;          use Projects, Projects.Editor;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Intl;               use Glide_Intl;
@@ -129,7 +124,7 @@ package body Variable_Editors is
    procedure Gtk_New
      (Editor : out New_Var_Edit;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Var    : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
+      Var    : Scenario_Variable :=  No_Variable;
       Title  : String)
    is
       Item            : Gtk_List_Item;
@@ -144,7 +139,6 @@ package body Variable_Editors is
 
       Iter            : Gtk_Tree_Iter;
       E               : String_List_Iterator;
-      Expr            : Project_Node_Id;
       Is_Default      : Boolean;
 
    begin
@@ -230,37 +224,29 @@ package body Variable_Editors is
 
       --  Fill the information for the variable
 
-      if Var /= Empty_Node then
+      if Var /= No_Variable then
          Set_Text (Get_Entry (Editor.Variable_Name),
-                   Get_String (Get_Environment (Var)));
-
-         Expr := External_Default_Of
-           (Current_Term (First_Term (Expression_Of (Var))));
-         if Expr /= Empty_Node
-           and then Kind_Of (Expr) /= N_Literal_String
-         then
-            Expr := Empty_Node;
-         end if;
+                   External_Reference_Of (Var));
 
          Is_Default := True;
 
-         E := Type_Values (Var);
+         E := Value_Of (Var);
          while not Done (E) loop
-            Append (Editor.Model, Iter, Null_Iter);
+            declare
+               S : constant String := Get_String (Data (E));
+            begin
+               Append (Editor.Model, Iter, Null_Iter);
+               Is_Default := External_Default (Var) = S;
 
-            if Expr /= Empty_Node then
-               Is_Default := String_Equal
-                 (String_Value_Of (Data (E)), String_Value_Of (Expr));
-            end if;
+               Variable_Editor_Set
+                 (Editor.Model, Iter,
+                  Is_Default  => Is_Default,
+                  Value       => S,
+                  Is_Editable => True);
 
-            Variable_Editor_Set
-              (Editor.Model, Iter,
-               Is_Default => Is_Default,
-               Value => Get_String (String_Value_Of (Data (E))),
-               Is_Editable => True);
-
-            Is_Default := False;
-            E := Next (E);
+               Is_Default := False;
+               E := Next (E);
+            end;
          end loop;
       end if;
    end Gtk_New;
@@ -335,7 +321,6 @@ package body Variable_Editors is
    is
       New_Name : constant String :=
         Get_Text (Get_Entry (Editor.Variable_Name));
-      Var      : Project_Node_Id := Editor.Var;
       Changed  : Boolean := False;
       Iter     : Gtk_Tree_Iter;
       Val_Iter : String_List_Iterator;
@@ -407,15 +392,15 @@ package body Variable_Editors is
          return False;
       end if;
 
-      if Var /= Empty_Node
-        and then Get_String (Get_Environment (Var)) /= New_Name
+      if Editor.Var /= No_Variable
+        and then External_Reference_Of (Editor.Var) /= New_Name
       then
          declare
-            Vars : constant Project_Node_Array :=
+            Vars : constant Scenario_Variable_Array :=
               Scenario_Variables (Editor.Kernel);
          begin
             for V in Vars'Range loop
-               if New_Name = Get_String (Get_Environment (Vars (V))) then
+               if New_Name = External_Reference_Of (Vars (V)) then
                   Message := Message_Dialog
                     (Msg     => -"There is already a variable with this name",
                      Buttons => Button_OK,
@@ -426,67 +411,59 @@ package body Variable_Editors is
          end;
       end if;
 
-      Normalize (Get_Project (Editor.Kernel), Recurse => True);
-
       --  Create the variable if necessary
 
-      if Var = Empty_Node then
-         Var := Create_Type (Get_Project (Editor.Kernel), New_Name & "_Type");
-         Var := Create_Typed_Variable
-           (Get_Project (Editor.Kernel), New_Name, Var,
-            Add_Before_First_Case_Or_Pkg => True);
-         Set_Value_As_External (Var, New_Name);
-
-         Set_Project_Modified
-           (Editor.Kernel, Get_Project (Editor.Kernel), True);
-      end if;
+      if Editor.Var = No_Variable then
+         Editor.Var := Create_Environment_Variable
+           (Project   => Get_Project (Editor.Kernel),
+            Name      => New_Name,
+            Type_Name => New_Name & "_Type",
+            Env_Name  => New_Name);
+         --  ??? Report project as modified for kernel
 
       --  Rename the value appropriately (this has to be done separately, so
       --  that the case statements are changed appropriately).
 
-      if Editor.Var /= Empty_Node then
+      else
          Iter := Get_Iter_First (Editor.Model);
          while Iter /= Null_Iter loop
             Num_Rows := Num_Rows + 1;
 
-            if Editor.Var /= Empty_Node then
-               declare
-                  Old_Val : constant String :=
-                    Get_String (Editor.Model, Iter, Initial_Value_Column);
-                  New_Val : constant String :=
-                    Get_String (Editor.Model, Iter, Value_Column);
-               begin
-                  if Old_Val /= New_Val then
-                     Trace (Me, "Renaming value for variable "
-                            & Get_String (Get_Environment (Var))
-                            & " from " & Old_Val & " to " & New_Val);
+            declare
+               Old_Val : constant String :=
+                 Get_String (Editor.Model, Iter, Initial_Value_Column);
+               New_Val : constant String :=
+                 Get_String (Editor.Model, Iter, Value_Column);
+            begin
+               if Old_Val /= New_Val then
+                  Trace (Me, "Renaming value for variable "
+                         & External_Reference_Of (Editor.Var)
+                         & " from " & Old_Val & " to " & New_Val);
 
-                     Start_String;
-                     Store_String_Chars (New_Val);
-                     Rename_Value_For_External_Variable
-                       (Get_Project (Editor.Kernel),
-                        Ext_Variable_Name =>
-                          Get_String (Get_Environment (Var)),
-                        Old_Value_Name => Old_Val,
-                        New_Value_Name => End_String);
-                     Changed := True;
-                  end if;
-               end;
-            end if;
+                  Start_String;
+                  Store_String_Chars (New_Val);
+                  Rename_Value_For_External_Variable
+                    (Get_Project (Editor.Kernel),
+                     Ext_Variable_Name => External_Reference_Of (Editor.Var),
+                     Old_Value_Name => Old_Val,
+                     New_Value_Name => End_String);
+                  Changed := True;
+               end if;
+            end;
 
             Next (Editor.Model, Iter);
          end loop;
 
          --  Delete the values that no longer exist
 
-         Val_Iter := Type_Values (Var);
+         Val_Iter := Value_Of (Editor.Var);
          while not Done (Val_Iter) loop
             Found := False;
             Iter := Get_Iter_First (Editor.Model);
 
             while Iter /= Null_Iter loop
                if Get_String (Editor.Model, Iter, Value_Column) =
-                 Get_String (String_Value_Of (Data (Val_Iter)))
+                 Get_String (Data (Val_Iter))
                then
                   Found := True;
                   exit;
@@ -497,8 +474,8 @@ package body Variable_Editors is
 
             if not Found then
                Remove_Value (Get_Project (Editor.Kernel),
-                             Get_String (Get_Environment (Var)),
-                             Get_String (String_Value_Of (Data (Val_Iter))));
+                             External_Reference_Of (Editor.Var),
+                             Get_String (Data (Val_Iter)));
                Changed := True;
             end if;
 
@@ -523,16 +500,13 @@ package body Variable_Editors is
                Default : constant Boolean := Get_Boolean
                  (Editor.Model, Iter, Default_Value_Column);
                Id      : String_Id := No_String;
-               Expr    : Project_Node_Id;
 
             begin
                if Name /= New_Value_Name then
-                  Val_Iter := Type_Values (Var);
+                  Val_Iter := Value_Of (Editor.Var);
 
                   while not Done (Val_Iter) loop
-                     if Name =
-                       Get_String (String_Value_Of (Data (Val_Iter)))
-                     then
+                     if Name = Get_String (Data (Val_Iter)) then
                         Found := True;
                         exit;
                      end if;
@@ -547,32 +521,32 @@ package body Variable_Editors is
                      Id := End_String;
                      Values (Num_Values) := Id;
                      Trace (Me, "Adding new value " & Name & " for "
-                            & Get_String (Get_Environment (Var)));
+                            & External_Reference_Of (Editor.Var));
                   end if;
 
                   if Default then
-                     Expr := External_Default (Var);
+                     declare
+                        Expr : constant String :=
+                          External_Default (Editor.Var);
+                     begin
+                        if Expr = "" or else Expr /= Name then
+                           if Id = No_String then
+                              Start_String;
+                              Store_String_Chars (Name);
+                              Id := End_String;
+                           end if;
 
-                     if Expr = Empty_Node
-                       or else Kind_Of (Expr) /= N_Literal_String
-                       or else Get_String (String_Value_Of (Expr)) /= Name
-                     then
-                        if Id = No_String then
-                           Start_String;
-                           Store_String_Chars (Name);
-                           Id := End_String;
+                           Changed := True;
+
+                           Trace (Me, "Setting default value of "
+                                  & External_Reference_Of (Editor.Var)
+                                  & " to " & Name);
+                           Set_Default_Value_For_External_Variable
+                             (Get_Project (Editor.Kernel),
+                              External_Reference_Of (Editor.Var),
+                              Id);
                         end if;
-
-                        Changed := True;
-
-                        Trace (Me, "Setting default value of "
-                               & Get_String (Get_Environment (Var))
-                               & " to " & Name);
-                        Set_Default_Value_For_External_Variable
-                          (Get_Project (Editor.Kernel),
-                           Get_String (Get_Environment (Var)),
-                           Id);
-                     end if;
+                     end;
                   end if;
                end if;
             end;
@@ -583,7 +557,7 @@ package body Variable_Editors is
          if Num_Values >= Values'First then
             Add_Scenario_Variable_Values
               (Get_Project (Editor.Kernel),
-               Get_Environment (Var),
+               Editor.Var,
                Values (Values'First .. Num_Values));
             Changed := True;
          end if;
@@ -592,35 +566,29 @@ package body Variable_Editors is
       --  Has the variable been renamed ? This should be done last, so that
       --  the previous calls above work with the old name
 
-      if Get_String (Get_Environment (Var)) /= New_Name then
+      if External_Reference_Of (Editor.Var) /= New_Name then
          Trace (Me, "Renaming variable "
-                & Get_String (Get_Environment (Var))
-                & " to " & New_Name);
+                & External_Reference_Of (Editor.Var) & " to " & New_Name);
          Start_String;
          Store_String_Chars (New_Name);
          Rename_External_Variable
            (Get_Project (Editor.Kernel),
-            Old_Name => Get_String (Get_Environment (Var)),
+            Variable => Editor.Var,
             New_Name => End_String);
          Changed := True;
       end if;
 
-      if Editor.Var = Empty_Node then
-         if External_Default (Var) /= Empty_Node then
-            Prj.Ext.Add
-              (New_Name,
-               Get_String (String_Value_Of (External_Default (Var))));
+      if Editor.Var = No_Variable then
+         if External_Default (Editor.Var) /= "" then
+            Set_Value (Editor.Var, External_Default (Editor.Var));
          else
             Iter := Get_Iter_First (Editor.Model);
-            Prj.Ext.Add
-              (New_Name, Get_String (Editor.Model, Iter, Value_Column));
+            Set_Value
+              (Editor.Var, Get_String (Editor.Model, Iter, Value_Column));
          end if;
       end if;
 
       if Changed then
-         Set_Project_Modified
-           (Editor.Kernel, Get_Project (Editor.Kernel), True);
-
          --  Recompute the view so that the explorer is updated graphically.
 
          Recompute_View (Editor.Kernel);

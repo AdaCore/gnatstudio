@@ -34,7 +34,7 @@ with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
 with Osint;                     use Osint;
-with Prj_API;                   use Prj_API;
+with Projects;                  use Projects;
 with Basic_Types;               use Basic_Types;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -861,7 +861,7 @@ package body Src_Contexts is
 
       Set_File_List
         (Context,
-         Get_Source_Files (Get_Project_View (Kernel), True));
+         Get_Source_Files (Get_Project (Kernel), True));
       return Search_Context_Access (Context);
    end Files_From_Project_Factory;
 
