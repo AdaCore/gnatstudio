@@ -148,34 +148,36 @@ package Glide_Kernel.Preferences is
    -------------------
 
    Default_Keyword_Color : constant Property_Color :=
-     Register_Property ("Src_Editor:Default_Keyword_Color", "");
-   --  Default color for highlighting keywords
-   --  ??? not used
+     Register_Property ("Src_Editor:Keyword_Color", "");
+   --  Color for highlighting keywords
 
    Default_Comment_Color : constant Property_Color :=
-     Register_Property ("Src_Editor:Default_Comment_Color", "blue");
-   --  Default color for highlighting comments
-   --  ??? not used
+     Register_Property ("Src_Editor:Comment_Color", "blue");
+   --  Color for highlighting comments
 
    Default_String_Color : constant Property_Color :=
-     Register_Property ("Src_Editor:Default_String_Color", "brown");
-   --  Default color for highlighting strings
-   --  ??? not used
+     Register_Property ("Src_Editor:String_Color", "brown");
+   --  Color for highlighting strings
 
    Default_Character_Color : constant Property_Color :=
-     Register_Property ("Src_Editor:Default_Character_Color", "brown");
-   --  Default color for highlighting characters
-   --  ??? not used
+     Register_Property ("Src_Editor:Character_Color", "brown");
+   --  Color for highlighting characters
+
+   Default_HL_Line_Color   : constant Property_Color :=
+     Register_Property ("Src_Editor:Highlight_Line_Color", "green");
+   --  Color for highlighting lines
+
+   Default_HL_Region_Color : constant Property_Color :=
+     Register_Property ("Src_Editor:Highlight_Region_Color", "cyan");
+   --  Color for highlighting regions
 
    Automatic_Indentation : constant Glib.Properties.Property_Boolean :=
      Register_Property ("Src_Editor:Automatic_Indentation", True);
    --  Whether the editor should indent automatically the source
-   --  ??? not used
 
    Strip_Blanks : constant Glib.Properties.Property_Boolean :=
      Register_Property ("Src_Editor:Strip_Blanks", True);
    --  Whether the editor should remove trailing blanks when saving a file
-   --  ??? not used
 
    Default_Source_Editor_Font : constant Property_Font :=
      Register_Property ("Src_Editor:Default_Font", "Courier 10");
