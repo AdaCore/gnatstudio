@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gtk.Label;                 use Gtk.Label;
@@ -57,10 +58,140 @@ package body Vdiff_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->Compare->Two Files...
 
+   function Compare_Two_Files
+     (Kernel : access Kernel_Handle_Record'Class;
+      File1, File2 : VFS.Virtual_File;
+      Title1, Title2 : String;
+      Result : Diff_Occurrence_Link) return MDI_Child;
+   --  Compare two files.
+   --  Return null if there are no differences
+
    function Default_Factory
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Return the default context factory for Vdiff widgets.
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child;
+   --  Restore the status of the explorer from a saved XML tree.
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Save the status of the project explorer to an XML tree
+
+   -----------------------
+   -- Compare_Two_Files --
+   -----------------------
+
+   function Compare_Two_Files
+     (Kernel : access Kernel_Handle_Record'Class;
+      File1, File2 : VFS.Virtual_File;
+      Title1, Title2 : String;
+      Result : Diff_Occurrence_Link) return MDI_Child
+   is
+      R      : Diff_Occurrence_Link := Result;
+      Vdiff  : Vdiff_Access;
+      Child  : MDI_Child;
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Button);
+   begin
+      if Result = null then
+         Button := Message_Dialog
+           (Msg     => -"No differences found.",
+            Buttons => Button_OK,
+            Parent  => Get_Main_Window (Kernel));
+         return null;
+      end if;
+
+      Gtk_New (Vdiff);
+      Set_Text (Vdiff.File_Label1, Title1);
+      Set_Text (Vdiff.File_Label2, Title2);
+      Vdiff.File1 := File1;
+      Vdiff.File2 := File2;
+      Fill_Diff_Lists
+        (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
+      Show_All (Vdiff);
+      Child := Put
+        (Kernel, Vdiff,
+         Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+         Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+         Module         => Vdiff_Module_ID);
+      Set_Focus_Child (Child);
+      Set_Title (Child, -"Visual Comparison");
+
+      Free (R);
+
+      return Child;
+   end Compare_Two_Files;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (MDI  : MDI_Window;
+      Node : Node_Ptr;
+      User : Kernel_Handle) return MDI_Child
+   is
+      pragma Unreferenced (MDI);
+      Title1, Title2 : Glib.String_Ptr;
+      File1, File2 : VFS.Virtual_File;
+   begin
+      if Node.Tag.all = "Vdiff" then
+         Title1 := Get_Field (Node, "Title1");
+         Title2 := Get_Field (Node, "Title2");
+         File1  := Create (Full_Filename => Get_Field (Node, "File1").all);
+         File2  := Create (Full_Filename => Get_Field (Node, "File2").all);
+
+         return Compare_Two_Files
+           (User, File1, File2, Title1.all, Title2.all,
+            Diff (User, File1, File2));
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
+   is
+      N, N2 : Node_Ptr;
+   begin
+      if Widget.all in Vdiff_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Vdiff");
+
+         N2 := new Node;
+         N2.Tag := new String'("Title1");
+         N2.Value := new String'(Get_Text (Vdiff_Access (Widget).File_Label1));
+         Add_Child (N, N2);
+
+         N2 := new Node;
+         N2.Tag := new String'("Title2");
+         N2.Value := new String'(Get_Text (Vdiff_Access (Widget).File_Label2));
+         Add_Child (N, N2);
+
+         N2 := new Node;
+         N2.Tag := new String'("File1");
+         N2.Value := new String'(Full_Name (Vdiff_Access (Widget).File1).all);
+         Add_Child (N, N2);
+
+         N2 := new Node;
+         N2.Tag := new String'("File2");
+         N2.Value := new String'(Full_Name (Vdiff_Access (Widget).File2).all);
+         Add_Child (N, N2);
+
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
 
    --------------------------
    -- On_Compare_Two_Files --
@@ -69,8 +200,6 @@ package body Vdiff_Module is
    procedure On_Compare_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Vdiff  : Vdiff_Access;
-      Result : Diff_Occurrence_Link;
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
@@ -78,56 +207,30 @@ package body Vdiff_Module is
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
-
+      File2 : Virtual_File;
       Child  : MDI_Child;
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Button);
+      pragma Unreferenced (Widget, Child);
 
    begin
       if File1 = VFS.No_File then
          return;
       end if;
 
-      declare
-         File2 : constant Virtual_File :=
-           Select_File
-             (Title             => -"Select Second File",
-              Parent            => Get_Main_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-              Kind              => Unspecified,
-              History           => Get_History (Kernel));
+      File2 := Select_File
+        (Title             => -"Select Second File",
+         Parent            => Get_Main_Window (Kernel),
+         Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+         Kind              => Unspecified,
+         History           => Get_History (Kernel));
 
-      begin
-         if File2 = VFS.No_File then
-            return;
-         end if;
+      if File2 = VFS.No_File then
+         return;
+      end if;
 
-         Result := Diff (Kernel, File1, File2);
-
-         if Result = null then
-            Button := Message_Dialog
-              (Msg         => -"No differences found.",
-               Buttons     => Button_OK,
-               Parent      => Get_Main_Window (Kernel));
-            return;
-         end if;
-
-         Gtk_New (Vdiff);
-         Set_Text (Vdiff.File_Label1, Full_Name (File1).all);
-         Set_Text (Vdiff.File_Label2, Full_Name (File2).all);
-         Fill_Diff_Lists
-           (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
-         Show_All (Vdiff);
-         Child := Put
-           (Kernel, Vdiff,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module => Vdiff_Module_ID);
-         Set_Focus_Child (Child);
-         Set_Title (Child, -"Visual Comparison");
-
-         Free (Result);
-      end;
+      Child := Compare_Two_Files
+        (Kernel, File1, File2,
+         Full_Name (File1).all, Full_Name (File2).all,
+         Diff (Kernel, File1, File2));
 
    exception
       when E : others =>
@@ -144,11 +247,8 @@ package body Vdiff_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      Vdiff   : Vdiff_Access;
-      Result  : Diff_Occurrence_Link;
       Child   : MDI_Child;
-      Button  : Message_Dialog_Buttons;
-      pragma Unreferenced (Mode, Button);
+      pragma Unreferenced (Mode, Child);
 
    begin
       if Mime_Type = Mime_Diff_File then
@@ -173,25 +273,11 @@ package body Vdiff_Module is
                     Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
 
                begin
-                  Result := Diff
-                    (Kernel, Ref_File, New_F, Diff_F, Revert => True);
-
-                  if Result = null then
-                     Button := Message_Dialog
-                       (Msg         => -"No differences found.",
-                        Buttons     => Button_OK,
-                        Parent      => Get_Main_Window (Kernel));
-                     return False;
-                  end if;
-
-                  Gtk_New (Vdiff);
-                  Set_Text (Vdiff.File_Label1, Base & (-" <reference>"));
-                  Set_Text (Vdiff.File_Label2, New_File);
-                  Fill_Diff_Lists
-                    (Kernel, Vdiff.Clist1, Vdiff.Clist2, Ref_File,
-                     New_F, Result);
+                  Child := Compare_Two_Files
+                    (Kernel, Ref_File, New_F,
+                     Base & (-" <reference>"), New_File,
+                     Diff (Kernel, Ref_File, New_F, Diff_F, Revert => True));
                   Delete (Ref_File);
-                  Free (Result);
                end;
 
             elsif New_File = "" then
@@ -206,26 +292,12 @@ package body Vdiff_Module is
                   Base     : constant String := Base_Name (Orig_File);
                   Ref_File : constant Virtual_File :=
                     Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
-
                begin
-                  Result := Diff (Kernel, Orig_F, Ref_File, Diff_F);
-
-                  if Result = null then
-                     Button := Message_Dialog
-                       (Msg         => -"No differences found.",
-                        Buttons     => Button_OK,
-                        Parent      => Get_Main_Window (Kernel));
-                     return False;
-                  end if;
-
-                  Gtk_New (Vdiff);
-                  Set_Text (Vdiff.File_Label1, Orig_File);
-                  Set_Text (Vdiff.File_Label2, Base & (-" <reference>"));
-                  Fill_Diff_Lists
-                    (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_F,
-                     Ref_File, Result);
+                  Child := Compare_Two_Files
+                    (Kernel, Orig_F, Ref_File,
+                     Orig_File, Base & (-" <reference>"),
+                     Diff (Kernel, Orig_F, Ref_File, Diff_F));
                   Delete (Ref_File);
-                  Free (Result);
                end;
 
             else
@@ -234,34 +306,11 @@ package body Vdiff_Module is
                Orig_F := Create (Full_Filename => Orig_File);
                Diff_F := Create (Full_Filename => Diff_File);
                New_F  := Create (Full_Filename => New_File);
-
-               Result := Diff (Kernel, Orig_F, New_F, Diff_F);
-
-               if Result = null then
-                  Button := Message_Dialog
-                    (Msg         => -"No differences found.",
-                     Buttons     => Button_OK,
-                     Parent      => Get_Main_Window (Kernel));
-                  return False;
-               end if;
-
-               Gtk_New (Vdiff);
-               Set_Text (Vdiff.File_Label1, Orig_File);
-               Set_Text (Vdiff.File_Label2, New_File);
-               Fill_Diff_Lists
-                 (Kernel, Vdiff.Clist1, Vdiff.Clist2, Orig_F, New_F, Result);
-               Free (Result);
+               Child := Compare_Two_Files
+                 (Kernel, Orig_F, New_F, Orig_File, New_File,
+                  Diff (Kernel, Orig_F, New_F, Diff_F));
             end if;
 
-            Show_All (Vdiff);
-            Child := Put
-              (Kernel, Vdiff,
-               Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-               Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-               Module => Vdiff_Module_ID);
-
-            Set_Focus_Child (Child);
-            Set_Title (Child, -"Visual Comparison");
             return True;
          end;
       end if;
@@ -325,6 +374,8 @@ package body Vdiff_Module is
          Default_Context_Factory => Default_Factory'Access);
       Register_Menu
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
 end Vdiff_Module;
