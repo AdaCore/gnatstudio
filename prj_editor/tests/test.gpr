@@ -6,12 +6,13 @@ project Test is
 
    OS3 : OS_Type := "Linux"; --  not a scenario variable
    OS4 := external ("OS", "foo");  --  not a scenario variable
+   for Source_Dirs use ("common");
 
    case OS is
        when "Linux" => 
-          for Source_Dirs use ("os=linux/");
+          for Source_Dirs use Test'Source_Dirs & ("os=linux/");
        when "Windows" => 
-          for Source_Dirs use ("os=windows/");
+          for Source_Dirs use Test'Source_Dirs & ("os=windows/");
    end case;
 
    type Target_Type is ("Devel", "Release");
