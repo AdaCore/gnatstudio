@@ -42,16 +42,15 @@ package body Src_Info.LI_Utils is
    begin
       if File = No_LI_File then
          File := new LI_File_Constrained'
-         (LI => (Parsed => True,
-                 Handler => LI_Handler (Handler),
-                 LI_Filename => new String'(Source_Filename),
-                 Body_Info => new File_Info,
-                 Spec_Info => null,
-                 Separate_Info => null,
-                 Dependencies_Info => null,
-                 Compilation_Errors_Found => False,
-                 LI_Timestamp => 0));
-         File := new LI_File_Constrained;
+               (LI =>  (Parsed => True,
+                        Handler => LI_Handler (Handler),
+                        LI_Filename => new String'(Source_Filename),
+                        Body_Info => new File_Info,
+                        Spec_Info => null,
+                        Separate_Info => null,
+                        Dependencies_Info => null,
+                        Compilation_Errors_Found => False,
+                        LI_Timestamp => 0));
          File.LI.LI_Filename := new String'(Source_Filename);
          File.LI.Body_Info := new File_Info'
                (Unit_Name => null,
