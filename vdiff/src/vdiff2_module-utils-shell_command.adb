@@ -71,15 +71,24 @@ package body Vdiff2_Module.Utils.Shell_Command is
    ----------
 
    procedure Edit
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : Virtual_File)
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File     : Virtual_File;
+      Writable : Boolean := True)
    is
-      Args_edit           : Argument_List :=
-        (1 => new String'(Full_Name (File).all));
+      Args_Edit           : Argument_List :=
+        (1 => new String'(Full_Name (File).all),
+         2 => new String'("false"));
 
    begin
-      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_edit);
-      Basic_Types.Free (Args_edit);
+      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit (1 .. 1));
+
+      if not Writable then
+         Execute_GPS_Shell_Command
+           (Kernel, "Editor.set_writable",
+            Args_Edit (1 .. 2));
+      end if;
+
+      Basic_Types.Free (Args_Edit);
    end Edit;
 
    ---------------------------

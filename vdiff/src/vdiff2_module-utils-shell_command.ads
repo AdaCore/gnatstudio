@@ -34,9 +34,11 @@ package Vdiff2_Module.Utils.Shell_Command is
    pragma Inline (Add_Line);
 
    procedure Edit
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File   : Virtual_File);
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File     : Virtual_File;
+      Writable : Boolean := True);
    --  Open editor for File
+   --  If Writable is False, make this editor read-only.
    pragma Inline (Edit);
 
    procedure Synchronize_Scrolling
