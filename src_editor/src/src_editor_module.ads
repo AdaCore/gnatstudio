@@ -157,7 +157,6 @@ private
 
    type Mark_Identifier_Record is record
       Id     : Natural;
-      Child  : MDI_Child;
       File   : VFS.Virtual_File;
       Line   : Natural := 0;
       Column : Natural := 1;
