@@ -310,7 +310,7 @@ package body Gtkada.File_Selector is
       function Compare (Arg1, Arg2 : String) return Boolean is
       begin
          return Arg1 < Arg2;
-      end Comparison;
+     end Compare;
 
    begin
       if not Win.Current_Directory_Is_Open then
