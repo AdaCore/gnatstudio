@@ -43,6 +43,8 @@ GNAT_SOURCES= \
   g-os_lib.adb \
   g-string.ads \
   g-string.adb \
+  g-utf_32.ads \
+  g-utf_32.adb \
   gnatvsn.ads \
   gnatvsn.adb \
   hostparm.ads \
@@ -107,6 +109,8 @@ GNAT_SOURCES= \
   s-crtl.ads \
   s-casuti.ads \
   s-casuti.adb \
+  s-wchcnv.ads \
+  s-wchcnv.adb \
   scans.ads \
   scans.adb \
   scn.ads \
