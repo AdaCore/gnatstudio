@@ -50,8 +50,6 @@ with Pango.Layout;                use Pango.Layout;
 
 with Commands.Editor;             use Commands.Editor;
 with Language;                    use Language;
-with Language.C;                  use Language.C;
-with Language.Ada;                use Language.Ada;
 with Interfaces.C.Strings;        use Interfaces.C.Strings;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
@@ -1144,9 +1142,6 @@ package body Src_Editor_View is
       Lang     : Language_Access;
       New_Line : Boolean := True) return Boolean
    is
-      Kernel        : constant Kernel_Handle := Get_Kernel (Buffer);
-      Tab_Len       : constant Integer :=
-        Integer (Get_Pref (Kernel, Tab_Width));
       Indent_Style  : Indentation_Kind;
 
       Start         : Gtk_Text_Iter;
@@ -1204,8 +1199,8 @@ package body Src_Editor_View is
         (Count : Natural; Use_Tabs : Boolean) return String is
       begin
          if Use_Tabs then
-            return (1 .. Count / Tab_Len => ASCII.HT) &
-              (1 .. Count mod Tab_Len => ' ');
+            return (1 .. Count / Indent_Params.Tab_Width => ASCII.HT) &
+              (1 .. Count mod Indent_Params.Tab_Width => ' ');
          else
             return (1 .. Count => ' ');
          end if;
@@ -1258,43 +1253,12 @@ package body Src_Editor_View is
          return False;
       end if;
 
-      if Lang.all in Ada_Language'Class then
-         Indent_Style := Indentation_Kind'Val
-           (Get_Pref (Kernel, Ada_Automatic_Indentation));
-
-         if Indent_Style = None then
-            return False;
-         end if;
-
-         Use_Tabs := Get_Pref (Kernel, Ada_Use_Tabs);
-         Indent_Params :=
-           (Indent_Level      =>
-              Integer (Get_Pref (Kernel, Ada_Indentation_Level)),
-            Indent_Continue   =>
-              Integer (Get_Pref (Kernel, Ada_Continuation_Level)),
-            Indent_Decl       =>
-              Integer (Get_Pref (Kernel, Ada_Declaration_Level)),
-            Tab_Width         => Tab_Len,
-            Indent_Case_Extra => Get_Pref (Kernel, Ada_Indent_Case_Extra));
-
-      elsif Lang.all in C_Language'Class then
-         Indent_Style := Indentation_Kind'Val
-           (Get_Pref (Kernel, Ada_Automatic_Indentation));
-
-         if Indent_Style = None then
-            return False;
-         end if;
-
-         Use_Tabs := Get_Pref (Kernel, C_Use_Tabs);
-         Indent_Params :=
-           (Indent_Level      =>
-              Integer (Get_Pref (Kernel, C_Indentation_Level)),
-            Indent_Continue   => 0,
-            Indent_Decl       => 0,
-            Tab_Width         => Tab_Len,
-            Indent_Case_Extra => False);
-
-      else
+      Get_Indentation_Parameters
+        (Lang         => Lang,
+         Use_Tabs     => Use_Tabs,
+         Params       => Indent_Params,
+         Indent_Style => Indent_Style);
+      if Indent_Style = None then
          return False;
       end if;
 
