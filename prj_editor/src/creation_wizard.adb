@@ -22,16 +22,15 @@ with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
 with Glib;                  use Glib;
-with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Check_Button;      use Gtk.Check_Button;
+with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Label;             use Gtk.Label;
-with Gtk.Main;              use Gtk.Main;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Widget;            use Gtk.Widget;
@@ -52,7 +51,6 @@ with Switches_Editors; use Switches_Editors;
 with Naming_Editors;   use Naming_Editors;
 with Prj_API;          use Prj_API;
 with Pixmaps_Prj;      use Pixmaps_Prj;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel;     use Glide_Kernel;
 
 package body Creation_Wizard is
@@ -67,8 +65,8 @@ package body Creation_Wizard is
       return Gtk_Widget;
    function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget;
-   function Sixth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget;
+   --  function Sixth_Page (Wiz : access Prj_Wizard_Record'Class)
+   --     return Gtk_Widget;
    --  Return the widget to use for any of the pages in the wizard
 
    procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class);
@@ -82,8 +80,9 @@ package body Creation_Wizard is
    --  Return the directory name for File_Name (always ends with a directory
    --  separator).
 
-   procedure Generate_Prj (W : access Gtk_Widget_Record'Class);
+   function Generate_Prj (W : access Gtk_Widget_Record'Class) return String;
    --  Generate the project files from the contents of the wizard W.
+   --  Return the directory/name of the project that was just created.
 
    procedure Emit_Switches
      (Wiz : access Prj_Wizard_Record'Class;
@@ -97,9 +96,6 @@ package body Creation_Wizard is
      (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
    --  Called when a new page is selected in the wizard. We dynamically create
    --  the page if needed.
-
-   procedure Cancelled (Wiz : access Gtk_Widget_Record'Class);
-   --  Called when the cancel button was pressed
 
    -------------
    -- Gtk_New --
@@ -126,7 +122,7 @@ package body Creation_Wizard is
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
       Wizards.Initialize
-        (Wiz, Kernel, "Project setup", "#0e79bd", Num_Pages => 6);
+        (Wiz, Kernel, "Project setup", "#0e79bd", Num_Pages => 5);
 
       Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, logo_xpm);
@@ -137,26 +133,9 @@ package body Creation_Wizard is
       Set_Toc (Wiz, 3, "Build directory");
       Set_Toc (Wiz, 4, "Switches");
       Set_Toc (Wiz, 5, "Naming scheme");
-      Set_Toc (Wiz, 6, "Load project");
 
-      Widget_Callback.Object_Connect
-        (Finish_Button (Wiz), "clicked",
-         Widget_Callback.To_Marshaller (Generate_Prj'Access), Wiz);
-      Widget_Callback.Object_Connect
-        (Cancel_Button (Wiz), "clicked",
-         Widget_Callback.To_Marshaller (Cancelled'Access), Wiz);
       Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
    end Initialize;
-
-   ---------------
-   -- Cancelled --
-   ---------------
-
-   procedure Cancelled (Wiz : access Gtk_Widget_Record'Class) is
-   begin
-      Destroy (Wiz);
-      Main_Quit;
-   end Cancelled;
 
    -----------------
    -- Switch_Page --
@@ -208,13 +187,6 @@ package body Creation_Wizard is
             if W.Language_Changed or else Get_Nth_Page (W, 5) = null then
                Set_Page (W, 5, Fifth_Page (W));
                W.Language_Changed := False;
-            end if;
-
-         when 6 =>
-            Set_Wizard_Title (W, "Loading the project");
-
-            if Get_Nth_Page (W, 6) = null then
-               Set_Page (W, 6, Sixth_Page (W));
             end if;
 
          when others =>
@@ -371,29 +343,6 @@ package body Creation_Wizard is
       return Get_Window (Wiz.Naming);
    end Fifth_Page;
 
-   ----------------
-   -- Sixth_Page --
-   ----------------
-
-   function Sixth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget
-   is
-      Align  : Gtk_Alignment;
-      Frame  : Gtk_Frame;
-   begin
-      Gtk_New (Align, 0.0, 0.5, 1.0, 0.0);
-      Set_Border_Width (Align, 5);
-
-      Gtk_New (Frame);
-      Set_Border_Width (Frame, 5);
-      Add (Align, Frame);
-
-      Gtk_New (Wiz.Load_Project, "Automatically load the project");
-      Set_Active (Wiz.Load_Project, True);
-      Add (Frame, Wiz.Load_Project);
-      return Gtk_Widget (Align);
-   end Sixth_Page;
-
    --------------------
    -- Directory_Name --
    --------------------
@@ -450,7 +399,7 @@ package body Creation_Wizard is
    -- Generate_Prj --
    ------------------
 
-   procedure Generate_Prj (W : access Gtk_Widget_Record'Class) is
+   function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
       Wiz  : Prj_Wizard := Prj_Wizard (W);
       Project, Var : Project_Node_Id;
       File : File_Type;
@@ -537,18 +486,27 @@ package body Creation_Wizard is
          Write_Char'Unrestricted_Access, Write_Str'Unrestricted_Access);
       Close (File);
 
-      --  Load the project if needed
-      if Get_Active (Wiz.Load_Project) then
-         if Dir (Dir'Last) = Directory_Separator then
-            Load_Project (Wiz.Kernel, Dir & Name & ".gpr");
-         else
-            Load_Project
-              (Wiz.Kernel, Dir & Directory_Separator & Name & ".gpr");
-         end if;
+      if Dir (Dir'Last) = Directory_Separator then
+         return Dir & Name & ".gpr";
+      else
+         return Dir & Directory_Separator & Name & ".gpr";
       end if;
-
-      Destroy (W);
-      Main_Quit;
    end Generate_Prj;
+
+   ---------
+   -- Run --
+   ---------
+
+   function Run (Wiz : access Prj_Wizard_Record) return String is
+   begin
+      Show_All (Wiz);
+      Set_Current_Page (Wiz, 1);
+
+      if Run (Wiz) = Gtk_Response_Apply then
+         return Generate_Prj (Wiz);
+      else
+         return "";
+      end if;
+   end Run;
 
 end Creation_Wizard;

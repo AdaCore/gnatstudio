@@ -34,14 +34,24 @@ package Creation_Wizard is
    type Prj_Wizard is access all Prj_Wizard_Record'Class;
 
    procedure Gtk_New
-     (Wiz : out Prj_Wizard;
+     (Wiz    : out Prj_Wizard;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new project wizard
+   --  Create a new project wizard.
+   --  New pages can be added at will with Add_Page
 
    procedure Initialize
      (Wiz : out Prj_Wizard;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal function for the creation of a new wizard
+
+   function Run (Wiz : access Prj_Wizard_Record) return String;
+   --  Run the wizard and report the directory/name of the project that was
+   --  created. The empty string is returned if the wizard was cancelled.
+   --  Note that in this mode the wizard is modal.
+   --  The wizard is not destroyed on exit, it is your responsability to do
+   --  so. This allows you to access the extra pages you might have added to
+   --  the wizard with Add_Page.
+
 
 private
    type Prj_Wizard_Record is new Wizards.Wizard_Record with record
@@ -51,7 +61,6 @@ private
       Obj_Dir_Selection : Directory_Tree.Directory_Selector;
       Switches          : Switches_Editors.Switches_Edit;
       Naming            : Naming_Editors.Naming_Editor;
-      Load_Project      : Gtk.Check_Button.Gtk_Check_Button;
       Ada_Support       : Gtk.Check_Button.Gtk_Check_Button;
       C_Support         : Gtk.Check_Button.Gtk_Check_Button;
       Cpp_Support       : Gtk.Check_Button.Gtk_Check_Button;
