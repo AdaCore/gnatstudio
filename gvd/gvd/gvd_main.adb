@@ -34,6 +34,10 @@ with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Language.Debugger.Ada; use Language.Debugger.Ada;
+with Language.Debugger.C;   use Language.Debugger.C;
+with Language;              use Language;
+
 procedure Odd_Main is
    Process_Tab       : Debugger_Process_Tab;
    List              : Argument_List (1 .. Argument_Count);
@@ -141,6 +145,13 @@ begin
    Gtk.Main.Init;
    Init;
    Gtk_New (Main_Debug_Window);
+
+   --  ??? This should be moved in a future "preferences" package, so as to
+   --  accomodate user's specific extensions
+   Add_File_Extension (new Ada_Language, "\.adb$");
+   Add_File_Extension (new Ada_Language, "\.ads$");
+   Add_File_Extension (new C_Language, "\.c$");
+   Add_File_Extension (new C_Language, "\.h$");
 
    for J in 1 .. Argument_Count loop
       if Argument (J) = "--tty" then
