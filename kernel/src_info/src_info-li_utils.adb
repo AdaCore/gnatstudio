@@ -42,7 +42,7 @@ package body Src_Info.LI_Utils is
 
 
    function Belongs_To_Class
-     (D_Ptr           : in E_Declaration_Info_List;
+     (Declaration_Info_Ptr           : in E_Declaration_Info_List;
       Class_Name      : in String;
       Position        : in Point) return Boolean;
    --  Checks if given position belongs to class body (found in the given
@@ -554,7 +554,6 @@ package body Src_Info.LI_Utils is
       Filename                : in String := "";
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
-      pragma Unreferenced (Class_Name);
       Dep_Ptr : Dependency_File_Info_List;
    begin
       if (File = No_LI_File)
@@ -575,7 +574,10 @@ package body Src_Info.LI_Utils is
       return Find_Declaration_Internal
                (Declaration_Info_Ptr => Dep_Ptr.Value.Declarations,
                 Symbol_Name          => Symbol_Name,
-                Class_Name           => "",
+                Class_Name           => Class_Name,
+      --  ??? Is the dependency declaration of class should
+      --  necessary be located together with method dependency
+      --  declaration?
                 Location             => Location);
    end Find_Dependency_Declaration;
    --  ??? Class_Name parameter should be used properly
@@ -701,9 +703,9 @@ package body Src_Info.LI_Utils is
            ) and then (
              (Class_Name /= ""
                 and then Belongs_To_Class
-                          (D_Ptr       => Declaration_Info_Ptr,
-                           Class_Name  => Class_Name,
-                           Position    => Location))
+                          (Declaration_Info_Ptr => Declaration_Info_Ptr,
+                           Class_Name           => Class_Name,
+                           Position             => Location))
              or else (Class_Name = "")
            ) and then (
              (Kind /= No_Kind
@@ -776,13 +778,15 @@ package body Src_Info.LI_Utils is
    ------------------------
 
    function Belongs_To_Class
-     (D_Ptr           : in E_Declaration_Info_List;
-      Class_Name      : in String;
-      Position        : in Point) return Boolean is
+     (Declaration_Info_Ptr : in E_Declaration_Info_List;
+      Class_Name           : in String;
+      Position             : in Point) return Boolean
+   is
+      D_Ptr : E_Declaration_Info_List := Declaration_Info_Ptr;
    begin
       loop
          exit when D_Ptr = null;
-         if D_Ptr.Value.Declaration.Kind = Record_Object
+         if D_Ptr.Value.Declaration.Kind = Record_Type
            and then D_Ptr.Value.Declaration.Name.all = Class_Name
            and then (
              D_Ptr.Value.Declaration.Location.Line < Position.Line
@@ -798,6 +802,7 @@ package body Src_Info.LI_Utils is
          then
             return True;
          end if;
+         D_Ptr := D_Ptr.Next;
       end loop;
       return False;
    end Belongs_To_Class;
