@@ -154,12 +154,12 @@ sigset_t sys_sigsetmask P_ ((sigset_t new_mask));
 /* On bsd, [man says] kill does not accept a negative number to kill a pgrp.
    Must do that using the killpg call.  */
 #ifdef BSD_SYSTEM
-#define EMACS_KILLPG(gid, signo) (killpg ( (gid), (signo)))
+#define GVD_KILLPG(gid, signo) (killpg ( (gid), (signo)))
 #else
 #ifdef WINDOWSNT
-#define EMACS_KILLPG(gid, signo) (kill (gid, signo))
+#define GVD_KILLPG(gid, signo) (kill (gid, signo))
 #else
-#define EMACS_KILLPG(gid, signo) (kill   (-(gid), (signo)))
+#define GVD_KILLPG(gid, signo) (kill   (-(gid), (signo)))
 #endif
 #endif
 
