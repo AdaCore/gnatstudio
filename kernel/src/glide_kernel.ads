@@ -27,8 +27,8 @@ with Glib.Object;  use Glib;
 with Glib.Values;
 with Glib.Xml_Int;
 with Gdk;
-with Gdk.Types;
 with Gdk.Event;
+with Gdk.Types;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Main;
@@ -41,6 +41,7 @@ with Gtkada.MDI;
 with Language_Handlers;
 with Src_Info;
 with Src_Info.Queries;
+with String_Hash;
 with String_List_Utils;
 with System;
 with Ada.Unchecked_Conversion;
@@ -48,7 +49,7 @@ with Default_Preferences;
 with Histories;
 with Projects.Registry;
 with Task_Manager;
-with Commands;
+with Commands.Interactive;
 
 package Glide_Kernel is
 
@@ -339,6 +340,12 @@ package Glide_Kernel is
    --  This function is mostly intended to be called for the callbacks in the
    --  menu bar.
 
+   function Get_Current_Focus_Widget
+     (Kernel : access Kernel_Handle_Record) return Gtk.Widget.Gtk_Widget;
+   --  Return the widget which currently has the keyboard focus. null is
+   --  returned if no widget has the focus, or if GPS itself doesn't have
+   --  it.
+
    -------------
    -- Modules --
    -------------
@@ -438,67 +445,88 @@ package Glide_Kernel is
    --  See the function GUI_Utils.Create_Pixmap_From_Text for an easy way to
    --  create a tooltip that only contains text
 
+   -------------
+   -- Actions --
+   -------------
+   --  Actions are named commands (or list of commands) in GPS. These can
+   --  be associated with menus, keys and toolbar buttons among other things.
+
+   procedure Register_Action
+     (Kernel      : access Kernel_Handle_Record;
+      Name        : String;
+      Command     : access Commands.Interactive.Interactive_Command'Class;
+      Description : String := "");
+   --  Register a new named action in GPS.
+   --  Only the actions that can be executed interactively by the user
+   --  should be registered.
+   --  Name must be unique in GPS.
+   --  Command is freed automatically by the kernel.
+
+   function Lookup_Action
+     (Kernel : access Kernel_Handle_Record;
+      Name   : String) return Commands.Interactive.Interactive_Command_Access;
+   --  Lookup a command by name. Return null if no such action has been
+   --  registered.
+
+   function Lookup_Action_Description
+     (Kernel : access Kernel_Handle_Record;
+      Name   : String) return String;
+   --  Return the description for the action
+
+   type Action_Iterator is private;
+
+   function Start (Kernel : access Kernel_Handle_Record'Class)
+      return Action_Iterator;
+   --  Return the first action registered in the kernel (this is in no
+   --  particular order).
+
+   procedure Next
+     (Kernel : access Kernel_Handle_record'Class;
+      Iter   : in out Action_Iterator);
+   --  Move to the next action
+
+   function Get (Iter : Action_Iterator) return String;
+   --  Return the current action. The empty string is returned if there are no
+   --  more actions.
+
    ------------------
    -- Key handlers --
    ------------------
-
-   type Event_Data is private;
-   No_Event_Data : constant Event_Data;
-
-   function Get_Widget (Data : Event_Data) return Gtk.Widget.Gtk_Widget;
-   --  Get the widget that would have received the key event
-
-   function Get_Event (Data : Event_Data) return Gdk.Event.Gdk_Event;
-   --  Get the event itself. It is a Key_Press or Key_Release
-
-   function Get_Kernel (Data : Event_Data) return Kernel_Handle;
-   --  Return the kernel
-
-   function Get_Current_Event_Data
-     (Kernel : access Kernel_Handle_Record'Class) return Event_Data;
-   --  Return the current event data. This returns No_Event_Data unless
-   --  we are processing the event in the context of the key handler
 
    type Key_Context_Record is abstract tagged null record;
    type Key_Context is access all Key_Context_Record'Class;
 
    function Get_Description
-     (Context : access Key_Context_Record) return  String is abstract;
+     (Context : access Key_Context_Record) return String is abstract;
    --  Return the description of the context (a short string suitable for
    --  display in the key manager GUI
 
    function Context_Matches
      (Context : access Key_Context_Record;
-      Event   : Event_Data) return Boolean is abstract;
+      Kernel  : access Kernel_Handle_Record'Class)
+     return Boolean is abstract;
    --  Whether the current widget in Event matches the context
 
    type Key_Handler_Record is abstract tagged private;
    type Key_Handler_Access is access all Key_Handler_Record'Class;
 
-   procedure Register_Key
+   procedure Bind_Default_Key
      (Handler        : access Key_Handler_Record;
-      Name           : String;
+      Action         : String;
       Default_Key    : Gdk.Types.Gdk_Key_Type;
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Command        : access Commands.Root_Command'Class;
-      Tooltip        : String := "";
       Context        : Key_Context := null) is abstract;
-   --  Register a new key/command pair in the Handler.
+   --  Associate a default key binding with an action.
    --  Default_Key and Default_Mod are ignored if the key was previously
    --  overriden by the user.
-   --  Name must be unique in GPS. This is the key used in the XML file
-   --  to save custom key bindings, as well as to display the list of key
-   --  bindings in the GUI interface.
    --  Context indicates to which context the key binding applies. If null,
    --  this is a key binding that applies anywhere in GPS. The context is
    --  not deallocated by the kernel, but shouldn't be deallocated by the
    --  caller while at least one key binding depends on it.
-   --  Not two key bindings with the same name can be registered: the second
-   --  will override the first.
 
    function Process_Event
      (Handler  : access Key_Handler_Record;
-      Event    : Event_Data) return Boolean is abstract;
+      Event    : Gdk.Event.Gdk_Event) return Boolean is abstract;
    --  Process an event.
    --  This function should return True if the event was processed, False
    --  if no command was bound to that key.
@@ -826,34 +854,40 @@ private
    type Kernel_Scripting_Data is access all Kernel_Scripting_Data_Record'Class;
    --  Derived in Glide_Kernel.Scripts to store internal data
 
-   type Event_Data_Record is record
-      Widget : Gtk.Widget.Gtk_Widget;
-      Event  : Gdk.Event.Gdk_Event;
-      Kernel : Kernel_Handle;
-   end record;
-   type Event_Data is access all Event_Data_Record;
-
-   No_Event_Data : constant Event_Data := null;
-
    type Key_Handler_Record is abstract tagged null record;
    type Default_Key_Handler_Record is new Key_Handler_Record with null record;
-   procedure Register_Key
+   procedure Bind_Default_Key
      (Handler        : access Default_Key_Handler_Record;
-      Name           : String;
+      Action         : String;
       Default_Key    : Gdk.Types.Gdk_Key_Type;
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Command        : access Commands.Root_Command'Class;
-      Tooltip        : String := "";
       Context        : Key_Context := null);
    function Process_Event
      (Handler  : access Default_Key_Handler_Record;
-      Event    : Event_Data) return Boolean;
+      Event    : Gdk.Event.Gdk_Event) return Boolean;
+
+   type Action_Record is record
+      Command     : Commands.Interactive.Interactive_Command_Access;
+      Description : GNAT.OS_Lib.String_Access;
+   end record;
+   No_Action : constant Action_Record := (null, null);
+
+   procedure Free (Action : in out Action_Record);
+   --  Free the memory occupied by the action
+
+   package Actions_Htable is new String_Hash
+     (Action_Record, Free, No_Action);
+
+   type Action_Iterator is record
+      Iterator : Actions_Htable.String_Hash_Table.Iterator;
+   end record;
 
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Key_Handler : Key_Handler_Access := new Default_Key_Handler_Record;
       --  The kandler that processes all key events
 
-      Current_Event_Data : Event_Data;
+      Actions : Actions_Htable.String_Hash_Table.HTable;
+      --  The actions registered in the kernel
 
       Modules_List : Module_List.List;
       --  The list of all the modules that have been registered in this kernel.

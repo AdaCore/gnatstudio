@@ -21,6 +21,7 @@
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
+with Glib.Properties;           use Glib.Properties;
 with Gdk.Window;                use Gdk.Window;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -66,6 +67,7 @@ with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Basic_Mapper;              use Basic_Mapper;
 with Histories;                 use Histories;
+with Commands;                  use Commands;
 
 with Projects.Registry;         use Projects, Projects.Registry;
 
@@ -114,6 +116,8 @@ package body Glide_Kernel is
 
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
+
+   use Actions_Htable.String_Hash_Table;
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Kernel_Handle);
@@ -179,16 +183,6 @@ package body Glide_Kernel is
       end if;
    end GNAT_Version;
 
-   ----------------------------
-   -- Get_Current_Event_Data --
-   ----------------------------
-
-   function Get_Current_Event_Data
-     (Kernel : access Kernel_Handle_Record'Class) return Event_Data is
-   begin
-      return Kernel.Current_Event_Data;
-   end Get_Current_Event_Data;
-
    ---------------------------
    -- General_Event_Handler --
    ---------------------------
@@ -201,19 +195,9 @@ package body Glide_Kernel is
       if (Get_Event_Type (Event) = Key_Press
           or else Get_Event_Type (Event) = Key_Release)
       then
-         declare
-            Data   : aliased Event_Data_Record :=
-              (Kernel => K,
-               Event  => Event,
-               Widget => null);
-         begin
-            K.Current_Event_Data := Data'Unchecked_Access;
-            if Process_Event (K.Key_Handler, Data'Unchecked_Access) then
-               K.Current_Event_Data := null;
-               return;
-            end if;
-            K.Current_Event_Data := null;
-         end;
+         if Process_Event (K.Key_Handler, Event) then
+            return;
+         end if;
       end if;
 
       --  Dispatch the event in the standard gtk+ main loop
@@ -1788,75 +1772,74 @@ package body Glide_Kernel is
          C, Flags, Focus_Widget, Default_Width, Default_Height);
    end Put;
 
-   ------------------
-   -- Register_Key --
-   ------------------
+   ----------------------
+   -- Bind_Default_Key --
+   ----------------------
 
-   procedure Register_Key
+   procedure Bind_Default_Key
      (Handler        : access Default_Key_Handler_Record;
-      Name           : String;
+      Action         : String;
       Default_Key    : Gdk.Types.Gdk_Key_Type;
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Command        : access Commands.Root_Command'Class;
-      Tooltip        : String := "";
       Context        : Key_Context := null)
    is
       pragma Unreferenced
-        (Handler, Default_Key, Default_Mod, Command, Tooltip,
-         Context, Name);
+        (Handler, Default_Key, Default_Mod, Action, Context);
    begin
       null;
-   end Register_Key;
+   end Bind_Default_Key;
 
-   ----------------
-   -- Get_Widget --
-   ----------------
+   ------------------------------
+   -- Get_Current_Focus_Widget --
+   ------------------------------
 
-   function Get_Widget (Data : Event_Data) return Gtk.Widget.Gtk_Widget is
+   function Get_Current_Focus_Widget
+     (Kernel : access Kernel_Handle_Record) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Kernel);
+      use Widget_List;
       W, W2 : Gtk_Widget;
+      Toplevel : Gtk_Window;
+      List, List2 : Widget_List.Glist;
    begin
-      if Data.Widget = null then
-         W := Get_Event_Widget (Data.Event);
-         if W /= null then
-            W2 := W;
+      List := List_Toplevels;
+      List2 := First (List);
 
-            while W2 /= null and then W2.all in Gtk_Container_Record'Class loop
-               W  := W2;
-               W2 := Get_Focus_Child (Gtk_Container (W));
-            end loop;
+      while List2 /= Widget_List.Null_List loop
+         Toplevel := Gtk_Window (Get_Data (List2));
 
-            if W2 /= null then
-               W := W2;
+         if Get_Property (Toplevel, Has_Toplevel_Focus_Property) then
+            W := Get_Focus (Toplevel);
+            if W /= null and then Has_Focus_Is_Set (W) then
+               exit;
             end if;
-
-            if W.all in Gtk_Combo_Record'Class then
-               W := Gtk_Widget (Get_Entry (Gtk_Combo (W)));
-            end if;
+            W := null;
          end if;
 
-         Data.Widget := W;
+         List2 := Next (List2);
+      end loop;
+
+      Free (List);
+
+      if W /= null then
+         W2 := W;
+
+         while W2 /= null and then W2.all in Gtk_Container_Record'Class loop
+            W  := W2;
+            W2 := Get_Focus_Child (Gtk_Container (W));
+         end loop;
+
+         if W2 /= null then
+            W := W2;
+         end if;
+
+         if W.all in Gtk_Combo_Record'Class then
+            W := Gtk_Widget (Get_Entry (Gtk_Combo (W)));
+         end if;
       end if;
 
-      return Data.Widget;
-   end Get_Widget;
-
-   ---------------
-   -- Get_Event --
-   ---------------
-
-   function Get_Event (Data : Event_Data) return Gdk.Event.Gdk_Event is
-   begin
-      return Data.Event;
-   end Get_Event;
-
-   ----------------
-   -- Get_Kernel --
-   ----------------
-
-   function Get_Kernel (Data : Event_Data) return Kernel_Handle is
-   begin
-      return Data.Kernel;
-   end Get_Kernel;
+      return W;
+   end Get_Current_Focus_Widget;
 
    -------------------
    -- Process_Event --
@@ -1864,7 +1847,7 @@ package body Glide_Kernel is
 
    function Process_Event
      (Handler  : access Default_Key_Handler_Record;
-      Event    : Event_Data) return Boolean
+      Event    : Gdk.Event.Gdk_Event) return Boolean
    is
       pragma Unreferenced (Handler, Event);
    begin
@@ -1903,4 +1886,93 @@ package body Glide_Kernel is
    begin
       null;
    end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Action : in out Action_Record) is
+   begin
+      Commands.Destroy (Command_Access (Action.Command));
+      Free (Action.Description);
+   end Free;
+
+   ---------------------
+   -- Register_Action --
+   ---------------------
+
+   procedure Register_Action
+     (Kernel      : access Kernel_Handle_Record;
+      Name        : String;
+      Command     : access Commands.Interactive.Interactive_Command'Class;
+      Description : String := "") is
+   begin
+      Set (Kernel.Actions,
+           Name,
+           (Commands.Interactive.Interactive_Command_Access (Command),
+            new String'(Description)));
+   end Register_Action;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Kernel : access Kernel_Handle_Record'Class)
+      return Action_Iterator
+   is
+      Iter : Action_Iterator;
+   begin
+      Get_First (Kernel.Actions, Iter.Iterator);
+      return Iter;
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Kernel : access Kernel_Handle_Record'Class;
+      Iter   : in out Action_Iterator) is
+   begin
+      Get_Next (Kernel.Actions, Iter.Iterator);
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Action_Iterator) return String is
+   begin
+      return Get_Key (Iter.Iterator);
+   end Get;
+
+   -------------------
+   -- Lookup_Action --
+   -------------------
+
+   function Lookup_Action
+     (Kernel : access Kernel_Handle_Record;
+      Name   : String) return Commands.Interactive.Interactive_Command_Access
+   is
+   begin
+      return Get (Kernel.Actions, Name).Command;
+   end Lookup_Action;
+
+   -------------------------------
+   -- Lookup_Action_Description --
+   -------------------------------
+
+   function Lookup_Action_Description
+     (Kernel : access Kernel_Handle_Record;
+      Name   : String) return String
+   is
+      Action : constant Action_Record := Get (Kernel.Actions, Name);
+   begin
+      if Action.Description = null then
+         return "";
+      else
+         return Action.Description.all;
+      end if;
+   end Lookup_Action_Description;
+
 end Glide_Kernel;
