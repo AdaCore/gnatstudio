@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- Using "Locate in explorer" from VCS Explorer doesn't work
+  Problem:    When using the contextual menu on an entry in the VCS Explorer
+              and using "Locate in Explorer: ...", nothing happens.
+  Workaround: Double-click on the entry to open the file, and use "Locate in
+              explorer" on the file editor.
+
 - D621-013 GPS crashes when annotating large files
   Problem:    When querying the annotations for large files, GPS crashes before
               displaying the annotations.
