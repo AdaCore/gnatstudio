@@ -55,7 +55,7 @@ package body Entities.Queries is
    --  Check in EL the entities which has a reference as close as possible
    --  to (Line, Column). Distance is the initial closest distance known, and
    --  is changed to reflect the result of the find. It is set to 0 if an
-   --  exact match was
+   --  exact match was found.
    --  If Check_Decl_Only is True, then it only tries to match a declaration,
    --  and doesn't check references to the entity.
 
@@ -883,7 +883,8 @@ package body Entities.Queries is
    procedure Destroy (Iter : in out Dependency_Iterator) is
       pragma Unreferenced (Iter);
    begin
-      --      Unchecked_Free (Iter.Source_Files);
+--  ???
+--      Unchecked_Free (Iter.Source_Files);
       null;
    end Destroy;
 
