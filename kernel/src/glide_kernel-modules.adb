@@ -25,6 +25,7 @@ pragma Warnings (Off, Gtk.Image_Menu_Item);
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GUI_Utils;         use GUI_Utils;
 with Gdk.Event;         use Gdk.Event;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glib;              use Glib;
 with Glib.Object;       use Glib.Object;
 with Glib.Values;       use Glib.Values;
@@ -1127,6 +1128,34 @@ package body Glide_Kernel.Modules is
             end if;
          end loop;
 
+         --  If we are editing a project file, check in the loaded tree first
+         --  (in case an old copy is kept somewhere in the source or object
+         --  path)
+
+         if GNAT.Directory_Operations.File_Extension (Filename) =
+           Prj.Project_File_Extension
+         then
+            declare
+               Iterator : Imported_Project_Iterator := Start
+                 (Get_Project (Kernel));
+            begin
+               while Current (Iterator) /= No_Project loop
+                  if Project_Name (Current (Iterator)) & Project_File_Extension
+                    = Filename
+                  then
+                     Set_String
+                       (Value (1),
+                        Project_Path (Project_Id'(Current (Iterator))));
+                     File_Found := True;
+                     Has_Dir := True;
+                     exit;
+                  end if;
+
+                  Next (Iterator);
+               end loop;
+            end;
+         end if;
+
          if not Has_Dir then
             declare
                F : GNAT.OS_Lib.String_Access := Locate_Regular_File
@@ -1154,6 +1183,7 @@ package body Glide_Kernel.Modules is
                   Set_String (Value (1), Normalize_Pathname (F.all));
                   File_Found := True;
                   Free (F);
+                  Has_Dir := True;
                end if;
             end;
          end if;
