@@ -983,7 +983,6 @@ package body Src_Editor_Module is
             end if;
 
             if Child /= null then
-               Mark_Record.Child := Child;
                Box := Source_Box (Get_Widget (Child));
 
                if Line >= 0 and then Number > 0 then
@@ -1208,21 +1207,21 @@ package body Src_Editor_Module is
                Mark_Record.Line := Get_Line (Box.Editor, Mark_Record.Mark);
                Mark_Record.Column :=
                  Get_Column (Box.Editor, Mark_Record.Mark);
-            end if;
 
-            Set_Data (Node,
-                      Mark_Identifier_Record'
-                        (Id => Mark_Record.Id,
-                         Child => null,
-                         File => new String'(File),
-                         Line => Mark_Record.Line,
-                         Mark => null,
-                         Column => Mark_Record.Column,
-                         Length => Mark_Record.Length));
+               Set_Data (Node,
+                         Mark_Identifier_Record'
+                           (Id => Mark_Record.Id,
+                            Child => null,
+                            File => new String'(File),
+                            Line => Mark_Record.Line,
+                            Mark => null,
+                            Column => Mark_Record.Column,
+                            Length => Mark_Record.Length));
 
-            if not Added then
-               Add_Unique_Sorted (Id.Unopened_Files, File);
-               Added := True;
+               if not Added then
+                  Add_Unique_Sorted (Id.Unopened_Files, File);
+                  Added := True;
+               end if;
             end if;
          end if;
 
