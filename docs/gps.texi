@@ -3991,8 +3991,7 @@ Tree.
    entity contains the same entries.
 
    @item Project
-   Build all main files defined in your top level project, or all source
-   files if no main file are defined.
+   Build all source files defined in your top level project.
 
    @item <current file>
    Consider the currently selected file as a main file, and build it.
