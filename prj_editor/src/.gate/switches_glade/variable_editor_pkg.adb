@@ -51,7 +51,7 @@ begin
      0, 0,
      0, 0);
 
-   Gtk_New (Variable_Editor.Label53, -("Default/Current Value"));
+   Gtk_New (Variable_Editor.Label53, -("Current Value"));
    Set_Alignment (Variable_Editor.Label53, 0.5, 0.5);
    Set_Padding (Variable_Editor.Label53, 0, 0);
    Set_Justify (Variable_Editor.Label53, Justify_Center);
