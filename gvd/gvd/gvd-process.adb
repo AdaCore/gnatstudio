@@ -44,7 +44,7 @@ with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
-with Gtkada.Canvas;   use Gtkada.Canvas;
+with Odd.Canvas;      use Odd.Canvas;
 with Gtkada.Types;    use Gtkada.Types;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Odd.Pixmaps;     use Odd.Pixmaps;
@@ -193,12 +193,11 @@ package body Odd.Process is
    is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
       Start   : Positive := Str'First;
+      Str2    : String := Strip_Control_M (Str);
 
    begin
       Freeze (Process.Debugger_Text);
       Set_Point (Process.Debugger_Text, Get_Length (Process.Debugger_Text));
-
-      --  ??? Should strip ^M from the text.
 
       --  Should all the string be highlighted ?
 
@@ -207,14 +206,14 @@ package body Odd.Process is
                  Process.Debugger_Text_Font,
                  Process.Debugger_Text_Highlight_Color,
                  Null_Color,
-                 Str);
+                 Str2);
 
       --  If not, highlight only parts of it
 
       else
-         while Start <= Str'Last loop
+         while Start <= Str2'Last loop
             Match (Highlighting_Pattern (Process.Debugger),
-                   Str (Start .. Str'Last),
+                   Str2 (Start .. Str2'Last),
                    Matched);
             if Matched (0) /= No_Match then
                if Matched (0).First - 1 >= Start then
@@ -222,22 +221,22 @@ package body Odd.Process is
                           Process.Debugger_Text_Font,
                           Black (Get_System),
                           Null_Color,
-                          Str (Start .. Matched (0).First - 1));
+                          Str2 (Start .. Matched (0).First - 1));
                end if;
 
                Insert (Process.Debugger_Text,
                        Process.Debugger_Text_Font,
                        Process.Debugger_Text_Highlight_Color,
                        Null_Color,
-                       Str (Matched (0).First .. Matched (0).Last));
+                       Str2 (Matched (0).First .. Matched (0).Last));
                Start := Matched (0).Last + 1;
             else
                Insert (Process.Debugger_Text,
                        Process.Debugger_Text_Font,
                        Black (Get_System),
                        Null_Color,
-                       Str (Start .. Str'Last));
-               Start := Str'Last + 1;
+                       Str2 (Start .. Str2'Last));
+               Start := Str2'Last + 1;
             end if;
          end loop;
       end if;

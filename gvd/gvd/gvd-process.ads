@@ -32,6 +32,7 @@ with Gtk.Dialog;
 with Gtk.Handlers;
 with Gtk.Window;
 with Gtk.Widget;
+with Odd.Canvas;
 with Gtkada.Canvas;
 
 with Debugger; use Debugger;
@@ -45,7 +46,7 @@ with Odd.Types;
 package Odd.Process is
 
    package Canvas_Handler is new Gtk.Handlers.Callback
-     (Gtkada.Canvas.Interactive_Canvas_Record);
+     (Odd.Canvas.Odd_Canvas_Record);
 
    package Standard_Input_Package is new Gdk.Input.Input_Add
      (Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class);
