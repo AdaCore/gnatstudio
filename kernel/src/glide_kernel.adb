@@ -1463,7 +1463,8 @@ package body Glide_Kernel is
    function Get_System_Dir
      (Handle : access Kernel_Handle_Record) return String is
    begin
-      return Glide_Window (Handle.Main_Window).Prefix_Directory.all;
+      return Name_As_Directory
+        (Glide_Window (Handle.Main_Window).Prefix_Directory.all);
    end Get_System_Dir;
 
    ---------------------
