@@ -251,12 +251,16 @@ package Browsers.Canvas is
    --  Return the last number of the button set by this item. This function is
    --  used to make sure that no two items set the same button.
 
-   procedure Reset (Browser : access General_Browser_Record'Class;
-                    Item : access Browser_Item_Record);
+   procedure Reset
+     (Browser : access General_Browser_Record'Class;
+      Item : access Browser_Item_Record;
+      Parent_Removed, Child_Removed : Boolean);
    --  Reset the internal state of the item, as if it had never been expanded,
    --  analyzed,... This is called for instance after the item has been defined
    --  as the root of the canvas (and thus all other items have been removed).
-   --  It doesn't need to redraw the item
+   --  It doesn't need to redraw the item.
+   --  Parent_Removed and Child_Removed indicate which type of sibling was
+   --  removed. Both are set to True if both types of items have been removed
 
    function Get_Browser (Item : access Browser_Item_Record'Class)
       return General_Browser;
@@ -282,7 +286,7 @@ package Browsers.Canvas is
    --  item. The coordinates returned by Get_X and Get_Y in Event should be
    --  relative to the top-left corner of the Item.
 
-   procedure Reset_Active_Areas (Item : access Browser_Item_Record);
+   procedure Reset_Active_Areas (Item : in out Browser_Item_Record);
    --  Remove all active areas in Item
 
    ---------------
@@ -437,6 +441,9 @@ private
       Children  : Active_Area_Tree_Array_Access;
    end record;
 
+   procedure Destroy (Item : in out Browser_Item_Record);
+   --  See doc for inherited subprograms
+
    type Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
    with record
       Hide_Links : Boolean := False;
@@ -476,8 +483,10 @@ private
    procedure On_Button_Click
      (Item  : access Text_Item_With_Arrows_Record;
       Event : Gdk.Event.Gdk_Event_Button);
-   procedure Reset (Browser : access General_Browser_Record'Class;
-                    Item : access Text_Item_With_Arrows_Record);
+   procedure Reset
+     (Browser : access General_Browser_Record'Class;
+      Item : access Text_Item_With_Arrows_Record;
+      Parent_Removed, Child_Removed : Boolean);
    --  See doc for inherited Reset
 
    type Item_Active_Area_Callback is new Active_Area_Callback with record

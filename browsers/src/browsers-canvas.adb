@@ -483,7 +483,7 @@ package body Browsers.Canvas is
          end if;
       end loop;
 
-      Reset (Data.Browser, Browser_Item (Data.Item));
+      Reset (Data.Browser, Browser_Item (Data.Item), True, True);
       Refresh (Browser_Item (Data.Item));
 
       Layout (Data.Browser);
@@ -672,7 +672,7 @@ package body Browsers.Canvas is
    begin
       Browser.Selected_Item := Canvas_Item (Item);
       if Canvas_Item (Item) /= Old then
-         Highlight_Item_And_Siblings (Browser, Item, Old);
+         Highlight_Item_And_Siblings (General_Browser (Browser), Item, Old);
       end if;
    end Select_Item;
 
@@ -700,7 +700,7 @@ package body Browsers.Canvas is
    begin
       Browser.Selected_Item := null;
       if Old /= null then
-         Highlight_Item_And_Siblings (Browser, Old);
+         Highlight_Item_And_Siblings (General_Browser (Browser), Old);
       end if;
    end Unselect_All;
 
@@ -770,9 +770,10 @@ package body Browsers.Canvas is
 
    procedure Reset
      (Browser : access General_Browser_Record'Class;
-      Item    : access Browser_Item_Record)
+      Item    : access Browser_Item_Record;
+      Parent_Removed, Child_Removed : Boolean)
    is
-      pragma Unreferenced (Browser, Item);
+      pragma Unreferenced (Browser, Item, Parent_Removed, Child_Removed);
    begin
       null;
    end Reset;
@@ -783,12 +784,18 @@ package body Browsers.Canvas is
 
    procedure Reset
      (Browser : access General_Browser_Record'Class;
-      Item    : access Text_Item_With_Arrows_Record)
+      Item    : access Text_Item_With_Arrows_Record;
+      Parent_Removed, Child_Removed : Boolean)
    is
       pragma Unreferenced (Browser);
    begin
-      Item.Left_Arrow  := True;
-      Item.Right_Arrow := True;
+      if Parent_Removed then
+         Item.Left_Arrow  := True;
+      end if;
+
+      if Child_Removed then
+         Item.Right_Arrow := True;
+      end if;
    end Reset;
 
    --------------------
@@ -863,7 +870,36 @@ package body Browsers.Canvas is
      (Event : Gdk.Event.Gdk_Event;
       User  : access Browser_Item_Record'Class)
    is
-      B : constant General_Browser := Get_Browser (User);
+      B    : constant General_Browser := Get_Browser (User);
+
+      function Reset_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
+      --  Reset the items linked to User.
+
+      function Reset_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean
+      is
+         pragma Unreferenced (Canvas);
+      begin
+         if Get_Src (Link) = Vertex_Access (User) then
+            Reset (B, Browser_Item (Get_Dest (Link)),
+                   Parent_Removed => True,
+                   Child_Removed  => False);
+            Refresh (Browser_Item (Get_Dest (Link)));
+         end if;
+
+         if Get_Dest (Link) = Vertex_Access (User) then
+            Reset (B, Browser_Item (Get_Src (Link)),
+                   Parent_Removed => False,
+                   Child_Removed  => True);
+            Refresh (Browser_Item (Get_Src (Link)));
+         end if;
+
+         return True;
+      end Reset_Item;
+
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
@@ -871,6 +907,13 @@ package body Browsers.Canvas is
          if B.Selected_Item = Canvas_Item (User) then
             Unselect_All (B);
          end if;
+
+         For_Each_Link
+           (Get_Canvas (B), Reset_Item'Unrestricted_Access,
+            From => Canvas_Item (User));
+         For_Each_Link
+           (Get_Canvas (B), Reset_Item'Unrestricted_Access,
+            To => Canvas_Item (User));
 
          Remove (Get_Canvas (B), User);
       end if;
@@ -1348,7 +1391,7 @@ package body Browsers.Canvas is
                Area.Children := new Active_Area_Tree_Array'
                  (Tmp_Children.all & Tmp);
                Unchecked_Free (Tmp_Children);
-               Join_Areas (Area);
+               --  Join_Areas (Area);
                Inserted := True;
             end if;
          end if;
@@ -1422,7 +1465,7 @@ package body Browsers.Canvas is
    -- Reset_Active_Areas --
    ------------------------
 
-   procedure Reset_Active_Areas (Item : access Browser_Item_Record) is
+   procedure Reset_Active_Areas (Item : in out Browser_Item_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Active_Area_Tree_Record, Active_Area_Tree);
 
@@ -1438,8 +1481,10 @@ package body Browsers.Canvas is
             Unchecked_Free (Area.Children);
          end if;
 
-         Destroy (Area.Callback.all);
-         Unchecked_Free (Area.Callback);
+         if Area.Callback /= null then
+            Destroy (Area.Callback.all);
+            Unchecked_Free (Area.Callback);
+         end if;
          Unchecked_Free (Area);
       end Free;
 
@@ -1455,6 +1500,16 @@ package body Browsers.Canvas is
       pragma Unreferenced (Callback);
    begin
       null;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Item : in out Browser_Item_Record) is
+   begin
+      Reset_Active_Areas (Browser_Item_Record'Class (Item));
+      Destroy (Buffered_Item_Record (Item));
    end Destroy;
 
    -----------
