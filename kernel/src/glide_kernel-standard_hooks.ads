@@ -249,7 +249,6 @@ package Glide_Kernel.Standard_Hooks is
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
    --  that are to be modified.
-   --  ??? Explain when Info is freed
    --  If Normalize is True, the file name will be normalized.
    --  See File_Line_Action_Hook
    --  Infos must be freed by caller using Unchecked_Free. The actual contents
