@@ -16,6 +16,8 @@ package body Convert.Adp is
    is
       Project  : Project_Type;
       Registry : Project_Registry;
+      Tmp      : Boolean;
+      pragma Unreferenced (Tmp);
    begin
       Projects.Registry.Initialize;
       Load_Default_Project (Registry, ".");
@@ -30,7 +32,7 @@ package body Convert.Adp is
                         Project        => Project,
                         Spec_Extension => Spec_Extension.all,
                         Body_Extension => Body_Extension.all);
-      Save_Project (Project);
+      Tmp := Save_Project (Project);
    end Convert_From_Adp_To_Gpr;
 end Convert.Adp;
 
