@@ -1268,16 +1268,7 @@ package body Src_Info.ALI is
       Current_Sfile := Sfile;
 
       List_Subprograms := Decl_Info.Declaration.Primitive_Subprograms;
-
-      --  ??? Is this loop really needed, since we are processing a new entity
-      --  while List_Subprograms.Next /= null loop
-      --     List_Subprograms := List_Subprograms.Next;
-      --  end loop;
-
       List_Ref := Decl_Info.References;
-      --  while List_Ref.Next /= null loop
-      --     List_Ref := List_Ref.Next;
-      --  end loop;
 
       --  We don't make a deep copy for Current_Sfile since it is
       --  a temporary variable used for context information but not
