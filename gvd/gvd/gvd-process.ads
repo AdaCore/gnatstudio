@@ -23,9 +23,11 @@ with Glib;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Expect; use GNAT.Expect;
 
-with Gtk.Object; use Gtk.Object;
 with Gdk.Color;
 with Gdk.Font;
+with Gdk.Input;
+with Gdk.Types;
+with Gtk.Object; use Gtk.Object;
 with Gtkada.Canvas;
 
 with Debugger; use Debugger;
@@ -33,6 +35,21 @@ with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
 
 package Odd.Process is
+
+   package Standard_Input_Package is new Gdk.Input.Input_Add
+     (Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class);
+   --  This package is needed to handle the tty mode.
+
+   procedure Input_Available
+     (Debugger  : Standard_Input_Package.Data_Access;
+      Source    : Gint;
+      Condition : Gdk.Types.Gdk_Input_Condition);
+   --  This procedure should be used in cunjunction with My_Input above.
+   --  This is the callback input function that will retrieve the current
+   --  page in the process notebook contained by Debugger and send the
+   --  command (line read from Source) using Process_User_Command.
+   --  Note that this handler currently assumes that Source is the standard
+   --  input file descriptor.
 
    ---------------------------
    -- Debugger_Process_Tab --
@@ -119,7 +136,7 @@ package Odd.Process is
 
    procedure Process_User_Command
      (Debugger : Debugger_Process_Tab;
-      Command : String);
+      Command  : String);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to odd are filtered and
