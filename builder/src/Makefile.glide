@@ -221,24 +221,24 @@ endif
 
 ifeq ($(strip $(filter-out %sh,$(SHELL))),)
 $(OBJ_DIR)/%.d: %$(C_EXT)
-	@echo updating dependencies for $<
+	@echo updating dependencies for $(notdir $<)
 	@$(SHELL) -ec '$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
 	| sed '\''s/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g'\'' > $@; \
 	[ -s $@ ] || rm -f $@'
 
 $(OBJ_DIR)/%.d: %$(CXX_EXT)
-	@echo updating dependencies for $<
+	@echo updating dependencies for $(notdir $<)
 	@$(SHELL) -ec '$(CXX) $(DEP_FLAGS) $(ALL_CXXFLAGS) $< \
 	| sed '\''s/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g'\'' > $@; \
 	[ -s $@ ] || rm -f $@'
 else
 $(OBJ_DIR)/%.d: %$(C_EXT)
-	@echo updating dependencies for $<
+	@echo updating dependencies for $(notdir $<)
 	@$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
 	| sed 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g' > $@
 
 $(OBJ_DIR)/%.d: %$(CXX_EXT)
-	@echo updating dependencies for $<
+	@echo updating dependencies for $(notdir $<)
 	@$(CC) $(DEP_FLAGS) $(ALL_CXXFLAGS) $< \
 	| sed 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g' > $@
 endif
