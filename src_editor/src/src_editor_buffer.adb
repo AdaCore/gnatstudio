@@ -340,56 +340,13 @@ package body Src_Editor_Buffer is
         Get_String (Nth (Params, 2), Length => Length);
       Command     : Editor_Command
         := Editor_Command (Buffer.Current_Command);
+      Indented    : Boolean := False;
    begin
       if Buffer.Inserting then
          return;
       end if;
 
       Get_Text_Iter (Nth (Params, 1), Pos);
-
-      if Is_Null_Command (Command) then
-         Create (Command,
-                 Insertion,
-                 Source_Buffer (Buffer),
-                 True,
-                 Natural (Get_Line (Pos)),
-                 Natural (Get_Line_Offset (Pos)));
-         Add_Text (Command, Text);
-         Buffer.Current_Command := Command_Access (Command);
-
-      else
-         if Get_Mode (Command) = Insertion then
-            if Length = 1
-              and then (Text (1) = ASCII.LF
-                        or else Text (1) = ' ')
-            then
-               End_Action (Buffer);
-               Create (Command,
-                       Insertion,
-                       Source_Buffer (Buffer),
-                       True,
-                       Natural (Get_Line (Pos)),
-                       Natural (Get_Line_Offset (Pos)));
-               Add_Text (Command, Text);
-               Buffer.Current_Command := Command_Access (Command);
-
-            else
-               Add_Text (Command, Text);
-               Buffer.Current_Command := Command_Access (Command);
-            end if;
-
-         else
-            End_Action (Buffer);
-            Create (Command,
-                    Insertion,
-                    Source_Buffer (Buffer),
-                    True,
-                    Natural (Get_Line (Pos)),
-                    Natural (Get_Line_Offset (Pos)));
-            Add_Text (Command, Text);
-            Buffer.Current_Command := Command_Access (Command);
-         end if;
-      end if;
 
       if Automatic_Indentation and then Buffer.Lang /= null then
          declare
@@ -418,6 +375,8 @@ package body Src_Editor_Buffer is
                     Natural (Strlen (C_Str)) + 1;
                   Index        : Integer := Slice_Length - 1;
 
+                  Command : Editor_Replace_Slice;
+                  Result  : Boolean;
                begin
                   Slice (Slice_Length) := ASCII.LF;
                   Next_Indentation
@@ -458,10 +417,24 @@ package body Src_Editor_Buffer is
                   --  and also because otherwise, some marks will no longer be
                   --  valid.
 
-                  Replace_Slice
-                    (Buffer, Line, 0, Line, Col,
-                     Spaces (1 .. Indent) & Slice (Index .. Slice_Length) &
-                     Spaces (1 .. Next_Indent));
+
+                  Create (Command,
+                          Source_Buffer (Buffer),
+                          Integer (Line), 0,
+                          Integer (Line), Integer (Col),
+                          Spaces (1 .. Indent)
+                          & Slice (Index .. Slice_Length)
+                          & Spaces (1 .. Next_Indent));
+
+                  Enqueue (Buffer.Queue, Command);
+                  Indented := True;
+
+                  Get_Iter_At_Line_Offset (Buffer, Pos, Line, 0);
+                  Forward_Chars
+                    (Pos,
+                     Gint
+                       (Indent + Next_Indent + Slice_Length - Index + 1),
+                     Result);
 
                   Buffer.Inserting := False;
                   g_free (C_Str);
@@ -475,6 +448,55 @@ package body Src_Editor_Buffer is
                end;
             end if;
          end;
+      end if;
+
+      if Is_Null_Command (Command) then
+         --  If indentation has just been done, the text has already been
+         --  taken into account.
+
+         if not Indented then
+            Create (Command,
+                    Insertion,
+                    Source_Buffer (Buffer),
+                    True,
+                    Natural (Get_Line (Pos)),
+                    Natural (Get_Line_Offset (Pos)));
+            Add_Text (Command, Text);
+            Buffer.Current_Command := Command_Access (Command);
+         end if;
+
+      else
+         if Get_Mode (Command) = Insertion then
+            if Length = 1
+              and then (Text (1) = ASCII.LF
+                        or else Text (1) = ' ')
+            then
+               End_Action (Buffer);
+               Create (Command,
+                       Insertion,
+                       Source_Buffer (Buffer),
+                       True,
+                       Natural (Get_Line (Pos)),
+                       Natural (Get_Line_Offset (Pos)));
+               Add_Text (Command, Text);
+               Buffer.Current_Command := Command_Access (Command);
+
+            else
+               Add_Text (Command, Text);
+               Buffer.Current_Command := Command_Access (Command);
+            end if;
+
+         else
+            End_Action (Buffer);
+            Create (Command,
+                    Insertion,
+                    Source_Buffer (Buffer),
+                    True,
+                    Natural (Get_Line (Pos)),
+                    Natural (Get_Line_Offset (Pos)));
+            Add_Text (Command, Text);
+            Buffer.Current_Command := Command_Access (Command);
+         end if;
       end if;
    end First_Insert_Text;
 
@@ -1264,6 +1286,8 @@ package body Src_Editor_Buffer is
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
+      End_Action (Buffer);
+
       if not Enable_Undo then
          Buffer.Inserting := True;
       end if;
@@ -1294,6 +1318,8 @@ package body Src_Editor_Buffer is
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
+      End_Action (Buffer);
+
       if not Enable_Undo then
          Buffer.Inserting := True;
       end if;
@@ -1318,22 +1344,36 @@ package body Src_Editor_Buffer is
       Start_Column : Gint;
       End_Line     : Gint;
       End_Column   : Gint;
-      Text         : String)
+      Text         : String;
+      Enable_Undo  : Boolean := True)
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+      Previous_Inserting_Value : Boolean := Buffer.Inserting;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
       pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));
+
+      End_Action (Buffer);
+
+      if not Enable_Undo then
+         Buffer.Inserting := True;
+      end if;
 
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
       Get_Iter_At_Line_Offset (Buffer, End_Iter, End_Line, End_Column);
 
       --  Currently, Gtk_Text_Buffer does not export a service to replace
       --  some text, so we delete the slice first, then insert the text...
+
       Delete (Buffer, Start_Iter, End_Iter);
+
       Get_Iter_At_Line_Offset (Buffer, Start_Iter, Start_Line, Start_Column);
       Insert (Buffer, Start_Iter, Text);
+
+      if not Enable_Undo then
+         Buffer.Inserting := Previous_Inserting_Value;
+      end if;
    end Replace_Slice;
 
    ------------------
