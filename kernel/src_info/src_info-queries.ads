@@ -556,10 +556,12 @@ package Src_Info.Queries is
    --  The returned value must be freed by the user
    --  No_Entity_Information is returned if there are no more parameters
 
-   type Parameter_Type is (In_Parameter,
-                           Out_Parameter,
-                           In_Out_Parameter,
-                           Access_Parameter);
+   type Parameter_Type is
+     (In_Parameter,
+      Out_Parameter,
+      In_Out_Parameter,
+      Access_Parameter);
+
    function Get_Type (Iterator : Subprogram_Iterator) return Parameter_Type;
    --  Return information on how the parameter is passed to the subprogram.
 

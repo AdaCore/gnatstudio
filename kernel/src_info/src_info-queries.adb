@@ -1775,17 +1775,16 @@ package body Src_Info.Queries is
    --------------------
 
    function Is_Same_Entity
-     (Decl : E_Declaration; Entity : Entity_Information)
-      return Boolean is
+     (Decl : E_Declaration; Entity : Entity_Information) return Boolean is
    begin
       return Decl.Location.Line         = Entity.Decl_Line
         and then Decl.Location.Column   = Entity.Decl_Column
         and then Decl.Name.all          = Entity.Name.all
         and then
-        ((Decl.Location = Predefined_Entity_Location
-          and then Entity.Decl_File = null)
-         or else (Get_Source_Filename (Decl.Location.File) =
-                  Entity.Decl_File.all));
+          ((Decl.Location = Predefined_Entity_Location
+            and then Entity.Decl_File = null)
+           or else (Get_Source_Filename (Decl.Location.File) =
+                    Entity.Decl_File.all));
    end Is_Same_Entity;
 
    -------------------
