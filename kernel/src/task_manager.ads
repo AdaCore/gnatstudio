@@ -63,6 +63,12 @@ private
 
       Queue    : Command_Queues.List;
 
+      Total    : Integer := 0;
+      --  The total number of items inserted so far in Queue.
+
+      Done     : Integer := 0;
+      --  The number of items done in queue.
+
       Id       : String_Access;
 
       Priority : Natural := 2;
