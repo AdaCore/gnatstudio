@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with GNAT.Table;
 with GNAT.HTable;
 --  with GNAT.Heap_Sort_A;
@@ -5,25 +25,24 @@ with GNAT.HTable;
 package body Hashtable_With_Iterator is
    -----------------------------------------------------------------------
    --  Defining Hashtable
-   type Element_With_Number is
-      record
-         Number : Integer;
-         Element : Element_Type;
-      end record;
+   type Element_With_Number is record
+      Number : Integer;
+      Element : Element_Type;
+   end record;
    No_Element_With_Number : Element_With_Number := (0, No_Element);
 
    package My_Hash is new GNAT.HTable.Simple_HTable
-      (Key_Hash_Range,
-       Element_With_Number,
-       No_Element_With_Number,
-       Key_Type,
-       Key_Hash,
-       "=");
+     (Key_Hash_Range,
+      Element_With_Number,
+      No_Element_With_Number,
+      Key_Type,
+      Key_Hash,
+      "=");
 
    -----------------------------------------------------------------------
    --  Defining array of keys
    package Key_Array is new GNAT.Table
-         (Key_Type, Integer, 0, 1000, 100);
+     (Key_Type, Integer, 0, 1000, 100);
    -----------------------------------------------------------------------
 
    -----------------------------------------------------------------------

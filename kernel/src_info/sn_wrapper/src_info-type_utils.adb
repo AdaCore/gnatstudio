@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,14 +25,14 @@ with Ada.Unchecked_Deallocation;
 
 package body Src_Info.Type_Utils is
 
-   Function_Type_Pat : constant Pattern_Matcher
-                     := Compile ("\(([^\)]+)\)\s*\(\)\s*$");
+   Function_Type_Pat : constant Pattern_Matcher :=
+     Compile ("\(([^\)]+)\)\s*\(\)\s*$");
    --  Regexp used to cut functional type definition
    --  example: int (*[]) ()
    --                ^^^ this is cut
 
-   Template_Type_Pat : constant Pattern_Matcher
-                     := Compile ("^([^<\s]+)\s*<");
+   Template_Type_Pat : constant Pattern_Matcher :=
+     Compile ("^([^<\s]+)\s*<");
    --  Regexp to find plain class name in the templatized
    --  name.
 
