@@ -47,18 +47,18 @@ package body GVD.Menus is
    -- local constants --
    ---------------------
 
-   Contextual_Background_Menu_Name : constant String := "odd_bg_context";
+   Contextual_Background_Menu_Name : constant String := "gvd_bg_context";
    --  String used to store the background contextual menu as a user data in
    --  the canvas.
 
-   Item_Contextual_Menu_Name : constant String := "odd_item_context";
+   Item_Contextual_Menu_Name : constant String := "gvd_item_context";
    --  String used to store the item contextual menu  as a user data in the
    --  canvas.
 
-   Debugger_Contextual_Menu_Name : constant String := "odd_debugger_context";
+   Debugger_Contextual_Menu_Name : constant String := "gvd_debugger_context";
    --  String used to store the debugger command window contextual menu.
 
-   Call_Stack_Contextual_Menu_Name : constant String := "odd_call_stack";
+   Call_Stack_Contextual_Menu_Name : constant String := "gvd_call_stack";
    --  String used to store the debugger command window contextual menu.
 
    -----------------
@@ -292,7 +292,7 @@ package body GVD.Menus is
          Title    => "Setting value of " & Item.Component_Name,
          Message  => "Setting value of " & Item.Component_Name & ':',
          Position => Win_Pos_Mouse,
-         Key      => "odd_set_value_dialog");
+         Key      => "gvd_set_value_dialog");
    begin
       if not Item_Register.Register_Post_Cmd_If_Needed
         (Get_Process (Get_Debugger (Item.Item).Debugger),
