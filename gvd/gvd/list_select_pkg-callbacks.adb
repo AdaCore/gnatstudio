@@ -33,17 +33,18 @@ package body List_Select_Pkg.Callbacks is
    -------------------------
 
    procedure On_Clist_Select_Row
-     (Object : access Gtk_Clist_Record'Class;
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      List        : constant Gtk_Clist := Gtk_Clist (Object);
       List_Select : constant List_Select_Access :=
-        List_Select_Access (Get_Toplevel (Object));
+        List_Select_Access (Get_Toplevel (List));
       Arg1 : constant Gint := To_Gint (Params, 1);
 
       use Ada.Strings;
    begin
       Set_Text
-        (List_Select.The_Entry, Trim (Get_Text (Object, Arg1, 0), Left));
+        (List_Select.The_Entry, Trim (Get_Text (List, Arg1, 0), Left));
    end On_Clist_Select_Row;
 
    ---------------------------

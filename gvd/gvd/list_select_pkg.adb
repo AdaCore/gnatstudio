@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -29,6 +29,7 @@ with Gtk.Main;                  use Gtk.Main;
 with Callbacks_Odd;             use Callbacks_Odd;
 with Odd_Intl;                  use Odd_Intl;
 with List_Select_Pkg.Callbacks; use List_Select_Pkg.Callbacks;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
 
 package body List_Select_Pkg is
@@ -128,7 +129,7 @@ package body List_Select_Pkg is
       Set_Show_Titles (List_Select.List, True);
       Set_Column_Width (List_Select.List, 0, 80);
       Set_Column_Width (List_Select.List, 1, 80);
-      C_List_Callback.Connect
+      Widget_Callback.Connect
         (List_Select.List, "select_row", On_Clist_Select_Row'Access);
       Add_With_Viewport (List_Select.Scrolledwindow, List_Select.List);
 
