@@ -708,71 +708,72 @@ package body GPS.Kernel.Modules is
          Event        => Event,
          Menu         => Menu);
 
+      if Context = null then
+         Context := new Selection_Context;
+      end if;
       User.Kernel.Last_Context_For_Contextual := Context;
 
-      if Context /= null then
-         Set_Context_Information
-           (Context,
-            Kernel  => User.Kernel,
-            Creator => User.ID);
+      Set_Context_Information
+        (Context,
+         Kernel  => User.Kernel,
+         Creator => User.ID);
 
-         --  Compute what items should be made visible, except for separators
-         --  for the moment
-         C := Convert (User.Kernel.Contextual);
-         while C /= null loop
-            if C.Action /= null or else C.Command /= null then
-               C.Filter_Matched := Menu_Is_Visible (C, Context);
-            end if;
-            C := C.Next;
-         end loop;
+      --  Compute what items should be made visible, except for separators
+      --  for the moment
+      C := Convert (User.Kernel.Contextual);
+      while C /= null loop
+         if C.Action /= null or else C.Command /= null then
+            C.Filter_Matched := Menu_Is_Visible (C, Context);
+         end if;
+         C := C.Next;
+      end loop;
 
-         --  Same, but only for separators now, since their visibility might
-         --  depend on the visibility of other items
-         C := Convert (User.Kernel.Contextual);
-         while C /= null loop
-            if C.Action = null and then C.Command = null then
-               C.Filter_Matched := Menu_Is_Visible (C, Context);
-            end if;
-            C := C.Next;
-         end loop;
+      --  Same, but only for separators now, since their visibility might
+      --  depend on the visibility of other items
+      C := Convert (User.Kernel.Contextual);
+      while C /= null loop
+         if C.Action = null and then C.Command = null then
+            C.Filter_Matched := Menu_Is_Visible (C, Context);
+         end if;
+         C := C.Next;
+      end loop;
 
-         C := Convert (User.Kernel.Contextual);
-         while C /= null loop
-            if C.Filter_Matched
-              and then not Has_Explicit_Parent (C, Context)
-            then
-               Create_Item (C, Context, Item, Full_Name);
+      C := Convert (User.Kernel.Contextual);
+      while C /= null loop
+         if C.Filter_Matched
+           and then not Has_Explicit_Parent (C, Context)
+         then
+            Create_Item (C, Context, Item, Full_Name);
 
-               if Item /= null then
-                  Parent_Item := Find_Or_Create_Menu_Tree
-                    (Menu_Bar     => null,
-                     Menu         => Menu,
-                     Path         => Dir_Name ('/' & Full_Name.all),
-                     Accelerators => Get_Default_Accelerators (User.Kernel),
-                     Allow_Create => True,
-                     Use_Mnemonics => False);
-                  if Parent_Item /= null then
-                     Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
-                     if Parent_Menu = null then
-                        Gtk_New (Parent_Menu);
-                        Set_Submenu (Parent_Item, Parent_Menu);
-                     end if;
-                  else
-                     Parent_Menu := Menu;
+            if Item /= null then
+               Parent_Item := Find_Or_Create_Menu_Tree
+                 (Menu_Bar     => null,
+                  Menu         => Menu,
+                  Path         => Dir_Name ('/' & Full_Name.all),
+                  Accelerators => Get_Default_Accelerators (User.Kernel),
+                  Allow_Create => True,
+                  Use_Mnemonics => False);
+               if Parent_Item /= null then
+                  Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
+                  if Parent_Menu = null then
+                     Gtk_New (Parent_Menu);
+                     Set_Submenu (Parent_Item, Parent_Menu);
                   end if;
-
-                  Add_Menu (Parent => Parent_Menu, Item => Item);
+               else
+                  Parent_Menu := Menu;
                end if;
 
-               GNAT.OS_Lib.Free (Full_Name);
+               Add_Menu (Parent => Parent_Menu, Item => Item);
             end if;
 
-            C := C.Next;
-         end loop;
+            GNAT.OS_Lib.Free (Full_Name);
+         end if;
 
-         --  Do not Unref context, it will be automatically freed the next
-         --  time a contextual menu is displayed
-      end if;
+         C := C.Next;
+      end loop;
+
+      --  Do not Unref context, it will be automatically freed the next
+      --  time a contextual menu is displayed
 
       Pop_State (User.Kernel);
 
