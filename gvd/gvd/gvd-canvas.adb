@@ -173,6 +173,12 @@ package body GVD.Canvas is
    --  Reallocate all the fonts, with the appropriate size given the current
    --  zoom
 
+   function Refresh_Item
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class) return Boolean;
+   --  Recompute the size and redisplay the item. This function is meant to
+   --  be used in a For_Each_Item loop
+
    --------------------------
    -- Change_Align_On_Grid --
    --------------------------
@@ -586,7 +592,7 @@ package body GVD.Canvas is
          Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
       Add_Accelerator
         (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_Equal, 0, Accel_Visible);
+         Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
 
       Gtk_New (Mitem, Label => -"Zoom out");
       Append (Canvas.Contextual_Background_Menu, Mitem);
@@ -595,7 +601,7 @@ package body GVD.Canvas is
          Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
       Add_Accelerator
         (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_Minus, 0, Accel_Visible);
+         Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
 
       Gtk_New (Zooms_Menu);
 
