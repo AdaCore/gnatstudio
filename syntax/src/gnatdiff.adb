@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -51,21 +51,14 @@ procedure Gnatdiff is
 
    procedure Analyze_File (File : String; Constructs : out Construct_List) is
       Buffer     : String_Access;
-      New_Buffer : Extended_Line_Buffer;
-      Ignore     : Natural;
       Result     : aliased Construct_List;
 
    begin
       Buffer := Read_File (File);
       Analyze_Ada_Source
-        (Buffer.all, New_Buffer, Default_Indent_Parameters,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing     => Unchanged,
-         Format_Operators => False,
-         Indent           => False,
-         Constructs       => Result'Unchecked_Access,
-         Current_Indent   => Ignore,
-         Prev_Indent      => Ignore);
+        (Buffer.all, Default_Indent_Parameters,
+         Format           => False,
+         Constructs       => Result'Unchecked_Access);
       Constructs := Result;
       Free (Buffer);
    end Analyze_File;

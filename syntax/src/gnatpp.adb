@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@ with Ada.Command_Line; use Ada.Command_Line;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Basic_Types;      use Basic_Types;
 with Language;         use Language;
+with Line_Buffers;     use Line_Buffers;
 
 procedure Gnatpp is
    subtype String_Access is Basic_Types.String_Access;
@@ -33,7 +34,26 @@ procedure Gnatpp is
    Length     : Integer;
    pragma Unreferenced (Length);
    New_Buffer : Extended_Line_Buffer;
-   Ignore     : Natural;
+
+   procedure Replace_Cb
+     (Line    : Natural;
+      First   : Natural;
+      Last    : Natural;
+      Replace : String);
+   --  Callback for Analyze_Ada_Source.
+
+   ----------------
+   -- Replace_Cb --
+   ----------------
+
+   procedure Replace_Cb
+     (Line    : Natural;
+      First   : Natural;
+      Last    : Natural;
+      Replace : String) is
+   begin
+      Replace_Text (New_Buffer, Line, First, Last, Replace);
+   end Replace_Cb;
 
 begin
    F := Open_Read (Name, Binary);
@@ -42,10 +62,9 @@ begin
    Close (F);
    New_Buffer := To_Line_Buffer (Buffer.all);
    Analyze_Ada_Source
-     (Buffer.all, New_Buffer,
-      Indent_Params  => (3, 2, 2, 8, True),
-      Current_Indent => Ignore,
-      Prev_Indent    => Ignore);
+     (Buffer.all,
+      Indent_Params => (3, 2, 2, 8, True, Lower, Mixed, True, False),
+      Replace => Replace_Cb'Unrestricted_Access);
    Print (New_Buffer);
    Free (New_Buffer);
    Free (Buffer);

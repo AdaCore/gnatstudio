@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,9 +36,6 @@ procedure Gnatparse is
    Length      : Integer;
    pragma Unreferenced (Length);
    Info        : Construct_Access;
-   Indent      : Natural;
-   Next_Indent : Natural;
-   New_Buffer  : Extended_Line_Buffer;
    Constructs  : aliased Construct_List;
 
 begin
@@ -48,18 +45,11 @@ begin
    Close (F);
 
    Analyze_Ada_Source
-     (Buffer.all, New_Buffer, Default_Indent_Parameters,
-      Reserved_Casing  => Unchanged,
-      Ident_Casing     => Unchanged,
-      Format_Operators => False,
-      Indent           => False,
-      Constructs       => Constructs'Unchecked_Access,
-      Current_Indent   => Next_Indent,
-      Prev_Indent      => Indent);
+     (Buffer.all, Default_Indent_Parameters,
+      Format     => False,
+      Constructs => Constructs'Unchecked_Access);
 
    Free (Buffer);
-   Put_Line ("Indent = " & Image (Indent));
-   Put_Line ("Next Indent = " & Image (Next_Indent));
    Info := Constructs.First;
 
    loop
