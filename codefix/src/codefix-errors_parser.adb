@@ -191,17 +191,17 @@ package body Codefix.Errors_Parser is
    end Fix;
 
    -----------------------
-   -- Ligth_Misspelling --
+   -- Light_Misspelling --
    -----------------------
 
-   procedure Initialize (This : in out Ligth_Misspelling) is
+   procedure Initialize (This : in out Light_Misspelling) is
    begin
       This.Matcher := (1 => new Pattern_Matcher'
         (Compile ("misspelling of ""([^""]+)""$")));
    end Initialize;
 
    procedure Fix
-     (This         : Ligth_Misspelling;
+     (This         : Light_Misspelling;
       Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
@@ -611,9 +611,8 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Str_Red         : String_Access;
+      Str_Red : String_Access;
    begin
-
       Assign
         (Str_Red,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last));
@@ -1758,7 +1757,7 @@ package body Codefix.Errors_Parser is
 begin
    Add_Parser (new Agregate_Misspelling);
    Add_Parser (new Double_Misspelling);
-   Add_Parser (new Ligth_Misspelling);
+   Add_Parser (new Light_Misspelling);
    Add_Parser (new Goto_Misspelling);
    Add_Parser (new Library_Misspelling);
    Add_Parser (new Sth_Should_Be_Sth);
