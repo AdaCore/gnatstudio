@@ -125,9 +125,11 @@ package body Glide_Kernel.Modules is
      (Context : access File_Selection_Context;
       Project_View : Prj.Project_Id := Prj.No_Project;
       Directory : String := "";
-      File_Name : String := "") is
+      File_Name : String := "";
+      Importing_Project : Prj.Project_Id := Prj.No_Project) is
    begin
       Context.Project_View := Project_View;
+      Context.Importing_Project := Importing_Project;
       Free (Context.Directory);
       Free (Context.File_Name);
 
@@ -207,6 +209,26 @@ package body Glide_Kernel.Modules is
          return Context.File_Name.all;
       end if;
    end File_Information;
+
+   ---------------------------------------
+   -- Has_Importing_Project_Information --
+   ---------------------------------------
+
+   function Has_Importing_Project_Information
+     (Context : access File_Selection_Context) return Boolean is
+   begin
+      return Context.Importing_Project /= No_Project;
+   end Has_Importing_Project_Information;
+
+   -----------------------------------
+   -- Importing_Project_Information --
+   -----------------------------------
+
+   function Importing_Project_Information
+     (Context : access File_Selection_Context) return Prj.Project_Id is
+   begin
+      return Context.Importing_Project;
+   end Importing_Project_Information;
 
    -------------
    -- Destroy --

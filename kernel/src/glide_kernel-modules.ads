@@ -201,7 +201,8 @@ package Glide_Kernel.Modules is
      (Context : access File_Selection_Context;
       Project_View : Prj.Project_Id := Prj.No_Project;
       Directory : String := "";
-      File_Name : String := "");
+      File_Name : String := "";
+      Importing_Project : Prj.Project_Id := Prj.No_Project);
    --  Set the information in Context.
 
    function Has_Project_Information (Context : access File_Selection_Context)
@@ -212,6 +213,15 @@ package Glide_Kernel.Modules is
       return Prj.Project_Id;
    --  Return the id of the selected project. This can be No_Project is there
    --  wasn't any information about a specific project
+
+   function Has_Importing_Project_Information
+     (Context : access File_Selection_Context) return Boolean;
+   --  True if the context contains the name of the project importing the
+   --  current one.
+
+   function Importing_Project_Information
+     (Context : access File_Selection_Context) return Prj.Project_Id;
+   --  Return the project that imports the one returned by Project_Information.
 
    function Has_Directory_Information (Context : access File_Selection_Context)
       return Boolean;
@@ -240,9 +250,13 @@ private
       Project_View : Prj.Project_Id            := Prj.No_Project;
       Directory    : GNAT.OS_Lib.String_Access := null;
       File_Name    : GNAT.OS_Lib.String_Access := null;
+      Importing_Project : Prj.Project_Id       := Prj.No_Project;
    end record;
 
    pragma Inline (Has_Project_Information,
                   Has_Directory_Information,
+                  Has_Importing_Project_Information,
+                  Importing_Project_Information,
+                  Project_Information,
                   Has_File_Information);
 end Glide_Kernel.Modules;
