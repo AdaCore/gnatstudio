@@ -247,6 +247,9 @@ package GUI_Utils is
    --  Nothing is done in In_Widget, it is only used as a target for the grab
    --  operations.
    --  In_Widget must be realized.
+   --
+   --  In_Widget mustn't be a modal dialog, since otherwise the handling of
+   --  grabs will interfer with the dialog.
 
    --------------
    -- Tooltips --
