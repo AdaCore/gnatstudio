@@ -55,7 +55,7 @@ begin
       Widget_Callback.To_Marshaller (On_Final_Cancel_Clicked'Access), Final_Window);
    Add (Final_Window.Hbuttonbox1, Final_Window.Final_Cancel);
 
-   Gtk_New (Final_Window.Label4, -("All fixable errors have been scan. Are you shure to update changes ?"));
+   Gtk_New (Final_Window.Label4, -("All fixable errors have been scanned. Confirm changes ?"));
    Set_Alignment (Final_Window.Label4, 0.5, 0.5);
    Set_Padding (Final_Window.Label4, 0, 0);
    Set_Justify (Final_Window.Label4, Justify_Center);
