@@ -19,11 +19,8 @@
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
-with Gdk.Color;             use Gdk.Color;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Main;              use Gtk.Main;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Text;              use Gtk.Text;
 with Gtk.Stock;             use Gtk.Stock;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
@@ -39,8 +36,9 @@ with GVD.Types;             use GVD.Types;
 with Debugger;              use Debugger;
 
 with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Project;  use Glide_Kernel.Project;
+with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with Glide_Kernel.Editor;   use Glide_Kernel.Editor;
+with Glide_Kernel.Project;  use Glide_Kernel.Project;
 
 with Glide_Main_Window;     use Glide_Main_Window;
 with Glide_Page;            use Glide_Page;
@@ -66,8 +64,6 @@ with Make_Test_Window_Pkg; use Make_Test_Window_Pkg;
 with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
 
 package body Glide_Menu is
-
-   Highlight_File        : constant String := "#FF0000000000";
 
    --------------------
    -- Menu Callbacks --
@@ -544,20 +540,14 @@ package body Glide_Menu is
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
       Child     : MDI_Child := Get_Focus_Child (MDI);
       Fd        : Process_Descriptor;
-      Matched   : Match_Array (0 .. 3);
+      Matched   : Match_Array (0 .. 0);
       Result    : Expect_Match;
       Args      : Argument_List_Access;
       Matcher   : constant Pattern_Matcher := Compile
         (ASCII.SUB & "completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      File      : constant Pattern_Matcher :=
-        Compile ("([^:]*):(\d+):(\d+:)?");
       Dead      : Boolean;
       --  Id        : Message_Id;
-      Last      : Natural;
-      Highlight : Gdk_Color;
-      Console   : constant Gtk_Text :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
       Cmd       : constant String :=
         "gnatmake -P" & Get_Project_File_Name (Top.Kernel) & " ";
 
@@ -567,9 +557,7 @@ package body Glide_Menu is
       --  end if;
 
       Args := Argument_String_To_List (Cmd & Get_Title (Child));
-      Highlight := Parse (Highlight_File);
-      Alloc (Get_Default_Colormap, Highlight);
-      Insert (Console, Chars => Cmd & Get_Title (Child) & ASCII.LF);
+      Console.Insert (Top.Kernel, Cmd & Get_Title (Child) & ASCII.LF, False);
       Non_Blocking_Spawn
         (Fd, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
          Err_To_Out  => True);
@@ -592,28 +580,7 @@ package body Glide_Menu is
             Match (Matcher, S, Matched);
 
             if Matched (0) = No_Match then
-               Match (File, S, Matched);
-
-               if Matched (0) /= No_Match then
-                  Insert
-                    (Console,
-                     Chars => S (S'First .. Matched (1).First - 1));
-
-                  if Matched (3) = No_Match then
-                     Last := Matched (2).Last;
-                  else
-                     Last := Matched (3).Last - 1;
-                  end if;
-
-                  Insert
-                    (Console,
-                     Fore => Highlight,
-                     Chars => S (Matched (1).First .. Last));
-                  Insert (Console, Chars => S (Last + 1 .. S'Last));
-
-               else
-                  Insert (Console, Chars => S);
-               end if;
+               Console.Insert (Top.Kernel, S);
             else
                --  Id := Push (Top.Statusbar, 1, S (S'First + 1 .. S'Last));
                Print_Message (Top.Statusbar, Help, S (S'First + 1 .. S'Last));
@@ -623,7 +590,7 @@ package body Glide_Menu is
 
    exception
       when Process_Died =>
-         Insert (Console, Chars => Expect_Out (Fd));
+         Console.Insert (Top.Kernel, Expect_Out (Fd));
          --  Id := Push (Top.Statusbar, 1, "completed.");
          Print_Message (Top.Statusbar, Help, "completed.");
          Close (Fd);
