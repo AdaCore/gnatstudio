@@ -123,6 +123,9 @@ package body Python_Module is
      (Script  : access Python_Scripting_Record;
       Command : String;
       Args    : Callback_Data'Class) return Boolean;
+   function Execute_Command
+     (Command : PyObject;
+      Args    : Callback_Data'Class) return Boolean;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
@@ -136,6 +139,20 @@ package body Python_Module is
       Base   : Class_Type) return Boolean;
    function Get_Kernel
      (Script : access Python_Scripting_Record) return Kernel_Handle;
+   --  See doc from inherited subprograms
+
+   ------------------------
+   -- Python_Subprograms --
+   ------------------------
+
+   type Python_Subprogram_Record is new Subprogram_Record with record
+      Subprogram : PyObject;
+   end record;
+
+   procedure Execute
+     (Subprogram : access Python_Subprogram_Record;
+      Args       : Callback_Data'Class);
+   procedure Free (Subprogram : in out Python_Subprogram_Record);
    --  See doc from inherited subprograms
 
    --------------------------
@@ -167,6 +184,8 @@ package body Python_Module is
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return String;
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return Integer;
    function Nth_Arg (Data : Python_Callback_Data; N : Positive) return Boolean;
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive) return Subprogram_Type;
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return System.Address;
    function Nth_Arg
@@ -1370,23 +1389,36 @@ package body Python_Module is
          Errors      => Errors'Unrestricted_Access);
 
       if Obj /= null and then PyFunction_Check (Obj) then
-         Obj := PyEval_EvalCodeEx
-           (PyFunction_Get_Code (Obj),
-            Globals  => PyFunction_Get_Globals (Obj),
-            Locals   => null,
-            Args     => Python_Callback_Data (Args).Args,
-            Kwds     => Python_Callback_Data (Args).Kw,
-            Defaults => PyFunction_Get_Defaults (Obj),
-            Closure  => PyFunction_Get_Closure (Obj));
-         if Obj = null then
-            PyErr_Print;
-         end if;
+         return Execute_Command (Obj, Args);
       else
          Trace (Me, Command & " is not a function");
          Insert (Script.Kernel,
                  Command & (-" is not a function, when called from a hook"));
+         return False;
       end if;
+   end Execute_Command;
 
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Command : PyObject;
+      Args    : Callback_Data'Class) return Boolean
+   is
+      Obj : PyObject;
+   begin
+      Obj := PyEval_EvalCodeEx
+        (PyFunction_Get_Code (Command),
+         Globals  => PyFunction_Get_Globals (Command),
+         Locals   => null,
+            Args     => Python_Callback_Data (Args).Args,
+            Kwds     => Python_Callback_Data (Args).Kw,
+            Defaults => PyFunction_Get_Defaults (Command),
+            Closure  => PyFunction_Get_Closure (Command));
+      if Obj = null then
+         PyErr_Print;
+      end if;
 
       return Obj /= null
         and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
@@ -2130,5 +2162,48 @@ package body Python_Module is
    begin
       Py_INCREF (Instance.Data);
    end Ref;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Python_Callback_Data; N : Positive) return Subprogram_Type
+   is
+      Item : constant PyObject := Get_Param (Data, N);
+   begin
+      if Item = null or else not PyFunction_Check (Item) then
+         raise Invalid_Parameter;
+      else
+         Py_INCREF (Item);
+         return new Python_Subprogram_Record'
+           (Subprogram_Record with Subprogram => Item);
+      end if;
+   end Nth_Arg;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Subprogram : access Python_Subprogram_Record;
+      Args       : Callback_Data'Class)
+   is
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Tmp := Execute_Command
+        (Command => Subprogram.Subprogram,
+         Args    => Args);
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Subprogram : in out Python_Subprogram_Record) is
+   begin
+      Py_DECREF (Subprogram.Subprogram);
+   end Free;
 
 end Python_Module;
