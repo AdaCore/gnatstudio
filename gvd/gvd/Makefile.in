@@ -29,7 +29,7 @@ all: $(EXEC)
 stylechk: pkg_files style
 
 style:
-	make CFLAGS="-gnaty $(CFLAGS)"
+	make CFLAGS="-gnaty $(CFLAGS)" $(EXEC)
 
 pkg_files: ${PKG_FILES}
 
