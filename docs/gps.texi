@@ -428,7 +428,7 @@ all xref information".
 @item C/C++
 To enable the navigation features for C and C++ source files, you need
 to first generate a database of symbol references, by going through the
-menu Build->Recompute Xref information. Messages in the console window
+menu Build->Recompute C/C++ Xref info. Messages in the console window
 will indicate the state of the processing. Due to the nature of these
 languages, in order to provide accurate cross references, GPS needs to
 generate the database in two phases: a first pass parses all the files
