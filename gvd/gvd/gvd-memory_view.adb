@@ -65,19 +65,22 @@ package body GVD.Memory_View is
    ---------------------
 
    Address_Length       : constant Integer := 16;
-   Address_Separator    : constant String := ": ";
-   Data_Separator       : constant String := " ";
-   ASCII_Separator      : constant String := " ";
-   Data_ASCII_Separator : constant String := " -  ";
+   Address_Separator    : constant String  := ": ";
+   Data_Separator       : constant String  := " ";
+   ASCII_Separator      : constant String  := " ";
+   Data_ASCII_Separator : constant String  := " -  ";
 
-   Non_Valid_Character  : constant String := "-";
+   Non_Valid_Character  : constant String  := "-";
 
-   End_Of_Line       : constant String :=  "" & ASCII.LF;
-   Hex_Header        : constant String := "16#";
-   Hex_Footer        : constant String := "#";
+   End_Of_Line       : constant String  := (1 => ASCII.LF);
+   Hex_Header        : constant String  := "16#";
+   Hex_Footer        : constant String  := "#";
 
-   Line_Base_Size   : constant Integer := 16;
+   Line_Base_Size    : constant Integer := 16;
    --  Number of bytes per line.
+
+   --  ??? These global variables should be put in a structure.
+   --  This will probably be needed for preferences anyway
 
    View_Font      : Gdk_Font;
    View_Color     : Gdk_Color;
@@ -108,27 +111,31 @@ package body GVD.Memory_View is
    procedure Clear_View (View : access GVD_Memory_View_Record'Class);
    --  Removes everything from the view.
 
-   procedure Get_Coordinates (View     : access GVD_Memory_View_Record'Class;
-                              Position : in Gint;
-                              Row      : out Integer;
-                              Column   : out Integer);
+   procedure Get_Coordinates
+    (View     : access GVD_Memory_View_Record'Class;
+     Position : in Gint;
+     Row      : out Integer;
+     Column   : out Integer);
    --  Gives the bloc coordinates from a given position.
 
-   function Position_To_Bloc (View     : access GVD_Memory_View_Record'Class;
-                              Position : in Gint) return Integer;
+   function Position_To_Bloc
+     (View     : access GVD_Memory_View_Record'Class;
+      Position : in Gint) return Integer;
    --  Gives the bloc number at the given position.
 
    ---------------------
    -- Get_Coordinates --
    ---------------------
 
-   procedure Get_Coordinates (View     : access GVD_Memory_View_Record'Class;
-                              Position : in Gint;
-                              Row      : out Integer;
-                              Column   : out Integer)
+   procedure Get_Coordinates
+     (View     : access GVD_Memory_View_Record'Class;
+      Position : in Gint;
+      Row      : out Integer;
+      Column   : out Integer)
    is
       Row_Length : Integer;
       ASCII_Size : Integer := 0;
+
    begin
       if Get_Active (View.Show_Ascii) then
          ASCII_Size :=
@@ -149,6 +156,7 @@ package body GVD.Memory_View is
       Column := ((Integer (Position)
                   - Row * Row_Length
                   - (Address_Length + Address_Separator'Length)) + 1);
+
       if Column <= 0 then
          Column := -1;
          return;
@@ -165,8 +173,9 @@ package body GVD.Memory_View is
      (View     : access GVD_Memory_View_Record'Class;
       Position : in Gint) return Integer
    is
-      Row        : Integer;
-      Column     : Integer;
+      Row    : Integer;
+      Column : Integer;
+
    begin
       Get_Coordinates (View, Position, Row, Column);
       return Column + Row * View.Number_Of_Columns;
@@ -177,19 +186,16 @@ package body GVD.Memory_View is
    ---------------------------
 
    procedure Watch_Cursor_Location
-     (View     : access GVD_Memory_View_Record'Class)
+     (View : access GVD_Memory_View_Record'Class)
    is
-      Row        : Integer;
-      Column     : Integer;
+      Row    : Integer;
+      Column : Integer;
    begin
       Get_Coordinates (View, Get_Position (View.View), Row, Column);
 
-      if Column >= View.Number_Of_Columns
-        or else Column < 0
-      then
-         Set_Position (View.View,
-                       Address_Separator'Length
-                       + Gint (Address_Length));
+      if Column >= View.Number_Of_Columns or else Column < 0 then
+         Set_Position
+           (View.View, Address_Separator'Length + Gint (Address_Length));
       end if;
    end Watch_Cursor_Location;
 
@@ -266,9 +272,9 @@ package body GVD.Memory_View is
 
    procedure Init_Graphics (Window : Gdk_Window) is
    begin
-      View_Font  := Get_Gdkfont
+      View_Font      := Get_Gdkfont
         (Get_Pref (Memory_View_Font), Get_Pref (Memory_View_Font_Size));
-      View_Color := Get_Pref (Memory_View_Color);
+      View_Color     := Get_Pref (Memory_View_Color);
       Highlighted    := Get_Pref (Memory_Highlighted_Color);
       White_Color    := White (Get_System);
       Selected       := Get_Pref (Memory_Selected_Color);
@@ -286,7 +292,9 @@ package body GVD.Memory_View is
    is
       Index   : Integer := 1;
       Result  : String (1 .. 64);
-      Mapping : Character_Mapping := To_Mapping ("ABCDEF ", "abcdef0");
+      Mapping : constant Character_Mapping :=
+        To_Mapping ("ABCDEF ", "abcdef0");
+
    begin
       Put (Result, Address, Base);
       Skip_To_String (Result, Index, Hex_Footer);
@@ -394,16 +402,15 @@ package body GVD.Memory_View is
             Fore  => View_Color,
             Back  => Highlighted,
             Font  => View_Font,
-            Chars => To_Standard_Base (View.Starting_Address
-                                       + Long_Long_Integer
-                                       ((Line_Index - 1) *
-                                        View.Number_Of_Columns *
-                                        View.Unit_Size / 2),
-                                       16,
-                                       Address_Length) & Address_Separator);
+            Chars =>
+              To_Standard_Base
+                (View.Starting_Address +
+                   Long_Long_Integer
+                     ((Line_Index - 1) * View.Number_Of_Columns *
+                      View.Unit_Size / 2),
+                 16, Address_Length) & Address_Separator);
 
          for Column_Index in 1 .. View.Number_Of_Columns loop
-
             Index := (Line_Index - 1) *
               View.Number_Of_Columns * View.Unit_Size
               + (Column_Index - 1) * View.Unit_Size + 1;
@@ -412,10 +419,10 @@ package body GVD.Memory_View is
               View.Flags (Index .. Index + View.Unit_Size - 1)
             then
                Foreground := Modified_Color;
-               Current := View.Flags;
+               Current    := View.Flags;
             else
                Foreground := Null_Color;
-               Current := View.Values;
+               Current    := View.Values;
             end if;
 
             Insert
@@ -441,7 +448,6 @@ package body GVD.Memory_View is
             Insert (View.View, Chars => Data_ASCII_Separator);
 
             for Column_Index in 1 .. View.Number_Of_Columns loop
-
                Index := (Line_Index - 1) *
                  (View.Number_Of_Columns * View.Unit_Size)
                  + (Column_Index - 1) * View.Unit_Size + 1;
@@ -474,11 +480,12 @@ package body GVD.Memory_View is
                   Chars => Data_Separator);
             end loop;
          end if;
+
          if Line_Index /= View.Number_Of_Lines then
             Insert (View.View, Chars => End_Of_Line);
          end if;
-
       end loop;
+
       Thaw (View.View);
       Set_Position (View.View, Gint (View.Cursor_Position));
    end Update_Display;
@@ -527,13 +534,14 @@ package body GVD.Memory_View is
    --------------------
 
    procedure Display_Memory
-     (View : access GVD_Memory_View_Record'Class;
+     (View    : access GVD_Memory_View_Record'Class;
       Address : String)
    is
       Real_Address : Long_Long_Integer;
       Index        : Integer;
-      Process : constant Debugger_Process_Tab :=
+      Process      : constant Debugger_Process_Tab :=
         Get_Current_Process (View.Window);
+
    begin
       if Address'Length > 2
         and then Address (Address'First .. Address'First + 1) = "0x"
@@ -640,7 +648,7 @@ package body GVD.Memory_View is
    ------------
 
    procedure Update
-     (View : access GVD_Memory_View_Record'Class;
+     (View    : access GVD_Memory_View_Record'Class;
       Process : Gtk_Widget)
    is
       Tab : Debugger_Process_Tab := Debugger_Process_Tab (Process);
@@ -662,11 +670,11 @@ package body GVD.Memory_View is
    -----------------
 
    procedure Move_Cursor
-     (View : access GVD_Memory_View_Record'Class;
+     (View  : access GVD_Memory_View_Record'Class;
       Where : in Dir)
    is
-      Move     : Gint := 0;
-      Position : Gint := Get_Position (View.View);
+      Move       : Gint := 0;
+      Position   : constant Gint := Get_Position (View.View);
       ASCII_Size : Integer := 0;
 
    begin
@@ -711,6 +719,9 @@ package body GVD.Memory_View is
                end if;
 
             end if;
+
+            --  ??? Handling of ASCII.CR instead of ASCII.LF is suspicious
+
             if Get_Chars
               (View.View, Position + 2, Position + 3) (1) = ASCII.CR
             then
@@ -749,7 +760,6 @@ package body GVD.Memory_View is
          when others =>
             null;
       end case;
-
    end Move_Cursor;
 
    ------------
@@ -764,13 +774,12 @@ package body GVD.Memory_View is
       Success     : Boolean;
       Background  : Gdk_Color := Null_Color;
       Value_Index : Integer;
-      Position    : Gint := Get_Position (View.View);
+      Position    : constant Gint := Get_Position (View.View);
       Bloc_Begin  : Gint := Position;
       Bloc_End    : Gint := Position;
+
    begin
-      if View.View = null
-      or else Get_Length (View.View) <= 0
-      then
+      if View.View = null or else Get_Length (View.View) <= 0 then
          return;
       end if;
 
@@ -874,8 +883,6 @@ package body GVD.Memory_View is
 
       Update_Display (View);
       Thaw (View.View);
-
-
       Set_Position (View.View, Position);
       Move_Cursor (View, Right);
       Set_Position (View.View, Get_Position (View.View) + 1);
