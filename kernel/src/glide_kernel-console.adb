@@ -22,6 +22,7 @@ with Glide_Main_Window; use Glide_Main_Window;
 with Glide_Page;        use Glide_Page;
 with Glide_Consoles;    use Glide_Consoles;
 with GVD.Process;       use GVD.Process;
+with Ada.Text_IO;       use Ada.Text_IO;
 
 package body Glide_Kernel.Console is
 
@@ -37,10 +38,16 @@ package body Glide_Kernel.Console is
       Mode           : Message_Type := Info)
    is
       Top       : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Console   : constant Glide_Console :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
+      Console   : Glide_Console;
    begin
-      Insert (Console, Text, Highlight_Sloc, Add_LF, Mode);
+      if Top = null
+        or else Get_Current_Process (Top) = null
+      then
+         Put_Line (Text);
+      else
+         Console := Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
+         Insert (Console, Text, Highlight_Sloc, Add_LF, Mode);
+      end if;
    end Insert;
 
 end Glide_Kernel.Console;
