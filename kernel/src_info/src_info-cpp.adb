@@ -317,6 +317,7 @@ package body Src_Info.CPP is
          when UN     => return ".un";
          when MA     => return ".ma";
          when CON    => return ".con";
+         when LV     => return ".lv";
          when others => return "";
       end case;
    end Table_Extension;
@@ -352,6 +353,28 @@ package body Src_Info.CPP is
    --  in the sources (for instance, if we have #include "dir/file.h", then
    --  Source_Filename is "dir/file.h". Full_Filename is the full path to the
    --  physical file on the disk.
+
+   procedure Process_Local_Variables
+     (FU_Tab           : FU_Table;
+      Symbol           : Symbol_Type;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
+      Module_Type_Defs : Module_Typedefs_List);
+   --  Process local variables and arguments for specified function/method
+   --  body in FU_Tab. Symbol is either FU or MI.
+
+   procedure Process_Local_Variable
+     (Var            : LV_Table;
+      FU_Tab         : FU_Table;
+      Symbol         : Symbol_Type;
+      Handler        : access CPP_LI_Handler_Record'Class;
+      File           : in out LI_File_Ptr;
+      Decl_Info      : in out E_Declaration_Info_List);
+   --  Finds all places where given local variable (or argument) is used
+   --  in specified function/method body and create references from
+   --  declaration corresponding to that local variable or argument.
 
    procedure Create_DB_Directory
      (Handler : access CPP_LI_Handler_Record'Class);
@@ -3541,7 +3564,6 @@ package body Src_Info.CPP is
          declare
             Class_Def       : CL_Table;
             Class_Decl_Info : E_Declaration_Info_List;
-            Ref             : E_Reference_List;
          begin
             FU_Tab := Find (Handler.SN_Table (MI),
                 Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
@@ -3554,10 +3576,6 @@ package body Src_Info.CPP is
                   Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
                Is_Template := Class_Def.Template_Parameters.First
                   < Class_Def.Template_Parameters.Last;
-               --  We want to add a reference to the class we belong to
-               --  but there may be already a reference created in the
-               --  MD handler. If MD and MI instances are the same we
-               --  don't need to duplicate references
                Find_Or_Create_Class
                   (Handler,
                    Class_Def,
@@ -3567,28 +3585,15 @@ package body Src_Info.CPP is
                    List,
                    Project_View,
                    Module_Type_Defs);
-               if Class_Decl_Info /= null then
-                  Ref := Class_Decl_Info.Value.References;
-                  loop
-                     exit when Ref = null
-                        or else (Get_LI_Filename (Ref.Value.Location.File.LI)
-                             = Get_LI_Filename (File)
-                           and then Ref.Value.Location.Line
-                              = Sym.Start_Position.Line
-                           and then Ref.Value.Location.Column
-                              = 0
-                           and then Ref.Value.Kind = Primitive_Operation);
-                     Ref := Ref.Next;
-                  end loop;
-                  if Ref = null then
-                     Insert_Reference
-                       (Class_Decl_Info,
-                        File,
-                        (Sym.Start_Position.Line, 0),
-                        --  we don't know the precise position of the class
-                        --  name, so set the column to "anywhere"
-                        Primitive_Operation);
-                  end if;
+               if not (Class_Def.Start_Position < Sym.Start_Position
+                  and Sym.End_Position < Class_Def.End_Position) then
+                  Insert_Reference
+                    (Class_Decl_Info,
+                     File,
+                     (Sym.Start_Position.Line, 0),
+                     --  we don't know the precise position of the class
+                     --  name, so set the column to "anywhere"
+                     Reference);
                end if;
                Free (Class_Def);
             exception
@@ -3751,6 +3756,10 @@ package body Src_Info.CPP is
          Free (P);
       end loop;
       Release_Cursor (Handler.SN_Table (TO));
+
+      Process_Local_Variables
+        (FU_Tab, Sym.Symbol, Handler, File, List, Project_View,
+         Module_Type_Defs);
 
       Free (FU_Tab);
 
@@ -4127,9 +4136,7 @@ package body Src_Info.CPP is
             Insert_Reference
               (Class_Decl_Info,
                File,
-               (Sym.Start_Position.Line, 0),
-               --  we don't know the precise position of the class
-               --  name, so set the column to "anywhere"
+               (Sym.Start_Position.Line, Sym.Start_Position.Column),
                Primitive_Operation);
          end if;
          Free (Class_Def);
@@ -4404,6 +4411,234 @@ package body Src_Info.CPP is
    begin
       return Handler.Xrefs;
    end Get_Xrefs;
+
+   -----------------------------
+   -- Process_Local_Variables --
+   -----------------------------
+
+   procedure Process_Local_Variables
+     (FU_Tab           : FU_Table;
+      Symbol           : Symbol_Type;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
+      Project_View     : Prj.Project_Id;
+      Module_Type_Defs : Module_Typedefs_List)
+   is
+      pragma Unreferenced (Project_View);
+      P           : Pair_Ptr;
+      Var         : LV_Table;
+      Attributes  : SN_Attributes;
+      Decl_Info   : E_Declaration_Info_List;
+
+      Fu_Id       : constant String := FU_Tab.Buffer
+        (FU_Tab.Name.First .. FU_Tab.Name.Last);
+   begin
+      if not Is_Open (Handler.SN_Table (LV)) then
+         --  .lv table does not exist
+         return;
+      end if;
+
+      --  Find all local variables for given function/method.
+      --  Only function/method name is in the key.
+      Set_Cursor
+        (DB          => Handler.SN_Table (LV),
+         Position    => By_Key,
+         Key         => Fu_Id & Field_Sep,
+         Exact_Match => False);
+
+      loop
+         P := Get_Pair (Handler.SN_Table (LV), Next_By_Key);
+         exit when P = null;
+         Var := Parse_Pair (P.all);
+         Free (P);
+         --  Check if we found the right local variable:
+         --  compare class names (for methods only)
+         --  compare file names
+         --  compare arg types
+         if (Symbol = FU or else
+            Var.Buffer (Var.Class.First ..  Var.Class.Last) =
+            FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last))
+         and then
+            Var.Buffer (Var.File_Name.First .. Var.File_Name.Last) =
+            FU_Tab.Buffer (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)
+         and then
+            Cmp_Arg_Types
+              (FU_Tab.Buffer,
+               Var.Buffer,
+               FU_Tab.Arg_Types,
+               Var.Arg_Types,
+               Strict => True)
+         then
+            Info
+              (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
+               "::" & Fu_Id & ", lv: " &
+               Var.Buffer (Var.Name.First .. Var.Name.Last));
+            Info ("Type: " &
+              Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last));
+
+            --  Collect information about the local variable:
+            --  type, scope, location of type declaration...
+            declare
+               Desc        : CType_Description;
+               Success     : Boolean := False;
+               Scope       : E_Scope := Local_Scope;
+            begin
+               Type_Name_To_Kind
+                 (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
+                  Handler.SN_Table,
+                  Module_Type_Defs,
+                  Desc,
+                  Success);
+               if not Success then -- type not found
+                  --  Set kind to Unresolved_Entity for local variables
+                  --  which have unknown type.
+                  Desc.Kind := Unresolved_Entity;
+               end if;
+               Attributes := SN_Attributes (Var.Attributes);
+
+               if (Attributes and SN_STATIC) = SN_STATIC then
+                  Scope := Static_Local;
+               end if;
+
+               if Desc.Parent_Point = Invalid_Point then
+                  Insert_Declaration
+                    (File              => File,
+                     List              => List,
+                     Symbol_Name       => Var.Buffer
+                       (Var.Name.First .. Var.Name.Last),
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Scope,
+                     Declaration_Info  => Decl_Info);
+               else
+                  Insert_Declaration
+                    (File              => File,
+                     List              => List,
+                     Symbol_Name       => Var.Buffer
+                       (Var.Name.First .. Var.Name.Last),
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Scope,
+                     Parent_Location   => Desc.Parent_Point,
+                     Parent_Filename   => Desc.Parent_Filename.all,
+                     Declaration_Info  => Decl_Info);
+
+                  --  add reference to the type of this variable
+                  if Desc.IsTemplate then
+                     --  template specialization
+                     Refer_Type
+                       (Var.Buffer
+                         (Var.Value_Type.First .. Var.Value_Type.Last),
+                        Desc.Parent_Point,
+                        File,
+                        Var.Start_Position,
+                        Instantiation_Reference);
+                  else
+                     --  default reference kind
+                     Refer_Type
+                       (Var.Buffer
+                         (Var.Value_Type.First .. Var.Value_Type.Last),
+                        Desc.Parent_Point,
+                        File,
+                        Var.Start_Position);
+                  end if;
+               end if;
+            end;
+
+            if Decl_Info = null then
+               Fail ("unable to create declaration for local variable " &
+                 Var.Buffer (Var.Name.First .. Var.Name.Last));
+               Free (Var);
+               return;
+            end if;
+
+            Process_Local_Variable
+              (Var       => Var,
+               FU_Tab    => FU_Tab,
+               Symbol    => Symbol,
+               Handler   => Handler,
+               File      => File,
+               Decl_Info => Decl_Info);
+
+         end if;
+         Free (Var);
+      end loop;
+      Release_Cursor (Handler.SN_Table (LV));
+   end Process_Local_Variables;
+
+   ----------------------------
+   -- Process_Local_Variable --
+   ----------------------------
+
+   procedure Process_Local_Variable
+     (Var            : LV_Table;
+      FU_Tab         : FU_Table;
+      Symbol         : Symbol_Type;
+      Handler        : access CPP_LI_Handler_Record'Class;
+      File           : in out LI_File_Ptr;
+      Decl_Info      : in out E_Declaration_Info_List)
+   is
+      P        : Pair_Ptr;
+      Ref      : TO_Table;
+      Ref_Kind : Reference_Kind := Reference;
+   begin
+--    Info (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
+--       "::" &
+--       FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last) &
+--       ", lv: " &
+--       Var.Buffer (Var.Name.First .. Var.Name.Last));
+
+      --  Look thru' .to table for specified local variable (or argument)
+      --  usage within current function/method body.
+      Set_Cursor
+        (DB          => Handler.SN_Table (TO),
+         Position    => By_Key,
+         Key         =>
+           FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
+           Field_Sep &
+           FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last) &
+           Field_Sep &
+           To_String (Symbol) &
+           Field_Sep &
+           FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last) &
+           Field_Sep &
+           Var.Buffer (Var.Name.First .. Var.Name.Last) &
+           Field_Sep & "lv" & Field_Sep,
+         Exact_Match => False);
+      loop
+         P := Get_Pair (Handler.SN_Table (TO), Next_By_Key);
+         exit when P = null;
+         Ref := Parse_Pair (P.all);
+         Free (P);
+         --  Check if we found the right lv usage: comapre file name
+         --  and argument types
+         if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) =
+            Var.Buffer (Var.File_Name.First .. Var.File_Name.Last)
+         and then Cmp_Arg_Types
+           (FU_Tab.Buffer,
+            Ref.Buffer,
+            FU_Tab.Arg_Types,
+            Ref.Caller_Argument_Types,
+            Strict => True)
+         then
+            --  For each declaration of local variable (in .lv table) SN
+            --  creates a xref record with the same name and location
+            --  (in .to table). Thus, we don't create a reference to local
+            --  variable usage with the same location.
+            if Ref.Position /= Var.Start_Position then
+               if Ref.Buffer
+                 (Ref.Access_Type.First .. Ref.Access_Type.Last) = "w"
+               then
+                  Ref_Kind := Modification;
+               end if;
+               Insert_Reference (Decl_Info, File, Ref.Position, Ref_Kind);
+            end if;
+         end if;
+         Free (Ref);
+      end loop;
+      Release_Cursor (Handler.SN_Table (TO));
+   end Process_Local_Variable;
 
 end Src_Info.CPP;
 

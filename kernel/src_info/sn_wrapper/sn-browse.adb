@@ -77,24 +77,24 @@ package body SN.Browse is
       Temp_Name    : out GNAT.OS_Lib.Temp_File_Name;
       PD           : out GNAT.Expect.Process_Descriptor)
    is
-      BY_File_Name : constant String :=
-        DB_Directory & DB_File_Name & ".by" & ASCII.Nul;
+      LV_File_Name : constant String :=
+        DB_Directory & DB_File_Name & ".lv" & ASCII.NUL;
       TO_File_Name : constant String :=
-        DB_Directory & DB_File_Name & ".to" & ASCII.Nul;
+        DB_Directory & DB_File_Name & ".to" & ASCII.NUL;
       Dir          : Dir_Type;
       Last         : Natural;
       Dir_Entry    : String (1 .. 1024);
       --  1024 is the value of FILENAME_MAX in stdio.h (see
       --  GNAT.Directory_Operations)
       Success      : Boolean;
-      Args         : Argument_List (1 .. 3);
+      Args         : Argument_List (1 .. 4);
       Content      : String_Access;
       Temp_File    : File_Descriptor;
 
    begin
-      --  remove .to and .by tables
-      if File_Exists (BY_File_Name) then
-         Delete_File (BY_File_Name'Address, Success);
+      --  remove .to and .lv tables
+      if File_Exists (LV_File_Name) then
+         Delete_File (LV_File_Name'Address, Success);
          if not Success then
             raise Unlink_Failure;
          end if;
@@ -140,7 +140,8 @@ package body SN.Browse is
 
       Args := (1 => new String' (DB_Directory & DB_File_Name),
                2 => new String' ("-f"),
-               3 => new String' (Temp_Name));
+               3 => new String' (Temp_Name),
+               4 => new String' ("-l"));
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, DBIMP_Path, Args, Err_To_Out => True);
