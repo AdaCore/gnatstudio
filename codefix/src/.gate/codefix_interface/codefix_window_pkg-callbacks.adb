@@ -113,15 +113,4 @@ package body Codefix_Window_Pkg.Callbacks is
       null;
    end On_Cancel_Changes_Clicked;
 
-   ------------------------------
-   -- On_Apply_Changes_Clicked --
-   ------------------------------
-
-   procedure On_Apply_Changes_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Apply_Changes_Clicked;
-
 end Codefix_Window_Pkg.Callbacks;

@@ -30,7 +30,4 @@ package Codefix_Window_Pkg.Callbacks is
    procedure On_Cancel_Changes_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Apply_Changes_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
 end Codefix_Window_Pkg.Callbacks;

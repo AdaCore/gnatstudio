@@ -19,6 +19,7 @@ end Gtk_New;
 procedure Initialize (Codefix_Window : access Codefix_Window_Record'Class) is
    pragma Suppress (All_Checks);
    Fix_Caption_List_Items : String_List.Glist;
+   Tooltips : Gtk_Tooltips;
 
 begin
    Gtk.Window.Initialize (Codefix_Window, Window_Toplevel);
@@ -97,6 +98,8 @@ begin
 
    Gtk_New (Codefix_Window.Skip_Correction, -"Skip");
    Set_Flags (Codefix_Window.Skip_Correction, Can_Default);
+   Gtk_New (Tooltips);
+   Set_Tip (Tooltips, Codefix_Window.Skip_Correction, -"Don't fix this error");
    Widget_Callback.Object_Connect
      (Codefix_Window.Skip_Correction, "clicked",
       Widget_Callback.To_Marshaller (On_Skip_Correction_Clicked'Access), Codefix_Window);
@@ -104,6 +107,7 @@ begin
 
    Gtk_New (Codefix_Window.Accept_Correction);
    Set_Flags (Codefix_Window.Accept_Correction, Can_Default);
+   Set_Tip (Tooltips, Codefix_Window.Accept_Correction, -"Fix this error");
    Widget_Callback.Object_Connect
      (Codefix_Window.Accept_Correction, "clicked",
       Widget_Callback.To_Marshaller (On_Accept_Correction_Clicked'Access), Codefix_Window);
@@ -111,6 +115,7 @@ begin
 
    Gtk_New (Codefix_Window.Skip_All_Corrections, -"Skip all");
    Set_Flags (Codefix_Window.Skip_All_Corrections, Can_Default);
+   Set_Tip (Tooltips, Codefix_Window.Skip_All_Corrections, -"Don't fix any error of the same category than the current one");
    Widget_Callback.Object_Connect
      (Codefix_Window.Skip_All_Corrections, "clicked",
       Widget_Callback.To_Marshaller (On_Skip_All_Corrections_Clicked'Access), Codefix_Window);
@@ -118,6 +123,7 @@ begin
 
    Gtk_New (Codefix_Window.Accept_All_Corrections, -"Apply all");
    Set_Flags (Codefix_Window.Accept_All_Corrections, Can_Default);
+   Set_Tip (Tooltips, Codefix_Window.Accept_All_Corrections, -"Fix each error of the same category than the current one");
    Widget_Callback.Object_Connect
      (Codefix_Window.Accept_All_Corrections, "clicked",
       Widget_Callback.To_Marshaller (On_Accept_All_Corrections_Clicked'Access), Codefix_Window);
@@ -125,6 +131,7 @@ begin
 
    Gtk_New (Codefix_Window.Undo);
    Set_Flags (Codefix_Window.Undo, Can_Default);
+   Set_Tip (Tooltips, Codefix_Window.Undo, -"Cancel previous changes");
    Widget_Callback.Object_Connect
      (Codefix_Window.Undo, "clicked",
       Widget_Callback.To_Marshaller (On_Undo_Clicked'Access), Codefix_Window);
@@ -132,6 +139,7 @@ begin
 
    Gtk_New (Codefix_Window.Refresh, -"Refresh");
    Set_Flags (Codefix_Window.Refresh, Can_Default);
+   Set_Tip (Tooltips, Codefix_Window.Refresh, -"Recalculate the fix with last user's changes");
    Widget_Callback.Object_Connect
      (Codefix_Window.Refresh, "clicked",
       Widget_Callback.To_Marshaller (On_Refresh_Clicked'Access), Codefix_Window);
@@ -146,17 +154,11 @@ begin
 
    Gtk_New (Codefix_Window.Cancel_Changes);
    Set_Flags (Codefix_Window.Cancel_Changes, Can_Default);
+   Set_Tip (Tooltips, Codefix_Window.Cancel_Changes, -"Cancel all changes");
    Widget_Callback.Object_Connect
      (Codefix_Window.Cancel_Changes, "clicked",
       Widget_Callback.To_Marshaller (On_Cancel_Changes_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Vbuttonbox2, Codefix_Window.Cancel_Changes);
-
-   Gtk_New (Codefix_Window.Apply_Changes);
-   Set_Flags (Codefix_Window.Apply_Changes, Can_Default);
-   Widget_Callback.Object_Connect
-     (Codefix_Window.Apply_Changes, "clicked",
-      Widget_Callback.To_Marshaller (On_Apply_Changes_Clicked'Access), Codefix_Window);
-   Add (Codefix_Window.Vbuttonbox2, Codefix_Window.Apply_Changes);
 
 end Initialize;
 
