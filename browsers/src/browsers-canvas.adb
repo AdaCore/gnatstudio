@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Glib.Error;          use Glib.Error;
 with Glib.Graphs;         use Glib.Graphs;
 with Glib.Object;         use Glib.Object;
-with Glib.Values;         use Glib.Values;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.GC;              use Gdk.GC;
 with Gtkada.Canvas;       use Gtkada.Canvas;
@@ -33,7 +33,6 @@ with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
-with Gtk.Arguments;       use Gtk.Arguments;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -115,11 +114,6 @@ package body Browsers.Canvas is
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class);
    --  Toggle the layout of links.
 
-   procedure On_Draw_Links
-     (Browser : access Gtk_Widget_Record'Class;
-      Args    : Glib.Values.GValues);
-   --  Make sure that the highlighted links are always drawn last.
-
    procedure Set_Root
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Remove all items except the one described in Data from the canvas.
@@ -136,23 +130,119 @@ package body Browsers.Canvas is
      (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0);
    --  For debugging purposes, dump the tree to Me.
 
-   procedure Highlight_Item_And_Siblings
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Old     : Gtkada.Canvas.Canvas_Item := null);
-   --  Call Highlight on Item and all its siblings. If the selection status has
-   --  changed, this will result in a change of background color for these
-   --  items.
-   --  If Old is not null, then it is also refreshed along with all its
-   --  siblings. This subprogram is optimized so that the items are refreshed
-   --  only once.
-   --  The item is not selected.
+   procedure Destroyed (Browser : access Gtk_Widget_Record'Class);
+   --  Called when the browser is destroyed
+
+   procedure On_Preferences_Changed
+     (Browser : access Gtk_Widget_Record'Class);
+   --  Called when the preferences have changed
 
    procedure Compute_Parents
      (Event : Gdk_Event; Item : access Browser_Item_Record'Class);
    procedure Compute_Children
      (Event : Gdk_Event; Item : access Browser_Item_Record'Class);
    --  Callbacks for the title bar buttons of Arrow_item
+
+   type Image_Canvas_Record is new Interactive_Canvas_Record with record
+      Background : Gdk.Pixbuf.Gdk_Pixbuf;
+      Scaled_Background : Gdk.Pixbuf.Gdk_Pixbuf;
+      Bg_GC      : Gdk.GC.Gdk_GC;
+      Draw_Grid  : Boolean;
+   end record;
+   type Image_Canvas is access all Image_Canvas_Record'Class;
+
+   procedure Draw_Background
+     (Canvas        : access Image_Canvas_Record;
+      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle;
+      X_Left, Y_Top : Glib.Gint);
+
+   procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
+   --  Called when the canvas has been zoomed
+
+   -------------
+   -- On_Zoom --
+   -------------
+
+   procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class) is
+      C : Image_Canvas := Image_Canvas (Canvas);
+   begin
+      if C.Scaled_Background /= null
+        and then C.Scaled_Background /= C.Background
+      then
+         Unref (C.Scaled_Background);
+      end if;
+
+      if Get_Zoom (C) /= 100
+        and then C.Background /= null
+      then
+         C.Scaled_Background := Scale_Simple
+           (C.Background,
+            To_Canvas_Coordinates (C, Get_Width (C.Background)),
+            To_Canvas_Coordinates (C, Get_Height (C.Background)));
+      else
+         C.Scaled_Background := C.Background;
+      end if;
+   end On_Zoom;
+
+   ---------------------
+   -- Draw_Background --
+   ---------------------
+
+   procedure Draw_Background
+     (Canvas        : access Image_Canvas_Record;
+      Screen_Rect   : Gdk.Rectangle.Gdk_Rectangle;
+      X_Left, Y_Top : Glib.Gint) is
+   begin
+      if Canvas.Background /= null then
+         declare
+            X, Y, W, H, Ys : Gint;
+            Xs : Gint := Screen_Rect.X;
+            Bw : constant Gint := Get_Width (Canvas.Scaled_Background);
+            Bh : constant Gint := Get_Height (Canvas.Scaled_Background);
+         begin
+            while Xs < Screen_Rect.X + Screen_Rect.Width loop
+               Ys := Screen_Rect.Y;
+               X := (X_Left + Xs) mod Bw;
+               W := Gint'Min (Screen_Rect.Width + Screen_Rect.X - Xs, Bw - X);
+
+               while Ys < Screen_Rect.Y + Screen_Rect.Height loop
+                  Y := (Y_Top  + Ys) mod Bh;
+                  H := Gint'Min
+                    (Screen_Rect.Height + Screen_Rect.Y - Ys, Bh - Y);
+
+                  Render_To_Drawable
+                    (Pixbuf       => Canvas.Scaled_Background,
+                     Drawable     => Get_Window (Canvas),
+                     Gc           => Get_Black_GC (Get_Style (Canvas)),
+                     Src_X        => X,
+                     Src_Y        => Y,
+                     Dest_X       => Xs,
+                     Dest_Y       => Ys,
+                     Width        => W,
+                     Height       => H);
+                  Ys := Ys + H;
+               end loop;
+               Xs := Xs + W;
+            end loop;
+         end;
+
+      else
+         Draw_Rectangle
+           (Get_Window (Canvas),
+            Canvas.Bg_GC,
+            Filled => True,
+            X      => Screen_Rect.X,
+            Y      => Screen_Rect.Y,
+            Width  => Gint (Screen_Rect.Width),
+            Height => Gint (Screen_Rect.Height));
+      end if;
+
+      if Canvas.Draw_Grid then
+         Draw_Grid (Interactive_Canvas (Canvas),
+                    Get_Black_GC (Get_Style (Canvas)),
+                    Screen_Rect, X_Left, Y_Top);
+      end if;
+   end Draw_Background;
 
    ----------------
    -- Initialize --
@@ -164,6 +254,7 @@ package body Browsers.Canvas is
       Create_Toolbar : Boolean)
    is
       Scrolled : Gtk_Scrolled_Window;
+      Canvas : Image_Canvas;
    begin
       Gtk.Box.Initialize_Vbox (Browser, Homogeneous => False);
 
@@ -172,14 +263,19 @@ package body Browsers.Canvas is
 
       Pack_Start (Browser, Scrolled, Expand => True, Fill => True);
 
-      Gtk_New (Browser.Canvas);
+      Canvas := new Image_Canvas_Record;
+      Gtkada.Canvas.Initialize (Canvas);
+      Browser.Canvas := Interactive_Canvas (Canvas);
+
+      Widget_Callback.Connect
+        (Browser.Canvas, "zoomed",
+         Widget_Callback.To_Marshaller (On_Zoom'Access));
+
       Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
       Browser.Kernel := Kernel_Handle (Kernel);
 
-      Configure
-        (Browser.Canvas,
-         Annotation_Font => Get_Pref (GVD_Prefs, Annotation_Font));
+      On_Preferences_Changed (Browser);
 
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
@@ -190,13 +286,16 @@ package body Browsers.Canvas is
          Pack_Start (Browser, Browser.Toolbar, Expand => False);
       end if;
 
-      --  ??? Should be freed when browser is destroyed.
       Browser.Up_Arrow := Render_Icon
         (Browser, Stock_Go_Up, Icon_Size_Menu);
       Browser.Down_Arrow := Render_Icon
         (Browser, Stock_Go_Down, Icon_Size_Menu);
       Browser.Close_Pixmap := Render_Icon
         (Browser, Stock_Close, Icon_Size_Menu);
+
+      Widget_Callback.Object_Connect
+        (Browser, "destroy",
+         Widget_Callback.To_Marshaller (Destroyed'Access), Browser);
 
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
@@ -208,20 +307,110 @@ package body Browsers.Canvas is
          Browser);
 
       Widget_Callback.Object_Connect
-        (Browser.Canvas, "draw_links", On_Draw_Links'Access,
-         Browser, After => True);
-
-      Widget_Callback.Object_Connect
         (Browser.Canvas, "background_click",
          Widget_Callback.To_Marshaller (On_Background_Click'Access), Browser);
 
-      --  ??? Should free pixmaps on destroy.
+      Widget_Callback.Object_Connect
+        (Kernel, "preferences_changed",
+         Widget_Callback.To_Marshaller (On_Preferences_Changed'Access),
+         Browser);
 
       Set_Size_Request
         (Browser,
          Get_Pref (Kernel, Default_Widget_Width),
          Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
+
+   ---------------
+   -- Destroyed --
+   ---------------
+
+   procedure Destroyed (Browser : access Gtk_Widget_Record'Class) is
+      B : constant General_Browser := General_Browser (Browser);
+   begin
+      Unref (B.Up_Arrow);
+      Unref (B.Down_Arrow);
+      Unref (B.Close_Pixmap);
+      Unref (B.Default_Item_GC);
+      Unref (B.Selected_Item_GC);
+      Unref (B.Parent_Linked_Item_GC);
+      Unref (B.Child_Linked_Item_GC);
+      Unref (B.Text_GC);
+      Unref (B.Title_GC);
+
+      if Image_Canvas (B.Canvas).Background /= null then
+         Unref (Image_Canvas (B.Canvas).Background);
+      end if;
+      Unref (Image_Canvas (B.Canvas).Bg_GC);
+   end Destroyed;
+
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Browser : access Gtk_Widget_Record'Class)
+   is
+      B : constant General_Browser := General_Browser (Browser);
+      Kernel : constant Kernel_Handle := Get_Kernel (B);
+      Error  : GError;
+      Iter   : Item_Iterator;
+   begin
+      if Realized_Is_Set (B) then
+         B.Selected_Link_Color := Get_Pref (Kernel, Selected_Link_Color);
+         B.Unselected_Link_Color := Get_Pref (Kernel, Unselected_Link_Color);
+
+         Set_Foreground
+           (B.Selected_Item_GC,
+            Get_Pref (Kernel, Glide_Kernel.Preferences.Selected_Item_Color));
+         Set_Foreground
+           (B.Parent_Linked_Item_GC,
+            Get_Pref (Kernel, Parent_Linked_Item_Color));
+         Set_Foreground
+           (B.Child_Linked_Item_GC,
+            Get_Pref (Kernel, Child_Linked_Item_Color));
+         Set_Foreground
+           (B.Text_GC, Get_Pref (B.Kernel, Browsers_Hyper_Link_Color));
+         Set_Foreground
+           (B.Title_GC, Get_Pref (B.Kernel, GVD.Preferences.Title_Color));
+         Set_Foreground (Image_Canvas (B.Canvas).Bg_GC,
+                         Get_Pref (B.Kernel, Browsers_Bg_Color));
+      end if;
+
+      Configure
+        (B.Canvas,
+         Annotation_Font => Get_Pref (GVD_Prefs, Annotation_Font));
+
+      Image_Canvas (B.Canvas).Draw_Grid :=
+        Get_Pref (Kernel, Browsers_Draw_Grid);
+
+      if Image_Canvas (B.Canvas).Background /= null then
+         Unref (Image_Canvas (B.Canvas).Background);
+      end if;
+
+      if Get_Pref (Kernel, Browsers_Bg_Image) /= "" then
+         Gdk_New_From_File
+           (Image_Canvas (B.Canvas).Background,
+            Filename => Get_Pref (Kernel, Browsers_Bg_Image),
+            Error    => Error);
+      else
+         Image_Canvas (B.Canvas).Background := null;
+      end if;
+
+      On_Zoom (B.Canvas);
+
+      Iter := Start (B.Canvas);
+      while Get (Iter) /= null loop
+         Set_Font_Description
+           (Browser_Item (Get (Iter)).Title_Layout,
+            Get_Pref (Kernel, Browsers_Link_Font));
+
+         Refresh (Browser_Item (Get (Iter)));
+         Next (Iter);
+      end loop;
+
+      Refresh_Canvas (B.Canvas);
+   end On_Preferences_Changed;
 
    ---------------------------
    -- Setup_Default_Toolbar --
@@ -260,28 +449,6 @@ package body Browsers.Canvas is
       return Browser.Toolbar;
    end Get_Toolbar;
 
-   ------------------
-   -- On_Draw_Link --
-   ------------------
-
-   procedure On_Draw_Links
-     (Browser : access Gtk_Widget_Record'Class;
-      Args    : Glib.Values.GValues)
-   is
-      B   : constant General_Browser := General_Browser (Browser);
-      Win : constant Gdk_Window := Gdk_Window (To_C_Proxy (Args, 1));
-   begin
-      --  Redraw the selected links if needed.
-      --  IF we don't do that, then it might happen that unselected links
-      --  overlap selected links. This also means that these links are drawn
-      --  twice...
-      if B.Selected_Item /= null
-        and then Get_Orthogonal_Links (Get_Canvas (B))
-      then
-         Update_Links (Get_Canvas (B), Win, B.Selected_Item);
-      end if;
-   end On_Draw_Links;
-
    ---------------
    -- Key_Press --
    ---------------
@@ -312,6 +479,7 @@ package body Browsers.Canvas is
    begin
       if B.Selected_Item_GC = null then
          B.Selected_Link_Color := Get_Pref (Kernel, Selected_Link_Color);
+         B.Unselected_Link_Color := Get_Pref (Kernel, Unselected_Link_Color);
 
          Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
          Color := Get_Pref
@@ -332,11 +500,16 @@ package body Browsers.Canvas is
          Set_Foreground (B.Child_Linked_Item_GC, Color);
 
          Gdk_New (B.Text_GC, Get_Window (B.Canvas));
-         Set_Foreground (B.Text_GC, Get_Pref (B.Kernel, Browsers_Link_Color));
+         Set_Foreground
+           (B.Text_GC, Get_Pref (B.Kernel, Browsers_Hyper_Link_Color));
 
          Gdk_New (B.Title_GC, Get_Window (B.Canvas));
          Set_Foreground (B.Title_GC,
                          Get_Pref (B.Kernel, GVD.Preferences.Title_Color));
+
+         Gdk_New (Image_Canvas (B.Canvas).Bg_GC, Get_Window (B.Canvas));
+         Set_Foreground (Image_Canvas (B.Canvas).Bg_GC,
+                         Get_Pref (B.Kernel, Browsers_Bg_Color));
       end if;
    end Realized;
 
@@ -627,66 +800,6 @@ package body Browsers.Canvas is
       return General_Browser (Get_Parent (Get_Parent (Canvas)));
    end To_Brower;
 
-   -------------------
-   -- Selected_Item --
-   -------------------
-
-   function Selected_Item (Browser : access General_Browser_Record)
-      return Gtkada.Canvas.Canvas_Item is
-   begin
-      return Browser.Selected_Item;
-   end Selected_Item;
-
-   ---------------------------------
-   -- Highlight_Item_And_Siblings --
-   ---------------------------------
-
-   procedure Highlight_Item_And_Siblings
-     (Browser : access General_Browser_Record'Class;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Old     : Gtkada.Canvas.Canvas_Item := null)
-   is
-      Iter : Item_Iterator;
-      It  : Canvas_Item;
-   begin
-      if Old /= null then
-         Highlight (Browser_Item (Old));
-
-         Iter := Start (Browser.Canvas, Old);
-         loop
-            It := Get (Iter);
-            exit when It = null;
-            Highlight (Browser_Item (It));
-            Next (Iter);
-         end loop;
-      end if;
-
-      if Canvas_Item (Item) /= Old then
-         Highlight (Browser_Item (Item));
-      end if;
-
-      Iter := Start (Browser.Canvas, Canvas_Item (Item));
-      loop
-         It := Get (Iter);
-         exit when It = null;
-
-         --  Do not refresh items that have already been refreshed
-         if Old = null
-           or else (not Has_Link (Browser.Canvas, It, Old)
-                    and then not Has_Link (Browser.Canvas, Old, It))
-         then
-            Highlight (Browser_Item (It));
-         end if;
-
-         Next (Iter);
-      end loop;
-
-      --  We need to redraw the whole canvas, so that the links are correctly
-      --  updated. If Highlight_Item_And_Siblings is called twice, this isn't a
-      --  problem since gtk+ will coalesce the two events anyway.
-      Refresh_Canvas (Browser.Canvas);
-   end Highlight_Item_And_Siblings;
-
    ---------------
    -- Highlight --
    ---------------
@@ -696,22 +809,6 @@ package body Browsers.Canvas is
       Redraw_Title_Bar (Browser_Item (Item));
    end Highlight;
 
-   -----------------
-   -- Select_Item --
-   -----------------
-
-   procedure Select_Item
-     (Browser : access General_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class)
-   is
-      Old : constant Canvas_Item := Browser.Selected_Item;
-   begin
-      Browser.Selected_Item := Canvas_Item (Item);
-      if Canvas_Item (Item) /= Old then
-         Highlight_Item_And_Siblings (Browser, Item, Old);
-      end if;
-   end Select_Item;
-
    -------------------------
    -- On_Background_Click --
    -------------------------
@@ -720,35 +817,11 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class) is
    begin
       Grab_Focus (General_Browser (Browser).Canvas);
-      Unselect_All (General_Browser (Browser));
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Background_Click;
-
-   ------------------
-   -- Unselect_All --
-   ------------------
-
-   procedure Unselect_All (Browser : access General_Browser_Record) is
-      Old : constant Canvas_Item := Browser.Selected_Item;
-   begin
-      Browser.Selected_Item := null;
-      if Old /= null then
-         Highlight_Item_And_Siblings (Browser, Old);
-      end if;
-   end Unselect_All;
-
-   -----------------
-   -- Get_Text_GC --
-   -----------------
-
-   function Get_Text_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
-   begin
-      return Browser.Text_GC;
-   end Get_Text_GC;
 
    ---------------
    -- Draw_Link --
@@ -757,7 +830,6 @@ package body Browsers.Canvas is
    procedure Draw_Link
      (Canvas      : access Interactive_Canvas_Record'Class;
       Link        : access Browser_Link_Record;
-      Window      : Gdk.Window.Gdk_Window;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
       Edge_Number : Glib.Gint)
@@ -768,24 +840,23 @@ package body Browsers.Canvas is
         and then not Browser_Item (Get_Dest (Link)).Hide_Links
       then
          if Invert_Mode
-           or else
-           (Get_Src (Link) /= Vertex_Access (Selected_Item (Browser))
-            and then Get_Dest (Link) /=
-               Vertex_Access (Selected_Item (Browser)))
+           or else not
+           (Is_Selected (Canvas, Canvas_Item (Get_Src (Link)))
+            or else Is_Selected (Canvas, Canvas_Item (Get_Dest (Link))))
          then
             --  ??? Should force recomputation of the annotations so that they
             --  can have the same color as the link themselves. But since they
             --  are cached, the cache needs to be freed whenever we change the
             --  GC.
+            Set_Foreground (GC, Browser.Unselected_Link_Color);
             Draw_Link
-              (Canvas, Canvas_Link_Access (Link), Window,
+              (Canvas, Canvas_Link_Access (Link),
                Invert_Mode, GC, Edge_Number);
          else
             Set_Foreground (GC, Browser.Selected_Link_Color);
             Draw_Link
               (Canvas, Canvas_Link_Access (Link),
-               Window, Invert_Mode, GC, Edge_Number);
-            Set_Foreground (GC, Black (Get_Default_Colormap));
+               Invert_Mode, GC, Edge_Number);
          end if;
       end if;
    end Draw_Link;
@@ -879,10 +950,6 @@ package body Browsers.Canvas is
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
       then
-         if B.Selected_Item = Canvas_Item (User) then
-            Unselect_All (B);
-         end if;
-
          For_Each_Link
            (Get_Canvas (B), Reset_Item'Unrestricted_Access,
             From => Canvas_Item (User));
@@ -906,7 +973,7 @@ package body Browsers.Canvas is
    is
       Button_Width  : constant Gint := Get_Width  (Item.Browser.Close_Pixmap);
       Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
-      X : constant Gint := Get_Coord (Item).Width
+      X : constant Gint := Item.Title_Width + Item.Title_X
         - (Num + 1) * (Margin + Button_Width);
       Y, W, H : Gint;
       Thick : constant Gint := Y_Thickness (Get_Style (Item.Browser.Canvas));
@@ -917,7 +984,7 @@ package body Browsers.Canvas is
       end if;
 
       Get_Pixel_Size (Item.Title_Layout, W, H);
-      Y := (H - Button_Height) / 2 + Thick;
+      Y := (H - Button_Height) / 2 + Thick + Item.Title_Y;
 
       Draw_Shadow
         (Style       => Get_Style (Item.Browser),
@@ -964,23 +1031,23 @@ package body Browsers.Canvas is
            (Pixmap (Item),
             GC     => Get_Title_Background_GC (Browser_Item (Item)),
             Filled => True,
-            X      => XThick,
-            Y      => YThick,
-            Width  => Get_Coord (Item).Width - 2 * XThick,
+            X      => Item.Title_X + YThick,
+            Y      => Item.Title_Y + YThick,
+            Width  => Item.Title_Width - 2 * XThick,
             Height => H);
          Draw_Layout
            (Drawable => Pixmap (Item),
             GC       => Get_Black_GC (Get_Style (Item.Browser)),
-            X        => Margin + XThick,
-            Y        => YThick,
+            X        => Margin + XThick + Item.Title_X,
+            Y        => YThick + Item.Title_Y,
             Layout   => Item.Title_Layout);
          Draw_Line
            (Pixmap (Item),
             Gc     => Get_Black_GC (Get_Style (Item.Browser)),
-            X1     => XThick,
-            Y1     => H + YThick,
-            X2     => Get_Coord (Item).Width - XThick - 1,
-            Y2     => H + YThick);
+            X1     => XThick + Item.Title_X,
+            Y1     => H + YThick + Item.Title_Y,
+            X2     => Item.Title_Width + Item.Title_X - XThick - 1,
+            Y2     => H + YThick + Item.Title_Y);
          Draw_Title_Bar_Button
            (Item   => Item,
             Num    => 0,
@@ -1009,25 +1076,28 @@ package body Browsers.Canvas is
      (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC
    is
       B : constant General_Browser := Get_Browser (Item);
-      Selected : constant Canvas_Item := Selected_Item (B);
+      Canvas : constant Interactive_Canvas := Get_Canvas (B);
+      Iter : Item_Iterator;
    begin
-      if Canvas_Item (Item) = Selected then
+      if Is_Selected (Canvas, Item) then
          return Get_Selected_Item_GC (B);
 
-      elsif Selected /= null
-        and then Has_Link (Get_Canvas (B), From => Item, To => Selected)
-      then
-         return Get_Parent_Linked_Item_GC (B);
-
-      elsif Selected /= null
-        and then Has_Link (Get_Canvas (B), From => Selected, To => Item)
-      then
-         return Get_Child_Linked_Item_GC (B);
-
       else
-         --  ??? Should use different color
-         return Item.Browser.Title_GC;
+         Iter := Start (Canvas, Linked_From_Or_To => Canvas_Item (Item));
+         while Get (Iter) /= null loop
+            if Is_Selected (Canvas, Get (Iter)) then
+               if Is_Linked_From (Iter) then
+                  return Get_Parent_Linked_Item_GC (B);
+               else
+                  return Get_Child_Linked_Item_GC (B);
+               end if;
+            end if;
+            Next (Iter);
+         end loop;
       end if;
+
+      --  ??? Should use different color
+      return Item.Browser.Title_GC;
    end Get_Title_Background_GC;
 
    -----------------------
@@ -1052,7 +1122,7 @@ package body Browsers.Canvas is
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      pragma Unreferenced (Xoffset, Layout);
+      pragma Unreferenced (Layout);
       Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
         (Browser_Item (Item));  --  dispatching call
       Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
@@ -1073,6 +1143,10 @@ package body Browsers.Canvas is
          H := Height;
       end if;
 
+      Item.Title_Width := W;
+      Item.Title_X := Xoffset;
+      Item.Title_Y := Yoffset;
+
       W := W + Width_Offset;
       H := H + Height_Offset;
 
@@ -1084,20 +1158,20 @@ package body Browsers.Canvas is
         (Pixmap (Item),
          GC     => Bg_GC,
          Filled => True,
-         X      => 0,
-         Y      => Layout_H,
-         Width  => W,
-         Height => H - Layout_H);
+         X      => Xoffset,
+         Y      => Layout_H + Yoffset,
+         Width  => W - Width_Offset,
+         Height => H - Layout_H - Height_Offset);
 
       Draw_Shadow
         (Style       => Get_Style (Item.Browser.Canvas),
          Window      => Pixmap (Item),
          State_Type  => State_Normal,
          Shadow_Type => Shadow_Out,
-         X           => 0,
-         Y           => 0,
-         Width       => W,
-         Height      => H);
+         X           => Xoffset,
+         Y           => Yoffset,
+         Width       => W - Width_Offset - Xoffset,
+         Height      => H - Height_Offset - Yoffset);
 
       if Item.Title_Layout /= null then
          Yoffset := Yoffset + Layout_H;
@@ -1112,10 +1186,6 @@ package body Browsers.Canvas is
      (Item  : access Browser_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button) is
    begin
-      if Get_Event_Type (Event) = Button_Press then
-         Select_Item (Item.Browser, Item);
-      end if;
-
       Raise_Item (Get_Canvas (Get_Browser (Item)), Item);
       Activate (Browser_Item (Item), Event);
 
@@ -1144,6 +1214,40 @@ package body Browsers.Canvas is
    begin
       Item.Browser := General_Browser (Browser);
    end Initialize;
+
+   --------------
+   -- Selected --
+   --------------
+
+   procedure Selected
+     (Item        : access Browser_Item_Record;
+      Canvas      : access Interactive_Canvas_Record'Class;
+      Is_Selected : Boolean)
+   is
+      pragma Unreferenced (Is_Selected);
+      --  Call Highlight on Item and all its siblings. If the selection status
+      --  has changed, this will result in a change of background color for
+      --  these items.
+      Iter : Item_Iterator;
+      It  : Canvas_Item;
+   begin
+      Highlight (Browser_Item (Item));
+
+      Iter := Start (Canvas, Canvas_Item (Item));
+      loop
+         It := Get (Iter);
+         exit when It = null;
+
+         Highlight (Browser_Item (It));
+
+         Next (Iter);
+      end loop;
+
+      --  We need to redraw the whole canvas, so that the links are correctly
+      --  updated. If multiple items are selected, this isn't a problem since
+      --  gtk+ will coalesce the two events anyway.
+      Refresh_Canvas (Canvas);
+   end Selected;
 
    ----------
    -- Call --
@@ -1706,7 +1810,7 @@ package body Browsers.Canvas is
             Set_Text (Layout, List.Lines (L)(First .. Last - 1));
 
             if In_Xref then
-               GC := Get_Text_GC (Browser);
+               GC := Browser.Text_GC;
             else
                GC := Get_Black_GC (Get_Style (Browser));
             end if;
