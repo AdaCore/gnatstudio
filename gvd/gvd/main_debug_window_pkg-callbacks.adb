@@ -41,6 +41,7 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 with Odd.Canvas;          use Odd.Canvas;
 with Odd.Dialogs;         use Odd.Dialogs;
 with Gtkada.Types;        use Gtkada.Types;
+with Odd.Types;           use Odd.Types;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 

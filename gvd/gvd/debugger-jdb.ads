@@ -73,46 +73,46 @@ package Debugger.Jdb is
    procedure Set_Executable
      (Debugger   : access Jdb_Debugger;
       Executable : String;
-      Mode       : Command_Type := Internal);
+      Mode       : Odd.Types.Command_Type := Odd.Types.Internal);
 
    procedure Run
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
-      Mode      : Command_Type := Hidden);
+      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Start
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
-      Mode      : Command_Type := Hidden);
+      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Attach_Process
      (Debugger : access Jdb_Debugger;
       Process  : String;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Detach_Process
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Step_Into
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Step_Over
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Step_Into_Instruction
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Step_Over_Instruction
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Continue
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Interrupt (Debugger : access Jdb_Debugger);
 
@@ -130,63 +130,63 @@ package Debugger.Jdb is
 
    procedure Stack_Down
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Stack_Up
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Stack_Frame
      (Debugger : access Jdb_Debugger;
       Frame    : Positive;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Break_Subprogram
      (Debugger  : access Jdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden);
+      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Break_Source
      (Debugger  : access Jdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden);
+      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden);
+      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Break_Address
      (Debugger   : access Jdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden);
+      Mode       : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Break_Regexp
      (Debugger   : access Jdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden);
+      Mode       : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Enable_Breakpoint
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
       Enable   : Boolean := True;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Remove_Breakpoint
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Finish
      (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Backtrace
      (Debugger : access Jdb_Debugger;
@@ -196,7 +196,7 @@ package Debugger.Jdb is
    procedure Change_Directory
      (Debugger    : access Jdb_Debugger;
       Dir         : String;
-      Mode        : Command_Type := Hidden);
+      Mode        : Odd.Types.Command_Type := Odd.Types.Hidden);
 
    procedure Found_File_Name
      (Debugger    : access Jdb_Debugger;
@@ -250,7 +250,7 @@ private
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Command_Type := Hidden)
+      Mode            : Odd.Types.Command_Type := Odd.Types.Hidden)
      return String;
 
    type Jdb_Debugger is new Debugger.Debugger_Root with record

@@ -30,6 +30,7 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger; use Debugger;
 with Process_Proxies; use Process_Proxies;
+with Odd.Types; use Odd.Types;
 
 package body Process_Tab_Pkg.Callbacks is
 

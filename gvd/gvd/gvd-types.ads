@@ -33,6 +33,13 @@ package Odd.Types is
    procedure Free (Ar : in out String_Array);
    --  Free all the strings in the array.
 
+   type Command_Type is (Internal, Hidden, User);
+   --  Internal commands are not stored into the command history.
+   --  Hidden commands are stored into the history but not shown in
+   --  the debugger window.
+   --  User commands are shown into the command history and displayed in
+   --  the debugger window.
+
    -----------------
    -- Breakpoints --
    -----------------
