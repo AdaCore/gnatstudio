@@ -47,8 +47,6 @@ package body Shell_Script is
 
    Me : constant Debug_Handle := Create ("Shell_Script");
 
-   Shell_Name : constant String := "GPS Shell";
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
@@ -80,6 +78,10 @@ package body Shell_Script is
      (Script             : access Shell_Scripting_Record;
       Command            : String;
       Display_In_Console : Boolean := True);
+   function Execute_Command
+     (Script  : access Shell_Scripting_Record;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    function Get_Name (Script : access Shell_Scripting_Record) return String;
    --  See doc from inherited subprograms
 
@@ -243,6 +245,15 @@ package body Shell_Script is
    function Instance_From_Address
      (Add : System.Address) return Shell_Class_Instance;
    --  Return an instance from its address
+
+   function Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String) return String;
+   function Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
+   --  Execute a command in the GPS shell and returns its result.
 
    ------------------------
    -- Name_From_Instance --
@@ -651,8 +662,21 @@ package body Shell_Script is
    function Get_Name (Script : access Shell_Scripting_Record) return String is
       pragma Unreferenced (Script);
    begin
-      return Shell_Name;
+      return GPS_Shell_Name;
    end Get_Name;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Shell_Scripting_Record;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String is
+   begin
+      return Execute_GPS_Shell_Command
+        (Script.Kernel, Command, Args);
+   end Execute_Command;
 
    -------------------------------
    -- Execute_GPS_Shell_Command --

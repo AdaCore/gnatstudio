@@ -21,7 +21,6 @@
 --  This package contains the implementation for a specific scripting language,
 --  the simple GPS shell.
 
-with GNAT.OS_Lib;
 with Glide_Kernel;
 
 package Shell_Script is
@@ -29,14 +28,5 @@ package Shell_Script is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
-
-   function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
-   function Execute_GPS_Shell_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String) return String;
-   --  Execute a command in the GPS shell and returns its result.
 
 end Shell_Script;
