@@ -122,6 +122,10 @@ package body Python_Module is
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
       Errors             : access Boolean) return Boolean;
+   function Execute_Command
+     (Script  : access Python_Scripting_Record;
+      Command : String;
+      Args    : Callback_Data'Class) return Boolean;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
@@ -1239,6 +1243,49 @@ package body Python_Module is
    begin
       Obj := Run_Command
         (Script.Interpreter, Command, Console, Hide_Output, Errors);
+      return Obj /= null
+        and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
+                  or else
+                    (PyString_Check (Obj)
+                     and then PyString_AsString (Obj) = "true"));
+   end Execute_Command;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Python_Scripting_Record;
+      Command : String;
+      Args    : Callback_Data'Class) return Boolean
+   is
+      Obj : PyObject;
+      Errors : aliased Boolean;
+
+   begin
+      Obj := Run_Command
+        (Script.Interpreter,
+         Command     => Command,
+         Hide_Output => True,
+         Errors      => Errors'Unrestricted_Access);
+
+      if Obj /= null and then PyFunction_Check (Obj) then
+         Obj := PyEval_EvalCodeEx
+           (PyFunction_Get_Code (Obj),
+            Globals  => PyFunction_Get_Globals (Obj),
+            Locals   => null,
+            Args     => Python_Callback_Data (Args).Args,
+            Kwds     => Python_Callback_Data (Args).Kw,
+            Defaults => PyFunction_Get_Defaults (Obj),
+            Closure  => PyFunction_Get_Closure (Obj));
+      else
+         Trace (Me, Command & " is not a function");
+      end if;
+
+      if Obj = null then
+         PyErr_Print;
+      end if;
+
       return Obj /= null
         and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
                   or else
