@@ -46,6 +46,7 @@ with Language.Ada;              use Language.Ada;
 with Language.C;                use Language.C;
 with Language.Cpp;              use Language.Cpp;
 with Prj;                       use Prj;
+with Prj_API;
 with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
 
@@ -460,6 +461,8 @@ begin
    Free (Home);
    Free (Dir);
    Free (Prefix);
+
+   Prj_API.Finalize;
 
 exception
    when Invalid_Switch | Invalid_Parameter =>
