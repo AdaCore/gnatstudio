@@ -23,6 +23,7 @@ with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Generic_List;
 with Unchecked_Deallocation;
 with Commands;             use Commands;
+with Commands.VCS;         use Commands.VCS;
 
 package body VCS is
 
@@ -177,5 +178,19 @@ package body VCS is
    begin
       return VCS.Queue;
    end Get_Queue;
+
+   -----------------
+   -- Check_Files --
+   -----------------
+
+   procedure Check_Files
+     (Rep       : access VCS_Record;
+      Filenames : String_List_Utils.String_List.List)
+   is
+      C : Update_Files_Command_Access;
+   begin
+      Create (C, Rep.Kernel, Filenames);
+      Enqueue (Rep.Queue, C);
+   end Check_Files;
 
 end VCS;

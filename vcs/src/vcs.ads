@@ -251,6 +251,13 @@ package VCS is
    --  in order to display the annotations in the GPS editors.
    --  The Line_Information ID that must be used is Annotation_Id.
 
+   procedure Check_Files
+     (Rep       : access VCS_Record;
+      Filenames : String_List_Utils.String_List.List);
+   --  Enqueue an action that will check that the open buffers correspond
+   --  to files on disk, and reload the buffers if necessary, asking the user
+   --  when the buffer has been modified.
+
    procedure Set_Error
      (Rep            : access VCS_Record;
       Message        : String;
