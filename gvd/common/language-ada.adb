@@ -378,17 +378,18 @@ package body Language.Debugger.Ada is
       File_Name : String)
      return Boolean
    is
+      Name : constant String := Base_File_Name (File_Name);
    begin
-      return (File_Name'Length > 2
-              and then File_Name (File_Name'First + 1) = '-'
-              and then (File_Name (File_Name'First) = 'a'
-                        or else File_Name (File_Name'First) = 'g'
-                        or else File_Name (File_Name'First) = 's'
-                        or else File_Name (File_Name'First) = 'i'))
-        or else File_Name = "gnat.ads"
-        or else File_Name = "ada.ads"
-        or else File_Name = "interfac.ads"
-        or else File_Name = "system.ads";
+      return (Name'Length > 2
+              and then Name (Name'First + 1) = '-'
+              and then (Name (Name'First) = 'a'
+                        or else Name (Name'First) = 'g'
+                        or else Name (Name'First) = 's'
+                        or else Name (Name'First) = 'i'))
+        or else Name = "gnat.ads"
+        or else Name = "ada.ads"
+        or else Name = "interfac.ads"
+        or else Name = "system.ads";
    end Is_System_File;
 
 begin
