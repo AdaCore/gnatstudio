@@ -1,4 +1,4 @@
-Known Problems fixed in GPS 2.2.0
+Known Problems fixed in GPS 3.0.0
 
 - E207-021 Can't load a project depending on predefined projects
   Problem:    If your project depends on project files found in the predefined
