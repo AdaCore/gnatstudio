@@ -3074,6 +3074,7 @@ package body Project_Viewers is
       procedure Process_Title_Node      (N : Node_Ptr);
       procedure Process_Check_Node      (N : Node_Ptr);
       procedure Process_Spin_Node       (N : Node_Ptr);
+      procedure Process_Field_Node      (N : Node_Ptr);
       procedure Process_Radio_Node      (N : Node_Ptr);
       procedure Process_Combo_Node      (N : Node_Ptr);
       procedure Process_Popup_Node      (N : Node_Ptr);
@@ -3349,6 +3350,37 @@ package body Project_Viewers is
             False, False);
       end Process_Combo_Node;
 
+      ------------------------
+      -- Process_Field_Node --
+      ------------------------
+
+      procedure Process_Field_Node (N : Node_Ptr) is
+         Line, Col : Natural;
+         Label   : constant String := Get_Attribute (N, "label");
+         Switch  : constant String := Get_Attribute (N, "switch");
+         Tip     : constant String := Get_Attribute (N, "tip");
+         As_Dir  : constant Boolean :=
+           Get_Attribute (N, "as-directory", "false") = "true";
+         As_File  : constant Boolean :=
+           Get_Attribute (N, "as-file", "false") = "true";
+      begin
+         Coordinates_From_Node (N, Line, Col);
+
+         if Label = "" or else Switch = "" then
+            Insert (Kernel,
+                      -("Invalid <spin> node in custom file, requires"
+                        & " a label and a switch attributes"),
+                    Mode => Glide_Kernel.Console.Error);
+            return;
+         end if;
+
+         Create_Field
+           (Page, Boxes (Line, Col), Label, Switch, Tip,
+            As_Directory     => As_Dir and not As_File,
+            As_File          => As_File,
+            Label_Size_Group => Sizes (Line, Col));
+      end Process_Field_Node;
+
       -----------------------
       -- Process_Spin_Node --
       -----------------------
@@ -3485,6 +3517,8 @@ package body Project_Viewers is
                Process_Spin_Node (N);
             elsif N.Tag.all = "radio" then
                Process_Radio_Node (N);
+            elsif N.Tag.all = "field" then
+               Process_Field_Node (N);
             elsif N.Tag.all = "combo" then
                Process_Combo_Node (N);
             elsif N.Tag.all = "popup" then
@@ -3525,7 +3559,7 @@ package body Project_Viewers is
       Tool : constant Tool_Properties_Record :=
         Get_Tool_Properties (Kernel, Creator.Tool_Name.all);
    begin
-      Gtk_New (Page, Creator.Tool_Name.all,
+      Gtk_New (Page, Kernel, Creator.Tool_Name.all,
                Tool.Project_Package.all,
                Tool.Project_Index.all,
                Guint (Lines), Guint (Cols), Get_Tooltips (Kernel));
@@ -3608,6 +3642,7 @@ package body Project_Viewers is
                              and then Child.Tag.all /= "spin"
                              and then Child.Tag.all /= "radio"
                              and then Child.Tag.all /= "combo"
+                             and then Child.Tag.all /= "field"
                              and then Child.Tag.all /= "popup"
                              and then Child.Tag.all /= "dependency"
                              and then Child.Tag.all /= "expansion"
