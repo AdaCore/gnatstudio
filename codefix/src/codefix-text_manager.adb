@@ -237,7 +237,10 @@ package body Codefix.Text_Manager is
       procedure Free_Pool is new
         Ada.Unchecked_Deallocation (Mark_Abstr'Class, Ptr_Mark);
    begin
-      Free (This.all);
+      if This /= null then
+         Free (This.all);
+      end if;
+
       Free_Pool (This);
    end Free;
 
