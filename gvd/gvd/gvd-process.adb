@@ -411,20 +411,24 @@ package body Odd.Process is
             Addr_First, Addr_Last);
       end if;
 
-      --  Do not show the output if we have an internal command
+      --  Do not show the output if we have an internal or hidden command
 
-      if Get_Command_Mode (Get_Process (Process.Debugger)) /= Internal then
-         if First = 0 then
-            Text_Output_Handler (Process, Str);
-         else
-            Text_Output_Handler (Process, Str (Str'First .. First - 1));
-            Text_Output_Handler (Process, Str (Last + 1 .. Str'Last));
-         end if;
+      case Get_Command_Mode (Get_Process (Process.Debugger)) is
+         when User | Odd.Types.Visible =>
+            if First = 0 then
+               Text_Output_Handler (Process, Str);
+            else
+               Text_Output_Handler (Process, Str (Str'First .. First - 1));
+               Text_Output_Handler (Process, Str (Last + 1 .. Str'Last));
+            end if;
 
-         Process.Edit_Pos := Get_Length (Process.Debugger_Text);
-         Set_Point (Process.Debugger_Text, Process.Edit_Pos);
-         Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
-      end if;
+            Process.Edit_Pos := Get_Length (Process.Debugger_Text);
+            Set_Point (Process.Debugger_Text, Process.Edit_Pos);
+            Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
+
+         when Hidden | Internal =>
+            null;
+      end case;
 
       --  Do we have a file name or line number indication: if yes, do not
       --  process them immediatly, but wait for the current command to be
@@ -698,7 +702,12 @@ package body Odd.Process is
 
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
+
       Initialize (Process.Debugger);
+
+      --  Display the initial prompt
+
+      Display_Prompt (Process.Debugger);
 
       return Process;
    end Create_Debugger;
