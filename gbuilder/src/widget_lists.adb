@@ -168,7 +168,7 @@ package body Widget_Lists is
    procedure Gtk_New (Page : out List_Page) is
    begin
       Page := new List_Page_Record;
-      Initialize (Page);
+      Widget_Lists.Initialize (Page);
    end Gtk_New;
 
    -------------
