@@ -65,7 +65,7 @@ package body GVD.Canvas is
       Component      : Items.Generic_Type_Access;
       Component_Name : String (1 .. Name_Length);
       Mode           : Display_Mode;
-
+      Format         : Value_Format;
       Zoom           : Guint;
    end record;
 
@@ -107,7 +107,12 @@ package body GVD.Canvas is
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
    --  Change the mode of a specific item to indicate whether the value of the
-   --  item should be displayed
+   --  item should be displayed.
+
+   procedure Change_Format
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Change the display format of a specific item.
 
    procedure Clone_Component
      (Widget  : access Gtk_Widget_Record'Class;
@@ -499,6 +504,21 @@ package body GVD.Canvas is
       end if;
    end Change_Display_Mode;
 
+   -------------------
+   -- Change_Format --
+   -------------------
+
+   procedure Change_Format
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record) is
+   begin
+      if Get_Active (Gtk_Radio_Menu_Item (Widget))
+        and then Get_Format (Item.Item) /= Item.Format
+      then
+         Set_Format (Item.Item, Item.Format);
+      end if;
+   end Change_Format;
+
    ---------------------
    -- Clone_Component --
    ---------------------
@@ -619,6 +639,7 @@ package body GVD.Canvas is
              Component      => null,
              Component_Name => "",
              Mode           => Value,
+             Format         => Default_Format,
              Zoom           => Zoom_Levels (J)));
       end loop;
 
@@ -685,9 +706,10 @@ package body GVD.Canvas is
       Component      : Items.Generic_Type_Access;
       Component_Name : String) return Gtk.Menu.Gtk_Menu
    is
-      Mitem : Gtk_Menu_Item;
-      Radio : Gtk_Radio_Menu_Item;
-      Check : Gtk_Check_Menu_Item;
+      Mitem   : Gtk_Menu_Item;
+      Radio   : Gtk_Radio_Menu_Item;
+      Check   : Gtk_Check_Menu_Item;
+      Submenu : Gtk_Menu;
 
    begin
       if Canvas.Item_Contextual_Menu /= null then
@@ -708,6 +730,7 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
@@ -726,6 +749,7 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
@@ -739,6 +763,7 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
@@ -761,10 +786,11 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"View memory at &" & Component_Name);
+      Gtk_New (Mitem, Label => -"View memory at address of " & Component_Name);
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (View_Into_Memory'Access),
@@ -774,6 +800,7 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
@@ -792,6 +819,7 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
       Set_Sensitive (Mitem, Is_A_Variable (Item));
@@ -806,11 +834,17 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
       --  Display a separator
       Gtk_New (Mitem);
+      Append (Canvas.Item_Contextual_Menu, Mitem);
+
+      Gtk_New (Submenu);
+      Gtk_New (Mitem, Label => -"Display");
+      Set_Submenu (Mitem, Gtk_Widget (Submenu));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
       Gtk_New (Radio, Widget_SList.Null_List, -"Show Value");
@@ -824,8 +858,9 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Radio);
+      Append (Submenu, Radio);
 
       Gtk_New (Radio, Group (Radio), -"Show Type");
       Set_Active (Radio, Get_Display_Mode (Item) = Type_Only);
@@ -838,8 +873,9 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Type_Only,
+                      Format         => Default_Format,
                       Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Radio);
+      Append (Submenu, Radio);
 
       Gtk_New (Radio, Group (Radio), -"Show Value + Type");
       Set_Active (Radio, Get_Display_Mode (Item) = Type_Value);
@@ -852,8 +888,88 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Type_Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
-      Append (Canvas.Item_Contextual_Menu, Radio);
+      Append (Submenu, Radio);
+
+      --  Display a separator
+      Gtk_New (Mitem);
+      Append (Submenu, Mitem);
+
+      Gtk_New (Radio, Widget_SList.Null_List, -"Default");
+      Set_Active (Radio, Get_Format (Item) = Default_Format);
+      Item_Handler.Connect
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Format'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value,
+                      Format         => Default_Format,
+                      Zoom           => 100));
+      Append (Submenu, Radio);
+
+      Gtk_New (Radio, Group (Radio), -"Decimal");
+      Set_Active (Radio, Get_Format (Item) = Decimal);
+      Item_Handler.Connect
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Format'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value,
+                      Format         => Decimal,
+                      Zoom           => 100));
+      Append (Submenu, Radio);
+
+      Gtk_New (Radio, Group (Radio), -"Hexadecimal");
+      Set_Active (Radio, Get_Format (Item) = Hexadecimal);
+      Item_Handler.Connect
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Format'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value,
+                      Format         => Hexadecimal,
+                      Zoom           => 100));
+      Append (Submenu, Radio);
+
+      Gtk_New (Radio, Group (Radio), -"Octal");
+      Set_Active (Radio, Get_Format (Item) = Octal);
+      Item_Handler.Connect
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Format'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value,
+                      Format         => Octal,
+                      Zoom           => 100));
+      Append (Submenu, Radio);
+
+      Gtk_New (Radio, Group (Radio), -"Binary");
+      Set_Active (Radio, Get_Format (Item) = Binary);
+      Item_Handler.Connect
+        (Radio, "activate",
+         Item_Handler.To_Marshaller (Change_Format'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value,
+                      Format         => Binary,
+                      Zoom           => 100));
+      Append (Submenu, Radio);
 
       --  Display a separator
 
@@ -874,6 +990,7 @@ package body GVD.Canvas is
                       Component      => Component,
                       Component_Name => Component_Name,
                       Mode           => Value,
+                      Format         => Default_Format,
                       Zoom           => 100));
       Append (Canvas.Item_Contextual_Menu, Check);
 
