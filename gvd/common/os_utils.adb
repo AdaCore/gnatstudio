@@ -40,6 +40,23 @@ package body OS_Utils is
 
    function Get_Tmp_Dir return String is
       S : String_Access;
+
+      function Normalize (Path : String_Access) return String;
+      --  Normalize Path as a directory and Free it on return
+
+      function Normalize (Path : String_Access) return String is
+         P   : String_Access := Path;
+         Val : constant String := Path.all;
+      begin
+         Free (P);
+
+         if Val (Val'Last) = Dir_Separator then
+            return Val;
+         else
+            return Val & Dir_Separator;
+         end if;
+      end Normalize;
+
    begin
       --  Try in the following order:
       --  TMPDIR env var
@@ -51,24 +68,14 @@ package body OS_Utils is
       S := Getenv ("TMPDIR");
 
       if S.all /= "" then
-         declare
-            Val : constant String := Normalize_Pathname (S.all & "/");
-         begin
-            Free (S);
-            return Val;
-         end;
+         return Normalize (S);
       end if;
 
       Free (S);
       S := Getenv ("TEMP");
 
       if S.all /= "" then
-         declare
-            Val : constant String := Normalize_Pathname (S.all & "/");
-         begin
-            Free (S);
-            return Val;
-         end;
+         return Normalize (S);
       end if;
 
       Free (S);
@@ -86,7 +93,7 @@ package body OS_Utils is
       Base        : String_Access;
 
    begin
-      Change_Dir (Get_Tmp_Dir);
+      Change_Dir (Temp_Dir);
       Create_Temp_File (Fd, Base);
       Close (Fd);
 
