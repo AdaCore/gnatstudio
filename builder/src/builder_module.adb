@@ -45,6 +45,7 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Prj_API;                   use Prj_API;
 with Prj;                       use Prj;
 with Src_Info;                  use Src_Info;
+with Histories;                 use Histories;
 
 with Glide_Main_Window;         use Glide_Main_Window;
 
@@ -68,6 +69,11 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
 package body Builder_Module is
+
+   Cst_Run_Arguments_History : constant History_Key := "gvd_run_arguments";
+   --  The key in the history for the arguments to the run command.
+   --  WARNING: this constant is shared with gvd-menu.adb, since we want to
+   --  have the same history for the debugger arguments.
 
    Timeout : constant Guint32 := 50;
    --  Timeout in milliseconds to check the build process
@@ -1240,7 +1246,7 @@ package body Builder_Module is
                Title         => -"Run Command",
                Message       => -"Enter the command to run:",
                Check_Msg     => -"Use external terminal",
-               Key           => "gps_run_cmd",
+               Key           => Cst_Run_Arguments_History,
                History       => Get_History (K),
                Button_Active => Active'Unchecked_Access);
 
