@@ -106,9 +106,9 @@ package body Browsers.Dependency_Items is
       Source : Internal_File) return Boolean;
    --  Return True if Source is a system file (runtime file for Ada).
    --  ??? This should be moved to a more general location, and perhaps be
-   --  ??? implemented with support from the project files.
-   --  ??? It could also simply use the paths to detect whether the file is in
-   --  ??? one of the predefined paths.
+   --  implemented with support from the project files.
+   --  It could also simply use the paths to detect whether the file is in
+   --  one of the predefined paths.
 
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -245,8 +245,9 @@ package body Browsers.Dependency_Items is
    is
       Child   : MDI_Child;
    begin
-      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel),
-                                      Glide_Browser_Record'Tag);
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Glide_Browser_Record'Tag);
+
       if Child /= null then
          Raise_Child (Child);
       else
@@ -298,6 +299,7 @@ package body Browsers.Dependency_Items is
    begin
       Set_Busy (Kernel_Handle (Kernel), True);
       Lib_Info := Locate_From_Source_And_Complete (Kernel, F);
+
       if Lib_Info = No_LI_File then
          Trace (Me,
                 "Examine_Dependencies: Couldn't find ALI file for " & File);
@@ -366,7 +368,13 @@ package body Browsers.Dependency_Items is
                  Vertical_Layout => Vertical_Layout);
          Refresh_Canvas (Get_Canvas (In_Browser));
       end if;
+
       Set_Busy (Kernel_Handle (Kernel), False);
+
+   exception
+      when others =>
+         Set_Busy (Kernel_Handle (Kernel), False);
+         raise;
    end Examine_Dependencies;
 
    --------------------
@@ -505,6 +513,7 @@ package body Browsers.Dependency_Items is
         (Get_Kernel (Context),
          Dependency_Browser (Get_Widget (Browser)),
          File_Information (File_Selection_Context_Access (Context)));
+
    exception
       when E : Unsupported_Language =>
          Insert (Get_Kernel (Context), Exception_Message (E),
