@@ -21,7 +21,6 @@
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Language.Ada;              use Language.Ada;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -29,7 +28,6 @@ with OS_Utils;                  use OS_Utils;
 
 package body Docgen.Work_On_Source is
 
-   package ASU renames Ada.Strings.Unbounded;
    package TSFL renames Type_Source_File_List;
    package TEL renames Type_Entity_List;
 
@@ -169,6 +167,7 @@ package body Docgen.Work_On_Source is
    begin
       --  initialise the Doc_Info data
       Data_Open := Doc_Info'(Open_Info,
+                             Process_Body => Options.Process_Body_Files,
                              Open_Title => new String'("Docgen documentation"),
                              Open_File  => new String'(Package_File),
                              Open_Package_List => Source_File_List);
@@ -191,6 +190,7 @@ package body Docgen.Work_On_Source is
    begin
       --  initialise the Doc_Info data
       Data_Close := Doc_Info'(Close_Info,
+                              Process_Body => Options.Process_Body_Files,
                               Close_Title => new String'("End documentation"));
 
       --  call the documentation procedure
@@ -214,6 +214,7 @@ package body Docgen.Work_On_Source is
    begin
       --  initialise the Doc_Info data
       Data_Line := Doc_Info'(Body_Line_Info,
+                             Process_Body => Options.Process_Body_Files,
                              Body_Text      => File_Text,
                              Body_File      =>
                              new String'(Source_File),
@@ -269,6 +270,7 @@ package body Docgen.Work_On_Source is
          end if;
 
          Data_Package := Doc_Info'(Unit_Index_Info,
+                                   Process_Body => Options.Process_Body_Files,
                                    Doc_Directory =>
                                    new String'(Options.Doc_Directory.all),
                                    First_File =>
@@ -288,6 +290,7 @@ package body Docgen.Work_On_Source is
                Package_Name    := TSFL.Data (Source_File_Node).Package_Name;
                Data_Item :=
                  Doc_Info'(Index_Item_Info,
+                           Process_Body => Options.Process_Body_Files,
                            Item_Name => Package_Name,
                            Item_File =>
                            new String'(File_Name (Source_Filename.all)),
@@ -307,6 +310,7 @@ package body Docgen.Work_On_Source is
       end if;
 
       Data_End := Doc_Info'(End_Of_Index_Info,
+                            Process_Body => Options.Process_Body_Files,
                             End_index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
@@ -329,13 +333,10 @@ package body Docgen.Work_On_Source is
 
       Source_Filename       : GOL.String_Access;
       Subprogram_Index_Node : Type_Entity_List.List_Node;
-
       Index_File       : File_Type;
-
       Data_Subprogram  : Doc_Info (Info_Type => Subprogram_Index_Info);
       Data_Item        : Doc_Info (Info_Type => Index_Item_Info);
       Data_End         : Doc_Info (Info_Type => End_Of_Index_Info);
-
    begin
       Create (Index_File,
               Out_File,
@@ -343,6 +344,7 @@ package body Docgen.Work_On_Source is
               & "index_sub" & Options.Doc_Suffix.all);
 
       Data_Subprogram := Doc_Info'(Subprogram_Index_Info,
+                                   Process_Body => Options.Process_Body_Files,
                                    First_Dummy => null);
       Options.Doc_Subprogram (Index_File, Data_Subprogram);
 
@@ -350,36 +352,34 @@ package body Docgen.Work_On_Source is
          Subprogram_Index_Node := TEL.First (Subprogram_Index_List);
          for J in 1 .. Type_Entity_List.Length (Subprogram_Index_List) loop
 
-               --  only if NOT a subprogram from a standard package!
-            if Index (To_Unbounded_String
-                        (TEL.Data
-                           (Subprogram_Index_Node).Name.all), ".") > 0 then
+            Source_Filename := TEL.Data (Subprogram_Index_Node).File_Name;
 
-               Source_Filename := TEL.Data (Subprogram_Index_Node).File_Name;
+            Data_Item := Doc_Info'(Index_Item_Info,
+                                   Process_Body =>
+                                     Options.Process_Body_Files,
+                                   Item_Name =>
+                                     TEL.Data
+                                       (Subprogram_Index_Node).Short_Name,
+                                   Item_File =>
+                                   new String'(File_Name
+                                                 (Source_Filename.all)),
+                                   Item_Line =>
+                                     TEL.Data (Subprogram_Index_Node).Line,
+                                   Item_Doc_File => new String'
+                                     (Base_Name
+                                        (Get_Doc_File_Name
+                                           (Source_Filename.all,
+                                            Options.Doc_Directory.all,
+                                            Options.Doc_Suffix.all))));
+            Options.Doc_Subprogram (Index_File, Data_Item);
 
-               Data_Item := Doc_Info'(Index_Item_Info,
-                                      Item_Name =>
-                                        TEL.Data
-                                          (Subprogram_Index_Node).Short_Name,
-                                      Item_File =>
-                                      new String'(File_Name
-                                                    (Source_Filename.all)),
-                                      Item_Line =>
-                                        TEL.Data (Subprogram_Index_Node).Line,
-                                      Item_Doc_File => new String'
-                                        (Base_Name
-                                           (Get_Doc_File_Name
-                                              (Source_Filename.all,
-                                               Options.Doc_Directory.all,
-                                               Options.Doc_Suffix.all))));
-               Options.Doc_Subprogram (Index_File, Data_Item);
-            end if;
             Subprogram_Index_Node := TEL.Next (Subprogram_Index_Node);
          end loop;
 
       end if;
 
       Data_End := Doc_Info'(End_Of_Index_Info,
+                            Process_Body => Options.Process_Body_Files,
                             End_Index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
@@ -414,6 +414,7 @@ package body Docgen.Work_On_Source is
               Options.Doc_Directory.all
               & "index_type" & Options.Doc_Suffix.all);
       Data_Type := Doc_Info'(Type_Index_Info,
+                             Process_Body => Options.Process_Body_Files,
                              Second_Dummy => null);
       Options.Doc_Subprogram (Index_File, Data_Type);
 
@@ -422,9 +423,10 @@ package body Docgen.Work_On_Source is
          Type_Index_Node := TEL.First (Type_Index_List);
          for J in 1 .. Type_Entity_List.Length (Type_Index_List) loop
 
-               Source_Filename := TEL.Data (Type_Index_Node).File_Name;
+            Source_Filename := TEL.Data (Type_Index_Node).File_Name;
 
-               Data_Item := Doc_Info'(Index_Item_Info,
+            Data_Item := Doc_Info'(Index_Item_Info,
+                                   Process_Body => Options.Process_Body_Files,
                                       Item_Name =>
                                         TEL.Data (Type_Index_Node).Short_Name,
                                       Item_File =>
@@ -446,6 +448,7 @@ package body Docgen.Work_On_Source is
       end if;
 
       Data_End := Doc_Info'(End_Of_Index_Info,
+                            Process_Body => Options.Process_Body_Files,
                             End_Index_Title => new String'("End of Index"));
       Options.Doc_Subprogram (Index_File, Data_End);
 
@@ -475,6 +478,7 @@ package body Docgen.Work_On_Source is
    begin
 
       Data_Header := Doc_Info'(Header_Info,
+                               Process_Body => Options.Process_Body_Files,
                                Header_Package => new String'(Package_Name),
                                Header_File  => new String'(Package_File),
                                Header_Line  => Def_In_Line,
@@ -501,6 +505,7 @@ package body Docgen.Work_On_Source is
 
    begin
       Data_Footer := Doc_Info'(Footer_Info,
+                               Process_Body => Options.Process_Body_Files,
                                Footer_Title => new String'("Docgen"),
                                Footer_File  => new String'(Package_File));
       Options.Doc_Subprogram (Doc_File, Data_Footer);
@@ -550,6 +555,7 @@ package body Docgen.Work_On_Source is
       if Description_Found then
 
          Data_Subtitle := Doc_Info'(Subtitle_Info,
+                                    Process_Body => Options.Process_Body_Files,
                                     Subtitle_Name =>
                                     new String'("Description"),
                                     Subtitle_Kind => Package_Desc_Info,
@@ -565,6 +571,7 @@ package body Docgen.Work_On_Source is
                                          True,
                                          Options);
          Data_Package := Doc_Info'(Package_Desc_Info,
+                                   Process_Body => Options.Process_Body_Files,
                                    Package_Desc_Description
                                      => Description);
          Options.Doc_Subprogram (Doc_File, Data_Package);
@@ -621,6 +628,7 @@ package body Docgen.Work_On_Source is
       if New_Line.all'Length > 0 then
 
          Data_Subtitle := Doc_Info'(Subtitle_Info,
+                                    Process_Body => Options.Process_Body_Files,
                                     Subtitle_Name =>
                                     new String'("Dependencies"),
                                     Subtitle_Kind => With_Info,
@@ -629,6 +637,7 @@ package body Docgen.Work_On_Source is
          Options.Doc_Subprogram (Doc_File, Data_Subtitle);
       end if;
       Data_With := Doc_Info'(With_Info,
+                             Process_Body => Options.Process_Body_Files,
                              With_List  => Entity_List,
                              With_File  => new String '(Source_Filename),
                              With_Header => New_Line);
@@ -664,6 +673,7 @@ package body Docgen.Work_On_Source is
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
+                                    Process_Body => Options.Process_Body_Files,
                                     Subtitle_Name =>
                                     new String'("Packages"),
                                     Subtitle_Kind => Package_Info,
@@ -675,7 +685,7 @@ package body Docgen.Work_On_Source is
                --  check if the entity is a variable
             if TEL.Data (Entity_Node).Kind = Package_Entity
             --  but NOT the package itself
-              and not (To_Lower (TEL.Data (Entity_Node).Short_Name.all) =
+              and not (To_Lower (TEL.Data (Entity_Node).Name.all) =
                        To_Lower (Package_Name))
             --  check if defined in this file, the others used only for bodys!
             and TEL.Data (Entity_Node).File_Name.all = Source_Filename
@@ -701,6 +711,8 @@ package body Docgen.Work_On_Source is
                   False,
                   Options);
                Data_Package := Doc_Info'(Package_Info,
+                                         Process_Body =>
+                                           Options.Process_Body_Files,
                                          Package_Entity      =>
                                            TEL.Data (Entity_Node),
                                          Package_Description => Description,
@@ -745,6 +757,7 @@ package body Docgen.Work_On_Source is
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
+                                    Process_Body => Options.Process_Body_Files,
                                     Subtitle_Name =>
                                     new String'
                                       ("Constants and Named Numbers"),
@@ -774,21 +787,27 @@ package body Docgen.Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := Extract_Comment
-                 (File_Text.all,
-                  TEL.Data (Entity_Node).Line,
-                  Count_Lines (Header.all),
-                  False,
-                  Options);
+               --  check if it was a entity with its own header
+               if Header /= null then
 
-               Data_Var := Doc_Info'(Var_Info,
+                  Description := Extract_Comment
+                    (File_Text.all,
+                     TEL.Data (Entity_Node).Line,
+                     Count_Lines (Header.all),
+                     False,
+                     Options);
+
+                  Data_Var := Doc_Info'(Var_Info,
+                                     Process_Body =>
+                                       Options.Process_Body_Files,
                                      Var_Entity      => TEL.Data (Entity_Node),
                                      Var_Description => Description,
                                      Var_List        => Entity_List,
                                      Var_Header     => Header,
                                      Var_Header_Line =>
                                        TEL.Data (Entity_Node).Line);
-               Options.Doc_Subprogram (Doc_File, Data_Var);
+                  Options.Doc_Subprogram (Doc_File, Data_Var);
+               end if;
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
@@ -825,6 +844,7 @@ package body Docgen.Work_On_Source is
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
+                                    Process_Body => Options.Process_Body_Files,
                                     Subtitle_Name =>
                                     new String'("Exceptions"),
                                     Subtitle_Kind => Exception_Info,
@@ -854,14 +874,19 @@ package body Docgen.Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := Extract_Comment
-                 (File_Text.all,
-                  TEL.Data (Entity_Node).Line,
-                  Count_Lines (Header.all),
-                  False,
-                  Options);
+               --  check if it was a entity with its own header
+               if Header /= null then
 
-               Data_Exception := Doc_Info'(Exception_Info,
+                  Description := Extract_Comment
+                    (File_Text.all,
+                     TEL.Data (Entity_Node).Line,
+                     Count_Lines (Header.all),
+                     False,
+                     Options);
+
+                  Data_Exception := Doc_Info'(Exception_Info,
+                                           Process_Body =>
+                                             Options.Process_Body_Files,
                                            Exception_Entity      =>
                                              TEL.Data (Entity_Node),
                                            Exception_Description =>
@@ -871,8 +896,10 @@ package body Docgen.Work_On_Source is
                                            Exception_Header   =>
                                              Header,
                                            Exception_Header_Line =>
-                                           TEL.Data (Entity_Node).Line);
-               Options.Doc_Subprogram (Doc_File, Data_Exception);
+                                             TEL.Data (Entity_Node).Line);
+                  Options.Doc_Subprogram (Doc_File, Data_Exception);
+
+               end if;
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
@@ -910,6 +937,8 @@ package body Docgen.Work_On_Source is
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
+                                    Process_Body =>
+                                      Options.Process_Body_Files,
                                   Subtitle_Name =>
                                   new String'("Types"),
                                    Subtitle_Kind => Type_Info,
@@ -939,14 +968,20 @@ package body Docgen.Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := Extract_Comment
-                 (File_Text.all,
-                  TEL.Data (Entity_Node).Line,
-                  Count_Lines (Header.all),
-                  False,
-                  Options);
 
-               Data_Type := Doc_Info'(Type_Info,
+               --  check if it was a entity with its own header
+               if Header /= null then
+
+                  Description := Extract_Comment
+                    (File_Text.all,
+                     TEL.Data (Entity_Node).Line,
+                     Count_Lines (Header.all),
+                     False,
+                     Options);
+
+                  Data_Type := Doc_Info'(Type_Info,
+                                      Process_Body =>
+                                        Options.Process_Body_Files,
                                       Type_Entity      =>
                                         TEL.Data (Entity_Node),
                                       Type_Description => Description,
@@ -954,7 +989,8 @@ package body Docgen.Work_On_Source is
                                       Type_Header => Header,
                                       Type_Header_Line =>
                                         TEL.Data (Entity_Node).Line);
-               Options.Doc_Subprogram (Doc_File, Data_Type);
+                  Options.Doc_Subprogram (Doc_File, Data_Type);
+               end if;
 
             end if;
             Entity_Node := TEL.Next (Entity_Node);
@@ -993,6 +1029,8 @@ package body Docgen.Work_On_Source is
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
          Data_Subtitle := Doc_Info'(Subtitle_Info,
+                                    Process_Body =>
+                                      Options.Process_Body_Files,
                                   Subtitle_Name =>
                                   new String'("Subprograms"),
                                     Subtitle_Kind => Subprogram_Info,
@@ -1022,14 +1060,20 @@ package body Docgen.Work_On_Source is
                                    TEL.Data (Entity_Node).Short_Name.all,
                                    TEL.Data (Entity_Node).Line);
 
-               Description := Extract_Comment
-                 (File_Text.all,
-                  TEL.Data (Entity_Node).Line,
-                  Count_Lines (Header.all),
-                  False,
-                  Options);
 
-               Data_Subprogram := Doc_Info'(Subprogram_Info,
+               --  check if it was a entity with its own header
+               if Header /= null then
+
+                  Description := Extract_Comment
+                    (File_Text.all,
+                     TEL.Data (Entity_Node).Line,
+                     Count_Lines (Header.all),
+                     False,
+                     Options);
+
+                  Data_Subprogram := Doc_Info'(Subprogram_Info,
+                                            Process_Body =>
+                                              Options.Process_Body_Files,
                                             Subprogram_Entity      =>
                                               TEL.Data (Entity_Node),
                                             Subprogram_Description =>
@@ -1042,7 +1086,8 @@ package body Docgen.Work_On_Source is
                                               Header,
                                             Subprogram_Header_Line =>
                                               TEL.Data (Entity_Node).Line);
-               Options.Doc_Subprogram (Doc_File, Data_Subprogram);
+                  Options.Doc_Subprogram (Doc_File, Data_Subprogram);
+               end if;
             end if;
             Entity_Node := TEL.Next (Entity_Node);
             Free (Description);
@@ -1272,7 +1317,7 @@ package body Docgen.Work_On_Source is
             Parse_Node := Parse_Node.Next;
          end if;
       end loop;
-      return new String'("No Entity found by parser for: " & Entity_Name);
+      return null;
    end Get_Whole_Header;
 
 end Docgen.Work_On_Source;
