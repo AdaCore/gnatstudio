@@ -1902,8 +1902,10 @@ package body Src_Editor_Module is
       Button : Gtk_Widget;
       pragma Unreferenced (Widget, Button);
 
-      Open_File_Dialog         : Gtk_Dialog;
-      Open_File_Entry          : Gtkada_Entry;
+      Open_File_Dialog  : Gtk_Dialog;
+      Open_File_Entry   : Gtkada_Entry;
+      Hist              : constant String_List_Access :=
+        Get_History (Get_History (Kernel).all, Open_From_Path_History);
 
    begin
       Gtk_New (Open_File_Dialog,
@@ -1922,6 +1924,12 @@ package body Src_Editor_Module is
       Set_Activates_Default (Get_Entry (Open_File_Entry), True);
       Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
                   Fill => True, Expand => True);
+
+      if Hist /= null then
+         Set_Text (Get_Entry (Open_File_Entry),
+                   Base_Name (Hist (Hist'First).all));
+         Select_Region (Get_Entry (Open_File_Entry), 0, -1);
+      end if;
 
       Button := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button
