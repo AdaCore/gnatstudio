@@ -48,7 +48,6 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
 
 with Prj;                  use Prj;
-with Prj.PP;               use Prj.PP;
 with Namet;                use Namet;
 with Stringt;              use Stringt;
 with Types;                use Types;
@@ -364,7 +363,6 @@ package body Project_Trees is
             Attribute_Index => No_String,
             Prepend         => True);
          Free (Dirs);
-         Pretty_Print (Get_Project_From_View (Data.Project));
          Recompute_View (Data.Kernel);
       end if;
    end Add_Directory_From_Contextual;
