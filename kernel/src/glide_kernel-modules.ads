@@ -439,7 +439,7 @@ package Glide_Kernel.Modules is
 
    function Widget_Factory
      (Page         : access Project_Editor_Page_Record;
-      Project      : Projects.Project_type;
+      Project      : Projects.Project_Type;
       Full_Project : String;
       Kernel       : access Kernel_Handle_Record'Class)
       return Gtk.Widget.Gtk_Widget is abstract;
@@ -711,7 +711,7 @@ package Glide_Kernel.Modules is
    procedure Free (X : in out Line_Information_Record);
    --  Free memory associated with X.
 
-   type Line_Information_Array is array (Natural range <>)
+   type Line_Information_Array is array (Integer range <>)
      of Line_Information_Record;
 
    type Line_Information_Data is access Line_Information_Array;
@@ -724,6 +724,13 @@ package Glide_Kernel.Modules is
      (System.Address, Line_Information_Data);
    function To_Address is new Ada.Unchecked_Conversion
      (Line_Information_Data, System.Address);
+
+   procedure Add_Editor_Label
+     (Kernel     : access Kernel_Handle_Record'Class;
+      File       : String;
+      Identifier : String;
+      Label      : String);
+   --  Add a label in the editors for File.
 
    procedure Create_Line_Information_Column
      (Kernel         : access Kernel_Handle_Record'Class;
