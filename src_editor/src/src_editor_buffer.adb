@@ -323,11 +323,11 @@ package body Src_Editor_Buffer is
    --  Remove lines from the column info and line highlights.
 
    procedure Insert_At_Position
-     (Buffer   : access Source_Buffer_Record;
-      Info   : Line_Information_Record;
-      Column : Integer;
-      Line   : Integer;
-      Width  : Integer);
+     (Buffer  : access Source_Buffer_Record;
+      Info    : Line_Information_Record;
+      Column  : Integer;
+      Line    : Integer;
+      Width   : Integer);
    --  Insert Info at the correct line position in L.
 
    procedure Remove_Line_Information_Column
@@ -440,6 +440,7 @@ package body Src_Editor_Buffer is
 
       Free_Queue (Buffer.Queue);
       Free (Buffer.Filename);
+      Free (Buffer.File_Identifier);
       Unchecked_Free (Buffer.Real_Lines);
 
       for J in Buffer.Line_Info'Range loop
@@ -1899,6 +1900,16 @@ package body Src_Editor_Buffer is
          Buffer.Saved_Position := Get_Position (Buffer.Queue);
          Buffer.Current_Status := Saved;
          Status_Changed (Buffer);
+
+      elsif Success
+        and then (Buffer.Filename = null
+                  or else Buffer.Filename.all /= Filename)
+      then
+         if Buffer.Filename /= null then
+            File_Closed (Buffer.Kernel, Buffer.Filename.all);
+         end if;
+
+         File_Edited (Buffer.Kernel, Filename);
       end if;
 
    exception
@@ -2805,6 +2816,35 @@ package body Src_Editor_Buffer is
       Buffer.Filename := new String'(Name);
    end Set_Filename;
 
+   -------------------------
+   -- Get_File_Identifier --
+   -------------------------
+
+   function Get_File_Identifier
+     (Buffer : access Source_Buffer_Record)
+     return String
+   is
+   begin
+      if Buffer.File_Identifier = null then
+         return "";
+      else
+         return Buffer.File_Identifier.all;
+      end if;
+   end Get_File_Identifier;
+
+   -------------------------
+   -- Set_File_Identifier --
+   -------------------------
+
+   procedure Set_File_Identifier
+     (Buffer : access Source_Buffer_Record;
+      Name   : String)
+   is
+   begin
+      Free (Buffer.File_Identifier);
+      Buffer.File_Identifier := new String'(Name);
+   end Set_File_Identifier;
+
    ---------------------------
    -- Source_Lines_Revealed --
    ---------------------------
@@ -2822,7 +2862,9 @@ package body Src_Editor_Buffer is
          Buffer.Kernel,
          Src_Editor_Module_Id);
 
-      if Buffer.Filename /= null then
+      if Buffer.Filename /= null
+        and then Buffer.Filename.all /= ""
+      then
          if Base_Name (Buffer.Filename.all) = Buffer.Filename.all then
             Set_File_Information
               (Context, "", Base_Name (Buffer.Filename.all));
@@ -2833,6 +2875,9 @@ package body Src_Editor_Buffer is
                Dir_Name (Buffer.Filename.all),
                Base_Name (Buffer.Filename.all));
          end if;
+
+      elsif Buffer.File_Identifier /= null then
+         Set_File_Information (Context, "", Buffer.File_Identifier.all);
       end if;
 
       Set_Area_Information (Context, Start_Line, End_Line);
