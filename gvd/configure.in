@@ -1,0 +1,27 @@
+AC_REVISION($Revision$)
+AC_INIT(odd/odd.ads)
+
+ODD_MAJOR_VERSION=0
+ODD_MINOR_VERSION=0
+ODD_MICRO_VERSION=1
+ODD_VERSION=$ODD_MAJOR_VERSION.$ODD_MINOR_VERSION.$ODD_MICRO_VERSION
+
+AC_CANONICAL_SYSTEM
+
+# checking for local tools
+AC_PROG_CC
+AM_PATH_GNAT
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+
+# checking for gtk
+AM_PATH_GTK(1.2.7,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+
+# Set the version number of Odd
+AC_SUBST(ODD_VERSION)
+
+EXEC_PREFIX="$prefix"
+AC_SUBST(EXEC_PREFIX)
+
+AC_OUTPUT(odd/Makefile)
