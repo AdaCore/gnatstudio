@@ -945,13 +945,17 @@ package body Aliases_Module is
             declare
                Buffer : constant Gtk_Text_Buffer := Get_Buffer
                  (Gtk_Text_View (W));
-               First_Iter, Last_Iter : Gtk_Text_Iter;
+               First_Iter, Last_Iter, Line_Start : Gtk_Text_Iter;
                Success : Boolean := True;
             begin
                Get_Iter_At_Mark (Buffer, First_Iter, Get_Insert (Buffer));
                Search_Entity_Bounds (First_Iter, Last_Iter);
 
+               Copy (Source => First_Iter, Dest => Line_Start);
+               Set_Line_Index (Line_Start, 0);
+
                while Success
+                 and then Compare (Line_Start, First_Iter) <= 0
                  and then Get
                    (Aliases_Module_Id.Aliases,
                     Get_Slice (Buffer, First_Iter, Last_Iter)) = No_Alias
