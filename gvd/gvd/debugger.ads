@@ -469,7 +469,7 @@ package Debugger is
 
    function Is_Execution_Command
      (Debugger : access Debugger_Root;
-      Command : String) return Boolean is abstract;
+      Command  : String) return Boolean is abstract;
    --  Return True if Command is an execution command for the specified
    --  debugger (e.g step, next, ... for gdb).
 
