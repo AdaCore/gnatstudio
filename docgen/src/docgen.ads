@@ -62,7 +62,8 @@ package Docgen is
 
    type Reference_List_Information is record
       Entity          : Src_Info.Queries.Entity_Information;
-      Set_Link        : Boolean;   --  if False, no link will be set
+      Set_Link        : Boolean;
+      --  if False, no link will be set
    end record;
    --  List of references for an entity: this is the list of subprograms
    --  calling or called by the entity.
@@ -145,12 +146,14 @@ package Docgen is
    end record;
    --  Description of an entity
 
+   type Entity_List_Information_Handle is access Entity_List_Information;
+
    function Clone
      (Entity     : Entity_List_Information;
       Copy_Lists : Boolean) return Entity_List_Information;
    --  Return a deep-copy of Entity.
    --  Entity can be freed without impacting the copy
-   --  If Also_List is true, it copies also the lists used for the call graph
+   --  If Copy_List is true, it copies also the lists used for the call graph
    --  Calls_List and Called_List
 
    procedure Free (X : in out Entity_List_Information);
@@ -178,24 +181,23 @@ package Docgen is
    --  Sort the entities in alphabetical order by name,
    --  BUT all public entites stand in front of the private
 
+
    procedure Free (X : in out Entity_Handle);
 
-   package List_Entity_Handle is new Generic_List (Entity_Handle);
-
-   function Find_In_List
-     (List : List_Entity_Handle.List;
-      Info : Entity_Information) return Entity_Handle;
-   --  Returns a pointer on the element like Info stored in the list (if it
-   --  exists), otherwise it returns null.
+   package List_Entity_Handle is
+     new Generic_List (Entity_Handle);
 
    type Tagged_Element is record
-      Me               : Entity_Handle;
-      My_Parent        : Entity_Handle;
+      Me                   : Entity_Handle;
+      My_Parents           : List_Entity_Handle.List;
       My_Children          : List_Entity_Handle.List;
+      Number_Of_Parents    : Natural;
       Number_Of_Children   : Natural;
+      Print_Me             : Boolean;
    end record;
    --  Represent a tagged type
-   --  Here, we consider that a tagged type don't have more than one parent
+   --  Print_Me indicates that the tagged type is defined in the processed
+   --  files, it must be printed in the specific index file.
 
    type Tagged_Element_Handle is access Tagged_Element;
 
@@ -212,12 +214,54 @@ package Docgen is
      new Sort (Type_List_Tagged_Element, "<" => Compare_Tagged_Name);
    --  Sort the tagged types in alphabetical order by name,
 
+   function Find_In_List
+     (List : List_Entity_Handle.List;
+      Info : Entity_Information) return Entity_Handle;
+   --  Search if Info is in List. Return a pointer on Info in List if success.
+
+   procedure Add_Child (List   : in out Type_List_Tagged_Element.List;
+                        Target : in Entity_Handle;
+                        Patch  : in Entity_Handle);
+   --  For a current tagged type: update of the list of children with the
+   --  local child in the current file.
+
+   procedure Add_Parent (List   : in out Type_List_Tagged_Element.List;
+                         Target : in Entity_Handle;
+                         Patch  : in Entity_Handle);
+   --  For a current tagged type: update of the list of parents with the
+   --  local parent in the current file.
+
+   procedure Must_Print_Tagged_Type
+     (List : in out Type_List_Tagged_Element.List;
+      Target : in Entity_Handle);
+   --  Updates the field Print_Me if necessary.
+
    type Info_Types is
      (Open_Info, Close_Info, Subtitle_Info, Exception_Info, Type_Info,
-      Subprogram_Info, Header_Info, Footer_Info, With_Info, Package_Desc_Info,
-      Unit_Index_Info, Type_Index_Info, Tagged_Type_Index_Info,
-      Subprogram_Index_Info, End_Of_Index_Info, Index_Tagged_Type_Item,
-      Index_Item_Info, Body_Line_Info, Var_Info, Package_Info, Entry_Info);
+      Subprogram_Info, Header_Info, Header_Private_Info, Footer_Info,
+      With_Info, Package_Desc_Info, Body_Line_Info, Var_Info,
+      Package_Info, Entry_Info,
+      Unit_Index_Info,
+      Type_Index_Info,
+      Tagged_Type_Index_Info,
+      Subprogram_Index_Info,
+      --  The 4 fiels above are used to create the header of the index
+      --  file (units, types, subprograms or tagged types) and also to build
+      --  links (if allowed by the format) on the other index files
+      Private_Index_Info,
+      --  Used to print "Private" in the index file before all the
+      --  private types/subprograms
+      Public_Index_Info,
+      --  Used to print "Public" in the index file before all the
+      --  private types/subprograms
+      End_Of_Index_Info,
+      --  Used to close the index file ( of units, types, subprograms or
+      --  tagged types)
+      Index_Tagged_Type_Item,
+      --  Used to print a tagged type in the specific index file
+      Index_Item_Info
+      --  Used to print a type/unit/subprogram in the specific index file
+      );
    --  The structure used in the type Doc_Info.
 
    type Type_Api_Doc is (HTML, TEXI);
@@ -289,6 +333,10 @@ package Docgen is
                Header_File                   : VFS.Virtual_File;
                Header_Link                   : Boolean;
                Header_Line                   : Natural;
+
+               --  Used to start the private part of the file
+            when Header_Private_Info =>
+               Header_Title                  : GNAT.OS_Lib.String_Access;
 
                --  Used to finish an entity information
             when Footer_Info =>
@@ -375,6 +423,14 @@ package Docgen is
             when Tagged_Type_Index_Info =>
                --  The doc file name without the suffix
                Tagged_Type_Index_File_Name   : GNAT.OS_Lib.String_Access;
+
+               --  Used to start private types/subprograms in the index frame
+            when Private_Index_Info =>
+               Private_Index_Title : GNAT.OS_Lib.String_Access;
+
+               --  Used to start public types/subprograms in the index frame
+            when Public_Index_Info =>
+               Public_Index_Title : GNAT.OS_Lib.String_Access;
 
                --  Used to finish all 4 kinds of index files
             when End_Of_Index_Info =>
