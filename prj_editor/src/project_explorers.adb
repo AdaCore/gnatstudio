@@ -963,6 +963,10 @@ package body Project_Explorers is
          New_D := D;
          Free (New_D);
          return False;
+
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Read_Directory;
 
    ---------------------------
@@ -1516,6 +1520,10 @@ package body Project_Explorers is
             end if;
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
    end File_Tree_Collapse_Row_Cb;
 
    -------------------
@@ -2231,6 +2239,10 @@ package body Project_Explorers is
          Sort_Recursive (T.Tree, Node);
          Thaw (T.Tree);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Expand_Tree_Cb;
 
    ------------------------
@@ -2370,7 +2382,7 @@ package body Project_Explorers is
    ----------------------
 
    procedure Select_Directory
-     (Explorer         : access Project_Explorer_Record'Class;
+     (Explorer     : access Project_Explorer_Record'Class;
       Project_Node : Gtk_Ctree_Node;
       Directory    : String := "")
    is
@@ -2404,8 +2416,8 @@ package body Project_Explorers is
 
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Files : String_Array_Access;
-      Node : Gtk_Ctree_Node)
+      Files    : String_Array_Access;
+      Node     : Gtk_Ctree_Node)
    is
       function Imported_Projects (Prj : Project_Id) return Project_Id_Array;
       --  Return the list of imported projects, as an array
@@ -2564,10 +2576,10 @@ package body Project_Explorers is
    ---------------------------
 
    procedure Update_Directory_Node
-     (Explorer : access Project_Explorer_Record'Class;
+     (Explorer         : access Project_Explorer_Record'Class;
       Files_In_Project : String_Array_Access;
-      Node     : Gtk_Ctree_Node;
-      Data     : User_Data)
+      Node             : Gtk_Ctree_Node;
+      Data             : User_Data)
    is
       Index : Natural;
       N, N2 : Gtk_Ctree_Node;
@@ -2836,6 +2848,11 @@ package body Project_Explorers is
       end if;
 
       Thaw (T.Tree);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Thaw (T.Tree);
    end Refresh;
 
    ----------------------
@@ -2939,6 +2956,10 @@ package body Project_Explorers is
          Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
          Context_Changed (T.Kernel, Context);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Selection_Changed;
 
    -------------------------
@@ -2947,8 +2968,7 @@ package body Project_Explorers is
 
    function Find_Iter_For_Event
      (Explorer : access Project_Explorer_Record'Class;
-      Event    : Gdk_Event)
-     return Gtk_Tree_Iter
+      Event    : Gdk_Event) return Gtk_Tree_Iter
    is
       X         : Gdouble;
       Y         : Gdouble;
@@ -2998,8 +3018,8 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class;
       Event    : Gdk_Event) return Boolean
    is
-      T        : constant Project_Explorer := Project_Explorer (Explorer);
-      Iter     : Gtk_Tree_Iter;
+      T    : constant Project_Explorer := Project_Explorer (Explorer);
+      Iter : Gtk_Tree_Iter;
    begin
       if Get_Button (Event) = 1 then
          Iter := Find_Iter_For_Event (T, Event);
@@ -3024,8 +3044,8 @@ package body Project_Explorers is
                when Entity_Node =>
 
                   declare
-                     Val        : GValue;
-                     User       : User_Data_Access;
+                     Val  : GValue;
+                     User : User_Data_Access;
                   begin
                      --  ??? the following two lines are due to a possible
                      --  mapping error in GtkAda: I need to call "Unset" on
@@ -3060,6 +3080,11 @@ package body Project_Explorers is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end File_Button_Press;
 
    --------------------------
@@ -3117,6 +3142,11 @@ package body Project_Explorers is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Button_Press_Release;
 
    ----------------------
@@ -3133,6 +3163,7 @@ package body Project_Explorers is
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Project_Explorer_Record'Tag);
+
       if Child = null then
          Gtk_New (Explorer, Kernel);
          Refresh (Kernel, GObject (Explorer));
@@ -3144,6 +3175,10 @@ package body Project_Explorers is
          Raise_Child (Child);
          Set_Focus_Child (Get_MDI (Kernel), Child);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_Explorer;
 
    ---------------------
