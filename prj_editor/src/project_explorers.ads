@@ -29,6 +29,7 @@ with Scenario_Views;
 with Vsearch_Ext;
 with Gtk.Main;
 with Gtk.Ctree;
+with Gtk.Handlers;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 with Gdk.Pixbuf;
@@ -115,6 +116,9 @@ private
 
       Open_Masks    : Mask_Array;
       Close_Masks   : Mask_Array;
+
+      Expand_Id     : Gtk.Handlers.Handler_Id;
+      --  The signal for the expansion of nodes in the project view
 
       Old_Selection : Gtk.Ctree.Gtk_Ctree_Node;
       --  Memorizes the node that was selected at the beginning of a

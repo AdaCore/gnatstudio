@@ -1366,7 +1366,7 @@ package body Project_Explorers is
       --  The contents of the nodes is computed on demand. We need to be aware
       --  when the user has changed the visibility status of a node.
 
-      Widget_Callback.Object_Connect
+      Explorer.Expand_Id := Widget_Callback.Object_Connect
         (Explorer.Tree, "tree_expand", Expand_Tree_Cb'Access, Explorer);
       Widget_Callback.Object_Connect
         (Explorer.Tree, "tree_select_row",
@@ -3428,14 +3428,12 @@ package body Project_Explorers is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Kernel, All_Occurences);
+      pragma Unreferenced (Kernel, All_Occurences, Extra_Information);
       Context : Explorer_Search_Context_Access;
-      Extra   : constant Explorer_Search_Extra :=
-        Explorer_Search_Extra (Extra_Information);
 
    begin
       Context := new Explorer_Search_Context;
-      Context.Include_Entities := Get_Active (Extra.Include_Entities);
+      Context.Include_Entities := False;
       return Search_Context_Access (Context);
    end Explorer_Search_Factory;
 
@@ -3515,6 +3513,8 @@ package body Project_Explorers is
          Next;
       end if;
 
+      Gtk.Handlers.Handler_Block (Explorer.Tree, Explorer.Expand_Id);
+
       while C.Current /= null loop
          if Match (C, Node_Get_Text (Explorer.Tree, C.Current, 0)) /= -1 then
             Gtk_Select (Explorer.Tree, C.Current);
@@ -3533,11 +3533,13 @@ package body Project_Explorers is
                Node_Moveto (Explorer.Tree, C.Current, 0, 0.5, 0.0);
             end if;
 
+            Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
             return True;
          end if;
          Next;
       end loop;
 
+      Gtk.Handlers.Handler_Unblock (Explorer.Tree, Explorer.Expand_Id);
       return False;
    end Search;
 
