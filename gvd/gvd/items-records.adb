@@ -463,7 +463,8 @@ package body Items.Records is
          Current_Y := Current_Y + H;
       end if;
 
-      Set_Font_Description (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+      Set_Font_Description
+        (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
 
       for F in Item.Fields'Range loop
          --  not a variant part ?
@@ -553,11 +554,12 @@ package body Items.Records is
          Item.Type_Height := 0;
       end if;
 
-      Set_Font_Description (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+      Set_Font_Description
+        (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
 
       if Item.Visible then
          Line_Height := To_Pixels
-           (Get_Size (Get_Pref (GVD_Prefs, Value_Font)));
+           (Get_Size (Get_Pref (GVD_Prefs, Default_Font)));
 
          for F in Item.Fields'Range loop
             if Largest_Name = null

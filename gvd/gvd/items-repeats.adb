@@ -165,7 +165,8 @@ package body Items.Repeats is
       end if;
 
       Set_Text (Context.Layout, Str);
-      Set_Font_Description (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+      Set_Font_Description
+        (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
       Draw_Layout
         (Drawable => Context.Pixmap,
          GC       => Context.GC,
@@ -206,7 +207,7 @@ package body Items.Repeats is
 
          Set_Text (Context.Layout, Str);
          Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
          Get_Pixel_Size (Context.Layout, Item.Repeat_Str_Width, Item.Height);
          Item.Width :=
            Item.Value.Width + Item.Repeat_Str_Width + 2 * Border_Spacing;

@@ -623,7 +623,7 @@ package body Items.Arrays is
 
       if Show_Value (Context.Mode) then
          Set_Font_Description
-           (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+           (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
 
          for V in Item.Values'Range loop
             Set_Text
@@ -704,7 +704,7 @@ package body Items.Arrays is
          if Show_Value (Context.Mode) then
             Item.Index_Width := 20;  --  minimal width
             Set_Font_Description
-              (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+              (Context.Layout, Get_Pref (GVD_Prefs, Default_Font));
 
             if Item.Values /= null then
                for V in Item.Values'Range loop
