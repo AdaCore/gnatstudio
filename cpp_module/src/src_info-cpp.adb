@@ -22,6 +22,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO;               use Ada.Text_IO;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Projects;             use Projects;
 with Projects.Editor;      use Projects.Editor;
@@ -1497,20 +1498,20 @@ package body Src_Info.CPP is
       for Table in Table_Type loop
          declare
             Ext   : constant String := Table_Extension (Table);
-            Files : String_List_Access :=
-              new String_List (1 .. DB_Dirs'Length);
-
+            Files : chars_ptr_array (1 .. DB_Dirs'Length);
          begin
-            for J in DB_Dirs'Range loop
-               Files (J) := new String'
-                 (DB_Dirs (J).all & Browse.DB_File_Name & Ext);
-            end loop;
-
             if Ext /= "" then
-               DB_API.Open (SN_Table (Table), Files, Success);
-            end if;
+               for J in DB_Dirs'Range loop
+                  Files (Interfaces.C.size_t (J)) := New_String
+                 (DB_Dirs (J).all & Browse.DB_File_Name & Ext);
+               end loop;
 
-            Free (Files);
+               DB_API.Open (SN_Table (Table), Files, Success);
+
+               for F in Files'Range loop
+                  Free (Files (F));
+               end loop;
+            end if;
          end;
       end loop;
    end Open_DB_Files;
@@ -1773,7 +1774,6 @@ package body Src_Info.CPP is
           (Project_Registry'Class
              (Get_Registry (Root_Project)), File_Name);
       DB_Dir          : constant String := Get_DB_Dir (Project);
-      Files           : String_List_Access;
       Success         : Boolean;
       Sym             : FIL_Table;
       Info            : Construct_Access;
@@ -1793,11 +1793,14 @@ package body Src_Info.CPP is
       --  Open the databases if not yet open
 
       if not Is_Open (Handler.SN_Table (FIL)) then
-         Files := new String_List (1 .. 1);
-         Files (1) := new String'
-           (DB_Dir & Browse.DB_File_Name & Table_Extension (FIL));
-         DB_API.Open (Handler.SN_Table (FIL), Files, Success);
-         Free (Files (1));
+         declare
+            Files : chars_ptr_array (1 .. 1);
+         begin
+            Files (1) := New_String
+              (DB_Dir & Browse.DB_File_Name & Table_Extension (FIL));
+            DB_API.Open (Handler.SN_Table (FIL), Files, Success);
+            Free (Files (1));
+         end;
 
          if not Success then
             return;
@@ -2185,11 +2188,15 @@ package body Src_Info.CPP is
       Attributes              : SN_Attributes) return E_Kind
    is
       Class_Def   : CL_Table;
-      Kind        : E_Kind;
+      Success     : Boolean;
    begin
-      Find (Handler.SN_Table (CL), Class_Name, Tab => Class_Def);
-      Kind := Get_Method_Kind (Class_Def, Return_Type, Attributes);
-      return Kind;
+      Find (Handler.SN_Table (CL), Class_Name, Tab => Class_Def,
+            Success => Success);
+      if Success then
+         return Get_Method_Kind (Class_Def, Return_Type, Attributes);
+      else
+         return Unresolved_Entity_Kind;
+      end if;
    end Get_Method_Kind;
 
    ------------------------------------
@@ -2326,11 +2333,13 @@ package body Src_Info.CPP is
             Location    => First_MD_Pos);
 
          if Decl_Info = null then
-            begin -- create class declaration if needed
-               Find
-                 (Handler.SN_Table (CL),
-                  String (Key (Class_Name.First .. Class_Name.Last)),
-                  Tab => CL_Tab);
+            --  create class declaration if needed
+            Find
+              (Handler.SN_Table (CL),
+               String (Key (Class_Name.First .. Class_Name.Last)),
+               Tab => CL_Tab,
+               Success => Success);
+            if Success then
                Find_Or_Create_Class
                  (Handler,
                   CL_Tab,
@@ -2338,10 +2347,7 @@ package body Src_Info.CPP is
                   Decl_Info,
                   File,
                   Module_Type_Defs);
-            exception
-               when Not_Found =>
-                  null;
-            end;
+            end if;
 
             Insert_Dependency_Declaration
               (Handler            => Handler,
@@ -2642,33 +2648,20 @@ package body Src_Info.CPP is
       Find (Handler.SN_Table (CON),
             String (Ref.Key (Ref.Referred_Symbol_Name.First ..
                                Ref.Referred_Symbol_Name.Last)),
-            Tab => Var);
+            Tab => Var,
+            Success => Success);
 
-      --  Find declaration
+      if Success then
+         --  Find declaration
 
-      Var_File := Create
-        (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
+         Var_File := Create
+           (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
 
-      if Xref_Filename_For
-        (Var_File,
-         Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-         Handler.Prj_HTable) = Get_LI_Filename (File)
-      then
-         Decl_Info := Find_Declaration
-           (File                    => File,
-            Symbol_Name             =>
-              String (Ref.Key (Ref.Referred_Symbol_Name.First ..
-                                 Ref.Referred_Symbol_Name.Last)),
-            Location                => Var.Start_Position);
-
-         if Decl_Info = null then
-            Sym.Key            := Var.Key;
-            Sym.Data           := Var.Data;
-            Sym.Identifier     := Var.Name;
-            Sym.Start_Position := Var.Start_Position;
-            Sym.File_Name      := Var.File_Name;
-            Sym_CON_Handler (Sym, Handler, File, Module_Type_Defs);
-
+         if Xref_Filename_For
+           (Var_File,
+            Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
+            Handler.Prj_HTable) = Get_LI_Filename (File)
+         then
             Decl_Info := Find_Declaration
               (File                    => File,
                Symbol_Name             =>
@@ -2677,82 +2670,99 @@ package body Src_Info.CPP is
                Location                => Var.Start_Position);
 
             if Decl_Info = null then
-               Fail ("Failed to create CON declaration");
-               return;
+               Sym.Key            := Var.Key;
+               Sym.Data           := Var.Data;
+               Sym.Identifier     := Var.Name;
+               Sym.Start_Position := Var.Start_Position;
+               Sym.File_Name      := Var.File_Name;
+               Sym_CON_Handler (Sym, Handler, File, Module_Type_Defs);
+
+               Decl_Info := Find_Declaration
+                 (File                    => File,
+                  Symbol_Name             =>
+                    String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+                                       Ref.Referred_Symbol_Name.Last)),
+                  Location                => Var.Start_Position);
+
+               if Decl_Info = null then
+                  Fail ("Failed to create CON declaration");
+                  return;
+               end if;
+            end if;
+
+         else -- another file
+            Decl_Info := Find_Dependency_Declaration
+              (File                    => File,
+               Symbol_Name             =>
+                 String (Ref.Key (Ref.Referred_Symbol_Name.First ..
+                                    Ref.Referred_Symbol_Name.Last)),
+               Filename                => Var_File,
+               Location                => Var.Start_Position);
+
+            if Decl_Info = null then
+               --  dep decl does not yet exist Collect information about the
+               --  variable: type, scope, location of type declaration...
+               Type_Name_To_Kind
+                 (String
+                    (Var.Data (Var.Declared_Type.First
+                               .. Var.Declared_Type.Last)),
+                  Handler.SN_Table,
+                  Module_Type_Defs,
+                  Desc,
+                  Success);
+               if not Success then -- unknown type
+                  return;
+               end if;
+
+               if (Var.Attributes and SN_STATIC) = SN_STATIC then
+                  Scope := Static_Local;
+               end if;
+
+               if Desc.Parent_Point = Invalid_Point then
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       =>
+                       String (Var.Key (Var.Name.First .. Var.Name.Last)),
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Scope,
+                     Referred_Filename => Var_File,
+                     Declaration_Info  => Decl_Info);
+               else
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       =>
+                       String (Var.Key (Var.Name.First .. Var.Name.Last)),
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Scope,
+                     Referred_Filename => Var_File,
+                     Parent_Location   => Desc.Parent_Point,
+                     Parent_Filename   => Desc.Parent_Filename,
+                     Declaration_Info  => Decl_Info);
+               end if;
+
+               Free (Desc);
             end if;
          end if;
 
-      else -- another file
-         Decl_Info := Find_Dependency_Declaration
-           (File                    => File,
-            Symbol_Name             =>
-              String (Ref.Key (Ref.Referred_Symbol_Name.First ..
-                                 Ref.Referred_Symbol_Name.Last)),
-            Filename                => Var_File,
-            Location                => Var.Start_Position);
-
-         if Decl_Info = null then
-            --  dep decl does not yet exist Collect information about the
-            --  variable: type, scope, location of type declaration...
-            Type_Name_To_Kind
-              (String
-                (Var.Data (Var.Declared_Type.First .. Var.Declared_Type.Last)),
-               Handler.SN_Table,
-               Module_Type_Defs,
-               Desc,
-               Success);
-            if not Success then -- unknown type
-               return;
-            end if;
-
-            if (Var.Attributes and SN_STATIC) = SN_STATIC then
-               Scope := Static_Local;
-            end if;
-
-            if Desc.Parent_Point = Invalid_Point then
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       =>
-                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
-                  Location          => Var.Start_Position,
-                  Kind              => Type_To_Object (Desc.Kind),
-                  Scope             => Scope,
-                  Referred_Filename => Var_File,
-                  Declaration_Info  => Decl_Info);
-            else
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       =>
-                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
-                  Location          => Var.Start_Position,
-                  Kind              => Type_To_Object (Desc.Kind),
-                  Scope             => Scope,
-                  Referred_Filename => Var_File,
-                  Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Desc.Parent_Filename,
-                  Declaration_Info  => Decl_Info);
-            end if;
-
-            Free (Desc);
+         if Ref.Key (Ref.Access_Type.First) = 'r' then
+            Ref_Kind := Reference;
+         else
+            Ref_Kind := Modification;
          end if;
-      end if;
 
-      if Ref.Key (Ref.Access_Type.First) = 'r' then
-         Ref_Kind := Reference;
-      else
-         Ref_Kind := Modification;
+         Insert_Reference
+           (Declaration_Info => Decl_Info,
+            File             => File,
+            Location         => Ref.Position,
+            Kind             => Ref_Kind);
       end if;
-
-      Insert_Reference
-        (Declaration_Info => Decl_Info,
-         File             => File,
-         Location         => Ref.Position,
-         Kind             => Ref_Kind);
 
    exception
-      when Not_Found  | DB_Error => -- ignore
+      when DB_Error => -- ignore
          Fail ("unable to find constant " &
                String (Ref.Key (Ref.Referred_Symbol_Name.First ..
                                   Ref.Referred_Symbol_Name.Last)));
@@ -2864,6 +2874,7 @@ package body Src_Info.CPP is
       Decl_Info  : E_Declaration_Info_List;
       Enum_Const : EC_Table;
       Enum_Const_File : Virtual_File;
+      Success    : Boolean;
       Ref_Id     : constant String := String
         (Ref.Key
            (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
@@ -2871,61 +2882,64 @@ package body Src_Info.CPP is
    begin
       --  Info ("Fu_To_EC_Handler: " & Ref_Id);
 
-      Find (Handler.SN_Table (EC), Ref_Id, Tab => Enum_Const);
+      Find (Handler.SN_Table (EC), Ref_Id, Tab => Enum_Const,
+            Success => Success);
 
-      Enum_Const_File := Create
-        (String (Enum_Const.Key
-           (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)));
+      if Success then
+         Enum_Const_File := Create
+           (String (Enum_Const.Key
+               (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last)));
 
-      --  Find declaration
-      if Xref_Filename_For
-        (Enum_Const_File,
-         Get_DB_Dir (Handler.DB_Dirs, Enum_Const.DBI),
-         Handler.Prj_HTable) = Get_LI_Filename (File)
-      then
-         Decl_Info := Find_Declaration
-           (File                    => File,
-            Symbol_Name             => Ref_Id,
-            Location                => Enum_Const.Start_Position);
+         --  Find declaration
+         if Xref_Filename_For
+           (Enum_Const_File,
+            Get_DB_Dir (Handler.DB_Dirs, Enum_Const.DBI),
+            Handler.Prj_HTable) = Get_LI_Filename (File)
+         then
+            Decl_Info := Find_Declaration
+              (File                    => File,
+               Symbol_Name             => Ref_Id,
+               Location                => Enum_Const.Start_Position);
 
-         if Decl_Info = null then
-            Insert_Declaration
-              (File              => File,
-               Symbol_Name       => Ref_Id,
-               Location          => Enum_Const.Start_Position,
-               Kind              => (Enumeration_Literal, False, False, False),
-               Scope             => Global_Scope,
-               Declaration_Info  => Decl_Info);
+            if Decl_Info = null then
+               Insert_Declaration
+                 (File              => File,
+                  Symbol_Name       => Ref_Id,
+                  Location          => Enum_Const.Start_Position,
+                  Kind           => (Enumeration_Literal, False, False, False),
+                  Scope             => Global_Scope,
+                  Declaration_Info  => Decl_Info);
+            end if;
+
+         else -- another file
+            Decl_Info := Find_Dependency_Declaration
+              (File                    => File,
+               Symbol_Name             => Ref_Id,
+               Filename                => Enum_Const_File,
+               Location                => Enum_Const.Start_Position);
+
+            if Decl_Info = null then
+               Insert_Dependency_Declaration
+                 (Handler           => Handler,
+                  File              => File,
+                  Symbol_Name       => Ref_Id,
+                  Location          => Enum_Const.Start_Position,
+                  Kind           => (Enumeration_Literal, False, False, False),
+                  Scope             => Global_Scope,
+                  Referred_Filename => Enum_Const_File,
+                  Declaration_Info  => Decl_Info);
+            end if;
          end if;
 
-      else -- another file
-         Decl_Info := Find_Dependency_Declaration
-           (File                    => File,
-            Symbol_Name             => Ref_Id,
-            Filename                => Enum_Const_File,
-            Location                => Enum_Const.Start_Position);
-
-         if Decl_Info = null then
-            Insert_Dependency_Declaration
-              (Handler           => Handler,
-               File              => File,
-               Symbol_Name       => Ref_Id,
-               Location          => Enum_Const.Start_Position,
-               Kind              => (Enumeration_Literal, False, False, False),
-               Scope             => Global_Scope,
-               Referred_Filename => Enum_Const_File,
-               Declaration_Info  => Decl_Info);
-         end if;
+         Insert_Reference
+           (Declaration_Info => Decl_Info,
+            File             => File,
+            Location         => Ref.Position,
+            Kind             => Reference);
       end if;
 
-      Insert_Reference
-        (Declaration_Info => Decl_Info,
-         File             => File,
-         Location         => Ref.Position,
-         Kind             => Reference);
-
    exception
-      when DB_Error | Not_Found =>
+      when DB_Error =>
          Fail ("unable to find enumeration constant " & Ref_Id);
    end Fu_To_Ec_Handler;
 
@@ -3379,10 +3393,6 @@ package body Src_Info.CPP is
          File,
          Ref.Position,
          Reference);
-
-   exception
-      when Not_Found  | DB_Error => -- ignore
-         Fail ("unable to find function " & Ref_Id);
    end Fu_To_Fu_Handler;
 
    ----------------------
@@ -3409,105 +3419,110 @@ package body Src_Info.CPP is
 --        Info ("Fu_To_GV_Handler: " & Ref_Id);
 
       --  we need declaration's location
-      Find (Handler.SN_Table (GV), Ref_Id, Tab => Var);
+      Find (Handler.SN_Table (GV), Ref_Id, Tab => Var, Success => Success);
 
-      Var_File := Create
-        (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
+      if Success then
+         Var_File := Create
+           (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
 
-      --  Find declaration
-      if Xref_Filename_For
-        (Var_File,
-         Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-         Handler.Prj_HTable) = Get_LI_Filename (File)
-      then
-         Decl_Info := Find_Declaration
-           (File                    => File,
-            Symbol_Name             => Ref_Id,
-            Location                => Var.Start_Position);
-
-         if Decl_Info = null then
---          Info ("Forward reference to the variable: " & Ref_Id);
-            Sym.Key            := Var.Key;
-            Sym.Data           := Var.Data;
-            Sym.Identifier     := Var.Name;
-            Sym.Start_Position := Var.Start_Position;
-            Sym.File_Name      := Var.File_Name;
-            Sym_GV_Handler (Sym, Handler, File, Module_Type_Defs, Decl_Info);
+         --  Find declaration
+         if Xref_Filename_For
+           (Var_File,
+            Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
+            Handler.Prj_HTable) = Get_LI_Filename (File)
+         then
+            Decl_Info := Find_Declaration
+              (File                    => File,
+               Symbol_Name             => Ref_Id,
+               Location                => Var.Start_Position);
 
             if Decl_Info = null then
-               Fail ("unable to create declaration for global variable "
-                       & Ref_Id);
-               return;
+               --       Info ("Forward reference to the variable: " & Ref_Id);
+               Sym.Key            := Var.Key;
+               Sym.Data           := Var.Data;
+               Sym.Identifier     := Var.Name;
+               Sym.Start_Position := Var.Start_Position;
+               Sym.File_Name      := Var.File_Name;
+               Sym_GV_Handler
+                 (Sym, Handler, File, Module_Type_Defs, Decl_Info);
+
+               if Decl_Info = null then
+                  Fail ("unable to create declaration for global variable "
+                        & Ref_Id);
+                  return;
+               end if;
+            end if;
+
+         else -- another file
+            Decl_Info := Find_Dependency_Declaration
+              (File                    => File,
+               Symbol_Name             => Ref_Id,
+               Filename                => Create
+                (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last))),
+               Location                => Var.Start_Position);
+
+            if Decl_Info = null then
+               --  Collect information about the variable:
+               --  type, scope, location of type declaration...
+               Type_Name_To_Kind
+                 (String
+                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
+                  Handler.SN_Table,
+                  Module_Type_Defs,
+                  Desc,
+                  Success);
+               if not Success then -- unknown type
+                  return;
+               end if;
+
+               if (Var.Attributes and SN_STATIC) = SN_STATIC then
+                  Scope := Static_Local;
+               end if;
+
+               if Desc.Parent_Point = Invalid_Point then
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       =>
+                       String (Var.Key (Var.Name.First .. Var.Name.Last)),
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Scope,
+                     Referred_Filename => Var_File,
+                     Declaration_Info  => Decl_Info);
+               else
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       =>
+                       String (Var.Key (Var.Name.First .. Var.Name.Last)),
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Scope,
+                     Referred_Filename => Var_File,
+                     Parent_Location   => Desc.Parent_Point,
+                     Parent_Filename   => Desc.Parent_Filename,
+                     Declaration_Info  => Decl_Info);
+               end if;
+               Free (Desc);
             end if;
          end if;
 
-      else -- another file
-         Decl_Info := Find_Dependency_Declaration
-           (File                    => File,
-            Symbol_Name             => Ref_Id,
-            Filename                => Create
-              (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last))),
-            Location                => Var.Start_Position);
-
-         if Decl_Info = null then
-            --  Collect information about the variable:
-            --  type, scope, location of type declaration...
-            Type_Name_To_Kind
-              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
-               Handler.SN_Table,
-               Module_Type_Defs,
-               Desc,
-               Success);
-            if not Success then -- unknown type
-               return;
-            end if;
-
-            if (Var.Attributes and SN_STATIC) = SN_STATIC then
-               Scope := Static_Local;
-            end if;
-
-            if Desc.Parent_Point = Invalid_Point then
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       =>
-                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
-                  Location          => Var.Start_Position,
-                  Kind              => Type_To_Object (Desc.Kind),
-                  Scope             => Scope,
-                  Referred_Filename => Var_File,
-                  Declaration_Info  => Decl_Info);
-            else
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       =>
-                    String (Var.Key (Var.Name.First .. Var.Name.Last)),
-                  Location          => Var.Start_Position,
-                  Kind              => Type_To_Object (Desc.Kind),
-                  Scope             => Scope,
-                  Referred_Filename => Var_File,
-                  Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Desc.Parent_Filename,
-                  Declaration_Info  => Decl_Info);
-            end if;
-            Free (Desc);
+         if Ref.Key (Ref.Access_Type.First) = 'r' then
+            Ref_Kind := Reference;
+         else
+            Ref_Kind := Modification;
          end if;
+
+         Insert_Reference
+           (Declaration_Info => Decl_Info,
+            File             => File,
+            Location         => Ref.Position,
+            Kind             => Ref_Kind);
       end if;
 
-      if Ref.Key (Ref.Access_Type.First) = 'r' then
-         Ref_Kind := Reference;
-      else
-         Ref_Kind := Modification;
-      end if;
-
-      Insert_Reference
-        (Declaration_Info => Decl_Info,
-         File             => File,
-         Location         => Ref.Position,
-         Kind             => Ref_Kind);
    exception
-      when Not_Found  | DB_Error => -- ignore
+      when DB_Error => -- ignore
          Fail ("unable to find global variable " & Ref_Id);
    end Fu_To_Gv_Handler;
 
@@ -3542,137 +3557,143 @@ package body Src_Info.CPP is
       end if;
 
       --  we need declaration's location
-      Find (Handler.SN_Table (IV), Ref_Class, Ref_Id, Tab => Var);
+      Find (Handler.SN_Table (IV), Ref_Class, Ref_Id, Tab => Var,
+            Success => Success);
 
-      Var_File := Create
-        (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
+      if Success then
 
-      --  Find declaration
-      if Xref_Filename_For
-        (Var_File,
-         Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
-         Handler.Prj_HTable) = Get_LI_Filename (File)
-      then
-         Decl_Info := Find_Declaration
-           (File                    => File,
-            Class_Name              => Ref_Class,
-            Symbol_Name             => Ref_Id,
-            Location                => Var.Start_Position);
+         Var_File := Create
+           (String (Var.Key (Var.File_Name.First .. Var.File_Name.Last)));
 
-         if Decl_Info = null then
---          Info ("Forward reference to the instance variable: " & Ref_Id);
-            Sym.Key            := Var.Key;
-            Sym.Data           := Var.Data;
-            Sym.Class          := Var.Class;
-            Sym.Identifier     := Var.Name;
-            Sym.Start_Position := Var.Start_Position;
-            Sym.File_Name      := Var.File_Name;
-            Sym_IV_Handler (Sym, Handler, File, Module_Type_Defs, Decl_Info);
+         --  Find declaration
+         if Xref_Filename_For
+           (Var_File,
+            Get_DB_Dir (Handler.DB_Dirs, Var.DBI),
+            Handler.Prj_HTable) = Get_LI_Filename (File)
+         then
+            Decl_Info := Find_Declaration
+              (File                    => File,
+               Class_Name              => Ref_Class,
+               Symbol_Name             => Ref_Id,
+               Location                => Var.Start_Position);
 
             if Decl_Info = null then
-               Fail ("unable to create declaration for instance variable "
-                     & Ref_Id & ' ' & Ref_Class);
-               return;
+               Sym.Key            := Var.Key;
+               Sym.Data           := Var.Data;
+               Sym.Class          := Var.Class;
+               Sym.Identifier     := Var.Name;
+               Sym.Start_Position := Var.Start_Position;
+               Sym.File_Name      := Var.File_Name;
+               Sym_IV_Handler
+                 (Sym, Handler, File, Module_Type_Defs, Decl_Info);
+
+               if Decl_Info = null then
+                  Fail ("unable to create declaration for instance variable "
+                        & Ref_Id & ' ' & Ref_Class);
+                  return;
+               end if;
             end if;
-         end if;
 
-      else -- another file
-         Decl_Info := Find_Dependency_Declaration
-           (File                    => File,
-            Class_Name              => Ref_Class,
-            Symbol_Name             => Ref_Id,
-            Filename                => Var_File,
-            Location                => Var.Start_Position);
+         else -- another file
+            Decl_Info := Find_Dependency_Declaration
+              (File                    => File,
+               Class_Name              => Ref_Class,
+               Symbol_Name             => Ref_Id,
+               Filename                => Var_File,
+               Location                => Var.Start_Position);
 
-         if Decl_Info = null then
-            --  Collect information about the variable:
-            --  type, scope, location of type declaration...
-            Find_Class
-              (Ref_Class,
-               Handler.SN_Table,
-               Desc,
-               Class_Def,
-               Success);
-
-            if not Success then -- try unions
-               Find_Union
+            if Decl_Info = null then
+               --  Collect information about the variable:
+               --  type, scope, location of type declaration...
+               Find_Class
                  (Ref_Class,
                   Handler.SN_Table,
                   Desc,
                   Class_Def,
                   Success);
+
+               if not Success then -- try unions
+                  Find_Union
+                    (Ref_Class,
+                     Handler.SN_Table,
+                     Desc,
+                     Class_Def,
+                     Success);
+               end if;
+
+               if not Success then
+                  Fail ("Failed to locate class/union: "
+                        & Ref_Class
+                        & " for instance variable "
+                        & Ref_Id);
+                  return;
+               end if;
+
+               Free (Desc);
+
+               --  make sure class/union declaration exists
+               Find_Or_Create_Class
+                 (Handler,
+                  Class_Def,
+                  Full_Name (Get_LI_Filename (File)).all,
+                  Decl_Info,
+                  File,
+                  Module_Type_Defs);
+
+               Type_Name_To_Kind
+                 (String
+                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
+                  Handler.SN_Table,
+                  Module_Type_Defs,
+                  Desc,
+                  Success);
+
+               if not Success then -- unknown type
+                  return;
+               end if;
+
+               if Desc.Parent_Point = Invalid_Point then
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Local_Scope,
+                     Referred_Filename => Var_File,
+                     Declaration_Info  => Decl_Info);
+               else
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Var.Start_Position,
+                     Kind              => Type_To_Object (Desc.Kind),
+                     Scope             => Local_Scope,
+                     Referred_Filename => Var_File,
+                     Parent_Location   => Desc.Parent_Point,
+                     Parent_Filename   => Desc.Parent_Filename,
+                     Declaration_Info  => Decl_Info);
+               end if;
+               Free (Desc);
             end if;
-
-            if not Success then
-               Fail ("Failed to locate class/union: "
-                  & Ref_Class
-                  & " for instance variable "
-                  & Ref_Id);
-               return;
-            end if;
-
-            Free (Desc);
-
-            --  make sure class/union declaration exists
-            Find_Or_Create_Class
-              (Handler,
-               Class_Def,
-               Full_Name (Get_LI_Filename (File)).all,
-               Decl_Info,
-               File,
-               Module_Type_Defs);
-
-            Type_Name_To_Kind
-              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
-               Handler.SN_Table,
-               Module_Type_Defs,
-               Desc,
-               Success);
-
-            if not Success then -- unknown type
-               return;
-            end if;
-
-            if Desc.Parent_Point = Invalid_Point then
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Var.Start_Position,
-                  Kind              => Type_To_Object (Desc.Kind),
-                  Scope             => Local_Scope,
-                  Referred_Filename => Var_File,
-                  Declaration_Info  => Decl_Info);
-            else
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Var.Start_Position,
-                  Kind              => Type_To_Object (Desc.Kind),
-                  Scope             => Local_Scope,
-                  Referred_Filename => Var_File,
-                  Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Desc.Parent_Filename,
-                  Declaration_Info  => Decl_Info);
-            end if;
-            Free (Desc);
          end if;
+
+         if Ref.Key (Ref.Access_Type.First) = 'r' then
+            Ref_Kind := Reference;
+         else
+            Ref_Kind := Modification;
+         end if;
+
+         Insert_Reference
+           (Declaration_Info        => Decl_Info,
+            File                    => File,
+            Location                => Ref.Position,
+            Kind                    => Ref_Kind);
       end if;
 
-      if Ref.Key (Ref.Access_Type.First) = 'r' then
-         Ref_Kind := Reference;
-      else
-         Ref_Kind := Modification;
-      end if;
-
-      Insert_Reference
-        (Declaration_Info        => Decl_Info,
-         File                    => File,
-         Location                => Ref.Position,
-         Kind                    => Ref_Kind);
    exception
-      when Not_Found  | DB_Error => -- ignore
+      when DB_Error => -- ignore
          Fail ("unable to find instance variable " & Ref_Class & "." & Ref_Id);
    end Fu_To_Iv_Handler;
 
@@ -3692,67 +3713,70 @@ package body Src_Info.CPP is
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last));
       Decl_Info : E_Declaration_Info_List;
       Macro_File : Virtual_File;
+      Success : Boolean;
    begin
       if not Is_Open (Handler.SN_Table (MA)) then
          --  .ma table does not exist
          return;
       end if;
 
-      Find (Handler.SN_Table (MA), Ref_Id, Tab => Macro);
+      Find (Handler.SN_Table (MA), Ref_Id, Tab => Macro, Success => Success);
 
-      Macro_File := Create
-        (String (Macro.Key (Macro.File_Name.First .. Macro.File_Name.Last)));
+      if Success then
+         Macro_File := Create
+          (String (Macro.Key (Macro.File_Name.First .. Macro.File_Name.Last)));
 
-      if Xref_Filename_For
-        (Macro_File,
-         Get_DB_Dir (Handler.DB_Dirs, Macro.DBI),
-         Handler.Prj_HTable) = Get_LI_Filename (File)
-      then
-         --  look for declaration in current file
-         Decl_Info := Find_Declaration
-           (File        => File,
-            Symbol_Name => Ref_Id,
-            Location    => Macro.Start_Position);
+         if Xref_Filename_For
+           (Macro_File,
+            Get_DB_Dir (Handler.DB_Dirs, Macro.DBI),
+            Handler.Prj_HTable) = Get_LI_Filename (File)
+         then
+            --  look for declaration in current file
+            Decl_Info := Find_Declaration
+              (File        => File,
+               Symbol_Name => Ref_Id,
+               Location    => Macro.Start_Position);
 
-         if Decl_Info = null then
-            Insert_Declaration
-              (File               => File,
-               Symbol_Name        => Ref_Id,
-               Location           => Macro.Start_Position,
-               Kind               => Unresolved_Entity_Kind,
-               Scope              => Global_Scope,
-               Declaration_Info   => Decl_Info);
+            if Decl_Info = null then
+               Insert_Declaration
+                 (File               => File,
+                  Symbol_Name        => Ref_Id,
+                  Location           => Macro.Start_Position,
+                  Kind               => Unresolved_Entity_Kind,
+                  Scope              => Global_Scope,
+                  Declaration_Info   => Decl_Info);
+            end if;
+
+         else
+            --  look for dependency declaration
+            Decl_Info := Find_Dependency_Declaration
+              (File                 => File,
+               Symbol_Name          => Ref_Id,
+               Filename             => Macro_File,
+               Location             => Macro.Start_Position);
+
+            if Decl_Info = null then
+               Insert_Dependency_Declaration
+                 (Handler           => Handler,
+                  File              => File,
+                  Symbol_Name       => Ref_Id,
+                  Location          => Macro.Start_Position,
+                  Kind              => Unresolved_Entity_Kind,
+                  Scope             => Global_Scope,
+                  Referred_Filename => Macro_File,
+                  Declaration_Info  => Decl_Info);
+            end if;
          end if;
 
-      else
-         --  look for dependency declaration
-         Decl_Info := Find_Dependency_Declaration
-           (File                 => File,
-            Symbol_Name          => Ref_Id,
-            Filename             => Macro_File,
-            Location             => Macro.Start_Position);
-
-         if Decl_Info = null then
-            Insert_Dependency_Declaration
-              (Handler           => Handler,
-               File              => File,
-               Symbol_Name       => Ref_Id,
-               Location          => Macro.Start_Position,
-               Kind              => Unresolved_Entity_Kind,
-               Scope             => Global_Scope,
-               Referred_Filename => Macro_File,
-               Declaration_Info  => Decl_Info);
-         end if;
+         Insert_Reference
+           (Declaration_Info => Decl_Info,
+            File             => File,
+            Location         => Ref.Position,
+            Kind             => Reference);
       end if;
 
-      Insert_Reference
-        (Declaration_Info => Decl_Info,
-         File             => File,
-         Location         => Ref.Position,
-         Kind             => Reference);
-
    exception
-      when DB_Error | Not_Found =>
+      when DB_Error =>
          Fail ("unable to find macro " & Ref_Id);
    end Fu_To_Ma_Handler;
 
@@ -3898,38 +3922,42 @@ package body Src_Info.CPP is
 
          declare
             Class_Def : CL_Table;
+            Success   : Boolean;
          begin
-            Find (Handler.SN_Table (CL), Ref_Class, Tab => Class_Def);
+            Find (Handler.SN_Table (CL), Ref_Class, Tab => Class_Def,
+                  Success => Success);
             --  ??? what to do when several classes with one name are available
             --  what about unions?
 
-            Decl_Info := Find_Declaration
-              (File        => File,
-               Symbol_Name => Ref_Id,
-               Class_Name  => Ref_Class,
-               Kind        => Overloaded_Entity_Kind,
-               Location    => Class_Def.Start_Position);
+            if Success then
+               Decl_Info := Find_Declaration
+                 (File        => File,
+                  Symbol_Name => Ref_Id,
+                  Class_Name  => Ref_Class,
+                  Kind        => Overloaded_Entity_Kind,
+                  Location    => Class_Def.Start_Position);
 
-            if Decl_Info = null then
-               Decl_Info := new E_Declaration_Info_Node'
-                 (Value =>
-                    (Declaration => No_Declaration,
-                     References => null),
-                  Next => File.LI.Body_Info.Declarations);
-               Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
-               Decl_Info.Value.Declaration.Kind := Overloaded_Entity_Kind;
-               Decl_Info.Value.Declaration.Location :=
-                 (File   =>
-                    (LI              => File,
-                     Part            => Unit_Body,
-                     Source_Filename => File.LI.Body_Info.Source_Filename),
-                  Line   => Class_Def.Start_Position.Line,
-                  Column => Class_Def.Start_Position.Column);
-               File.LI.Body_Info.Declarations := Decl_Info;
+               if Decl_Info = null then
+                  Decl_Info := new E_Declaration_Info_Node'
+                    (Value =>
+                       (Declaration => No_Declaration,
+                        References => null),
+                     Next => File.LI.Body_Info.Declarations);
+                  Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
+                  Decl_Info.Value.Declaration.Kind := Overloaded_Entity_Kind;
+                  Decl_Info.Value.Declaration.Location :=
+                    (File   =>
+                       (LI              => File,
+                        Part            => Unit_Body,
+                        Source_Filename => File.LI.Body_Info.Source_Filename),
+                     Line   => Class_Def.Start_Position.Line,
+                     Column => Class_Def.Start_Position.Column);
+                  File.LI.Body_Info.Declarations := Decl_Info;
+               end if;
             end if;
 
          exception
-            when DB_Error | Not_Found =>
+            when DB_Error =>
                Fail ("Failed to lookup class " & Ref_Class
                   & " for method " & Ref_Id);
                return;
@@ -3942,7 +3970,7 @@ package body Src_Info.CPP is
          Ref.Position,
          Reference);
    exception
-      when Not_Found  | DB_Error => -- ignore
+      when DB_Error => -- ignore
          Fail ("unable to find method " & Ref_Class & "::" & Ref_Id);
          return;
    end Fu_To_Mi_Handler;
@@ -3972,145 +4000,147 @@ package body Src_Info.CPP is
 
       --  Info ("Fu_To_T: " & Ref_Id);
 
-      Find (Handler.SN_Table (T), Ref_Id, Tab => Typedef);
+      Find (Handler.SN_Table (T), Ref_Id, Tab => Typedef, Success => Success);
 
-      Typedef_File := Create
-        (String (Typedef.Key
-           (Typedef.File_Name.First .. Typedef.File_Name.Last)));
+      if Success then
+         Typedef_File := Create
+           (String (Typedef.Key
+                      (Typedef.File_Name.First .. Typedef.File_Name.Last)));
 
-      if Xref_Filename_For
-        (Typedef_File,
-         Get_DB_Dir (Handler.DB_Dirs, Typedef.DBI),
-         Handler.Prj_HTable) = Get_LI_Filename (File)
-      then
-         --  look for declaration in current file
-         Decl_Info := Find_Declaration
-           (File        => File,
-            Symbol_Name => Ref_Id,
-            Location    => Typedef.Start_Position);
+         if Xref_Filename_For
+           (Typedef_File,
+            Get_DB_Dir (Handler.DB_Dirs, Typedef.DBI),
+            Handler.Prj_HTable) = Get_LI_Filename (File)
+         then
+            --  look for declaration in current file
+            Decl_Info := Find_Declaration
+              (File        => File,
+               Symbol_Name => Ref_Id,
+               Location    => Typedef.Start_Position);
 
-         if Decl_Info = null then
-            --  Declaration for type is not created yet
-            Find_Original_Type
-              (Ref_Id,
-               Handler.SN_Table,
-               Module_Type_Defs,
-               Desc, Success);
+            if Decl_Info = null then
+               --  Declaration for type is not created yet
+               Find_Original_Type
+                 (Ref_Id,
+                  Handler.SN_Table,
+                  Module_Type_Defs,
+                  Desc, Success);
 
-            if not Success then
-               Fail ("unable to find type for typedef " & Ref_Id);
-               Free (Desc);
-               return;
+               if not Success then
+                  Fail ("unable to find type for typedef " & Ref_Id);
+                  Free (Desc);
+                  return;
+               end if;
+
+               if Desc.Ancestor_Point = Invalid_Point then
+                  --  unknown parent
+                  Insert_Declaration
+                    (File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Typedef.Start_Position,
+                     Kind              => Desc.Kind,
+                     Scope             => Global_Scope,
+                     Declaration_Info  => Decl_Info);
+               elsif Desc.Ancestor_Point = Predefined_Point then
+                  --  typedef for builtin type
+                  Insert_Declaration
+                    (File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Typedef.Start_Position,
+                     Kind              => Desc.Kind,
+                     Scope             => Global_Scope,
+                     Declaration_Info  => Decl_Info);
+                  Set_Parent_Location
+                    (File, Decl_Info, VFS.No_File, Predefined_Point,
+                     Parent_Name => Desc.Builtin_Name.all);
+               else
+                  --  parent type found
+                  Insert_Declaration
+                    (File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Typedef.Start_Position,
+                     Kind              => Desc.Kind,
+                     Scope             => Global_Scope,
+                     Declaration_Info  => Decl_Info);
+                  Set_Parent_Location
+                    (File, Decl_Info, Desc.Ancestor_Filename,
+                     Desc.Ancestor_Point);
+               end if;
             end if;
 
-            if Desc.Ancestor_Point = Invalid_Point then
-               --  unknown parent
-               Insert_Declaration
-                 (File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Typedef.Start_Position,
-                  Kind              => Desc.Kind,
-                  Scope             => Global_Scope,
-                  Declaration_Info  => Decl_Info);
-            elsif Desc.Ancestor_Point = Predefined_Point then
-               --  typedef for builtin type
-               Insert_Declaration
-                 (File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Typedef.Start_Position,
-                  Kind              => Desc.Kind,
-                  Scope             => Global_Scope,
-                  Declaration_Info  => Decl_Info);
-               Set_Parent_Location
-                 (File, Decl_Info, VFS.No_File, Predefined_Point,
-                  Parent_Name => Desc.Builtin_Name.all);
-            else
-               --  parent type found
-               Insert_Declaration
-                 (File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Typedef.Start_Position,
-                  Kind              => Desc.Kind,
-                  Scope             => Global_Scope,
-                  Declaration_Info  => Decl_Info);
-               Set_Parent_Location
-                 (File, Decl_Info, Desc.Ancestor_Filename,
-                  Desc.Ancestor_Point);
+         else
+            --  look for dependency declaration
+            Decl_Info := Find_Dependency_Declaration
+              (File                 => File,
+               Symbol_Name          => Ref_Id,
+               Filename             => Typedef_File,
+               Location             => Typedef.Start_Position);
+
+            if Decl_Info = null then
+               Find_Original_Type
+                 (Ref_Id,
+                  Handler.SN_Table,
+                  Module_Type_Defs,
+                  Desc,
+                  Success);
+
+               if not Success then
+                  Fail ("unable to find type for typedef " & Ref_Id);
+                  Free (Desc);
+                  return;
+               end if;
+
+               if Desc.Ancestor_Point = Invalid_Point then
+                  --  unknown parent
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Typedef.Start_Position,
+                     Kind              => Desc.Kind,
+                     Scope             => Global_Scope,
+                     Referred_Filename => Typedef_File,
+                     Declaration_Info  => Decl_Info);
+               elsif Desc.Ancestor_Point = Predefined_Point then
+                  --  typedef for builtin type
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Typedef.Start_Position,
+                     Parent_Location   => Predefined_Point,
+                     Kind              => Desc.Kind,
+                     Scope             => Global_Scope,
+                     Referred_Filename => Typedef_File,
+                     Declaration_Info  => Decl_Info);
+               else
+                  --  parent type found
+                  Insert_Dependency_Declaration
+                    (Handler           => Handler,
+                     File              => File,
+                     Symbol_Name       => Ref_Id,
+                     Location          => Typedef.Start_Position,
+                     Parent_Location   => Desc.Ancestor_Point,
+                     Parent_Filename   => Desc.Ancestor_Filename,
+                     Kind              => Desc.Kind,
+                     Scope             => Global_Scope,
+                     Referred_Filename => Typedef_File,
+                     Declaration_Info  => Decl_Info);
+               end if;
             end if;
          end if;
 
-      else
-         --  look for dependency declaration
-         Decl_Info := Find_Dependency_Declaration
-           (File                 => File,
-            Symbol_Name          => Ref_Id,
-            Filename             => Typedef_File,
-            Location             => Typedef.Start_Position);
+         Insert_Reference
+           (Declaration_Info     => Decl_Info,
+            File                 => File,
+            Location             => Ref.Position,
+            Kind                 => Reference);
 
-         if Decl_Info = null then
-            Find_Original_Type
-              (Ref_Id,
-               Handler.SN_Table,
-               Module_Type_Defs,
-               Desc,
-               Success);
-
-            if not Success then
-               Fail ("unable to find type for typedef " & Ref_Id);
-               Free (Desc);
-               return;
-            end if;
-
-            if Desc.Ancestor_Point = Invalid_Point then
-               --  unknown parent
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Typedef.Start_Position,
-                  Kind              => Desc.Kind,
-                  Scope             => Global_Scope,
-                  Referred_Filename => Typedef_File,
-                  Declaration_Info  => Decl_Info);
-            elsif Desc.Ancestor_Point = Predefined_Point then
-               --  typedef for builtin type
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Typedef.Start_Position,
-                  Parent_Location   => Predefined_Point,
-                  Kind              => Desc.Kind,
-                  Scope             => Global_Scope,
-                  Referred_Filename => Typedef_File,
-                  Declaration_Info  => Decl_Info);
-            else
-               --  parent type found
-               Insert_Dependency_Declaration
-                 (Handler           => Handler,
-                  File              => File,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Typedef.Start_Position,
-                  Parent_Location   => Desc.Ancestor_Point,
-                  Parent_Filename   => Desc.Ancestor_Filename,
-                  Kind              => Desc.Kind,
-                  Scope             => Global_Scope,
-                  Referred_Filename => Typedef_File,
-                  Declaration_Info  => Decl_Info);
-            end if;
-         end if;
+         Free (Desc);
       end if;
 
-      Insert_Reference
-        (Declaration_Info     => Decl_Info,
-         File                 => File,
-         Location             => Ref.Position,
-         Kind                 => Reference);
-
-      Free (Desc);
-
    exception
-      when DB_Error | Not_Found  =>
+      when DB_Error  =>
          Fail ("unable to find typedef " & Ref_Id);
    end Fu_To_T_Handler;
 
@@ -4366,75 +4396,79 @@ package body Src_Info.CPP is
       Find
         (Handler.SN_Table (CON),
          String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-         Tab => Var);
+         Tab => Var,
+         Success => Success);
 
-      Type_Name_To_Kind
-        (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
-         Handler.SN_Table,
-         Module_Type_Defs,
-         Desc,
-         Success);
+      if Success then
+         Type_Name_To_Kind
+           (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
+            Handler.SN_Table,
+            Module_Type_Defs,
+            Desc,
+            Success);
 
-      if not Success then -- type not found
-         --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global
-         --  variables with unknown type?
-         Desc.Kind := Unresolved_Entity_Kind;
-      end if;
-
-      if (Var.Attributes and SN_STATIC) = SN_STATIC then
-         Scope := Static_Local;
-      end if;
-
-      if Desc.Parent_Point = Invalid_Point then
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => Sym.Start_Position,
-            Kind              => Type_To_Object (Desc.Kind),
-            Scope             => Scope,
-            Declaration_Info  => Decl_Info);
-      else
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => Sym.Start_Position,
-            Kind              => Type_To_Object (Desc.Kind),
-            Scope             => Scope,
-            Declaration_Info  => Decl_Info);
-         Set_Parent_Location
-           (File, Decl_Info,
-            Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename);
-
-            --  add reference to the type of this variable
-         if Desc.Is_Template then
-            --  template specialization
-            Refer_Type
-              (Plain_Class_Name
-                 (String
-                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last))),
-               Desc.Parent_Point,
-               File,
-               Var.Type_Start_Position,
-               Instantiation_Reference);
-         else
-            --  default reference kind
-            Refer_Type
-              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
-               Desc.Parent_Point,
-               File,
-               Var.Type_Start_Position);
+         if not Success then -- type not found
+            --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global
+            --  variables with unknown type?
+            Desc.Kind := Unresolved_Entity_Kind;
          end if;
 
+         if (Var.Attributes and SN_STATIC) = SN_STATIC then
+            Scope := Static_Local;
+         end if;
+
+         if Desc.Parent_Point = Invalid_Point then
+            Insert_Declaration
+              (File              => File,
+               Symbol_Name       =>
+                String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+               Location          => Sym.Start_Position,
+               Kind              => Type_To_Object (Desc.Kind),
+               Scope             => Scope,
+               Declaration_Info  => Decl_Info);
+         else
+            Insert_Declaration
+              (File              => File,
+               Symbol_Name       =>
+                String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+               Location          => Sym.Start_Position,
+               Kind              => Type_To_Object (Desc.Kind),
+               Scope             => Scope,
+               Declaration_Info  => Decl_Info);
+            Set_Parent_Location
+              (File, Decl_Info,
+               Parent_Location   => Desc.Parent_Point,
+               Parent_Filename   => Desc.Parent_Filename);
+
+            --  add reference to the type of this variable
+            if Desc.Is_Template then
+               --  template specialization
+               Refer_Type
+                 (Plain_Class_Name
+                   (String
+                     (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last))),
+                  Desc.Parent_Point,
+                  File,
+                  Var.Type_Start_Position,
+                  Instantiation_Reference);
+            else
+               --  default reference kind
+               Refer_Type
+                 (String
+                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
+                  Desc.Parent_Point,
+                  File,
+                  Var.Type_Start_Position);
+            end if;
+
+         end if;
+
+         Free (Desc);
       end if;
 
-      Free (Desc);
    exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- no such variable
-         null;           -- ignore error
+      when  DB_Error =>
+         null;
    end Sym_CON_Handler;
 
    -------------------------
@@ -4512,16 +4546,21 @@ package body Src_Info.CPP is
          declare
             EC_Def : EC_Table;
             E_Def  : E_Table;
+            Success : Boolean;
          begin
             Find (Handler.SN_Table (EC),
-                  Ec_Id, Sym.Start_Position, Tab => EC_Def);
-            Find_Enum
-              (String (EC_Def.Data
-                 (EC_Def.Enumeration_Name.First ..
-                  EC_Def.Enumeration_Name.Last)),
-               Handler.SN_Table, Desc, E_Def, Has_Enum);
+                  Ec_Id, Sym.Start_Position, Tab => EC_Def,
+                  Success => Success);
+            if Success then
+               Find_Enum
+                 (String (EC_Def.Data
+                            (EC_Def.Enumeration_Name.First ..
+                               EC_Def.Enumeration_Name.Last)),
+                  Handler.SN_Table, Desc, E_Def, Has_Enum);
+            end if;
+
          exception
-            when DB_Error | Not_Found => -- ignore
+            when DB_Error => -- ignore
                null;
          end;
       end if;
@@ -4573,6 +4612,7 @@ package body Src_Info.CPP is
       Match        : Boolean;
       FU_File      : LI_File_Ptr;
       FU_Tab_File  : Virtual_File;
+      Success      : Boolean;
 
    begin
       --  Info ("Sym_FD_Hanlder: """
@@ -4585,143 +4625,149 @@ package body Src_Info.CPP is
          String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Sym.Start_Position,
          String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
-         Tab => FD_Tab);
+         Tab => FD_Tab,
+         Success => Success);
 
-      Is_Static := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
+      if Success then
 
-      Set_Cursor
-        (Handler.SN_Table (FD),
-         By_Key,
-         String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
-           & Field_Sep,
-         False);
+         Is_Static := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
 
-      loop
-         Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
-         exit when P = No_Pair;
+         Set_Cursor
+           (Handler.SN_Table (FD),
+            By_Key,
+            String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+            & Field_Sep,
+            False);
 
-         Parse_Pair (P, FD_Tab_Tmp);
+         loop
+            Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-         --  Update position of the first forward declaration
-         --  We have to compare prototypes of all global functions
-         --  if this is a global function, or only local (static)
-         --  ones if this is a static function
+            Parse_Pair (P, FD_Tab_Tmp);
 
-         Match := True;
+            --  Update position of the first forward declaration
+            --  We have to compare prototypes of all global functions
+            --  if this is a global function, or only local (static)
+            --  ones if this is a static function
 
-         if Is_Static then
-            Match := Match and then
+            Match := True;
+
+            if Is_Static then
+               Match := Match and then
                Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)
                = FD_Tab_Tmp.Key (FD_Tab_Tmp.File_Name.First ..
                                    FD_Tab_Tmp.File_Name.Last);
-         end if;
-
-         Match := Match and Cmp_Prototypes
-           (FD_Tab.Data,
-            FD_Tab_Tmp.Data,
-            FD_Tab.Arg_Types,
-            FD_Tab_Tmp.Arg_Types,
-            FD_Tab.Return_Type,
-            FD_Tab_Tmp.Return_Type,
-            Strict => True);
-
-         if (Match and then First_FD_Pos = Invalid_Point)
-           or else FD_Tab_Tmp.Start_Position < First_FD_Pos
-         then
-            First_FD_Pos := FD_Tab_Tmp.Start_Position;
-         end if;
-      end loop;
-
-      Release_Cursor (Handler.SN_Table (FD));
-
-      Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
-
-      Target_Kind := Get_Function_Kind
-        (String
-           (FD_Tab.Data (FD_Tab.Return_Type.First .. FD_Tab.Return_Type.Last)),
-         FD_Tab.Attributes);
-
-      Decl_Info := Find_Declaration
-        (File        => File,
-         Symbol_Name => String (Sym.Key
-            (Sym.Identifier.First .. Sym.Identifier.Last)),
-         Location    => First_FD_Pos);
-
-      if Decl_Info = null then
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => First_FD_Pos,
-            Kind              => Target_Kind,
-            Scope             => Global_Scope,
-            Declaration_Info  => Decl_Info);
-      end if;
-
-      --  for all subsequent declarations, add reference to the first decl
-      if Sym.Start_Position /= First_FD_Pos then
-         Insert_Reference
-           (Decl_Info,
-            File,
-            Sym.Start_Position,
-            Reference);
-      else -- for the first declaration we lookup body
-         Set_Cursor
-           (Handler.SN_Table (FU),
-            By_Key,
-            String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
-              & Field_Sep,
-            False);
-         Match := False;
-
-         loop
-            Get_Pair (Handler.SN_Table (FU), Next_By_Key, Result => P);
-            exit when P = No_Pair;
-
-            Parse_Pair (P, FU_Tab);
-            Match := Cmp_Prototypes
-               (FD_Tab.Data,
-                FU_Tab.Data,
-                FD_Tab.Arg_Types,
-                FU_Tab.Arg_Types,
-                FD_Tab.Return_Type,
-                FU_Tab.Return_Type,
-                Strict => True);
-
-            exit when Match;
-         end loop;
-
-         Release_Cursor (Handler.SN_Table (FU));
-
-         if Match -- we found the body
-           and then FU_Tab.Key
-             (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)
-             /= FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
-               --  and it is in another file
-         then
-            FU_Tab_File := Create
-              (String (FU_Tab.Key
-                  (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
-            FU_File := Locate_From_Source (Handler, FU_Tab_File);
-
-            if FU_File = No_LI_File then
-               Create_Stub_For_File
-                 (LI            => FU_File,
-                  Handler       => Handler,
-                  Full_Filename => FU_Tab_File);
             end if;
 
+            Match := Match and Cmp_Prototypes
+              (FD_Tab.Data,
+               FD_Tab_Tmp.Data,
+               FD_Tab.Arg_Types,
+               FD_Tab_Tmp.Arg_Types,
+               FD_Tab.Return_Type,
+               FD_Tab_Tmp.Return_Type,
+               Strict => True);
+
+            if (Match and then First_FD_Pos = Invalid_Point)
+              or else FD_Tab_Tmp.Start_Position < First_FD_Pos
+            then
+               First_FD_Pos := FD_Tab_Tmp.Start_Position;
+            end if;
+         end loop;
+
+         Release_Cursor (Handler.SN_Table (FD));
+
+         Assert
+           (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
+
+         Target_Kind := Get_Function_Kind
+           (String
+              (FD_Tab.Data
+                 (FD_Tab.Return_Type.First .. FD_Tab.Return_Type.Last)),
+            FD_Tab.Attributes);
+
+         Decl_Info := Find_Declaration
+           (File        => File,
+            Symbol_Name => String
+              (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+            Location    => First_FD_Pos);
+
+         if Decl_Info = null then
+            Insert_Declaration
+              (File              => File,
+               Symbol_Name       =>
+                String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+               Location          => First_FD_Pos,
+               Kind              => Target_Kind,
+               Scope             => Global_Scope,
+               Declaration_Info  => Decl_Info);
+         end if;
+
+         --  for all subsequent declarations, add reference to the first decl
+         if Sym.Start_Position /= First_FD_Pos then
             Insert_Reference
               (Decl_Info,
-               FU_File,
-               FU_Tab.Start_Position,
-               Body_Entity);
-            Set_End_Of_Scope (Decl_Info, FU_File, FU_Tab.End_Position);
+               File,
+               Sym.Start_Position,
+               Reference);
+         else -- for the first declaration we lookup body
+            Set_Cursor
+              (Handler.SN_Table (FU),
+               By_Key,
+               String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+               & Field_Sep,
+               False);
+            Match := False;
+
+            loop
+               Get_Pair (Handler.SN_Table (FU), Next_By_Key, Result => P);
+               exit when P = No_Pair;
+
+               Parse_Pair (P, FU_Tab);
+               Match := Cmp_Prototypes
+                 (FD_Tab.Data,
+                  FU_Tab.Data,
+                  FD_Tab.Arg_Types,
+                  FU_Tab.Arg_Types,
+                  FD_Tab.Return_Type,
+                  FU_Tab.Return_Type,
+                  Strict => True);
+
+               exit when Match;
+            end loop;
+
+            Release_Cursor (Handler.SN_Table (FU));
+
+            if Match -- we found the body
+              and then FU_Tab.Key
+                (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)
+            /= FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
+            --  and it is in another file
+            then
+               FU_Tab_File := Create
+                 (String (FU_Tab.Key
+                          (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
+               FU_File := Locate_From_Source (Handler, FU_Tab_File);
+
+               if FU_File = No_LI_File then
+                  Create_Stub_For_File
+                    (LI            => FU_File,
+                     Handler       => Handler,
+                     Full_Filename => FU_Tab_File);
+               end if;
+
+               Insert_Reference
+                 (Decl_Info,
+                  FU_File,
+                  FU_Tab.Start_Position,
+                  Body_Entity);
+               Set_End_Of_Scope (Decl_Info, FU_File, FU_Tab.End_Position);
+            end if;
          end if;
       end if;
 
    exception
-      when DB_Error | Not_Found =>
+      when DB_Error =>
          Fail ("unable to find function " &
                String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
    end Sym_FD_Handler;
@@ -4745,6 +4791,7 @@ package body Src_Info.CPP is
       End_Position    : Point;
       Ref             : TO_Table;
       Our_Ref         : Boolean;
+      Success         : Boolean;
       Class_Def       : CL_Table := Invalid_CL_Table;
       Class_Decl_Info : E_Declaration_Info_List;
       Fu_Id           : constant String := String (Sym.Key
@@ -4759,33 +4806,37 @@ package body Src_Info.CPP is
 --               & Sym.End_Position.Line'Img);
 
       if Sym.Symbol = MI then
-         begin
-            Find
-              (Handler.SN_Table (MI),
-               String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
-               Fu_Id,
-               Sym.Start_Position,
-               String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
-               Tab => FU_Tab);
+         Find
+           (Handler.SN_Table (MI),
+            String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
+            Fu_Id,
+            Sym.Start_Position,
+            String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
+            Tab => FU_Tab,
+            Success => Success);
 
-            begin -- check if this class is template
-               Find
-                 (Handler.SN_Table (CL),
-                  String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
-                  Tab => Class_Def);
+         if Success then
+            --  Check if this class is template
+            Find
+              (Handler.SN_Table (CL),
+               String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
+               Tab => Class_Def,
+               Success => Success);
+
+            if Success then
                Target_Kind := Get_Method_Kind
                  (Class_Def,
-                  String (FU_Tab.Data (FU_Tab.Return_Type.First ..
-                                         FU_Tab.Return_Type.Last)),
+                  String (FU_Tab.Data
+                     (FU_Tab.Return_Type.First .. FU_Tab.Return_Type.Last)),
                   FU_Tab.Attributes);
                Find_Or_Create_Class
-                  (Handler,
-                   Class_Def,
-                   String
-                     (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
-                   Class_Decl_Info,
-                   File,
-                   Module_Type_Defs);
+                 (Handler,
+                  Class_Def,
+                  String
+                    (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
+                  Class_Decl_Info,
+                  File,
+                  Module_Type_Defs);
 
                if not (Class_Def.Start_Position < Sym.Start_Position
                        and Sym.End_Position < Class_Def.End_Position)
@@ -4798,38 +4849,27 @@ package body Src_Info.CPP is
                      --  name, so set the column to "anywhere"
                      Reference);
                end if;
-
-            exception
-               when DB_Error | Not_Found =>
-                  null;
-            end;
+            end if;
 
             End_Position := FU_Tab.End_Position;
-         exception
-            when DB_Error | Not_Found =>
-               Fail ("unable to find method "
-                     & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
-                     & "." & Fu_Id);
-               return;
-         end;
+         end if;
+
       else
-         begin
-            Find
-              (Handler.SN_Table (FU),
-               Fu_Id,
-               Sym.Start_Position,
-               String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
-               Tab => FU_Tab);
+         Find
+           (Handler.SN_Table (FU),
+            Fu_Id,
+            Sym.Start_Position,
+            String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
+            Tab => FU_Tab,
+            Success => Success);
+
+         if Success then
             Target_Kind := Get_Function_Kind
-               (String (FU_Tab.Data (FU_Tab.Return_Type.First ..
+              (String (FU_Tab.Data (FU_Tab.Return_Type.First ..
                                       FU_Tab.Return_Type.Last)),
-                FU_Tab.Attributes);
+               FU_Tab.Attributes);
             End_Position := FU_Tab.End_Position;
-         exception
-            when DB_Error | Not_Found =>
-               Fail ("unable to find function " & Fu_Id);
-               return;
-         end;
+         end if;
       end if;
 
       --  Detect forward declaration. If there are many declarations
@@ -4998,74 +5038,67 @@ package body Src_Info.CPP is
       Find
        (Handler.SN_Table (GV),
         String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-        Tab => Var);
+        Tab => Var,
+        Success => Success);
 
-      Type_Name_To_Kind
-        (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
-         Handler.SN_Table,
-         Module_Type_Defs,
-         Desc,
-         Success);
+      if Success then
 
-      if not Success then -- type not found
-         --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global vars
-         --  with unknown type?
-         Desc.Kind := Unresolved_Entity_Kind;
-      end if;
+         Type_Name_To_Kind
+           (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
+            Handler.SN_Table,
+            Module_Type_Defs,
+            Desc,
+            Success);
 
-      if (Var.Attributes and SN_STATIC) = SN_STATIC then
-         Scope := Static_Local;
-      end if;
-
-      if Desc.Parent_Point = Invalid_Point then
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => Sym.Start_Position,
-            Kind              => Type_To_Object (Desc.Kind),
-            Scope             => Scope,
-            Declaration_Info  => Decl_Info);
-      else
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => Sym.Start_Position,
-            Kind              => Type_To_Object (Desc.Kind),
-            Scope             => Scope,
-            Declaration_Info  => Decl_Info);
-         Set_Parent_Location
-           (File, Decl_Info,
-            Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Desc.Parent_Filename);
-
-         --  add reference to the type of this variable
-         if Desc.Is_Template then
-            --  template specialization
-            Refer_Type
-              (Plain_Class_Name
-                 (String
-                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last))),
-               Desc.Parent_Point,
-               File,
-               Var.Type_Start_Position,
-               Instantiation_Reference);
-         else
-            --  default reference kind
-            Refer_Type
-              (String (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
-               Desc.Parent_Point,
-               File,
-               Var.Type_Start_Position);
+         if not Success then -- type not found
+            --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global vars
+            --  with unknown type?
+            Desc.Kind := Unresolved_Entity_Kind;
          end if;
-      end if;
 
-      Free (Desc);
-   exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- no such variable
-         null;           -- ignore error
+         if (Var.Attributes and SN_STATIC) = SN_STATIC then
+            Scope := Static_Local;
+         end if;
+
+         Insert_Declaration
+           (File              => File,
+            Symbol_Name       =>
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+            Location          => Sym.Start_Position,
+            Kind              => Type_To_Object (Desc.Kind),
+            Scope             => Scope,
+            Declaration_Info  => Decl_Info);
+
+         if Desc.Parent_Point /= Invalid_Point then
+            Set_Parent_Location
+              (File, Decl_Info,
+               Parent_Location   => Desc.Parent_Point,
+               Parent_Filename   => Desc.Parent_Filename);
+
+            --  add reference to the type of this variable
+            if Desc.Is_Template then
+               --  template specialization
+               Refer_Type
+                 (Plain_Class_Name
+                   (String
+                     (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last))),
+                  Desc.Parent_Point,
+                  File,
+                  Var.Type_Start_Position,
+                  Instantiation_Reference);
+            else
+               --  default reference kind
+               Refer_Type
+                 (String
+                    (Var.Data (Var.Value_Type.First .. Var.Value_Type.Last)),
+                  Desc.Parent_Point,
+                  File,
+                  Var.Type_Start_Position);
+            end if;
+         end if;
+
+         Free (Desc);
+      end if;
    end Sym_GV_Handler;
 
    --------------------
@@ -5151,133 +5184,124 @@ package body Src_Info.CPP is
         (Handler.SN_Table (IV),
          String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
          String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-         Tab => Inst_Var);
+         Tab => Inst_Var,
+         Success => Success);
 
-      Find_Class
-        (String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
-         Handler.SN_Table,
-         Desc,
-         Class_Def,
-         Success);
+      if Success then
 
-      if not Success then -- try unions
-         Find_Union
+         Find_Class
            (String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
             Handler.SN_Table,
             Desc,
             Class_Def,
             Success);
-      end if;
 
-      if not Success then
-         Fail ("Failed to locate class/union: "
-            & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
-            & " for instance variable "
-            & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
-         return;
-      end if;
-
-      --  Determine iv type
-      if Desc.Is_Template then
-         Free (Desc);
-         Type_Name_To_Kind
-           (String (Inst_Var.Data
-              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
-            Handler.SN_Table,
-            Module_Type_Defs,
-            Desc,
-            Success,
-            CL,
-            Invalid_FU_Table,
-            Class_Def);
-      else
-         Free (Desc);
-         Type_Name_To_Kind
-           (String (Inst_Var.Data
-              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
-            Handler.SN_Table,
-            Module_Type_Defs,
-            Desc,
-            Success);
-      end if;
-
-      if not Success then
-         --  Pretend we have a predefined type, so that we can at least do
-         --  something useful
-
-         Desc.Parent_Point    := Invalid_Point;
-         Desc.Parent_Filename := VFS.No_File;
-         Desc.Kind            :=
-           (Private_Type,
-            Is_Generic  => False,
-            Is_Type     => False,
-            Is_Abstract => False);
-         Desc.Parent_Point := Predefined_Point;
-         Desc.Builtin_Name := new String'
-           (String (Inst_Var.Data
-             (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)));
-
---           Fail
---             ("Failed to determine type of instance in IV "
---              & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
---              & "::"
---             & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
---              & ' '
---              & String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last))
---              & ' '
---              & String (Inst_Var.Data
---                 (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)));
-         --  Cannot determine type of this instance variable
---         return;
-      end if;
-
-      if Desc.Parent_Point = Invalid_Point then
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => Sym.Start_Position,
-            Kind              => Type_To_Object (Desc.Kind),
-            Scope             => Local_Scope,
-            Declaration_Info  => Decl_Info);
-      else
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => Sym.Start_Position,
-            Kind              => Type_To_Object (Desc.Kind),
-            Scope             => Local_Scope,
-            Declaration_Info  => Decl_Info);
-
-         if Desc.Builtin_Name /= null then
-            Set_Parent_Location
-              (File, Decl_Info,
-               Parent_Location   => Desc.Parent_Point,
-               Parent_Filename   => Desc.Parent_Filename,
-               Parent_Name       => Desc.Builtin_Name.all);
-         else
-            Set_Parent_Location
-              (File, Decl_Info,
-               Parent_Location   => Desc.Parent_Point,
-               Parent_Filename   => Desc.Parent_Filename);
+         if not Success then -- try unions
+            Find_Union
+              (String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
+               Handler.SN_Table,
+               Desc,
+               Class_Def,
+               Success);
          end if;
 
-            --  add reference to the type of this field
-         Refer_Type
-           (String (Inst_Var.Data
-              (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
-            Desc.Parent_Point,
-            File,
-            Sym.Start_Position);
-      end if;
+         if not Success then
+            Fail
+              ("Failed to locate class/union: "
+               & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+               & " for instance variable "
+               & String
+                 (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
+            return;
+         end if;
 
-      Free (Desc);
-   exception
-      when  DB_Error |   -- non-existent table
-            Not_Found => -- no such variable
-         Fail ("Sym_IV_Handler: unexpected exception");
-         Decl_Info := null;
+         --  Determine iv type
+         if Desc.Is_Template then
+            Free (Desc);
+            Type_Name_To_Kind
+              (String (Inst_Var.Data
+                 (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
+               Handler.SN_Table,
+               Module_Type_Defs,
+               Desc,
+               Success,
+               CL,
+               Invalid_FU_Table,
+               Class_Def);
+         else
+            Free (Desc);
+            Type_Name_To_Kind
+              (String (Inst_Var.Data
+                    (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
+               Handler.SN_Table,
+               Module_Type_Defs,
+               Desc,
+               Success);
+         end if;
+
+         if not Success then
+            --  Pretend we have a predefined type, so that we can at least do
+            --  something useful
+
+            Desc.Parent_Point    := Invalid_Point;
+            Desc.Parent_Filename := VFS.No_File;
+            Desc.Kind            :=
+              (Private_Type,
+               Is_Generic  => False,
+               Is_Type     => False,
+               Is_Abstract => False);
+            Desc.Parent_Point := Predefined_Point;
+            Desc.Builtin_Name := new String'
+              (String (Inst_Var.Data
+                 (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)));
+
+            --  Cannot determine type of this instance variable
+            --         return;
+         end if;
+
+         if Desc.Parent_Point = Invalid_Point then
+            Insert_Declaration
+              (File              => File,
+               Symbol_Name       =>
+                String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+               Location          => Sym.Start_Position,
+               Kind              => Type_To_Object (Desc.Kind),
+               Scope             => Local_Scope,
+               Declaration_Info  => Decl_Info);
+         else
+            Insert_Declaration
+              (File              => File,
+               Symbol_Name       =>
+                String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+               Location          => Sym.Start_Position,
+               Kind              => Type_To_Object (Desc.Kind),
+               Scope             => Local_Scope,
+               Declaration_Info  => Decl_Info);
+
+            if Desc.Builtin_Name /= null then
+               Set_Parent_Location
+                 (File, Decl_Info,
+                  Parent_Location   => Desc.Parent_Point,
+                  Parent_Filename   => Desc.Parent_Filename,
+                  Parent_Name       => Desc.Builtin_Name.all);
+            else
+               Set_Parent_Location
+                 (File, Decl_Info,
+                  Parent_Location   => Desc.Parent_Point,
+                  Parent_Filename   => Desc.Parent_Filename);
+            end if;
+
+            --  add reference to the type of this field
+            Refer_Type
+              (String (Inst_Var.Data
+                  (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last)),
+               Desc.Parent_Point,
+               File,
+               Sym.Start_Position);
+         end if;
+
+         Free (Desc);
+      end if;
    end Sym_IV_Handler;
 
    --------------------
@@ -5327,6 +5351,7 @@ package body Src_Info.CPP is
       Found        : Boolean;
       MI_File      : LI_File_Ptr;
       MI_Tab_File  : Virtual_File;
+      Success      : Boolean;
 
    begin
       --  Find this symbol
@@ -5336,171 +5361,171 @@ package body Src_Info.CPP is
          String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
          Sym.Start_Position,
          String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
-         MD_Tab);
+         MD_Tab,
+         Success => Success);
 
-      Set_Cursor
-        (Handler.SN_Table (MD),
-         By_Key,
-         String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
-         & Field_Sep
-         & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
-         & Field_Sep,
-         False);
+      if Success then
 
-      loop
-         Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
-         exit when P = No_Pair;
-         Parse_Pair (P, MD_Tab_Tmp);
-
-         --  Update position of the first forward declaration
-
-         if Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)
-            = MD_Tab_Tmp.Key (MD_Tab_Tmp.File_Name.First ..
-                                MD_Tab_Tmp.File_Name.Last)
-           and then Cmp_Prototypes
-             (MD_Tab.Data,
-              MD_Tab_Tmp.Data,
-              MD_Tab.Arg_Types,
-              MD_Tab_Tmp.Arg_Types,
-              MD_Tab.Return_Type,
-              MD_Tab_Tmp.Return_Type,
-              Strict => True)
-           and then ((First_MD_Pos = Invalid_Point)
-                     or else MD_Tab_Tmp.Start_Position < First_MD_Pos)
-         then
-            First_MD_Pos := MD_Tab_Tmp.Start_Position;
-         end if;
-      end loop;
-
-      Release_Cursor (Handler.SN_Table (MD));
-      Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
-
-      declare
-         Class_Def          : CL_Table;
-         Class_Decl_Info    : E_Declaration_Info_List;
-      begin -- check if this class is template
-         Find
-           (Handler.SN_Table (CL),
-            String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
-            Tab => Class_Def);
-         Target_Kind := Get_Method_Kind
-           (Class_Def,
-            String (MD_Tab.Data (MD_Tab.Return_Type.First ..
-                                  MD_Tab.Return_Type.Last)),
-            MD_Tab.Attributes);
-         --  Add reference to the class we belong to
-         Find_Or_Create_Class
-           (Handler,
-            Class_Def,
-            String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
-            Class_Decl_Info, File, Module_Type_Defs);
-
-         if Class_Decl_Info /= null then
-            Insert_Reference
-              (Class_Decl_Info,
-               File,
-               (Sym.Start_Position.Line, Sym.Start_Position.Column),
-               Primitive_Operation);
-         end if;
-
-      exception
-         when DB_Error | Not_Found =>
-            null;
-      end;
-
-      Decl_Info := Find_Declaration
-        (File        => File,
-         Symbol_Name =>
-           String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-         Location    => First_MD_Pos);
-
-      if Decl_Info = null then
-         Insert_Declaration
-           (File              => File,
-            Symbol_Name       =>
-               String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
-            Location          => First_MD_Pos,
-            Kind              => Target_Kind,
-            Scope             => Global_Scope,
-            Declaration_Info  => Decl_Info);
-      end if;
-
-      --  for all subsequent declarations, add reference to the first decl
-
-      if Sym.Start_Position /= First_MD_Pos then
-         Insert_Reference
-           (Declaration_Info => Decl_Info,
-            File             => File,
-            Location         => Sym.Start_Position,
-            Kind             => Reference);
-
-      else -- for the first declaration we lookup body
          Set_Cursor
-           (Handler.SN_Table (MI),
+           (Handler.SN_Table (MD),
             By_Key,
             String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
             & Field_Sep
             & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
             & Field_Sep,
             False);
-         Found := False;
 
          loop
-            Get_Pair (Handler.SN_Table (MI), Next_By_Key, Result => P);
+            Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
             exit when P = No_Pair;
+            Parse_Pair (P, MD_Tab_Tmp);
 
-            Parse_Pair (P, MI_Tab);
-            Found := Cmp_Prototypes
-               (MD_Tab.Data,
-                MI_Tab.Data,
-                MD_Tab.Arg_Types,
-                MI_Tab.Arg_Types,
-                MD_Tab.Return_Type,
-                MI_Tab.Return_Type,
-                Strict => True);
+            --  Update position of the first forward declaration
 
-            exit when Found;
+            if Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)
+            = MD_Tab_Tmp.Key (MD_Tab_Tmp.File_Name.First ..
+                                MD_Tab_Tmp.File_Name.Last)
+              and then Cmp_Prototypes
+                (MD_Tab.Data,
+                 MD_Tab_Tmp.Data,
+                 MD_Tab.Arg_Types,
+                 MD_Tab_Tmp.Arg_Types,
+                 MD_Tab.Return_Type,
+                 MD_Tab_Tmp.Return_Type,
+                 Strict => True)
+              and then ((First_MD_Pos = Invalid_Point)
+                        or else MD_Tab_Tmp.Start_Position < First_MD_Pos)
+            then
+               First_MD_Pos := MD_Tab_Tmp.Start_Position;
+            end if;
          end loop;
 
-         Release_Cursor (Handler.SN_Table (MI));
+         Release_Cursor (Handler.SN_Table (MD));
+         Assert
+           (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
-         if Found -- we found the body
-           and then MI_Tab.Key (MI_Tab.File_Name.First ..
-                                   MI_Tab.File_Name.Last)
-             /= MD_Tab.Key (MD_Tab.File_Name.First ..
-                               MD_Tab.File_Name.Last)
-         --  and it is in another file
-         then
-            MI_Tab_File := Create
-              (String (MI_Tab.Key
-                  (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
-            MI_File := Locate_From_Source (Handler, MI_Tab_File);
+         declare
+            Class_Def          : CL_Table;
+            Class_Decl_Info    : E_Declaration_Info_List;
+         begin -- check if this class is template
+            Find
+              (Handler.SN_Table (CL),
+               String (Sym.Key (Sym.Class.First .. Sym.Class.Last)),
+               Tab => Class_Def,
+               Success => Success);
 
-            if MI_File = No_LI_File then
-               Create_Stub_For_File
-                 (LI            => MI_File,
-                  Handler       => Handler,
-                  Full_Filename => MI_Tab_File);
+            if Success then
+               Target_Kind := Get_Method_Kind
+                 (Class_Def,
+                  String (MD_Tab.Data (MD_Tab.Return_Type.First ..
+                                         MD_Tab.Return_Type.Last)),
+                  MD_Tab.Attributes);
+               --  Add reference to the class we belong to
+               Find_Or_Create_Class
+                 (Handler,
+                  Class_Def,
+                  String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
+                  Class_Decl_Info, File, Module_Type_Defs);
+
+               if Class_Decl_Info /= null then
+                  Insert_Reference
+                    (Class_Decl_Info,
+                     File,
+                     (Sym.Start_Position.Line, Sym.Start_Position.Column),
+                     Primitive_Operation);
+               end if;
             end if;
+         end;
 
-            if MI_File /= File
-              or else MD_Tab.Start_Position /= MI_Tab.Start_Position
+         Decl_Info := Find_Declaration
+           (File        => File,
+            Symbol_Name =>
+              String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+            Location    => First_MD_Pos);
+
+         if Decl_Info = null then
+            Insert_Declaration
+              (File              => File,
+               Symbol_Name       =>
+                String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)),
+               Location          => First_MD_Pos,
+               Kind              => Target_Kind,
+               Scope             => Global_Scope,
+               Declaration_Info  => Decl_Info);
+         end if;
+
+         --  for all subsequent declarations, add reference to the first decl
+
+         if Sym.Start_Position /= First_MD_Pos then
+            Insert_Reference
+              (Declaration_Info => Decl_Info,
+               File             => File,
+               Location         => Sym.Start_Position,
+               Kind             => Reference);
+
+         else -- for the first declaration we lookup body
+            Set_Cursor
+              (Handler.SN_Table (MI),
+               By_Key,
+               String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+               & Field_Sep
+               & String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last))
+               & Field_Sep,
+               False);
+            Found := False;
+
+            loop
+               Get_Pair (Handler.SN_Table (MI), Next_By_Key, Result => P);
+               exit when P = No_Pair;
+
+               Parse_Pair (P, MI_Tab);
+               Found := Cmp_Prototypes
+                 (MD_Tab.Data,
+                  MI_Tab.Data,
+                  MD_Tab.Arg_Types,
+                  MI_Tab.Arg_Types,
+                  MD_Tab.Return_Type,
+                  MI_Tab.Return_Type,
+                  Strict => True);
+
+               exit when Found;
+            end loop;
+
+            Release_Cursor (Handler.SN_Table (MI));
+
+            if Found -- we found the body
+              and then MI_Tab.Key (MI_Tab.File_Name.First ..
+                                     MI_Tab.File_Name.Last)
+            /= MD_Tab.Key (MD_Tab.File_Name.First ..
+                             MD_Tab.File_Name.Last)
+            --  and it is in another file
             then
-               Insert_Reference
-                 (Decl_Info,
-                  MI_File,
-                  MI_Tab.Start_Position,
-                  Body_Entity);
-            end if;
+               MI_Tab_File := Create
+                 (String (MI_Tab.Key
+                    (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
+               MI_File := Locate_From_Source (Handler, MI_Tab_File);
 
-            Set_End_Of_Scope (Decl_Info, MI_File, MI_Tab.End_Position);
+               if MI_File = No_LI_File then
+                  Create_Stub_For_File
+                    (LI            => MI_File,
+                     Handler       => Handler,
+                     Full_Filename => MI_Tab_File);
+               end if;
+
+               if MI_File /= File
+                 or else MD_Tab.Start_Position /= MI_Tab.Start_Position
+               then
+                  Insert_Reference
+                    (Decl_Info,
+                     MI_File,
+                     MI_Tab.Start_Position,
+                     Body_Entity);
+               end if;
+
+               Set_End_Of_Scope (Decl_Info, MI_File, MI_Tab.End_Position);
+            end if;
          end if;
       end if;
-
-   exception
-      when DB_Error | Not_Found =>
-         Fail ("unable to find method " &
-               String (Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last)));
    end Sym_MD_Handler;
 
    --------------------
