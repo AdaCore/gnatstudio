@@ -48,12 +48,21 @@ package body Debugger.Gdb.Ada is
                Index := Index + 1;
                Parse_Record_Type (Lang, Type_Str, Entity, Index, Result, "}>");
 
+            --  A reference (for "in out" parameters)
+            --  ??? Simply ignore that fact, and parse the type...
+
+            elsif Looking_At (Type_Str, Index, "<ref>") then
+
+               Index := Index + 6;
+               Parse_Type (Lang, Type_Str, Entity, Index, Result);
+
             --  Simple types, like <4-byte integer> and <4-byte float>
 
             else
                Skip_To_Char (Type_Str, Index, '>');
                Index := Index + 1;
                Result := New_Simple_Type;
+
             end if;
 
          when 'a' =>
@@ -83,6 +92,54 @@ package body Debugger.Gdb.Ada is
                   Parse_Num (Type_Str, Index, Modulo);
                   Result := New_Mod_Type (Modulo);
                end;
+            else
+               raise Unexpected_Type;
+            end if;
+
+         when 'n' =>
+
+            --  A tagged record type, as in
+            --  new tagged_type with record c : float; end record;
+
+            if Looking_At (Type_Str, Index, "new ") then
+               declare
+                  Child  : Generic_Type_Access;
+                  Parent : Generic_Type_Access;
+                  Last   : Natural;
+               begin
+                  Index := Index + 4;
+                  Result := New_Class_Type (Num_Ancestors => 1);
+
+                  --  What is the ancestor ?
+
+                  Last := Index;
+                  while Type_Str (Last) /= ' ' loop
+                     Last := Last + 1;
+                  end loop;
+
+                  declare
+                     Ancestor_Type : String :=
+                       Type_Of (Get_Debugger (Lang),
+                                Type_Str (Index .. Last - 1));
+                     Tmp : Natural := Ancestor_Type'First;
+                  begin
+                     Parse_Type (Lang, Ancestor_Type,
+                                 Type_Str (Index .. Last - 1),
+                                 Tmp, Parent);
+                  end;
+                  Add_Ancestor (Class_Type (Result.all), 1,
+                                Class_Type_Access (Parent));
+
+                  --  Get the child (skip "with record")
+
+                  Index := Last + 12;
+                  Parse_Record_Type (Lang, Type_Str, Entity, Index, Child,
+                                     "end record");
+                  Set_Child (Class_Type (Result.all),
+                             Record_Type_Access (Child));
+               end;
+            else
+               raise Unexpected_Type;
             end if;
 
          when 'r' =>
@@ -107,6 +164,25 @@ package body Debugger.Gdb.Ada is
                   Result := New_Range_Type (Min, Max);
                end;
 
+            else
+               raise Unexpected_Type;
+            end if;
+
+         when 't' =>
+
+            --  A tagged type
+
+            if Looking_At (Type_Str, Index, "tagged record") then
+               Index := Index + 14;
+               declare
+                  Child : Generic_Type_Access;
+               begin
+                  Parse_Record_Type (Lang, Type_Str, Entity, Index, Child,
+                                     "end record");
+                  Result := New_Class_Type (Num_Ancestors => 0);
+                  Set_Child (Class_Type (Result.all),
+                             Record_Type_Access (Child));
+               end;
             else
                raise Unexpected_Type;
             end if;
@@ -136,6 +212,23 @@ package body Debugger.Gdb.Ada is
       Result     : in out Generic_Values.Generic_Type_Access;
       Repeat_Num : out Positive)
    is
+
+--       procedure Parse_Record_Value (Index  : in out Natural;
+--                                     Result : in out Generic_Type_Access);
+      --  Parse a record value, ignoring the opening and closing parentheses.
+      --  The number of fields parsed is exactly the same as defined in Result.
+
+      ------------------------
+      -- Parse_Record_Value --
+      ------------------------
+
+--       procedure Parse_Record_Value (Index  : in out Natural;
+--                                     Result : in out Generic_Type_Access)
+--       is
+--       begin
+
+--       end Parse_Record_Value;
+
    begin
       Repeat_Num := 1;
 
@@ -256,6 +349,10 @@ package body Debugger.Gdb.Ada is
                      Repeat_Num : Positive;
                   begin
                      --  Skips '=>'
+                     --  This also skips the address part in some "in out"
+                     --  parameters, like:
+                     --    (<ref> gnat.expect.process_descriptor) @0x818a990: (
+                     --     pid => 2012, ...
 
                      Skip_To_Char (Type_Str, Index, '=');
                      Index := Index + 3;
@@ -294,8 +391,26 @@ package body Debugger.Gdb.Ada is
 
          Skip_Blanks (Type_Str, Index);
 
-         --  Skip closing ')'
-         Index := Index + 1;
+         --  Skip closing ')', if seen
+         if Index <= Type_Str'Last and then Type_Str (Index) = ')' then
+            Index := Index + 1;
+         end if;
+
+      ------------------
+      -- Class values --
+      ------------------
+
+      elsif Result'Tag = Class_Type'Tag then
+         declare
+            R : Generic_Type_Access;
+         begin
+            for A in 1 .. Get_Num_Ancestors (Class_Type (Result.all)) loop
+               R := Get_Ancestor (Class_Type (Result.all), A);
+               Parse_Value (Lang, Type_Str, Index, R, Repeat_Num);
+            end loop;
+            R := Get_Child (Class_Type (Result.all));
+            Parse_Value (Lang, Type_Str, Index, R, Repeat_Num);
+         end;
       end if;
    end Parse_Value;
 
@@ -586,6 +701,17 @@ package body Debugger.Gdb.Ada is
 
          if Type_Str (Int) = '=' then
             Index := Int + 3;  --  skip "field_name => ";
+
+            --  If we are not parsing the most internal dimension, we in fact
+            --  saw the start of a new dimension, as in:
+            --    (3 => ((6 => 1, 2), (6 => 1, 2)), ((6 => 1, 2), (6 => 1, 2)))
+            --  for   array (3 .. 4, 1 .. 2, 6 .. 7) of integer
+            --  In that case, don't try to parse the item
+
+            if Dim /= Num_Dimensions (Result.all) then
+               return;
+            end if;
+
          end if;
 
          --  Parse the next item
