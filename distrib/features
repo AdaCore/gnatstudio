@@ -2,4 +2,6 @@ New features in GPS 1.0.1
 
 - The font "tahoma" is used under Windows by default
 - Matching parenthesis are now highlighted in the editor
+- Files will be search in the object directory as well when clicking on
+  error message or selecting File->Open From Path
 
