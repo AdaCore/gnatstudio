@@ -18,35 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;
-with Directory_Tree;
-
 package Creation_Wizard.Simple is
-
-   type Simple_Wizard_Record is new Wizard_Base_Record with private;
-   type Simple_Wizard is access all Simple_Wizard_Record'Class;
-
-   procedure Gtk_New
-     (Wiz    : out Simple_Wizard;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new simple project creation, which creates a set of projects
-   --  given a set of object directories and source directories.
-
-   procedure Initialize
-     (Wiz    : access Simple_Wizard_Record'Class;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Internal function for the creation of a new wizard
-
-   procedure Generate_Project
-     (Wiz     : access Simple_Wizard_Record;
-      Project : in out Projects.Project_Type);
-   --  Generate additional attributes for the project, as well as other
-   --  projects if needed
-
-private
-   type Simple_Wizard_Record is new Wizard_Base_Record with record
-      Src_Dirs : Directory_Tree.Directory_Selector;
-      Obj_Dirs : Directory_Tree.Directory_Selector;
-   end record;
-
+   procedure Add_Simple_Wizard_Pages
+     (Wiz : access Project_Wizard_Record'Class);
+   --  Add the required pages to a wizard to make it a simple project wizard.
+   --  Such a wizard creates a set of projects given a set of object and
+   --  source directories.
 end Creation_Wizard.Simple;

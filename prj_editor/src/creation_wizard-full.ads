@@ -22,33 +22,22 @@ with Glide_Kernel;
 
 package Creation_Wizard.Full is
 
-   type Prj_Wizard_Record is new Wizard_Base_Record with private;
+   type Prj_Wizard_Record is new Project_Wizard_Record with private;
    type Prj_Wizard is access all Prj_Wizard_Record'Class;
 
    procedure Gtk_New
      (Wiz               : out Prj_Wizard;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ask_About_Loading : Boolean := False);
+      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new project wizard.
    --  New pages can be added at will with Add_Page and through XML files.
    --  Default values for the various pages are taken from the project
    --  currently loaded in Kernel.
-   --  See inherited doc for Ask_About_Loading
 
    procedure Initialize
      (Wiz               : access Prj_Wizard_Record'Class;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ask_About_Loading : Boolean := False);
+      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal function for the creation of a new wizard
 
-   procedure Generate_Project
-     (Wiz     : access Prj_Wizard_Record;
-      Project : in out Projects.Project_Type);
-   --  Save in Project extra attributes specific to this full wizard.
-
 private
-   type Prj_Wizard_Record is new Wizard_Base_Record with record
-      XML_Pages_Count   : Natural := 0;  --  number of pages defined by XML
-   end record;
-
+   type Prj_Wizard_Record is new Project_Wizard_Record with null record;
 end Creation_Wizard.Full;

@@ -173,7 +173,7 @@ package body Creation_Wizard.Selector is
       From_Adp_Iter       : Gtk_Tree_Iter;
       Paned  : Gtk_Paned;
       Button : Gtk_Widget;
-      Wizard : Creation_Wizard.Wizard_Base;
+      Wizard : Creation_Wizard.Project_Wizard;
       Label  : Gtk_Label;
       pragma Unreferenced (Button);
    begin
@@ -243,36 +243,28 @@ package body Creation_Wizard.Selector is
          if Iter_Is_Selected
            (Get_Selection (Dialog.View), From_Sources_Iter)
          then
-            declare
-               Wiz : Creation_Wizard.Simple.Simple_Wizard;
-            begin
-               Gtk_New (Wiz, Kernel);
-               Wizard := Wizard_Base (Wiz);
-            end;
+            Gtk_New (Wizard, Kernel, Show_Toc => True);
+            Add_Simple_Wizard_Pages (Wizard);
 
          elsif Iter_Is_Selected
            (Get_Selection (Dialog.View), From_Adp_Iter)
          then
-            declare
-               Wiz : Creation_Wizard.Adp.Adp_Wizard;
-            begin
-               Gtk_New (Wiz, Kernel);
-               Wizard := Wizard_Base (Wiz);
-            end;
+            Gtk_New (Wizard, Kernel, Show_Toc => True);
+            Add_Adp_Wizard_Pages (Wizard);
 
          else
             declare
                Wiz : Creation_Wizard.Full.Prj_Wizard;
             begin
-               Gtk_New (Wiz, Kernel, Ask_About_Loading => False);
-               Wizard := Wizard_Base (Wiz);
+               Gtk_New (Wiz, Kernel);
+               Wizard := Project_Wizard (Wiz);
             end;
          end if;
 
          Destroy (Dialog);
          if Wizard /= null then
             declare
-               Name : constant String := Creation_Wizard.Run (Wizard);
+               Name : constant String := Run (Wizard);
             begin
                if Name /= "" then
                   Load_Project (Kernel, Name);

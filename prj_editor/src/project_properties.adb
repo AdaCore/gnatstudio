@@ -82,6 +82,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with String_Utils;              use String_Utils;
 with GUI_Utils;                 use GUI_Utils;
+with Creation_Wizard;           use Creation_Wizard;
+with Wizards;                   use Wizards;
 
 package body Project_Properties is
    use Widget_List;
@@ -94,6 +96,7 @@ package body Project_Properties is
 
    type Attribute_Editor_Record;
    type Attribute_Editor is access all Attribute_Editor_Record'Class;
+
 
    ----------------------------
    -- Attribute descriptions --
@@ -189,6 +192,29 @@ package body Project_Properties is
      (Kernel    : access Kernel_Handle_Record'Class;
       Attr      : Attribute_Description_Access);
    --  Register a new attribute in the project parser.
+
+   ------------------
+   -- Wizard pages --
+   ------------------
+
+   type XML_Project_Wizard_Page is new Project_Wizard_Page_Record with record
+      Page : Attribute_Page;
+      Box  : Gtk_Box;  --  ??? Would be nice to create on the fly
+   end record;
+   type XML_Project_Wizard_Page_Access is
+     access all XML_Project_Wizard_Page'Class;
+
+   procedure Generate_Project
+     (Page               : access XML_Project_Wizard_Page;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean);
+   function Create_Content
+     (Page : access XML_Project_Wizard_Page;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
+   --  See inherited doc
+
 
    -----------------------
    -- Properties module --
@@ -443,6 +469,8 @@ package body Project_Properties is
 
       Pages              : Widget_Array_Access;
       --  The pages that have been registered.
+
+      XML_Pages          : Wizard_Pages_Array_Access;
 
       Project            : Project_Type;
       Kernel             : Kernel_Handle;
@@ -3255,10 +3283,12 @@ package body Project_Properties is
       Button       : Gtk_Widget;
       Page         : Project_Editor_Page;
       Box          : Gtk_Box;
+      XML_Page     : XML_Project_Wizard_Page_Access;
       General_Page_Box : Gtk_Box;
       Main_Box     : Gtk_Box;
       Event        : Gtk_Event_Box;
       General_Size : Gtk_Size_Group;
+      Tmp          : Wizard_Pages_Array_Access;
    begin
       Gtk.Dialog.Initialize
         (Dialog => Editor,
@@ -3324,25 +3354,37 @@ package body Project_Properties is
          --  this means the event is sent to the parent's of the enclosing
          --  notebook, and thus is improperly handled by the nested notebooks.
 
-         Box := Attribute_Editors_Page_Box
-           (Kernel           => Kernel,
-            Project          => Project,
-            Nth_Page         => P,
-            General_Page_Box => General_Page_Box,
-            Path_Widget      => Editor.Path,
-            Context          => "properties");
+         XML_Page := XML_Project_Wizard_Page_Access
+           (Attribute_Editors_Page_Box
+              (Kernel           => Kernel,
+               Project          => Project,
+               General_Page_Box => General_Page_Box,
+               Nth_Page         => P,
+               Path_Widget      => Editor.Path,
+               Context          => "properties"));
 
-         if Box /= General_Page_Box and then Box /= null then
+         if XML_Page.Box /= General_Page_Box and then XML_Page /= null then
             Gtk_New (Event);
-            Add (Event, Box);
+            Add (Event, XML_Page.Box);
 
             if Attribute_Editors_Page_Name (P) /= "General" then
                Gtk_New (Label, Attribute_Editors_Page_Name (P));
                Append_Page (Main_Note, Event, Label);
             end if;
+
+            Tmp := Editor.XML_Pages;
+            if Tmp = null then
+               Editor.XML_Pages := new Wizard_Pages_Array (1 .. 1);
+            else
+               Editor.XML_Pages :=
+                 new Wizard_Pages_Array (1 .. Tmp'Length + 1);
+               Editor.XML_Pages (Tmp'Range) := Tmp.all;
+               Unchecked_Free (Tmp);
+            end if;
+
+            Editor.XML_Pages (Editor.XML_Pages'Last) := Wizard_Page (XML_Page);
          end if;
       end loop;
-
 
       Show_All (Editor);
 
@@ -3409,20 +3451,62 @@ package body Project_Properties is
       return Properties_Module_ID.Pages (Nth).Name.all;
    end Attribute_Editors_Page_Name;
 
+   ----------------------
+   -- Generate_Project --
+   ----------------------
+
+   procedure Generate_Project
+     (Page               : access XML_Project_Wizard_Page;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project            : in out Projects.Project_Type;
+      Changed            : in out Boolean)
+   is
+      pragma Unreferenced (Kernel);
+      Attr    : Attribute_Description_Access;
+   begin
+      for S in Page.Page.Sections'Range loop
+         for A in Page.Page.Sections (S).Attributes'Range loop
+            Attr := Page.Page.Sections (S).Attributes (A);
+
+            if Attr.Editor = null then
+               Trace (Me, "No editor created for "
+                      & Attr.Pkg.all & "'" & Attr.Name.all);
+            else
+               Generate_Project
+                 (Attr.Editor, Project, Scenario_Variables, Changed);
+            end if;
+         end loop;
+      end loop;
+   end Generate_Project;
+
+   --------------------
+   -- Create_Content --
+   --------------------
+
+   function Create_Content
+     (Page : access XML_Project_Wizard_Page;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
+   is
+      pragma Unreferenced (Wiz);
+   begin
+      return Gtk_Widget (Page.Box);
+   end Create_Content;
+
    --------------------------------
    -- Attribute_Editors_Page_Box --
    --------------------------------
 
    function Attribute_Editors_Page_Box
-     (Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project          : Projects.Project_Type;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project           : Projects.Project_Type;
       General_Page_Box : Gtk.Box.Gtk_Box := null;
-      Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
-      Nth_Page         : Integer;
-      Context          : String) return Gtk.Box.Gtk_Box
+      Path_Widget       : access Gtk.GEntry.Gtk_Entry_Record'Class;
+      Nth_Page          : Integer;
+      Context           : String) return Project_Wizard_Page
    is
       Page : Attribute_Page renames Properties_Module_ID.Pages (Nth_Page);
-      Page_Box     : Gtk_Box;
+      Page_Box     : XML_Project_Wizard_Page_Access;
       Box          : Gtk_Box;
       Frame        : Gtk_Frame;
       Size         : Gtk_Size_Group;
@@ -3447,10 +3531,13 @@ package body Project_Properties is
 
             if W /= null then
                if Page_Box = null then
-                  if Page.Name.all = "General" then
-                     Page_Box := General_Page_Box;
+                  Page_Box := new XML_Project_Wizard_Page;
+                  Page_Box.Page := Page;
+
+                  if Page.Name.all = -"General" then
+                     Page_Box.Box := General_Page_Box;
                   else
-                     Gtk_New_Vbox (Page_Box, Homogeneous => False);
+                     Gtk_New_Vbox (Page_Box.Box, Homogeneous => False);
                   end if;
 
                   Gtk_New (Size);
@@ -3476,19 +3563,15 @@ package body Project_Properties is
          if Page_Box /= null and then Box /= null then
             if Page.Sections (S).Name.all /= "" then
                Pack_Start
-                 (Page_Box, Frame, Expand => Expandable, Fill => True);
+                 (Page_Box.Box, Frame, Expand => Expandable, Fill => True);
             else
                Pack_Start
-                 (Page_Box, Box, Expand => Expandable, Fill => True);
+                 (Page_Box.Box, Box, Expand => Expandable, Fill => True);
             end if;
          end if;
       end loop;
 
-      if Page_Box /= null then
-         Show_All (Page_Box);
-      end if;
-
-      return Page_Box;
+      return Project_Wizard_Page (Page_Box);
    end Attribute_Editors_Page_Box;
 
    -------------------
@@ -3611,38 +3694,6 @@ package body Project_Properties is
       end case;
    end Warning_On_View_Incomplete;
 
-   -------------------------------
-   -- Update_Project_Attributes --
-   -------------------------------
-
-   function Update_Project_Attributes
-     (Project            : Projects.Project_Type;
-      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
-   is
-      Attr    : Attribute_Description_Access;
-      Changed : Boolean := False;
-   begin
-      for P in Properties_Module_ID.Pages'Range loop
-         for S in Properties_Module_ID.Pages (P).Sections'Range loop
-            for A in Properties_Module_ID.Pages (P).Sections (S).
-              Attributes'Range
-            loop
-               Attr := Properties_Module_ID.Pages (P).Sections (S).
-                 Attributes (A);
-
-               if Attr.Editor = null then
-                  Trace (Me, "No editor created for "
-                         & Attr.Pkg.all & "'" & Attr.Name.all);
-               else
-                  Generate_Project
-                    (Attr.Editor, Project, Scenario_Variables, Changed);
-               end if;
-            end loop;
-         end loop;
-      end loop;
-      return Changed;
-   end Update_Project_Attributes;
-
    ---------------------
    -- Edit_Properties --
    ---------------------
@@ -3712,6 +3763,8 @@ package body Project_Properties is
          return Changed;
       end Process_General_Page;
 
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Wizard_Page_Record'Class, Wizard_Page);
 
       Editor  : Properties_Editor;
       Changed : Boolean := False;
@@ -3800,6 +3853,7 @@ package body Project_Properties is
             Saved_Values : Argument_List := Get_Current_Scenario (Vars);
             Prj_Iter     : Project_Iterator := Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
+            Tmp_Project  : Project_Type;
          begin
             while Current (Prj_Iter) /= Projects.No_Project loop
                declare
@@ -3821,8 +3875,24 @@ package body Project_Properties is
                         Free (Curr);
                      end;
 
-                     Changed := Update_Project_Attributes
-                       (Current (Prj_Iter), Vars)
+                     if Editor.XML_Pages /= null then
+                        for X in Editor.XML_Pages'Range loop
+                           Tmp_Project := Current (Prj_Iter);
+                           Generate_Project
+                             (Page               =>
+                                Project_Wizard_Page (Editor.XML_Pages (X)),
+                              Kernel             => Kernel,
+                              Scenario_Variables => Vars,
+                              Project            => Tmp_Project,
+                              Changed            => Changed);
+                           if Tmp_Project = Projects.No_Project then
+                              Report_Error ("Project not modified");
+                              return; --  Give up on modifications
+                           end if;
+                        end loop;
+                     end if;
+
+                     Changed := Changed
                        or Process_General_Page
                         (Editor, Current (Prj_Iter), Project_Renamed_Or_Moved);
 
@@ -3897,6 +3967,15 @@ package body Project_Properties is
          if Changed then
             Recompute_View (Kernel);
          end if;
+      end if;
+
+      if Editor.XML_Pages /= null then
+         for X in Editor.XML_Pages'Range loop
+            On_Destroy (Editor.XML_Pages (X));
+            Unchecked_Free (Editor.XML_Pages (X));
+         end loop;
+
+         Unchecked_Free (Editor.XML_Pages);
       end if;
 
       Destroy (Editor);

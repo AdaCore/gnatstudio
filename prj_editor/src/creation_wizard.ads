@@ -20,55 +20,122 @@
 
 with Gtk.GEntry;
 with Gtk.Check_Button;
-
 with Wizards;
 with Glide_Kernel;
 with Projects;
+with Gtk.Widget;
+with Gtk.Handlers;
 
 package Creation_Wizard is
 
-   type Wizard_Base_Record is abstract new Wizards.Wizard_Record with private;
-   type Wizard_Base is access all Wizard_Base_Record'Class;
-
-   procedure Initialize
-     (Wiz                 : access Wizard_Base_Record'Class;
-      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Force_Relative_Dirs : Boolean := False;
-      Ask_About_Loading   : Boolean := False;
-      Activate_Finish_From_Page : Integer := -1);
-   --  Initialize a new basic wizard.
-   --  It has a single page, to select the name and location of the project
-   --  (the user must provide both).
-   --  If Force_Relative_Dirs is False, then an extra button is added so that
-   --  the user can choose whether paths should be relative or absolute.
-   --  If Ask_About_Loading is true, then an extra page is appended at the end
-   --  of the wizard, and the user can select whether to load the project
-   --  immediately or not. Otherwise, the project is not loaded.
-   --  See doc in Wizards for Activate_Finish_From_Page.
-
-   function Run (Wiz : access Wizard_Base_Record'Class) return String;
-   --  Run the wizard and report the directory/name of the project that was
-   --  created. The empty string is returned if the wizard was cancelled.
-   --  Note that in this mode the wizard is modal.
-   --  The wizard is destroyed on exit
+   type Project_Wizard_Page_Record is abstract
+      new Wizards.Wizard_Page_Record with null record;
+   type Project_Wizard_Page is access all Project_Wizard_Page_Record'Class;
 
    procedure Generate_Project
-     (Wiz     : access Wizard_Base_Record;
-      Project : in out Projects.Project_Type) is abstract;
-   --  This function is called once the project file itself has been created,
-   --  so that children of Wizard_Base_Record can add their own setup to
-   --  the project.
-   --  Project is the project being created, which hasn't been saved on the
-   --  disk yet at that point.
+     (Page    : access Project_Wizard_Page_Record;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project : in out Projects.Project_Type;
+      Changed : in out Boolean) is abstract;
+   --  This function is called when the user has pressed Finish in the wizard.
+   --  It should update the project's attributes as per the settings in the
+   --  page.
+   --  Set the project to No_Project to cancel the generation.
+   --  Changed is set to True if some modification was actually done, left
+   --  unchanged otherwise.
+
+
+   type Name_And_Location_Page is new Project_Wizard_Page_Record with private;
+   type Name_And_Location_Page_Access
+     is access all Name_And_Location_Page'Class;
+   --  See inherited documentation.
+   --  This page must be the first in a project wizard, and is responsible for
+   --  creating the project itself (the parameter it gets passed is No_Project)
+   --  This page adds checks to make sure the name of the project is valid.
+
+   function Get_Path_Widget
+     (Page : access Name_And_Location_Page) return Gtk.GEntry.Gtk_Entry;
+   --  Return the widget that contains the currently set path for the project
+
+   function Get_Name_Widget
+     (Page : access Name_And_Location_Page) return Gtk.GEntry.Gtk_Entry;
+   --  Return the widget that contains the name of the project
+
+   function Create_Name_And_Location_Page
+     (Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Force_Relative_Dirs : Boolean := False)
+      return Name_And_Location_Page_Access;
+   --  Create a new page for editing the name and location of a project.
+   --  If Force_Relative_Dirs is False, then an extra button is added so that
+   --  the user can choose whether paths should be relative or absolute.
+
+
+
+   type Project_Wizard_Record is
+      new Wizards.Wizard_Record with private;
+   type Project_Wizard is access all Project_Wizard_Record'Class;
+
+   procedure Gtk_New
+     (Wiz                 : out Project_Wizard;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Show_Toc            : Boolean := True);
+   --  Create a new project wizard.
+   --  The goal of such a wizard is to create a new project.
+   --  All pages added to the wizard must be children of
+   --  Project_Wizard_Page_Record.
+   --  The project is not loaded automatically on exit;
+   --
+   --  This wizard will always contain the Name_And_Location_Page.
+
+   procedure Initialize
+     (Wiz                 : access Project_Wizard_Record'Class;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Show_Toc            : Boolean := True);
+   --  Initialize a new project wizard.
+
+   function Run (Wiz : access Project_Wizard_Record) return String;
+   --  Display the dialog, let the user interact with it, and return the name
+   --  of the project that was created (and not loaded).
+   --  The empty string is returned if the user pressed Cancel.
+
+   -------------------
+   -- Gtk interface --
+   -------------------
+
+   package Page_Handlers is new Gtk.Handlers.User_Callback
+     (Gtk.Widget.Gtk_Widget_Record, Project_Wizard_Page);
+
 
 private
+   procedure Perform_Finish (Wiz : access Project_Wizard_Record);
+   function Is_Complete
+     (Page : access Name_And_Location_Page;
+      Wiz  : access Wizards.Wizard_Record'Class) return Boolean;
+   function Create_Content
+     (Page : access Name_And_Location_Page;
+      Wiz  : access Wizards.Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
+   procedure Generate_Project
+     (Page    : access Name_And_Location_Page;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project : in out Projects.Project_Type;
+      Changed : in out Boolean);
+   --  See inherited doc
 
-   type Wizard_Base_Record is abstract new Wizards.Wizard_Record with record
-      Project_Name      : Gtk.GEntry.Gtk_Entry;
-      Project_Location  : Gtk.GEntry.Gtk_Entry;
-      Relative_Paths    : Gtk.Check_Button.Gtk_Check_Button;
-      Kernel            : Glide_Kernel.Kernel_Handle;
-      Ask_About_Loading : Boolean;
+   type Name_And_Location_Page is new Project_Wizard_Page_Record with record
+      Project_Name        : Gtk.GEntry.Gtk_Entry;
+      Project_Location    : Gtk.GEntry.Gtk_Entry;
+      Relative_Paths      : Gtk.Check_Button.Gtk_Check_Button;
+      Kernel              : Glide_Kernel.Kernel_Handle;
+      Force_Relative_Dirs : Boolean;
    end record;
+
+   type Project_Wizard_Record is new Wizards.Wizard_Record with
+      record
+         Kernel            : Glide_Kernel.Kernel_Handle;
+         Project           : Projects.Project_Type;
+         Name_And_Location : Name_And_Location_Page_Access;
+      end record;
 
 end Creation_Wizard;

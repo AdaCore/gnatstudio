@@ -391,7 +391,10 @@ package body Project_Viewers is
    --------------------------
 
    type Switches_Editor_Record is new Project_Editor_Page_Record
-     with null record;
+   with null record;
+--     function Create_Content
+--       (Page : access Switches_Editor_Record;
+--        Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
    function Widget_Factory
      (Page         : access Switches_Editor_Record;
       Project      : Project_Type;
@@ -1221,7 +1224,7 @@ package body Project_Viewers is
       Gtk_New (Wiz, Get_Kernel (File));
 
       declare
-         Name : constant String := Creation_Wizard.Run (Wiz);
+         Name : constant String := Run (Wiz);
       begin
          if Name /= "" then
             Add_Dependency_Internal

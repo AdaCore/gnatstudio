@@ -18,40 +18,123 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Gtk.Arguments;         use Gtk.Arguments;
-with Gtk.Box;               use Gtk.Box;
 with Gtk.GEntry;            use Gtk.GEntry;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtkada.Handlers;       use Gtkada.Handlers;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Basic_Types;           use Basic_Types;
 with Wizards;               use Wizards;
 with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Project;  use Glide_Kernel.Project;
 with File_Utils;            use File_Utils;
 with Project_Viewers;       use Project_Viewers;
 with Project_Properties;    use Project_Properties;
 with Projects;              use Projects;
+with Ada.Unchecked_Deallocation;
 
 package body Creation_Wizard.Full is
 
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
-   --  Called when a new page is selected in the wizard. We dynamically create
-   --  the page if needed.
+   type Project_Editor_Page_Wrapper is new Project_Wizard_Page_Record with
+      record
+         Page : Project_Editor_Page;
+         Wiz  : Wizard;
+      end record;
+   function Create_Content
+     (Page : access Project_Editor_Page_Wrapper;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget;
+   procedure Update_Page (Page : access Project_Editor_Page_Wrapper);
+   procedure Generate_Project
+     (Page    : access Project_Editor_Page_Wrapper;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project : in out Projects.Project_Type;
+      Changed : in out Boolean);
+   procedure On_Destroy (Page : access Project_Editor_Page_Wrapper);
+   --  See inherited documentation
+
+   --------------------
+   -- Create_Content --
+   --------------------
+
+   function Create_Content
+     (Page : access Project_Editor_Page_Wrapper;
+      Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget is
+   begin
+      Page.Wiz := Wizard (Wiz);
+      return Widget_Factory
+        (Page         => Page.Page,
+         Project      => Projects.No_Project,
+         Full_Project =>
+           Name_As_Directory (Get_Text
+             (Get_Path_Widget (Project_Wizard (Wiz).Name_And_Location)))
+           & Get_Text (Get_Name_Widget
+                       (Project_Wizard (Wiz).Name_And_Location)),
+         Kernel       => Get_Kernel (Wiz));
+   end Create_Content;
+
+   -----------------
+   -- Update_Page --
+   -----------------
+
+   procedure Update_Page (Page : access Project_Editor_Page_Wrapper) is
+      Languages : String_List := Get_Current_Value
+        (Kernel     => Get_Kernel (Page.Wiz),
+         Pkg        => "",
+         Name       => "languages");
+   begin
+      Refresh (Page      => Page.Page,
+               Widget    => Get_Content (Page),
+               Project   => Projects.No_Project,
+               Languages => Languages);
+      Free (Languages);
+   end Update_Page;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Page : access Project_Editor_Page_Wrapper) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Project_Editor_Page_Record'Class, Project_Editor_Page);
+   begin
+      Destroy (Page.Page.all);
+      Unchecked_Free (Page.Page);
+   end On_Destroy;
+
+   ----------------------
+   -- Generate_Project --
+   ----------------------
+
+   procedure Generate_Project
+     (Page    : access Project_Editor_Page_Wrapper;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project : in out Projects.Project_Type;
+      Changed : in out Boolean)
+   is
+      Languages : String_List := Get_Current_Value
+        (Kernel     => Get_Kernel (Page.Wiz),
+         Pkg        => "",
+         Name       => "languages");
+   begin
+      Changed := Changed or Project_Editor
+        (Page               => Page.Page,
+         Project            => Project,
+         Kernel             => Kernel,
+         Widget             => Get_Content (Page),
+         Languages          => Languages,
+         Scenario_Variables => Scenario_Variables,
+         Ref_Project        => Projects.No_Project);
+      Free (Languages);
+   end Generate_Project;
 
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
-     (Wiz               : out Prj_Wizard;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ask_About_Loading : Boolean := False) is
+     (Wiz    : out Prj_Wizard;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Wiz := new Prj_Wizard_Record;
-      Creation_Wizard.Full.Initialize (Wiz, Kernel, Ask_About_Loading);
+      Creation_Wizard.Full.Initialize (Wiz, Kernel);
    end Gtk_New;
 
    ----------------
@@ -59,131 +142,46 @@ package body Creation_Wizard.Full is
    ----------------
 
    procedure Initialize
-     (Wiz               : access Prj_Wizard_Record'Class;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Ask_About_Loading : Boolean := False)
+     (Wiz    : access Prj_Wizard_Record'Class;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Page  : Project_Editor_Page;
+      P          : Project_Editor_Page;
       Attr_Count : constant Natural := Attribute_Editors_Page_Count;
       Count : constant Natural := Project_Editor_Pages_Count (Kernel);
-      Box           : Gtk_Box;
-      Main_Page_Box : Gtk_Box;
+      Page       : Project_Wizard_Page;
 
    begin
-      Creation_Wizard.Initialize
-        (Wiz, Kernel, Force_Relative_Dirs => False,
-         Ask_About_Loading => Ask_About_Loading,
-         Activate_Finish_From_Page => 1);
-      Wiz.XML_Pages_Count := 0;
-
-      Main_Page_Box := Gtk_Box (Get_Nth_Page (Wiz, 1));
+      Creation_Wizard.Initialize (Wiz, Kernel);
 
       --  "+1" here is for the "General" page, which is omitted in the result
       --  of Attribute_Editors_Page_Count
 
       for E in 1 .. Attr_Count + 1 loop
-         Box := Attribute_Editors_Page_Box
-           (Kernel           => Kernel,
-            Project          => No_Project,
-            General_Page_Box => Main_Page_Box,
-            Path_Widget      => Wiz.Project_Location,
-            Nth_Page         => E,
-            Context          => "wizard");
-         if Box /= null then
-            Wiz.XML_Pages_Count := Wiz.XML_Pages_Count + 1;
+         Page := Attribute_Editors_Page_Box
+           (Kernel            => Kernel,
+            Project           => No_Project,
+            Path_Widget       => Get_Path_Widget (Wiz.Name_And_Location),
+            Nth_Page          => E,
+            Context           => "wizard");
+         if Page /= null then
             Add_Page (Wiz,
-                      Page         => Box,
-                      Title        => Attribute_Editors_Page_Name (E),
-                      Toc_Contents => Attribute_Editors_Page_Name (E));
+                      Page         => Page,
+                      Description  => Attribute_Editors_Page_Name (E),
+                      Toc          => Attribute_Editors_Page_Name (E));
          end if;
       end loop;
 
       for E in 1 .. Count loop
-         Page := Get_Nth_Project_Editor_Page (Kernel, E);
+         P := Get_Nth_Project_Editor_Page (Kernel, E);
+         Page := new Project_Editor_Page_Wrapper'
+           (Project_Wizard_Page_Record with
+            Page => P,
+            Wiz  => Wizard (Wiz));
          Add_Page (Wiz,
-                   Page         => Widget_Factory
-                     (Page, No_Project,
-                      Name_As_Directory (Get_Text (Wiz.Project_Location))
-                      & Get_Text (Wiz.Project_Name),
-                      Kernel),
-                   Title        => Get_Title (Page),
-                   Toc_Contents => Get_Toc (Page));
+                   Page        => Page,
+                   Description => Get_Title (P),
+                   Toc         => Get_Toc (P));
       end loop;
-
-      Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
    end Initialize;
-
-   -----------------
-   -- Switch_Page --
-   -----------------
-
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args)
-   is
-      W        : constant Prj_Wizard := Prj_Wizard (Wiz);
-      Page_Num : constant Guint := To_Guint (Args, 1);
-   begin
-      if Integer (Page_Num - 1) <= W.XML_Pages_Count then
-         null;
-
-      elsif Integer (Page_Num - 1) - W.XML_Pages_Count <=
-        Project_Editor_Pages_Count (W.Kernel)
-      then
-         declare
-            Languages : GNAT.OS_Lib.String_List := Get_Current_Value
-              (Kernel  => W.Kernel,
-               Pkg     => "",
-               Name    => "languages",
-               Index   => "");
-         begin
-            Refresh
-              (Page         => Get_Nth_Project_Editor_Page
-                 (W.Kernel, Integer (Page_Num - 1) - W.XML_Pages_Count),
-               Widget       => Get_Nth_Page (W, Integer (Page_Num)),
-               Project      => No_Project,
-               Languages    => Languages);
-            Free (Languages);
-         end;
-      end if;
-   end Switch_Page;
-
-   ----------------------
-   -- Generate_Project --
-   ----------------------
-
-   procedure Generate_Project
-     (Wiz     : access Prj_Wizard_Record;
-      Project : in out Projects.Project_Type)
-   is
-      Count      : constant Natural := Project_Editor_Pages_Count (Wiz.Kernel);
-      Languages      : GNAT.OS_Lib.String_List := Get_Current_Value
-        (Kernel  => Wiz.Kernel,
-         Pkg     => "",
-         Name    => "languages",
-         Index   => "");
-      Changed, Tmp   : Boolean;
-      pragma Unreferenced (Changed, Tmp);
-
-   begin
-      Changed := Update_Project_Attributes
-        (Project            => Project,
-         Scenario_Variables => (1 .. 0 => No_Variable));
-
-      for P in 1 .. Count loop
-         --  We are only interested in the side effect of Project_Editor, since
-         --  we know for sure that the project will be modified
-         Changed := Project_Editor
-           (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
-            Project,
-            Wiz.Kernel,
-            Get_Nth_Page (Wiz, P + Wiz.XML_Pages_Count + 1),
-            Languages          => Languages,
-            Scenario_Variables => (1 .. 0 => No_Variable),
-            Ref_Project => Project);
-      end loop;
-
-      Tmp := Save_Single_Project (Wiz.Kernel, Project);
-      Free (Languages);
-   end Generate_Project;
 
 end Creation_Wizard.Full;

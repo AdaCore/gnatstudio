@@ -19,8 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
-with Gtk.Alignment;         use Gtk.Alignment;
-with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
 with Gtk.Check_Button;      use Gtk.Check_Button;
@@ -28,7 +26,6 @@ with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Frame;             use Gtk.Frame;
 with Gtk.GEntry;            use Gtk.GEntry;
-with Gtk.Handlers;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Widget;            use Gtk.Widget;
@@ -49,179 +46,141 @@ with Wizards;          use Wizards;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Intl;       use Glide_Intl;
 with File_Utils;       use File_Utils;
 
 package body Creation_Wizard is
 
-   function First_Page
-     (Wiz                 : access Wizard_Base_Record'Class;
-      Force_Relative_Dirs : Boolean) return Gtk_Box;
-   --  Return the widget to use for the "General" page in the wizard
-
-   procedure Change_Forward_State (Wiz : access Gtk_Widget_Record'Class);
-   --  Checks whether the contents of the first page has been fully answered,
-   --  and activate (or not) the next button.
-
-   procedure Page_Checker (Wiz : access Gtk_Widget_Record'Class);
-   --  Check that the contents of the current page is valid. If not, prevent
-   --  the user from changing the page
-
-   procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class);
+   procedure Advanced_Prj_Location
+     (Widget : access Gtk_Widget_Record'Class;
+      Page   : Project_Wizard_Page);
    --  Open up a dialog to select the project location.
 
-   function Generate_Prj (W : access Gtk_Widget_Record'Class) return String;
-   --  Generate the project files from the contents of the wizard W.
-   --  Return the directory/name of the project that was just created.
+   -------------
+   -- Gtk_New --
+   -------------
 
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
-   --  Called when a new page is selected in the wizard
+   procedure Gtk_New
+     (Wiz                 : out Project_Wizard;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Show_Toc            : Boolean := True) is
+   begin
+      Wiz := new Project_Wizard_Record;
+      Initialize (Wiz, Kernel, Show_Toc);
+   end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Wiz                 : access Wizard_Base_Record'Class;
+     (Wiz                 : access Project_Wizard_Record'Class;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Force_Relative_Dirs : Boolean := False;
-      Ask_About_Loading   : Boolean := False;
-      Activate_Finish_From_Page : Integer := -1)
-   is
-      Main_Page_Box : Gtk_Box;
+      Show_Toc            : Boolean := True) is
    begin
       Wiz.Kernel := Kernel_Handle (Kernel);
-      Wiz.Ask_About_Loading := Ask_About_Loading;
       Wizards.Initialize
-        (Wiz, Kernel, -"Project setup", Num_Pages => 1,
-        Activate_Finish_From_Page => Activate_Finish_From_Page);
-
-      Set_Toc (Wiz, 1, -"Naming the project", -"Creating a new project");
-      Main_Page_Box := First_Page (Wiz, Force_Relative_Dirs);
-      Set_Page (Wiz, 1, Main_Page_Box);
-
-      Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
+        (Wiz,
+         Kernel   => Kernel,
+         Title    => -"Project setup",
+         Show_Toc => Show_Toc);
+      Wiz.Name_And_Location := Create_Name_And_Location_Page
+        (Kernel, Force_Relative_Dirs => False);
+      Add_Page
+        (Wiz,
+         Page         => Wiz.Name_And_Location,
+         Description => -"Enter the project name and location",
+         Toc         => -"Naming the project");
    end Initialize;
 
    -----------------
-   -- Switch_Page --
+   -- Is_Complete --
    -----------------
 
-   procedure Switch_Page
-     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args)
+   function Is_Complete
+     (Page : access Name_And_Location_Page;
+      Wiz  : access Wizard_Record'Class) return Boolean
    is
-      Page_Num : constant Guint := To_Guint (Args, 1);
-      W : constant Wizard_Base := Wizard_Base (Wiz);
-   begin
-      if Page_Num = 1 then
-         Set_Sensitive
-           (Next_Button (W), Get_Text (W.Project_Name)'Length /= 0);
-         Set_Sensitive
-           (Finish_Button (W),
-            Get_Activate_Finish_From_Page (W) = 1
-            and then Get_Text (W.Project_Name)'Length /= 0);
-      end if;
-   end Switch_Page;
-
-   --------------------------
-   -- Change_Forward_State --
-   --------------------------
-
-   procedure Change_Forward_State (Wiz : access Gtk_Widget_Record'Class) is
-      W : constant Wizard_Base := Wizard_Base (Wiz);
-   begin
-      Set_Sensitive (Next_Button (W), Get_Text (W.Project_Name)'Length /= 0);
-      Set_Sensitive (Finish_Button (W), Get_Text (W.Project_Name)'Length /= 0);
-   end Change_Forward_State;
-
-   ------------------
-   -- Page_Checker --
-   ------------------
-
-   procedure Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
-      W       : constant Wizard_Base := Wizard_Base (Wiz);
       Ignored : Message_Dialog_Buttons;
       pragma Unreferenced (Ignored);
-
    begin
-      if Get_Current_Page (W) = 1 then
-         declare
-            Project  : constant String := Get_Text (W.Project_Name);
-            Prj_File : constant String := To_File_Name (Project);
-            Location : constant String := Get_Text (W.Project_Location);
-
-         begin
-            if not Is_Valid_Project_Name (Project) then
-               Ignored := Message_Dialog
-                 (Msg =>
-                    (-"Invalid name for the project ") &
-                    (-"(only letters, digits and underscores)"),
-                  Title => -"Invalid name",
-                  Dialog_Type => Error,
-                  Buttons => Button_OK);
-
-               Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
-               return;
-            end if;
-
-            if Is_Regular_File
-              (Location & Prj_File & Project_File_Extension)
-            then
-               if Message_Dialog
-                 (Msg => Location
-                  & Prj_File & Project_File_Extension
-                  & (-" already exists. Do you want to overwrite ?"),
-                  Title => -"File exists",
-                  Dialog_Type => Error,
-                  Buttons => Button_Yes or Button_No) = Button_No
-               then
-                  Gtk.Handlers.Emit_Stop_By_Name (Next_Button (W), "clicked");
-               end if;
-            end if;
-
-            if not Is_Directory (Location) then
-               if Message_Dialog
-                 (Msg => Location
-                  & (-" is not a directory, would you like to create it ?"),
-                  Title => -"Directory not found",
-                  Dialog_Type => Information,
-                  Buttons => Button_Yes or Button_No) = Button_Yes
-               then
-                  begin
-                     Make_Dir (Location);
-                  exception
-                     when Directory_Error =>
-                        null;
-                  end;
-               end if;
-            end if;
-         end;
+      if Page.Project_Name = null then
+         return False;
       end if;
-   end Page_Checker;
 
-   ----------------
-   -- First_Page --
-   ----------------
+      declare
+         Project  : constant String := Get_Text (Page.Project_Name);
+      begin
+         if Project = "" then
+            Display_Error (Wiz, -"You must specify a project name");
+            return False;
+         end if;
 
-   function First_Page
-     (Wiz                 : access Wizard_Base_Record'Class;
-      Force_Relative_Dirs : Boolean) return Gtk_Box
+         if not Is_Valid_Project_Name (Project) then
+            Display_Error (Wiz,
+                           -("Invalid name for the project "
+                             & "(only letters, digits and underscores)"));
+            return False;
+         end if;
+
+         for J in reverse Project'First .. Project'Last - 4 loop
+            if Project (J) = '.' then
+               Display_Error
+                 (Wiz,
+                  -("Child projects must import or extend their parent"
+                    & " project. This is not done automatically by GPS,"
+                    & " and you will have to edit the project by hand to"
+                    & " make it valid."));
+               exit;
+            elsif Project (J) = '/'
+              or else Project (J) = Directory_Separator
+            then
+               exit;
+            end if;
+         end loop;
+      end;
+
+      return True;
+   end Is_Complete;
+
+   -----------------------------------
+   -- Create_Name_And_Location_Page --
+   -----------------------------------
+
+   function Create_Name_And_Location_Page
+     (Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Force_Relative_Dirs : Boolean := False)
+      return Name_And_Location_Page_Access
    is
-      Table  : Gtk_Table;
-      Label  : Gtk_Label;
-      Button : Gtk_Button;
-      Page   : Gtk_Vbox;
-      Box    : Gtk_Vbox;
-      Frame  : Gtk_Frame;
+      Page   : Name_And_Location_Page_Access;
    begin
-      Gtk_New_Vbox (Page);
-      Set_Border_Width (Page, 5);
+      Page := new Name_And_Location_Page;
+      Page.Kernel := Kernel_Handle (Kernel);
+      Page.Force_Relative_Dirs := Force_Relative_Dirs;
+      return Page;
+   end Create_Name_And_Location_Page;
+
+   --------------------
+   -- Create_Content --
+   --------------------
+
+   function Create_Content
+     (Page : access Name_And_Location_Page;
+      Wiz  : access Wizards.Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
+   is
+      Table    : Gtk_Table;
+      Label    : Gtk_Label;
+      Button   : Gtk_Button;
+      Main_Box : Gtk_Vbox;
+      Box      : Gtk_Vbox;
+      Frame    : Gtk_Frame;
+   begin
+      Gtk_New_Vbox (Main_Box);
+      Set_Border_Width (Main_Box, 5);
 
       Gtk_New (Frame, -"Name & Location");
       Set_Border_Width (Frame, 5);
-      Pack_Start (Page, Frame, Expand => False);
+      Pack_Start (Main_Box, Frame, Expand => False);
 
       Gtk_New (Table, Rows => 4, Columns => 2, Homogeneous => False);
       Add (Frame, Table);
@@ -229,18 +188,15 @@ package body Creation_Wizard is
       Gtk_New (Label, -"Enter the name of the project to create:");
       Attach (Table, Label, 0, 2, 0, 1);
 
-      Gtk_New (Wiz.Project_Name, 255);
-      Attach (Table, Wiz.Project_Name, 0, 1, 1, 2);
-      Set_Activates_Default (Wiz.Project_Name, True);
-
-      --  We can't move to the next page until the name of the project has been
-      --  specified
-
-      Set_Sensitive (Next_Button (Wiz), False);
+      Gtk_New (Page.Project_Name, 255);
+      Attach (Table, Page.Project_Name, 0, 1, 1, 2);
+      Set_Activates_Default (Page.Project_Name, True);
+      Grab_Focus (Page.Project_Name);
 
       Widget_Callback.Object_Connect
-        (Wiz.Project_Name, "changed",
-         Widget_Callback.To_Marshaller (Change_Forward_State'Access), Wiz);
+        (Page.Project_Name, "changed",
+         Widget_Callback.To_Marshaller (Update_Buttons_Sensitivity'Access),
+         Wiz);
 
       Set_Row_Spacing (Table, 1, 20);
 
@@ -249,89 +205,121 @@ package body Creation_Wizard is
          -"Enter the directory where the project file will be created:");
       Attach (Table, Label, 0, 2, 2, 3);
 
-      Gtk_New (Wiz.Project_Location, 255);
-      Set_Text (Wiz.Project_Location, Get_Current_Dir);
-      Attach (Table, Wiz.Project_Location, 0, 1, 3, 4);
-      Set_Activates_Default (Wiz.Project_Location, True);
+      Gtk_New (Page.Project_Location, 255);
+      Set_Text (Page.Project_Location, Get_Current_Dir);
+      Attach (Table, Page.Project_Location, 0, 1, 3, 4);
+      Set_Activates_Default (Page.Project_Location, True);
 
       Gtk_New (Button, -"Browse");
       Attach (Table, Button, 1, 2, 3, 4, Xoptions => 0);
-      Widget_Callback.Object_Connect
+      Page_Handlers.Connect
         (Button, "clicked",
-         Widget_Callback.To_Marshaller (Advanced_Prj_Location'Access), Wiz);
+         Page_Handlers.To_Marshaller (Advanced_Prj_Location'Access),
+         User_Data => Project_Wizard_Page (Page));
 
-      if not Force_Relative_Dirs then
+      if not Page.Force_Relative_Dirs then
          Gtk_New (Frame, -"General");
          Set_Border_Width (Frame, 5);
-         Pack_Start (Page, Frame, Expand => False);
+         Pack_Start (Main_Box, Frame, Expand => False);
 
          Gtk_New_Vbox (Box);
          Set_Border_Width (Box, 5);
          Add (Frame, Box);
 
-         Gtk_New (Wiz.Relative_Paths, -"Use relative paths in the projects");
-         Set_Active (Wiz.Relative_Paths,
-                     Get_Pref (Wiz.Kernel, Generate_Relative_Paths));
-         Pack_Start (Box, Wiz.Relative_Paths, Expand => False);
+         Gtk_New (Page.Relative_Paths, -"Use relative paths in the projects");
+         Set_Active (Page.Relative_Paths,
+                     Get_Pref (Page.Kernel, Generate_Relative_Paths));
+         Pack_Start (Box, Page.Relative_Paths, Expand => False);
       else
-         Wiz.Relative_Paths := null;
+         Page.Relative_Paths := null;
       end if;
 
-      Widget_Callback.Object_Connect
-        (Next_Button (Wiz), "clicked",
-         Widget_Callback.To_Marshaller (Page_Checker'Access), Wiz);
-
-      Show_All (Page);
-
-      return Page;
-   end First_Page;
+      return Gtk_Widget (Main_Box);
+   end Create_Content;
 
    ---------------------------
    -- Advanced_Prj_Location --
    ---------------------------
 
-   procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class) is
+   procedure Advanced_Prj_Location
+     (Widget : access Gtk_Widget_Record'Class;
+      Page   : Project_Wizard_Page)
+   is
+      P : constant Name_And_Location_Page_Access :=
+        Name_And_Location_Page_Access (Page);
       Name : constant String := Select_Directory
         (Title          => -"Select project file location",
-         Parent         => Gtk_Window (Get_Toplevel (W)),
-         Base_Directory => Name_As_Directory
-           (Get_Text (Wizard_Base (W).Project_Location)),
-         History        => Get_History (Wizard_Base (W).Kernel));
+         Parent         => Gtk_Window (Get_Toplevel (Widget)),
+         Base_Directory => Name_As_Directory (Get_Text (P.Project_Location)),
+         History        => Get_History (P.Kernel));
    begin
       if Name /= "" then
-         Set_Text (Wizard_Base (W).Project_Location, Name);
+         Set_Text (P.Project_Location, Name);
       end if;
    end Advanced_Prj_Location;
 
-   ------------------
-   -- Generate_Prj --
-   ------------------
+   ----------------------
+   -- Generate_Project --
+   ----------------------
 
-   function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
-      Wiz        : constant Wizard_Base := Wizard_Base (W);
-      Dir        : constant String := Name_As_Directory
-        (Get_Text (Wiz.Project_Location));
-      Name           : constant String := Get_Text (Wiz.Project_Name);
+   procedure Generate_Project
+     (Page    : access Name_And_Location_Page;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Scenario_Variables : Projects.Scenario_Variable_Array;
+      Project : in out Projects.Project_Type;
+      Changed : in out Boolean)
+   is
+      Dir            : constant String := Name_As_Directory
+        (Get_Text (Page.Project_Location));
+      Name           : constant String := Get_Text (Page.Project_Name);
       Relative_Paths : constant Boolean :=
-        Wiz.Relative_Paths = null
-        or else Get_Active (Wiz.Relative_Paths);
-      Project        : Project_Type;
-      Changed, Tmp   : Boolean;
-      pragma Unreferenced (Changed, Tmp);
+        Page.Relative_Paths = null or else Get_Active (Page.Relative_Paths);
+      Tmp            : Boolean;
+      pragma Unreferenced (Tmp, Scenario_Variables);
 
-
+      Project_Name : constant String := Get_Text (Page.Project_Name);
+      Prj_File     : constant String := To_File_Name (Project_Name);
+      Location     : constant String := Get_Text (Page.Project_Location);
    begin
-      Push_State (Wiz.Kernel, Processing);
+      if Is_Regular_File (Location & Prj_File & Project_File_Extension) then
+         if Message_Dialog
+           (Msg         => Location & Prj_File & Project_File_Extension
+               & (-" already exists. Do you want to overwrite ?"),
+            Title       => -"File exists",
+            Dialog_Type => Error,
+            Buttons     => Button_Yes or Button_No) = Button_No
+         then
+            Project := No_Project;
+            return;
+         end if;
+
+         if not Is_Directory (Location) then
+            if Message_Dialog
+              (Msg         => Location
+                  & (-" is not a directory, would you like to create it ?"),
+               Title       => -"Directory not found",
+               Dialog_Type => Information,
+               Buttons     => Button_Yes or Button_No) = Button_Yes
+            then
+               begin
+                  Make_Dir (Location);
+               exception
+                  when Directory_Error =>
+                     null;
+               end;
+            end if;
+         end if;
+      end if;
 
       if Name'Length > 4
         and then Name (Name'Last - 3 .. Name'Last) = ".gpr"
       then
          Project := Create_Project
-           (Get_Registry (Wiz.Kernel).all,
+           (Get_Registry (Kernel).all,
             Name => Name (Name'First .. Name'Last - 4), Path => Dir);
       else
          Project := Create_Project
-           (Get_Registry (Wiz.Kernel).all, Name => Name, Path => Dir);
+           (Get_Registry (Kernel).all, Name => Name, Path => Dir);
       end if;
 
       if Relative_Paths then
@@ -340,86 +328,64 @@ package body Creation_Wizard is
          Set_Paths_Type (Project, Absolute);
       end if;
 
-      Generate_Project (Wiz, Project);
+      Changed := True;
+   end Generate_Project;
 
-      Tmp := Save_Single_Project (Wiz.Kernel, Project);
+   --------------------
+   -- Perform_Finish --
+   --------------------
+
+   procedure Perform_Finish (Wiz : access Project_Wizard_Record) is
+      Pages   : constant Wizard_Pages_Array_Access := Get_Pages (Wiz);
+      Changed : Boolean := False;
+      Tmp     : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Push_State (Wiz.Kernel, Processing);
+
+      for P in Pages'Range loop
+         --  The first page will create the project (Name_And_Location_Page)
+         Generate_Project
+           (Project_Wizard_Page (Pages (P)),
+            Get_Kernel (Wiz),
+            Scenario_Variables => Projects.No_Scenario,
+            Project            => Wiz.Project,
+            Changed            => Changed);
+         if Wiz.Project = No_Project then
+            Pop_State (Wiz.Kernel);
+            return;
+         end if;
+      end loop;
+
+      Tmp := Save_Single_Project (Wiz.Kernel, Wiz.Project);
       Pop_State (Wiz.Kernel);
 
-      return Project_Path (Project);
-   end Generate_Prj;
+   exception
+      when E : others =>
+         Trace (Exception_Handle, "Unexpected exception: "
+                & Exception_Information (E));
+   end Perform_Finish;
 
    ---------
    -- Run --
    ---------
 
-   function Run (Wiz : access Wizard_Base_Record'Class) return String is
-      Load_Project_Page : Gtk_Alignment;
-      Frame             : Gtk_Frame;
-      Load_Project      : Gtk_Check_Button;
-      Box               : Gtk_Vbox;
-      Label             : Gtk_Label;
+   function Run (Wiz : access Project_Wizard_Record) return String is
    begin
-      if Wiz.Ask_About_Loading then
-         Gtk_New (Load_Project_Page, 0.0, 0.5, 1.0, 0.0);
-         Set_Border_Width (Load_Project_Page, 5);
-
-         Gtk_New (Frame);
-         Set_Border_Width (Frame, 5);
-         Add (Load_Project_Page, Frame);
-
-         Gtk_New_Vbox (Box, Spacing => 10);
-         Add (Frame, Box);
-         Gtk_New (Label, (-"Clicking on apply will generate the project") &
-                  ASCII.LF &
-                    (-"Warning: this operation may take a long time"));
-         Set_Alignment (Label, 0.0, 0.5);
-         Add (Box, Label);
-         Gtk_New (Load_Project, -"Automatically load the project");
-         Set_Active (Load_Project, True);
-         Add (Box, Load_Project);
-
-         Add_Page
-           (Wiz, Load_Project_Page, -"Loading the project", -"Load project");
-      end if;
-
       Show_All (Wiz);
-      Set_Current_Page (Wiz, 1);
-      Grab_Focus (Wiz.Project_Name);
 
       if Run (Wiz) = Gtk_Response_Apply then
-         --  If we have a child project, report limitations.
-         --  Ignore trailing ".gpr" file extension in this check
-
-         declare
-            Name : constant String := Generate_Prj (Wiz);
-         begin
-            for J in reverse Name'First .. Name'Last - 4 loop
-               if Name (J) = '.' then
-                  Insert
-                    (Wiz.Kernel,
-                      -("Child projects must import or extend their parent"
-                        & " project. This is not done automatically by GPS,"
-                        & " and you will have to edit the project by hand to"
-                        & " make it valid."));
-                  Set_Active (Load_Project, False);
-                  exit;
-               elsif Name (J) = '/' or else Name (J) = Directory_Separator then
-                  exit;
-               end if;
-            end loop;
-
-            --  Load the project if needed
-
-            if Name /= ""
-              and then Wiz.Ask_About_Loading
-              and then Get_Active (Load_Project)
-            then
-               Glide_Kernel.Project.Load_Project (Wiz.Kernel, Name);
-            end if;
-
+         if Wiz.Project = No_Project then
             Destroy (Wiz);
-            return Name;
-         end;
+            return "";
+         else
+            declare
+               Name : constant String := Project_Path (Wiz.Project);
+            begin
+               Destroy (Wiz);
+               return Name;
+            end;
+         end if;
       else
          Destroy (Wiz);
          return "";
@@ -432,5 +398,26 @@ package body Creation_Wizard is
          Destroy (Wiz);
          return "";
    end Run;
+
+   ---------------------
+   -- Get_Path_Widget --
+   ---------------------
+
+   function Get_Path_Widget
+     (Page : access Name_And_Location_Page) return Gtk.GEntry.Gtk_Entry is
+   begin
+      return Page.Project_Location;
+   end Get_Path_Widget;
+
+   ---------------------
+   -- Get_Name_Widget --
+   ---------------------
+
+   function Get_Name_Widget
+     (Page : access Name_And_Location_Page) return Gtk.GEntry.Gtk_Entry is
+   begin
+      return Page.Project_Name;
+   end Get_Name_Widget;
+
 
 end Creation_Wizard;

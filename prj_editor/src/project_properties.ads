@@ -31,6 +31,7 @@ with Gtk.Box;
 with Projects;
 with GNAT.OS_Lib;
 with Commands.Interactive;
+with Creation_Wizard;
 
 package Project_Properties is
 
@@ -73,9 +74,9 @@ package Project_Properties is
       General_Page_Box : Gtk.Box.Gtk_Box := null;
       Path_Widget      : access Gtk.GEntry.Gtk_Entry_Record'Class;
       Nth_Page         : Integer;
-      Context          : String) return Gtk.Box.Gtk_Box;
-   --  Return the contents of the Nth page for editing attributes. It will
-   --  return null if the  given page contains no visible attribute.
+      Context          : String) return Creation_Wizard.Project_Wizard_Page;
+   --  Return the nth page for editing attributes.
+   --  Return null if the  given page contains no visible attribute.
    --
    --  Project is the project from which the value of the attributes is taken.
    --  If No_Project is specified, the default value for the attributes will be
@@ -88,13 +89,6 @@ package Project_Properties is
    --  instance, it is "wizard" for the project wizard. This acts as a filter
    --  over which attributes will be displayed.
 
-   function Update_Project_Attributes
-     (Project            : Projects.Project_Type;
-      Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean;
-   --  Update the contents of the project based on the current editor for the
-   --  project editor.
-   --  Return True if the project was changed.
-
    function Get_Current_Value
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Pkg     : String;
@@ -103,6 +97,8 @@ package Project_Properties is
       return GNAT.OS_Lib.String_List;
    --  Return the value of the attribute as currently edited.
    --  The returned value must be freed by the caller.
+   --  ??? Relies on global variables, would be nice to eliminate through the
+   --  use of the Project_Wizard_Page.
 
 
 private

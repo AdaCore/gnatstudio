@@ -83,39 +83,47 @@ package body Adp_Converter is
       Body_Extension : String)
    is
       Buffer : String_Access := Read_File (Adp_Filename);
-      Build_Dir : constant String :=
-        Normalize_Pathname
-          (Get_Attribute_Value (Buffer, "build_dir"),
-           Dir_Name (Adp_Filename));
       Source_Dirs, Object_Dirs, Main_Units : String_List_Access;
    begin
-      if Build_Dir = "" then
-         Trace (Me, "No build dir specified in .adp file");
+      if Buffer = null then
+         Trace (Me, "No such file " & Adp_Filename);
          return;
       end if;
 
-      Source_Dirs := Parse_Source_Dirs (Buffer, Build_Dir);
-      Object_Dirs := Parse_Object_Dirs (Buffer, Build_Dir);
-      Main_Units  := Parse_Main_Units  (Buffer);
+      declare
+         Build_Dir : constant String :=
+           Normalize_Pathname
+             (Get_Attribute_Value (Buffer, "build_dir"),
+              Dir_Name (Adp_Filename));
+      begin
+         if Build_Dir = "" then
+            Trace (Me, "No build dir specified in .adp file");
+            return;
+         end if;
 
-      Create_Gpr_Files
-        (Registry          => Registry,
-         Root_Project      => Project,
-         Source_Dirs       => Source_Dirs.all,
-         Object_Dirs       => Object_Dirs.all,
-         Spec_Extension    => Spec_Extension,
-         Body_Extension    => Body_Extension,
-         Main_Units        => Main_Units,
-         Builder_Switches  => Get_Attribute_Value (Buffer, "gnatmake_opt"),
-         Compiler_Switches => Get_Attribute_Value (Buffer, "comp_opt"),
-         Binder_Switches   => Get_Attribute_Value (Buffer, "bind_opt"),
-         Linker_Switches   => Get_Attribute_Value (Buffer, "link_opt"),
-         Cross_Prefix      => Get_Attribute_Value (Buffer, "cross_prefix"));
+         Source_Dirs := Parse_Source_Dirs (Buffer, Build_Dir);
+         Object_Dirs := Parse_Object_Dirs (Buffer, Build_Dir);
+         Main_Units  := Parse_Main_Units  (Buffer);
 
-      Free (Main_Units);
-      Free (Source_Dirs);
-      Free (Object_Dirs);
-      Free (Buffer);
+         Create_Gpr_Files
+           (Registry          => Registry,
+            Root_Project      => Project,
+            Source_Dirs       => Source_Dirs.all,
+            Object_Dirs       => Object_Dirs.all,
+            Spec_Extension    => Spec_Extension,
+            Body_Extension    => Body_Extension,
+            Main_Units        => Main_Units,
+            Builder_Switches  => Get_Attribute_Value (Buffer, "gnatmake_opt"),
+            Compiler_Switches => Get_Attribute_Value (Buffer, "comp_opt"),
+            Binder_Switches   => Get_Attribute_Value (Buffer, "bind_opt"),
+            Linker_Switches   => Get_Attribute_Value (Buffer, "link_opt"),
+            Cross_Prefix      => Get_Attribute_Value (Buffer, "cross_prefix"));
+
+         Free (Main_Units);
+         Free (Source_Dirs);
+         Free (Object_Dirs);
+         Free (Buffer);
+      end;
    end Convert_Adp_File;
 
    -----------------------
