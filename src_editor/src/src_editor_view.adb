@@ -901,32 +901,8 @@ package body Src_Editor_View is
       View : constant Source_View := Source_View (Widget);
       File : constant String := Get_String (Nth (Args, 1));
 
-      Max : Natural := 1;
-
-      Real_Lines : Natural_Array_Access :=
-        Get_Real_Lines (Source_Buffer (Get_Buffer (View)));
    begin
       if Get_Filename (Source_Buffer (Get_Buffer (View))) = File then
-
-         --  The file corresponding to the view was saved:
-         --  resynchronize the real lines with the original lines.
-
-         for J in Real_Lines'Range loop
-            if Real_Lines (J) /= 0 then
-               Max := J;
-            end if;
-         end loop;
-
-         Unchecked_Free (Real_Lines);
-         Real_Lines := new Natural_Array (1 .. Max * 2);
-
-         for J in 1 .. Max loop
-            Real_Lines (J) := J;
-         end loop;
-
-         Real_Lines (Max + 1 .. Max * 2) := (others => 0);
-
-         Set_Real_Lines (Source_Buffer (Get_Buffer (View)), Real_Lines);
          Redraw_Columns (View);
       end if;
    exception
