@@ -105,6 +105,9 @@ package Tries is
    function Get (Pointer : Cell_Pointer) return Data_Type;
    --  Return the data found in the pointed type
 
+   procedure Remove (Tree : in out Trie_Tree; Pointer : Cell_Pointer);
+   --  Return the data pointed to by Pointer
+
 private
    --  The structure of the tree is the following: this is n-ary tree. Each
    --  cell in the tree matches a substring of the index.

@@ -127,7 +127,7 @@ package body Tries is
             return Ind;
          end if;
 
-         --  There is at least one children if we had No_Data stored in the
+         --  There is at least one child if we had No_Data stored in the
          --  tree.
          C := C.Children (C.Children'First);
       end loop;
@@ -383,10 +383,18 @@ package body Tries is
 
    procedure Remove (Tree : in out Trie_Tree; Index : String) is
       Pointer           : Cell_Pointer;
-      Tmp               : Cell_Child_Array_Access;
    begin
       Find_Cell_Child (Tree, Index, Pointer);
+      Remove (Tree, Pointer);
+   end Remove;
 
+   ------------
+   -- Remove --
+   ------------
+
+   procedure Remove (Tree : in out Trie_Tree; Pointer : Cell_Pointer) is
+      Tmp : Cell_Child_Array_Access;
+   begin
       --  Warning: Cell points into the .Children array of its parent.
       --  Modifying the later will indirectly also modify what is pointed to
       --  by Cell.
@@ -461,7 +469,7 @@ package body Tries is
          end if;
 
       else
-         Trace (Me, "Couldn't remove from Tree: " & Index & " scenario="
+         Trace (Me, "Couldn't remove from Tree scenario="
                 & Pointer.Scenario'Img);
       end if;
    end Remove;
