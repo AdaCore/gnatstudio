@@ -691,7 +691,18 @@ package body Display_Items is
                      Set_Auto_Refresh
                        (Item, Get_Window (Item.Debugger.Data_Canvas),
                         not Item.Auto_Refresh);
-                     Item_Updated (Item.Debugger.Data_Canvas, Item);
+
+                     --  If we moved back to the auto-refresh state, force an
+                     --  update of the value.
+                     if Item.Auto_Refresh then
+                        declare
+                           Tmp : Boolean;
+                        begin
+                           Tmp := Update (Item.Debugger.Data_Canvas, Item);
+                        end;
+                     else
+                        Item_Updated (Item.Debugger.Data_Canvas, Item);
+                     end if;
 
                   when 1 =>
                      Free (Item);
