@@ -22,11 +22,11 @@ DEPENDENCIES= \
 kbody \
 common \
 syntax \
-src_editor \
 vdiff \
-prj_editor \
 hypergrep \
 aunit \
+src_editor \
+prj_editor \
 glide
 
 all: ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
