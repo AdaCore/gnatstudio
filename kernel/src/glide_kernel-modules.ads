@@ -22,39 +22,32 @@
 --  ==============================
 --
 --  This package contains all the subprograms needed to register new modules in
---  Glide.
+--  GPS.
 --
---  All the functionalities provided in Glide are organized into modules. Each
---  module can do the following:
---     - Add new menus to the standard Glide menu bar
---     - Add new icons in the Glide toolbar
---     - Add new entries in the contextual menus.
---     - Associate any of the previous with specific callbacks, and insert new
---       widgets in the Glide MDI
+--  All the functionalities provided in GPS are organized into modules. Each
+--  module can extensively modify the standard behavior of GPS (see below)
 --
---  The modules should only interact with each other through the Glide kernel,
+--  The modules should only interact with each other through the kernel,
 --  never directly. This provides more flexibility, as well as room for future
 --  extensions like dynamic modules.
 --
---  The default modules provided in Glide (source editor, project editor,...)
+--  The default modules provided in GPS (source editor, project editor,...)
 --  are more closely integrated into the kernel than other external
 --  modules. However, even these should ideally be fully replaceable with minor
 --  source modification (for instance if one wants to override the default
 --  source editor).
 --
---  Each module is associated with a unique name. The names for the default
---  Glide modules are provided as constants in this package, so that it is easy
---  to check whether an action was initiated by one module or another.
+--  Each module is associated with a unique name. The names for some of the
+--  default GPS modules are provided as constants in this package, so that it
+--  is easy to check whether an action was initiated by one module or another.
 --
 --  Registering modules
 --  ===================
 --
 --  All the modules must be registered with the kernel before they can do
---  anything, by calling Register_Module.
---
---  Once the kernel has been created, it will call any initialization
---  function you have provided. This function might for instance be used to
---  register new menu for the menu bar, or new icons in the toolbar.
+--  anything. Register_Module should be called from gps.adb, and this
+--  subprogram can then register new behaviors in GPS (see below "Registering
+--  New Features")
 --
 --  This mechanism allows the kernel to be completely independent of the
 --  specific modules, since it doesn't need to know in advance the exact list
@@ -64,7 +57,7 @@
 --  ================
 --
 --   Here is a description of the sequence of events used to display contextual
---   menus in Glide:
+--   menus in GPS:
 --      - Each object that should have a contextual menu should call
 --        Register_Contextual_Menu. The kernel will automatically setup
 --        appropriate gtk callbacks.
@@ -77,6 +70,32 @@
 --        will be called as usual.
 --      - The menu is automatically destroyed, and the context freed, when the
 --        action has finished executing.
+--
+--  Registering features
+--  ====================
+--
+--   The behavior of the kernel and GPS itself can be modified extensively by
+--   the modules, through a set of Register_* subprograms. This includes:
+--      - Inserting new widgets in the MDI (either at startup or upon user
+--        request)
+--      - Adding new menus and toolbar icons
+--      - Adding new contextual menu and new entries in existing menus
+--      - Changing the default behavior of several standard functions, like
+--        file edition, help file display, ... through Mime callbacks
+--      - Adding new search contexts (see find_utils.ads in the vsearch module)
+--      - Adding new predefined regular expressions in the search dialog
+--      - Changing the way the current desktop is saved to disk and restored
+--      - Changing what is displayed in tooltips in the editors
+--      - Adding new attributes to projects, and the corresponding pages in the
+--        project creation wizard or the project properties dialog.
+--      - Adding new user-modifiable preferences (see glide_preferences.ads)
+--      - Adding new supported languages (see language_handlers-glide.ads)
+--        and the corresponding cross-referencing subprograms (same file)
+--
+--   All these changes can be done locally in the module, and do not need any
+--   modification to the rest of GPS itself (apart from registering the module
+--   in gps.adb). This means that a user might chose not to load some of the
+--   modules to simplify the GUI somewhat.
 
 with Gdk.Event;
 with Glib.Object;
@@ -310,6 +329,8 @@ package Glide_Kernel.Modules is
    ------------
    -- Search --
    ------------
+   --  See also find_utils.ads in the vsearch module for how to register your
+   --  own search contexts
 
    procedure Register_Search_Pattern
      (Kernel         : access Kernel_Handle_Record'Class;
