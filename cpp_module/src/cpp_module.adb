@@ -169,6 +169,7 @@ package body Cpp_Module is
            (Kernel, Project_View_Changed_Hook, Project_View_Changed'Access);
       end if;
 
+      Reset (LI);
       Register_LI_Handler (Handler, CPP_LI_Handler_Name, LI_Handler (LI));
 
       Register_Language (Handler, "c", C_Lang);
