@@ -361,7 +361,12 @@ package body Codefix.Errors_Manager is
 
             if Line_This = null then
                Line_This := Get_First_Line (This.Fix_List);
-               Already_Fixed := False;
+
+               if Get_Context (Line_Object.all) /= Original_Line
+                 and then Get_Coloration (Line_Object.all)
+               then
+                  Already_Fixed := False;
+               end if;
             else
                if Get_Context (Line_Object.all) = Original_Line
                  or else Line_Object.all = Line_This.all
