@@ -97,12 +97,8 @@ AC_DEFUN(AM_PATH_PYTHON,
    if test -z ${PYTHON_PATH_WITH}; then 
       AC_PATH_PROG(PYTHON_BASE, python, no)
 
-      if test x$PYTHON = xno ; then
-         AC_MSG_ERROR(I could not find python.)
-      else
-         PYTHON_BASE=`dirname ${PYTHON_BASE}`
-         PYTHON_BASE=`dirname ${PYTHON_BASE}`
-      fi
+      PYTHON_BASE=`dirname ${PYTHON_BASE}`
+      PYTHON_BASE=`dirname ${PYTHON_BASE}`
    else
       PYTHON_BASE=${PYTHON_PATH_WITH}
    fi
