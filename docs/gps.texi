@@ -5993,8 +5993,8 @@ will not interrupt the debugged program. Instead, you need to hit
 running. On Windows this separate execution window uses the default
 system-wide console properties (the size of the window, the
 colors...). It is possible to change those properties using the
-default console menu (top-left of the console) on Windows/XP or using
-the control panel on Windows/NT.
+default console menu (top-left of the console) on Windows XP or using
+the control panel on Windows NT.
 
 If false, no execution window will be created. The debugger assumes that the
 program being debugged does not require input, or that if it does, input
