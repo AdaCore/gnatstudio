@@ -21,6 +21,7 @@
 with Glib.Error;                  use Glib.Error;
 with Glib.Messages;               use Glib.Messages;
 with Glib.Object;                 use Glib.Object;
+with Glib.Values;                 use Glib.Values;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gtk;                         use Gtk;
 with Gtk.Accel_Map;               use Gtk.Accel_Map;
@@ -222,8 +223,15 @@ procedure GPS is
    --  return the same thing as GNAT.Command_Line.Parameter, but strips the
    --  leading '=' if any, so that users can say '--log-level=4' for instance.
 
+   procedure Set_Main_Title
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : MDI_Child);
+   --  Set the title of the main window
+
    procedure Child_Selected
-     (MDI : access GObject_Record'Class; Kernel : Kernel_Handle);
+     (Mdi    : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Kernel : Kernel_Handle);
    --  Called when a new child is selected
 
    procedure Title_Changed
@@ -558,8 +566,7 @@ procedure GPS is
 
       Kernel_Callback.Connect
         (Get_MDI (GPS.Kernel), "child_selected",
-         Kernel_Callback.To_Marshaller (Child_Selected'Unrestricted_Access),
-         GPS.Kernel);
+         Child_Selected'Unrestricted_Access, GPS.Kernel);
       Kernel_Callback.Connect
         (Get_MDI (GPS.Kernel), "child_title_changed",
          Title_Changed'Unrestricted_Access, GPS.Kernel);
@@ -747,8 +754,8 @@ procedure GPS is
         & (-"Usage:") & LF
         & (-"   gps [options] [-Pproject-file] [source1] [source2] ...") & LF
         & ("source1, source2,...") & LF
-        & (-"    Name of files to load. Start with '=' to load from") & LF
-        & (-"    project") & LF
+        & (-"    Name of files to load. Start with '=' to load from project")
+        & LF
         & (-"Options:") & LF
         & (-"   --help              Show this help message and exit") & LF
         & (-"   --version           Show the GPS version and exit") & LF
@@ -1336,7 +1343,7 @@ procedure GPS is
       Started := True;
 
       --  Set the title of the GPS window.
-      Child_Selected (Get_MDI (GPS.Kernel), GPS.Kernel);
+      Set_Main_Title (GPS.Kernel, Get_Focus_Child (Get_MDI (GPS.Kernel)));
 
       return False;
    end Finish_Setup;
@@ -1352,39 +1359,44 @@ procedure GPS is
    is
       pragma Unreferenced (MDI);
       C : constant MDI_Child := MDI_Child (To_Object (Child, 1));
-
    begin
-      if Started then
-         --  Set the title of the main window.
-         Reset_Title (Glide_Window (Get_Main_Window (Kernel)),
-                      Get_Short_Title (C));
-      end if;
+      Set_Main_Title (Kernel, C);
    end Title_Changed;
 
    --------------------
-   -- Child_Selected --
+   -- Set_Main_Title --
    --------------------
 
-   procedure Child_Selected
-     (MDI : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-      Child   : constant MDI_Child := Get_Focus_Child (MDI_Window (MDI));
+   procedure Set_Main_Title
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : MDI_Child) is
    begin
-      --  Set the title of the main window.
-
       if Started then
          if Child = null then
-            Reset_Title
-              (Glide_Window (Get_Main_Window (Kernel)));
+            Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
          else
             Reset_Title
               (Glide_Window (Get_Main_Window (Kernel)),
                Get_Short_Title (Child));
          end if;
       end if;
+   end Set_Main_Title;
+
+   --------------------
+   -- Child_Selected --
+   --------------------
+
+   procedure Child_Selected
+     (Mdi    : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Mdi);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+      Child : constant MDI_Child := MDI_Child (To_Object (Params, 1));
+   begin
+      Set_Main_Title (Kernel, Child);
 
       if Started and then Context /= null then
          Context_Changed (Kernel, Context);
