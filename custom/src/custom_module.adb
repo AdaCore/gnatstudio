@@ -490,7 +490,7 @@ package body Custom_Module is
 
             Command := Lookup_Action (Kernel, Action);
 
-            if Command.Command /= null then
+            if Command /= null and then Command.Command /= null then
                Register_Button
                  (Kernel,
                   Title.all,
