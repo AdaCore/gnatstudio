@@ -142,10 +142,9 @@ package body Welcome_Page is
       Gtk_New_Hbox (Hbox, Homogeneous => True, Spacing => 3);
       Pack_Start (Main_Box, Hbox);
 
-      Gtk_New
-        (Label,
-         -("GPS is a complete integrated development environment that gives"
-           & " access to a wide range of tools and integrates them smoothly.");
+      Gtk_New (Label,
+        -("GPS is a complete integrated development environment that gives"
+          & " access to a wide range of tools and integrates them smoothly."));
       Set_Line_Wrap (Label, True);
       Pack_Start (Hbox, Label);
 
