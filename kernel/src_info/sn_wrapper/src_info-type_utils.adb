@@ -37,52 +37,6 @@ package body Src_Info.Type_Utils is
    --  Regexp to find plain class name in the templatized
    --  name.
 
-   procedure Free (HT : in out HTable);
-   --  Frees Module_Typedefs
-
-   ------------------------
-   -- Type_Hash_Function --
-   ------------------------
-
-   function Type_Hash_Function (Key : String_Access)
-      return String_Hash_Table_Range
-   is
-      function String_Hash_Function is
-         new HTables.Hash (String_Hash_Table_Range);
-      pragma Inline (String_Hash_Function);
-   begin
-      return String_Hash_Function (Key.all);
-   end Type_Hash_Function;
-
-   -------------------------
-   -- Type_Equal_Function --
-   -------------------------
-
-   function Type_Equal_Function (K1, K2 : String_Access)
-      return Boolean
-   is
-   begin
-      return K1.all = K2.all;
-   end Type_Equal_Function;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (HT : in out HTable) is
-      Elmt : Typedef_Entry;
-      Key  : String_Access;
-   begin
-      Get_First (HT, Elmt);
-      loop
-         exit when Elmt.Key = null;
-         Key := Elmt.Key;
-         Remove (HT, Key);
-         Free (Key);
-         Get_Next (HT, Elmt);
-      end loop;
-   end Free;
-
    ----------
    -- Free --
    ----------
@@ -326,9 +280,7 @@ package body Src_Info.Type_Utils is
       Success           : out Boolean)
    is
       Typedef   : T_Table;
-      HTTypedef : Typedef_Entry;
-      Key       : String_Access;
-      Seek_Key  : String_Access;
+      HTTypedef : Type_Parse_State;
       Enclosed_Class  : CL_Table := Invalid_CL_Table;
       Enclosed_Symbol : Symbol_Type := Undef;
    begin
@@ -341,16 +293,14 @@ package body Src_Info.Type_Utils is
 
       Find (SN_Table (T), Type_Name, Tab => Typedef);
 
-      Key := new String'(Type_Name);
-      Set (Module_Typedefs.all, Key, (Key, Incomplete));
+      Set (Module_Typedefs.all, Type_Name, Incomplete);
       --  add this type as an unidentified one
 
       --  lookup left side of the typedef in our type
       --  hash table
-      Seek_Key  := new String'
-         (Typedef.Buffer (Typedef.Original.First .. Typedef.Original.Last));
-      HTTypedef := Get (Module_Typedefs.all, Seek_Key);
-      Free (Seek_Key);
+      HTTypedef := Get
+        (Module_Typedefs.all,
+         Typedef.Buffer (Typedef.Original.First .. Typedef.Original.Last));
 
       if Desc.Is_Typedef = True
          and then Desc.Ancestor_Point = Invalid_Point
@@ -362,7 +312,7 @@ package body Src_Info.Type_Utils is
 
       Desc.Is_Typedef := True;
 
-      if HTTypedef.State = Incomplete then -- loop detected
+      if HTTypedef = Incomplete then -- loop detected
          Desc.Kind := Unresolved_Entity;
          if Desc.Parent_Point = Invalid_Point then
             Desc.Parent_Point    := Typedef.Start_Position;
@@ -426,7 +376,7 @@ package body Src_Info.Type_Utils is
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
          Free (Typedef);
          Success := True;
-         Set (Module_Typedefs.all, Key, (Key, Complete));
+         Set (Module_Typedefs.all, Type_Name, Complete);
          return;
       end if;
 
@@ -736,7 +686,7 @@ package body Src_Info.Type_Utils is
         Ada.Unchecked_Deallocation (HTable, Module_Typedefs_List);
    begin
       if Module_Typedefs /= null then
-         Free (Module_Typedefs.all);
+         Reset (Module_Typedefs.all);
          Internal_Free (Module_Typedefs);
       end if;
    end Free;
@@ -783,16 +733,10 @@ package body Src_Info.Type_Utils is
    -- False_Free --
    ----------------
 
-   procedure False_Free_Element (X : in out Typedef_Entry) is
+   procedure False_Free_Element (X : in out Type_Parse_State) is
       pragma Unreferenced (X);
    begin
       null;
    end False_Free_Element;
-
-   procedure False_Free_Key (X : in out String_Access) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end False_Free_Key;
 
 end Src_Info.Type_Utils;

@@ -253,34 +253,22 @@ private
 
    type String_Hash_Table_Range is range 1 .. Type_Table_Size;
 
-   function Type_Hash_Function (Key : GNAT.OS_Lib.String_Access)
-      return String_Hash_Table_Range;
+   function Type_Hash_Function is
+      new HTables.Hash (String_Hash_Table_Range);
    --  Hash function for keys
-
-   function Type_Equal_Function
-     (K1, K2 : GNAT.OS_Lib.String_Access) return Boolean;
-   --  Checks the equality of two keys
 
    type Type_Parse_State is (Incomplete, Complete, Unknown);
 
-   type Typedef_Entry is
-      record
-         Key   : GNAT.OS_Lib.String_Access;
-         State : Type_Parse_State;
-      end record;
-
-   procedure False_Free_Element (X : in out Typedef_Entry);
-   procedure False_Free_Key (X : in out String_Access);
+   procedure False_Free_Element (X : in out Type_Parse_State);
 
    package String_Hash_Table is new HTables.Simple_HTable
      (Header_Num   => String_Hash_Table_Range,
-      Element      => Typedef_Entry,
+      Element      => Type_Parse_State,
       Free_Element => False_Free_Element,
-      Key          => GNAT.OS_Lib.String_Access,
-      Free_Key     => False_Free_Key,
-      No_Element   => (null, Unknown),
+      Key          => String,
+      No_Element   => Unknown,
       Hash         => Type_Hash_Function,
-      Equal        => Type_Equal_Function);
+      Equal        => "=");
 
    use String_Hash_Table;
 
