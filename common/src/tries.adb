@@ -21,6 +21,7 @@
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
+--  with GNAT.IO; use GNAT.IO;
 
 package body Tries is
 
@@ -162,9 +163,10 @@ package body Tries is
             if Ind /= null then
                Ind_First := Ind'First + Tree.Index_Length;
                Ind_Last := Ind'First + Tree.Children (C).Index_Length - 1;
+               Assert (Me, Ind_Last <= Ind'Last, "Too long Index_Length");
 
                if Ind (Ind_First) = Index (Index'First) then
-                  if Ind'Length = 1 and then Index'Length = 1 then
+                  if Ind_Last - Ind_First = 0 and then Index'Length = 1 then
                      Cell        := Tree.Children (C)'Unrestricted_Access;
                      Last        := Index'Last;
                      Scenario    := 3;
@@ -173,7 +175,7 @@ package body Tries is
 
                   if Index'Length = 1 then
                      Scenario := 2;
-                     Index_Length := Index'Last;
+                     Index_Length := Index'Length;
                      Last     := Index'Last;
                      Cell     := Tree.Children (C)'Unrestricted_Access;
                      return;
@@ -183,9 +185,9 @@ package body Tries is
                   for J in Ind_First + 1 .. Ind_Last loop
                      if Ind (J) /= Index (Start) then
                         --  If at least one character matched, this is the
-                        --  correct cell, although it will have to be splitted
-                        Cell         := Tree.Children (C)'Unrestricted_Access;
-                        Last         := Start - 1;
+                        --  correct cell, although it will have to be split
+                        Cell := Tree.Children (C)'Unrestricted_Access;
+                        Last := Start - 1;
                         Index_Length := J - Ind'First;
                         Scenario := 1;
                         return;
@@ -194,12 +196,12 @@ package body Tries is
 
                         --  Cell matches, but will have to be splitted
                         if Start > Index'Last then
-                           Cell       := Tree.Children (C)'Unrestricted_Access;
+                           Cell := Tree.Children (C)'Unrestricted_Access;
                            Cell_Parent := Tree;
-                           Last       := Start;
+                           Last := Start;
 
-                           --  If all the characters of the index matched, we
-                           --  have found our cell
+                           --  If all the characters of the index matched,
+                           --  we have found our cell
 
                            if J = Ind_Last then
                               Scenario   := 3;
@@ -212,8 +214,8 @@ package body Tries is
                      end if;
                   end loop;
 
-                  --  If at least one character matched, but the index was too
-                  --  short, check the children
+                  --  If at least one character matched, but the index was
+                  --  too short, check the children
 
                   Find_Cell_Child
                     (Tree.Children (C)'Unrestricted_Access,
@@ -229,6 +231,54 @@ package body Tries is
       Cell := Tree;
       Scenario := 4;
    end Find_Cell_Child;
+
+   ----------
+   -- Dump --
+   ----------
+
+   procedure Dump (Tree : Trie_Tree) is
+      procedure Dump (Cell : Cell_Child; Eliminate : Natural);
+      --  Dump a cell
+
+      procedure Dump (Cell : Cell_Child; Eliminate : Natural) is
+         Ind : constant String_Access := Get_Index (Cell);
+      begin
+         if Ind'First + Cell.Index_Length - 1 > Ind'Last then
+            Put ("('" & Ind (Ind'First + Eliminate .. Ind'Last)
+                 & "(invalid length:" & Integer'Image (Cell.Index_Length)
+                 & ")'");
+         else
+            Put ("('"
+                 & Ind (Ind'First + Eliminate ..
+                          Ind'First + Cell.Index_Length - 1) & "'");
+         end if;
+
+         Put (Cell.Data);
+         Put (" ");
+
+         if Cell.Children /= null then
+            for C in Cell.Children'Range loop
+               Dump (Cell.Children (C), Cell.Index_Length);
+            end loop;
+         end if;
+
+         Put (")");
+      end Dump;
+   begin
+      if Tree.Child.Children = null then
+         Put ("('')");
+      else
+         Dump (Tree.Child, 0);
+      end if;
+   end Dump;
+
+--     procedure Put (Str : Data_Type);
+--     procedure Put (Str : Data_Type) is
+--        pragma Unreferenced (Str);
+--     begin
+--        null;
+--     end Put;
+--     procedure My_Dump is new Dump;
 
    ------------
    -- Insert --
@@ -261,8 +311,11 @@ package body Tries is
                         Index_Length => Cell.Index_Length,
                         Children     => Cell.Children),
                   2 => (Data         => Data,
-                        Index_Length => Index'Last,
+                        Index_Length => Index'Length,
                         Children     => null)));
+            Assert
+              (Me, Get_Index (Data)'Length >= Index'Length,
+               "Invalid length in scenario 1");
 
          when 2 =>
             Cell.all :=
@@ -272,10 +325,16 @@ package body Tries is
                  (1 => (Data         => Cell.Data,
                         Index_Length => Cell.Index_Length,
                         Children     => Cell.Children)));
+            Assert (Me, Get_Index (Data)'Length >= Index_Length,
+                    "Invalid length in scenario 2 "
+                    & Get_Index (Data)'Length'Img
+                    & Index_Length'Img);
 
          when 3 =>
             Free (Cell.Data);
             Cell.Data := Data;
+            Assert (Me, Get_Index (Cell.Data)'Length >= Cell.Index_Length,
+                    "Invalid length in scenario 3");
 
          when 4 | 5 =>
             Tmp2 := Cell.Children;
@@ -292,45 +351,13 @@ package body Tries is
               (Data         => Data,
                Index_Length => Index'Length,
                Children     => null);
+            Assert (Me, Get_Index (Data)'Length >= Index'Length,
+                    "Invalid length in scenario 4");
 
          when others =>
             null;
       end case;
    end Insert;
-
-   ----------
-   -- Dump --
-   ----------
-
-   procedure Dump (Tree : Trie_Tree) is
-      procedure Dump (Cell : Cell_Child; Eliminate : Natural);
-      --  Dump a cell
-
-      procedure Dump (Cell : Cell_Child; Eliminate : Natural) is
-         Ind : constant String_Access := Get_Index (Cell);
-      begin
-         Put ("('"
-              & Ind (Ind'First + Eliminate ..
-                       Ind'First + Cell.Index_Length - 1) & "'");
-
-         Put (Cell.Data);
-         Put (" ");
-
-         if Cell.Children /= null then
-            for C in Cell.Children'Range loop
-               Dump (Cell.Children (C), Cell.Index_Length);
-            end loop;
-         end if;
-
-         Put (")");
-      end Dump;
-   begin
-      if Tree.Child.Children = null then
-         Put ("('')");
-      else
-         Dump (Tree.Child, 0);
-      end if;
-   end Dump;
 
    ------------
    -- Remove --
@@ -348,7 +375,7 @@ package body Tries is
         (Tree.Child'Unrestricted_Access, Index, Cell, Cell_Parent, Last,
          Index_Length, Scenario);
 
-      if Scenario = 3 or else Scenario = 4 then
+      if Scenario = 2 or else Scenario = 3 then
          Free (Cell.Data);
          Cell.Data := No_Data;
 
@@ -358,6 +385,8 @@ package body Tries is
                if Cell_Parent.Children'Length = 1 then
                   Unchecked_Free (Cell_Parent.Children);
 
+               --  If there were two children, and the current node has no
+               --  data, we can simply remove it.
                elsif Cell_Parent.Children'Length = 2
                  and then Cell_Parent.Data = No_Data
                then
@@ -438,7 +467,7 @@ package body Tries is
         (Tree.Child'Unrestricted_Access, Index, Cell, Cell_Parent, Last,
          Index_Length, Scenario);
 
-      if Scenario <= 4 then
+      if Scenario = 3 then
          return Cell.Data;
       end if;
       return No_Data;
@@ -525,6 +554,15 @@ package body Tries is
    begin
       Iter.Current := Iter.Current + 1;
    end Next;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (Iter : Iterator) return Natural is
+   begin
+      return Iter.Cells'Last - Iter.Current + 1;
+   end Length;
 
    ---------
    -- Get --
