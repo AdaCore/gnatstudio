@@ -83,6 +83,9 @@ package GVD is
    Exec_Command : constant String := "@EXEC_COMMAND@";
    --  Command used to run helpers.
 
+   Default_Font : constant String := "@DEFAULT_FONT@";
+   --  Default system font used in the preferences.
+
    Default_HTML_Browser : constant String := "@HTML_BROWSER@";
    --  Command use to browse HTML pages.
 
