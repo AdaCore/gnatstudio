@@ -47,6 +47,7 @@ with Creation_Wizard;           use Creation_Wizard;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Prj;                       use Prj;
+with Gtk.Tooltips;              use Gtk.Tooltips;
 
 package body Welcome is
 
@@ -67,6 +68,17 @@ package body Welcome is
    procedure On_Browse_Load (Screen : access Gtk_Widget_Record'Class);
    --  Browse a new project to open
 
+   procedure On_Default_Project_Clicked
+     (Screen : access Gtk_Widget_Record'Class);
+   --  Callback for the default project radio button
+
+   procedure On_Create_Project_Clicked
+     (Screen : access Gtk_Widget_Record'Class);
+   --  Callback for the create project radio button
+
+   procedure On_Open_Project_Clicked (Screen : access Gtk_Widget_Record'Class);
+   --  Callback for the open project radio button
+
    -------------
    -- Gtk_New --
    -------------
@@ -78,7 +90,6 @@ package body Welcome is
    is
       Box, Hbox    : Gtk_Box;
       Sep          : Gtk_Separator;
-      Button       : Gtk_Button;
       Size         : Gtk_Size_Group;
       Stock_Button : Gtk_Widget;
       pragma Unreferenced (Stock_Button);
@@ -112,6 +123,17 @@ package body Welcome is
         (Screen.Default_Project,
          Label => -"Start with default project in directory:");
       Pack_Start (Box, Screen.Default_Project, Expand => False);
+      Set_Tip
+        (Get_Tooltips (Kernel), Screen.Default_Project,
+         (-"Create a default project in memory, and use the following ") &
+         (-"directory as the source and object directory. ") &
+         (-"Click on the browse button to modify the directory. ") &
+         (-"You can later modify any property and save the project ") &
+         (-"on disk if needed."));
+      Widget_Callback.Object_Connect
+        (Screen.Default_Project, "clicked",
+         Widget_Callback.To_Marshaller (On_Default_Project_Clicked'Access),
+         Screen);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
@@ -120,11 +142,11 @@ package body Welcome is
       Pack_Start (Hbox, Screen.Default_Dir, Expand => True, Fill => True);
       Set_Text (Screen.Default_Dir, Get_Current_Dir);
 
-      Gtk_New (Button, -"Browse");
-      Add_Widget (Size, Button);
-      Pack_Start (Hbox, Button, Expand => False);
+      Gtk_New (Screen.Default_Browse, -"Browse");
+      Add_Widget (Size, Screen.Default_Browse);
+      Pack_Start (Hbox, Screen.Default_Browse, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
+        (Screen.Default_Browse, "clicked",
          Widget_Callback.To_Marshaller (On_Browse_Default'Access), Screen);
 
       --  Creating a new project
@@ -137,6 +159,15 @@ package body Welcome is
          Screen.Default_Project,
          -"Create new project with wizard");
       Pack_Start (Box, Screen.Create_Project, Expand => False);
+      Set_Tip
+        (Get_Tooltips (Kernel), Screen.Create_Project,
+         (-"Launch a wizard to create a new project on disk which will ") &
+         (-"be loaded automatically. ") &
+         (-"After the wizard, you can still modify any project's property."));
+      Widget_Callback.Object_Connect
+        (Screen.Create_Project, "clicked",
+         Widget_Callback.To_Marshaller (On_Create_Project_Clicked'Access),
+         Screen);
 
       --  Open project
 
@@ -148,6 +179,14 @@ package body Welcome is
          Screen.Create_Project,
          -"Open existing project:");
       Pack_Start (Box, Screen.Open_Project_Button, Expand => False);
+      Set_Tip
+        (Get_Tooltips (Kernel), Screen.Open_Project_Button,
+         (-"Open a project from disk, either from a list of recent ") &
+         (-"projects or by browsing the file system."));
+      Widget_Callback.Object_Connect
+        (Screen.Open_Project_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Open_Project_Clicked'Access),
+         Screen);
 
       Gtk_New_Hbox (Hbox, Homogeneous => False);
       Pack_Start (Box, Hbox, Expand => False);
@@ -159,12 +198,15 @@ package body Welcome is
       Set_Text (Get_Entry (Screen.Open_Project),
                 Normalize_Pathname (Project_Name, Resolve_Links => False));
 
-      Gtk_New (Button, -"Browse");
-      Add_Widget (Size, Button);
-      Pack_Start (Hbox, Button, Expand => False);
+      Gtk_New (Screen.Open_Browse, -"Browse");
+      Add_Widget (Size, Screen.Open_Browse);
+      Pack_Start (Hbox, Screen.Open_Browse, Expand => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
+        (Screen.Open_Browse, "clicked",
          Widget_Callback.To_Marshaller (On_Browse_Load'Access), Screen);
+
+      Set_Sensitive (Screen.Open_Project, False);
+      Set_Sensitive (Screen.Open_Browse, False);
 
       --  Always displaying the welcome dialog
 
@@ -321,5 +363,50 @@ package body Welcome is
          Set_Text (Get_Entry (S.Open_Project), File);
       end if;
    end On_Browse_Load;
+
+   --------------------------------
+   -- On_Default_Project_Clicked --
+   --------------------------------
+
+   procedure On_Default_Project_Clicked
+     (Screen : access Gtk_Widget_Record'Class)
+   is
+      S : constant Welcome_Screen := Welcome_Screen (Screen);
+   begin
+      Set_Sensitive (S.Open_Project, False);
+      Set_Sensitive (S.Open_Browse, False);
+      Set_Sensitive (S.Default_Dir, True);
+      Set_Sensitive (S.Default_Browse, True);
+   end On_Default_Project_Clicked;
+
+   -------------------------------
+   -- On_Create_Project_Clicked --
+   -------------------------------
+
+   procedure On_Create_Project_Clicked
+     (Screen : access Gtk_Widget_Record'Class)
+   is
+      S : constant Welcome_Screen := Welcome_Screen (Screen);
+   begin
+      Set_Sensitive (S.Open_Project, False);
+      Set_Sensitive (S.Open_Browse, False);
+      Set_Sensitive (S.Default_Dir, False);
+      Set_Sensitive (S.Default_Browse, False);
+   end On_Create_Project_Clicked;
+
+   -----------------------------
+   -- On_Open_Project_Clicked --
+   -----------------------------
+
+   procedure On_Open_Project_Clicked
+     (Screen : access Gtk_Widget_Record'Class)
+   is
+      S : constant Welcome_Screen := Welcome_Screen (Screen);
+   begin
+      Set_Sensitive (S.Open_Project, True);
+      Set_Sensitive (S.Open_Browse, True);
+      Set_Sensitive (S.Default_Dir, False);
+      Set_Sensitive (S.Default_Browse, False);
+   end On_Open_Project_Clicked;
 
 end Welcome;
