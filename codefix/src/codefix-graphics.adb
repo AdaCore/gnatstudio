@@ -45,8 +45,6 @@ with Codefix.Merge_Utils;    use Codefix.Merge_Utils;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
-with Final_Window_Pkg;       use Final_Window_Pkg;
-
 package body Codefix.Graphics is
 
    Me : constant Debug_Handle := Create ("Codefix.Graphics");
@@ -190,15 +188,7 @@ package body Codefix.Graphics is
                Quit (Graphic_Codefix);
             end;
          else
-            declare
-               Final_Window : Final_Window_Access;
-            begin
-               Gtk_New (Final_Window);
-               Show_All (Final_Window);
-               Final_Window.Graphic_Codefix := Graphic_Codefix_Access
-                 (Graphic_Codefix);
-               return;
-            end;
+            return;
          end if;
       end if;
 
@@ -250,7 +240,6 @@ package body Codefix.Graphics is
 
       Show_All (Graphic_Codefix);
    end Load_Next_Error;
-
 
    ---------------------
    -- Load_Error --
