@@ -434,6 +434,7 @@ package body Language is
    procedure Next_Indentation
      (Lang          : access Language_Root;
       Buffer        : String;
+      Success       : out Boolean;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
@@ -444,6 +445,8 @@ package body Language is
       Blanks : Natural;
 
    begin
+      Success := True;
+
       if Buffer'Length = 0 then
          Indent := 0;
          Next_Indent := 0;

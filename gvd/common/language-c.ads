@@ -90,6 +90,7 @@ package Language.C is
    procedure Next_Indentation
      (Lang          : access C_Language;
       Buffer        : String;
+      Success       : out Boolean;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);

@@ -449,6 +449,7 @@ package body Language.Ada is
    procedure Next_Indentation
      (Lang          : access Ada_Language;
       Buffer        : String;
+      Success       : out Boolean;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
@@ -467,6 +468,7 @@ package body Language.Ada is
          Indent           => False,
          Current_Indent   => Next_Indent,
          Prev_Indent      => Indent);
+      Success := True;
    end Next_Indentation;
 
 begin

@@ -352,11 +352,15 @@ package Language is
    procedure Next_Indentation
      (Lang          : access Language_Root;
       Buffer        : String;
+      Success       : out Boolean;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
    --  Given a Buffer, return the indentation level for the last character
    --  in the buffer and for the next line.
+   --  Success indicates whether the indentation was computed successfully
+   --  or not. If False, Indent and Next_Indent should be ignored and no
+   --  indentation should be performed.
 
    type Entity_Callback is access function
      (Entity         : Language_Entity;
