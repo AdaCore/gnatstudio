@@ -268,12 +268,13 @@ package body Glide_Kernel is
       Success      : out Boolean) is
    begin
       Src_Info.ALI.Parse_ALI_File
-        (ALI_Filename => ALI_Filename,
-         Project      => Get_Project_View (Handle),
-         Source_Path  => Get_Source_Path (Handle),
-         List         => Handle.Source_Info_List,
-         Unit         => Unit,
-         Success      => Success);
+        (ALI_Filename      => ALI_Filename,
+         Project           => Get_Project_View (Handle),
+         Extra_Source_Path => Get_Source_Path (Handle),
+         Extra_Object_Path => Get_Object_Path (Handle),
+         List              => Handle.Source_Info_List,
+         Unit              => Unit,
+         Success           => Success);
    end Parse_ALI_File;
 
    ------------------------
