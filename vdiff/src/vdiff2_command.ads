@@ -17,16 +17,20 @@
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
+
+--  ??? missing general description of the purpose of this package
+
 with Glide_Kernel; use Glide_Kernel;
 with Commands;     use Commands;
 with Diff_Utils;   use Diff_Utils;
 
-
 package Vdiff2_Command is
+
+   --  ??? All the types and functions in this package need to be commented
 
    type Handler_Action is access procedure
      (Kernel : Kernel_Handle;
-      Diff : in out Diff_Head_Access);
+      Diff   : in out Diff_Head_Access);
 
    type Diff_Command is new Root_Command with record
       Kernel    : Kernel_Handle;
@@ -41,23 +45,39 @@ package Vdiff2_Command is
       List_Diff : Diff_Occurrence_List_Access;
       Action    : Handler_Action);
 
-   function Execute (Command : access Diff_Command)
-                     return Command_Return_Type;
+   function Execute
+     (Command : access Diff_Command) return Command_Return_Type;
 
-   procedure Next_Difference (Kernel : Kernel_Handle;
-                             Diff   : in out  Diff_Head_Access);
-   procedure Prev_Difference (Kernel : Kernel_Handle;
-                             Diff   : in out Diff_Head_Access);
-   procedure First_Difference (Kernel : Kernel_Handle;
-                              Diff   : in out Diff_Head_Access);
-   procedure Last_Difference (Kernel : Kernel_Handle;
-                              Diff   : in out Diff_Head_Access);
-   procedure Reload_Difference (Kernel : Kernel_Handle;
-                                Diff   : in out Diff_Head_Access);
-   procedure Remove_Difference (Kernel : Kernel_Handle;
-                                Diff   : in out Diff_Head_Access);
-   procedure Close_Difference (Kernel : Kernel_Handle;
-                               Diff   : in out Diff_Head_Access);
-   procedure Unhighlight_Difference (Kernel : Kernel_Handle;
-                              Diff   : in out Diff_Head_Access);
+   procedure Next_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out  Diff_Head_Access);
+
+   procedure Prev_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
+   procedure First_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
+   procedure Last_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
+   procedure Reload_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
+   procedure Remove_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
+   procedure Close_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
+   procedure Unhighlight_Difference
+     (Kernel : Kernel_Handle;
+      Diff   : in out Diff_Head_Access);
+
 end Vdiff2_Command;
