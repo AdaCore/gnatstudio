@@ -203,6 +203,16 @@ package body Debugger is
       return Debugger.The_Language;
    end Get_Language;
 
+   ---------------------
+   -- Detect_Language --
+   ---------------------
+
+   procedure Detect_Language (Debugger : access Debugger_Root) is
+      pragma Unreferenced (Debugger);
+   begin
+      null;
+   end Detect_Language;
+
    -----------------
    -- Get_Process --
    -----------------
@@ -372,6 +382,21 @@ package body Debugger is
       return Entity;
    end Get_Uniq_Id;
 
+   ---------------------
+   -- Lines_With_Code --
+   ---------------------
+
+   procedure Lines_With_Code
+     (Debugger : access Debugger_Root;
+      File     : VFS.Virtual_File;
+      Result   : out Boolean;
+      Lines    : out Line_Array)
+   is
+      pragma Unreferenced (Debugger, File, Lines);
+   begin
+      Result := False;
+   end Lines_With_Code;
+
    -----------------------
    -- Source_Files_List --
    -----------------------
@@ -401,6 +426,12 @@ package body Debugger is
       --  since otherwise that Wait won't see the output and will lose some
       --  output. We don't have to do that anyway, since the other Wait will
       --  indirectly call the output filter.
+
+      if Debugger = null then
+         Timeout_Remove (Process.Timeout_Id);
+         Process.Timeout_Id := 0;
+         return False;
+      end if;
 
       if Wait_Prompt (Debugger, Timeout => 1) then
          Debugger.Continuation_Line := False;
@@ -439,6 +470,7 @@ package body Debugger is
             Final_Post_Process (Process, Mode);
 
             if Is_Load_Command (Debugger, Current_Command) then
+               Detect_Language (Debugger);
                Pos := Current_Command'First;
                Skip_To_Blank (Current_Command, Pos);
                Skip_Blanks (Current_Command, Pos);
@@ -939,6 +971,10 @@ package body Debugger is
       Free (Command);
       return True;
    end Process_Command;
+
+   -----------------
+   -- Clear_Queue --
+   -----------------
 
    procedure Clear_Queue (Debugger : access Debugger_Root'Class) is
       Command : Command_Access := Debugger.Command_Queue;
