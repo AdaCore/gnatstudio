@@ -1515,8 +1515,8 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      Buffer.Hidden_Lines := Buffer.Hidden_Lines +
-        Natural (First_Line - Last_Line) - 1;
+      Buffer.Hidden_Lines := Buffer.Hidden_Lines -
+        Natural (Last_Line - First_Line) - 1;
 
       for Line in First_Line .. Last_Line loop
          if Editable_Lines (Line).Where = In_Buffer then
@@ -1568,14 +1568,14 @@ package body Src_Editor_Buffer.Line_Information is
                     Buffer_Lines (Line).Side_Info_Data
                     (Col).Info.Associated_Command;
 
-                  if Command /= null then
-                     if Command.all in Hide_Editable_Lines_Type'Class then
-                        if Execute (Command) = Success then
-                           Fold_All (Buffer);
-                        end if;
-
-                        return;
+                  if Command /= null
+                    and then Command.all in Hide_Editable_Lines_Type'Class
+                  then
+                     if Execute (Command) = Success then
+                        Fold_All (Buffer);
                      end if;
+
+                     return;
                   end if;
                end if;
             end loop;
@@ -1608,14 +1608,14 @@ package body Src_Editor_Buffer.Line_Information is
                     Buffer_Lines (Line).Side_Info_Data
                     (Col).Info.Associated_Command;
 
-                  if Command /= null then
-                     if Command.all in Unhide_Editable_Lines_Type'Class then
-                        if Execute (Command) = Success then
-                           Unfold_All (Buffer);
-                        end if;
-
-                        return;
+                  if Command /= null
+                    and then Command.all in Unhide_Editable_Lines_Type'Class
+                  then
+                     if Execute (Command) = Success then
+                        Unfold_All (Buffer);
                      end if;
+
+                     return;
                   end if;
                end if;
             end loop;
@@ -1669,7 +1669,9 @@ package body Src_Editor_Buffer.Line_Information is
                     Buffer_Lines (Buffer_Line).Side_Info_Data
                     (Column).Info.Associated_Command;
 
-                  if Command.all in Unhide_Editable_Lines_Type'Class then
+                  if Command /= null
+                    and then Command.all in Unhide_Editable_Lines_Type'Class
+                  then
                      if Execute (Command) /= Success then
                         return;
                      end if;
@@ -1680,6 +1682,54 @@ package body Src_Editor_Buffer.Line_Information is
          end loop;
       end loop;
    end Unfold_Line;
+
+   -----------------------------------
+   -- Remove_Block_Folding_Commands --
+   -----------------------------------
+
+   procedure Remove_Block_Folding_Commands
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
+      Buffer_Lines : Line_Data_Array_Access renames Buffer.Line_Data;
+      Command : Command_Access;
+      Other_Command_Found : Boolean := False;
+
+   begin
+      if BL.all = null then
+         return;
+      end if;
+
+      for Col in BL.all'Range loop
+         if BL.all (Col).Identifier.all = Block_Info_Column then
+            for Line in Buffer_Lines'Range loop
+               if Buffer_Lines (Line).Side_Info_Data /= null
+                 and then Buffer_Lines (Line).Side_Info_Data (Col).Info /= null
+               then
+                  Command :=
+                    Buffer_Lines (Line).Side_Info_Data
+                    (Col).Info.Associated_Command;
+
+                  if Command /= null
+                    and then
+                      (Command.all in Hide_Editable_Lines_Type'Class
+                       or else Command.all in Unhide_Editable_Lines_Type'Class)
+                  then
+                     Add_Block_Command (Buffer, Line, null, null);
+                  else
+                     Other_Command_Found := True;
+                  end if;
+               end if;
+            end loop;
+
+            exit;
+         end if;
+      end loop;
+
+      if not Other_Command_Found then
+         Remove_Line_Information_Column (Buffer, Block_Info_Column);
+      end if;
+   end Remove_Block_Folding_Commands;
 
    --------------------
    -- Lines_Are_Real --
