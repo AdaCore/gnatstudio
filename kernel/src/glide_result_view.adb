@@ -27,7 +27,6 @@ with Gdk.Event;                use Gdk.Event;
 
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
@@ -182,14 +181,14 @@ package body Glide_Result_View is
          return;
       end if;
 
-      Path := Get_Path (View.Model, Iter);
+      Path := Get_Path (View.Tree.Model, Iter);
 
       while Success and then Get_Depth (Path) /= 3 loop
-         Success := Expand_Row (View.Tree, Path, True);
+         Success := Expand_Row (View.Tree, Path, False);
          Down (Path);
       end loop;
 
-      Iter := Get_Iter (View.Model, Path);
+      Iter := Get_Iter (View.Tree.Model, Path);
       Path_Free (Path);
 
       if Iter = Null_Iter then
@@ -217,7 +216,7 @@ package body Glide_Result_View is
       Get_Selected (Get_Selection (View.Tree), Model, Iter);
 
       if Iter /= Null_Iter then
-         Remove (View.Model, Iter);
+         Remove (View.Tree.Model, Iter);
       end if;
    end Remove_Category;
 
@@ -235,27 +234,29 @@ package body Glide_Result_View is
       Line          : String;
       Column        : String;
       Length        : String;
-      Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf) is
+      Pixbuf        : Gdk.Pixbuf.Gdk_Pixbuf := Null_Pixbuf)
+   is
+      Model : constant Gtk_Tree_Store := View.Tree.Model;
    begin
-      Set (View.Model, Iter, Base_Name_Column, Base_Name);
-      Set (View.Model, Iter, Absolute_Name_Column, Absolute_Name);
-      Set (View.Model, Iter, Message_Column, Message);
-      Set (View.Model, Iter, Mark_Column, Mark);
-      Set (View.Model, Iter, Line_Column, Line);
-      Set (View.Model, Iter, Column_Column, Column);
-      Set (View.Model, Iter, Length_Column, Length);
-      Set (View.Model, Iter, Icon_Column, C_Proxy (Pixbuf));
+      Set (Model, Iter, Base_Name_Column, Base_Name);
+      Set (Model, Iter, Absolute_Name_Column, Absolute_Name);
+      Set (Model, Iter, Message_Column, Message);
+      Set (Model, Iter, Mark_Column, Mark);
+      Set (Model, Iter, Line_Column, Line);
+      Set (Model, Iter, Column_Column, Column);
+      Set (Model, Iter, Length_Column, Length);
+      Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
 
       if Line = "" then
-         Set (View.Model, Iter, Weight_Column, 400);
+         Set (Model, Iter, Weight_Column, 400);
 
          --  We can safely take the address of the colors, since they have the
          --  same lifespan as View and View.Model.
-         Set (View.Model, Iter, Color_Column,
+         Set (Model, Iter, Color_Column,
               Convert (View.Non_Leaf_Color'Address));
       else
-         Set (View.Model, Iter, Weight_Column, 600);
-         Set (View.Model, Iter, Color_Column,
+         Set (Model, Iter, Weight_Column, 600);
+         Set (Model, Iter, Color_Column,
               Convert (View.Leaf_Color'Address));
       end if;
    end Fill_Iter;
@@ -282,12 +283,12 @@ package body Glide_Result_View is
          return;
       end if;
 
-      Path := Get_Path (View.Model, Iter);
+      Path := Get_Path (View.Tree.Model, Iter);
 
       --  Expand to the next path corresponding to a location node.
 
       while Success and then Get_Depth (Path) < 3 loop
-         Success := Expand_Row (View.Tree, Path, True);
+         Success := Expand_Row (View.Tree, Path, False);
          Down (Path);
          Select_Path (Get_Selection (View.Tree), Path);
       end loop;
@@ -310,7 +311,7 @@ package body Glide_Result_View is
          Next (Path);
       end if;
 
-      if not Success or else Get_Iter (View.Model, Path) = Null_Iter then
+      if not Success or else Get_Iter (View.Tree.Model, Path) = Null_Iter then
          if Backwards then
             Success := Prev (File_Path);
          else
@@ -318,13 +319,13 @@ package body Glide_Result_View is
          end if;
 
          if not Success
-           or else Get_Iter (View.Model, File_Path) = Null_Iter
+           or else Get_Iter (View.Tree.Model, File_Path) = Null_Iter
          then
             File_Path := Copy (Category_Path);
             Down (File_Path);
 
             if Backwards then
-               while Get_Iter (View.Model, File_Path) /= Null_Iter loop
+               while Get_Iter (View.Tree.Model, File_Path) /= Null_Iter loop
                   Next (File_Path);
                end loop;
 
@@ -332,12 +333,12 @@ package body Glide_Result_View is
             end if;
          end if;
 
-         Success := Expand_Row (View.Tree, File_Path, True);
+         Success := Expand_Row (View.Tree, File_Path, False);
          Path := Copy (File_Path);
          Down (Path);
 
          if Backwards then
-            while Get_Iter (View.Model, Path) /= Null_Iter loop
+            while Get_Iter (View.Tree.Model, Path) /= Null_Iter loop
                Next (Path);
             end loop;
 
@@ -367,22 +368,22 @@ package body Glide_Result_View is
       New_Category  : out Boolean;
       Create        : Boolean := True) is
    begin
-      Category_Iter := Get_Iter_First (View.Model);
+      Category_Iter := Get_Iter_First (View.Tree.Model);
       New_Category := False;
 
       while Category_Iter /= Null_Iter loop
          if Get_String
-           (View.Model, Category_Iter, Base_Name_Column) = Category
+           (View.Tree.Model, Category_Iter, Base_Name_Column) = Category
          then
             exit;
          end if;
 
-         Next (View.Model, Category_Iter);
+         Next (View.Tree.Model, Category_Iter);
       end loop;
 
       if Category_Iter = Null_Iter then
          if Create then
-            Append (View.Model, Category_Iter, Null_Iter);
+            Append (View.Tree.Model, Category_Iter, Null_Iter);
             Fill_Iter (View, Category_Iter, Category, "", "", "", "", "", "",
                        View.Category_Pixbuf);
             New_Category := True;
@@ -395,22 +396,22 @@ package body Glide_Result_View is
          return;
       end if;
 
-      File_Iter := Children (View.Model, Category_Iter);
+      File_Iter := Children (View.Tree.Model, Category_Iter);
 
       while File_Iter /= Null_Iter loop
          if Get_String
-           (View.Model, File_Iter, Absolute_Name_Column) = File
+           (View.Tree.Model, File_Iter, Absolute_Name_Column) = File
          then
             return;
          end if;
 
-         Next (View.Model, File_Iter);
+         Next (View.Tree.Model, File_Iter);
       end loop;
 
       --  When we reach this point, we need to create a new sub-category.
 
       if Create then
-         Append (View.Model, File_Iter, Category_Iter);
+         Append (View.Tree.Model, File_Iter, Category_Iter);
          Fill_Iter
            (View, File_Iter, Base_Name (File), File, "", "", "", "", "",
             View.File_Pixbuf);
@@ -444,7 +445,7 @@ package body Glide_Result_View is
       Get_Category_File
         (View, Category, File, Category_Iter, File_Iter, Category_Created);
 
-      Append (View.Model, Iter, File_Iter);
+      Append (View.Tree.Model, Iter, File_Iter);
 
       declare
          Output : constant String := Create_Mark
@@ -457,7 +458,7 @@ package body Glide_Result_View is
       end;
 
       if Category_Created then
-         Path := Get_Path (View.Model, Category_Iter);
+         Path := Get_Path (View.Tree.Model, Category_Iter);
          Dummy := Expand_Row (View.Tree, Path, False);
          Path_Free (Path);
 
@@ -471,11 +472,11 @@ package body Glide_Result_View is
             end if;
          end;
 
-         Path := Get_Path (View.Model, File_Iter);
-         Dummy := Expand_Row (View.Tree, Path, True);
+         Path := Get_Path (View.Tree.Model, File_Iter);
+         Dummy := Expand_Row (View.Tree, Path, False);
          Path_Free (Path);
 
-         Path := Get_Path (View.Model, Iter);
+         Path := Get_Path (View.Tree.Model, Iter);
          Select_Path (Get_Selection (View.Tree), Path);
          Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
          Goto_Location (View);
@@ -488,7 +489,7 @@ package body Glide_Result_View is
    ----------------------
 
    procedure Set_Column_Types (View : access Result_View_Record'Class) is
-      Tree          : constant Gtk_Tree_View := View.Tree;
+      Tree          : constant Smart_Tree := View.Tree;
       Col           : Gtk_Tree_View_Column;
       Text_Rend     : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend   : Gtk_Cell_Renderer_Pixbuf;
@@ -604,7 +605,7 @@ package body Glide_Result_View is
             Select_Path (Get_Selection (Explorer.Tree), Path);
          end if;
 
-         Iter := Get_Iter (Explorer.Model, Path);
+         Iter := Get_Iter (Explorer.Tree.Model, Path);
 
          if Get_Depth (Path) = 1 then
             Gtk_New (Mitem, -"Remove category");
@@ -701,8 +702,7 @@ package body Glide_Result_View is
 
       --  Initialize the tree.
 
-      Gtk_New (View.Model, Columns_Types);
-      Gtk_New (View.Tree, View.Model);
+      Gtk_New (View.Tree, Columns_Types);
       Set_Column_Types (View);
       Set_Headers_Visible (View.Tree, False);
 
@@ -782,7 +782,7 @@ package body Glide_Result_View is
       Get_Category_File (View, Identifier, "", Iter, Dummy_Iter, Dummy);
 
       if Iter /= Null_Iter then
-         Remove (View.Model, Iter);
+         Remove (View.Tree.Model, Iter);
       end if;
    end Remove_Category;
 
@@ -835,7 +835,7 @@ package body Glide_Result_View is
                if Row_Expanded (Explorer.Tree, Path) then
                   Success := Collapse_Row (Explorer.Tree, Path);
                else
-                  Success := Expand_Row (Explorer.Tree, Path, True);
+                  Success := Expand_Row (Explorer.Tree, Path, False);
                end if;
 
             elsif Get_Depth (Path) = 3 then
@@ -848,8 +848,9 @@ package body Glide_Result_View is
                      pragma Unreferenced (Success);
 
                   begin
-                     Iter := Get_Iter (Explorer.Model, Path);
-                     Get_Value (Explorer.Model, Iter, Action_Column, Value);
+                     Iter := Get_Iter (Explorer.Tree.Model, Path);
+                     Get_Value
+                       (Explorer.Tree.Model, Iter, Action_Column, Value);
                      Action := To_Action_Item (Get_Address (Value));
 
                      if Action /= null
@@ -923,21 +924,21 @@ package body Glide_Result_View is
       if Category_Iter /= Null_Iter
         and then File_Iter /= Null_Iter
       then
-         Line_Iter := Children (View.Model, File_Iter);
+         Line_Iter := Children (View.Tree.Model, File_Iter);
 
          while Line_Iter /= Null_Iter loop
             if Get_String
-              (View.Model, Line_Iter, Message_Column) = Message
+              (View.Tree.Model, Line_Iter, Message_Column) = Message
               and then Get_String
-                (View.Model, Line_Iter, Line_Column) = Image (Line)
+                (View.Tree.Model, Line_Iter, Line_Column) = Image (Line)
               and then Get_String
-                (View.Model, Line_Iter, Column_Column) = Image (Column)
+                (View.Tree.Model, Line_Iter, Column_Column) = Image (Column)
             then
                if Action = null then
-                  Set (View.Model, Line_Iter,
+                  Set (View.Tree.Model, Line_Iter,
                        Button_Column, C_Proxy (Null_Pixbuf));
 
-                  Get_Value (View.Model, Line_Iter, Action_Column, Value);
+                  Get_Value (View.Tree.Model, Line_Iter, Action_Column, Value);
                   Old_Action := To_Action_Item (Get_Address (Value));
 
                   if Old_Action /= null then
@@ -945,22 +946,22 @@ package body Glide_Result_View is
                   end if;
 
                   Set_Address (Value, System.Null_Address);
-                  Set_Value (View.Model, Line_Iter,
+                  Set_Value (View.Tree.Model, Line_Iter,
                              Action_Column, Value);
                   Unset (Value);
 
                else
-                  Set (View.Model, Line_Iter,
+                  Set (View.Tree.Model, Line_Iter,
                        Button_Column, C_Proxy (Action.Image));
                   Init (Value, GType_Pointer);
                   Set_Address (Value, To_Address (Action));
-                  Set_Value (View.Model, Line_Iter,
+                  Set_Value (View.Tree.Model, Line_Iter,
                              Action_Column, Value);
                   Unset (Value);
                end if;
             end if;
 
-            Next (View.Model, Line_Iter);
+            Next (View.Tree.Model, Line_Iter);
          end loop;
       end if;
    end Add_Action_Item;
