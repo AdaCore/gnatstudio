@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.2.0
 
+- E106-004 GPS crashes when closing editors of a file that has been modified
+  Problem:    When a file is modified outside of GPS, and when closing the
+              editor associated to this file, it is possible that the editor
+              is closed and the dialog "File has changed on disk" appears. In
+              this case, choosing "Reload" causes GPS to crash.
+  Workaround: Verify that the editor is still open before clicking on "Reload"
+
 - DC21-008 It is impossible to use non-escaped "%" in GPS shell
   Problem:    When creating GPS shell actions, it is not possible to create
               command lines containing the "%" sign, GPS always attempts to
