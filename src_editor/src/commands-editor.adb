@@ -36,6 +36,15 @@ package body Commands.Editor is
       return (Command = null or else (Command.Current_Text_Size = 0));
    end Is_Null_Command;
 
+   -------------------
+   -- Get_Direction --
+   -------------------
+
+   function Get_Direction (Command : Editor_Command) return Direction_Type is
+   begin
+      return Command.Direction;
+   end Get_Direction;
+
    --------------
    -- Get_Mode --
    --------------
@@ -277,13 +286,22 @@ package body Commands.Editor is
 
    function Undo (Command : access Editor_Replace_Slice_Type) return Boolean is
    begin
-      Replace_Slice (Command.Buffer,
-                     Gint (Command.Start_Line),
-                     Gint (Command.Start_Column),
-                     Gint (Command.End_Line_After),
-                     Gint (Command.End_Column_After),
-                     Command.Text_Before.all,
-                     False);
+      if not Is_Valid_Position
+        (Command.Buffer,
+         Gint (Command.End_Line_After),
+         Gint (Command.End_Column_After))
+      then
+         return True;
+      end if;
+
+      Replace_Slice
+        (Command.Buffer,
+         Gint (Command.Start_Line),
+         Gint (Command.Start_Column),
+         Gint (Command.End_Line_After),
+         Gint (Command.End_Column_After),
+         Command.Text_Before.all,
+         False);
       Command_Finished (Command, True);
       return True;
    end Undo;
@@ -311,16 +329,16 @@ package body Commands.Editor is
       Item.End_Column_Before := End_Column;
 
       Item.Text_Before := new String'
-        (Get_Slice (Buffer,
-                    Gint (Start_Line),
-                    Gint (Start_Column),
-                    Gint (End_Line),
-                    Gint (End_Column)));
-
+        (Get_Slice
+          (Buffer,
+           Gint (Start_Line),
+           Gint (Start_Column),
+           Gint (End_Line),
+           Gint (End_Column)));
       Item.Text_After := new String' (Text);
 
-      Get_Iter_At_Line_Offset (Buffer, Iter,
-                               Gint (Start_Line), Gint (Start_Column));
+      Get_Iter_At_Line_Offset
+        (Buffer, Iter, Gint (Start_Line), Gint (Start_Column));
    end Create;
 
 end Commands.Editor;
