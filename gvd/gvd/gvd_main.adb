@@ -92,6 +92,7 @@ procedure Odd_Main is
                     (-"Exiting..."),
                   Error, Button_OK,
                   Justification => Justify_Left);
+               OS_Exit (1);
          end;
       end if;
 
@@ -152,6 +153,17 @@ begin
    Init;
    Gtk_New (Main_Debug_Window);
 
+   --  ??? Should have a cleaner way of initializing Log_File
+
+   declare
+      Log : aliased constant String :=
+        Home.all & Directory_Separator & ".gvd" & Directory_Separator & "log" &
+        ASCII.NUL;
+   begin
+      Main_Debug_Window.Debug_Mode := True;
+      Main_Debug_Window.Log_File := Create_File (Log'Address, Fmode => Text);
+   end;
+
    for J in 1 .. Argument_Count loop
       if Skip_Argument then
          Skip_Argument := False;
@@ -165,8 +177,8 @@ begin
               (0, Input_Read, Input_Available'Access,
                Main_Debug_Window.all'Access);
 
-         elsif Argument (J) = "--debug" then
-            Main_Debug_Window.Debug_Mode := True;
+         elsif Argument (J) = "--disable-log" then
+            Main_Debug_Window.Debug_Mode := False;
 
          elsif Argument (J) = "--jdb" then
             Debug_Type := Debugger.Jdb_Type;
