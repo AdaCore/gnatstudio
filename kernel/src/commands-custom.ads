@@ -175,6 +175,9 @@ private
       Save_Output : Boolean_Array_Access;
       --  Whether we should save the output of the nth-command
 
+      Is_Failure  : Boolean_Array_Access;
+      --  Whether the Nth command is an "on-failure" command.
+
       Context  : Selection_Context_Access;
       --  The context we had at the beginning of the executing
    end record;
