@@ -921,7 +921,9 @@ package body Debugger.Gdb is
         or else Command = "c"
         or else Command = "finish"
         or else Command = "begin"
-        or else Command = "run";
+        or else Command = "run"
+        or else (Command'Length >= 4
+          and then Command (Command'First .. Command'First + 3) = "run ");
    end Is_Execution_Command;
 
    ----------------------
