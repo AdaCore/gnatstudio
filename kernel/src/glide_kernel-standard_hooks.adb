@@ -1004,17 +1004,6 @@ package body Glide_Kernel.Standard_Hooks is
            & ASCII.LF
            & "Arguments are the following: (context)"),
          Hook_With_Args, Context_Run_Hook_Handler'Access);
-
-      Create_Hook_Type
-        (Kernel, Before_Exit_Hook_Type,
-        -("Common type for all hooks related to opening files." & ASCII.LF
-          & "No arguments."),
-         Hook_With_Args_And_Return, Open_File_Run_Hook_Handler'Access);
-      Register_Hook
-        (Kernel, Open_File_Action_Hook,
-         -("Hook called when a file needs to be opened or closed"),
-         Type_Name => Open_File_Hook_Type);
-
    end Register_Action_Hooks;
 
 end Glide_Kernel.Standard_Hooks;
