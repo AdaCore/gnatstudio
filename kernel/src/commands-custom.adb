@@ -382,6 +382,27 @@ package body Commands.Custom is
                null;
             end;
 
+            --  Check the "on-failure" attribute of <external> commands
+            if N.Tag.all = "external" then
+               declare
+                  Fail : constant String := Get_Attribute
+                    (N, "on-failure");
+               begin
+                  if Fail /= "" then
+                     declare
+                        Tmp : constant String := Substitute
+                          (Fail,
+                           Substitution_Char => '%',
+                           Callback        => Substitution'Unrestricted_Access,
+                           Recursive         => False);
+                        pragma Unreferenced (Tmp);
+                     begin
+                        null;
+                     end;
+                  end if;
+               end;
+            end if;
+
             Index := Index + 1;
             N     := N.Next;
          end loop;
@@ -531,6 +552,12 @@ package body Commands.Custom is
       function Execute_Next_Command return Boolean;
       --  Execute the following commands, until the next external one.
       --  Return True if there are still commands to executed after that one.
+
+      function Get_Show_Command (N : Node_Ptr) return Boolean;
+      --  Return True if the command should be shown for N
+
+      function Get_Nth_Command (Cmd_Index : Integer) return Node_Ptr;
+      --  Return the nth command in the list
 
       ------------------
       -- Substitution --
@@ -820,14 +847,43 @@ package body Commands.Custom is
             return False;
       end Execute_Simple_Command;
 
+      ---------------------
+      -- Get_Nth_Command --
+      ---------------------
+
+      function Get_Nth_Command (Cmd_Index : Integer) return Node_Ptr is
+         Index : Natural := 1;
+         N     : Node_Ptr := Command.XML;
+      begin
+         while Index < Cmd_Index loop
+            N := N.Next;
+            Index := Index + 1;
+         end loop;
+
+         return N;
+      end Get_Nth_Command;
+
+      ----------------------
+      -- Get_Show_Command --
+      ----------------------
+
+      function Get_Show_Command (N : Node_Ptr) return Boolean is
+         Att : constant String := Get_Attribute (N, "show-command");
+      begin
+         if Att /= "" then
+            return To_Lower (Att) = "true";
+         end if;
+
+         return Command.Default_Show_Command;
+      end Get_Show_Command;
+
       --------------------------
       -- Execute_Next_Command --
       --------------------------
 
       function Execute_Next_Command return Boolean is
-         Index : Natural := 1;
          N : Node_Ptr;
-         Show_Command : Boolean := Command.Default_Show_Command;
+         Show_Command : Boolean;
       begin
          if Command.Command /= null then
             Success := Execute_Simple_Command
@@ -835,20 +891,10 @@ package body Commands.Custom is
             return False;
 
          else
-            N := Command.XML;
-            while Index < Command.Cmd_Index loop
-               N := N.Next;
-               Index := Index + 1;
-            end loop;
+            N := Get_Nth_Command (Command.Cmd_Index);
 
             while Success and then N /= null loop
-               declare
-                  Att : constant String := Get_Attribute (N, "show-command");
-               begin
-                  if Att /= "" then
-                     Show_Command := To_Lower (Att) = "true";
-                  end if;
-               end;
+               Show_Command := Get_Show_Command (N);
 
                if To_Lower (N.Tag.all) = "shell" then
                   Success := Execute_Simple_Command
@@ -910,16 +956,37 @@ package body Commands.Custom is
             return Execute_Again;
          end if;
 
+         Command.Outputs (Command.Cmd_Index) := Command.Current_Output;
+         Command.Current_Output := null;
+         Command.Cmd_Index := Command.Cmd_Index + 1;
          Command.In_Process := False;
+
          if Command.Process_Exit_Status /= 0 then
+
+            --  We were executing an external command that fail. Time to
+            --  execute the "on-failure" fallback
+            declare
+               N : constant Node_Ptr :=
+                 Get_Nth_Command (Command.Cmd_Index - 1);
+               Failure : constant String := Get_Attribute (N, "on-failure");
+               Lang    : constant String :=
+                 Get_Attribute (N, "on-failure-lang", GPS_Shell_Name);
+            begin
+               if Failure /= "" then
+                  Success := Execute_Simple_Command
+                    (Lookup_Scripting_Language (Command.Kernel, Lang),
+                     Failure,
+                     Output_Location =>
+                       Get_Attribute (N, "output",
+                                      Command.Default_Output_Destination.all),
+                     Show_Command => Get_Show_Command (N));
+               end if;
+            end;
+
             Success := False;
             return Terminate_Command;
          end if;
 
-         Command.Outputs (Command.Cmd_Index) := Command.Current_Output;
-         Command.Current_Output := null;
-
-         Command.Cmd_Index := Command.Cmd_Index + 1;
       else
          Command.Outputs     := new Argument_List (1 .. Count);
          Command.Save_Output := new Boolean_Array (1 .. Count);
