@@ -732,7 +732,7 @@ package body Glide_Kernel.Modules is
    is
       User_Data : Contextual_Menu_User_Data;
    begin
-      pragma Assert (ID /= null);
+      Assert (Me, ID /= null, "Null module Id to Register_Contextual_Menu");
 
       User_Data := Contextual_Menu_User_Data'
         (Object       => GObject (Object),
@@ -790,7 +790,7 @@ package body Glide_Kernel.Modules is
       Index       : Gint;
 
    begin
-      pragma Assert (Path (Path'First) = '/');
+      Assert (Me, Path (Path'First) = '/', "Menu path must start with /");
 
       --  Find the existing parents
 
@@ -937,7 +937,8 @@ package body Glide_Kernel.Modules is
       Index           : Gint;
 
    begin
-      pragma Assert (Parent_Path (Parent_Path'First) = '/');
+      Assert (Me, Parent_Path (Parent_Path'First) = '/',
+             "Menu path must start with /");
 
       --  Find the existing parents
 
