@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
+--                     Copyright (C) 2003 - 2005                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -288,19 +288,19 @@ package body Task_Manager.GUI is
    is
       pragma Unreferenced (Menu);
 
-      Interface : constant Task_Manager_Interface :=
+      Iface : constant Task_Manager_Interface :=
         Task_Manager_Interface (Manager.Manager.GUI);
-      Iter      : Gtk_Tree_Iter;
-      Model     : Gtk_Tree_Model;
-      Path      : Gtk_Tree_Path;
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      Path  : Gtk_Tree_Path;
    begin
       Manager.Manager.Referenced_Command := -1;
 
-      if Interface /= null then
-         Get_Selected (Get_Selection (Interface.Tree), Model, Iter);
+      if Iface /= null then
+         Get_Selected (Get_Selection (Iface.Tree), Model, Iter);
 
          if Iter = Null_Iter then
-            Interface.Manager.Referenced_Command := -1;
+            Iface.Manager.Referenced_Command := -1;
          else
             Path := Get_Path (Model, Iter);
 
@@ -431,24 +431,24 @@ package body Task_Manager.GUI is
       Params : GValues)
    is
       pragma Unreferenced (Params);
-      Interface : constant Task_Manager_Interface :=
+      Iface : constant Task_Manager_Interface :=
         Task_Manager_Interface (Object);
       Iter  : Gtk_Tree_Iter;
       Model : Gtk_Tree_Model;
       Path  : Gtk_Tree_Path;
 
    begin
-      Get_Selected (Get_Selection (Interface.Tree), Model, Iter);
+      Get_Selected (Get_Selection (Iface.Tree), Model, Iter);
 
       if Iter = Null_Iter then
-         Interface.Manager.Referenced_Command := -1;
+         Iface.Manager.Referenced_Command := -1;
       else
          Path := Get_Path (Model, Iter);
 
          declare
             A : constant Gint_Array := Get_Indices (Path);
          begin
-            Interface.Manager.Referenced_Command := Integer (A (A'First)) + 1;
+            Iface.Manager.Referenced_Command := Integer (A (A'First)) + 1;
          end;
 
          Path_Free (Path);
