@@ -786,6 +786,9 @@ package body VCS_View_Pkg is
          when Removed =>
             Set (Explorer.Model, Iter, Status_Pixbuf_Column,
                  C_Proxy (Status_Removed_Pixbuf));
+         when Added =>
+            Set (Explorer.Model, Iter, Status_Pixbuf_Column,
+                 C_Proxy (Status_Added_Pixbuf));
          when Modified =>
             Set (Explorer.Model, Iter, Status_Pixbuf_Column,
                  C_Proxy (Status_Modified_Pixbuf));
