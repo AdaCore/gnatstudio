@@ -523,18 +523,17 @@ package body Projects is
 
          while Src /= Nil_String loop
             Get_Name_String (String_Elements.Table (Src).Value);
-            if Language_Matches
-              (Project.Data.Registry.all,
-               Create (Name_Buffer (1 .. Name_Len), P),
-               Matching_Languages)
-            then
-               if not Get (Seen, Name_Buffer (1 .. Name_Len))  then
-                  if Full_Path then
-                     declare
-                        File : constant String := Name_Buffer (1 .. Name_Len);
-                     begin
-                        Set (Seen, File, True);
 
+            declare
+               File : constant String := Name_Buffer (1 .. Name_Len);
+               F    : constant Virtual_File := Create_From_Base (File);
+            begin
+               if Language_Matches
+                 (Project.Data.Registry.all, F, Matching_Languages)
+               then
+                  if not Get (Seen, Name_Buffer (1 .. Name_Len))  then
+                     if Full_Path then
+                        Set (Seen, File, True);
                         Sources (Index) := Create
                           (File, Project, Use_Object_Path => False);
 
@@ -548,19 +547,18 @@ package body Projects is
                         --  examples) can go on.
 
                         if Sources (Index) = VFS.No_File then
-                           Sources (Index) := Create_From_Base (File);
+                           Sources (Index) := F;
                         end if;
-                     end;
 
-                  else
-                     Set (Seen, Name_Buffer (1 .. Name_Len), True);
-                     Sources (Index) := Create_From_Base
-                       (Name_Buffer (1 .. Name_Len));
+                     else
+                        Set (Seen, File, True);
+                        Sources (Index) := F;
+                     end if;
+
+                     Index := Index + 1;
                   end if;
-
-                  Index := Index + 1;
                end if;
-            end if;
+            end;
 
             Src := String_Elements.Table (Src).Next;
          end loop;
