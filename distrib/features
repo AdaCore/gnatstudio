@@ -3,6 +3,8 @@ details, please see the documentation.
 
 New features in GPS 1.3.0
 
+- Window menu is now sorted alphabetically
+
 - Support for preprocessor directives in Ada sources
 
 - Support for current block highlighting and block folding for C/C++
