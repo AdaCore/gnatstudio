@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.Regpat;  use GNAT.Regpat;
+
 package body Language.Debugger.Java is
 
    --------------------
@@ -66,5 +68,33 @@ package body Language.Debugger.Java is
    begin
       return Name & '.' & Field;
    end Record_Field_Name;
+
+   --------------
+   -- Keywords --
+   --------------
+
+   function Keywords (Lang : access Java_Language)
+      return GNAT.Regpat.Pattern_Matcher
+   is
+   begin
+      return Compile ("^@@@@$");
+   end Keywords;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context
+     (Lang : access Java_Language) return Language_Context is
+   begin
+      return (Comment_Start_Length => 2,
+              Comment_End_Length   => 2,
+              Comment_Start        => "/*",
+              Comment_End          => "*/",
+              String_Delimiter     => '"',
+              Quote_Character      => '\',
+              Constant_Character   => ''');
+   end Get_Language_Context;
+
 
 end Language.Debugger.Java;

@@ -36,11 +36,11 @@ package Language.Debugger.C is
    -- Highlighting --
    ------------------
 
-   procedure Looking_At
-     (Lang      : access C_Language;
-      Buffer    : String;
-      Entity    : out Language_Entity;
-      Next_Char : out Positive);
+   function Keywords (Lang : access C_Language)
+                     return GNAT.Regpat.Pattern_Matcher;
+
+   function Get_Language_Context
+     (Lang : access C_Language) return Language_Context;
 
    ---------------------------------
    -- Language specific functions --

@@ -32,21 +32,17 @@ package Language.Debugger.Ada is
    function Is_Simple_Type
      (Lang : access Ada_Language; Str : String) return Boolean;
 
+   function Keywords (Lang : access Ada_Language)
+     return GNAT.Regpat.Pattern_Matcher;
+
+   function Get_Language_Context
+     (Lang : access Ada_Language) return Language_Context;
+
    --------------------------------
    -- Language specific commands --
    --------------------------------
 
    function Start (Debugger : access Ada_Language) return String;
-
-   ------------------
-   -- Highlighting --
-   ------------------
-
-   procedure Looking_At
-     (Lang      : access Ada_Language;
-      Buffer    : String;
-      Entity    : out Language_Entity;
-      Next_Char : out Positive);
 
    --------------
    -- Explorer --

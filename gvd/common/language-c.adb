@@ -23,10 +23,11 @@ with Odd.Pixmaps;  use Odd.Pixmaps;
 
 package body Language.Debugger.C is
 
-   Keywords : Pattern_Matcher := Compile
+   Keywords_List : Pattern_Matcher := Compile
      ("^(do|e(lse|xtern)|for|if|s(t(atic|ruct)|witch)|union|while)\W");
    --  List of words: ("struct" "union" "extern" "for" "if" "do" "else"
    --  "while" "switch" "static")
+   --  ??? Could add typedef
    --
    --  for c++: ("class" "interface" "namespace" "try" "catch" "friend"
    --  "virtual" "template" "public" "protected" "private" "const" "abstract"
@@ -72,111 +73,6 @@ package body Language.Debugger.C is
         or else Str = "short"
         or else Str = "void";
    end Is_Simple_Type;
-
-   ----------------
-   -- Looking_At --
-   ----------------
-
-   procedure Looking_At
-     (Lang      : access C_Language;
-      Buffer    : String;
-      Entity    : out Language_Entity;
-      Next_Char : out Positive)
-   is
-      Matched : Match_Array (0 .. 1);
-
-   begin
-      --  Do we have a keyword ?
-
-      Match (Keywords, Buffer, Matched);
-
-      if Matched (0) /= No_Match then
-         Next_Char := Matched (0).Last + 1;
-         Entity := Keyword_Text;
-         return;
-      end if;
-
-      --  Do we have a comment ? (only C comments)
-
-      if Buffer'Length > 2
-        and then Buffer (Buffer'First) = '/'
-        and then Buffer (Buffer'First + 1) = '*'
-      then
-         Entity := Comment_Text;
-         Next_Char := Buffer'First + 1;
-
-         while Next_Char < Buffer'Last
-           and then (Buffer (Next_Char) /= '*'
-                     or else Buffer (Next_Char + 1) /= '/')
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-
-         Next_Char := Next_Char + 2;
-         return;
-      end if;
-
-      --  Do we have a string ?
-
-      if Buffer (Buffer'First) = '"' then
-         Entity := String_Text;
-         Next_Char := Buffer'First + 1;
-
-         while Next_Char <= Buffer'Last
-           and then (Buffer (Next_Char) /= '"'
-                     or else Buffer (Next_Char - 1) = '\')
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-
-         Next_Char := Next_Char + 1;
-         return;
-      end if;
-
-      --  A constant character
-
-      if Buffer'Length > 3
-        and then Buffer (Buffer'First) = '''
-        and then Buffer (Buffer'First + 2) = '''
-      then
-         Entity := String_Text;
-         Next_Char := Buffer'First + 3;
-         return;
-      end if;
-
-      --  If no, skip to the next meaningful character
-
-      Next_Char := Buffer'First + 1;
-
-      if Buffer (Next_Char) = ' ' or else Buffer (Next_Char) = ASCII.HT then
-         while Next_Char <= Buffer'Last
-           and then (Buffer (Next_Char) = ' '
-                     or else Buffer (Next_Char) = ASCII.HT)
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-
-      --  It is better to return a pointer to the newline, so that the icons
-      --  on the side might be displayed properly.
-
-      else
-         while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= ' '
-           and then Buffer (Next_Char) /= ASCII.LF
-           and then Buffer (Next_Char) /= ASCII.HT
-           and then Buffer (Next_Char) /= '"'
-           and then Buffer (Next_Char) /= '/'   --  for comments
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-
-         if Buffer (Next_Char) = ' ' then
-            Next_Char := Next_Char + 1;
-         end if;
-      end if;
-
-      Entity := Normal_Text;
-   end Looking_At;
 
    ----------------------
    -- Dereference_Name --
@@ -253,5 +149,33 @@ package body Language.Debugger.C is
    begin
       return Str (Matched (4).First .. Matched (4).Last);
    end Make_Entry_Subprogram;
+
+   --------------
+   -- Keywords --
+   --------------
+
+   function Keywords (Lang : access C_Language)
+                     return GNAT.Regpat.Pattern_Matcher
+   is
+   begin
+      return Keywords_List;
+   end Keywords;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context
+     (Lang : access C_Language) return Language_Context
+   is
+   begin
+      return (Comment_Start_Length => 2,
+              Comment_End_Length   => 2,
+              Comment_Start        => "/*",
+              Comment_End          => "*/",
+              String_Delimiter     => '"',
+              Quote_Character      => '\',
+              Constant_Character   => ''');
+   end Get_Language_Context;
 
 end Language.Debugger.C;

@@ -29,6 +29,12 @@ package Language.Debugger.Java is
      (Lang : access Java_Language;
       Str : String) return Boolean;
 
+   function Keywords (Lang : access Java_Language)
+     return GNAT.Regpat.Pattern_Matcher;
+
+   function Get_Language_Context
+     (Lang : access Java_Language) return Language_Context;
+
    function Dereference_Name
      (Lang : access Java_Language;
       Name : String) return String;

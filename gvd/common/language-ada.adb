@@ -21,11 +21,10 @@
 with GNAT.Regpat;  use GNAT.Regpat;
 with Odd.Pixmaps;  use Odd.Pixmaps;
 with Odd.Strings;  use Odd.Strings;
-with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Language.Debugger.Ada is
 
-   Keywords : Pattern_Matcher (1292);
+   Keywords_List : Pattern_Matcher (1292);
    --  The size is hard-coded to save a little bit on the compilation time
    --  for the regular expression (we need to compile the regexp only once).
 
@@ -141,114 +140,6 @@ package body Language.Debugger.Ada is
         or else Str = "system.address"
         or else Str = "character";
    end Is_Simple_Type;
-
-   ----------------
-   -- Looking_At --
-   ----------------
-
-   procedure Looking_At
-     (Lang      : access Ada_Language;
-      Buffer    : String;
-      Entity    : out Language_Entity;
-      Next_Char : out Positive)
-   is
-      Matched : Match_Array (0 .. 1);
-
-   begin
-
-      --  Do we have a comment ?
-
-      if Buffer'Length > 2
-        and then Buffer (Buffer'First) = '-'
-        and then Buffer (Buffer'First + 1) = '-'
-      then
-         Entity := Comment_Text;
-         Next_Char := Buffer'First + 1;
-         while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= ASCII.LF
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-         Next_Char := Next_Char + 1;
-         return;
-      end if;
-
-      --  Do we have a string ?
-
-      if Buffer (Buffer'First) = '"' then
-         Entity := String_Text;
-         Next_Char := Buffer'First + 1;
-
-         while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= '"'
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-
-         Next_Char := Next_Char + 1;
-         return;
-      end if;
-
-      --  A constant character
-
-      if Buffer'Length > 3
-        and then Buffer (Buffer'First) = '''
-        and then Buffer (Buffer'First + 2) = '''
-      then
-         Entity := String_Text;
-         Next_Char := Buffer'First + 3;
-         return;
-      end if;
-
-      --  Another special character, not part of a word: just skip it, before
-      --  doing some regexp matching
-      --  It is better to return a pointer to the newline, so that the icons
-      --  on the side might be displayed properly.
-
-      if not Is_Letter (Buffer (Buffer'First)) then
-         Entity := Normal_Text;
-         Next_Char := Buffer'First + 1;
-
-         while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= ' '
-           and then Buffer (Next_Char) /= ASCII.LF
-           and then Buffer (Next_Char) /= ASCII.HT
-           and then Buffer (Next_Char) /= '"'
-           and then Buffer (Next_Char) /= '-'   --  for comments
-           and then Buffer (Next_Char) /= '''   --  constant character
-           and then not Is_Letter (Buffer (Next_Char))
-         loop
-            Next_Char := Next_Char + 1;
-         end loop;
-
-         return;
-      end if;
-
-      --  Do we have a keyword ?
-
-      Match (Keywords, Buffer, Matched);
-
-      if Matched (0) /= No_Match then
-         Next_Char := Matched (0).Last + 1;
-         Entity := Keyword_Text;
-         return;
-      end if;
-
-      --  If no, skip to the next meaningful character. we know we are
-      --  starting with a letter
-
-      Next_Char := Buffer'First + 1;
-      Entity := Normal_Text;
-
-      --  Skip the current word
-
-      while Next_Char <= Buffer'Last
-        and then (Is_Letter (Buffer (Next_Char))
-                  or else Buffer (Next_Char) = '_')
-      loop
-         Next_Char := Next_Char + 1;
-      end loop;
-   end Looking_At;
 
    ----------------------
    -- Dereference_Name --
@@ -432,8 +323,35 @@ package body Language.Debugger.Ada is
         or else Name = "system.ads";
    end Is_System_File;
 
+   --------------
+   -- Keywords --
+   --------------
+
+   function Keywords (Lang : access Ada_Language)
+      return GNAT.Regpat.Pattern_Matcher
+   is
+   begin
+      return Keywords_List;
+   end Keywords;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context
+     (Lang : access Ada_Language) return Language_Context is
+   begin
+      return (Comment_Start_Length => 2,
+              Comment_End_Length   => 1,
+              Comment_Start        => "--",
+              Comment_End          => String'(1 => ASCII.LF),
+              String_Delimiter     => '"',
+              Quote_Character      => ASCII.Nul,
+              Constant_Character   => ''');
+   end Get_Language_Context;
+
 begin
-   Compile (Keywords,
+   Compile (Keywords_List,
             "^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"
             & "(egin|ody)|c(ase|onstant)|d(e(clare|l(ay|ta))|igits|o)|"
             & "e(ls(e|if)|n(d|try)|x(ception|it))|f(or|unction)|g(eneric|"
