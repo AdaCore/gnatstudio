@@ -105,7 +105,3 @@ GNAT_SOURCES= \
   widechar.ads \
   widechar.adb
 
-do_links:
-	@$(foreach f,$(GNAT_SOURCES), \
-	  $(LN) ../gnat_src/$(f) gnat > /dev/null ;) true
-

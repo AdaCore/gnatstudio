@@ -34,6 +34,10 @@ all: do_links ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
 
 clean: ${DEPENDENCIES:%=%_clean}
 
+do_links: force
+	@$(foreach f,$(GNAT_SOURCES), \
+	  $(LN) ../gnat_src/$(f) gnat > /dev/null ;)
+
 ${DEPENDENCIES:%=%_clean}: force
 	make -C ${@:%_clean=%}/src clean
 
