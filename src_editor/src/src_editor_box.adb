@@ -1151,20 +1151,32 @@ package body Src_Editor_Box is
             end if;
          end if;
 
-      elsif Message_Dialog
-        (Msg => Base_Name (Filename)
-           & (-" already exists. Do you want to overwrite ?"),
-         Dialog_Type => Confirmation,
-         Buttons => Button_OK or Button_Cancel,
-         Title => "Confirm overwriting",
-         Parent => Get_Main_Window (Editor.Kernel)) = Button_OK
-      then
-         Save_To_File (Editor.Source_Buffer, Filename, Success);
+      else
+         if Is_Regular_File (Filename) then
+            if Message_Dialog
+              (Msg => Base_Name (Filename)
+               & (-" already exists. Do you want to overwrite ?"),
+               Dialog_Type => Confirmation,
+               Buttons => Button_OK or Button_Cancel,
+               Title => "Confirm overwriting",
+               Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
+            then
+               Success := False;
+            end if;
+         end if;
+
+         if Success then
+            Save_To_File (Editor.Source_Buffer, Filename, Success);
+            Free (Editor.Filename);
+            Editor.Filename := new String' (Filename);
+         end if;
       end if;
 
       if Success then
          Set_Text (Editor.Modified_Label, -"Saved");
          Editor.Modified := False;
+         Editor.Timestamp := To_Timestamp
+           (File_Time_Stamp (Editor.Filename.all));
       end if;
    end Save_To_File;
 
