@@ -33,7 +33,6 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Glide_Intl;                use Glide_Intl;
 
 with GVD.Preferences;           use GVD.Preferences;
-with GVD.Status_Bar;            use GVD.Status_Bar;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -41,6 +40,8 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Projects.Editor;           use Projects, Projects.Editor;
@@ -61,7 +62,6 @@ with GNAT.Expect;               use GNAT.Expect;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect.TTY;
 pragma Warnings (On);
-with GNAT.Regpat;               use GNAT.Regpat;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -69,6 +69,9 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+
+with Commands;                  use Commands;
+with Commands.Builder;          use Commands.Builder;
 
 package body Builder_Module is
 
@@ -80,9 +83,6 @@ package body Builder_Module is
    Run_External_Key : constant History_Key := "run_external_terminal";
    --  The key in the history for the check button "run in external terminal"
 
-   Timeout : constant Guint32 := 50;
-   --  Timeout in milliseconds to check the build process
-
    Timeout_Xref : constant Guint32 := 50;
    --  Timeout in milliseconds to generate the xref information
 
@@ -90,24 +90,6 @@ package body Builder_Module is
 
    All_Files : constant String := "<all>";
    --  String id used to represent all files.
-
-   type Builder_Module_ID_Record is new Module_ID_Record with record
-      Make_Menu  : Gtk_Menu;
-      Run_Menu   : Gtk_Menu;
-      Build_Item : Gtk_Menu_Item;
-      --  The build menu, updated automatically every time the list of main
-      --  units changes.
-
-      Output     : String_List_Utils.String_List.List;
-      --  The last build output.
-   end record;
-   --  Data stored with the module id.
-
-   type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
-
-   function Idle_Build (Data : Process_Data) return Boolean;
-   --  Called by the Gtk main loop when idle.
-   --  Handle on going build.
 
    type LI_Handler_Iterator_Access_Access is access LI_Handler_Iterator_Access;
 
@@ -133,11 +115,6 @@ package body Builder_Module is
      (D : Compute_Xref_Data_Access) return Boolean;
    --  Compute the cross-references for the next files in the project.
 
-   procedure Set_Sensitive_Menus
-     (Kernel    : Kernel_Handle;
-      Sensitive : Boolean);
-   --  Change the sensitive aspect of the build menu items.
-
    procedure Free (Ar : in out String_List);
    procedure Free (Ar : in out String_List_Access);
    --  Free the memory associate with Ar.
@@ -150,13 +127,6 @@ package body Builder_Module is
    --  Compute the make arguments following the right Syntax
    --  (gnatmake / make), given a Project and File name.
    --  It is the responsibility of the caller to free the returned object.
-
-   procedure Parse_Compiler_Output
-     (Kernel : Kernel_Handle;
-      Output : String);
-   --  Parse the output of build engine and insert the result
-   --    - in the GPS results view if it corresponds to a file location
-   --    - in the GPS console if it is a general message.
 
    procedure Add_Build_Menu
      (Menu         : in out Gtk_Menu;
@@ -279,25 +249,6 @@ package body Builder_Module is
       String_List_Utils.String_List.Free
         (Builder_Module_ID_Access (Builder_Module_ID).Output);
    end Clear_Compilation_Output;
-
-   ---------------------------
-   -- Parse_Compiler_Output --
-   ---------------------------
-
-   procedure Parse_Compiler_Output
-     (Kernel : Kernel_Handle;
-      Output : String) is
-   begin
-      Insert (Kernel, Output, Add_LF => False);
-      String_List_Utils.String_List.Append
-        (Builder_Module_ID_Access (Builder_Module_ID).Output,
-         Output);
-      Parse_File_Locations (Kernel, Output, -"Builder Results", True);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Parse_Compiler_Output;
 
    -----------------------
    -- Compute_Arguments --
@@ -518,6 +469,8 @@ package body Builder_Module is
       Syntax       : Command_Syntax;
       State_Pushed : Boolean := False;
 
+      C            : Build_Command_Access;
+
    begin
       To_Lower (Langs (Langs'First).all);
 
@@ -634,8 +587,7 @@ package body Builder_Module is
 
       Insert_And_Launch
         (Kernel,
-         Remote_Protocol  =>
-           Get_Pref (GVD_Prefs, Remote_Protocol),
+         Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
          Remote_Host      =>
            Get_Attribute_Value (Project, Remote_Host_Attribute),
          Command          => Cmd.all,
@@ -645,13 +597,14 @@ package body Builder_Module is
       Free (Cmd);
       Free (Args);
 
+      Create (C, (Kernel, Fd, null, null, null));
+
       if Synchronous then
-         while Idle_Build ((Kernel, Fd, null, null, null)) loop
-            delay 0.2;
-         end loop;
+         Launch_Synchronous (Command_Access (C));
+
       else
-         Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
+         Launch_Background_Command
+           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
       end if;
 
    exception
@@ -723,6 +676,7 @@ package body Builder_Module is
 
          Lang : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
+         C    : Build_Command_Access;
 
       begin
          if File = "" then
@@ -763,8 +717,10 @@ package body Builder_Module is
            (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
             Err_To_Out  => True);
          Free (Args);
-         Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
+
+         Create (C, (Kernel, Fd, null, null, null));
+         Launch_Background_Command
+           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
 
       exception
          when Invalid_Process =>
@@ -802,6 +758,7 @@ package body Builder_Module is
 
       Lang         : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
+      C            : Build_Command_Access;
 
    begin
       if File = "" then
@@ -877,13 +834,13 @@ package body Builder_Module is
 
       Free (Cmd);
 
-      if not Synchronous then
-         Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
+      Create (C, (Kernel, Fd, null, null, null));
+
+      if Synchronous then
+         Launch_Synchronous (Command_Access (C));
       else
-         while Idle_Build ((Kernel, Fd, null, null, null)) loop
-            delay 0.2;
-         end loop;
+         Launch_Background_Command
+           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
       end if;
 
    exception
@@ -995,13 +952,15 @@ package body Builder_Module is
    is
       pragma Unreferenced (Widget);
 
-      Cmd          : constant String := Simple_Entry_Dialog
+      Cmd : constant String := Simple_Entry_Dialog
         (Parent   => Get_Main_Window (Kernel),
          Title    => -"Custom Execution",
          Message  => -"Enter the command to execute:",
          Position => Gtk.Enums.Win_Pos_Mouse,
          History  => Get_History (Kernel),
          Key      => "gps_custom_command");
+
+      C   : Build_Command_Access;
 
    begin
       if Cmd = "" or else Cmd (Cmd'First) = ASCII.NUL then
@@ -1037,9 +996,11 @@ package body Builder_Module is
                 (Get_Project (Kernel), Remote_Host_Attribute),
             Cmd_Line         => Cmd,
             Fd               => Fd);
-         Id := Process_Timeout.Add
-           (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
 
+         Create (C, (Kernel, Fd, null, null, null));
+
+         Launch_Background_Command
+           (Kernel, Command_Access (C), Active => False, Queue_Id => "");
       exception
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command", Mode => Error);
@@ -1145,135 +1106,6 @@ package body Builder_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Compute_Xref;
-
-   ----------------
-   -- Idle_Build --
-   ----------------
-
-   function Idle_Build (Data : Process_Data) return Boolean is
-      Kernel  : Kernel_Handle renames Data.Kernel;
-      Fd      : Process_Descriptor_Access := Data.Descriptor;
-
-      Top          : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
-      Matched      : Match_Array (0 .. 3);
-      Result       : Expect_Match;
-      Matcher      : constant Pattern_Matcher := Compile
-        ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.");
-      Timeout      : Integer := 1;
-      Line_Matcher : constant Pattern_Matcher :=
-        Compile ("^.*?\n", Multiple_Lines);
-      Buffer       : String_Access := new String (1 .. 1024);
-      Buffer_Pos   : Natural := Buffer'First;
-      Min_Size     : Natural;
-      New_Size     : Natural;
-      Tmp          : String_Access;
-      Status       : Integer;
-
-   begin
-      if Top.Interrupted then
-         Interrupt (Fd.all);
-         Console.Insert (Kernel, "<^C>");
-         Top.Interrupted := False;
-         Print_Message
-           (Top.Statusbar, GVD.Status_Bar.Help, -"Interrupting build...");
-         Timeout := 10;
-      end if;
-
-      loop
-         Expect (Fd.all, Result, Line_Matcher, Timeout => Timeout);
-
-         exit when Result = Expect_Timeout;
-
-         declare
-            S : constant String := Strip_CR (Expect_Out (Fd.all));
-         begin
-            Match (Matcher, S, Matched);
-
-            if Matched (0) = No_Match then
-               --  Coalesce all the output into one single chunck, which is
-               --  much faster to display in the console.
-
-               Min_Size := Buffer_Pos + S'Length;
-
-               if Buffer'Last < Min_Size then
-                  New_Size := Buffer'Length * 2;
-
-                  while New_Size < Min_Size loop
-                     New_Size := New_Size * 2;
-                  end loop;
-
-                  Tmp := new String (1 .. New_Size);
-                  Tmp (1 .. Buffer_Pos - 1) := Buffer (1 .. Buffer_Pos - 1);
-                  Free (Buffer);
-                  Buffer := Tmp;
-               end if;
-
-               Buffer (Buffer_Pos .. Buffer_Pos + S'Length - 1) := S;
-               Buffer_Pos := Buffer_Pos + S'Length;
-
-            else
-               Set_Fraction
-                 (Top.Statusbar,
-                  Gdouble'Value
-                    (S (Matched (3).First .. Matched (3).Last)) / 100.0);
-               Set_Progress_Text
-                 (Top.Statusbar, S (S'First .. Matched (2).Last));
-            end if;
-         end;
-      end loop;
-
-      if Buffer_Pos /= Buffer'First then
-         Parse_Compiler_Output
-           (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1));
-      end if;
-
-      Free (Buffer);
-
-      return True;
-
-   exception
-      when Process_Died =>
-         if Buffer_Pos /= Buffer'First then
-            Parse_Compiler_Output
-              (Kernel,
-               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all));
-         end if;
-
-         Free (Buffer);
-         Set_Fraction (Top.Statusbar, 0.0);
-         Set_Progress_Text (Top.Statusbar, "");
-         Parse_Compiler_Output (Kernel, Expect_Out (Fd.all));
-         Close (Fd.all, Status);
-
-         if Status = 0 then
-            Console.Insert
-              (Kernel, ASCII.LF & (-"successful compilation/build"));
-         else
-            Console.Insert
-              (Kernel,
-               ASCII.LF & (-"process exited with status ") & Image (Status));
-         end if;
-
-         Pop_State (Kernel);
-         Set_Sensitive_Menus (Kernel, True);
-         Free (Fd);
-
-         Compilation_Finished (Kernel, "");
-         return False;
-
-      when E : others =>
-         Free (Buffer);
-         Pop_State (Kernel);
-         Set_Sensitive_Menus (Kernel, True);
-         Close (Fd.all);
-         Free (Fd);
-         Set_Fraction (Top.Statusbar, 0.0);
-         Set_Progress_Text (Top.Statusbar, "");
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-
-         return False;
-   end Idle_Build;
 
    ------------
    -- On_Run --
