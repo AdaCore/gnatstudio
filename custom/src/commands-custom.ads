@@ -70,6 +70,10 @@ package Commands.Custom is
       Command      : String;
       Args         : Argument_List_Access);
    --  Create a new custom command.
+   --  Caller must not free memory allocated to Args.
+
+   procedure Free (X : in out Custom_Command);
+   --  Free memory associated to X.
 
    function Execute (Command : access Custom_Command) return Boolean;
    --  Execute Command, and return True if the command could be launched

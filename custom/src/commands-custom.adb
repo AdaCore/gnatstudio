@@ -33,6 +33,16 @@ with Ada.Unchecked_Deallocation;
 
 package body Commands.Custom is
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Custom_Command) is
+   begin
+      Free (X.Command);
+      Free (X.Args);
+   end Free;
+
    ------------
    -- Create --
    ------------

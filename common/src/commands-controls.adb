@@ -51,6 +51,9 @@ package body Commands.Controls is
    -- Local subprograms --
    -----------------------
 
+   procedure Free (X : in out Queue_Change_Command);
+   --  Free memory associated to X.
+
    procedure On_Undo
      (Widget  : access Gtk_Widget_Record'Class;
       Params  : GValues;
@@ -62,6 +65,16 @@ package body Commands.Controls is
       Params  : GValues;
       Command : Queue_Change_Access);
    --  Callback for the redo widgets.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Queue_Change_Command) is
+      pragma Unreferenced (X);
+   begin
+      null;
+   end Free;
 
    -------------
    -- On_Undo --
