@@ -886,10 +886,14 @@ package body Find_Utils is
       Editor : constant Source_Editor_Box :=
         Find_Current_Editor (Kernel);
    begin
-      Context := new Current_File_Context;
-      Set_Current_File (Context, Get_Filename (Editor));
-      Context.All_Occurences := All_Occurences;
-      return Search_Context_Access (Context);
+      if Editor = null then
+         return null;
+      else
+         Context := new Current_File_Context;
+         Set_Current_File (Context, Get_Filename (Editor));
+         Context.All_Occurences := All_Occurences;
+         return Search_Context_Access (Context);
+      end if;
    end Current_File_Factory;
 
    --------------------------------
