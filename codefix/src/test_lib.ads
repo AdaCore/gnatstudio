@@ -52,10 +52,4 @@ package Test_Lib is
    --  Get a number from the user between Min and Max. If the number is
    --  incorrect, the user is asked again.
 
-   procedure Ambiguity
-     (Alternative_1, Alternative_2 : Extract;
-      Current_Text                 : Text_Navigator_Abstr'Class;
-      Delete_Choice                : out Alternative_Choice);
-   --  Put on screen the ambiguity problem.
-
 end Test_Lib;
