@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
-with Gdk.Color;             use Gdk.Color;
 with Gtk;                   use Gtk;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtkada.Types;          use Gtkada.Types;
@@ -39,6 +38,7 @@ with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Combo;             use Gtk.Combo;
+with Gtk.Handlers;
 with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Object;            use Gtk.Object;
 with Gtk.Check_Button;      use Gtk.Check_Button;
@@ -46,7 +46,6 @@ with Process_Proxies;       use Process_Proxies;
 with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with GVD.Utils;             use GVD.Utils;
-with GVD.Preferences;       use GVD.Preferences;
 
 package body GVD.Dialogs is
 
@@ -368,23 +367,11 @@ package body GVD.Dialogs is
       Frame    : Natural)
    is
       Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Debugger);
-      Rows : constant Gint := Get_Rows (Tab.Stack_List);
-      Bg : Gdk_Color;
    begin
-      Freeze (Tab.Stack_List);
-
-      --  Restore the default background for all the lines
-      for R in 0 .. Rows - 1 loop
-         Set_Background (Tab.Stack_List, R, Null_Color);
-      end loop;
-
-      --  Highlight the current frame
-      Bg := Parse (File_Name_Bg_Color);
-      Alloc (Get_System, Bg);
-      Set_Background (Tab.Stack_List, Gint (Frame), Bg);
-      Free_Colors (Get_System, (1 => Bg));
-
-      Thaw (Tab.Stack_List);
+      Gtk.Handlers.Handler_Block (Tab.Stack_List, Tab.Stack_List_Select_Id);
+      Unselect_All (Tab.Stack_List);
+      Select_Row (Tab.Stack_List, Gint (Frame), 0);
+      Gtk.Handlers.Handler_Unblock (Tab.Stack_List, Tab.Stack_List_Select_Id);
    end Highlight_Stack_Frame;
 
    ----------------

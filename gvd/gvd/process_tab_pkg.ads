@@ -48,6 +48,8 @@ package Process_Tab_Pkg is
       Editor_Text : Code_Editor;
       Scrolledwindow7 : Gtk_Scrolled_Window;
       Debugger_Text : Gtk_Text;
+
+      Stack_List_Select_Id : Gtk.Handlers.Handler_Id;
    end record;
    type Process_Tab_Access is access all Process_Tab_Record'Class;
 

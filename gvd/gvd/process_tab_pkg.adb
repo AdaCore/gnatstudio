@@ -79,7 +79,7 @@ begin
    Set_Events (Process_Tab.Stack_List,
      Button_Press_Mask or
      Button_Release_Mask);
-   C_List_Callback.Connect
+   Process_Tab.Stack_List_Select_Id := C_List_Callback.Connect
      (Process_Tab.Stack_List, "select_row", On_Stack_List_Select_Row'Access);
    Return_Callback.Object_Connect
      (Process_Tab.Stack_List, "button_press_event", On_Stack_List_Button_Press_Event'Access, Process_Tab);
