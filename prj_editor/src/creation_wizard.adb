@@ -32,6 +32,7 @@ with Gdk.Event;             use Gdk.Event;
 with Gdk.Pixmap;            use Gdk.Pixmap;
 with Glib;                  use Glib;
 with Gtk.Alignment;         use Gtk.Alignment;
+with Gtk.Arguments;         use Gtk.Arguments;
 with Gtk.Arrow;             use Gtk.Arrow;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
@@ -46,14 +47,11 @@ with Gtk.Main;              use Gtk.Main;
 with Gtk.Menu;              use Gtk.Menu;
 with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;   use Gtk.Scrolled_Window;
-with Gtk.Style;             use Gtk.Style;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.Types;          use Gtkada.Types;
-with Pango.Font;            use Pango.Font;
-with Pango.Enums;           use Pango.Enums;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -84,6 +82,10 @@ package body Creation_Wizard is
    function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget;
    --  Return the widget to use for any of the pages in the wizard
+
+   procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class);
+   --  Checks whether the contents of the first page has been fully answered,
+   --  and activate (or not) the next button.
 
    procedure Add_Src_Directory
      (Wiz : access Prj_Wizard_Record'Class;
@@ -156,6 +158,14 @@ package body Creation_Wizard is
    --  Create a new variable in a package called Name to represent the default
    --  switches to use for this tool
 
+   procedure Switch_Page
+     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
+   --  Called when a new page is selected in the wizard. We dynamically create
+   --  the page if needed.
+
+   procedure Cancelled (Wiz : access Gtk_Widget_Record'Class);
+   --  Called when the cancel button was pressed
+
    -------------
    -- Gtk_New --
    -------------
@@ -175,32 +185,95 @@ package body Creation_Wizard is
       Mask : Gdk_Bitmap;
 
    begin
-      Wizards.Initialize (Wiz, "Project setup", "#0476bc");
+      Wizards.Initialize (Wiz, "Project setup", "#0e79bd", Num_Pages => 5);
       Set_USize (Wiz, 640, -1);
 
       Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, Logo_Xpm);
       Add_Logo (Wiz, Pix, Mask);
 
-      Wiz.Title_Style := Copy (Get_Style (Wiz));
-      Set_Font_Description
-        (Wiz.Title_Style,
-         To_Font_Description
-         (Family_Name => "helvetica",
-          Weight      => Pango_Weight_Bold,
-          Style       => Pango_Style_Oblique,
-          Size        => 14));
-
-      Add_Page (Wiz, First_Page (Wiz),  "Naming the project");
-      Add_Page (Wiz, Second_Page (Wiz), "Selecting sources");
-      Add_Page (Wiz, Third_Page (Wiz),  "Selecting build directory");
-      Add_Page (Wiz, Fourth_Page (Wiz), "Selecting switches");
-      Add_Page (Wiz, Fifth_Page (Wiz),  "Choosing the naming scheme");
+      Set_Toc (Wiz, 1, "Naming the project");
+      Set_Toc (Wiz, 2, "Selecting sources");
+      Set_Toc (Wiz, 3, "Build directory");
+      Set_Toc (Wiz, 4, "Compilation switches");
+      Set_Toc (Wiz, 5, "Naming scheme");
 
       Widget_Callback.Object_Connect
         (Finish_Button (Wiz), "clicked",
          Widget_Callback.To_Marshaller (Generate_Prj'Access), Wiz);
+      Widget_Callback.Object_Connect
+        (Cancel_Button (Wiz), "clicked",
+         Widget_Callback.To_Marshaller (Cancelled'Access), Wiz);
+      Widget_Callback.Connect (Wiz, "switch_page", Switch_Page'Access);
    end Initialize;
+
+   ---------------
+   -- Cancelled --
+   ---------------
+
+   procedure Cancelled (Wiz : access Gtk_Widget_Record'Class) is
+   begin
+      Destroy (Wiz);
+   end Cancelled;
+
+   -----------------
+   -- Switch_Page --
+   -----------------
+
+   procedure Switch_Page
+     (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args)
+   is
+      W : Prj_Wizard := Prj_Wizard (Wiz);
+      Page_Num : Guint := To_Guint (Args, 1);
+   begin
+      case Page_Num is
+         when 1 =>
+            Set_Wizard_Title (W, "Creating a new project");
+            if Get_Nth_Page (W, 1) = null then
+               Set_Page (W, 1, First_Page (W));
+            end if;
+
+         when 2 =>
+            Set_Wizard_Title
+              (W, "Please select the source directories for this project");
+            if Get_Nth_Page (W, 2) = null then
+               Set_Page (W, 2, Second_Page (W));
+            end if;
+
+         when 3 =>
+            Set_Wizard_Title
+              (W, "Please select the build directory for this project");
+            if Get_Nth_Page (W, 3) = null then
+               Set_Page (W, 3, Third_Page (W));
+            end if;
+
+         when 4 =>
+            Set_Wizard_Title
+              (W, "Please select the switches to build the project");
+            if Get_Nth_Page (W, 4) = null then
+               Set_Page (W, 4, Fourth_Page (W));
+            end if;
+
+         when 5 =>
+            Set_Wizard_Title (W, "Please select the naming scheme to use");
+            if Get_Nth_Page (W, 5) = null then
+               Set_Page (W, 5, Fifth_Page (W));
+            end if;
+
+         when others =>
+            null;
+      end case;
+   end Switch_Page;
+
+   ------------------------
+   -- First_Page_Checker --
+   ------------------------
+
+   procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
+      W : Prj_Wizard := Prj_Wizard (Wiz);
+   begin
+      Set_Sensitive (Next_Button (W), Get_Chars (W.Project_Name)'Length /= 0);
+   end First_Page_Checker;
 
    ----------------
    -- First_Page --
@@ -210,21 +283,13 @@ package body Creation_Wizard is
       return Gtk_Widget
    is
       Table  : Gtk_Table;
-      Box    : Gtk_Box;
       Label  : Gtk_Label;
       Button : Gtk_Button;
       Align  : Gtk_Alignment;
       Frame  : Gtk_Frame;
    begin
-      Gtk_New_Vbox (Box, Spacing => 8);
-      Set_Border_Width (Box, 5);
-
-      Gtk_New (Label, "Creating a new project");
-      Set_Style (Label, Wiz.Title_Style);
-      Pack_Start (Box, Label, Fill => False, Expand => False);
-
       Gtk_New (Align, 0.0, 0.5, 1.0, 0.0);
-      Pack_Start (Box, Align, Expand => True, Fill => True);
+      Set_Border_Width (Align, 5);
 
       Gtk_New (Frame, "Name and location");
       Set_Border_Width (Frame, 5);
@@ -238,6 +303,14 @@ package body Creation_Wizard is
 
       Gtk_New (Wiz.Project_Name, 255);
       Attach (Table, Wiz.Project_Name, 0, 1, 1, 2);
+
+      --  We can't move to the next page until the name of the project has been
+      --  specified
+      Set_Sensitive (Next_Button (Wiz), False);
+
+      Widget_Callback.Object_Connect
+        (Wiz.Project_Name, "changed",
+         Widget_Callback.To_Marshaller (First_Page_Checker'Access), Wiz);
 
       Set_Row_Spacing (Table, 1, 20);
 
@@ -254,7 +327,7 @@ package body Creation_Wizard is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Advanced_Prj_Location'Access), Wiz);
 
-      return Gtk_Widget (Box);
+      return Gtk_Widget (Align);
    end First_Page;
 
    -----------------
@@ -264,23 +337,15 @@ package body Creation_Wizard is
    function Second_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget
    is
-      Box, Vbox : Gtk_Box;
+      Box       : Gtk_Box;
       Bbox      : Gtk_Hbutton_Box;
       Button    : Gtk_Button;
       Scrolled  : Gtk_Scrolled_Window;
-      Label     : Gtk_Label;
       Arrow     : Gtk_Arrow;
    begin
       Add_Events (Wiz, Button_Press_Mask or Button_Release_Mask);
 
-      Gtk_New_Vbox (Vbox, Homogeneous => False, Spacing => 8);
-
-      Gtk_New (Label, "Please select the source directories for this project");
-      Set_Style (Label, Wiz.Title_Style);
-      Pack_Start (Vbox, Label, Expand => False, Fill => False);
-
       Gtk_New_Vbox (Box, Homogeneous => False);
-      Pack_End (Vbox, Box, Expand => True, Fill => True);
 
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
@@ -296,7 +361,6 @@ package body Creation_Wizard is
 
       Gtk_New (Bbox);
       Set_Layout (Bbox, Buttonbox_Spread);
-      --  Set_Child_Size_Default (Arrow_Buttons_Width, Arrow_Buttons_Height);
       Pack_Start (Box, Bbox, Expand => False, Fill => False);
 
       Gtk_New (Button);
@@ -337,7 +401,7 @@ package body Creation_Wizard is
 
       Show_Directory (Wiz.Src_Dir_Selection, Get_Current_Dir);
 
-      return Gtk_Widget (Vbox);
+      return Gtk_Widget (Box);
    end Second_Page;
 
    ----------------
@@ -347,25 +411,16 @@ package body Creation_Wizard is
    function Third_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget
    is
-      Vbox : Gtk_Box;
-      Label : Gtk_Label;
       Scrolled  : Gtk_Scrolled_Window;
    begin
-      Gtk_New_Vbox (Vbox, Homogeneous => False);
-
-      Gtk_New (Label, "Please select the build directory for this project");
-      Set_Style (Label, Wiz.Title_Style);
-      Pack_Start (Vbox, Label, Expand => False, Fill => False);
-
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack_Start (Vbox, Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Wiz.Obj_Dir_Selection, "/");
       Add (Scrolled, Wiz.Obj_Dir_Selection);
 
       Show_Directory (Wiz.Obj_Dir_Selection, Get_Current_Dir);
-      return Gtk_Widget (Vbox);
+      return Gtk_Widget (Scrolled);
    end Third_Page;
 
    -----------------
@@ -375,20 +430,9 @@ package body Creation_Wizard is
    function Fourth_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget
    is
-      Vbox : Gtk_Box;
-      Label : Gtk_Label;
    begin
-      Gtk_New_Vbox (Vbox, Homogeneous => False);
-
-      Gtk_New (Label, "Please select the switches to build the project");
-      Set_Style (Label, Wiz.Title_Style);
-      Pack_Start (Vbox, Label, Expand => False, Fill => False);
-
       Gtk_New (Wiz.Switches);
-      Pack_Start
-        (Vbox, Get_Window (Wiz.Switches), Expand => True, Fill => True);
-
-      return Gtk_Widget (Vbox);
+      return Get_Window (Wiz.Switches);
    end Fourth_Page;
 
    ----------------
@@ -398,20 +442,9 @@ package body Creation_Wizard is
    function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget
    is
-      Vbox : Gtk_Box;
-      Label : Gtk_Label;
    begin
-      Gtk_New_Vbox (Vbox, Homogeneous => False);
-
-      Gtk_New (Label, "Please select the naming scheme to use");
-      Set_Style (Label, Wiz.Title_Style);
-      Pack_Start (Vbox, Label, Expand => False, Fill => False);
-
       Gtk_New (Wiz.Naming);
-      Pack_Start
-        (Vbox, Get_Window (Wiz.Naming), Expand => True, Fill => True);
-
-      return Gtk_Widget (Vbox);
+      return Get_Window (Wiz.Naming);
    end Fifth_Page;
 
    -------------------------
