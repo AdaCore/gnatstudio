@@ -20,7 +20,8 @@
 
 with GNAT.Expect; use GNAT.Expect;
 with GVD.Process; use GVD.Process;
-with GVD.Types; use GVD.Types;
+with GVD.Types;   use GVD.Types;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with System;
 
 package GVD.Trace is
@@ -37,6 +38,11 @@ package GVD.Trace is
       Kind    : IO_Kind := Input_Kind);
    --  Write on the log file associated with Process.
    --  Replace ASCII.LF by "\n" and ASCII.HT by "\t", and put lines in quotes.
+
+   procedure Output_Line
+     (Window : Main_Debug_Window_Access;
+      Str    : String);
+   --  Write on the log file associated with Window.
 
    procedure Input_Filter
      (Descriptor : Process_Descriptor'Class;

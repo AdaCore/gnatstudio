@@ -38,6 +38,22 @@ package body GVD.Trace is
    function To_Main_Window is new
      Ada.Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
+   -----------------
+   -- Output_Line --
+   -----------------
+
+   procedure Output_Line
+     (Window : Main_Debug_Window_Access;
+      Str    : String)
+   is
+      LF   : aliased constant String := (1 => ASCII.LF);
+      N    : Integer;
+
+   begin
+      N := Write (Window.Log_File, Str'Address, Str'Length);
+      N := Write (Window.Log_File, LF'Address, LF'Length);
+   end Output_Line;
+
    --------------------
    -- Output_Message --
    --------------------
