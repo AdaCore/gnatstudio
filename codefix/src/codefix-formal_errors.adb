@@ -350,7 +350,7 @@ package body Codefix.Formal_Errors is
 
       Set_Caption
         (New_Command,
-         "Add expected word """ & String_Expected & """");
+         "Add expected string """ & String_Expected & """");
 
       Append (Result, New_Command);
 
