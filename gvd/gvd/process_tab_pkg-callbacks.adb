@@ -458,7 +458,7 @@ package body Process_Tab_Pkg.Callbacks is
             null;
       end case;
 
-      return True;
+      return False;
    end On_Debugger_Text_Key_Press_Event;
 
    ---------------------------------
