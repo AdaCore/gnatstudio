@@ -154,7 +154,7 @@ package Src_Info is
      (Iterator : in out LI_Handler_Iterator;
       Finished : out Boolean) is abstract;
    --  This function should move to the next source file that has been
-   --  analyzed, providing the previous file is fully parsed.
+   --  analyzed, provided the previous file is fully parsed.
    --  If the files are analyzed by external processes, the call to
    --  Generate_LI_For_Project would for instance start the external process
    --  for the first file, and when Next is called, it should check that the
@@ -177,7 +177,7 @@ package Src_Info is
    --  LI handlers --
    ------------------
 
-   type LI_Handler_Record is abstract tagged null record;
+   type LI_Handler_Record is abstract tagged limited null record;
    type LI_Handler is access all LI_Handler_Record'Class;
    --  General type to handle and generate Library Information data (for
    --  cross-references, and the various queries for the browsers).
@@ -269,6 +269,72 @@ package Src_Info is
    function Get_Line   (Location : File_Location) return Positive;
    function Get_Column (Location : File_Location) return Natural;
    --  Return the fields of a location
+
+   ------------
+   -- E_Kind --
+   ------------
+   --  This type is exported only for use in the src_info hierarchy. In fact,
+   --  it will eventually be replaced by a tagged type hierarchy. It should not
+   --  be used outside of src_info.
+
+   type E_Kind is
+     (Overloaded_Entity,
+      --  This special kind of entity is used for overloaded symbols that
+      --  couldn't be resolved by the parser. See the comment above for a more
+      --  complete explanation.
+
+      Unresolved_Entity,
+      --  This special kind indicates that we do not know the exact kind of
+      --  entity. This can happen for instance in C, in the following case:
+      --     typedef old_type new_type;
+      --  but old_type is defined nowhere in the closure of the include files.
+
+      Access_Object,
+      Access_Type,
+      Array_Object,
+      Array_Type,
+      Boolean_Object,
+      Boolean_Type,
+      Class_Wide_Object,
+      Class_Wide_Type,
+      Decimal_Fixed_Point_Object,
+      Decimal_Fixed_Point_Type,
+      Entry_Or_Entry_Family,
+      Enumeration_Literal,
+      Enumeration_Object,
+      Enumeration_Type,
+      Exception_Entity,
+      Floating_Point_Object,
+      Floating_Point_Type,
+      Generic_Function_Or_Operator,
+      Generic_Package,
+      Generic_Procedure,
+      Label_On_Block,
+      Label_On_Loop,
+      Label_On_Statement,
+      Modular_Integer_Object,
+      Modular_Integer_Type,
+      Named_Number,
+      Non_Generic_Function_Or_Operator,
+      Non_Generic_Package,
+      Non_Generic_Procedure,
+      Ordinary_Fixed_Point_Object,
+      Ordinary_Fixed_Point_Type,
+      Private_Type,
+      Protected_Object,
+      Protected_Type,
+      Record_Object,
+      Record_Type,
+      Signed_Integer_Object,
+      Signed_Integer_Type,
+      String_Object,
+      String_Type,
+      Task_Object,
+      Task_Type);
+   --  The entity kind (sorted by alphabetical order).
+   --
+   --  Note that Boolean is treated in a special way: it is treated as
+   --  Boolean_Type/Object, rather than as an Enumeration_Type/Object.
 
 private
 
@@ -418,65 +484,6 @@ private
    --  Primitive_Operations.
 
 
-
-   type E_Kind is
-     (Overloaded_Entity,
-      --  This special kind of entity is used for overloaded symbols that
-      --  couldn't be resolved by the parser. See the comment above for a more
-      --  complete explanation.
-
-      Unresolved_Entity,
-      --  This special kind indicates that we do not know the exact kind of
-      --  entity. This can happen for instance in C, in the following case:
-      --     typedef old_type new_type;
-      --  but old_type is defined nowhere in the closure of the include files.
-
-      Access_Object,
-      Access_Type,
-      Array_Object,
-      Array_Type,
-      Boolean_Object,
-      Boolean_Type,
-      Class_Wide_Object,
-      Class_Wide_Type,
-      Decimal_Fixed_Point_Object,
-      Decimal_Fixed_Point_Type,
-      Entry_Or_Entry_Family,
-      Enumeration_Literal,
-      Enumeration_Object,
-      Enumeration_Type,
-      Exception_Entity,
-      Floating_Point_Object,
-      Floating_Point_Type,
-      Generic_Function_Or_Operator,
-      Generic_Package,
-      Generic_Procedure,
-      Label_On_Block,
-      Label_On_Loop,
-      Label_On_Statement,
-      Modular_Integer_Object,
-      Modular_Integer_Type,
-      Named_Number,
-      Non_Generic_Function_Or_Operator,
-      Non_Generic_Package,
-      Non_Generic_Procedure,
-      Ordinary_Fixed_Point_Object,
-      Ordinary_Fixed_Point_Type,
-      Private_Type,
-      Protected_Object,
-      Protected_Type,
-      Record_Object,
-      Record_Type,
-      Signed_Integer_Object,
-      Signed_Integer_Type,
-      String_Object,
-      String_Type,
-      Task_Object,
-      Task_Type);
-   --  The entity kind (sorted by alphabetical order).
-   --
-   --  Note that Boolean is treated in a special way: it is treated as
-   --  Boolean_Type/Object, rather than as an Enumeration_Type/Object.
 
    type Reference_Kind is
      (Reference,
