@@ -155,7 +155,7 @@
             <check label="Check if-then layout" switch="-gnatyi" />
             <check label="Check casing rules" switch="-gnatyk" />
             <check label="Check reference manual layout" switch="-gnatyl" />
-            <check label="Check line length <= 79 characters" switch="-gnatym" />
+            <check label="Check line length &lt;= 79 characters" switch="-gnatym" />
             <check label="Check casing of Standard identifiers" switch="-gnatyn"/>
             <check label="Check subprogram bodies in alphabetical order"
                    switch="-gnatyo" />
