@@ -11,21 +11,21 @@ package body Glib.Unicode is
       return Is_Alphanumeric (Character'Val (Char));
    end Is_Alnum;
 
-   function Utf8_Find_Next_Char
+   function UTF8_Find_Next_Char
      (Str : UTF8_String; Index : Natural) return Natural
    is
       pragma Unreferenced (Str);
    begin
       return Index + 1;
-   end Utf8_Find_Next_Char;
+   end UTF8_Find_Next_Char;
 
-   function Utf8_Get_Char (Str : UTF8_String) return Gunichar is
+   function UTF8_Get_Char (Str : UTF8_String) return Gunichar is
    begin
       return Character'Pos (Str (Str'First));
-   end Utf8_Get_Char;
+   end UTF8_Get_Char;
 
-   function Utf8_Strdown (Str : UTF8_String) return UTF8_String is
+   function UTF8_Strdown (Str : UTF8_String) return UTF8_String is
    begin
       return To_Lower (Str);
-   end Utf8_Strdown;
+   end UTF8_Strdown;
 end Glib.Unicode;
