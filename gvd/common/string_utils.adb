@@ -301,18 +301,18 @@ package body String_Utils is
                end if;
 
             when '\' =>
-              if Backslash_Special then
-                 if Str'Length /= 0 then
-                    Str (S_Index) := Type_Str (Index + 1);
-                    S_Index := S_Index + 1;
-                 end if;
-                 Index := Index + 2;
+               if Backslash_Special then
+                  if Str'Length /= 0 then
+                     Str (S_Index) := Type_Str (Index + 1);
+                     S_Index := S_Index + 1;
+                  end if;
+                  Index := Index + 2;
 
-              else
-                 Str (S_Index) := Type_Str (Index);
-                 S_Index := S_Index + 1;
-                 Index := Index + 1;
-              end if;
+               else
+                  Str (S_Index) := Type_Str (Index);
+                  S_Index := S_Index + 1;
+                  Index := Index + 1;
+               end if;
 
             when ' ' | ',' =>
                if In_String then
