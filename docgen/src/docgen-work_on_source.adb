@@ -469,7 +469,7 @@ package body Docgen.Work_On_Source is
          Converter, Doc_Directory, Doc_Suffix);
       Free (File_Text);
 
-      exception
+   exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Process_Source;
