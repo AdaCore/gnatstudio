@@ -377,7 +377,7 @@ package Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
-   --  Fix 'statement missing'.
+   --  Fix 'space required'.
 
    type Name_Missing is new Error_Parser (Block_Name_Expected, 3) with record
       Matcher_Aux : Arr_Matcher (1 .. 3) :=
@@ -399,7 +399,7 @@ package Codefix.Errors_Parser is
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
-   --  Fix 'statement missing'.
+   --  Fix 'end sth expected'.
 
    type Double_Keyword is new Error_Parser (Extra_Keyword, 1) with null record;
 
