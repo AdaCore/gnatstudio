@@ -111,11 +111,14 @@ package Glide_Kernel.Editor is
    procedure Find_Dependencies
      (Kernel       : access Kernel_Handle_Record'Class;
       Source_Name  : String;
-      Dependencies : out Src_Info.Dependency_File_Info_List;
+      Dependencies : out Src_Info.Queries.Dependency_List;
       Status       : out Src_Info.Queries.Dependencies_Query_Status);
    --  Return the list of units on which the unit associated to the given
    --  filename depends. An Internal_Error status is returned if the
    --  LI information of the given file can not be found or if the associated
    --  LI file can not be found.
+
+   --  ??? Shouldn't this be moved to another package, like
+   --  ??? Glide_Kernel.Browsers
 
 end Glide_Kernel.Editor;
