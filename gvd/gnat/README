@@ -1,3 +1,2 @@
-Note: You need a recent GNAT version, at least GNAT 3.13a1, since it requires
- an updated GNAT.Regpat package.
-
+This directory contains all the GNAT packages that are not included or not
+suitable in either the 3.12 or 3.13 versions of GNAT.
