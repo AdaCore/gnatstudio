@@ -4,6 +4,7 @@ with Gdk.Types;
 with Gtk.Event_Box;
 with Gtk.Layout;
 with Gtk.Widget;
+with Gtk.Window;
 with GNAT.OS_Lib;
 
 --  TODO:
@@ -30,6 +31,18 @@ package Gtkada.MDI is
    type MDI_Window is access all MDI_Window_Record'Class;
    --  Although this widget is implemented as a gtk_layout, you shouldn't
    --  use the standard Gtk_Layout functions like Put and Move yourself.
+
+   type MDI_Child_Record is new Gtk.Event_Box.Gtk_Event_Box_Record
+     with private;
+   type MDI_Child is access all MDI_Child_Record'Class;
+   --  A child of the MDI,  that encapsulate the widgets you have put in the
+   --  MDI window.
+   --  You can easily convert from this to the initial widget using the
+   --  functions Find_MDI_Child and Get_Widget.
+
+   type Dock_Side is (None, Left, Top, Right, Bottom);
+   --  Side on which a child will be docked. If None, the child cannot be
+   --  docked.
 
    procedure Gtk_New (MDI : out MDI_Window);
    --  Create a new MDI window.
@@ -60,21 +73,69 @@ package Gtkada.MDI is
    --  On the other hand, if you insert any other widget, toplevel windows
    --  are created on the fly when needed, and destroyed automatically.
 
-   procedure Raise_Child
-     (MDI : access MDI_Window_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class);
+   procedure Raise_Child (Child : access MDI_Child_Record'Class);
    --  Put Child in the foreground.
 
-   procedure Float_Child
+   procedure Minimize_Child
+     (Child : access MDI_Child_Record'Class; Minimize : Boolean);
+   --  Change the minimized state of a child.
+   --  If the child was floating, it is first put back in the MDI
+
+   function Get_Focus_Child
+     (MDI : access MDI_Window_Record) return MDI_Child;
+   --  Return the child that currently has the focus.
+   --  null is returned if no child has the focus.
+
+   -----------------------------------------
+   -- MDI_Child and encapsulated children --
+   -----------------------------------------
+
+   function Get_Widget (Child : access MDI_Child_Record)
+      return Gtk.Widget.Gtk_Widget;
+   --  Return the widget that Child encapsulates. This is the widget you
+   --  initially Put() in MDI.
+   --  Note that if you put a toplevel Gtk_Window initially, this returns the
+   --  child of the window.
+
+   function Get_Window (Child : access MDI_Child_Record)
+      return Gtk.Window.Gtk_Window;
+   --  If you initially Put() a Gtk_Window in the MDI, this returns that
+   --  window, although with no child (see Get_Widget instead).
+   --  If you have put something else than a toplevel window, this function
+   --  returns null.
+
+   function Find_MDI_Child
      (MDI : access MDI_Window_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Float : Boolean);
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return MDI_Child;
+   --  Return the MDI_Child that encapsulates Widget.
+   --  Widget must be the exact same one you gave in argument to Put.
+
+   -----------------------------------
+   -- Floating and docking children --
+   -----------------------------------
+
+   procedure Float_Child
+     (Child : access MDI_Child_Record'Class; Float : Boolean);
    --  Change the floating state of a child
 
    function Is_Floating
-     (MDI : access MDI_Window_Record;
-      Child : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+     (Child : access MDI_Child_Record'Class) return Boolean;
    --  Return True if Child is currently in a separate window
+
+   procedure Dock_Child
+     (Child : access MDI_Child_Record'Class; Dock : Boolean := True);
+   --  Change the docking start of a child.
+   --  If the child was floating, it is first put back in the MDI
+
+   procedure Set_Dock_Side
+     (Child : access MDI_Child_Record'Class; Side  : Dock_Side);
+   --  Specify where a child should be docked. Note that this doesn't
+   --  actually dock the child.
+
+   ---------------------------
+   -- Reorganizing children --
+   ---------------------------
 
    procedure Cascade_Children (MDI : access MDI_Window_Record);
    --  All the children are stacked so that the focus widget is on top.
@@ -109,7 +170,7 @@ package Gtkada.MDI is
    --  </signals>
 
 private
-   type State_Type is (Normal, Iconified, Floating);
+   type State_Type is (Normal, Iconified, Floating, Docked);
 
    type MDI_Child_Record is new Gtk.Event_Box.Gtk_Event_Box_Record with record
       Initial : Gtk.Widget.Gtk_Widget;
@@ -122,10 +183,16 @@ private
       State : State_Type := Normal;
       Name : GNAT.OS_Lib.String_Access;
 
+      Dock : Dock_Side := None;
+
       Uniconified_Width, Uniconified_Height : Glib.Gint;
+      --  The size of the window, when not iconified. When in normal state,
+      --  this represents the size of the window, since we can not rely on
+      --  Get_Allocation_Width and Get_Allocation_Height (in case for instance
+      --  we just resized the widget but didn't go back to the main gtk loop)
+
       Uniconified_X, Uniconified_Y : Glib.Gint;
    end record;
-   type MDI_Child is access all MDI_Child_Record'Class;
 
    procedure Gtk_New (Child : out MDI_Child;
                       Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -161,4 +228,7 @@ private
       --  The graphic contexts to draw the children.
    end record;
 
+   pragma Inline (Get_Window);
+   pragma Inline (Get_Widget);
+   pragma Inline (Get_Focus_Child);
 end Gtkada.MDI;
