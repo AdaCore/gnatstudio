@@ -39,6 +39,7 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with Ada.Text_IO;              use Ada.Text_IO;
 with Commands;                 use Commands;
 
 
@@ -47,13 +48,14 @@ package body Vdiff2_Module.Utils is
    use Diff_Head_List;
    use Diff_Chunk_List;
 
-   Me                  : constant Debug_Handle := Create ("VDiff2_Utils");
-   Default_Style       : constant String  := "Default_diff";
-   Old_Style           : constant String  := "Old_diff";
-   Append_Style        : constant String  := "Append_diff";
-   Remove_Style        : constant String  := "Remove_diff";
-   Change_Style        : constant String  := "Change_diff";
-   Id_Col_Vdiff        : constant String  := "Vdiff2_Col_Merge";
+   Me                   : constant Debug_Handle := Create ("VDiff2_Utils");
+   Default_Style        : constant String       := "Default_diff";
+   Old_Style            : constant String       := "Old_diff";
+   Append_Style         : constant String       := "Append_diff";
+   Remove_Style         : constant String       := "Remove_diff";
+   Change_Style         : constant String       := "Change_diff";
+      Fine_Change_Style : constant String       := "Default_diff";
+   Id_Col_Vdiff         : constant String       := "Vdiff2_Col_Merge";
 
    type   T_VLine_Information is array (1 .. 3) of Line_Information_Data;
 
@@ -78,6 +80,14 @@ package body Vdiff2_Module.Utils is
       Info     : T_VLine_Information;
       Conflict : Boolean := False);
    --  Hightlight the Current Chunk given in VRange where action is Append
+
+   procedure Fine_Diff_Block
+     (Kernel       : Kernel_Handle;
+      Source_File  : Virtual_File;
+      Dest_File    : Virtual_File;
+      Source_Range : Diff_Range;
+      Dest_Range   : Diff_Range := Null_Range);
+   --  Highlight Fine change between two diff block
 
    function Get_File_Last_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -241,6 +251,147 @@ package body Vdiff2_Module.Utils is
          Free (Tmp);
       end loop;
    end Append;
+
+   -----------------------
+   --  Fine_Diff_Block  --
+   -----------------------
+
+   procedure Fine_Diff_Block
+     (Kernel       : Kernel_Handle;
+      Source_File  : Virtual_File;
+      Dest_File    : Virtual_File;
+      Source_Range : Diff_Range;
+      Dest_Range   : Diff_Range := Null_Range)
+   is
+      Offset_Dest          : constant Natural :=
+        Dest_Range.Last - Dest_Range.First;
+      Offset_Source        : constant Natural :=
+        Source_Range.Last - Source_Range.First;
+      Offset_Min           : Natural;
+      Args_Get_Chars_Src   : Argument_List :=
+        (1 => new String'(Full_Name (Source_File)),
+         2 => new String'(Natural'Image (Source_Range.First)),
+         3 => new String'(Natural'Image (1)));
+      Args_Get_Chars_Dest  : Argument_List :=
+        (1 => new String'(Full_Name (Dest_File)),
+         2 => new String'(Natural'Image (Dest_Range.First)),
+         3 => new String'(Natural'Image (1)));
+      Args_Highlight_Range : Argument_List :=
+        (1 => new String'(Full_Name (Dest_File)),
+         2 => new String'(Fine_Change_Style),
+         3 => new String'(Natural'Image (Dest_Range.First)),
+         4 => null,
+         5 => null);
+      Current_Line_Source : String_Access;
+      Current_Line_Dest   : String_Access;
+
+   begin
+
+      if Offset_Source < Offset_Dest then
+         Offset_Min := Offset_Source;
+      else
+         Offset_Min := Offset_Dest;
+      end if;
+
+      if Offset_Min > 0 then
+         for J in 1 .. Offset_Min loop
+            Current_Line_Dest := new String'
+              (Execute_GPS_Shell_Command
+                 (Kernel, "get_chars", Args_Get_Chars_Src));
+            Current_Line_Source := new String'
+              (Execute_GPS_Shell_Command
+                 (Kernel, "get_chars", Args_Get_Chars_Dest));
+
+            Put_Line ("source : " & Current_Line_Source.all);
+            Put_Line ("dest   : " & Current_Line_Dest.all);
+
+            declare
+               Long_Min : Natural;
+               First    : Natural;
+               Last     : Natural;
+               In_Block : Boolean := false;
+            begin
+               if (Current_Line_Source.all'Length) <
+                 (Current_Line_Dest.all'Length)
+               then
+                  Long_Min := Current_Line_Source.all'Length;
+               else
+                  Long_Min := Current_Line_Dest.all'Length;
+               end if;
+
+               for Ind in 1 .. Long_Min loop
+                  if Current_Line_Source.all (Ind) /=
+                    Current_Line_Dest.all (Ind)
+                  then
+                     if not In_Block then
+                        First    := Ind;
+                        In_Block := true;
+                     end if;
+                  elsif In_Block then
+                     Last := Ind;
+                     Free (Args_Highlight_Range (4));
+                     Free (Args_Highlight_Range (5));
+                     Args_Highlight_Range (4) :=
+                       new String'(Natural'Image (First));
+                     Args_Highlight_Range (5) :=
+                       new String'(Natural'Image (Last));
+                     Execute_GPS_Shell_Command
+                       (Kernel, "highlight_range", Args_Highlight_Range);
+                     In_Block := false;
+                  end if;
+               end loop;
+
+               if In_Block then
+                  Last := Long_Min;
+                  Free (Args_Highlight_Range (4));
+                  Free (Args_Highlight_Range (5));
+                  Args_Highlight_Range (4) :=
+                    new String'(Natural'Image (First));
+                  Args_Highlight_Range (5) :=
+                    new String'(Natural'Image (Last));
+                  Execute_GPS_Shell_Command
+                    (Kernel, "highlight_range", Args_Highlight_Range);
+                  In_Block := false;
+               end if;
+
+               if Long_Min < Current_Line_Dest.all'Length then
+                  Free (Args_Highlight_Range (4));
+                  Free (Args_Highlight_Range (5));
+                  Last := Current_Line_Dest.all'Length;
+                  First := Long_Min;
+                  Args_Highlight_Range (4) :=
+                    new String'(Natural'Image (First));
+                  Args_Highlight_Range (5) :=
+                    new String'(Natural'Image (Last));
+                  Execute_GPS_Shell_Command
+                    (Kernel, "highlight_range", Args_Highlight_Range);
+               end if;
+            end;
+
+            Free (Current_Line_Source);
+            Free (Current_Line_Dest);
+            Free (Args_Get_Chars_Src (2));
+            Free (Args_Get_Chars_Dest (2));
+            Free (Args_Highlight_Range (3));
+            Args_Get_Chars_Src (2) := new String'
+              (Natural'Image (Source_Range.First + J));
+            Args_Get_Chars_Dest (2) := new String'
+              (Natural'Image (Dest_Range.First + J));
+            Args_Highlight_Range (3) := new String'
+              (Natural'Image (Dest_Range.First + J));
+         end loop;
+
+         if Offset_Source < Offset_Dest then
+            for J in Offset_Source .. Offset_Dest loop
+               null;
+            end loop;
+         end if;
+      end if;
+
+      Basic_Types.Free (Args_Get_Chars_Dest);
+      Basic_Types.Free (Args_Get_Chars_Src);
+      Basic_Types.Free (Args_Highlight_Range);
+   end Fine_Diff_Block;
 
    ----------
    -- Free --
@@ -799,7 +950,14 @@ package body Vdiff2_Module.Utils is
                Curr_Chunk.Range2.Mark := new String'
                  (Mark_Diff_Block
                    (Kernel, Item.File2,
-                    Curr_Chunk.Range2.First));
+                     Curr_Chunk.Range2.First));
+
+               Fine_Diff_Block
+                 (Kernel_Handle (Kernel),
+                  Item.File1,
+                  Item.File2,
+                  Curr_Chunk.Range1,
+                  Curr_Chunk.Range2);
 
             when Delete =>
                VStyle (Other) := new String'(Remove_Style);
@@ -1198,7 +1356,7 @@ package body Vdiff2_Module.Utils is
            (Msg         => -"No differences found.",
             Buttons     => Button_OK,
             Parent      => Get_Main_Window (Id.Kernel));
-         return false;
+         return False;
       end if;
 
       Item :=
