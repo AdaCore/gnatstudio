@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2004                              --
+--                        Copyright (C) 2004                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,15 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Remote_Connections; use Remote_Connections;
-with Glib;               use Glib;
-with GNAT.OS_Lib;        use GNAT.OS_Lib;
-with Ada.Calendar;       use Ada.Calendar;
-with VFS;                use VFS;
-with GNAT.Sockets;       use GNAT.Sockets;
-with Traces;             use Traces;
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Exceptions;           use Ada.Exceptions;
+with Remote_Connections;      use Remote_Connections;
+with Glib;                    use Glib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Ada.Calendar;            use Ada.Calendar;
+with VFS;                     use VFS;
+with GNAT.Sockets;            use GNAT.Sockets;
+with Traces;                  use Traces;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Streams;             use Ada.Streams;
 
 package body HTTP_Protocol is
@@ -461,6 +461,7 @@ package body HTTP_Protocol is
       Http : constant Http_Connection := new Http_Connection_Record;
    begin
       Remote_Connections.Register_Protocol (Http);
+      Initialize;
    end Register_Protocol;
 
 end HTTP_Protocol;
