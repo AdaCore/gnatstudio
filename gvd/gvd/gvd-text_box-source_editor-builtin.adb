@@ -803,7 +803,7 @@ package body GVD.Source_Editors is
 
    begin
       --  Avoid reloading a file twice.
-      --  This also solve the problem of recursive loops ("info line" in gdb,
+      --  This also solves the problem of recursive loops ("info line" in gdb,
       --  with annotation level set to 1 will print a file reference as well).
 
       if Editor.Current_File /= null
@@ -813,7 +813,7 @@ package body GVD.Source_Editors is
       end if;
 
       Free (Editor.Current_File);
-      Editor.Current_File := new String'(File_Name);
+      Editor.Current_File := new String' (File_Name);
       Editor.Current_File_Cache := Find_In_Cache
         (Process.Window, Editor.Current_File.all);
 
@@ -843,7 +843,7 @@ package body GVD.Source_Editors is
 
       if Set_Current then
          Free (Editor.Debugger_Current_File);
-         Editor.Debugger_Current_File := new String'(File_Name);
+         Editor.Debugger_Current_File := new String' (File_Name);
       end if;
 
    exception
