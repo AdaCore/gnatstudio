@@ -1304,7 +1304,7 @@ package body Projects is
                    & Project_Name (Root_Project));
          end if;
 
-         Trace (Me, "Start: compute parent depends for "
+         Trace (Me, "Start: compute parent deps for "
                 & Project_Name (Project));
 
          declare
@@ -1314,16 +1314,24 @@ package body Projects is
               Root_Project.Data.Imported_Projects;
             Include  : Boolean_Array (Imported'Range) := (others => False);
             Name     : constant Name_Id := Prj.Tree.Name_Of (Project.Node);
+            Decl     : constant Project_Node_Id :=
+              Project_Declaration_Of (Project.Node);
+            Name2    : Name_Id := No_Name;
             Index    : Integer := Imported'Last;
             With_Clause : Project_Node_Id;
          begin
+            if Extended_Project_Of (Decl) /= Empty_Node then
+               Name2 := Prj.Tree.Name_Of (Extended_Project_Of (Decl));
+            end if;
 
             --  We first start by the lowest possible project, then go up to
             --  the root project. Note that no project that appears before
             --  Project can import it, so we can save some time.
 
             while Index >= Imported'First loop
-               if Name = Imported (Index) then
+               if Name = Imported (Index)
+                 or else Name2 = Imported (Index)
+               then
                   Include (Index) := True;
                   exit;
                end if;
@@ -1333,6 +1341,25 @@ package body Projects is
             while Index >= Imported'First loop
                With_Clause := Prj.Tree.Tree_Private_Part.Projects_Htable.Get
                  (Imported (Index)).Node;
+
+               --  Test the extended projects...
+               if Extended_Project_Of (Project_Declaration_Of (With_Clause))
+                 /= Empty_Node
+               then
+                  Name2 := Prj.Tree.Name_Of (Extended_Project_Of
+                     (Project_Declaration_Of (With_Clause)));
+
+                  for N in Index + 1 .. Include'Last loop
+                     if Imported (N) = Name2 then
+                        Include (N) := True;
+                     end if;
+                  end loop;
+               end if;
+
+               --  ??? Special handling needed for limited with: we need to
+               --  check in imported projects as well, in case they, even
+               --  indirectly, do a limited_with on Project.
+
                With_Clause := First_With_Clause_Of (With_Clause);
 
                Imported_Projects_Loop :
@@ -1348,6 +1375,7 @@ package body Projects is
 
                   With_Clause := Next_With_Clause_Of (With_Clause);
                end loop Imported_Projects_Loop;
+
 
                Index := Index - 1;
             end loop;
@@ -1371,6 +1399,18 @@ package body Projects is
                Project.Data.Importing_Projects (Imp) := Imported (Index);
                Index := Index + 1;
             end loop;
+
+            --  The code below is used for debugging sessions
+
+            --  Trace (Me, "Find_All_Projects_Importing: "
+            --         & Get_String (Name));
+            --  for J in Project.Data.Importing_Projects'Range loop
+            --    Trace (Me, Get_String (Project.Data.Importing_Projects (J)));
+            --  end loop;
+
+         exception
+            when E : others =>
+               Trace (Me, "Unexpected exception " & Exception_Information (E));
          end;
       end if;
 

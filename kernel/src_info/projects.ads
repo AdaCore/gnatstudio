@@ -397,7 +397,9 @@ package Projects is
       Include_Self : Boolean := False;
       Direct_Only  : Boolean := False) return Imported_Project_Iterator;
    --  Return the list of all the projects that import Project, either directly
-   --  or indirectly.
+   --  or indirectly. It also includes projects that extend Project, and their
+   --  own extensions, so that a project and all its extensions are considered
+   --  as the same project.
    --  If Project is No_Project, the resulting array contains all the project
    --  in the hierarchy.
    --  If Include_Self is true, then Project will be included in the returned
