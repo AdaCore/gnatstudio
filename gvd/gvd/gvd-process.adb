@@ -41,7 +41,6 @@ with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Paned;           use Gtk.Paned;
-with Gtk.Socket;          use Gtk.Socket;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Container;       use Gtk.Container;
@@ -59,27 +58,28 @@ with Ada.Text_IO;              use Ada.Text_IO;
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with Odd_Intl;                  use Odd_Intl;
-with Process_Tab_Pkg;           use Process_Tab_Pkg;
-with Display_Items;             use Display_Items;
-with Debugger.Gdb;              use Debugger.Gdb;
-with Debugger.Jdb;              use Debugger.Jdb;
-with Process_Proxies;           use Process_Proxies;
-with Items.Simples;             use Items.Simples;
-with Main_Debug_Window_Pkg;     use Main_Debug_Window_Pkg;
-with Breakpoints_Pkg;           use Breakpoints_Pkg;
-with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
-with GVD.Canvas;                use GVD.Canvas;
-with GVD.Dialogs;               use GVD.Dialogs;
-with GVD.Pixmaps;               use GVD.Pixmaps;
-with GVD.Strings;               use GVD.Strings;
-with GVD.Types;                 use GVD.Types;
-with GVD.Code_Editors;          use GVD.Code_Editors;
-with GVD.Preferences;           use GVD.Preferences;
-with GVD.Window_Settings;       use GVD.Window_Settings;
-with GVD.Status_Bar;            use GVD.Status_Bar;
-with GVD.Utils;                 use GVD.Utils;
-with GVD.Trace;                 use GVD.Trace;
+with Odd_Intl;                   use Odd_Intl;
+with Process_Tab_Pkg;            use Process_Tab_Pkg;
+with Display_Items;              use Display_Items;
+with Debugger.Gdb;               use Debugger.Gdb;
+with Debugger.Jdb;               use Debugger.Jdb;
+with Process_Proxies;            use Process_Proxies;
+with Items.Simples;              use Items.Simples;
+with Main_Debug_Window_Pkg;      use Main_Debug_Window_Pkg;
+with Breakpoints_Pkg;            use Breakpoints_Pkg;
+with Breakpoints_Pkg.Callbacks;  use Breakpoints_Pkg.Callbacks;
+with GVD.Canvas;                 use GVD.Canvas;
+with GVD.Dialogs;                use GVD.Dialogs;
+with GVD.Pixmaps;                use GVD.Pixmaps;
+with GVD.Strings;                use GVD.Strings;
+with GVD.Types;                  use GVD.Types;
+with GVD.Code_Editors;           use GVD.Code_Editors;
+with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
+with GVD.Preferences;            use GVD.Preferences;
+with GVD.Window_Settings;        use GVD.Window_Settings;
+with GVD.Status_Bar;             use GVD.Status_Bar;
+with GVD.Utils;                  use GVD.Utils;
+with GVD.Trace;                  use GVD.Trace;
 
 with System;
 with Unchecked_Conversion;
@@ -1641,7 +1641,6 @@ package body GVD.Process is
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
       C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
       Widget  : Gtk_Widget;
-      Win     : Gtk_Window;
 
    begin
       if F /= Process.Debugger_Text_Font
@@ -1670,11 +1669,7 @@ package body GVD.Process is
          Process.Separate_Data := not Process.Separate_Data;
 
          if Process.Separate_Data then
-            if Main.External_XID /= 0 then
-               Gtk_New (Win);
-               Show (Win);
-               Reparent (Get_External_Source (Process.Editor_Text), Win);
-            end if;
+            Detach (Get_Source (Process.Editor_Text));
 
             --  Ref the widget so that it is not destroyed.
             Ref (Process.Data_Editor_Paned);
@@ -1688,21 +1683,13 @@ package body GVD.Process is
 
             Reparent (Widget, Process);
             Reparent (Process.Editor_Vbox, Process.Process_Paned);
+            Attach
+              (Get_Source (Process.Editor_Text),
+               Get_Editor_Container (Process.Editor_Text));
             Show_All (Process);
 
-            if Main.External_XID /= 0 then
-               Reparent
-                 (Get_External_Source (Process.Editor_Text),
-                  Get_Editor_Container (Process.Editor_Text));
-               Destroy (Win);
-            end if;
          else
-            if Main.External_XID /= 0 then
-               Gtk_New (Win);
-               Show (Win);
-               Reparent (Get_External_Source (Process.Editor_Text), Win);
-            end if;
-
+            Detach (Get_Source (Process.Editor_Text));
             Hide (Process);
 
             if Get_Active (Main.Call_Stack) then
@@ -1716,14 +1703,10 @@ package body GVD.Process is
             Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
             Add (Process.Process_Paned, Process.Data_Editor_Paned);
             Unref (Process.Data_Editor_Paned);
+            Attach
+              (Get_Source (Process.Editor_Text),
+               Get_Editor_Container (Process.Editor_Text));
             Show_All (Process.Process_Paned);
-
-            if Main.External_XID /= 0 then
-               Reparent
-                 (Get_External_Source (Process.Editor_Text),
-                  Get_Editor_Container (Process.Editor_Text));
-               Destroy (Win);
-            end if;
          end if;
       end if;
    end Preferences_Changed;
