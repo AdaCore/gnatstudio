@@ -32,7 +32,8 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
