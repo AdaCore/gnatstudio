@@ -297,7 +297,9 @@ package Glide_Kernel.Modules is
    --     third  : source_line_info data (use Get_Address)
    --     fourth : line info sticks to data (instead of sticking to
    --              line numbers (use Get_Boolean)
-   --     fifth  : True if every line ???
+   --     fifth  : True if every line needs to have info for this
+   --              identifier (use Get_Boolean)
+   --  See also the procedure Create_Line_Information_Column.
 
    Mime_Html_File : constant String := "gps/html";
    --  Request to display a html file
