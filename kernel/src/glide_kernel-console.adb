@@ -303,14 +303,15 @@ package body Glide_Kernel.Console is
 
                Insert_Result
                  (Kernel,
-                  C.all,
+                  Category,
                   Create
                     (Text (Matched
                              (File_Index).First .. Matched (File_Index).Last),
                      Kernel),
                   Text (Last + 1 .. Real_Last),
                   Positive (Line), Positive (Column), 0,
-                  Highlight);
+                  Highlight,
+                  C.all);
 
                Free (C);
             end;
@@ -339,19 +340,22 @@ package body Glide_Kernel.Console is
    -------------------
 
    procedure Insert_Result
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Category  : String;
-      File      : VFS.Virtual_File;
-      Text      : String;
-      Line      : Positive;
-      Column    : Positive;
-      Length    : Natural := 0;
-      Highlight : Boolean := False)
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Category           : String;
+      File               : VFS.Virtual_File;
+      Text               : String;
+      Line               : Positive;
+      Column             : Positive;
+      Length             : Natural := 0;
+      Highlight          : Boolean := False;
+      Highlight_Category : String := "")
    is
       View : constant Result_View := Get_Or_Create_Result_View (Kernel);
    begin
       if View /= null then
-         Insert (View, Category, File, Line, Column, Text, Length, Highlight);
+         Insert
+           (View, Category, File, Line, Column, Text, Length,
+            Highlight, Highlight_Category);
          Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
       end if;
    end Insert_Result;
@@ -590,7 +594,7 @@ package body Glide_Kernel.Console is
               (Get_Address (Data (Data'First + 6)));
          begin
             Add_Action_Item
-              (View, Identifier, Category, File,
+              (View, Identifier, Category, "", File,
                Integer (Line), Integer (Column),
                Message, Action);
          end;
