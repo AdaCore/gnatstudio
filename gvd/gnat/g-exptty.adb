@@ -36,6 +36,36 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body GNAT.Expect.TTY is
 
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close
+     (Descriptor : in out TTY_Process_Descriptor;
+      Status     : out Integer)
+   is
+      procedure Terminate_Process (Process : System.Address);
+      pragma Import (C, Terminate_Process, "gvd_terminate_process");
+
+      function Waitpid (Process : System.Address) return Integer;
+      pragma Import (C, Waitpid, "gvd_waitpid");
+      --  Wait for a specific process id, and return its exit code.
+
+   begin
+      Close (Descriptor.Input_Fd);
+
+      if Descriptor.Error_Fd /= Descriptor.Output_Fd then
+         Close (Descriptor.Error_Fd);
+      end if;
+
+      Close (Descriptor.Output_Fd);
+      Terminate_Process (Descriptor.Process);
+      GNAT.OS_Lib.Free (Descriptor.Buffer);
+      Descriptor.Buffer_Size := 0;
+
+      Status := Waitpid (Descriptor.Process);
+   end Close;
+
    ---------------
    -- Interrupt --
    ---------------

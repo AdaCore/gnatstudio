@@ -47,6 +47,10 @@ package GNAT.Expect.TTY is
 
 private
 
+   procedure Close
+     (Descriptor : in out TTY_Process_Descriptor;
+      Status     : out Integer);
+
    procedure Interrupt (Descriptor : in out TTY_Process_Descriptor);
    --  When we use pseudo-terminals, we do not need to use signals to
    --  interrupt the debugger, we can simply send the appropriate character.
