@@ -68,4 +68,32 @@ package Src_Editor_Buffer.Line_Information is
       Offset : Gint);
    --  Perform a click in the side column for line Line, offset Offset.
 
+   function Add_Blank_Lines
+     (Editor : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type;
+      GC     : Gdk.GC.Gdk_GC;
+      Text   : String;
+      Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
+   --  Add Number blank lines at line Line.
+   --  Blank lines cannot be edited, and are not saved on disk.
+
+   function Create_Mark
+     (Editor : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type;
+      Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
+   --  Create mark at Line, Column.
+
+   procedure Add_Lines
+     (Buffer : access Source_Buffer_Record'Class;
+      Start  : Buffer_Line_Type;
+      Number : Buffer_Line_Type);
+   --  Add Number blank lines to the column info and line highlights,
+   --  after Start.
+
+   procedure Remove_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Start_Line : Buffer_Line_Type;
+      End_Line   : Buffer_Line_Type);
+   --  Remove lines from the column info and line highlights.
+
 end Src_Editor_Buffer.Line_Information;
