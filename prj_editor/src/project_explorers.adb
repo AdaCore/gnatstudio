@@ -1450,6 +1450,7 @@ package body Project_Explorers is
       pragma Unreferenced (Success);
       Area_Rect : Gdk_Rectangle;
       Path2     : Gtk_Tree_Path;
+      Iter      : Gtk_Tree_Iter;
    begin
       if T.Expanding then
          return;
@@ -1468,15 +1469,19 @@ package body Project_Explorers is
          True);
 
       if Realized_Is_Set (T.Tree) then
-         Path2 := Get_Path (T.Tree.Model, Children (T.Tree.Model, Node));
-         Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
-         if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
-            Scroll_To_Cell
-              (T.Tree,
-               Path, null, True,
-               0.1, 0.1);
+         Iter := Children (T.Tree.Model, Node);
+
+         if Iter /= Null_Iter then
+            Path2 := Get_Path (T.Tree.Model, Iter);
+            Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
+            if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
+               Scroll_To_Cell
+                 (T.Tree,
+                  Path, null, True,
+                  0.1, 0.1);
+            end if;
+            Path_Free (Path2);
          end if;
-         Path_Free (Path2);
       end if;
 
       T.Expanding := False;
