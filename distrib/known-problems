@@ -57,6 +57,12 @@ Known Problems fixed in GPS 1.2.1
               immediately removed, continuousely.
   Workaround: Mouse the mouse to another menu item.
 
+- C404-004 Dynamic menu key binding not working properly under Windows
+  Problem:     Under Windows, when enabling the dynamic key binding feature,
+               an extra <Shift> is always incorrectly detected when using
+               <Control>-key.
+  Workaround:  Edit the file .gps/custom_key directly.
+
 Known Problems fixed in GPS 1.2.0
 
 - C404-010 Bad indentation of task specs in some cases
