@@ -970,7 +970,22 @@ package body Browsers.Entities is
       Field : Entity_Information;
       Is_Enum : constant Boolean :=
         Get_Kind (Item.Entity).Kind = Enumeration_Kind;
+      Discriminants : Discriminant_Iterator := Get_Discriminants
+        (Lib_Info, Item.Entity);
+
    begin
+      --  Discriminants will not be displayed for GNAT <= 20030309
+      loop
+         Field := Get (Discriminants);
+         exit when Field = No_Entity_Information;
+
+         Add_Type (List, Item, Lib_Info, Field,
+                   -"Discriminant: " & Get_Name (Field));
+
+         Next (Discriminants);
+      end loop;
+
+
       Get_Scope_Tree (Kernel, Item.Entity, Tree, Node);
 
       if Node /= Null_Scope_Tree_Node then
