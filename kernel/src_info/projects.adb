@@ -187,7 +187,7 @@ package body Projects is
    function Project_Name (Project : Project_Type) return String is
    begin
       if Project = No_Project or else Is_Default (Project) then
-         return "";
+         return "default";
       else
          return Get_String (Prj.Tree.Name_Of (Project.Node));
       end if;
@@ -200,7 +200,7 @@ package body Projects is
    function Project_Name (Project : Project_Type) return Name_Id is
    begin
       if Project = No_Project or else Is_Default (Project) then
-         return No_Name;
+         return Name_Default;
       else
          return Prj.Tree.Name_Of (Project.Node);
       end if;
