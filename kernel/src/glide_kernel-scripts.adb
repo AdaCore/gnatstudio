@@ -1414,10 +1414,22 @@ package body Glide_Kernel.Scripts is
          Set_Return_Value (Data, False);
 
       elsif Command = "read" then
-         Set_Return_Value (Data, "");
+         if Get_Data (Inst) /= null then
+            Set_Return_Value
+              (Data, Read (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
+                           Whole_Line => False));
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
 
       elsif Command = "readline" then
-         Set_Return_Value (Data, "");
+         if Get_Data (Inst) /= null then
+            Set_Return_Value
+              (Data, Read (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
+                           Whole_Line => True));
+         else
+            Set_Error_Msg (Data, -"Console was closed by user");
+         end if;
 
       end if;
 
