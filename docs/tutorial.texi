@@ -581,8 +581,10 @@ button to close the properties window.
 @section Variable editor
 @noindent
 
-You may have noticed the @code{Build} label located on top of the
-project explorer. This is a configuration variable. With GPS and the GNAT
+Select the menu @code{Tools/Scenario View}. This will add a new window in
+GPS, which contains a @code{Build} label.
+
+This is a configuration variable. With GPS and the GNAT
 project facility, you can define as many configuration variables as you want,
 and modify any project settings (e.g. switches, sources, ...) based on the
 values of configuration variables. These variables can also take any
