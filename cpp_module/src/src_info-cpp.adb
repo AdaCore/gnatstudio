@@ -73,7 +73,6 @@ package body Src_Info.CPP is
    procedure Insert_Dependency
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
-      List                 : LI_File_List;
       Referred_Filename    : VFS.Virtual_File);
    --  Create a new dependency, from the files described in File to the source
    --  file Referred_Filename.
@@ -81,7 +80,6 @@ package body Src_Info.CPP is
    procedure Insert_Dependency_Declaration
      (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                  : in out LI_File_Ptr;
-      List                  : LI_File_List;
       Symbol_Name           : String;
       Referred_Filename     : VFS.Virtual_File;
       Location              : SN.Point;
@@ -134,7 +132,6 @@ package body Src_Info.CPP is
 
    procedure Set_Parent_Location
      (File            : LI_File_Ptr;
-      List            : LI_File_List;
       Declaration     : in out E_Declaration_Info_List;
       Parent_Filename : VFS.Virtual_File := VFS.No_File;
       Parent_Location : SN.Point := SN.Invalid_Point;
@@ -148,7 +145,6 @@ package body Src_Info.CPP is
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      List          : LI_File_List;
       Full_Filename : VFS.Virtual_File);
    --  Create a stub LI file for Full_Filename, if there is no matching LI file
    --  in List.
@@ -158,7 +154,6 @@ package body Src_Info.CPP is
    procedure Insert_Dependency
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
-      List                 : LI_File_List;
       Referred_Filename    : VFS.Virtual_File;
       Referred_LI          : out LI_File_Ptr;
       Dep_Ptr              : out Dependency_File_Info_List);
@@ -172,14 +167,13 @@ package body Src_Info.CPP is
    procedure Insert_Dependency
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
-      List                 : LI_File_List;
       Referred_Filename    : VFS.Virtual_File)
    is
       Dep_Ptr : Dependency_File_Info_List;
       Referred_LI : LI_File_Ptr;
    begin
       Insert_Dependency
-        (Handler, File, List, Referred_Filename, Referred_LI, Dep_Ptr);
+        (Handler, File, Referred_Filename, Referred_LI, Dep_Ptr);
    end Insert_Dependency;
 
    -----------------------
@@ -189,7 +183,6 @@ package body Src_Info.CPP is
    procedure Insert_Dependency
      (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                 : in out LI_File_Ptr;
-      List                 : LI_File_List;
       Referred_Filename    : VFS.Virtual_File;
       Referred_LI          : out LI_File_Ptr;
       Dep_Ptr              : out Dependency_File_Info_List)
@@ -203,7 +196,6 @@ package body Src_Info.CPP is
       Create_Stub_For_File
         (LI            => Referred_LI,
          Handler       => CPP_LI_Handler (Handler),
-         List          => List,
          Full_Filename => Referred_Filename);
 
       Assert (Fail_Stream, File.LI.Body_Info.Source_Filename.all /=
@@ -262,7 +254,6 @@ package body Src_Info.CPP is
    procedure Insert_Dependency_Declaration
      (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
       File                  : in out LI_File_Ptr;
-      List                  : LI_File_List;
       Symbol_Name           : String;
       Referred_Filename     : VFS.Virtual_File;
       Location              : Point;
@@ -282,7 +273,6 @@ package body Src_Info.CPP is
       Insert_Dependency
         (Handler           => Handler,
          File              => File,
-         List              => List,
          Referred_Filename => Referred_Filename,
          Referred_LI       => Referred_LI,
          Dep_Ptr           => Dep_Ptr);
@@ -332,7 +322,7 @@ package body Src_Info.CPP is
          End_Of_Scope_Location,
          Rename_Location);
       Set_Parent_Location
-        (Referred_LI, List, D_Ptr, Parent_Filename, Parent_Location);
+        (Referred_LI, D_Ptr, Parent_Filename, Parent_Location);
       Declaration_Info := D_Ptr;
    end Insert_Dependency_Declaration;
 
@@ -446,7 +436,6 @@ package body Src_Info.CPP is
 
    procedure Set_Parent_Location
      (File            : LI_File_Ptr;
-      List            : LI_File_List;
       Declaration     : in out E_Declaration_Info_List;
       Parent_Filename : VFS.Virtual_File := VFS.No_File;
       Parent_Location : SN.Point := SN.Invalid_Point;
@@ -480,7 +469,6 @@ package body Src_Info.CPP is
             Create_Stub_For_File
               (LI            => Tmp_LI_File_Ptr,
                Handler       => CPP_LI_Handler (File.LI.Handler),
-               List          => List,
                Full_Filename => Parent_Filename);
          end if;
 
@@ -504,7 +492,6 @@ package body Src_Info.CPP is
    procedure Create_Stub_For_File
      (LI            : out LI_File_Ptr;
       Handler       : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      List          : LI_File_List;
       Full_Filename : VFS.Virtual_File)
    is
       Project   : constant Project_Type := Get_Project_From_File
@@ -516,13 +503,12 @@ package body Src_Info.CPP is
          Get_DB_Dir (Project),
          Get_Prj_HTable (Handler));
    begin
-      LI := Locate (List, Xref_Name);
+      LI := Locate (Handler, Xref_Name);
 
       if LI = null then
          Create_LI_File
            (File        => LI,
             Project     => Project,
-            List        => List,
             LI_Filename => Xref_Name,
             Handler     => LI_Handler (Handler));
       end if;
@@ -542,113 +528,95 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Sym_Default_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List);
    procedure Sym_CON_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);  --  Unreferenced
    procedure Sym_FU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_E_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;  --  Unreferenced
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;            --  Unreferenced
       Module_Type_Defs : Module_Typedefs_List);   --  Unreferenced
    procedure Sym_EC_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);  --  Unreferenced
    procedure Sym_T_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List);
    procedure Sym_UN_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;           --  Unreferenced
       Module_Type_Defs : Module_Typedefs_List);  --  Unreferenced
    procedure Sym_IV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List);
    procedure Sym_IU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MA_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;  --  Unreferenced
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;             --  Unreferenced
       Module_Type_Defs : Module_Typedefs_List);    --  Unreferenced
    procedure Sym_MD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
 
    ---------------------
@@ -680,74 +648,62 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Fu_To_Gv_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Fu_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);     --  Unreferenced
    procedure Fu_To_Con_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_E_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);    --  Unreferenced
    procedure Fu_To_Ec_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);    --  Unreferenced
    procedure Fu_To_Iv_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ma_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);     --  Unreferenced
    procedure Fu_To_Mi_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Cl_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_T_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Un_Handler
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);     --  Unreferenced
 
    -----------------
@@ -826,7 +782,6 @@ package body Src_Info.CPP is
       Full_Filename   : String;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
-      List            : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    --  Attempts to find class declaration among this Handler.File declarations
    --  and dependency declarations. If not found, creates it.
@@ -836,8 +791,7 @@ package body Src_Info.CPP is
    procedure Process_File
      (Full_Filename : VFS.Virtual_File;
       Handler       : access CPP_LI_Handler_Record'Class;
-      File          : in out LI_File_Ptr;
-      List_Of_Files : LI_File_List);
+      File          : in out LI_File_Ptr);
    --  Process the SN databases to create the LI structure for
    --  Source_Filename. Source_Filename is the name of the file as it appears
    --  in the sources (for instance, if we have #include "dir/file.h", then
@@ -850,7 +804,6 @@ package body Src_Info.CPP is
       Symbol           : Symbol_Type;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    --  Process local variables and arguments for specified function/method
    --  body in FU_Tab. Symbol is either FU or MI.
@@ -875,7 +828,6 @@ package body Src_Info.CPP is
       CL_Tab           : CL_Table := Invalid_CL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    --  Finds arguments for the template specified by (Scope, Template_Args,
    --  File_Name). Here Scope is the name of either class/struct/union or
@@ -933,7 +885,6 @@ package body Src_Info.CPP is
       Full_Filename    : String;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List);
    --  Generates list of dependency declarations for the method
    --  with given name
@@ -942,8 +893,7 @@ package body Src_Info.CPP is
      (Name             : String;
       Full_Filename    : String;
       Handler          : access CPP_LI_Handler_Record'Class;
-      File             : out LI_File_Ptr;
-      List             : LI_File_List);
+      File             : out LI_File_Ptr);
    --  Generates list of dependency declarations for the function
    --  with given name
 
@@ -978,7 +928,6 @@ package body Src_Info.CPP is
       Arg_Types    : Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
-      List         : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False);
@@ -996,7 +945,6 @@ package body Src_Info.CPP is
       Arg_Types    : Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
-      List         : LI_File_List;
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False);
    --  Attempts to find/create the first forward declaration
@@ -1576,8 +1524,7 @@ package body Src_Info.CPP is
    procedure Process_File
      (Full_Filename : VFS.Virtual_File;
       Handler       : access CPP_LI_Handler_Record'Class;
-      File          : in out LI_File_Ptr;
-      List_Of_Files : LI_File_List)
+      File          : in out LI_File_Ptr)
    is
       P               : Pair;
       Module_Typedefs : Src_Info.Type_Utils.Module_Typedefs_List;
@@ -1603,8 +1550,7 @@ package body Src_Info.CPP is
 
          Parse_Pair (P, Sym);
 
-         Symbol_Handlers (Sym.Symbol)
-           (Sym, Handler, File, List_Of_Files, Module_Typedefs);
+         Symbol_Handlers (Sym.Symbol) (Sym, Handler, File, Module_Typedefs);
       end loop;
 
       Release_Cursor (Handler.SN_Table (FIL));
@@ -1715,7 +1661,6 @@ package body Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : VFS.Virtual_File;
-      List                   : LI_File_List;
       Project                : Project_Type;
       Check_Timestamp        : Boolean := True)
    is
@@ -1739,7 +1684,6 @@ package body Src_Info.CPP is
       Create_Stub_For_File
         (LI            => File,
          Handler       => Handler,
-         List          => List,
          Full_Filename => Source_Filename);
 
       --  check timestamps for the parsed file
@@ -1760,13 +1704,10 @@ package body Src_Info.CPP is
          File.LI.Dependencies_Info := null;
       end if;
 
---        Trace (Info_Stream, "Create_Or_Complete_LI "
---               & Full_Name (Source_Filename).all);
-
       Convert_To_Parsed
         (File, File.LI.LI_Filename, Update_Timestamp => True);
 
-      Process_File (Source_Filename, Handler, File, List);
+      Process_File (Source_Filename, Handler, File);
 
       Save
         (Get_Xref_Pool (Handler.Prj_HTable, DB_Dir),
@@ -1783,14 +1724,10 @@ package body Src_Info.CPP is
 
    procedure Parse_All_LI_Information
      (Handler                : access CPP_LI_Handler_Record;
-      List                   : LI_File_List;
       In_Directory           : String;
       Project                : Project_Type)
    is
-      pragma Unreferenced (Handler);
-      pragma Unreferenced (List);
-      pragma Unreferenced (In_Directory);
-      pragma Unreferenced (Project);
+      pragma Unreferenced (Handler, In_Directory, Project);
    begin
       null;
    end Parse_All_LI_Information;
@@ -2106,7 +2043,6 @@ package body Src_Info.CPP is
       Full_Filename   : String;
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
-      List            : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Sym        : FIL_Table;
@@ -2127,8 +2063,7 @@ package body Src_Info.CPP is
             Sym.File_Name      := CL_Tab.File_Name;
             Sym.Start_Position := CL_Tab.Start_Position;
             Sym.Identifier     := CL_Tab.Name;
-            Sym_CL_Handler
-              (Sym, Handler, File, List, Module_Type_Defs, Decl_Info);
+            Sym_CL_Handler (Sym, Handler, File, Module_Type_Defs, Decl_Info);
 
             if Decl_Info = null then
                Fail ("We've just called Sym_CL_Handler but it has"
@@ -2151,7 +2086,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               List               => List,
                Symbol_Name        =>
                  String (CL_Tab.Key (CL_Tab.Name.First .. CL_Tab.Name.Last)),
                Referred_Filename  => Create
@@ -2250,7 +2184,6 @@ package body Src_Info.CPP is
       Arg_Types        : Segment;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List;
       Strict           : Boolean := False)
@@ -2382,7 +2315,6 @@ package body Src_Info.CPP is
                   Full_Filename,
                   Decl_Info,
                   File,
-                  List,
                   Module_Type_Defs);
             exception
                when Not_Found =>
@@ -2392,7 +2324,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               List               => List,
                Symbol_Name        => String (Key (Name.First .. Name.Last)),
                Referred_Filename  => MD_Tab_File,
                Location           => First_MD_Pos,
@@ -2423,7 +2354,6 @@ package body Src_Info.CPP is
       Arg_Types    : Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
-      List         : LI_File_List;
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False)
    is
@@ -2552,7 +2482,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               List               => List,
                Symbol_Name        => String (Key (Name.First .. Name.Last)),
                Referred_Filename  => FD_Tab_File,
                Location           => First_FD_Pos,
@@ -2566,15 +2495,6 @@ package body Src_Info.CPP is
       when DB_Error => null;
    end Find_First_Forward_Declaration;
 
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add (HT : LI_File_List; LIFP : LI_File_Ptr) is
-   begin
-      Add (HT.Table.all, LIFP);
-   end Add;
-
    ----------------------
    -- Fu_To_Cl_Handler --
    ----------------------
@@ -2583,7 +2503,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -2635,7 +2554,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               List               => List,
                Symbol_Name        => String
                  (Class_Def.Key (Class_Def.Name.First .. Class_Def.Name.Last)),
                Referred_Filename  => Class_Def_File,
@@ -2681,7 +2599,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -2728,8 +2645,7 @@ package body Src_Info.CPP is
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
-            Sym_CON_Handler
-              (Sym, Handler, File, List, Module_Type_Defs);
+            Sym_CON_Handler (Sym, Handler, File, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File                    => File,
@@ -2775,7 +2691,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       =>
                     String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
@@ -2787,7 +2702,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       =>
                     String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
@@ -2830,7 +2744,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -2878,7 +2791,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               List               => List,
                Symbol_Name        => String
                  (Enum_Def.Key (Enum_Def.Name.First .. Enum_Def.Name.Last)),
                Referred_Filename  => Enum_Def_File,
@@ -2924,7 +2836,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -2976,7 +2887,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler           => Handler,
                File              => File,
-               List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
                Kind              => (Enumeration_Literal, False, False, False),
@@ -3007,7 +2917,6 @@ package body Src_Info.CPP is
       Full_Filename    : String;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       P              : Pair;
@@ -3044,7 +2953,6 @@ package body Src_Info.CPP is
                   MDecl.Arg_Types,
                   Handler,
                   File,
-                  List,
                   Module_Type_Defs,
                   Decl_Info);
             end if;
@@ -3081,7 +2989,6 @@ package body Src_Info.CPP is
                   MBody.Arg_Types,
                   Handler,
                   File,
-                  List,
                   Module_Type_Defs,
                   Decl_Info);
 
@@ -3095,13 +3002,12 @@ package body Src_Info.CPP is
                     (String (MBody.Key
                        (MBody.File_Name.First .. MBody.File_Name.Last)));
 
-                  MI_File := Locate_From_Source (List, Mbody_File);
+                  MI_File := Locate_From_Source (Handler, Mbody_File);
 
                   if MI_File = No_LI_File then
                      Create_Stub_For_File
                        (LI            => MI_File,
                         Handler       => Handler,
-                        List          => List,
                         Full_Filename => Mbody_File);
                   end if;
 
@@ -3127,8 +3033,7 @@ package body Src_Info.CPP is
      (Name     : String;
       Full_Filename : String;
       Handler  : access CPP_LI_Handler_Record'Class;
-      File     : out LI_File_Ptr;
-      List     : LI_File_List)
+      File     : out LI_File_Ptr)
    is
       P           : Pair;
       FDecl       : FD_Table;
@@ -3161,7 +3066,6 @@ package body Src_Info.CPP is
                   FDecl.Arg_Types,
                   Handler,
                   File,
-                  List,
                   Decl_Info);
             end if;
          end loop;
@@ -3192,7 +3096,6 @@ package body Src_Info.CPP is
                   Fn.Arg_Types,
                   Handler,
                   File,
-                  List,
                   Decl_Info);
 
                if Decl_Info = null then -- only implementation
@@ -3204,7 +3107,6 @@ package body Src_Info.CPP is
                   Insert_Dependency_Declaration
                     (Handler            => Handler,
                      File               => File,
-                     List               => List,
                      Symbol_Name        => Name,
                      Referred_Filename  => Create
                        (String
@@ -3218,7 +3120,7 @@ package body Src_Info.CPP is
 
                else -- add end of scope and body entity references
                   Fn_File := Locate_From_Source
-                    (List,
+                    (Handler,
                      Create
                        (String
                           (Fn.Key (Fn.File_Name.First .. Fn.File_Name.Last))));
@@ -3227,7 +3129,6 @@ package body Src_Info.CPP is
                      Create_Stub_For_File
                        (LI            => Fn_File,
                         Handler       => Handler,
-                        List          => List,
                         Full_Filename => Create
                           (String
                              (Fn.Key
@@ -3256,7 +3157,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -3392,7 +3292,6 @@ package body Src_Info.CPP is
                FDecl.Arg_Types,
                Handler,
                File,
-               List,
                Decl_Info,
                Strict => True);
 
@@ -3426,8 +3325,7 @@ package body Src_Info.CPP is
            (Ref_Id,
             String (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)),
             Handler,
-            File,
-            List);
+            File);
 
          Decl_Info := Find_Declaration
            (File        => File,
@@ -3470,7 +3368,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -3510,8 +3407,7 @@ package body Src_Info.CPP is
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
-            Sym_GV_Handler
-              (Sym, Handler, File, List, Module_Type_Defs, Decl_Info);
+            Sym_GV_Handler (Sym, Handler, File, Module_Type_Defs, Decl_Info);
 
             if Decl_Info = null then
                Fail ("unable to create declaration for global variable "
@@ -3549,7 +3445,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       =>
                     String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
@@ -3561,7 +3456,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       =>
                     String (Var.Key (Var.Name.First .. Var.Name.Last)),
                   Location          => Var.Start_Position,
@@ -3600,7 +3494,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -3649,8 +3542,7 @@ package body Src_Info.CPP is
             Sym.Identifier     := Var.Name;
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
-            Sym_IV_Handler
-              (Sym, Handler, File, List, Module_Type_Defs, Decl_Info);
+            Sym_IV_Handler (Sym, Handler, File, Module_Type_Defs, Decl_Info);
 
             if Decl_Info = null then
                Fail ("unable to create declaration for instance variable "
@@ -3703,7 +3595,6 @@ package body Src_Info.CPP is
                Full_Name (Get_LI_Filename (File)).all,
                Decl_Info,
                File,
-               List,
                Module_Type_Defs);
 
             Type_Name_To_Kind
@@ -3721,7 +3612,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
@@ -3732,7 +3622,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
@@ -3770,7 +3659,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -3823,7 +3711,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler           => Handler,
                File              => File,
-               List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Macro.Start_Position,
                Kind              => Unresolved_Entity_Kind,
@@ -3852,7 +3739,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       P             : Pair;
@@ -3959,7 +3845,6 @@ package body Src_Info.CPP is
             MDecl.Arg_Types,
             Handler,
             File,
-            List,
             Module_Type_Defs,
             Decl_Info,
             Strict => True);
@@ -3984,7 +3869,6 @@ package body Src_Info.CPP is
             String (Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)),
             Handler,
             File,
-            List,
             Module_Type_Defs);
 
          declare
@@ -4045,7 +3929,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Typedef   : T_Table;
@@ -4113,7 +3996,7 @@ package body Src_Info.CPP is
                   Scope             => Global_Scope,
                   Declaration_Info  => Decl_Info);
                Set_Parent_Location
-                 (File, List, Decl_Info, VFS.No_File, Predefined_Point,
+                 (File, Decl_Info, VFS.No_File, Predefined_Point,
                   Parent_Name => Desc.Builtin_Name.all);
             else
                --  parent type found
@@ -4125,7 +4008,7 @@ package body Src_Info.CPP is
                   Scope             => Global_Scope,
                   Declaration_Info  => Decl_Info);
                Set_Parent_Location
-                 (File, List, Decl_Info, Desc.Ancestor_Filename,
+                 (File, Decl_Info, Desc.Ancestor_Filename,
                   Desc.Ancestor_Point);
             end if;
          end if;
@@ -4157,7 +4040,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
@@ -4169,7 +4051,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Predefined_Point,
@@ -4182,7 +4063,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
@@ -4216,7 +4096,6 @@ package body Src_Info.CPP is
      (Ref              : TO_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -4263,7 +4142,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               List               => List,
                Symbol_Name        => String (Union_Def.Key
                  (Union_Def.Name.First .. Union_Def.Name.Last)),
                Referred_Filename  => Union_File,
@@ -4310,13 +4188,11 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info      : E_Declaration_Info_List;
    begin
-      Sym_CL_Handler
-        (Sym, Handler, File, List, Module_Type_Defs, Decl_Info);
+      Sym_CL_Handler (Sym, Handler, File, Module_Type_Defs, Decl_Info);
    end Sym_CL_Handler;
 
    --------------------
@@ -4327,7 +4203,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List)
    is
@@ -4379,7 +4254,6 @@ package body Src_Info.CPP is
             Class_Def,
             Handler,
             File,
-            List,
             Module_Type_Defs);
       end if;
 
@@ -4413,7 +4287,7 @@ package body Src_Info.CPP is
                   Success);
                if Success then -- if found, add it to parent list
                   Set_Parent_Location
-                    (File, List, Decl_Info,
+                    (File, Decl_Info,
                      Parent_Filename => Create
                        (String (Super_Def.Key
                           (Super_Def.File_Name.First ..
@@ -4445,7 +4319,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Desc              : CType_Description;
@@ -4505,7 +4378,7 @@ package body Src_Info.CPP is
             Scope             => Scope,
             Declaration_Info  => Decl_Info);
          Set_Parent_Location
-           (File, List, Decl_Info,
+           (File, Decl_Info,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename);
 
@@ -4548,11 +4421,9 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced
-        (Sym, Handler, File, List, Module_Type_Defs);
+      pragma Unreferenced (Sym, Handler, File, Module_Type_Defs);
    begin
       --  Info ("Sym_Default_Hanlder: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -4568,10 +4439,9 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Handler, Module_Type_Defs, List);
+      pragma Unreferenced (Handler, Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       E_Id      : constant String := String (Sym.Key
         (Sym.Identifier.First .. Sym.Identifier.Last));
@@ -4596,7 +4466,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -4640,7 +4509,7 @@ package body Src_Info.CPP is
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
          Set_Parent_Location
-           (File, List, Decl_Info,
+           (File, Decl_Info,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename);
       else
@@ -4663,7 +4532,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -4808,13 +4676,12 @@ package body Src_Info.CPP is
             FU_Tab_File := Create
               (String (FU_Tab.Key
                   (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last)));
-            FU_File := Locate_From_Source (List, FU_Tab_File);
+            FU_File := Locate_From_Source (Handler, FU_Tab_File);
 
             if FU_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => FU_File,
                   Handler       => Handler,
-                  List          => List,
                   Full_Filename => FU_Tab_File);
             end if;
 
@@ -4841,7 +4708,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info       : E_Declaration_Info_List := null;
@@ -4859,10 +4725,12 @@ package body Src_Info.CPP is
         (Sym.Identifier.First .. Sym.Identifier.Last));
 
    begin
-      --  Info ("Sym_FU_Hanlder: """
-      --        & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
-      --        & Fu_Id
-      --        & """");
+--        Trace (Info_Stream, "Sym_FU_Handler: "
+--               & Sym.Symbol'Img & ' '
+--               & Fu_Id & ' '
+--               & String (Sym.Key (Sym.Class.First .. Sym.Class.Last))
+--               & ' '  & Sym.Start_Position.Line'Img
+--               & Sym.End_Position.Line'Img);
 
       if Sym.Symbol = MI then
          begin
@@ -4891,7 +4759,6 @@ package body Src_Info.CPP is
                      (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
                    Class_Decl_Info,
                    File,
-                   List,
                    Module_Type_Defs);
 
                if not (Class_Def.Start_Position < Sym.Start_Position
@@ -4959,7 +4826,6 @@ package body Src_Info.CPP is
             FU_Tab.Arg_Types,
             Handler,
             File,
-            List,
             Module_Type_Defs,
             Decl_Info,
             Strict => True);
@@ -4978,7 +4844,6 @@ package body Src_Info.CPP is
             FU_Tab.Arg_Types,
             Handler,
             File,
-            List,
             Decl_Info,
             Strict => True);
          if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
@@ -5014,7 +4879,6 @@ package body Src_Info.CPP is
             Class_Def,
             Handler,
             File,
-            List,
             Module_Type_Defs);
       end if;
 
@@ -5047,14 +4911,14 @@ package body Src_Info.CPP is
               Ref.Key (Ref.File_Name.First .. Ref.File_Name.Last)
             then
                Fu_To_Handlers (Ref.Referred_Symbol)
-                 (Ref, Handler, File, List, Module_Type_Defs);
+                 (Ref, Handler, File, Module_Type_Defs);
             end if;
          end if;
       end loop;
       Release_Cursor (Handler.SN_Table (TO));
 
       Process_Local_Variables
-        (FU_Tab, Sym.Symbol, Handler, File, List, Module_Type_Defs);
+        (FU_Tab, Sym.Symbol, Handler, File, Module_Type_Defs);
 
    exception
       when DB_Error => null; -- non-existent table .to, ignore it
@@ -5069,12 +4933,11 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info : E_Declaration_Info_List;
    begin
-      Sym_GV_Handler (Sym, Handler, File, List, Module_Type_Defs, Decl_Info);
+      Sym_GV_Handler (Sym, Handler, File, Module_Type_Defs, Decl_Info);
    end Sym_GV_Handler;
 
    --------------------
@@ -5085,7 +4948,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List)
    is
@@ -5148,7 +5010,7 @@ package body Src_Info.CPP is
             Scope             => Scope,
             Declaration_Info  => Decl_Info);
          Set_Parent_Location
-           (File, List, Decl_Info,
+           (File, Decl_Info,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename);
 
@@ -5188,7 +5050,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -5206,13 +5067,11 @@ package body Src_Info.CPP is
          Insert_Dependency
            (Handler           => Handler,
             File              => File,
-            List              => List,
             Referred_Filename => Create_From_Base (Filename));
       else
          Insert_Dependency
            (Handler           => Handler,
             File              => File,
-            List              => List,
             Referred_Filename => Full_Included);
       end if;
    end Sym_IU_Handler;
@@ -5225,13 +5084,12 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info : E_Declaration_Info_List;
    begin
       Sym_IV_Handler
-        (Sym, Handler, File, List, Module_Type_Defs, Decl_Info);
+        (Sym, Handler, File, Module_Type_Defs, Decl_Info);
    end Sym_IV_Handler;
 
    --------------------
@@ -5242,7 +5100,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List)
    is
@@ -5369,13 +5226,13 @@ package body Src_Info.CPP is
 
          if Desc.Builtin_Name /= null then
             Set_Parent_Location
-              (File, List, Decl_Info,
+              (File, Decl_Info,
                Parent_Location   => Desc.Parent_Point,
                Parent_Filename   => Desc.Parent_Filename,
                Parent_Name       => Desc.Builtin_Name.all);
          else
             Set_Parent_Location
-              (File, List, Decl_Info,
+              (File, Decl_Info,
                Parent_Location   => Desc.Parent_Point,
                Parent_Filename   => Desc.Parent_Filename);
          end if;
@@ -5405,10 +5262,9 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Handler, List, Module_Type_Defs);
+      pragma Unreferenced (Handler, Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
 --        Info ("Sym_MA_Handler: """
@@ -5433,7 +5289,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Target_Kind  : E_Kind;
@@ -5512,7 +5367,7 @@ package body Src_Info.CPP is
            (Handler,
             Class_Def,
             String (Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last)),
-            Class_Decl_Info, File, List, Module_Type_Defs);
+            Class_Decl_Info, File, Module_Type_Defs);
 
          if Class_Decl_Info /= null then
             Insert_Reference
@@ -5593,13 +5448,12 @@ package body Src_Info.CPP is
             MI_Tab_File := Create
               (String (MI_Tab.Key
                   (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last)));
-            MI_File := Locate_From_Source (List, MI_Tab_File);
+            MI_File := Locate_From_Source (Handler, MI_Tab_File);
 
             if MI_File = No_LI_File then
                Create_Stub_For_File
                  (LI            => MI_File,
                   Handler       => Handler,
-                  List          => List,
                   Full_Filename => MI_Tab_File);
             end if;
 
@@ -5631,7 +5485,6 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info  : E_Declaration_Info_List;
@@ -5683,7 +5536,7 @@ package body Src_Info.CPP is
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
             Set_Parent_Location
-              (File, List, Decl_Info,
+              (File, Decl_Info,
                Parent_Location   => Predefined_Point,
                Parent_Name       => Desc.Builtin_Name.all);
 
@@ -5697,7 +5550,7 @@ package body Src_Info.CPP is
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
             Set_Parent_Location
-              (File, List, Decl_Info,
+              (File, Decl_Info,
                Parent_Filename   => Desc.Ancestor_Filename,
                Parent_Location   => Desc.Ancestor_Point);
          end if;
@@ -5718,10 +5571,9 @@ package body Src_Info.CPP is
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Module_Type_Defs, List);
+      pragma Unreferenced (Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       Desc      : CType_Description;
       Union_Def : UN_Table;
@@ -5784,7 +5636,6 @@ package body Src_Info.CPP is
       Symbol           : Symbol_Type;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       P           : Pair;
@@ -5919,7 +5770,7 @@ package body Src_Info.CPP is
                      Scope             => Scope,
                      Declaration_Info  => Decl_Info);
                   Set_Parent_Location
-                    (File, List, Decl_Info,
+                    (File, Decl_Info,
                      Parent_Location   => Desc.Parent_Point,
                      Parent_Filename   => Desc.Parent_Filename);
 
@@ -6113,7 +5964,6 @@ package body Src_Info.CPP is
       CL_Tab           : CL_Table := Invalid_CL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
-      List             : LI_File_List;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Arg              : TA_Table;
@@ -6220,7 +6070,7 @@ package body Src_Info.CPP is
                      Scope            => Local_Scope,
                      Declaration_Info => Decl_Info);
                   Set_Parent_Location
-                    (File, List, Decl_Info,
+                    (File, Decl_Info,
                      Parent_Location  => Desc.Parent_Point,
                      Parent_Filename  => Desc.Parent_Filename);
                end if;
