@@ -21,7 +21,6 @@
 --  This package defines the debugger module (called GVD).
 
 with GPS.Kernel;
-with Glib.Object;
 
 package GVD_Module is
 
@@ -36,12 +35,5 @@ package GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Args   : String);
    --  Initialize the debugger if needed.
-
-   procedure On_Assembly
-     (Widget : access Glib.Object.GObject_Record'Class;
-      Kernel : GPS.Kernel.Kernel_Handle);
-   --  Display the assembly view.
-   --  Used e.g. for implementing menu Debug->Data->Assembly
-   --  Widget parameter is ignored.
 
 end GVD_Module;

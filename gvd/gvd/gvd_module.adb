@@ -171,8 +171,6 @@ package body GVD_Module is
    --  Set the appropriate debugger menu items to the corresponding state.
 
    type GVD_Module_Record is new Module_ID_Record with record
-      Kernel                         : Kernel_Handle;
-
       Initialized                    : Boolean := False;
       --  Whether the debugger is running;
 
@@ -204,7 +202,7 @@ package body GVD_Module is
    type GVD_Module is access all GVD_Module_Record'Class;
 
    procedure Destroy (Id : in out GVD_Module_Record);
-   --  Terminate the debugger the module, and kill the underlying debugger.
+   --  Terminate the debugger module, and kill the underlying debugger.
 
    procedure Tooltip_Handler
      (Sel_Context : access Selection_Context'Class;
@@ -293,6 +291,13 @@ package body GVD_Module is
 
    procedure On_Debug_Terminate_Single (Widget : access GObject_Record'Class);
    --  Callback for the "debugger_closed" singla.
+
+   procedure On_Assembly
+     (Widget : access Glib.Object.GObject_Record'Class;
+      Kernel : GPS.Kernel.Kernel_Handle);
+   --  Display the assembly view.
+   --  Used e.g. for implementing menu Debug->Data->Assembly
+   --  Widget parameter is ignored.
 
    --------------------
    -- GVD_Contextual --
@@ -1850,7 +1855,7 @@ package body GVD_Module is
 
    begin
       Set_Sensitive
-        (Find_Menu_Item (Id.Kernel, Data_Sub & (-"Assembly")), True);
+        (Find_Menu_Item (Get_Kernel (Id.all), Data_Sub & (-"Assembly")), True);
       Ref (Asm);
       Remove (Gtk_Container (Get_Parent (Asm)), Asm);
       Set_Mode (Editor, Source);
@@ -2832,7 +2837,7 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class) is
    begin
       Debug_Terminate
-        (GVD_Module (GVD_Module_ID).Kernel, Visual_Debugger (Widget));
+        (Get_Kernel (GVD_Module_ID.all), Visual_Debugger (Widget));
    end On_Debug_Terminate_Single;
 
    -----------------------
@@ -3167,7 +3172,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Debug_Terminate (Get_Kernel (GVD_Module_ID.all));
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
@@ -3243,7 +3248,7 @@ package body GVD_Module is
    is
       Debug          : constant String := '/' & (-"_Debug") & '/';
       Debug_Sub      : constant String := Debug & (-"_Debug") & '/';
-      Data_Sub       : constant String := Debug & (-"_Data") & '/';
+      Data_Sub       : constant String := Debug & (-"D_ata") & '/';
       Mitem          : Gtk_Menu_Item;
       Menu           : Gtk_Menu;
       Debugger_Class : constant GPS.Kernel.Scripts.Class_Type :=
@@ -3256,8 +3261,6 @@ package body GVD_Module is
       Subprogram_Filter : Action_Filter;
    begin
       GVD_Module_ID := new GVD_Module_Record;
-      GVD_Module (GVD_Module_ID).Kernel := Kernel_Handle (Kernel);
-
       GVD.Preferences.GVD_Prefs := Get_Preferences (Kernel);
       GVD.Preferences.Register_Default_Preferences (GVD.Preferences.GVD_Prefs);
       GVD_Module (GVD_Module_ID).Show_Lines_With_Code :=
@@ -3387,7 +3390,7 @@ package body GVD_Module is
                      On_Attach'Access);
       Register_Menu (Kernel, Debug_Sub, -"_Detach", "",
                      On_Detach'Access);
-      Register_Menu (Kernel, Debug_Sub, -"Debug _Core File...", "",
+      Register_Menu (Kernel, Debug_Sub, -"Debug C_ore File...", "",
                      On_Load_Core'Access);
       Register_Menu (Kernel, Debug_Sub, -"_Kill", "",
                      On_Kill'Access);
@@ -3396,7 +3399,7 @@ package body GVD_Module is
                      On_Call_Stack'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"_Threads", "",
                      On_Threads'Access, Ref_Item => -"Protection Domains");
-      Register_Menu (Kernel, Data_Sub, -"T_asks", "",
+      Register_Menu (Kernel, Data_Sub, -"Ta_sks", "",
                      On_Tasks'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"A_ssembly", "", On_Assembly'Access);
       Gtk_New (Mitem);
@@ -3419,7 +3422,7 @@ package body GVD_Module is
                      On_Display_Expression'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
-      Register_Menu (Kernel, Data_Sub, -"R_efresh", Stock_Refresh,
+      Register_Menu (Kernel, Data_Sub, -"Re_fresh", Stock_Refresh,
                      On_Data_Refresh'Access, null,
                      GDK_L, Control_Mask);
 
@@ -3448,7 +3451,7 @@ package body GVD_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
 
-      Register_Menu (Kernel, Debug, -"Termin_ate Current", "",
+      Register_Menu (Kernel, Debug, -"Te_rminate Current", "",
                      On_Debug_Terminate_Current'Access, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Ter_minate", "",
                      On_Debug_Terminate'Access, Sensitive => False);
@@ -3487,7 +3490,7 @@ package body GVD_Module is
 
    procedure Destroy (Id : in out GVD_Module_Record) is
    begin
-      Debug_Terminate (Id.Kernel);
+      Debug_Terminate (Get_Kernel (Id));
    end Destroy;
 
 end GVD_Module;
