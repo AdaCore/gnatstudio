@@ -19,8 +19,8 @@
 -----------------------------------------------------------------------
 
 --  This package contains the spec of the object Backend_HTML. It inherits
---     from the abstract object Backend (see docgen.ads). It's responsible
---     for the documentation in the HTML format.
+--  from the abstract object Backend (see docgen.ads). It's responsible
+--  for the documentation in the HTML format.
 
 with Docgen;            use Docgen;
 with VFS;               use VFS;
@@ -50,13 +50,13 @@ package Docgen_Backend_HTML is
    --  Initialize the private fields before the documentation process
 
    procedure Doc_Create
-     (B             : access Backend_HTML;
-      Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File          : in Ada.Text_IO.File_Type;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Info          : in out Docgen.Doc_Info;
-      Doc_Directory : String;
-      Doc_Suffix    : String);
+     (B                : access Backend_HTML;
+      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File             : in Ada.Text_IO.File_Type;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Info             : in out Docgen.Doc_Info;
+      Doc_Directory    : String;
+      Doc_Suffix       : String);
    --  Start the process producing the documentation for one file.
    --  Use the html language.
 
@@ -106,7 +106,7 @@ package Docgen_Backend_HTML is
 
    procedure Format_Identifier
      (B                : access Backend_HTML;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
