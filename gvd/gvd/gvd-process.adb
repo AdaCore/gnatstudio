@@ -1458,9 +1458,6 @@ package body GVD.Process is
    procedure Process_Stopped
      (Debugger : access Visual_Debugger_Record'Class) is
    begin
-      --  ??? Will not work when commands like "step" are sent before
-      --  e.g "run".
-      Set_Is_Started (Debugger.Debugger, True);
       Object_Callback.Emit_By_Name (GObject (Debugger), "process_stopped");
    end Process_Stopped;
 
