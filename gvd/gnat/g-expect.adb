@@ -2,9 +2,13 @@ with GNAT.IO;
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
 with GNAT.Regpat;   use GNAT.Regpat;
 with System;        use System;
+with Unchecked_Conversion;
 with Unchecked_Deallocation;
 
 package body GNAT.Expect is
+
+   function To_Pid is new
+     Unchecked_Conversion (OS_Lib.Process_Id, Process_Id);
 
    type Array_Of_Pd is array (Positive range <>) of Process_Descriptor_Access;
 
@@ -35,6 +39,9 @@ package body GNAT.Expect is
    -- Target dependent section --
    ------------------------------
 
+   function Dup (Fd : File_Descriptor) return File_Descriptor;
+   pragma Import (C, Dup);
+
    procedure Dup2 (Old_Fd, New_Fd : File_Descriptor);
    pragma Import (C, Dup2);
 
@@ -46,19 +53,7 @@ package body GNAT.Expect is
    pragma Import (C, Kill);
 
    procedure Create_Pipe (Pipe : access Pipe_Type);
-   pragma Import (C, Create_Pipe, "pipe");
-
-   function Fork return Process_Id;
-   pragma Import (C, Fork);
-
-   procedure Execvp (File : String; Args : System.Address);
-   pragma Import (C, Execvp);
-
-   procedure Waitpid
-     (Pid     : Process_Id;
-      Status  : System.Address;
-      Options : Integer);
-   pragma Import (C, Waitpid);
+   pragma Import (C, Create_Pipe, "__gnat_pipe");
 
    function Read
      (Fd   : File_Descriptor;
@@ -232,6 +227,9 @@ package body GNAT.Expect is
    -----------
 
    procedure Close (Descriptor : in out Process_Descriptor) is
+      Success : Boolean;
+      Pid     : OS_Lib.Process_Id;
+
    begin
       Close (Descriptor.Input_Fd);
 
@@ -245,7 +243,8 @@ package body GNAT.Expect is
       GNAT.OS_Lib.Free (Descriptor.Buffer);
       Descriptor.Buffer_Size := 0;
 
-      Waitpid (Descriptor.Pid, System.Null_Address, 0);
+      Wait_Process (Pid, Success);
+      Descriptor.Pid := To_Pid (Pid);
    end Close;
 
    ---------------
@@ -802,29 +801,12 @@ package body GNAT.Expect is
       Err_To_Out  : Boolean := False) return Process_Descriptor
    is
       Descriptor : Process_Descriptor;
-      Arg_List   : array (1 .. Args'Length + 2) of System.Address;
-      Arg        : String_Access;
       Pipe1      : aliased Pipe_Type;
       Pipe2      : aliased Pipe_Type;
       Pipe3      : aliased Pipe_Type;
+      Input, Output, Error : File_Descriptor;
 
    begin
-      --  Prepare an array of arguments to pass to C
-
-      Arg                       := new String (1 .. Command'Length + 1);
-      Arg (1 .. Command'Length) := Command;
-      Arg (Arg'Last)            := ASCII.Nul;
-      Arg_List (1)              := Arg.all'Address;
-
-      for J in Args'Range loop
-         Arg                         := new String (1 .. Args (J)'Length + 1);
-         Arg (1 .. Args (J)'Length)  := Args (J).all;
-         Arg (Arg'Last)              := ASCII.Nul;
-         Arg_List (J + 2 - Args'First) := Arg.all'Address;
-      end loop;
-
-      Arg_List (Arg_List'Last) := System.Null_Address;
-
       --  Create the pipes
 
       Create_Pipe (Pipe1'Unchecked_Access);
@@ -840,29 +822,36 @@ package body GNAT.Expect is
 
       Descriptor.Error_Fd := Pipe3.Input;
 
-      --  Fork a new process
+      --  Since Windows does not have a separate fork/exec, we need to
+      --  perform the following actions:
+      --    - save stdin, stdout, stderr
+      --    - replace them by our pipes
+      --    - create the child with process handle inheritance
+      --    - revert to the previous stdin, stdout and stderr.
 
-      Descriptor.Pid := Fork;
+      Input  := Dup (GNAT.OS_Lib.Standin);
+      Output := Dup (GNAT.OS_Lib.Standout);
+      Error  := Dup (GNAT.OS_Lib.Standerr);
+      Dup2 (Pipe1.Input,  GNAT.OS_Lib.Standin);
+      Dup2 (Pipe2.Output, GNAT.OS_Lib.Standout);
+      Dup2 (Pipe3.Output, GNAT.OS_Lib.Standerr);
 
-      if Descriptor.Pid = Null_Pid then
+      Close (Pipe1.Input);
+      Close (Pipe2.Output);
 
-         --  Put the pipes on standard file descriptors
-
-         Dup2 (Pipe1.Input,  GNAT.OS_Lib.Standin);
-         Dup2 (Pipe2.Output, GNAT.OS_Lib.Standout);
-         Dup2 (Pipe3.Output, GNAT.OS_Lib.Standerr);
-
-         --  Close the duplicates
-
-         Close (Pipe1.Input);
-
-         if Pipe2.Output /= Pipe3.Output then
-            Close (Pipe3.Output);
-         end if;
-
-         Close (Pipe2.Output);
-         Execvp (Command & ASCII.Nul, Arg_List'Address);
+      if not Err_To_Out then
+         Close (Pipe3.Output);
       end if;
+
+      Descriptor.Pid :=
+        To_Pid (GNAT.OS_Lib.Non_Blocking_Spawn (Command, Args));
+
+      Dup2 (Input,  GNAT.OS_Lib.Standin);
+      Close (Input);
+      Dup2 (Output, GNAT.OS_Lib.Standout);
+      Close (Output);
+      Dup2 (Error, GNAT.OS_Lib.Standerr);
+      Close (Error);
 
       --  Create the buffer
 
@@ -932,4 +921,3 @@ package body GNAT.Expect is
    end Trace_Filter;
 
 end GNAT.Expect;
-
