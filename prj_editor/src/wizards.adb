@@ -324,7 +324,6 @@ package body Wizards is
 
       if Wiz.Pages (Wiz.Current_Page) /= null then
          Hide (Wiz.Pages (Wiz.Current_Page));
---         Set_Child_Visible (Wiz.Pages (Wiz.Current_Page), False);
       end if;
 
       Wiz.Current_Page := Num;
@@ -334,7 +333,6 @@ package body Wizards is
                      Expand => True, Fill => True);
       end if;
       Show (Wiz.Pages (Wiz.Current_Page));
---      Set_Child_Visible (Wiz.Pages (Wiz.Current_Page), True);
 
       --  If the new page is valid, highlight it
 
