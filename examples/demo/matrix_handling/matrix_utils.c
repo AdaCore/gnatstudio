@@ -16,16 +16,16 @@ char * matrixPrint (Matrix *m)
   else
     {
       while (--row >= 0)
-	{
-	  column = m->columns;
-	  while (--column >= 0)
-	    {
-	      sprintf (result, "%s%d   ", result,
-	       matrixGet (m, m->rows - row - 1, m->columns - column - 1));
-	    }
+        {
+          column = m->columns;
+          while (--column >= 0)
+            {
+              sprintf (result, "%s%d   ", result,
+                       matrixGet (m, m->rows - row - 1, m->columns - column - 1));
+            }
 
-	  sprintf(result, "%s\n", result);
-	}
+          sprintf(result, "%s\n", result);
+        }
     }
 
   return result;
