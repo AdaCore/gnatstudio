@@ -46,7 +46,6 @@ with Src_Info.Queries;  use Src_Info.Queries;
 with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -840,7 +839,7 @@ package body Glide_Kernel.Modules is
       Set_Boolean (Value (5), Enable_Navigation);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
-         Insert (Kernel, -"No file editor was registered");
+         Trace (Me, -"No file editor was registered");
       end if;
 
       for J in Value'Range loop
@@ -862,7 +861,7 @@ package body Glide_Kernel.Modules is
       Set_String (Value (1), Filename);
 
       if not Mime_Action (Kernel, Mime_Html_File, Value) then
-         Insert (Kernel, -"No html viewer was registered");
+         Trace (Me, -"No html viewer was registered");
       end if;
 
       Unset (Value (1));
