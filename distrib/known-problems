@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- D902-016 Project wizard print a warning if the directory contains a dot
+  Problem:    If you use the project wizard to create a new project in
+              a directory that contains a dot ('.'), GPS will display a
+              warning about child projects.
+  Workaround: This warning can be safely ignored
+
 - D831-003 Ada runtime files not seen as direct sources of a project
   Problem:    If a project has one or more files with the same name as the
               Ada runtime, these files will not be displayed in the Project
