@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -47,10 +47,10 @@ package body Process_Tab_Pkg.Callbacks is
 
    procedure Move_Until_Match
      (History : in out History_List;
-      S : in String;
-      D : in Direction;
-      Index : out Integer;
-      Found : out Boolean);
+      S       : in String;
+      D       : in Direction;
+      Index   : out Integer;
+      Found   : out Boolean);
    --  Scan the history to find an entry which begins like S.
    --  Index indicates the number of characters found beyond that pattern.
 
@@ -60,8 +60,7 @@ package body Process_Tab_Pkg.Callbacks is
 
    function On_Process_Tab_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
+      Params : Gtk.Arguments.Gtk_Args) return Boolean is
    begin
       Hide (Get_Toplevel (Object));
       return True;
@@ -76,8 +75,17 @@ package body Process_Tab_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Object);
+
    begin
-      return True;
+      if Process.Window.Standalone then
+         --  Do not delete the data window if in stand alone mode.
+         return True;
+      else
+         Process.Data_Paned := null;
+         return False;
+      end if;
    end On_Data_Paned_Delete_Event;
 
    ------------------------------
@@ -156,8 +164,17 @@ package body Process_Tab_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       --  Arg1 : Gdk_Event := To_Event (Params, 1);
+      Process : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Object);
+
    begin
-      return True;
+      if Process.Window.Standalone then
+         --  Do not delete the command window if in stand alone mode.
+         return True;
+      else
+         Process.Command_Scrolledwindow := null;
+         return False;
+      end if;
    end On_Command_Scrolledwindow_Delete_Event;
 
    ----------------------------------
