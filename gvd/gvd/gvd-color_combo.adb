@@ -28,6 +28,7 @@ with Gtk.Color_Selection; use Gtk.Color_Selection;
 with Gtk.Widget;          use Gtk.Widget;
 with Gdk.Drawable;        use Gdk.Drawable;
 with Gtk.Pixmap;          use Gtk.Pixmap;
+with Gtk.Widget;          use Gtk.Widget;
 with Gdk.GC;              use Gdk.GC;
 with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Pixmap;          use Gdk.Pixmap;
@@ -64,6 +65,9 @@ package body GVD.Color_Combo is
    --  Called whenever the arrow button is selected to open or hide the
    --  popup window.
 
+   procedure Button_Clicked (Combo : access Gtk_Widget_Record'Class);
+   --  Called when the button is clicked
+
    -------------
    -- Gtk_New --
    -------------
@@ -91,6 +95,10 @@ package body GVD.Color_Combo is
          Type_Name    => "GvdColorCombo",
          Parameters   => Signal_Parameters);
 
+      Widget_Callback.Object_Connect
+        (Get_Button (Combo), "clicked",
+         Widget_Callback.To_Marshaller (Button_Clicked'Access), Combo);
+
       Gtk_New (Combo.Selection);
       Add (Get_Frame (Combo), Combo.Selection);
       Color_Cb.Object_Connect
@@ -110,6 +118,16 @@ package body GVD.Color_Combo is
          Combo);
       Show (Combo.Selection);
    end Initialize;
+
+   --------------------
+   -- Button_Clicked --
+   --------------------
+
+   procedure Button_Clicked (Combo : access Gtk_Widget_Record'Class) is
+   begin
+      Widget_Callback.Emit_By_Name
+        (Get_Arrow (Gvd_Color_Combo (Combo)), "clicked");
+   end Button_Clicked;
 
    -------------------
    -- Color_Changed --
