@@ -67,7 +67,7 @@ unmodified in any copy.
 @c --------------------------------------------------------------------
 
 @noindent
-This document is intended to provide a guide through the major capabilities
+This document provides a guide through the major capabilities
 of the GNAT Programming System by working on a code example: sdc, a simple
 desktop calculator.
 
