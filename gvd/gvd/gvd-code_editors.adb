@@ -306,7 +306,7 @@ package body GVD.Code_Editors is
       Br        : GVD.Types.Breakpoint_Array) is
    begin
       if Editor.Mode = Source or else Editor.Mode = Source_Asm then
-         Update_Breakpoints (Editor.Source, Br);
+         Update_Breakpoints (Editor.Source, Br, Editor.Process);
       end if;
 
       if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
@@ -466,7 +466,8 @@ package body GVD.Code_Editors is
                       Process => Gtk_Widget (Process));
 
             if Process.Breakpoints /= null then
-               Update_Breakpoints (Editor.Source, Process.Breakpoints.all);
+               Update_Breakpoints
+                 (Editor.Source, Process.Breakpoints.all, Editor.Process);
             end if;
 
          when Asm =>
@@ -498,7 +499,8 @@ package body GVD.Code_Editors is
                       Process => Gtk_Widget (Process));
 
             if Process.Breakpoints /= null then
-               Update_Breakpoints (Editor.Source, Process.Breakpoints.all);
+               Update_Breakpoints
+                 (Editor.Source, Process.Breakpoints.all, Editor.Process);
                Update_Breakpoints (Editor.Asm, Process.Breakpoints.all);
             end if;
       end case;
