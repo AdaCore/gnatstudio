@@ -234,7 +234,7 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor");
 
       Display_Line_Numbers := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Strip-Blanks",
+        (Name    => "Src-Editor-Display-Line_Numbers",
          Default => True,
          Blurb   => -("Whether the line numbers should be displayed in"
                        & " file editors"),
