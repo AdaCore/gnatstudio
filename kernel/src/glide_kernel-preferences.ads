@@ -151,7 +151,8 @@ package Glide_Kernel.Preferences is
      Register_Property
      ("Diff_Utils:Diff",
       "diff",
-      -"Command used to compute differences between two files",
+      -("Command used to compute differences between two files. Arguments"
+        & " can also be specified"),
       -"Diff command",
       -"Visual diff");
    --  ??? not used
@@ -160,7 +161,7 @@ package Glide_Kernel.Preferences is
      Register_Property
      ("Diff_Utils:Patch",
       "patch",
-      -"Command used to apply a patch",
+      -"Command used to apply a patch. Arguments can also be specified",
       -"Patch command",
       -"Visual diff");
    --  ??? not used
