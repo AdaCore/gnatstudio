@@ -1863,7 +1863,7 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
    begin
       declare
-         Filename : constant String :=
+         Filename : constant Virtual_File :=
            Select_File
              (Title             => -"Open File",
               Parent            => Get_Main_Window (Kernel),
@@ -1872,12 +1872,10 @@ package body Src_Editor_Module is
               History           => Get_History (Kernel));
 
       begin
-         if Filename = "" then
-            return;
+         if Filename /= VFS.No_File then
+            Open_File_Editor (Kernel, Filename);
+            Change_Project_Dir (Kernel, Dir_Name (Filename));
          end if;
-
-         Open_File_Editor (Kernel, Create (Full_Filename => Filename));
-         Change_Project_Dir (Kernel, Dir_Name (Filename));
       end;
 
    exception
@@ -2051,7 +2049,7 @@ package body Src_Editor_Module is
       if Source /= null then
          declare
             Old_Name : constant Virtual_File := Get_Filename (Source);
-            New_Name : constant String :=
+            New_Name : constant Virtual_File :=
               Select_File
                 (Title             => -"Save File As",
                  Parent            => Get_Main_Window (Kernel),
@@ -2062,11 +2060,8 @@ package body Src_Editor_Module is
                  History           => Get_History (Kernel));
 
          begin
-            if New_Name = "" then
-               return;
-            else
-               Save_To_File
-                 (Kernel, Create (Full_Filename => New_Name), Success);
+            if New_Name /= VFS.No_File then
+               Save_To_File (Kernel, New_Name, Success);
             end if;
          end;
       end if;

@@ -1977,7 +1977,7 @@ package body Src_Editor_Box is
             Free (Constructs);
 
             declare
-               Name : constant String :=
+               Name : constant Virtual_File :=
                  Select_File
                    (Title             => -"Save File As",
                     Parent            => Get_Main_Window (Editor.Kernel),
@@ -1986,19 +1986,16 @@ package body Src_Editor_Box is
                       Get_Pref (Editor.Kernel, Use_Native_Dialogs),
                     Kind              => Save_File,
                     History           => Get_History (Editor.Kernel));
-               New_File : Virtual_File;
 
             begin
-               if Name = "" then
+               if Name = VFS.No_File then
                   Success := False;
                   return;
                end if;
 
-               New_File := Create (Full_Filename => Name);
-
-               if Is_Regular_File (New_File) then
+               if Is_Regular_File (Name) then
                   if Message_Dialog
-                    (Msg => Base_Name (New_File)
+                    (Msg => Base_Name (Name)
                        & (-" already exists. Do you want to overwrite ?"),
                      Dialog_Type => Confirmation,
                      Buttons => Button_OK or Button_Cancel,
@@ -2010,7 +2007,7 @@ package body Src_Editor_Box is
                end if;
 
                if Success then
-                  Save_To_File (Editor.Source_Buffer, New_File, Success);
+                  Save_To_File (Editor.Source_Buffer, Name, Success);
                end if;
             end;
          else
