@@ -149,7 +149,7 @@ are displayed in the menus themselves.
 Here is a detailed list of the menu items that can be found in the menu bar:
 
 @subsection File
-@itemize @bullet
+@table @b
    @item Open Program...
 @anchor{open program menu}
 Open a file selection dialog that allows you to choose a program to
@@ -183,7 +183,7 @@ executable to debug before, by either using the @ref{open program menu}, or
 by specifying the name of the executable on the command line (@pxref{Command
 Line Options}).
 
-   @item Edit Source.
+   @item Edit Source
 Launch an external editor that will open the file currently displayed in
 @ref{The Source Window}. You can specify the name of the external editor by
 using the @ref{preferences menu}.
@@ -221,7 +221,7 @@ already running process. To do so, you need to specify the process id
 of the process you want to debug. Note that as for @ref{core files}, you need
 to specify an executable before attaching to a process.
 
-   @item Detach Process.
+   @item Detach Process
 Detach the currently debugged process from the underlying debugger.
 This means that the executable will continue to run outside GVD. You can use
 the @i{Attach To Process} menu to re-attach later to this process.
@@ -231,16 +231,16 @@ Open a directory selection dialog to change the directory in the underlying
 debugger. Useful in particular before executing a process, or loading a
 file using a relative path.
 
-   @item Close.
+   @item Close
 @anchor{close menu}
 Close the current debugger. If this is the last debugger, the main window
 will remain visible, but with a gray area instead of the notebook containing
 the Data, Explorer, Source and Debugger windows.
 To create a new debugger, see also the @ref{new debugger menu}.
 
-   @item Exit.
+   @item Exit
 Save the window settings and exit GVD.
-@end itemize
+@end table
 
 @subsection Edit
 The only item currently available in this menu is the preferences menu.
@@ -261,173 +261,173 @@ tabs at the top of the dialog, labelled @i{General}, @i{Source}, @i{Data},
 @i{Command}, @i{Memory}, @i{Helpers}. Each page corresponds to a section of
 preferences.
 
-@itemize @bullet
-@item General.
+@table @b
+@item General
 Give access to the general preferences in GVD.
 
-@itemize @bullet
-@item Break On Exceptions.
+@table @i
+@item Break On Exceptions
 Whether a breakpoint on all exceptions should be set by default.
 
-@item Status Bar Time Out.
+@item Status Bar Time Out
 Time after which a message in the status bar will disappear. Messages that
 have disappeared can be displayed using the arrow in the bottom left area
 of the main window.
 
-@item File Extensions.
+@item File Extensions
 Filename extensions recognized for each of the following supported languages:
 Ada, C, C++.
 Each text entry is a semicolon separated list of filename extensions, e.g
 @code{.ads;.adb}.
-@end itemize
+@end table
 
-@item Source.
+@item Source
 You can modify the preferences for the @i{Explorer}, @i{Source}, and
 @i{Assembly} windows, in particular the font and colors used to highlight
 elements.
 
-@itemize @bullet
-@item Display Explorer Tree.
+@table @i
+@item Display Explorer Tree
 Whether the list of files should be displayed.
 
-@item File Name Background.
+@item File Name Background
 Color used for the background of the file name in the editor.
 This is also used for the background of the current frame in the Call Stack
 window.
 
-@item Font.
+@item Font
 Font used in the editor.
 
-@item Show Line Numbers.
+@item Show Line Numbers
 Whether line numbers should be displayed in the code editor.
 
-@item Show Lines with Code.
+@item Show Lines with Code
 Whether dots should be displayed in the code editor for lines that
 contain code.
 
-@item Automatic Display of Variables.
+@item Automatic Display of Variables
 Whether tooltips should appear automatically to display the value of the
 variable pointed by the cursor.
 
-@item Syntax Highlighting.
+@item Syntax Highlighting
 Indicate whether the editor should provide color highlighting.
 
-@item Strip Carriage Return.
+@item Strip Carriage Return
 Whether Carriage Return characters will be stripped when reading a file.
 GVD tries to detect this automatically but in some rare cases, it can be useful
 to enable to option by hand.
 
-@item Comments.
+@item Comments
 Color used for comments.
 
-@item Strings.
+@item Strings
 Color used for strings.
 
-@item Keywords.
+@item Keywords
 Color used for keywords.
 
-@item Current Line.
+@item Current Line
 The color to use to highlight the current line in the editor
-@end itemize
+@end table
 
-@item Data.
+@item Data
 Enable you to change the preferences of the @i{Data Window}, in particular
 the fonts and colors used to display the data graphically.
 
-@itemize @bullet
-@item Clickable Item.
+@table @i
+@item Clickable Item
 Color to use for the items that are clickable (e.g pointers).
 
-@item Title Background.
+@item Title Background
 Color to use for the background of the title.
 
-@item Changed Data.
+@item Changed Data
 Color used to highlight fields that have changed since the last update.
 
-@item Auto-Refreshed.
+@item Auto-Refreshed
 Color used for auto-refreshed items.
 
-@item Frozen.
+@item Frozen
 Color used for frozen items.
 
-@item 3D Look.
+@item 3D Look
 Should the items have a 3d look ?
 
-@item Separate Window.
+@item Separate Window
 Whether the Data window should be a separate window.
 
-@item Item Name.
+@item Item Name
 Font used for the name of the item.
 
-@item Item Value.
+@item Item Value
 Font used to display the value of the item.
 
-@item Item Type.
+@item Item Type
 Font used to display the type of the item.
 
-@item Hide Big Items.
+@item Hide Big Items
 Whether items higher than a given limit will start in a hidden state.
 
 @item Big Item Height
 Items taller than this value will start hidden.
 
-@item Detect Aliased (shared data structures).
+@item Detect Aliased (shared data structures)
 If enabled, do not create new items when an item with the same address is
 already present in the canvas.
 
-@item Display Grid Points.
+@item Display Grid Points
 Whether the grid should be displayed in the canvas.
 
-@item Auto-Align Displays on Nearest Grid Point.
+@item Auto-Align Displays on Nearest Grid Point
 Should items be aligned on the grid.
 
-@item Show Call Stack.
+@item Show Call Stack
 @anchor{Show Call Stack}
 Whether the Call Stack view should be shown in the data window.
-@end itemize
+@end table
 
-@item Command.
+@item Command
 Enable you to change the preferences of the @i{Debugger Console}, also
 known as the @i{Command Window}.
 
-@itemize @bullet
-@item Color Highlighting.
+@table @i
+@item Color Highlighting
 Set the color used to highlight debugger commands and prompts.
-@item Font.
+@item Font
 Set the font name and size for the @i{Debugger Console}. Note that it
 is recommended to use a fixed size font such as Courier to get a proportional
 display.
-@end itemize
+@end table
 
-@item Memory.
+@item Memory
 Gives access to the preferences related to the memory view window.
 The values following have currently no effect.
 
-@itemize @bullet
-@item Font.
+@table @i
+@item Font
 Set the font name and size to display the contents of the memory. It
 is recommended to use a fixed size font such as Courier to get a proportional
 display.
-@item Default Color.
+@item Default Color
 Color used by default in the memory view window.
 
-@item Color Highlighting.
+@item Color Highlighting
 Color used for highlighted items in the memory view.
 
-@item Selection.
+@item Selection
 Color used for selected items in the memory view.
 
-@item Modified.
+@item Modified
 Color used for modified items in the memory view.
-@end itemize
+@end table
 
-@item Helpers.
+@item Helpers
 @anchor{helpers menu}
 Helpers are external programs that are used by GVD to perform specific
 actions.
 
-@itemize @bullet
-@item Edit Sources.
+@table @i
+@item Edit Sources
 Program used by the @i{Edit Current Source} menu. Special arguments are
 @code{%f} that is replaced by the full path name to the current file, using
 forward slashes as the directory separator, and @code{%l} that is replaced by
@@ -436,75 +436,75 @@ This value is superceded by the environment variable
 @code{GVD_EDITOR} if it exists (see also @ref{GVD_EDITOR}).
 Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
-@item List Processes.
+@item List Processes
 Currently not used. This is the command that generates a list of processes
 suitable for process actions such as attach.
-@item Remote Shell.
+@item Remote Shell
 Command used to establish a remote connection
 (see @ref{Using GVD with a Remote Debugger}).
-@item Remote Copy.
+@item Remote Copy
 Command used to copy files remotely
 (see @ref{Using GVD with a Remote Debugger}).
-@item HTML Browser.
+@item HTML Browser
 @anchor{HTML browser}
 Command used to browse HTML files, in particular the HTML version of this
 help file.
-@end itemize
+@end table
 
-@end itemize
+@end table
 
 @subsection Program
-@itemize @bullet
+@table @b
    @item Run/Start...
 Open a dialog window allowing you to specify the arguments to pass to the
 program, and whether the program should be stopped at the beginning of the
 main program. If you confirm by clicking on the @i{OK} button, the program
 will be launched according to the arguments entered.
 
-   @item Step.
+   @item Step
 Step the program until it reaches a different source line.
 
    @item Step Instruction.
 Step the program by one machine instruction exactly.
 
-   @item Next.
+   @item Next
 Step the program, proceeding through subroutine calls.
 
-   @item Next Instruction.
+   @item Next Instruction
 Step the program by one machine instruction but proceed through subroutine
 calls.
 
-   @item Finish.
+   @item Finish
 Continue until selected stack frame returns.
 
-   @item Continue.
+   @item Continue
 Continue the program being debugged.
 
-   @item Interrupt.
+   @item Interrupt
 Interrupt asynchronously the program being debugged. Note that depending on
 the state of the program, you may stop it in a low level system code that do
 not have debug information, or even in some cases, a coherent state. Use
 of breakpoints is recommended instead to stop programs.
 
-@end itemize
+@end table
 
 @subsection Command
-@itemize @bullet
+@table @b
    @item Command History...
 Open a dialog with the list of commands executed in the current session.
 You can select any number of items in this list and replay the selection
 automatically.
 
-   @item Clear Window.
+   @item Clear Window
 Clear the debugger console window. This removes all the input and output
 exchanged between GVD and the underlying debugger, and reset the scrollbar
 accordingly.
 
-@end itemize
+@end table
 
 @subsection Data
-@itemize @bullet
-   @item Call Stack.
+@table @b
+   @item Call Stack
       Display/Hide the Call Stack window inside the Data window.
       See @ref{The Call Stack Window} for more details. Note that you can
       also display or hide the call stack at the preferences level, see
@@ -544,15 +544,15 @@ accordingly.
       Open a memory viewer/editor. See @ref{The Memory Window} for more
       details.
 
-   @item Display Local Variables.
+   @item Display Local Variables
       Open an item in the Data Window containing all the local variables
       for the current frame.
 
-   @item Display Arguments.
+   @item Display Arguments
       Open an item in the Data Window containing the arguments
       for the current frame.
 
-   @item Display Registers.
+   @item Display Registers
       Open an item in the Data Window containing the machine registers
       for the current frame.
 
@@ -566,19 +566,19 @@ accordingly.
       command (e.g @code{p/x var}) or a procedure call in the debuggee
       (e.g @code{call my_proc}).
 
-   @item Refresh.
+   @item Refresh
       Refresh all the items displayed in the Data Window.
-@end itemize
+@end table
 
 @subsection Help
-@itemize @bullet
+@table @b
    @item GVD Manual...
 Open this documentation in an HTML browser (as specified in the
 @ref{HTML browser}).
 
    @item About...
 Open a simple information box about GVD.
-@end itemize
+@end table
 
 @c --------------------------------------------------------------------
 @node The Tool Bar
@@ -592,45 +592,45 @@ Open a simple information box about GVD.
    bar to a vertical bar with two columns.
    To move it back to the main window, double click on the left area.
 
-@itemize @bullet
-  @item Run.
+@table @b
+  @item Run
 Run the program using the arguments set previousely (e.g on the command
 line).
   @item Start
 Same as @i{Run}, but stops at the beginning of the main subprogram.
 
-  @item Step.
+  @item Step
 Step the program until it reaches a different source line.
 
-  @item Stepi.
+  @item Stepi
 Step the program by one machine instruction exactly.
 
-  @item Next.
+  @item Next
 Step the program, proceeding through subroutine calls.
 
-  @item Nexti.
+  @item Nexti
 Step the program by one machine instruction but proceed through subroutine
 calls.
 
-  @item Finish.
+  @item Finish
 Continue until selected stack frame returns.
 
-  @item Cont.
+  @item Cont
 Continue the program being debugged.
 
-  @item Up.
+  @item Up
 Go up one frame in the call stack.
 
-  @item Down.
+  @item Down
 Go down one frame in the call stack.
 
-  @item Interrupt.
+  @item Interrupt
 Interrupt asynchronously the program being debugged. Note that depending on
 the state of the program, you may stop it in a low level system code that do
 not have debug information, or even in some cases, a coherent state. Use
 of breakpoints is recommended instead to stop programs.
 
-@end itemize
+@end table
 
 @c --------------------------------------------------------------------
 @node The Call Stack Window
@@ -667,12 +667,17 @@ of breakpoints is recommended instead to stop programs.
 @section The Data Window
 @c --------------------------------------------------------------------
 
+@c --------------------------------------------------------------------
+@subsection Description
+@c --------------------------------------------------------------------
+
 @noindent
    The data window will contain all the graphic boxes that can be accessed
    using the @i{Data->Display} menu items, or the data window
    @i{Display Expression...} contextual menu, or the source window
-   @i{Print} or @i{Display} contextual menu items, or finally the
+   @i{Display} contextual menu items, or finally the
    @i{graph} command in the debugger console.
+
    For each of these commands, a box will be displayed in the data window
    with the following information:
 
@@ -714,66 +719,51 @@ of breakpoints is recommended instead to stop programs.
 
    A contextual menu, taking into account the current component pointed
    by the mouse, gives access to the following capabilities:
-   @itemize @bullet
-     @item Close @i{component}.
+   @table @b
+     @item Close @i{component}
 Close the selected item.
 
-     @item Hide all @i{component}.
+     @item Hide all @i{component}
 Hide all subcomponents of the selected item. To select a particular field
 or item in a record/array, move your mouse over the name of this
 component, not over the box containing the values for this item.
 
-     @item Show all @i{component}.
+     @item Show all @i{component}
 Show all subcomponents of the selected item.
 
-     @item Clone @i{component}.
+     @item Clone @i{component}
 Clone the selected component into a new, independant item.
 
-     @item View memory at &@i{component}.
+     @item View memory at &@i{component}
 Bring up the memory view dialog and explore memory at the address of the 
 component.
 
-     @item Set value of @i{component}.
+     @item Set value of @i{component}
 Set the value of a selected component. This will open an entry box
 where you can enter the new value of a variable/component.
 
-     @item Update Value.
+     @item Update Value
 Refresh the value displayed in the selected item.
 
-     @item Show Value.
+     @item Show Value
 Show only the value of the item.
 
-     @item Show Type.
+     @item Show Type
 Show only the type of each field for the item.
 
-     @item Show Value+Type.
+     @item Show Value+Type
 Show both the value and the type of the item.
 
-     @item Auto refresh.
+     @item Auto refresh
 Enable or disable the automatic refreshing of the item upon program execution
 (e.g step, next).
 
-   @end itemize
-
-   Colors convey special meaning in the canvas. The default color (can be
-   changed using the @ref{preferences menu}) are:
-   @itemize @bullet
-     @item Black: default color for printing values
-     @item Blue:  pointers and access types, that can be dereferenced by double
-                  clicking on them
-     @item Red:   values that have changed since last update of the canvas.
-                  For non frozen boxes, only the values/lines that have changed
-                  in a given box are highlighted rather than the whole box.
-   @end itemize
-
-@iftex
-@image{colors, 10cm}
-@end iftex
+   @end table
 
    A contextual menu can be accessed in the canvas itself (point the mouse to
    an empty area in the canvas, and click on the right mouse button) with the
    following entries:
-   @itemize @bullet
+   @table @b
      @item Display Expression...
       Open a small dialog letting you specify an arbitrary expression
       in the Data Window. This expression can be a variable name, or a
@@ -784,10 +774,10 @@ Enable or disable the automatic refreshing of the item upon program execution
       command (e.g @code{p/x var}) or a procedure call in the debuggee
       (e.g @code{call my_proc}).
 
-     @item Align On Grid.
+     @item Align On Grid
 Enable or disable alignment of items on the grid.
 
-     @item Detect Aliases.
+     @item Detect Aliases
 Enable or disable the automatic detection of shared data structures.
 Each time you display an item or dereference a pointer, GVD look at all
 the items already displayed on the canvas and compare their addresses with
@@ -795,7 +785,99 @@ the address of the new item to display. If they match, GVD will not
 create a new item, but it will create a link (if you tried to dereference
 a pointer).
 
-   @end itemize
+   @end table
+
+@c --------------------------------------------------------------------
+@subsection Manipulating items
+@c --------------------------------------------------------------------
+
+@subsubsection Moving items
+
+All the items on the canvas have some common behavior and can be fully
+manipulated with the mouse.
+
+They can be moved freely anywhere on the canvas, simply by clicking on
+them and then dragging the mouse. Note that if you are trying to move
+an item outside of the visible area of the data window, the latter will
+be scrolled so as to make the new position visible.
+
+Automatic scrolling is also provided if you move the mouse, while dragging
+an item, near the borders of the data window. As long as the mouse
+remains close to the border and the button is pressed on the item,
+the data window is scrolled and the item is moved. This provides an
+easy way to move an item a long distance from its initial position.
+
+@subsubsection Colors
+
+Most of the items are displayed using several colors, each of these
+conveys a special meaning. Here is the description for all the colors
+(note that the exact color can be changed through the preferences
+dialog, these are the default colors):
+
+@iftex
+@image{colors, 10cm}
+@end iftex
+
+@table @b
+
+@item black
+This is the default color used to print the value of variables or
+expressions.
+
+@item blue
+This color is used for C pointers (or Ada access types), ie all the variables
+and fields that are memory addresses pointing to some other value in
+memory.
+
+You can easily dereference these (see the value pointed to) by double-clicking
+on the blue text itself.
+
+@item red
+This color is used for variables and fields whose value has changed since
+the data window was last displayed. For instance, if you display an array
+in the data window and then select the @i{Next} button in the toolbar, then
+the elements of the array whose value has just changed will appear in red.
+
+As another example, if you choose to display the value of local variables in
+the data window (@i{Display->Display Local Variables}), then only the
+variables whose value has changed are highlighted, the others are left in
+black.
+
+@end table
+
+@subsubsection Icons
+
+Several different icons can be used to in the display of items. They also
+convey special meanings.
+
+@table @b
+
+@item garbage bin icon
+This icons indicates that the debugger could not get the value of the
+variable or expression. There might be several reasons, for instance the
+variable is currently not in scope (and thus has no existence), or it might
+have been optimized away by the compiler. In all cases, GVD will update the
+display as soon as the variable becomes visible again
+
+@item gift icon
+This icon indicates that part of a complex structure is currently hidden.
+Manipulating huge items in the data window (for instance if the variable
+is an array of hundreds of complex elements) might not be very helpful. As a
+result, GVD gives you the opportunity to shrink part of the value so as to
+save some screen-estate and make it easier to visualize the interesting parts
+of these variables.
+
+Double-clicking on this icon will expand the hidden part, and clicking on
+any sub-rectangle in the display of the variable will hide that part and
+replace it with that icon.
+
+See also the description of the contextual menu to automatically show or hide
+all the contents of an item. Note also that one alternative to hidding
+subcomponents is to clone them in a separate item (see the contextual menu
+again).
+
+@end table
+
 
 @c --------------------------------------------------------------------
 @node The Memory Window
@@ -862,24 +944,24 @@ Open Program, Open Core Dump, or Attach Process menu, or the corresponding
 commands in the debugger console.
 
    Contextual menu:
-   @itemize @bullet
-     @item Hide System Files.
+   @table @b
+     @item Hide System Files
 Hide the files that are part of the system.
 This currently only affects Ada programs compiled with GNAT, and will hide the
 GNAT run time files used by the executable.
 
-     @item Reload Files.
+     @item Reload Files
 Recompute the list of files. this is particularly useful when the program
 uses shared libraries that are not known until the program references
 them.
 
-     @item Delete Files Not Found.
+     @item Delete Files Not Found
 Delete the files that cannot be found on the file system. Note that this
 operation can take a long time to complete.
 
-     @item Show Current File.
+     @item Show Current File
 Highlight the file containing the current execution point.
-   @end itemize
+   @end table
 
 @c --------------------------------------------------------------------
 @node The Source Window
@@ -889,8 +971,8 @@ Highlight the file containing the current execution point.
 @noindent
    The source window is composed of two main areas: a small column on the left
    containing the following information:
-   @itemize @bullet
-     @item Lines with code.
+   @table @b
+     @item Lines with code
 In this area, blue dots are shown that represent lines for which the debugger
 has debug information, in other words, lines that have been compiled with
 debug information and for which the compiler has generated some code.
@@ -899,15 +981,15 @@ line or not, and will blindly send to the underlying debugger the breakpoint
 command. This will usually (e.g in the case of gdb) result in setting a
 breakpoint in the closest location that matches the file and line that you
 specified.
-     @item Current line executed.
+     @item Current line executed
 This is a green arrow showing the line where the program stopped.
 
-     @item Lines with breakpoints.
+     @item Lines with breakpoints
 For lines where breakpoints have been set, a red mark is displayed on top
 of the blue dots showing the lines with code. You can add and delete
 breakpoints by clicking on this area (the first click with set a brekapoint,
 the second click will remove it).
-   @end itemize
+   @end table
 
 @iftex
 @image{tooltips, 12.7cm}
@@ -919,8 +1001,8 @@ the second click will remove it).
    disabled in the @ref{preferences menu}.
 
    Contextual menu:
-   @itemize @bullet
-     @item Print @i{selection}.
+   @table @b
+     @item Print @i{selection}
 Print the selection (or by default the name pointed by the cursor) in the
 debugger console.
 
@@ -936,34 +1018,34 @@ window, or use the contextual menu for the specific item (see
 Bring up the memory view dialog and explore memory at the address of the 
 selection.
 
-     @item Set Breakpoint on Line @i{xx}.
+     @item Set Breakpoint on Line @i{xx}
 Set a breakpoint on the line pointed by the cursor, in the current file.
 
-     @item Continue Until Line @i{xx}.
+     @item Continue Until Line @i{xx}
 Contine execution (the program must have been started previousely) until a
 specified line.
 
-     @item Show Current Location.
+     @item Show Current Location
 Jump to the current line of execution. This is particularly useful after
 navigating through your source code.
 
-     @item Display Line Numbers.
+     @item Display Line Numbers
 Enable/Disable the display of line numbers on the left of the source
 editor.
 
-     @item Show Lines with Code.
+     @item Show Lines with Code
 Enable/Disable the display of lines with code, as described above.
 
-     @item Show Source Code.
+     @item Show Source Code
 Show only the source code.
 
-     @item Show Asm Code.
+     @item Show Asm Code
 Show only the assembly code around the current execution point.
 See @ref{The Assembly Window} for more details.
 
-     @item Show Asm and Source.
+     @item Show Asm and Source
 Show both the source code and the assembly window at the same time.
-   @end itemize
+   @end table
 
 @c --------------------------------------------------------------------
 @node The Assembly Window
@@ -1335,7 +1417,7 @@ gvd my_code --dargs --nx --pargs --file foo --version
 The following environment variables can be set to override some default
 settings in GVD:
 
-@itemize @bullet
+@table @samp
    @item GVD_ROOT.
 Override the default root directory specified when GVD
 is built (during the @i{configure} process, see the file @code{INSTALL} in
@@ -1352,7 +1434,7 @@ if set.
 @anchor{GVD_EDITOR}
 Override the default editor as found in the @ref{helpers menu}.
 
-@end itemize
+@end table
 
 @c --------------------------------------------------------------------
 @node Files
@@ -1361,7 +1443,7 @@ Override the default editor as found in the @ref{helpers menu}.
 
 @noindent
 
-@itemize @bullet
+@table @file
    @item $HOME/.gvd
 GVD state directory
    @item $HOME/.gvd/log
@@ -1391,7 +1473,7 @@ Each file in the @code{sessions} directory represents a particular session
 saved by the user.
 
    @item $HOME/.gdbinit   GDB initialization file
-@end itemize
+@end table
 
 @c --------------------------------------------------------------------
 @node Limitations
