@@ -33,6 +33,54 @@ package SN.Find_Fns is
    function To_String (Sym_Type : Symbol_Type) return String;
    --  converts symbol type into string
 
+   procedure Set_Cursor_At
+     (DB             : DB_File;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String);
+   --  Change the cursor in DB to point to the first entry matching the
+   --  parameters. If any of the parameters is left to its default value, only
+   --  the preceding parameters are taken into account.
+   --  The cursor must be released by the caller.
+
+   procedure Set_Cursor_At
+     (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String);
+   --  Same as above with one extra parameter
+
+
+   procedure Get_Pair
+     (DB             : DB_File;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair);
+   --  Get the value in the database DB matching the key given by the
+   --  parameters. The returned value must be freed by the user.
+   --  Not_Found is raised if no matching key could be found.
+   --  Matching is done on as many parameters as possible, until one of them
+   --  has the default invalid value, in which case the first entry in DB
+   --  matching the parameters so far is returned, or Not_Found is raised if
+   --  there are none.
+
+   procedure Get_Pair
+     (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair);
+   --  Same as above, with a different index
+
+   ----------
+   -- Find --
+   ----------
+   --  The following subprograms are higher level interfaces to Get_Pair, which
+   --  automatically free the Pair.
+
    procedure Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
@@ -136,4 +184,5 @@ package SN.Find_Fns is
       Tab      : out T_Table);
    --  Find functions for Typedefs table
 
+   pragma Inline (Find);
 end SN.Find_Fns;

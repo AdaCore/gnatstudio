@@ -33,39 +33,15 @@ package body SN.Find_Fns is
    --  Point. Where is left to the first character following this
    --  representation.
 
-   procedure Get_Pair
+   -------------------
+   -- Set_Cursor_At --
+   -------------------
+
+   procedure Set_Cursor_At
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Result         : out Pair);
-   --  Get the value in the database DB matching the key given by the
-   --  parameters. The returned value must be freed by the user.
-   --  Not_Found is raised if no matching key could be found.
-   --  Matching is done on as many parameters as possible, until one of them
-   --  has the default invalid value, in which case the first entry in DB
-   --  matching the parameters so far is returned, or Not_Found is raised if
-   --  there are none.
-
-   procedure Get_Pair
-     (DB             : DB_File;
-      Class          : String := Invalid_String;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Result         : out Pair);
-   --  Same as above, with a different index
-
-   --------------
-   -- Get_Pair --
-   --------------
-
-   procedure Get_Pair
-     (DB : DB_File;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Result         : out Pair)
+      Filename       : String := Invalid_String)
    is
       Key  : String (1 .. Name'Length + Position_Length + Filename'Length + 2);
       Pos  : Integer := 1;
@@ -90,25 +66,18 @@ package body SN.Find_Fns is
 
       Set_Cursor
         (DB, By_Key, Key (Key'First .. Pos - 1), Exact_Match => False);
-      Get_Pair (DB, Next_By_Key, Result);
-      Release_Cursor (DB);
+   end Set_Cursor_At;
 
-      if Result = No_Pair then
-         raise Not_Found;
-      end if;
-   end Get_Pair;
+   -------------------
+   -- Set_Cursor_At --
+   -------------------
 
-   --------------
-   -- Get_Pair --
-   --------------
-
-   procedure Get_Pair
+   procedure Set_Cursor_At
      (DB             : DB_File;
       Class          : String := Invalid_String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Result         : out Pair)
+      Filename       : String := Invalid_String)
    is
       Key  : String (1 .. Class'Length + Name'Length
                      + Position_Length + Filename'Length + 3);
@@ -141,6 +110,41 @@ package body SN.Find_Fns is
 
       Set_Cursor
         (DB, By_Key, Key (Key'First .. Pos - 1), Exact_Match => False);
+   end Set_Cursor_At;
+
+   --------------
+   -- Get_Pair --
+   --------------
+
+   procedure Get_Pair
+     (DB : DB_File;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair) is
+   begin
+      Set_Cursor_At (DB, Name, Start_Position, Filename);
+      Get_Pair (DB, Next_By_Key, Result);
+      Release_Cursor (DB);
+
+      if Result = No_Pair then
+         raise Not_Found;
+      end if;
+   end Get_Pair;
+
+   --------------
+   -- Get_Pair --
+   --------------
+
+   procedure Get_Pair
+     (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Result         : out Pair) is
+   begin
+      Set_Cursor_At (DB, Class, Name, Start_Position, Filename);
       Get_Pair (DB, Next_By_Key, Result);
       Release_Cursor (DB);
 
@@ -164,7 +168,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -182,7 +185,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -200,7 +202,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -218,7 +219,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -236,7 +236,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -254,7 +253,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -272,7 +270,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -291,7 +288,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Class, Variable_Name, Start_Position, Filename, P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -309,7 +305,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -328,7 +323,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -346,7 +340,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Name, Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ----------
@@ -365,7 +358,6 @@ package body SN.Find_Fns is
    begin
       Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
       Parse_Pair (P, Tab);
-      Free (P);
    end Find;
 
    ---------------
