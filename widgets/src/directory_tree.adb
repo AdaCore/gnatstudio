@@ -280,6 +280,33 @@ package body Directory_Tree is
    --  Dir_Name is the last part of the full path, ie shouldn't include its
    --  parent's name.
 
+   procedure On_Tree_Select_Row
+     (Object : access GObject_Record'Class;
+      Params : GValues);
+   --  Callback for a change in the directory selection.
+
+   ------------------------
+   -- On_Tree_Select_Row --
+   ------------------------
+
+   procedure On_Tree_Select_Row
+     (Object : access GObject_Record'Class;
+      Params : GValues)
+   is
+      Tree  : constant Dir_Tree := Dir_Tree (Object);
+      Iter  : Gtk_Tree_Iter;
+      Model : Gtk_Tree_Model;
+      pragma Unreferenced (Params);
+   begin
+      Get_Selected (Get_Selection (Tree.File_Tree), Model, Iter);
+
+      if Iter /= Null_Iter then
+         Free (Tree.Current_Dir);
+         Tree.Current_Dir := new String'
+           (Get_String (Tree.File_Model, Iter, Absolute_Name_Column));
+      end if;
+   end On_Tree_Select_Row;
+
    ------------
    -- Filter --
    ------------
@@ -316,10 +343,9 @@ package body Directory_Tree is
          return;
       end if;
 
-      Select_Iter (Get_Selection (Tree.File_Tree), Iter);
-
       Path := Get_Path (Tree.File_Model, Iter);
       Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
+      Set_Cursor (Tree.File_Tree, Path, null, False);
       Path_Free (Path);
    end Show_Parent;
 
@@ -352,8 +378,8 @@ package body Directory_Tree is
               (Tree.File_Model, Iter, Absolute_Name_Column);
          begin
             if Curr_Dir = D then
-               Select_Iter (Get_Selection (Tree.File_Tree), Iter);
                Scroll_To_Cell (Tree.File_Tree, Path, null, True, 0.1, 0.1);
+               Set_Cursor (Tree.File_Tree, Path, null, False);
                Path_Free (Path);
 
                return;
@@ -377,6 +403,9 @@ package body Directory_Tree is
 
          Path_Free (Path);
       end loop;
+
+      Free (Tree.Current_Dir);
+      Tree.Current_Dir := new String'(Dir);
    end Show_Directory;
 
    ---------------------------------
@@ -427,8 +456,6 @@ package body Directory_Tree is
          Set (Selector.List_Model, Row, Base_Name_Column, Dir);
       end if;
 
-      Select_Iter (Get_Selection (Selector.List_Tree), Row);
-
       if Recursive then
          Open (Handle, Dir);
 
@@ -462,17 +489,12 @@ package body Directory_Tree is
    -------------------
 
    function Get_Selection
-     (Tree : access Dir_Tree_Record) return String
-   is
-      Iter     : Gtk_Tree_Iter;
-      Model    : Gtk_Tree_Model;
+     (Tree : access Dir_Tree_Record) return String is
    begin
-      Get_Selected (Get_Selection (Tree.File_Tree), Model, Iter);
-
-      if Iter = Null_Iter then
+      if Tree.Current_Dir = null then
          return "";
       else
-         return Get_String (Tree.File_Model, Iter, Absolute_Name_Column);
+         return Tree.Current_Dir.all;
       end if;
    end Get_Selection;
 
@@ -624,7 +646,7 @@ package body Directory_Tree is
       end if;
 
       if Is_Valid then
-         Select_Path (Get_Selection (Selector.Directory.File_Tree), Path);
+         Set_Cursor (Selector.Directory.File_Tree, Path, null, False);
 
          Gtk_New (Menu);
          Gtk_New (Item, -"Add directory recursive");
@@ -1163,6 +1185,7 @@ package body Directory_Tree is
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
                           Glib.C_Proxy (Open_Pixbufs (Directory_Node)));
                      D.Explorer.Scroll_To_Directory := True;
+
                      D.Explorer.Realize_Cb_Id :=
                        Gtkada.Handlers.Object_Return_Callback.Object_Connect
                          (D.Explorer.File_Tree, "expose_event",
@@ -1384,9 +1407,18 @@ package body Directory_Tree is
          --  ??? Root_Dir is not taken into account yet.
          Refresh (Tree, Initial_Dir.all);
 
+         Tree.Current_Dir := new String'(Initial_Dir.all);
+
          Free (Root_Dir);
          Free (Initial_Dir);
       end;
+
+      Object_Callback.Object_Connect
+        (Get_Selection (Tree.File_Tree),
+         "changed",
+         On_Tree_Select_Row'Access,
+         Slot_Object => Tree,
+         After => True);
    end Initialize;
 
    ----------------------------
@@ -1411,10 +1443,10 @@ package body Directory_Tree is
       Params : Glib.Values.GValues)
    is
       pragma Unreferenced (Params);
-      E : constant Dir_Tree :=
-        Dir_Tree (Explorer);
+      E : constant Dir_Tree := Dir_Tree (Explorer);
    begin
       File_Remove_Idle_Calls (E);
+      Free (E.Current_Dir);
    end On_File_Destroy;
 
    -------------------------------
@@ -1461,17 +1493,20 @@ package body Directory_Tree is
       Values   : GValues) return Boolean
    is
       pragma Unreferenced (Values);
-      T       : Dir_Tree := Dir_Tree (Explorer);
+      T : Dir_Tree := Dir_Tree (Explorer);
 
    begin
+      Disconnect (T.File_Tree, T.Realize_Cb_Id);
+
       if T.Scroll_To_Directory then
+         T.Scroll_To_Directory := False;
          Scroll_To_Cell
            (T.File_Tree,
             T.Path, null, True,
             0.1, 0.1);
+
          Select_Path (Get_Selection (T.File_Tree), T.Path);
-         Disconnect (T.File_Tree, T.Realize_Cb_Id);
-         T.Scroll_To_Directory := False;
+         Set_Cursor (T.File_Tree, T.Path, null, False);
       end if;
 
       return True;
@@ -1542,38 +1577,30 @@ package body Directory_Tree is
    is
       Iter         : Gtk_Tree_Iter;
    begin
-      if Get_Button (Event) = 1 then
-         Iter := Find_Iter_For_Event (Tree, Model, Event);
+      Iter := Find_Iter_For_Event (Tree, Model, Event);
 
-         if Iter /= Null_Iter then
-            Select_Iter (Get_Selection (Tree), Iter);
+      if Iter /= Null_Iter then
+         if Get_Event_Type (Event) = Gdk_2button_Press then
+            declare
+               Path    : Gtk_Tree_Path;
+               Success : Boolean;
+               pragma Unreferenced (Success);
+            begin
+               Path := Get_Path (Model, Iter);
 
-            if Get_Event_Type (Event) = Gdk_2button_Press then
-               declare
-                  Path    : Gtk_Tree_Path;
-                  Success : Boolean;
-                  pragma Unreferenced (Success);
-               begin
-                  Path := Get_Path (Model, Iter);
-
-                  if Row_Expanded (Tree, Path) then
-                     Success := Collapse_Row (Tree, Path);
-                  else
-                     if Add_Dummy then
-                        Append_Dummy_Iter (Model, Iter);
-                     end if;
-
-                     Success := Expand_Row
-                       (Tree, Path, False);
+               if Row_Expanded (Tree, Path) then
+                  Success := Collapse_Row (Tree, Path);
+               else
+                  if Add_Dummy then
+                     Append_Dummy_Iter (Model, Iter);
                   end if;
 
-                  Path_Free (Path);
-               end;
-            end if;
+                  Success := Expand_Row
+                    (Tree, Path, False);
+               end if;
 
-            return False;
-
-
+               Path_Free (Path);
+            end;
          end if;
       end if;
 
