@@ -45,10 +45,6 @@ package Vsearch_Pkg is
       Buttons_Hbox : Gtk_Hbox;
       Options_Frame : Gtk_Frame;
       Options_Vbox : Gtk_Vbox;
-      Scope_Hbox : Gtk_Hbox;
-      Scope_Label : Gtk_Label;
-      Scope_Combo : Gtk_Combo;
-      Scope_Entry : Gtk_Entry;
       Search_All_Check : Gtk_Check_Button;
       Case_Check : Gtk_Check_Button;
       Whole_Word_Check : Gtk_Check_Button;
