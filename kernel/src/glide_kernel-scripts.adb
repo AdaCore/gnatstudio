@@ -28,6 +28,7 @@ with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Actions; use Glide_Kernel.Actions;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
+with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
@@ -48,6 +49,7 @@ with Traces;               use Traces;
 with VFS;                  use VFS;
 with Basic_Types;          use Basic_Types;
 with Language_Handlers;    use Language_Handlers;
+with Prj.Ext;              use Prj.Ext;
 
 package body Glide_Kernel.Scripts is
 
@@ -202,6 +204,7 @@ package body Glide_Kernel.Scripts is
    Prefix_Cst     : aliased constant String := "prefix";
    Sensitive_Cst  : aliased constant String := "sensitive";
    Force_Cst      : aliased constant String := "force";
+   Value_Cst      : aliased constant String := "value";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -230,6 +233,8 @@ package body Glide_Kernel.Scripts is
      (1 => Prefix_Cst'Access);
    Set_Sensitive_Parameters : constant Cst_Argument_List :=
      (1 => Sensitive_Cst'Access);
+   Set_Scenario_Parameters : constant Cst_Argument_List :=
+     (1 => Name_Cst'Access, 2 => Value_Cst'Access);
 
    On_Input_Cst     : aliased constant String := "on_input";
    On_Destroy_Cst   : aliased constant String := "on_destroy";
@@ -779,6 +784,16 @@ package body Glide_Kernel.Scripts is
                Set_Return_Value_Key
                  (Data, External_Reference_Of (Vars (V)));
             end loop;
+         end;
+
+      elsif Command = "set_scenario_variable" then
+         Name_Parameters (Data, Set_Scenario_Parameters);
+         declare
+            Name  : constant String := Nth_Arg (Data, 1);
+            Value : constant String := Nth_Arg (Data, 2);
+         begin
+            Prj.Ext.Add (Name, Value);
+            Run_Hook (Kernel, Variable_Changed_Hook);
          end;
 
       elsif Command = "scenario_variables_cmd_line" then
@@ -1578,6 +1593,13 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel, "scenario_variables",
          Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+      Register_Command
+        (Kernel, "set_scenario_variable",
+         Class         => Get_Project_Class (Kernel),
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
          Static_Method => True,
          Handler       => Default_Command_Handler'Access);
       Register_Command
