@@ -215,7 +215,7 @@ package body Display_Items is
    --  by a reference to Item.Is_Alias_Of (so that the temporary links
    --  point to the alias)
 
-   procedure Compute_Link_Pos (Link : access Odd_Link_Record'Class);
+   procedure Compute_Link_Pos (Link : access GVD_Link_Record'Class);
    --  Compute the attachment of the link in its source item.
    --  The position is based on the Source_Component field of the link.
 
@@ -893,10 +893,10 @@ package body Display_Items is
       Arrow      : Arrow_Type := End_Arrow;
       Alias_Link : Boolean := False)
    is
-      L : Odd_Link;
+      L : GVD_Link;
    begin
       if not Has_Link (Canvas, From, To, Name) then
-         L := new Odd_Link_Record;
+         L := new GVD_Link_Record;
          Configure (L, From, To, Arrow, Name);
          L.Alias_Link := Alias_Link;
 
@@ -912,7 +912,7 @@ package body Display_Items is
    -- Compute_Link_Pos --
    ----------------------
 
-   procedure Compute_Link_Pos (Link : access Odd_Link_Record'Class) is
+   procedure Compute_Link_Pos (Link : access GVD_Link_Record'Class) is
       X : constant Gint := Get_X (Link.Source_Component.all) +
         Get_Width (Link.Source_Component.all) / 2;
       Y : constant Gint := Get_Y (Link.Source_Component.all) +
@@ -974,8 +974,8 @@ package body Display_Items is
         (Canvas : access Interactive_Canvas_Record'Class;
          Link   : access Canvas_Link_Record'Class) return Boolean is
       begin
-         Odd_Link (Link).Source_Component := Deref_Component;
-         Compute_Link_Pos (Odd_Link (Link));
+         GVD_Link (Link).Source_Component := Deref_Component;
+         Compute_Link_Pos (GVD_Link (Link));
          --  Only the first one
          return False;
       end Set_Link_Pos;
@@ -1190,9 +1190,9 @@ package body Display_Items is
          Link   : access Canvas_Link_Record'Class) return Boolean is
       begin
          if Get_Src (Link) = Canvas_Item (Item)
-           and then Odd_Link (Link).Source_Component /= null
+           and then GVD_Link (Link).Source_Component /= null
          then
-            Compute_Link_Pos (Odd_Link (Link));
+            Compute_Link_Pos (GVD_Link (Link));
          end if;
 
          return True;
@@ -1562,7 +1562,7 @@ package body Display_Items is
          Replace   : Boolean;
 
       begin
-         if not Odd_Link (Link).Alias_Link then
+         if not GVD_Link (Link).Alias_Link then
             Src := Get_Src (Link);
             Dest := Get_Dest (Link);
             Replace := False;
@@ -1653,7 +1653,7 @@ package body Display_Items is
         (Canvas : access Interactive_Canvas_Record'Class;
          Link   : access Canvas_Link_Record'Class) return Boolean is
       begin
-         if Odd_Link (Link).Alias_Link then
+         if GVD_Link (Link).Alias_Link then
             Remove_Link (Canvas, Link);
             Destroy (Link);
          end if;

@@ -36,8 +36,8 @@ package Display_Items is
      Gtkada.Canvas.Canvas_Item_Record with private;
    type Display_Item is access all Display_Item_Record'Class;
 
-   type Odd_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with private;
-   type Odd_Link is access all Odd_Link_Record'Class;
+   type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with private;
+   type GVD_Link is access all GVD_Link_Record'Class;
 
    procedure Init_Graphics (Win : Gdk.Window.Gdk_Window);
    --  Initializes the pixmaps, colors, etc.
@@ -82,8 +82,7 @@ package Display_Items is
 
    function Find_Item
      (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
-      Num    : Integer)
-     return Display_Item;
+      Num    : Integer) return Display_Item;
    --  Return the item whose identifier is Num, or null if there is none
 
    procedure On_Button_Click
@@ -137,8 +136,8 @@ package Display_Items is
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
    --  Calls Reset_Recursive for the entity represented by the item.
 
-   function Is_Alias_Of (Item : access Display_Item_Record)
-                        return Display_Item;
+   function Is_Alias_Of
+     (Item : access Display_Item_Record) return Display_Item;
    --  Return the item for which Item is an alias, or null if there is none.
 
    function Get_Name (Item : access Display_Item_Record) return String;
@@ -146,12 +145,11 @@ package Display_Items is
 
    function Get_Debugger
      (Item : access Display_Item_Record'Class)
-     return GVD.Process.Debugger_Process_Tab;
+      return GVD.Process.Debugger_Process_Tab;
    --  Return the process tab to which item belongs
 
    function Is_A_Variable
-     (Item : access Display_Item_Record'Class)
-     return Boolean;
+     (Item : access Display_Item_Record'Class) return Boolean;
    --  Return True if the item is a variable.
 
    procedure Set_Display_Mode
@@ -159,8 +157,8 @@ package Display_Items is
       Mode : Items.Display_Mode);
    --  Set the display mode for the item and all its children
 
-   function Get_Display_Mode (Item : access Display_Item_Record)
-                             return Items.Display_Mode;
+   function Get_Display_Mode
+     (Item : access Display_Item_Record) return Items.Display_Mode;
    --  Get the display mode for item
 
    procedure Update_Resize_Display
@@ -177,8 +175,7 @@ package Display_Items is
    function Create_Drawing_Context
      (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Mode   : Items.Display_Mode := Items.Value;
-      Lang   : Language.Language_Access := null)
-     return Items.Drawing_Context;
+      Lang   : Language.Language_Access := null) return Items.Drawing_Context;
    --  Return a graphic context that can be used to display an item.
    --  The item will be drawn on Pixmap. Mode indicates which information
    --  should be displayed, and Lang is provided to get type information
@@ -222,7 +219,7 @@ private
       --  Whether we should display the mode itself.
    end record;
 
-   type Odd_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record
+   type GVD_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record
       Alias_Link : Boolean := False;
       --  True if this Link was created as a result of an aliasing operation.
       --  Such links are always deleted before each update, and recreated
