@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -72,9 +72,9 @@ package body Commands.Locations is
    ------------
 
    procedure Create
-     (Item    : out Generic_Location_Command;
-      Kernel  : Kernel_Handle;
-      Args    : GNAT.OS_Lib.Argument_List)
+     (Item   : out Generic_Location_Command;
+      Kernel : Kernel_Handle;
+      Args   : GNAT.OS_Lib.Argument_List)
    is
       A : String_List (Args'Range);
    begin
@@ -103,12 +103,12 @@ package body Commands.Locations is
    end Create;
 
    procedure Create
-     (Item           : out Source_Location_Command;
-      Kernel         : Kernel_Handle;
-      Filename       : VFS.Virtual_File;
-      Line           : Natural := 0;
-      Column         : Natural := 0;
-      Column_End     : Natural := 0) is
+     (Item       : out Source_Location_Command;
+      Kernel     : Kernel_Handle;
+      Filename   : VFS.Virtual_File;
+      Line       : Natural := 0;
+      Column     : Natural := 0;
+      Column_End : Natural := 0) is
    begin
       Item := new Source_Location_Command_Type;
       Item.Kernel := Kernel;

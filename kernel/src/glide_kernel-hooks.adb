@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -941,10 +941,10 @@ package body Glide_Kernel.Hooks is
    --------------
 
    procedure Add_Hook
-     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name     : String;
-      Hook     : access Hook_Args_Return_Record'Class;
-      Watch    : Glib.Object.GObject := null) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name   : String;
+      Hook   : access Hook_Args_Return_Record'Class;
+      Watch  : Glib.Object.GObject := null) is
    begin
       Add_Hook (Kernel, Name, Hook_Function (Hook),
                 Hook_With_Args_And_Return, Watch);
@@ -991,8 +991,7 @@ package body Glide_Kernel.Hooks is
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name     : String;
       Data     : Hooks_Data'Class;
-      Set_Busy : Boolean := True)
-         return Boolean
+      Set_Busy : Boolean := True) return Boolean
    is
       Info : constant Hook_Description_Access :=
         Hook_Description_Access (Get (Kernel.Hooks, Name));
@@ -1034,11 +1033,10 @@ package body Glide_Kernel.Hooks is
    ----------------------------
 
    function Run_Hook_Until_Failure
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name   : String;
-      Data   : Hooks_Data'Class;
-      Set_Busy : Boolean := True)
-         return Boolean
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name     : String;
+      Data     : Hooks_Data'Class;
+      Set_Busy : Boolean := True) return Boolean
    is
       Info : constant Hook_Description_Access :=
         Hook_Description_Access (Get (Kernel.Hooks, Name));

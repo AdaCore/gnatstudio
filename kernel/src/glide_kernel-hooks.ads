@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -293,7 +293,6 @@ package Glide_Kernel.Hooks is
       Data     : Hooks_Data'Class;
       Set_Busy : Boolean := True);
    --  See doc for Run_Hook above
-
 
    -------------------------------------------
    -- Hooks with arguments and return value --

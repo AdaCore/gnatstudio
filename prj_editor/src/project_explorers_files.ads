@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -90,4 +90,5 @@ private
       --  handler, in case the fill function should call itself recursively :
       --  to be investigated.
    end record;
+
 end Project_Explorers_Files;
