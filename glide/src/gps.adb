@@ -39,11 +39,7 @@ with OS_Utils;             use OS_Utils;
 with Ada.Command_Line;     use Ada.Command_Line;
 with Prj;                  use Prj;
 
---  Just force the loading of the modules
---  Removing any of the line below will not load the module in Glide, and thus
---  the associated functionalities will not be available. Note that you also
---  need to call Register_Module in the main program below.
-pragma Warnings (Off);
+--  Modules registered by Glide.
 with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
@@ -53,7 +49,7 @@ with Project_Explorers;
 with Project_Viewers;
 with Src_Editor_Module;
 with VCS_Module;
-pragma Warnings (On);
+with Vdiff_Module;
 
 procedure Glide2 is
    use Glide_Main_Window;
@@ -149,39 +145,28 @@ procedure Glide2 is
                Justification => Justify_Left);
             OS_Exit (1);
       end;
-
-      --  ??? Load the preferences, or set the default values
-
-      --  if Is_Regular_File
-      --    (Dir.all & Directory_Separator & "preferences")
-      --  then
-      --     Load_Preferences (Dir.all & Directory_Separator & "preferences");
-      --  else
-      --     Set_Default_Preferences;
-      --  end if;
    end Init_Settings;
 
 begin
    Aunit_Module.Register_Module;
    VCS_Module.Register_Module;
-   GVD_Module.Register_Module;
    Metrics_Module.Register_Module;
    Browsers.Dependency_Items.Register_Module;
    Browsers.Projects.Register_Module;
    Project_Viewers.Register_Module;
    Project_Explorers.Register_Module;
    Src_Editor_Module.Register_Module;
+   GVD_Module.Register_Module;
+   Vdiff_Module.Register_Module;
 
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
-   Gtk_New (Glide, "<glide>", Glide_Menu.Glide_Menu_Items.all);
+   Init_Settings;
+   Gtk_New
+     (Glide, "<glide>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Set_Title (Glide, "Glide - Next Generation");
    Maximize (Glide);
-
-   Init_Settings;
-   Glide.Home_Dir := Dir;
-   Glide.Prefix_Directory := Prefix;
 
    declare
       Rc : constant String := Prefix.all & Directory_Separator & "bin" &
@@ -192,11 +177,15 @@ begin
       end if;
    end;
 
+   Free (Home);
+   Free (Dir);
+   Free (Prefix);
+
    --  ??? Should have a cleaner way of initializing Log_File
 
    declare
       Log : aliased constant String :=
-        Dir.all & Directory_Separator & "log" & ASCII.NUL;
+        Glide.Home_Dir.all & Directory_Separator & "debugger.log" & ASCII.NUL;
    begin
       Glide.Debug_Mode := True;
       Glide.Log_Level  := GVD.Types.Hidden;
@@ -237,9 +226,7 @@ begin
    if not File_Opened then
       Display_Help
         (Glide.Kernel,
-         Glide.Prefix_Directory.all & Directory_Separator &
-           "doc" & Directory_Separator & "html" & Directory_Separator &
-           "glide-welcome.html");
+         Glide.Prefix_Directory.all & "/doc/glide2/html/glide-welcome.html");
       Maximize_Children (Get_MDI (Glide.Kernel));
    end if;
 
