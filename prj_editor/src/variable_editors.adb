@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -48,6 +48,7 @@ with System;                   use System;
 
 with Projects.Editor;          use Projects, Projects.Editor;
 with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Intl;               use Glide_Intl;
 with Traces;                   use Traces;
@@ -584,7 +585,7 @@ package body Variable_Editors is
          --  Recompute the view so that the explorer is updated graphically.
 
          Recompute_View (Editor.Kernel);
-         Variable_Changed (Editor.Kernel);
+         Run_Hook (Editor.Kernel, Variable_Changed_Hook);
       end if;
 
       return True;

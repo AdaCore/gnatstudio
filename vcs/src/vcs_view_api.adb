@@ -32,9 +32,12 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Glide_Result_View;         use Glide_Result_View;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
 with String_List_Utils;         use String_List_Utils;
 
