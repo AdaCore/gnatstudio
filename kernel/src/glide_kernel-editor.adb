@@ -103,11 +103,23 @@ package body Glide_Kernel.Editor is
    ------------------------
 
    function Get_Current_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box is
+     (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box
+   is
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      MDI     : constant MDI_Window :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      Focus   : constant Gtk_Widget := Get_Widget (Get_Focus_Child (MDI));
+
    begin
-      if Kernel.Current_Editor = null then
+      if Focus.all in Source_Box_Record'Class then
+         --  Simple case, the current focus window is a source editor
+         return Source_Box (Focus).Editor;
+
+      elsif Kernel.Current_Editor = null then
          return null;
       else
+         --  Otherwise, return the last source editor registered that had
+         --  the focus.
          return Source_Box (Get_Widget (Kernel.Current_Editor)).Editor;
       end if;
    end Get_Current_Editor;
@@ -207,19 +219,22 @@ package body Glide_Kernel.Editor is
       Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
       MDI     : constant MDI_Window :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      Current : constant Source_Editor_Box := Get_Current_Editor (Kernel);
+      Title   : constant String := Get_Filename (Current);
       Editor  : Source_Editor_Box;
       Box     : Source_Box;
-      Focus   : constant MDI_Child := Get_Focus_Child (MDI);
-      Current : Source_Box := Source_Box (Get_Widget (Focus));
       Child   : MDI_Child;
-      Title   : constant String := Get_Title (Focus);
 
    begin
-      Create_New_View (Editor, Current.Editor);
-      Gtk_New (Box, Editor);
-      Attach (Editor, Box);
-      Child := Put (MDI, Box);
-      Set_Title (Child, Title & " <2>");
+      if Current /= null then
+         Create_New_View (Editor, Current);
+         Gtk_New (Box, Editor);
+         Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
+         Attach (Editor, Box);
+         Child := Put (MDI, Box);
+         --  ??? Should compute the right number.
+         Set_Title (Child, Base_File_Name (Title) & " <2>");
+      end if;
    end New_View;
 
    ---------------
