@@ -1,0 +1,33 @@
+with "foo/child2.gpr";
+project Child1 is
+  type OS_Type is ("Linux", "Windows");
+  OS : OS_Type := External ("OS_TYPE", "Linux");  --  Fail if no default value
+  for Source_Files use ("child1_src.adb", "child11_src.adb",
+                        "child11_src.ads");
+  for Source_Dirs use ("foo", "foo/bar/**");
+  for Object_dir use "ob" & "j"; --  Concatenation
+
+  package Gnatmake is
+
+     case OS is
+        when "Linux" => 
+          for Switches use ("-g");
+        when others =>
+          for Switches use ("-gnaty");
+     end case;
+  end Gnatmake;
+
+  package Compiler is
+     for Switches use ("-O1", "-gnatwu");
+     for Switches ("child1_src.adb") use ("-O2", "-g");
+     for Switches ("child11_src.ads") use ("-O1");
+  end Compiler;
+
+  package Gnatbind is
+     for Switches use ("-E");
+  end Gnatbind;
+
+  package Gnatlink is
+     for Switches use ("-s");
+  end Gnatlink;
+end Child1;

@@ -1,3 +1,0 @@
-project Child3 is
-   Source_Files := ("child2_src.adb");
-end Child3;

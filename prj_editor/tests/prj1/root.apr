@@ -1,5 +1,0 @@
-with "child1";
-project Root is
-   Source_Files := ("root_src.adb");
-   Source_Dirs := ".";
-end Root;

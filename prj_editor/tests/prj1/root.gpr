@@ -1,0 +1,22 @@
+--  with "child1";
+project Root is
+   for Source_Files use ("root_src.adb");
+   for Source_Dirs use (".");
+   type OS_Type is ("linux", "windows");
+   OS : OS_Type := external ("OS", "linux");
+
+   package gnatmake is
+      case OS is
+         when "linux" =>
+            for Switches use ("-g");
+
+         when "windows" =>
+            for Switches use ("-gnaty");
+      end case;
+   end gnatmake;
+
+   case OS is
+      when "linux" =>
+          for Source_Dirs use Root'Source_Dirs & ("foo");
+   end case; 
+end Root;
