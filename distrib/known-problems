@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- D816-007 Double-clicking does not select identifiers containing digits
+  Problem:    When an identifier contain digits, double-clicking on it does not
+              select the entire word.
+  Workaround: Select the identifier manually.
+
 - D806-007 Selecting text and pressing enter does not delete the selection
   Problem:    When there is a selection in an editor that has auto-indentation
               capabilities, the text is not deleted when pressing enter.
