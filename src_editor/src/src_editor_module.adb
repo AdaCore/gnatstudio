@@ -3705,6 +3705,7 @@ package body Src_Editor_Module is
          Name  : constant String := -"Current File";
          Name2 : constant String := -"Files From Project";
          Name3 : constant String := -"Files...";
+         Name4 : constant String := -"Open Files";
       begin
          Register_Search_Function
            (Kernel => Kernel,
@@ -3735,6 +3736,16 @@ package body Src_Editor_Module is
                Id                => null,
                Mask              => All_Options
                  and not Search_Backward));
+         Register_Search_Function
+           (Kernel => Kernel,
+            Data   =>
+              (Length            => Name4'Length,
+               Label             => Name4,
+               Factory           => Open_Files_Factory'Access,
+               Extra_Information => Gtk_Widget (Selector),
+               Id                => null,
+               Mask              => All_Options
+               and not Search_Backward));
       end;
 
       --  Register the aliases special entities
