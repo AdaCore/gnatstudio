@@ -161,14 +161,14 @@ package body Glide_Kernel.Task_Manager is
             Set_GUI (Manager, Previous_Interface);
             return True;
 
-         when Gtk_Response_None =>
+         when Gtk_Response_None | Gtk_Response_No =>
             Set_GUI (Manager, Previous_Interface);
-            return True;
+            return False;
 
          when others =>
             Destroy (Dialog);
             Set_GUI (Manager, Previous_Interface);
-            return True;
+            return False;
       end case;
    end On_Exit_Hook;
 
