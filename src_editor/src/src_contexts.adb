@@ -21,7 +21,6 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Text_IO;               use Ada.Text_IO;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -415,11 +414,8 @@ package body Src_Contexts is
       Start_Line   : Natural := 1;
       Start_Column : Natural := 1)
    is
-      Max_File_Len  : constant := 2 ** 21;
-      FD            : File_Descriptor;
       Lang          : Language_Access;
-      Len           : Natural;
-      Buffer        : Basic_Types.String_Access;
+      Buffer        : GNAT.OS_Lib.String_Access;
       Child         : MDI_Child;
       Start         : Natural;
       Line          : Natural;
@@ -438,29 +434,18 @@ package body Src_Contexts is
       Child := Get_File_Editor (Kernel, Name);
 
       if Child = null then
-         FD := Open_Read (Name, Text);
-         if FD = Invalid_FD then
+         Buffer := Read_File (Name);
+
+         if Buffer = null then
             return;
          end if;
-
-         Len := Natural (File_Length (FD));
-
-         --  ??? Temporary, until we are sure that we only manipulate text
-         --  files.
-
-         if Len > Max_File_Len then
-            Close (FD);
-            return;
-         end if;
-
-         Buffer := new String (1 .. Len);
-         Len := Read (FD, Buffer.all'Address, Len);
-         Close (FD);
 
          Line  := 1;
          Start := Buffer'First;
+
          while Line < Start_Line loop
             Start := Start + 1;
+
             exit when Start > Buffer'Last;
 
             if Buffer (Start) = ASCII.LF then
@@ -486,11 +471,11 @@ package body Src_Contexts is
            (Buffer (Start .. Buffer'Last), Context, Callback, Scope, Lang,
             Start_Line, Start_Column);
       end if;
+
       Free (Buffer);
 
    exception
       when Invalid_Context =>
-         Close (FD);
          Free (Buffer);
    end Scan_File;
 
@@ -1219,48 +1204,42 @@ package body Src_Contexts is
 
             --  Else, file isn't loaded, so we replace directly in the physical
             --  file.
+
             else
                --  ??? Could be more efficient, since we have already read the
                --  file to do the search
 
                declare
+                  Buffer   : GNAT.OS_Lib.String_Access;
                   FD       : File_Descriptor;
                   Len      : Natural;
-                  Buffer   : Basic_Types.String_Access;
-                  File     : Ada.Text_IO.File_Type;
+
                begin
-                  FD := Open_Read (Current_File (C), Text);
-                  if FD /= Invalid_FD then
-                     Len := Natural (File_Length (FD));
-                     Buffer := new String (1 .. Len);
-                     Len := Read (FD, Buffer.all'Address, Len);
-                     Close (FD);
+                  Buffer := Read_File (Current_File (C));
 
-                     Create (File, Out_File, Current_File (C));
-
-                     Put
-                       (File, Buffer
-                        (Buffer'First .. Matches (Matches'First).Index - 1));
-                     Put (File, Replace_String);
+                  if Buffer /= null then
+                     FD := Create_File (Current_File (C), Binary);
+                     Len := Write (FD, Buffer (1)'Address,
+                                   Matches (Matches'First).Index - 1);
+                     Len := Write (FD, Replace_String'Address,
+                                   Replace_String'Length);
 
                      for M in Matches'First + 1 .. Matches'Last loop
-                        Put
-                          (File, Buffer
-                           (Matches (M - 1).Index
-                            + Matches (M - 1).End_Column
-                            - Matches (M - 1).Column
-                              .. Matches (M).Index - 1));
-                        Put (File, Replace_String);
+                        Len := Matches (M - 1).Index
+                          + Matches (M - 1).End_Column
+                          - Matches (M - 1).Column;
+                        Len := Write
+                          (FD, Buffer (Len)'Address, Matches (M).Index - Len);
+                        Len := Write (FD, Replace_String'Address,
+                                      Replace_String'Length);
                      end loop;
 
-                     Put
-                       (File,
-                        Buffer (Matches (Matches'Last).Index
-                                + Matches (Matches'Last).End_Column
-                                - Matches (Matches'Last).Column
-                                .. Buffer'Last));
-
-                     Close (File);
+                     Len := Matches (Matches'Last).Index
+                       + Matches (Matches'Last).End_Column
+                       - Matches (Matches'Last).Column;
+                     Len := Write
+                       (FD, Buffer (Len)'Address, Buffer'Last - Len + 1);
+                     Close (FD);
                      Free (Buffer);
                   end if;
                end;
