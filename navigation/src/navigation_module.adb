@@ -335,7 +335,7 @@ package body Navigation_Module is
       Register_Command
         (Kernel,
          Command      => "add_location_command",
-         Usage        => "(command, arg1, [arg2...]) -> None",
+         Params       => "(command, arg1, [arg2...])",
          Description  => -("Register a command to be associated with"
                            &" navigation buttons."),
          Minimum_Args => 1,
