@@ -460,6 +460,11 @@ private
       --  mouse.
 
       Writable             : Boolean := True;
+
+      Explicit_Writable_Set : Boolean := False;
+      --  Whether the user has manually toggled the editor read-only
+      --  or writable
+
       Overwrite            : Boolean := False;
 
       Default_GC, Bg_GC    : Gdk.Gdk_GC;
