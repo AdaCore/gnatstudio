@@ -47,6 +47,10 @@ package VCS_View_Pkg is
       Kernel   : Kernel_Handle);
    --  Internal initialization function.
 
+   function Get_Kernel (VCS_View : access VCS_View_Record)
+      return Glide_Kernel.Kernel_Handle;
+   --  Return the kernel associated with VCS_View
+
    procedure Clear (Explorer : VCS_View_Access);
    --  Clear all the files in the model.
 

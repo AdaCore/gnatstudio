@@ -1367,4 +1367,14 @@ package body VCS_View_Pkg is
       return "";
    end Get_Current_File;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (VCS_View : access VCS_View_Record)
+      return Glide_Kernel.Kernel_Handle is
+   begin
+      return VCS_View.Kernel;
+   end Get_Kernel;
+
 end VCS_View_Pkg;
