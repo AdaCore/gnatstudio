@@ -84,6 +84,20 @@ package Glide_Kernel.Preferences is
       Value  : Boolean);
    --  See Default_Preferences.Set_Pref
 
+   ------------------
+   -- Enumerations --
+   ------------------
+
+   type Line_Terminators is (Unchanged, Unix, Windows);
+   for Line_Terminators'Size use Glib.Gint'Size;
+   pragma Convention (C, Line_Terminators);
+   --  The list of supported line terminators.
+
+   type Key_Themes is (Default, Emacs);
+   for Key_Themes'Size use Glib.Gint'Size;
+   pragma Convention (C, Key_Themes);
+   --  The list of supported key themes.
+
    -----------------------
    -- List of constants --
    -----------------------
@@ -93,7 +107,7 @@ package Glide_Kernel.Preferences is
 
    -- General --
    Default_Font          : Param_Spec_Font;
-   Key_Theme_Name        : Param_Spec_String;
+   Key_Theme_Name        : Param_Spec_Enum;
    Use_Native_Dialogs    : Param_Spec_Boolean;
    Can_Change_Accels     : Param_Spec_Boolean;
    Default_Charset       : Param_Spec_String;
@@ -131,6 +145,7 @@ package Glide_Kernel.Preferences is
    Default_HL_Region_Color   : Param_Spec_Color;
 
    Strip_Blanks              : Param_Spec_Boolean;
+   Line_Terminator           : Param_Spec_Enum;
    Display_Line_Numbers      : Param_Spec_Boolean;
    Source_Editor_Font        : Param_Spec_Font;
    Keyword_Font              : Param_Spec_Font;
