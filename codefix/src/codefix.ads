@@ -19,11 +19,10 @@
 -----------------------------------------------------------------------
 
 --  This is the main package of Codefix, it define constants, exceptions and
---  tools that are used in others package.
+--  tools that are used in others packages.
 
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with GNAT.Debug_Pools; use GNAT.Debug_Pools;
 
 package Codefix is
 
@@ -51,8 +50,6 @@ package Codefix is
    --  the value null before calling these functions.
 
    type Dynamic_String is access all String;
-   P : GNAT.Debug_Pools.Debug_Pool;
-   for Dynamic_String'Storage_Pool use P;
 
    procedure Assign (This : in out Dynamic_String; Value : String);
    --  Delete the precedent string, and create a new initialized with Value.
