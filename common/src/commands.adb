@@ -336,7 +336,7 @@ package body Commands is
 
    procedure Add_Alternate_Action
      (Item   : access Root_Command'Class;
-      Action : access Root_Command'Class)is
+      Action : access Root_Command'Class) is
    begin
       Prepend (Item.Alternate_Commands, Command_Access (Action));
    end Add_Alternate_Action;
