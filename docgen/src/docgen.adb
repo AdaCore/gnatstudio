@@ -130,7 +130,7 @@ package body Docgen is
 
    procedure Free (X : in out Source_File_Information) is
    begin
-      Free (X.Package_Name);
+      Free (X.Unit_Name);
       Free (X.Doc_File_Name);
    end Free;
 
@@ -227,7 +227,8 @@ package body Docgen is
          Entity             => Entity.Entity,
          Is_Private         => Entity.Is_Private,
          Line_In_Body       => Entity.Line_In_Body,
-         Public_Declaration => Entity.Public_Declaration);
+         Public_Declaration => Entity.Public_Declaration,
+         Processed          => Entity.Processed);
    end Clone;
 
    ----------
