@@ -113,7 +113,7 @@ Source Browsing
 
 Debugging
 
-* The Debugger Menu::
+* The Debug Menu::
 * The Call Stack Window::
 * The Data Window::
 * The Breakpoint Editor::
@@ -1443,7 +1443,7 @@ When you want to quit the debugger without quitting GPS, go to the menu
 @code{Debug->Terminate}, which will terminate your debug session.
 
 @menu
-* The Debugger Menu::
+* The Debug Menu::
 * The Call Stack Window::
 * The Data Window::
 * The Breakpoint Editor::
