@@ -42,18 +42,7 @@ procedure Initialize (Codefix_Window : access Codefix_Window_Record'Class) is
    Fix_Caption_List_Items : String_List.Glist;
 
 begin
-      --   Gtk.Window.Initialize (Codefix_Window, Window_Toplevel);
    Gtk.Box.Initialize_Hbox (Codefix_Window);
---   Set_Title (Codefix_Window, -"Codefix");
---   Set_Policy (Codefix_Window, False, True, False);
---   Set_Position (Codefix_Window, Win_Pos_None);
---   Set_Modal (Codefix_Window, False);
---   Set_USize (Codefix_Window, 640, 480);
---   Return_Callback.Connect
---     (Codefix_Window, "delete_event", On_Codefix_Window_Delete_Event'Access);
-
---   Gtk_New_Hbox (Codefix_Window.Hbox1, False, 0);
---   Add (Codefix_Window, Codefix_Window.Hbox1);
 
    Gtk_New_Vbox (Codefix_Window.Vbox6, False, 0);
    Pack_Start (Codefix_Window, Codefix_Window.Vbox6, True, True, 0);
@@ -103,7 +92,6 @@ begin
       Widget_Callback.To_Marshaller (On_Fix_Entry_Changed'Access), Codefix_Window);
 
    Gtk_New_Vbox (Codefix_Window.Vbox5, False, 0);
---   Pack_Start (Codefix_Window.Hbox1, Codefix_Window.Vbox5, False, True, 0);
    Pack_Start (Codefix_Window, Codefix_Window.Vbox5, False, True, 0);
 
    Gtk_New (Codefix_Window.Vbuttonbox1);
@@ -111,7 +99,7 @@ begin
    Set_Layout (Codefix_Window.Vbuttonbox1, Buttonbox_Start);
    Set_Child_Size (Codefix_Window.Vbuttonbox1, 85, 27);
    Set_Child_Ipadding (Codefix_Window.Vbuttonbox1, 7, 0);
-   Pack_Start (Codefix_Window.Vbox5, Codefix_Window.Vbuttonbox1, True, True, 0);
+   Pack_Start (Codefix_Window.Vbox5, Codefix_Window.Vbuttonbox1, True, True, 5);
 
    Gtk_New
      (Codefix_Window.Alignment1, 0.5, 0.5, 1.0,
@@ -132,12 +120,40 @@ begin
       Widget_Callback.To_Marshaller (On_Accept_Correction_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Accept_Correction);
 
+   Gtk_New (Codefix_Window.Skip_All_Corrections, -"Skip all");
+   Set_Flags (Codefix_Window.Skip_All_Corrections, Can_Default);
+   Widget_Callback.Object_Connect
+     (Codefix_Window.Skip_All_Corrections, "clicked",
+      Widget_Callback.To_Marshaller (On_Skip_All_Corrections_Clicked'Access), Codefix_Window);
+   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Skip_All_Corrections);
+
+   Gtk_New (Codefix_Window.Accept_All_Corrections, -"Apply all");
+   Set_Flags (Codefix_Window.Accept_All_Corrections, Can_Default);
+   Widget_Callback.Object_Connect
+     (Codefix_Window.Accept_All_Corrections, "clicked",
+      Widget_Callback.To_Marshaller (On_Accept_All_Corrections_Clicked'Access), Codefix_Window);
+   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Accept_All_Corrections);
+
+   Gtk_New_From_Stock (Codefix_Window.Undo, Stock_Undo);
+   Set_Flags (Codefix_Window.Undo, Can_Default);
+   Widget_Callback.Object_Connect
+     (Codefix_Window.Undo, "clicked",
+      Widget_Callback.To_Marshaller (On_Undo_Clicked'Access), Codefix_Window);
+   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Undo);
+
+   Gtk_New_From_Stock (Codefix_Window.Refresh, Stock_Refresh);
+   Set_Flags (Codefix_Window.Refresh, Can_Default);
+   Widget_Callback.Object_Connect
+     (Codefix_Window.Refresh, "clicked",
+      Widget_Callback.To_Marshaller (On_Refresh_Clicked'Access), Codefix_Window);
+   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Refresh);
+
    Gtk_New (Codefix_Window.Vbuttonbox2);
    Set_Spacing (Codefix_Window.Vbuttonbox2, 10);
    Set_Layout (Codefix_Window.Vbuttonbox2, Buttonbox_End);
    Set_Child_Size (Codefix_Window.Vbuttonbox2, 85, 27);
    Set_Child_Ipadding (Codefix_Window.Vbuttonbox2, 7, 0);
-   Pack_Start (Codefix_Window.Vbox5, Codefix_Window.Vbuttonbox2, True, True, 0);
+   Pack_Start (Codefix_Window.Vbox5, Codefix_Window.Vbuttonbox2, True, True, 5);
 
    Gtk_New_From_Stock (Codefix_Window.Cancel_Changes, Stock_Cancel);
    Set_Flags (Codefix_Window.Cancel_Changes, Can_Default);
