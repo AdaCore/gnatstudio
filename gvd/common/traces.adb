@@ -532,7 +532,7 @@ package body Traces is
 
    begin
       if File_Name /= "" then
-         F := Open_Read (C_Name, Text);
+         F := Open_Read (File_Name, Text);
 
          if F = Invalid_FD then
             return;
