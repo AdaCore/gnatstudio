@@ -286,7 +286,8 @@ package body Src_Editor_Module is
       Node : Node_Ptr;
       User : Kernel_Handle) return MDI_Child;
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
       return Node_Ptr;
    --  Support functions for the MDI
 
@@ -2190,8 +2191,10 @@ package body Src_Editor_Module is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
    is
+      pragma Unreferenced (User);
       N, Child     : Node_Ptr;
       Line, Column : Positive;
       Editor       : Source_Editor_Box;
@@ -3807,6 +3810,15 @@ package body Src_Editor_Module is
         (Kernel, -"Goto line...",
          Action => Command,
          Filter => Line_Numbers_Area_Filter);
+
+      Command := new Goto_Declaration_Command;
+      Register_Contextual_Menu
+        (Kernel, -"Goto declaration of entity",
+         Action => Command,
+         Ref_Item => "Goto declaration of %e",
+         Filter => Action_Filter
+           (not Line_Numbers_Area_Filter
+            and Create (Module => Src_Editor_Module_Name)));
 
       Command := new Goto_Other_File_Command;
       Register_Contextual_Menu
