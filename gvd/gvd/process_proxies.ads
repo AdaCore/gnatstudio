@@ -123,7 +123,7 @@ private
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.
 
-      Internal_Command   : Boolean := True;
+      Internal_Command   : Boolean := False;
       --  True if we are processing a set of commands that were not sent by
       --  the user, and whose output should be hidden.
    end record;

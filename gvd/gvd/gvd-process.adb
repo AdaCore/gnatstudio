@@ -28,7 +28,6 @@ with Gdk.Cursor;   use Gdk.Cursor;
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
 
-with Gtk.Bin;      use Gtk.Bin;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Main;     use Gtk.Main;
 with Gtk.Widget;   use Gtk.Widget;
@@ -201,11 +200,9 @@ package body Odd.Process is
 
       --  Do not show the output if we have an internal command
 
-      if Is_Internal_Command (Get_Process (Process.Debugger)) then
-         Initial_Internal_Command := True;
-      else
-         Initial_Internal_Command := False;
-
+      Initial_Internal_Command :=
+        Is_Internal_Command (Get_Process (Process.Debugger));
+      if not Initial_Internal_Command then
          if First = 0 then
             Text_Output_Handler (Process, Str);
          else
@@ -477,8 +474,6 @@ package body Odd.Process is
 
          Wait_Prompt (Debugger.Debugger);
       end if;
-
-      Set_Internal_Command (Get_Process (Debugger.Debugger), False);
 
       --  Put back the standard cursor
 
