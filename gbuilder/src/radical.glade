@@ -6,7 +6,7 @@
   <program_name>radical</program_name>
   <directory></directory>
   <source_directory>.</source_directory>
-  <pixmaps_directory>pixmaps</pixmaps_directory>
+  <pixmaps_directory>../pixmaps</pixmaps_directory>
   <language>Ada 95</language>
   <gnome_support>False</gnome_support>
   <gettext_support>True</gettext_support>
