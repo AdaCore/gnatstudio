@@ -56,6 +56,7 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       Path   : String);
    --  Set the Source_Path for the given Kernel Handle.
+   --  ??? Should this be renamed to something like Set_Extra_Source_Path
 
    function Get_Source_Path
      (Handle : access Kernel_Handle_Record) return String;
@@ -68,6 +69,7 @@ package Glide_Kernel is
       Path   : String);
    --  Set the Object_Path for the given Kernel Handle.
    --  ??? Needs more comments.
+   --  ??? Should this be renamed to something like Set_Extra_Object_Path
 
    function Get_Object_Path
      (Handle : access Kernel_Handle_Record) return String;
