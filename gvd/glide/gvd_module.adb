@@ -38,7 +38,6 @@ with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Pixmap;              use Gtk.Pixmap;
-with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Table;               use Gtk.Table;
 with Gtk.Toolbar;             use Gtk.Toolbar;
@@ -93,6 +92,9 @@ with Commands.Debugger;       use Commands.Debugger;
 
 with GVD.Text_Box.Source_Editor.Glide;
 use  GVD.Text_Box.Source_Editor.Glide;
+
+with Glide_Interactive_Consoles;
+use  Glide_Interactive_Consoles;
 
 package body GVD_Module is
 
@@ -1129,8 +1131,8 @@ package body GVD_Module is
       Page.Debugger := null;
 
       --  This might have been closed by the user
-      if Page.Command_Scrolledwindow /= null then
-         Close (Page.Process_Mdi, Page.Command_Scrolledwindow);
+      if Page.Debugger_Text /= null then
+         Close (Page.Process_Mdi, Page.Debugger_Text);
       end if;
 
       if Page.Data_Paned /= null then

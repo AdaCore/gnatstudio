@@ -41,6 +41,8 @@ with Odd_Intl;            use Odd_Intl;
 with Ada.Strings;         use Ada.Strings;
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
 
+with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+
 package body GVD.Window_Settings is
 
    -----------------
@@ -209,10 +211,10 @@ package body GVD.Window_Settings is
                end if;
 
                if not Top.TTY_Mode then
-                  if Process.Command_Scrolledwindow /= null then
+                  if Process.Debugger_Text /= null then
                      Set (String_Gint ("Command_Height" & Image),
                           Gint (Get_Allocation_Height
-                                  (Process.Command_Scrolledwindow)),
+                                  (Process.Debugger_Text)),
                           True);
                   end if;
 
