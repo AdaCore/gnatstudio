@@ -39,6 +39,10 @@ with Ada.Text_IO;         use Ada.Text_IO;
 
 package body Odd.Menus is
 
+   ---------------------
+   -- local constants --
+   ---------------------
+
    Contextual_Background_Menu_Name : constant String := "odd_bg_context";
    --  String used to store the background contextual menu as a user data in
    --  the canvas.
@@ -52,6 +56,10 @@ package body Odd.Menus is
 
    Debugger_Contextual_Menu_Name : constant String := "odd_debugger_context";
    --  String used to store the debugger command window contextual menu.
+
+   -----------------
+   -- local types --
+   -----------------
 
    type Breakpoint_Record (File_Length : Natural) is record
       Process : Debugger_Process_Tab;
@@ -70,6 +78,10 @@ package body Odd.Menus is
       Item   : Display_Item;
    end record;
 
+   --------------------
+   -- local packages --
+   --------------------
+
    package Menu_User_Data is new Gtk.Object.User_Data (Gtk_Menu);
 
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
@@ -83,13 +95,49 @@ package body Odd.Menus is
    package Item_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Item_Record);
 
-   procedure Set_Breakpoint (Widget : access Gtk_Widget_Record'Class;
-                             Br     : Breakpoint_Record);
+   ----------------------
+   -- local procedures --
+   ----------------------
+
+   procedure Set_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record);
    --  Set a breakpoint on a specific line.
 
-   procedure Till_Breakpoint (Widget : access Gtk_Widget_Record'Class;
-                              Br     : Breakpoint_Record);
+   procedure Till_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record);
    --  Set a temporary breakpoint on a line, and continue execution.
+
+   procedure Change_Align_On_Grid
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Canvas : Interactive_Canvas);
+   --  Spec needed ???
+
+   procedure Change_Line_Nums
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Editor : Code_Editor);
+   --  Spec needed ???
+
+   procedure Print_Locals
+     (Widget : access Gtk_Widget_Record'Class;
+      Var    : Variable_Record);
+   --  Spec needed ???
+
+   procedure Print_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Var    : Variable_Record);
+   --  Spec needed ???
+
+   procedure Update_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Item   : Item_Record);
+   --  Spec needed ???
+
+   procedure Change_Lines_With_Code
+     (Item   : access Gtk_Check_Menu_Item_Record'Class;
+      Editor : Code_Editor);
+   --  Spec needed ???
 
    --------------------------
    -- Change_Align_On_Grid --
@@ -97,8 +145,7 @@ package body Odd.Menus is
 
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Interactive_Canvas)
-   is
+      Canvas : Interactive_Canvas) is
    begin
       Align_On_Grid (Canvas, Get_Active (Item));
    end Change_Align_On_Grid;
@@ -109,8 +156,7 @@ package body Odd.Menus is
 
    procedure Change_Line_Nums
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Code_Editor)
-   is
+      Editor : Code_Editor) is
    begin
       Set_Show_Line_Nums (Editor, Get_Active (Item));
    end Change_Line_Nums;
@@ -121,8 +167,7 @@ package body Odd.Menus is
 
    procedure Change_Lines_With_Code
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Editor : Code_Editor)
-   is
+      Editor : Code_Editor) is
    begin
       Set_Show_Lines_With_Code (Editor, Get_Active (Item));
    end Change_Lines_With_Code;
@@ -131,9 +176,9 @@ package body Odd.Menus is
    -- Set_Breakpoint --
    --------------------
 
-   procedure Set_Breakpoint (Widget : access Gtk_Widget_Record'Class;
-                             Br     : Breakpoint_Record)
-   is
+   procedure Set_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record) is
    begin
       Break_Source (Br.Process.Debugger, Br.File, Br.Line);
    end Set_Breakpoint;
@@ -142,9 +187,9 @@ package body Odd.Menus is
    -- Till_Breakpoint --
    ---------------------
 
-   procedure Till_Breakpoint (Widget : access Gtk_Widget_Record'Class;
-                              Br     : Breakpoint_Record)
-   is
+   procedure Till_Breakpoint
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Breakpoint_Record) is
    begin
       Break_Source (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
       Continue (Br.Process.Debugger, Display => True);
@@ -167,8 +212,9 @@ package body Odd.Menus is
    -- Print_Variable --
    --------------------
 
-   procedure Print_Variable (Widget : access Gtk_Widget_Record'Class;
-                             Var    : Variable_Record)
+   procedure Print_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Var    : Variable_Record)
    is
       pragma Warnings (Off, Widget);
    begin
@@ -189,11 +235,14 @@ package body Odd.Menus is
    -- Print_Locals --
    ------------------
 
-   procedure Print_Locals (Widget : access Gtk_Widget_Record'Class;
-                           Var    : Variable_Record)
+   procedure Print_Locals
+     (Widget : access Gtk_Widget_Record'Class;
+      Var    : Variable_Record)
    is
-      S : String := "graph display `" & Info_Locals (Var.Process.Debugger)
-        & '`';
+      pragma Warnings (Off, Widget);
+
+      S : String :=
+        "graph display `" & Info_Locals (Var.Process.Debugger) & '`';
    begin
       Text_Output_Handler (Var.Process, S, Is_Command => True);
       Process_User_Command (Var.Process, S);

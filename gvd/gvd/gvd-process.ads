@@ -114,11 +114,11 @@ package Odd.Process is
       --  Color used for highlighting in the debugger window.
 
       Debugger_Text_Font : Gdk.Font.Gdk_Font := Gdk.Font.Null_Font;
-       --  Font used in the debugger window.
+      --  Font used in the debugger window.
 
       Selected_Item      : Gtkada.Canvas.Canvas_Item := null;
       Selected_Component : Items.Generic_Type_Access := null;
-       --  The currently selected item, and its specific component.
+      --  The currently selected item, and its specific component.
 
       Command_History : String_History.History_List
         (Default_Command_History_Size, Command_History_Collapse_Entries);

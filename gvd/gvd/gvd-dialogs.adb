@@ -258,7 +258,8 @@ package body Odd.Dialogs is
       Temp      : Chars_Ptr_Array (0 .. 1);
       Row       : Gint;
       Width     : Gint;
-      Ok_Button : Gtk_Button;
+      OK_Button : Gtk_Button;
+
    begin
       Initialize (Question_Dialog, "Question", Main_Window);
       Widget_Callback.Connect

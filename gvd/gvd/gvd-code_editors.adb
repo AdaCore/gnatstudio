@@ -65,6 +65,10 @@ package body Odd.Code_Editors is
 
    use Odd;
 
+   ---------------------
+   -- Local constants --
+   ---------------------
+
    Do_Color_Highlighting : constant Boolean := True;
    --  Indicate whether the editor should provide color highlighting.
 
@@ -89,9 +93,17 @@ package body Odd.Code_Editors is
    subtype Line_Number is String (1 .. Line_Numbers_Width);
    --  Type of strings used to display line numbers.
 
+   --------------------
+   -- Local packages --
+   --------------------
+
    package Editor_Cb is new Callback (Code_Editor_Record);
    package Editor_Event_Cb is new Gtk.Handlers.Return_Callback
      (Code_Editor_Record, Boolean);
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
 
    procedure Free is new Unchecked_Deallocation (String, String_Access);
 
@@ -100,9 +112,9 @@ package body Odd.Code_Editors is
    --  Called by Explorer when an item in the buffer is selected.
    --  This will select the word starting at Index.
 
-   function Button_Press_Cb (Editor : access Code_Editor_Record'Class;
-                             Event  : Gdk.Event.Gdk_Event)
-                            return Boolean;
+   function Button_Press_Cb
+     (Editor : access Code_Editor_Record'Class;
+      Event  : Gdk.Event.Gdk_Event) return Boolean;
    --  Handle button press events in the text editor.
 
    procedure Print_Buffer (Editor : access Code_Editor_Record'Class);
@@ -119,6 +131,16 @@ package body Odd.Code_Editors is
       Args   : Gtk_Args);
    --  Compute the contents of the explorer if needed. This is not done
    --  systematically, so as to speed things up.
+
+   procedure Scroll_Layout (Editor : access Code_Editor_Record'Class);
+   --  Spec needed ???
+
+   procedure Scroll_Layout_Changed
+     (Editor : access Code_Editor_Record'Class);
+   --  Spec needed ???
+
+   procedure Destroy_Cb (Editor : access Code_Editor_Record'Class);
+   --  Spec needed ???
 
    -------------
    -- Jump_To --
@@ -270,11 +292,11 @@ package body Odd.Code_Editors is
       --  Note that this widget is resized vertically dynamically if needed,
       --  so we can just set a size of 0.
       Gtk_New (Editor.Buttons);
-      Set_Usize (Editor.Buttons, Layout_Width, 0);
+      Set_USize (Editor.Buttons, Layout_Width, 0);
 
       Gtk_New (Editor.Explorer_Scroll);
       Set_Policy (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
-      Set_Usize (Editor.Explorer_Scroll, Explorer_Width, -1);
+      Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
 
       Editor_Cb.Object_Connect
         (Get_Vadj (Editor.Text), "value_changed",

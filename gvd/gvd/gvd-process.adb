@@ -114,6 +114,11 @@ package body Odd.Process is
       Window     : System.Address);
    --  Standard handler to add gdb's output to the debugger window.
 
+   function Debugger_Button_Press
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Event    : Gdk.Event.Gdk_Event) return Boolean;
+   --  Spec needed ???
+
    -------------
    -- Convert --
    -------------
@@ -344,9 +349,7 @@ package body Odd.Process is
 
    function Debugger_Button_Press
      (Process : access Debugger_Process_Tab_Record'Class;
-      Event    : Gdk.Event.Gdk_Event)
-     return Boolean
-   is
+      Event    : Gdk.Event.Gdk_Event) return Boolean is
    begin
       if Get_Button (Event) = 3 then
          Popup (Debugger_Contextual_Menu (Process),

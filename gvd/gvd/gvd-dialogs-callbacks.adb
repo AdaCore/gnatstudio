@@ -211,8 +211,9 @@ package body Odd.Dialogs.Callbacks is
         Question_Dialog_Access (Get_Toplevel (Object));
 
       Selection : Gint_List.Glist := Get_Selection (Dialog.List);
-      S : Unbounded_String;
-      Tmp       : Gint_List.Glist :=Gint_List. First (Selection);
+      S         : Unbounded_String;
+      Tmp       : Gint_List.Glist := Gint_List. First (Selection);
+
    begin
       while Tmp /= Gint_List.Null_List loop
          Append (S, Get_Text (Dialog.List, Gint_List.Get_Data (Tmp), 0));

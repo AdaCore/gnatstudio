@@ -57,8 +57,8 @@ package body Odd.Histories is
          end if;
 
          History.Contents (History.Last + 1) :=
-           History_Entry'(Data       => New Data_Type'(Data),
-                          Repeat_Num => 1);
+           History_Entry' (Data       => new Data_Type'(Data),
+                           Repeat_Num => 1);
          History.Last := (History.Last + 1) mod History.Max_Items;
       end if;
 
@@ -103,7 +103,7 @@ package body Odd.Histories is
 
    procedure Move_To_Next (History : in out History_List) is
    begin
-      if History.Current = - 1
+      if History.Current = -1
         or else (History.Current + 1) mod History.Max_Items = History.Last
       then
          History.Current := -1;
