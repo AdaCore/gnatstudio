@@ -73,7 +73,7 @@ package body SN.Find_Fns is
 
    procedure Set_Cursor_At
      (DB             : DB_File;
-      Class          : String := Invalid_String;
+      Class          : String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String)
