@@ -18,11 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-with Gtk.Button; use Gtk.Button;
-with Gtk.Toggle_Button; use Gtk.Toggle_Button;
-with Vsearch_Pkg; use Vsearch_Pkg;
+with Find_Utils;
 with Glide_Kernel;
+with Gtk.Button;
+with Gtk.Toggle_Button;
+with Gtk.Widget;
+with Vsearch_Pkg;
 
 --  This package provides an extended version of the visual search
 --  widget that can be found in module vsearch, so that it can be integrated
@@ -30,48 +31,7 @@ with Glide_Kernel;
 
 package Vsearch_Ext is
 
-   type Vsearch_Extended_Record is new Vsearch_Record with record
-      Kernel                 : Glide_Kernel.Kernel_Handle;
-      Search_Next_Button     : Gtk_Button;
-      Search_Replace_Button  : Gtk_Button;
-      Search_Previous_Button : Gtk_Button;
-      Stop_Button            : Gtk_Button;
-      Options_Toggle         : Gtk_Toggle_Button;
-      Context                : Gint := 0;
-      Scope                  : Gint := 0;
-      Continue               : Boolean := True;
-   end record;
-
-   Context_Current_File  : constant := 0;
-   --  Index of the "Current File" choice in the "Look In" entry.
-
-   Context_Explorer      : constant := 1;
-   --  Index of the "Explorer" choice in the "Look In" entry.
-
-   Context_Project_Files : constant := 2;
-   --  Index of the "Project Files" choice in the "Look In" entry.
-
-   Context_Files         : constant := 3;
-   --  Index of the "Files..." choice in the "Look In" entry.
-
-   Context_Help          : constant := 4;
-   --  Index of the "Help" choice in the "Look In" entry.
-
-   Scope_Whole_Text       : constant := 0;
-   --  Index of the "Whole Text" choice in the "Scope" entry.
-
-   Scope_Comments         : constant := 1;
-   --  Index of the "Comments Only" choice in the "Scope" entry.
-
-   Scope_Strings          : constant := 2;
-   --  Index of the "Strings Only" choice in the "Scope" entry.
-
-   Scope_Comments_Strings : constant := 3;
-   --  Index of the "Comments + Strings" choice in the "Scope" entry.
-
-   Scope_Code             : constant := 4;
-   --  Index of the "All but Comments" choice in the "Scope" entry.
-
+   type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with private;
    type Vsearch_Extended is access all Vsearch_Extended_Record'Class;
 
    procedure Gtk_New
@@ -83,5 +43,48 @@ package Vsearch_Ext is
      (Vsearch : access Vsearch_Extended_Record'Class;
       Handle  : Glide_Kernel.Kernel_Handle);
    --  Internal initialization procedure.
+
+   --------------------------------
+   -- Registering search modules --
+   --------------------------------
+
+   procedure Register_Search_Function
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Label             : String;
+      Factory           : Find_Utils.Module_Search_Context_Factory;
+      Extra_Information : Gtk.Widget.Gtk_Widget := null;
+      Mask              : Find_Utils.Search_Options_Mask;
+      Search_Func       : Find_Utils.Module_Search_Function;
+      Replace_Func      : Find_Utils.Module_Replace_Function := null);
+   --  Register a new search function.
+   --  This will be available under the title Label in the search combo box.
+   --  If Extra_Information is not null, then it will be displayed every time
+   --  this label is selected. It can be used for instance to ask for more
+   --  information like a list of files to search.
+   --  When the user then selects "Find", the function Factory is called to
+   --  create the factory. The options and searched string or regexp will be
+   --  set automatically on return of Factory, so you do not need to handle
+   --  this.
+   --  Mask indicates what options are relevant for that module. Options that
+   --  are not set will be greyed out.
+   --  Search_Func and Replace_Func are the two functions that are actually
+   --  used to perform the actions. If one of them is null, the corresponding
+   --  GUI button will be greyed out.
+
+   procedure Register_Default_Search
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register the default search function
+
+private
+   type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
+      Kernel                 : Glide_Kernel.Kernel_Handle;
+      Search_Next_Button     : Gtk.Button.Gtk_Button;
+      Search_Replace_Button  : Gtk.Button.Gtk_Button;
+      Search_Previous_Button : Gtk.Button.Gtk_Button;
+      Stop_Button            : Gtk.Button.Gtk_Button;
+      Options_Toggle         : Gtk.Toggle_Button.Gtk_Toggle_Button;
+      Continue               : Boolean := True;
+      Extra_Information      : Gtk.Widget.Gtk_Widget;
+   end record;
 
 end Vsearch_Ext;
