@@ -2565,16 +2565,13 @@ package body VCS_View_API is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-
-      Ref      : constant VCS_Access := Get_Current_Ref (Kernel);
       Explorer : VCS_View_Access;
 
    begin
       Open_Explorer (Kernel, null);
       Explorer := Get_Explorer (Kernel);
       Clear (Explorer);
-
-      Get_Status (Ref, Get_Files_In_Project (Get_Project (Kernel)));
+      Query_Project_Files (Explorer, Kernel, Get_Project (Kernel), True, True);
 
    exception
       when E : others =>
