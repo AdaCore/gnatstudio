@@ -29,8 +29,7 @@ with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
 package Make_Suite_Window_Pkg.Callbacks is
-   --  Handle callbacks for main "AUnit_Make_Suite" window.  Generated
-   --  by Glade
+   --  Handle callbacks for main "AUnit_Make_Suite" window.
 
    function On_Make_Suite_Window_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
