@@ -483,6 +483,9 @@ package body Browsers.Call_Graph is
             Get_Declaration_Line_Of (Item.Entity),
             Get_Declaration_Column_Of (Item.Entity));
 
+         --  Make sure that the item we clicked on is still visible
+         Show_Item (Get_Canvas (Item.Browser), Item);
+
       elsif Get_Event_Type (Event) = Button_Press then
          Select_Item (Item.Browser, Item, True);
       end if;
