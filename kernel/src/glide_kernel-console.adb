@@ -370,6 +370,7 @@ package body Glide_Kernel.Console is
       Title       : String := "";
       History     : History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
+      Module      : Glide_Kernel.Module_ID := null;
       Force_Create : Boolean := False) return Interactive_Console
    is
       Console : Interactive_Console;
@@ -397,7 +398,19 @@ package body Glide_Kernel.Console is
             Set_Max_Length   (Get_History (Kernel).all, 100, History);
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
-            Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
+            if Module /= null then
+               Child := Glide_Kernel.Put
+                 (Kernel,
+                  Child               => Console,
+                  Focus_Widget        => Gtk_Widget (Get_View (Console)),
+                  Module              => Module,
+                  Desktop_Independent => True);
+            else
+               Child := Put
+                 (Get_MDI (Kernel),
+                  Child               => Console,
+                  Focus_Widget        => Gtk_Widget (Get_View (Console)));
+            end if;
             Set_Dock_Side (Child, Bottom);
             Dock_Child (Child);
             Raise_Child (Child);

@@ -58,12 +58,14 @@ package Glide_Kernel.Console is
       Title   : String := "";
       History : Histories.History_Key := "interactive";
       Create_If_Not_Exist : Boolean := True;
+      Module       : Glide_Kernel.Module_ID := null;
       Force_Create : Boolean := False) return Interactive_Console;
    --  Return a new interactive console (or an existing one if there is already
    --  one with the given Title). Any existing console is not cleared.
    --  If the title is the empty stirng, the GPS console is returned.
    --  If Force_Create, a new console is created even if one with the same
-   --  name already exists
+   --  name already exists.
+   --  Module is used to associate the console with a specific module
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class)
