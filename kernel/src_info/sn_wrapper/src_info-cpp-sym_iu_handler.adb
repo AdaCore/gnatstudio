@@ -20,6 +20,8 @@ begin
         Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
       Source_Filename   =>
         Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+      Referred_Filename =>
+        Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
       Location          => Sym.Start_Position,
       Kind              => Non_Generic_Package, -- ???
       Scope             => Global_Scope,
