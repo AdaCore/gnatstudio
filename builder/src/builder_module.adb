@@ -621,10 +621,14 @@ package body Builder_Module is
            Glide_Window (Get_Main_Window (Kernel));
          File_Context : constant File_Selection_Context_Access :=
            File_Selection_Context_Access (Context);
-
          File : constant String := Directory_Information (File_Context) &
            File_Information (File_Context);
-         Cmd  : constant String := "gnatmake -q -u -gnats "
+         View : constant Project_Id := Get_Project_View (Kernel);
+         Cmd  : constant String :=
+           Get_Attribute_Value
+             (View, Compiler_Command_Attribute,
+              Ide_Package, Default => "gnatmake", Index => "Ada")
+           & " -q -u -gnats "
            & Argument_List_To_String (Default_Builder_Switches) & File;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
@@ -805,46 +809,44 @@ package body Builder_Module is
       use String_List_Utils.String_List;
 
       Node : List_Node := First (Args);
+      L    : Integer := 0;
+
    begin
       if Command = "compile" then
          while Node /= Null_Node loop
             Compile_File (Kernel_Handle (Kernel), Data (Node));
-
             Node := Next (Node);
          end loop;
+
       elsif Command = "get_build_output" then
-         declare
-            L : Integer := 0;
-         begin
-            Node := First
-              (Builder_Module_ID_Access (Builder_Module_ID).Output);
+         Node := First
+           (Builder_Module_ID_Access (Builder_Module_ID).Output);
 
-            while Node /= Null_Node loop
-               L := L + Data (Node)'Length;
-               Node := Next (Node);
-            end loop;
+         while Node /= Null_Node loop
+            L := L + Data (Node)'Length;
+            Node := Next (Node);
+         end loop;
 
-            if L /= 0 then
-               declare
-                  S      : String (1 .. L);
-                  Length : Natural;
-               begin
-                  L := 1;
-                  Node := First
-                    (Builder_Module_ID_Access (Builder_Module_ID).Output);
+         if L /= 0 then
+            declare
+               S      : String (1 .. L);
+               Length : Natural;
+            begin
+               L := 1;
+               Node := First
+                 (Builder_Module_ID_Access (Builder_Module_ID).Output);
 
-                  while Node /= Null_Node loop
-                     Length := Data (Node)'Length;
-                     S (L .. L + Length - 1) := Data (Node);
-                     L := L + Length;
+               while Node /= Null_Node loop
+                  Length := Data (Node)'Length;
+                  S (L .. L + Length - 1) := Data (Node);
+                  L := L + Length;
 
-                     Node := Next (Node);
-                  end loop;
+                  Node := Next (Node);
+               end loop;
 
-                  return S;
-               end;
-            end if;
-         end;
+               return S;
+            end;
+         end if;
       end if;
 
       return "";
@@ -1343,6 +1345,7 @@ package body Builder_Module is
       Has_Child    : Boolean := False;
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
+      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
 
    begin
       if Menu = null then
@@ -1357,9 +1360,7 @@ package body Builder_Module is
       if Set_Shortcut
         and then Builder_Module.Build_Item /= null
       then
-         Remove_Accelerator
-           (Builder_Module.Build_Item,
-            Get_Default_Accelerators (Kernel), GDK_F4, 0);
+         Remove_Accelerator (Builder_Module.Build_Item, Group, GDK_F4, 0);
          Builder_Module.Build_Item := null;
       end if;
 
@@ -1386,6 +1387,10 @@ package body Builder_Module is
                GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
             Builder_Module.Build_Item := Mitem;
             Has_Child := True;
+         else
+            --  ??? F4 key binding is no longer taken into account if the
+            --  following line is called systematically:
+            Set_Accel_Path (Mitem, "<gps>/Build/Make/" & Mains (M).all, Group);
          end if;
       end loop;
 
@@ -1403,12 +1408,15 @@ package body Builder_Module is
    is
       Mains : constant Argument_List := Get_Attribute_Value
         (Project, Attribute_Name => Main_Attribute);
-      Mitem        : Gtk_Menu_Item;
+      Mitem : Gtk_Menu_Item;
+      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
+
    begin
       if Menu = null then
          if Mains'Length = 0 then
             return;
          end if;
+
          Gtk_New (Menu);
       end if;
 
@@ -1422,6 +1430,7 @@ package body Builder_Module is
          begin
             Gtk_New (Mitem, Exec);
             Append (Menu, Mitem);
+            Set_Accel_Path (Mitem, "<gps>/Build/Run/" & Exec, Group);
             File_Project_Cb.Object_Connect
               (Mitem, "activate",
                File_Project_Cb.To_Marshaller (On_Run'Access),
@@ -1445,24 +1454,28 @@ package body Builder_Module is
 
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
-      Mitem        : Gtk_Menu_Item;
-      Menu1        : Gtk_Menu renames Builder_Module.Make_Menu;
-      Menu2        : Gtk_Menu renames Builder_Module.Run_Menu;
+      Mitem : Gtk_Menu_Item;
+      Menu1 : Gtk_Menu renames Builder_Module.Make_Menu;
+      Menu2 : Gtk_Menu renames Builder_Module.Run_Menu;
+      Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
 
    begin
       --  Only add the shortcuts for the root project
-      Add_Build_Menu (Menu         => Builder_Module.Make_Menu,
-                      Project      => Get_Project_View (Kernel),
-                      Kernel       => Kernel,
-                      Set_Shortcut => True);
-      Add_Run_Menu   (Menu         => Builder_Module.Run_Menu,
-                      Project      => Get_Project_View (Kernel),
-                      Kernel       => Kernel);
+      Add_Build_Menu
+        (Menu         => Builder_Module.Make_Menu,
+         Project      => Get_Project_View (Kernel),
+         Kernel       => Kernel,
+         Set_Shortcut => True);
+      Add_Run_Menu
+        (Menu         => Builder_Module.Run_Menu,
+         Project      => Get_Project_View (Kernel),
+         Kernel       => Kernel);
 
       --  No main program ?
 
       Gtk_New (Mitem, -"<current file>");
       Append (Menu1, Mitem);
+      Set_Accel_Path (Mitem, "<gps>/Build/Make/<current file>", Group);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
          File_Project_Cb.To_Marshaller (On_Build'Access),
@@ -1474,13 +1487,14 @@ package body Builder_Module is
 
       if Builder_Module.Build_Item = null then
          Add_Accelerator
-           (Mitem, "activate", Get_Default_Accelerators (Kernel),
-            GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
+           (Mitem, "activate", Group, GDK_F4, 0,
+            Gtk.Accel_Group.Accel_Visible);
          Builder_Module.Build_Item := Mitem;
       end if;
 
       Gtk_New (Mitem, -"All main subprograms");
       Append (Menu1, Mitem);
+      Set_Accel_Path (Mitem, "<gps>/Build/Make/<All main subprograms>", Group);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
          File_Project_Cb.To_Marshaller (On_Build'Access),
@@ -1492,25 +1506,27 @@ package body Builder_Module is
 
       Gtk_New (Mitem, -"Custom...");
       Append (Menu1, Mitem);
+      --  ??? F9 key binding is no longer taken into account if the following
+      --  line is commented out:
+      --  Set_Accel_Path (Mitem, "<gps>/Build/Make/Custom...", Group);
       Kernel_Callback.Connect
         (Mitem, "activate",
          Kernel_Callback.To_Marshaller (On_Custom'Access),
          User_Data => Kernel);
       Add_Accelerator
-        (Mitem, "activate", Get_Default_Accelerators (Kernel),
-         GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
+        (Mitem, "activate", Group, GDK_F9, 0, Gtk.Accel_Group.Accel_Visible);
 
       --  Should be able to run any program
 
       Gtk_New (Mitem, -"Custom...");
       Append (Menu2, Mitem);
+      Set_Accel_Path (Mitem, "<gps>/Build/Run/Custom...", Group);
       File_Project_Cb.Object_Connect
         (Mitem, "activate",
          File_Project_Cb.To_Marshaller (On_Run'Access),
          Slot_Object => Kernel,
          User_Data   => File_Project_Record'
            (Length => 0, Project => Get_Project_View (Kernel), File => ""));
-
       Show_All (Menu1);
       Show_All (Menu2);
 
