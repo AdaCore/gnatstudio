@@ -1130,6 +1130,7 @@ package body Ada_Analyzer is
                Tmp := Tmp + 1;
 
                if Buffer (Tmp) = ASCII.LF then
+                  Compute_Indentation (Token, Prev_Token, Tmp - 1, Num_Spaces);
                   New_Lines := New_Lines + 1;
                end if;
 
