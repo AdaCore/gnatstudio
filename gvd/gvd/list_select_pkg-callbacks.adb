@@ -19,9 +19,10 @@
 -----------------------------------------------------------------------
 
 
-with Glib;            use Glib;
-with Gtk.Main;        use Gtk.Main;
-with Gtkada.Dialogs;  use Gtkada.Dialogs;
+with Glib;              use Glib;
+with Gtk.Main;          use Gtk.Main;
+with Gtkada.Dialogs;    use Gtkada.Dialogs;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body List_Select_Pkg.Callbacks is
 
@@ -35,21 +36,21 @@ package body List_Select_Pkg.Callbacks is
      (Object : access Gtk_Clist_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      List_Select : List_Select_Access
-        := List_Select_Access (Get_Toplevel (Object));
-      Arg1 : Gint := To_Gint (Params, 1);
+      List_Select : constant List_Select_Access :=
+        List_Select_Access (Get_Toplevel (Object));
+      Arg1 : constant Gint := To_Gint (Params, 1);
+
+      use Ada.Strings;
    begin
-      Set_Text (List_Select.The_Entry,
-                Get_Text (Object, Arg1, 0));
+      Set_Text
+        (List_Select.The_Entry, Trim (Get_Text (Object, Arg1, 0), Left));
    end On_Clist_Select_Row;
 
    ---------------------------
    -- On_The_Entry_Activate --
    ---------------------------
 
-   procedure On_The_Entry_Activate
-     (Object : access Gtk_Entry_Record'Class)
-   is
+   procedure On_The_Entry_Activate (Object : access Gtk_Entry_Record'Class) is
    begin
       Gtk.Main.Main_Quit;
    end On_The_Entry_Activate;
@@ -58,9 +59,7 @@ package body List_Select_Pkg.Callbacks is
    -- On_Ok_Clicked --
    -------------------
 
-   procedure On_Ok_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Ok_Clicked (Object : access Gtk_Button_Record'Class) is
    begin
       Gtk.Main.Main_Quit;
    end On_Ok_Clicked;
@@ -69,11 +68,10 @@ package body List_Select_Pkg.Callbacks is
    -- On_Cancel_Clicked --
    -----------------------
 
-   procedure On_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-      List_Select : List_Select_Access
-        := List_Select_Access (Get_Toplevel (Object));
+   procedure On_Cancel_Clicked (Object : access Gtk_Button_Record'Class) is
+      List_Select : constant List_Select_Access :=
+        List_Select_Access (Get_Toplevel (Object));
+
    begin
       Set_Text (List_Select.The_Entry, "");
       Gtk.Main.Main_Quit;
@@ -87,8 +85,8 @@ package body List_Select_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       Dummy       : Message_Dialog_Buttons;
-      List_Select : List_Select_Access
-        := List_Select_Access (Get_Toplevel (Object));
+      List_Select : List_Select_Access :=
+        List_Select_Access (Get_Toplevel (Object));
    begin
       Dummy := Message_Dialog
         (List_Select.Help_Text.all,
