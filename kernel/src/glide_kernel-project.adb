@@ -679,10 +679,10 @@ package body Glide_Kernel.Project is
    ------------------------------
 
    function Save_Project_Conditional
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Force     : Boolean) return Save_Return_Value
+     (Kernel : access Kernel_Handle_Record'Class;
+      Force  : Boolean) return Save_Return_Value
    is
-      Button   : Message_Dialog_Buttons;
+      Button : Message_Dialog_Buttons;
    begin
       if Force then
          Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
@@ -691,7 +691,7 @@ package body Glide_Kernel.Project is
         (Kernel.Projects_Data, Get_Project (Kernel), Recursive => True)
       then
          Button := Message_Dialog
-           (Msg            => -"Do you want to save the project ?",
+           (Msg            => -"Do you want to save the projects ?",
             Dialog_Type    => Confirmation,
             Buttons        =>
               Button_Yes or Button_All or Button_No or Button_Cancel,
