@@ -294,10 +294,12 @@ package body Entities.Queries is
       Distance : Integer := Integer'Last;
       Closest  : Entity_Information;
    begin
-      Trace (Me, "Find name=" & Normalized_Entity_Name
-             & " Source=" & Full_Name (Get_Filename (Source)).all
-             & " line=" & Line'Img & " column=" & Column'Img
-             & " check_decl=" & Check_Decl_Only'Img);
+      if Active (Me) then
+         Trace (Me, "Find name=" & Normalized_Entity_Name
+                & " Source=" & Full_Name (Get_Filename (Source)).all
+                & " line=" & Line'Img & " column=" & Column'Img
+                & " check_decl=" & Check_Decl_Only'Img);
+      end if;
 
       if Normalized_Entity_Name = "" then
          Find_Any_Entity
@@ -345,20 +347,21 @@ package body Entities.Queries is
       Handler  : constant LI_Handler := Get_LI_Handler (Db, File_Name);
       Source   : Source_File;
    begin
-      if Handler = null then
-         Trace (Me, "No such file registered: "
-                & Full_Name (File_Name).all);
-         Status := Entity_Not_Found;
-         Entity := null;
-      else
+      Status := Entity_Not_Found;
+      Entity := null;
+
+      if Handler /= null then
          Source := Get_Source_Info (Handler, File_Name);
 
          if Source /= null then
             Find_Declaration
               (Db, Source, Entity_Name, Line, Column, Entity, Status,
                Check_Decl_Only, Handler);
+            return;
          end if;
       end if;
+
+      Trace (Me, "No such file registered: " & Full_Name (File_Name).all);
    end Find_Declaration;
 
    ----------------------
@@ -378,12 +381,14 @@ package body Entities.Queries is
    is
       H       : LI_Handler := Handler;
       Updated : Source_File;
-      pragma Unreferenced (Updated);
    begin
-      Trace (Me, "Find_Declaration entity=" & Entity_Name
-             & " source=" & Full_Name (Get_Filename (Source)).all
-             & " line=" & Line'Img
-             & " column=" & Column'Img);
+      if Active (Me) then
+         Trace (Me, "Find_Declaration entity=" & Entity_Name
+                & " source=" & Full_Name (Get_Filename (Source)).all
+                & " line=" & Line'Img
+                & " column=" & Column'Img);
+      end if;
+
       if Source = Get_Predefined_File (Db) then
          Entity := Get_Or_Create
            (Name         => Entity_Name,
@@ -400,17 +405,24 @@ package body Entities.Queries is
          H := Get_LI_Handler (Db, Get_Filename (Source));
       end if;
 
+      Status := Entity_Not_Found;
+      Entity := null;
+
       if H /= null then
          Updated := Get_Source_Info (H, Get_Filename (Source));
 
-         if Case_Insensitive_Identifiers (H) then
-            Find (Source, UTF8_Strdown (Entity_Name), Line, Column,
-                  Check_Decl_Only, Entity, Status);
-         else
-            Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
-                  Entity, Status);
+         if Updated /= null then
+            if Case_Insensitive_Identifiers (H) then
+               Find (Source, UTF8_Strdown (Entity_Name), Line, Column,
+                     Check_Decl_Only, Entity, Status);
+            else
+               Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
+                     Entity, Status);
+            end if;
          end if;
+
          Trace (Me, "Result=" & Status'Img);
+
       else
          Status := Entity_Not_Found;
          Entity := null;
@@ -433,9 +445,11 @@ package body Entities.Queries is
         Entity_Reference_Arrays.First - 1;
       Return_Next : Boolean := Current_Location = No_File_Location;
    begin
-      Trace (Me, "Find_Next_Body for "
-             & Get_Name (Entity).all
-             & " current=" & To_String (Current_Location));
+      if Active (Me) then
+         Trace (Me, "Find_Next_Body for "
+                & Get_Name (Entity).all
+                & " current=" & To_String (Current_Location));
+      end if;
 
       Update_Xref (Entity.Declaration.File);
 
@@ -561,9 +575,11 @@ package body Entities.Queries is
       Assert (Me, Entity /= null,
               "No Entity specified to Find_All_References");
 
-      Trace (Me, "Find_All_References to " & Get_Name (Entity).all
-             & ' ' & To_String (Entity.Declaration)
-             & " in_file=" & Boolean'Image (In_File /= null));
+      if Active (Me) then
+         Trace (Me, "Find_All_References to " & Get_Name (Entity).all
+                & ' ' & To_String (Entity.Declaration)
+                & " in_file=" & Boolean'Image (In_File /= null));
+      end if;
 
       if In_Scope /= null then
          loop
