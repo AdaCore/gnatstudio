@@ -149,13 +149,11 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Destination.Start := Clone (File_Cursor (Position));
          Destination.Start.Col := 1;
          Destination.Start.Line := 1;
-
-         while Is_Comment (Get_Line (Current_Text, Destination.Start)) loop
-            Destination.Start.Line := Destination.Start.Line + 1;
-         end loop;
       end if;
 
-      while Is_Blank (Get_Line (Current_Text, Destination.Start)) loop
+      while Is_Blank (Get_Line (Current_Text, Destination.Start))
+        or else Is_Comment (Get_Line (Current_Text, Destination.Start))
+      loop
          Destination.Start.Col := 1;
          Destination.Start.Line := Destination.Start.Line + 1;
       end loop;
@@ -503,14 +501,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
            (Get_Element (This, First),
             Last_Used - First + 1));
 
-      if First > 1 then
-         Remove_Elements (This, First - 1, Last_Used);
-         --  -1 deletes the precedent character, the ','.
-      else
-         Remove_Elements (This, First, Last_Used + 1);
-         --  In this case, there is no precedent character, so the next ','
-         --  is deleted.
-      end if;
+      Remove_Elements (This, First, Last_Used);
 
    end Cut_Off_Elements;
 
@@ -555,9 +546,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Current_Element : Tokens_List.List_Node;
       Garbage_Node    : Tokens_List.List_Node;
       Last_Used       : Natural;
+      First_Used      : Natural;
 
-      Offset_Char    : Integer := 0;
-      Previous_Line  : Ptr_Extract_Line;
+      Offset_Char     : Integer := 0;
+      Previous_Line   : Ptr_Extract_Line;
 
    begin
 
@@ -567,14 +559,25 @@ package body Codefix.Text_Manager.Ada_Extracts is
          Last_Used := Last;
       end if;
 
-      Current_Element := Get_Element (This, First);
+      First_Used := First;
 
-      if First - Last_Used + 1 =  Length (This.Elements_List) then
+      if First_Used > 1 then
+         First_Used := First_Used - 1;
+         --  -1 deletes the precedent character, the ','.
+      else
+         Last_Used := Last_Used + 1;
+         --  In this case, there is no precedent character, so the next ','
+         --  is deleted.
+      end if;
+
+      if Last_Used - First_Used + 1 >=  Length (This.Elements_List) then
          Remove_Instruction (This);
          return;
       end if;
 
-      for J in First .. Last_Used loop
+      Current_Element := Get_Element (This, First_Used);
+
+      for J in First_Used .. Last_Used loop
          if Data (Current_Element).Line /= Previous_Line then
             Offset_Char := 0;
             Previous_Line := Data (Current_Element).Line;
