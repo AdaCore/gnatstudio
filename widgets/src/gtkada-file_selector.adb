@@ -411,10 +411,8 @@ package body Gtkada.File_Selector is
          History => History);
       Set_Position (File_Selector, Win_Pos_Mouse);
 
-      if Default_Name /= "" then
-         Set_Text
-           (File_Selector.Selection_Entry, Locale_To_UTF8 (Default_Name));
-      end if;
+      Set_Text
+        (File_Selector.Selection_Entry, Locale_To_UTF8 (Default_Name));
 
       if File_Pattern /= "" then
          Register_Filter
@@ -804,8 +802,6 @@ package body Gtkada.File_Selector is
    begin
       --  If the new directory is not the one currently shown in the File_List,
       --  then update the File_List.
-
-      Set_Text (Win.Selection_Entry, "");
 
       if Dir /= ""
         and then Win.Current_Directory.all /= Normalized
