@@ -30,7 +30,6 @@ with Gtk.Check_Button;        use Gtk.Check_Button;
 with Gtk.Spin_Button;         use Gtk.Spin_Button;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
 with GVD.Color_Combo;         use GVD.Color_Combo;
-with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
 package body GVD.Preferences is
@@ -54,7 +53,7 @@ package body GVD.Preferences is
    procedure Set
      (Var : String_Boolean; Value : Boolean; Override : Boolean := False);
    procedure Set
-     (Var : String_Color; Value : Gdk_Color; Override : Boolean := False);
+     (Var : String_Color; Value : String; Override : Boolean := False);
    procedure Set
      (Var      : String_Font;
       Size     : String_Gint;
@@ -270,40 +269,9 @@ package body GVD.Preferences is
    ---------
 
    procedure Set
-     (Var : String_Color; Value : Gdk_Color; Override : Boolean := False)
-   is
-      function Normalize (V : Gcolor_Int) return String;
-
-      function Normalize (V : Gcolor_Int) return String is
-         S : String (1 .. 8);  --  "16#....#" or "16#.#", ....
-         O : String (1 .. 4) := "0000";
-         Index : Natural := S'Last;
-         O_Index : Natural := O'Last;
-
-      begin
-         Put (S, Integer (V), 16);
-
-         while S (Index) /= '#' loop
-            Index := Index - 1;
-         end loop;
-
-         Index := Index - 1;
-
-         while S (Index) /= '#' loop
-            O (O_Index) := S (Index);
-            Index := Index - 1;
-            O_Index := O_Index - 1;
-         end loop;
-
-         return O;
-      end Normalize;
-
+     (Var : String_Color; Value : String; Override : Boolean := False) is
    begin
-      Set (String (Var), '#'
-           & Normalize (Red (Value))
-           & Normalize (Green (Value))
-           & Normalize (Blue (Value)),
-           Override);
+      Set (String (Var), Value, Override);
    end Set;
 
    ---------
