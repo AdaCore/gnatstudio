@@ -408,7 +408,7 @@ begin
    Gtk_New (Main_Debug_Window.Abort1, -"Abort");
    Set_Sensitive (Main_Debug_Window.Abort1, False);
    Add_Accelerator (Main_Debug_Window.Abort1, "activate",
-     The_Accel_Group, GDK_Backslash, Gdk.Types.Control_Mask, Accel_Visible);
+     The_Accel_Group, GDK_backslash, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Abort1, "activate",
       Widget_Callback.To_Marshaller (On_Abort1_Activate'Access), Main_Debug_Window);
