@@ -1517,6 +1517,13 @@ the current line of execution when debugging, or cvs annotations.
 Located on the right of the editor, it allows you to scroll through the source
 file.
 
+@item A Speed Column
+This column, when visible, is located on the left of the editor. It allows you
+to view all the highlighted lines in a files, at a glance. For example, all the
+lines containing compilation errors are displayed in the Speed Column.
+See @ref{The Preferences Dialog} for information on how to customize the
+behaviour of the Speed Column.
+
 @item A status bar
 Giving information about the file.
 If the file is maintained under version control, and version control is
@@ -5651,6 +5658,24 @@ e.g. procedures, loops, if statements, @dots{}
 @item Block folding
 @cindex block folding
 Whether the editor should provide the ability to fold/unfold blocks.
+
+@item Speed Column Policy
+@cindex speed column policy
+When the Speed Column should be shown on the side of the editors:
+@table @code
+
+@item Never
+The Speed Column is never displayed.
+
+@item Automatic
+The Speed Column is shown whenever lines are highlighted in the editor, for
+example to indicate compilation errors, current debugger location, and so on.
+It disappears when no lines are highlighted.
+
+@item Always
+The Speed Column is always displayed.
+
+@end table
 
 @item External editor
 @cindex external editor
