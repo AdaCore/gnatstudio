@@ -223,7 +223,7 @@ package body Codefix_Module is
             Remove_Pixmap'Access,
             Create_Pixmap'Access);
 
-         Child := Put (Get_MDI (Kernel), Graphic_Codefix);
+         Child := Put (Kernel, Graphic_Codefix, Module => Codefix_Module_ID);
          Set_Title (Child, -"Code fixing", -"Codefix");
       else
          Graphic_Codefix := Graphic_Codefix_Access (Get_Widget (Child));
