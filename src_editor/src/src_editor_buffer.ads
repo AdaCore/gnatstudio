@@ -39,6 +39,7 @@ with Src_Highlighting;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
+with Ada.Calendar;
 with Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Generic_List;
@@ -1030,6 +1031,15 @@ private
 
       Blocks       : Block_List.List;
       --  A cache structure containing all the blocks in the buffer.
+
+      Blocks_Timeout_Registered : Boolean := False;
+      --  Whether the blocks need to be recomputed.
+
+      Blocks_Timeout : Gtk.Main.Timeout_Handler_Id;
+      --  A timeout handling the refresh of the timeouts.
+
+      Blocks_Request_Timestamp : Ada.Calendar.Time;
+      --  The last time the blocks refresh was requested.
    end record;
 
 end Src_Editor_Buffer;
