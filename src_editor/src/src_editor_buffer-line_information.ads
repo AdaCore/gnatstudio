@@ -53,7 +53,7 @@ package Src_Editor_Buffer.Line_Information is
    --  User must not free Info.
 
    procedure Draw_Line_Info
-     (Editor      : access Source_Buffer_Record'Class;
+     (Buffer      : access Source_Buffer_Record'Class;
       Top_Line    : Buffer_Line_Type;
       Bottom_Line : Buffer_Line_Type;
       View        : Gtk_Text_View;
@@ -64,13 +64,13 @@ package Src_Editor_Buffer.Line_Information is
    --  Layout should be used to draw text.
 
    procedure On_Click
-     (Editor : access Source_Buffer_Record'Class;
+     (Buffer : access Source_Buffer_Record'Class;
       Line   : Buffer_Line_Type;
       Offset : Gint);
    --  Perform a click in the side column for line Line, offset Offset.
 
    function Add_Blank_Lines
-     (Editor : access Source_Buffer_Record'Class;
+     (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
       GC     : Gdk.GC.Gdk_GC;
       Text   : String;
