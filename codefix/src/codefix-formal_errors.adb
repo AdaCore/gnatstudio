@@ -88,12 +88,18 @@ package body Codefix.Formal_Errors is
          return;
       end if;
 
-      Assign (This.File_Name,
-              Message (Matches (1).First .. Matches (1).Last));
-      This.Line := Positive'Value
-        (Message (Matches (2).First .. Matches (2).Last));
-      This.Col := Positive'Value
-        (Message (Matches (3).First .. Matches (3).Last));
+      begin
+         Assign (This.File_Name,
+                 Message (Matches (1).First .. Matches (1).Last));
+         This.Line := Positive'Value
+           (Message (Matches (2).First .. Matches (2).Last));
+         This.Col := Positive'Value
+           (Message (Matches (3).First .. Matches (3).Last));
+      exception
+         when Constraint_Error =>
+            Free (This);
+            This := Invalid_Error_Message;
+      end;
    end Parse_Head;
 
    -----------
