@@ -69,6 +69,13 @@ package body Src_Highlighting is
    --  empty string and can be parsed, then the Foreground_Gdk_Property is set
    --  with the given color.
 
+   procedure New_Tag
+     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Tag_Name   : String;
+      Color_Name : String);
+   --  Create a new Gtk_Text_Tag with the given Tag_Name. Color_Name is used
+   --  to set the Background_Gdk_Property.
+
    ------------------
    -- Create_Color --
    ------------------
