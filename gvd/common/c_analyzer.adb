@@ -209,12 +209,12 @@ package body C_Analyzer is
    procedure Pop_To_Construct
      (Stack : in out Token_Stack.Simple_Stack;
       Item  : out Token_Stack.Generic_Type_Access);
-   --  Returns first token from Stack that is not an identifier nor a
+   --  Return first token from Stack that is not an identifier nor a
    --  type or storage token kind. This Item is not removed from the stack.
    --  Items before the item found are removed from the stack.
 
    function Get_Token (S : String) return Token_Type;
-   --  Returns a Token_Type given a string
+   --  Return a Token_Type given a string
 
    ----------------------
    -- Pop_To_Construct --
@@ -652,6 +652,7 @@ package body C_Analyzer is
          Pop_To_Construct (Stack, Item);
 
          if Item.Token = No_Token then
+            --  ??? Value is uninitialized at this point
             return;
          else
             --  There is an item on the stack, read it now
@@ -1132,6 +1133,7 @@ package body C_Analyzer is
                if Curly_Level = 0 then
                   Push (Tokens, Temp);
                end if;
+
                Do_Indent (Index, Indent);
 
             when Tok_Identifier =>
