@@ -1,0 +1,17 @@
+/* Define if you need to in order for stat and other things to work.  */
+#undef _POSIX_SOURCE
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+#define VERSION 1.1
+
+#undef HAVE_GNU_REGEX
+
+/* This is from libglade */
+
+#ifdef DEBUG
+#  define debug(stmnt) stmnt
+#else
+#  define debug(stmnt) /* nothing */
+#endif
