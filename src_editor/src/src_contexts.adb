@@ -542,12 +542,12 @@ package body Src_Contexts is
               (Get_Slice (Editor, 1, 1), Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope, Lang);
          else
-            Result.Line       := Result.Line + Current_Line - 1;
-
-            if Current_Line = 1 then
+            if Result.Line = 1 then
                Result.Column     := Result.Column + Current_Column - 1;
                Result.End_Column := Result.End_Column + Current_Column - 1;
             end if;
+
+            Result.Line       := Result.Line + Current_Line - 1;
          end if;
       end if;
 
