@@ -172,6 +172,7 @@ private
       --  This array associates original line numbers (ie lines that were
       --  in the view the first time it was opened) with lines in the current
       --  view.
+      --  ??? The line number is already stored in Line_Information_Access
 
       Original_Text_Inserted : Boolean := False;
    end record;
