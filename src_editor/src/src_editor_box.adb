@@ -73,11 +73,6 @@ package body Src_Editor_Box is
      (Widget_Type => Glib.Object.GObject_Record,
       User_Type   => Source_Editor_Box);
 
-   --  package Return_Callback is new Gtk.Handlers.User_Return_Callback
-   --    (Widget_Type => Source_View_Record,
-   --     Return_Type => Boolean,
-   --     User_Type   => Source_Editor_Box);
-
    --------------------------
    -- Forward declarations --
    --------------------------
