@@ -211,6 +211,16 @@ package GNAT.Expect is
    --  Standard_Output. This is mainly used for debugging purposes.
    --  User_Data is ignored.
 
+   procedure Lock_Filters (Descriptor : in out Process_Descriptor);
+   --  Temporarily disables all output and input filters. They will be
+   --  reactivated only when Unlock_Filters has been called as many times as
+   --  Lock_Filters;
+
+   procedure Unlock_Filters (Descriptor : in out Process_Descriptor);
+   --  Unlocks the filters.
+   --  They are reactivated only if Unlock_Filters has been called as many
+   --  times as Lock_Filters.
+
    ------------------
    -- Sending data --
    ------------------
@@ -385,7 +395,7 @@ package GNAT.Expect is
       Matched     : out GNAT.Regpat.Match_Array;
       Timeout     : Integer := 10000;
       Full_Buffer : Boolean := False);
-   --  Same as above, but for multiprocesses.
+   --  Same as above, but for multi processes.
 
    procedure Expect
      (Result      : out Expect_Match;
@@ -398,6 +408,16 @@ package GNAT.Expect is
    ------------------------
    -- Getting the output --
    ------------------------
+
+   procedure Flush
+     (Descriptor : in out Process_Descriptor;
+      Timeout    : Integer := 0);
+   --  Discard all output waiting from the process.
+   --  This output is simply discarded, and no filter is called. This output
+   --  will also not be visible by the next call to Expect, nor will any
+   --  output currently buffered.
+   --  Timeout is the delay for which we wait for output to be available from
+   --  the process. If 0, we only get what is immediately available.
 
    function Expect_Out (Descriptor : Process_Descriptor) return String;
    --  Return the string matched by the last Expect call.
@@ -443,6 +463,7 @@ private
       Input_Fd         : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
       Output_Fd        : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
       Error_Fd         : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
+      Filters_Lock     : Integer := 0;
       Out_Filters      : Filter_List := null;
       In_Filters       : Filter_List := null;
 
