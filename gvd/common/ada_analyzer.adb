@@ -2081,13 +2081,19 @@ package body Ada_Analyzer is
                      or else Prev_Token = Tok_Right_Paren
                      or else Prev_Token = Tok_All
                      or else Prev_Token in Token_Class_Literal
+                     or else P = End_Of_Line
                   then
                      Prev_Token := Tok_Apostrophe;
                   else
                      First := P;
-                     P     := Next_Char (Next_Char (P));
 
-                     while P <= End_Of_Line
+                     if P = End_Of_Line - 1 then
+                        P := P + 1;
+                     else
+                        P := P + 2;
+                     end if;
+
+                     while P < End_Of_Line
                        and then Buffer (P) /= '''
                      loop
                         P := Next_Char (P);
