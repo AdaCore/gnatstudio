@@ -199,6 +199,7 @@ package Glide_Kernel.Preferences is
    Delimiter_Color           : Param_Spec_Color;
    Block_Folding             : Param_Spec_Boolean;
    Block_Highlighting        : Param_Spec_Boolean;
+   Automatic_Syntax_Check    : Param_Spec_Boolean;
    Current_Line_Color        : Param_Spec_Color;
    Current_Block_Color       : Param_Spec_Color;
    Search_Results_Color      : Param_Spec_Color;
