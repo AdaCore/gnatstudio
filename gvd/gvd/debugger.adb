@@ -24,10 +24,10 @@ with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with GNAT.IO;           use GNAT.IO;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 
 with Glib;              use Glib;
 with Gtk.Main;          use Gtk.Main;
@@ -37,16 +37,17 @@ with Gdk.Types;
 with Gtkada.Types;      use Gtkada.Types;
 
 with Odd_Intl;          use Odd_Intl;
-with GVD;               use GVD;
 with Items;             use Items;
 with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
-with GVD.Strings;       use GVD.Strings;
-with GVD.Types;         use GVD.Types;
-with GVD.Process;       use GVD.Process;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with GVD;               use GVD;
 with GVD.Preferences;   use GVD.Preferences;
+with GVD.Process;       use GVD.Process;
+with GVD.Strings;       use GVD.Strings;
+with GVD.Trace;         use GVD.Trace;
+with GVD.Types;         use GVD.Types;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
 
@@ -55,6 +56,10 @@ package body Debugger is
    use String_History;
 
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
+
+   ---------------------
+   -- Local Functions --
+   ---------------------
 
    function To_Gint is new Ada.Unchecked_Conversion (File_Descriptor, Gint);
 
@@ -86,6 +91,22 @@ package body Debugger is
    --  This should be called only if we are currently waiting for the next
    --  prompt, ie processing the output
    --  Note that this function will do nothing if Mode is Internal.
+
+   ---------------------
+   -- Command Queuing --
+   ---------------------
+
+   procedure Queue_Command
+     (Debugger        : access Debugger_Root'Class;
+      Cmd             : String;
+      Empty_Buffer    : Boolean;
+      Mode            : Command_Type);
+   --  Queue a given command to be executed after the next call to Wait.
+
+   function Process_Command
+     (Debugger : access Debugger_Root'Class) return Boolean;
+   --  Call the first command queued for Debugger.
+   --  Return False if no command are in the queue, True otherwise.
 
    ----------
    -- Free --
@@ -348,31 +369,52 @@ package body Debugger is
 
          --  Put back the standard cursor
 
+         if Get_Command_Mode (Get_Process (Process.Debugger)) >= Visible then
+            Set_Busy_Cursor (Process, False);
+         end if;
+
          Set_Command_In_Process (Get_Process (Process.Debugger), False);
-         Set_Busy_Cursor (Process, False);
+         Process.Debugger.Processing_User_Command := False;
          Unregister_Dialog (Process);
 
          --  Do the postprocessing here instead of calling Send_Internal_Post
          --  since we need to handle post processing slightly differently
 
-         Process_Post_Processes (Get_Process (Process.Debugger));
+         declare
+            Current_Command : constant String := Process.Current_Command.all;
+            Result          : Boolean;
+         begin
+            Free (Process.Current_Command);
 
-         if Is_Context_Command
-           (Process.Debugger, Process.Current_Command.all)
-         then
-            Context_Changed (Process);
-         elsif Is_Execution_Command
-           (Process.Debugger, Process.Current_Command.all)
-         then
-            Process_Stopped (Process);
-         end if;
+            if Process_Command (Process.Debugger) then
+               --  ??? register if needed for context_changed/process_stopped
+               --  before returning
+               return;
+            end if;
 
-         Update_Breakpoints
-           (Process,
-            Force =>
-              Is_Break_Command
-                (Process.Debugger, Process.Current_Command.all));
-         Free (Process.Current_Command);
+            Set_Command_In_Process (Get_Process (Process.Debugger));
+            Final_Post_Process (Process);
+
+            if Is_Context_Command
+              (Process.Debugger, Current_Command)
+            then
+               Context_Changed (Process);
+            elsif Is_Execution_Command
+              (Process.Debugger, Current_Command)
+            then
+               Process_Stopped (Process);
+            end if;
+
+            Update_Breakpoints
+              (Process,
+               Force => Is_Break_Command (Process.Debugger, Current_Command));
+            Set_Command_In_Process (Get_Process (Process.Debugger), False);
+
+            --  In case a command has been queued while handling the signals
+            --  and breakpoints above.
+
+            Result := Process_Command (Process.Debugger);
+         end;
       end if;
 
    exception
@@ -382,10 +424,11 @@ package body Debugger is
 
          Gdk.Input.Remove (Process.Input_Id);
          Process.Input_Id := 0;
+         Process.Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Process.Debugger), False);
          Set_Busy_Cursor (Process, False);
-         Unregister_Dialog (Process);
          Free (Process.Current_Command);
+         Unregister_Dialog (Process);
    end Output_Available;
 
    -----------------------
@@ -393,16 +436,17 @@ package body Debugger is
    -----------------------
 
    procedure Send_Internal_Pre
-     (Debugger         : access Debugger_Root'Class;
-      Cmd              : String;
-      Empty_Buffer     : Boolean := True;
-      Mode             : Command_Type)
+     (Debugger     : access Debugger_Root'Class;
+      Cmd          : String;
+      Empty_Buffer : Boolean := True;
+      Mode         : Command_Type)
    is
       use type Gtk.Window.Gtk_Window;
       Data    : History_Data;
       Process : Debugger_Process_Tab;
 
    begin
+      Debugger.Processing_User_Command := True;
       Set_Command_In_Process (Get_Process (Debugger));
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
@@ -412,8 +456,6 @@ package body Debugger is
          if Mode >= Visible then
             Set_Busy_Cursor (Process);
          end if;
-
-         Send_Init (Process);
 
          --  Display the command in the output window if necessary
 
@@ -439,7 +481,6 @@ package body Debugger is
       --  Send the command to the debugger
 
       Send (Get_Process (Debugger), Cmd, Empty_Buffer);
-      Send_Completed (Debugger, Cmd);
    end Send_Internal_Pre;
 
    ------------------------
@@ -447,19 +488,30 @@ package body Debugger is
    ------------------------
 
    procedure Send_Internal_Post
-     (Debugger         : access Debugger_Root'Class;
-      Cmd              : String;
-      Mode             : Command_Type)
+     (Debugger : access Debugger_Root'Class;
+      Cmd      : String;
+      Mode     : Command_Type)
    is
       Process : Debugger_Process_Tab;
-   begin
-      Set_Command_In_Process (Get_Process (Debugger), False);
-      Process_Post_Processes (Get_Process (Debugger));
+      Result  : Boolean;
 
-      --  Not an internal command, not in text mode (for testing purposes...)
+   begin
+      --  See also Output_Available for similar handling.
+
+      Debugger.Processing_User_Command := False;
+      Set_Command_In_Process (Get_Process (Debugger), False);
+
+      --  Should this be Internal or Internal + Hidden ???
+      if Mode /= Internal and then Process_Command (Debugger) then
+         --  ??? register if needed for context_changed/process_stopped
+         --  before returning
+         return;
+      end if;
 
       if Debugger.Window /= null then
+         Set_Command_In_Process (Get_Process (Debugger));
          Process := Convert (Debugger.Window, Debugger);
+         Final_Post_Process (Process);
 
          if Mode /= Internal then
             --  Postprocessing (e.g handling of auto-update).
@@ -474,8 +526,20 @@ package body Debugger is
               (Process, Force => Is_Break_Command (Debugger, Cmd));
          end if;
 
-         Set_Busy_Cursor (Process, False);
+         Set_Command_In_Process (Get_Process (Debugger), False);
+
+         if Mode >= Visible then
+            Set_Busy_Cursor (Process, False);
+         end if;
+
          Unregister_Dialog (Process);
+
+         --  In case a command has been queued while handling the signals
+         --  and breakpoints above.
+
+         if Mode /= Internal then
+            Result := Process_Command (Debugger);
+         end if;
       end if;
    end Send_Internal_Post;
 
@@ -484,92 +548,54 @@ package body Debugger is
    ----------
 
    procedure Send
-     (Debugger         : access Debugger_Root'Class;
-      Cmd              : String;
-      Empty_Buffer     : Boolean := True;
-      Wait_For_Prompt  : Boolean := True;
-      Mode             : Command_Type := Hidden)
+     (Debugger        : access Debugger_Root'Class;
+      Cmd             : String;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True;
+      Mode            : Command_Type := Hidden)
    is
       Process : Debugger_Process_Tab;
-      Last    : Positive := Cmd'First;
-      First   : Positive;
       Button  : Message_Dialog_Buttons;
 
    begin
-      --  ???Note: Handling of several commands inside the same string,
-      --  separated by ASCII.LF is just a temporary workaround for the
-      --  "start" command in C mode. This should be removed once we have
-      --  the command queue working.
+      --  ??? Should cut commands in the same string and queue them instead
+      --  of sending them as a single command.
+
+      if Wait_For_Prompt
+        and then Command_In_Process (Get_Process (Debugger))
+      then
+         Queue_Command (Debugger, Cmd, Empty_Buffer, Mode);
+         return;
+      end if;
+
+      Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
 
       case Mode is
          when Invisible_Command =>
-         --  Handle global lock
-         --  if Command_In_Process (Convert (Debugger.Window, Debugger)) then
-         --     return;
-         --  end if;
-
-            --  ??? Need to queue the command instead
-            if Wait_For_Prompt
-              and then Command_In_Process (Get_Process (Debugger))
-            then
-               return;
+            if Wait_For_Prompt then
+               Wait_Prompt (Debugger);
+               Send_Internal_Post (Debugger, Cmd, Mode);
             end if;
-
-            while Last <= Cmd'Last loop
-               First := Last;
-               Skip_To_Char (Cmd, Last, ASCII.LF);
-
-               Send_Internal_Pre
-                 (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
-
-               --  All commands, except possibly the last, must wait for the
-               --  prompt
-
-               if Wait_For_Prompt or else Last - 1 /= Cmd'Last then
-                  Wait_Prompt (Debugger);
-                  Send_Internal_Post (Debugger, Cmd (First .. Last - 1), Mode);
-               end if;
-
-               Last := Last + 1;
-            end loop;
 
          when Visible_Command =>
-            --  ??? Need to queue the command instead
-            if Wait_For_Prompt
-              and then Command_In_Process (Get_Process (Debugger))
-            then
-               return;
+            if not Async_Commands then
+               Wait_Prompt (Debugger);
+               Send_Internal_Post (Debugger, Cmd, Mode);
+
+            elsif Wait_For_Prompt then
+               Process := Convert (Debugger.Window, Debugger);
+               Process.Current_Command := new String' (Cmd);
+
+               pragma Assert (Process.Input_Id = 0);
+
+               Process.Input_Id := My_Input.Add
+                 (To_Gint
+                  (Get_Output_Fd
+                   (Get_Descriptor (Get_Process (Debugger)).all)),
+                  Gdk.Types.Input_Read,
+                  Output_Available'Access,
+                  My_Input.Data_Access (Process));
             end if;
-
-            while Last <= Cmd'Last loop
-               First := Last;
-               Skip_To_Char (Cmd, Last, ASCII.LF);
-
-               Send_Internal_Pre
-                 (Debugger, Cmd (First .. Last - 1), Empty_Buffer, Mode);
-
-               --  All commands, except the last, are synchronous, and must
-               --  wait for the prompt
-
-               if not Async_Commands or else Last - 1 /= Cmd'Last then
-                  Wait_Prompt (Debugger);
-                  Send_Internal_Post (Debugger, Cmd (First .. Last - 1), Mode);
-
-               elsif Wait_For_Prompt then
-                  Process := Convert (Debugger.Window, Debugger);
-                  Process.Current_Command := new String'
-                    (Cmd (First .. Last - 1));
-                  Process.Input_Id := My_Input.Add
-                    (To_Gint
-                     (Get_Output_Fd
-                      (Get_Descriptor (Get_Process (Debugger)).all)),
-                     Gdk.Types.Input_Read,
-                     Output_Available'Access,
-                     My_Input.Data_Access (Process));
-               end if;
-
-               Last := Last + 1;
-            end loop;
       end case;
 
    exception
@@ -583,6 +609,7 @@ package body Debugger is
          Button := Message_Dialog
            (-"The underlying debugger died unexpectedly. Closing it",
             Error, Button_OK);
+         Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy_Cursor (Process, False);
          Unregister_Dialog (Process);
@@ -594,69 +621,53 @@ package body Debugger is
    ---------------
 
    function Send_Full
-     (Debugger        : access Debugger_Root'Class;
-      Cmd             : String;
-      Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True;
-      Mode            : Invisible_Command := Hidden) return String
+     (Debugger     : access Debugger_Root'Class;
+      Cmd          : String;
+      Mode         : Invisible_Command := Hidden) return String
    is
       Process : Debugger_Process_Tab;
+      Main    : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Debugger.Window);
+
    begin
-      --  ??? We should always avoid concurrent calls to Wait, or the exact
-      --  behavior of the application will depend on specific timing, which is
-      --  not reliable.
+      if Main.Locked then
+         Output_Error (Main, "Internal inconsistency: recursing in Send_Full");
+         return "";
+      end if;
 
-      if Command_In_Process (Get_Process (Debugger)) then
-         if Can_Output then
-            Put_Line ("!!! already running a Wait command!!");
+      Main.Locked := True;
+
+      if Debugger.Processing_User_Command then
+         Wait_User_Command (Debugger);
+      end if;
+
+      Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
+      Wait_Prompt (Debugger);
+
+      declare
+         S : constant String := Expect_Out (Get_Process (Debugger));
+      begin
+         Send_Internal_Post (Debugger, Cmd, Mode);
+         Main.Locked := False;
+
+         if Need_To_Strip_CR then
+            return Strip_CR (S);
+         else
+            return S;
          end if;
-      end if;
-
-      --  Block if the global lock is set
-      --  if Command_In_Process (Convert (Debugger.Window, Debugger)) then
-      --     return;
-      --  end if;
-
-      Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
-
-      if Wait_For_Prompt then
-         Wait_Prompt (Debugger);
-
-         declare
-            S : constant String := Expect_Out (Get_Process (Debugger));
-         begin
-            Send_Internal_Post (Debugger, Cmd, Mode);
-
-            if Need_To_Strip_CR then
-               return Strip_CR (S);
-            else
-               return S;
-            end if;
-         end;
-      end if;
-
-      return "";
+      end;
 
    exception
       when Process_Died =>
+         Main.Locked := False;
          Process := Convert (Debugger.Window, Debugger);
+         Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy_Cursor (Process, False);
          Unregister_Dialog (Process);
          Close_Debugger (Process);
          return "";
    end Send_Full;
-
-   --------------------
-   -- Send_Completed --
-   --------------------
-
-   procedure Send_Completed
-     (Debugger : access Debugger_Root;
-      Cmd      : String) is
-   begin
-      null;
-   end Send_Completed;
 
    ------------------------------
    -- Variable_Name_With_Frame --
@@ -776,5 +787,71 @@ package body Debugger is
          Free (Info (J).Information);
       end loop;
    end Free;
+
+   -------------------
+   -- Queue_Command --
+   -------------------
+
+   procedure Queue_Command
+     (Debugger        : access Debugger_Root'Class;
+      Cmd             : String;
+      Empty_Buffer    : Boolean;
+      Mode            : Command_Type)
+   is
+      Tmp     : Command_Access := Debugger.Command_Queue;
+      Command : Command_Access;
+
+   begin
+      Command := new Command_Record'
+        (Cmd             => new String' (Cmd),
+         Empty_Buffer    => Empty_Buffer,
+         Mode            => Mode,
+         Next            => null);
+
+      if Tmp = null then
+         Debugger.Command_Queue := Command;
+      else
+         while Tmp.Next /= null loop
+            Tmp := Tmp.Next;
+         end loop;
+
+         Tmp.Next := Command;
+      end if;
+   end Queue_Command;
+
+   ---------------------
+   -- Process_Command --
+   ---------------------
+
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Command_Record, Command_Access);
+
+   function Process_Command
+     (Debugger : access Debugger_Root'Class) return Boolean
+   is
+      Command : Command_Access := Debugger.Command_Queue;
+   begin
+      if Command = null then
+         return False;
+      end if;
+
+      Debugger.Command_Queue := Command.Next;
+      Send
+        (Debugger, Command.Cmd.all, Command.Empty_Buffer,
+         Mode => Command.Mode);
+      Free (Command.Cmd);
+      Free (Command);
+      return True;
+   end Process_Command;
+
+   procedure Clear_Queue (Debugger : access Debugger_Root'Class) is
+      Command : Command_Access := Debugger.Command_Queue;
+   begin
+      while Command /= null loop
+         Debugger.Command_Queue := Command.Next;
+         Free (Command.Cmd);
+         Free (Command);
+      end loop;
+   end Clear_Queue;
 
 end Debugger;

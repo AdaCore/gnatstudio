@@ -102,29 +102,23 @@ package Debugger is
    --  Send a command to the underlying process associated with Debugger.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
-   --  Send_Completed is called right after the command is sent to the
-   --  debugger. Call Wait_Prompt before exiting if Wait_For_Prompt is True.
+   --  Call Wait_Prompt before exiting if Wait_For_Prompt is True.
    --  If Mode <= Hidden, then the output of the command won't be shown
    --  in the command window.
    --  If Mode indicates a visible command, it is executed asynchronously,
    --  otherwise it is executed synchronously, ie wait until we get the
    --  prompt.
-   --  Cmd can contain multiple commands, separated by ASCII.LF. There are
-   --  sent in turn, waiting for the completion of each before executing the
-   --  next. Only the last command can be asynchronous (depending on Mode), all
-   --  the others are synchronous.
 
    function Send_Full
      (Debugger        : access Debugger_Root'Class;
       Cmd             : String;
-      Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
-   --  Same as above, but also returns the output of the debugger. The full
-   --  output is returned, ie this includes the final prompt. You should
-   --  rather use the function Send
-   --  The empty string is returned if Wait_For_Prompt is False.
+   --  Same as above, but also return the output of the debugger.
+   --  The full output is returned, ie this includes the final prompt.
+   --  You should rather use the function Send below.
+   --  Note that any input waiting from the process is first discarded before
+   --  sending the command.
    --  You should always use this function instead of using Expect_Out
    --  yourself after calling the procedure Send, since some intermediate
    --  hidden calls to the debugger might have taken place in the meanwhile.
@@ -132,23 +126,18 @@ package Debugger is
    function Send
      (Debugger        : access Debugger_Root;
       Cmd             : String;
-      Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True;
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String is abstract;
    --  Same as above, but return a clean version of the output, ie it deletes
    --  the final prompt if any, depending on the debugger type.
 
-   procedure Send_Completed
-     (Debugger : access Debugger_Root;
-      Cmd      : String);
-   --  Hook called by Send right after it has sent Cmd to the debugger, and
-   --  before any other post-processing (like Wait_Prompt).
-
    procedure Wait_User_Command (Debugger : access Debugger_Root);
    --  Wait until the current user command ends.
    --  This is useful in particular when handling batches of command,
    --  e.g when replaying sessions or a set of user commands.
+
+   procedure Clear_Queue (Debugger : access Debugger_Root'Class);
+   --  Clear the queue of commands to execute associated with Debugger.
 
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
@@ -215,8 +204,7 @@ package Debugger is
    --  Return True if a prompt was found.
 
    procedure Display_Prompt
-     (Debugger        : access Debugger_Root;
-      Wait_For_Prompt : Boolean := True) is abstract;
+     (Debugger : access Debugger_Root) is abstract;
    --  Send a command to the debugger, so that the prompt is displayed
    --  again in the debugger window. This is used after internal commands like
    --  "graph print", to indicate that the command has finished executing.
@@ -435,9 +423,7 @@ package Debugger is
    --  See above for details on Display.
    --  GDB_COMMAND: "cont"
 
-   procedure Interrupt
-     (Debugger : access Debugger_Root;
-      Wait_For_Prompt : Boolean := False) is abstract;
+   procedure Interrupt (Debugger : access Debugger_Root) is abstract;
    --  Interrupt the debugger, or the debuggee if it is running.
 
    function Is_Execution_Command
@@ -769,6 +755,15 @@ package Debugger is
 
 private
 
+   type Command_Record;
+   type Command_Access is access Command_Record;
+   type Command_Record is record
+      Cmd             : GVD.Types.String_Access;
+      Empty_Buffer    : Boolean;
+      Mode            : GVD.Types.Command_Type;
+      Next            : Command_Access;
+   end record;
+
    type Debugger_Root is abstract tagged record
       Process      : Process_Proxies.Process_Proxy_Access := null;
       Window       : Gtk.Window.Gtk_Window;
@@ -778,5 +773,13 @@ private
       --  True when the debugger session has been started (ie the execution
       --  of the debuggee has started, and the user can now use commands like
       --  Next, Step, ...)
+
+      Command_Queue : Command_Access := null;
+      --  The list of commands to be processed after the next call to wait.
+
+      Processing_User_Command : Boolean := False;
+      --  True when a user command is being handled by the debugger.
+      --  ??? Would be nice to merge Process_Proxy.Command_In_Process and
+      --  Main_Debug_Window.Locked with this field
    end record;
 end Debugger;
