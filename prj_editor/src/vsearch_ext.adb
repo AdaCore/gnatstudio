@@ -42,6 +42,7 @@ with GUI_Utils;             use GUI_Utils;
 
 with Basic_Types;           use Basic_Types;
 with Generic_List;
+with Ada.Exceptions;        use Ada.Exceptions;
 
 with Traces; use Traces;
 
@@ -169,6 +170,7 @@ package body Vsearch_Ext is
 
          List := Next (List);
       end loop;
+
       return No_Search;
    end Find_Module;
 
@@ -178,9 +180,10 @@ package body Vsearch_Ext is
 
    function Idle_Search (Data : Idle_Search_Data) return Boolean is
    begin
-      if Search (Data.Vsearch.Last_Search_Context,
-                 Data.Vsearch.Kernel,
-                 Data.Search_Backward)
+      if Search
+           (Data.Vsearch.Last_Search_Context,
+            Data.Vsearch.Kernel,
+            Data.Search_Backward)
         and then Data.Vsearch.Continue
       then
          return True;
@@ -192,6 +195,13 @@ package body Vsearch_Ext is
          Data.Vsearch.Search_Idle_Handler := 0;
          return False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Pop_State (Data.Vsearch.Kernel);
+         Data.Vsearch.Search_Idle_Handler := 0;
+         return False;
    end Idle_Search;
 
    ---------------
@@ -249,7 +259,12 @@ package body Vsearch_Ext is
       else
          Free (Vsearch.Last_Search_Context);
       end if;
+
       Pop_State (Vsearch.Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Search;
 
    --------------------
@@ -289,6 +304,10 @@ package body Vsearch_Ext is
             Pop_State (Vsearch.Kernel);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Search_Next;
 
    -----------------------
@@ -299,6 +318,10 @@ package body Vsearch_Ext is
       pragma Unreferenced (Object);
    begin
       null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Search_Replace;
 
    ------------------------
@@ -309,6 +332,10 @@ package body Vsearch_Ext is
       pragma Unreferenced (Object);
    begin
       null;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Search_Previous;
 
    --------------------
@@ -339,6 +366,10 @@ package body Vsearch_Ext is
       end if;
 
       Show_All (Vsearch.Table);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Options_Toggled;
 
    ------------------------------
@@ -391,6 +422,10 @@ package body Vsearch_Ext is
             Vsearch.Extra_Information := Data.Extra_Information;
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Context_Entry_Changed;
 
    -------------
