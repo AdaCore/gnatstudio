@@ -235,6 +235,7 @@ package body Odd.Explorer is
       File_Node : Gtk_Ctree_Node;
       Data : Node_Data_Access;
       Tab  : Debugger_Process_Tab := Convert (Explorer);
+      Lang : Language_Access;
    begin
       --  If an entity was referenced, load the file and display the
       --  correct line.
@@ -243,9 +244,8 @@ package body Odd.Explorer is
          File_Node := Row_Get_Parent
            (Node_Get_Row (Row_Get_Parent (Node_Get_Row (Node))));
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, File_Node);
-         Set_Current_Language
-           (Code_Editor (Explorer.Code_Editor),
-            Get_Language_From_File (Data.Extension));
+         Lang := Get_Language_From_File (Data.Extension);
+         Set_Current_Language (Code_Editor (Explorer.Code_Editor), Lang);
          Load_File (Code_Editor (Explorer.Code_Editor),
                     Find_File (Tab.Debugger, Data.Extension));
          Highlight_Word (Code_Editor (Explorer.Code_Editor),
@@ -256,9 +256,8 @@ package body Odd.Explorer is
       else
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
          if Data.Is_File_Node then
-            Set_Current_Language
-              (Code_Editor (Explorer.Code_Editor),
-               Get_Language_From_File (Data.Extension));
+            Lang := Get_Language_From_File (Data.Extension);
+            Set_Current_Language (Code_Editor (Explorer.Code_Editor), Lang);
             Load_File (Code_Editor (Explorer.Code_Editor),
                        Find_File (Tab.Debugger, Data.Extension));
             --  Set_Line (Code_Editor (Explorer.Code_Editor), 1);
@@ -402,15 +401,30 @@ package body Odd.Explorer is
                --  and strip the ^Ms from the string
                declare
                   S : String (1 .. Length);
+                  Lang : Language_Access;
                begin
                   Length := Read (F, S'Address, Length);
 
                   --  Need to read the file independently from the
                   --  code_editor.
-                  Explore
-                    (Explorer, Node, Explorer, S,
-                     Get_Language_From_File (Full_Name),
-                     Full_Name);
+                  Lang := Get_Language_From_File (Full_Name);
+                  if Lang /= null then
+                     Explore (Explorer, Node, Explorer, S, Lang, Full_Name);
+                  else
+                     Node := Insert_Node
+                       (Explorer,
+                        Parent        => Node,
+                        Sibling       => null,
+                        Text          => Null_Array + (-"Unknown Language"),
+                        Spacing       => 5,
+                        Pixmap_Closed => Null_Pixmap,
+                        Mask_Closed   => Null_Bitmap,
+                        Pixmap_Opened => Null_Pixmap,
+                        Mask_Opened   => Null_Bitmap,
+                        Is_Leaf       => True,
+                        Expanded      => False);
+                     Node_Set_Selectable (Explorer, Node, False);
+                  end if;
                end;
                Close (F);
 
