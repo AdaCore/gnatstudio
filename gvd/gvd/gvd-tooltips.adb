@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -138,7 +138,9 @@ package body GVD.Tooltips is
       Area.Width := 0;
       Area.Height := 0;
 
-      Add_Events (Widget, Pointer_Motion_Mask or Enter_Notify_Mask);
+      Add_Events
+        (Widget,
+         Pointer_Motion_Mask or Enter_Notify_Mask or Focus_Change_Mask);
       Tooltip := new Tooltips_Record'
         (Timeout        => Default_Timeout,
          Data           => new User_Type' (Data),
@@ -160,6 +162,14 @@ package body GVD.Tooltips is
          User_Data => Tooltip);
       Tooltip_Handler.Connect
         (Widget, "leave_notify_event",
+         Tooltip_Handler.To_Marshaller (Mouse_Leave_Cb'Access),
+         User_Data => Tooltip);
+      Tooltip_Handler.Connect
+        (Widget, "leave_notify_event",
+         Tooltip_Handler.To_Marshaller (Mouse_Leave_Cb'Access),
+         User_Data => Tooltip);
+      Tooltip_Handler.Connect
+        (Widget, "focus_out_event",
          Tooltip_Handler.To_Marshaller (Mouse_Leave_Cb'Access),
          User_Data => Tooltip);
    end New_Tooltip;
