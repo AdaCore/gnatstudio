@@ -667,9 +667,14 @@ package Src_Editor_Buffer is
    end record;
 
    function Get_Block
-     (Editor : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Block_Record;
+     (Editor        : access Source_Buffer_Record;
+      Line          : Buffer_Line_Type;
+      Force_Compute : Boolean := True) return Block_Record;
    --  Return the block information associated with Line.
+   --  If Force_Compute is True, then the buffer blocks will be parsed
+   --  on-the-fly if needed. If Force_Compute is False and the buffer blocks
+   --  are not up-to-date, the latest known block at this line will be
+   --  returned.
 
    function Has_Block_Information
      (Editor : access Source_Buffer_Record) return Boolean;
