@@ -1522,6 +1522,39 @@ Access the various suggested fixes through the methods of the Codefix class</des
   </shell_doc>
 
   <!--#################################################################
+    ####   Console class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Console">
+      <description>This class redirects its input and output to one of GPS's windows. The current console can be overriden by calls to set_console()</description>
+      <example lang="python">
+         my_out = GPS.Console (1)
+         my_out.set_console ("New Window")
+
+         sys.stdout = my_out
+         print "a"      ##  Prints in "New Window"
+
+         my_out.write ("b")   ##  Also prints in "New Window"
+ 
+         my_out.set_console ()
+         print "c"      ##  Prints in python console       
+      </example>
+  </shell_doc>
+
+  <shell_doc name="GPS.Console.__init__">
+      <param name="self">The instance of GPS.Console</param>
+      <param name="capture">An integer</param>
+      <description>Build a new instance of GPS.Console. The parameter indicates whether the output to this stream should be captured by GPS, and returned when commands are executed through a GPS action. If it is set to "1", then the output can later be used with %1 in the next command executed by the GPS action</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Console.set_console">
+      <param name="self">The instance of GPS.Console</param>
+      <param name="console" default="">A string</param>
+      <description>Change the console to which the output of Python is sent. If an argument is specified, it should contain the name of a console to create. If no argument is specified, the Python console will be used</description>
+  </shell_doc>
+
+
+  <!--#################################################################
     ####   Toolbar class
     ###################################################################-->
 
