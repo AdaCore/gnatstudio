@@ -124,6 +124,7 @@ package body Glide_Result_View is
    Column_Cst        : aliased constant String := "column";
    Message_Cst       : aliased constant String := "message";
    Highlight_Cat_Cst : aliased constant String := "highlight";
+   Length_Cst        : aliased constant String := "length";
 
    Parse_Location_Parameters : constant Cst_Argument_List :=
      (1 => Output_Cst'Access,
@@ -143,7 +144,8 @@ package body Glide_Result_View is
       3 => Line_Cst'Access,
       4 => Column_Cst'Access,
       5 => Message_Cst'Access,
-      6 => Highlight_Cat_Cst'Access);
+      6 => Highlight_Cat_Cst'Access,
+      7 => Length_Cst'Access);
 
    -----------------------
    -- Local subprograms --
@@ -1548,14 +1550,16 @@ package body Glide_Result_View is
         (Kernel,
          Command      => "add",
          Params       =>
-           Parameter_Names_To_Usage (Locations_Add_Parameters, 1),
+           Parameter_Names_To_Usage (Locations_Add_Parameters, 2),
          Description  =>
          -("Add a new entry in the location window. Nodes are created as"
            & " needed for the category or file. If Highlight is specified to"
            & " a non-empty string, the whole line is highlighted in the file,"
            & " with a color given by that highlight category (see "
-           & " register_highlighting for more information)"),
-         Minimum_Args => Locations_Add_Parameters'Length - 1,
+           & " register_highlighting for more information). Length is the"
+           & " length of the highlighting. The default value of 0 indicates"
+           & " that the whole line should be highlighted"),
+         Minimum_Args => Locations_Add_Parameters'Length - 2,
          Maximum_Args => Locations_Add_Parameters'Length,
          Class         => Locations_Class,
          Static_Method => True,
@@ -1603,7 +1607,7 @@ package body Glide_Result_View is
       elsif Command = "add" then
          Name_Parameters (Data, Locations_Add_Parameters);
          declare
-            Highlight : constant String := Nth_Arg (Data, 6, "");
+            Highlight : constant String  := Nth_Arg (Data, 6, "");
          begin
             Insert_Result
               (Get_Kernel (Data),
@@ -1613,6 +1617,7 @@ package body Glide_Result_View is
                Line               => Nth_Arg (Data, 3),
                Column             => Nth_Arg (Data, 4),
                Text               => Nth_Arg (Data, 5),
+               Length             => Nth_Arg (Data, 7, 0),
                Highlight          => Highlight /= "",
                Highlight_Category => Highlight,
                Quiet              => True);
