@@ -31,8 +31,8 @@ package Language.Java is
      (Lang : access Java_Language;
       Str : String) return Boolean;
 
-   function Keywords (Lang : access Java_Language)
-     return GNAT.Regpat.Pattern_Matcher;
+   function Keywords
+     (Lang : access Java_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access Java_Language) return Language_Context_Access;

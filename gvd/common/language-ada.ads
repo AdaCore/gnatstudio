@@ -35,8 +35,8 @@ package Language.Ada is
    function Is_Simple_Type
      (Lang : access Ada_Language; Str : String) return Boolean;
 
-   function Keywords (Lang : access Ada_Language)
-     return GNAT.Regpat.Pattern_Matcher;
+   function Keywords
+     (Lang : access Ada_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access Ada_Language) return Language_Context_Access;

@@ -35,7 +35,7 @@ package Language.Cpp is
    ------------------
 
    function Keywords
-     (Lang : access Cpp_Language) return GNAT.Regpat.Pattern_Matcher;
+     (Lang : access Cpp_Language) return Pattern_Matcher_Access;
 
    function Get_Language_Context
      (Lang : access Cpp_Language) return Language_Context_Access;

@@ -28,7 +28,7 @@ with Basic_Types;  use Basic_Types;
 
 package body Language.Ada is
 
-   Keywords_List : Pattern_Matcher (1292);
+   Keywords_List : aliased Pattern_Matcher (1292);
    --  The size is hard-coded to save a little bit on the compilation time
    --  for the regular expression (we need to compile the regexp only once).
 
@@ -372,24 +372,25 @@ package body Language.Ada is
    --------------
 
    function Keywords
-     (Lang : access Ada_Language) return GNAT.Regpat.Pattern_Matcher
+     (Lang : access Ada_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin
-      return Keywords_List;
+      return Keywords_List'Access;
    end Keywords;
 
    --------------------------
    -- Get_Language_Context --
    --------------------------
 
+   Comment_Start_Pattern : aliased Pattern_Matcher := Compile ("^--");
+
    Ada_Context : aliased Language_Context :=
      (Comment_Start_Length          => 0,
       Comment_End_Length            => 0,
-      New_Line_Comment_Start_Length => 2,
       Comment_Start                 => "",
       Comment_End                   => "",
-      New_Line_Comment_Start        => "--",
+      New_Line_Comment_Start        => Comment_Start_Pattern'Access,
       String_Delimiter              => '"',
       Quote_Character               => ASCII.NUL,
       Constant_Character            => ''',

@@ -26,7 +26,7 @@ with C_Analyzer;        use C_Analyzer;
 
 package body Language.C is
 
-   Keywords_List : constant Pattern_Matcher := Compile
+   Keywords_List : aliased Pattern_Matcher := Compile
      ("^(" & C_Keywords_Regexp & ")\W");
    --  for java: ("finally" "synchronized" "implements" "extends" "throws"
    --  "threadsafe" "transient" "native" "volatile"
@@ -152,24 +152,25 @@ package body Language.C is
    --------------
 
    function Keywords
-     (Lang : access C_Language) return GNAT.Regpat.Pattern_Matcher
+     (Lang : access C_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin
-      return Keywords_List;
+      return Keywords_List'Access;
    end Keywords;
 
    --------------------------
    -- Get_Language_Context --
    --------------------------
 
-   C_Context : aliased Language_Context :=
+   Comment_Start_Pattern : aliased Pattern_Matcher := Compile ("^//");
+
+   C_Context             : aliased Language_Context :=
      (Comment_Start_Length          => 2,
       Comment_End_Length            => 2,
-      New_Line_Comment_Start_Length => 2,
       Comment_Start                 => "/*",
       Comment_End                   => "*/",
-      New_Line_Comment_Start        => "//",
+      New_Line_Comment_Start        => Comment_Start_Pattern'Access,
       String_Delimiter              => '"',
       Quote_Character               => '\',
       Constant_Character            => ''',

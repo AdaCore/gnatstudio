@@ -21,6 +21,8 @@ with GNAT.Regpat; use GNAT.Regpat;
 
 package body Language.Unknown is
 
+   Keywords_List : aliased Pattern_Matcher := GNAT.Regpat.Never_Match;
+
    --------------------
    -- Is_Simple_Type --
    --------------------
@@ -84,24 +86,25 @@ package body Language.Unknown is
    --------------
 
    function Keywords
-     (Lang : access Unknown_Language) return GNAT.Regpat.Pattern_Matcher
+     (Lang : access Unknown_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin
-      return GNAT.Regpat.Never_Match;
+      return Keywords_List'Access;
    end Keywords;
 
    --------------------------
    -- Get_Language_Context --
    --------------------------
 
+   Comment_Start_Pattern : aliased Pattern_Matcher := Never_Match;
+
    Unknown_Context : aliased Language_Context :=
      (Comment_Start_Length          => 0,
       Comment_End_Length            => 0,
-      New_Line_Comment_Start_Length => 0,
       Comment_Start                 => "",
       Comment_End                   => "",
-      New_Line_Comment_Start        => "",
+      New_Line_Comment_Start        => Comment_Start_Pattern'Access,
       String_Delimiter              => ASCII.NUL,
       Quote_Character               => ASCII.NUL,
       Constant_Character            => ASCII.NUL,

@@ -21,6 +21,9 @@ with GNAT.Regpat; use GNAT.Regpat;
 
 package body Language.Java is
 
+   Keywords_List : aliased Pattern_Matcher := Compile ("^@@@@$");
+   --  ??? Need to set a real pattern
+
    --------------------
    -- Is_Simple_Type --
    --------------------
@@ -81,24 +84,25 @@ package body Language.Java is
    --------------
 
    function Keywords
-     (Lang : access Java_Language) return GNAT.Regpat.Pattern_Matcher
+     (Lang : access Java_Language) return Pattern_Matcher_Access
    is
       pragma Unreferenced (Lang);
    begin
-      return Compile ("^@@@@$");
+      return Keywords_List'Access;
    end Keywords;
 
    --------------------------
    -- Get_Language_Context --
    --------------------------
 
-   Java_Context : aliased Language_Context :=
+   Comment_Start_Pattern : aliased Pattern_Matcher := Compile ("^//");
+
+   Java_Context  : aliased Language_Context :=
      (Comment_Start_Length          => 2,
       Comment_End_Length            => 2,
-      New_Line_Comment_Start_Length => 2,
       Comment_Start                 => "/*",
       Comment_End                   => "*/",
-      New_Line_Comment_Start        => "//",
+      New_Line_Comment_Start        => Comment_Start_Pattern'Access,
       String_Delimiter              => '"',
       Quote_Character               => '\',
       Constant_Character            => ''',
