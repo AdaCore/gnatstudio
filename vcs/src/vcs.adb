@@ -139,8 +139,9 @@ package body VCS is
    ----------
 
    procedure Free (Ref : in out VCS_Record) is
+      pragma Unreferenced (Ref);
    begin
-      Free_Queue (Ref.Queue);
+      null;
    end Free;
 
    ----------
@@ -168,16 +169,6 @@ package body VCS is
       Free (F.Tags);
       Free (F.Users);
    end Free;
-
-   ---------------
-   -- Get_Queue --
-   ---------------
-
-   function Get_Queue
-     (VCS : access VCS_Record) return Commands.Command_Queue is
-   begin
-      return VCS.Queue;
-   end Get_Queue;
 
    -----------------
    -- Check_Files --
