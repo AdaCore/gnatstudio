@@ -2338,7 +2338,7 @@ package body Project_Viewers is
       Register_Project_Editor_Page
         (Kernel,
          Page  => new Naming_Editor_Record,
-         Label => -"Naming scheme",
+         Label => -"Naming",
          Toc   => -"Naming scheme",
          Title => -"Please select the naming scheme to use");
    end Register_Module;
