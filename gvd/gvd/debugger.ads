@@ -575,5 +575,5 @@ private
       --  True when the debugger session has been started (ie the execution
       --  of the debuggee has started, and the user can now use commands like
       --  Next, Step, ...)
-end record;
+   end record;
 end Debugger;
