@@ -63,6 +63,7 @@ with Gtk.Size_Group;            use Gtk.Size_Group;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 with Prj.Attr;                  use Prj, Prj.Attr;
 with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
@@ -243,6 +244,7 @@ package body Project_Properties is
 
    function Create_Attribute_Dialog
      (Kernel          : access Kernel_Handle_Record'Class;
+      Toplevel        : access Gtk.Window.Gtk_Window_Record'Class;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String) return String;
@@ -1896,7 +1898,7 @@ package body Project_Properties is
       if Ed.As_Directory then
          declare
             Dir : constant String := Select_Directory
-              (Parent => Get_Current_Window (Ed.Kernel),
+              (Parent => Gtk_Window (Get_Toplevel (Editor)),
                Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs));
          begin
             if Dir /= "" then
@@ -1905,7 +1907,7 @@ package body Project_Properties is
          end;
       else
          File := Select_File
-           (Parent => Get_Current_Window (Ed.Kernel),
+           (Parent => Gtk_Window (Get_Toplevel (Editor)),
             Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs));
          if File /= VFS.No_File then
             Set_Text (Gtk_Entry (Ed.Ent), Full_Name (File).all);
@@ -1920,7 +1922,8 @@ package body Project_Properties is
    procedure Add_String_In_List (Editor : access Gtk_Widget_Record'Class) is
       Ed    : constant File_Attribute_Editor := File_Attribute_Editor (Editor);
       Value : constant String := Create_Attribute_Dialog
-        (Ed.Kernel, Ed.Project, Ed.Attribute, Attribute_Index => "");
+        (Ed.Kernel, Gtk_Window (Get_Toplevel (Editor)),
+         Ed.Project, Ed.Attribute, Attribute_Index => "");
       Iter  : Gtk_Tree_Iter;
    begin
       if Value /= "" then
@@ -2287,6 +2290,7 @@ package body Project_Properties is
 
    function Create_Attribute_Dialog
      (Kernel          : access Kernel_Handle_Record'Class;
+      Toplevel        : access Gtk.Window.Gtk_Window_Record'Class;
       Project         : Project_Type;
       Description     : Attribute_Description_Access;
       Attribute_Index : String) return String
@@ -2303,7 +2307,7 @@ package body Project_Properties is
          when Attribute_As_String =>
             Gtk_New (Dialog,
                      Title  => -"Enter new value",
-                     Parent => Get_Current_Window (Kernel),
+                     Parent => Gtk_Window (Toplevel),
                      Flags  => Modal or Destroy_With_Parent);
             Gtk_New (Ent);
             Set_Text (Ent, Get_Current_Value
@@ -2336,7 +2340,7 @@ package body Project_Properties is
                  (Project, Description, Index => Attribute_Index);
             begin
                File := Select_File
-                 (Parent => Get_Current_Window (Kernel),
+                 (Parent => Gtk_Window (Toplevel),
                   Base_Directory => Dir_Name (Current),
                   Default_Name   => Base_Name (Current),
                   Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
@@ -2349,7 +2353,7 @@ package body Project_Properties is
 
          when Attribute_As_Directory =>
             return Select_Directory
-              (Parent => Get_Current_Window (Kernel),
+              (Parent => Gtk_Window (Toplevel),
                Base_Directory => Get_Current_Value
                  (Project, Description, Index => Attribute_Index),
                Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
@@ -2357,7 +2361,7 @@ package body Project_Properties is
          when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
             Gtk_New (Dialog,
                      Title  => -"Select new value",
-                     Parent => Get_Current_Window (Kernel),
+                     Parent => Gtk_Window (Toplevel),
                      Flags  => Modal or Destroy_With_Parent);
             W := Create_List_Attribute_Editor
               (Kernel, Project, Description, Attribute_Index,
@@ -2892,7 +2896,7 @@ package body Project_Properties is
                if Ed.Attribute.Is_List then
                   Gtk_New (Dialog,
                            Title  => -"Enter new value",
-                           Parent => Get_Current_Window (Ed.Kernel),
+                           Parent => Gtk_Window (Get_Toplevel (Editor)),
                            Flags  => Modal or Destroy_With_Parent);
                   Value_Ed := Create_Widget_Attribute
                     (Kernel          => Ed.Kernel,
@@ -2937,6 +2941,7 @@ package body Project_Properties is
                      declare
                         Value : constant String := Create_Attribute_Dialog
                           (Kernel          => Ed.Kernel,
+                           Toplevel        => Gtk_Window (Get_Toplevel (Ed)),
                            Project         => Ed.Project,
                            Description     => Ed.Attribute,
                            Attribute_Index => Attribute_Index);
