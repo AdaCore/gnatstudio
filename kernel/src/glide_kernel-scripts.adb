@@ -1014,8 +1014,10 @@ package body Glide_Kernel.Scripts is
       Free (Scripting_Data (Kernel.Scripts).File_Location_Class.Name);
       Free (Scripting_Data (Kernel.Scripts).Entity_Context_Class.Name);
 
-      Classes_Hash.String_Hash_Table.Reset
-        (Scripting_Data (Kernel.Scripts).Classes);
+      --  ??? the following code generates a SEGV (double deallocation, or
+      --  deallocation of static memory ?)
+      --  Classes_Hash.String_Hash_Table.Reset
+      --    (Scripting_Data (Kernel.Scripts).Classes);
    end Finalize;
 
    -------------
