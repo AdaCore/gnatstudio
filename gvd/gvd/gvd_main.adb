@@ -47,7 +47,11 @@ with GVD.Preferences;           use GVD.Preferences;
 with GVD.Window_Settings;       use GVD.Window_Settings;
 with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Toolbar;               use GVD.Toolbar;
+with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.GVD;     use Language_Handlers.GVD;
+with Language.Ada;              use Language.Ada;
+with Language.C;                use Language.C;
+with Language.Cpp;              use Language.Cpp;
 
 with GVD.Open_Program_Dialog;   use GVD.Open_Program_Dialog;
 
