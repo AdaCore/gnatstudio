@@ -9,27 +9,20 @@
 @@IF@@ @_FAMILY_@ = MAIN
    <BR>
    <A HREF="@_REF_FILE_@#@_LINE_@" target="main"><B>@_NAME_@</B></A>
-   <BR>
 @@ELSIF@@ @_FAMILY_@ = NO_PARENT
    No parent.
-   <BR>
 @@ELSIF@@ @_FAMILY_@ = NO_CHILD
    No child.
-   <BR>
 @@ELSIF@@ @_FAMILY_@ = PARENT_WITH_LINK
-   <B>Parent object: </B>
+   <B>Parent object :</B>
    <A HREF="@_REF_FILE_@#@_LINE_@" TARGET="main">@_NAME_@</A>
-   <BR>
 @@ELSIF@@ @_FAMILY_@ = PARENT_WITHOUT_LINK
-   <B>Parent object: </B>
+   <B>Parent object :</B>
    @_NAME_@
-   <BR>
 @@ELSIF@@ @_FAMILY_@ = CHILD_WITH_LINK
-   <B>Child object: </B>
+   <B>Child object :</B>
    <A HREF="@_REF_FILE_@#@_LINE_@" TARGET="main">@_NAME_@</A>
-   <BR>
 @@ELSIF@@ @_FAMILY_@ = CHILD_WITHOUT_LINK
-   <B>Child object: </B>
-   @_NAME_@
-   <BR>
+   <B>Child object :</B> @_NAME_@
 @@END_IF@@
+<BR>
