@@ -604,6 +604,7 @@ package body Src_Info.LI_Utils is
                              Source_Filename => new String'(Source_Filename)),
                     Line => End_Of_Scope_Location.Line,
                     Column => End_Of_Scope_Location.Column);
+         D_Ptr.Value.Declaration.End_Of_Scope.Kind := End_Of_Body;
       end if;
       if Rename_Location = Invalid_Point then
          D_Ptr.Value.Declaration.Rename := Null_File_Location;
