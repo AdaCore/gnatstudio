@@ -86,8 +86,7 @@ with Traces;                      use Traces;
 with VFS;                         use VFS;
 with Projects;                    use Projects;
 with Projects.Registry;           use Projects.Registry;
-with GVD.Dialogs;                 use GVD.Dialogs;
---  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
+with Std_Dialogs;                 use Std_Dialogs;
 
 with Commands;                    use Commands;
 with Commands.Editor;             use Commands.Editor;
