@@ -1631,7 +1631,7 @@ external tool @code{gnatstub}.
 @cindex pretty print
 Pretty print the current source editor by calling the external tool
 @code{gnatpp}. It is possible to specify @code{gnatpp} switches in the
-switch editor. @c ??? @xref{}.
+switch editor. @xref{The Switches Editor}.
 
 @item Unit Testing
 @cindex AUnit
@@ -2015,15 +2015,14 @@ displaying references to the current entity or selection.
 @cindex call graph
 @cindex calls
 Open or raise the call graph browser on the specified entity and display all
-the functions called by @i{entity}.
-@c ??? @ref{}
+the functions called by @i{entity}. @xref{Call Graph}.
 
 @item @i{Entity} is called by
 @cindex call graph
 @cindex called by
 Open or raise the call graph browser on the specified entity and display all
-the functions calling @i{entity}.
-@c ??? @ref{}
+the functions calling @i{entity}. @xref{Call Graph}.
+
 Note that this capability requires a global look up in the project cross
 references, which may take a significant amount of time the first time.
 After a global look up, information is cached in memory, so that further
@@ -2915,7 +2914,7 @@ The contextual menu obtained by right-clicking on a project item
 contains several items. Most of them are added by the project editor,
 and gives direct access to editing the properties of the project,
 adding dependencies@dots{}
-@c ??? missing a xref to project contextual menus
+@xref{The Project Explorer (Editing Projects)}.
 
 Some new items are added to the menu
 
@@ -4305,7 +4304,10 @@ The font used in the source editor.
 @table @b
 @item Auto indentation
 @cindex indentation
-Whether the editor should indent automatically Ada sources.
+How the editor should indent Ada sources.
+None means no indentation; Simple means that indentation from the previous
+line is used for the next line; Extended means that a language specific
+parser is used for indenting sources.
 
 @item Use tabulations
 @cindex tabulation
@@ -4364,7 +4366,10 @@ end case;
 @table @b
 @item Auto indentation
 @cindex indentation
-Whether the editor should indent automatically C/C++ sources.
+How the editor should indent C/C++ sources.
+None means no indentation; Simple means that indentation from the previous
+line is used for the next line; Extended means that a language specific
+parser is used for indenting sources.
 
 @item Use tabulations
 @cindex tabulation
@@ -5492,6 +5497,14 @@ GPS and gdb.
 Desktop file in XML format (using the menu @code{File->Save...->Desktop}),
 loaded automatically if found.
 
+   @item $HOME/.gps/gtkrc
+@cindex Gtk+
+@cindex gtkrc
+The theme used by the gtk+ library on which gps is based. It allows you
+to configure the colors and fonts used in your
+application. @xref{Defining New Styles and Key Bindings}.
+See also @file{<prefix>/etc/gps/gtkrc}.
+
    @item $HOME/.gps/history
 @cindex history
 Contains the state and history of combo boxes (e.g. the
@@ -5502,26 +5515,8 @@ Contains the state and history of combo boxes (e.g. the
 Contains all the preferences in XML format, as specified in the
 preferences menu.
 
-   @item $HOME/.gps/window_settings
-Contains all the settings of the windows (window sizes, pane
-offset) in XML format. These settings are saved automatically when quitting
-GPS, and loaded automatically at start up. To reset the settings, simply
-remove this file.
-
    @item $HOME/.gps/sessions
 Directory containing the debugging sessions.
-
-   @item $HOME/.gps/history
-Contains all the histories for the combo boxes and the @code{File->Reopen} and
-@code{Project->Reopen} menus.
-
-   @item $HOME/.gps/gtkrc
-@cindex Gtk+
-@cindex gtkrc
-The theme used by the gtk+ library on which gps is based. It allows you
-to configure the colors and fonts used in your
-application. @xref{Defining New Styles and Key Bindings}.
-See also @file{<prefix>/etc/gps/gtkrc}.
 
    @item $HOME/.gps/sessions/@i{session}
 Each file in the @code{sessions} directory represents a particular session
@@ -5561,16 +5556,16 @@ GPS will look for all the documentation files under this directory.
 This directory contains source code examples.
 
    @item @i{prefix}/doc/gps/examples/tutorial
-@cindex url
 This directory contains the sources used by the GPS tutorial.
 @ifhtml
+@cindex url
 See @url{gps-tutorial.html}.
 @end ifhtml
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
 Animated image displayed in the top right corner of GPS to indicate that
-actions (e.g compilation) are going on.
+actions (e.g compilation) are on going.
 
    @item @i{prefix}/share/gps/gps-splash.jpg
 @cindex jpeg
