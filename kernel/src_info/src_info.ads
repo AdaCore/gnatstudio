@@ -173,8 +173,7 @@ package Src_Info is
    type LI_Handler is access all LI_Handler_Record'Class;
    --  General type to handle and generate Library Information data (for
    --  cross-references, and the various queries for the browsers).
-   --  Derived types should be created for all the languages supported by
-   --  Glide2.
+   --  Derived types should be created for all the languages supported.
 
    procedure Create_Or_Complete_LI
      (Handler                : access LI_Handler_Record;
@@ -1084,4 +1083,3 @@ private
    --  deallocated after use.
 
 end Src_Info;
-
