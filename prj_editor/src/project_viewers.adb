@@ -3509,9 +3509,7 @@ package body Project_Viewers is
             return;
          end if;
 
-         if Alias /= "" then
-            Add_Coalesce_Switch (Page, Switch, Alias);
-         end if;
+         Add_Coalesce_Switch (Page, Switch, Alias);
 
          while N2 /= null loop
             if N2.Tag.all = "entry" then
