@@ -4,7 +4,7 @@ project Standalone is
    for Object_Dir use "standalone_obj/";
 
    package Builder is
-      for Default_Switches ("Ada') use ("-m");
+      for Default_Switches ("Ada") use ("-m");
    end Builder;
 
    package Compiler is
