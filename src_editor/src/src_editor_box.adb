@@ -418,6 +418,13 @@ package body Src_Editor_Box is
       if To_Body then
          Find_Next_Body
            (Entity      => Entity,
+            Current_Location => 
+              (File   => Get_Or_Create
+                 (Db   => Get_Database (Get_Kernel (Context)),
+                  File => File_Information (Context)),
+               Line   => Glide_Kernel.Contexts.Line_Information (Context),
+               Column => Column_Type
+                 (Glide_Kernel.Contexts.Entity_Column_Information (Context))),
             Location    => Location);
 
          if Location = Entities.No_File_Location then
@@ -1521,6 +1528,7 @@ package body Src_Editor_Box is
                     Krunch (Entity_Name_Information (Context));
                   Entity : constant Entity_Information := Get_Entity (Context);
                   Location : Entities.File_Location;
+                  Current_Location : Entities.File_Location;
 
                begin
                   if Entity /= null then
@@ -1533,12 +1541,23 @@ package body Src_Editor_Box is
                         User_Data   => Selection_Context_Access (Context),
                         Slot_Object => Editor,
                         After       => True);
+                    
+                     Current_Location := 
+                       (File   => Get_Or_Create
+                          (Db   => Get_Database (Get_Kernel (Context)),
+                           File => File_Information (Context)),
+                        Line   => Contexts.Line_Information (Context),
+                        Column => Column_Type
+                          (Contexts.Entity_Column_Information (Context)));
 
                      Find_Next_Body
                        (Entity   => Entity,
+                        Current_Location => Current_Location,
                         Location => Location);
 
-                     if Location /= Entities.No_File_Location then
+                     if Location /= Entities.No_File_Location
+                        and then Location /= Current_Location
+                     then
                         if Is_Container (Get_Kind (Entity).Kind) then
                            Gtk_New (Item, -"Goto body of " & Name);
                         else
