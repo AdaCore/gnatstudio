@@ -58,12 +58,20 @@ package body Codefix is
    --------------
 
    procedure Get_Line (File : File_Type; This : in out Dynamic_String) is
-      Len    : Natural;
-      Buffer : String (1 .. 4096);
+      Len          : Natural;
+      Current_Size : Natural := 128;
    begin
-      Get_Line (File, Buffer, Len);
-      Free (This);
-      This := new String'(Buffer (1 .. Len));
+      loop
+         declare
+            Buffer : String (1 .. Current_Size);
+         begin
+            Get_Line (File, Buffer, Len);
+            Free (This);
+            This := new String'(Buffer (1 .. Len));
+            if Len < Current_Size then return; end if;
+         end;
+         Current_Size := Current_Size * 2;
+      end loop;
    end Get_Line;
 
    --------------
