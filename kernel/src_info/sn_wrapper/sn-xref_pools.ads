@@ -23,6 +23,7 @@
 
 with HTables;
 with GNAT.OS_Lib;
+with VFS;
 
 package SN.Xref_Pools is
 
@@ -42,11 +43,11 @@ package SN.Xref_Pools is
    procedure Init (Pool : out Xref_Pool);
    --  Creates new empty pool.
 
-   procedure Load (Pool : in out Xref_Pool; Filename : String);
+   procedure Load (Pool : in out Xref_Pool; Filename : VFS.Virtual_File);
    --  Loads pool from specified file. Does the same as Init if specified
    --  file does not exist.
 
-   procedure Save (Pool : Xref_Pool; Filename : String);
+   procedure Save (Pool : Xref_Pool; Filename : VFS.Virtual_File);
    --  Saves pool to specified file if needed. Overwrite existing file.
    --  Raises Xref_File_Error if writing failed.
 
@@ -55,9 +56,9 @@ package SN.Xref_Pools is
    --  persistent storage.
 
    function Xref_Filename_For
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Directory       : String;
-      Pool            : Xref_Pool) return GNAT.OS_Lib.String_Access;
+      Pool            : Xref_Pool) return VFS.Virtual_File;
    --  Return unique xref file name associated with specified source file
    --  name. It does the following steps:
    --
@@ -76,7 +77,7 @@ package SN.Xref_Pools is
    --  The returned string must not be freed by the user.
 
    procedure Free_Filename_For
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Directory       : String;
       Pool            : Xref_Pool);
    --  Releases previously generated xref file name from memory,
@@ -84,13 +85,13 @@ package SN.Xref_Pools is
    --  thus makes that name able to associate with other source file name.
 
    function Is_Xref_Valid
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean;
    --  Return valig flag for xref file associated with given source file name.
    --  Returns False if no xref file for given file was generated yet.
 
    procedure Set_Valid
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Valid           : Boolean;
       Pool            : Xref_Pool);
    --  Set valid flag for given source file name.
@@ -105,7 +106,7 @@ private
 
    type Xref_Elmt_Record is record
       Source_Filename   : GNAT.OS_Lib.String_Access;
-      Xref_Filename     : GNAT.OS_Lib.String_Access;
+      Xref_Filename     : VFS.Virtual_File;
       Valid             : Boolean := False;
       Next              : Xref_Elmt_Ptr;
    end record;

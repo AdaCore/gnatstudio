@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with String_Utils; use String_Utils;
+with VFS; use VFS;
 
 package body SN.Xref_Pools is
 
@@ -32,7 +33,9 @@ package body SN.Xref_Pools is
    --  GNAT.Directory_Operations)
 
    function Generate_Filename
-     (Source_Filename : String; N : Integer) return String;
+     (Source_Filename : VFS.Virtual_File;
+      Directory       : String;
+      N               : Integer) return Virtual_File;
    --  Generate xref file name based on specified source file name and counter
 
    --------------
@@ -111,7 +114,7 @@ package body SN.Xref_Pools is
    -- Load --
    ----------
 
-   procedure Load (Pool : in out Xref_Pool; Filename : String) is
+   procedure Load (Pool : in out Xref_Pool; Filename : VFS.Virtual_File) is
    begin
       Init (Pool);
 
@@ -134,7 +137,7 @@ package body SN.Xref_Pools is
          --  ??? Should use GNAT.OS_Lib Open/Read instead, would be more
          --  efficient
 
-         Open (FD, In_File, Filename);
+         Open (FD, In_File, Locale_Full_Name (Filename));
 
          if Is_Open (FD) then
             loop
@@ -152,8 +155,9 @@ package body SN.Xref_Pools is
                begin
                   Xref_Elmt.Source_Filename :=
                     new String'(Src_Buf (Src_Buf'First .. Src_Buf_Last));
-                  Xref_Elmt.Xref_Filename :=
-                    new String'(Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
+                  Xref_Elmt.Xref_Filename := Create
+                    (Full_Filename =>
+                       Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
 
                   if Ref_Buf (Ref_Buf'First) = '1' then
                      Xref_Elmt.Valid := True;
@@ -181,7 +185,7 @@ package body SN.Xref_Pools is
    -- Save --
    ----------
 
-   procedure Save (Pool : Xref_Pool; Filename : String) is
+   procedure Save (Pool : Xref_Pool; Filename : VFS.Virtual_File) is
       FD : File_Type;
       E  : Xref_Elmt_Ptr;
    begin
@@ -190,7 +194,7 @@ package body SN.Xref_Pools is
          return;
       end if;
 
-      Create (FD, Out_File, Filename);
+      Create (FD, Out_File, Locale_Full_Name (Filename));
       STable.Get_First (Pool.HTable, E);
 
       while E /= Null_Xref_Elmt loop
@@ -200,7 +204,7 @@ package body SN.Xref_Pools is
          else
             Put (FD, '0');
          end if;
-         Put_Line (FD, E.Xref_Filename.all);
+         Put_Line (FD, Full_Name (E.Xref_Filename));
          STable.Get_Next (Pool.HTable, E);
       end loop;
 
@@ -240,7 +244,6 @@ package body SN.Xref_Pools is
       while E /= Null_Xref_Elmt loop
          STable.Get_Next (Pool.HTable, Next);
          STable.Remove (Pool.HTable, E.Source_Filename);
-         Free (E.Xref_Filename);
          Free (E.Source_Filename);
          Free (E);
          E := Next;
@@ -254,14 +257,17 @@ package body SN.Xref_Pools is
    -----------------------
 
    function Generate_Filename
-     (Source_Filename : String; N : Integer) return String
+     (Source_Filename : VFS.Virtual_File;
+      Directory       : String;
+      N               : Integer) return Virtual_File
    is
       Name  : constant String := Base_Name (Source_Filename);
    begin
       if N = 0 then
-         return Name & Xref_Suffix;
+         return Create (Full_Filename => Directory & Name & Xref_Suffix);
       else
-         return Name & Image (N) & Xref_Suffix;
+         return Create
+           (Full_Filename => Directory & Name & Image (N) & Xref_Suffix);
       end if;
    end Generate_Filename;
 
@@ -270,16 +276,17 @@ package body SN.Xref_Pools is
    -----------------------
 
    function Xref_Filename_For
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Directory       : String;
-      Pool            : Xref_Pool) return String_Access
+      Pool            : Xref_Pool) return VFS.Virtual_File
    is
       Data  : Xref_Elmt_Ptr;
       N     : Integer := 0;
+      Source : aliased constant String := Full_Name (Source_Filename);
    begin
       --  Get hashed value
 
-      Data := STable.Get (Pool.HTable, Source_Filename'Unrestricted_Access);
+      Data := STable.Get (Pool.HTable, Source'Unrestricted_Access);
 
       if Data /= null then
          return Data.Xref_Filename;
@@ -288,11 +295,11 @@ package body SN.Xref_Pools is
       --  Generate new xref file name
 
       Data := new Xref_Elmt_Record; -- new hashtable value
-      Data.Source_Filename := new String'(Source_Filename);
+      Data.Source_Filename := new String'(Source);
       loop
          declare
-            Name : constant String := Generate_Filename (Source_Filename, N);
-            Full_Name   : constant String := Directory & Name;
+            Full_Name : constant Virtual_File :=
+              Generate_Filename (Source_Filename, Directory, N);
             FD          : File_Descriptor;
          begin
             if not Is_Directory (Directory) then
@@ -300,17 +307,18 @@ package body SN.Xref_Pools is
             end if;
 
             if not Is_Regular_File (Full_Name) then
-               Data.Xref_Filename := new String'(Full_Name);
+               Data.Xref_Filename := Full_Name;
 
                --  touch this file
-               FD := Create_New_File (Full_Name, Binary);
+               FD := Create_New_File (Locale_Full_Name (Full_Name), Binary);
 
                if FD = Invalid_FD then -- unable to create a new file
                   --  raise an exception if unable to create new xref file
                   Free (Data.Source_Filename);
-                  Free (Data.Xref_Filename);
-                  Raise_Exception (Xref_File_Error'Identity,
-                    "unable to create a new file: " & Full_Name);
+                  Raise_Exception
+                    (Xref_File_Error'Identity,
+                     "unable to create a new file: "
+                     & VFS.Full_Name (Full_Name));
                end if;
 
                Close (FD);
@@ -333,11 +341,13 @@ package body SN.Xref_Pools is
    -----------------------
 
    procedure Free_Filename_For
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Directory       : String;
       Pool            : Xref_Pool)
    is
-      Key       : String_Access := new String'(Source_Filename);
+      pragma Unreferenced (Directory); --  ???
+
+      Key       : String_Access := new String'(Full_Name (Source_Filename));
       Xref_Elmt : Xref_Elmt_Ptr :=
         STable.Get (Pool.HTable, Key);
    begin
@@ -346,17 +356,19 @@ package body SN.Xref_Pools is
       end if;
 
       declare
-         Result     : Boolean;
-         Full_Name  : constant String := Name_As_Directory (Directory) &
-            Xref_Elmt.Xref_Filename.all;
+         --  ??? Why not reuse Xref_Elmt.Xref_Filename directly ?
+--           Full_Name  : constant Virtual_File := Create
+--             (Full_Filename =>
+--                Name_As_Directory (Directory) &
+--                Base_Name (Xref_Elmt.Xref_Filename));
       begin
          --  remove file (ignoring errors)
-         Delete_File (Full_Name, Result);
+--         Delete_File (Full_Name, Result);
+         Delete (Xref_Elmt.Xref_Filename);
          --  remove from hashtable
          STable.Remove (Pool.HTable, Key);
          Free (Key);
          Free (Xref_Elmt.Source_Filename);
-         Free (Xref_Elmt.Xref_Filename);
          Free (Xref_Elmt);
          Pool.Changed := True;
       end;
@@ -367,11 +379,12 @@ package body SN.Xref_Pools is
    -------------------
 
    function Is_Xref_Valid
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean
    is
+      Full : aliased constant String := Full_Name (Source_Filename);
       Xref_Elmt : constant Xref_Elmt_Ptr :=
-        STable.Get (Pool.HTable, Source_Filename'Unrestricted_Access);
+        STable.Get (Pool.HTable, Full'Unrestricted_Access);
    begin
       return Xref_Elmt /= null and then Xref_Elmt.Valid;
    end Is_Xref_Valid;
@@ -381,12 +394,13 @@ package body SN.Xref_Pools is
    ---------------
 
    procedure Set_Valid
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Valid           : Boolean;
       Pool            : Xref_Pool)
    is
+      Full : aliased constant String := Full_Name (Source_Filename);
       Xref_Elmt : Xref_Elmt_Ptr :=
-        STable.Get (Pool.HTable, Source_Filename'Unrestricted_Access);
+        STable.Get (Pool.HTable, Full'Unrestricted_Access);
    begin
       if Xref_Elmt /= null then
          if Xref_Elmt.Valid /= Valid then
