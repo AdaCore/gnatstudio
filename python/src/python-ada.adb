@@ -166,11 +166,21 @@ package body Python.Ada is
       pragma Unreferenced (Result);
    begin
       Def.Flags := Def.Flags or METH_STATIC;
+
+      --  If the documentation is not specified, store the fully qualified
+      --  name instead. There is no way otherwise to retrieve the class name
+      --  from the python shell.
+      if Def.Doc = Null_Ptr then
+         Def.Doc := New_String
+           (PyString_AsString (PyObject_GetAttrString (Class, "__module__"))
+            & "." & PyString_AsString (PyClass_Name (Class))
+            & "." & Value (Func.Name));
+      end if;
+
       C_Func := PyCFunction_New (Def, Self, PyString_FromString ("GPS"));
       if C_Func /= null then
          Static := PyStaticMethod_New (C_Func);
-         Result := PyObject_SetAttrString
-           (Class, Func.Name, Static);
+         Result := PyObject_SetAttrString (Class, Func.Name, Static);
       end if;
    end Add_Static_Method;
 
@@ -188,6 +198,17 @@ package body Python.Ada is
       pragma Unreferenced (Result);
    begin
       Def.Flags := Def.Flags or METH_CLASS;
+
+      --  If the documentation is not specified, store the fully qualified
+      --  name instead. There is no way otherwise to retrieve the class name
+      --  from the python shell.
+      if Def.Doc = Null_Ptr then
+         Def.Doc := New_String
+           (PyString_AsString (PyObject_GetAttrString (Class, "__module__"))
+            & "." & PyString_AsString (PyClass_Name (Class))
+            & "." & Value (Func.Name));
+      end if;
+
       C_Func := PyCFunction_New (Def, null, PyString_FromString ("GPS"));
       if C_Func /= null then
          Result := PyObject_SetAttrString

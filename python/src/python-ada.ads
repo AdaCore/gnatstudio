@@ -198,6 +198,9 @@ package Python.Ada is
    --  Return a static version of Method. This method doesn't receive an
    --  instance or the class as its first parameter. This is similar to C++ or
    --  Java's static methods.
+   --  If no documentation is set for the method, it will be set to the fully
+   --  qualified name of the method, since otherwise there is no way from the
+   --  GPS shell to get access to the class to which the method belongs.
 
    procedure Add_Class_Method (Class : PyClassObject; Func : PyMethodDef);
    --  Return a class version of Method.
@@ -206,6 +209,9 @@ package Python.Ada is
    --  It can be called either on the class or an instance. If a class method
    --  is called for a derived class, the derived class object is passed as the
    --  implied first argument.
+   --  If no documentation is set for the method, it will be set to the fully
+   --  qualified name of the method, since otherwise there is no way from the
+   --  GPS shell to get access to the class to which the method belongs.
 
    function PyInstance_New
      (Class : PyObject; Args : PyObject; Keywords : PyObject := null)
