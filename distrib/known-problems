@@ -1,0 +1,8 @@
+Known Problems fixed in GPS 1.0.0
+
+- IDE project attributes not taken into account
+  Problem:    When setting values for the compiler or debugger, GPS will not
+              take them into account when building or debugging.
+  Workaround: Use a wrapper script called gnatmake (or gdb) that calls the
+              proper tool (e.g powerpc-wrs-vxworks-gnatmake).
+
