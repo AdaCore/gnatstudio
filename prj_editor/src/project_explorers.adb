@@ -112,6 +112,9 @@ package body Project_Explorers is
    Number_Of_Columns    : constant := 1;
    --  Number of columns in the ctree.
 
+   Ctree_Spacing        : constant := 5;
+   --  The spacing used for the ctree nodes.
+
    Explorer_Module_ID   : Module_ID := null;
    --  Id for the explorer module
 
@@ -139,7 +142,8 @@ package body Project_Explorers is
 
    subtype Tree_Chars_Ptr_Array is Chars_Ptr_Array (1 .. Number_Of_Columns);
 
-   type User_Data (Node_Type : Node_Types; Name_Length : Natural) is record
+   type User_Data (Node_Type : Real_Node_Types; Name_Length : Natural) is
+   record
       Up_To_Date : Boolean := False;
       --  Indicates whether the children of this node (imported projects,
       --  directories,...) have already been parsed and added to the tree. If
@@ -147,7 +151,7 @@ package body Project_Explorers is
       --  removed and the new children should be computed.
 
       case Node_Type is
-         when Project_Node | Modified_Project_Node =>
+         when Project_Node | Extends_Project_Node =>
             Name    : Name_Id;
             --  We do not keep a pointer to the project_id itself, since this
             --  becomes obsolete as soon as a new project_view is parsed. On
@@ -1097,7 +1101,11 @@ package body Project_Explorers is
 
       Create_Pixmaps (Project_Node, project_xpm, project_closed_xpm);
       Create_Pixmaps
-        (Modified_Project_Node, project_ext_xpm, project_ext_closed_xpm);
+        (Modified_Project_Node,
+         project_modified_xpm,
+         project_modified_closed_xpm);
+      Create_Pixmaps
+        (Extends_Project_Node, project_ext_xpm, project_ext_closed_xpm);
       Create_Pixmaps (Directory_Node, mini_ofolder_xpm, mini_folder_xpm);
       Create_Pixmaps
         (Obj_Directory_Node, mini_folder_object_xpm, mini_folder_object_xpm);
@@ -1549,7 +1557,7 @@ package body Project_Explorers is
          declare
             Iter_Name : constant String :=
               Get_String (T.File_Model, Iter, Absolute_Name_Column);
-            N_Type : Node_Types := Node_Types'Val
+            N_Type : Real_Node_Types := Node_Types'Val
               (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)));
 
          begin
@@ -1564,7 +1572,7 @@ package body Project_Explorers is
                   Free_Children (T, Iter);
                   File_Append_File_Info (T, Iter, Iter_Name);
 
-               when Modified_Project_Node =>
+               when Extends_Project_Node =>
                   null;
 
                when Category_Node | Entity_Node =>
@@ -1640,7 +1648,7 @@ package body Project_Explorers is
          Parent        => Node,
          Sibling       => null,
          Text          => Create_Line_Text (""),
-         Spacing       => 5,
+         Spacing       => Ctree_Spacing,
          Pixmap_Closed => Null_Pixmap,
          Mask_Closed   => Null_Bitmap,
          Pixmap_Opened => Null_Pixmap,
@@ -1674,6 +1682,11 @@ package body Project_Explorers is
 
    begin
       if Modified_Project then
+         Node_Type := Extends_Project_Node;
+
+      elsif Project_Modified
+        (Explorer.Kernel, Get_Project_From_View (Project))
+      then
          Node_Type := Modified_Project_Node;
       end if;
 
@@ -1683,7 +1696,7 @@ package body Project_Explorers is
          Sibling       => null,
          Text          => Create_Line_Text
            (Get_Name_String (Projects.Table (Project).Name)),
-         Spacing       => 5,
+         Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (Node_Type),
          Mask_Closed   => Explorer.Close_Masks (Node_Type),
          Pixmap_Opened => Explorer.Open_Pixmaps (Node_Type),
@@ -1691,7 +1704,9 @@ package body Project_Explorers is
          Is_Leaf       => Is_Leaf,
          Expanded      => False);
 
-      if Node_Type = Project_Node then
+      if Node_Type = Project_Node
+        or else Node_Type = Modified_Project_Node
+      then
          Node_Set_Row_Data
            (Explorer.Tree, N,
             (Node_Type   => Project_Node,
@@ -1699,10 +1714,10 @@ package body Project_Explorers is
              Name        => Projects.Table (Project).Name,
              Up_To_Date  => False));
 
-      elsif Node_Type = Modified_Project_Node then
+      elsif Node_Type = Extends_Project_Node then
          Node_Set_Row_Data
            (Explorer.Tree, N,
-            (Node_Type   => Modified_Project_Node,
+            (Node_Type   => Extends_Project_Node,
              Name_Length => 0,
              Name        => Projects.Table (Project).Name,
              Up_To_Date  => False));
@@ -1789,7 +1804,7 @@ package body Project_Explorers is
          Parent        => Parent_Node,
          Sibling       => null,
          Text          => Create_Line_Text (Node_Text.all),
-         Spacing       => 5,
+         Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (Node_Type),
          Mask_Closed   => Explorer.Close_Masks (Node_Type),
          Pixmap_Opened => Explorer.Open_Pixmaps (Node_Type),
@@ -1840,7 +1855,7 @@ package body Project_Explorers is
          Parent        => Parent_Node,
          Sibling       => null,
          Text          => Create_Line_Text (Name_Buffer (1 .. Name_Len)),
-         Spacing       => 5,
+         Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (File_Node),
          Mask_Closed   => Explorer.Close_Masks (File_Node),
          Pixmap_Opened => Explorer.Open_Pixmaps (File_Node),
@@ -1877,7 +1892,7 @@ package body Project_Explorers is
          Parent        => Parent_Node,
          Sibling       => null,
          Text          => Create_Line_Text (Category_Name (Category)),
-         Spacing       => 5,
+         Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (Category_Node),
          Mask_Closed   => Explorer.Close_Masks (Category_Node),
          Pixmap_Opened => Explorer.Open_Pixmaps (Category_Node),
@@ -1928,7 +1943,7 @@ package body Project_Explorers is
          Parent        => Parent_Node,
          Sibling       => null,
          Text          => Text,
-         Spacing       => 5,
+         Spacing       => Ctree_Spacing,
          Pixmap_Closed => Explorer.Close_Pixmaps (Entity_Node),
          Mask_Closed   => Explorer.Close_Masks (Entity_Node),
          Pixmap_Opened => Explorer.Open_Pixmaps (Entity_Node),
@@ -2149,7 +2164,7 @@ package body Project_Explorers is
             when Project_Node =>
                Expand_Project_Node (T, Node, Data);
 
-            when Modified_Project_Node =>
+            when Extends_Project_Node =>
                null;
 
             when Directory_Node =>
@@ -2570,8 +2585,9 @@ package body Project_Explorers is
    procedure Update_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
    is
-      Data  : User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
-      N, N2 : Gtk_Ctree_Node;
+      Data   : User_Data := Node_Get_Row_Data (Explorer.Tree, Node);
+      N, N2  : Gtk_Ctree_Node;
+      N_Type : Node_Types;
 
    begin
       --  If the information about the node hasn't been computed before,
@@ -2603,6 +2619,32 @@ package body Project_Explorers is
                when others         => null;
             end case;
          end if;
+      end if;
+
+      --  Has to be done whether the node is expanded or not, and whether it is
+      --  up-to-date or not, as long as its icon is visible.
+      --  Change the icons to reflect the modified state of the project
+      if Data.Node_Type = Project_Node then
+         if Project_Modified
+           (Explorer.Kernel,
+            Get_Project_From_View (Get_Project_From_Node (Explorer, Node)))
+         then
+            N_Type := Modified_Project_Node;
+         else
+            N_Type := Project_Node;
+         end if;
+
+         Set_Node_Info
+           (Ctree         => Explorer.Tree,
+            Node          => Node,
+            Text          => Node_Get_Text (Explorer.Tree, Node, 0),
+            Spacing       => Ctree_Spacing,
+            Pixmap_Closed => Explorer.Close_Pixmaps (N_Type),
+            Mask_Closed   => Explorer.Close_Masks (N_Type),
+            Pixmap_Opened => Explorer.Open_Pixmaps (N_Type),
+            Mask_Opened   => Explorer.Open_Masks (N_Type),
+            Is_Leaf       => False,
+            Expanded      => Row_Get_Expanded (Node_Get_Row (Node)));
       end if;
    end Update_Node;
 
@@ -2779,7 +2821,7 @@ package body Project_Explorers is
 
                when Project_Node
                  | Directory_Node
-                 | Modified_Project_Node
+                 | Extends_Project_Node
                  | Obj_Directory_Node =>
                   return No_String;
 

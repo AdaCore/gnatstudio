@@ -73,13 +73,16 @@ package Project_Explorers is
 private
    type Node_Types is
      (Project_Node,
-      Modified_Project_Node,
+      Extends_Project_Node,
       Directory_Node,
       Obj_Directory_Node,
       File_Node,
       Category_Node,
-      Entity_Node);
+      Entity_Node,
+      Modified_Project_Node);
    --  The kind of nodes one might find in the tree
+
+   subtype Real_Node_Types is Node_Types range Project_Node .. Entity_Node;
 
    type Pixmap_Array is array (Node_Types) of Gdk.Pixmap.Gdk_Pixmap;
    type Mask_Array   is array (Node_Types) of Gdk.Bitmap.Gdk_Bitmap;
