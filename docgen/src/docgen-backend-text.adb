@@ -577,9 +577,11 @@ package body Docgen.Backend.Text is
       Processed_Sources : Type_Source_File_Table.HTable)
    is
       use Entity_Information_Arrays;
+      Count : constant Index_Type :=
+                Entity_Information_Arrays.Length (Callers);
       Block : Unbounded_String;
    begin
-      if Entity_Information_Arrays.Length (Callers) /= 0 then
+      if Count /= 0 then
          for C in Entity_Information_Arrays.First .. Last (Callers) loop
             Output_Entity
               (B, Kernel, Block, Level, Options, Callers.Table (C),
@@ -593,6 +595,7 @@ package body Docgen.Backend.Text is
            (Parse
               (Get_Template_File_Name (B, Kernel, Caller_References_Kind),
                (Assoc ("BLOCK", Block),
+                Assoc ("COUNT", Natural (Count)),
                 Assoc ("INDENT", Level * Get_Indent (B.all))), Cache)));
    end Doc_Caller_References;
 
@@ -610,9 +613,11 @@ package body Docgen.Backend.Text is
       Processed_Sources : Type_Source_File_Table.HTable)
    is
       use Entity_Information_Arrays;
+      Count : constant Index_Type :=
+                Entity_Information_Arrays.Length (Calls);
       Block : Unbounded_String;
    begin
-      if Entity_Information_Arrays.Length (Calls) /= 0 then
+      if Count /= 0 then
          for C in Entity_Information_Arrays.First .. Last (Calls) loop
             Output_Entity
               (B, Kernel, Block, Level, Options, Calls.Table (C),
@@ -626,6 +631,7 @@ package body Docgen.Backend.Text is
            (Parse
               (Get_Template_File_Name (B, Kernel, Calls_References_Kind),
                (Assoc ("BLOCK", Block),
+                Assoc ("COUNT", Natural (Count)),
                 Assoc ("INDENT", Level * Get_Indent (B.all))), Cache)));
    end Doc_Calls_References;
 
