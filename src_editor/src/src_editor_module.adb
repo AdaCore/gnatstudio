@@ -81,11 +81,11 @@ with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Generic_List;
 with GVD.Preferences; use GVD.Preferences;
 
+with Src_Editor_Module.Line_Highlighting;
+
 package body Src_Editor_Module is
 
    Me : constant Debug_Handle := Create ("Src_Editor_Module");
-
-   No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
    Hist_Key : constant History_Key := "reopen_files";
    --  Key to use in the kernel histories to store the most recently opened
@@ -93,48 +93,6 @@ package body Src_Editor_Module is
 
    editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, editor_xpm, "mini_page_xpm");
-
-   type Mark_Identifier_Record is record
-      Id     : Natural;
-      Child  : MDI_Child;
-      File   : Basic_Types.String_Access;
-      Line   : Natural;
-      Column : Natural;
-      Mark   : Gtk_Text_Mark;
-      Length : Natural;
-   end record;
-
-   procedure Free (X : in out Mark_Identifier_Record);
-   --  Free memory associated to X.
-
-   package Mark_Identifier_List is new Generic_List (Mark_Identifier_Record);
-
-   type Source_Editor_Module_Record is new Module_ID_Record with record
-      Recent_Menu_Item         : Gtk_Menu_Item;
-      Source_Lines_Revealed_Id : Handler_Id := No_Handler;
-      File_Edited_Id           : Handler_Id := No_Handler;
-      File_Closed_Id           : Handler_Id := No_Handler;
-      Display_Line_Numbers     : Boolean    := False;
-
-      Stored_Marks             : Mark_Identifier_List.List;
-      Next_Mark_Id             : Natural := 0;
-
-      Open_File_Entry          : Gtkada_Entry;
-      Open_File_Dialog         : Gtk_Dialog;
-
-      Unopened_Files           : String_List_Utils.String_List.List;
-      --  Contains a list of files for which marks have been created but
-      --  that are not open.
-   end record;
-   type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
-
-   procedure Destroy (Id : in out Source_Editor_Module_Record);
-   --  Free the memory used by the module.
-
-   type Source_Box_Record is new Gtk_Hbox_Record with record
-      Editor : Source_Editor_Box;
-   end record;
-   type Source_Box is access all Source_Box_Record'Class;
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
@@ -1004,18 +962,19 @@ package body Src_Editor_Module is
             if Mark_Record.File /= null
               and then Mark_Record.File.all = File
             then
-               Set_Data (Node,
-                         Mark_Identifier_Record'
-                           (Id => Mark_Record.Id,
-                            Child => Child,
-                            File => new String'(File),
-                            Line => Mark_Record.Line,
-                            Mark =>
-                              Create_Mark
-                                (Box.Editor,
-                                 Mark_Record.Line, Mark_Record.Column),
-                            Column => Mark_Record.Column,
-                            Length => Mark_Record.Length));
+               Set_Data
+                 (Node,
+                  Mark_Identifier_Record'
+                    (Id => Mark_Record.Id,
+                     Child => Child,
+                     File => new String'(File),
+                     Line => Mark_Record.Line,
+                     Mark =>
+                       Create_Mark
+                         (Box.Editor,
+                          Mark_Record.Line, Mark_Record.Column),
+                     Column => Mark_Record.Column,
+                     Length => Mark_Record.Length));
             end if;
 
             Node := Next (Node);
@@ -2883,6 +2842,9 @@ package body Src_Editor_Module is
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
+      Source_Editor_Module (Src_Editor_Module_Id).Kernel :=
+        Kernel_Handle (Kernel);
+
       Register_Module
         (Module                  => Src_Editor_Module_Id,
          Kernel                  => Kernel,
@@ -3105,6 +3067,42 @@ package body Src_Editor_Module is
          Minimum_Args => 1,
          Maximum_Args => 7,
          Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "src.highlight",
+         Usage        => "src.highlight file [line] category",
+         Description  =>
+           -("Marks a line to belong to a highlighting category."
+             & ASCII.LF
+             & "If line is not specified, mark all lines in file."),
+
+         Minimum_Args => 2,
+         Maximum_Args => 3,
+         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "src.unhighlight",
+         Usage        => "src.unhighlight file [line] category",
+         Description  =>
+           -("Unmarks the line for the specified category"
+             & ASCII.LF
+             & "If line is not specified, unmark all lines in file."),
+         Minimum_Args => 2,
+         Maximum_Args => 3,
+         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "src.register_highlighting",
+         Usage        => "src.register_highlighting category color",
+         Description  => -("Create a new highlighting category with"
+                           & " the given color. The format for color is"
+                           & " ""#RRGGBB""."),
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Line_Highlighting.Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
