@@ -221,6 +221,15 @@ Scripting GPS
 @end ifset
 * Hooks::
 
+@ifset python
+Python FAQ
+* Redirecting the output of spawned processes::
+* Contextual menus on object directories only::
+* Redirecting the output to specific windows::
+* Reloading a python file in GPS::
+* Printing the GPS Python documentation::
+@end ifset
+
 Environment
 * Command Line Options::
 * Environment Variables::
@@ -9807,7 +9816,16 @@ a lot of output to process.
 This section lists some of the problems that have been encountered while using
 Python inside GPS. This is not a general Python discussion.
 
+@menu
+* Redirecting the output of spawned processes::
+* Contextual menus on object directories only::
+* Redirecting the output to specific windows::
+* Reloading a python file in GPS::
+* Printing the GPS Python documentation::
+@end menu
+
 @c -------------------------------------------
+@node Redirecting the output of spawned processes
 @subsubsection Redirecting the output of spawned processes
 
 In general, it is possible to redirect the output of any Python script to
@@ -9858,6 +9876,7 @@ first solution.
 
 
 @c ----------------------------------------------
+@node Contextual menus on object directories only
 @subsubsection Contextual menus on object directories only
 
 The following filter can be used for actions that can only execute in the
@@ -9885,6 +9904,7 @@ contextual menu entry will not be visible in other contexts
 
 
 @c  --------------------------------------------------------
+@node Redirecting the output to specific windows
 @subsubsection Redirecting the output to specific windows
 
 By default, the output of all python commands is displayed in the Python
@@ -9959,6 +9979,7 @@ be 0.
 @end itemize
 
 @c -------------------------------------------
+@node Reloading a python file in GPS
 @subsubsection Reloading a python file in GPS
 
 After you have made modification to a python file, you might want to
@@ -10015,10 +10036,43 @@ By default, GPS provides a contextual menu when you are editing a Python
 file. This contextual menu (Python->Reload module) will take care of all
 the above details.
 
+@c -------------------------------------------
+@node Printing the GPS Python documentation
+@subsubsection Printing the GPS Python documentation
+
+The python extension provided by GPS is fully documentation in this
+manual and a separate manual accessible through the Help menu in GPS.
+
+However, this documentation is provided in HTML, and might not be the
+best suitable for printing, if you wish to do so.
+
+The following paragraph explains how you can generate your own documentation
+for any python module, including GPS, and print the result.
+
+@smallexample
+import pydoc
+pydoc.writedoc (GPS)
+@end smallexample
+
+In the last comamnd, @code{GPS} is the name of the module that you want
+to print the documentation for. 
+
+These commands generate a @file{.html} file in the current directory.
+
+Alternatively, you can generate a simple text file with
+
+@smallexample
+e=file("./python_doc", "w")
+e.write (pydoc.text.document (GPS))
+e.flush()
+@end smallexample
+
+This text file includes bold characters by default. Such bold characters
+are correctly interpreted by tools such as @file{a2ps} which can be used
+to convert the text file into a postscript document.
+
 
 @end ifset
-
-
 @c --------------------------------------------------------------------
 @node Hooks
 @subsection Hooks
