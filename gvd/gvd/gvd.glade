@@ -158,7 +158,6 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_attach_to_process1_activate</handler>
-	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:16:14 GMT</last_modification_time>
 	    </signal>
 	    <label>Attach To Process...</label>
@@ -651,6 +650,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_run_again1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:31:26 GMT</last_modification_time>
 	    </signal>
 	    <label>Run Again</label>
@@ -837,6 +837,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_continue_without_signal1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:33:43 GMT</last_modification_time>
 	    </signal>
 	    <label>Continue without Signal</label>
@@ -860,6 +861,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_kill1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:34:05 GMT</last_modification_time>
 	    </signal>
 	    <label>Kill</label>
@@ -895,6 +897,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_abort1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:34:32 GMT</last_modification_time>
 	    </signal>
 	    <label>Abort</label>
@@ -1150,6 +1153,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_backtrace1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:07 GMT</last_modification_time>
 	    </signal>
 	    <label>Backtrace...</label>
@@ -1162,6 +1166,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_registers1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:20 GMT</last_modification_time>
 	    </signal>
 	    <label>Registers...</label>
@@ -1174,21 +1179,10 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_threads1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:23 GMT</last_modification_time>
 	    </signal>
 	    <label>Threads...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>tasks1</name>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_tasks1_activate</handler>
-	      <last_modification_time>Sat, 22 Apr 2000 20:29:20 GMT</last_modification_time>
-	    </signal>
-	    <label>Tasks...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1198,6 +1192,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_processus1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Sat, 22 Apr 2000 20:29:30 GMT</last_modification_time>
 	    </signal>
 	    <label>Processus...</label>
@@ -1210,6 +1205,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_signals1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:32 GMT</last_modification_time>
 	    </signal>
 	    <label>Signals...</label>
