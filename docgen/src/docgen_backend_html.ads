@@ -147,7 +147,8 @@ package Docgen_Backend_HTML is
       Process_Body     : Boolean;
       Loc_End          : Natural;
       Loc_Start        : Natural;
-      Entity_Info      : Entity_Information);
+      Entity_Info      : Entity_Information;
+      Entity_Abstract  : in out Boolean);
    --  Generate a link for the element Entity_Info on its declaration.
 
    procedure Finish
