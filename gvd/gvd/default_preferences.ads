@@ -93,7 +93,7 @@ package Default_Preferences is
    --  If the flags in param have Param_Writable, then this preference can be
    --  edited graphically through the preferences dialog.
    --  The Name is the name used when saving in the XML file. It shouldn't
-   --  contains any space, and should be a valid XML tag.
+   --  contain underscore characters
    --  The nick_name field is used in the preferences dialog.
    --  The description is used in the tooltips to provide more information the
    --  preference.
