@@ -190,29 +190,23 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class);
    --  Delete the last character of the buffer if it is an ASCII.LF.
 
-   procedure On_Buffer_Destroy
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues);
-   --  Callback for the "destroy" signal.
+   procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class);
+   --  Free memory associated to Buffer.
 
-   pragma Unreferenced (On_Buffer_Destroy);
-   --  ??? right now, this procedure is not used.
-   --  Must find a way to call it when the last view on this buffer is
-   --  destroyed.
+   --------------------
+   -- Buffer_Destroy --
+   --------------------
 
-   -----------------------
-   -- On_Buffer_Destroy --
-   -----------------------
-
-   procedure On_Buffer_Destroy
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues)
-   is
-      pragma Unreferenced (Params);
+   procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
    begin
       Free_Queue (Buffer.Queue);
-      Destroy (Buffer.Current_Command);
-   end On_Buffer_Destroy;
+
+      if Buffer.Current_Command /= null then
+         Destroy (Buffer.Current_Command);
+      end if;
+
+      Free (Buffer.Filename);
+   end Buffer_Destroy;
 
    ---------------------
    -- Changed_Handler --
@@ -1887,5 +1881,27 @@ package body Src_Editor_Buffer is
 
       return True;
    end Check_Timestamp;
+
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (Buffer : access Source_Buffer_Record) is
+   begin
+      Buffer.References := Buffer.References + 1;
+   end Ref;
+
+   -----------
+   -- Unref --
+   -----------
+
+   procedure Unref (Buffer : access Source_Buffer_Record) is
+   begin
+      Buffer.References := Buffer.References - 1;
+
+      if Buffer.References = 0 then
+         Buffer_Destroy (Buffer);
+      end if;
+   end Unref;
 
 end Src_Editor_Buffer;
