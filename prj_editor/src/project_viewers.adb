@@ -40,6 +40,7 @@ with Gtkada.MDI;      use Gtkada.MDI;
 with Gtkada.Types;    use Gtkada.Types;
 
 with Ada.Calendar;
+with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Calendar.Time_IO;     use GNAT.Calendar.Time_IO;
 with GNAT.Calendar;             use GNAT.Calendar;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -50,6 +51,7 @@ with Interfaces.C;              use Interfaces.C;
 with Prj_API;              use Prj_API;
 with Creation_Wizard;      use Creation_Wizard;
 with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
@@ -60,6 +62,8 @@ with Directory_Tree;       use Directory_Tree;
 with String_Utils;         use String_Utils;
 
 with Prj;           use Prj;
+with Prj.Part;      use Prj.Part;
+with Prj.Tree;      use Prj.Tree;
 with Stringt;       use Stringt;
 with Types;         use Types;
 with Namet;         use Namet;
@@ -287,6 +291,12 @@ package body Project_Viewers is
      (Widget  : access Gtk_Widget_Record'Class;
       Context : Selection_Context_Access);
    --  Callbacks for Project->Edit Naming Scheme, or the contextual menu
+
+   procedure On_Add_Dependency_From_Wizard
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access);
+   --  Add a dependency to the project described in Context. The dependency is
+   --  created from the wizard.
 
    -------------------------
    -- Find_In_Source_Dirs --
@@ -1006,6 +1016,39 @@ package body Project_Viewers is
       end if;
    end On_Edit_Naming_Scheme;
 
+   -----------------------------------
+   -- On_Add_Dependency_From_Wizard --
+   -----------------------------------
+
+   procedure On_Add_Dependency_From_Wizard
+     (Widget  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File : File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
+      Wiz  : Creation_Wizard.Prj_Wizard;
+      Imported_Project : Project_Node_Id;
+   begin
+      if Has_Project_Information (File) then
+         Gtk_New (Wiz, Get_Kernel (Context));
+         declare
+            Name : constant String := Run (Wiz);
+         begin
+            if Name /= "" then
+               Prj.Part.Parse (Imported_Project, Name, True);
+               Add_Imported_Project
+                 (Get_Project_From_View (Project_Information (File)),
+                  Imported_Project);
+            end if;
+         exception
+            when E : Project_Warning =>
+               Insert (Get_Kernel (Context), Exception_Message (E));
+         end;
+         Destroy (Wiz);
+         Recompute_View (Get_Kernel (Context));
+      end if;
+   end On_Add_Dependency_From_Wizard;
+
    -------------------------------
    -- Project_Editor_Contextual --
    -------------------------------
@@ -1073,8 +1116,12 @@ package body Project_Viewers is
             Set_Submenu (Item, Submenu);
 
             Gtk_New (Item, -"From wizard...");
-            Set_Sensitive (Item, False);
             Add (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Add_Dependency_From_Wizard'Access),
+               Selection_Context_Access (Context));
 
             Gtk_New (Item, -"default project");
             Set_Sensitive (Item, False);
