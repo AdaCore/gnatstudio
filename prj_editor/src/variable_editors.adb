@@ -539,19 +539,29 @@ package body Variable_Editors is
                   end if;
 
                   if Default then
-                     if Id = No_String then
-                        Start_String;
-                        Store_String_Chars (Name);
-                        Id := End_String;
-                     end if;
+                     declare
+                        Expr : Project_Node_Id := External_Default (Var);
+                     begin
+                        if Kind_Of (Expr) /= N_Literal_String
+                          or else Get_String (String_Value_Of (Expr)) /= Name
+                        then
+                           if Id = No_String then
+                              Start_String;
+                              Store_String_Chars (Name);
+                              Id := End_String;
+                           end if;
 
-                     Trace (Me, "Setting default value of "
-                            & Get_String (Get_Environment (Var))
-                            & " to " & Name);
-                     Set_Default_Value_For_External_Variable
-                       (Get_Project (Editor.Kernel),
-                        Get_String (Get_Environment (Var)),
-                        Id);
+                           Changed := True;
+
+                           Trace (Me, "Setting default value of "
+                                  & Get_String (Get_Environment (Var))
+                                  & " to " & Name);
+                           Set_Default_Value_For_External_Variable
+                             (Get_Project (Editor.Kernel),
+                              Get_String (Get_Environment (Var)),
+                              Id);
+                        end if;
+                     end;
                   end if;
                end if;
             end;
