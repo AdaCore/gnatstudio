@@ -327,6 +327,7 @@ package Language is
       Cat_Type,
       Cat_Subtype,
       Cat_Representation_Clause,
+      Cat_Local_Variable,
       Cat_Variable,
 
       ----------------
