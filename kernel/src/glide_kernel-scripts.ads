@@ -63,10 +63,17 @@ package Glide_Kernel.Scripts is
    procedure Free (Subprogram : in out Subprogram_Record) is abstract;
    --  Free the memory occupied by the subprogram instance
 
-   procedure Execute
+   function Execute
      (Subprogram : access Subprogram_Record;
-      Args       : Callback_Data'Class) is abstract;
-   --  Execute the subprogram with the given arguments
+      Args       : Callback_Data'Class) return Boolean is abstract;
+   --  Execute the subprogram with the given arguments, and evaluate its output
+   --  as a boolean
+
+   function Get_Name
+     (Subprogram : access Subprogram_Record) return String is abstract;
+   --  Return the name of the subprogram, as a string that can be displayed for
+   --  the user. This is used when analysing the contents of a hook for
+   --  instance
 
    -----------------
    -- Class types --
