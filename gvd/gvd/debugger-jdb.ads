@@ -46,9 +46,11 @@ package Debugger.Jdb is
    procedure Close (Debugger : access Jdb_Debugger);
 
    procedure Send
-     (Debugger     : access Jdb_Debugger;
-      Cmd          : String;
-      Empty_Buffer : Boolean := False);
+     (Debugger        : access Jdb_Debugger;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := False;
+      Wait_For_Prompt : Boolean := True);
 
    procedure Wait_Prompt (Debugger : access Jdb_Debugger);
 

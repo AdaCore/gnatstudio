@@ -46,9 +46,11 @@ package Debugger.Gdb is
    procedure Close (Debugger : access Gdb_Debugger);
 
    procedure Send
-     (Debugger     : access Gdb_Debugger;
-      Cmd          : String;
-      Empty_Buffer : Boolean := False);
+     (Debugger        : access Gdb_Debugger;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := False;
+      Wait_For_Prompt : Boolean := True);
 
    procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 

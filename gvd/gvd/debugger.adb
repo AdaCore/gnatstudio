@@ -214,7 +214,6 @@ package body Debugger is
       Thread   : Natural) is
    begin
       Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread));
-      Wait_Prompt (Debugger);
    end Thread_Switch;
 
 end Debugger;

@@ -100,12 +100,16 @@ package Debugger is
    --  Spawn must have been called first.
 
    procedure Send
-     (Debugger     : access Debugger_Root;
-      Cmd          : String;
-      Empty_Buffer : Boolean := False) is abstract;
+     (Debugger        : access Debugger_Root;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := False;
+      Wait_For_Prompt : Boolean := True) is abstract;
    --  Send a command to the underlying process associated with Debugger.
+   --  If Display is True, 
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
+   
 
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
@@ -224,9 +228,10 @@ package Debugger is
    --  Display parameter:
    --  ==================
    --  In all the following subprograms, display is used to output the command
-   --  in the debugger command window. If False is passed for this parameter,
-   --  the command is not shown in the command window associated with the
-   --  debugger.
+   --  in the debugger command window and to add the command to the command
+   --  history. If False is passed for this parameter, the command is not shown
+   --  in the command window associated with the debugger, and the command
+   --  history is not updated.
 
    procedure Run
      (Debugger : access Debugger_Root;
@@ -235,7 +240,7 @@ package Debugger is
    --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
    --  immediately.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "run"
 
    procedure Start
@@ -243,28 +248,28 @@ package Debugger is
       Display  : Boolean := False) is abstract;
    --  Start the execution of the executable and stop at the first user line.
    --  The arguments must have been set by a call to Set_Arguments.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "begin"
 
    procedure Step_Into
      (Debugger : access Debugger_Root;
       Display  : Boolean := False) is abstract;
    --  Step program until it reaches a different source line.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "step"
 
    procedure Step_Over
      (Debugger : access Debugger_Root;
       Display  : Boolean := False) is abstract;
    --  Step program, proceeding over subroutines.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "next"
 
    procedure Continue
      (Debugger : access Debugger_Root;
       Display  : Boolean := False) is abstract;
    --  Continue program after signal or breakpoint.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "next"
 
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
@@ -278,14 +283,14 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Display  : Boolean := False) is abstract;
    --  Select and print stack frame called by the current one.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "down"
 
    procedure Stack_Up
      (Debugger : access Debugger_Root;
       Display  : Boolean := False) is abstract;
    --  Select and print stack frame that called the current one.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "up"
 
    procedure Stack_Frame
@@ -295,14 +300,14 @@ package Debugger is
    --  Select and print the selected stack frame.
    --  The first frame is 1. It is up to the real debugger to convert to the
    --  appropriate Id when needed.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "frame"
 
    procedure Finish
      (Debugger : access Debugger_Root;
       Display  : Boolean := False) is abstract;
    --  Finish executing the current frame.
-   --  See above for details on Output.
+   --  See above for details on Display.
    --  GDB_COMMAND: "finish"
 
    type Backtrace_Record is record
