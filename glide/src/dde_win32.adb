@@ -155,7 +155,7 @@ package body DDE is
                Pos       : constant Natural := Index (Data, ":");
                Operation : DDE_Operation;
                Argument  : constant String :=
-                 Data (Pos + 1 .. Index (Data, (1 => ASCII.NUL) - 1);
+                 Data (Pos + 1 .. Index (Data, (1 => ASCII.NUL)) - 1);
                --  The data block is terminated by a nul character
 
             begin
