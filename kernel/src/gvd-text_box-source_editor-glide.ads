@@ -58,8 +58,9 @@ package GVD.Text_Box.Source_Editor.Glide is
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Update_Breakpoints
-     (Editor : access GEdit_Record;
-      Br     : GVD.Types.Breakpoint_Array);
+     (Editor  : access GEdit_Record;
+      Br      : GVD.Types.Breakpoint_Array;
+      Process : Gtk.Widget.Gtk_Widget);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Show_Message
@@ -96,6 +97,13 @@ private
    type GEdit_Record is new Source_Editor_Record with record
       Window : GVD.Main_Window.GVD_Main_Window;
       Line   : Natural := 0;
+
+      Current_Breakpoints : GVD.Types.Breakpoint_Array_Ptr;
+      --  This array contains the currently set breakpoints in the
+      --  File.
+      --  Entries in this array may be set to 0, in order to avoid
+      --  necessity to reallocate it every time the set of breakpoints
+      --  is updated.
    end record;
 
 end GVD.Text_Box.Source_Editor.Glide;
