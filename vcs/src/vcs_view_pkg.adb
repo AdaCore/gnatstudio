@@ -283,6 +283,8 @@ package body VCS_View_Pkg is
          Explorer := VCS_View_Access (Get_Widget (Child));
       end if;
 
+      Push_State (Kernel, Busy);
+
       while Status_Temp /= Null_Node loop
          Cache_Temp := First (Explorer.Cached_Status);
          Found      := False;
@@ -379,6 +381,8 @@ package body VCS_View_Pkg is
 
          Status_Temp := Next (Status_Temp);
       end loop;
+
+      Pop_State (Kernel);
    end Display_File_Status;
 
    -------------------------
