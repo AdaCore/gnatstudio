@@ -2,7 +2,7 @@
 # Copyright 2002 by ACT Europe
 
 [Pango]
-ModuleFiles =
+ModuleFiles = @prefix@/etc/gps/pango.modules
 
 [PangoX]
 AliasFiles = @prefix@/etc/gps/pangox.aliases
