@@ -205,18 +205,17 @@ package body Odd.Dialogs.Callbacks is
       Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
       List : constant Gtk_List :=
         History_Dialog_Access (Get_Toplevel (Object)).List;
-      Selected : Widget_List.Glist := Get_Selection (List);
-
       use Widget_List;
+      Selected : Widget_List.Glist := Last (Get_Selection (List));
 
    begin
       while Selected /= Null_List loop
          Process_User_Command
            (Tab,
             Get
-              (Gtk_Label
-                (Get_Data (Children (Gtk_Container (Get_Data (Selected)))))));
-         Selected := Next (Selected);
+            (Gtk_Label
+             (Get_Data (Children (Gtk_Container (Get_Data (Selected)))))));
+         Selected := Prev (Selected);
       end loop;
    end On_Replay_Selection_Clicked;
 
