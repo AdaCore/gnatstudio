@@ -46,7 +46,7 @@ with VFS;                       use VFS;
 package body Projects is
 
    Me    : constant Debug_Handle := Create ("Projects");
-   Debug : constant Debug_Handle := Create ("Projects.Debug");
+   Debug : constant Debug_Handle := Create ("Projects.Debug", Default => Off);
 
    type Name_Id_Array_Access is access Name_Id_Array;
 
