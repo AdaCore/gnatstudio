@@ -26,6 +26,7 @@ with Language;
 with Language_Handlers;
 with VFS;
 with Ada.Calendar;
+--  with Ada.Unchecked_Deallocation;
 
 package Src_Info is
 
@@ -44,6 +45,15 @@ package Src_Info is
    --  Return True if the given Source_Info has not been built using
    --  the corresponding LI file and hence can not be used for performing
    --  searches on this LI_File.
+
+   function Is_Up_To_Date
+     (LI : LI_File_Ptr;
+      Compare_With_Sources : Boolean := True;
+      Compare_With_LI_DB   : Boolean := False) return Boolean;
+   --  Whether the information contained in LI is up-to-date with regards to
+   --  either the source files it represents (if Compare_With_Source is True)
+   --  or with the actual LI files if Compare_With_LI_DB is True. Both
+   --  parameters can be true if both checks should be done.
 
    function Get_LI_Filename (LI : LI_File_Ptr) return VFS.Virtual_File;
    --  Return the name of the LI file associated with LI
@@ -254,6 +264,11 @@ package Src_Info is
 
    type E_Reference is private;
    No_Reference : constant E_Reference;
+
+--     type E_Reference_Array is array (Natural range <>) of E_Reference;
+--     type E_Reference_Array_Access is access E_Reference_Array;
+--     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+--       (E_Reference_Array, E_Reference_Array_Access);
 
    type File_Location is private;
    Null_File_Location : constant File_Location;

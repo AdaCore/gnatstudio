@@ -25,7 +25,9 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Basic_Types;
 with Projects;                  use Projects;
 with VFS;                       use VFS;
+with File_Utils;                use File_Utils;
 with GNAT.Calendar;
+with Ada.Calendar;              use Ada.Calendar;
 
 package body Src_Info is
 
@@ -1027,5 +1029,56 @@ package body Src_Info is
             --  -"task type"   -"task"
       end case;
    end Kind_To_String;
+
+   -------------------
+   -- Is_Up_To_Date --
+   -------------------
+
+   function Is_Up_To_Date
+     (LI                   : LI_File_Ptr;
+      Compare_With_Sources : Boolean := True;
+      Compare_With_LI_DB   : Boolean := False) return Boolean
+   is
+      function Is_Up_To_Date (File : File_Info_Ptr) return Boolean;
+      --  Return True if LI is up-to-date with regards to File
+
+      function Is_Up_To_Date (File : File_Info_Ptr) return Boolean is
+      begin
+         return File = null
+           or else File_Utils.File_Time_Stamp (File.Source_Filename.all) <=
+             File.File_Timestamp;
+      end Is_Up_To_Date;
+
+      File : File_Info_Ptr_List;
+   begin
+      if LI = null or else Is_Incomplete (LI) then
+         return False;
+      end if;
+
+      if Compare_With_LI_DB
+        and then File_Time_Stamp (LI.LI.LI_Filename) > LI.LI.LI_Timestamp
+      then
+         return False;
+      end if;
+
+      if Compare_With_Sources then
+         if not Is_Up_To_Date (LI.LI.Spec_Info)
+           or else not Is_Up_To_Date (LI.LI.Body_Info)
+         then
+            return False;
+         end if;
+
+         File := LI.LI.Separate_Info;
+         while File /= null loop
+            if not Is_Up_To_Date (File.Value) then
+               return False;
+            end if;
+
+            File := File.Next;
+         end loop;
+      end if;
+
+      return True;
+   end Is_Up_To_Date;
 
 end Src_Info;
