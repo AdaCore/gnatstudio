@@ -38,19 +38,22 @@
 --  occurs for this file.
 --  Files may be given as a list or with a pattern and a directory.
 --  Classic options included: match case, whole word.
+--  Boyer-Moore algorithm is used when the literal string isn't longer than
+--  Boyer_Moore.Max_Pattern_Length.
 
 --  NOTES:
 --  * Strings are assumed to end only with the string delimiter (they continue
 --    across ASCII.LF).
 --  * There is only 1 syntax level (e.g. strings aren't found within comments).
 --  * Searching in empty files matches nothing.
---  * This package does NOT register any extension (see language.ads).
+--  * This package does *NOT* register any extension (see language.ads).
 --  * ^ in a regexp means "start of the comment/string" when on the first line
 --    of the comment/string; otherwise "start of the line".
 --  * $ in a regexp means "end of the comment/string" when on the last line of
 --    the comment/string; otherwise "end of the line".
 --  * Don't use ^ or $ in a regexp when the scope is All_But_Comm, they have an
 --    undefined behavior.
+--  * Allowed chars in a word are found in g-regpat.ads.
 
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Regexp; use GNAT.Regexp;

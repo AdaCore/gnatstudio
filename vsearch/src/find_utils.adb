@@ -26,11 +26,15 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+--  NOTES:
+--  * Delimit_A_Word must be synced with word definition in g-regpat.ad?.
+
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Language; use Language;
 with OS_Utils; use OS_Utils;
 
+with Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 
 package body Find_Utils is
@@ -47,6 +51,16 @@ package body Find_Utils is
    --  Raise Search_Error if:
    --  * Look_For is empty, or can't compile
 
+   procedure Init_RE_Pattern
+     (Search     : out Code_Search;
+      Look_For   : String;
+      Match_Case : Boolean;
+      Whole_Word : Boolean);
+   --  Initialize RE_Pat.
+   --
+   --  Raise Search_Error if:
+   --  * Look_For can't compile
+
    -----------------
    -- Common_Init --
    -----------------
@@ -59,45 +73,20 @@ package body Find_Utils is
       Regexp     : Boolean;
       Scope      : Search_Scope)
    is
-      Flags : Regexp_Flags := No_Flags;
-      WD    : constant String := "\b";  -- Word_Delimiter
-
    begin
       if Look_For = "" then
          raise Search_Error;
       end if;
 
-      if not Match_Case then
-         Flags := Case_Insensitive;
-      end if;
+      if Regexp then
+         Init_RE_Pattern (Search, Look_For, Match_Case, Whole_Word);
 
-      if not Regexp and then not Whole_Word
-        and then Look_For'Length <= Boyer_Moore.Max_Pattern_Length
-      then
+      elsif Look_For'Length <= Boyer_Moore.Max_Pattern_Length then
          Search.Use_BM := True;
          Compile (Search.BM_Pat, Look_For, Match_Case);
+
       else
-         if Regexp then
-            if Whole_Word then
-               Search.RE_Pat :=
-                 new RE_Pattern' (Compile (WD & Look_For & WD, Flags));
-
-            else
-               Search.RE_Pat :=
-                 new RE_Pattern' (Compile (Look_For, Flags));
-            end if;
-         else
-            if Whole_Word then
-               Search.RE_Pat := new RE_Pattern'
-                 (Compile (WD & Quote (Look_For) & WD, Flags));
-
-            else
-               --  Couldn't optimize with Boyer-Moore
-
-               Search.RE_Pat := new RE_Pattern'
-                 (Compile (Quote (Look_For), Flags));
-            end if;
-         end if;
+         Init_RE_Pattern (Search, Quote (Look_For), Match_Case, Whole_Word);
       end if;
 
       Search.Look_For   := new String' (Look_For);
@@ -105,10 +94,6 @@ package body Find_Utils is
       Search.Whole_Word := Whole_Word;
       Search.Regexp     := Regexp;
       Search.Scope      := Scope;
-
-   exception
-      when Expression_Error =>
-         raise Search_Error;
    end Common_Init;
 
    ---------------
@@ -168,22 +153,49 @@ package body Find_Utils is
       --  Context  The language syntactic context used within the file
 
       function Contain_Match (Text : String) return Boolean;
-      --  Return False iff no match occurs within the given text (ie True if a
-      --  match or more).
+      --  Return False iff no match occurs within the given text (i.e. True if
+      --  a match or more).
       --
       --  Text: Text to check for matches
+
+      function Delimit_A_Word (C : Character) return Boolean;
+      --  Return True if C is a character which can't be in a word.
+      --
+      --  NOTE: See NOTES at the beginning of the file.
+
+      --------------------
+      -- Delimit_A_Word --
+      --------------------
+
+      function Delimit_A_Word (C : Character) return Boolean is
+         use Ada.Characters.Handling;
+      begin
+         return not (Is_Alphanumeric (C) or else C = '_');
+      end Delimit_A_Word;
 
       -------------------
       -- Contain_Match --
       -------------------
 
       function Contain_Match (Text : String) return Boolean is
+         Pos : Integer;
       begin
-         if Search.Use_BM then
-            return Boyer_Moore.Search (Search.BM_Pat, Text) /= -1;
-         else
+         if not Search.Use_BM then
             return Match (Search.RE_Pat.all, Text) /= Text'First - 1;
          end if;
+
+         Pos := Boyer_Moore.Search (Search.BM_Pat, Text);
+
+         if Pos = -1 then
+            return False;
+         elsif not Search.Whole_Word then
+            return True;
+         end if;
+
+         return (Pos = Text'First or else Delimit_A_Word (Text (Pos - 1)))
+           and then (Pos + Search.Look_For'Length - 1 = Text'Last
+                     or else Delimit_A_Word
+                               (Text (Pos + Search.Look_For'Length)));
       end Contain_Match;
 
       -----------------------
@@ -554,6 +566,35 @@ package body Find_Utils is
       Free_RE_Pattern (S.RE_Pat);
       Free (S.BM_Pat);
    end Free;
+
+   ---------------------
+   -- Init_RE_Pattern --
+   ---------------------
+
+   procedure Init_RE_Pattern
+     (Search     : out Code_Search;
+      Look_For   : String;
+      Match_Case : Boolean;
+      Whole_Word : Boolean)
+   is
+      Flags : Regexp_Flags := No_Flags;
+      WD    : constant String := "\b";  -- Word_Delimiter
+
+   begin
+      if not Match_Case then
+         Flags := Case_Insensitive;
+      end if;
+
+      if Whole_Word then
+         Search.RE_Pat := new RE_Pattern'(Compile (WD & Look_For & WD, Flags));
+      else
+         Search.RE_Pat := new RE_Pattern'(Compile (Look_For, Flags));
+      end if;
+
+   exception
+      when Expression_Error =>
+         raise Search_Error;
+   end Init_RE_Pattern;
 
    -----------------
    -- Init_Search --
