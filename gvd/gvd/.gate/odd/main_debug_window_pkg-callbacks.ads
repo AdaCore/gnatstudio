@@ -33,9 +33,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Change_Directory1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Close1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Restart1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
@@ -203,9 +200,6 @@ package Main_Debug_Window_Pkg.Callbacks is
 
    procedure On_Display_Registers1_Activate
      (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Display_Machine_Code1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_More_Status_Display1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);

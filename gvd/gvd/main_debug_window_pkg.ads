@@ -99,7 +99,6 @@ package Main_Debug_Window_Pkg is
       Print_Graph1 : Gtk_Menu_Item;
       Change_Directory1 : Gtk_Menu_Item;
       Separator4 : Gtk_Menu_Item;
-      Close1 : Gtk_Menu_Item;
       Restart1 : Gtk_Menu_Item;
       Exit1 : Gtk_Menu_Item;
       Edit2 : Gtk_Menu_Item;
@@ -183,7 +182,6 @@ package Main_Debug_Window_Pkg is
       Display_Local_Variables1 : Gtk_Menu_Item;
       Display_Arguments1 : Gtk_Menu_Item;
       Display_Registers1 : Gtk_Menu_Item;
-      Display_Machine_Code1 : Gtk_Menu_Item;
       More_Status_Display1 : Gtk_Menu_Item;
       Separator27 : Gtk_Menu_Item;
       Rotate_Graph1 : Gtk_Menu_Item;

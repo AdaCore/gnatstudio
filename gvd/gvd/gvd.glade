@@ -10,17 +10,7 @@
   <language>Ada 95</language>
   <gnome_support>False</gnome_support>
   <gettext_support>True</gettext_support>
-  <use_widget_names>False</use_widget_names>
   <output_main_file>False</output_main_file>
-  <output_support_files>True</output_support_files>
-  <output_build_files>True</output_build_files>
-  <backup_source_files>True</backup_source_files>
-  <main_source_file>interface.c</main_source_file>
-  <main_header_file>interface.h</main_header_file>
-  <handler_source_file>callbacks.c</handler_source_file>
-  <handler_header_file>callbacks.h</handler_header_file>
-  <support_source_file>support.c</support_source_file>
-  <support_header_file>support.h</support_header_file>
 </project>
 
 <widget>
@@ -171,7 +161,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>attach_to_process1</name>
-	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_attach_to_process1_activate</handler>
@@ -185,7 +174,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>detach_process1</name>
-	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_detach_process1_activate</handler>
@@ -224,7 +212,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>change_directory1</name>
-	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_change_directory1_activate</handler>
@@ -238,25 +225,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>separator4</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>close1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_W</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_close1_activate</handler>
-	      <object>main_debug_window</object>
-	      <last_modification_time>Tue, 28 Mar 2000 02:17:12 GMT</last_modification_time>
-	    </signal>
-	    <label>Close</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1358,24 +1326,6 @@
 	      <last_modification_time>Tue, 28 Mar 2000 02:44:11 GMT</last_modification_time>
 	    </signal>
 	    <label>Display Registers</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>display_machine_code1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_4</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_display_machine_code1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:41:30 GMT</last_modification_time>
-	    </signal>
-	    <label>Display Machine Code</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 

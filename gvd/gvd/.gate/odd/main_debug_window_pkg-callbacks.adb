@@ -124,17 +124,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Change_Directory1_Activate;
 
-   ------------------------
-   -- On_Close1_Activate --
-   ------------------------
-
-   procedure On_Close1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Close1_Activate;
-
    --------------------------
    -- On_Restart1_Activate --
    --------------------------
@@ -750,17 +739,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Display_Registers1_Activate;
-
-   ---------------------------------------
-   -- On_Display_Machine_Code1_Activate --
-   ---------------------------------------
-
-   procedure On_Display_Machine_Code1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Display_Machine_Code1_Activate;
 
    --------------------------------------
    -- On_More_Status_Display1_Activate --
