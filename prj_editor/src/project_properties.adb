@@ -48,7 +48,9 @@ package body Project_Properties is
          Name        : Gtk.GEntry.Gtk_Entry;
          Path        : Gtk.GEntry.Gtk_Entry;
          Executables : Gtk.Text.Gtk_Text;
-         Prefix      : Gtk.GEntry.Gtk_Entry;
+         Gnatls      : Gtk.GEntry.Gtk_Entry;
+         Compiler    : Gtk.GEntry.Gtk_Entry;
+         Debugger    : Gtk.GEntry.Gtk_Entry;
          Convert     : Gtk.Check_Button.Gtk_Check_Button;
       end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
@@ -102,7 +104,7 @@ package body Project_Properties is
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
 
-      Gtk_New (Table, Rows => 5, Columns => 3, Homogeneous => False);
+      Gtk_New (Table, Rows => 6, Columns => 3, Homogeneous => False);
       Pack_Start
         (Get_Vbox (Editor), Table, Expand => True, Fill => True);
 
@@ -140,13 +142,22 @@ package body Project_Properties is
       Set_Sensitive (Editor.Executables, False);
       Set_Sensitive (Label, False);
 
-      Gtk_New (Label, -"Tools prefix:");
+      Gtk_New (Label, -"Gnatls command:");
       Attach (Table, Label, 0, 1, 4, 5, Xoptions => 0);
-      Gtk_New (Editor.Prefix);
-      Attach (Table, Editor.Prefix, 1, 3, 4, 5);
+      Gtk_New (Editor.Gnatls);
+      Attach (Table, Editor.Gnatls, 1, 3, 4, 5);
+      Set_Text
+        (Editor.Gnatls,
+         Get_Attribute_Value (Project_View, Gnatlist_Attribute, Ide_Package));
 
-      Set_Sensitive (Editor.Prefix, False);
-      Set_Sensitive (Label, False);
+      Gtk_New (Label, -"Debugger command:");
+      Attach (Table, Label, 0, 1, 5, 6, Xoptions => 0);
+      Gtk_New (Editor.Debugger);
+      Attach (Table, Editor.Debugger, 1, 3, 5, 6);
+      Set_Text
+        (Editor.Debugger,
+         Get_Attribute_Value
+           (Project_View, Debugger_Command_Attribute, Ide_Package));
 
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
@@ -205,6 +216,30 @@ package body Project_Properties is
                   Project      => Project,
                   New_Name     => New_Name,
                   New_Path     => New_Path);
+               Changed := True;
+            end if;
+
+            if Get_Text (Editor.Gnatls) /= Get_Attribute_Value
+              (Project_View, Gnatlist_Attribute, Ide_Package)
+            then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Get_Project_From_View (Project_View),
+                  Pkg_Name           => Ide_Package,
+                  Scenario_Variables => Scenario_Variables (Kernel),
+                  Attribute_Name     => Gnatlist_Attribute,
+                  Value              => Get_Text (Editor.Gnatls));
+               Changed := True;
+            end if;
+
+            if Get_Text (Editor.Debugger) /= Get_Attribute_Value
+              (Project_View, Debugger_Command_Attribute, Ide_Package)
+            then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Get_Project_From_View (Project_View),
+                  Pkg_Name           => Ide_Package,
+                  Scenario_Variables => Scenario_Variables (Kernel),
+                  Attribute_Name     => Debugger_Command_Attribute,
+                  Value              => Get_Text (Editor.Debugger));
                Changed := True;
             end if;
          end;
