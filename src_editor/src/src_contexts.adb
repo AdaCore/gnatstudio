@@ -965,7 +965,8 @@ package body Src_Contexts is
             Context.Begin_Line,
             Context.Begin_Column,
             Context.End_Line,
-            Context.End_Column);
+            Context.End_Column,
+            False);
          return True;
 
       else
