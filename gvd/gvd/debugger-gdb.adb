@@ -2685,18 +2685,15 @@ package body Debugger.Gdb is
 
    function Complete
      (Debugger  : access Gdb_Debugger;
-      Beginning : in String) return String_Array
+      Beginning : String) return String_Array
    is
       S           : constant String :=
         Send (Debugger, "complete " & Beginning, Mode => Internal);
       First_Index : Integer := S'First;
       Last_Index  : Integer := S'First;
       Num         : Integer := 0;
-      Common_Pref : Integer := Beginning'Last;
-   begin
-      Skip_To_Char (Beginning, Common_Pref, ' ', -1);
-      Common_Pref := Common_Pref - Beginning'First + 1;
 
+   begin
       --  Find the number of words in the list.
 
       for Index in S'Range loop
@@ -2722,8 +2719,7 @@ package body Debugger.Gdb is
                Last_Index := Last_Index + 1;
             end if;
 
-            Result (Index) := new String'
-              (S (First_Index + Common_Pref .. Last_Index - 1));
+            Result (Index) := new String' (S (First_Index .. Last_Index - 1));
             Last_Index  := Last_Index + 1;
             First_Index := Last_Index;
          end loop;
