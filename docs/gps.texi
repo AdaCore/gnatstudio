@@ -7271,6 +7271,14 @@ can make an action depend on a named filter:
   @item Source editor
   This filter will only match if the currently selected window in GPS is an
   editor.
+  @item Explorer_Project_Node
+  Matches when clicking on a project node in the Project View
+  @item Explorer_Directory_Node
+  Matches when clicking on a directory node in the Project View
+  @item Explorer_File_Node
+  Matches when clicking on a file node in the Project View
+  @item Explorer_Entity_Node
+  Matches when clicking on an entity node in the Project View
   @end table
 
 @item language   (optional)
@@ -10670,6 +10678,53 @@ contextual menu entry will not be visible in other contexts
 </root>
 @end smallexample
 
+Another example would be to have a filter so that the contextual menu only
+appears when on a project node in the Project View. Using @code{%P} in your
+command is not enough, since the current context when you click on a file
+or directory also contain information about the project this file or directory
+belongs to. Thus this implicit filter will not be enough to hide your
+contextual menu.
+
+As a result, you need to do a slightly more complex test, where you check that
+the current context doesn't contains information on directories (which will
+disable the contextual menu for directories, files and entities). Since the
+command uses @code{%P}, GPS garantees that a project is available.
+
+We'll implement this contextual menu in a Python file, called @file[filters.py
+}.
+
+@smallexample
+import GPS
+def on_project():
+try:
+GPS.current_context().directory()
+return False 
+except:
+return True
+
+GPS.parse_xml ("""
+<action name="test_filter">
+<filter module="Explorer"
+     shell_lang="python"
+     shell_cmd="filters.on_project()" />
+<shell>echo current project is %P</shell>
+</action>
+<contextual action="test_filter">
+<title>Print current project</title>
+</contextual>""")
+@end smallexample
+
+The example above shows the flexibility of filters, since you can pretty much
+do anything you wish through the shell commands. However, it is complex to
+write for such a simple filter. Luckily, GPS provides a predefined filter
+just for that purpose, so that you can write instead, in an XML file:
+
+@smallexample
+<action name="test_filter" >
+<filter id="Explorer_Project_Node" />
+<shell>echo current project is %P</shell>
+</action>
+@end smallexample
 
 @c  --------------------------------------------------------
 @node Redirecting the output to specific windows
