@@ -24,6 +24,7 @@ with Browsers.Projects;         use Browsers.Projects;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Intl;                use Glide_Intl;
+with GUI_Utils;                 use GUI_Utils;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
@@ -36,6 +37,7 @@ with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -404,12 +406,16 @@ package body Browsers.Module is
    is
       Browser : MDI_Child;
    begin
+      Set_Busy_Cursor
+        (Get_Window (Get_Main_Window (Get_Kernel (Context))), True, True);
       Browser := Open_Browser (Get_Kernel (Context), Project_Browser);
       Examine_Project_Hierarchy
         (Get_Kernel (Context),
          Glide_Browser (Get_Widget (Browser)),
          Get_Project_From_View
          (Project_Information (File_Selection_Context_Access (Context))));
+      Set_Busy_Cursor
+        (Get_Window (Get_Main_Window (Get_Kernel (Context))), False);
    end On_Examine_Prj_Hierarchy;
 
    -----------------------
