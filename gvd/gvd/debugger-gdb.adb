@@ -381,10 +381,24 @@ package body Debugger.Gdb is
             Window.all'Address);
       end if;
 
-      Add_Output_Filter (Get_Descriptor (Debugger.Process).all,
-                         Trace_Filter'Access);
-      Add_Input_Filter (Get_Descriptor (Debugger.Process).all,
-                        Trace_Filter'Access);
+      --  ??? Should avoid the duplication of this code
+
+      if Main_Debug_Window_Access (Window).Debug_Mode then
+         Add_Output_Filter
+           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+         Add_Input_Filter
+           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+
+      elsif Main_Debug_Window_Access (Window).TTY_Mode then
+         Add_Output_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            TTY_Filter'Access,
+            Debugger.Process.all'Address);
+         Add_Input_Filter
+           (Get_Descriptor (Debugger.Process).all,
+            TTY_Filter'Access,
+            Debugger.Process.all'Address);
+      end if;
    end Spawn;
 
    ----------------
