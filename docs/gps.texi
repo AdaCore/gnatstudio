@@ -5774,6 +5774,7 @@ nodes:
    this category.
    @end table
 
+@ifset extended_language
 @item Project_Field
 This tag describes the tools that are used to support this
 language. The name of these tools is stored in the project files, and
@@ -5804,7 +5805,7 @@ This nodes has two attributes:
 
 The value of this tag is the string to use in the project properties
 editor when editing this project field.
-
+@end ifset
 
 @end table
 
