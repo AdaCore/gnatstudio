@@ -117,7 +117,9 @@ GNAT_SOURCES= \
   urealp.ads \
   urealp.adb \
   widechar.ads \
-  widechar.adb
+  widechar.adb \
+  Makefile.prolog \
+  Makefile.generic
 
 list-sources:
 	@echo $(GNAT_SOURCES)
