@@ -2319,7 +2319,8 @@ package body Src_Editor_Box is
                Get_Line (Mark_Iter),
                Get_Line_Offset (Mark_Iter),
                Get_Line (Iter),
-               Get_Line_Offset (Iter));
+               Get_Line_Offset (Iter),
+               Expand_Tabs => False);
          end if;
       end if;
    end Scroll_To_Mark;
