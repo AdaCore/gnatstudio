@@ -29,15 +29,12 @@
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Event;             use Gdk.Event;
-with Gdk.Font;              use Gdk.Font;
 with Gdk.Pixmap;            use Gdk.Pixmap;
-with Gdk.Types;             use Gdk.Types;
 with Glib;                  use Glib;
 with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Arrow;             use Gtk.Arrow;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
-with Gtk.Button_Box;        use Gtk.Button_Box;
 with Gtk.Clist;             use Gtk.Clist;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Frame;             use Gtk.Frame;
@@ -55,6 +52,8 @@ with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.Types;          use Gtkada.Types;
+with Pango.Font;            use Pango.Font;
+with Pango.Enums;           use Pango.Enums;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -174,9 +173,6 @@ package body Creation_Wizard is
    procedure Initialize (Wiz : access Prj_Wizard_Record'Class) is
       Pix  : Gdk_Pixmap;
       Mask : Gdk_Bitmap;
-      Font : Gdk_Font;
-
-      use Gdk;
 
    begin
       Wizards.Initialize (Wiz, "Project setup", "#0476bc");
@@ -187,10 +183,9 @@ package body Creation_Wizard is
       Add_Logo (Wiz, Pix, Mask);
 
       Wiz.Title_Style := Copy (Get_Style (Wiz));
-      Load (Font, "-adobe-helvetica-bold-*-*-*-*-180-*-*-*-*-*-*");
-      if Font /= null then
-         Set_Font (Wiz.Title_Style, Font);
-      end if;
+      Set_Font_Description
+        (Wiz.Title_Style,
+         From_String ("helvetica Bold Oblique 14"));
 
       Add_Page (Wiz, First_Page (Wiz),  "Naming the project");
       Add_Page (Wiz, Second_Page (Wiz), "Selecting sources");
@@ -265,8 +260,6 @@ package body Creation_Wizard is
    function Second_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget
    is
-      Arrow_Buttons_Width  : constant := 30;
-      Arrow_Buttons_Height : constant := 15;
       Box, Vbox : Gtk_Box;
       Bbox      : Gtk_Hbutton_Box;
       Button    : Gtk_Button;
