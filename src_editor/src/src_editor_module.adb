@@ -413,6 +413,8 @@ package body Src_Editor_Module is
      (Data    : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the source editor module.
 
+   procedure Current_Search_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
    procedure File_Search_Command_Handler
      (Data    : in out Callback_Data'Class; Command : String);
    procedure Project_Search_Command_Handler
@@ -684,6 +686,70 @@ package body Src_Editor_Module is
          null;
       end loop;
    end Common_Search_Command_Handler;
+
+   ------------------------------------
+   -- Current_Search_Command_Handler --
+   ------------------------------------
+
+   procedure Current_Search_Command_Handler
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+
+      Id      : Source_Editor_Module :=
+         Source_Editor_Module (Src_Editor_Module_Id);
+
+      Inst    : constant Class_Instance :=
+                 Nth_Arg (Data, 1, Get_File_Class (Kernel));
+      File    : constant Virtual_File := Get_File (Get_Data (Inst));
+      Pattern : constant String := Nth_Arg (Data, 2);
+      Casing  : constant Boolean := Nth_Arg (Data, 3, False);
+      Regexp  : constant Boolean := Nth_Arg (Data, 4, False);
+
+      Dummy   : Boolean;
+      pragma Unreferenced (Dummy);
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Store the result of the match in Data
+
+      function Callback (Match : Match_Result) return Boolean is
+      begin
+         Set_Return_Value
+           (Data,
+            Create_File_Location
+              (Get_Script (Data),
+               Create_File (Get_Script (Data), File),
+               Match.Line,
+               Match.Column));
+         return True;
+      end Callback;
+   begin
+      if Id.Search_Context = null
+        or else Id.Search_Pattern = null
+        or else Id.Search_Pattern.all /= Pattern
+        or else Id.Search_File /= File
+      then
+         Free (Id.Search_Pattern);
+         Id.Search_Pattern := new String'(Pattern);
+         Id.Search_File    := File;
+         Id.Search_Context := Files_From_Project_Factory (Whole, False);
+         Set_File_List (Id.Search_Context, new File_Array'(1 => File));
+
+         Set_Context
+           (Id.Search_Context,
+            Look_For => Pattern,
+            Options  => (Case_Sensitive => Casing,
+                         Whole_Word     => False,
+                         Regexp         => Regexp));
+      end if;
+
+      Dummy := Search
+        (Context  => Id.Search_Context,
+         Handler  => Get_Language_Handler (Kernel),
+         Kernel   => Kernel,
+         Callback => Callback'Unrestricted_Access);
+   end Current_Search_Command_Handler;
 
    ---------------------------------
    -- File_Search_Command_Handler --
@@ -4352,6 +4418,23 @@ package body Src_Editor_Module is
 
       Register_Command
         (Kernel,
+         Command      => "search_next",
+         Params       =>
+           Parameter_Names_To_Usage (File_Search_Parameters (1 .. 3), 2),
+         Return_Value => "list",
+         Description  =>
+           -("Return the next match for pattern in the file. Default"
+             & " values are False for case_sensitive and regexp."
+             & " Scope is a string, and should be any of 'whole', 'comments',"
+             & " 'strings', 'code'. The latter will match only for text"
+             & " outside of comments"),
+         Minimum_Args => 1,
+         Maximum_Args => 3,
+         Class        => Get_File_Class (Kernel),
+         Handler      => Current_Search_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
          Command      => "search",
          Params       =>
            Parameter_Names_To_Usage (Project_Search_Parameters, 4),
@@ -4594,6 +4677,8 @@ package body Src_Editor_Module is
    begin
       String_List_Utils.String_List.Free (Id.Unopened_Files);
       Mark_Identifier_List.Free (Id.Stored_Marks);
+
+      Free (Id.Search_Pattern);
 
       --  Post_It_Note_GC and Blank_Lines_GC are initialized only when the
       --  main window is mapped. Therefore, if the window was never displayed,
