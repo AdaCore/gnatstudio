@@ -104,9 +104,10 @@ package Switches_Editors is
       Files        : GNAT.OS_Lib.Argument_List)
       return Prj_API.Project_Node_Array;
    --  Generate the information in Project to represent the status of Switches.
-   --  The list of modified projects is returned.
+   --  The list of modified projects is returned (there can be several in case
+   --  one of the modified packages was a renaming of another package).
    --  Project_View can be No_Project, in which case the return value will
-   --  always be True, after modification of the project.
+   --  always be non empty, after modification of the project.
 
    ---------------------------
    -- Callbacks for the GUI --

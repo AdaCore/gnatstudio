@@ -47,6 +47,7 @@ with Language_Handlers;    use Language_Handlers;
 with String_Utils;         use String_Utils;
 with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
 with Basic_Types;          use Basic_Types;
+with Scenario_Selectors;   use Scenario_Selectors;
 
 with Types;                use Types;
 with Prj;                  use Prj;
@@ -102,7 +103,8 @@ package body Switches_Editors is
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Project_Node_Id;
       Project_View : Project_Id;
-      Files     : Argument_List);
+      Files     : Argument_List;
+      Scenario  : access Scenario_Selector_Record'Class);
    --  Called when the user has closed a switch editor for a specific file.
    --  This modifies the edited project to reflect the changes done in the
    --  dialog.
@@ -1402,20 +1404,45 @@ package body Switches_Editors is
      (Switches     : access Switches_Edit_Record'Class;
       Project      : Project_Node_Id;
       Project_View : Project_Id;
-      Files        : Argument_List)
+      Files        : Argument_List;
+      Scenario     : access Scenario_Selector_Record'Class)
    is
-      Result : constant Project_Node_Array := Generate_Project
-        (Switches     => Switches,
-         Kernel       => Switches.Kernel,
-         Project      => Project,
-         Project_View => Project_View,
-         Files        => Files);
+      Saved : Argument_List := Get_Current_Scenario
+        (Scenario_Variables (Switches.Kernel));
+      Scenar : Scenario_Iterator := Start (Scenario);
+      Modified : Boolean := False;
    begin
-      for R in Result'Range loop
-         Set_Project_Modified (Switches.Kernel, Result (R), True);
+      while not At_End (Scenar) loop
+         declare
+            Cur : Argument_List := Current (Scenar);
+         begin
+            Set_Environment (Scenario_Variables (Switches.Kernel), Cur);
+
+            declare
+               Result : constant Project_Node_Array := Generate_Project
+                 (Switches     => Switches,
+                  Kernel       => Switches.Kernel,
+                  Project      => Project,
+                  Project_View => Project_View,
+                  Files        => Files);
+            begin
+               for R in Result'Range loop
+                  Set_Project_Modified (Switches.Kernel, Result (R), True);
+               end loop;
+
+               Modified := Modified or else Result'Length /= 0;
+            end;
+
+            Free (Cur);
+         end;
+
+         Next (Scenar);
       end loop;
 
-      if Result'Length /= 0 then
+      Set_Environment (Scenario_Variables (Switches.Kernel), Saved);
+      Free (Saved);
+
+      if Modified then
          Recompute_View (Switches.Kernel);
       end if;
    end Close_Switch_Editor;
@@ -1636,6 +1663,8 @@ package body Switches_Editors is
       Dialog    : Gtk_Dialog;
       Button    : Gtk_Widget;
       B         : Gtk_Button;
+      Box       : Gtk_Box;
+      Selector  : Scenario_Selector;
 
    begin
       if Files'Length > 1 then
@@ -1658,10 +1687,17 @@ package body Switches_Editors is
                   Flags  => Modal or Destroy_With_Parent);
       end if;
 
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Box, Fill => True, Expand => True);
+
       Gtk_New (Switches);
       Switches.Kernel := Kernel_Handle (Kernel);
-      Pack_Start (Get_Vbox (Dialog),
-                  Get_Window (Switches), Fill => True, Expand => True);
+      Pack_Start (Box, Get_Window (Switches), Fill => True, Expand => True);
+
+      Gtk_New (Selector, Kernel);
+      Pack_Start (Box, Selector, Expand => False);
+
+      Show_All (Dialog);
 
       Fill_Editor (Switches, Project_View, Files);
 
@@ -1674,11 +1710,11 @@ package body Switches_Editors is
            (B, "clicked",
             Widget_Callback.To_Marshaller (Revert_To_Default'Access),
             Slot_Object => Switches);
+         Show_All (B);
       end if;
 
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Dialog);
+      Show_All (Button);
 
       --  Note: if the dialog is no longer modal, then we need to create a copy
       --  of the context for storing in the callback, since the current context
@@ -1686,7 +1722,8 @@ package body Switches_Editors is
       --  of this dialog.
 
       if Run (Dialog) = Gtk_Response_OK then
-         Close_Switch_Editor (Switches, Project, Project_View, Files);
+         Close_Switch_Editor
+           (Switches, Project, Project_View, Files, Selector);
       end if;
 
       Destroy (Dialog);
