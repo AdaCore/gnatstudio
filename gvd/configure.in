@@ -162,13 +162,6 @@ opsysfile="'\"system/${opsys}.h\"'"
 
 AC_SUBST(opsysfile)
 
-# On AIX machines, we must use -bbigtoc or we won't be able to link
-case "${host}" in
-   *aix*) TARGET_CFLAGS=""
-          TARGET_LFLAGS="-Wl,-bbigtoc";;
-   *)  TARGET_CFLAGS="";;
-esac
-
 # checking for gtk
 AM_PATH_GTK(1.2.10,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
