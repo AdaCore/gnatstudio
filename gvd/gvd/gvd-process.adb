@@ -77,8 +77,7 @@ package body Odd.Process is
          Put (Expect_Out (Get_Process (Debugger.Debugger).all));
       else
          Freeze (Win.Debugger_Text);
-         Load (Font,
-               "-adobe-courier-medium-i-*-*-15-*-*-*-*-*-*-*");
+         Load (Font, "-adobe-helvetica-bold-*-*-*-*-140-*-*-*-*-*-*");
          Insert
            (Win.Debugger_Text,
             Font,
