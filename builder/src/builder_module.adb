@@ -537,9 +537,15 @@ package body Builder_Module is
              (File_Selection_Context_Access (Context))
          then
             declare
-               File : constant String :=
-                 File_Information (File_Selection_Context_Access (Context));
+               File_Context : constant File_Selection_Context_Access :=
+                 File_Selection_Context_Access (Context);
+               File : constant String := File_Information (File_Context);
+
             begin
+               if Has_Directory_Information (File_Context) then
+                  Change_Dir (Directory_Information (File_Context));
+               end if;
+
                Prj := Get_Project_From_File (Get_Registry (K), File);
 
                if Prj = No_Project or else Is_Default (Project) then
@@ -585,6 +591,8 @@ package body Builder_Module is
             Args := Compute_Arguments
               (K, Syntax, Project_Path (Data.Project), Data.File);
          end if;
+
+         Change_Dir (Dir_Name (Project_Path (Data.Project)));
       end if;
 
       Clear_Compilation_Output (K);
@@ -794,6 +802,7 @@ package body Builder_Module is
                Default => "gnatmake", Index => "ada"));
       end if;
 
+      Change_Dir (Dir_Name (Project_Path (Prj)));
       Push_State (Kernel, Processing);
       Clear_Compilation_Output (Kernel);
       Set_Sensitive_Menus (Kernel, False);
