@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package provides functions for storing and recalling the sizes
+--  of all the windows and dialogs in GVD.
+
 with Gtk.Widget; use Gtk.Widget;
 
 package GVD.Window_Settings is
-
-   --  This package provides functions for storing and recalling the sizes
-   --  of all the windows and dialogs in GVD.
 
    procedure Save_Window_Settings
      (File_Name         : String;
@@ -36,5 +36,3 @@ package GVD.Window_Settings is
    --  Load the window settings from the file.
 
 end GVD.Window_Settings;
-
-

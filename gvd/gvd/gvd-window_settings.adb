@@ -43,22 +43,16 @@ package body GVD.Window_Settings is
    --  Also, the type of the constant gives the type of the value associated
    --  with the setting.
 
-   Main_Debug_Window_Height : constant String_Gint
-     := "Main_Debug_Window_Height";
-   Main_Debug_Window_Width : constant String_Gint
-     := "Main_Debug_Window_Width";
-   Memory_View_Height : constant String_Gint
-     := "Memory_View_Height";
-   Memory_View_Width : constant String_Gint
-     := "Memory_View_Width";
-   History_Dialog_Height : constant String_Gint
-     := "History_Dialog_Height";
-   History_Dialog_Width : constant String_Gint
-     := "History_Dialog_Width";
-   Task_Dialog_Height : constant String_Gint
-     := "Task_Dialog_Height";
-   Task_Dialog_Width : constant String_Gint
-     := "Task_Dialog_Width";
+   Main_Debug_Window_Height : constant String_Gint :=
+     "Main_Debug_Window_Height";
+   Main_Debug_Window_Width  : constant String_Gint :=
+     "Main_Debug_Window_Width";
+   Memory_View_Height       : constant String_Gint := "Memory_View_Height";
+   Memory_View_Width        : constant String_Gint := "Memory_View_Width";
+   History_Dialog_Height    : constant String_Gint := "History_Dialog_Height";
+   History_Dialog_Width     : constant String_Gint := "History_Dialog_Width";
+   Task_Dialog_Height       : constant String_Gint := "Task_Dialog_Height";
+   Task_Dialog_Width        : constant String_Gint := "Task_Dialog_Width";
 
    --------------------
    -- Local packages --
@@ -74,23 +68,25 @@ package body GVD.Window_Settings is
    -----------------------
    procedure Set
      (Var : String_Gint; Value : Gint; Override : Boolean := False);
-
-   procedure Set (Var : String; Value : String; Override : Boolean := False);
    --  Create a new entry in the current window settings, or modify the value
    --  of the existing one (only if Override is True)
 
+   procedure Set (Var : String; Value : String; Override : Boolean := False);
+   --  Ditto but with no type checking on Var.
+
    function Get_Setting (Name : String_Gint) return Gint;
    pragma Inline (Get_Setting);
+   --  Retrieve the value of a given setting.
 
    --------------------------
    -- Load_Window_Settings --
    --------------------------
 
    procedure Load_Window_Settings
-     (File_Name : String;
+     (File_Name         : String;
       Main_Debug_Window : Gtk_Widget)
    is
-      Top : Main_Debug_Window_Access :=
+      Top : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Main_Debug_Window);
 
    begin
@@ -115,7 +111,6 @@ package body GVD.Window_Settings is
       Set_Default_Size (Top.Task_Dialog,
                         Get_Setting (Task_Dialog_Width),
                         Get_Setting (Task_Dialog_Height));
-
    end Load_Window_Settings;
 
    --------------------------
@@ -123,10 +118,10 @@ package body GVD.Window_Settings is
    --------------------------
 
    procedure Save_Window_Settings
-     (File_Name : String;
+     (File_Name         : String;
       Main_Debug_Window : Gtk_Widget)
    is
-      Top : Main_Debug_Window_Access :=
+      Top : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Main_Debug_Window);
    begin
       if Current_Window_Settings = null then
@@ -165,8 +160,8 @@ package body GVD.Window_Settings is
    -----------------
 
    function Get_Setting (Name : String_Gint) return Gint is
-      Node : Node_Ptr
-        := Find_Tag (Current_Window_Settings.Child, String (Name));
+      Node : constant Node_Ptr :=
+        Find_Tag (Current_Window_Settings.Child, String (Name));
    begin
       pragma Assert (Node /= null);
       pragma Assert (Node.Value /= null);
@@ -177,9 +172,7 @@ package body GVD.Window_Settings is
    -- Set --
    ---------
 
-   procedure Set
-     (Var : String; Value : String; Override : Boolean := False)
-   is
+   procedure Set (Var : String; Value : String; Override : Boolean := False) is
       N : Node_Ptr := Find_Tag (Current_Window_Settings.Child, Var);
    begin
       if N = null then
@@ -187,6 +180,7 @@ package body GVD.Window_Settings is
          N.Tag := new String' (Var);
          N.Value := new String' (Value);
          Add_Child (Current_Window_Settings, N);
+
       elsif Override then
          Gint_Xml.Free (N.Value);
          N.Value := new String' (Value);
@@ -198,8 +192,7 @@ package body GVD.Window_Settings is
    ---------
 
    procedure Set
-     (Var : String_Gint; Value : Gint; Override : Boolean := False)
-   is
+     (Var : String_Gint; Value : Gint; Override : Boolean := False) is
    begin
       Set (String (Var), Gint'Image (Value), Override);
    end Set;
