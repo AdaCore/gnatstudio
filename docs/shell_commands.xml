@@ -1436,13 +1436,8 @@ format of the gps_index.xml files</description>
       <param name="column_index" default="-1">An integer</param>
       <param name="style_index" default="-1">An integer</param>
       <param name="warning_index" default="-1">An integer</param>
-      <paran name="highlight_category" default="">A string</param>
-      <paran name="style_category" default="">A string</param>
-      <paran name="warning_category" default="">A string</param>
       <description>Parse the output of a tool, and suggests auto-fix possibilities whenever possible. This adds small icons in the location window, so that the user can click on it to fix compilation errors. You should call Locations.parse with the same output prior to calling this command.
 The regular expression specifies how locations are recognized. By default, it matches file:line:column. The various indexes indicate the index of the opening parenthesis that contains the relevant information in the regular expression. Set it to 0 if that information is not available.
-highlight_category, style_category and warning_category reference the colors to
-use in the editor to highlight the messages when the regexp has matched. If none of them is specified, no highlighting is done in the editor. Create these categories with GPS.Editor.register_highlighting().
 Access the various suggested fixes through the methods of the Codefix class</description>
      <see_also name="GPS.Editor.register_highlighting()" />
   </shell_doc>
@@ -1943,8 +1938,13 @@ If the force parameter is false, then a confirmation dialog is displayed so that
      <param name="msg_index" default="-1">An integer</param>
      <param name="style_index" default="-1">An integer</param>
      <param name="warning_index" default="-1">An integer</param>
+     <paran name="highlight_category" default="">A string</param>
+     <paran name="style_category" default="">A string</param>
+     <paran name="warning_category" default="">A string</param>
      <description>Parse the contents of the string, which is supposedly the output of some tool, and add the errors and warnings to the locations window. A new category is created in the locations window if it doesn't exist. Preexisting contents for that category is not removed, see locations_remove_category.
-The regular expression specifies how locations are recognized. By default, it matches file:line:column. The various indexes indicate the index of the opening parenthesis that contains the relevant information in the regular expression. Set it to 0 if that information is not available. Style_Index and Warning_Index, if they match, force the error message in a specific category.</description>
+The regular expression specifies how locations are recognized. By default, it matches file:line:column. The various indexes indicate the index of the opening parenthesis that contains the relevant information in the regular expression. Set it to 0 if that information is not available. Style_Index and Warning_Index, if they match, force the error message in a specific category.
+highlight_category, style_category and warning_category reference the colors to use in the editor to highlight the messages when the regexp has matched. If none of them is specified, no highlighting is done in the editor. Create these categories with GPS.Editor.register_highlighting(). </description>
+      <see_also name="GPS.Editor.register_highlighting()" />
   </shell_doc>
 
   <shell_doc name="GPS.add" real_name="GPS.Locations.add">
@@ -1956,6 +1956,15 @@ The regular expression specifies how locations are recognized. By default, it ma
      <param name="highlight" default="">A string, the name of the highlight category</param>
      <param name="length" default="0">An integer</param>
      <description>Add a new entry in the location window. Nodes are created as needed for the category or file. If Highlight is specified to a non-empty string, the whole line is highlighted in the file, with a color given by that highlight category (see register_highlighting for more information). Length is the length of the highlighting. The default value of 0 indicates that the whole line should be highlighted</description>
+     <example lang="python">
+        GPS.Editor.register_highlighting ("My_Category", "blue")
+        GPS.Locations.add (category="Name in location window",
+                           file=GPS.File ("foo.c"),
+                           line=320,
+                           column=2,
+                           message="message",
+                           highlight="My_Category")
+     </example>
   </shell_doc>
 
   <shell_doc name="GPS.remove_category" real_name="GPS.Locations.remove_category">
