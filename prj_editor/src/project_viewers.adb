@@ -79,10 +79,6 @@ package body Project_Viewers is
    Prj_Editor_Module_ID : Module_ID;
    --  Id for the project editor module
 
-   Default_Project_Width  : constant := 400;
-   Default_Project_Height : constant := 400;
-   --  <preferences>
-
    Project_Switches_Name : constant String := "Project Switches";
 
    type View_Display is access procedure
@@ -799,7 +795,9 @@ package body Project_Viewers is
            (Viewer, Get_Current_Explorer_Context (Kernel));
 
          Set_Size_Request
-           (Viewer, Default_Project_Width, Default_Project_Height);
+           (Viewer,
+            Get_Pref (Kernel, Default_Widget_Width),
+            Get_Pref (Kernel, Default_Widget_Height));
          Child := Put (Get_MDI (Kernel), Viewer);
          Set_Title (Child, Project_Switches_Name);
       end if;
@@ -1181,10 +1179,12 @@ package body Project_Viewers is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Prj_Editor_Module_ID := Register_Module
-        (Module_Name             => Project_Editor_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => Project_Editor_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => Project_Editor_Contextual'Access);

@@ -31,6 +31,7 @@ with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Main_Window;         use Glide_Main_Window;
 with GVD.Status_Bar;            use GVD.Status_Bar;
@@ -49,11 +50,6 @@ with GNAT.Expect;               use GNAT.Expect;
 with Traces;                    use Traces;
 
 package body Src_Editor_Module is
-
-   Default_Editor_Width  : constant := 400;
-   Default_Editor_Height : constant := 400;
-   Timeout               : constant Guint32 := 50;
-   --  <preferences>
 
    Me : Debug_Handle := Create ("Src_Editor_Module");
 
@@ -317,7 +313,10 @@ package body Src_Editor_Module is
       if Current /= null then
          Create_New_View (Editor, Kernel, Current);
          Gtk_New (Box, Editor);
-         Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
+         Set_Size_Request
+           (Box,
+            Get_Pref (Kernel, Default_Widget_Width),
+            Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
          Child := Put (MDI, Box);
          --  ??? Should compute the right number.
@@ -399,7 +398,10 @@ package body Src_Editor_Module is
 
       if Editor /= null then
          Gtk_New (Box, Editor);
-         Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
+         Set_Size_Request
+           (Box,
+            Get_Pref (Kernel, Default_Widget_Width),
+            Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
          Child := Put (MDI, Box);
 
@@ -742,6 +744,8 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
+      Timeout : constant Guint32 := 50;
+
       Success : Boolean;
       Title   : constant String := Get_Editor_Filename (Kernel);
       Id      : Timeout_Handler_Id;
@@ -1032,10 +1036,12 @@ package body Src_Editor_Module is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Src_Editor_Module_Id := Register_Module
-        (Module_Name             => Src_Editor_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => Src_Editor_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => Source_Editor_Contextual'Access,

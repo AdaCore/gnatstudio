@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -26,7 +26,8 @@ package Src_Editor_Module is
    Src_Editor_Module_Id : Glide_Kernel.Module_ID;
    Src_Editor_Module_Name : constant String := "Source_Editor";
 
-   procedure Register_Module;
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
    function Find_Current_Editor

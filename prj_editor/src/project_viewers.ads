@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -31,7 +31,8 @@ package Project_Viewers is
    type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with private;
    type Project_Viewer is access all Project_Viewer_Record'Class;
 
-   procedure Register_Module;
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    procedure Initialize_Module
