@@ -127,6 +127,20 @@ package body GVD.Explorer is
    procedure Clear_Explorer (Explorer : access Explorer_Record'Class);
    --  Remove all the files from the explorer.
 
+   procedure Clear_Files_Data (Explorer : access Explorer_Record'Class);
+   --  Remove the entities associated with each file, but do not remove the
+   --  files themselves.
+
+   procedure Add_Dummy_Node
+     (Explorer : access Explorer_Record'Class;
+      To_Node  : Gtk_Ctree_Node;
+      Data     : in out Node_Data_Access);
+   --  Add a dummy node as a child of To_Node. This node is only used so that
+   --  To_Node is associated with a [+] symbol on its left, that indicates that
+   --  the user can expand its contents. The contents (entities,...) is
+   --  calculated lazily only the first time the user wants to see it.
+   --  Data is the user_data associated with To_Node.
+
    -------------
    -- Gtk_New --
    -------------
@@ -191,6 +205,8 @@ package body GVD.Explorer is
          Is_Leaf       => False,
          Expanded      => False);
       Show_All (Explorer);
+
+      Explorer.CR_Stripped := Get_Pref (Should_Strip_CR);
 
       --  See Expand_Explorer_Tree for more explanation on the horizontal
       --  scrolling problem that is not solved by the setting below ???
@@ -451,11 +467,10 @@ package body GVD.Explorer is
                   Lang := Get_Language_From_File (Full_Name);
 
                   if Lang /= null then
-                     if Get_Pref (Should_Strip_CR) then
+                     if Explorer.CR_Stripped then
                         Explore
                           (Explorer, Node, Explorer,
                            Strip_CR (S), Lang, Full_Name);
-
                      else
                         Explore (Explorer, Node, Explorer, S, Lang, Full_Name);
                      end if;
@@ -512,6 +527,31 @@ package body GVD.Explorer is
       when Gtkada.Types.Data_Error =>
          null;
    end Expand_Explorer_Tree;
+
+   --------------------
+   -- Add_Dummy_Node --
+   --------------------
+
+   procedure Add_Dummy_Node
+     (Explorer : access Explorer_Record'Class;
+      To_Node  : Gtk_Ctree_Node;
+      Data     : in out Node_Data_Access) is
+   begin
+      Data.Dummy_Node := Insert_Node
+        (Explorer,
+         Parent        => To_Node,
+         Sibling       => null,
+         Text          => Null_Array + "",
+         Spacing       => 5,
+         Pixmap_Closed => Null_Pixmap,
+         Mask_Closed   => Null_Bitmap,
+         Pixmap_Opened => Null_Pixmap,
+         Mask_Opened   => Null_Bitmap,
+         Is_Leaf       => True,
+         Expanded      => True);
+      Data.Computed := False;
+      Row_Data_Pkg.Node_Set_Row_Data (Explorer, To_Node, Data);
+   end Add_Dummy_Node;
 
    -------------------
    -- Add_File_Node --
@@ -614,22 +654,7 @@ package body GVD.Explorer is
                              Computed     => False,
                              Dummy_Node   => null);
 
-      --  Insert a dummy node so that the ctree displays a [+] button on
-      --  the left side.
-
-      Data.Dummy_Node := Insert_Node
-        (Tree,
-         Parent        => Node,
-         Sibling       => null,
-         Text          => Null_Array + "",
-         Spacing       => 5,
-         Pixmap_Closed => Null_Pixmap,
-         Mask_Closed   => Null_Bitmap,
-         Pixmap_Opened => Null_Pixmap,
-         Mask_Opened   => Null_Bitmap,
-         Is_Leaf       => True,
-         Expanded      => True);
-      Row_Data_Pkg.Node_Set_Row_Data (Tree, Node, Data);
+      Add_Dummy_Node (Tree, Node, Data);
    end Add_File_Node;
 
    -----------------------
@@ -1073,6 +1098,46 @@ package body GVD.Explorer is
       end if;
    end Show_Current_File;
 
+   ----------------------
+   -- Clear_Files_Data --
+   ----------------------
+
+   procedure Clear_Files_Data (Explorer : access Explorer_Record'Class) is
+      use type Row_List.Glist;
+      Extension_Node  : Gtk_Ctree_Node;
+      File_Node       : Gtk_Ctree_Node;
+      Data            : Node_Data_Access;
+      Child_Node      : Gtk_Ctree_Node;
+      Next_Child      : Gtk_Ctree_Node;
+
+   begin
+      Extension_Node :=
+        Find_Node_Ptr (Explorer, Row_List.Get_Data (Get_Row_List (Explorer)));
+
+      while Extension_Node /= null loop
+         File_Node := Row_Get_Children (Node_Get_Row (Extension_Node));
+         while File_Node /= null loop
+
+            Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, File_Node);
+            if Data.Is_File_Node and then Data.Computed then
+
+               Child_Node := Row_Get_Children (Node_Get_Row (File_Node));
+               while Child_Node /= null loop
+                  Next_Child := Row_Get_Sibling (Node_Get_Row (Child_Node));
+                  Remove_Node (Explorer, Child_Node);
+                  Child_Node := Next_Child;
+               end loop;
+
+               Add_Dummy_Node (Explorer, File_Node, Data);
+            end if;
+
+            File_Node := Row_Get_Sibling (Node_Get_Row (File_Node));
+         end loop;
+
+         Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
+      end loop;
+   end Clear_Files_Data;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -1095,7 +1160,16 @@ package body GVD.Explorer is
          GVD.Explorer.On_Executable_Changed (Explorer);
       end if;
 
-      --  ???? Should_Strip_CR
+      --  If the Should_Strip_CR preference has changed, we might need to
+      --  clear up the cache in the following case: This preference was off
+      --  before, and is now set to on. All other cases do not need a cleaning
+      --  of the cache.
+      if not Explorer.CR_Stripped
+        and then Get_Pref (Should_Strip_CR)
+      then
+         Explorer.CR_Stripped := True;
+         Clear_Files_Data (Explorer);
+      end if;
    end Preferences_Changed;
 
 end GVD.Explorer;

@@ -120,6 +120,10 @@ private
       Current_Line       : Natural := 1;
       --  Line to use when displaying the current file.
 
+      CR_Stripped        : Boolean := False;
+      --  State of the Should_Strip_CR preference when the tree was last
+      --  computed.
+
       Folder_Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Mask        : Gdk.Bitmap.Gdk_Bitmap;
       Folder_Open_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
