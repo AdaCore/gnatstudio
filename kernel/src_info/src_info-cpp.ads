@@ -64,4 +64,10 @@ package Src_Info.CPP is
    --  ??? In current implementation for C/C++ this function always
    --  returns Source_Filename taken as input
 
+   procedure Add
+     (HT      : in out LI_File_List;
+      LIFP    : LI_File_Ptr;
+      Success : out Boolean);
+   --  Just wrapper for internal Add to support extended testing
+
 end Src_Info.CPP;

@@ -1288,5 +1288,15 @@ package body Src_Info.CPP is
    procedure Fu_To_T_Handler     (Ref : TO_Table) is separate;
    procedure Fu_To_Un_Handler    (Ref : TO_Table) is separate;
 
+   ---------
+   -- Add --
+   ---------
+   procedure Add
+     (HT      : in out LI_File_List;
+      LIFP    : LI_File_Ptr;
+      Success : out Boolean) is
+   begin
+      Add (HT.Table, LIFP, Success);
+   end Add;
 end Src_Info.CPP;
 
