@@ -165,8 +165,7 @@ package body VCS.CVS is
 
    begin
       if L_Temp /= Null_Node then
-         Insert
-           (Kernel, -"CVS output:", Mode => Info);
+         Insert (Kernel, -"CVS output:", Mode => Info);
 
          while H_Temp /= Null_Node loop
             Insert (Kernel,
@@ -198,8 +197,8 @@ package body VCS.CVS is
    is
       use String_List;
 
-      C               : External_Command_Access;
-      Args            : List;
+      C    : External_Command_Access;
+      Args : List;
 
    begin
       declare
@@ -222,13 +221,14 @@ package body VCS.CVS is
          end;
       end if;
 
-      Create (C,
-              Rep.Kernel,
-              Get_Pref (Rep.Kernel, CVS_Command),
-              Dir_Name (Head (Filenames)),
-              Args,
-              Null_List,
-              Error_Output_Handler'Access);
+      Create
+        (C,
+         Rep.Kernel,
+         Get_Pref (Rep.Kernel, CVS_Command),
+         Dir_Name (Head (Filenames)),
+         Args,
+         Null_List,
+         Error_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 
