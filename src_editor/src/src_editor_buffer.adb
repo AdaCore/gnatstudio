@@ -138,6 +138,14 @@ package body Src_Editor_Buffer is
    -- Forward declarations --
    --------------------------
 
+   generic
+      with function Get_Column (Iter : Gtk_Text_Iter) return Gint;
+   function Generic_Valid_Position
+     (Buffer : Source_Buffer;
+      Line   : Gint;
+      Column : Gint := 0) return Boolean;
+   --  Generic version of Is_Valid_Position
+
    procedure Changed_Handler
      (Buffer : access Source_Buffer_Record'Class);
    --  This procedure is used to signal to the clients that the insert
@@ -1626,6 +1634,98 @@ package body Src_Editor_Buffer is
       end;
    end Emit_New_Cursor_Position;
 
+   ----------------------------
+   -- Generic_Valid_Position --
+   ----------------------------
+
+   function Generic_Valid_Position
+     (Buffer : Source_Buffer;
+      Line   : Gint;
+      Column : Gint := 0) return Boolean
+   is
+      Iter   : Gtk_Text_Iter;
+      Result : Boolean := True;
+   begin
+      --  First check that Line does not exceed the number of lines
+      --  in the buffer.
+
+      if Line >= Get_Line_Count (Buffer) then
+         return False;
+      end if;
+
+      --  At this point, we know that the line number is valid. If the column
+      --  number is negative, we know that this is an invalid column. On the
+      --  other hand, the column 0 always exists and this speeds up the query.
+
+      if Column < 0 then
+         return False;
+      elsif Column = 0 then
+         return True;
+      end if;
+
+      --  Get a text iterator at the begining of the line number Line.
+      --  Then, move it to the end of the line to get the number of
+      --  characters in this line.
+
+      Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
+
+      if not Ends_Line (Iter) then
+         Forward_To_Line_End (Iter, Result);
+      end if;
+
+      --  Check that Column does not exceed the number of character in
+      --  in the current line.
+
+      if Column > Get_Column (Iter) then
+         return False;
+      end if;
+
+      --  At this point, we passed all the checks, so the position is valid.
+      return True;
+   end Generic_Valid_Position;
+
+   -----------------------
+   -- Is_Valid_Position --
+   -----------------------
+
+   function Is_Valid_Index is new Generic_Valid_Position (Get_Line_Index);
+   function Is_Valid_Pos is new Generic_Valid_Position (Get_Line_Offset);
+
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Gint;
+      Column : Gint := 0) return Boolean is
+   begin
+      return Is_Valid_Pos (Source_Buffer (Buffer), Line, Column);
+   end Is_Valid_Position;
+
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Natural := 1) return Boolean
+   is
+      Buffer_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Buffer, Line);
+   begin
+      if Buffer_Line = 0 then
+         if Line in Buffer.Editable_Lines'Range
+           and then Buffer.Editable_Lines (Line).Where = In_Mark
+           and then Buffer.Editable_Lines (Line).Text /= null
+           and then Buffer.Editable_Lines (Line).Text'Length >= Column
+         then
+            return True;
+
+         else
+            Trace (Me, "invalid buffer line");
+            return False;
+         end if;
+
+      else
+         return Is_Valid_Position
+           (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
+      end if;
+   end Is_Valid_Position;
+
    ---------------------
    -- Highlight_Slice --
    ---------------------
@@ -1676,9 +1776,6 @@ package body Src_Editor_Buffer is
          Partial_Entity : Boolean) return Boolean
       is
          Success      : Boolean;
-         First_Line   : Gint;
-         Start_Line   : Integer := 0;
-         End_Index    : Integer;
          Col, Line    : Gint;
          Offset       : Gint;
          Buffer_Line  : Buffer_Line_Type;
@@ -1710,20 +1807,11 @@ package body Src_Editor_Buffer is
 
          Line := Gint (Buffer_Line - 1);
 
-         if not Is_Valid_Position (Buffer, Line, Col) then
-            --  Most likely, Slice is containing UTF8 chars, so count them
-            --  to convert the column in number of utf8 chars
-
-            Start_Line := Line_Start (Slice.all, Sloc_Start.Index);
-            Col := Gint (UTF8_Strlen (Slice (Start_Line .. Sloc_Start.Index)));
-
-            if not Is_Valid_Position (Buffer, Line, Col) then
-               Trace (Me, "invalid position");
-               return False;
-            end if;
+         if not Is_Valid_Index (Source_Buffer (Buffer), Line, Col) then
+            Trace (Me, "invalid position");
+            return False;
          end if;
 
-         First_Line := Line;
          Get_Iter_At_Line_Index (Buffer, Entity_Start, Line, Col);
 
          --  If the column is 0, the entity really ended on the end of the
@@ -1750,23 +1838,9 @@ package body Src_Editor_Buffer is
 
             Col := Gint (Sloc_End.Column) + Offset - 1;
 
-            if not Is_Valid_Position (Buffer, Line, Col) then
-               End_Index := Sloc_End.Index;
-
-               if First_Line /= Line or else Start_Line = 0 then
-                  if Slice (Sloc_End.Index) = ASCII.LF then
-                     End_Index := Sloc_End.Index - 1;
-                  end if;
-
-                  Start_Line := Line_Start (Slice.all, End_Index);
-               end if;
-
-               Col := Gint (UTF8_Strlen (Slice (Start_Line .. End_Index)));
-
-               if not Is_Valid_Position (Buffer, Line, Col) then
-                  Trace (Me, "invalid position");
-                  return False;
-               end if;
+            if not Is_Valid_Index (Source_Buffer (Buffer), Line, Col) then
+               Trace (Me, "invalid position");
+               return False;
             end if;
 
             Get_Iter_At_Line_Index (Buffer, Entity_End, Line, Col);
@@ -2558,83 +2632,6 @@ package body Src_Editor_Buffer is
    begin
       return Buffer.Lang;
    end Get_Language;
-
-   -----------------------
-   -- Is_Valid_Position --
-   -----------------------
-
-   function Is_Valid_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Gint;
-      Column : Gint := 0) return Boolean
-   is
-      Iter   : Gtk_Text_Iter;
-      Result : Boolean := True;
-   begin
-      --  First check that Line does not exceed the number of lines
-      --  in the buffer.
-
-      if Line >= Get_Line_Count (Buffer) then
-         return False;
-      end if;
-
-      --  At this point, we know that the line number is valid. If the column
-      --  number is negative, we know that this is an invalid column. On the
-      --  other hand, the column 0 always exists and this speeds up the query.
-
-      if Column < 0 then
-         return False;
-      elsif Column = 0 then
-         return True;
-      end if;
-
-      --  Get a text iterator at the begining of the line number Line.
-      --  Then, move it to the end of the line to get the number of
-      --  characters in this line.
-
-      Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
-
-      if not Ends_Line (Iter) then
-         Forward_To_Line_End (Iter, Result);
-      end if;
-
-      --  Check that Column does not exceed the number of character in
-      --  in the current line.
-
-      if Column > Get_Line_Offset (Iter) then
-         return False;
-      end if;
-
-      --  At this point, we passed all the checks, so the position is valid.
-      return True;
-   end Is_Valid_Position;
-
-   function Is_Valid_Position
-     (Buffer : access Source_Buffer_Record;
-      Line   : Editable_Line_Type;
-      Column : Natural := 1) return Boolean
-   is
-      Buffer_Line : constant Buffer_Line_Type :=
-        Get_Buffer_Line (Buffer, Line);
-   begin
-      if Buffer_Line = 0 then
-         if Line in Buffer.Editable_Lines'Range
-           and then Buffer.Editable_Lines (Line).Where = In_Mark
-           and then Buffer.Editable_Lines (Line).Text /= null
-           and then Buffer.Editable_Lines (Line).Text'Length >= Column
-         then
-            return True;
-
-         else
-            Trace (Me, "invalid buffer line");
-            return False;
-         end if;
-
-      else
-         return Is_Valid_Position
-           (Buffer, Gint (Buffer_Line - 1), Gint (Column - 1));
-      end if;
-   end Is_Valid_Position;
 
    -------------------------
    -- Set_Cursor_Position --
