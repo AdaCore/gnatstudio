@@ -11,3 +11,4 @@ traces.ads
 string_hash.adb
 string_hash.ads
 src_info-*.ad[bs]
+glide_intl.ad?
