@@ -51,13 +51,12 @@
 
    <!--  ??? Must find a way to query whole history>
 
-   <!--  ??? We should implement a command to split the current MDI>
-
    <action name="generic_cvs_history" show-command="true" output="">
       <shell output="">echo "Querying history for $2"</shell>
       <external>cvs log -N -r$1 $2</external>
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
+      <shell>MDI.split_vertically TRUE</shell>
       <shell>delete "%2"</shell>
    </action>
 
