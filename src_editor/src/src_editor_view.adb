@@ -1311,9 +1311,9 @@ package body Src_Editor_View is
             External_End_Action (Buffer);
 
             if Should_Indent (Buffer) then
-               Insert_At_Cursor (Buffer, "" & ASCII.LF);
+               Insert_At_Cursor (Buffer, (1 => ASCII.LF));
 
-               --  ??? COULD BE A KEY HANDLER AS WELL
+               --  ??? Could be a key handler as well
                Get_Iter_At_Mark (Buffer, Last, Get_Insert (Buffer));
                Copy (Last, Dest => Start);
                Backward_Line (Start, Result);
