@@ -5,6 +5,7 @@
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
         <title line="2" column="1" column-span="2" >Messages</title>
+        <title line="2" column="2" column-span="0" />
 
         <combo switch="-O" noswitch="0" nodigit="1" >
            <combo-entry label="No optimization" value="0" />
@@ -42,6 +43,7 @@
         <title line="1" column="1" >Code generation</title>
         <title line="1" column="2" >Debugging</title>
         <title line="2" column="1" column-span="2" >Messages</title>
+        <title line="2" column="2" column-span="0" />
 
         <combo switch="-O" noswitch="0" nodigit="1" >
            <combo-entry label="No optimization" value="0" />
