@@ -796,7 +796,13 @@ procedure GPS is
       --  Load all the source files given on the command line.
 
       procedure Load_Sources is
+         New_Dir : constant String := Get_Current_Dir;
       begin
+         --  Temporarily restore start-up dir, so that relative paths are
+         --  properly computed
+
+         Change_Dir (Startup_Dir.all);
+
          loop
             declare
                S : constant String := Get_Argument (Do_Expansion => True);
@@ -816,6 +822,8 @@ procedure GPS is
                File_Opened := True;
             end;
          end loop;
+
+         Change_Dir (New_Dir);
 
          --  Load a default project, in case the wizard needs to be
          --  launched. Do not load the desktop immediately, since this
