@@ -106,6 +106,7 @@ package General_Preferences_Pkg is
       Freeze_Bg_Color_Combo : GVD.Color_Combo.Gvd_Color_Combo;
       Look_3d_Check : Gtk_Check_Button;
       Separate_Data_Check : Gtk_Check_Button;
+      Show_Stack_Check : Gtk_Check_Button;
       Label_Data : Gtk_Label;
       Frame13 : Gtk_Frame;
       Table8 : Gtk_Table;

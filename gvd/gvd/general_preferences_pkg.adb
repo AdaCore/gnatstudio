@@ -484,6 +484,12 @@ begin
      Fill, 0,
      0, 0);
 
+   Gtk_New (General_Preferences.Show_Stack_Check, -"Show Call Stack");
+   Set_Active (General_Preferences.Show_Stack_Check, False);
+   Attach (General_Preferences.Table3, General_Preferences.Show_Stack_Check, 0, 2, 11, 12,
+     Fill, 0,
+     0, 0);
+
    Gtk_New (General_Preferences.Label_Data, -("Data"));
    Set_Alignment (General_Preferences.Label_Data, 0.5, 0.5);
    Set_Padding (General_Preferences.Label_Data, 0, 0);
