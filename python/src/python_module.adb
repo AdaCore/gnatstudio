@@ -84,6 +84,7 @@ package body Python_Module is
 
    Python_Module_Id : Python_Module_Record_Access;
 
+   procedure Destroy (Script : access Python_Scripting_Record);
    procedure Register_Command
      (Script        : access Python_Scripting_Record;
       Command       : String;
@@ -329,6 +330,15 @@ package body Python_Module is
                 & PyString_AsString (PyObject_Repr (Obj)));
       end if;
    end Trace_Dump;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Script : access Python_Scripting_Record) is
+   begin
+      Destroy (Script.Interpreter);
+   end Destroy;
 
    ---------------------------
    -- Create_Python_Console --

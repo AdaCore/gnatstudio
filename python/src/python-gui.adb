@@ -118,6 +118,15 @@ package body Python.GUI is
       Command     : String) return PyObject;
    --  Run a command and return its result. Nothing is printed in the console.
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Interpreter : access Python_Interpreter_Record) is
+   begin
+      Free (Interpreter.Buffer);
+   end Destroy;
+
    ------------------------
    -- Process_Gtk_Events --
    ------------------------

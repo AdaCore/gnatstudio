@@ -75,6 +75,9 @@ package Python.GUI is
       Text        : String);
    --  Insert some text in the interpreter console, and scroll as necessary
 
+   procedure Destroy (Interpreter : access Python_Interpreter_Record);
+   --  Free the memory occupied by the interpreter
+
    Interpreter_Error : exception;
 
 private
