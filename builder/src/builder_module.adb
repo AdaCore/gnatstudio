@@ -1083,6 +1083,7 @@ package body Builder_Module is
            (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1));
       end if;
 
+      Compilation_Finished (Kernel, "");
       Free (Buffer);
 
       return True;
@@ -1104,7 +1105,6 @@ package body Builder_Module is
          if Status = 0 then
             Console.Insert
               (Kernel, ASCII.LF & (-"successful compilation/build"));
-            Compilation_Finished (Kernel, "");
          else
             Console.Insert
               (Kernel,
@@ -1115,6 +1115,7 @@ package body Builder_Module is
          Set_Sensitive_Menus (Kernel, True);
          Free (Fd);
 
+         Compilation_Finished (Kernel, "");
          return False;
 
       when E : others =>
