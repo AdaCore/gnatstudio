@@ -28,9 +28,11 @@ with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Help;    use Glide_Kernel.Help;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Gtkada.Intl;          use Gtkada.Intl;
+with Gtkada.MDI;           use Gtkada.MDI;
 with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with GVD.Types;
 with OS_Utils;             use OS_Utils;
@@ -69,6 +71,7 @@ procedure Glide2 is
    Home           : String_Access;
    Prefix         : String_Access;
    Dir            : String_Access;
+   File_Opened    : Boolean := False;
 
    procedure Init_Settings;
    --  Set up environment for Glide.
@@ -209,6 +212,7 @@ begin
          Project_Loaded := True;
       else
          Open_File_Editor (Glide.Kernel, Argument (J));
+         File_Opened := True;
       end if;
    end loop;
 
@@ -228,6 +232,15 @@ begin
             exit;
          end if;
       end loop;
+   end if;
+
+   if not File_Opened then
+      Display_Help
+        (Glide.Kernel,
+         Glide.Prefix_Directory.all & Directory_Separator &
+           "doc" & Directory_Separator & "html" & Directory_Separator &
+           "glide-welcome.html");
+      Maximize_Children (Get_MDI (Glide.Kernel));
    end if;
 
    Show_All (Glide);
