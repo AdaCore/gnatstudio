@@ -228,12 +228,15 @@ package Projects is
    --  The returned name is the base name
 
    function Get_Filename_From_Unit
-     (Project   : Project_Type := No_Project;
-      Unit_Name : String;
-      Part      : Unit_Part) return String;
+     (Project         : Project_Type := No_Project;
+      Unit_Name       : String;
+      Part            : Unit_Part;
+      File_Must_Exist : Boolean := True) return String;
    --  Return the source filename for the given unit. The empty string is
    --  returned if this unit doesn't belong to the project, or if the concept
-   --  of unit doesn't apply to the language.
+   --  of unit doesn't apply to the language. If File_Must_Exist is False, then
+   --  the name of the file that would be used is returned, even if no such
+   --  file currently exists in the project.
    --  If Project is No_Project, the default GNAT naming scheme is used (for
    --  runtime files)
 

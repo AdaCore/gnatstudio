@@ -834,7 +834,8 @@ package body Projects is
    function Get_Filename_From_Unit
      (Project   : Project_Type := No_Project;
       Unit_Name : String;
-      Part      : Unit_Part) return String
+      Part      : Unit_Part;
+      File_Must_Exist : Boolean := True) return String
    is
       Arr  : Array_Element_Id := No_Array_Element;
       Unit : Name_Id;
@@ -890,8 +891,9 @@ package body Projects is
                   N : constant String := Unit_Name & Get_String
                     (Prj.Projects.Table (View).Naming.Separate_Suffix);
                begin
-                  if Get_Project_From_File
-                    (Project.Data.Registry.all, N, False) = Project
+                  if not File_Must_Exist
+                    or else Get_Project_From_File
+                      (Project.Data.Registry.all, N, False) = Project
                   then
                      return N;
                   end if;
@@ -914,8 +916,9 @@ package body Projects is
                      N : constant String := Uname
                        & Get_String (Array_Elements.Table (Arr).Value.Value);
                   begin
-                     if Get_Project_From_File
-                       (Project.Data.Registry.all, N, False) = Project
+                     if not File_Must_Exist
+                       or else Get_Project_From_File
+                         (Project.Data.Registry.all, N, False) = Project
                      then
                         return N;
                      end if;
