@@ -1067,7 +1067,7 @@ package body Project_Explorers is
          After => True);
 
       Gtk_New (Scrolled);
-      Gtk_New (Label, -"Files View");
+      Gtk_New (Label, -"File View");
       Append_Page (Explorer.Notebook, Scrolled, Label);
 
       Add (Scrolled, Explorer.File_Tree);
