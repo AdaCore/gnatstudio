@@ -213,13 +213,15 @@ package body GVD.Main_Window is
    is
       use type Glib.Object.GObject;
 
-      Tab : Visual_Debugger := Visual_Debugger (Debugger);
+      Tab     : Visual_Debugger := Visual_Debugger (Debugger);
+
    begin
       if Debugger = null then
          Tab := Get_Current_Process (Window);
       end if;
 
       if Tab /= null
+        and then Tab.Debugger /= null
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
          Update (Window.Thread_Dialog, Tab);
@@ -301,6 +303,12 @@ package body GVD.Main_Window is
       WTX_Version : Natural;
 
    begin
+      Window.Current_Debugger := Debugger;
+
+      if Process.Debugger = null then
+         return;
+      end if;
+
       Update_External_Dialogs (Window, Debugger);
 
       if Window.Breakpoints_Editor /= null then
