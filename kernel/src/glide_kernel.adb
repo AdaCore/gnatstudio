@@ -37,7 +37,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gint_Xml;                  use Gint_Xml;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -224,10 +223,10 @@ package body Glide_Kernel is
 
       Set_Source_Path
         (Handle, ".:" &
-         "/usr/gnat-wavefront/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adainclude");
+         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/rts-native/adainclude");
       Set_Object_Path
         (Handle, ".:" &
-         "/usr/gnat-wavefront/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib");
+         "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/rts-native/adalib");
       --  ??? This is a temporary hack for the demo. We should really compute
       --  ??? these values from the output of gnatls -v...
 
@@ -303,6 +302,27 @@ package body Glide_Kernel is
          Unit         => Unit,
          Success      => Success);
    end Parse_ALI_File;
+
+   ------------------------
+   -- Locate_From_Source --
+   ------------------------
+
+   function Locate_From_Source
+     (Handle            : access Kernel_Handle_Record;
+      Source_Filename   : String)
+      return Src_Info.LI_File_Ptr
+   is
+      File : Src_Info.Li_File_Ptr;
+   begin
+      Src_Info.Ali.Locate_From_Source
+        (List              => Handle.Source_Info_List,
+         Source_Filename   => Source_Filename,
+         Project           => Get_Project_View (Handle),
+         Extra_Source_Path => Get_Source_Path (Handle),
+         Extra_Object_Path => Get_Object_Path (Handle),
+         File              => File);
+      return File;
+   end Locate_From_Source;
 
    ----------------------------
    -- Reset_Source_Info_List --
