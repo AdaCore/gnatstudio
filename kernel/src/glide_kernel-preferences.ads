@@ -165,6 +165,8 @@ package Glide_Kernel.Preferences is
    MDI_Background_Color  : Param_Spec_Color;
    MDI_Title_Bar_Color   : Param_Spec_Color;
    MDI_Focus_Title_Color : Param_Spec_Color;
+   MDI_Switch_Child      : Param_Spec_Key;
+   MDI_All_Floating      : Param_Spec_Boolean;
 
    -- Languages --
    Ada_Automatic_Indentation : Param_Spec_Boolean;

@@ -180,6 +180,17 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (MDI_Destroy_Floats),
          -"General:Windows");
 
+      MDI_All_Floating := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "MDI-All-Floating",
+         Default => False,
+         Blurb   => -("If True, all windows will be set as floating, and put"
+                      & " under control of your window manager. Otherwise, a"
+                      & " multiple document interface is used."),
+         Nick    => -"All floating"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_All_Floating),
+         -"General:Windows");
+
       MDI_Background_Color := Param_Spec_Color (Gnew_Color
         (Name    => "MDI-Background-Color",
          Default => "#666666",
@@ -205,6 +216,16 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Selected title bar color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (MDI_Focus_Title_Color),
+         -"General:Windows");
+
+      MDI_Switch_Child      := Gnew_Key
+        (Name  => "MDI-Switch-Child",
+         Nick  => -"Select window",
+         Blurb => -"Key used for interactively selecting new windows",
+         Default_Modifier => Mod1_Mask,
+         Default_Key      => GDK_Tab);
+      Register_Property
+        (Kernel.Preferences, Param_Spec (MDI_Switch_Child),
          -"General:Windows");
 
       -- Source Editor --
