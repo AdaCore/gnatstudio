@@ -236,8 +236,8 @@ package VCS is
    --  in order to display a GPS visual diff.
 
    procedure Log
-     (Rep  : access VCS_Record; File : VFS.Virtual_File) is abstract;
-   --  Display the changelog for the correspondig file.
+     (Rep : access VCS_Record; File : VFS.Virtual_File) is abstract;
+   --  Display the changelog for the corresponding file.
 
    Annotation_Id : constant String := "Annotate";
    procedure Annotate
