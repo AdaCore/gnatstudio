@@ -308,6 +308,28 @@ package body Codefix.Graphics is
          end;
       end if;
 
+      if Get_Error_State
+        (Graphic_Codefix.Automatic_Skip,
+         Get_Category (Graphic_Codefix.Current_Error)) = Enabled
+      then
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
+
+      if Length (Get_Solutions (Graphic_Codefix.Current_Error)) = 1
+        and then Get_Error_State
+          (Graphic_Codefix.Automatic_Fix,
+           Get_Category (Graphic_Codefix.Current_Error)) = Enabled
+      then
+         Validate_And_Commit
+           (Graphic_Codefix.Corrector,
+            Graphic_Codefix.Current_Text.all,
+            Graphic_Codefix.Current_Error,
+            1);
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
+
       Current_Sol := First (Get_Solutions (Graphic_Codefix.Current_Error));
       Current_Vdiff := First (Graphic_Codefix.Vdiff_List);
 
@@ -341,7 +363,7 @@ package body Codefix.Graphics is
 --         Reduce
 --           (Extended_Extract,
 --            Display_Lines_Before,
---            Display_Lines_After);
+         --            Display_Lines_After);
 
          if Current_Vdiff /= Vdiff_Lists.Null_Node then
             Modify_Tab;
@@ -360,29 +382,22 @@ package body Codefix.Graphics is
          Current_Sol := Next (Current_Sol);
       end loop;
 
---      if not Success_Update or else Already_Fixed  then
---         Load_Next_Error (Graphic_Codefix);
---         return;
---      end if;
-
       Set_Popdown_Strings (Graphic_Codefix.Fix_Caption_List, New_Popdown_Str);
-
-      if Current_Vdiff /= Vdiff_Lists.Null_Node then
-         for J in Current_Nb_Tabs .. Graphic_Codefix.Nb_Tabs - 1 loop
-            Remove_Page
-              (Graphic_Codefix.Choices_Proposed,
-               Gint (Current_Nb_Tabs));
-         end loop;
-
-         Remove_Nodes
-           (Graphic_Codefix.Vdiff_List,
-            Prev (Graphic_Codefix.Vdiff_List, Current_Vdiff));
-      end if;
 
       Graphic_Codefix.Nb_Tabs := Current_Nb_Tabs;
       Set_Text
         (Graphic_Codefix.Error_Caption,
          Get_Message (Get_Error_Message (Graphic_Codefix.Current_Error)));
+
+      if Current_Nb_Tabs = 1
+        and then Get_Error_State
+          (Graphic_Codefix.Automatic_Fix,
+           Get_Category (Graphic_Codefix.Current_Error)) = Enabled
+      then
+         Valid_Current_Solution (Graphic_Codefix);
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
 
       Set_Current_Page (Graphic_Codefix.Choices_Proposed, 0);
 
