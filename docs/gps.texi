@@ -6642,8 +6642,7 @@ command and fill the location window appropriately
 
 For instance, the following action spawn an external tool, and parses its
 output to the location window and the automatic fixing tool if the external
-tool happens to fail. You must put the value of the @code{on-failure} on a
-single line in the XML file.
+tool happens to fail.
 
 In this group of commands the %... and $... macros can be used.
 
