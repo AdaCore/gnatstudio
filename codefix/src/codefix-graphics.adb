@@ -60,11 +60,17 @@ package body Codefix.Graphics is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
       Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Has_Been_Fixed := null) is
+      Fixed_Cb        : Fix_Action := null;
+      Unfixed_Cb      : Fix_Action := null) is
    begin
       Graphic_Codefix := new Graphic_Codefix_Record;
       Codefix.Graphics.Initialize
-        (Graphic_Codefix, Kernel, Current_Text, Corrector, Fixed_Cb);
+        (Graphic_Codefix,
+         Kernel,
+         Current_Text,
+         Corrector,
+         Fixed_Cb,
+         Unfixed_Cb);
    end Gtk_New;
 
    ----------------
@@ -76,7 +82,8 @@ package body Codefix.Graphics is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
       Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Has_Been_Fixed := null) is
+      Fixed_Cb        : Fix_Action := null;
+      Unfixed_Cb      : Fix_Action := null) is
    begin
       Codefix_Window_Pkg.Initialize (Graphic_Codefix);
 
@@ -84,6 +91,7 @@ package body Codefix.Graphics is
       Graphic_Codefix.Current_Text := Current_Text;
       Graphic_Codefix.Corrector := Corrector;
       Graphic_Codefix.Fixed_Cb := Fixed_Cb;
+      Graphic_Codefix.Unfixed_Cb := Unfixed_Cb;
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
 
@@ -507,5 +515,33 @@ package body Codefix.Graphics is
 
       return Current_Number;
    end Get_Nth_Solution;
+
+   ---------------------
+   -- Undo_Last_Error --
+   ---------------------
+
+   procedure Undo_Last_Error
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class)
+   is
+      Success : Boolean;
+   begin
+      if Graphic_Codefix.Current_Error = Null_Error_Id then
+         return;
+      end if;
+
+      Graphic_Codefix.Current_Error := Get_Previous_Error
+        (Graphic_Codefix.Corrector.all, Graphic_Codefix.Current_Error);
+
+      Undo (Graphic_Codefix.Current_Error, Graphic_Codefix.Current_Text.all);
+
+      Graphic_Codefix.Unfixed_Cb (Graphic_Codefix.Current_Error);
+
+      Load_Error (Graphic_Codefix, Success);
+
+      if not Success then
+         raise Codefix_Panic;
+      end if;
+
+   end Undo_Last_Error;
 
 end Codefix.Graphics;
