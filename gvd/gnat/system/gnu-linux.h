@@ -78,7 +78,7 @@ Boston, MA 02111-1307, USA.  */
 							\
     sigblock (sigmask (SIGCHLD));			\
     if (grantpt (fd) == -1 || unlockpt (fd) == -1	\
-        || !(ptyname = ptsname(fd)))			\
+        || !(ptyname = (char *)ptsname(fd)))			\
       {							\
 	sigunblock (sigmask (SIGCHLD));			\
 	close (fd);					\
