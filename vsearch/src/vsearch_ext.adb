@@ -208,7 +208,8 @@ package body Vsearch_Ext is
    --  Restore the status of the explorer from a saved XML tree.
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle)
       return Node_Ptr;
    --  Save the status of the project explorer to an XML tree
 
@@ -311,7 +312,8 @@ package body Vsearch_Ext is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      User   : Kernel_Handle) return Node_Ptr
    is
       N : Node_Ptr;
       Extended : Vsearch_Extended;
@@ -321,7 +323,7 @@ package body Vsearch_Ext is
 
          --  We do not want floating search to appear automatically next time
          --  gps is started
-         if Get_State (Find_MDI_Child (Get_MDI (Extended.Kernel), Extended)) /=
+         if Get_State (Find_MDI_Child (Get_MDI (User), Extended)) /=
            Floating
          then
             N := new Node;
