@@ -274,6 +274,10 @@ package body Project_Viewers is
      (Kernel : access Kernel_Handle_Record'Class; Project : Project_Node_Id);
    --  Open a popup dialog to select a new name for Project.
 
+   procedure Preferences_Changed
+     (Viewer : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the preferences have changed.
+
    -------------------------
    -- Find_In_Source_Dirs --
    -------------------------
@@ -604,7 +608,6 @@ package body Project_Viewers is
      (Viewer   : access Project_Viewer_Record'Class;
       Kernel   : access Kernel_Handle_Record'Class)
    is
-      Color    : Gdk_Color;
       Scrolled : Gtk_Scrolled_Window;
 
    begin
@@ -640,12 +643,31 @@ package body Project_Viewers is
          Widget_Callback.To_Marshaller (Project_View_Changed'Access),
          Viewer);
 
-      Color := Get_Pref (Kernel, Default_Switches_Color);
       Viewer.Default_Switches_Style := Copy (Get_Style (Viewer));
-      Set_Foreground (Viewer.Default_Switches_Style, State_Normal, Color);
+      Preferences_Changed (Viewer, Kernel_Handle (Kernel));
+
+      Kernel_Callback.Object_Connect
+        (Kernel, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         Slot_Object => Viewer,
+         User_Data   => Kernel_Handle (Kernel));
 
       Show_All (Viewer);
    end Initialize;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (Viewer : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      V : Project_Viewer := Project_Viewer (Viewer);
+      Color    : Gdk_Color;
+   begin
+      Color := Get_Pref (Kernel, Default_Switches_Color);
+      Set_Foreground (V.Default_Switches_Style, State_Normal, Color);
+   end Preferences_Changed;
 
    ------------------
    -- Show_Project --
