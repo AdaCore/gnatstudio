@@ -1259,10 +1259,9 @@ package body Gtkada.File_Selector is
          end if;
       end Matcher;
 
+      use Gdk.Types;
    begin
-      if G'Length /= 0
-        and then G (G'First) = ASCII.HT
-      then
+      if Get_Key_Val (Event) = GDK_Tab then
          declare
             Dir  : constant String := Dir_Name (S);
             Base : constant String := Base_Name (S);
