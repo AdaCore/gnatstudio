@@ -78,7 +78,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Prepare_Cleanup_Debuggers (GVD_Main_Window (Object));
       Id := Main_Window_Idle.Add (Idle_Exit'Access, GVD_Main_Window (Object));
 
-      return False;
+      return True;
    end On_Main_Debug_Window_Delete_Event;
 
    -------------------------------------
