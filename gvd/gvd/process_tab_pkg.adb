@@ -33,8 +33,14 @@ with System;
 with Gtk.Object; use Gtk.Object;
 with Gtkada.Intl;     use Gtkada.Intl;
 with GVD.Canvas;      use GVD.Canvas;
+with Gtk.Style;       use Gtk.Style;
+with Gdk.Color;       use Gdk.Color;
+with Gtk.Widget;      use Gtk.Widget;
 
 package body Process_Tab_Pkg is
+
+   MDI_Background_Color : constant String := "#666666";
+   --  <preference> Background color to use for the MDI window
 
    Signals : constant Chars_Ptr_Array :=
      (1 => New_String ("executable_changed"));
@@ -48,6 +54,10 @@ end Gtk_New;
 
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
    pragma Suppress (All_Checks);
+   Child : MDI_Child;
+   Color : Gdk_Color;
+   Style : Gtk_Style;
+
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
    Initialize_Class_Record (Process_Tab, Signals, Class_Record);
@@ -59,27 +69,26 @@ begin
    Return_Callback.Connect
      (Process_Tab, "delete_event", On_Process_Tab_Delete_Event'Access);
 
-   Gtk_New_Hbox (Process_Tab.Process_Hbox, False, 0);
-   --  Add (Process_Tab, Process_Tab.Process_Hbox);
-
-   Gtk_New_Vpaned (Process_Tab.Process_Paned);
-   Set_Handle_Size (Process_Tab.Process_Paned, 10);
-   Set_Gutter_Size (Process_Tab.Process_Paned, 6);
-   Set_Position (Process_Tab.Process_Paned, 500);
-   Pack_Start (Process_Tab.Process_Hbox, Process_Tab.Process_Paned, True, True, 0);
-
-   Gtk_New_Vpaned (Process_Tab.Data_Editor_Paned);
-   Set_Handle_Size (Process_Tab.Data_Editor_Paned, 10);
-   Set_Gutter_Size (Process_Tab.Data_Editor_Paned, 6);
-   Set_Position (Process_Tab.Data_Editor_Paned, 200);
-   Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
+   Gtk_New (Process_Tab.Process_Mdi);
+   Color := Parse (MDI_Background_Color);
+   Alloc (Get_Default_Colormap, Color);
+   Style := Copy (Get_Style (Process_Tab.Process_Mdi));
+   Set_Background (Style, State_Normal, Color);
+   Set_Style (Process_Tab.Process_Mdi, Style);
+   Set_Priorities
+     (Process_Tab.Process_Mdi,
+      (Left => 4, Right => 3, Top => 1, Bottom => 2));
+   --  Add (Process_Tab, Process_Tab.Process_Mdi);
 
    Gtk_New_Hpaned (Process_Tab.Data_Paned);
    Set_Handle_Size (Process_Tab.Data_Paned, 10);
    Set_Gutter_Size (Process_Tab.Data_Paned, 6);
    Set_Position (Process_Tab.Data_Paned, 200);
-   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Paned);
-   --  Ref (Process_Tab.Data_Paned);
+   --  Set_Title (Put (Process_Tab.Process_Mdi, Process_Tab.Data_Paned), "Data");
+   Set_USize (Process_Tab.Data_Paned, 100, 100);
+   Child := Put (Process_Tab.Process_Mdi, Process_Tab.Data_Paned);
+   Set_Title (Child, "Data");
+   Dock_Child (Child, Side => Top);
 
    Gtk_New (Process_Tab.Stack_Scrolledwindow);
    Set_Policy (Process_Tab.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
@@ -142,36 +151,23 @@ begin
    Set_Policy (Process_Tab.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
    Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
 
-   Gtk_New_Vbox (Process_Tab.Editor_Vbox, False, 0);
-   Add (Process_Tab.Data_Editor_Paned, Process_Tab.Editor_Vbox);
-
    Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
---   Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
+   --  Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Data_Scrolledwindow, Process_Tab.Data_Canvas);
 
-
-   Gtk_New_Hbox (Process_Tab.Label_Hbox, False, 0);
-   Pack_Start (Process_Tab.Editor_Vbox, Process_Tab.Label_Hbox, False, True, 0);
-
-   Gtk_New_Hseparator (Process_Tab.Explorer_Separator);
-   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Explorer_Separator, False, True, 0);
-
-   Gtk_New (Process_Tab.Editor_Label);
-   Set_Alignment (Process_Tab.Editor_Label, 0.5, 0.5);
-   Set_Padding (Process_Tab.Editor_Label, 0, 0);
-   Set_Justify (Process_Tab.Editor_Label, Justify_Center);
-   Set_Line_Wrap (Process_Tab.Editor_Label, False);
-   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Editor_Label, False, False, 0);
-
-   Gtk_New_Hseparator (Process_Tab.Editor_Separator);
-   Pack_Start (Process_Tab.Label_Hbox, Process_Tab.Editor_Separator, True, True, 0);
-
    Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);
-   Add (Process_Tab.Editor_Vbox, Process_Tab.Editor_Text);
+   --  Set_Title (Put (Process_Tab.Process_Mdi, Process_Tab.Editor_Text), "Editor");
+   Child := Put (Process_Tab.Process_Mdi, Process_Tab.Editor_Text);
+   Set_Title (Child, "Editor");
+   Maximize_Children (Process_Tab.Process_Mdi);
+   --  Dock_Child (Child, Side => Right);
+   --  Dock_Child (Child, Side => Bottom);
 
    Gtk_New (Process_Tab.Command_Scrolledwindow);
    Set_Policy (Process_Tab.Command_Scrolledwindow, Policy_Never, Policy_Always);
-   Add (Process_Tab.Process_Paned, Process_Tab.Command_Scrolledwindow);
+   Child := Put (Process_Tab.Process_Mdi, Process_Tab.Command_Scrolledwindow);
+   Set_Title (Child, "Console");
+   Dock_Child (Child, Side => Bottom);
 
    Gtk_New (Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
@@ -185,6 +181,7 @@ begin
      (Process_Tab.Debugger_Text, "grab_focus",
       Widget_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access), Process_Tab);
    Add (Process_Tab.Command_Scrolledwindow, Process_Tab.Debugger_Text);
+
 end Initialize;
 
 end Process_Tab_Pkg;
