@@ -207,7 +207,7 @@ package Glide_Kernel.Modules is
 
    procedure Set_File_Information
      (Context : access File_Selection_Context;
-      Project_View : Prj.Project_Id;
+      Project_View : Prj.Project_Id := Prj.No_Project;
       Directory : String := "";
       File_Name : String := "");
    --  Set the information in Context.
