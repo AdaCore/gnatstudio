@@ -38,7 +38,7 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Types;        use Gtkada.Types;
 with Language;            use Language;
 with Debugger;            use Debugger;
-with Explorer;            use Explorer;
+with Odd.Explorer;        use Odd.Explorer;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Ada.Direct_IO;
 
