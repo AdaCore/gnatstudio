@@ -56,6 +56,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Welcome;                   use Welcome;
+with DDE;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -691,6 +692,8 @@ begin
      (Get_MDI (GPS.Kernel), "child_selected",
       Kernel_Callback.To_Marshaller (Child_Selected'Unrestricted_Access),
       GPS.Kernel);
+
+   DDE.Register_DDE_Server (GPS.Kernel);
 
    GPS.Debug_Mode := True;
    GPS.Log_Level  := GVD.Types.Hidden;
