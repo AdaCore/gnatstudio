@@ -396,10 +396,6 @@ package body Debugger.Gdb is
       Send (Debugger, "set height 0");
       Send (Debugger, "set annotate 1");
 
-      --  We are missing one prompt, because we did not wait for hit after
-      --  calling "set prompt"
-      Wait_Prompt (Debugger);
-
       --  Connect to the remote target if needed.
 
       Pop_Internal_Command_Status (Get_Process (Debugger));
