@@ -1135,12 +1135,21 @@ package body VCS_View_API is
       List   := Get_Selected_Files (Context);
 
       while not String_List.Is_Empty (List) loop
-         Open_File_Editor
-           (Kernel, Get_Log_From_File
-              (Kernel,
-               Create (Full_Filename => String_List.Head (List)), True));
-         Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
-                Reuse_If_Possible => True, After => True);
+         declare
+            Log_File     : constant Virtual_File :=
+              Get_Log_From_File
+                (Kernel,
+                 Create (Full_Filename => String_List.Head (List)), True);
+            Already_Open : Boolean;
+         begin
+            Already_Open := Is_Open (Kernel, Log_File);
+            Open_File_Editor (Kernel, Log_File);
+
+            if not Already_Open then
+               Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
+                      Reuse_If_Possible => True, After => True);
+            end if;
+         end;
 
          String_List.Next (List);
       end loop;
@@ -1524,11 +1533,20 @@ package body VCS_View_API is
 
          if Get_Log_From_File (Kernel, File, False) = VFS.No_File then
             All_Logs_Exist := False;
-            Open_File_Editor
-              (Kernel,
-               Get_Log_From_File (Kernel, File, True));
-            Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
-                   Reuse_If_Possible => True, After => True);
+
+            declare
+               Log_File     : constant Virtual_File :=
+                 Get_Log_From_File (Kernel, File, True);
+               Already_Open : Boolean;
+            begin
+               Already_Open := Is_Open (Kernel, Log_File);
+               Open_File_Editor (Kernel, Log_File);
+
+               if not Already_Open then
+                  Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
+                         Reuse_If_Possible => True, After => True);
+               end if;
+            end;
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
