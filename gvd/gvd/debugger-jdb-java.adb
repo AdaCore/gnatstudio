@@ -151,19 +151,13 @@ package body Debugger.Jdb.Java is
    ----------------------
 
    procedure Parse_Constructs
-     (Lang            : access Jdb_Java_Language;
-      Buffer          : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length   : Natural;
-      Result          : out Construct_List;
-      Indent          : out Natural;
-      Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
+     (Lang   : access Jdb_Java_Language;
+      Buffer : String;
+      Result : out Construct_List)
    is
       pragma Unreferenced (Lang);
    begin
-      Parse_Constructs
-        (Java_Lang, Buffer, Buffer_Length,
-         Result, Indent, Next_Indent, Indent_Params);
+      Parse_Constructs (Java_Lang, Buffer, Result);
    end Parse_Constructs;
 
    ----------------------
@@ -172,16 +166,14 @@ package body Debugger.Jdb.Java is
 
    procedure Next_Indentation
      (Lang          : access Jdb_Java_Language;
-      Buffer        : Interfaces.C.Strings.chars_ptr;
-      Buffer_Length : Natural;
+      Buffer        : String;
       Indent        : out Natural;
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
       pragma Unreferenced (Lang);
    begin
-      Next_Indentation
-        (Java_Lang, Buffer, Buffer_Length, Indent, Next_Indent, Indent_Params);
+      Next_Indentation (Java_Lang, Buffer, Indent, Next_Indent, Indent_Params);
    end Next_Indentation;
 
    ------------------
