@@ -73,7 +73,6 @@ with Traces;                    use Traces;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Src_Contexts;              use Src_Contexts;
 with Find_Utils;                use Find_Utils;
-with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
 with OS_Utils;                  use OS_Utils;
 with Aliases_Module;            use Aliases_Module;
@@ -93,6 +92,10 @@ package body Src_Editor_Module is
    Hist_Key : constant History_Key := "reopen_files";
    --  Key to use in the kernel histories to store the most recently opened
    --  files.
+
+   Open_From_Path_History : constant History_Key := "open-from-project";
+   --  Key used to store the most recently open files in the Open From Project
+   --  dialog.
 
    editor_xpm : aliased Chars_Ptr_Array (0 .. 0);
    pragma Import (C, editor_xpm, "mini_page_xpm");
@@ -145,9 +148,6 @@ package body Src_Editor_Module is
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
 
-   procedure Refresh_Recent_Menu (Kernel : access Kernel_Handle_Record'Class);
-   --  Fill the Recent menu.
-
    function Save_Function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget;
@@ -193,11 +193,6 @@ package body Src_Editor_Module is
    procedure On_New_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->New menu
-
-   procedure On_Recent
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  File->Recent menu
 
    procedure On_Save
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -377,6 +372,11 @@ package body Src_Editor_Module is
    function Expand_Aliases_Entities
      (Data : Event_Data; Special : Character) return String;
    --  Does the expansion of special entities in the aliases.
+
+   type On_Recent is new Menu_Callback_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   procedure Activate (Callback : access On_Recent; Item : String);
 
    ------------------
    -- Get_Filename --
@@ -1594,7 +1594,6 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class; File : String) is
    begin
       Add_To_History (Kernel, Hist_Key, File);
-      Refresh_Recent_Menu (Kernel);
    end Add_To_Recent_Menu;
 
    ---------------
@@ -1839,6 +1838,9 @@ package body Src_Editor_Module is
         (Get_Entry (Get_Combo (Open_File_Entry)), True);
       Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
                   Fill => True, Expand => True);
+      Get_History (Get_History (Kernel).all,
+                   Open_From_Path_History,
+                   Get_Combo (Open_File_Entry));
 
       Button := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button
@@ -1867,7 +1869,8 @@ package body Src_Editor_Module is
             Text : constant String :=
               Get_Text (Get_Entry (Get_Combo (Open_File_Entry)));
          begin
-            Add_Unique_Combo_Entry (Get_Combo (Open_File_Entry), Text);
+            Add_To_History
+              (Get_History (Kernel).all, Open_From_Path_History,  Text);
             Open_File_Editor (Kernel, Text, From_Path => True);
          end;
       end if;
@@ -1879,22 +1882,18 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_From_Path;
 
-   ---------------
-   -- On_Recent --
-   ---------------
+   --------------
+   -- Activate --
+   --------------
 
-   procedure On_Recent
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Mitem : constant Full_Path_Menu_Item := Full_Path_Menu_Item (Widget);
+   procedure Activate (Callback : access On_Recent; Item : String) is
    begin
-      Open_File_Editor (Kernel, Get_Path (Mitem), From_Path => False);
+      Open_File_Editor (Callback.Kernel, Item, From_Path => False);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Recent;
+   end Activate;
 
    -----------------
    -- On_New_File --
@@ -2894,6 +2893,7 @@ package body Src_Editor_Module is
       Undo_Redo        : Undo_Redo_Information;
       Selector         : Scope_Selector;
       Extra            : Files_Extra_Scope;
+      Recent_Menu_Item : Gtk_Menu_Item;
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
@@ -2922,12 +2922,15 @@ package body Src_Editor_Module is
                      On_Open_From_Path'Access, null,
                      GDK_F3, Shift_Mask, Ref_Item => -"Save...");
 
-      Source_Editor_Module (Src_Editor_Module_Id).Recent_Menu_Item :=
+      Recent_Menu_Item :=
         Register_Menu (Kernel, File, -"_Recent", "", null,
                        Ref_Item   => -"Open From Project...",
                        Add_Before => False);
-
-      Refresh_Recent_Menu (Kernel);
+      Associate (Get_History (Kernel).all,
+                 Hist_Key,
+                 Recent_Menu_Item,
+                 new On_Recent'(Menu_Callback_Record with
+                                Kernel => Kernel_Handle (Kernel)));
 
       Register_Menu (Kernel, File, -"_New", Stock_New, On_New_File'Access,
                      Ref_Item => -"Open...");
@@ -3408,48 +3411,6 @@ package body Src_Editor_Module is
          Remove_Line_Information_Column (Kernel, "", Src_Editor_Module_Name);
       end if;
    end Preferences_Changed;
-
-   -------------------------
-   -- Refresh_Recent_Menu --
-   -------------------------
-
-   procedure Refresh_Recent_Menu
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      The_Data    : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-      Value       : constant String_List_Access := Get_History
-        (Get_History (Kernel).all, Hist_Key);
-      Recent_Menu : Gtk_Menu;
-   begin
-      if Get_Submenu (The_Data.Recent_Menu_Item) /= null then
-         Remove_Submenu (The_Data.Recent_Menu_Item);
-      end if;
-
-      Gtk_New (Recent_Menu);
-      Set_Submenu (The_Data.Recent_Menu_Item, Gtk_Widget (Recent_Menu));
-
-      if Value /= null then
-         for V in Value'Range loop
-            declare
-               Path  : constant String := Value (V).all;
-               Mitem : Full_Path_Menu_Item;
-            begin
-               Gtk_New (Mitem, Shorten (Path), Path);
-               Append (Recent_Menu, Mitem);
-
-               Kernel_Callback.Connect
-                 (Mitem,
-                  "activate",
-                  Kernel_Callback.To_Marshaller (On_Recent'Access),
-                  Kernel_Handle (Kernel));
-
-            end;
-         end loop;
-
-         Show_All (Recent_Menu);
-      end if;
-   end Refresh_Recent_Menu;
 
    -------------
    -- Destroy --

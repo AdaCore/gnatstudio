@@ -142,7 +142,6 @@ private
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Kernel                   : Kernel_Handle;
 
-      Recent_Menu_Item         : Gtk_Menu_Item;
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
       File_Closed_Id           : Handler_Id := No_Handler;
