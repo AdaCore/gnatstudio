@@ -156,17 +156,20 @@ package body Shell_Script is
    procedure Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean);
    function Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : access Boolean) return String;
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean);
    function Get_Name (Script : access Shell_Scripting_Record) return String;
    function Is_Subclass
@@ -788,7 +791,7 @@ package body Shell_Script is
          begin
             if Buffer /= null then
                Execute_Command
-                 (Get_Script (Data), Buffer.all, Display_In_Console => True,
+                 (Get_Script (Data), Buffer.all,
                   Errors => Errors);
                Free (Buffer);
             else
@@ -930,7 +933,8 @@ package body Shell_Script is
    procedure Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean)
    is
       Err : aliased Boolean;
@@ -938,8 +942,14 @@ package body Shell_Script is
         (Script.Kernel, Command, Err'Unchecked_Access);
    begin
       Errors := Err;
-      if Display_In_Console and then Script.Console /= null then
-         Insert (Script.Console, S);
+      if not Hide_Output then
+         if Console = null then
+            if Script.Console /= null then
+               Insert (Script.Console, S);
+            end if;
+         else
+            Insert (Console, S);
+         end if;
       end if;
    end Execute_Command;
 
@@ -950,7 +960,8 @@ package body Shell_Script is
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : out Boolean)
    is
       Err  : aliased Boolean;
@@ -963,8 +974,14 @@ package body Shell_Script is
            (Script.Kernel, "load", Args, Err'Unchecked_Access);
       begin
          Errors := Err;
-         if Display_In_Console and then Script.Console /= null then
-            Insert (Script.Console, S);
+         if not Hide_Output then
+            if Console = null then
+               if Script.Console /= null then
+                  Insert (Script.Console, S);
+               end if;
+            else
+               Insert (Console, S);
+            end if;
          end if;
 
          Free (Args);
@@ -997,7 +1014,8 @@ package body Shell_Script is
    function Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
-      Display_In_Console : Boolean := True;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
       Errors             : access Boolean) return String
    is
       Err : aliased Boolean;
@@ -1007,8 +1025,14 @@ package body Shell_Script is
    begin
       Errors.all := Err;
 
-      if Display_In_Console and then Script.Console /= null then
-         Insert (Script.Console, Result);
+      if not Hide_Output then
+         if Console = null then
+            if Script.Console /= null then
+               Insert (Script.Console, Result);
+            end if;
+         else
+            Insert (Console, Result);
+         end if;
       end if;
 
       return Result;
