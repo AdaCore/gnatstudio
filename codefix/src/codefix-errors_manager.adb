@@ -171,7 +171,7 @@ package body Codefix.Errors_Manager is
    procedure Validate
      (This   : in out Correction_Manager;
       Error  : Error_Id;
-      Choice : Extract)
+      Choice : Extract'Class)
    is
       pragma Unreferenced (Error);
    begin
@@ -239,7 +239,7 @@ package body Codefix.Errors_Manager is
         (Node : Extract_List.List_Node) return Extract_List.List_Node;
       --  Delete the current node after having got the next one.
 
-      function Conflict (Extract_1, Extract_2 : Extract) return Boolean;
+      function Conflict (Extract_1, Extract_2 : Extract'Class) return Boolean;
       --  Is True when Extract_1 and Extract_2 have at least one line in
       --  common.
 
@@ -266,7 +266,8 @@ package body Codefix.Errors_Manager is
       -- Conflit --
       -------------
 
-      function Conflict (Extract_1, Extract_2 : Extract) return Boolean is
+      function Conflict (Extract_1, Extract_2 : Extract'Class) return Boolean
+      is
          Num_1, Num_2   : Natural;
          Line_1, Line_2 : Extract_Line;
 

@@ -22,6 +22,7 @@ with Generic_List;
 with Language; use Language;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 package Codefix.Formal_Errors is
 
@@ -46,7 +47,7 @@ package Codefix.Formal_Errors is
    procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
 
-   package Extract_List is new Generic_List (Extract);
+   package Extract_List is new Generic_List (Extract'Class, Free_Data);
    use Extract_List;
 
    subtype Solution_List is Extract_List.List;
@@ -54,7 +55,7 @@ package Codefix.Formal_Errors is
 
    function Get_Extract
      (This     : Solution_List;
-      Position : Positive) return Extract;
+      Position : Positive) return Extract'Class;
    --  Get the extract recorded in a solution list at the given position.
 
    procedure Free (This : in out Solution_List);
@@ -132,7 +133,7 @@ package Codefix.Formal_Errors is
    function Not_Modified
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Name         : String) return Extract;
+      Name         : String) return Ada_List;
 
 private
 

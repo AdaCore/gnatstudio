@@ -101,14 +101,14 @@ package Codefix.Errors_Manager is
    procedure Validate
      (This   : in out Correction_Manager;
       Error  : Error_Id;
-      Choice : Extract);
+      Choice : Extract'Class);
    --  Specify a choice between the differents correction'possibilities
    --  of a message.
 
    subtype Alternative_Choice is Natural range 0 .. 2;
 
    type Ambiguous_Callback is access procedure
-     (Alternative_1, Alternative_2 : Extract;
+     (Alternative_1, Alternative_2 : Extract'Class;
       Current_Text                 : Text_Navigator_Abstr'Class;
       Delete_Choice                : out Alternative_Choice);
    --  Is called when ambiguities appears. If Delete_Choice is 0, no solution
