@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -80,6 +80,9 @@ package body Docgen.Work_On_Source is
       --  Different ways of process for spec and body files
 
       if Is_Spec_File (Source_Filename) then
+         --  ??? Need to call the appropriate kernel service to retrieve
+         --  the right language automatically.
+
          Parse_Constructs (Ada_Lang, File_Text.all, Parsed_List);
          Sort_List_Name (Entity_List);
 
@@ -190,10 +193,7 @@ package body Docgen.Work_On_Source is
       Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options)
    is
-      Data_Open : Doc_Info (Info_Type => Open_Info);
-   begin
-      --  initialise the Doc_Info data
-      Data_Open := Doc_Info'
+      Data_Open : Doc_Info :=
         (Open_Info,
          Doc_Info_Options  => Options,
          Doc_File_List     => Source_File_List,
@@ -202,10 +202,8 @@ package body Docgen.Work_On_Source is
          Open_Package_Next => Next_Package,
          Open_Package_Prev => Prev_Package,
          Doc_LI_Unit       => No_LI_File);
-
-      --  call the documentation procedure
+   begin
       Options.Doc_Subprogram (Doc_File, Data_Open);
-
       Free (Data_Open.Open_Title);
       Free (Data_Open.Open_File);
    end Process_Open_File;
@@ -219,19 +217,14 @@ package body Docgen.Work_On_Source is
       File_Name : String;
       Options   : All_Options)
    is
-      Data_Close : Doc_Info (Info_Type => Close_Info);
-   begin
-      --  Initialise the Doc_Info data
-
-      Data_Close := Doc_Info'
+      Data_Close : Doc_Info :=
         (Close_Info,
          Doc_Info_Options => Options,
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          Close_File_Name  => new String'(File_Name));
 
-      --  Call the documentation procedure
-
+   begin
       Options.Doc_Subprogram (Doc_File, Data_Close);
       Free (Data_Close.Close_File_Name);
    end Process_Close_File;
@@ -248,11 +241,7 @@ package body Docgen.Work_On_Source is
       Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options)
    is
-      Data_Line : Doc_Info (Info_Type => Body_Line_Info);
-   begin
-      --  Initialise the Doc_Info data
-
-      Data_Line := Doc_Info'
+      Data_Line : Doc_Info :=
         (Body_Line_Info,
          Doc_Info_Options => Options,
          Doc_LI_Unit      => LI_Unit,
@@ -260,8 +249,7 @@ package body Docgen.Work_On_Source is
          Body_File        => new String'(Source_File),
          Doc_File_List    => Source_File_List);
 
-      --  Call the documentation procedure
-
+   begin
       Options.Doc_Subprogram (Doc_File, Data_Line);
       Free (Data_Line.Body_File);
    end Process_One_Body_File;
@@ -288,6 +276,7 @@ package body Docgen.Work_On_Source is
       --  how many files already examined BEFORE the loop
 
       Doc_File_Name    : constant String := "index_unit";
+
    begin
       Create (Index_File,
               Out_File,
@@ -363,7 +352,6 @@ package body Docgen.Work_On_Source is
       Options.Doc_Subprogram (Index_File, Data_End);
 
       Free (Data_End.End_Index_Title);
-
       Close (Index_File);
    end Process_Unit_Index;
 
@@ -452,13 +440,10 @@ package body Docgen.Work_On_Source is
    is
       Source_Filename : GOL.String_Access;
       Type_Index_Node : Type_Entity_List.List_Node;
-
       Index_File      : File_Type;
-
       Data_Type       : Doc_Info (Info_Type => Type_Index_Info);
       Data_Item       : Doc_Info (Info_Type => Index_Item_Info);
       Data_End        : Doc_Info (Info_Type => End_Of_Index_Info);
-
       Doc_File_Name   : constant String := "index_type";
 
    begin
@@ -501,7 +486,6 @@ package body Docgen.Work_On_Source is
 
             Type_Index_Node := TEL.Next (Type_Index_Node);
          end loop;
-
       end if;
 
       Data_End := Doc_Info'
@@ -513,7 +497,6 @@ package body Docgen.Work_On_Source is
       Options.Doc_Subprogram (Index_File, Data_End);
 
       Free (Data_End.End_Index_Title);
-
       Close (Index_File);
    end Process_Type_Index;
 
@@ -528,9 +511,7 @@ package body Docgen.Work_On_Source is
       Process_Body_File  : Boolean;
       Options            : All_Options)
    is
-      Data_Header : Doc_Info (Info_Type => Header_Info);
-   begin
-      Data_Header := Doc_Info'
+      Data_Header : Doc_Info :=
         (Header_Info,
          Doc_Info_Options => Options,
          Doc_LI_Unit => No_LI_File,
@@ -539,8 +520,9 @@ package body Docgen.Work_On_Source is
          Header_File  => new String'(Package_File),
          Header_Line  => First_File_Line,
          Header_Link  => Process_Body_File);
-      Options.Doc_Subprogram (Doc_File, Data_Header);
 
+   begin
+      Options.Doc_Subprogram (Doc_File, Data_Header);
       Free (Data_Header.Header_Package);
       Free (Data_Header.Header_File);
    end Process_Header;
@@ -554,17 +536,16 @@ package body Docgen.Work_On_Source is
       Package_File  : String;
       Options       : All_Options)
    is
-      Data_Footer   : Doc_Info (Info_Type => Footer_Info);
-   begin
-      Data_Footer := Doc_Info'
+      Data_Footer : Doc_Info :=
         (Footer_Info,
          Doc_Info_Options => Options,
          Doc_LI_Unit => No_LI_File,
          Doc_File_List => TSFL.Null_List,
          Footer_Title => new String'("Docgen"),
          Footer_File  => new String'(Package_File));
-      Options.Doc_Subprogram (Doc_File, Data_Footer);
 
+   begin
+      Options.Doc_Subprogram (Doc_File, Data_Footer);
       Free (Data_Footer.Footer_Title);
       Free (Data_Footer.Footer_File);
    end Process_Footer;
@@ -1444,8 +1425,8 @@ package body Docgen.Work_On_Source is
       Entity_Name : String;
       Entity_Line : Natural) return GNAT.OS_Lib.String_Access
    is
-      Parse_Node      : Construct_Access;
-      Result          : GNAT.OS_Lib.String_Access;
+      Parse_Node : Construct_Access;
+      Result     : GNAT.OS_Lib.String_Access;
 
       use type Basic_Types.String_Access;
 
@@ -1459,8 +1440,9 @@ package body Docgen.Work_On_Source is
            and then To_Lower (Parse_Node.Name.all) = To_Lower (Entity_Name)
            and then Parse_Node.Sloc_Start.Line = Entity_Line
          then
-            Result := new String (1 .. Parse_Node.Sloc_End.Index -
-                                    Parse_Node.Sloc_Start.Index + 1);
+            Result := new String
+              (1 .. Parse_Node.Sloc_End.Index -
+                      Parse_Node.Sloc_Start.Index + 1);
             Result.all := File_Text (Parse_Node.Sloc_Start.Index ..
                                        Parse_Node.Sloc_End.Index);
             return Result;
