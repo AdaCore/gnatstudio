@@ -531,8 +531,8 @@ procedure GPS is
                           (GPS_Name (GPS) & " version " & GVD.Version & " (" &
                            GVD.Source_Date & ") hosted on " & GVD.Target,
                            Information, Button_OK,
-                           Title => -"Version",
-                        Justification => Justify_Left);
+                           Title         => -"Version",
+                           Justification => Justify_Left);
                      end if;
 
                      OS_Exit (0);
@@ -712,7 +712,7 @@ procedure GPS is
             (-("Source files are searched everywhere on the project's" &
                " source path")),
             Information, Button_OK,
-            Title => -"Help",
+            Title         => -"Help",
             Justification => Justify_Left);
       end if;
    end Help;
@@ -833,10 +833,7 @@ procedure GPS is
                      Load_Default_Desktop => True);
                end if;
 
-               Open_File_Editor
-                 (GPS.Kernel,
-                  Create (S, GPS.Kernel, False, False),
-                  1, 1);
+               Open_File_Editor (GPS.Kernel, Create (S, GPS.Kernel), 1, 1);
                File_Opened := True;
             end;
          end loop;
@@ -1143,6 +1140,7 @@ procedure GPS is
    is
       pragma Unreferenced (MDI);
       C : constant MDI_Child := MDI_Child (To_Object (Child, 1));
+
    begin
       if Started then
          --  Set the title of the main window.
@@ -1209,7 +1207,7 @@ procedure GPS is
             ASCII.LF & ASCII.LF &
             "You will be asked to save modified files before GPS exits",
             Error, Button_OK,
-            Title => -"Fatal Error",
+            Title         => -"Fatal Error",
             Justification => Justify_Left);
          Result := Save_MDI_Children (GPS.Kernel, Force => False);
    end Main_Processing;
