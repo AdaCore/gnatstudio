@@ -21,6 +21,7 @@
 with Gdk.Event;             use Gdk.Event;
 with Gdk.Types;             use Gdk.Types;
 with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
+with Glib;                  use Glib;
 with Glib.Object;           use Glib.Object;
 with Glib.Xml_Int;          use Glib.Xml_Int;
 with Gtk.Alignment;         use Gtk.Alignment;
@@ -177,6 +178,9 @@ package body Vsearch_Ext is
    function On_Delete (Search : access Gtk_Widget_Record'Class)
       return Boolean;
    --  Called when the search widget is about to be destroyed.
+
+   procedure Resize_If_Needed (Vsearch : access Vsearch_Extended_Record'Class);
+   --  Resize the vsearch window if needed.
 
    ---------------
    -- Callbacks --
@@ -634,6 +638,26 @@ package body Vsearch_Ext is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Stop_Search;
 
+   ----------------------
+   -- Resize_If_Needed --
+   ----------------------
+
+   procedure Resize_If_Needed (Vsearch : access Vsearch_Extended_Record'Class)
+   is
+      Win : Gtk_Window;
+      Child : constant MDI_Child := Find_MDI_Child
+        (Get_MDI (Vsearch.Kernel), Vsearch);
+   begin
+      if Child /= null
+        and then Is_Floating (Child)
+      then
+         Win := Gtk_Window (Get_Toplevel (Vsearch));
+         if Win /= null then
+            Resize (Win, -1, -1);
+         end if;
+      end if;
+   end Resize_If_Needed;
+
    ------------------------
    -- On_Options_Toggled --
    ------------------------
@@ -646,6 +670,8 @@ package body Vsearch_Ext is
       else
          Hide_All (Vsearch.Options_Frame);
       end if;
+
+      Resize_If_Needed (Vsearch);
 
    exception
       when E : others =>
@@ -713,8 +739,9 @@ package body Vsearch_Ext is
                0, 2, 4, 5, Fill, 0, 2, 0);
             Show_All (Vsearch.Table);
             Vsearch.Extra_Information := Data.Extra_Information;
-            Queue_Resize (Vsearch);
          end if;
+
+         Resize_If_Needed (Vsearch);
       end if;
 
    exception
@@ -1054,6 +1081,23 @@ package body Vsearch_Ext is
       Get_History
         (Get_History (Handle).all, Pattern_Hist_Key, Vsearch.Pattern_Combo,
          Clear_Combo => False);
+
+      Associate
+        (Get_History (Handle).all,
+         "case_sensitive_search",
+         Vsearch.Case_Check);
+      Associate
+        (Get_History (Handle).all,
+         "all_occurrences_search",
+         Vsearch.Search_All_Check);
+      Associate
+        (Get_History (Handle).all,
+         "whole_word_search",
+         Vsearch.Whole_Word_Check);
+      Associate
+        (Get_History (Handle).all,
+         "regexp_search",
+         Vsearch.Regexp_Check);
    end Initialize;
 
    ---------------
@@ -1087,7 +1131,7 @@ package body Vsearch_Ext is
       --  If not currently displayed
       if Child = null then
 
-         --  Create if if not done yet
+         --  Create if not done yet
          if Vsearch_Module_Id.Search = null then
             Gtk_New (Vsearch_Module_Id.Search, Kernel_Handle (Kernel));
 
