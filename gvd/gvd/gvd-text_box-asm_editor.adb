@@ -46,6 +46,10 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Odd.Asm_Editors is
 
+   Getting_Assembly_Msg : constant String_Access :=
+     new String' (-"Getting assembly code...");
+   --  Message displayed when GVD is getting the assembly code.
+
    package Editor_Cb is new Callback (Asm_Editor_Record);
 
    function Line_From_Address
@@ -173,10 +177,8 @@ package body Odd.Asm_Editors is
       Editor.Current_Range := Find_In_Cache (Editor, Pc);
 
       if Editor.Current_Range = null then
-         --  When is this memory freed ???
          Set_Buffer
-           (Editor, new String' (-"Getting assembly code..."),
-            Clear_Previous => False);
+           (Editor, Getting_Assembly_Msg, Clear_Previous => False);
          Update_Child (Editor);
 
          Get_Machine_Code
