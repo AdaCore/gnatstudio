@@ -662,9 +662,29 @@ package body Projects.Registry is
 
    function Get_Language_From_File
      (Registry : Project_Registry; Source_Filename : String)
-      return Types.Name_Id is
+      return Types.Name_Id
+   is
+      S : constant Source_File_Data := Get
+        (Registry.Data.Sources, Source_Filename);
    begin
-      return Get (Registry.Data.Sources, Source_Filename).Lang;
+      if S = No_Source_File_Data then
+         --  This is most probably one of the runtime files.
+         --  For now, we simply consider the standard GNAT extensions, although
+         --  we should search in the list of registered languages
+         --  (language_handlers-glide)
+
+         declare
+            Ext : constant String := File_Extension (Source_Filename);
+         begin
+            if Ext = ".ads" or else Ext = ".adb" then
+               return Name_Ada;
+            else
+               return No_Name;
+            end if;
+         end;
+      else
+         return S.Lang;
+      end if;
    end Get_Language_From_File;
 
    ----------------------
