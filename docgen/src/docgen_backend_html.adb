@@ -205,6 +205,7 @@ package body Docgen_Backend_HTML is
       Info             : Doc_Info)
    is
       pragma Unreferenced (End_Line);
+      Line_Body : Natural := Line_In_Body;
    begin
       --  In html, each identifier may have a link,
       --  Each link is made by the subprogram Format_Link (see just below).
@@ -225,7 +226,7 @@ package body Docgen_Backend_HTML is
          Text,
          File_Name,
          Entity_Line,
-         Line_In_Body,
+         Line_Body,
          Source_File_List,
          Link_All,
          Is_Body,
@@ -256,7 +257,8 @@ package body Docgen_Backend_HTML is
       Process_Body     : Boolean;
       Loc_End          : Natural;
       Loc_Start        : Natural;
-      Entity_Info      : Entity_Information)
+      Entity_Info      : Entity_Information;
+      Entity_Abstract  : in out Boolean)
    is
       pragma Unreferenced (Start_Index, Start_Column, End_Index, LI_Unit);
 
@@ -323,12 +325,7 @@ package body Docgen_Backend_HTML is
             Put (File, Text (Get_Last_Index (B.all) .. Loc_Start - 1));
          end if;
 
-         if Get_Kind (Entity_Info).Kind = Package_Kind then
-            Line_To_Use := First_File_Line;
-         else
-            Line_To_Use := Get_Declaration_Line_Of (Entity_Info);
-         end if;
-
+         Line_To_Use := Get_Declaration_Line_Of (Entity_Info);
          Put (File,
               "<A href="""
               & Get_Html_File_Name
@@ -348,18 +345,19 @@ package body Docgen_Backend_HTML is
          --  processed source files => filter them out
 
          return
-           (Link_All
-            or else Source_File_In_List
-              (Source_File_List, Get_Declaration_File_Of (Entity_Info)))
-
+           (not Entity_Abstract
+            and then
+              (Link_All
+               or else Source_File_In_List
+                 (Source_File_List, Get_Declaration_File_Of (Entity_Info)))
          --  create no links if it is the declaration line itself;
          --  only if it's a subprogram or entry in a spec sometimes
          --  a link can be created to it body, so don't filter these ones.
-           and then
+            and then
              (Get_Declaration_File_Of (Entity_Info) /= File_Name
               or else Get_Declaration_Line_Of (Entity_Info) /=
                 Start_Line + Entity_Line - 1
-              or else Special_Link_Should_Be_Set);
+              or else Special_Link_Should_Be_Set));
       end Link_Should_Be_Set;
 
       --------------------------------
