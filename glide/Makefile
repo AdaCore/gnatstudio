@@ -3,7 +3,9 @@ include ../gtkada/src/Makefile.common
 default build compile link ada c c++ clean internal-clean :
 	$(MAKE) -s -f Makefile.gps $@
 
-shared: compile
+shared: compile do-shared restore
+
+do-shared:
 # prepare the objects for the shared library:
 	for m in ../kernel .. ../common ../widgets ../gvd ../gvd/common ../vsearch; do \
 	  mkdir -p $$m/obj_save; \
@@ -31,6 +33,7 @@ shared: compile
 	-rm -f obj/gps
 	$(MAKE) -s -f Makefile.gps default ADAFLAGS="-largs -lkernel"
 
+restore:
 # put back objects and ali files in their original state:
 	for m in ../kernel .. ../common ../widgets ../gvd ../gvd/common ../vsearch; do \
 	  mv $$m/obj_save/*.o $$m/obj; \
