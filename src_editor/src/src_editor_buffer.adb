@@ -66,6 +66,10 @@ package body Src_Editor_Buffer is
 
    type Delimiter_Type is (Opening, Closing);
 
+   function Strlen
+     (Str : Interfaces.C.Strings.chars_ptr) return Interfaces.C.size_t;
+   pragma Import (C, Strlen);
+
    Delimiters : constant array (1 .. 3, Delimiter_Type'Range) of Character
      := (('(', ')'),
          ('[', ']'),
