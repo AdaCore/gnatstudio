@@ -22,6 +22,7 @@ with Text_IO; use Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
+with Types;  use Types;
 with SN; use SN;
 with Src_Info.CPP;  use Src_Info.CPP;
 with Prj;
@@ -424,6 +425,8 @@ package body Src_Info.LI_Utils is
                               Source_Filename => null),
                    Line   => Parent_Location.Line,
                    Column => Parent_Location.Column),
+         Kind => Parent_Type,
+         Predefined_Entity_Name => No_Name,
          Next  => null);
    end Add_Parent;
 
@@ -661,11 +664,15 @@ package body Src_Info.LI_Utils is
       if Parent_Location = Invalid_Point then
          D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
            (Value => Null_File_Location,
+            Kind  => Parent_Type,
+            Predefined_Entity_Name => No_Name,
             Next  => null);
 
       elsif Parent_Location = Predefined_Point then
          D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
            (Value => Predefined_Entity_Location,
+            Kind  => Parent_Type,
+            Predefined_Entity_Name => No_Name,
             Next  => null);
 
       else
@@ -693,6 +700,8 @@ package body Src_Info.LI_Utils is
                                  Source_Filename => null),
                       Line   => Parent_Location.Line,
                       Column => Parent_Location.Column),
+            Kind  => Parent_Type,
+            Predefined_Entity_Name => No_Name,
             Next  => null);
 
          --  ??? what does the procedure look like to support multiple
