@@ -22,10 +22,10 @@ with Glib;        use Glib;
 with Glib.Values; use Glib.Values;
 with Glib.Object; use Glib.Object;
 
+with Gdk.Event;  use Gdk.Event;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
 
 with Gtk;                       use Gtk;
-with Gtk.Arguments;             use Gtk.Arguments;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
@@ -33,7 +33,6 @@ with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
-with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -58,9 +57,6 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
 
 package body VCS_View_Pkg is
-
-   Tmp_Dir : constant String := "/tmp/";
-   --  <preferences>
 
    ------------------
    --  Local types --
@@ -140,6 +136,36 @@ package body VCS_View_Pkg is
    -- Local subprograms --
    -----------------------
 
+   procedure Get_Status
+     (Explorer : VCS_View_Access;
+      Files    : String_List.List);
+   --  Updates the status for Files.
+
+   procedure Open_Files
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : String_List.List;
+      Ref      : VCS_Access);
+   --  Open a list of files.
+   --  User must free Files afterwards.
+
+   procedure Commit
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : String_List.List;
+      Log      : String;
+      Ref      : VCS_Access);
+   --  Commit a list of files with a given log.
+   --  User must free Files afterwards.
+
+   procedure Diff_Files
+     (Explorer : VCS_View_Access;
+      Kernel   : Kernel_Handle;
+      Files    : String_List.List;
+      Ref      : VCS_Access);
+   --  View differences between Files and the head revision.
+   --  User must free Files afterwards.
+
    procedure Create_Model (VCS_View : access VCS_View_Record'Class);
    --  Creates the underlying tree model for VCS_View.
 
@@ -216,66 +242,6 @@ package body VCS_View_Pkg is
    -- Callbacks --
    ---------------
 
-   procedure On_Edit_Log_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Edit_Multiple_Log_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_View_Diff_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  Callback for the diff button.
-
-   procedure On_Annotate_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_View_Log_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Get_Status_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Update_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Open_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Commit_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Revert_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Add_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
-   procedure On_Remove_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-   --  ???
-
    procedure Log_Editor_Text_Changed
      (Object      : access Gtk_Widget_Record'Class;
       Parameter   : Log_Parameter);
@@ -295,6 +261,12 @@ package body VCS_View_Pkg is
      (Object      : access Gtk_Widget_Record'Class;
       Params      : Glib.Values.GValues);
    --  ???
+
+   function Button_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+       Event   : Gdk_Event)
+      return Boolean;
+   --  Callback for the "button_press" event.
 
    -------------------
    -- Launch_Viewer --
@@ -335,6 +307,45 @@ package body VCS_View_Pkg is
          Open_File_Editor (Kernel, Filename);
       end if;
    end Launch_Editor;
+
+   -------------------------
+   -- Display_File_Status --
+   -------------------------
+
+   procedure Display_File_Status
+     (Kernel : Kernel_Handle;
+      Status : File_Status_List.List)
+   is
+      use File_Status_List;
+
+      Child    : MDI_Child
+        := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+      Explorer : VCS_View_Access;
+      L        : File_Status_List.List := Status;
+      Iter     : Gtk_Tree_Iter;
+      Success  : Boolean;
+   begin
+      if Child = null then
+         return;
+      else
+         Explorer := VCS_View_Access (Get_Widget (Child));
+      end if;
+
+      Clear (Explorer.Model);
+
+      while not Is_Empty (L) loop
+         Append (Explorer.Model, Iter, Null_Iter);
+         Fill_Info (Explorer, Iter, Head (L), False, Success);
+
+         if not Success then
+            Remove (Explorer.Model, Iter);
+         end if;
+
+         L := Next (L);
+      end loop;
+
+      Columns_Autosize (Explorer.Tree);
+   end Display_File_Status;
 
    -------------------------
    -- Display_String_List --
@@ -552,7 +563,7 @@ package body VCS_View_Pkg is
       String_List.Append (Directory_List, Explorer.Current_Directory.all);
 
       if Connect then
-         L := Get_Status (Explorer.VCS_Ref, Directory_List);
+         Get_Status (Explorer.VCS_Ref, Directory_List);
       else
          L := Local_Get_Status (Explorer.VCS_Ref, Directory_List);
       end if;
@@ -802,135 +813,6 @@ package body VCS_View_Pkg is
       end if;
    end Edit_Log;
 
-   --------------------------------
-   -- On_Edit_Log_Button_Clicked --
-   --------------------------------
-
-   procedure On_Edit_Log_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer       : constant VCS_View_Access := VCS_View_Access (Object);
-      Selected_Files : String_List.List;
-
-   begin
-      if Explorer.Current_Directory = null then
-         return;
-      end if;
-
-      Selected_Files := Get_Selected_Files (Explorer);
-
-      if String_List.Is_Empty (Get_Selected_Files (Explorer)) then
-         Push_Message (Explorer,
-                       Error, -"No files are selected.");
-         return;
-      end if;
-
-      Edit_Log (Explorer, Explorer.Kernel, Selected_Files, Explorer.VCS_Ref);
-   end On_Edit_Log_Button_Clicked;
-
-   -----------------------------------------
-   -- On_Edit_Multiple_Log_Button_Clicked --
-   -----------------------------------------
-
-   procedure On_Edit_Multiple_Log_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer          : constant VCS_View_Access := VCS_View_Access (Object);
-      Log_Editor        : Log_Editor_Window_Access;
-      Parameter_Object  : Log_Parameter;
-      No_Files_Selected : Boolean := True;
-
-      procedure Clear_Launch_Log_Editor
-        (View     : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter);
-      --  Removes any log_editor attached to the given row.
-
-      procedure Fill_Launch_Log_Editor
-        (Explorer : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter);
-      --  Adds the necessary information to the current
-      --  log_editor.
-
-      procedure Clear_Launch_Log_Editor
-        (View : access VCS_View_Record'Class;
-         Iter : Gtk_Tree_Iter)
-      is
-         Stored_Object : GObject;
-      begin
-         No_Files_Selected := False;
-
-         Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
-
-         if Stored_Object /= null then
-            Log_Editor := Log_Editor_Window_Access (Stored_Object);
-            Log_Editor_Ok_Clicked
-              (Object,
-               (Explorer, Explorer.Kernel, Log_Editor, Explorer.VCS_Ref));
-         end if;
-      end Clear_Launch_Log_Editor;
-
-      procedure Fill_Launch_Log_Editor
-        (Explorer : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter) is
-      begin
-         Add_File_Name
-           (Log_Editor, Get_String (Explorer.Model, Iter, Name_Column));
-         Set (Explorer.Model, Iter, Log_Editor_Column, GObject (Log_Editor));
-      end Fill_Launch_Log_Editor;
-
-   begin
-      if Explorer.Current_Directory = null then
-         return;
-      end if;
-
-      Foreach_Selected_File
-        (Explorer, Clear_Launch_Log_Editor'Unrestricted_Access);
-
-      if No_Files_Selected then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      --  Create the log editor.
-      Gtk_New (Log_Editor);
-
-      Set_Title (Log_Editor, -"Multiple log editor");
-      Set_Text (Log_Editor, "");
-
-      Parameter_Object.Explorer := Explorer;
-      Parameter_Object.Kernel := Explorer.Kernel;
-      Parameter_Object.VCS_Ref := Explorer.VCS_Ref;
-      Parameter_Object.Log_Editor := Log_Editor;
-
-      --  Associate the log editor to all files.
-      Foreach_Selected_File
-        (Explorer, Fill_Launch_Log_Editor'Unrestricted_Access);
-
-      Explorer_Callback.Connect
-        (Log_Editor.Ok_Button,
-         "clicked",
-         Explorer_Callback.To_Marshaller (Log_Editor_Ok_Clicked'Access),
-         Parameter_Object);
-
-      Explorer_Callback.Connect
-        (Log_Editor.Log_Text,
-         "insert_text",
-         Explorer_Callback.To_Marshaller (Log_Editor_Text_Changed'Access),
-         Parameter_Object,
-         After => True);
-
-      if Explorer.Kernel = null then
-         Show_All (Log_Editor);
-      else
-         declare
-            Child : MDI_Child;
-         begin
-            Child := Put (Get_MDI (Explorer.Kernel), Log_Editor);
-         end;
-      end if;
-   end On_Edit_Multiple_Log_Button_Clicked;
 
    ----------------
    -- Diff_Files --
@@ -943,179 +825,18 @@ package body VCS_View_Pkg is
       Ref      : VCS_Access)
    is
       L_Temp  : String_List.List := Files;
-      Temp, L : String_List.List;
-      Success : Boolean;
 
    begin
       pragma Assert (Ref /= null);
 
       while not String_List.Is_Empty (L_Temp) loop
-         declare
-            Current_File : constant String := String_List.Head (L_Temp);
-            Base         : constant String := Base_Name (Current_File);
-            Patch_File   : constant String := Tmp_Dir & Base & "_difs";
-            File         : File_Type;
-
-         begin
-            Temp := Diff (Ref, Current_File);
-
-            if Kernel = null then
-               Launch_Viewer
-                 (Explorer,
-                  Kernel,
-                  Temp,
-                  -"Diff for current revision of " & Current_File);
-
-            else
-               Create (File, Name => Patch_File);
-               L := Temp;
-
-               while not String_List.Is_Empty (L) loop
-                  Put_Line (File, String_List.Head (L));
-                  L := String_List.Next (L);
-               end loop;
-
-               Close (File);
-               Display_Differences
-                 (Kernel, New_File => Current_File, Diff_File => Patch_File);
-               Delete_File (Patch_File, Success);
-            end if;
-         end;
+         Diff (Ref, String_List.Head (L_Temp));
 
          L_Temp := String_List.Next (L_Temp);
       end loop;
 
       String_List.Free (L_Temp);
    end Diff_Files;
-
-   --------------------------------
-   -- On_View_Diff_Button_Clicked --
-   --------------------------------
-
-   procedure On_View_Diff_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-      L        : String_List.List := Get_Selected_Files (Explorer);
-
-   begin
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Push_Message (Explorer, Verbose, -"Viewing diffs for files:");
-      Display_String_List (Explorer, L, Verbose);
-      Diff_Files (Explorer, Explorer.Kernel, L, Explorer.VCS_Ref);
-      Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-      String_List.Free (L);
-      Pop_State (Explorer.Kernel);
-   end On_View_Diff_Button_Clicked;
-
-   --------------------------------
-   -- On_Annotate_Button_Clicked --
-   --------------------------------
-
-   procedure On_Annotate_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer         : constant VCS_View_Access := VCS_View_Access (Object);
-      L                : String_List.List := Get_Selected_Files (Explorer);
-      L_Temp           : String_List.List := L;
-      Temp_String_List : String_List.List;
-
-   begin
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Push_Message (Explorer, Verbose, -"Annotating files:");
-      Display_String_List (Explorer, L, Verbose);
-
-      while not String_List.Is_Empty (L_Temp) loop
-         Temp_String_List :=
-           Annotate (Explorer.VCS_Ref, String_List.Head (L_Temp));
-         Launch_Viewer
-           (Explorer, Explorer.Kernel, Temp_String_List,
-            -"Annotating " & String_List.Head (L_Temp));
-         L_Temp := String_List.Next (L_Temp);
-      end loop;
-
-      Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-      Pop_State (Explorer.Kernel);
-   end On_Annotate_Button_Clicked;
-
-   --------------------------------
-   -- On_View_Log_Button_Clicked --
-   --------------------------------
-
-   procedure On_View_Log_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer         : constant VCS_View_Access := VCS_View_Access (Object);
-      L                : String_List.List := Get_Selected_Files (Explorer);
-      L_Temp           : String_List.List := L;
-      Temp_String_List : String_List.List;
-
-   begin
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Push_Message (Explorer, Verbose, -"Viewing logs of files:");
-      Display_String_List (Explorer, L, Verbose);
-
-      while not String_List.Is_Empty (L_Temp) loop
-         Temp_String_List := Log (Explorer.VCS_Ref, String_List.Head (L_Temp));
-         Launch_Viewer (Explorer, Explorer.Kernel, Temp_String_List);
-         L_Temp := String_List.Next (L_Temp);
-      end loop;
-
-      Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-      Pop_State (Explorer.Kernel);
-   end On_View_Log_Button_Clicked;
-
-   ----------------------------------
-   -- On_Get_Status_Button_Clicked --
-   ----------------------------------
-
-   procedure On_Get_Status_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-      L        : String_List.List := Get_Selected_Files (Explorer);
-
-   begin
-      Push_State (Explorer.Kernel, Processing);
-
-      if String_List.Is_Empty (L) then
-         if Explorer.Current_Directory = null then
-            Explorer.Current_Directory := new String' (Get_Current_Dir);
-         end if;
-
-         Push_Message
-           (Explorer,
-            Verbose,
-            -"Querying status for files in directory "
-              & Explorer.Current_Directory.all & " ... ");
-         Refresh_Files (Explorer, True);
-         Push_Message (Explorer, Info, -"... done." & ASCII.LF);
-      else
-         Get_Status (Explorer, L);
-      end if;
-
-      String_List.Free (L);
-      Pop_State (Explorer.Kernel);
-   end On_Get_Status_Button_Clicked;
 
    ----------------
    -- Get_Status --
@@ -1125,39 +846,7 @@ package body VCS_View_Pkg is
      (Explorer : VCS_View_Access;
       Files    : String_List.List) is
    begin
-      if Explorer.Kernel = null then
-         Push_Message (Explorer, Verbose, -"Querying status for files:");
-         Display_String_List (Explorer, Files, Verbose);
-      end if;
-
-      declare
-         Iter   : Gtk_Tree_Iter;
-         Result : File_Status_List.List :=
-           Get_Status (Explorer.VCS_Ref, Files);
-         Dummy  : Boolean;
-
-      begin
-         while not File_Status_List.Is_Empty (Result) loop
-            Iter := Get_Iter_From_Name
-              (Explorer,
-               Base_Name (String_List.Head
-                 (File_Status_List.Head (Result).File_Name)));
-
-            if Iter /= Null_Iter then
-               Fill_Info (Explorer,
-                          Iter,
-                          File_Status_List.Head (Result),
-                          True,
-                          Dummy);
-            end if;
-
-            File_Status_List.Tail (Result);
-         end loop;
-
-         if Explorer.Kernel = null then
-            Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-         end if;
-      end;
+      Get_Status (Explorer.VCS_Ref, Files);
    end Get_Status;
 
    ----------------------
@@ -1175,7 +864,6 @@ package body VCS_View_Pkg is
       Push_Message (Explorer, Kernel, Verbose, -"Updating files:");
       Display_String_List (Explorer, Kernel, Files, Verbose);
       Update (Ref, Files);
-      Push_Message (Explorer, Kernel, Verbose, -"... done." & ASCII.LF);
 
       --  If the dialog exists, then update the status for the files.
 
@@ -1183,29 +871,6 @@ package body VCS_View_Pkg is
          Get_Status (Explorer, Files);
       end if;
    end Update_File_List;
-
-   ------------------------------
-   -- On_Update_Button_Clicked --
-   ------------------------------
-
-   procedure On_Update_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-      L        : String_List.List := Get_Selected_Files (Explorer);
-
-   begin
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Update_File_List (Explorer, Explorer.Kernel, L, Explorer.VCS_Ref);
-      String_List.Free (L);
-      Pop_State (Explorer.Kernel);
-   end On_Update_Button_Clicked;
 
    ----------------
    -- Open_Files --
@@ -1230,36 +895,6 @@ package body VCS_View_Pkg is
          end loop;
       end;
    end Open_Files;
-
-   ----------------------------
-   -- On_Open_Button_Clicked --
-   ----------------------------
-
-   procedure On_Open_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-      L        : String_List.List := Get_Selected_Files (Explorer);
-
-   begin
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Push_Message (Explorer, Verbose, -"Opening files:");
-      Display_String_List (Explorer, L, Verbose);
-
-      Open_Files (Explorer, Explorer.Kernel, L, Explorer.VCS_Ref);
-
-      Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-
-      String_List.Free (L);
-      On_Get_Status_Button_Clicked (Object, Params);
-      Pop_State (Explorer.Kernel);
-   end On_Open_Button_Clicked;
 
    ------------
    -- Commit --
@@ -1327,104 +962,6 @@ package body VCS_View_Pkg is
       String_List.Free (Files_List);
       String_List.Free (Logs_List);
    end Commit;
-
-   ------------------------------
-   -- On_Commit_Button_Clicked --
-   ------------------------------
-
-   procedure On_Commit_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-      L        : String_List.List := Get_Selected_Files (Explorer);
-
-   begin
-      if Explorer.Current_Directory = null then
-         return;
-      end if;
-
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Commit (Explorer, Explorer.Kernel, L, "", Explorer.VCS_Ref);
-      On_Get_Status_Button_Clicked (Object, Params);
-      String_List.Free (L);
-      Pop_State (Explorer.Kernel);
-   end On_Commit_Button_Clicked;
-
-   ------------------------------
-   -- On_Revert_Button_Clicked --
-   ------------------------------
-
-   procedure On_Revert_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-   begin
-      Push_State (Explorer.Kernel, Processing);
-      Pop_State (Explorer.Kernel);
-   end On_Revert_Button_Clicked;
-
-   ---------------------------
-   -- On_Add_Button_Clicked --
-   ---------------------------
-
-   procedure On_Add_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-      L        : String_List.List := Get_Selected_Files (Explorer);
-
-   begin
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Push_Message (Explorer, Verbose, -"Adding files:");
-      Display_String_List (Explorer, L, Verbose);
-      Add (Explorer.VCS_Ref, L);
-      Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-      String_List.Free (L);
-      On_Get_Status_Button_Clicked (Object, Params);
-      Pop_State (Explorer.Kernel);
-   end On_Add_Button_Clicked;
-
-   ------------------------------
-   -- On_Remove_Button_Clicked --
-   ------------------------------
-
-   procedure On_Remove_Button_Clicked
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
-      L        : String_List.List := Get_Selected_Files (Explorer);
-
-   begin
-      if String_List.Is_Empty (L) then
-         Push_Message (Explorer, Error, -"No files are selected.");
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Push_Message (Explorer, Verbose, -"Removing files:");
-      Display_String_List (Explorer, L, Verbose);
-
-      Remove (Explorer.VCS_Ref, L);
-
-      Push_Message (Explorer, Verbose, -"... done." & ASCII.LF);
-      String_List.Free (L);
-      On_Get_Status_Button_Clicked (Object, Params);
-      Pop_State (Explorer.Kernel);
-   end On_Remove_Button_Clicked;
 
    -------------------
    -- Set_Directory --
@@ -1589,6 +1126,23 @@ package body VCS_View_Pkg is
       Show_Files (VCS_View, "", Ref);
    end Gtk_New;
 
+   ------------------
+   -- Button_Press --
+   ------------------
+
+   function Button_Press
+     (Explorer : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event)
+     return Boolean
+   is
+   begin
+      if Get_Button (Event) = 1 then
+         return False;
+      end if;
+
+      return True;
+   end Button_Press;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1596,16 +1150,11 @@ package body VCS_View_Pkg is
    procedure Initialize (VCS_View : access VCS_View_Record'Class) is
       Vbox1           : Gtk_Vbox;
       Hbox1           : Gtk_Hbox;
-      Hbox2           : Gtk_Hbox;
-      Toolbar2        : Gtk_Toolbar;
-      Toolbar1        : Gtk_Toolbar;
       Scrolledwindow1 : Gtk_Scrolled_Window;
-      Scrolledwindow2 : Gtk_Scrolled_Window;
       Selection       : Gtk_Tree_Selection;
 
    begin
       Initialize_Hbox (VCS_View);
-
       Gtk_New_Vbox (Vbox1, False, 0);
       Pack_Start (VCS_View, Vbox1);
 
@@ -1619,132 +1168,17 @@ package body VCS_View_Pkg is
       Create_Model (VCS_View);
 
       Gtk_New (VCS_View.Tree, VCS_View.Model);
-
       Selection := Get_Selection (VCS_View.Tree);
-
       Set_Mode (Selection, Selection_Multiple);
-
       Add (Scrolledwindow1, VCS_View.Tree);
 
-      --  Set columns types for the Tree.
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (VCS_View.Tree,
+         "button_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Button_Press'Access),
+         VCS_View);
 
       Set_Column_Types (VCS_View);
-
-      Gtk_New (Toolbar2, Orientation_Vertical, Toolbar_Both);
-      Set_Tooltips (Toolbar2, True);
-      VCS_View.Edit_Log_Button := Append_Element
-        (Toolbar  => Toolbar2,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Edit Log");
-      Widget_Callback.Object_Connect
-        (VCS_View.Edit_Log_Button, "clicked",
-         On_Edit_Log_Button_Clicked'Access,
-         VCS_View);
-
-      VCS_View.Edit_Multiple_Log_Button := Append_Element
-        (Toolbar  => Toolbar2,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Edit multiple Log");
-      Widget_Callback.Object_Connect
-        (VCS_View.Edit_Multiple_Log_Button, "clicked",
-         On_Edit_Multiple_Log_Button_Clicked'Access,
-         VCS_View);
-
-      VCS_View.View_Diff_Button := Append_Element
-        (Toolbar  => Toolbar2,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"View Diff");
-      Widget_Callback.Object_Connect
-        (VCS_View.View_Diff_Button, "clicked",
-         On_View_Diff_Button_Clicked'Access,
-         VCS_View);
-
-      VCS_View.Annotate_Button := Append_Element
-        (Toolbar => Toolbar2,
-         The_Type => Toolbar_Child_Button,
-         Text => -"Annotate");
-      Widget_Callback.Object_Connect
-        (VCS_View.Annotate_Button, "clicked",
-         On_Annotate_Button_Clicked'Access,
-         VCS_View);
-
-      VCS_View.View_Log_Button := Append_Element
-        (Toolbar  => Toolbar2,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"View Log");
-      Widget_Callback.Object_Connect
-        (VCS_View.View_Log_Button, "clicked",
-         On_View_Log_Button_Clicked'Access,
-         VCS_View);
-      Pack_Start (Hbox1, Toolbar2, False, False, 3);
-
-      Gtk_New (Toolbar1, Orientation_Vertical, Toolbar_Both);
-      Set_Tooltips (Toolbar1, True);
-      VCS_View.Get_Status_Button := Append_Element
-        (Toolbar  => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Get status");
-      Widget_Callback.Object_Connect
-        (VCS_View.Get_Status_Button, "clicked",
-         On_Get_Status_Button_Clicked'Access,
-         VCS_View);
-      VCS_View.Update_Button := Append_Element
-        (Toolbar  => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Update");
-      Widget_Callback.Object_Connect
-        (VCS_View.Update_Button, "clicked",
-         On_Update_Button_Clicked'Access,
-         VCS_View);
-      VCS_View.Open_Button := Append_Element
-        (Toolbar  => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Open");
-      Widget_Callback.Object_Connect
-        (VCS_View.Open_Button, "clicked", On_Open_Button_Clicked'Access,
-         VCS_View);
-      VCS_View.Commit_Button := Append_Element
-        (Toolbar  => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Commit");
-      Widget_Callback.Object_Connect
-        (VCS_View.Commit_Button, "clicked", On_Commit_Button_Clicked'Access,
-         VCS_View);
-      VCS_View.Revert_Button := Append_Element
-        (Toolbar  => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Revert");
-      Widget_Callback.Object_Connect
-        (VCS_View.Revert_Button, "add", On_Revert_Button_Clicked'Access,
-         VCS_View);
-      VCS_View.Add_Button := Append_Element
-        (Toolbar  => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Add");
-      Widget_Callback.Object_Connect
-        (VCS_View.Add_Button, "clicked", On_Add_Button_Clicked'Access,
-         VCS_View);
-      VCS_View.Remove_Button := Append_Element
-        (Toolbar  => Toolbar1,
-         The_Type => Toolbar_Child_Button,
-         Text     => -"Remove");
-      Widget_Callback.Object_Connect
-        (VCS_View.Remove_Button, "clicked", On_Remove_Button_Clicked'Access,
-         VCS_View);
-      Pack_Start (Hbox1, Toolbar1, False, False, 3);
-
-      if VCS_View.Kernel = null then
-         Gtk_New_Hbox (Hbox2, False, 0);
-         Pack_Start (Vbox1, Hbox2, True, True, 3);
-
-         Gtk_New (Scrolledwindow2);
-         Set_Policy (Scrolledwindow2, Policy_Never, Policy_Always);
-         Pack_Start (Hbox2, Scrolledwindow2, True, True, 3);
-
-         Gtk_New (VCS_View.Message_Text);
-         Set_Editable (VCS_View.Message_Text, False);
-         Add (Scrolledwindow2, VCS_View.Message_Text);
-      end if;
    end Initialize;
 
 end VCS_View_Pkg;
