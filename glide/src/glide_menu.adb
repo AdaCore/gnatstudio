@@ -292,16 +292,16 @@ package body Glide_Menu is
    function Get_Current_Editor
      (Top : Glide_Window) return Source_Editor_Box
    is
-      MDI       : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Source    : Gtk_Widget := Get_Widget (Get_Focus_Child (MDI));
+      --  MDI       : constant MDI_Window :=
+      --    Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      --  Source    : Gtk_Widget := Get_Widget (Get_Focus_Child (MDI));
 
    begin
-      if Source.all in Source_Box_Record'Class then
-         return Source_Box (Source).Editor;
-      else
-         return null;
-      end if;
+      --  ??? if Source.all in Source_Box_Record'Class then
+      --     return Source_Box (Source).Editor;
+      --  else
+      return null;
+      --  end if;
    end Get_Current_Editor;
 
    ------------------
@@ -630,9 +630,9 @@ package body Glide_Menu is
         "gnatmake -P" & Get_Project_File_Name (Top.Kernel) & " ";
 
    begin
-      if Get_Widget (Child).all not in Source_Box_Record'Class then
-         return;
-      end if;
+      --  ??? if Get_Widget (Child).all not in Source_Box_Record'Class then
+      --     return;
+      --  end if;
 
       Args := Argument_String_To_List (Cmd & Get_Title (Child));
       Highlight := Parse (Highlight_File);
@@ -904,8 +904,6 @@ package body Glide_Menu is
       MDI     : constant MDI_Window :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
       Child   : MDI_Child := Get_Focus_Child (MDI);
-      Box     : Source_Box;
-      Editor  : Source_Editor_Box;
       Success : Boolean;
 
       function Body_Name (Name : String) return String;
@@ -931,22 +929,17 @@ package body Glide_Menu is
       end Gnatstub;
 
    begin
-      if Get_Widget (Child).all in Source_Box_Record'Class then
+      --  if Get_Widget (Child).all in Source_Box_Record'Class then
          declare
             Title : constant String := Get_Title (Child);
          begin
             Gnatstub (Title, Success);
 
             if Success then
-               Gtk_New (Editor, Top.Kernel);
-               Gtk_New (Box, Editor);
-               Attach (Editor, Box);
-               Child := Put (MDI, Box);
-               Set_Title (Child, Body_Name (Title));
-               Load_File (Editor, Body_Name (Title), Success => Success);
+               Open_File (Top.Kernel, Body_Name (Title));
             end if;
          end;
-      end if;
+      --  end if;
    end On_Generate_Body;
 
    ----------------------
@@ -960,10 +953,6 @@ package body Glide_Menu is
    is
       Make_Test_Window : Make_Test_Window_Access;
       Top              : constant Glide_Window := Glide_Window (Object);
-      Success          : Boolean;
-      Editor           : Source_Editor_Box;
-      Box              : Source_Box;
-      Child            : MDI_Child;
 
    begin
       Gtk_New (Make_Test_Window);
@@ -974,23 +963,8 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Test_Window.Name.all;
          begin
-            Gtk_New (Editor, Top.Kernel);
-            Gtk_New (Box, Editor);
-            Attach (Editor, Box);
-            Child := Put
-              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
-               Box);
-            Set_Title (Child, File & ".ads");
-            Load_File (Editor, File & ".ads", Success => Success);
-
-            Gtk_New (Editor, Top.Kernel);
-            Gtk_New (Box, Editor);
-            Attach (Editor, Box);
-            Child := Put
-              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
-               Box);
-            Set_Title (Child, File & ".adb");
-            Load_File (Editor, File & ".adb", Success => Success);
+            Open_File (Top.Kernel, File & ".ads");
+            Open_File (Top.Kernel, File & ".adb");
          end;
       end if;
 
@@ -1009,10 +983,6 @@ package body Glide_Menu is
    is
       Make_Suite_Window : Make_Suite_Window_Access;
       Top               : constant Glide_Window := Glide_Window (Object);
-      Success           : Boolean;
-      Editor            : Source_Editor_Box;
-      Box               : Source_Box;
-      Child             : MDI_Child;
 
    begin
       Gtk_New (Make_Suite_Window);
@@ -1023,23 +993,8 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Suite_Window.Name.all;
          begin
-            Gtk_New (Editor, Top.Kernel);
-            Gtk_New (Box, Editor);
-            Attach (Editor, Box);
-            Child := Put
-              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
-               Box);
-            Set_Title (Child, File & ".ads");
-            Load_File (Editor, File & ".ads", Success => Success);
-
-            Gtk_New (Editor, Top.Kernel);
-            Gtk_New (Box, Editor);
-            Attach (Editor, Box);
-            Child := Put
-              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
-               Box);
-            Set_Title (Child, File & ".adb");
-            Load_File (Editor, File & ".adb", Success => Success);
+            Open_File (Top.Kernel, File & ".ads");
+            Open_File (Top.Kernel, File & ".adb");
          end;
       end if;
 
@@ -1058,10 +1013,6 @@ package body Glide_Menu is
    is
       Make_Harness_Window : Make_Harness_Window_Access;
       Top                 : constant Glide_Window := Glide_Window (Object);
-      Success             : Boolean;
-      Editor              : Source_Editor_Box;
-      Box                 : Source_Box;
-      Child               : MDI_Child;
 
    begin
       Gtk_New (Make_Harness_Window);
@@ -1072,14 +1023,7 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Harness_Window.Procedure_Name.all;
          begin
-            Gtk_New (Editor, Top.Kernel);
-            Gtk_New (Box, Editor);
-            Attach (Editor, Box);
-            Child := Put
-              (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi,
-               Box);
-            Set_Title (Child, File & ".adb");
-            Load_File (Editor, File & ".adb", Success => Success);
+            Open_File (Top.Kernel, File & ".adb");
          end;
       end if;
 
