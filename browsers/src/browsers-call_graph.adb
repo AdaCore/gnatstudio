@@ -23,11 +23,21 @@ with Glib.Xml_Int;         use Glib.Xml_Int;
 with Glib.Object;          use Glib.Object;
 with Gdk.GC;               use Gdk.GC;
 with Gdk.Event;            use Gdk.Event;
+with Gtk.Box;              use Gtk.Box;
+with Gtk.Button;           use Gtk.Button;
+with Gtk.Check_Button;     use Gtk.Check_Button;
+with Gtk.Dialog;           use Gtk.Dialog;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Frame;            use Gtk.Frame;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Object;           use Gtk.Object;
+with Gtk.Radio_Button;     use Gtk.Radio_Button;
+with Gtk.Stock;            use Gtk.Stock;
+with Gtk.Vbutton_Box;      use Gtk.Vbutton_Box;
 with Gtk.Widget;           use Gtk.Widget;
+with Histories;            use Histories;
 with Pango.Layout;         use Pango.Layout;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.Handlers;      use Gtkada.Handlers;
@@ -82,6 +92,13 @@ package body Browsers.Call_Graph is
      (1 => Include_Implicit_Cst'Access);
 
 
+   type Filters_Buttons is array (Reference_Kind) of Gtk_Check_Button;
+   type References_Filter_Dialog_Record is new Gtk_Dialog_Record with record
+      Filters : Filters_Buttons;
+   end record;
+   type References_Filter_Dialog is access all
+     References_Filter_Dialog_Record'Class;
+
    function All_Refs_Category (Entity : Entity_Information) return String;
    --  Return the category title when doing a find all refs on a given entity.
 
@@ -117,12 +134,18 @@ package body Browsers.Call_Graph is
 
    type Find_All_Refs_Command is new Interactive_Command with record
       Locals_Only      : Boolean := False;
+      Recurse_Project  : Boolean := True;
       Writes_Only      : Boolean := False;
       Reads_Only       : Boolean := False;
-      Include_Implicit : Boolean := False;
    end record;
    function Execute
      (Command : access Find_All_Refs_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+
+   type Find_Specific_Refs_Command
+     is new Interactive_Command with null record;
+   function Execute
+     (Command : access Find_Specific_Refs_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
    type Edit_Body_Command is new Interactive_Command with null record;
@@ -225,10 +248,9 @@ package body Browsers.Call_Graph is
       Kernel           : Kernel_Handle;
       Iter             : Entity_Reference_Iterator_Access;
       Entity           : Entity_Information;
-      Include_Writes   : Boolean;
-      Include_Reads    : Boolean;
-      Include_Implicit : Boolean;
+      Filter           : Reference_Kind_Filter;
       Iter_Started     : Boolean;
+      Show_Caller      : Boolean;
       Category         : String_Access;
    end record;
 
@@ -313,17 +335,23 @@ package body Browsers.Call_Graph is
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
    --  Create a new call graph browser.
 
+   procedure Parse_All_Refs
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Entity            : Entity_Information;
+      Locals_Only       : Boolean;
+      Show_Caller       : Boolean;
+      Filter            : Reference_Kind_Filter);
+   --  Internal implementation of find_all_references
+
    procedure Find_All_References_Internal
      (Kernel           : access Kernel_Handle_Record'Class;
       Info             : Entity_Information;
       Category_Title   : String;
-      Include_Writes   : Boolean;
-      Include_Reads    : Boolean;
-      Include_Implicit : Boolean);
+      Show_Caller      : Boolean;
+      Filter           : Reference_Kind_Filter);
    --  Internal implementation for Find_All_References_From_Contextual,
    --  Find_All_Writes_From_Contextual and Find_All_Reads_From_Contextual.
-   --  If Include_Implicit is true, then implicit references will also be
-   --  listed.
+   --  Starts a background search for all references.
 
    procedure Find_Next_Reference
      (Data    : in out Entity_Idle_Data;
@@ -381,15 +409,17 @@ package body Browsers.Call_Graph is
    --  Create a current kernel context, based on the currently selected item
 
    procedure Print_Ref
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Location : File_Location;
-      Kind     : Reference_Kind;
-      Name     : String;
-      Category : String);
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Ref         : Entity_Reference;
+      Name        : String;
+      Category    : String;
+      Show_Caller : Boolean);
    --  Display a reference in the locations tree, after looking for the
    --  directory containing File.
    --  Category corresponds to the purpose of the print. All references
    --  corresponding to the same category will be printed as a group.
+   --  If Show_Caller is true, the full name of the caller will also be
+   --  displayed.
 
    procedure Call_Graph_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
@@ -405,6 +435,10 @@ package body Browsers.Call_Graph is
    procedure Examine_Entity_Call_Graph
      (Item : access Arrow_Item_Record'Class);
    --  Callbacks for the title bar buttons
+
+   procedure Unselect_All_Filters (Dialog : access Gtk_Widget_Record'Class);
+   procedure Select_All_Filters (Dialog : access Gtk_Widget_Record'Class);
+   --  Select or unselect all filters in "Find references..."
 
    -----------------------
    -- All_Refs_Category --
@@ -1150,32 +1184,51 @@ package body Browsers.Call_Graph is
    ---------------
 
    procedure Print_Ref
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Location : File_Location;
-      Kind     : Reference_Kind;
-      Name     : String;
-      Category : String)
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Ref         : Entity_Reference;
+      Name        : String;
+      Category    : String;
+      Show_Caller : Boolean)
    is
-      Col : Positive;
+      Col  : Integer := Get_Column (Get_Location (Ref));
+      Line : constant Integer      := Get_Line (Get_Location (Ref));
+      File : constant Virtual_File :=
+        Get_Filename (Get_File (Get_Location (Ref)));
    begin
-      if Get_Column (Location) > 0 then
-         Col := Positive (Get_Column (Location));
-      else
+      if Col <= 0 then
          Col := 1;
       end if;
 
-      Insert_Result
-        (Kernel,
-         Category  => Category,
-         File      => Get_Filename (Get_File (Location)),
-         Text      => Name & " [" & Kind_To_String (Kind) & "]",
-         Line      => Get_Line (Location),
-         Column    => Col,
-         Length    => Name'Length,
-         Highlight => True,
-         Highlight_Category => "Search Results",
-         Remove_Duplicates => False,
-         Enable_Counter    => False);
+      if Show_Caller and then Get_Caller (Ref) /= null then
+         Insert_Result
+           (Kernel,
+            Category  => Category,
+            File      => File,
+            Text      => Name & " ["
+               & Kind_To_String (Get_Kind (Ref)) & "] in: "
+               & Get_Full_Name (Get_Caller (Ref)),
+            Line      => Line,
+            Column    => Col,
+            Length    => Name'Length,
+            Highlight => True,
+            Highlight_Category => "Search Results",
+            Remove_Duplicates => False,
+            Enable_Counter    => False);
+
+      else
+         Insert_Result
+           (Kernel,
+            Category  => Category,
+            File      => File,
+            Text      => Name & " [" & Kind_To_String (Get_Kind (Ref)) & "]",
+            Line      => Line,
+            Column    => Col,
+            Length    => Name'Length,
+            Highlight => True,
+            Highlight_Category => "Search Results",
+            Remove_Duplicates => False,
+            Enable_Counter    => False);
+      end if;
    end Print_Ref;
 
    -------------------------
@@ -1187,24 +1240,15 @@ package body Browsers.Call_Graph is
       Command : Command_Access;
       Result  : out Command_Return_Type)
    is
-      Location : File_Location;
       Count    : Integer := 0;
-      Kind     : Reference_Kind;
    begin
       Result := Execute_Again;
 
       if not Data.Iter_Started then
-         declare
-            Filter   : Reference_Kind_Filter := Real_References_Filter;
-         begin
-            if Data.Include_Implicit then
-               Filter (Implicit) := True;
-            end if;
-            Find_All_References
-              (Iter   => Data.Iter.all,
-               Entity => Data.Entity,
-               Filter => Filter);
-         end;
+         Find_All_References
+           (Iter   => Data.Iter.all,
+            Entity => Data.Entity,
+            Filter => Data.Filter);
 
          Data.Iter_Started := True;
          Set_Progress
@@ -1227,19 +1271,12 @@ package body Browsers.Call_Graph is
             exit;
 
          else
-            Kind := Get_Kind (Get (Data.Iter.all));
-
-            if (Data.Include_Writes and then Is_Write_Reference (Kind))
-              or else (Data.Include_Reads and then Is_Read_Reference (Kind))
-              or else (Data.Include_Implicit and then Kind = Implicit)
-            then
-               Location := Get_Location (Get (Data.Iter.all));
-               Print_Ref
-                 (Data.Kernel, Location,
-                  Kind,
-                  Get_Name (Data.Entity).all,
-                  Data.Category.all);
-            end if;
+            Print_Ref
+              (Data.Kernel,
+               Get (Data.Iter.all),
+               Get_Name (Data.Entity).all,
+               Data.Category.all,
+               Show_Caller => Data.Show_Caller);
 
             Count := Count + 1;
          end if;
@@ -1262,19 +1299,13 @@ package body Browsers.Call_Graph is
      (Kernel           : access Kernel_Handle_Record'Class;
       Info             : Entity_Information;
       Category_Title   : String;
-      Include_Writes   : Boolean;
-      Include_Reads    : Boolean;
-      Include_Implicit : Boolean)
+      Show_Caller      : Boolean;
+      Filter           : Reference_Kind_Filter)
    is
       Data : Entity_Idle_Data;
       C    : Xref_Commands.Generic_Asynchronous_Command_Access;
 
    begin
-      Trace (Me, "Find_All_References_Internal Writes="
-             & Include_Writes'Img
-             & " Reads=" & Include_Reads'Img
-             & " Implicit=" & Include_Implicit'Img);
-
       if Info /= null then
          begin
             Remove_Result_Category (Kernel, Category_Title);
@@ -1282,11 +1313,10 @@ package body Browsers.Call_Graph is
             Ref (Info);
             Data := (Kernel           => Kernel_Handle (Kernel),
                      Iter             => new Entity_Reference_Iterator,
-                     Include_Writes   => Include_Writes,
-                     Include_Reads    => Include_Reads,
-                     Include_Implicit => Include_Implicit,
+                     Filter           => Filter,
                      Category         => new String'(Category_Title),
                      Iter_Started     => False,
+                     Show_Caller      => Show_Caller,
                      Entity           => Info);
 
             Xref_Commands.Create
@@ -1423,9 +1453,9 @@ package body Browsers.Call_Graph is
            (Kernel,
             Entity,
             Category_Title   => All_Refs_Category (Entity),
-            Include_Writes   => True,
-            Include_Reads    => True,
-            Include_Implicit => False);
+            Filter           => Read_Reference_Filter
+               or Write_Reference_Filter,
+            Show_Caller      => False);
 
       else
          Console.Insert
@@ -1511,29 +1541,28 @@ package body Browsers.Call_Graph is
       Kernel     : constant Kernel_Handle := Get_Kernel (Data);
       Entity     : constant Entity_Information := Get_Data (Data, 1);
       Cb         : constant Examine_Callback := (null, null, False);
+      Filter     : Reference_Kind_Filter;
 
    begin
       if Command = "find_all_refs" then
          Name_Parameters (Data, References_Cmd_Parameters);
+         Filter := Read_Reference_Filter or Write_Reference_Filter;
+         Filter (Implicit) := Nth_Arg (Data, 2, False);
          Find_All_References_Internal
            (Kernel, Entity,
             Category_Title   => All_Refs_Category (Entity),
-            Include_Writes   => True,
-            Include_Reads    => True,
-            Include_Implicit => Nth_Arg (Data, 2, False));
+            Show_Caller      => False,
+            Filter           => Filter);
 
       elsif Command = "references" then
          Name_Parameters (Data, References_Cmd_Parameters);
          declare
-            Include_Implicit : constant Boolean := Nth_Arg (Data, 2, False);
             Iter : Entity_Reference_Iterator;
             Loc  : File_Location;
             Ref  : Entity_Reference;
-            Filter : Reference_Kind_Filter := Real_References_Filter;
          begin
-            if Include_Implicit then
-               Filter (Implicit) := True;
-            end if;
+            Filter := Real_References_Filter;
+            Filter (Implicit) := Nth_Arg (Data, 2, False);
 
             Set_Return_Value_As_List (Data);
             Find_All_References
@@ -1729,6 +1758,63 @@ package body Browsers.Call_Graph is
       return Commands.Failure;
    end Execute;
 
+   --------------------
+   -- Parse_All_Refs --
+   --------------------
+
+   procedure Parse_All_Refs
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Entity            : Entity_Information;
+      Locals_Only       : Boolean;
+      Show_Caller       : Boolean;
+      Filter            : Reference_Kind_Filter)
+   is
+      Iter     : Entity_Reference_Iterator;
+      File     : constant Virtual_File := File_Information
+        (File_Selection_Context_Access (Get_Current_Context (Kernel)));
+   begin
+      if Locals_Only then
+         Push_State (Kernel_Handle (Kernel), Busy);
+         declare
+            Title : constant String := All_Refs_Category (Entity);
+         begin
+            --  Print the declaration of the entity, but only if it is in the
+            --  current file, as expected by users.
+
+            Remove_Result_Category (Kernel, Title);
+            Find_All_References
+              (Iter    => Iter,
+               Entity  => Entity,
+               Filter  => Filter,
+               In_File => Get_Or_Create (Get_Database (Kernel), File));
+
+            while not At_End (Iter) loop
+               if Get (Iter) /= No_Entity_Reference then
+                  Print_Ref (Kernel,
+                             Get (Iter),
+                             Get_Name (Entity).all,
+                             Title,
+                             Show_Caller => Show_Caller);
+               end if;
+               Next (Iter);
+            end loop;
+
+            Recount_Category (Kernel, Title);
+            Destroy (Iter);
+         end;
+
+         Pop_State (Kernel_Handle (Kernel));
+
+      else
+         Find_All_References_Internal
+           (Kernel,
+            Entity,
+            Category_Title   => All_Refs_Category (Entity),
+            Show_Caller      => Show_Caller,
+            Filter           => Filter);
+      end if;
+   end Parse_All_Refs;
+
    -------------
    -- Execute --
    -------------
@@ -1740,78 +1826,196 @@ package body Browsers.Call_Graph is
       Kernel   : constant Kernel_Handle := Get_Kernel (Context.Context);
       Entity   : constant Entity_Information := Get_Entity
         (Entity_Selection_Context_Access (Context.Context));
-      File     : constant Virtual_File := File_Information
-        (Entity_Selection_Context_Access (Context.Context));
-      Iter     : Entity_Reference_Iterator;
-      Location : File_Location;
+      Filter   : Reference_Kind_Filter := (others => False);
    begin
-      if Command.Locals_Only then
-         Push_State (Kernel, Busy);
-         declare
-            Title : constant String := All_Refs_Category (Entity);
-         begin
-            --  Print the declaration of the entity, but only if it is in the
-            --  current file, as expected by users.
-
-            Remove_Result_Category (Kernel, Title);
-            declare
-               Filter : Reference_Kind_Filter := Real_References_Filter;
-            begin
-               if Command.Include_Implicit then
-                  Filter (Implicit) := True;
-               end if;
-
-               Find_All_References
-                 (Iter    => Iter,
-                  Entity  => Entity,
-                  Filter  => Filter,
-                  In_File => Get_Or_Create (Get_Database (Kernel), File));
-            end;
-
-            while not At_End (Iter) loop
-               if Get (Iter) /= No_Entity_Reference then
-                  Location := Get_Location (Get (Iter));
-                  Print_Ref (Kernel, Location,
-                             Get_Kind (Get (Iter)),
-                             Get_Name (Entity).all, Title);
-               end if;
-               Next (Iter);
-            end loop;
-
-            Recount_Category (Kernel, Title);
-            Destroy (Iter);
-         end;
-
-         Pop_State (Kernel);
-
+      if Command.Reads_Only then
+         Filter := Read_Reference_Filter;
       elsif Command.Writes_Only then
-         Find_All_References_Internal
-           (Kernel,
-            Entity,
-            Category_Title   => -"Modifications of: ",
-            Include_Writes   => True,
-            Include_Reads    => False,
-            Include_Implicit => Command.Include_Implicit);
-
-      elsif Command.Reads_Only then
-         Find_All_References_Internal
-           (Kernel,
-            Entity,
-            Category_Title   => -"Read-Only references for: ",
-            Include_Writes   => False,
-            Include_Reads    => True,
-            Include_Implicit => Command.Include_Implicit);
-
+         Filter := Write_Reference_Filter;
       else
-         Find_All_References_Internal
-           (Kernel,
-            Entity,
-            Category_Title   => All_Refs_Category (Entity),
-            Include_Writes   => True,
-            Include_Reads    => True,
-            Include_Implicit => Command.Include_Implicit);
+         Filter := Read_Reference_Filter or Write_Reference_Filter;
       end if;
+
+      Parse_All_Refs
+        (Kernel            => Kernel,
+         Entity            => Entity,
+         Locals_Only       => Command.Locals_Only,
+         Filter            => Filter,
+         Show_Caller       => False);
       return Commands.Success;
+   end Execute;
+
+   ------------------------
+   -- Select_All_Filters --
+   ------------------------
+
+   procedure Select_All_Filters (Dialog : access Gtk_Widget_Record'Class) is
+      D : constant References_Filter_Dialog :=
+        References_Filter_Dialog (Dialog);
+   begin
+      for F in D.Filters'Range loop
+         if D.Filters (F) /= null then
+            Set_Active (D.Filters (F), True);
+         end if;
+      end loop;
+   end Select_All_Filters;
+
+   --------------------------
+   -- Unselect_All_Filters --
+   --------------------------
+
+   procedure Unselect_All_Filters (Dialog : access Gtk_Widget_Record'Class) is
+      D : constant References_Filter_Dialog :=
+        References_Filter_Dialog (Dialog);
+   begin
+      for F in D.Filters'Range loop
+         if D.Filters (F) /= null then
+            Set_Active (D.Filters (F), False);
+         end if;
+      end loop;
+   end Unselect_All_Filters;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Find_Specific_Refs_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context.Context);
+      Dialog     : References_Filter_Dialog;
+      Box        : Gtk_Box;
+      Col        : array (1 .. 2) of Gtk_Box;
+      Filter_Box : Gtk_Vbutton_Box;
+      Index      : Integer := Col'First;
+      Project_And_Recursive,
+      File_Only : Gtk_Radio_Button;
+      Show_Caller : Gtk_Check_Button;
+      Filter    : Reference_Kind_Filter := (others => False);
+      Frame     : Gtk_Frame;
+      Widget    : Gtk_Widget;
+      Button    : Gtk_Button;
+      pragma Unreferenced (Command, Widget);
+   begin
+      Dialog := new References_Filter_Dialog_Record;
+      Initialize (Dialog,
+                  Title  => -"Find Preferences Options",
+                  Parent => Get_Main_Window (Kernel),
+                  Flags  => Modal);
+
+      --  Context choice
+
+      Gtk_New (Frame, -"Context");
+      Pack_Start (Get_Vbox (Dialog), Frame);
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
+
+      Gtk_New (Project_And_Recursive, Widget_SList.Null_List,
+               -"In all projects");
+      Pack_Start (Box, Project_And_Recursive);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, "Find_Prefs_Project_Recursive", True);
+      Associate (Get_History (Kernel).all, "Find_Prefs_Project_Recursive",
+                 Project_And_Recursive);
+
+      Gtk_New (File_Only, Get_Group (Project_And_Recursive),
+               -"In current file");
+      Pack_Start (Box, File_Only);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, "Find_Prefs_File_Only", False);
+      Associate (Get_History (Kernel).all, "Find_Prefs_File_Only", File_Only);
+
+      --  Filter choice
+
+      Gtk_New (Frame, -"Filter");
+      Pack_Start (Get_Vbox (Dialog), Frame);
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Add (Frame, Box);
+
+      for C in Col'Range loop
+         Gtk_New_Vbox (Col (C), Homogeneous => True);
+         Pack_Start (Box, Col (C), Expand => True);
+      end loop;
+
+      for F in Dialog.Filters'Range loop
+         if Is_Real_Reference (F) or else F = Implicit then
+            Gtk_New (Dialog.Filters (F), Kind_To_String (F));
+            Pack_Start (Col (Index), Dialog.Filters (F));
+            Create_New_Boolean_Key_If_Necessary
+              (Get_History (Kernel).all,
+               History_Key ("Find_Prefs_Filter_" & F'Img), True);
+            Associate (Get_History (Kernel).all,
+                       History_Key ("Find_Prefs_Filter_" & F'Img),
+                       Dialog.Filters (F));
+            Index := Index + 1;
+            if Index > Col'Last then
+               Index := Col'First;
+            end if;
+         end if;
+      end loop;
+
+      Gtk_New (Filter_Box);
+      Set_Layout (Filter_Box, Buttonbox_Spread);
+      Pack_Start (Box, Filter_Box, Padding => 5);
+
+      Gtk_New (Button, -"Select all");
+      Pack_Start (Filter_Box, Button);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Select_All_Filters'Access),
+         Dialog);
+
+      Gtk_New (Button, -"Unselect all");
+      Pack_Start (Filter_Box, Button);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Unselect_All_Filters'Access),
+         Dialog);
+
+      --  Extra info choice
+
+      Gtk_New (Frame, -"Extra information");
+      Pack_Start (Get_Vbox (Dialog), Frame);
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
+
+      Gtk_New (Show_Caller, -"Show context");
+      Pack_Start (Box, Show_Caller);
+      Create_New_Boolean_Key_If_Necessary
+        (Get_History (Kernel).all, "Find_Prefs_Show_Caller", False);
+      Associate (Get_History (Kernel).all, "Find_Prefs_Show_Caller",
+                 Show_Caller);
+
+      Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Widget := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         for F in Dialog.Filters'Range loop
+            if Dialog.Filters (F) = null then
+               Filter (F) := False;
+            else
+               Filter (F) := Get_Active (Dialog.Filters (F));
+            end if;
+         end loop;
+
+         Parse_All_Refs
+           (Kernel            => Kernel,
+            Entity            => Get_Entity
+              (Entity_Selection_Context_Access (Context.Context)),
+            Locals_Only       => Get_Active (File_Only),
+            Filter            => Filter,
+            Show_Caller       => Get_Active (Show_Caller));
+
+         Destroy (Dialog);
+
+         return Commands.Success;
+      else
+         Destroy (Dialog);
+         return Commands.Failure;
+      end if;
    end Execute;
 
    ---------------------
@@ -1858,11 +2062,10 @@ package body Browsers.Call_Graph is
          Label  => "References/Find all references to %e",
          Action => Command);
 
-      Command := new Find_All_Refs_Command;
-      Find_All_Refs_Command (Command.all).Include_Implicit := True;
+      Command := new Find_Specific_Refs_Command;
       Register_Contextual_Menu
-        (Kernel, "Find all references and implicit",
-         Label  => "References/Find all references (and implicit use)) to %e",
+        (Kernel, "Find references...",
+         Label  => "References/Find references to %e...",
          Action => Command);
 
       Command := new Find_All_Refs_Command;
@@ -1870,20 +2073,6 @@ package body Browsers.Call_Graph is
       Register_Contextual_Menu
         (Kernel, "Find all local references",
          Label  => "References/Find all local references to %e",
-         Action => Command);
-
-      Command := new Find_All_Refs_Command;
-      Find_All_Refs_Command (Command.all).Writes_Only := True;
-      Register_Contextual_Menu
-        (Kernel, "Find all writes",
-         Label  => "References/Find all writes to %e",
-         Action => Command);
-
-      Command := new Find_All_Refs_Command;
-      Find_All_Refs_Command (Command.all).Reads_Only := True;
-      Register_Contextual_Menu
-        (Kernel, "Find all reads",
-         Label  => "References/Find all reads to %e",
          Action => Command);
 
       Command := new Edit_Spec_Command;
