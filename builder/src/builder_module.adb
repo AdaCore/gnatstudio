@@ -595,7 +595,7 @@ package body Builder_Module is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
               (Project, Compiler_Command_Attribute,
-               Ide_Package, Default => "gnatmake", Index => "Ada"));
+               Default => "gnatmake", Index => "Ada"));
 
          when Make_Syntax =>
             Cmd := new String'("make");
@@ -611,8 +611,7 @@ package body Builder_Module is
          Remote_Protocol  =>
            Get_Pref (GVD_Prefs, Remote_Protocol),
          Remote_Host      =>
-           Get_Attribute_Value
-             (Project, Remote_Host_Attribute, Ide_Package),
+           Get_Attribute_Value (Project, Remote_Host_Attribute),
          Command          => Cmd.all,
          Arguments        => Args.all,
          Fd               => Fd);
@@ -670,7 +669,7 @@ package body Builder_Module is
          Cmd  : constant String :=
            Get_Attribute_Value
              (Get_Project (Kernel), Compiler_Command_Attribute,
-              Ide_Package, Default => "gnatmake", Index => "Ada")
+              Default => "gnatmake", Index => "Ada")
            & " -q -u -gnats " & File;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
@@ -791,7 +790,6 @@ package body Builder_Module is
          Cmd := new String'
            (Get_Attribute_Value
               (Prj, Compiler_Command_Attribute,
-               Ide_Package,
                Default => "gnatmake", Index => "Ada"));
       end if;
 
@@ -804,11 +802,8 @@ package body Builder_Module is
       if Project = "" then
          Insert_And_Launch
            (Kernel,
-            Remote_Protocol =>
-              Get_Pref (GVD_Prefs, Remote_Protocol),
-            Remote_Host     =>
-              Get_Attribute_Value
-              (Prj, Remote_Host_Attribute, Ide_Package),
+            Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
+            Remote_Host    => Get_Attribute_Value (Prj, Remote_Host_Attribute),
             Command         => Cmd.all,
             Arguments       => Default_Builder_Switches &
               (Arg1'Unchecked_Access, Local_File'Unchecked_Access),
@@ -823,11 +818,9 @@ package body Builder_Module is
          begin
             Insert_And_Launch
               (Kernel,
-               Remote_Protocol =>
-                 Get_Pref (GVD_Prefs, Remote_Protocol),
+               Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
                Remote_Host     =>
-                 Get_Attribute_Value
-                 (Prj, Remote_Host_Attribute, Ide_Package),
+                 Get_Attribute_Value (Prj, Remote_Host_Attribute),
                Command         => Cmd.all,
                Arguments       => Args.all &
                  (Prj_Arg'Unchecked_Access, Local_File'Unchecked_Access),
@@ -980,7 +973,7 @@ package body Builder_Module is
             Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
             Remote_Host      =>
               Get_Attribute_Value
-                (Get_Project (Kernel), Remote_Host_Attribute, Ide_Package),
+                (Get_Project (Kernel), Remote_Host_Attribute),
             Cmd_Line         => Cmd,
             Fd               => Fd);
          Id := Process_Timeout.Add
@@ -1248,8 +1241,7 @@ package body Builder_Module is
          Remote_Cmd : constant String :=
            Get_Pref (GVD_Prefs, Remote_Protocol);
          Remote_Host     : constant String :=
-           Get_Attribute_Value
-             (Data.Project, Remote_Host_Attribute, Ide_Package);
+           Get_Attribute_Value (Data.Project, Remote_Host_Attribute);
          Exec : String_Access;
       begin
          if Remote_Host = ""
@@ -1388,7 +1380,7 @@ package body Builder_Module is
       Set_Shortcut : Boolean)
    is
       Mains : Argument_List := Get_Attribute_Value
-        (Project, Attribute_Name => Main_Attribute);
+        (Project, Attribute => Main_Attribute);
       Mitem        : Gtk_Menu_Item;
       Has_Child    : Boolean := False;
       Builder_Module : constant Builder_Module_ID_Access :=
@@ -1453,7 +1445,7 @@ package body Builder_Module is
       Kernel       : access Kernel_Handle_Record'Class)
    is
       Mains : constant Argument_List := Get_Attribute_Value
-        (Project, Attribute_Name => Main_Attribute);
+        (Project, Attribute => Main_Attribute);
       Mitem : Gtk_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
 
@@ -1468,9 +1460,8 @@ package body Builder_Module is
 
       for M in Mains'Range loop
          declare
-            Full : constant String := Base_Name (Mains (M).all);
-            Exec : constant String := Full
-              (Full'First .. Delete_File_Suffix (Full, Project));
+            Exec : constant String :=
+              Get_Executable_Name (Project, Mains (M).all);
          begin
             Gtk_New (Mitem, Exec);
             Append (Menu, Mitem);
