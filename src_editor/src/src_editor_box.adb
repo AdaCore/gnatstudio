@@ -1116,9 +1116,6 @@ package body Src_Editor_Box is
       Editor : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       Editor.Writable := not Editor.Writable;
-      --  ??? This is not sufficient: the automatic indentation
-      --  (and completion) overrides this setting.
-
       Set_Editable (Editor.Source_View, Editor.Writable);
 
       if Editor.Writable then
