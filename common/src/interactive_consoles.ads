@@ -71,7 +71,7 @@ package Interactive_Consoles is
       Highlight    : Gdk_Color := Null_Color;
       Wrap_Mode    : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False);
-   --  Create a new console for glide.
+   --  Create a new console.
    --  History_List and Key are used to handle the history of commands entered
    --  by the user in the interactive window. No history is provided if
    --  History_List is null

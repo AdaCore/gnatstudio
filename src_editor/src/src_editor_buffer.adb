@@ -2157,7 +2157,7 @@ package body Src_Editor_Buffer is
       Gtk.Text_Buffer.Initialize (Buffer);
 
       Glib.Object.Initialize_Class_Record
-        (Buffer, Signals, Class_Record, "GlideSourceBuffer",
+        (Buffer, Signals, Class_Record, "GPSSourceBuffer",
          Signal_Parameters);
 
       Buffer.Lang := Lang;

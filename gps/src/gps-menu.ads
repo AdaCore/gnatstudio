@@ -32,6 +32,6 @@ package GPS.Menu is
    procedure Register_Common_Menus
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
    --  Register some of the common menus that couldn't be created through
-   --  Glide_Menu_Items.
+   --  GPS_Menu_Items.
 
 end GPS.Menu;

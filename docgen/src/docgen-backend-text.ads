@@ -379,6 +379,6 @@ package Docgen.Backend.Text is
      (B      : access Backend;
       Kernel : access Kernel_Handle_Record'Class) return String;
    --  Return the path which must contains the documentation, e.g:
-   --  "/..../gps/glide/obj/Text/"
+   --  "/.../gps/obj/text/"
 
 end Docgen.Backend.Text;

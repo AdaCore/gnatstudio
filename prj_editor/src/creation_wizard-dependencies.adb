@@ -134,7 +134,7 @@ package body Creation_Wizard.Dependencies is
       Limited_With          : Boolean := False)
    is
       procedure Report_Error (S : String);
-      --  Output error messages from the project parser to the glide console.
+      --  Output error messages from the project parser to the console.
 
       ------------------
       -- Report_Error --

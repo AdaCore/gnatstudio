@@ -181,7 +181,7 @@ package body Src_Contexts is
       Match       : Match_Result;
       Give_Focus  : Boolean;
       Interactive : Boolean);
-   --  Print the result of the search in the glide console
+   --  Print the result of the search in the console
    --  If Give_Focus is true, the focus will be given to the editor
 
    procedure Free (Result : in out Match_Result_Array_Access);

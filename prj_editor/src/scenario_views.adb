@@ -68,7 +68,7 @@ package body Scenario_Views is
       User  : Variable_User_Data);
    --  Called when the value of one of the variables has changed.
    --  This recomputes the scenario view, so that changes are reflected in
-   --  other parts of Glide.
+   --  other parts of GPS.
 
    procedure Edit_Variable
      (Button : access Gtk_Widget_Record'Class; Data : Variable_User_Data);

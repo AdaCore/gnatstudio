@@ -2325,7 +2325,7 @@ package body Debugger.Gdb is
 
    begin
       --  ??? Will fail on
-      --  "/home/briot/Ada/glide/glide_window_pkg-callbacks: \
+      --  "/home/user/Ada/gps/gps_window_pkg-callbacks: \
       --     No such file or directory."
       --  which can be emitted as the result of "info sources"
 

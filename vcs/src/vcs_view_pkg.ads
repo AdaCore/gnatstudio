@@ -232,7 +232,7 @@ private
 
    type VCS_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
-      --  Reference to the Glide kernel that launched the explorer, if any.
+      --  Reference to the kernel that launched the explorer, if any.
 
       Context : Selection_Context_Access;
       --  The current context being shown / selected in the explorer.

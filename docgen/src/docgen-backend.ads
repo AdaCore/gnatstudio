@@ -459,7 +459,7 @@ package Docgen.Backend is
      (B      : access Backend;
       Kernel : access Kernel_Handle_Record'Class) return String is abstract;
    --  Return the path which must contain the documentation (eg.
-   --  "/..../gps/glide/obj/html/" for an instance of object
+   --  "/.../gps/obj/html/" for an instance of object
    --  Backend_HTML).
 
    function Get_Last_Index (B : Backend'Class) return Natural;

@@ -311,7 +311,7 @@ package VCS is
      (Rep     : access VCS_Record;
       Message : String;
       Add_LF  : Boolean := True);
-   --  Display message in the glide console.
+   --  Display message in the console.
 
    --  ??? missing:
    --  init

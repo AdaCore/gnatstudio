@@ -194,7 +194,7 @@ package body Welcome is
       Get_History (Get_History (Kernel).all,
                    "project_files", Screen.Open_Project);
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
-      --  Synchronize the name of the key with glide_menu.adb
+      --  Synchronize the name of the key with gps-menu.adb
 
       if Project_Name /= "" then
          Set_Text (Get_Entry (Screen.Open_Project),

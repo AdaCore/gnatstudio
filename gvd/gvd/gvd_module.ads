@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package defines the GLIDE module for communication with GVD.
+--  This package defines the debugger module (called GVD).
 
 with GPS.Kernel;
 with Glib.Object;
