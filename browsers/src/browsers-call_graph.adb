@@ -661,8 +661,7 @@ package body Browsers.Call_Graph is
 
                while not At_End (Refs) loop
                   Ref := Get (Refs);
-                  if Get_Kind (Ref) /= Label
-                    and then Get_Kind (Ref) /= Body_Entity
+                  if Show_In_Call_Graph (Get_Kind (Ref))
                     and then Get_Caller (Ref) = Entity
                     and then Get_Declaration_Of (Rename) /= Get_Location (Ref)
                   then
@@ -789,9 +788,7 @@ package body Browsers.Call_Graph is
          Parent : constant Entity_Information := Get_Caller (Refs);
       begin
          if Parent /= null
-           and then Get_Kind (Refs) /= Declaration
-           and then Get_Kind (Refs) /= Body_Entity
-           and then Get_Kind (Refs) /= Completion_Of_Private_Or_Incomplete_Type
+           and then Show_In_Call_Graph (Get_Kind (Refs))
          then
             Data.Execute (Data.Callback, Parent, Refs, False);
          end if;
@@ -1207,42 +1204,44 @@ package body Browsers.Call_Graph is
    begin
       Result := Execute_Again;
 
-      while Count < Locations_At_A_Time
-        and then Result = Execute_Again
-      loop
+      while Count < Locations_At_A_Time loop
          if At_End (Data.Iter.all) then
             Recount_Category
               (Data.Kernel, Data.Category.all & Get_Name (Data.Entity));
             Result := Success;
-         else
-            if Get (Data.Iter.all) /= No_Entity_Reference then
-               if (Data.Include_Writes
-                   and then Is_Write_Reference
-                     (Get_Kind (Get (Data.Iter.all))))
-                 or else
-                   (Data.Include_Reads
-                    and then Is_Read_Reference
-                      (Get_Kind (Get (Data.Iter.all))))
-               then
-                  Location := Get_Location (Get (Data.Iter.all));
-                  Print_Ref
-                    (Data.Kernel, Location,
-                     Get_Name (Data.Entity),
-                     Data.Category.all & Get_Name (Data.Entity));
-               end if;
-            end if;
+            exit;
 
+            --  Not done parsing all the files yet
+         elsif Get (Data.Iter.all) = No_Entity_Reference then
             Next (Data.Iter.all);
+            exit;
 
-            Set_Progress
-              (Command,
-               (Running,
-                Get_Current_Progress (Data.Iter.all),
-                Get_Total_Progress (Data.Iter.all)));
+         else
+            if (Data.Include_Writes
+                and then Is_Write_Reference
+                  (Get_Kind (Get (Data.Iter.all))))
+              or else
+                (Data.Include_Reads
+                 and then Is_Read_Reference
+                   (Get_Kind (Get (Data.Iter.all))))
+            then
+               Location := Get_Location (Get (Data.Iter.all));
+               Print_Ref
+                 (Data.Kernel, Location,
+                  Get_Name (Data.Entity),
+                  Data.Category.all & Get_Name (Data.Entity));
+            end if;
+            Count := Count + 1;
          end if;
 
-         Count := Count + 1;
+         Next (Data.Iter.all);
       end loop;
+
+      Set_Progress
+        (Command,
+         (Running,
+          Get_Current_Progress (Data.Iter.all),
+          Get_Total_Progress (Data.Iter.all)));
    end Find_Next_Reference;
 
    ----------------------------------
