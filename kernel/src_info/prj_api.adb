@@ -22,6 +22,7 @@
 with Prj;           use Prj;
 pragma Elaborate_All (Prj);
 with Prj.Tree;      use Prj.Tree;
+with Prj.Part;      use Prj.Part;
 with Prj.Attr;      use Prj.Attr;
 with Prj.Util;      use Prj.Util;
 with Prj_Normalize; use Prj_Normalize;
@@ -1107,10 +1108,47 @@ package body Prj_API is
    --------------------------
 
    procedure Add_Imported_Project
-     (Project : Project_Node_Id; Imported_Project : Project_Node_Id)
+     (Project : Project_Node_Id;
+      Imported_Project_Location : String)
    is
+      use Prj.Tree.Tree_Private_Part;
       With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+      Imported_Project : Project_Node_Id;
+
+      Basename : constant String := Base_File_Name (Imported_Project_Location);
+      Ext      : constant String := File_Extension (Imported_Project_Location);
+      Last     : Natural := Basename'Last;
+      Dep_ID   : Name_Id;
+      Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
    begin
+      if Ext /= "" then
+         --  Also remove the '.'
+         Last := Last - Ext'Length - 1;
+      end if;
+
+      Name_Len := Last - Basename'First + 1;
+      Name_Buffer (1 .. Name_Len) := Basename (Basename'First .. Last);
+      Dep_ID := Name_Find;
+
+      Dep_Name := Tree_Private_Part.Projects_Htable.Get (Dep_ID);
+
+      if Dep_Name /= No_Project_Name_And_Node then
+         if Get_Name_String (Path_Name_Of (Dep_Name.Node)) /=
+           Normalize_Pathname (Imported_Project_Location)
+         then
+            Raise_Exception
+              (Project_Error'Identity,
+               -"A different project with the same name"
+               & " already exists in the project tree.");
+            return;
+         else
+            Imported_Project := Dep_Name.Node;
+         end if;
+      else
+         Prj.Part.Parse (Imported_Project, Imported_Project_Location,
+                         Always_Errout_Finalize => True);
+      end if;
+
       --  Make sure we are not trying to import ourselves, since otherwise it
       --  would result in an infinite loop when manipulating the project
 
@@ -2852,6 +2890,37 @@ package body Prj_API is
    begin
       return Get_Name_String (Projects.Table (Project_View).Name);
    end Project_Name;
+
+   ----------------------------
+   -- Create_Default_Project --
+   ----------------------------
+
+   function Create_Default_Project (Name, Path : String)
+     return Project_Node_Id
+   is
+      Project : Project_Node_Id;
+      No_Scenario : constant Project_Node_Array (1 .. 0) :=
+        (others => Empty_Node);
+      Values : Argument_List (1 .. 1);
+   begin
+      Project := Create_Project (Name, Path);
+
+      Values := (1 => new String' ("."));
+      Update_Attribute_Value_In_Scenario
+        (Project,
+         Scenario_Variables => No_Scenario,
+         Attribute_Name     => "source_dirs",
+         Values             => Values);
+      Free (Values (1));
+
+      Update_Attribute_Value_In_Scenario
+        (Project,
+         Scenario_Variables => No_Scenario,
+         Attribute_Name     => "object_dir",
+         Value              => ".");
+
+      return Project;
+   end Create_Default_Project;
 
 begin
    Namet.Initialize;

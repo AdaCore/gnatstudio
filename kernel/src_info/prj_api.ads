@@ -69,7 +69,8 @@ package Prj_API is
    --  existing one.
 
    procedure Add_Imported_Project
-     (Project : Project_Node_Id; Imported_Project : Project_Node_Id);
+     (Project : Project_Node_Id;
+      Imported_Project_Location : String);
    --  Add a new with_statement for Imported_Project.
 
    procedure Remove_Imported_Project
@@ -112,6 +113,11 @@ package Prj_API is
 
    function Project_Name (Project_View : Project_Id) return String;
    --  Return the name of the project.
+
+   function Create_Default_Project (Name, Path : String)
+      return Project_Node_Id;
+   --  Create a new project, whose source directory and object directory are is
+   --  Path.
 
    procedure Rename
      (Root_Project : Project_Node_Id;
