@@ -18,18 +18,17 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Command_Line;       use Ada.Command_Line;
 with Ada.Exceptions;         use Ada.Exceptions;
 
 with Glib;                   use Glib;
-with Glib.Object;            use Glib.Object;
+--  with Glib.Object;            use Glib.Object;
 with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Combo;              use Gtk.Combo;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Label;              use Gtk.Label;
-with Gtk.Box;                use Gtk.Box;
-with Gtk.Main;               use Gtk.Main;
+--  with Gtk.Box;                use Gtk.Box;
+--  with Gtk.Main;               use Gtk.Main;
 with Gtk.Clist;              use Gtk.Clist;
 
 with Diff_Utils;             use Diff_Utils;
@@ -41,26 +40,29 @@ with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
-use Codefix.Formal_Errors.Extract_List;
-with Codefix.File_Io;        use Codefix.File_Io;
-with Codefix.Text_Navigators;
+use Codefix.Formal_Errors.Command_List;
 
 with Final_Window_Pkg;       use Final_Window_Pkg;
 
-with Interfaces.C.Strings;   use Interfaces.C.Strings;
+--  with Interfaces.C.Strings;   use Interfaces.C.Strings;
 
 package body Codefix.Graphics is
 
-   Kernel_Class : GObject_Class := Uninitialized_Class;
+   --  Kernel_Class : GObject_Class := Uninitialized_Class;
 
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Graphic_Codefix : out Graphic_Codefix_Access) is
+   procedure Gtk_New
+     (Graphic_Codefix : out Graphic_Codefix_Access;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Current_Text    : Ptr_Text_Navigator;
+      Errors_Found    : Ptr_Errors_Interface) is
    begin
       Graphic_Codefix := new Graphic_Codefix_Record;
-      Codefix.Graphics.Initialize (Graphic_Codefix);
+      Codefix.Graphics.Initialize
+        (Graphic_Codefix, Kernel, Current_Text, Errors_Found);
    end Gtk_New;
 
    ----------------
@@ -68,31 +70,27 @@ package body Codefix.Graphics is
    ----------------
 
    procedure Initialize
-     (Graphic_Codefix : access Graphic_Codefix_Record'Class)
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Current_Text    : Ptr_Text_Navigator;
+      Errors_Found    : Ptr_Errors_Interface)
    is
-      Signal_Parameters : Signal_Parameter_Types (1 .. 0, 1 .. 0);
+--      Signal_Parameters : Signal_Parameter_Types (1 .. 0, 1 .. 0);
 
-      Signals : chars_ptr_array (1 .. 0);
+--      Signals : chars_ptr_array (1 .. 0);
       --  The list of signals defined for this object
 
    begin
       Codefix_Window_Pkg.Initialize (Graphic_Codefix);
 
-      Graphic_Codefix.Kernel := new Kernel_Handle_Record;
-      Glib.Object.Initialize (Graphic_Codefix.Kernel);
-      Initialize_Class_Record
-        (Graphic_Codefix.Kernel,
-         Signals,
-         Kernel_Class,
-         "GlideKernel",
-         Signal_Parameters);
-
-      Open (Graphic_Codefix.Errors_Found, Argument (1));
+      Graphic_Codefix.Kernel := Kernel_Handle (Kernel);
+      Graphic_Codefix.Current_Text := Current_Text;
+      Graphic_Codefix.Errors_Found := Errors_Found;
 
       Analyze
         (Graphic_Codefix.Corrector,
-         Graphic_Codefix.Current_Text,
-         Graphic_Codefix.Errors_Found,
+         Graphic_Codefix.Current_Text.all,
+         Graphic_Codefix.Errors_Found.all,
          null);
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
@@ -105,9 +103,9 @@ package body Codefix.Graphics is
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class) is
    begin
-      Free (Graphic_Codefix.Current_Text);
+      Free (Graphic_Codefix.Current_Text.all);
       Free (Graphic_Codefix.Corrector);
-      Free (Graphic_Codefix.Errors_Found);
+      Free (Graphic_Codefix.Errors_Found.all);
       Free (Graphic_Codefix.Vdiff_List);
       --  Unref (Graphic_Codefix);
       Destroy (Graphic_Codefix);
@@ -121,7 +119,7 @@ package body Codefix.Graphics is
    procedure Quit (Graphic_Codefix : access Graphic_Codefix_Record'Class) is
    begin
       Free (Graphic_Codefix);
-      Gtk.Main.Main_Quit;
+--      Gtk.Main.Main_Quit;
    end Quit;
 
    ----------
@@ -170,14 +168,14 @@ package body Codefix.Graphics is
       procedure Add_Tab;
       --  Add a page in the Notebook and initialize its data.
 
-      Current_Sol      : Extract_List.List_Node;
+      Current_Sol      : Command_List.List_Node;
       Proposition      : Vdiff_Access;
       Label            : Gtk_Label;
       Current_Nb_Tabs  : Integer;
       Current_Vdiff    : Vdiff_Lists.List_Node;
       Extended_Extract : Extract;
-      Success_Update   : Boolean;
-      Already_Fixed    : Boolean;
+--      Success_Update   : Boolean;
+--      Already_Fixed    : Boolean;
       New_Popdown_Str  : String_List.Glist;
 
       -----------------
@@ -189,7 +187,8 @@ package body Codefix.Graphics is
          First_Iterator    : Text_Iterator_Access;
          Current_Iterator  : Text_Iterator_Access;
          Previous_File     : Dynamic_String := new String'("");
-         Total_Nb_Files    : Natural := Get_Nb_Files (Extended_Extract);
+         Total_Nb_Files    : constant Natural :=
+           Get_Nb_Files (Extended_Extract);
       begin
 
          Current_Line := Get_First_Line (Extended_Extract);
@@ -223,7 +222,7 @@ package body Codefix.Graphics is
                  (Current_Iterator.New_Line.all);
             elsif Get_Context (Current_Line.all) /= Line_Created then
                Current_Iterator.Old_Line := new String'(Get_Old_Text
-                  (Current_Line.all, Graphic_Codefix.Current_Text));
+                  (Current_Line.all, Graphic_Codefix.Current_Text.all));
             end if;
 
             Current_Iterator.Original_Position :=
@@ -294,15 +293,11 @@ package body Codefix.Graphics is
 
          Display_Sol;
 
-         Ref (Proposition.Main_Box);
-         Remove (Proposition, Proposition.Main_Box);
-
          Append_Page
            (Graphic_Codefix.Choices_Proposed,
-            Proposition.Main_Box,
+            Proposition,
             Label);
 
-         Unref (Proposition.Main_Box);
          Append (Graphic_Codefix.Vdiff_List, Proposition);
       end Add_Tab;
 
@@ -333,32 +328,35 @@ package body Codefix.Graphics is
 
       Current_Nb_Tabs := 0;
 
-      while Current_Sol /= Extract_List.Null_Node loop
-         Extended_Extract := Clone (Extract (Data (Current_Sol)));
+      while Current_Sol /= Command_List.Null_Node loop
+         Execute
+           (Data (Current_Sol),
+            Graphic_Codefix.Current_Text.all,
+            Extended_Extract);
          Extend_Before
            (Extended_Extract,
-            Graphic_Codefix.Current_Text,
+            Graphic_Codefix.Current_Text.all,
             Display_Lines_Before);
          Extend_After
            (Extended_Extract,
-            Graphic_Codefix.Current_Text,
+            Graphic_Codefix.Current_Text.all,
             Display_Lines_After);
-         Update_Changes
-           (Graphic_Codefix.Corrector,
-            Graphic_Codefix.Current_Text,
-            Extended_Extract,
-            Success_Update,
-            Already_Fixed);
+--         Update_Changes
+--           (Graphic_Codefix.Corrector,
+--            Graphic_Codefix.Current_Text,
+--            Extended_Extract,
+--            Success_Update,
+--            Already_Fixed);
 
-         if Already_Fixed or else not Success_Update then
-            Free (Extended_Extract);
-            exit;
-         end if;
-
-         Reduce
-           (Extended_Extract,
-            Display_Lines_Before,
-            Display_Lines_After);
+--         if Already_Fixed or else not Success_Update then
+--            Free (Extended_Extract);
+--            exit;
+--         end if;
+--
+--         Reduce
+--           (Extended_Extract,
+--            Display_Lines_Before,
+--            Display_Lines_After);
 
          if Current_Vdiff /= Vdiff_Lists.Null_Node then
             Modify_Tab;
@@ -372,15 +370,15 @@ package body Codefix.Graphics is
            (New_Popdown_Str, Get_Caption (Data (Current_Sol)));
 
          Reduce (Extended_Extract, 0, 0);
-         Set_Data (Current_Sol, Extended_Extract);
+--         Set_Data (Current_Sol, Extended_Extract);
 
          Current_Sol := Next (Current_Sol);
       end loop;
 
-      if not Success_Update or else Already_Fixed  then
-         Load_Next_Error (Graphic_Codefix);
-         return;
-      end if;
+--      if not Success_Update or else Already_Fixed  then
+--         Load_Next_Error (Graphic_Codefix);
+--         return;
+--      end if;
 
       Set_Popdown_Strings (Graphic_Codefix.Fix_Caption_List, New_Popdown_Str);
 
@@ -414,17 +412,17 @@ package body Codefix.Graphics is
    procedure Valid_Current_Solution
      (Graphic_Codefix : access Graphic_Codefix_Record'Class)
    is
-      Current_Extract : Extract_List.List_Node;
+      Current_Command : Command_List.List_Node;
    begin
-      Current_Extract := First (Get_Solutions (Graphic_Codefix.Current_Error));
+      Current_Command := First (Get_Solutions (Graphic_Codefix.Current_Error));
 
-      while Get_Caption (Data (Current_Extract)) /=
+      while Get_Caption (Data (Current_Command)) /=
         Get_Text (Graphic_Codefix.Fix_Entry)
       loop
 
-         Current_Extract := Next (Current_Extract);
+         Current_Command := Next (Current_Command);
 
-         if Current_Extract = Extract_List.Null_Node then
+         if Current_Command = Command_List.Null_Node then
             Raise_Exception
               (Codefix_Panic'Identity,
                "Text """ &
@@ -433,10 +431,11 @@ package body Codefix.Graphics is
          end if;
       end loop;
 
-      Validate
+      Validate_And_Commit
         (Graphic_Codefix.Corrector,
+         Graphic_Codefix.Current_Text.all,
          Graphic_Codefix.Current_Error,
-         Data (Current_Extract));
+         Data (Current_Command));
    end Valid_Current_Solution;
 
    ----------------------
@@ -446,18 +445,18 @@ package body Codefix.Graphics is
    function Get_Nth_Solution
      (Graphic_Codefix : access Graphic_Codefix_Record'Class) return Gint
    is
-      Current_Extract : Extract_List.List_Node;
+      Current_Command : Command_List.List_Node;
       Current_Number  : Gint := 1;
    begin
-      Current_Extract := First (Get_Solutions (Graphic_Codefix.Current_Error));
+      Current_Command := First (Get_Solutions (Graphic_Codefix.Current_Error));
 
-      while Get_Caption (Data (Current_Extract)) /=
+      while Get_Caption (Data (Current_Command)) /=
         Get_Text (Graphic_Codefix.Fix_Entry)
       loop
          Current_Number := Current_Number + 1;
-         Current_Extract := Next (Current_Extract);
+         Current_Command := Next (Current_Command);
 
-         if Current_Extract = Extract_List.Null_Node then
+         if Current_Command = Command_List.Null_Node then
             Raise_Exception
               (Codefix_Panic'Identity,
                "Text """ &
