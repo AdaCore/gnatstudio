@@ -697,16 +697,16 @@ package body Project_Viewers is
       Child : MDI_Child;
 
    begin
+      Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
+      if Child = null then
+         Trace (Me, "No MDI window visiting the project viewer");
+         return;
+      end if;
+
       if Context /= null
         and then Context.all in File_Selection_Context'Class
       then
          File := File_Selection_Context_Access (Context);
-
-         Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
-         if Child = null then
-            Trace (Me, "No MDI window visiting the project viewer");
-            return;
-         end if;
 
          if File.all in File_Selection_Context'Class
            and then not Has_Directory_Information (File)
@@ -747,6 +747,13 @@ package body Project_Viewers is
 
       else
          Clear (Viewer);
+
+         Viewer.Current_Project := Get_Project_View (Viewer.Kernel);
+         Set_Title (Child,
+                    Title => -"Editing switches for project "
+                    & Project_Name (Viewer.Current_Project),
+                    Short_Title => Project_Switches_Name);
+         Show_Project (Viewer, Viewer.Current_Project, "");
       end if;
    end Explorer_Selection_Changed;
 
