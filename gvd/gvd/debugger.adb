@@ -353,7 +353,9 @@ package body Debugger is
    procedure Output_Available
      (Process   : My_Input.Data_Access;
       Source    : Gint;
-      Condition : Gdk.Types.Gdk_Input_Condition) is
+      Condition : Gdk.Types.Gdk_Input_Condition)
+   is
+      Debugger : constant Debugger_Access := Process.Debugger;
    begin
       --  Get everything that is available (and transparently call the
       --  output filters set for Pid).
@@ -363,18 +365,18 @@ package body Debugger is
       --  output. We don't have to do that anyway, since the other Wait will
       --  indirectly call the output filter.
 
-      if Wait_Prompt (Process.Debugger, Timeout => 0) then
+      if Wait_Prompt (Debugger, Timeout => 0) then
          Gdk.Input.Remove (Process.Input_Id);
          Process.Input_Id := 0;
 
          --  Put back the standard cursor
 
-         if Get_Command_Mode (Get_Process (Process.Debugger)) >= Visible then
+         if Get_Command_Mode (Get_Process (Debugger)) >= Visible then
             Set_Busy_Cursor (Process, False);
          end if;
 
-         Set_Command_In_Process (Get_Process (Process.Debugger), False);
-         Process.Debugger.Processing_User_Command := False;
+         Set_Command_In_Process (Get_Process (Debugger), False);
+         Debugger.Processing_User_Command := False;
          Unregister_Dialog (Process);
 
          --  Do the postprocessing here instead of calling Send_Internal_Post
@@ -386,34 +388,30 @@ package body Debugger is
          begin
             Free (Process.Current_Command);
 
-            if Process_Command (Process.Debugger) then
+            if Process_Command (Debugger) then
                --  ??? register if needed for context_changed/process_stopped
                --  before returning
                return;
             end if;
 
-            Set_Command_In_Process (Get_Process (Process.Debugger));
+            Set_Command_In_Process (Get_Process (Debugger));
             Final_Post_Process (Process);
 
-            if Is_Context_Command
-              (Process.Debugger, Current_Command)
-            then
+            if Is_Context_Command (Debugger, Current_Command) then
                Context_Changed (Process);
-            elsif Is_Execution_Command
-              (Process.Debugger, Current_Command)
-            then
+            elsif Is_Execution_Command (Debugger, Current_Command) then
                Process_Stopped (Process);
             end if;
 
             Update_Breakpoints
               (Process,
-               Force => Is_Break_Command (Process.Debugger, Current_Command));
-            Set_Command_In_Process (Get_Process (Process.Debugger), False);
+               Force => Is_Break_Command (Debugger, Current_Command));
+            Set_Command_In_Process (Get_Process (Debugger), False);
 
             --  In case a command has been queued while handling the signals
             --  and breakpoints above.
 
-            Result := Process_Command (Process.Debugger);
+            Result := Process_Command (Debugger);
          end;
       end if;
 
@@ -424,8 +422,8 @@ package body Debugger is
 
          Gdk.Input.Remove (Process.Input_Id);
          Process.Input_Id := 0;
-         Process.Debugger.Processing_User_Command := False;
-         Set_Command_In_Process (Get_Process (Process.Debugger), False);
+         Debugger.Processing_User_Command := False;
+         Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy_Cursor (Process, False);
          Free (Process.Current_Command);
          Unregister_Dialog (Process);
@@ -630,16 +628,16 @@ package body Debugger is
         Main_Debug_Window_Access (Debugger.Window);
 
    begin
+      if Debugger.Processing_User_Command then
+         Wait_User_Command (Debugger);
+      end if;
+
       if Main.Locked then
          Output_Error (Main, "Internal inconsistency: recursing in Send_Full");
          return "";
       end if;
 
       Main.Locked := True;
-
-      if Debugger.Processing_User_Command then
-         Wait_User_Command (Debugger);
-      end if;
 
       Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
       Wait_Prompt (Debugger);
