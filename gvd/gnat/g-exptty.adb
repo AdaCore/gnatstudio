@@ -182,11 +182,12 @@ package body GNAT.Expect.TTY is
       Args  : in System.Address)
    is
       pragma Unreferenced (Pipe1, Pipe2, Pipe3, Cmd);
-      procedure Internal (Process : System.Address; Argv : System.Address);
+      function Internal
+        (Process : System.Address; Argv : System.Address) return Process_Id;
       pragma Import (C, Internal, "gvd_setup_child_communication");
 
    begin
-      Internal (Pid.Process, Args);
+      Pid.Pid := Internal (Pid.Process, Args);
    end Set_Up_Child_Communications;
 
 end GNAT.Expect.TTY;
