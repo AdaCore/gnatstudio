@@ -412,7 +412,7 @@ package body Browsers.Call_Graph is
    begin
       Item.Entity   := Entity;
       Ref (Item.Entity);
-      Initialize (Item, Browser, Get_Name (Entity),
+      Initialize (Item, Browser, Get_Name (Entity).all,
                   Examine_Ancestors_Call_Graph'Access,
                   Examine_Entity_Call_Graph'Access);
       Set_Children_Shown (Item, not May_Have_To_Dependencies);
@@ -1226,7 +1226,7 @@ package body Browsers.Call_Graph is
       while Count < Locations_At_A_Time loop
          if At_End (Data.Iter.all) then
             Recount_Category
-              (Data.Kernel, Data.Category.all & Get_Name (Data.Entity));
+              (Data.Kernel, Data.Category.all & Get_Name (Data.Entity).all);
             Result := Success;
             exit;
 
@@ -1247,8 +1247,8 @@ package body Browsers.Call_Graph is
                Location := Get_Location (Get (Data.Iter.all));
                Print_Ref
                  (Data.Kernel, Location,
-                  Get_Name (Data.Entity),
-                  Data.Category.all & Get_Name (Data.Entity));
+                  Get_Name (Data.Entity).all,
+                  Data.Category.all & Get_Name (Data.Entity).all);
             end if;
             Count := Count + 1;
          end if;
@@ -1281,7 +1281,7 @@ package body Browsers.Call_Graph is
       if Info /= null then
          begin
             Remove_Result_Category
-              (Kernel, Category_Title & Get_Name (Info));
+              (Kernel, Category_Title & Get_Name (Info).all);
 
             Ref (Info);
             Data := (Kernel         => Kernel_Handle (Kernel),
@@ -1391,7 +1391,7 @@ package body Browsers.Call_Graph is
          --  current file. Otherwise, this is too surprising for the use
 
          Remove_Result_Category
-           (Kernel, -"References for: " & Get_Name (Info));
+           (Kernel, -"References for: " & Get_Name (Info).all);
 
          Find_All_References
            (Iter    => Iter,
@@ -1404,8 +1404,8 @@ package body Browsers.Call_Graph is
             Print_Ref
               (Kernel,
                Location,
-               Get_Name (Info),
-               -"References for: " & Get_Name (Info));
+               Get_Name (Info).all,
+               -"References for: " & Get_Name (Info).all);
 
             Next (Iter);
          end loop;
@@ -1574,12 +1574,12 @@ package body Browsers.Call_Graph is
 
       Set_Entity_Information
         (Entity_Selection_Context_Access (Context),
-         Entity_Name   => Get_Name (Item.Entity),
+         Entity_Name   => Get_Name (Item.Entity).all,
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
 
       if Menu /= null then
          declare
-            Name : constant String := Get_Name (Item.Entity);
+            Name : constant String := Get_Name (Item.Entity).all;
          begin
             Gtk_New (Mitem, Name & (-" calls..."));
             Gtk_New (Pix, Get_Children_Arrow (Get_Browser (Item)));

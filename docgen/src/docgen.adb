@@ -389,7 +389,7 @@ package body Docgen is
          Ref := List_Reference_In_File.Data_Ref (E_L_I);
 
          if Ref.Line = Line
-           and then To_Lower (Text) = Get_Name (Ref.Entity)
+           and then To_Lower (Text) = Get_Name (Ref.Entity).all
            and then Ref.Column = Column
          then
             Result := True;
@@ -495,7 +495,7 @@ package body Docgen is
       elsif not X.Is_Private and Y.Is_Private then
          return True;
       else
-         return Get_Name (X.Entity) < Get_Name (Y.Entity);
+         return Get_Name (X.Entity).all < Get_Name (Y.Entity).all;
       end if;
    end Compare_Elements_Name;
 
@@ -539,7 +539,7 @@ package body Docgen is
    function Compare_Elements_Name
      (X, Y : Reference_List_Information) return Boolean is
    begin
-      return Get_Name (X.Entity) < Get_Name (Y.Entity);
+      return Get_Name (X.Entity).all < Get_Name (Y.Entity).all;
    end Compare_Elements_Name;
 
    -----------------

@@ -373,7 +373,7 @@ package body Docgen.Work_On_File is
                Private_Tagged_Types_List     => Private_Tagged_Types_List);
          end if;
 
-         if File_Is_Spec or else not Is_Operator (Get_Name (Info)) then
+         if File_Is_Spec or else not Is_Operator (Get_Name (Info).all) then
             --  ??? Temporary solution: operators are not added.
             --  In fact, it seems that Parse_Entity doesn't return
             --  them as identifiers. So, if we add them in the

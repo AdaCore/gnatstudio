@@ -758,7 +758,7 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "name" then
          Entity := Get_Data (Data, 1);
-         Set_Return_Value (Data, Get_Name (Entity));
+         Set_Return_Value (Data, Get_Name (Entity).all);
 
       elsif Command = "decl_file" then
          Entity := Get_Data (Data, 1);

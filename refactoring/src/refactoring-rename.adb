@@ -113,7 +113,7 @@ package body Refactoring.Rename is
       Pack_Start (Box, Label, Expand => False);
 
       Gtk_New (Dialog.New_Name);
-      Set_Text (Dialog.New_Name, Get_Name (Entity));
+      Set_Text (Dialog.New_Name, Get_Name (Entity).all);
       Select_Region (Dialog.New_Name, 0, -1);
       Set_Activates_Default (Dialog.New_Name, True);
       Pack_Start (Box, Dialog.New_Name);
@@ -155,7 +155,7 @@ package body Refactoring.Rename is
       Stale_LI_List : File_Arrays.Instance)
    is
       pragma Unreferenced (No_LI_List, Stale_LI_List);
-      Name : constant String := Get_Name (Entity);
+      Name : constant String := Get_Name (Entity).all;
    begin
       --  Replace first the last occurrences since we are about to modify
       --  the file, and the locations would become invalid
@@ -208,7 +208,7 @@ package body Refactoring.Rename is
          Show_All (Dialog);
 
          if Run (Dialog) = Gtk_Response_OK
-           and then Get_Name (Entity) /= Get_Text (Dialog.New_Name)
+           and then Get_Name (Entity).all /= Get_Text (Dialog.New_Name)
          then
             declare
                New_Name : constant String := Get_Text (Dialog.New_Name);

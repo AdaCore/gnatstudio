@@ -758,11 +758,11 @@ package body Browsers.Entities is
       if Get_Kind (Entity).Is_Abstract then
          Initialize
            (Item, Browser,
-            Get_Name (Entity) & ASCII.LF & "   " & UML_Abstract,
+            Get_Name (Entity).all & ASCII.LF & "   " & UML_Abstract,
             Find_Parent_Types'Access, Find_Children_Types'Access);
       else
          Initialize
-           (Item, Browser, Get_Name (Entity),
+           (Item, Browser, Get_Name (Entity).all,
             Find_Parent_Types'Access, Find_Children_Types'Access);
       end if;
       Ref (Entity);
@@ -775,7 +775,7 @@ package body Browsers.Entities is
 
    function "<" (E1, E2 : Entity_Information) return Boolean is
    begin
-      return Get_Name (E1) < Get_Name (E2);
+      return Get_Name (E1).all < Get_Name (E2).all;
    end "<";
 
    --------------------
@@ -785,9 +785,9 @@ package body Browsers.Entities is
    function Entity_As_Link (Ent : Entity_Information) return String is
    begin
       if Is_Predefined_Entity (Ent) then
-         return Get_Name (Ent);
+         return Get_Name (Ent).all;
       else
-         return '@' & Get_Name (Ent) & '@';
+         return '@' & Get_Name (Ent).all & '@';
       end if;
    end Entity_As_Link;
 
@@ -974,9 +974,9 @@ package body Browsers.Entities is
 
          Add_Line
            (List,
-            Get_Name (Parameter) & ": "
+            Get_Name (Parameter).all & ": "
             & Image (Get_Type (Subs)) & " " & Entity_As_Link (Typ),
-            Length1 => Get_Name (Parameter)'Length + 1,
+            Length1 => Get_Name (Parameter).all'Length + 1,
             Callback => (1 => Build (Item, Typ)));
          --  Do not free Typ, it is needed for callbacks
 
@@ -1053,7 +1053,7 @@ package body Browsers.Entities is
 
          else
             Add_Type
-              (Attr_List, Item, Arr.Table (A), Get_Name (Arr.Table (A)));
+              (Attr_List, Item, Arr.Table (A), Get_Name (Arr.Table (A)).all);
          end if;
       end loop;
 
@@ -1085,7 +1085,7 @@ package body Browsers.Entities is
          Field := Get_Entity (Discriminants);
          if Field /= null then
             Add_Type (List, Item, Field,
-                      -"Discriminant: " & Get_Name (Field));
+                      -"Discriminant: " & Get_Name (Field).all);
          end if;
 
          Next (Discriminants);
@@ -1104,9 +1104,9 @@ package body Browsers.Entities is
               and then not Is_Container (Get_Kind (Field).Kind)
             then
                if Is_Enum then
-                  Add_Line (List, Get_Name (Field));
+                  Add_Line (List, Get_Name (Field).all);
                else
-                  Add_Type (List, Item, Field, Get_Name (Field));
+                  Add_Type (List, Item, Field, Get_Name (Field).all);
                end if;
             end if;
          end if;
@@ -1392,7 +1392,7 @@ package body Browsers.Entities is
       Added                          : Boolean;
 
    begin
-      Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
+      Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity).all);
       Update_Xref (Get_File (Get_Declaration_Of (Item.Entity)));
 
       Add_Line (General_Lines, -Kind_To_String (Get_Kind (Item.Entity)));
@@ -1670,7 +1670,7 @@ package body Browsers.Entities is
          Line      => Get_Line (Get_Declaration_Of (It.Entity)),
          Column    => Get_Column (Get_Declaration_Of (It.Entity)),
          Column_End => Get_Column (Get_Declaration_Of (It.Entity))
-           + Get_Name (It.Entity)'Length);
+           + Get_Name (It.Entity).all'Length);
    end On_Show_Source;
 
    ------------------------
@@ -1690,7 +1690,7 @@ package body Browsers.Entities is
       Context := new Entity_Selection_Context;
       Set_Entity_Information
         (Context       => Context,
-         Entity_Name   => Get_Name (Item.Entity),
+         Entity_Name   => Get_Name (Item.Entity).all,
          Entity_Column => Get_Column (Get_Declaration_Of (Item.Entity)));
       Set_File_Information
         (Context     => Context,

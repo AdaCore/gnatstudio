@@ -448,7 +448,7 @@ package body Docgen_Backend_HTML is
                & Info.Doc_File_Name.all
                & "#" & Image (Get_Line (Get_Declaration_Of (Entity)))
                & """ TARGET=""main"">"
-               & Get_Name (Entity)
+               & Get_Name (Entity).all
                & "</A> at&nbsp;"
                & Base_Name (Get_Filename (F))
                & "&nbsp;"
@@ -460,7 +460,7 @@ package body Docgen_Backend_HTML is
          else
             Put_Line
               (File, "<TR><TD><PRE>" & Space
-               & Get_Name (Entity)
+               & Get_Name (Entity).all
                & " at&nbsp;"
                & Base_Name (Get_Filename (F))
                & "&nbsp;"
@@ -655,7 +655,7 @@ package body Docgen_Backend_HTML is
             & "#"
             & Image (Get_Line (Get_Declaration_Of (Entity)))
             & """>"
-            & Get_Name (Entity)
+            & Get_Name (Entity).all
             & "</A> declared at&nbsp;"
             & Base_Name (F)
             & "&nbsp;"
@@ -667,7 +667,7 @@ package body Docgen_Backend_HTML is
       else
          Put_Line
            (File,
-            "<TR><TD><PRE>" & Space & Get_Name (Entity)
+            "<TR><TD><PRE>" & Space & Get_Name (Entity).all
             & " declared at&nbsp;"
             & Base_Name (F)
             & "&nbsp;"
@@ -1026,7 +1026,7 @@ package body Docgen_Backend_HTML is
                & "#"
                & Image (Get_Line (Get_Declaration_Of (Entity)))
                & """ target=""main""><B>"
-               & Get_Name (Entity) & "</B></A><BR>" & ASCII.LF);
+               & Get_Name (Entity).all & "</B></A><BR>" & ASCII.LF);
 
          when No_Parent =>
             Put_Line (File, "No parent.<BR>");
@@ -1043,14 +1043,15 @@ package body Docgen_Backend_HTML is
                & "#"
                & Image (Get_Line (Get_Declaration_Of (Entity)))
                & """ TARGET=""main"">"
-               & Get_Name (Entity) & "</A><BR>"
+               & Get_Name (Entity).all & "</A><BR>"
                & ASCII.LF);
 
          when Parent_Without_Link =>
             --  The parent of the tagged type is not declared in the processed
             --  files. Link can't be made.
             Put_Line
-              (File, "<B>Parent object: </B>" & Get_Name (Entity) & "<BR>");
+              (File, "<B>Parent object: </B>" & Get_Name (Entity).all
+               & "<BR>");
 
          when No_Child =>
             Put_Line (File, "No child.<BR>");
@@ -1067,13 +1068,13 @@ package body Docgen_Backend_HTML is
                & "#"
                & Image (Get_Line (Get_Declaration_Of (Entity)))
                & """ TARGET=""main"">"
-               & Get_Name (Entity) & "</A><BR>" & ASCII.LF);
+               & Get_Name (Entity).all & "</A><BR>" & ASCII.LF);
 
          when Child_Without_Link =>
             --  This child of the tagged type is not declared in the processed
             --  files. Link can't be made.
             Put_Line (File, "<B>Child object: </B>"
-                      & Get_Name (Entity)
+                      & Get_Name (Entity).all
                       & "<BR>");
       end case;
    end Doc_Index_Tagged_Type;

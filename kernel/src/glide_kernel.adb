@@ -1516,7 +1516,7 @@ package body Glide_Kernel is
          Count := Count + 1;
          Candidate := Get (Iter);
 
-         if Get_Name (Candidate) = Entity_Name then
+         if Get_Name (Candidate).all = Entity_Name then
             if Count = 1 then
                Gtk_New (Dialog,
                         Title  => -"Select the declaration",

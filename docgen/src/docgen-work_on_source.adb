@@ -526,7 +526,7 @@ package body Docgen.Work_On_Source is
                Entity := TEL.Data_Ref (Entity_Node);
 
                if Entity.Kind = Package_Entity
-                 and then Get_Name (Entity.Entity) = Package_Name
+                 and then Get_Name (Entity.Entity).all = Package_Name
                then
                   Found_Main_Package := True;
                   exit;
@@ -949,7 +949,7 @@ package body Docgen.Work_On_Source is
                Info   := Type_Source_File_Table.Get (Source_File_List, Source);
                Doc_Index_Item
                  (B, Kernel, Index_File,
-                  Name      => Get_Name (Entity.Entity),
+                  Name      => Get_Name (Entity.Entity).all,
                   Item_File => Source,
                   Line      => Get_Line (Get_Declaration_Of (Entity.Entity)),
                   Doc_File  => Info.Doc_File_Name.all);
@@ -1027,7 +1027,7 @@ package body Docgen.Work_On_Source is
             Info := Type_Source_File_Table.Get (Source_File_List, File);
             Doc_Index_Item
               (B, Kernel, Index_File,
-               Name => Get_Name (Entity.Entity),
+               Name => Get_Name (Entity.Entity).all,
                Item_File => File,
                Line      => Get_Line (Get_Declaration_Of (Entity.Entity)),
                Doc_File  => Info.Doc_File_Name.all);
@@ -1230,7 +1230,7 @@ package body Docgen.Work_On_Source is
             Entity := TEL.Data_Ref (Entity_Node);
 
             if Entity.Kind = Package_Entity
-              and then Get_Name (Entity.Entity) = Package_Name
+              and then Get_Name (Entity.Entity).all = Package_Name
             then
                --  It's a library level package declaration
                if Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
@@ -1479,7 +1479,7 @@ package body Docgen.Work_On_Source is
 
             if Entity.Is_Private = Private_Entity
               and then Entity.Kind = Package_Entity
-              and then Get_Name (Entity.Entity) /= Package_Name
+              and then Get_Name (Entity.Entity).all /= Package_Name
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
               and then Entity_Defined_In_Package
@@ -1490,7 +1490,7 @@ package body Docgen.Work_On_Source is
                   Get_Whole_Header
                     (File_Text.all,
                      Parsed_List,
-                     Get_Name (Entity.Entity),
+                     Get_Name (Entity.Entity).all,
                      Get_Line (Get_Declaration_Of (Entity.Entity)),
                      Header_Start, Header_End);
 
@@ -1538,7 +1538,7 @@ package body Docgen.Work_On_Source is
                         Options,
                         Level,
                         Entity => Info,
-                        Header => "package " & Get_Name (Info) & " is");
+                        Header => "package " & Get_Name (Info).all & " is");
                      Level := Level + 1;
 
                      --  Recursive call in order to deal with entity defined
@@ -1550,7 +1550,7 @@ package body Docgen.Work_On_Source is
                         Doc_File,
                         Source_File_List,
                         Source_Filename,
-                        Get_Name (Info),
+                        Get_Name (Info).all,
                         Info,
                         Entity_List,
                         List_Ref_In_File,
@@ -1571,7 +1571,7 @@ package body Docgen.Work_On_Source is
                         Options,
                         Level,
                         Entity => Info,
-                        Header => "end " & Get_Name (Info));
+                        Header => "end " & Get_Name (Info).all);
 
                      if Description.all /= "" then
                         Process_Description
@@ -1602,7 +1602,7 @@ package body Docgen.Work_On_Source is
                   Get_Whole_Header
                     (File_Text.all,
                      Parsed_List,
-                     Get_Name (Entity.Entity),
+                     Get_Name (Entity.Entity).all,
                      Get_Line (Get_Declaration_Of (Entity.Entity)),
                      Header_Start, Header_End);
 
@@ -1731,7 +1731,7 @@ package body Docgen.Work_On_Source is
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (Entity.Entity),
+                  Get_Name (Entity.Entity).all,
                   Get_Line (Get_Declaration_Of (Entity.Entity)),
                   Header_Start, Header_End);
 
@@ -1865,7 +1865,7 @@ package body Docgen.Work_On_Source is
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (Entity.Entity),
+                  Get_Name (Entity.Entity).all,
                   Get_Line (Get_Declaration_Of (Entity.Entity)),
                   Header_Start, Header_End);
 
@@ -2052,7 +2052,7 @@ package body Docgen.Work_On_Source is
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (Entity.Entity),
+                  Get_Name (Entity.Entity).all,
                   Get_Line (Get_Declaration_Of (Entity.Entity)),
                   Header_Start, Header_End);
 
@@ -2224,7 +2224,7 @@ package body Docgen.Work_On_Source is
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (Entity.Entity),
+                  Get_Name (Entity.Entity).all,
                   Get_Line (Get_Declaration_Of (Entity.Entity)),
                   Header_Start, Header_End);
 
@@ -2431,7 +2431,7 @@ package body Docgen.Work_On_Source is
                Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (Entity.Entity),
+                  Get_Name (Entity.Entity).all,
                   Get_Line (Get_Declaration_Of (Entity.Entity)),
                   Header_Start, Header_End);
 

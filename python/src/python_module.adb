@@ -798,11 +798,11 @@ package body Python_Module is
         or else Command = "__repr__"
       then
          if Is_Predefined_Entity (Entity) then
-            Set_Return_Value (Data, Get_Name (Entity));
+            Set_Return_Value (Data, Get_Name (Entity).all);
          else
             Set_Return_Value
               (Data,
-               Get_Name (Entity) & ':'
+               Get_Name (Entity).all & ':'
                & Base_Name (Get_Filename
                               (Get_File (Get_Declaration_Of (Entity))))
                & ':'
@@ -813,7 +813,7 @@ package body Python_Module is
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
-            (Hash (Get_Name (Entity)
+            (Hash (Get_Name (Entity).all
                    & Full_Name (Get_Filename
                        (Get_File (Get_Declaration_Of (Entity)))).all
                    & Image (Get_Line (Get_Declaration_Of (Entity)))
@@ -822,8 +822,8 @@ package body Python_Module is
       elsif Command = "__cmp__" then
          declare
             Entity2 : constant Entity_Information := Get_Data (Data, 2);
-            Name1 : constant String := Get_Name (Entity);
-            Name2 : constant String := Get_Name (Entity2);
+            Name1 : constant String := Get_Name (Entity).all;
+            Name2 : constant String := Get_Name (Entity2).all;
          begin
             if Name1 < Name2 then
                Set_Return_Value (Data, -1);
