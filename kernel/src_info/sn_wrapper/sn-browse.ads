@@ -1,4 +1,5 @@
 with SN.Xref_Pools; use SN.Xref_Pools;
+with GNAT.Expect;   use GNAT.Expect;
 
 package SN.Browse is
    Unlink_Failure    : exception;
@@ -16,16 +17,18 @@ package SN.Browse is
 
    procedure Browse
      (File_Name, DB_Directory, Browser_Name : in String;
-      Xrefs : in out Xref_Pool);
-   --  Executes given browser on the file so that all database files
+      Xrefs : in out Xref_Pool; PD : out GNAT.Expect.Process_Descriptor);
+   --  Starts given browser on the file so that all database files
    --  should be placed in the specified directory.
    --  A number of exceptions may be thrown to signal error during
    --  process spawning, file unlinking...
 
-   procedure Generate_Xrefs (DB_Directory : in String);
+   function Generate_Xrefs (DB_Directory : in String)
+      return GNAT.Expect.Process_Descriptor;
    --  Removes .by and .to tables in the DB_Directory and
    --  does the same as  "cat *.xref | dbimp" so that generated cross
    --  reference tables should lie in the DB_Directory.
+   --  on error an exception is thrown
 
    procedure Delete_Database (DB_Directory : in String);
    --  Removes all files from SN DB directory except xref pool

@@ -65,15 +65,12 @@ package body SN.Browse is
 
    procedure Browse
      (File_Name, DB_Directory, Browser_Name : in String;
-      Xrefs : in out Xref_Pool)
+      Xrefs : in out Xref_Pool; PD : out GNAT.Expect.Process_Descriptor)
    is
       Xref_File_Name      : String_Access;
       Success             : Boolean;
       Args                : Argument_List_Access;
       DBUtil_Path         : String_Access;
-      PD                  : GNAT.Expect.Process_Descriptor;
-      Result              : GNAT.Expect.Expect_Match;
---    Pid                 : GNAT.OS_Lib.Process_Id;
    begin
       --  check DB_Directory exists
       if not Is_Directory (DB_Directory) then
@@ -120,14 +117,6 @@ package body SN.Browse is
       GNAT.Expect.Non_Blocking_Spawn (PD, DBUtil_Path.all, Args.all,
          Err_To_Out => True);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
-      loop
-         begin
-            GNAT.Expect.Expect (PD, Result, "", -1);
-         exception
-            when GNAT.Expect.Process_Died => exit;
-         end;
-      end loop;
-      GNAT.Expect.Close (PD);
       Delete (Args);
       Free (DBUtil_Path);
    end Browse;
@@ -136,7 +125,8 @@ package body SN.Browse is
    -- Generate_Xrefs --
    --------------------
 
-   procedure Generate_Xrefs (DB_Directory : in String) is
+   function Generate_Xrefs (DB_Directory : String)
+      return GNAT.Expect.Process_Descriptor is
       BY_File_Name : String := DB_Directory & Directory_Separator
                       & DB_File_Name & ".by" & ASCII.Nul;
       TO_File_Name : String := DB_Directory & Directory_Separator
@@ -149,11 +139,7 @@ package body SN.Browse is
       Success      : Boolean;
       Args         : Argument_List_Access;
       Content      : String_Access;
-      Temp_File    : File_Descriptor;
-      Temp_Name    : Temp_File_Name;
       PD           : GNAT.Expect.Process_Descriptor;
-      Result       : GNAT.Expect.Expect_Match;
---      Pid          : GNAT.OS_Lib.Process_Id;
    begin
 
       --  remove .to and .by tables
@@ -172,12 +158,6 @@ package body SN.Browse is
       end if;
 
       --  start dbimp
-      Create_Temp_File (Temp_File, Temp_Name);
-      if Temp_File = Invalid_FD then
-         raise Temp_File_Failure;
-      end if;
-
-
       --  enumerate all .xref files in the target directory
       --  and copy them into the temp file
       Open (Dir, DB_Directory);
@@ -185,28 +165,8 @@ package body SN.Browse is
          raise Directory_Error;
       end if;
 
-      Read (Dir, Dir_Entry, Last); -- read first directory entry
-      while Last /= 0 loop
-         if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) = Xref_Suffix then
-            Content := OS_Utils.Read_File (DB_Directory
-               & Directory_Separator & Dir_Entry (1 .. Last));
-            if null /= Content then
-               if Content'Length
-                  /= Write (Temp_File, Content.all'Address, Content'Length)
-               then
-                  raise Temp_File_Failure;
-               end if;
-               Free (Content);
-            end if;
-         end if;
-         Read (Dir, Dir_Entry, Last); -- read next directory entry
-      end loop;
-      Close (Dir);
-      Close (Temp_File);
-
       Args := Argument_String_To_List (
           DB_Directory & Directory_Separator & DB_File_Name
-          & " -f " & Temp_Name
       );
 
       if null = DBIMP_Path then
@@ -217,21 +177,23 @@ package body SN.Browse is
       GNAT.Expect.Non_Blocking_Spawn (PD, DBIMP_Path.all, Args.all,
          Err_To_Out => True);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
---      Wait_Process (Pid, Success);
-      loop
-         begin
-            GNAT.Expect.Expect (PD, Result, "", -1);
-         exception
-            when GNAT.Expect.Process_Died => exit;
-         end;
-      end loop;
       Delete (Args);
-      GNAT.Expect.Close (PD);
 
-      Delete_File (Temp_Name'Address, Success);
-      if not Success then
-         raise Unlink_Failure;
-      end if;
+      Read (Dir, Dir_Entry, Last); -- read first directory entry
+      while Last /= 0 loop
+         if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) = Xref_Suffix then
+            Content := OS_Utils.Read_File (DB_Directory
+               & Directory_Separator & Dir_Entry (1 .. Last));
+            if null /= Content then
+               GNAT.Expect.Send (PD, Content.all);
+               Free (Content);
+            end if;
+         end if;
+         Read (Dir, Dir_Entry, Last); -- read next directory entry
+      end loop;
+      Close (Dir);
+
+      return PD;
    end Generate_Xrefs;
 
    ---------------------
