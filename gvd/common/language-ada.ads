@@ -22,18 +22,18 @@ package Language.Debugger.Ada is
 
    type Ada_Language is abstract new Language_Debugger with private;
 
-   function Is_Simple_Type (Lang : access Ada_Language;
-                            Str : String)
-                           return Boolean;
-   --  Return True if Str is a simple type, like integer, ...
-   --  These are the types that don't need information from the debugger to
-   --  be known, ie we can save a call to the debugger when parsing the value
-   --  of a variable.
+   function Is_Simple_Type
+     (Lang : access Ada_Language; Str : String) return Boolean;
 
-   procedure Looking_At (Lang      : access Ada_Language;
-                         Buffer    : String;
-                         Entity    : out Language_Entity;
-                         Next_Char : out Positive);
+   procedure Looking_At
+     (Lang      : access Ada_Language;
+      Buffer    : String;
+      Entity    : out Language_Entity;
+      Next_Char : out Positive);
+
+   function Dereference
+     (Lang     : access Ada_Language;
+      Variable : String) return String;
 
 private
 

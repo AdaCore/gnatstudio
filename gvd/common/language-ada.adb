@@ -43,10 +43,11 @@ package body Language.Debugger.Ada is
    -- Looking_At --
    ----------------
 
-   procedure Looking_At (Lang      : access Ada_Language;
-                         Buffer    : String;
-                         Entity    : out Language_Entity;
-                         Next_Char : out Positive)
+   procedure Looking_At
+     (Lang      : access Ada_Language;
+      Buffer    : String;
+      Entity    : out Language_Entity;
+      Next_Char : out Positive)
    is
       Matched : Match_Array (0 .. 1);
 
@@ -119,6 +120,17 @@ package body Language.Debugger.Ada is
       end if;
       Entity := Normal_Text;
    end Looking_At;
+
+   -----------------
+   -- Dereference --
+   -----------------
+
+   function Dereference
+     (Lang     : access Ada_Language;
+      Variable : String) return String is
+   begin
+      return Variable & ".all";
+   end Dereference;
 
 begin
    Compile (Keywords,
