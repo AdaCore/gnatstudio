@@ -165,6 +165,7 @@ package Glide_Kernel.Preferences is
    Block_Highlighting        : Param_Spec_Boolean;
    Current_Line_Color        : Param_Spec_Color;
    Current_Block_Color       : Param_Spec_Color;
+   Search_Results_Color      : Param_Spec_Color;
 
    Strip_Blanks              : Param_Spec_Boolean;
    Line_Terminator           : Param_Spec_Enum;

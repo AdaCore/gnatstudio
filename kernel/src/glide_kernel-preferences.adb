@@ -393,6 +393,15 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Delimiter_Color),
          -"Editor:Fonts & Colors");
 
+      Search_Results_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Search_Results-Color",
+         Default => "light blue",
+         Blurb   => -"Color for highlighting search results",
+         Nick    => -"Search results highlighting"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Search_Results_Color),
+         -"Editor:Fonts & Colors");
+
       -- Debugger --
 
       GVD.Preferences.Register_Default_Preferences
