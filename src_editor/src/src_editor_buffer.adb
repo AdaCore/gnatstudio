@@ -22,6 +22,9 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
+pragma Warnings (Off);
+with Ada.Strings.Unbounded.Aux; use Ada.Strings.Unbounded.Aux;
+pragma Warnings (On);
 with Ada.Unchecked_Deallocation;
 with GNAT.Regpat;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -2619,21 +2622,23 @@ package body Src_Editor_Buffer is
       Buffer_Line : Buffer_Line_Type;
       Force_Write : Boolean := False;
       --  Whether the file mode has been forced to writable.
+      U_Buffer    : Unbounded_String;
+      S           : Ada.Strings.Unbounded.String_Access;
+      Length      : Natural;
 
-      procedure New_Line (FD : in out Writable_File);
-      --  Write a new line on FD.
+      procedure New_Line;
+      --  Append a new line on U_Buffer.
 
       --------------
       -- New_Line --
       --------------
 
-      procedure New_Line (FD : in out Writable_File) is
-         NL : aliased constant String := ASCII.CR & ASCII.LF;
+      procedure New_Line is
       begin
          case Terminator is
-            when CR_LF        => Write (FD, NL (1 .. 2));
-            when CR           => Write (FD, NL (1 .. 1));
-            when Unknown | LF => Write (FD, NL (2 .. 2));
+            when CR_LF        => Append (U_Buffer, (ASCII.CR & ASCII.LF));
+            when CR           => Append (U_Buffer, ASCII.CR);
+            when Unknown | LF => Append (U_Buffer, ASCII.LF);
          end case;
       end New_Line;
 
@@ -2709,7 +2714,7 @@ package body Src_Editor_Buffer is
             begin
                if Str.Length = 0 then
                   if Line /= Buffer.Last_Editable_Line then
-                     New_Line (FD);
+                     New_Line;
                   end if;
                else
                   declare
@@ -2729,20 +2734,26 @@ package body Src_Editor_Buffer is
                            Index := UTF8_Find_Prev_Char (Contents, Index);
                         end loop;
 
-                        Write (FD, Contents (Contents'First .. Index));
+                        Append (U_Buffer, Contents (Contents'First .. Index));
 
                      else
-                        Write (FD, Contents);
+                        Append (U_Buffer, Contents);
                      end if;
                   end;
 
-                  New_Line (FD);
+                  New_Line;
                end if;
 
                Free (Str);
             end;
          end loop;
       end;
+
+      Get_String (U_Buffer, S, Length);
+
+      if S /= null then
+         Write (FD, S (1 .. Length));
+      end if;
 
       Close (FD);
 
