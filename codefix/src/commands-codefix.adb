@@ -40,7 +40,6 @@ package body Commands.Codefix is
       Menu            : Gtk_Menu;
    begin
       if Is_Fixed (Command.Error) then
-         Command_Finished (Command, True);
          return True;
       end if;
 
@@ -54,7 +53,6 @@ package body Commands.Codefix is
          Menu := Create_Submenu (Command.Error);
          Show_All (Menu);
          Popup (Menu);
-         Command_Finished (Command, True);
          return True;
       end if;
 
@@ -80,8 +78,6 @@ package body Commands.Codefix is
          Column        => Get_Error_Message (Command.Error).Col,
          Message       =>
              Cut_Message (Get_Message (Get_Error_Message (Command.Error))));
-
-      Command_Finished (Command, True);
 
       return True;
    end Execute;
