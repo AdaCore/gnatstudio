@@ -114,12 +114,22 @@ package Glide_Kernel.Modules is
       Priority                : Module_Priority := Default_Priority;
       Initializer             : Module_Initializer  := null;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
-      Mime_Handler            : Module_Mime_Handler := null) return Module_ID;
+      Mime_Handler            : Module_Mime_Handler := null;
+      MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
+      Default_Context_Factory : Module_Default_Context_Factory := null)
+      return Module_ID;
    --  Register a new module into Glide.
    --  Module_Name can be used by other modules to check whether they want to
    --  interact with this module.
    --  See the general description for this package for explanation on
    --  Initializer and Contextual_Menu_Handler.
+   --
+   --  MDI_Child_Tag is used to associated a given MDI child with a specific
+   --  module. It should be the name of the widget inserted directly in the
+   --  MDI. It is then used in conjunction with Default_Context_Factory to
+   --  generate a selection context that can be used for the glide menubar
+   --  items. Note that Kernel_Handle_Record'Tag is used as a default,
+   --  non-significant value for MDI_Child_Tag.
 
    function Module_Name (ID : Module_ID) return String;
    --  Return the name of the module registered as ID.

@@ -95,7 +95,10 @@ package body Glide_Kernel.Modules is
       Priority                : Module_Priority     := Default_Priority;
       Initializer             : Module_Initializer  := null;
       Contextual_Menu_Handler : Module_Menu_Handler := null;
-      Mime_Handler            : Module_Mime_Handler := null) return Module_ID
+      Mime_Handler            : Module_Mime_Handler := null;
+      MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
+      Default_Context_Factory : Module_Default_Context_Factory := null)
+      return Module_ID
    is
       ID      : Module_ID;
       Prev    : Module_List.List_Node := Module_List.Null_Node;
@@ -116,6 +119,8 @@ package body Glide_Kernel.Modules is
                Initializer     => Initializer,
                Contextual_Menu => Contextual_Menu_Handler,
                Mime_Handler    => Mime_Handler,
+               Default_Factory => Default_Context_Factory,
+               Child_Tag       => MDI_Child_Tag,
                Was_Initialized => False);
             Module_List.Append (Kernel.Modules_List, Prev, ID);
 
@@ -133,6 +138,8 @@ package body Glide_Kernel.Modules is
          Initializer     => Initializer,
          Contextual_Menu => Contextual_Menu_Handler,
          Mime_Handler    => Mime_Handler,
+         Default_Factory => Default_Context_Factory,
+         Child_Tag       => MDI_Child_Tag,
          Was_Initialized => False);
       Module_List.Append (Kernel.Modules_List, ID);
       return ID;
