@@ -58,6 +58,24 @@ package body Debugger.Gdb.Ada is
       Result   : in out Array_Type_Access);
    --  Parse the value of an array.
 
+   ---------------------
+   -- Break Exception --
+   ---------------------
+
+   function Break_Exception
+     (Debugger  : access Gdb_Ada_Language;
+      Name      : String  := "";
+      Unhandled : Boolean := False) return String is
+   begin
+      if Unhandled then
+         return "break exception unhandled";
+      elsif Name /= "" then
+         return "break exception " & Name;
+      else
+         return "break exception";
+      end if;
+   end Break_Exception;
+
    ----------------
    -- Parse_Type --
    ----------------
