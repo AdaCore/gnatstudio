@@ -107,6 +107,7 @@ package SN is
 
    SN_OVERRIDE           : constant SN_Attributes := 16#20000#;
    SN_OVERLOADED         : constant SN_Attributes := 16#40000#;
+   SN_TEMPLATE           : constant SN_Attributes := 16#80000#;
 
 
    SN_TYPE_DEF           : constant SN_Attributes := 1;
