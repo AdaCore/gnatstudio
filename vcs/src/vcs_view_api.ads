@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,7 @@ with Glide_Kernel;      use Glide_Kernel;
 with Gtk.Menu;          use Gtk.Menu;
 with VCS;               use VCS;
 with Projects;          use Projects;
+with Gtkada.MDI;
 
 package VCS_View_API is
 
@@ -110,7 +111,11 @@ package VCS_View_API is
    procedure Open_Explorer
      (Kernel  : Kernel_Handle;
       Context : Selection_Context_Access);
+   function Open_Explorer
+     (Kernel  : Kernel_Handle;
+      Context : Selection_Context_Access) return Gtkada.MDI.MDI_Child;
    --  If the VCS Explorer is not displayed, display it.
+   --  Both suprograms accept a null context
 
    function Get_Current_Ref
      (Context : Selection_Context_Access) return VCS_Access;
