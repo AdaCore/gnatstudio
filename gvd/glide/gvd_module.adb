@@ -115,6 +115,10 @@ package body GVD_Module is
       --  The list of lines which are currently revealed in the editor
       --  but the status of which has not yet been queried from the debugger.
 
+      Slow_Query       : Boolean := False;
+      --  Set to True when the interval between two debugger queries should
+      --  be long (for example when the debugger was detected to be busy).
+
       List_Modified    : Boolean := False;
       --  Set to True when the list has been modified by a callback.
 
@@ -1231,6 +1235,7 @@ package body GVD_Module is
       Kind         : Line_Kind;
       C            : Set_Breakpoint_Command_Access;
       File_Line    : File_Line_Record;
+      Timeout_Id   : Timeout_Handler_Id;
       Debugger     : constant Debugger_Access :=
         Get_Current_Process
           (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel)).Debugger;
@@ -1243,7 +1248,16 @@ package body GVD_Module is
          return False;
 
       elsif Command_In_Process (Get_Process (Debugger)) then
-         return True;
+         GVD_Module (GVD_Module_ID).Slow_Query := True;
+         Timeout_Id := Timeout_Add
+           (100, Idle_Reveal_Lines'Access);
+         return False;
+
+      elsif GVD_Module (GVD_Module_ID).Slow_Query then
+         GVD_Module (GVD_Module_ID).Slow_Query := False;
+         Timeout_Id := Timeout_Add
+           (1, Idle_Reveal_Lines'Access);
+         return False;
       end if;
 
       File_Line := File_Line_List.Head
