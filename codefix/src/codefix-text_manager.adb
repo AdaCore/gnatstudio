@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;        use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.Case_Util;        use GNAT.Case_Util;
@@ -576,6 +577,7 @@ package body Codefix.Text_Manager is
          Scope_List : Scope_Lists.List;
          Result     : Construct_Access;
          Name       : Dynamic_String;
+         Root       : Ptr_Scope_Node;
       end record;
 
       function Get_Node (Container : Ptr_Scope_Node; Name : String)
@@ -602,18 +604,23 @@ package body Codefix.Text_Manager is
         (Container : Ptr_Scope_Node; Object : Ptr_Scope_Node) is
       begin
          Append (Container.Scope_List, Object);
+         Object.Root := Container;
       end Add_Node;
 
       procedure Free (This : in out Ptr_Scope_Node) is
-         pragma Unreferenced (This);
+         procedure Free_Pool is
+           new Ada.Unchecked_Deallocation (Scope_Node, Ptr_Scope_Node);
       begin
-         null;
+         Free (This.Scope_List);
+         Free (This.Name);
+         Free_Pool (This);
       end Free;
 
       Current_Info  : Construct_Access;
       Found         : Boolean := False;
       Result        : Construct_Access;
       Current_Scope : Ptr_Scope_Node;
+      First_Scope   : Ptr_Scope_Node;
 
       ---------------
       -- Normalize --
@@ -641,28 +648,29 @@ package body Codefix.Text_Manager is
          This_Scope     : Ptr_Scope_Node := null;
       begin
 
-         if Current_Info.Is_Declaration
-           and then (Current_Info.Category = Cat_Package
-                     or else Current_Info.Category = Cat_Protected)
-         then
-            Current_Scope := Get_Node
-              (Current_Scope, Current_Info.Name.all);
-            This_Scope := Current_Scope; --  Vraiment utile ?
-            Current_Result := Current_Scope.Result;
-            Result := Current_Result;
-         end if;
-
-         if not Current_Info.Is_Declaration
-           and then (Current_Info.Category = Cat_Package
-                     or else Current_Info.Category = Cat_Protected)
-         then
-            This_Scope := new Scope_Node;
-            Assign (This_Scope.Name, Current_Info.Name.all);
-            Add_Node (Current_Scope, This_Scope);
-            Current_Scope := This_Scope;
-         end if;
-
          if not Is_First then
+
+            if Current_Info.Is_Declaration
+              and then (Current_Info.Category = Cat_Package
+                     or else Current_Info.Category = Cat_Protected)
+            then
+               Current_Scope := Get_Node
+                 (Current_Scope, Current_Info.Name.all);
+               This_Scope := Current_Scope; --  Vraiment utile ?
+               Current_Result := Current_Scope.Result;
+               Result := Current_Result;
+            end if;
+
+            if not Current_Info.Is_Declaration
+              and then (Current_Info.Category = Cat_Package
+                     or else Current_Info.Category = Cat_Protected)
+            then
+               This_Scope := new Scope_Node;
+               Assign (This_Scope.Name, Current_Info.Name.all);
+               Add_Node (Current_Scope, This_Scope);
+               Current_Scope := This_Scope;
+            end if;
+
             Current_Info := Current_Info.Prev;
          end if;
 
@@ -675,6 +683,11 @@ package body Codefix.Text_Manager is
                  or else (Current_Info.Sloc_End.Line = Stop.Line
                           and then Current_Info.Sloc_End.Column < Stop.Column)
                then
+                  --  Sortir du scope !!!
+                  if This_Scope /= null then
+                     Current_Scope := This_Scope.Root;
+                  end if;
+
                   return;
                end if;
 
@@ -737,8 +750,10 @@ package body Codefix.Text_Manager is
 
    begin
       Current_Info := Current_Text.Tokens_List.Last;
-      Current_Scope := new Scope_Node;
+      First_Scope := new Scope_Node;
+      Current_Scope := First_Scope;
       Seeker (Current_Info.Sloc_Start, True);
+      Free (First_Scope);
       return Result.all;
    end Search_Body;
 
@@ -1310,10 +1325,13 @@ package body Codefix.Text_Manager is
             if Current_Line.Context /= Line_Created then
                Line_Cursor.Line := Line_Cursor.Line - 1;
             end if;
-            exit when Prev.Cursor.File_Name.all = This.Cursor.File_Name.all
-              and then (Prev.Cursor.Line + 1 = This.Cursor.Line
-                        or else Prev.Cursor.Line = This.Cursor.Line);
+
+            exit when Prev.Cursor.File_Name.all =
+              Current_Line.Cursor.File_Name.all
+              and then (Prev.Cursor.Line + 1 = Current_Line.Cursor.Line
+                        or else Prev.Cursor.Line = Current_Line.Cursor.Line);
             exit when Line_Cursor.Line = 0;
+
             Get_Line (Current_Text, Clone (Line_Cursor), New_Line.all);
             New_Line.Next := Current_Line;
             Prev.Next := New_Line;
@@ -2225,7 +2243,7 @@ package body Codefix.Text_Manager is
                end if;
             else
                Prev_Line := Current_Line;
-               Left_After := Left_After + 1;
+               Left_After := Left_After - 1;
             end if;
          else
             Prev_Line := Current_Line;
@@ -2238,6 +2256,7 @@ package body Codefix.Text_Manager is
 
       if Left_After = 0 then
          for J in Lines'Range loop
+            exit when Lines (J) = null;
             Remove (Lines (J), Previous (This, Lines (J)), This);
             Free (Lines (J).all);
             Free (Lines (J));
@@ -2311,9 +2330,12 @@ package body Codefix.Text_Manager is
          Current_Line := Current_Line.Next;
       end loop;
 
-      --  Where can I free Result ??
-
-      return Result.all;
+      declare
+         Result_Stack : String := Result.all;
+      begin
+         Free (Result);
+         return Result_Stack;
+      end;
    end Get_Files_Names;
 
    ------------------
@@ -2633,12 +2655,21 @@ package body Codefix.Text_Manager is
 
    function New_Text_Interface (This : Virtual_Navigator) return Ptr_Text;
 
+   function Get_Body_Or_Spec (This : Virtual_Navigator; File_Name : String)
+     return String;
+
    function New_Text_Interface (This : Virtual_Navigator) return Ptr_Text is
       pragma Unreferenced (This);
    begin
       return null;
    end New_Text_Interface;
 
+   function Get_Body_Or_Spec (This : Virtual_Navigator; File_Name : String)
+     return String is
+      pragma Unreferenced (This, File_Name);
+   begin
+      return "";
+   end Get_Body_Or_Spec;
 
    procedure Merge
      (This                 : out Extract;
