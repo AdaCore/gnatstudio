@@ -226,6 +226,8 @@ package body Codefix_Module is
          Child := Put (Get_MDI (Kernel), Graphic_Codefix);
          Set_Title (Child, -"Code fixing", -"Codefix");
       else
+         Graphic_Codefix := Graphic_Codefix_Access (Get_Widget (Child));
+         Load_Next_Error (Graphic_Codefix, True);
          Raise_Child (Child);
       end if;
 
