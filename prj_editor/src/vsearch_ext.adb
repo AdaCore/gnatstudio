@@ -4,7 +4,7 @@
 --                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -233,7 +233,7 @@ package body Vsearch_Ext is
          if Vsearch.Last_Search_Context /= null then
             Options :=
               (Scope          => Search_Scope'Val
-                 (Get_Index_In_List (Vsearch.Scope_Combo) + 1),
+                 (Get_Index_In_List (Vsearch.Scope_Combo)),
                Case_Sensitive => Get_Active (Vsearch.Case_Check),
                Whole_Word     => Get_Active (Vsearch.Whole_Word_Check),
                Regexp         => Get_Active (Vsearch.Regexp_Check));
@@ -522,8 +522,8 @@ package body Vsearch_Ext is
       Set_Active (Vsearch.Options_Toggle, False);
       Pack_Start
         (Vsearch.Buttons_Hbox, Vsearch.Options_Toggle, False, False, 0);
-      Set_Tip (Get_Tooltips (Handle), Vsearch.Options_Toggle, -
-               "Display extended options");
+      Set_Tip (Get_Tooltips (Handle), Vsearch.Options_Toggle,
+               -"Display extended options");
       Widget_Callback.Object_Connect
         (Vsearch.Options_Toggle, "toggled",
          Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
@@ -554,7 +554,9 @@ package body Vsearch_Ext is
          Label             => -"Current File",
          Factory           => Current_File_Factory'Access,
          Extra_Information => null,
-         Mask              => All_Options and not Search_Backward);
+         Mask              => All_Options
+           and not Search_Backward
+           and not All_Occurences and not Supports_Replace);
       Register_Search_Function
         (Kernel            => Kernel,
          Label             => -"Files From Project",
