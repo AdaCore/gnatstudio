@@ -932,7 +932,10 @@ package body Items.Records is
             return False;
          end if;
 
-         if not Structurally_Equivalent
+         --  Protect against the null Name, which happens for variant parts
+         if Item1.Fields (F).Value /= null
+           and then Record_Type_Access (Item2).Fields (F).Value /= null
+           and then not Structurally_Equivalent
            (Item1.Fields (F).Value,
             Record_Type_Access (Item2).Fields (F).Value)
          then
