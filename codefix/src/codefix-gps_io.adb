@@ -159,7 +159,7 @@ package body Codefix.GPS_Io is
 
    function Get_Recorded_Line
      (This   : Console_Interface;
-      Number : Positive) return String
+      Number : Natural) return String
    is
       Node : String_List.List_Node;
    begin

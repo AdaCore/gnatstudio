@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -71,10 +71,10 @@ package Codefix.GPS_Io is
 
    function Get_Recorded_Line
      (This   : Console_Interface;
-      Number : Positive) return String;
+      Number : Natural) return String;
    --  Return a line that has been previously recorded into the
    --  Console_Interface.
-
+   --  if is the first line of file, Number = 0
    procedure Replace
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;
