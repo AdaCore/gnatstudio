@@ -24,11 +24,8 @@ with String_Utils; use String_Utils;
 with VFS;          use VFS;
 with GNAT.Strings; use GNAT.Strings;
 with GNAT.Bubble_Sort; use GNAT.Bubble_Sort;
-with Traces; use Traces;
 
 package body Entities.Debug is
-
-   Me : constant Debug_Handle := Create ("Entities.Debug");
 
    Dump_Full_File_Names : constant Boolean := False;
    Show_Timestamps      : Boolean := True;
@@ -48,7 +45,9 @@ package body Entities.Debug is
    --  Sort the Files and return a sorted array
 
    procedure Dump
-     (Sorted_Files : Source_File_Array; Show_Entities : Boolean);
+     (Sorted_Files  : Source_File_Array;
+      Show_Entities : Boolean;
+      Full          : Boolean);
    procedure Dump (LIs       : in out LI_HTable.HTable);
    procedure Dump
      (Entities : Entities_Tries.Trie_Tree; Full : Boolean; Name : String);
@@ -65,7 +64,7 @@ package body Entities.Debug is
      (Locs : Entity_Reference_List; Name : String; Full : Boolean);
    procedure Dump (Kind : E_Kind);
    procedure Dump (Ref  : E_Reference; Full : Boolean);
-   procedure Dump (File : Virtual_File);
+   procedure Dump (File : Virtual_File; Full : Boolean := False);
    procedure Dump_Entities_From_Files (Files : Source_File_Array);
    --  Dump various parts of the system
 
@@ -118,9 +117,9 @@ package body Entities.Debug is
    -- Dump --
    ----------
 
-   procedure Dump (File : Virtual_File) is
+   procedure Dump (File : Virtual_File; Full : Boolean := False) is
    begin
-      if Dump_Full_File_Names then
+      if Dump_Full_File_Names or else Full then
          Output (Full_Name (File).all);
       else
          Output (Base_Name (File));
@@ -320,9 +319,10 @@ package body Entities.Debug is
    -- Dump --
    ----------
 
-   procedure Dump (File : Source_File; Show_Entities : Boolean) is
+   procedure Dump
+     (File : Source_File; Show_Entities : Boolean; Full : Boolean) is
    begin
-      Dump (Get_Filename (File));
+      Dump (Get_Filename (File), Full);
       Output (" ");
       Dump (File.Timestamp);
       Output_Line
@@ -459,11 +459,13 @@ package body Entities.Debug is
    ----------
 
    procedure Dump
-     (Sorted_Files : Source_File_Array; Show_Entities : Boolean) is
+     (Sorted_Files  : Source_File_Array;
+      Show_Entities : Boolean;
+      Full          : Boolean) is
    begin
       Output_Line ("====== Source files =====");
       for F in Sorted_Files'Range loop
-         Dump (Sorted_Files (F), Show_Entities);
+         Dump (Sorted_Files (F), Show_Entities, Full);
       end loop;
    end Dump;
 
@@ -513,17 +515,15 @@ package body Entities.Debug is
    -- Dump --
    ----------
 
-   procedure Dump (Db : Entities_Database) is
+   procedure Dump (Db : Entities_Database; Full : Boolean := False) is
    begin
       if Db /= null then
-         Trace (Me, "MANU Getting Sorted List of Files");
          declare
             Files : constant Source_File_Array := Get_Sorted_List_Of_Files
               (Db.Files'Unrestricted_Access);
          begin
-            Trace (Me, "MANU sorting LIs");
             Dump (Db.LIs);
-            Dump (Files, Show_Entities => False);
+            Dump (Files, Show_Entities => False, Full => Full);
             Dump_Entities_From_Files (Files);
          end;
       end if;
