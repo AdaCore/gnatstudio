@@ -212,7 +212,7 @@ package body GVD.Dialogs.Callbacks is
                   Command,
                   Output_Command => True,
                   Mode           => GVD.Types.User);
-               Wait_User_Command (Tab);
+               Wait_User_Command (Tab.Debugger);
                Gtk_New (Item, Label => Command);
                Show (Item);
                Add (History_Dialog.List, Item);
