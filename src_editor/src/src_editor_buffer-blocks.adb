@@ -24,6 +24,8 @@ with Interfaces.C;
 
 package body Src_Editor_Buffer.Blocks is
 
+   use Block_List;
+
    function Strlen
      (Str : Gtkada.Types.Chars_Ptr) return Interfaces.C.size_t;
    pragma Import (C, Strlen);
@@ -41,10 +43,23 @@ package body Src_Editor_Buffer.Blocks is
       C_Str         : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
       Slice_Length  : Natural;
       Slice         : Unchecked_String_Access;
+      Block         : Block_Access;
       pragma Suppress (Access_Check, Slice);
 
    begin
-      if Buffer.Lang = null or else not Buffer.Parse_Blocks then
+      if Buffer.Lang = null then
+         return;
+      end if;
+
+      --  Free the previous block information.
+
+      Free (Buffer.Blocks);
+
+      for Line in Buffer.Line_Data'Range loop
+         Buffer.Line_Data (Line).Block := null;
+      end loop;
+
+      if not Buffer.Parse_Blocks then
          return;
       end if;
 
@@ -53,11 +68,6 @@ package body Src_Editor_Buffer.Blocks is
       Slice_Length := Natural (Strlen (C_Str));
 
       Parse_Constructs (Buffer.Lang, Slice (1 .. Slice_Length), Constructs);
-
-      for Line in Buffer.Line_Data'Range loop
-         Buffer.Line_Data (Line).Block := New_Block;
-      end loop;
-
       Current := Constructs.First;
 
       while Current /= null loop
@@ -69,21 +79,23 @@ package body Src_Editor_Buffer.Blocks is
             Column     := Integer'Min
               (Current.Sloc_Start.Column, Current.Sloc_End.Column);
 
-            Buffer.Line_Data (Line_Start).Block :=
-              (Indentation_Level =>
-                 Buffer.Line_Data (Line_Start).Block.Indentation_Level + 1,
+            Block := new Block_Record'
+              (Indentation_Level => 0,
                Offset            => Column,
-               Other_Line        => Line_End,
+               First_Line        => Line_Start,
+               Last_Line         => Line_End,
                Block_Type        => Current.Category,
                GC                => null);
 
-            Buffer.Line_Data (Line_End).Block :=
-              (Indentation_Level =>
-                 Buffer.Line_Data (Line_End).Block.Indentation_Level - 1,
-               Offset            => Column,
-               Other_Line        => Line_Start,
-               Block_Type        => Current.Category,
-               GC                => null);
+            Buffer.Line_Data (Line_Start).Block := Block;
+
+            Append (Buffer.Blocks, Block);
+
+            for J in Line_Start + 1 .. Line_End loop
+               if Buffer.Line_Data (J).Block = null then
+                  Buffer.Line_Data (J).Block := Block;
+               end if;
+            end loop;
          end if;
 
          Current := Current.Next;
