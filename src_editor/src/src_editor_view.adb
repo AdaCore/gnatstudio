@@ -1323,6 +1323,8 @@ package body Src_Editor_View is
          Ysrc     => 0,
          Xdest    => 0,
          Ydest    => 0);
+
+      Gdk.Pixmap.Unref (Buffer);
    end Redraw_Columns;
 
    --------------------------
