@@ -94,7 +94,10 @@ package body Switches_Editors is
    -- Fields --
    ------------
 
-   type Switch_Field_Widget is new Switch_Basic_Widget_Record with record
+   type Switch_Field_Widget (Sep_Length, Switch_Length : Natural)
+     is new Switch_Basic_Widget_Record (Switch_Length)
+   with record
+      Separator : String (1 .. Sep_Length);
       Field : Gtk.GEntry.Gtk_Entry;
    end record;
    type Switch_Field_Widget_Access is access all Switch_Field_Widget'Class;
@@ -109,7 +112,10 @@ package body Switches_Editors is
    -- Spin buttons --
    ------------------
 
-   type Switch_Spin_Widget is new Switch_Basic_Widget_Record with record
+   type Switch_Spin_Widget (Sep_Length, Switch_Length : Natural)
+     is new Switch_Basic_Widget_Record (Switch_Length)
+   with record
+      Separator : String (1 .. Sep_Length);
       Spin  : Gtk.Spin_Button.Gtk_Spin_Button;
       Default : Integer;
       --  Default value, for which no switch is needed on the command line
@@ -138,11 +144,13 @@ package body Switches_Editors is
    -- Combo buttons --
    -------------------
 
-   type Switch_Combo_Widget (Switch_Length : Natural;
-                             No_Digit_Length : Natural;
+   type Switch_Combo_Widget (Sep_Length       : Natural;
+                             Switch_Length    : Natural;
+                             No_Digit_Length  : Natural;
                              No_Switch_Length : Natural)
-      is new Switch_Basic_Widget_Record (Switch_Length) with
-   record
+     is new Switch_Basic_Widget_Record (Switch_Length)
+   with record
+      Separator         : String (1 .. Sep_Length);
       Combo             : Gtk_Combo;
       Default_No_Digit  : String (1 .. No_Digit_Length);
       Default_No_Switch : String (1 .. No_Switch_Length);
@@ -378,7 +386,7 @@ package body Switches_Editors is
       else
          declare
             T : GNAT.OS_Lib.String_Access := new String'(Text);
-            Result : constant String := Switch.Switch & ' '
+            Result : constant String := Switch.Switch & Switch.Separator
                & Argument_List_To_Quoted_String ((1 => T));
          begin
             Free (T);
@@ -444,7 +452,7 @@ package body Switches_Editors is
             if Item.Value = Switch.Default_No_Switch then
                return "";
             else
-               return Switch.Switch & Item.Value;
+               return Switch.Switch & Switch.Separator & Item.Value;
             end if;
          end if;
 
@@ -546,7 +554,7 @@ package body Switches_Editors is
       Val : constant Integer := Integer (Get_Value_As_Int (Switch.Spin));
    begin
       if Val /= Switch.Default  then
-         return Switch.Switch & Image (Val);
+         return Switch.Switch & Switch.Separator & Image (Val);
       else
          return "";
       end if;
@@ -877,19 +885,21 @@ package body Switches_Editors is
       Switch            : String;
       Min, Max, Default : Integer;
       Tip               : String := "";
-      Label_Size_Group : Gtk.Size_Group.Gtk_Size_Group := null)
+      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator         : String := "")
    is
       Hbox  : Gtk_Box;
       Adj   : Gtk_Adjustment;
       S     : Switch_Spin_Widget_Access := new Switch_Spin_Widget
-        (Switch'Length);
+        (Separator'Length, Switch'Length);
       L     : Gtk_Label;
 
    begin
       Gtk_New_Hbox (Hbox, False, 0);
       Pack_Start (Box, Hbox, False, False);
-      S.Switch := Switch;
-      S.Default := Default;
+      S.Separator := Separator;
+      S.Switch    := Switch;
+      S.Default   := Default;
 
       Gtk_New (L, Label);
       Set_Alignment (L, 0.0, 0.5);
@@ -965,18 +975,20 @@ package body Switches_Editors is
       Tip               : String := "";
       As_Directory      : Boolean := False;
       As_File           : Boolean := False;
-      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null)
+      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator         : String := " ")
    is
       Hbox   : Gtk_Box;
       S      : Switch_Field_Widget_Access := new Switch_Field_Widget
-        (Switch'Length);
+        (Separator'Length, Switch'Length);
       L      : Gtk_Label;
       Button : Gtk_Button;
 
    begin
       Gtk_New_Hbox (Hbox, False, 0);
       Pack_Start (Box, Hbox, False, False);
-      S.Switch := Switch;
+      S.Separator := Separator;
+      S.Switch    := Switch;
 
       Gtk_New (L, Label);
       Set_Alignment (L, 0.0, 0.5);
@@ -1036,8 +1048,8 @@ package body Switches_Editors is
          S := new Switch_Check_Widget (Buttons (B).Switch'Length);
 
          Gtk_New (Last, Group => Last, Label => -Buttons (B).Label.all);
-         S.Check := Gtk_Check_Button (Last);
-         S.Switch := Buttons (B).Switch.all;
+         S.Check     := Gtk_Check_Button (Last);
+         S.Switch    := Buttons (B).Switch.all;
          Pack_Start (Box, Last, False, False);
          Widget_Callback.Object_Connect
            (Last, "toggled",
@@ -1098,12 +1110,14 @@ package body Switches_Editors is
       Default_No_Digit     : String;
       Buttons              : Combo_Switch_Array;
       Tip                  : String := "";
-      Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null)
+      Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator            : String := "")
      return Gtk.Widget.Gtk_Widget
    is
       L     : Gtk_Label;
       S     : Switch_Combo_Widget_Access := new Switch_Combo_Widget
-        (Switch'Length, Default_No_Switch'Length, Default_No_Digit'Length);
+        (Separator'Length, Switch'Length, Default_No_Switch'Length,
+         Default_No_Digit'Length);
       Hbox  : Gtk_Box;
       Item  : Combo_List_Item;
    begin
@@ -1121,6 +1135,7 @@ package body Switches_Editors is
 
       Gtk_New (S.Combo);
       Pack_Start (Hbox, S.Combo, Expand => True, Fill => True);
+      S.Separator         := Separator;
       S.Default_No_Switch := Default_No_Switch;
       S.Default_No_Digit  := Default_No_Digit;
 

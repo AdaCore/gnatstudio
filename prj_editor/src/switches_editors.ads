@@ -98,7 +98,8 @@ package Switches_Editors is
       Switch            : String;
       Min, Max, Default : Integer;
       Tip               : String := "";
-      Label_Size_Group : Gtk.Size_Group.Gtk_Size_Group := null);
+      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator         : String := "");
    --  Create a new spin button for a switch with multiple levels.
    --  The actual switch on the command line is "-" & Switch & Level, as in
    --  "-j2".
@@ -112,7 +113,8 @@ package Switches_Editors is
       Tip               : String := "";
       As_Directory      : Boolean := False;
       As_File           : Boolean := False;
-      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null);
+      Label_Size_Group  : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator         : String := " ");
    --  Create a new field switch.
    --  If As_Directory is true, the field is expected to contain a directory,
    --  and a browse button is added.
@@ -130,11 +132,12 @@ package Switches_Editors is
    type Radio_Switch_Array is array (Positive range <>) of Radio_Switch;
 
    procedure Create_Radio
-     (Page    : access Switches_Editor_Page_Record;
-      Box     : access Gtk.Box.Gtk_Box_Record'Class;
-      Buttons : Radio_Switch_Array);
+     (Page      : access Switches_Editor_Page_Record;
+      Box       : access Gtk.Box.Gtk_Box_Record'Class;
+      Buttons   : Radio_Switch_Array);
    --  Create a series of radio buttons. Only one of them can be active at any
    --  time. No copy is made of the string accesses in Buttons.
+   --  Separator is used between the switch and its argument
 
    type Combo_Switch is record
       Label : Cst_String_Access;
@@ -151,7 +154,8 @@ package Switches_Editors is
       Default_No_Digit     : String;
       Buttons              : Combo_Switch_Array;
       Tip                  : String := "";
-      Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null)
+      Label_Size_Group     : Gtk.Size_Group.Gtk_Size_Group := null;
+      Separator            : String := "")
       return Gtk.Widget.Gtk_Widget;
    --  Create a new combo button. Switch is displayed on the left of the combo
    --  box. The newly created widget is returned, and it includes the label,

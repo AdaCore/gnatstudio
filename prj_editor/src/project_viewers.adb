@@ -394,7 +394,8 @@ package body Project_Viewers is
       Table  : access Gtk_Table_Record'Class;
       Lines  : Natural;
       Cols   : Natural;
-      Node   : Node_Ptr);
+      Node   : Node_Ptr;
+      Default_Separator : String);
    --  Subprogram for Parse_Switches_Page, this is used to handle both the
    --  <switches> and the <popup> tags
 
@@ -3100,7 +3101,8 @@ package body Project_Viewers is
       Table  : access Gtk_Table_Record'Class;
       Lines  : Natural;
       Cols   : Natural;
-      Node   : Node_Ptr)
+      Node   : Node_Ptr;
+      Default_Separator : String)
    is
       type Frame_Array is array (1 .. Lines, 1 .. Cols) of Gtk_Frame;
       type Box_Array   is array (1 .. Lines, 1 .. Cols) of Gtk_Box;
@@ -3326,7 +3328,8 @@ package body Project_Viewers is
          Line, Col : Natural;
       begin
          Coordinates_From_Node (N, Line, Col);
-         Create_Radio (Page, Boxes (Line, Col), Process_Radio_Entry_Nodes (N));
+         Create_Radio
+           (Page, Boxes (Line, Col), Process_Radio_Entry_Nodes (N));
       end Process_Radio_Node;
 
       ------------------------
@@ -3353,7 +3356,8 @@ package body Project_Viewers is
          end if;
 
          Gtk_New (Table, Guint (Lines), Guint (Cols), Homogeneous => False);
-         Parsing_Switches_XML (Kernel, Page, Table, Lines, Cols, N);
+         Parsing_Switches_XML
+           (Kernel, Page, Table, Lines, Cols, N, Default_Separator);
 
          Pack_Start
            (Boxes (Line, Col), Create_Popup (Label, Table), False, False);
@@ -3370,6 +3374,8 @@ package body Project_Viewers is
          Tip       : constant String := Get_Attribute (N, "tip");
          No_Switch : constant String := Get_Attribute (N, "noswitch");
          No_Digit  : constant String := Get_Attribute (N, "nodigit");
+         Sep       : constant String :=
+           Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -3389,7 +3395,8 @@ package body Project_Viewers is
                Default_No_Digit  => No_Digit,
                Buttons           => Process_Combo_Entry_Nodes (N),
                Tip               => Tip,
-               Label_Size_Group  => Sizes (Line, Col)),
+               Label_Size_Group  => Sizes (Line, Col),
+               Separator         => Sep),
             False, False);
       end Process_Combo_Node;
 
@@ -3404,8 +3411,10 @@ package body Project_Viewers is
          Tip     : constant String := Get_Attribute (N, "tip");
          As_Dir  : constant Boolean :=
            Get_Attribute (N, "as-directory", "false") = "true";
-         As_File  : constant Boolean :=
+         As_File : constant Boolean :=
            Get_Attribute (N, "as-file", "false") = "true";
+         Sep     : constant String :=
+           Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -3421,7 +3430,8 @@ package body Project_Viewers is
            (Page, Boxes (Line, Col), Label, Switch, Tip,
             As_Directory     => As_Dir and not As_File,
             As_File          => As_File,
-            Label_Size_Group => Sizes (Line, Col));
+            Label_Size_Group => Sizes (Line, Col),
+            Separator        => Sep);
       end Process_Field_Node;
 
       -----------------------
@@ -3437,8 +3447,10 @@ package body Project_Viewers is
            (Get_Attribute (N, "min", "1"));
          Max     : constant Integer := Safe_Value
            (Get_Attribute (N, "max", "1"));
-         Default     : constant Integer := Safe_Value
+         Default : constant Integer := Safe_Value
            (Get_Attribute (N, "default", "1"));
+         Sep     : constant String :=
+           Get_Attribute (N, "separator", Default_Separator);
       begin
          Coordinates_From_Node (N, Line, Col);
 
@@ -3452,7 +3464,7 @@ package body Project_Viewers is
 
          Create_Spin
            (Page, Boxes (Line, Col), Label, Switch, Min, Max, Default, Tip,
-            Sizes (Line, Col));
+            Sizes (Line, Col), Sep);
       end Process_Spin_Node;
 
       ------------------------
@@ -3528,7 +3540,6 @@ package body Project_Viewers is
          end if;
       end Process_Expansion_Node;
 
-
       N      : Node_Ptr;
 
    begin
@@ -3598,6 +3609,8 @@ package body Project_Viewers is
         Safe_Value (Get_Attribute (Creator.XML_Node, "lines", "1"));
       Cols : constant Integer :=
         Safe_Value (Get_Attribute (Creator.XML_Node, "columns", "1"));
+      Default_Separator : constant String :=
+        Get_Attribute (Creator.XML_Node, "separator", "");
       Page : Switches_Editor_Page;
       Tool : constant Tool_Properties_Record :=
         Get_Tool_Properties (Kernel, Creator.Tool_Name.all);
@@ -3613,7 +3626,8 @@ package body Project_Viewers is
          end loop;
       end if;
 
-      Parsing_Switches_XML (Kernel, Page, Page, Lines, Cols, Creator.XML_Node);
+      Parsing_Switches_XML
+        (Kernel, Page, Page, Lines, Cols, Creator.XML_Node, Default_Separator);
       return Page;
    end Create;
 
