@@ -263,9 +263,11 @@ package body GVD.Tooltips is
 
    procedure Destroy_Tooltip (Tooltip : in out Tooltips) is
    begin
-      Remove_Tooltip (Tooltip);
-      Free_User_Type (Tooltip.Data);
-      Free_Tooltips (Tooltip);
+      if Tooltip /= null then
+         Remove_Tooltip (Tooltip);
+         Free_User_Type (Tooltip.Data);
+         Free_Tooltips (Tooltip);
+      end if;
    end Destroy_Tooltip;
 
    --------------
