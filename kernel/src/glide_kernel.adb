@@ -276,7 +276,9 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
-      MDI : constant MDI_Window := Get_MDI (Handle);
+      MDI   : constant MDI_Window := Get_MDI (Handle);
+      Child : MDI_Child;
+
    begin
       --  ??? the following implementation assumes that the file editors
       --  are MDI children that have corresponding file names for title, and
@@ -285,7 +287,33 @@ package body Glide_Kernel is
       --  against that of the source editor module. The ID for that module
       --  needs to be moved to glide_kernel.ads.
 
-      return Find_MDI_Child_By_Name (MDI, Full_Name (File).all);
+      --  First, try to find the editor using the normalized name of File.
+      Child := Find_MDI_Child_By_Name
+        (MDI, Full_Name (File, Normalize => True).all);
+
+      --  If no editor could be found matching the file name, look in the open
+      --  files for a file that matches File, and then try to find an editor
+      --  for the non-normalized file name for this file.
+
+      --  ??? A correct implementation would be either to always normalize file
+      --  names when opening editors, or to store the MDI Child along with the
+      --  files in Handle.Open_Files.
+      --  The temporary implementation below was chosen because we didn't want
+      --  to make overly massive changes at the time.
+
+      if Child /= null then
+         return Child;
+      else
+         for J in Handle.Open_Files'Range loop
+            if File = Handle.Open_Files (J) then
+               return Find_MDI_Child_By_Name
+                 (MDI,
+                  Full_Name (Handle.Open_Files (J), Normalize => False).all);
+            end if;
+         end loop;
+
+         return null;
+      end if;
    end Get_File_Editor;
 
    ---------------------------
