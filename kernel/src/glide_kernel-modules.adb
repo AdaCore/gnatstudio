@@ -493,7 +493,7 @@ package body Glide_Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record := No_Action)
+      Action      : Action_Record_Access := null)
    is
       Item  : Gtk_Menu_Item;
       pragma Unreferenced (Item);
@@ -548,7 +548,7 @@ package body Glide_Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record := No_Action) return Gtk_Menu_Item
+      Action      : Action_Record_Access := null) return Gtk_Menu_Item
    is
       use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
       function Cleanup (Path : String) return String;
@@ -619,7 +619,7 @@ package body Glide_Kernel.Modules is
             User_Data   => (Command, null));
       end if;
 
-      if Action /= No_Action then
+      if Action /= null then
          Command_Callback.Object_Connect
            (Item, "activate",
             Command_Callback.To_Marshaller (Execute_Command'Access),

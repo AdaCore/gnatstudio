@@ -351,7 +351,7 @@ package Glide_Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record := No_Action);
+      Action      : Action_Record_Access := null);
    --  Same as the above, but creates the menu item directly, and connects the
    --  appropriate callback.
    --  If Command is not null, then a callback will be created to launch
@@ -371,7 +371,7 @@ package Glide_Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True;
       Sensitive   : Boolean := True;
-      Action      : Action_Record := No_Action)
+      Action      : Action_Record_Access := null)
       return Gtk.Menu_Item.Gtk_Menu_Item;
    --  Same as above, but returns the menu item that was created.
 
