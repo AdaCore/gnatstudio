@@ -180,6 +180,7 @@ package body Vdiff2_Module.Utils is
                VRange (J).Mark := new String'
                  (Mark_Diff_Block (Kernel, VFile (J),
                                    VRange (J).First));
+               Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
             end if;
          else
             if (VRange (Other).Action = Append and then J /= Other) or
@@ -192,6 +193,7 @@ package body Vdiff2_Module.Utils is
                VRange (J).Mark := new String'
                  (Mark_Diff_Block (Kernel, VFile (J),
                                    VRange (J).First));
+               Delete_Mark (Kernel_Handle (Kernel), Tmp.all);
             end if;
          end if;
 
