@@ -208,8 +208,6 @@ If you confirm by clicking on the @i{OK} button, GVD will open a new
 debugger for each sub session selected and will replay all the commands
 automatically.
 
-???image
-
    @item Save Session As...
 Open a dialog similar to the @i{Open Session} dialog, allowing you to specify
 the name of the session to save, and what sub sessions/debuggers to save.
