@@ -248,8 +248,9 @@ package body Docgen.Work_On_Source is
      (B                 : Backend_Handle;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+      Entity_List       : in out Type_Entity_List.List;
+      List_Ref_In_File  : in out List_Reference_In_File.List;
+      Source_Filename   : VFS.Virtual_File;
       Package_Name      : String;
       Package_File      : VFS.Virtual_File;
       Process_Body_File : Boolean;
@@ -345,6 +346,7 @@ package body Docgen.Work_On_Source is
       Doc_Directory      : String;
       Doc_Suffix         : String)
    is
+      use type Basic_Types.String_Access;
       File_Text   : GNAT.OS_Lib.String_Access;
       Parsed_List : Construct_List;
    begin
@@ -377,6 +379,7 @@ package body Docgen.Work_On_Source is
          Doc_File,
          Entity_List,
          List_Ref_In_File,
+         Source_Filename,
          Package_Name,
          Source_Filename,
          Process_Body_File,
@@ -390,7 +393,6 @@ package body Docgen.Work_On_Source is
       if Is_Spec_File (Kernel, Source_Filename) then
          --  ??? Need to call the appropriate kernel service to retrieve
          --  the right language automatically.
-
          Parse_Constructs (Ada_Lang, File_Text.all, Parsed_List);
          Sort_List_Name (Entity_List);
 
@@ -944,8 +946,9 @@ package body Docgen.Work_On_Source is
      (B                 : Backend_Handle;
       Kernel            : access Kernel_Handle_Record'Class;
       Doc_File          : File_Type;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
+      Entity_List       : in out Type_Entity_List.List;
+      List_Ref_In_File  : in out List_Reference_In_File.List;
+      Source_Filename   : VFS.Virtual_File;
       Package_Name      : String;
       Package_File      : Virtual_File;
       Process_Body_File : Boolean;
@@ -954,17 +957,47 @@ package body Docgen.Work_On_Source is
       Doc_Directory     : String;
       Doc_Suffix        : String)
    is
-      Data_Header : Doc_Info :=
+      use TEL;
+      Find_Header : Boolean := False;
+      Declar_Line : Natural := First_File_Line;
+      Entity_Node : Type_Entity_List.List_Node;
+      Data_Header  : Doc_Info :=
         (Header_Info,
          Doc_Info_Options => Options,
          Doc_LI_Unit    => No_LI_File,
          Doc_File_List  => TSFL.Null_List,
          Header_Package => new String'(Package_Name),
          Header_File    => Package_File,
-         Header_Line    => First_File_Line,
+         Header_Line    => Declar_Line,
          Header_Link    => Process_Body_File);
-
    begin
+
+      if not TEL.Is_Empty (Entity_List) then
+         Entity_Node := TEL.First (Entity_List);
+         while Entity_Node /= TEL.Null_Node loop
+            if TEL.Data (Entity_Node).Kind = Package_Entity
+            --  It's a package declaration
+              and then To_Lower (TEL.Data (Entity_Node).Name.all) =
+                To_Lower (Package_Name)
+            --  Main package
+            then
+               if  Get_Declaration_File_Of (TEL.Data (Entity_Node).Entity)
+                 = Source_Filename then
+                  --  Clauses with may be above the declaration
+                  --  of the main package
+                  Declar_Line := Get_Declaration_Line_Of
+                    (TEL.Data (Entity_Node).Entity);
+               else
+                  Declar_Line := Get_Line
+                    (TEL.Data (Entity_Node).Line_In_Body);
+               end if;
+               Find_Header := True;
+            end if;
+            exit when Find_Header;
+            Entity_Node := TEL.Next (Entity_Node);
+         end loop;
+      end if;
+      Data_Header.Header_Line := Declar_Line;
       Converter (B, Kernel, Doc_File,
                  Entity_List, List_Ref_In_File,
                  Data_Header, Doc_Directory, Doc_Suffix);
@@ -1203,6 +1236,11 @@ package body Docgen.Work_On_Source is
 
       First_Already_Set : Boolean;
 
+      Old_Name : String_Access;
+      --  To delete when bug with Get_Full_Name is resolved
+      --  With this temporary solution, we avoid an infinite loop
+      --  but we omit packages in 3 level
+
    begin
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
@@ -1217,8 +1255,12 @@ package body Docgen.Work_On_Source is
          Entity_Node := TEL.First (Entity_List);
          Entity_Node_Prec := TEL.Null_Node;
 
+
+         Old_Name := null;
+
          while Entity_Node /= TEL.Null_Node loop
             --  Check if the entity is a package
+
 
             Alert := False;
             if TEL.Data (Entity_Node).Kind = Package_Entity
@@ -1229,65 +1271,71 @@ package body Docgen.Work_On_Source is
               and then Get_Declaration_File_Of
                 (TEL.Data (Entity_Node).Entity) = Source_Filename
             then
-               if Entity_Node = TEL.First (Entity_List) then
-                  Alert := True;
-               end if;
+               Old_Name := TEL.Data (Entity_Node).Name;
+               if Old_Name = TEL.Data (Entity_Node).Name then
+                  Entity_Node_Prec := Entity_Node;
+                  Entity_Node := TEL.Next (Entity_Node);
 
-               Header := Get_Whole_Header
-                 (File_Text.all,
-                  Parsed_List,
-                  Get_Name (TEL.Data (Entity_Node).Entity),
-                  Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+               else
+                  if Entity_Node = TEL.First (Entity_List) then
+                     Alert := True;
+                  end if;
 
-               if Header /= null then
+                  Header := Get_Whole_Header
+                    (File_Text.all,
+                     Parsed_List,
+                     Get_Name (TEL.Data (Entity_Node).Entity),
+                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+
+                  if Header /= null then
                   --  Check if the subtitle has been set already.
                   --  Can't be set before the "if"
 
-                  if not First_Already_Set then
+                     if not First_Already_Set then
+                        Converter (B,
+                                   Kernel,
+                                   Doc_File,
+                                   Entity_List,
+                                   List_Ref_In_File,
+                                   Data_Subtitle,
+                                   Doc_Directory,
+                                   Doc_Suffix);
+                        First_Already_Set := True;
+                     end if;
+
+                     Description := Extract_Comment
+                       (File_Text.all,
+                        Get_Declaration_Line_Of
+                          (TEL.Data (Entity_Node).Entity),
+                        Count_Lines (Header.all),
+                        False,
+                        Options);
+
+                     Data_Package := Doc_Info'
+                       (Package_Info,
+                        Doc_Info_Options    => Options,
+                        Doc_LI_Unit         => LI_Unit,
+                        Doc_File_List       => Source_File_List,
+                        Package_Entity      => TEL.Data (Entity_Node),
+                        Package_Description => Description,
+                        Package_Header      => Header,
+                        Package_Header_Line => Get_Declaration_Line_Of
+                          (TEL.Data (Entity_Node).Entity));
                      Converter (B,
                                 Kernel,
                                 Doc_File,
                                 Entity_List,
                                 List_Ref_In_File,
-                                Data_Subtitle,
+                                Data_Package,
                                 Doc_Directory,
                                 Doc_Suffix);
-                     First_Already_Set := True;
                   end if;
-
-                  Description := Extract_Comment
-                    (File_Text.all,
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity),
-                     Count_Lines (Header.all),
-                     False,
-                     Options);
-
-                  Data_Package := Doc_Info'
-                    (Package_Info,
-                     Doc_Info_Options    => Options,
-                     Doc_LI_Unit         => LI_Unit,
-                     Doc_File_List       => Source_File_List,
-                     Package_Entity      => TEL.Data (Entity_Node),
-                     Package_Description => Description,
-                     Package_Header      => Header,
-                     Package_Header_Line => Get_Declaration_Line_Of
-                       (TEL.Data (Entity_Node).Entity));
-                  Converter (B,
-                             Kernel,
-                             Doc_File,
-                             Entity_List,
-                             List_Ref_In_File,
-                             Data_Package,
-                             Doc_Directory,
-                             Doc_Suffix);
+                  if Alert = True then
+                     Entity_Node := TEL.First (Entity_List);
+                  else
+                     Entity_Node := TEL.Next (Entity_Node_Prec);
+                  end if;
                end if;
-
-               if Alert = True then
-                  Entity_Node := TEL.First (Entity_List);
-               else
-                  Entity_Node := Entity_Node_Prec;
-               end if;
-
             else
                Entity_Node_Prec := Entity_Node;
                Entity_Node := TEL.Next (Entity_Node);
@@ -1359,7 +1407,6 @@ package body Docgen.Work_On_Source is
                   Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
 
                --  Check if it was a entity with its own header
-
                if Header /= null then
                   --  Check if the subtitle "Constand and Named Numbers:"
                   --  has been set already.
@@ -1586,7 +1633,6 @@ package body Docgen.Work_On_Source is
                   Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
 
                --  Check if it was a entity with its own header
-
                if Header /= null then
                   --  Check if still the subtitle "Types:" has to be set.
                   --  Can't be set before the "if"
@@ -1832,7 +1878,6 @@ package body Docgen.Work_On_Source is
                   Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
 
                --  Check if it was a entity with its own header
-
                if Header /= null then
                   Description := Extract_Comment
                     (File_Text.all,
