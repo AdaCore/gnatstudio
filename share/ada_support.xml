@@ -229,12 +229,12 @@
             <combo-entry label="Upper case" value="U" />
          </combo>
          <combo label="Attribute" switch="-a" line="2" noswitch="M" nodigit="M" >
-            <combo-entry label="Upper case" value="U" />
+            <combo-entry label="Mixed case" value="M" />
             <combo-entry label="Lower case" value="L" />
             <combo-entry label="Upper case" value="U" />
          </combo>
          <combo label="Pragma" switch="-p" line="2" noswitch="M" nodigit="M" >
-            <combo-entry label="Upper case" value="U" />
+            <combo-entry label="Mixed case" value="M" />
             <combo-entry label="Lower case" value="L" />
             <combo-entry label="Upper case" value="U" />
          </combo>
@@ -256,7 +256,7 @@
          <check label="Assignments in statements" switch="-A3" line="4" />
          <check label="Arrow delimiters in associations" switch="-A4" line="4" />
 
-         <check label="Set missing end/exit labels" switch="-e" line="5" />
+         <check label="Do not set missing end/exit labels" switch="-e" line="5" />
       </switches>
    </tool>
 
