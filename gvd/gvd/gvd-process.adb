@@ -955,7 +955,7 @@ package body GVD.Process is
       Widget := Get_Widget (Process.Window.Factory, -"/Data/Call Stack");
 
       if Widget = null then
-         --  This means that GVD is part of Glide
+         --  This means that GVD is part of GPS
          Widget :=
            Get_Widget (Process.Window.Factory, -"/Debug/Data/Call Stack");
       end if;
@@ -1495,7 +1495,7 @@ package body GVD.Process is
       Widget := Get_Widget (Window.Factory, -"/Data/Call Stack");
 
       if Widget = null then
-         --  This means that GVD is part of Glide
+         --  This means that GVD is part of GPS
          Widget := Get_Widget (Window.Factory, -"/Debug/Data/Call Stack");
       end if;
 
@@ -1607,10 +1607,19 @@ package body GVD.Process is
       --  debugger targeted to VxWorks AE
 
       Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
-      Info_WTX (Process.Debugger, WTX_Version);
 
-      if WTX_Version /= 3 then
-         Set_Sensitive (Widget, False);
+      if Widget = null then
+         --  This means that GVD is part of GPS
+         Widget := Get_Widget
+           (Window.Factory, -"/Debug/Data/Protection Domains");
+      end if;
+
+      if Widget /= null then
+         Info_WTX (Process.Debugger, WTX_Version);
+
+         if WTX_Version /= 3 then
+            Set_Sensitive (Widget, False);
+         end if;
       end if;
 
       Success := True;
