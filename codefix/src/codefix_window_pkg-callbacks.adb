@@ -27,7 +27,6 @@ with Gtk.Enums;                   use Gtk.Enums;
 use Gtk.Enums.String_List;
 
 with Codefix;                     use Codefix;
-with Codefix.Errors_Manager;      use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;       use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 with Codefix.Graphics; use Codefix.Graphics;
@@ -36,31 +35,7 @@ with Traces;                      use Traces;
 
 package body Codefix_Window_Pkg.Callbacks is
 
-   use Gtk.Arguments;
-
    Me : constant Debug_Handle := Create ("Codefix_Window_Pkg.Callbacks");
-
-   ------------------------------------
-   -- On_Codefix_Window_Delete_Event --
-   ------------------------------------
-
-   function On_Codefix_Window_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-
-      Graphic_Codefix : constant Graphic_Codefix_Access :=
-        Graphic_Codefix_Access (Object);
-   begin
-      Quit (Graphic_Codefix);
-      return False;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end On_Codefix_Window_Delete_Event;
 
    --------------------------
    -- On_Fix_Entry_Changed --
@@ -83,11 +58,27 @@ package body Codefix_Window_Pkg.Callbacks is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Fix_Entry_Changed;
 
-   --------------------------------
-   -- On_Skip_Correction_Clicked --
-   --------------------------------
+   ---------------------
+   -- On_Prev_Clicked --
+   ---------------------
 
-   procedure On_Skip_Correction_Clicked
+   procedure On_Prev_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
+   begin
+      Load_Previous_Error (Graphic_Codefix);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Prev_Clicked;
+
+   ---------------------
+   -- On_Next_Clicked --
+   ---------------------
+
+   procedure On_Next_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
@@ -98,13 +89,13 @@ package body Codefix_Window_Pkg.Callbacks is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Skip_Correction_Clicked;
+   end On_Next_Clicked;
 
-   ----------------------------------
-   -- On_Accept_Correction_Clicked --
-   ----------------------------------
+   ----------------------
+   -- On_Apply_Clicked --
+   ----------------------
 
-   procedure On_Accept_Correction_Clicked
+   procedure On_Apply_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
@@ -116,41 +107,7 @@ package body Codefix_Window_Pkg.Callbacks is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Accept_Correction_Clicked;
-
-   -------------------------------------
-   -- On_Skip_All_Corrections_Clicked --
-   -------------------------------------
-
-   procedure On_Skip_All_Corrections_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Graphic_Codefix : constant Graphic_Codefix_Access :=
-        Graphic_Codefix_Access (Object);
-   begin
-      Set_Error_State
-        (Graphic_Codefix.Automatic_Skip,
-         Get_Category (Graphic_Codefix.Current_Error),
-         Enabled);
-      On_Skip_Correction_Clicked (Object);
-   end On_Skip_All_Corrections_Clicked;
-
-   ---------------------------------------
-   -- On_Accept_All_Corrections_Clicked --
-   ---------------------------------------
-
-   procedure On_Accept_All_Corrections_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Graphic_Codefix : constant Graphic_Codefix_Access :=
-        Graphic_Codefix_Access (Object);
-   begin
-      Set_Error_State
-        (Graphic_Codefix.Automatic_Fix,
-         Get_Category (Graphic_Codefix.Current_Error),
-         Enabled);
-      On_Accept_Correction_Clicked (Object);
-   end On_Accept_All_Corrections_Clicked;
+   end On_Apply_Clicked;
 
    ---------------------
    -- On_Undo_Clicked --
@@ -185,38 +142,5 @@ package body Codefix_Window_Pkg.Callbacks is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Refresh_Clicked;
-
-   -------------------------
-   -- On_Previous_Clicked --
-   -------------------------
-
-   procedure On_Previous_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Graphic_Codefix : constant Graphic_Codefix_Access :=
-        Graphic_Codefix_Access (Object);
-   begin
-      Load_Previous_Error (Graphic_Codefix);
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Previous_Clicked;
-
-   -------------------------------
-   -- On_Cancel_Changes_Clicked --
-   -------------------------------
-
-   procedure On_Cancel_Changes_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Graphic_Codefix : constant Graphic_Codefix_Access :=
-        Graphic_Codefix_Access (Object);
-   begin
-      Cancel_All_Fixes (Graphic_Codefix);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Cancel_Changes_Clicked;
 
 end Codefix_Window_Pkg.Callbacks;
