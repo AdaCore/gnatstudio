@@ -43,6 +43,13 @@ project GPS is
       for Default_Switches ("Ada") use ("-E");
    end Binder;
 
+   package Linker is
+      case Shared.OS is
+         when "Windows_NT" =>
+            for Default_Switches ("Ada") use ("obj/gps.res");
+      end case;
+   end Linker;
+
    package IDE renames Shared.IDE;
 
 end GPS;
