@@ -281,6 +281,10 @@ procedure GPS is
       OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
       Projects.Registry.Initialize;
 
+      --  Reset any artificial memory limit
+
+      Setenv ("GNAT_MEMORY_LIMIT", "");
+
       Charset := Getenv ("CHARSET");
 
       if Charset.all = "" then
@@ -382,6 +386,12 @@ procedure GPS is
       Ignored := Log_Set_Handler
         ("Gtk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
 
+      declare
+         Sessions : constant String :=
+           File_Utils.Name_As_Directory (Dir.all) & "sessions";
+         Customize : constant String :=
+           File_Utils.Name_As_Directory (Dir.all) & "customize";
+
       begin
          User_Directory_Existed := Is_Directory (Dir.all);
 
@@ -415,28 +425,22 @@ procedure GPS is
             Close (File);
          end if;
 
-         if not
-           Is_Directory (File_Utils.Name_As_Directory (Dir.all) & "sessions")
-         then
-            Make_Dir (File_Utils.Name_As_Directory (Dir.all) & "sessions");
+         if not Is_Directory (Sessions) then
+            Make_Dir (Sessions);
 
             if not Dir_Created then
                Button := Message_Dialog
-                 ((-"Created config directory ")
-                  & File_Utils.Name_As_Directory (Dir.all) & "sessions",
+                 ((-"Created config directory ") & Sessions,
                   Information, Button_OK, Justification => Justify_Left);
             end if;
          end if;
 
-         if not Is_Directory
-           (File_Utils.Name_As_Directory (Dir.all) & "customize")
-         then
-            Make_Dir (File_Utils.Name_As_Directory (Dir.all) & "customize");
+         if not Is_Directory (Customize) then
+            Make_Dir (Customize);
 
             if not Dir_Created then
                Button := Message_Dialog
-                 ((-"Created config directory ")
-                  & File_Utils.Name_As_Directory (Dir.all) & "customize",
+                 ((-"Created config directory ") & Customize,
                   Information, Button_OK, Justification => Justify_Left);
             end if;
          end if;
@@ -833,7 +837,22 @@ procedure GPS is
                      Load_Default_Desktop => True);
                end if;
 
-               Open_File_Editor (GPS.Kernel, Create (S, GPS.Kernel), 1, 1);
+               if S (S'First) = '=' then
+                  Open_File_Editor
+                    (GPS.Kernel,
+                     Create (S (S'First + 1 .. S'Last),
+                             GPS.Kernel,
+                             Use_Source_Path => True,
+                             Use_Object_Path => False));
+               else
+                  Open_File_Editor
+                    (GPS.Kernel,
+                     Create (S,
+                             GPS.Kernel,
+                             Use_Source_Path => False,
+                             Use_Object_Path => False));
+               end if;
+
                File_Opened := True;
             end;
          end loop;
@@ -916,7 +935,7 @@ procedure GPS is
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
---      Docgen_Module.Register_Module (GPS.Kernel);
+--        Docgen_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
@@ -932,7 +951,6 @@ procedure GPS is
       declare
          Navigate : constant String := '/' & (-"Navigate") & '/';
          Tools    : constant String := '/' & (-"Tools") & '/';
-
       begin
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
@@ -1047,7 +1065,6 @@ procedure GPS is
          if not Auto_Load_Project then
             if Batch_File /= null then
                Load_Default_Project (GPS.Kernel, Get_Current_Dir);
-
             else
                Load_Sources;
 
