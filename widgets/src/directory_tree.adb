@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -113,8 +113,8 @@ package body Directory_Tree is
    --  user has manually created directories)
 
    procedure Add_Directory
-     (Selector : access Directory_Selector_Record'Class;
-      Dir : String;
+     (Selector  : access Directory_Selector_Record'Class;
+      Dir       : String;
       Recursive : Boolean);
    --  Add Dir in the tree to the list of source directories associated with
    --  the project.  If recursive is True, then all the subdirectories are also
@@ -664,10 +664,12 @@ package body Directory_Tree is
 
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : Directory_Selector := Directory_Selector (W);
-      Dir : constant String := Get_Selection (Selector.Directory);
+      Dir      : constant String    := Get_Selection (Selector.Directory);
+
    begin
       pragma Assert
         (Selector.List /= null, "Not a multiple-directory selector");
+
       if Dir /= "" then
          Freeze (Selector.List);
          Unselect_All (Selector.List);
@@ -926,7 +928,7 @@ package body Directory_Tree is
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
            (Button, "clicked",
-            Widget_Callback.To_Marshaller (Add_Directory_Cb'Access),
+            Widget_Callback.To_Marshaller (Add_Single_Directory_Cb'Access),
             Selector);
 
          Gtk_New (Button);
@@ -935,7 +937,7 @@ package body Directory_Tree is
          Pack_Start (Bbox, Button, Expand => False, Fill => False);
          Widget_Callback.Object_Connect
            (Button, "clicked",
-            Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
+            Widget_Callback.To_Marshaller (Remove_Single_Directory_Cb'Access),
             Selector);
 
          Gtk_New (Scrolled);
