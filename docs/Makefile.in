@@ -4,7 +4,7 @@ sharedir = $(prefix)/share/gps
 
 DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
-TEX= @TEX@
+TEXI2DVI= @TEXI2DVI@
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -46,11 +46,8 @@ gps.html gps.ps gps.info gps.txt: ${TEXI}
 	perl ./texi2html $< ${TEXI2HTML_FLAGS}
 
 %.ps::
-ifneq (${TEX},)
-	echo x | ${TEX} $<
-	texindex ${<:.texi=.cp}
-	${TEX} $<
-	${TEX} $<
+ifneq (${TEXI2DVI},)
+	echo x | ${TEXI2DVI} $<
 ifneq (${DVIPS},)
 	${DVIPS} ${<:.texi=.dvi} -o $@
 else
@@ -59,9 +56,9 @@ else
 	@echo "------------------------------------------------------"
 endif
 else
-	@echo "----------------------------------------------------"
-	@echo "tex not found, cannot build DVI or PS documentation"
-	@echo "----------------------------------------------------"
+	@echo "--------------------------------------------------------"
+	@echo "texi2dvi not found, cannot build DVI or PS documentation"
+	@echo "--------------------------------------------------------"
 endif
 
 %.info: ${TEXI}
