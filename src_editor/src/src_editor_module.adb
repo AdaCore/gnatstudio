@@ -83,6 +83,7 @@ package body Src_Editor_Module is
       Child  : MDI_Child;
       File   : Basic_Types.String_Access;
       Mark   : Gtk_Text_Mark;
+      Length : Natural;
    end record;
 
    procedure Free (X : in out Mark_Identifier_Record);
@@ -373,6 +374,7 @@ package body Src_Editor_Module is
       Node : List_Node;
       Filename : Basic_Types.String_Access;
       Line     : Natural := 1;
+      Length   : Natural := 0;
       Column   : Natural := 1;
    begin
       if Command = "edit" or else Command = "create_mark" then
@@ -413,6 +415,24 @@ package body Src_Editor_Module is
                      Free (Filename);
                      return Command
                      & ": " & (-"option -l requires a numerical value");
+               end;
+
+            elsif Data (Node) = "-L" then
+               Node := Next (Node);
+
+               if Node = Null_Node then
+                  Free (Filename);
+                  return Command & ": " & (-"option -L requires a value");
+               end if;
+
+               declare
+               begin
+                  Length  := Natural'Value (Data (Node));
+               exception
+                  when others =>
+                     Free (Filename);
+                     return Command
+                     & ": " & (-"option -L requires a numerical value");
                end;
 
             elsif Filename = null then
@@ -457,6 +477,7 @@ package body Src_Editor_Module is
                      Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
 
                      Mark_Record.Child := Child;
+                     Mark_Record.Length := Length;
 
                      Mark_Record.Mark :=
                        Create_Mark (Box.Editor, Line, Column);
@@ -541,7 +562,8 @@ package body Src_Editor_Module is
 
                      Scroll_To_Mark
                        (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
-                        Mark_Record.Mark);
+                        Mark_Record.Mark,
+                        Mark_Record.Length);
 
                      Found := True;
                      exit;
@@ -2363,9 +2385,12 @@ package body Src_Editor_Module is
         (Kernel,
          Command => "create_mark",
          Help    => -"Usage:" & ASCII.LF
-         & "  create_mark [-l line] [-c column] file_name" & ASCII.LF
+         & "  create_mark [-l line] [-c column] [-L length] file_name"
+           & ASCII.LF
            & (-"Create a mark for file_name," &
               " at position given by line and column.") & ASCII.LF
+           & (-"Length corresponds of the text length to be highlighted"
+              & " after the mark.") & ASCII.LF
            & (-"The identifier of the mark is returned.") & ASCII.LF
            & (-"Use the command goto_mark to jump to this mark."),
          Handler => Edit_Command_Handler'Access);
