@@ -633,10 +633,23 @@ package body Switches_Editors is
          --  and add the new ones
 
          for C in Coalesce_Switches'Range loop
+            --  Add the coalesced switch to the command line. As a special
+            --  case, if the result is in fact the default value of the switch,
+            --  we try to minimize the length of the command line (ie instead
+            --  of putting -gnaty3ab we put -gnaty if these are equivalent)
+
             if Coalesce_Switches (C).all /= "" then
-               Append_Text (P.Cmd_Line,
-                            P.Coalesce_Switches (C).all
-                            & Coalesce_Switches (C).all & ' ');
+               declare
+                  Cmd : constant String :=
+                    P.Coalesce_Switches (C).all & Coalesce_Switches (C).all;
+               begin
+                  if Cmd = P.Coalesce_Switches_Default (C).all then
+                     Append_Text
+                       (P.Cmd_Line, P.Coalesce_Switches (C).all & ' ');
+                  else
+                     Append_Text (P.Cmd_Line, Cmd & ' ');
+                  end if;
+               end;
             end if;
 
             for Cur in Current'Range loop
@@ -1088,10 +1101,13 @@ package body Switches_Editors is
    -------------------------
 
    procedure Add_Coalesce_Switch
-     (Page    : access Switches_Editor_Page_Record'Class;
-      Switch  : String) is
+     (Page              : access Switches_Editor_Page_Record'Class;
+      Switch            : String;
+      Default_As_String : String := "") is
    begin
       Append (Page.Coalesce_Switches, (1 => new String'(Switch)));
+      Append (Page.Coalesce_Switches_Default,
+              (1 => new String'(Default_As_String)));
    end Add_Coalesce_Switch;
 
    --------------------------
@@ -1141,6 +1157,7 @@ package body Switches_Editors is
       Page.Title := new String'(Title);
       Page.Pkg   := new String'(Project_Package);
       Page.Coalesce_Switches  := new GNAT.OS_Lib.String_List (1 .. 0);
+      Page.Coalesce_Switches_Default := new GNAT.OS_Lib.String_List (1 .. 0);
       Page.Expansion_Switches := new String_List_Array (1 .. 0);
 
       Gtk_New (Page.Cmd_Line);
@@ -1292,7 +1309,7 @@ package body Switches_Editors is
                Pack_Start (Box,
                            Create_Popup (-"Warnings", Warn_Box),
                            False, False);
-               Add_Coalesce_Switch (Page, "-gnatw");
+               Add_Coalesce_Switch (Page, "-gnatw", "-gnatwfikmopeuvz");
                Add_Custom_Expansion
                  (Page, "-gnatwa",
                   (Cst_Gnat_Wc'Access,
@@ -1380,7 +1397,7 @@ package body Switches_Editors is
                Pack_Start (Box,
                            Create_Popup (-"Style checks", Style_Box),
                            False, False);
-               Add_Coalesce_Switch (Page, "-gnaty");
+               Add_Coalesce_Switch (Page, "-gnaty", "-gnatyabcefhiklmnprst");
                Add_Custom_Expansion (Page, "-gnaty",
                                      (Cst_Gnat_Y3'Access,
                                       Cst_Gnat_Ya'Access,
@@ -1733,6 +1750,7 @@ package body Switches_Editors is
       Free (P.Title);
       Free (P.Pkg);
       Free (P.Coalesce_Switches);
+      Free (P.Coalesce_Switches_Default);
 
       for C in P.Expansion_Switches'Range loop
          Free (P.Expansion_Switches (C));

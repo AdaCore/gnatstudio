@@ -153,17 +153,44 @@ package Switches_Editors is
    --  builder, "-g" will also be forced for the compiler.
 
    procedure Add_Coalesce_Switch
-     (Page    : access Switches_Editor_Page_Record'Class; Switch : String);
+     (Page              : access Switches_Editor_Page_Record'Class;
+      Switch            : String;
+      Default_As_String : String := "");
    --  Defines Switch as a common switch (ie all other switches that start with
    --  Switch will be collapse into one (for instance: if Switch is "-gnaty",
    --  then "-gnatya" and "-gnatyl" are collapsed into "-gnatyal").
+   --  Default_As_String is the switch that Switch by itself on the command
+   --  line is equal to (e.g. -gnaty = -gnaty3abcefhiklmnprst). In case the
+   --  result of coalescing switches comes done to Default_As_String, then only
+   --  Switch will be put on the command line
+   --
+   --  See also Add_Custom_Expansion below.
 
    procedure Add_Custom_Expansion
      (Page : access Switches_Editor_Page_Record'Class;
       Switch  : String;
       Default : Cst_Argument_List);
    --  Default are the switches used when Switch is found on the command line
-   --  by itself
+   --  by itself.
+   --  This works in close coordination with coalesce switches: when updating
+   --  the command line, for instance after the user has selected a button,
+   --  this package does the following:
+   --   - Expand the switches found on the command line.
+   --      => e.g.:  -gnaty => -gnaty3 -gnatya -gnatyb -gnatyc
+   --   - Add or remove switches from the command line, depending on the
+   --     currently activated GUI elements.
+   --      => e.g.:  If the button for -gnatyc is not activated, the command
+   --                line becomes   -gnatya -gnatyb
+   --   - The command line is post-processed to coalesce switches.
+   --      => e.g.:  -gnatya -gnatyb  => -gnatyab
+   --   - Simplify the command line if possible through the
+   --     Default_As_String parameter to Add_Coalesce_Switch
+   --
+   --  Therefore, the purpose of this expansion step is to decompose complex
+   --  switches in the list of their components so that each component is
+   --  associated with only one GUI element.
+   --  The purpose of the coalesce step is to make the switches more readable
+   --  by the user.
 
    ---------------------
    -- Switches editor --
@@ -269,6 +296,10 @@ private
       Coalesce_Switches : GNAT.OS_Lib.String_List_Access;
       --  List of coalesce switches (see Add_Coalesce_Switch). This is never
       --  null once the widget has been created.
+
+      Coalesce_Switches_Default : GNAT.OS_Lib.String_List_Access;
+      --  This array has the same size as Coalesce_Switches, and contains the
+      --  values of Default_As_String passed to Add_Coalesce_Switch
 
       Expansion_Switches : String_List_Array_Access;
       --  List of custom expansions. The first string in each element is the
