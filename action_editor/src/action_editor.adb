@@ -183,10 +183,13 @@ package body Action_Editor is
    is
       procedure Internal
         (Tree, Iter : System.Address;
-         Col1 : Gint; Value1 : String;
-         Final : Gint := -1);
+         Col1       : Gint;
+         Value1     : String;
+         Final      : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
-      Iter : Gtk_Tree_Iter;
+
+      Iter : aliased Gtk_Tree_Iter;
+
    begin
       Append (Model, Iter, Parent);
       Internal
