@@ -35,9 +35,11 @@ package SN.Browse is
    --  Name of file for persistent xref pool
 
    procedure Browse
-     (File_Name    : String;
-      DB_Directory : String;
-      PD           : out GNAT.Expect.Process_Descriptor);
+     (File_Name     : String;
+      DB_Directory  : String;
+      DBIMP_Path    : String;
+      Cbrowser_Path : String;
+      PD            : out GNAT.Expect.Process_Descriptor);
    --  Start the language browser on the files lists in File_Name (one file per
    --  line, and lines can start with @ to specify the name of the xref file to
    --  use from then on).
@@ -47,7 +49,8 @@ package SN.Browse is
    --  process spawning, file unlinking...
 
    procedure Generate_Xrefs
-     (DB_Directory : in String;
+     (DB_Directory : String;
+      DBIMP_Path   : String;
       Temp_Name    : out GNAT.OS_Lib.Temp_File_Name;
       PD           : out GNAT.Expect.Process_Descriptor);
    --  Removes .by and .to tables in the DB_Directory and
