@@ -853,10 +853,33 @@ package body Project_Explorers is
       Is_Leaf := Node_Type = Obj_Directory_Node
         or else not Has_Entries (Project, Directory, Files_In_Project);
 
-      if Projects_Before_Directories then
-         Append (Explorer.Tree.Model, N, Parent_Node);
+      if Object_Directory then
+         --  Append the object directory before the first project.
+
+         declare
+            Ref : Gtk_Tree_Iter;
+         begin
+            Ref := Children (Explorer.Tree.Model, Parent_Node);
+
+            while Ref /= Null_Iter loop
+               if Get_Node_Type (Explorer.Tree.Model, Ref) = Project_Node then
+                  Insert_Before (Explorer.Tree.Model, N, Parent_Node, Ref);
+                  exit;
+               end if;
+
+               Next (Explorer.Tree.Model, Ref);
+            end loop;
+
+            if Ref = Null_Iter then
+               Append (Explorer.Tree.Model, N, Parent_Node);
+            end if;
+         end;
       else
-         Prepend (Explorer.Tree.Model, N, Parent_Node);
+         if Projects_Before_Directories then
+            Append (Explorer.Tree.Model, N, Parent_Node);
+         else
+            Prepend (Explorer.Tree.Model, N, Parent_Node);
+         end if;
       end if;
 
       Set (Explorer.Tree.Model, N, Base_Name_Column, Text.all);
@@ -1312,8 +1335,7 @@ package body Project_Explorers is
 
 
       Index : Natural;
-      N, N2, Tmp : Gtk_Tree_Iter;
-      pragma Unreferenced (Tmp);
+      N, N2 : Gtk_Tree_Iter;
 
       Project : constant Project_Id := Get_Project_From_Node (Explorer, Node);
       Sources : String_Id_Array := Source_Dirs (Project);
@@ -1457,14 +1479,6 @@ package body Project_Explorers is
                     (Get_String (Projects.Table
                                    (Project).Object_Directory));
                   Obj := End_String;
-                  Tmp := Add_Directory_Node
-                    (Explorer,
-                     Directory        => Get_String
-                       (Projects.Table (Prj).Object_Directory),
-                     Project          => Project,
-                     Parent_Node      => Node,
-                     Files_In_Project => null,
-                     Object_Directory => True);
 
                when Project_Node | Modified_Project_Node =>
                   --  The list of imported project files cannot change with
