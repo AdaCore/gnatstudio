@@ -1666,9 +1666,9 @@ package body Glide_Kernel.Modules is
    -- Interpret_Command --
    -----------------------
 
-   procedure Interpret_Command
+   function Interpret_Command
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String)
+      Command : String) return String
    is
       use String_List_Utils.String_List;
       use type Command_List.List_Node;
@@ -1676,13 +1676,29 @@ package body Glide_Kernel.Modules is
       Args         : Argument_List_Access;
       The_Command  : GNAT.OS_Lib.String_Access;
       The_Args     : String_List_Utils.String_List.List;
+      Args_Node    : String_List_Utils.String_List.List_Node;
 
       Command_Node : Command_List.List_Node;
+
+      Result : GNAT.OS_Lib.String_Access;
+
+      procedure I (S : String);
+      --  Appends S & ASCII.LF to Result.
+      --  Result must not be set to Null when calling this subprogram.
+
+      procedure I (S : String) is
+         R : String := Result.all & S & ASCII.LF;
+      begin
+         Free (Result);
+         Result := new String'(R);
+      end I;
+
    begin
       if Command = "" then
-         return;
+         return "";
       end if;
 
+      Result := new String'("");
       Args := Argument_String_To_List (Command);
 
       The_Command := new String'(Args (Args'First).all);
@@ -1695,7 +1711,9 @@ package body Glide_Kernel.Modules is
          Command_Node := Command_List.First (Kernel.Commands_List);
 
          if Is_Empty (The_Args) then
-            Insert (Kernel, "The following commands are defined :");
+            I ("The following commands are defined :");
+            I ("  help");
+            I ("  echo");
          else
             The_Command := new String'(Head (The_Args));
          end if;
@@ -1706,15 +1724,28 @@ package body Glide_Kernel.Modules is
                  Command_List.Data (Command_Node);
             begin
                if Is_Empty (The_Args) then
-                  Insert (Kernel, "  " & Data.Command.all);
+                  I ("  " & Data.Command.all);
                else
                   if Data.Command.all = The_Command.all then
-                     Insert (Kernel, Data.Help.all);
+                     I (Data.Help.all);
                   end if;
                end if;
             end;
 
             Command_Node := Command_List.Next (Command_Node);
+         end loop;
+
+         if Is_Empty (The_Args) then
+            I ("Type ""help <command>"" to" &
+               " get help about a specific command.");
+         end if;
+
+      elsif The_Command.all = "echo" then
+         Args_Node := First (The_Args);
+
+         while Args_Node /= Null_Node loop
+            I (Data (Args_Node));
+            Args_Node := Next (Args_Node);
          end loop;
 
       else
@@ -1726,14 +1757,10 @@ package body Glide_Kernel.Modules is
                  Command_List.Data (Command_Node);
             begin
                if Data.Command.all = The_Command.all then
-                  Insert (Kernel,
-                          Data.Command_Handler
-                            (Kernel,
-                             The_Command.all,
-                             The_Args),
-                          False,
-                          True);
-
+                  I (Data.Command_Handler
+                       (Kernel,
+                        The_Command.all,
+                        The_Args));
                   exit;
                end if;
             end;
@@ -1745,6 +1772,21 @@ package body Glide_Kernel.Modules is
       Free (The_Command);
       Free (The_Args);
       Free (Args);
+
+      declare
+         R : String := Result.all;
+      begin
+         Free (Result);
+
+         return R;
+      end;
+   end Interpret_Command;
+
+   procedure Interpret_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String) is
+   begin
+      Insert (Kernel, Interpret_Command (Kernel, Command), False, False);
    end Interpret_Command;
 
 end Glide_Kernel.Modules;
