@@ -112,7 +112,7 @@ package body Diff_Utils is
    is
       Descriptor : TTY_Process_Descriptor;
       Pattern    : constant Pattern_Matcher :=
-        Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?$",
+        Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n",
           Multiple_Lines);
       Matches    : Match_Array (0 .. 5);
       Args       : Argument_List (1 .. 2);
@@ -138,10 +138,7 @@ package body Diff_Utils is
       end loop;
 
       loop
-         --  loop for Gtk+ events ???
-         --  while Gtk.Main.Events_Pending loop
-         --     Dead := Main_Iteration;
-         --  end loop;
+         --  ??? Should register a timer instead of blocking the whole process
 
          Expect (Descriptor, Result, Pattern, Matches, Timeout => -1);
          Compute_Occurrence
@@ -238,9 +235,7 @@ package body Diff_Utils is
    -- Fine_Diff --
    ---------------
 
-   function Fine_Diff
-     (Line1, Line2 : String) return Diff_Occurrence_Link
-   is
+   function Fine_Diff (Line1, Line2 : String) return Diff_Occurrence_Link is
       Result, Tmp : Diff_Occurrence_Link;
       First, Last : Natural := 0;
 
