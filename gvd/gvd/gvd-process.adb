@@ -1009,7 +1009,6 @@ package body GVD.Process is
      (Debugger : access Debugger_Process_Tab_Record'Class) is
    begin
       --  If the context has changed, it means that the debugger has started
-      --  ??? Not always actually, see e.g the "file" command in gdb.
       Set_Is_Started (Debugger.Debugger, True);
 
       --  Emit the signal
@@ -1064,13 +1063,13 @@ package body GVD.Process is
      (Process : access Debugger_Process_Tab_Record'Class;
       Cmd     : String)
    is
-      Matched  : Match_Array (0 .. 10);
-      Matched2 : Match_Array (0 .. 10);
-      Item    : Display_Item;
+      Matched   : Match_Array (0 .. 10);
+      Matched2  : Match_Array (0 .. 10);
+      Item      : Display_Item;
       Index,
-      Last    : Positive;
-      Enable  : Boolean;
-      First   : Natural;
+      Last      : Positive;
+      Enable    : Boolean;
+      First     : Natural;
       Dependent_On_First : Natural := Natural'Last;
       Link_Name_First    : Natural := Natural'Last;
       Link_Name : GVD.Types.String_Access;
@@ -1288,6 +1287,11 @@ package body GVD.Process is
             end if;
          end if;
       end if;
+
+   exception
+      when Constraint_Error =>
+         --  Usually because Find_Item returned a null value.
+         Output_Error (Process.Window, (-" Invalid command: ") & Cmd);
    end Process_Graph_Cmd;
 
    ----------------------
