@@ -189,9 +189,9 @@ package body Src_Info.CPP is
          IsVolatile        : Boolean;
          IsConst           : Boolean;
          IsTemplate        : Boolean;
-         Parent_Point      : Point;
+         Parent_Point      : Point   := Invalid_Point;
          Parent_Filename   : SN.String_Access;
-         Ancestor_Point    : Point;
+         Ancestor_Point    : Point   := Invalid_Point;
          Ancestor_Filename : SN.String_Access;
          Builtin_Name      : SN.String_Access;
          Is_Typedef        : Boolean := False;
@@ -640,7 +640,6 @@ package body Src_Info.CPP is
    begin
 
       Success := False;
-      Desc.Ancestor_Point := Invalid_Point;
 
       if not Is_Open (SN_Table (T)) then
          --  typedef table does not exist
@@ -661,7 +660,7 @@ package body Src_Info.CPP is
          Desc.Parent_Filename := new String'(Typedef.Buffer (
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
 
-         if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+         if Desc.Ancestor_Point = Invalid_Point then
             Desc.Ancestor_Point    := Typedef.Start_Position;
             Desc.Ancestor_Filename := new String' (Typedef.Buffer (
                           Typedef.File_Name.First .. Typedef.File_Name.Last));
@@ -675,7 +674,8 @@ package body Src_Info.CPP is
       --  original type not found
       if Desc.Is_Typedef then
          --  but typedef clause present
-         Desc.E_Kind := Unresolved_Entity;
+         Desc.Kind := Unresolved_Entity;
+         Success := True;
       end if;
 
       Free (Typedef);
