@@ -74,9 +74,6 @@ package Projects.Editor is
    function Length (List : Prj.String_List_Id) return Natural;
    --  Return the number of elements in the list.
 
-   function Is_Equal (Str1 : Types.Name_Id; Str2 : String) return Boolean;
-   --  Return True if the two strings are equal.
-
    --------------
    -- Projects --
    --------------
@@ -293,6 +290,22 @@ package Projects.Editor is
       Value              : String;
       Attribute_Index    : String := "");
    --  Same as above, but for an attribute that contains a single value.
+
+   type Associative_Array_Value is record
+      Index : GNAT.OS_Lib.String_Access;
+      Value : GNAT.OS_Lib.String_Access;
+   end record;
+   type Associative_Array_Values is array (Natural range <>)
+     of Associative_Array_Value;
+
+   procedure Set_Attribute_Value_In_Scenario
+     (Project            : Project_Type;
+      Scenario_Variables : Scenario_Variable_Array;
+      Attribute          : Attribute_Pkg;
+      Values             : Associative_Array_Values);
+   --  Remove all currently set values for the attribute, and replace them with
+   --  Values. This is more efficient than calling
+   --  Update_Attribute_Value_In_Scenario multiple times.
 
    function Get_Attribute_Value
      (Project        : Project_Type;
