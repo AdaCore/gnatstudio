@@ -82,6 +82,16 @@ package body Glide_Kernel.Modules is
    --  Return the menu item with name Name, either from Menu, or from Menu_Bar
    --  if the latter is null.
 
+   procedure General_Line_Information
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String;
+      Info           : Line_Information_Data;
+      Stick_To_Data  : Boolean := True;
+      Every_Line     : Boolean := True);
+   --  Create the Mime info for adding/creating/removing line information,
+   --  and send it.
+
    ---------------------
    -- Compute_Tooltip --
    ---------------------
@@ -886,29 +896,31 @@ package body Glide_Kernel.Modules is
       end if;
    end Free;
 
-   --------------------------
-   -- Add_Line_Information --
-   --------------------------
+   ------------------------------
+   -- General_Line_Information --
+   ------------------------------
 
-   procedure Add_Line_Information
+   procedure General_Line_Information
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String;
       Identifier     : String;
       Info           : Line_Information_Data;
-      Stick_To_Data  : Boolean := True)
+      Stick_To_Data  : Boolean := True;
+      Every_Line     : Boolean := True)
    is
-      Value : GValue_Array (1 .. 4);
+      Value : GValue_Array (1 .. 5);
       Norm_Filename : constant String := Normalize_Pathname (File);
-
    begin
       Init (Value (1),  Glib.GType_String);
       Init (Value (2),  Glib.GType_String);
       Init (Value (3),  Glib.GType_Pointer);
       Init (Value (4),  Glib.GType_Boolean);
+      Init (Value (5),  Glib.GType_Boolean);
       Set_String (Value (1), Norm_Filename);
       Set_String (Value (2), Identifier);
       Set_Address (Value (3), To_Address (Info));
       Set_Boolean (Value (4), Stick_To_Data);
+      Set_Boolean (Value (5), Every_Line);
 
       if not Mime_Action (Kernel, Mime_File_Line_Info, Value) then
          Trace (Me, "No file editor with line info display "
@@ -918,6 +930,57 @@ package body Glide_Kernel.Modules is
       for J in Value'Range loop
          Unset (Value (J));
       end loop;
+   end General_Line_Information;
+
+   ------------------------------------
+   -- Create_Line_Information_Column --
+   ------------------------------------
+
+   procedure Create_Line_Information_Column
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String;
+      Stick_To_Data  : Boolean := True;
+      Every_Line     : Boolean := True)
+   is
+      A : Line_Information_Array (0 .. 0);
+   begin
+      General_Line_Information (Kernel,
+                                File,
+                                Identifier,
+                                new Line_Information_Array' (A),
+                                Stick_To_Data,
+                                Every_Line);
+   end Create_Line_Information_Column;
+
+
+   ------------------------------------
+   -- Remove_Line_Information_Column --
+   ------------------------------------
+
+   procedure Remove_Line_Information_Column
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String)
+   is
+      A : Line_Information_Array (1 .. 0);
+   begin
+      General_Line_Information (Kernel, File, Identifier,
+                                new Line_Information_Array' (A));
+   end Remove_Line_Information_Column;
+
+   --------------------------
+   -- Add_Line_Information --
+   --------------------------
+
+   procedure Add_Line_Information
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String;
+      Info           : Line_Information_Data)
+   is
+   begin
+      General_Line_Information (Kernel, File, Identifier, Info);
    end Add_Line_Information;
 
    ----------------------
