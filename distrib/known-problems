@@ -1,3 +1,5 @@
+Known Problems fixed in GPS 1.4.0
+
 Known Problems fixed in GPS 1.3.0
 
 - C611-012 Cross-references do not work with C under Solaris
@@ -17,7 +19,7 @@ Known Problems fixed in GPS 1.3.0
   Problem:    If you are doing an interactive search, replacing the text using
               the keyboard shortcut for "Paste" doesn't replace the selected
               text.
-  Workaround: Use the Search/Replace function.
+  Workaround: Use the Search/Replace interface.
 
 - C627-007 Exec directory settings lost when editing project properties
   Problem:    If you have specified a relative path for the executables
