@@ -136,13 +136,18 @@ package Glide_Kernel.Preferences is
    Save_Desktop_On_Exit  : Param_Spec_Boolean;
 
    -- Messages --
-   Message_Highlight    : Param_Spec_Color;
-   Message_Src_Highlight : Param_Spec_Color;
-   Show_Build_Progress  : Param_Spec_Boolean;
-   File_Pattern         : Param_Spec_String;
-   File_Pattern_Index   : Param_Spec_Int;
-   Line_Pattern_Index   : Param_Spec_Int;
-   Column_Pattern_Index : Param_Spec_Int;
+   Message_Highlight     : Param_Spec_Color;
+   Error_Src_Highlight   : Param_Spec_Color;
+   Warning_Src_Highlight : Param_Spec_Color;
+   Style_Src_Highlight  : Param_Spec_Color;
+   Search_Src_Highlight  : Param_Spec_Color;
+   Show_Build_Progress   : Param_Spec_Boolean;
+   File_Pattern          : Param_Spec_String;
+   File_Pattern_Index    : Param_Spec_Int;
+   Line_Pattern_Index    : Param_Spec_Int;
+   Column_Pattern_Index  : Param_Spec_Int;
+   Style_Pattern_Index   : Param_Spec_Int;
+   Warning_Pattern_Index : Param_Spec_Int;
 
    -- Diff_Utils --
    Diff_Context_Length : Param_Spec_Int;
