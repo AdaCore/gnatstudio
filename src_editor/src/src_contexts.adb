@@ -187,6 +187,7 @@ package body Src_Contexts is
    function Auxiliary_Search
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
@@ -964,6 +965,7 @@ package body Src_Contexts is
    function Auxiliary_Search
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
@@ -975,8 +977,7 @@ package body Src_Contexts is
       Assert (Me, not Context.All_Occurrences,
               "All occurences not supported for current_file_context");
 
-      Lang := Get_Language_From_File
-        (Get_Language_Handler (Kernel), Get_Filename (Editor));
+      Lang := Get_Language_From_File (Handler, Get_Filename (Editor));
       Get_Cursor_Location (Editor, Line, Column);
 
       --  If we had a previous selection, and it had a null length, move the
@@ -1047,7 +1048,7 @@ package body Src_Contexts is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
-      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
+      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor : Source_Editor_Box;
 
    begin
@@ -1058,7 +1059,9 @@ package body Src_Contexts is
       Editor := Get_Source_Box_From_MDI (Child);
       Raise_Child (Child);
       Minimize_Child (Child, False);
-      return Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
+      return Auxiliary_Search
+        (Context, Editor,
+         Get_Language_Handler (Kernel), Kernel, Search_Backward);
 
    exception
       when E : others =>
@@ -1129,7 +1132,9 @@ package body Src_Contexts is
 
       --  Search for next replaceable entity.
 
-      return Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
+      return Auxiliary_Search
+        (Context, Editor, Get_Language_Handler (Kernel),
+         Kernel, Search_Backward);
 
    exception
       when E : others =>
@@ -1143,6 +1148,7 @@ package body Src_Contexts is
 
    function Search
      (Context         : access Abstract_Files_Context;
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Kernel          : Kernel_Handle;
       Callback        : Scan_Callback) return Boolean
    is
@@ -1163,7 +1169,7 @@ package body Src_Contexts is
          if Context.Begin_Line /= 0 then
             First_Match
               (Context       => Context,
-               Handler       => Get_Language_Handler (Kernel),
+               Handler       => Handler,
                Kernel        => Kernel,
                Name          => Current_File (C),
                Scope         => Context.Scope,
@@ -1208,7 +1214,7 @@ package body Src_Contexts is
 
             First_Match
               (Context       => Context,
-               Handler       => Get_Language_Handler (Kernel),
+               Handler       => Handler,
                Kernel        => Kernel,
                Name          => Current_File (C),
                Scope         => Context.Scope,
@@ -1241,7 +1247,7 @@ package body Src_Contexts is
             begin
                Scan_File
                  (Context,
-                  Get_Language_Handler (Kernel),
+                  Handler,
                   Kernel,
                   Current_File (C), Callback, Context.Scope,
                   Lexical_State => State, Force_Read => Kernel = null,
@@ -1281,6 +1287,7 @@ package body Src_Contexts is
 
    begin
       return Search (Context,
+                     Get_Language_Handler (Kernel),
                      Kernel_Handle (Kernel),
                      Interactive_Callback'Unrestricted_Access);
    end Search;

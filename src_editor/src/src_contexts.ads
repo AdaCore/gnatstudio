@@ -30,6 +30,7 @@ with Gtk.Combo;
 with Gtk.Frame;
 with Find_Utils;   use Find_Utils;
 with Files_Extra_Info_Pkg;
+with Language_Handlers;
 
 package Src_Contexts is
 
@@ -98,6 +99,7 @@ package Src_Contexts is
 
    function Search
      (Context         : access Abstract_Files_Context;
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Kernel          : Glide_Kernel.Kernel_Handle;
       Callback        : Scan_Callback) return Boolean;
    --  Search either the next match or all the occurrences, depending on the
@@ -107,6 +109,9 @@ package Src_Contexts is
    --  itself has returned False.
    --  If Kernel is not null, then this subprogram will first check whether
    --  there exists an open editor in GPS for the current file.
+   --
+   --  Handler is needed for support of the regression testsuite (where Kernel
+   --  is null)
 
    function Current_File
      (Context : access Abstract_Files_Context) return String is abstract;
