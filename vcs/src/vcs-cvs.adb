@@ -996,7 +996,8 @@ package body VCS.CVS is
 
    procedure Add
      (Rep       : access CVS_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Log       : String)
    is
       Arguments   : String_List.List;
       Arguments_2 : String_List.List;
@@ -1009,8 +1010,7 @@ package body VCS.CVS is
       String_List.Append (Arguments_2, "commit");
       String_List.Append (Arguments_2, "-m");
 
-      String_List.Append (Arguments_2, -"Initial revision for this file.");
-      --  ??? This should be customizable.
+      String_List.Append (Arguments_2, Log);
 
       Simple_Action (Rep, Filenames, Arguments_2);
    end Add;
@@ -1021,7 +1021,8 @@ package body VCS.CVS is
 
    procedure Remove
      (Rep       : access CVS_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Log       : String)
    is
       Arguments : String_List.List;
       Arguments_2 : String_List.List;
@@ -1034,8 +1035,7 @@ package body VCS.CVS is
       String_List.Append (Arguments_2, "commit");
       String_List.Append (Arguments_2, "-m");
 
-      String_List.Append (Arguments_2, -"Remove this file.");
-      --  ??? This should be customizable.
+      String_List.Append (Arguments_2, Log);
 
       Simple_Action (Rep, Filenames, Arguments_2);
    end Remove;

@@ -67,11 +67,13 @@ package VCS.Unknown_VCS is
 
    procedure Add
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Remove
      (Rep       : access Unknown_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Revert
      (Rep       : access Unknown_VCS_Record;

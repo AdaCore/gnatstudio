@@ -230,13 +230,15 @@ package VCS is
 
    procedure Add
      (Rep       : access VCS_Record;
-      Filenames : String_List.List) is abstract;
+      Filenames : String_List.List;
+      Log       : String) is abstract;
    --  Add files to the specified VCS repository
    --  The user must free Filenames.
 
    procedure Remove
      (Rep       : access VCS_Record;
-      Filenames : String_List.List) is abstract;
+      Filenames : String_List.List;
+      Log       : String) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
    --  The user must free Filenames.
 

@@ -63,11 +63,13 @@ package VCS.CVS is
 
    procedure Add
      (Rep       : access CVS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Remove
      (Rep       : access CVS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Revert
      (Rep       : access CVS_Record;

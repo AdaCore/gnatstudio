@@ -68,11 +68,13 @@ package VCS.Generic_VCS is
 
    procedure Add
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Remove
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Revert
      (Rep       : access Generic_VCS_Record;

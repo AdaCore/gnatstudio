@@ -63,11 +63,13 @@ package VCS.ClearCase is
 
    procedure Add
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Remove
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List);
+      Filenames : String_List.List;
+      Log       : String);
 
    procedure Revert
      (Rep       : access ClearCase_Record;

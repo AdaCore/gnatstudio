@@ -1100,7 +1100,8 @@ package body VCS.ClearCase is
 
    procedure Add
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Log       : String)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
@@ -1169,7 +1170,7 @@ package body VCS.ClearCase is
 
             Append (Args, "mkelem");
             Append (Args, "-c");
-            Append (Args, -"Initial revision");
+            Append (Args, Log);
             Append (Args, File);
 
             Append
@@ -1193,7 +1194,7 @@ package body VCS.ClearCase is
 
             Append (Args, "ci");
             Append (Args, "-c");
-            Append (Args, -"Initial check-in");
+            Append (Args, Log);
             Append (Args, File);
 
             Append (Head, -"ClearCase error: could not checkin " & File);
@@ -1277,7 +1278,8 @@ package body VCS.ClearCase is
 
    procedure Remove
      (Rep       : access ClearCase_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Log       : String)
    is
       Kernel : Kernel_Handle
         renames VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel;
@@ -1324,7 +1326,7 @@ package body VCS.ClearCase is
 
             Append (Args, "co");
             Append (Args, "-c");
-            Append (Args, -"Removing " & File);
+            Append (Args, Log);
             Append (Args, Dir);
 
             Append (Head, -"ClearCase error: could not checkout " & Dir);
@@ -1345,7 +1347,7 @@ package body VCS.ClearCase is
 
             Append (Args, "rm");
             Append (Args, "-c");
-            Append (Args, -"Removing this element.");
+            Append (Args, Log);
             Append (Args, File);
 
             Append
@@ -1368,7 +1370,7 @@ package body VCS.ClearCase is
             --  Check in the directory.
             Append (Args, "ci");
             Append (Args, "-c");
-            Append (Args, -"Removed element: " & File);
+            Append (Args, Log);
             Append (Args, Dir);
 
             Append (Head, -"ClearCase error: could not checkin " & Dir);
