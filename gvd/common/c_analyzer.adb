@@ -477,6 +477,7 @@ package body C_Analyzer is
 
       First             : Natural;
       Index             : Natural := Buffer'First;
+      Paren_Index       : Natural;
       Indent            : Natural := 0;
       Indent_Done       : Boolean := False;
       Token             : Token_Type := No_Token;
@@ -1212,9 +1213,21 @@ package body C_Analyzer is
             when '(' =>
                Token := Tok_Left_Paren;
 
+               if Indent_Done then
+                  Paren_Index :=
+                    Index - Line_Start (Buffer, Index) + Padding + 1;
+               else
+                  --  Open parenthesis on start of line, e.g:
+                  --  foo
+                  --    (bar);
+
+                  Paren_Index := Indent_Level + 2;
+               end if;
+
                --  ??? Could optimize by caching Line_Start
-               Push (Indents,
-                     (Index - Line_Start (Buffer, Index) + Padding + 1, 0));
+
+               Push (Indents, (Paren_Index, 0));
+               Do_Indent (Index, Indent);
                Paren_Level := Paren_Level + 1;
 
             when ')' =>
