@@ -681,6 +681,7 @@ package body GVD.Asm_Editors is
      (Editor : access Asm_Editor_Record'Class) is
    begin
       Editor.Highlight_Color := Get_Pref (Asm_Highlight_Color);
+      Set_Font (Editor, Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
       Update_Child (Editor);
 
       --  The currently highlighted range is reset in Gvd.Code_Editors.
