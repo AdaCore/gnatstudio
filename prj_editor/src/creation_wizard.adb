@@ -114,7 +114,8 @@ package body Creation_Wizard is
       Main_Page_Box := First_Page (Wiz);
       Set_Page (Wiz, 1, Main_Page_Box);
 
-      --  "+1" here is for the "General" page.
+      --  "+1" here is for the "General" page, which is omitted in the result
+      --  of Attribute_Editors_Page_Count
 
       for E in 1 .. Attr_Count + 1 loop
          Box := Attribute_Editors_Page_Box
