@@ -1,5 +1,6 @@
 with "../common/common";
 with "../gtkada/gtkada";
+with "../kbody/kbody";
 with "../kernel/kernel";
 with "../gvd/gvd_common";
 
