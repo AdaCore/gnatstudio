@@ -28,9 +28,7 @@ with Gdk.Event;         use Gdk.Event;
 with Glib;              use Glib;
 with Glib.Object;       use Glib.Object;
 with Glib.Values;       use Glib.Values;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Main_Window; use Glide_Main_Window;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
 with Gtk.Accel_Group;   use Gtk.Accel_Group;
 with Gtk.Enums;         use Gtk.Enums;
@@ -49,6 +47,10 @@ with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
+
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
 
 package body Glide_Kernel.Modules is
 
@@ -777,13 +779,14 @@ package body Glide_Kernel.Modules is
    ----------------------
 
    procedure Open_File_Editor
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Filename : String;
-      Line     : Natural := 0;
-      Column   : Natural := 0;
-      Highlight_Line : Boolean := True)
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : String;
+      Line              : Natural := 0;
+      Column            : Natural := 0;
+      Highlight_Line    : Boolean := True;
+      Enable_Navigation : Boolean := True)
    is
-      Value : GValue_Array (1 .. 4);
+      Value : GValue_Array (1 .. 5);
    begin
       Init (Value (1), Glib.GType_String);
 
@@ -803,6 +806,9 @@ package body Glide_Kernel.Modules is
 
       Init (Value (4), Glib.GType_Boolean);
       Set_Boolean (Value (4), Highlight_Line);
+
+      Init (Value (5), Glib.GType_Boolean);
+      Set_Boolean (Value (5), Enable_Navigation);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Insert (Kernel, -"No file editor was registered");
