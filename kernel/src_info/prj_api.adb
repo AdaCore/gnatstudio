@@ -42,6 +42,7 @@ with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with String_Utils;     use String_Utils;
 with Project_Browsers; use Project_Browsers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Glide_Intl;    use Glide_Intl;
@@ -4085,12 +4086,19 @@ package body Prj_API is
    function Get_Languages (Project_View : Project_Id)
       return GNAT.OS_Lib.Argument_List
    is
-      Languages : constant Argument_List :=
+      Languages : Argument_List :=
         Get_Attribute_Value (Project_View, Languages_Attribute);
+      Tmp : GNAT.OS_Lib.String_Access;
    begin
       if Languages'Length = 0 then
          return (1 => new String' (Ada_String));
       else
+         for L in Languages'Range loop
+            Tmp := new String' (To_Lower (Languages (L).all));
+            Free (Languages (L));
+            Languages (L) := Tmp;
+         end loop;
+
          return Languages;
       end if;
    end Get_Languages;
