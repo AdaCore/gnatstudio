@@ -833,7 +833,7 @@ Full + Automatic inlining
 		  <object>Switches_Editor</object>
 		  <last_modification_time>Fri, 11 May 2001 18:56:37 GMT</last_modification_time>
 		</signal>
-		<label>Assertions</label>
+		<label>Enable Assertions</label>
 		<active>False</active>
 		<draw_indicator>True</draw_indicator>
 		<child>
