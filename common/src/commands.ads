@@ -32,9 +32,6 @@ package Commands is
    --  Executes Command. Return value indicates whether the operation was
    --  successful.
 
-   procedure Execute (Command : access Root_Command);
-   --  Same as function Execute, but does not return any value.
-
    function Undo (Command : access Root_Command) return Boolean;
    --  Undo a Command. Return value indicates whether the operation was
    --  successful.
@@ -44,14 +41,17 @@ package Commands is
    function New_Queue return Command_Queue;
 
    procedure Enqueue
-     (Queue  : Command_Queue;
-      Action : access Root_Command);
+     (Queue         : Command_Queue;
+      Action        : access Root_Command;
+      High_Priority : Boolean := False);
    --  Appends Action at the end of the Queue.
 
    procedure Execute_Next_Action (Queue : Command_Queue);
    --  Execute the next action in the queue, or do nothing if there is none.
 
 private
+   procedure Execute (Command : access Root_Command);
+   --  Same as function Execute, but does not return any value.
 
    procedure Command_Finished (Queue : Command_Queue);
    --  This procedure should be called every time the execution of a Command
