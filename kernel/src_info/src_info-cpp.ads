@@ -232,7 +232,7 @@ private
    function Hash (Key : String_Access) return HTable_Range;
    function Equal (Key1, Key2 : String_Access) return Boolean;
 
-   procedure False_Free_Element (X : in out Sn_Prj_Data);
+   procedure False_Free_Element (X : in out SN_Prj_Data);
    procedure False_Free_Key (X : in out String_Access);
 
    package SN_Prj_HTables is new HTables.Simple_HTable
