@@ -120,6 +120,40 @@ procedure GPS is
    Vdiff2_Trace   : constant Debug_Handle := Create ("MODULE.Vdiff2", Off);
    Metrics_Trace  : constant Debug_Handle := Create ("MODULE.Metrics", On);
    Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", Off);
+   Python_Trace   : constant Debug_Handle := Create ("MODULE.Python", On);
+   Vdiff_Trace            : constant Debug_Handle :=
+     Create ("MODULE.Vdiff", On);
+   Call_Graph_Trace       : constant Debug_Handle :=
+     Create ("MODULE.Call_Graph", On);
+   Dependency_Trace       : constant Debug_Handle :=
+     Create ("MODULE.Dependency", On);
+   Project_Browser_Trace  : constant Debug_Handle :=
+     Create ("MODULE.Project_Browser", On);
+   Entities_Browser_Trace : constant Debug_Handle :=
+     Create ("MODULE.Entities_Browser", On);
+   Aliases_Trace : constant Debug_Handle := Create ("MODULE.Aliases", On);
+   Project_Explorer_Trace : constant Debug_Handle :=
+     Create ("MODULE.Project_Explorer", On);
+   Files_Explorer_Trace   : constant Debug_Handle :=
+     Create ("MODULE.Files_Explorer", On);
+   External_Editor_Trace  : constant Debug_Handle :=
+     Create ("MODULE.External_Editor", On);
+   VCS_Trace     : constant Debug_Handle := Create ("MODULE.VCS", On);
+   Custom_Trace  : constant Debug_Handle := Create ("MODULE.Custom", On);
+   Action_Editor_Trace : constant Debug_Handle :=
+     Create ("MODULE.Action_Editor", On);
+   Codefix_Trace : constant Debug_Handle := Create ("MODULE.Codefix", On);
+   GVD_Trace     : constant Debug_Handle := Create ("MODULE.GVD", On);
+   Aunit_Trace   : constant Debug_Handle := Create ("MODULE.Aunit", On);
+   VFS_Trace     : constant Debug_Handle := Create ("MODULE.VFS", On);
+   Help_Trace    : constant Debug_Handle := Create ("MODULE.Help", On);
+   SSH_Trace     : constant Debug_Handle := Create ("MODULE.SSH", On);
+   Project_Viewer_Trace : constant Debug_Handle :=
+     Create ("MODULE.Project_Viewer", On);
+   Project_Properties_Trace : constant Debug_Handle :=
+     Create ("MODULE.Project_Properties", On);
+   CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
+
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
 
@@ -931,15 +965,25 @@ procedure GPS is
       --  Register the remote protocols early so that other modules can access
       --  remote files.
 
-      SSH_Protocol.Register_Protocol;
+      if Active (SSH_Trace) then
+         SSH_Protocol.Register_Protocol;
+      end if;
 
       --  Register all modules (scripting languages must be registered first)
 
       Shell_Script.Register_Module (GPS.Kernel);
-      Python_Module.Register_Module (GPS.Kernel);
+
+      if Active (Python_Trace) then
+         Python_Module.Register_Module (GPS.Kernel);
+      end if;
 
       Register_Default_Script_Commands (GPS.Kernel);
-      Python_Module.Initialize_IO;
+
+      --  Needs to be called after the default commands have been registered,
+      --  in particular GPS.Console
+      if Active (Python_Trace) then
+         Python_Module.Initialize_IO;
+      end if;
 
       Glide_Result_View.Register_Commands (GPS.Kernel);
 
@@ -962,7 +1006,10 @@ procedure GPS is
       Theme_Manager_Module.Register_Module (GPS.Kernel);
 
       Vsearch_Ext.Register_Module (GPS.Kernel);
-      Help_Module.Register_Module (GPS.Kernel);
+
+      if Active (Help_Trace) then
+         Help_Module.Register_Module (GPS.Kernel);
+      end if;
 
       Navigation_Module.Register_Module (GPS.Kernel);
 
@@ -970,34 +1017,86 @@ procedure GPS is
          Metrics_Module.Register_Module (GPS.Kernel);
       end if;
 
-      Browsers.Call_Graph.Register_Module (GPS.Kernel);
-      Browsers.Dependency_Items.Register_Module (GPS.Kernel);
-      Browsers.Projects.Register_Module (GPS.Kernel);
-      Browsers.Entities.Register_Module (GPS.Kernel);
-      Project_Viewers.Register_Module (GPS.Kernel);
-      Project_Properties.Register_Module (GPS.Kernel);
-      Aliases_Module.Register_Module (GPS.Kernel);
+      if Active (Call_Graph_Trace) then
+         Browsers.Call_Graph.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Dependency_Trace) then
+         Browsers.Dependency_Items.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Project_Browser_Trace) then
+         Browsers.Projects.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Entities_Browser_Trace) then
+         Browsers.Entities.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Project_Viewer_Trace) then
+         Project_Viewers.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Project_Properties_Trace) then
+         Project_Properties.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Aliases_Trace) then
+         Aliases_Module.Register_Module (GPS.Kernel);
+      end if;
+
       Src_Editor_Module.Register_Module (GPS.Kernel);
-      Project_Explorers.Register_Module (GPS.Kernel);
-      Project_Explorers_Files.Register_Module (GPS.Kernel);
-      External_Editor_Module.Register_Module (GPS.Kernel);
-      GVD_Module.Register_Module (GPS.Kernel);
+
+      if Active (Project_Explorer_Trace) then
+         Project_Explorers.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Files_Explorer_Trace) then
+         Project_Explorers_Files.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (External_Editor_Trace) then
+         External_Editor_Module.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (GVD_Trace) then
+         GVD_Module.Register_Module (GPS.Kernel);
+      end if;
+
       Builder_Module.Register_Module (GPS.Kernel);
 
       if Active (Vdiff2_Trace) then
          Vdiff2_Module.Register_Module (GPS.Kernel);
-      else
+      end if;
+
+      if Active (Vdiff_Trace) then
          Vdiff_Module.Register_Module (GPS.Kernel);
       end if;
 
-      VCS_Module.Register_Module (GPS.Kernel);
-      VCS.ClearCase.Register_Module (GPS.Kernel);
-      Aunit_Module.Register_Module (GPS.Kernel);
-      VFS_Module.Register_Module (GPS.Kernel);
-      Codefix_Module.Register_Module (GPS.Kernel);
+      if Active (VCS_Trace) then
+         VCS_Module.Register_Module (GPS.Kernel);
+         VCS.ClearCase.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Aunit_Trace) then
+         Aunit_Module.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (VFS_Trace) then
+         VFS_Module.Register_Module (GPS.Kernel);
+      end if;
+
+      if Active (Codefix_Trace) then
+         Codefix_Module.Register_Module (GPS.Kernel);
+      end if;
+
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Glide_Kernel.Preferences.Register_Module (GPS.Kernel);
-      Custom_Module.Register_Module (GPS.Kernel);
+
+      if Active (Custom_Trace) then
+         Custom_Module.Register_Module (GPS.Kernel);
+      end if;
+
       Glide_Result_View.Register_Module (GPS.Kernel);
 
       if Active (Refactor_Trace) then
@@ -1011,16 +1110,23 @@ procedure GPS is
       --  Register the supported languages and their associated LI handlers.
 
       Ada_Module.Register_Module (GPS.Kernel);
-      Cpp_Module.Register_Module (GPS.Kernel);
+
+      if Active (CPP_Trace) then
+         Cpp_Module.Register_Module (GPS.Kernel);
+      end if;
 
       --  Load system files
 
-      Load_All_Custom_Files (GPS.Kernel);
+      if Active (Custom_Trace) then
+         Load_All_Custom_Files (GPS.Kernel);
+      end if;
 
       --  Do this after the custom files, since this will override other
       --  The comment above is unfinished ???
 
-      Action_Editor.Register_Module (GPS.Kernel);
+      if Active (Action_Editor_Trace) then
+         Action_Editor.Register_Module (GPS.Kernel);
+      end if;
 
       --  Load preferences, but only after loading custom files, to make sure
       --  the themes loaded at startup are still overriden by the user's
@@ -1032,7 +1138,9 @@ procedure GPS is
       --  so that the usual hooks are taken into account right from the
       --  beginning
 
-      Python_Module.Load_Python_Startup_Files (GPS.Kernel);
+      if Active (Python_Trace) then
+         Python_Module.Load_Python_Startup_Files (GPS.Kernel);
+      end if;
 
       --  Temporarily disable unimplemented menu items
 
