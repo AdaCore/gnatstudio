@@ -27,6 +27,8 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtkada.File_Selection;     use Gtkada.File_Selection;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Label;                 use Gtk.Label;
@@ -63,6 +65,8 @@ package body Project_Properties is
       Kernel       : access Kernel_Handle_Record'Class);
    --  Internal initialization function
 
+   procedure Browse_Location (Editor : access Gtk_Widget_Record'Class);
+   --  Open a directory selector for the new location of the project file
 
    -------------
    -- Gtk_New --
@@ -117,6 +121,11 @@ package body Project_Properties is
       Gtk_New (Button2, -"Browse");
       Attach (Table, Button2, 2, 3, 1, 2, Xoptions => 0);
 
+      Widget_Callback.Object_Connect
+        (Button2, "clicked",
+         Widget_Callback.To_Marshaller (Browse_Location'Access),
+         Slot_Object => Editor);
+
       Gtk_New (Editor.Convert, "Convert paths to absolute");
       Attach (Table, Editor.Convert, 1, 2, 2, 3);
 
@@ -142,6 +151,22 @@ package body Project_Properties is
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
    end Initialize;
+
+   ---------------------
+   -- Browse_Location --
+   ---------------------
+
+   procedure Browse_Location (Editor : access Gtk_Widget_Record'Class) is
+      Ed : Properties_Editor := Properties_Editor (Editor);
+      Name : constant String := File_Selection_Dialog
+        (-"Select project file location",
+         Default_Dir => Name_As_Directory (Get_Text (Ed.Path)),
+         Dir_Only => True);
+   begin
+      if Name /= "" then
+         Set_Text (Ed.Path, Name);
+      end if;
+   end Browse_Location;
 
    ---------------------
    -- Edit_Properties --
