@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.2.0
 
+- DC21-008 It is impossible to use non-escaped "%" in GPS shell
+  Problem:    When creating GPS shell actions, it is not possible to create
+              command lines containing the "%" sign, GPS always attempts to
+              expand it.
+  Workaround: When you need to use the "%" sign, use a python command or an
+              external wrapper.
+
 - DB25-012 Contextual menu's filter in File View
   Problem:    If you create a custom contextual menu through an XML file,
               and add a filter so that it appears only in the Files View, this
