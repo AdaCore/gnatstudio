@@ -2451,8 +2451,16 @@ This item is also accessible through the editor's contextual menu
 
 @c @item Start Of Statement
 @c @item End Of Statement
-@c @item Next Procedure
-@c @item Previous Procedure
+
+@item Next Subprogram
+@cindex Next Subprogram
+Move the current cursor position to the start of the next procedure,
+function, task, protected record or entry.
+
+@item Previous Subprogram
+@cindex Previous Subprogram
+Move the current cursor position to the start of the previous procedure,
+function, task, protected record or entry.
 
 @item Previous Tag
 @cindex tag
