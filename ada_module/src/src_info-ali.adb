@@ -772,7 +772,7 @@ package body Src_Info.ALI is
       Filename_Id : File_Name_Type;
 
    begin
-      FD := Open_Read (Full & ASCII.NUL, Fmode => Binary);
+      FD := Open_Read (Full, Fmode => Binary);
 
       if FD = Invalid_FD then
          Trace (Me, "Couldn't open " & Full);
