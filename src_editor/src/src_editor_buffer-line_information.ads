@@ -134,4 +134,10 @@ package Src_Editor_Buffer.Line_Information is
       Line   : Editable_Line_Type);
    --  Unfold the block(s) containing Line.
 
+   function Lines_Are_Real
+     (Buffer : access Source_Buffer_Record'Class) return Boolean;
+   pragma Inline (Lines_Are_Real);
+   --  Return True if all editable lines are visible and all visible lines
+   --  are editable lines.
+
 end Src_Editor_Buffer.Line_Information;
