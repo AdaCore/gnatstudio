@@ -32,7 +32,7 @@ with Traces;                      use Traces;
 
 package body Language is
    Default_Word_Character_Set : constant Character_Set :=
-           Constants.Letter_Set or Constants.Decimal_Digit_Set or To_Set ("_");
+     Constants.Letter_Set or Constants.Decimal_Digit_Set or To_Set ("_");
    --  Default character set for keywords and indentifiers
 
    procedure Looking_At
@@ -831,35 +831,58 @@ package body Language is
    ---------------------------------------
 
    procedure Skip_To_Current_Comment_Block_End
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural)
+     (Context            : Language_Context;
+      Buffer             : String;
+      Index              : in out Natural;
+      Ignore_Blank_Lines : Boolean := False)
    is
-      Tmp : Integer := Index;
-      Typ : constant Comment_Type :=
-        Looking_At_Start_Of_Comment (Context, Buffer, Index);
+      Last_Comment_Index : Integer := Index;
+      Typ                : Comment_Type;
    begin
-      case Typ is
+      Block_Iteration : loop
+         Typ :=
+           Looking_At_Start_Of_Comment (Context, Buffer, Index);
+
+         case Typ is
          when No_Comment =>
-            null;
+            Index := Last_Comment_Index;
+            exit Block_Iteration;
 
          when Comment_Single_Line =>
-            loop
-               Skip_Lines (Buffer, 1, Tmp);
-               while Tmp <= Buffer'Last
-                 and then (Buffer (Tmp) = ' ' or Buffer (Tmp) = ASCII.HT)
+            declare
+               Tmp : Integer := Index;
+            begin
                loop
-                  Tmp := Tmp + 1;
-               end loop;
+                  Skip_Lines (Buffer, 1, Tmp);
+                  while Tmp <= Buffer'Last
+                    and then (Buffer (Tmp) = ' ' or Buffer (Tmp) = ASCII.HT)
+                  loop
+                     Tmp := Tmp + 1;
+                  end loop;
 
-               exit when Looking_At_Start_Of_Comment (Context, Buffer, Tmp) =
-                 No_Comment;
-               Index := Tmp;
-            end loop;
+                  exit when
+                    Looking_At_Start_Of_Comment (Context, Buffer, Tmp) =
+                    No_Comment;
+
+                  Index := Tmp;
+               end loop;
+            end;
 
          when Comment_Multi_Line =>
             Skip_To_String (Buffer, Index, Context.Comment_End);
-      end case;
+
+         end case;
+
+         if Ignore_Blank_Lines then
+            Last_Comment_Index := Index;
+            Skip_Lines (Buffer, 1, Index);
+            Skip_Blanks (Buffer, Index);
+         else
+            exit Block_Iteration;
+         end if;
+
+      end loop Block_Iteration;
+
    end Skip_To_Current_Comment_Block_End;
 
    --------------------------------
