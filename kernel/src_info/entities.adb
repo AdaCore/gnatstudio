@@ -97,14 +97,14 @@ package body Entities is
    --  known about them is cleared (we just keep their name and declaration)
 
    procedure Mark_Dependencies_As_Invalid
-     (Tree : Entities_Tries.Trie_Tree; Dependencies_On : Source_File);
+     (Tree : access Entities_Tries.Trie_Tree; Dependencies_On : Source_File);
    --  All entities in Tree that are referenced elsewhere are marked as invalid
 
    procedure Remove_Marked_Entities (File : Source_File);
    --  Unref all entities declared in File that are marked as valid.
 
    procedure Remove_Marked_Entities_In_List
-     (Tree : in out Entities_Tries.Trie_Tree; File : Source_File);
+     (Tree : access Entities_Tries.Trie_Tree; File : Source_File);
    --  Remove from Tree all the entities declared in File and that are marked
    --  as valid. These entities are about to be removed from memory anyway
 
@@ -370,7 +370,7 @@ package body Entities is
    -------------------------------
 
    procedure Mark_And_Isolate_Entities (File : Source_File) is
-      Iter   : Entities_Tries.Iterator := Start (File.Entities, "");
+      Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
       EL     : Entity_Information_List_Access;
       Entity : Entity_Information;
    begin
@@ -409,7 +409,7 @@ package body Entities is
    ----------------------------------
 
    procedure Mark_Dependencies_As_Invalid
-     (Tree : Entities_Tries.Trie_Tree; Dependencies_On : Source_File)
+     (Tree : access Entities_Tries.Trie_Tree; Dependencies_On : Source_File)
    is
       Iter : Entities_Tries.Iterator := Start (Tree, "");
       EL   : Entity_Information_List_Access;
@@ -432,7 +432,7 @@ package body Entities is
    ----------------------------
 
    procedure Remove_Marked_Entities (File : Source_File) is
-      Iter   : Entities_Tries.Iterator := Start (File.Entities, "");
+      Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
       EL     : Entity_Information_List_Access;
       Entity : Entity_Information;
    begin
@@ -464,7 +464,7 @@ package body Entities is
    ------------------------------------
 
    procedure Remove_Marked_Entities_In_List
-     (Tree : in out Entities_Tries.Trie_Tree; File : Source_File)
+     (Tree : access Entities_Tries.Trie_Tree; File : Source_File)
    is
       Iter   : Entities_Tries.Iterator := Start (Tree, "");
       EL     : Entity_Information_List_Access;
@@ -481,7 +481,7 @@ package body Entities is
               and then Entity.Is_Valid
             then
                if Entity_Information_Arrays.Length (EL.all) = 1 then
-                  Remove (Tree, Entity.Name.all);
+                  Remove (Tree.all, Entity.Name.all);
                   exit;
                else
                   Remove (EL.all, E);
@@ -499,7 +499,7 @@ package body Entities is
    ----------------
 
    procedure Fast_Reset (File : Source_File) is
-      Iter   : Entities_Tries.Iterator := Start (File.Entities, "");
+      Iter   : Entities_Tries.Iterator := Start (File.Entities'Access, "");
       EL     : Entity_Information_List_Access;
    begin
       loop
@@ -551,7 +551,8 @@ package body Entities is
 
       for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
          Mark_Dependencies_As_Invalid
-           (File.Depended_On.Table (F).File.Entities, Dependencies_On => File);
+           (File.Depended_On.Table (F).File.Entities'Access,
+            Dependencies_On => File);
       end loop;
 
       --  Other files can no longer reference entities in File that are no
@@ -559,12 +560,12 @@ package body Entities is
 
       for F in Dependency_Arrays.First .. Last (File.Depends_On) loop
          Remove_Marked_Entities_In_List
-           (File.Depends_On.Table (F).File.All_Entities, File);
+           (File.Depends_On.Table (F).File.All_Entities'Access, File);
       end loop;
 
       for F in Dependency_Arrays.First .. Last (File.Depended_On) loop
          Remove_Marked_Entities_In_List
-           (File.Depended_On.Table (F).File.All_Entities, File);
+           (File.Depended_On.Table (F).File.All_Entities'Access, File);
       end loop;
 
       --  Remove all entities that are still marked as valid (ie that are not
@@ -639,7 +640,7 @@ package body Entities is
       procedure Check_And_Remove (E : in out Entity_Information_List);
       procedure Check_And_Remove (E : in out Entity_Reference_List);
       procedure Check_And_Remove (E : in out E_Reference);
-      procedure Check_And_Remove (E : in out Entities_Tries.Trie_Tree);
+      procedure Check_And_Remove (E : access Entities_Tries.Trie_Tree);
       --  Remove all references to File in E
 
       procedure Check_And_Remove (E : in out Entity_Information) is
@@ -673,7 +674,7 @@ package body Entities is
          end loop;
       end Check_And_Remove;
 
-      procedure Check_And_Remove (E : in out Entities_Tries.Trie_Tree) is
+      procedure Check_And_Remove (E : access Entities_Tries.Trie_Tree) is
          Iter : Entities_Tries.Iterator := Start (E, "");
          EL   : Entity_Information_List_Access;
       begin
@@ -716,7 +717,7 @@ package body Entities is
       Check_And_Remove (Entity.Pointed_Type);
       Check_And_Remove (Entity.Returned_Type);
       Check_And_Remove (Entity.Primitive_Op_Of);
-      Check_And_Remove (Entity.Called_Entities);
+      Check_And_Remove (Entity.Called_Entities'Access);
       Check_And_Remove (Entity.Rename);
       Check_And_Remove (Entity.Primitive_Subprograms);
       Check_And_Remove (Entity.Child_Types);

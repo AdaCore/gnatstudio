@@ -829,7 +829,7 @@ private
       References            : Entity_Reference_List;
       --  All the references to this entity in the parsed files
 
-      Called_Entities       : Entities_Tries.Trie_Tree;
+      Called_Entities       : aliased Entities_Tries.Trie_Tree;
       --  List of entities that have a reference between the body and the
       --  end-of-scope of the entity.
 
@@ -889,7 +889,7 @@ private
 
       Name        : VFS.Virtual_File;
 
-      Entities    : Entities_Tries.Trie_Tree;
+      Entities    : aliased Entities_Tries.Trie_Tree;
       --  All the entities defined in the source file
 
       Unit_Name   : GNAT.OS_Lib.String_Access;
@@ -907,7 +907,7 @@ private
       --  The LI file used to parse the file. This might be left to null if
       --  the file was created appart from parsing a LI file.
 
-      All_Entities : Entities_Tries.Trie_Tree;
+      All_Entities : aliased Entities_Tries.Trie_Tree;
       --  The list of all entities referenced by entities in the file, and that
       --  are defined in other files.
       --  ??? This could be computed by traversing all the files in Depends_On,

@@ -86,7 +86,7 @@ package body Entities.Queries is
    --  Find the entity in File which is referenced at the given location
 
    procedure Find_Any_Entity
-     (Trie            : Entities_Tries.Trie_Tree;
+     (Trie            : access Entities_Tries.Trie_Tree;
       File            : Source_File;
       Line            : Integer;
       Column          : Integer;
@@ -231,7 +231,7 @@ package body Entities.Queries is
    ---------------------
 
    procedure Find_Any_Entity
-     (Trie            : Entities_Tries.Trie_Tree;
+     (Trie            : access Entities_Tries.Trie_Tree;
       File            : Source_File;
       Line            : Integer;
       Column          : Integer;
@@ -268,12 +268,12 @@ package body Entities.Queries is
       Closest         : in out Entity_Information) is
    begin
       Find_Any_Entity
-        (File.Entities, File, Line, Column, Check_Decl_Only,
+        (File.Entities'Access, File, Line, Column, Check_Decl_Only,
          Distance, Closest);
 
       if Distance /= 0 and then not Check_Decl_Only then
          Find_Any_Entity
-           (File.All_Entities, File, Line, Column,
+           (File.All_Entities'Access, File, Line, Column,
             Check_Decl_Only, Distance, Closest);
       end if;
    end Find_Any_Entity;
@@ -306,13 +306,13 @@ package body Entities.Queries is
            (Source, Line, Column, Check_Decl_Only, Distance, Closest);
       else
          Find
-           (Get (Source.Entities, Normalized_Entity_Name), Source, Line,
+           (Get (Source.Entities'Access, Normalized_Entity_Name), Source, Line,
             Column, Check_Decl_Only, Distance, Closest);
 
          Trace (Me, "After find in entities: distance=" & Distance'Img);
 
          if Distance /= 0 and then not Check_Decl_Only then
-            Find (Get (Source.All_Entities, Normalized_Entity_Name),
+            Find (Get (Source.All_Entities'Access, Normalized_Entity_Name),
                   Source, Line, Column, Check_Decl_Only, Distance, Closest);
             Trace (Me, "After find in all entities: distance=" & Distance'Img);
          end if;
@@ -1453,7 +1453,7 @@ package body Entities.Queries is
 
       procedure Add_To_Tree
         (Tree : in out Scope_Tree_Access;
-         Trie : Entities_Tries.Trie_Tree);
+         Trie : access Entities_Tries.Trie_Tree);
       --  Add all entities from Trie to the tree
 
       procedure Fill_Table
@@ -1468,7 +1468,7 @@ package body Entities.Queries is
       procedure Process_All_Entities_Refs
         (Info           : Entity_Info_Array;
          Info_For_Decl  : Entity_Info_Array;
-         For_Entities   : Entities_Tries.Trie_Tree;
+         For_Entities   : access Entities_Tries.Trie_Tree;
          Add_Deps       : Boolean);
       --  We now have in Lines the inner-most entity at that scope, used
       --  for computing the parent for specific references.
@@ -1489,7 +1489,7 @@ package body Entities.Queries is
 
       procedure Add_To_Tree
         (Tree : in out Scope_Tree_Access;
-         Trie : Entities_Tries.Trie_Tree)
+         Trie : access Entities_Tries.Trie_Tree)
       is
          Iter   : Entities_Tries.Iterator := Start (Trie, "");
          EL     : Entity_Information_List_Access;
@@ -1596,7 +1596,7 @@ package body Entities.Queries is
       procedure Process_All_Entities_Refs
         (Info           : Entity_Info_Array;
          Info_For_Decl  : Entity_Info_Array;
-         For_Entities   : Entities_Tries.Trie_Tree;
+         For_Entities   : access Entities_Tries.Trie_Tree;
          Add_Deps       : Boolean)
       is
          Iter   : Entities_Tries.Iterator := Start (For_Entities, "");
@@ -1682,8 +1682,8 @@ package body Entities.Queries is
 
       Update_Xref (File);
 
-      Add_To_Tree (Tree, File.Entities);
-      Add_To_Tree (Tree, File.All_Entities);
+      Add_To_Tree (Tree, File.Entities'Access);
+      Add_To_Tree (Tree, File.All_Entities'Access);
 
       if Tree /= null then
          T := Tree;
@@ -1724,9 +1724,11 @@ package body Entities.Queries is
 --              end loop;
 
             Process_All_Entities_Refs
-              (Line_Info, Info_For_Decl, File.Entities, Add_Deps => False);
+              (Line_Info, Info_For_Decl,
+               File.Entities'Access, Add_Deps => False);
             Process_All_Entities_Refs
-              (Line_Info, Info_For_Decl, File.All_Entities, Add_Deps => True);
+              (Line_Info, Info_For_Decl,
+               File.All_Entities'Access, Add_Deps => True);
          end;
       end if;
 
@@ -1863,7 +1865,7 @@ package body Entities.Queries is
    function Get_All_Called_Entities
      (Entity : Entity_Information) return Calls_Iterator
    is
-      Loc : File_Location := No_File_Location;
+      Loc  : File_Location := No_File_Location;
       Iter : Entities_Tries.Iterator;
    begin
       loop
@@ -1877,7 +1879,7 @@ package body Entities.Queries is
          end if;
       end loop;
 
-      Iter := Start (Entity.Called_Entities, "");
+      Iter := Start (Entity.Called_Entities'Access, "");
 
       return (Entity => Entity,
               Iter   => Iter,
@@ -1938,7 +1940,7 @@ package body Entities.Queries is
    is
    begin
       Update_Xref (File, File_Has_No_LI_Report);
-      Iter.Iter := Start (File.Entities, Prefix);
+      Iter.Iter := Start (File.Entities'Access, Prefix);
       Iter.Prefix := new String'(Prefix);
       Iter.File := File;
       Iter.Index_In_EL := Entity_Information_Arrays.First;
@@ -1990,7 +1992,8 @@ package body Entities.Queries is
            and then Iter.Processing_Entities
          then
             Free (Iter.Iter);
-            Iter.Iter := Start (Iter.File.All_Entities, Iter.Prefix.all);
+            Iter.Iter :=
+              Start (Iter.File.All_Entities'Access, Iter.Prefix.all);
             Iter.EL   := Get (Iter.Iter);
             Iter.Processing_Entities := False;
          end if;

@@ -50,7 +50,9 @@ package body Entities.Debug is
       Full          : Boolean);
    procedure Dump (LIs       : in out LI_HTable.HTable);
    procedure Dump
-     (Entities : Entities_Tries.Trie_Tree; Full : Boolean; Name : String);
+     (Entities : access Entities_Tries.Trie_Tree;
+      Full     : Boolean;
+      Name     : String);
    procedure Dump (LI        : LI_File);
    procedure Dump (Timestamp : Ada.Calendar.Time);
    procedure Dump (Files : Source_File_List; Name : String);
@@ -339,10 +341,10 @@ package body Entities.Debug is
       Dump (File.Depended_On, "depended_on");
 
       if Show_Entities then
-         Dump (File.Entities, Full => False, Name => "entities");
+         Dump (File.Entities'Access, Full => False, Name => "entities");
       end if;
 
-      Dump (File.All_Entities, Full => False, Name => "all_entities");
+      Dump (File.All_Entities'Access, Full => False, Name => "all_entities");
    end Dump;
 
    ----------
@@ -387,7 +389,7 @@ package body Entities.Debug is
             Dump (Entity.Primitive_Op_Of, False, "primitive_of");
             Dump (Entity.Primitive_Subprograms, False, "primitives");
             Dump (Entity.Child_Types, False, "child_types");
-            Dump (Entity.Called_Entities, False, "calls");
+            Dump (Entity.Called_Entities'Access, False, "calls");
             Dump (Entity.References, "references", Full => True);
          elsif Name /= "" then
             Output_Line ("");
@@ -474,7 +476,9 @@ package body Entities.Debug is
    ----------
 
    procedure Dump
-     (Entities : Entities_Tries.Trie_Tree; Full : Boolean; Name : String)
+     (Entities : access Entities_Tries.Trie_Tree;
+      Full     : Boolean;
+      Name     : String)
    is
       Iter : Entities_Tries.Iterator := Start (Entities, "");
       E    : Entity_Information_List_Access;
@@ -507,7 +511,7 @@ package body Entities.Debug is
    begin
       Output_Line ("====== Entities from files =====");
       for F in Files'Range loop
-         Dump (Files (F).Entities, Full => True, Name => "");
+         Dump (Files (F).Entities'Access, Full => True, Name => "");
       end loop;
    end Dump_Entities_From_Files;
 
