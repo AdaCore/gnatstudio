@@ -41,7 +41,8 @@ package body VCS.CVS is
    CVS_Reference : VCS_Access;
 
    VCS_CVS_Module_Name : constant String := "CVS_Connectivity";
-   VCS_CVS_Module_ID : Module_ID;
+   VCS_CVS_Module_ID   : Module_ID;
+   CVS_Identifier      : constant String := "cvs";
 
    -----------------------
    -- Local Subprograms --
@@ -109,6 +110,16 @@ package body VCS.CVS is
       List   : String_List.List) return Boolean;
    --  Parse the status information from List and display it in the VCS
    --  explorer.
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Ref : access CVS_Record) return String is
+      pragma Unreferenced (Ref);
+   begin
+      return CVS_Identifier;
+   end Name;
 
    ----------
    -- Free --
@@ -425,7 +436,7 @@ package body VCS.CVS is
                  Mode => Verbose);
       end if;
 
-      Display_File_Status (Kernel, Result, True, True);
+      Display_File_Status (Kernel, Result, CVS_Reference, True, True);
       File_Status_List.Free (Result);
 
       return True;
@@ -1171,7 +1182,7 @@ package body VCS.CVS is
    begin
       Lower_Case (Id);
 
-      if Strip_Quotes (Id) = "cvs" then
+      if Strip_Quotes (Id) = CVS_Identifier then
          return CVS_Reference;
       end if;
 
@@ -1196,6 +1207,8 @@ package body VCS.CVS is
       CVS_Reference := new CVS_Record;
       CVS_Reference.Kernel := Kernel_Handle (Kernel);
       CVS_Reference.Queue  := New_Queue;
+
+      Register_VCS (Kernel, CVS_Identifier);
    end Register_Module;
 
 end VCS.CVS;
