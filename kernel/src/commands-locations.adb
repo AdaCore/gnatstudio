@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Shell;                use Shell;
+with String_Utils;         use String_Utils;
 
 package body Commands.Locations is
 
@@ -74,6 +76,22 @@ package body Commands.Locations is
    ------------
 
    procedure Create
+     (Item    : out Generic_Location_Command;
+      Kernel  : Kernel_Handle;
+      Command : String)
+   is
+   begin
+      Item := new Generic_Location_Command_Type;
+      Item.Kernel := Kernel;
+
+      if Item.Command /= null then
+         Free (Item.Command);
+      end if;
+
+      Item.Command := new String'(Command);
+   end Create;
+
+   procedure Create
      (Item     : out Html_Location_Command;
       Kernel   : Kernel_Handle;
       Filename : String) is
@@ -103,6 +121,11 @@ package body Commands.Locations is
    -- Free --
    ----------
 
+   procedure Free (X : in out Generic_Location_Command_Type) is
+   begin
+      Free (X.Command);
+   end Free;
+
    procedure Free (X : in out Source_Location_Command_Type) is
    begin
       Free (X.Filename);
@@ -116,6 +139,18 @@ package body Commands.Locations is
    -------------
    -- Execute --
    -------------
+
+   function Execute
+     (Command : access Generic_Location_Command_Type) return Boolean is
+   begin
+      if Command.Command /= null then
+         Interpret_Command
+           (Command.Kernel, Strip_Quotes (Command.Command.all));
+         return True;
+      else
+         return False;
+      end if;
+   end Execute;
 
    function Execute
      (Command : access Html_Location_Command_Type) return Boolean is
