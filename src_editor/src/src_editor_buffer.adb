@@ -2199,7 +2199,7 @@ package body Src_Editor_Buffer is
 
       Prev := B.Parse_Blocks;
       B.Parse_Blocks := B.Block_Folding or else B.Block_Highlighting
-        or else Get_Pref (Kernel, Display_Subprogram_Name);
+        or else Get_Pref (Kernel, Display_Subprogram_Names);
 
       if Prev /= B.Parse_Blocks then
          Buffer_Information_Changed (B);
