@@ -11,8 +11,6 @@ GVD_BASE_DIR := $(BASE_DIR)
 
 BASE_DIR=$(GVD_BASE_DIR)/../gtkada
 include $(BASE_DIR)/Makefile.gtkada
-BASE_DIR=$(GVD_BASE_DIR)
-include $(BASE_DIR)/Makefile.gvd_common
 
 GVD_SRC_DIRS = $(GVD_BASE_DIR)/gvd $(GVD_BASE_DIR)/pixmaps
 SRC_DIRS += $(GVD_SRC_DIRS)

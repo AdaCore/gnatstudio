@@ -1,5 +1,4 @@
 with "../gtkada/gtkada";
-with "gvd_common";
 with "../shared";
 with "../kernel/kernel";
 
