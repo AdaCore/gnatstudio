@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -114,20 +114,20 @@ package body Prj_Normalize is
 
    begin
       --  ??? This doesn't check that two references to the same external
-      --  ??? variable have the same type. In fact, this needs to be checked
-      --  ??? for a project and all its imported projects, so outside of this
-      --  ??? subprogram
-
-      --  ??? Should check that an attribute isn't declared both in a case
-      --  ??? construction and in the common part.
-
-      --  ??? Should check that all the scenario variables point to different
-      --  ??? types, so that they can be modified at will.
-
-      --  ??? Should check that all instances of a scenario variable have the
-      --  ??? same default, or none. This isn't really important, however,
-      --  ??? since default values are used only once at the beginning by
-      --  ??? Glide.
+      --  variable have the same type. In fact, this needs to be checked
+      --  for a project and all its imported projects, so outside of this
+      --  subprogram
+      --
+      --  Should check that an attribute isn't declared both in a case
+      --  construction and in the common part.
+      --
+      --  Should check that all the scenario variables point to different
+      --  types, so that they can be modified at will.
+      --
+      --  Should check that all instances of a scenario variable have the
+      --  same default, or none. This isn't really important, however,
+      --  since default values are used only once at the beginning by
+      --  Glide.
 
       if Kind_Of (Node) = N_Project then
          Decl_List := First_Declarative_Item_Of
@@ -138,10 +138,9 @@ package body Prj_Normalize is
 
       while Decl_List /= Empty_Node loop
          Current_Node := Current_Item_Node (Decl_List);
+
          case Kind_Of (Current_Node) is
-
             when N_Case_Construction =>
-
                if Case_Construction_Found then
                   Trace (Me, "Two case constructions at the same level");
                   return -"Two case constructions at the same level";
@@ -172,6 +171,7 @@ package body Prj_Normalize is
                Case_Construction_Found := True;
 
                Case_Item := First_Case_Item_Of (Current_Node);
+
                while Case_Item /= Empty_Node loop
                   if First_Choice_Of (Case_Item) = Empty_Node then
                      Trace
@@ -193,17 +193,18 @@ package body Prj_Normalize is
                        (Project, Case_Item, Nested_Case_Names
                         & External_Variable_Value'
                         (Var_Type, Var_Name, No_String, False));
+
                   begin
                      if S /= "" then
                         Trace (Me, "One of the case items isn't normalized");
                         return S;
                      end if;
                   end;
+
                   Case_Item := Next_Case_Item (Case_Item);
                end loop;
 
             when N_Package_Declaration =>
-
                declare
                   S : constant String := Internal_Is_Normalized
                     (Project, Current_Node, Nested_Case_Names);
@@ -215,8 +216,8 @@ package body Prj_Normalize is
                end;
 
             when others =>
-
                Standard_Node_Found := True;
+
                if Case_Construction_Found
                  and then Kind_Of (Node) = N_Case_Item
                then
@@ -232,7 +233,6 @@ package body Prj_Normalize is
                   Trace (Me, "Scenario variable declared in package");
                   return -"Scenario variable declared in package";
                end if;
-
          end case;
 
          Decl_List := Next_Declarative_Item (Decl_List);
@@ -245,8 +245,8 @@ package body Prj_Normalize is
    -- Is_Normalized --
    -------------------
 
-   function Is_Normalized (Project : Prj.Tree.Project_Node_Id)
-      return String
+   function Is_Normalized
+     (Project : Prj.Tree.Project_Node_Id) return String
    is
       No_Names : External_Variable_Value_Array (1 .. 0);
    begin
@@ -263,8 +263,8 @@ package body Prj_Normalize is
    -- Has_Been_Normalized --
    -------------------------
 
-   function Has_Been_Normalized (Project : Prj.Tree.Project_Node_Id)
-      return Boolean is
+   function Has_Been_Normalized
+     (Project : Prj.Tree.Project_Node_Id) return Boolean is
    begin
       return Tree_Private_Part.Project_Nodes.Table (Project).Location /=
         No_Location;
@@ -288,11 +288,12 @@ package body Prj_Normalize is
    -- Add_Value --
    ---------------
 
-   procedure Add_Value (To   : in out External_Variable_Value_Array_Access;
-                        Last : in out Natural;
-                        V    : External_Variable_Value)
+   procedure Add_Value
+     (To   : in out External_Variable_Value_Array_Access;
+      Last : in out Natural;
+      V    : External_Variable_Value)
    is
-      Old : External_Variable_Value_Array_Access := To;
+      Old      : External_Variable_Value_Array_Access := To;
       New_Last : Natural;
    begin
       if To = null or else Last = To'Last then
@@ -301,6 +302,7 @@ package body Prj_Normalize is
          else
             New_Last :=  Old'Last * 2;
          end if;
+
          To :=  new External_Variable_Value_Array (Old'First .. New_Last);
          To (Old'Range) := Old.all;
          Free (Old);
@@ -315,9 +317,9 @@ package body Prj_Normalize is
    ---------------
 
    procedure Normalize
-     (Root_Project     : Project_Node_Id;
-      Print_Error : Prj.Put_Line_Access := null;
-      Recurse     : Boolean := False)
+     (Root_Project : Project_Node_Id;
+      Print_Error  : Prj.Put_Line_Access := null;
+      Recurse      : Boolean := False)
    is
       Values       : External_Variable_Value_Array_Access := null;
       Last_Values  : Natural;
@@ -331,7 +333,7 @@ package body Prj_Normalize is
       --  removed from this list.
 
       Project_Norm : Project_Node_Id;
-      Current_Pkg : Project_Node_Id;
+      Current_Pkg  : Project_Node_Id;
 
       procedure Process_Declarative_List
         (From, To : Project_Node_Id; Case_Stmt : in out Project_Node_Id);
@@ -378,16 +380,15 @@ package body Prj_Normalize is
          pragma Assert (Kind_Of (Decl_Item) = N_Declarative_Item);
 
          while Decl_Item /= Empty_Node loop
-
             Current := Current_Item_Node (Decl_Item);
 
             --  Save the next item, since the current item will be inserted in
             --  a different list, and thus its next field will be modified.
+
             Next_Item := Next_Declarative_Item (Decl_Item);
             Set_Next_Declarative_Item (Decl_Item, Empty_Node);
 
             case Kind_Of (Current) is
-
                when N_Package_Declaration =>
                   --  Skip subpackages, since these must appear after every
                   --  other declarative item in the normalized project.
@@ -422,6 +423,7 @@ package body Prj_Normalize is
                   --  matches the value of the outer item.
 
                   Already_Have_Var := False;
+
                   for J in Values'First .. Last_Values loop
                      if String_Equal (Values (J).Variable_Name, Name) then
                         Already_Have_Var := True;
@@ -434,13 +436,13 @@ package body Prj_Normalize is
                   --  For all the case items in the current case construction
 
                   while Case_Item /= Empty_Node loop
-
                      Index := Last_Values + 1;
 
                      if Already_Have_Var then
                         Match := Values_Matches
                           (Name, Case_Item,
                            Values (Values'First .. Last_Values));
+
                      else
                         Match := True;
                         Choice := First_Choice_Of (Case_Item);
@@ -534,7 +536,6 @@ package body Prj_Normalize is
          end loop;
       end Process_Declarative_List;
 
-
       Decl, Case_Stmt : Project_Node_Id;
       Iter : Imported_Project_Iterator := Start (Root_Project, Recurse);
       Project : Project_Node_Id;
@@ -569,6 +570,7 @@ package body Prj_Normalize is
          --  All the subpackages
 
          Current_Pkg := First_Package_Of (Project);
+
          while Current_Pkg /= Empty_Node loop
             Decl := First_Declarative_Item_Of (Current_Pkg);
             Set_First_Declarative_Item_Of (Current_Pkg, Empty_Node);
@@ -578,6 +580,7 @@ package body Prj_Normalize is
               (From      => Decl,
                To        => Current_Pkg,
                Case_Stmt => Case_Stmt);
+
             if Last_Values /= Values'First - 1 then
                Free (Values);
                raise Normalize_Error;
