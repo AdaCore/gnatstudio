@@ -89,7 +89,7 @@ package body Debugger.Gdb is
    --  Matches a file name/line indication in gdb's output.
 
    File_Name_Pattern2 : constant Pattern_Matcher :=
-     Compile ("^([^:]+):(\d+): No such file or directory.", Multiple_Lines);
+     Compile ("^([^:\n]+):(\d+): No such file or directory.", Multiple_Lines);
    --  Second regexp used to detect when the current frame can not be displayed
    --  Note that this pattern should work even when LANG isn't english because
    --  gdb does not seem to take into account this variable at all.
@@ -599,9 +599,7 @@ package body Debugger.Gdb is
       --  processing a command.
       --  ??? Problem here if we were waiting on a user question (for instance
       --  in Start)
-      Interrupt
-        (Debugger,
-         Wait_For_Prompt => not Command_In_Process (Get_Process (Debugger)));
+      Interrupt (Debugger, Wait_For_Prompt => False);
 
       --  Make sure gdb will not complain if the file is being run
       Send (Debugger, "set confirm off");
