@@ -927,6 +927,20 @@ The environment variable @code{GPS_DOC_PATH} can either be set by each
 user in his own environment, or can be set system-wide by modifying
 the small wrapper script @file{gps} itself on Unix systems.
 
+It can also be set programmatically through the GPS shell or any of the
+scripting languages. This is done with
+
+@ifset python
+@smallexample
+GPS.add_doc_directory ("/home/foo")
+@end smallexample
+
+@else
+@smallexample
+add_doc_path "/home/foo"
+@end smallexample
+@end ifset
+
 The specific list of files shown in the menus is set by reading the
 index files in each of the directories in @code{GPS_DOC_PATH}. These
 index files must be called @file{gps_index.xml}, and their format
