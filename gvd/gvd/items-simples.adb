@@ -519,7 +519,7 @@ package body Items.Simples is
                Num_Lines := Num_Lines + 1;
                Width := Gint'Max
                  (Width,
-                  Text_Width (Context.Font,
+                  Text_Width (Context.Command_Font,
                               Item.Value (Line_Start + 1 .. J - 1)));
                Line_Start := J + 1;
             end if;
@@ -527,11 +527,10 @@ package body Items.Simples is
 
          Item.Width := Gint'Max
            (Width,
-            Text_Width (Context.Font,
+            Text_Width (Context.Command_Font,
                         Item.Value (Line_Start + 1 .. Item.Value'Last)));
-         Item.Height :=
-           (Get_Ascent (Context.Font) + Get_Descent (Context.Font)) *
-           Num_Lines;
+         Item.Height := (Get_Ascent (Context.Command_Font)
+           + Get_Descent (Context.Command_Font)) * Num_Lines;
 
       else
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
@@ -586,14 +585,14 @@ package body Items.Simples is
 
             Draw_Text
               (Context.Pixmap,
-               Font => Context.Font,
+               Font => Context.Command_Font,
                GC   => Text_GC,
                X    => X,
-               Y    => Line + Get_Ascent (Context.Font),
+               Y    => Line + Get_Ascent (Context.Command_Font),
                Text => Item.Value (Line_Start + 1 .. J - 1));
 
-            Line :=
-              Line + Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+            Line := Line + Get_Ascent (Context.Command_Font)
+              + Get_Descent (Context.Command_Font);
             Line_Start := J + 1;
          end if;
       end loop;
@@ -606,10 +605,10 @@ package body Items.Simples is
 
       Draw_Text
         (Context.Pixmap,
-         Font => Context.Font,
+         Font => Context.Command_Font,
          GC   => Text_GC,
          X    => X,
-         Y    => Line + Get_Ascent (Context.Font),
+         Y    => Line + Get_Ascent (Context.Command_Font),
          Text => Item.Value (Line_Start + 1 .. Item.Value'Last));
 
       if Item.Selected then

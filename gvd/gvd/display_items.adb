@@ -1702,18 +1702,13 @@ package body Display_Items is
 
    function Create_Drawing_Context
      (Item : access Display_Item_Record'Class)
-     return Drawing_Context
-   is
-      D : Drawing_Context := Create_Drawing_Context
+     return Drawing_Context is
+   begin
+      return Create_Drawing_Context
         (Canvas => Item.Debugger.Data_Canvas,
          Pixmap => Pixmap (Item),
          Mode   => Item.Mode,
          Lang   => Get_Language (Item.Debugger.Debugger));
-   begin
-      if not Item.Is_A_Variable then
-         D.Font := D.Command_Font;
-      end if;
-      return D;
    end Create_Drawing_Context;
 
    ----------------------------
