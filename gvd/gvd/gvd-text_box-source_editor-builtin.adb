@@ -783,9 +783,14 @@ package body GVD.Source_Editors is
 
    begin
       if Show /= Editor.Show_Line_Nums then
+         --  Pretend we have changed the contents of the buffer. This removes
+         --  all highlighting of the current line, and reset any marker we
+         --  might have
+         Set_Buffer (Editor, Get_Buffer (Editor), Clear_Previous => False);
          Editor.Show_Line_Nums := Show;
          Update_Child (Editor);
          Set_Value (Get_Vadj (Get_Child (Editor)), Value);
+         Highlight_Current_Line (Editor);
       end if;
    end Set_Show_Line_Nums;
 
