@@ -31,8 +31,6 @@
 --
 --  See package VCS for a complete spec of this package.
 
-with Basic_Types;    use Basic_Types;
-
 package VCS.CVS is
 
    type CVS_Record is new VCS_Record with private;
@@ -50,47 +48,64 @@ package VCS.CVS is
      return File_Status_List.List;
 
    function Local_Get_Status
-     (Rep         : access CVS_Record;
-      Filenames   :        String_List.List)
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List)
      return File_Status_List.List;
 
    procedure Open
      (Rep       : access CVS_Record;
-      Name      : String;
-      User_Name : String := "");
+      Filenames :        String_List.List;
+      User_Name :        String           := "");
 
    procedure Commit
-     (Rep  : access CVS_Record;
-      Name : String;
-      Log  : String);
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List;
+      Logs      :        String_List.List);
 
-   procedure Update (Rep : access CVS_Record; Name : String);
+   procedure Update
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List);
 
-   procedure Merge (Rep : access CVS_Record; Name : String);
+   procedure Merge
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List);
 
-   procedure Add (Rep : access CVS_Record; Name : String);
+   procedure Add
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List);
 
-   procedure Remove (Rep : access CVS_Record; Name : String);
+   procedure Remove
+     (Rep       : access CVS_Record;
+      Filenames :        String_List.List);
 
    function Diff
      (Rep       : access CVS_Record;
-      File_Name : String;
-      Version_1 : String := "";
-      Version_2 : String)
+      File      :        String;
+      Version_1 :        String     := "";
+      Version_2 :        String)
      return String_List.List;
 
    function Log
-      (Rep       : access CVS_Record;
-       File_Name : String)
+     (Rep  : access CVS_Record;
+      File :        String)
       return String_List.List;
 
    function Success (Rep : access CVS_Record) return Boolean;
 
    function Get_Message (Rep : access CVS_Record) return String;
 
+   procedure Register_Idle_Function
+     (Rep  : access CVS_Record;
+      Func : Idle_Function;
+      Timeout : Integer := 200);
+
 private
+   type Parameterless_Procedure is access procedure;
+
    type CVS_Record is new VCS_Record with record
-      Success : Boolean := False;
-      Message : String_Access;
+      Success             : Boolean := True;
+      Message             : String_List.List;
+      Local_Idle_Function : Idle_Function := null;
+      Timeout             : Integer := 200;
    end record;
 end VCS.CVS;

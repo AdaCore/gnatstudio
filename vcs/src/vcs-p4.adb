@@ -26,35 +26,58 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Ada.Text_IO; use Ada.Text_IO;
-with GNAT.Expect; use GNAT.Expect;
+pragma Warnings (Off);
+
 package body VCS.P4 is
 
-   -----------------------
-   -- Local Subprograms --
-   -----------------------
+   ---------
+   -- Add --
+   ---------
 
-   procedure Set_Message
-     (Rep : access P4_Record;
-      M   : String);
-   --  Sets the internal error message to M.
-
-   -----------------
-   -- Set_Message --
-   -----------------
-
-   procedure Set_Message
-     (Rep : access P4_Record;
-      M   : String)
+   procedure Add
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List)
    is
    begin
-      if Rep.Message /= null then
-         Free (Rep.Message);
-      end if;
-      Rep.Message := new String'(M);
-   end Set_Message;
+      null;
+   end Add;
+
+   ------------
+   -- Commit --
+   ------------
+
+   procedure Commit
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List;
+      Logs      :        String_List.List)
+   is
+   begin
+      null;
+   end Commit;
+
+   ----------
+   -- Diff --
+   ----------
+
+   function Diff
+     (Rep       : access P4_Record;
+      File      :        String;
+      Version_1 :        String     := "";
+      Version_2 :        String)
+      return String_List.List
+   is
+   begin
+      return Diff (Rep, File, Version_1, Version_2);
+   end Diff;
+
+   -----------------
+   -- Get_Message --
+   -----------------
+
+   function Get_Message (Rep : access P4_Record) return String is
+   begin
+      return Get_Message (Rep);
+   end Get_Message;
 
    ----------------
    -- Get_Status --
@@ -67,7 +90,7 @@ package body VCS.P4 is
       Get_Version : Boolean          := True;
       Get_Tags    : Boolean          := False;
       Get_Users   : Boolean          := False)
-     return File_Status_List.List
+      return File_Status_List.List
    is
       Result : File_Status_List.List;
    begin
@@ -81,12 +104,36 @@ package body VCS.P4 is
    function Local_Get_Status
      (Rep         : access P4_Record;
       Filenames   :        String_List.List)
-     return File_Status_List.List
+      return File_Status_List.List
    is
-      Result : File_Status_List.List;
    begin
-      return Result;
+      return Local_Get_Status (Rep, Filenames);
    end Local_Get_Status;
+
+   ---------
+   -- Log --
+   ---------
+
+   function Log
+     (Rep  : access P4_Record;
+      File :        String)
+      return String_List.List
+   is
+   begin
+      return Log (Rep, File);
+   end Log;
+
+   -----------
+   -- Merge --
+   -----------
+
+   procedure Merge
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List)
+   is
+   begin
+      null;
+   end Merge;
 
    ----------
    -- Open --
@@ -94,7 +141,7 @@ package body VCS.P4 is
 
    procedure Open
      (Rep       : access P4_Record;
-      Name      : String;
+      Filenames      : String_List.List;
       User_Name : String := "")
    is
    begin
@@ -102,104 +149,37 @@ package body VCS.P4 is
    end Open;
 
    ------------
-   -- Commit --
-   ------------
-
-   procedure Commit
-     (Rep  : access P4_Record;
-      Name : String;
-      Log  : String) is
-   begin
-      null;
-   end Commit;
-
-   ------------
-   -- Update --
-   ------------
-
-   procedure Update (Rep : access P4_Record; Name : String) is
-   begin
-      null;
-   end Update;
-
-   -----------
-   -- Merge --
-   -----------
-
-   procedure Merge (Rep : access P4_Record; Name : String)
-   is
-   begin
-      null;
-   end Merge;
-
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add (Rep : access P4_Record; Name : String)
-   is
-   begin
-      null;
-   end Add;
-
-   ------------
    -- Remove --
    ------------
 
-   procedure Remove (Rep : access P4_Record; Name : String)
+   procedure Remove
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List)
    is
    begin
       null;
    end Remove;
 
-   ----------
-   -- Diff --
-   ----------
-
-   function Diff
-     (Rep       : access P4_Record;
-      File_Name : String;
-      Version_1 : String := "";
-      Version_2 : String)
-     return String_List.List
-   is
-      Result : String_List.List;
-   begin
-      return Result;
-   end Diff;
-
-   ---------
-   -- Log --
-   ---------
-
-   function Log
-      (Rep       : access P4_Record;
-       File_Name : String)
-      return String_List.List
-   is
-      Result : String_List.List;
-   begin
-      return Result;
-   end Log;
-
    -------------
    -- Success --
    -------------
 
-   function Success (Rep : access P4_Record) return Boolean
-   is
+   function Success (Rep : access P4_Record) return Boolean is
    begin
-      return False;
+      return Success (Rep);
    end Success;
 
-   -----------------
-   -- Get_Message --
-   -----------------
+   ------------
+   -- Update --
+   ------------
 
-   function Get_Message (Rep : access P4_Record) return String
+   procedure Update
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List)
    is
    begin
-      return "";
-   end Get_Message;
+      null;
+   end Update;
 
 end VCS.P4;
+

@@ -56,32 +56,40 @@ package VCS.P4 is
 
    procedure Open
      (Rep       : access P4_Record;
-      Name      : String;
+      Filenames      : String_List.List;
       User_Name : String := "");
 
    procedure Commit
-     (Rep  : access P4_Record;
-      Name : String;
-      Log  : String);
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List;
+      Logs      :        String_List.List);
 
-   procedure Update (Rep : access P4_Record; Name : String);
+   procedure Update
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List);
 
-   procedure Merge (Rep : access P4_Record; Name : String);
+   procedure Merge
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List);
 
-   procedure Add (Rep : access P4_Record; Name : String);
+   procedure Add
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List);
 
-   procedure Remove (Rep : access P4_Record; Name : String);
+   procedure Remove
+     (Rep       : access P4_Record;
+      Filenames :        String_List.List);
 
    function Diff
      (Rep       : access P4_Record;
-      File_Name : String;
-      Version_1 : String := "";
-      Version_2 : String)
+      File      :        String;
+      Version_1 :        String     := "";
+      Version_2 :        String)
      return String_List.List;
 
    function Log
-      (Rep       : access P4_Record;
-       File_Name : String)
+     (Rep  : access P4_Record;
+      File :        String)
       return String_List.List;
 
    function Success (Rep : access P4_Record) return Boolean;

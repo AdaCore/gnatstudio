@@ -106,18 +106,18 @@ package VCS is
    function Get_Status
      (Rep         : access VCS_Record;
       Filenames   :        String_List.List;
-      Get_Status  :        Boolean    := True;
-      Get_Version :        Boolean    := True;
-      Get_Tags    :        Boolean    := False;
-      Get_Users   :        Boolean    := False)
+      Get_Status  :        Boolean          := True;
+      Get_Version :        Boolean          := True;
+      Get_Tags    :        Boolean          := False;
+      Get_Users   :        Boolean          := False)
      return File_Status_List.List is abstract;
    --  Return the status of a list of files.
    --  The returned File_Status_Record is to be filled only with information
    --  that have the corresponding parameter set to True, all the other fields
    --  are empty lists.
    --
-   --  Filenames must be a list of absolute file names.
-   --
+   --  Filenames must be a list of absolute file names or absolute
+   --  directory names.
    --  The returned list must correspond to the order in Filenames.
    --
    --  Implementations for this procedure should document which fields are
@@ -140,8 +140,8 @@ package VCS is
 
    procedure Open
      (Rep       : access VCS_Record;
-      Name      : String;
-      User_Name : String := "")
+      Filenames :        String_List.List;
+      User_Name :        String           := "")
       is abstract;
    --  Open the a file for modification.
    --  This is a necessary step for some systems but not all of them.
@@ -149,31 +149,42 @@ package VCS is
    --  editing the file, whenever possible.
 
    procedure Commit
-     (Rep  : access VCS_Record;
-      Name : String;
-      Log  : String) is abstract;
+     (Rep       : access VCS_Record;
+      Filenames :        String_List.List;
+      Logs      :        String_List.List) is abstract;
    --  Check a file Name in the specified repository.
    --  Log is used as the revision history.
+   --  The elements in Logs must exactly correspond to the elements in
+   --  Filenames.
 
-   procedure Update (Rep : access VCS_Record; Name : String) is abstract;
+   procedure Update
+     (Rep       : access VCS_Record;
+      Filenames :        String_List.List) is abstract;
    --  Check a file out the specified repository.
    --  Name is the name of the local file.
 
-   procedure Merge (Rep : access VCS_Record; Name : String) is abstract;
-   --  Merge the file from the specified repository with the local file.
-   --  Name is the name of the local file.
+   procedure Merge
+     (Rep       : access VCS_Record;
+      Filenames :        String_List.List) is abstract;
+   --  Merge the files from the specified repository with the local files.
+   --  The merge is done locally, a commit is required to pass the
+   --  resulting changes to the repository.
 
-   procedure Add (Rep : access VCS_Record; Name : String) is abstract;
-   --  Add a given file/directory name in the specified VCS repository
+   procedure Add
+     (Rep       : access VCS_Record;
+      Filenames :        String_List.List) is abstract;
+   --  Add files to the specified VCS repository
 
-   procedure Remove (Rep : access VCS_Record; Name : String) is abstract;
+   procedure Remove
+     (Rep       : access VCS_Record;
+      Filenames :        String_List.List) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
 
    function Diff
      (Rep       : access VCS_Record;
-      File_Name : String;
-      Version_1 : String := "";
-      Version_2 : String)
+      File      :        String;
+      Version_1 :        String     := "";
+      Version_2 :        String)
      return String_List.List is abstract;
    --  Return a diff between two versions of one file.
    --  The result is a String_List.List with one element for each line,
@@ -181,8 +192,8 @@ package VCS is
    --  If Version_1 is empty, then the local file is taken.
 
    function Log
-      (Rep       : access VCS_Record;
-       File_Name : String)
+     (Rep  : access VCS_Record;
+      File :        String)
       return String_List.List is abstract;
    --  Return a changelog for the corresponding file.
    --  The result String_List.List with one element for each line.
@@ -199,6 +210,24 @@ package VCS is
    --
    --  This function must return an empty string whenever an operation succeeds
    --  and a non-empty string whenever an operation fails.
+
+
+   --  ??? this needs to be documented.
+   --  ??? this needs to be made generic.
+   --    generic
+   --       type Data_Type is private;
+   --    package Idle Is
+
+   type Idle_Function is access
+     procedure;
+   --  (Data : Data_Type);
+
+   procedure Register_Idle_Function
+     (Rep  : access VCS_Record;
+      Func : Idle_Function;
+      Timeout : Integer := 100) is abstract;
+      --    end Idle;
+
 
    --  missing:
    --  annotate
