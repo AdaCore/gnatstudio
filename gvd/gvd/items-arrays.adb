@@ -58,7 +58,14 @@ package body Items.Arrays is
       --  Do we have an array with no element ?
 
       if Length <= 0 then
-         return "??";
+
+         --  Special case for one dimensional arrays, since these are often
+         --  strings whose length was not known when parsing the type info.
+         if Item.Num_Dimensions = 1 then
+            return Long_Integer'Image (Item.Dimensions (Dim_Num).First);
+         else
+            return "??";
+         end if;
       else
          declare
             Dim : constant String := Long_Integer'Image
@@ -563,6 +570,8 @@ package body Items.Arrays is
       if Item.Dimensions (1).First > Item.Dimensions (1).Last
         and then Item.Dimensions (1).First /= Long_Integer'Last
         and then Item.Dimensions (1).Last /= Long_Integer'First
+        and then Item.Values = null  --  In case we were able to parse the
+                                     --  value anyway
       then
          return;
       end if;
@@ -670,6 +679,8 @@ package body Items.Arrays is
       if Item.Dimensions (1).First > Item.Dimensions (1).Last
         and then Item.Dimensions (1).First /= Long_Integer'Last
         and then Item.Dimensions (1).Last /= Long_Integer'First
+        and then Item.Values = null --  Sometimes (ex/ Unbounded_Strings), we
+                                    --  could parse the value anyway
       then
          Item.Width := 20;
          Item.Height := 0;
