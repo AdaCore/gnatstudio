@@ -698,7 +698,7 @@ package body Outline_View is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Outline_View_Module_Name : constant String := "Outline_View";
-      Project : constant String := '/' & (-"Project");
+      Tools : constant String := '/' & (-"Tools");
       Command : Interactive_Command_Access;
    begin
       Register_Module
@@ -708,7 +708,7 @@ package body Outline_View is
          Kernel      => Kernel);
 
       Register_Menu
-        (Kernel, Project, -"Outline View", "", On_Open_Outline'Access);
+        (Kernel, Tools, -"Outline View", "", On_Open_Outline'Access);
 
       Command := new Refresh_Outline_Command;
       Register_Contextual_Menu

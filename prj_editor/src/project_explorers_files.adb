@@ -1228,7 +1228,7 @@ package body Project_Explorers_Files is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Project : constant String := '/' & (-"Project");
+      Tools : constant String := '/' & (-"Tools");
    begin
       Register_Module
         (Module                  => Explorer_Files_Module_Id,
@@ -1239,7 +1239,7 @@ package body Project_Explorers_Files is
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
-        (Kernel, Project, -"File View", "", On_Open_Explorer'Access);
+        (Kernel, Tools, -"File View", "", On_Open_Explorer'Access);
    end Register_Module;
 
 end Project_Explorers_Files;
