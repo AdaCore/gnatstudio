@@ -1,3 +1,4 @@
+pragma Warnings (Off);
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
@@ -167,6 +168,7 @@ package body Display_Items is
       Id     : String;
       Name   : String) return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
+   --  If Name is not the empty string, the name must also match
 
    procedure Create_Link
      (Canvas     : access Interactive_Canvas_Record'Class;
@@ -286,8 +288,7 @@ package body Display_Items is
       end if;
 
       if Auto_Refresh then
-         --  The following call always returns null if the preference for
-         --  alias detection is unset.
+         --  Avoid creating the same item twice if it already exists in the canvas
 
          Alias_Item :=
            Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
@@ -323,7 +324,6 @@ package body Display_Items is
 
       --  We now know there is no alias, so we can spend time parsing the value
       --  if necessary.
-
 
       if Default_Entity = null then
          begin
@@ -365,6 +365,10 @@ package body Display_Items is
          Item.Is_Dereference := True;
          Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
          Put (Debugger.Data_Canvas, Item);
+      end if;
+
+      if Get_Detect_Aliases (GVD_Canvas (Debugger.Data_Canvas)) then
+         Recompute_All_Aliases (Debugger.Data_Canvas, False);
       end if;
 
       Set_Busy (Debugger, False);
@@ -695,7 +699,9 @@ package body Display_Items is
       is
          pragma Unreferenced (Canvas);
       begin
-         if Is_Alias_Of (Display_Item (Item), Id, Name, Deref_Name) then
+         if (Name = "" or else Display_Item (Item).Name.all = Name)
+           and then Is_Alias_Of (Display_Item (Item), Id, Name, Deref_Name)
+         then
             if Display_Item (Item).Is_Alias_Of /= null then
                Alias_Item := Display_Item (Item).Is_Alias_Of;
             else
@@ -710,7 +716,7 @@ package body Display_Items is
    begin
       --  Always search if we have a special name to look for, so as to avoid
       --  creating the same item multiple times
-      if Name = "" or else Get_Detect_Aliases (GVD_Canvas (Canvas)) then
+      if Name /= "" or else Get_Detect_Aliases (GVD_Canvas (Canvas)) then
          For_Each_Item (Canvas, Alias_Found'Unrestricted_Access);
       end if;
 
@@ -1443,19 +1449,13 @@ package body Display_Items is
                return False;
 
             elsif It.Is_Dereference and then It2.Is_Dereference then
-               if It.Name /= null
-                 and then It2.Name /= null
-                 and then It2.Name'Length < It.Name'Length
-               then
-                  It.Is_Alias_Of := It2;
-                  For_Each_Item
-                    (Canvas, Clean_Alias_Chain'Unrestricted_Access);
-               else
-                  It2.Is_Alias_Of := It;
-                  It := It2;
-                  For_Each_Item
-                    (Canvas, Clean_Alias_Chain'Unrestricted_Access);
-               end if;
+               --  The last item inserted in the canvas will always be the
+               --  alias and invisible one (so that, when inserting a new item
+               --  in the canvas, we do not disturb the current layout).
+               It2.Is_Alias_Of := It;
+               It := It2;
+               For_Each_Item
+                 (Canvas, Clean_Alias_Chain'Unrestricted_Access);
                return False;
 
             --  They both were explicitly displayed by the user. Print a
@@ -1622,6 +1622,7 @@ package body Display_Items is
       --  If we broke the alias, move the item back to some new coordinates
       elsif It.Was_Alias then
          Move_To (Canvas, It);
+         Layout (Canvas);
       end if;
 
       return True;
