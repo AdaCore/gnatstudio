@@ -345,7 +345,7 @@ package body GVD.Preferences is
       Set (Should_Strip_CR, Need_To_Strip_CR);
 
       Set (String (Asm_Highlight_Color), "#FF0000");
-      Set (String (Assembly_Range_Size), "100");
+      Set (String (Assembly_Range_Size), "200");
 
       Set (Separate_Data, False);
       Set (Show_Stack, False);
