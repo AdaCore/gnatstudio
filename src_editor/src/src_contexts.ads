@@ -142,6 +142,15 @@ private
    --  Warning: do not change the contents or order of this type without
    --  synchronizing with vsearch.glade and Scan_Buffer.
 
+   type Recognized_Lexical_States is
+     (Statements, Strings, Mono_Comments, Multi_Comments);
+   --  Current lexical state of the currently parsed file.
+   --
+   --  Statements      all but comments and strings
+   --  Strings         string literals
+   --  Mono_Comments   end of line terminated comments
+   --  Multi_Comments  (possibly) multi-line comments
+
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
    type Match_Result_Access is access Match_Result;
@@ -166,6 +175,11 @@ private
 
       All_Occurrences : Boolean := False;
       Scope           : Search_Scope := Whole;
+
+      Current_Lexical : Recognized_Lexical_States := Statements;
+      --  The current scope when parsing the current file. This needs to be
+      --  saved so that when we continue the search we restart in the proper
+      --  state
    end record;
 
    type Current_File_Context is new File_Search_Context with null record;
