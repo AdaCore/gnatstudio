@@ -34,15 +34,13 @@
 --
 --  </description>
 
-with Gtk.Box;
 with Gtk.Button;
-with Gtk.GEntry;
-
+with Gtk.Table;
 with Glide_Kernel;
 
 package Scenario_Views is
 
-   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with private;
+   type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with private;
    type Scenario_View is access all Scenario_View_Record;
 
    procedure Gtk_New
@@ -58,9 +56,8 @@ package Scenario_Views is
    --  Internal function for creating new widgets
 
 private
-   type Scenario_View_Record is new Gtk.Box.Gtk_Box_Record with record
+   type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with record
       Kernel      : Glide_Kernel.Kernel_Handle;
-      Field       : Gtk.GEntry.Gtk_Entry;
       Edit_Button : Gtk.Button.Gtk_Button;
    end record;
 end Scenario_Views;

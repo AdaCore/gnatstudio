@@ -28,9 +28,15 @@
 
 with Glib;            use Glib;
 with Glib.Object;     use Glib.Object;
-with Gtk.Box;         use Gtk.Box;
 with Gtk.Button;      use Gtk.Button;
+with Gtk.Combo;       use Gtk.Combo;
+with Gtk.Enums;       use Gtk.Enums;
 with Gtk.GEntry;      use Gtk.GEntry;
+with Gtk.Handlers;    use Gtk.Handlers;
+with Gtk.Label;       use Gtk.Label;
+with Gtk.List;        use Gtk.List;
+with Gtk.List_Item;   use Gtk.List_Item;
+with Gtk.Table;       use Gtk.Table;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
 
@@ -55,6 +61,26 @@ package body Scenario_Views is
    procedure Refresh (View : access GObject_Record'Class; Data : GObject);
    --  Callback when the current view of the project has changed
 
+   procedure Add_Possible_Values
+     (List : access Gtk_List_Record'Class; Typ : Project_Node_Id);
+   --  Add all the possible values for type Typ into the List.
+   --  ??? This is a duplicate of the one in variable_editors.adb
+
+   type Variable_User_Data is record
+      View : Scenario_View;
+      Var  : Project_Node_Id;
+   end record;
+
+   procedure Variable_Value_Changed
+     (GEntry : access Gtk_Widget_Record'Class;
+      User   : Variable_User_Data);
+   --  Called when the value of one of the variables has changed.
+   --  This recomputes the scenario view, so that changes are reflected in
+   --  other parts of Glide.
+
+   package View_Callback is new User_Callback
+     (Gtk_Widget_Record, Variable_User_Data);
+
    -------------
    -- Gtk_New --
    -------------
@@ -73,18 +99,21 @@ package body Scenario_Views is
    ----------------
 
    procedure Initialize
-     (View    : access Scenario_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class)
-   is
+     (View   : access Scenario_View_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class) is
    begin
       View.Kernel := Kernel_Handle (Kernel);
-      Initialize_Hbox (View, Homogeneous => False, Spacing => 10);
+      Gtk.Table.Initialize
+        (View,
+         Rows        => 1,
+         Columns     => 2,
+         Homogeneous => False);
 
       Gtk_New (View.Edit_Button, "Edit Scenario");
       --  Activated only when a project is loaded
       Set_Sensitive (View.Edit_Button, False);
+      Attach (View, View.Edit_Button, 0, 2, 0, 1);
 
-      Pack_Start (View, View.Edit_Button, Expand => False, Fill => False);
       Widget_Callback.Object_Connect
         (View.Edit_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Edit_Scenario'Access), View);
@@ -95,10 +124,6 @@ package body Scenario_Views is
       Object_User_Callback.Connect
         (Kernel, "project_view_changed",
          Object_User_Callback.To_Marshaller (Refresh'Access), GObject (View));
-
-      Gtk_New (View.Field, 1024);
-      Set_Editable (View.Field, False);
-      Pack_Start (View, View.Field, Expand => True, Fill => True);
 
       --  Update the viewer with the current project
       Refresh (Kernel, GObject (View));
@@ -124,54 +149,117 @@ package body Scenario_Views is
       Show_All (Edit);
    end On_Edit_Scenario;
 
+   ----------------------------
+   -- Variable_Value_Changed --
+   ----------------------------
+
+   procedure Variable_Value_Changed
+     (GEntry : access Gtk_Widget_Record'Class;
+      User   : Variable_User_Data)
+   is
+      Value : constant String := Get_Chars (Gtk_Entry (GEntry));
+   begin
+      if Value /= "" then
+         String_To_Name_Buffer (External_Reference_Of (User.Var));
+         declare
+            Name : constant String :=
+              Name_Buffer (Name_Buffer'First .. Name_Len);
+         begin
+            Change_Scenario_Variable (User.View.Kernel, Name, Value);
+         end;
+
+         Recompute_View (User.View.Kernel);
+      end if;
+   end Variable_Value_Changed;
+
+   -------------------------
+   -- Add_Possible_Values --
+   -------------------------
+
+   procedure Add_Possible_Values
+     (List : access Gtk_List_Record'Class; Typ : Project_Node_Id)
+   is
+      Iter : String_List_Iterator := Type_Values (Typ);
+      Item : Gtk_List_Item;
+   begin
+      while not Done (Iter) loop
+         --  We know this is a list of static strings
+         String_To_Name_Buffer (Data (Iter));
+         Gtk_New (Item, Name_Buffer (Name_Buffer'First .. Name_Len));
+         Add (List, Item);
+         Iter := Next (Iter);
+      end loop;
+      Show_All (List);
+   end Add_Possible_Values;
+
    -------------
    -- Refresh --
    -------------
 
    procedure Refresh (View : access GObject_Record'Class; Data : GObject) is
       V : Scenario_View := Scenario_View (Data);
+      Label : Gtk_Label;
+      Combo : Gtk_Combo;
+      Row : Guint;
       Str : String_Id;
    begin
-      --  No project view => Clean up the tree
+      --  No project view => Clean up the scenario viewer
       if Get_Project_View (V.Kernel) = No_Project then
-         Set_Text (V.Field, "");
-         return;
+         Resize (V, Rows => 1, Columns => 2);
+         Hide_All (V);
+         Set_Sensitive (V.Edit_Button, False);
+
+      else
+         declare
+            Scenar_Var : constant Project_Node_Array :=
+              Find_Scenario_Variables (Get_Project (V.Kernel));
+         begin
+            Set_Sensitive (V.Edit_Button, True);
+            Resize (V, Rows => Guint (Scenar_Var'Length), Columns => 2);
+
+            for J in Scenar_Var'Range loop
+               Row := Guint (J - Scenar_Var'First) + 1;
+               Str := External_Reference_Of (Scenar_Var (J));
+               String_To_Name_Buffer (Str);
+               Gtk_New (Label, Name_Buffer (Name_Buffer'First .. Name_Len));
+               Set_Alignment (Label, 0.0, 0.5);
+               Attach (V, Label, 0, 1, Row, Row + 1, Xoptions => Fill);
+
+               Gtk_New (Combo);
+               Set_Editable (Get_Entry (Combo), False);
+               Set_Width_Chars (Get_Entry (Combo), 0);
+               Attach (V, Combo, 1, 2, Row, Row + 1);
+
+               Add_Possible_Values
+                 (Get_List (Combo), String_Type_Of (Scenar_Var (J)));
+
+               --  Display either the current value of the variable (if set),
+               --  or its default value.
+               Str := External_Reference_Of (Scenar_Var (J));
+               if Str /= No_String then
+                  String_To_Name_Buffer (Str);
+                  Str := Prj.Ext.Value_Of (Name_Find);
+                  if Str /= No_String then
+                     String_To_Name_Buffer (Str);
+                     Set_Text
+                       (Get_Entry (Combo),
+                        Name_Buffer (Name_Buffer'First .. Name_Len));
+                  else
+                     Set_Text (Get_Entry (Combo), "");
+                     Display_Expr
+                       (Get_Entry (Combo), Value_Of (Scenar_Var (J)));
+                  end if;
+               end if;
+
+               View_Callback.Connect
+                 (Get_Entry (Combo),
+                  "changed",
+                  View_Callback.To_Marshaller (Variable_Value_Changed'Access),
+                  (View => V, Var => Scenar_Var (J)));
+            end loop;
+         end;
+         Show_All (V);
       end if;
-
-      declare
-         Vars : Project_Node_Array :=
-           Find_Scenario_Variables (Get_Project (V.Kernel));
-      begin
-         Set_Sensitive (V.Edit_Button, True);
-         Set_Text (V.Field, "");
-
-         for Var in Vars'Range loop
-            Str := External_Reference_Of (Vars (Var));
-            if Str /= No_String then
-               String_To_Name_Buffer (Str);
-               Str := Prj.Ext.Value_Of  (External_Name => Name_Find);
-            end if;
-
-            if Var /= Vars'First then
-               Append_Text (V.Field, ", ");
-            end if;
-
-            if Str = No_String then
-               Append_Text
-                 (V.Field,
-                  Get_Name_String (Name_Of (Vars (Var))) & "=""");
-               Display_Expr (V.Field, Value_Of (Vars (Var)));
-               Append_Text (V.Field, """");
-
-            else
-               String_To_Name_Buffer (Str);
-               Append_Text
-                 (V.Field,
-                  Get_Name_String (Name_Of (Vars (Var)))
-                  & "=""" & Name_Buffer (1 .. Name_Len) & """");
-            end if;
-         end loop;
-      end;
    end Refresh;
 
 end Scenario_Views;
