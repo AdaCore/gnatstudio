@@ -26,9 +26,6 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Prj.Tree;     use Prj.Tree;
-with Prj;          use Prj;
-
 with Gtk.Window;      use Gtk.Window;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
