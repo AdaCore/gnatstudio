@@ -18,6 +18,12 @@ Known Problems fixed in GPS 3.0.0
               not report valid ones.
   Workaround: Use the 'Whole Text' context instead.
 
+- E204-005 Refresh problems after a Commit in the VCS Explorer under Windows
+  Problem:    Under Windows, when working on files where the full path has
+              some upper case characters, the VCS Explorer is not properly
+              refreshed after doing a Commit operation
+  Workaround: Refresh the VCS Explorer using the Query Status operation.
+
 - E106-004 GPS crashes when closing editors of a file that has been modified
   Problem:    When a file is modified outside of GPS, and when closing the
               editor associated to this file, it is possible that the editor
