@@ -501,7 +501,9 @@ package body Task_Manager.GUI is
                Remove (Manager.Progress_Area, Manager.Queues (J).Bar);
             end if;
 
-            Gtk_New (Manager.Queues (J).Bar);
+            if Manager.Queues (J).Show_Bar then
+               Gtk_New (Manager.Queues (J).Bar);
+            end if;
          end loop;
       end if;
 
@@ -521,24 +523,26 @@ package body Task_Manager.GUI is
          if Manager.Need_Global_Refresh
            and then Manager.Progress_Area /= null
          then
-            Pack_End
-              (Manager.Progress_Area,
-               Manager.Queues (J).Bar,
-               Expand => False,
-               Fill   => True,
-               Padding => 0);
+            if Manager.Queues (J).Show_Bar then
+               Pack_End
+                 (Manager.Progress_Area,
+                  Manager.Queues (J).Bar,
+                  Expand => False,
+                  Fill   => True,
+                  Padding => 0);
 
-            Manager_Contextual_Menus.Contextual_Callback.Connect
-              (Manager.Queues (J).Bar,
-               "button_press_event",
-               On_Progress_Bar_Button_Pressed'Access,
-               (null, null, (Manager, J)));
+               Manager_Contextual_Menus.Contextual_Callback.Connect
+                 (Manager.Queues (J).Bar,
+                  "button_press_event",
+                  On_Progress_Bar_Button_Pressed'Access,
+                  (null, null, (Manager, J)));
 
-            Manager_Contextual_Menus.Register_Contextual_Menu
-              (Manager.Queues (J).Bar,
-               (Manager, J), Menu_Create'Access, Menu_Destroy'Access);
+               Manager_Contextual_Menus.Register_Contextual_Menu
+                 (Manager.Queues (J).Bar,
+                  (Manager, J), Menu_Create'Access, Menu_Destroy'Access);
 
-            Show_All (Manager. Queues (J).Bar);
+               Show_All (Manager. Queues (J).Bar);
+            end if;
          end if;
 
          Refresh_Command (Manager, J);
