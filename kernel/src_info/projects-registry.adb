@@ -478,6 +478,7 @@ package body Projects.Registry is
       Reset (Registry, View_Only => True);
 
       Unchecked_Free (Registry.Data.Scenario_Variables);
+
       Create_Environment_Variables (Registry);
 
       Prj.Reset;
@@ -530,8 +531,7 @@ package body Projects.Registry is
                     Directory (Directory'First .. Last)) /= Direct
             then
                Set (Registry.Data.Directories,
-                    K => Directory (Directory'First .. Last),
-                    E => As_Parent);
+                    K => Directory (Directory'First .. Last), E => As_Parent);
             end if;
          end loop;
       end Register_Directory;
@@ -653,6 +653,7 @@ package body Projects.Registry is
       Buffer    : String (1 .. 2048);
       Part      : Unit_Part;
       Unit, Lang : Name_Id;
+      Has_File : Boolean;
 
    begin
       --  Nothing to do if the only language is Ada, since this has already
@@ -663,16 +664,54 @@ package body Projects.Registry is
                  and then Languages (Languages'First).all = Ada_String)
       then
          Free (Languages);
+
+         --  ??? Temporary: check whether each directory contains source files
+         --  for the project. This is faster than checkin this later on, and
+         --  speeds up loading of big projects (7501 files in 150 directories:
+         --  loading goes from 1min20 to 30s).
+         --  However, this work has already been done by the project parser, so
+         --  we need to get the information from there.
+
+         for D in Dirs'Range loop
+            Open (Dir, Dirs (D).all);
+            Has_File := False;
+
+            loop
+               Read (Dir, Buffer, Length);
+               exit when Length = 0;
+
+               --  Have to use the naming scheme, since the hash-table hasn't
+               --  been filled yet (Get_Language_From_File wouldn't work)
+
+               Get_Unit_Part_And_Name_From_Filename
+                 (Filename  => Buffer (1 .. Length),
+                  Project   => Get_View (Project),
+                  Part      => Part,
+                  Unit_Name => Unit,
+                  Lang      => Lang);
+
+               if Lang = Name_Ada then
+                  Has_File := True;
+                  exit;
+               end if;
+            end loop;
+
+            Update_Directory_Cache (Project, Dirs (D).all, Has_File);
+            Close (Dir);
+         end loop;
+
          return;
       end if;
 
       --  Note: we do not have to check Source_File_List and Source_Files
       --  attributes, since they have already been processed by the Ada parser.
 
-      --  ??? We are parsing Ada files twice
+      --  ??? We are parsing Ada files twice for projects that have Ada and at
+      --  least another language.
 
       for D in Dirs'Range loop
          Open (Dir, Dirs (D).all);
+         Has_File := False;
 
          loop
             Read (Dir, Buffer, Length);
@@ -701,8 +740,11 @@ package body Projects.Registry is
                end loop;
 
                Record_Source (Buffer (1 .. Length), Lang);
+               Has_File := True;
             end if;
          end loop;
+
+         Update_Directory_Cache (Project, Dirs (D).all, Has_File);
 
          Close (Dir);
       end loop;
@@ -776,6 +818,7 @@ package body Projects.Registry is
       Node : Project_Node_Id;
    begin
       if Registry.Data = null then
+         Trace (Me, "Get_Project_From_Name: Registry not initialized");
          return No_Project;
 
       else
@@ -789,6 +832,7 @@ package body Projects.Registry is
                P := No_Project;
                Trace (Me, "Get_Project_From_Name: "
                       & Get_String (Name) & " wasn't found");
+
             else
                Create_From_Node (P, Registry, Node);
                Set (Registry.Data.Projects, Name_Buffer (1 .. Name_Len), P);
@@ -1073,7 +1117,6 @@ package body Projects.Registry is
          end;
 
       else
-
          --  First check the cache
 
          Info := Get (Registry.Data.Sources, Filename);
