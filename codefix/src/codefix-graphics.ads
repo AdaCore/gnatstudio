@@ -44,6 +44,11 @@ package Codefix.Graphics is
 
    type Fix_Action is access procedure (Error : Error_Id);
 
+   procedure No_Free (This : in out Error_Id);
+
+   package Error_Id_Lists is new Generic_List (Error_Id, No_Free);
+   use Error_Id_Lists;
+
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
       Current_Text      : Ptr_Text_Navigator;
       Corrector         : Ptr_Correction_Manager;
@@ -57,6 +62,7 @@ package Codefix.Graphics is
       Fixed_Cb          : Fix_Action;
       Unfixed_Cb        : Fix_Action;
       Start             : Boolean;
+      Fixes_List        : Error_Id_Lists.List;
    end record;
 
    type Graphic_Codefix_Access is access all Graphic_Codefix_Record;
@@ -108,8 +114,13 @@ package Codefix.Graphics is
      (Graphic_Codefix : access Graphic_Codefix_Record'Class) return Gint;
    --  Return the number of the current solution in the solution list.
 
-   procedure Undo_Last_Error
+   procedure Undo_Last_Fix
      (Graphic_Codefix : access Graphic_Codefix_Record'Class);
    --  Undo and reload the last error fixed in Graphic_Codefix.
+
+   procedure Cancel_All_Fixes
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class);
+   --  Cancel all the fixes that have been made in This. Graphic_Codefix has to
+   --  be freed after this call.
 
 end Codefix.Graphics;
