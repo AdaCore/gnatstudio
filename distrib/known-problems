@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- Search misses occurrences in sources with tabs
+  Problem:    The search tool will miss some occurrences if your source file
+              contains tabs.
+  Workaround: Do a search for all occurrences, and then click in the
+              location window
+
 - Custom toolbar buttons are not shown when created through parse_xml
   Problem:    If you use the GPS shell command "parse_xml" to create toolbar
               buttons, those buttons are not displayed.
