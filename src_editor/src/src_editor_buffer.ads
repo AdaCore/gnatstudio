@@ -466,8 +466,8 @@ private
       Queue           : Command_Queue;
       --  Contains the queue of editor commands for this editor.
 
-      Current_Command : Command_Access;
-      --  The current editor command.
+      Current_Command : Command_Access := null;
+      --  The current editor command. Belongs to Queue, defined above.
 
       Timestamp      : Src_Info.Timestamp := 0;
       --  Timestamp of the file the last time it was checked. It it used to
