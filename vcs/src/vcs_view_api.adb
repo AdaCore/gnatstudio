@@ -439,6 +439,8 @@ package body VCS_View_API is
             Add_Action (Diff_Head, On_Menu_Diff'Access);
             Add_Action (Diff, On_Menu_Diff_Specific'Access);
             Add_Action (Diff2, On_Menu_Diff2'Access);
+            Add_Action (Diff_Base_Head, On_Menu_Diff_Base_Head'Access);
+
 
             Gtk_New (Item);
             Append (Menu, Item);
@@ -2258,6 +2260,40 @@ package body VCS_View_API is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff;
+
+   ----------------------------
+   -- On_Menu_Diff_Base_Head --
+   ----------------------------
+
+   procedure On_Menu_Diff_Base_Head
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Files    : String_List.List;
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+            Mode => Error);
+         return;
+      end if;
+
+      while not String_List.Is_Empty (Files) loop
+         Diff_Base_Head
+           (Get_Current_Ref (Context),
+            Create (Full_Filename => String_List.Head (Files)));
+         String_List.Next (Files);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Diff_Base_Head;
 
    ----------------------
    -- On_Menu_View_Log --
