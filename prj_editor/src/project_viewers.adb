@@ -1516,8 +1516,7 @@ package body Project_Viewers is
       Project      : Project_Node_Id;
       Project_View : Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
-      return Boolean
+      Widget       : access Gtk_Widget_Record'Class) return Boolean
    is
       pragma Unreferenced (Page);
       Editor       : Executables_Editor := Executables_Editor (Widget);
@@ -1622,7 +1621,7 @@ package body Project_Viewers is
    --------------------
 
    function Project_Editor
-     (Page : access Source_Editor_Record;
+     (Page         : access Source_Editor_Record;
       Project      : Project_Node_Id;
       Project_View : Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
@@ -1701,7 +1700,6 @@ package body Project_Viewers is
             Prepend            => False);
       end if;
 
-
       Free (Dirs);
 
       return not Equal;
@@ -1720,18 +1718,22 @@ package body Project_Viewers is
       Obj_Dir_Selection : Directory_Tree.Directory_Selector;
    begin
       if Project_View /= No_Project then
-         Gtk_New (Obj_Dir_Selection,
-                  Initial_Directory => Name_As_Directory
-                  (GNAT.OS_Lib.Normalize_Pathname (Get_Name_String
-                     (Prj.Projects.Table (Project_View).Object_Directory))),
-                  Multiple_Directories => False,
-                  Busy_Cursor_On => Get_Window (Get_Main_Window (Kernel)));
+         Gtk_New
+           (Obj_Dir_Selection,
+            Initial_Directory => Name_As_Directory
+              (GNAT.OS_Lib.Normalize_Pathname (Get_Name_String
+                 (Prj.Projects.Table (Project_View).Object_Directory))),
+            Multiple_Directories => False,
+            Busy_Cursor_On => Get_Window (Get_Main_Window (Kernel)));
+
       else
-         Gtk_New (Obj_Dir_Selection,
-                  Initial_Directory => Get_Current_Dir,
-                  Multiple_Directories => False,
-                  Busy_Cursor_On => Get_Window (Get_Main_Window (Kernel)));
+         Gtk_New
+           (Obj_Dir_Selection,
+            Initial_Directory => Get_Current_Dir,
+            Multiple_Directories => False,
+            Busy_Cursor_On => Get_Window (Get_Main_Window (Kernel)));
       end if;
+
       return Gtk_Widget (Obj_Dir_Selection);
    end Widget_Factory;
 
@@ -1750,6 +1752,7 @@ package body Project_Viewers is
       pragma Unreferenced (Page);
       New_Dir : constant String := Get_Single_Selection
         (Directory_Selector (Widget));
+
    begin
       if Project_View /= No_Project then
          if New_Dir /= Name_As_Directory
@@ -1784,6 +1787,7 @@ package body Project_Viewers is
                   Value              => New_Dir,
                   Attribute_Index    => "");
             end if;
+
             return True;
          end if;
 
@@ -1816,6 +1820,7 @@ package body Project_Viewers is
                Value              => New_Dir,
                Attribute_Index    => "");
          end if;
+
          return True;
       end if;
 
@@ -1829,7 +1834,7 @@ package body Project_Viewers is
    function Widget_Factory
      (Page : access Switches_Editor_Record;
       Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
-     return Gtk_Widget
+      return Gtk_Widget
    is
       pragma Unreferenced (Page, Kernel);
       Switches : Switches_Editors.Switches_Edit;
@@ -1859,8 +1864,7 @@ package body Project_Viewers is
       Project      : Project_Node_Id;
       Project_View : Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
-      return Boolean
+      Widget       : access Gtk_Widget_Record'Class) return Boolean
    is
       pragma Unreferenced (Page);
    begin
