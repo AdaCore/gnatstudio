@@ -197,7 +197,7 @@ package body GPS.Kernel.Project is
          --  Temporarily unset this, to handle the following case:
          --  the project file contains errors and couldn't be loaded, but it
          --  was also saved in the desktop. If that is the case, the project
-         --  would be open twice otherwise
+         --  would be open several times otherwise
          Set_Pref (Kernel, Auto_Jump_To_First, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
          Parse_File_Locations (Kernel, S, Location_Category);
