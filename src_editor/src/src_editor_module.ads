@@ -23,13 +23,11 @@ with Glib;          use Glib;
 with Gdk.GC;
 with Gtk.Button;
 with Gtk.Box;       use Gtk.Box;
-with Gtk.Dialog;    use Gtk.Dialog;
 with Gtk.Handlers;  use Gtk.Handlers;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Text_Mark; use Gtk.Text_Mark;
 
 with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
 
 with Src_Editor_Box;
 
@@ -152,9 +150,6 @@ private
 
       Stored_Marks             : Mark_Identifier_List.List;
       Next_Mark_Id             : Natural := 0;
-
-      Open_File_Entry          : Gtkada_Entry;
-      Open_File_Dialog         : Gtk_Dialog;
 
       Unopened_Files           : String_List_Utils.String_List.List;
       --  Contains a list of files for which marks have been created but

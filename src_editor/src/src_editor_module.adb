@@ -1820,37 +1820,33 @@ package body Src_Editor_Module is
       Button : Gtk_Widget;
       pragma Unreferenced (Widget, Button);
 
-      Id     : Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+      Open_File_Dialog         : Gtk_Dialog;
+      Open_File_Entry          : Gtkada_Entry;
 
    begin
-      if Id.Open_File_Dialog = null then
-         Gtk_New (Id.Open_File_Dialog,
-                  Title  => -"Open file from project",
-                  Parent => Get_Main_Window (Kernel),
-                  Flags  => Modal or Destroy_With_Parent);
-         Set_Default_Size (Id.Open_File_Dialog, 300, 200);
-         Set_Position (Id.Open_File_Dialog, Win_Pos_Mouse);
+      Gtk_New (Open_File_Dialog,
+               Title  => -"Open file from project",
+               Parent => Get_Main_Window (Kernel),
+               Flags  => Modal or Destroy_With_Parent);
+      Set_Default_Size (Open_File_Dialog, 300, 200);
+      Set_Position (Open_File_Dialog, Win_Pos_Mouse);
 
-         Gtk_New (Label, -"Enter file name (use <tab> for completion):");
-         Pack_Start (Get_Vbox (Id.Open_File_Dialog), Label, Expand => False);
+      Gtk_New (Label, -"Enter file name (use <tab> for completion):");
+      Pack_Start (Get_Vbox (Open_File_Dialog), Label, Expand => False);
 
-         Gtk_New (Id.Open_File_Entry);
-         Set_Activates_Default
-           (Get_Entry (Get_Combo (Id.Open_File_Entry)), True);
-         Pack_Start (Get_Vbox (Id.Open_File_Dialog), Id.Open_File_Entry,
-                     Fill => True, Expand => True);
+      Gtk_New (Open_File_Entry);
+      Set_Activates_Default
+        (Get_Entry (Get_Combo (Open_File_Entry)), True);
+      Pack_Start (Get_Vbox (Open_File_Dialog), Open_File_Entry,
+                  Fill => True, Expand => True);
 
-         Button := Add_Button (Id.Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
-         Button := Add_Button
-           (Id.Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
-         Set_Default_Response (Id.Open_File_Dialog, Gtk_Response_OK);
-      else
-         Set_Text (Get_Entry (Get_Combo (Id.Open_File_Entry)), "");
-      end if;
+      Button := Add_Button (Open_File_Dialog, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button
+        (Open_File_Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Set_Default_Response (Open_File_Dialog, Gtk_Response_OK);
 
-      Grab_Focus (Get_Entry (Get_Combo (Id.Open_File_Entry)));
-      Show_All (Id.Open_File_Dialog);
+      Grab_Focus (Get_Entry (Get_Combo (Open_File_Entry)));
+      Show_All (Open_File_Dialog);
 
       declare
          List1 : String_Array_Access := Get_Source_Files
@@ -1861,22 +1857,22 @@ package body Src_Editor_Module is
            Get_Predefined_Source_Files (Get_Registry (Kernel));
       begin
          Set_Completions
-           (Id.Open_File_Entry, new String_Array'(List1.all & List2.all));
+           (Open_File_Entry, new String_Array'(List1.all & List2.all));
          Unchecked_Free (List1);
          Unchecked_Free (List2);
       end;
 
-      if Run (Id.Open_File_Dialog) = Gtk_Response_OK then
+      if Run (Open_File_Dialog) = Gtk_Response_OK then
          declare
             Text : constant String :=
-              Get_Text (Get_Entry (Get_Combo (Id.Open_File_Entry)));
+              Get_Text (Get_Entry (Get_Combo (Open_File_Entry)));
          begin
-            Add_Unique_Combo_Entry (Get_Combo (Id.Open_File_Entry), Text);
+            Add_Unique_Combo_Entry (Get_Combo (Open_File_Entry), Text);
             Open_File_Editor (Kernel, Text, From_Path => True);
          end;
       end if;
 
-      Hide_All (Id.Open_File_Dialog);
+      Destroy (Open_File_Dialog);
 
    exception
       when E : others =>
@@ -3461,10 +3457,6 @@ package body Src_Editor_Module is
 
    procedure Destroy (Id : in out Source_Editor_Module_Record) is
    begin
-      if Id.Open_File_Dialog /= null then
-         Destroy (Id.Open_File_Dialog);
-      end if;
-
       String_List_Utils.String_List.Free (Id.Unopened_Files);
       Mark_Identifier_List.Free (Id.Stored_Marks);
    end Destroy;
