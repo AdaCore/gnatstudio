@@ -557,7 +557,8 @@ package body Project_Trees is
          Buffer (1 .. Buffer_Len) := Directory;
       end if;
 
-      Is_Leaf := not Has_Entries (Buffer (1 .. Buffer_Len));
+      Is_Leaf := Node_Type = Obj_Directory_Node
+        or else not Has_Entries (Buffer (1 .. Buffer_Len));
 
 
       N := Insert_Node
