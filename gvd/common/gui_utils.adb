@@ -1239,7 +1239,7 @@ package body GUI_Utils is
       use type Widget_List.Glist;
       Children, Tmp : Widget_List.Glist;
       Label         : Gtk_Label;
-      New_Name      : String := Name;
+      New_Name      : String (Name'Range);
       Last          : Integer := New_Name'First;
 
    begin
@@ -1319,8 +1319,6 @@ package body GUI_Utils is
       if Path (First) = '/' then
          First := First + 1;
       end if;
-
-      Last := First;
 
       --  Find the existing parents
 
