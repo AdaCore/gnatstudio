@@ -25,7 +25,7 @@
 --  routines in glide_kernel.*.
 --
 --  One general note on the design of this package: this package must be
---  independant of the kernel (e.g take explicit an source_path, instead of a
+--  independent of the kernel (e.g take explicit an source_path, instead of a
 --  handle to the kernel), so that it can eventually be integrated directly
 --  into the sources of Gnat and its tools.
 
@@ -36,6 +36,10 @@ with Projects;
 with String_Hash;
 
 package Src_Info.Queries is
+
+   type E_Kind_Set is array (E_Kinds) of Boolean;
+   pragma Pack (E_Kind_Set);
+   --  General type to implement sets of E_Kind
 
    ----------------
    -- Scope Tree --

@@ -40,10 +40,7 @@ package body Src_Info.Queries is
 
    Me : constant Debug_Handle := Create ("SRC_INFO");
 
-   type E_Kind_To_Boolean_Map is array (E_Kinds) of Boolean;
-   pragma Pack (E_Kind_To_Boolean_Map);
-
-   Is_Scope_Entity : constant E_Kind_To_Boolean_Map :=
+   Is_Scope_Entity : constant E_Kind_Set :=
      (Overloaded_Entity     => False,
       Unresolved_Entity     => False,
       Access_Kind           => False,
@@ -76,7 +73,7 @@ package body Src_Info.Queries is
    --  appear when computing the full scope name for an entity (see
    --  Get_Full_Name).
 
-   Is_Subprogram_Entity : constant E_Kind_To_Boolean_Map :=
+   Is_Subprogram_Entity : constant E_Kind_Set :=
      (Procedure_Kind        => True,
       Function_Or_Operator  => True,
       Entry_Or_Entry_Family => True,
@@ -89,7 +86,7 @@ package body Src_Info.Queries is
    --  This table should contain true if the corresponding element is
    --  considered as a subprogram (see Is_Subprogram)
 
-   Is_Label_Entity : constant E_Kind_To_Boolean_Map :=
+   Is_Label_Entity : constant E_Kind_Set :=
      (Label_On_Loop      => True,
       Label_On_Statement => True,
       Label_On_Block     => True,
