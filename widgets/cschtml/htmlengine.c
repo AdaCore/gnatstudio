@@ -3999,6 +3999,7 @@ html_engine_get_selection_string (HTMLEngine *engine)
 {
 	GString *buffer;
 	gchar *string;
+	gchar* utf8;
 
 	g_return_val_if_fail (engine != NULL, NULL);
 	g_return_val_if_fail (HTML_IS_ENGINE (engine), NULL);
@@ -4012,7 +4013,11 @@ html_engine_get_selection_string (HTMLEngine *engine)
 	string = buffer->str;
 	g_string_free (buffer, FALSE);
 
-	return string;
+	utf8 = g_locale_to_utf8 (string, strlen (string), NULL, NULL, NULL);
+	
+	free (string);
+
+	return utf8;
 }
 
 
