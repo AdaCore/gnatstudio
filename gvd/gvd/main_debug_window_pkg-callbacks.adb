@@ -739,8 +739,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object));
       end if;
 
-      Update (Top.Backtrace_Dialog, Tab);
       Show_All (Top.Backtrace_Dialog);
+      Update (Top.Backtrace_Dialog, Tab);
    end On_Backtrace1_Activate;
 
    --------------------------
@@ -762,8 +762,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Gtk_New (Top.Task_Dialog, Gtk_Window (Object));
       end if;
 
-      Update (Top.Task_Dialog, Tab);
       Show_All (Top.Task_Dialog);
+      Update (Top.Task_Dialog, Tab);
    end On_Threads1_Activate;
 
    ----------------------------
