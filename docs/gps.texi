@@ -2212,8 +2212,10 @@ Menu entries include the following categories:
 GPS keeps a set of case exceptions that is used by all
 case insensitive languages. When editing or reformatting a buffer for
 such a language the case exception dictionary will be checked
-first. If an exception is found for this word, it will be used;
-otherwise the specified casing for keywords or identifiers is used.
+first. If an exception is found for this word or a substring of the
+word, it will be used; otherwise the specified casing for keywords or
+identifiers is used. A substring is defined as a part of the word
+separated by underscores.
 
 Note that this feature is not activated for entities (keywords or
 identifiers) for which the casing is set to @code{Unchanged}. See
@@ -2242,6 +2244,18 @@ Add the current entity into the case exception dictionary.
 
 @item Remove exception for @i{entity}
 Remove the current entity from the case exception dictionary.
+@end table
+
+To add or remove a substring exception into/from the dictionary you need to
+first select the substring on the editor. In this case the last two
+contextual menu entries will be:
+
+@table @b
+@item Add substring exception for @i{str}
+Add the selected substring into the case substring exception dictionary.
+
+@item Remove substring exception for @i{str}
+Remove the selected substring from the case substring exception dictionary.
 @end table
 
 @c --------------------------------------------------------------------------
@@ -8724,10 +8738,10 @@ GPS.Project.root().get_attribute_as_list ("main")
 
 @noindent
 A set of case exceptions can be declared in this file. Each case
-exception is put inside the tag @code{<word>}. These exceptions are
-used by GPS to set identifiers or keywords case when editing case
-insensitive languages (except if corresponding case is set to
-Unchanged). @pxref{The Preferences Dialog}.
+exception is put inside the tag @code{<word>} or @code{<substring>}. These 
+exceptions are used by GPS to set identifiers or keywords case when
+editing case insensitive languages (except if corresponding case is
+set to Unchanged). @pxref{The Preferences Dialog}.
 
 @smallexample
 <?xml version="1.0" ?>
@@ -8735,6 +8749,7 @@ Unchanged). @pxref{The Preferences Dialog}.
   <case_exceptions>
      <word>GNAT</word>
      <word>OS_Lib</word>
+     <substring>IO</substring>
   </case_exceptions>
 </exceptions>
 @end smallexample
