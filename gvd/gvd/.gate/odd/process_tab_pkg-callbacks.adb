@@ -54,4 +54,15 @@ package body Process_Tab_Pkg.Callbacks is
       return False;
    end On_Debugger_Text_Key_Press_Event;
 
+   ---------------------------------
+   -- On_Debugger_Text_Grab_Focus --
+   ---------------------------------
+
+   procedure On_Debugger_Text_Grab_Focus
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Debugger_Text_Grab_Focus;
+
 end Process_Tab_Pkg.Callbacks;

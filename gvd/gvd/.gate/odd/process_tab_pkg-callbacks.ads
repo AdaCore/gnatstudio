@@ -14,4 +14,7 @@ package Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
+   procedure On_Debugger_Text_Grab_Focus
+     (Object : access Gtk_Widget_Record'Class);
+
 end Process_Tab_Pkg.Callbacks;

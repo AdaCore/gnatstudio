@@ -44,6 +44,7 @@ begin
    Set_Submenu (Main_Debug_Window.File1, Main_Debug_Window.File1_Menu);
 
    Gtk_New (Main_Debug_Window.Open_Program1, -"Open Program...");
+   Set_Sensitive (Main_Debug_Window.Open_Program1, False);
    Gtk_New (The_Accel_Group);
    Add_Accel_Group (Main_Debug_Window, The_Accel_Group);
    Add_Accelerator (Main_Debug_Window.Open_Program1, "activate",
@@ -88,9 +89,9 @@ begin
 
    Gtk_New (Main_Debug_Window.Reload_Source1, -"Reload Source");
    Set_Sensitive (Main_Debug_Window.Reload_Source1, False);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Reload_Source1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Reload_Source1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Reload_Source1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Reload_Source1);
    Set_Right_Justify (Main_Debug_Window.Reload_Source1, False);
 
@@ -176,9 +177,9 @@ begin
    Set_Sensitive (Main_Debug_Window.Undo3, False);
    Add_Accelerator (Main_Debug_Window.Undo3, "activate",
      The_Accel_Group, GDK_z, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Undo3, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Undo3_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Undo3_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Undo3);
    Set_Right_Justify (Main_Debug_Window.Undo3, False);
 
@@ -186,9 +187,9 @@ begin
    Set_Sensitive (Main_Debug_Window.Redo1, False);
    Add_Accelerator (Main_Debug_Window.Redo1, "activate",
      The_Accel_Group, GDK_y, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Redo1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Redo1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Redo1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Redo1);
    Set_Right_Justify (Main_Debug_Window.Redo1, False);
 
@@ -200,9 +201,9 @@ begin
    Set_Sensitive (Main_Debug_Window.Cut1, False);
    Add_Accelerator (Main_Debug_Window.Cut1, "activate",
      The_Accel_Group, GDK_Delete, Gdk.Types.Shift_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Cut1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Cut1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Cut1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Cut1);
    Set_Right_Justify (Main_Debug_Window.Cut1, False);
 
@@ -210,9 +211,9 @@ begin
    Set_Sensitive (Main_Debug_Window.Copy1, False);
    Add_Accelerator (Main_Debug_Window.Copy1, "activate",
      The_Accel_Group, GDK_Insert, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Copy1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Copy1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Copy1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Copy1);
    Set_Right_Justify (Main_Debug_Window.Copy1, False);
 
@@ -220,9 +221,9 @@ begin
    Set_Sensitive (Main_Debug_Window.Paste1, False);
    Add_Accelerator (Main_Debug_Window.Paste1, "activate",
      The_Accel_Group, GDK_Insert, Gdk.Types.Shift_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Paste1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Paste1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Paste1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Paste1);
    Set_Right_Justify (Main_Debug_Window.Paste1, False);
 
@@ -230,9 +231,9 @@ begin
    Set_Sensitive (Main_Debug_Window.Select_All1, False);
    Add_Accelerator (Main_Debug_Window.Select_All1, "activate",
      The_Accel_Group, GDK_A, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Select_All1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Select_All1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Select_All1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Select_All1);
    Set_Right_Justify (Main_Debug_Window.Select_All1, False);
 
