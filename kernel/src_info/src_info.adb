@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -24,6 +24,7 @@ with Traces;                    use Traces;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Basic_Types;
 with Projects;                  use Projects;
+with VFS;                       use VFS;
 
 package body Src_Info is
 
@@ -109,10 +110,10 @@ package body Src_Info is
 
    function Locate
      (List : LI_File_List;
-      LI_Filename : String)
+      LI_Filename : VFS.Virtual_File)
       return LI_File_Ptr is
    begin
-      return Get (List.Table.all, LI_Filename);
+      return Get (List.Table.all, Base_Name (LI_Filename));
    end Locate;
 
    ------------------------
@@ -121,10 +122,10 @@ package body Src_Info is
 
    function Locate_From_Source
      (List            : LI_File_List;
-      Source_Filename : String)
+      Source_Filename : VFS.Virtual_File)
       return LI_File_Ptr
    is
-      Short_Filename : constant String := Source_Filename;
+      Short_Filename : constant String := Base_Name (Source_Filename);
       Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
       Table : LI_File_HTable.HTable := List.Table.all;
@@ -233,10 +234,19 @@ package body Src_Info is
    -- Get_LI_Filename --
    ---------------------
 
-   function Get_LI_Filename (E : LI_File_Node_Ptr) return String_Access is
+   function Get_LI_Filename (E : LI_File_Node_Ptr) return Virtual_File is
    begin
       return E.Value.LI.LI_Filename;
    end Get_LI_Filename;
+
+   -------------------------
+   -- Get_LI_Filename_Key --
+   -------------------------
+
+   function Get_LI_Filename_Key (E : LI_File_Node_Ptr) return String_Access is
+   begin
+      return E.Value.LI.LI_Filename_Key;
+   end Get_LI_Filename_Key;
 
    ----------
    -- Hash --
@@ -264,8 +274,9 @@ package body Src_Info is
    begin
       Assert
         (Me,
-         LI_File_HTable.Get (HT, LIFP.LI.LI_Filename) = null,
-         "File " & LIFP.LI.LI_Filename.all & " is already in the list");
+         LI_File_HTable.Get (HT, LIFP.LI.LI_Filename_Key) = null,
+         "File " & Base_Name (LIFP.LI.LI_Filename)
+         & " is already in the list");
       LI_File_HTable.Set (HT, new LI_File_Node'(Value => LIFP, Next => null));
    end Add;
 
@@ -348,7 +359,7 @@ package body Src_Info is
 
    procedure Destroy (LIF : in out LI_File) is
    begin
-      Free (LIF.LI_Filename);
+      Free (LIF.LI_Filename_Key);
       Destroy (LIF.Spec_Info);
       Destroy (LIF.Body_Info);
       Destroy (LIF.Separate_Info);
@@ -530,62 +541,43 @@ package body Src_Info is
    ----------------------
 
    function Make_Source_File
-     (Source_Filename        : String;
+     (Source_Filename        : VFS.Virtual_File;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Project                : Projects.Project_Type) return Internal_File
    is
-      LI : constant String := LI_Filename_From_Source
+      LI : constant Virtual_File := LI_Filename_From_Source
         (Handler                => Get_LI_Handler_From_File
            (Glide_Language_Handler (Handler), Source_Filename),
          Source_Filename        => Source_Filename,
          Project                => Project);
 
    begin
-      return (File_Name => new String'(Source_Filename),
-              LI_Name   => new String'(LI));
+      return (File_Name => Source_Filename,
+              LI_Name   => LI);
    end Make_Source_File;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (File : in out Internal_File) is
-   begin
-      Free (File.File_Name);
-      Free (File.LI_Name);
-   end Destroy;
-
-   ----------
-   -- Copy --
-   ----------
-
-   function Copy (File : Internal_File) return Internal_File is
-      Result : Internal_File;
-   begin
-      Result := (File_Name => new String'(File.File_Name.all),
-                 LI_Name   => new String'(File.LI_Name.all));
-      return Result;
-   end Copy;
 
    -------------------------
    -- Get_Source_Filename --
    -------------------------
 
-   function Get_Source_Filename (File : Internal_File) return String is
+   function Get_Source_Filename (File : Internal_File)
+      return VFS.Virtual_File is
    begin
-      return File.File_Name.all;
+      return File.File_Name;
    end Get_Source_Filename;
 
    -------------------------
    -- Get_Source_Filename --
    -------------------------
 
-   function Get_Source_Filename (File : Source_File) return String is
+   function Get_Source_Filename (File : Source_File) return VFS.Virtual_File is
    begin
       if File = No_Source_File then
-         return "";
+         return VFS.No_File;
       end if;
-      return Get_File_Info (File).Source_Filename.all;
+      return Create
+        (Get_File_Info (File).Source_Filename.all,
+         File.LI.LI.Project, Use_Object_Path => False);
    end Get_Source_Filename;
 
    -------------------
@@ -593,15 +585,17 @@ package body Src_Info is
    -------------------
 
    function Get_Unit_Part
-     (Lib_Info : LI_File_Ptr; File : String) return Unit_Part is
+     (Lib_Info : LI_File_Ptr; File : VFS.Virtual_File) return Unit_Part
+   is
+      Base : constant String := Base_Name (File);
    begin
       if Lib_Info.LI.Spec_Info /= null
-        and then Lib_Info.LI.Spec_Info.Source_Filename.all = File
+        and then Lib_Info.LI.Spec_Info.Source_Filename.all = Base
       then
          return Unit_Spec;
 
       elsif Lib_Info.LI.Body_Info /= null
-        and then Lib_Info.LI.Body_Info.Source_Filename.all = File
+        and then Lib_Info.LI.Body_Info.Source_Filename.all = Base
       then
          return Unit_Body;
       end if;
@@ -613,9 +607,9 @@ package body Src_Info is
    -- Get_LI_Filename --
    ---------------------
 
-   function Get_LI_Filename (LI : LI_File_Ptr) return String is
+   function Get_LI_Filename (LI : LI_File_Ptr) return VFS.Virtual_File is
    begin
-      return LI.LI.LI_Filename.all;
+      return LI.LI.LI_Filename;
    end Get_LI_Filename;
 
    ---------------------------
@@ -626,7 +620,7 @@ package body Src_Info is
      (Handler      : access LI_Handler_Record;
       Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List)
    is
       pragma Unreferenced (Handler, Root_Project);
@@ -696,7 +690,7 @@ package body Src_Info is
    -- Get_File --
    --------------
 
-   function Get_File (Location : File_Location) return String is
+   function Get_File (Location : File_Location) return VFS.Virtual_File is
    begin
       return Get_Source_Filename (Location.File);
    end Get_File;
@@ -731,12 +725,11 @@ package body Src_Info is
    is
       use type Basic_Types.String_Access;
    begin
-      Basic_Types.Free (Iterator.Source_Files);
+      Unchecked_Free (Iterator.Source_Files);
       Iterator.Source_Files := Get_Source_Files
         (Project            => Project,
          Recursive          => Recursive,
          Full_Path          => True,
-         Normalized         => True,
          Matching_Languages => Languages);
       Iterator.Current_File := Iterator.Source_Files'First;
    end Compute_Sources;
@@ -747,11 +740,10 @@ package body Src_Info is
 
    procedure Compute_Sources
      (Iterator    : in out LI_Handler_Iterator'Class;
-      Source_File : String) is
+      Source_File : VFS.Virtual_File) is
    begin
-      Basic_Types.Free (Iterator.Source_Files);
-      Iterator.Source_Files := new Basic_Types.String_Array'
-        (1 => new String'(Source_File));
+      Unchecked_Free (Iterator.Source_Files);
+      Iterator.Source_Files := new File_Array'(1 => Source_File);
       Iterator.Current_File := Iterator.Source_Files'First;
    end Compute_Sources;
 
@@ -760,16 +752,16 @@ package body Src_Info is
    -------------------------
 
    function Current_Source_File
-     (Iterator : LI_Handler_Iterator'Class) return String
+     (Iterator : LI_Handler_Iterator'Class) return VFS.Virtual_File
    is
       use type Basic_Types.String_Array_Access;
    begin
       if Iterator.Source_Files /= null
         and then Iterator.Current_File <= Iterator.Source_Files'Last
       then
-         return Iterator.Source_Files (Iterator.Current_File).all;
+         return Iterator.Source_Files (Iterator.Current_File);
       else
-         return "";
+         return VFS.No_File;
       end if;
    end Current_Source_File;
 
@@ -788,7 +780,7 @@ package body Src_Info is
 
    procedure Destroy (Iterator : in out LI_Handler_Iterator) is
    begin
-      Basic_Types.Free (Iterator.Source_Files);
+      Unchecked_Free (Iterator.Source_Files);
    end Destroy;
 
    ----------
@@ -850,10 +842,11 @@ package body Src_Info is
    -------------------
 
    function Get_Unit_Name
-     (Lib_Info : LI_File_Ptr; File : String) return String
+     (Lib_Info : LI_File_Ptr; File : VFS.Virtual_File) return String
    is
       Info : File_Info_Ptr;
       List : File_Info_Ptr_List;
+      Base : constant String := Base_Name (File);
    begin
       if Lib_Info = null then
          return "";
@@ -862,7 +855,7 @@ package body Src_Info is
       Info := Lib_Info.LI.Spec_Info;
 
       if Info /= null
-        and then Info.Source_Filename.all = File
+        and then Info.Source_Filename.all = Base
       then
          if Info.Unit_Name = null then
             return "";
@@ -874,7 +867,7 @@ package body Src_Info is
       Info := Lib_Info.LI.Body_Info;
 
       if Info /= null
-        and then Info.Source_Filename.all = File
+        and then Info.Source_Filename.all = Base
       then
          if Info.Unit_Name = null then
             return "";
@@ -889,7 +882,7 @@ package body Src_Info is
          Info := List.Value;
 
          if Info /= null
-           and then Info.Source_Filename.all = File
+           and then Info.Source_Filename.all = Base
          then
             if Info.Unit_Name = null then
                return "";

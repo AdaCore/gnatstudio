@@ -31,6 +31,7 @@ with GVD.Process;       use GVD.Process;
 with GVD.Trace;         use GVD.Trace;
 with GVD.Types;         use GVD.Types;
 with GVD.Main_Window;   use GVD.Main_Window;
+with VFS;               use VFS;
 
 package body Debugger.Jdb is
 
@@ -620,7 +621,7 @@ package body Debugger.Jdb is
 
    procedure Break_Source
      (Debugger  : access Jdb_Debugger;
-      File      : String;
+      File      : VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden)
@@ -628,26 +629,27 @@ package body Debugger.Jdb is
       pragma Unreferenced (Temporary);
       Str : constant String := Positive'Image (Line);
       Pos : Positive;
+      Base : constant String := Base_Name (File);
 
    begin
-      Pos := File'Last;
+      Pos := Base'Last;
 
       --  Remove the extension from the filename to get an estimation of the
       --  class name.
 
-      while Pos > File'First and then File (Pos) /= '.' loop
+      while Pos > Base'First and then Base (Pos) /= '.' loop
          Pos := Pos - 1;
       end loop;
 
-      if File (Pos) = '.' then
+      if Base (Pos) = '.' then
          Pos := Pos - 1;
       else
          --  No file extension, assume a valid class name.
-         Pos := File'Last;
+         Pos := Base'Last;
       end if;
 
       Send (Debugger,
-            "stop at " & File (File'First .. Pos) & ':' &
+            "stop at " & Base (Base'First .. Pos) & ':' &
             Str (Str'First + 1 .. Str'Last),
             Mode => Mode);
    end Break_Source;
@@ -925,7 +927,7 @@ package body Debugger.Jdb is
 
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;
-      File     : String;
+      File     : VFS.Virtual_File;
       Line     : Positive) return Line_Kind
    is
       pragma Unreferenced (Debugger, File, Line);

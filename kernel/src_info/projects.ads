@@ -22,6 +22,8 @@ with Basic_Types;
 with GNAT.OS_Lib;
 with Prj.Tree;
 with Types;
+with VFS;
+with Glib;
 
 package Projects is
 
@@ -73,6 +75,20 @@ package Projects is
    function Get_Registry (Project : Project_Type)
       return Abstract_Registry'Class;
    --  Return the registry that Project belongs to.
+
+   -----------
+   -- Files --
+   -----------
+   --  The following subprograms are in used in conjunction with vfs.ads, so
+   --  that the latter remains independent of GPS as much as possible.
+
+   function Create
+     (Base_Name : Glib.UTF8_String;
+      Project : Projects.Project_Type;
+      Use_Source_Path : Boolean := True;
+      Use_Object_Path : Boolean := True)
+      return VFS.Virtual_File;
+   --  Create a new instance of the file.
 
    -------------------
    -- Project files --
@@ -162,9 +178,8 @@ package Projects is
      (Project            : Project_Type;
       Recursive          : Boolean;
       Full_Path          : Boolean := True;
-      Normalized         : Boolean := True;
       Matching_Languages : Name_Id_Array := All_Languages)
-      return Basic_Types.String_Array_Access;
+      return VFS.File_Array_Access;
    --  Return the list of source files belonging to the project.
    --  If Recursive is False, only the direct sources of the project are
    --  returned. Otherwise, the sources from imported projects are returned as
@@ -172,9 +187,7 @@ package Projects is
    --  It is the caller's responsability to free the list.
    --  If Full_Path is true, then the file names will also include the
    --  directory. The directory names are the ones found in the project,
-   --  although they are absolute directories. Directories are always
-   --  normalized (".." is removed), but links are not resolved unless
-   --  Normalized is true.
+   --  although they are absolute directories.
    --
    --  The sources that are returned are not necessarily the ones that are used
    --  when compiling the root project, since some of them might be overriden
@@ -204,7 +217,7 @@ package Projects is
    --    - Unit_Body represents package/subprogram/generic bodies and subunits.
 
    function Get_Unit_Part_From_Filename
-     (Project : Project_Type; Filename : String) return Unit_Part;
+     (Project : Project_Type; Filename : VFS.Virtual_File) return Unit_Part;
    --  Return the type of File. As opposed to Src_Info.Get_Unit_Part, this one
    --  doesn't require that the LI file has been parsed before.
    --  This function doesn't assume any knowledge of the language, and will
@@ -219,7 +232,8 @@ package Projects is
    --  simply be Filename'Last.
 
    function Other_File_Name
-     (Project : Project_Type; Source_Filename : String) return String;
+     (Project : Project_Type; Source_Filename : VFS.Virtual_File)
+      return VFS.Virtual_File;
    --  Return the name of the spec or body for Source_Filename, depending on
    --  what Source_Filename is. Source_Filename is returned if there is no
    --  other file.
@@ -228,17 +242,19 @@ package Projects is
    --  The returned name is the base name
 
    function Get_Filename_From_Unit
-     (Project         : Project_Type := No_Project;
+     (Project         : Project_Type;   --  Mustn't be No_Project
       Unit_Name       : String;
       Part            : Unit_Part;
-      File_Must_Exist : Boolean := True) return String;
+      File_Must_Exist : Boolean := True;
+      Check_Predefined_Library : Boolean := False) return VFS.Virtual_File;
    --  Return the source filename for the given unit. The empty string is
    --  returned if this unit doesn't belong to the project, or if the concept
    --  of unit doesn't apply to the language. If File_Must_Exist is False, then
    --  the name of the file that would be used is returned, even if no such
    --  file currently exists in the project.
-   --  If Project is No_Project, the default GNAT naming scheme is used (for
-   --  runtime files)
+   --  If Check_Predefined_Library is True, the default GNAT naming scheme is
+   --  used (for runtime files).
+   --  Project must never be No_Project
 
    ----------------
    -- Attributes --
@@ -356,7 +372,7 @@ package Projects is
    procedure Get_Switches
      (Project          : Project_Type;
       In_Pkg           : String;
-      File             : String;
+      File             : VFS.Virtual_File;
       Language         : Types.Name_Id;
       Value            : out Prj.Variable_Value;
       Is_Default_Value : out Boolean);
@@ -584,7 +600,7 @@ private
    --  package indicator
 
    procedure Get_Unit_Part_And_Name_From_Filename
-     (Filename  : String;
+     (Filename  : Glib.UTF8_String;
       Project   : Project_Type;
       Part      : out Unit_Part;
       Unit_Name : out Types.Name_Id;

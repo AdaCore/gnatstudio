@@ -23,6 +23,7 @@ with GVD.Types;            use GVD.Types;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Intl;           use Glide_Intl;
 with Process_Proxies;      use Process_Proxies;
+with VFS;                  use VFS;
 
 package body Commands.Debugger is
 
@@ -35,13 +36,13 @@ package body Commands.Debugger is
       Kernel     : Kernel_Handle;
       Debugger   : Visual_Debugger;
       Mode       : Breakpoint_Command_Mode;
-      File       : String;
+      File       : VFS.Virtual_File;
       Line       : Positive) is
    begin
       Item          := new Set_Breakpoint_Command;
       Item.Kernel   := Kernel;
       Item.BMode    := Mode;
-      Item.File     := new String'(File);
+      Item.File     := File;
       Item.Line     := Line;
       Item.Debugger := Debugger;
    end Create;
@@ -71,7 +72,7 @@ package body Commands.Debugger is
          when Set =>
             Break_Source
               (Command.Debugger.Debugger,
-               Command.File.all,
+               Command.File,
                Command.Line,
                Mode => Visible);
 
@@ -79,9 +80,8 @@ package body Commands.Debugger is
             if Command.Debugger.Breakpoints /= null then
                for J in Command.Debugger.Breakpoints'Range loop
                   if Command.Debugger.Breakpoints (J).Line = Command.Line
-                    and then Command.Debugger.Breakpoints (J).File /= null
-                    and then Command.Debugger.Breakpoints (J).File.all =
-                      Command.File.all
+                    and then Command.Debugger.Breakpoints (J).File =
+                      Command.File
                   then
                      Remove_Breakpoint
                        (Command.Debugger.Debugger,
@@ -106,14 +106,5 @@ package body Commands.Debugger is
 
       return Success;
    end Execute;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Free (Command : in out Set_Breakpoint_Command) is
-   begin
-      Free (Command.File);
-   end Free;
 
 end Commands.Debugger;

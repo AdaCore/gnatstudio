@@ -509,7 +509,7 @@ package Glide_Kernel.Scripts is
    type File_Info is private;
    No_File : constant File_Info;
 
-   function Get_Name (File : File_Info) return String;
+   function Get_File (File : File_Info) return VFS.Virtual_File;
    --  Return the name of File
 
    function Get_Data (Instance : access Class_Instance_Record'Class)
@@ -518,10 +518,8 @@ package Glide_Kernel.Scripts is
 
    function Create_File
      (Script : access Scripting_Language_Record'Class;
-      File   : String) return Class_Instance;
+      File   : VFS.Virtual_File) return Class_Instance;
    --  Return a new file.
-   --  ??? How do we handle files with similar names in extended projects ? We
-   --  probably need to pass the project in argument as well.
 
    -------------------------
    -- File_Location_Class --
@@ -613,7 +611,7 @@ private
    end record;
 
    type File_Info is record
-      Name : GNAT.OS_Lib.String_Access;
+      File : VFS.Virtual_File;
    end record;
 
    type File_Location_Info is record
@@ -621,13 +619,12 @@ private
       Line, Column : Natural;
    end record;
 
-   No_File  : constant File_Info := (Name => null);
+   No_File  : constant File_Info := (File => VFS.No_File);
    No_Class : constant Class_Type := (Name => null);
    No_File_Location : constant File_Location_Info := (null, 0, 0);
 
    type Class_Instance_Record is abstract tagged null record;
    type Callback_Data is abstract tagged null record;
    type Scripting_Language_Record is abstract tagged null record;
-
 
 end Glide_Kernel.Scripts;

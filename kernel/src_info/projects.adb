@@ -42,6 +42,7 @@ with String_Hash;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Types;                     use Types;
+with VFS;                       use VFS;
 
 package body Projects is
 
@@ -465,6 +466,28 @@ package body Projects is
       return Length (Prj.Projects.Table (Get_View (Project)).Sources);
    end Direct_Sources_Count;
 
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Base_Name : Glib.UTF8_String;
+      Project : Projects.Project_Type;
+      Use_Source_Path : Boolean := True;
+      Use_Object_Path : Boolean := True)
+      return VFS.Virtual_File
+   is
+      Full : constant String := Get_Full_Path_From_File
+        (Project_Registry (Get_Registry (Project)), Base_Name,
+         Use_Source_Path, Use_Object_Path);
+   begin
+      if Full = "" then
+         return VFS.No_File;
+      else
+         return VFS.Create (Full);
+      end if;
+   end Create;
+
    ----------------------
    -- Get_Source_Files --
    ----------------------
@@ -473,13 +496,12 @@ package body Projects is
      (Project            : Project_Type;
       Recursive          : Boolean;
       Full_Path          : Boolean := True;
-      Normalized         : Boolean := True;
       Matching_Languages : Name_Id_Array := All_Languages)
-      return Basic_Types.String_Array_Access
+      return VFS.File_Array_Access
    is
       Src     : String_List_Id;
       Count   : constant Natural := Source_Files_Count (Project, Recursive);
-      Sources : String_Array_Access;
+      Sources : File_Array_Access;
       Index   : Natural := 1;
       View    : Project_Id;
       Iter    : Imported_Project_Iterator;
@@ -491,7 +513,7 @@ package body Projects is
       Reset (Seen);
 
       Iter := Start (Project, Recursive);
-      Sources := new String_Array (1 .. Count);
+      Sources := new File_Array (1 .. Count);
 
       loop
          P := Current (Iter);
@@ -504,7 +526,7 @@ package body Projects is
             Get_Name_String (String_Elements.Table (Src).Value);
             if Language_Matches
               (Project.Data.Registry.all,
-               Name_Buffer (1 .. Name_Len),
+               Create (Name_Buffer (1 .. Name_Len), P),
                Matching_Languages)
             then
                if not Get (Seen, Name_Buffer (1 .. Name_Len))  then
@@ -512,9 +534,10 @@ package body Projects is
                      declare
                         File : constant String := Name_Buffer (1 .. Name_Len);
                      begin
-                        Get_Full_Path_From_File
-                          (Project.Data.Registry.all, File,
-                           Use_Source_Path => True, Use_Object_Path => False);
+                        Set (Seen, File, True);
+
+                        Sources (Index) := Create
+                          (File, Project, Use_Object_Path => False);
 
                         --  Sometimes the file cannot be found in the project
                         --  registry, and Get_Full_Path_From_File above sets an
@@ -525,29 +548,17 @@ package body Projects is
                         --  operations (such as search in project files for
                         --  examples) can go on.
 
-                        if Name_Len <= 0 then
-                           Name_Len := File'Length;
-                           Name_Buffer (1 .. Name_Len) := File;
+                        if Sources (Index) = VFS.No_File then
+                           Sources (Index) := Create_From_Base (File);
                         end if;
-
-                        Set (Seen, File, True);
                      end;
 
-                     if Normalized then
-                        declare
-                           Full : constant String := Normalize_Pathname
-                             (Name_Buffer (1 .. Name_Len),
-                              Resolve_Links => True);
-                        begin
-                           Name_Len := Full'Length;
-                           Name_Buffer (1 .. Name_Len) := Full;
-                        end;
-                     end if;
                   else
                      Set (Seen, Name_Buffer (1 .. Name_Len), True);
+                     Sources (Index) := Create_From_Base
+                       (Name_Buffer (1 .. Name_Len));
                   end if;
 
-                  Sources (Index) := new String'(Name_Buffer (1 .. Name_Len));
                   Index := Index + 1;
                end if;
             end if;
@@ -559,18 +570,6 @@ package body Projects is
       end loop;
 
       Reset (Seen);
-
-      --  Shrink the array if needed
-      if Index <= Sources'Last then
-         declare
-            S : constant String_Array_Access := new String_Array'
-              (Sources (Sources'First .. Index - 1));
-         begin
-            Basic_Types.Unchecked_Free (Sources);
-            Sources := S;
-         end;
-      end if;
-
       return Sources;
    end Get_Source_Files;
 
@@ -631,20 +630,20 @@ package body Projects is
          --  list of supported languages, then return any match we had
 
          L     := Langs;
-         while L /= Nil_String loop
-            Get_Name_String (Array_Elements.Table (List).Value.Value);
-            if Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len)) then
+         Get_Name_String (Array_Elements.Table (List).Value.Value);
+         if Suffix_Matches (Filename, Name_Buffer (1 .. Name_Len)) then
+            while L /= Nil_String loop
                if String_Elements.Table (L).Value = Lang then
                   Len := Name_Len;
                   return;
                end if;
 
-               Candidate     := List;
-               Candidate_Len := Name_Len;
-            end if;
+               L := String_Elements.Table (L).Next;
+            end loop;
 
-            L := String_Elements.Table (L).Next;
-         end loop;
+            Candidate     := List;
+            Candidate_Len := Name_Len;
+         end if;
 
          List := Array_Elements.Table (List).Next;
       end loop;
@@ -658,7 +657,7 @@ package body Projects is
    ------------------------------------------
 
    procedure Get_Unit_Part_And_Name_From_Filename
-     (Filename  : String;
+     (Filename  : Glib.UTF8_String;
       Project   : Project_Type;
       Part      : out Unit_Part;
       Unit_Name : out Name_Id;
@@ -709,13 +708,13 @@ package body Projects is
          if Arr /= No_Array_Element then
             Part      := Unit_Spec;
             Lang      := Array_Elements.Table (Arr).Index;
-            Unit_Name := Get_String (Filename);
+            Unit_Name := Get_String (F);
             return;
          end if;
 
       else
          Part      := Unit_Body;
-         Unit_Name := Get_String (Filename);
+         Unit_Name := Get_String (F);
          Lang      := Array_Elements.Table (Arr).Index;
          return;
       end if;
@@ -774,7 +773,7 @@ package body Projects is
 
       Lang      := No_Name;
       Part      := Unit_Separate;
-      Unit_Name := Get_String (Filename);
+      Unit_Name := Get_String (Base_Name (Filename));
    end Get_Unit_Part_And_Name_From_Filename;
 
    ---------------------------------
@@ -782,13 +781,13 @@ package body Projects is
    ---------------------------------
 
    function Get_Unit_Part_From_Filename
-     (Project : Project_Type; Filename : String) return Unit_Part
+     (Project : Project_Type; Filename : VFS.Virtual_File) return Unit_Part
    is
       Unit : Unit_Part;
       Name, Lang : Name_Id;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (Filename, Project, Unit, Name, Lang);
+        (Base_Name (Filename), Project, Unit, Name, Lang);
       return Unit;
    end Get_Unit_Part_From_Filename;
 
@@ -832,28 +831,52 @@ package body Projects is
    ----------------------------
 
    function Get_Filename_From_Unit
-     (Project   : Project_Type := No_Project;
-      Unit_Name : String;
-      Part      : Unit_Part;
-      File_Must_Exist : Boolean := True) return String
+     (Project         : Project_Type;
+      Unit_Name       : String;
+      Part            : Unit_Part;
+      File_Must_Exist : Boolean := True;
+      Check_Predefined_Library : Boolean := False) return VFS.Virtual_File
    is
       Arr  : Array_Element_Id := No_Array_Element;
       Unit : Name_Id;
       View : Project_Id;
       Value : Variable_Value;
+      N     : Virtual_File;
 
    begin
       --  Standard GNAT naming scheme
-      if Project = No_Project then
+      --  ??? This isn't language independent, what if other languages have
+      --  similar requirements
+
+      if Check_Predefined_Library then
          case Part is
-            when Unit_Body =>
-               return Substitute_Dot (Unit_Name, "-") & ".adb";
-            when Unit_Spec =>
-               return Substitute_Dot (Unit_Name, "-") & ".ads";
+            when Unit_Body | Unit_Spec =>
+               declare
+                  Base : String := Substitute_Dot (Unit_Name, "-") & ".adb";
+                  Path : constant String :=
+                    Get_Predefined_Source_Path (Project.Data.Registry.all);
+                  Iter : Path_Iterator := Start (Path);
+               begin
+                  if Part = Unit_Spec then
+                     Base (Base'Last) := 's';
+                  end if;
+
+                  while not At_End (Path, Iter) loop
+                     N := Create
+                       (Name_As_Directory (Current (Path, Iter)) & Base);
+                     if not File_Must_Exist or else Is_Regular_File (N) then
+                        return N;
+                     end if;
+
+                     Iter := Next (Path, Iter);
+                  end loop;
+               end;
+
             when others =>
                Assert (Me, False, "Unexpected Unit_Part");
-               return "";
          end case;
+
+         return VFS.No_File;
 
       --  The project naming scheme
       else
@@ -877,7 +900,9 @@ package body Projects is
          end case;
 
          if Value /= Nil_Variable_Value then
-            return Get_String (Value.Value);
+            return Create
+              (Base_Name => Get_String (Value.Value),
+               Project   => Project);
          end if;
 
          --  Otherwise test the standard naming scheme
@@ -887,18 +912,19 @@ package body Projects is
                Arr := Prj.Projects.Table (View).Naming.Body_Suffix;
 
             when Unit_Separate =>
-               declare
-                  N : constant String := Unit_Name & Get_String
-                    (Prj.Projects.Table (View).Naming.Separate_Suffix);
-               begin
-                  if not File_Must_Exist
-                    or else Get_Project_From_File
-                      (Project.Data.Registry.all, N, False) = Project
-                  then
-                     return N;
-                  end if;
-               end;
-               return "";
+               N := Create
+                 (Unit_Name & Get_String
+                    (Prj.Projects.Table (View).Naming.Separate_Suffix),
+                  Project);
+
+               if not File_Must_Exist
+                 or else Get_Project_From_File
+                   (Project.Data.Registry.all, N, False) = Project
+               then
+                  return N;
+               end if;
+
+               return VFS.No_File;
 
             when Unit_Spec =>
                Arr := Prj.Projects.Table (View).Naming.Spec_Suffix;
@@ -912,17 +938,19 @@ package body Projects is
          begin
             while Arr /= No_Array_Element loop
                if Array_Elements.Table (Arr).Index = Name_Ada then
-                  declare
-                     N : constant String := Uname
-                       & Get_String (Array_Elements.Table (Arr).Value.Value);
-                  begin
-                     if not File_Must_Exist
+                  N := Create
+                    (Uname
+                     & Get_String (Array_Elements.Table (Arr).Value.Value),
+                     Project);
+
+                  if N /= VFS.No_File
+                    and then
+                      (not File_Must_Exist
                        or else Get_Project_From_File
-                         (Project.Data.Registry.all, N, False) = Project
-                     then
-                        return N;
-                     end if;
-                  end;
+                         (Project.Data.Registry.all, N, False) = Project)
+                  then
+                     return N;
+                  end if;
                end if;
 
                Arr := Array_Elements.Table (Arr).Next;
@@ -930,7 +958,7 @@ package body Projects is
          end;
       end if;
 
-      return "";
+      return VFS.No_File;
    end Get_Filename_From_Unit;
 
    ------------------------
@@ -981,15 +1009,16 @@ package body Projects is
    ---------------------
 
    function Other_File_Name
-     (Project : Project_Type; Source_Filename : String) return String
+     (Project : Project_Type; Source_Filename : Virtual_File)
+      return Virtual_File
    is
-      File       : constant String := Base_Name (Source_Filename);
       Unit, Part : Unit_Part;
       Name, Lang : Name_Id;
       P          : Project_Type;
+      N          : Virtual_File;
    begin
       Get_Unit_Part_And_Name_From_Filename
-        (File, Project, Unit, Name, Lang);
+        (Base_Name (Source_Filename), Project, Unit, Name, Lang);
 
       case Unit is
          when Unit_Spec                 => Part := Unit_Body;
@@ -1005,34 +1034,25 @@ package body Projects is
          --  project.
          P := Extending_Project (Project, Recurse => True);
          while P /= No_Project loop
-            declare
-               N : constant String := Get_Filename_From_Unit (P, Unit, Part);
-            begin
-               if N /= "" then
-                  return N;
-               end if;
-            end;
+            N := Get_Filename_From_Unit
+              (P, Unit, Part, File_Must_Exist => True);
+            if N /= VFS.No_File then
+               return N;
+            end if;
 
             P := Parent_Project (P);
          end loop;
 
          --  Default to the GNAT naming scheme (for runtime files)
-         --  ??? This isn't language independent, what if other languages have
-         --  similar requirements
 
-         declare
-            Standard : constant String := Get_Full_Path_From_File
-              (Project_Registry (Get_Registry (Project)),
-               Get_Filename_From_Unit (No_Project, Unit, Part),
-               Use_Source_Path => True,
-               Use_Object_Path => False);
-         begin
-            if Standard /= "" then
-               return Standard;
-            end if;
-         end;
+         N := Get_Filename_From_Unit
+           (Project, Unit, Part, File_Must_Exist => True,
+            Check_Predefined_Library => True);
+         if N /= VFS.No_File then
+            return N;
+         end if;
 
-         return File;
+         return Source_Filename;
       end;
    end Other_File_Name;
 
@@ -2129,18 +2149,18 @@ package body Projects is
    procedure Get_Switches
      (Project          : Project_Type;
       In_Pkg           : String;
-      File             : String;
+      File             : VFS.Virtual_File;
       Language         : Types.Name_Id;
       Value            : out Variable_Value;
       Is_Default_Value : out Boolean) is
    begin
       --  Do we have some file-specific switches ?
-      if File /= "" then
+      if File /= VFS.No_File then
          Value := Get_Attribute_Value
            (Project        => Project,
             Attribute      =>
               Attribute_Pkg (In_Pkg & '#' & Get_String (Name_Switches)),
-            Index          => File);
+            Index          => Base_Name (File));
 
          if Value /= Nil_Variable_Value then
             Is_Default_Value := False;

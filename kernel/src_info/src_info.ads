@@ -19,12 +19,12 @@
 -----------------------------------------------------------------------
 
 with HTables;
-with Basic_Types;
 with Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Projects;
 with Language;
 with Language_Handlers;
+with VFS;
 
 package Src_Info is
 
@@ -63,19 +63,19 @@ package Src_Info is
 
    function Locate
      (List : LI_File_List;
-      LI_Filename : String) return LI_File_Ptr;
+      LI_Filename : VFS.Virtual_File) return LI_File_Ptr;
    --  Return a pointer to the LI_File whose filename is LI_Filename.
    --  Return No_LI_File if no such LI_File is found.
 
    function Locate_From_Source
      (List            : LI_File_List;
-      Source_Filename : String) return LI_File_Ptr;
+      Source_Filename : VFS.Virtual_File) return LI_File_Ptr;
    --  Return a pointer to the LI_File which has a source file named
    --  Source_Filename. Return No_LI_File if not found.
    --  Note that the path to the file is ignored during the search, only
    --  the basename is taken into account.
 
-   function Get_LI_Filename (LI : LI_File_Ptr) return String;
+   function Get_LI_Filename (LI : LI_File_Ptr) return VFS.Virtual_File;
    --  Return the name of the LI file associated with LI
 
    -----------------------
@@ -86,15 +86,8 @@ package Src_Info is
    --  Information on a file and its unit. This information can be stored for
    --  later usage, and remains valid even when the LI file is parsed again.
 
-   procedure Destroy (File : in out Internal_File);
-   --  Destroy the memory associated with File_Info.
-
-   function Copy (File : Internal_File) return Internal_File;
-   --  Return a deep copy of Internal_File, that will need to be destroyed
-   --  later on.  File might be destroyed, the copy will remain valid.
-
    function Make_Source_File
-     (Source_Filename : String;
+     (Source_Filename : VFS.Virtual_File;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Project         : Projects.Project_Type) return Internal_File;
    --  Converts from a source filename to a File_Info structure.
@@ -103,17 +96,18 @@ package Src_Info is
    --  Project should be the project to which Source_Filename belongs (so that
    --  both the naming scheme and the search path are correct).
 
-   function Get_Source_Filename (File : Internal_File) return String;
+   function Get_Source_Filename (File : Internal_File) return VFS.Virtual_File;
    --  Return the Filename for the given File.
 
    function Get_Unit_Part
-     (Lib_Info : LI_File_Ptr; File : String) return Projects.Unit_Part;
+     (Lib_Info : LI_File_Ptr; File : VFS.Virtual_File)
+      return Projects.Unit_Part;
    --  Return the type of File (a body, a spec or a separate).
    --  See also Projects.Registry.Get_Unit_Part_From_Filename if you are
    --  working with filenames that don't have a matching LI_File.
 
    function Get_Unit_Name
-     (Lib_Info : LI_File_Ptr; File : String) return String;
+     (Lib_Info : LI_File_Ptr; File : VFS.Virtual_File) return String;
    --  Return the unit name, when applicable, for the file. If the language of
    --  the file doesn't support the concept of units, the empty string is
    --  returned.
@@ -188,7 +182,7 @@ package Src_Info is
    procedure Create_Or_Complete_LI
      (Handler                : access LI_Handler_Record;
       File                   : in out LI_File_Ptr;
-      Source_Filename        : String;
+      Source_Filename        : VFS.Virtual_File;
       List                   : LI_File_List;
       Project                : Projects.Project_Type) is abstract;
    --  Find the LI file for Source_Filename, or create one if there is none
@@ -202,9 +196,9 @@ package Src_Info is
 
    function LI_Filename_From_Source
      (Handler                : access LI_Handler_Record;
-      Source_Filename        : String;
+      Source_Filename        : VFS.Virtual_File;
       Project                : Projects.Project_Type)
-      return String is abstract;
+      return VFS.Virtual_File is abstract;
    --  Return the name of the Library Information file associated with
    --  Source_Filename. In Ada, there is one such file per source
    --  file. However, in some other languages, all source files might be
@@ -230,7 +224,8 @@ package Src_Info is
      (Handler       : access LI_Handler_Record;
       Root_Project  : Projects.Project_Type;
       File_Project  : Projects.Project_Type;
-      Full_Filename : String) return LI_Handler_Iterator'Class is abstract;
+      Full_Filename : VFS.Virtual_File) return LI_Handler_Iterator'Class
+   is abstract;
    --  Generate the LI information for a given file. In Ada, this means
    --  recompiling the file so as to generate the corresponding ALI
    --  file. However, for some languages the database can only be regenerated
@@ -260,7 +255,7 @@ package Src_Info is
      (Handler      : access LI_Handler_Record;
       Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
-      File_Name    : String;
+      File_Name    : VFS.Virtual_File;
       Result       : out Language.Construct_List);
    --  Build a Construct_List, either using the src_info tools (like SN)
    --  or a language parser.
@@ -279,7 +274,7 @@ package Src_Info is
    function Get_Location (Ref  : E_Reference) return File_Location;
    --  Return the location for a declaration or a reference.
 
-   function Get_File   (Location : File_Location) return String;
+   function Get_File   (Location : File_Location) return VFS.Virtual_File;
    function Get_Line   (Location : File_Location) return Positive;
    function Get_Column (Location : File_Location) return Natural;
    --  Return the fields of a location
@@ -895,8 +890,8 @@ private
    --  E_Declaration_Info_Node is a node of this list.
 
    type Internal_File is record
-      File_Name : String_Access;
-      LI_Name   : String_Access;
+      File_Name : VFS.Virtual_File;
+      LI_Name   : VFS.Virtual_File;
    end record;
    --  The information associated with a source file, and that remains valid
    --  even when the LI file is parsed again.
@@ -976,11 +971,13 @@ private
       Handler       : LI_Handler;
       --  The handler used to create this LI_File.
 
-      LI_Filename   : String_Access;
+      LI_Filename   : VFS.Virtual_File;
+      LI_Filename_Key : String_Access;
       Spec_Info     : File_Info_Ptr;
       Body_Info     : File_Info_Ptr;
       Separate_Info : File_Info_Ptr_List;
       LI_Timestamp  : Timestamp;
+      Project       : Projects.Project_Type;
 
       case Parsed is
          when True =>
@@ -1031,9 +1028,13 @@ private
    pragma Inline (Next);
    --  Return a pointer to the LI_File_Node following given one.
 
-   function Get_LI_Filename (E : LI_File_Node_Ptr) return String_Access;
+   function Get_LI_Filename (E : LI_File_Node_Ptr) return VFS.Virtual_File;
    pragma Inline (Get_LI_Filename);
    --  return the filename of the LI_File pointed by E.
+
+   function Get_LI_Filename_Key (E : LI_File_Node_Ptr) return String_Access;
+   pragma Inline (Get_LI_Filename_Key);
+   --  return the basename of E. Intended for use in the hash table
 
    function Hash (F : String_Access) return LI_File_HTable_Index;
    pragma Inline (Hash);
@@ -1051,7 +1052,7 @@ private
         Set_Next => Set_Next,
         Next => Next,
         Key => String_Access,
-        Get_Key => Get_LI_Filename,
+        Get_Key => Get_LI_Filename_Key,
         Hash => Hash,
         Equal => Equal);
    --  A hash-table of LI_File_Ptr objects. There will always be at most
@@ -1077,7 +1078,7 @@ private
    --------------------------
 
    type LI_Handler_Iterator is abstract tagged record
-      Source_Files : Basic_Types.String_Array_Access;
+      Source_Files : VFS.File_Array_Access;
       Current_File : Integer := 0;
    end record;
 
@@ -1095,11 +1096,11 @@ private
 
    procedure Compute_Sources
      (Iterator    : in out LI_Handler_Iterator'Class;
-      Source_File : String);
+      Source_File : VFS.Virtual_File);
    --  The list of files will be a single file.
 
    function Current_Source_File
-     (Iterator : LI_Handler_Iterator'Class) return String;
+     (Iterator : LI_Handler_Iterator'Class) return VFS.Virtual_File;
    --  Return the full path name to the next source file that needs to be
    --  analyzed by the iterator.
    --  The empty string "" is returned if there are no more source files.
@@ -1153,7 +1154,7 @@ private
    --  Returns True if the given file location value has been set. It is
    --  faster than comparing the Location against Null_File_Location.
 
-   function Get_Source_Filename (File : Source_File) return String;
+   function Get_Source_Filename (File : Source_File) return VFS.Virtual_File;
    --  Returns the source filename of the given file.
    --  Note that this function is merely a shortcut to
    --       File.Unit.Spec/Body/Separate_Info.Source_Filename.all

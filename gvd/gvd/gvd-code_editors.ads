@@ -51,6 +51,7 @@ with GVD.Text_Box.Source_Editor;
 with GVD.Types;
 with Pango.Font;
 with Basic_Types;
+with VFS;
 
 package GVD.Code_Editors is
 
@@ -81,7 +82,7 @@ package GVD.Code_Editors is
 
    procedure Load_File
      (Editor      : access Code_Editor_Record;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Set_Current : Boolean := True;
       Force       : Boolean := False);
    --  Load and append a file in the editor.
@@ -175,7 +176,7 @@ package GVD.Code_Editors is
    --  assembly window.
 
    function Get_Current_File
-     (Editor : access Code_Editor_Record) return String;
+     (Editor : access Code_Editor_Record) return VFS.Virtual_File;
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
 

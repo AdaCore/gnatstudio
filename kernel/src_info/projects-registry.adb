@@ -30,6 +30,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with Glide_Intl;                use Glide_Intl;
+with Glib.Convert;              use Glib.Convert;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
 with Output;                    use Output;
@@ -49,6 +50,7 @@ with String_Hash;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Types;                     use Types;
+with VFS;                       use VFS;
 
 package body Projects.Registry is
 
@@ -131,7 +133,7 @@ package body Projects.Registry is
       Predefined_Source_Path : GNAT.OS_Lib.String_Access;
       --  Predefined source paths for the runtime library
 
-      Predefined_Source_Files : Basic_Types.String_Array_Access;
+      Predefined_Source_Files : VFS.File_Array_Access;
       --  The list of source files in Predefined_Source_Path.
 
       --  Implicit dependency on the global htables in the Prj.* packages.
@@ -942,7 +944,7 @@ package body Projects.Registry is
             if File_In_Sources (Buffer (1 .. Length))
               and then Get_Project_From_File
               (Registry          => Registry,
-               Source_Filename   => Buffer (1 .. Length),
+               Source_Filename   => Create_From_Base (Buffer (1 .. Length)),
                Root_If_Not_Found => False) = No_Project
             then
                --  Have to use the naming scheme, since the hash-table hasn't
@@ -1081,7 +1083,7 @@ package body Projects.Registry is
 
    function Get_Project_From_File
      (Registry          : Project_Registry;
-      Source_Filename   : String;
+      Source_Filename   : Virtual_File;
       Root_If_Not_Found : Boolean := True)
       return Project_Type
    is
@@ -1099,11 +1101,11 @@ package body Projects.Registry is
    ----------------------------
 
    function Get_Language_From_File
-     (Registry : Project_Registry; Source_Filename : String)
+     (Registry : Project_Registry; Source_Filename : Virtual_File)
       return Types.Name_Id
    is
       S : constant Source_File_Data := Get
-        (Registry.Data.Sources, Source_Filename);
+        (Registry.Data.Sources, Base_Name (Source_Filename));
       Part : Unit_Part;
       Unit, Lang : Name_Id;
    begin
@@ -1114,7 +1116,8 @@ package body Projects.Registry is
          --  (language_handlers-glide)
 
          declare
-            Ext : constant String := File_Extension (Source_Filename);
+            Ext : constant String := File_Extension
+              (Base_Name (Source_Filename));
          begin
             if Ext = ".ads" or else Ext = ".adb" then
                return Name_Ada;
@@ -1127,7 +1130,7 @@ package body Projects.Registry is
                --  highlighting.
 
                Get_Unit_Part_And_Name_From_Filename
-                 (Filename  => Source_Filename,
+                 (Filename  => Base_Name (Source_Filename),
                   Project   => Get_Root_Project (Registry),
                   Part      => Part,
                   Unit_Name => Unit,
@@ -1149,7 +1152,7 @@ package body Projects.Registry is
 
    function Language_Matches
      (Registry        : Project_Registry;
-      Source_Filename : String;
+      Source_Filename : Virtual_File;
       Filter          : Projects.Name_Id_Array) return Boolean
    is
       Lang : Name_Id;
@@ -1274,9 +1277,7 @@ package body Projects.Registry is
 
    function Get_Predefined_Source_Files
      (Registry : Project_Registry)
-      return Basic_Types.String_Array_Access
-   is
-      Result : String_Array_Access;
+      return VFS.File_Array_Access is
    begin
       --  ??? A nicer way would be to implement this with a predefined project,
       --  and rely on the project parser to return the source
@@ -1291,14 +1292,7 @@ package body Projects.Registry is
 
       --  Make a copy of the result, so that we can keep a cache in the kernel
 
-      Result := new String_Array (Registry.Data.Predefined_Source_Files'Range);
-
-      for S in Registry.Data.Predefined_Source_Files'Range loop
-         Result (S) := new String'
-           (Registry.Data.Predefined_Source_Files (S).all);
-      end loop;
-
-      return Result;
+      return new File_Array'(Registry.Data.Predefined_Source_Files.all);
    end Get_Predefined_Source_Files;
 
    --------------------------------
@@ -1311,7 +1305,7 @@ package body Projects.Registry is
       Free (Registry.Data.Predefined_Source_Path);
       Registry.Data.Predefined_Source_Path := new String'(Path);
 
-      Free (Registry.Data.Predefined_Source_Files);
+      Unchecked_Free (Registry.Data.Predefined_Source_Files);
    end Set_Predefined_Source_Path;
 
    --------------------------------
@@ -1331,10 +1325,11 @@ package body Projects.Registry is
 
    procedure Get_Full_Path_From_File
      (Registry        : Project_Registry;
-      Filename        : String;
+      Filename        : Glib.UTF8_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean)
    is
+      Locale : constant String := Locale_From_UTF8 (Filename);
       Project : Project_Type;
       Path : GNAT.OS_Lib.String_Access;
       Iterator : Imported_Project_Iterator;
@@ -1343,7 +1338,7 @@ package body Projects.Registry is
    begin
       if Is_Absolute_Path (Filename) then
          declare
-            S : constant String := Normalize_Pathname (Filename);
+            S : constant String := Normalize_Pathname (Locale);
          begin
             Name_Len := S'Length;
             Name_Buffer (1 .. Name_Len) := S;
@@ -1364,7 +1359,7 @@ package body Projects.Registry is
          --  (in case an old copy is kept somewhere in the source or object
          --  path)
 
-         if GNAT.Directory_Operations.File_Extension (Filename) =
+         if GNAT.Directory_Operations.File_Extension (Locale) =
            Project_File_Extension
            and then Get_Root_Project (Registry) /= No_Project
          then
@@ -1394,26 +1389,26 @@ package body Projects.Registry is
          --  ??? Seems Prj.Nmsc is already computing and storing the path
          --  somewhere, unfortunately it requires a Unit_Name.
 
-         Project := Get_Project_From_File (Registry, Filename);
-
+         Project := Get_Project_From_File
+           (Registry, Create_From_Base (Filename));
          if Project /= No_Project then
             if Use_Source_Path then
                Path := Locate_Regular_File
-                 (Filename, Include_Path (Project, False));
+                 (Locale, Include_Path (Project, False));
             end if;
 
             if Path = null
               and then Use_Object_Path
             then
                Path := Locate_Regular_File
-                 (Filename, Object_Path (Project, False));
+                 (Locale, Object_Path (Project, False));
             end if;
          end if;
 
          if Get_Root_Project (Registry) /= No_Project then
             if Path = null and then Use_Source_Path then
                Path := Locate_Regular_File
-                 (Filename,
+                 (Locale,
                   Include_Path (Get_Root_Project (Registry), True)
                   & Path_Separator & Get_Predefined_Source_Path (Registry)
                   & Path_Separator & ".");
@@ -1421,7 +1416,7 @@ package body Projects.Registry is
 
             if Path = null and then Use_Object_Path then
                Path := Locate_Regular_File
-                 (Filename,
+                 (Locale,
                   Object_Path (Get_Root_Project (Registry), True)
                   & Path_Separator & Get_Predefined_Object_Path (Registry));
             end if;

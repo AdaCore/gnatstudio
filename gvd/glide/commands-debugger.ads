@@ -21,8 +21,8 @@
 --  This package contains commands related to the debugger.
 
 with Glide_Kernel; use Glide_Kernel;
-with Basic_Types;  use Basic_Types;
 with GVD.Process;  use GVD.Process;
+with VFS;          use VFS;
 
 package Commands.Debugger is
 
@@ -38,19 +38,16 @@ package Commands.Debugger is
       Kernel         : Kernel_Handle;
       Debugger       : Visual_Debugger;
       Mode           : Breakpoint_Command_Mode;
-      File           : String;
+      File           : VFS.Virtual_File;
       Line           : Positive);
 
    function Execute
      (Command : access Set_Breakpoint_Command) return Command_Return_Type;
 
-   procedure Free (Command : in out Set_Breakpoint_Command);
-   --  Free memory associated to Command.
-
 private
 
    type Set_Breakpoint_Command is new Root_Command with record
-      File     : String_Access;
+      File     : VFS.Virtual_File;
       Kernel   : Kernel_Handle;
       Line     : Positive;
       BMode    : Breakpoint_Command_Mode;

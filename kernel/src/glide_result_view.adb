@@ -53,6 +53,7 @@ with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
 with Projects.Registry;        use Projects.Registry;
+with VFS;                      use VFS;
 
 with Traces;                   use Traces;
 with Commands;                 use Commands;
@@ -844,8 +845,8 @@ package body Glide_Result_View is
               (Get_String (Model, Iter, Column_Column));
             Par    : constant Gtk_Tree_Iter := Parent (Model, Iter);
             Granpa : constant Gtk_Tree_Iter := Parent (Model, Par);
-            File   : constant String :=
-              Get_String (Model, Par, Absolute_Name_Column);
+            File   : constant Virtual_File := Create
+              (Full_Filename => Get_String (Model, Par, Absolute_Name_Column));
             Category : constant String :=
               Get_String (Model, Granpa, Base_Name_Column);
             Message : constant String :=
@@ -853,14 +854,11 @@ package body Glide_Result_View is
               Get_String (Model, Iter, Message_Column);
          begin
             Result := new Message_Context;
-
             Set_File_Information
               (Result,
-               Dir_Name (File),
-               Base_Name (File),
+               File,
                Line => Line,
                Column => Column);
-
             Set_Message_Information
               (Result,
                Category,

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -22,6 +22,7 @@ with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Text_IO;       use Ada.Text_IO;
 with String_Utils;      use String_Utils;
 with Projects;          use Projects;
+with VFS;               use VFS;
 
 package body Src_Info.Debug is
 
@@ -111,7 +112,7 @@ package body Src_Info.Debug is
          Put ("<null file location, kind="
               & Kind.Kind'Img & ">");
       else
-         Put (Get_File (FL) & ":");
+         Put (Base_Name (Get_File (FL)) & ":");
          if Display_Kind then
             Put (Image (FL.Line) & Output_E_Kind (Kind) & Image (FL.Column));
          else
@@ -203,7 +204,7 @@ package body Src_Info.Debug is
 
    procedure Dump_Source_File (SF : Source_File) is
    begin
-      Put (Get_Source_Filename (SF));
+      Put (Base_Name (Get_Source_Filename (SF)));
    exception
       when E : others =>
          Print_Exception_Info (E, "Dump_Source_File");
@@ -491,7 +492,8 @@ package body Src_Info.Debug is
       --  so, and then abort since there is no more information we can
       --  print at this stage.
       if not LIF.Parsed then
-         Put_Line ("Unit_Name: " & LIF.LI_Filename.all & "<not parsed!>");
+         Put_Line ("Unit_Name: "
+                   & Base_Name (LIF.LI_Filename) & "<not parsed!>");
          return;
       end if;
 

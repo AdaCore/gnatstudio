@@ -58,6 +58,7 @@ with Basic_Types;           use Basic_Types;
 with Odd_Intl;              use Odd_Intl;
 with GVD.Files;             use GVD.Files;
 with GUI_Utils;             use GUI_Utils;
+with VFS;                   use VFS;
 
 package body GVD.Explorer is
 
@@ -334,12 +335,12 @@ package body GVD.Explorer is
            (Node_Get_Row (Row_Get_Parent (Node_Get_Row (Node))));
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, File_Node);
          Lang := Get_Language_From_File
-           (Lang_Handler (Explorer), Data.Extension);
+           (Lang_Handler (Explorer), Create_From_Base (Data.Extension));
          Set_Current_Language
            (Code_Editor (Explorer.Code_Editor), Lang);
 
          Load_File (Code_Editor (Explorer.Code_Editor),
-                    Find_File (Tab.Debugger, Data.Extension),
+                    Create (Find_File (Tab.Debugger, Data.Extension)),
                     Set_Current => False);
 
          if File_Node = Explorer.Current_File_Node then
@@ -360,7 +361,7 @@ package body GVD.Explorer is
 
          if Data.Is_File_Node then
             Lang := Get_Language_From_File
-              (Lang_Handler (Explorer), Data.Extension);
+              (Lang_Handler (Explorer), Create_From_Base (Data.Extension));
             Set_Current_Language
               (Code_Editor (Explorer.Code_Editor), Lang);
 
@@ -369,7 +370,7 @@ package body GVD.Explorer is
             end if;
 
             Load_File (Code_Editor (Explorer.Code_Editor),
-                       Find_File (Tab.Debugger, Data.Extension),
+                       Create (Find_File (Tab.Debugger, Data.Extension)),
                        Set_Current => False);
 
             if Line /= 1 then
@@ -588,7 +589,7 @@ package body GVD.Explorer is
             --  Need to read the file independently from the
             --  code_editor.
             Lang := Get_Language_From_File
-              (Lang_Handler (Explorer), Full_Name);
+              (Lang_Handler (Explorer), Create (Full_Filename => Full_Name));
 
             if Lang /= null then
                Explore (Explorer, Node, Explorer, S.all, Lang, Full_Name);
@@ -1144,7 +1145,7 @@ package body GVD.Explorer is
                Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
 
                Lang := Get_Language_From_File
-                 (Lang_Handler (Explorer), Data.Extension);
+                 (Lang_Handler (Explorer), Create_From_Base (Data.Extension));
 
                if Lang /= null
                  and then Is_System_File (Lang, Data.Extension)

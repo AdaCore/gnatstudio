@@ -20,6 +20,7 @@
 
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with VFS;                  use VFS;
 
 package body Commands.Locations is
 
@@ -41,13 +42,9 @@ package body Commands.Locations is
    --------------
 
    function Get_File
-     (Item : access Source_Location_Command_Type) return String is
+     (Item : access Source_Location_Command_Type) return VFS.Virtual_File is
    begin
-      if Item.Filename = null then
-         return "";
-      end if;
-
-      return Item.Filename.all;
+      return Item.Filename;
    end Get_File;
 
    --------------
@@ -98,24 +95,24 @@ package body Commands.Locations is
    procedure Create
      (Item     : out Html_Location_Command;
       Kernel   : Kernel_Handle;
-      Filename : String) is
+      Filename : VFS.Virtual_File) is
    begin
       Item := new Html_Location_Command_Type;
       Item.Kernel := Kernel;
-      Item.Filename := new String'(Filename);
+      Item.Filename := Filename;
    end Create;
 
    procedure Create
      (Item           : out Source_Location_Command;
       Kernel         : Kernel_Handle;
-      Filename       : String;
+      Filename       : VFS.Virtual_File;
       Line           : Natural := 0;
       Column         : Natural := 0;
       Column_End     : Natural := 0) is
    begin
       Item := new Source_Location_Command_Type;
       Item.Kernel := Kernel;
-      Item.Filename := new String'(Filename);
+      Item.Filename := Filename;
       Item.Line := Line;
       Item.Column := Column;
       Item.Column_End := Column_End;
@@ -128,16 +125,6 @@ package body Commands.Locations is
    procedure Free (X : in out Generic_Location_Command_Type) is
    begin
       Free (X.Args);
-   end Free;
-
-   procedure Free (X : in out Source_Location_Command_Type) is
-   begin
-      Free (X.Filename);
-   end Free;
-
-   procedure Free (X : in out Html_Location_Command_Type) is
-   begin
-      Free (X.Filename);
    end Free;
 
    -------------
@@ -169,8 +156,8 @@ package body Commands.Locations is
      (Command : access Html_Location_Command_Type) return Command_Return_Type
    is
    begin
-      if Command.Filename /= null then
-         Open_Html (Command.Kernel, Command.Filename.all, False);
+      if Command.Filename /= VFS.No_File then
+         Open_Html (Command.Kernel, Command.Filename, False);
       end if;
 
       Command_Finished (Command, True);
@@ -199,7 +186,7 @@ package body Commands.Locations is
             then
                Location_Command := Source_Location_Command (Other_Command);
 
-               if Location_Command.Filename.all = Command.Filename.all then
+               if Location_Command.Filename = Command.Filename then
                   Open_At_Line := True;
                end if;
             end if;
@@ -214,7 +201,7 @@ package body Commands.Locations is
 
                Location_Command := Source_Location_Command (Other_Command);
 
-               if Location_Command.Filename.all = Command.Filename.all then
+               if Location_Command.Filename = Command.Filename then
                   Open_At_Line := True;
                end if;
             end if;
@@ -223,19 +210,16 @@ package body Commands.Locations is
       if Open_At_Line then
          Open_File_Editor
            (Command.Kernel,
-            Command.Filename.all,
+            Command.Filename,
             Command.Line,
             Command.Column,
             Command.Column_End,
-            False,
-            From_Path => False);
-
+            False);
       else
          Open_File_Editor
            (Command.Kernel,
-            Command.Filename.all,
-            Enable_Navigation => False,
-            From_Path => False);
+            Command.Filename,
+            Enable_Navigation => False);
       end if;
 
       Command_Finished (Command, True);

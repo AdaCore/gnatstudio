@@ -31,7 +31,6 @@ package body GVD.Types is
       Free (Br.Address);
       Free (Br.Expression);
       Free (Br.Except);
-      Free (Br.File);
       Free (Br.Info);
       Free (Br.Subprogram);
       Free (Br.Condition);

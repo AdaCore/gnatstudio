@@ -35,8 +35,8 @@ with GVD.Code_Editors;     use GVD.Code_Editors;
 with GVD.Types;            use GVD.Types;
 with GVD_Module;           use GVD_Module;
 with Debugger_Pixmaps;     use Debugger_Pixmaps;
-with String_Utils;         use String_Utils;
 with String_List_Utils;    use String_List_Utils;
+with VFS;                  use VFS;
 
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box;
 
@@ -134,18 +134,17 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
-      if Editor.Debugger_Current_File = null then
+      if Editor.Debugger_Current_File = VFS.No_File then
          return;
       end if;
 
       Open_File_Editor
-        (Kernel, Editor.Debugger_Current_File.all,
-         Editor.Line, 1, Enable_Navigation => False, New_File => False,
-         From_Path => False);
+        (Kernel, Editor.Debugger_Current_File,
+         Editor.Line, 1, Enable_Navigation => False, New_File => False);
 
       declare
          Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(Editor.Debugger_Current_File.all),
+           (1 => new String'(Full_Name (Editor.Debugger_Current_File)),
             2 => new String'(Highlight_Category));
       begin
          Execute_GPS_Shell_Command (Kernel, "unhighlight", Args);
@@ -158,7 +157,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       if Editor.Line /= 0 then
          declare
             Args : GNAT.OS_Lib.Argument_List (1 .. 3) :=
-              (1 => new String'(Editor.Debugger_Current_File.all),
+              (1 => new String'(Full_Name (Editor.Debugger_Current_File)),
                2 => new String'(Highlight_Category),
                3 => new String'(Editor.Line'Img));
          begin
@@ -171,7 +170,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end if;
 
       Add_Unique_Sorted
-        (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
+        (Editor.Highlighted_Files, Full_Name (Editor.Debugger_Current_File));
    end Highlight_Current_Line;
 
    --------------------
@@ -211,31 +210,24 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
    procedure Load_File
      (Editor      : access GEdit_Record;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Set_Current : Boolean := True;
       Force       : Boolean := False)
    is
       pragma Unreferenced (Force);
       Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
-      File   : constant String := To_Host_Pathname
-        (GNAT.OS_Lib.Normalize_Pathname (File_Name));
 
    begin
-      if Editor.Current_File = null
-        or else Editor.Current_File.all /= File
-      then
-         Free (Editor.Current_File);
-         Editor.Current_File := new String'(File);
+      if Editor.Current_File /= File_Name then
+         Editor.Current_File := File_Name;
 
          if Set_Current then
-            Free (Editor.Debugger_Current_File);
-            Editor.Debugger_Current_File := new String'(File);
+            Editor.Debugger_Current_File := File_Name;
          end if;
 
          Open_File_Editor
-           (Kernel, File, New_File => False,
-            Enable_Navigation => False,
-            From_Path => False);
+           (Kernel, File_Name, New_File => False,
+            Enable_Navigation => False);
       end if;
    end Load_File;
 
@@ -271,9 +263,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Tab     : constant Visual_Debugger := Visual_Debugger (Process);
 
       Prev_Current_Line : constant Integer := Get_Current_Source_Line (Tab);
-      Prev_File         : constant String  := Get_Current_Source_File (Tab);
+      Prev_File       : constant Virtual_File := Get_Current_Source_File (Tab);
    begin
-      if Editor.Current_File = null then
+      if Editor.Current_File = VFS.No_File then
          return;
       end if;
 
@@ -294,14 +286,14 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
       Editor.Line := Line;
       Open_File_Editor
-        (Kernel, Editor.Current_File.all, Editor.Line, 1,
-         New_File => False, From_Path => False);
-      Append (Editor.Highlighted_Files, Editor.Debugger_Current_File.all);
+        (Kernel, Editor.Current_File, Editor.Line, 1, New_File => False);
+      Append (Editor.Highlighted_Files,
+              Full_Name (Editor.Debugger_Current_File));
 
       if Set_Current then
          Add_Line_Information
            (Kernel,
-            Editor.Current_File.all,
+            Editor.Current_File,
             "Current Line",
             --  ??? we should get that from elsewhere.
             new Line_Information_Array'
@@ -310,7 +302,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                  Image => Current_Line_Pixbuf,
                  Associated_Command => null)));
 
-         Set_Current_Source_Location (Tab, Editor.Current_File.all, Line);
+         Set_Current_Source_Location (Tab, Editor.Current_File, Line);
       end if;
    end Set_Line;
 
@@ -324,8 +316,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    is
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
    begin
-      Free (Editor.Current_File);
-      Editor.Current_File := new String'("");
+      Editor.Current_File := VFS.No_File;
       Console.Insert (Kernel, Message);
       --  ??? Do not insert an error, to avoid loosing the focus from the
       --  debugger console. Consider putting a message in the status bar
@@ -380,9 +371,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
             Result.Expression := new String'(D.Expression.all);
          end if;
 
-         if D.File /= null then
-            Result.File := new String'(D.File.all);
-         end if;
+         Result.File := D.File;
 
          if D.Except /= null then
             Result.Except := new String'(D.Except.all);
@@ -425,7 +414,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       is
          First_Zero : Integer := -1;
       begin
-         if N.File = null then
+         if N.File = VFS.No_File then
             Added := False;
             return;
          end if;
@@ -435,16 +424,15 @@ package body GVD.Text_Box.Source_Editor.Glide is
          end if;
 
          for J in A'Range loop
-            if A (J).File /= null
-              and then A (J).Line = N.Line
-              and then A (J).File.all = N.File.all
+            if A (J).Line = N.Line
+              and then A (J).File = N.File
             then
                Added := False;
                return;
             end if;
 
             if First_Zero = -1
-              and then A (J).File = null
+              and then A (J).File = VFS.No_File
             then
                First_Zero := J;
             end if;
@@ -491,13 +479,13 @@ package body GVD.Text_Box.Source_Editor.Glide is
                   Kernel,
                   Tab,
                   Unset,
-                  Br (J).File.all,
+                  Br (J).File,
                   Br (J).Line);
                A (L).Image := Line_Has_Breakpoint_Pixbuf;
                A (L).Associated_Command := Command_Access (Other_Command);
                Add_Line_Information
                  (Kernel,
-                  Br (J).File.all,
+                  Br (J).File,
                   Breakpoints_Column_Id,
                   new Line_Information_Array'(A));
 
@@ -511,7 +499,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end if;
 
       for J in Editor.Current_Breakpoints'Range loop
-         if Editor.Current_Breakpoints (J).File /= null then
+         if Editor.Current_Breakpoints (J).File /= VFS.No_File then
             Found := False;
             Index := Br'First;
 
@@ -519,8 +507,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
               and then Index <= Br'Last
             loop
                if Editor.Current_Breakpoints (J).Line = Br (Index).Line
-                 and then Editor.Current_Breakpoints (J).File.all
-                 = Br (Index).File.all
+                 and then Editor.Current_Breakpoints (J).File =
+                 Br (Index).File
                then
                   Found := True;
                end if;
@@ -539,7 +527,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                      Kernel,
                      Tab,
                      Set,
-                     Editor.Current_Breakpoints (J).File.all,
+                     Editor.Current_Breakpoints (J).File,
                      Editor.Current_Breakpoints (J).Line);
 
                   if Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code) then
@@ -551,7 +539,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                   A (L).Associated_Command := Command_Access (Other_Command);
                   Add_Line_Information
                     (Kernel,
-                     Editor.Current_Breakpoints (J).File.all,
+                     Editor.Current_Breakpoints (J).File,
                      Breakpoints_Column_Id,
                      new Line_Information_Array'(A));
                end;

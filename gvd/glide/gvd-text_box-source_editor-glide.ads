@@ -73,7 +73,7 @@ package GVD.Text_Box.Source_Editor.Glide is
 
    procedure Load_File
      (Editor      : access GEdit_Record;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Set_Current : Boolean := True;
       Force       : Boolean := False);
    --  See GVD.Text_Box.Source_Editor for more information.

@@ -28,6 +28,7 @@ with Gtk.Window;
 with Language.Debugger;
 with Basic_Types;
 with GVD.Types;
+with VFS;
 
 package Debugger.Gdb is
 
@@ -218,7 +219,7 @@ package Debugger.Gdb is
 
    procedure Break_Source
      (Debugger  : access Gdb_Debugger;
-      File      : String;
+      File      : VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
@@ -323,7 +324,7 @@ package Debugger.Gdb is
 
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;
-      File     : String;
+      File     : VFS.Virtual_File;
       Line     : Positive) return Line_Kind;
 
    function List_Breakpoints

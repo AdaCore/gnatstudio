@@ -29,7 +29,6 @@ with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
 pragma Warnings (On);
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Gtk.Window;        use Gtk.Window;
 
@@ -54,6 +53,7 @@ with Items.Simples;     use Items.Simples;
 with Items.Arrays;      use Items.Arrays;
 with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
+with VFS;               use VFS;
 
 with Ada.Unchecked_Deallocation;
 
@@ -1550,7 +1550,7 @@ package body Debugger.Gdb is
 
    procedure Break_Source
      (Debugger  : access Gdb_Debugger;
-      File      : String;
+      File      : VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden) is
@@ -1975,7 +1975,7 @@ package body Debugger.Gdb is
 
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;
-      File     : String;
+      File     : VFS.Virtual_File;
       Line     : Positive) return Line_Kind is
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
@@ -2813,8 +2813,9 @@ package body Debugger.Gdb is
 
                Match (File_Name_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
-                  Br (Num).File := new String'
-                    (S (Matched (1).First .. Matched (1).Last));
+                  Br (Num).File := Create
+                    (Full_Filename =>
+                       (S (Matched (1).First .. Matched (1).Last)));
                   Br (Num).Line := Integer'Value
                     (S (Matched (2).First .. Matched (2).Last));
                   M := True;

@@ -83,6 +83,7 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
+with VFS;                       use VFS;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -124,7 +125,7 @@ package body GVD_Module is
       Force_Refresh : Boolean := False);
 
    type File_Line_Record is record
-      File : String_Access;
+      File : VFS.Virtual_File;
       Line : Integer;
    end record;
 
@@ -233,14 +234,14 @@ package body GVD_Module is
 
    procedure Create_Debugger_Columns
      (Kernel : Kernel_Handle;
-      File   : String);
+      File   : Virtual_File);
    --  Create the side information columns corresponding to the debugger
    --  in the editors for file.
    --  If File is empty, create them for all files.
 
    procedure Remove_Debugger_Columns
      (Kernel : Kernel_Handle;
-      File   : String);
+      File   : Virtual_File);
    --  Remove the side information columns corresponding to the debugger
    --  in the editors for file.
    --  If File is empty, remove them for all files.
@@ -536,7 +537,8 @@ package body GVD_Module is
    procedure Initialize_Debugger
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      On_Debug_Init (Kernel, (0, Get_Project (Kernel), ""));
+      On_Debug_Init
+        (Kernel, File_Project_Record'(Get_Project (Kernel), VFS.No_File));
    end Initialize_Debugger;
 
    -----------------------------
@@ -545,7 +547,7 @@ package body GVD_Module is
 
    procedure Create_Debugger_Columns
      (Kernel : Kernel_Handle;
-      File   : String) is
+      File   : Virtual_File) is
    begin
       --  Create the information column for the current line.
       Create_Line_Information_Column
@@ -571,7 +573,7 @@ package body GVD_Module is
 
    procedure Remove_Debugger_Columns
      (Kernel : Kernel_Handle;
-      File   : String) is
+      File   : Virtual_File) is
    begin
       Remove_Line_Information_Column (Kernel, File, "Current Line");
       Remove_Line_Information_Column
@@ -1216,9 +1218,8 @@ package body GVD_Module is
       if Page.Debugger = null then
          Program_Args := new String'("");
 
-         if Data.File /= "" then
-            Module := new String'
-              (Executables_Directory (Data.Project) & Data.File);
+         if Data.File /= No_File then
+            Module := new String'(Full_Name (Data.File));
 
          elsif Top.Program_Args /= null then
             Blank_Pos := Ada.Strings.Fixed.Index (Top.Program_Args.all, " ");
@@ -1310,7 +1311,7 @@ package body GVD_Module is
       --  Add columns for debugging information to all the files that
       --  are currently open.
 
-      Create_Debugger_Columns (K, "");
+      Create_Debugger_Columns (K, VFS.No_File);
       Pop_State (K);
 
       Id.Initialized := True;
@@ -1409,7 +1410,7 @@ package body GVD_Module is
          Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
       end if;
 
-      Remove_Debugger_Columns (Kernel, "");
+      Remove_Debugger_Columns (Kernel, VFS.No_File);
       Free_Debug_Info (GEdit (Get_Source
         (Visual_Debugger (Get_Current_Process (Top)).Editor_Text)));
       Page.Exiting := False;
@@ -1743,10 +1744,10 @@ package body GVD_Module is
         Glide_Window (Get_Main_Window (Get_Kernel (Context)));
       Edit : constant GEdit := GEdit (Get_Source
         (Visual_Debugger (Get_Current_Process (Top)).Editor_Text));
-      Name : constant String := Get_Current_File (Edit);
+      Name : constant Virtual_File := Get_Current_File (Edit);
 
    begin
-      if Name /= "" then
+      if Name /= VFS.No_File then
          Highlight_Current_Line (Edit);
       end if;
 
@@ -1783,8 +1784,8 @@ package body GVD_Module is
       Top : constant Glide_Window := Glide_Window (Object);
    begin
       --  Re-create all debugger columns.
-      Remove_Debugger_Columns (Top.Kernel, "");
-      Create_Debugger_Columns (Top.Kernel, "");
+      Remove_Debugger_Columns (Top.Kernel, VFS.No_File);
+      Create_Debugger_Columns (Top.Kernel, VFS.No_File);
    end On_Executable_Changed;
 
    -----------------------
@@ -1837,7 +1838,7 @@ package body GVD_Module is
       File_Line := File_Line_List.Head (Id.Unexplored_Lines);
 
       Kind := Line_Contains_Code
-        (Debugger, File_Line.File.all, File_Line.Line);
+        (Debugger, File_Line.File, File_Line.Line);
 
       Id.Total_Explored_Lines := Id.Total_Explored_Lines + 1;
 
@@ -1868,8 +1869,8 @@ package body GVD_Module is
             if Tab.Breakpoints /= null then
                for J in Tab.Breakpoints'Range loop
                   if Tab.Breakpoints (J).Line = File_Line.Line
-                    and then Tab.Breakpoints (J).File /= null
-                    and then Tab.Breakpoints (J).File.all = File_Line.File.all
+                    and then Tab.Breakpoints (J).File /= VFS.No_File
+                    and then Tab.Breakpoints (J).File = File_Line.File
                   then
                      Mode := Unset;
                      A (L).Image := Line_Has_Breakpoint_Pixbuf;
@@ -1879,8 +1880,7 @@ package body GVD_Module is
             end if;
 
             Create
-              (C, Id.Kernel, Tab, Mode, File_Line.File.all,
-               File_Line.Line);
+              (C, Id.Kernel, Tab, Mode, File_Line.File, File_Line.Line);
             A (L).Associated_Command := Command_Access (C);
 
          elsif Kind = No_More_Code then
@@ -1892,7 +1892,7 @@ package body GVD_Module is
             Node := First (Id.Unexplored_Lines);
 
             while Node /= Null_Node loop
-               if Data (Node).File.all = File_Line.File.all
+               if Data (Node).File = File_Line.File
                  and then Data (Node).Line > File_Line.Line
                then
                   Prev_Node := Prev (Id.Unexplored_Lines, Node);
@@ -1921,7 +1921,7 @@ package body GVD_Module is
 
          Add_Line_Information
            (Id.Kernel,
-            File_Line.File.all,
+            File_Line.File,
             Breakpoints_Column_Id,
             new Line_Information_Array'(A));
       end;
@@ -1963,7 +1963,8 @@ package body GVD_Module is
       Args    : GValues)
    is
       Top  : constant Glide_Window := Glide_Window (Widget);
-      File : constant String := Get_String (Nth (Args, 1));
+      File : constant Virtual_File :=
+        Create (Full_Filename => Get_String (Nth (Args, 1)));
    begin
       Create_Debugger_Columns (Top.Kernel, File);
 
@@ -2002,8 +2003,7 @@ package body GVD_Module is
 
       declare
          Line1, Line2 : Integer;
-         File : constant String := Directory_Information (Area_Context) &
-           File_Information (Area_Context);
+         File : constant Virtual_File := File_Information (Area_Context);
          C    : Reveal_Lines_Commands.Generic_Asynchronous_Command_Access;
 
       begin
@@ -2025,8 +2025,7 @@ package body GVD_Module is
             end if;
 
             for J in Line1 .. Line2 loop
-               File_Line_List.Prepend
-                 (Id.Unexplored_Lines, (new String'(File), J));
+               File_Line_List.Prepend (Id.Unexplored_Lines, (File, J));
                --  ??? We might want to use a LIFO structure here
                --  instead of FIFO, so that the lines currently shown
                --  are displayed first.
@@ -2057,8 +2056,8 @@ package body GVD_Module is
             if Tab.Breakpoints /= null then
                for J in Tab.Breakpoints'Range loop
                   if Tab.Breakpoints (J).Line in Bps'Range
-                    and then Tab.Breakpoints (J).File /= null
-                    and then Tab.Breakpoints (J).File.all = File
+                    and then Tab.Breakpoints (J).File /= VFS.No_File
+                    and then Tab.Breakpoints (J).File = File
                   then
                      Bps (Tab.Breakpoints (J).Line) :=
                        Tab.Breakpoints (J).Num;
@@ -2133,9 +2132,9 @@ package body GVD_Module is
                      File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
                      Slot_Object => Kernel,
                      User_Data => File_Project_Record'
-                       (Length  => Exec'Length,
-                        Project => Current (Iter),
-                        File    => Exec));
+                       (Project => Current (Iter),
+                        File    => Create
+                          (Executables_Directory (Current (Iter)) & Exec)));
                end;
             end loop;
 
@@ -2155,9 +2154,8 @@ package body GVD_Module is
          File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
          Slot_Object => Kernel,
          User_Data => File_Project_Record'
-           (Length  => 0,
-            Project => Get_Project (Kernel),
-            File    => ""));
+           (Project => Get_Project (Kernel),
+            File    => VFS.No_File));
       Show_All (Menu);
 
    exception
@@ -2188,8 +2186,8 @@ package body GVD_Module is
            Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
 
          if Prev /= Id.Show_Lines_With_Code then
-            Remove_Debugger_Columns (Kernel_Handle (Kernel), "");
-            Create_Debugger_Columns (Kernel_Handle (Kernel), "");
+            Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
+            Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
          end if;
       end if;
    end Preferences_Changed;
@@ -2405,8 +2403,9 @@ package body GVD_Module is
    ----------
 
    procedure Free (X : in out File_Line_Record) is
+      pragma Unreferenced (X);
    begin
-      Free (X.File);
+      null;
    end Free;
 
    -------------

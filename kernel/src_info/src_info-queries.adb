@@ -25,13 +25,12 @@ with System.Assertions;       use System.Assertions;
 with Traces;                  use Traces;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
 with Projects;                use Projects;
 with Projects.Registry;       use Projects.Registry;
-with Basic_Types;             use Basic_Types;
+with VFS;                     use VFS;
 
 package body Src_Info.Queries is
 
@@ -112,7 +111,7 @@ package body Src_Info.Queries is
 
    function Location_Matches
      (Location  : File_Location;
-      File_Name : String;
+      File_Name : Virtual_File;
       Line      : Positive;
       Column    : Positive) return Integer;
    --  Return 0 if the given File_Location is pointing to the same
@@ -136,7 +135,7 @@ package body Src_Info.Queries is
 
    procedure Find_Spec_Or_Body
      (Decl            : E_Declaration_Info_List;
-      File_Name       : String;
+      File_Name       : Virtual_File;
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
@@ -194,7 +193,7 @@ package body Src_Info.Queries is
 
    procedure Internal_Find_Declaration_Or_Body
      (Lib_Info      : LI_File_Ptr;
-      File_Name     : String;
+      File_Name     : Virtual_File;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
@@ -215,7 +214,7 @@ package body Src_Info.Queries is
    --  only on the line and column
 
    function Get_Declarations_From_File
-     (Lib_Info : LI_File_Ptr; File_Name : String)
+     (Lib_Info : LI_File_Ptr; File_Name : VFS.Virtual_File)
       return E_Declaration_Info_List;
    --  Return the list of declarations for a specific source file.
 
@@ -300,7 +299,7 @@ package body Src_Info.Queries is
 
    function Location_Matches
      (Location  : File_Location;
-      File_Name : String;
+      File_Name : Virtual_File;
       Line      : Positive;
       Column    : Positive)
       return Integer
@@ -369,7 +368,7 @@ package body Src_Info.Queries is
 
    procedure Find_Spec_Or_Body
      (Decl            : E_Declaration_Info_List;
-      File_Name       : String;
+      File_Name       : Virtual_File;
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
@@ -455,7 +454,7 @@ package body Src_Info.Queries is
 
    procedure Internal_Find_Declaration_Or_Body
      (Lib_Info      : LI_File_Ptr;
-      File_Name     : String;
+      File_Name     : Virtual_File;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
@@ -544,7 +543,7 @@ package body Src_Info.Queries is
 
    procedure Find_Declaration
      (Lib_Info      : LI_File_Ptr;
-      File_Name     : String;
+      File_Name     : VFS.Virtual_File;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
@@ -576,7 +575,7 @@ package body Src_Info.Queries is
          Entity := No_Entity_Information;
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
-                & " file=" & File_Name & " Status=" & Status'Img);
+                & " file=" & Base_Name (File_Name) & " Status=" & Status'Img);
       end if;
 
    exception
@@ -594,7 +593,7 @@ package body Src_Info.Queries is
 
    procedure Find_Next_Body
      (Lib_Info               : LI_File_Ptr;
-      File_Name              : String;
+      File_Name              : VFS.Virtual_File;
       Entity_Name            : String;
       Line                   : Positive;
       Column                 : Positive;
@@ -639,9 +638,6 @@ package body Src_Info.Queries is
 
          if Decl.Declaration.Location.File.LI /= Lib_Info then
             Entity := Get_Entity (Decl.Declaration);
-
-            Body_LI := Locate_From_Source
-              (Source_Info_List, Get_Declaration_File_Of (Entity));
             Create_Or_Complete_LI
               (Handler                => Handler,
                File                   => Body_LI,
@@ -684,7 +680,7 @@ package body Src_Info.Queries is
       else
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
-                & " file=" & File_Name);
+                & " file=" & Base_Name (File_Name));
       end if;
 
    exception
@@ -701,18 +697,12 @@ package body Src_Info.Queries is
    -- Destroy --
    -------------
 
-   procedure Destroy (Dep : in out Dependency) is
-   begin
-      Destroy (Dep.File);
-   end Destroy;
-
    procedure Destroy (List : in out Dependency_List) is
       Current_Dep : Dependency_List renames List;
       Next_Dep    : Dependency_List;
    begin
       while Current_Dep /= null loop
          Next_Dep := Current_Dep.Next;
-         Destroy (Current_Dep.Value);
          Free (Current_Dep);
          Current_Dep := Next_Dep;
       end loop;
@@ -724,7 +714,7 @@ package body Src_Info.Queries is
 
    procedure Find_Dependencies
      (Lib_Info        : LI_File_Ptr;
-      Source_Filename : String;
+      Source_Filename : Virtual_File;
       Dependencies    : out Dependency_List;
       Status          : out Dependencies_Query_Status)
    is
@@ -733,6 +723,7 @@ package body Src_Info.Queries is
       List        : File_Info_Ptr_List;
       Part        : Unit_Part;
       B, S        : Boolean;
+      Base        : constant String := Base_Name (Source_Filename);
    begin
       if Lib_Info = null then
          Dependencies := null;
@@ -756,8 +747,10 @@ package body Src_Info.Queries is
             Dependencies := new Dependency_Node'
               (Value =>
                  (File =>
-                    (File_Name => new String'(FI.Source_Filename.all),
-                     LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
+                    (File_Name => Create
+                       (FI.Source_Filename.all, Lib_Info.LI.Project,
+                        Use_Object_Path => False),
+                     LI_Name   => Lib_Info.LI.LI_Filename),
                   Dep  => (Depends_From_Spec => False,
                            Depends_From_Body => True)),
                Next  => Dependencies);
@@ -765,12 +758,14 @@ package body Src_Info.Queries is
 
          List := Lib_Info.LI.Separate_Info;
          while List /= null loop
-            if List.Value.Source_Filename.all /= Source_Filename then
+            if List.Value.Source_Filename.all /= Base then
                Dependencies := new Dependency_Node'
                  (Value =>
                     (File =>
-                     (File_Name => new String'(List.Value.Source_Filename.all),
-                      LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
+                       (File_Name => Create
+                          (List.Value.Source_Filename.all,
+                           Lib_Info.LI.Project, Use_Object_Path => False),
+                        LI_Name   => Lib_Info.LI.LI_Filename),
                      Dep  => (Depends_From_Spec => False,
                               Depends_From_Body => True)),
                   Next  => Dependencies);
@@ -785,8 +780,10 @@ package body Src_Info.Queries is
             Dependencies := new Dependency_Node'
               (Value =>
                  (File =>
-                    (File_Name => new String'(FI.Source_Filename.all),
-                     LI_Name   => new String'(Lib_Info.LI.LI_Filename.all)),
+                    (File_Name => Create
+                       (FI.Source_Filename.all,
+                        Lib_Info.LI.Project, Use_Object_Path => False),
+                     LI_Name   => Lib_Info.LI.LI_Filename),
                   Dep  => (Depends_From_Spec => False,
                            Depends_From_Body => True)),
                Next  => Dependencies);
@@ -806,16 +803,18 @@ package body Src_Info.Queries is
                Dependencies := null;
                Status := Internal_Error;
                Trace (Me, "Couldn't find the File_Info_Ptr for "
-                        & Get_LI_Filename (Lib_Info));
+                        & Full_Name (Get_LI_Filename (Lib_Info)));
                return;
             end if;
 
             Dependencies := new Dependency_Node'
               (Value =>
                  (File =>
-                    (File_Name => new String'(FI.Source_Filename.all),
-                     LI_Name   => new String'
-                       (Current_Dep.Value.File.LI.LI.LI_Filename.all)),
+                    (File_Name => Create
+                       (FI.Source_Filename.all,
+                        Current_Dep.Value.File.LI.LI.Project,
+                        Use_Object_Path => False),
+                     LI_Name   => Current_Dep.Value.File.LI.LI.LI_Filename),
                   Dep  => Current_Dep.Value.Dep_Info),
                Next  => Dependencies);
          end if;
@@ -923,8 +922,7 @@ package body Src_Info.Queries is
       Subprograms_Pkg_Only : Boolean := True) is
    begin
       if Tree /= Null_Scope_Tree then
-         Trace (Handler, "Scope tree for "
-                & Base_Name (Tree.LI_Filename.all));
+         Trace (Handler, "Scope tree for " & Base_Name (Tree.LI_Filename));
          if Node = Null_Scope_Tree_Node then
             Trace (Handler, "Part= BODY");
             Trace_Dump (Handler, Tree.Body_Tree, "",
@@ -1012,7 +1010,6 @@ package body Src_Info.Queries is
 
    procedure Free (Tree : in out Scope_Tree) is
    begin
-      Free (Tree.LI_Filename);
       Free (Tree.Body_Tree);
       Free (Tree.Spec_Tree);
 
@@ -1480,7 +1477,7 @@ package body Src_Info.Queries is
       end loop;
 
       T := (Lib_Info    => Lib_Info,
-            LI_Filename => new String'(Lib_Info.LI.LI_Filename.all),
+            LI_Filename => Lib_Info.LI.LI_Filename,
             Time_Stamp  => 0,
             Body_Tree   => null,
             Spec_Tree   => null,
@@ -1701,7 +1698,7 @@ package body Src_Info.Queries is
             Column => Decl.Location.Column,
             Scope  => Decl.Scope,
             Kind   => Decl.Kind,
-            File   => "");
+            File   => VFS.No_File);
       end if;
    end Get_Entity;
 
@@ -1713,20 +1710,12 @@ package body Src_Info.Queries is
    begin
       if Entity = No_Entity_Information then
          return No_Entity_Information;
-      elsif Is_Predefined_Entity (Entity) then
-         return Create
-           (Name   => Entity.Name.all,
-            Line   => Entity.Decl_Line,
-            Column => Entity.Decl_Column,
-            File   => "",
-            Scope  => Entity.Scope,
-            Kind   => Entity.Kind);
       else
          return Create
            (Name   => Entity.Name.all,
             Line   => Entity.Decl_Line,
             Column => Entity.Decl_Column,
-            File   => Entity.Decl_File.all,
+            File   => Entity.Decl_File,
             Scope  => Entity.Scope,
             Kind   => Entity.Kind);
       end if;
@@ -1738,7 +1727,6 @@ package body Src_Info.Queries is
 
    procedure Destroy (Entity : in out Entity_Information) is
    begin
-      Free (Entity.Decl_File);
       Free (Entity.Name);
       Entity := No_Entity_Information;
    end Destroy;
@@ -1768,13 +1756,13 @@ package body Src_Info.Queries is
    -----------------------------
 
    function Get_Declaration_File_Of
-     (Entity : Entity_Information) return String is
+     (Entity : Entity_Information) return VFS.Virtual_File is
    begin
       if Is_Predefined_Entity (Entity) then
          Trace (Me, "Get_Declaration_File_Of: Predefined_Entity");
-         return "";
+         return VFS.No_File;
       else
-         return Entity.Decl_File.all;
+         return Entity.Decl_File;
       end if;
    end Get_Declaration_File_Of;
 
@@ -1808,9 +1796,9 @@ package body Src_Info.Queries is
         and then Decl.Name.all          = Entity.Name.all
         and then
           ((Decl.Location = Predefined_Entity_Location
-            and then Entity.Decl_File = null)
-           or else (Get_Source_Filename (Decl.Location.File) =
-                    Entity.Decl_File.all));
+            and then Entity.Decl_File = VFS.No_File)
+           or else Get_Source_Filename (Decl.Location.File) =
+             Entity.Decl_File);
    end Is_Same_Entity;
 
    -------------------
@@ -2236,12 +2224,12 @@ package body Src_Info.Queries is
       Iterator               : out Entity_Reference_Iterator;
       Project                : Project_Type := No_Project;
       LI_Once                : Boolean := False;
-      In_File                : String := "") is
+      In_File                : VFS.Virtual_File := VFS.No_File) is
    begin
       Iterator.Entity := Copy (Entity);
       Iterator.LI_Once := LI_Once;
 
-      if In_File = "" then
+      if In_File = VFS.No_File then
          Find_Ancestor_Dependencies
            (Root_Project, Lang_Handler,
             Get_Declaration_File_Of (Entity), List,
@@ -2295,18 +2283,18 @@ package body Src_Info.Queries is
       begin
          if not Get
            (Iterator.Examined,
-            Iterator.Source_Files (Iterator.Current_File).all)
+            Base_Name (Iterator.Source_Files (Iterator.Current_File)))
          then
             Handler := Get_LI_Handler_From_File
               (Glide_Language_Handler (Lang_Handler),
-               Iterator.Source_Files (Iterator.Current_File).all);
+               Iterator.Source_Files (Iterator.Current_File));
 
             --  For now, we do not have inter-language cross-references, so we
             --  do nothing if the file doesn't have the same language.
 
             if Handler = Iterator.Decl_LI.LI.Handler then
                LI := Locate_From_Source
-                 (List, Iterator.Source_Files (Iterator.Current_File).all);
+                 (List, Iterator.Source_Files (Iterator.Current_File));
 
                --  Do nothing if the file is not the same language
                if LI = null
@@ -2316,13 +2304,14 @@ package body Src_Info.Queries is
                     (Handler                => Handler,
                      File                   => LI,
                      Source_Filename        =>
-                       Iterator.Source_Files (Iterator.Current_File).all,
+                       Iterator.Source_Files (Iterator.Current_File),
                      List                   => List,
                      Project                => Current (Iterator.Importing));
 
                   Assert (Me, LI = null or else LI.LI.Parsed,
                           "Unparsed LI returned for file "
-                          & Iterator.Source_Files (Iterator.Current_File).all);
+                          & Base_Name
+                            (Iterator.Source_Files (Iterator.Current_File)));
                end if;
 
                if LI /= null then
@@ -2353,7 +2342,7 @@ package body Src_Info.Queries is
                      Sep_List := Sep_List.Next;
                   end loop;
 
-                  Trace (Me, "Check_File: " & LI.LI.LI_Filename.all);
+                  Trace (Me, "Check_File: " & Full_Name (LI.LI.LI_Filename));
                   return Check_LI (LI);
                end if;
             end if;
@@ -2377,7 +2366,7 @@ package body Src_Info.Queries is
 
          if Iterator.Current_Separate /= null
            and then Iterator.Current_Separate.Value.Source_Filename.all =
-             Iterator.Source_Filename.all
+             Base_Name (Iterator.Source_Filename)
          then
             Iterator.Current_Separate := Iterator.Current_Separate.Next;
          end if;
@@ -2404,7 +2393,7 @@ package body Src_Info.Queries is
             if Iterator.Include_Self
               and then Iterator.LI.LI.Spec_Info /= null
               and then Iterator.LI.LI.Spec_Info.Source_Filename.all =
-                Iterator.Source_Filename.all
+                Base_Name (Iterator.Source_Filename)
             then
                Trace (Me, "Check_LI: spec matches");
                Iterator.Current_Part := Unit_Spec;
@@ -2416,7 +2405,7 @@ package body Src_Info.Queries is
             if Iterator.LI.LI.Body_Info /= null
               and then (Iterator.Include_Self
                         or else Iterator.LI.LI.Body_Info.Source_Filename.all /=
-                          Iterator.Source_Filename.all)
+                          Base_Name (Iterator.Source_Filename))
             then
                Trace (Me, "Check_LI: body matches "
                       & Iterator.LI.LI.Body_Info.Source_Filename.all);
@@ -2444,7 +2433,7 @@ package body Src_Info.Queries is
                or else Dep.Value.Dep_Info.Depends_From_Body)
               and then Dep.Value.File.LI = Iterator.Decl_LI
               and then Get_Source_Filename (Dep.Value.File) =
-              Iterator.Source_Filename.all;
+              Iterator.Source_Filename;
             Dep := Dep.Next;
          end loop;
 
@@ -2503,7 +2492,7 @@ package body Src_Info.Queries is
 
          --  Move to the next project
 
-         Free (Iterator.Source_Files);
+         Unchecked_Free (Iterator.Source_Files);
          Reset (Iterator.Examined);
 
          Next (Iterator.Importing);
@@ -2532,7 +2521,7 @@ package body Src_Info.Queries is
    procedure Find_Ancestor_Dependencies
      (Root_Project    : Project_Type;
       Lang_Handler : Language_Handlers.Language_Handler;
-      Source_Filename : String;
+      Source_Filename : VFS.Virtual_File;
       List            : LI_File_List;
       Iterator        : out Dependency_Iterator;
       Project         : Project_Type := No_Project;
@@ -2547,7 +2536,7 @@ package body Src_Info.Queries is
 
    begin
       Trace (Me, "Find_Ancestor_Dependencies: "
-             & Source_Filename
+             & Base_Name (Source_Filename)
              & " self="   & Boolean'Image (Include_Self)
              & " single=" & Boolean'Image (Single_Source_File));
 
@@ -2568,7 +2557,7 @@ package body Src_Info.Queries is
       Iterator.Current_Separate := null;
       Iterator.Current_Part     := Unit_Spec;
       Iterator.Decl_LI          := Locate_From_Source (List, Source_Filename);
-      Iterator.Source_Filename  := new String'(Source_Filename);
+      Iterator.Source_Filename  := Source_Filename;
       Iterator.Include_Self     := Include_Self;
       Iterator.Indirect_Imports := Indirect_Imports;
 
@@ -2590,12 +2579,11 @@ package body Src_Info.Queries is
 
       Assert (Me,
               Iterator.Decl_LI /= null,
-              "LI file not found for " & Source_Filename);
+              "LI file not found for " & Base_Name (Source_Filename));
 
       if Single_Source_File then
          Iterator.Importing := Start (Decl_Project, Recursive => False);
-         Iterator.Source_Files := new String_Array'
-           (1 => new String'(Source_Filename));
+         Iterator.Source_Files := new File_Array'(1 => Source_Filename);
       else
          Iterator.Importing := Find_All_Projects_Importing
            (Root_Project, Iterator_Decl_Project,
@@ -2626,38 +2614,41 @@ package body Src_Info.Queries is
    function Get (Iterator : Dependency_Iterator)
       return Dependency
    is
-      S : GNAT.OS_Lib.String_Access;
+      S : Virtual_File;
    begin
       Assert (Me, not Iterator.Indirect_Imports,
               "Get cannot be used when searching indirect imports");
+
       --  Is this a dependency from a separate ?
       if Iterator.Current_Separate /= null then
          return
            (File => Internal_File'
-            (File_Name => new String'
-               (Iterator.Current_Separate.Value.Source_Filename.all),
-             LI_Name   => new String'(Iterator.LI.LI.LI_Filename.all)),
+              (File_Name => Create
+                 (Iterator.Current_Separate.Value.Source_Filename.all,
+                  Iterator.LI.LI.Project, Use_Object_Path => False),
+               LI_Name   => Iterator.LI.LI.LI_Filename),
             Dep => (False, True));
       end if;
 
       if Iterator.Current_Part = Unit_Spec then
-         S := new String'(Iterator.LI.LI.Spec_Info.Source_Filename.all);
+         S := Create
+           (Iterator.LI.LI.Spec_Info.Source_Filename.all,
+            Iterator.LI.LI.Project, Use_Object_Path => False);
       else
-         S := new String'(Iterator.LI.LI.Body_Info.Source_Filename.all);
+         S := Create
+           (Iterator.LI.LI.Body_Info.Source_Filename.all,
+            Iterator.LI.LI.Project, Use_Object_Path => False);
       end if;
 
       if Iterator.LI = Iterator.Decl_LI then
          return
            (File => Internal_File'
-            (File_Name => S,
-             LI_Name   => new String'(Iterator.LI.LI.LI_Filename.all)),
+              (File_Name => S, LI_Name => Iterator.LI.LI.LI_Filename),
             Dep  => (False, True));
       else
          return
            (File => Internal_File'
-            (File_Name => S,
-             LI_Name   => new String'
-               (Iterator.Current_Decl.Value.File.LI.LI.LI_Filename.all)),
+              (File_Name => S, LI_Name => Iterator.LI.LI.LI_Filename),
             Dep  => Iterator.Current_Decl.Value.Dep_Info);
       end if;
    end Get;
@@ -2695,8 +2686,7 @@ package body Src_Info.Queries is
 
    procedure Destroy (Iterator : in out Dependency_Iterator) is
    begin
-      Free (Iterator.Source_Filename);
-      Free (Iterator.Source_Files);
+      Unchecked_Free (Iterator.Source_Files);
       Reset (Iterator.Examined);
    end Destroy;
 
@@ -2719,7 +2709,8 @@ package body Src_Info.Queries is
    -----------------------
 
    function Get_Other_File_Of
-     (Lib_Info : LI_File_Ptr; Source_Filename : String) return String
+     (Lib_Info : LI_File_Ptr; Source_Filename : Virtual_File)
+      return Virtual_File
    is
       Part : constant Unit_Part := Get_Unit_Part (Lib_Info, Source_Filename);
    begin
@@ -2728,15 +2719,19 @@ package body Src_Info.Queries is
       case Part is
          when Unit_Body | Unit_Separate =>
             if Lib_Info.LI.Spec_Info /= null then
-               return Lib_Info.LI.Spec_Info.Source_Filename.all;
+               return Create
+                 (Lib_Info.LI.Spec_Info.Source_Filename.all,
+                  Lib_Info.LI.Project, Use_Object_Path => False);
             end if;
 
          when Unit_Spec =>
             if Lib_Info.LI.Body_Info /= null then
-               return Lib_Info.LI.Body_Info.Source_Filename.all;
+               return Create
+                 (Lib_Info.LI.Body_Info.Source_Filename.all,
+                  Lib_Info.LI.Project, Use_Object_Path => False);
             end if;
       end case;
-      return "";
+      return VFS.No_File;
    end Get_Other_File_Of;
 
    --------------------
@@ -2749,7 +2744,7 @@ package body Src_Info.Queries is
       return Node.Decl.Rename /= Null_File_Location
         and then not Is_Predefined_Entity (Entity)
         and then Location_Matches
-        (Node.Decl.Rename, Entity.Decl_File.all,
+        (Node.Decl.Rename, Entity.Decl_File,
          Entity.Decl_Line, Entity.Decl_Column) = 0;
    end Is_Renaming_Of;
 
@@ -2839,7 +2834,8 @@ package body Src_Info.Queries is
       else
          return Source_File'
            (LI => LI, Part => Part,
-            Source_Filename => new String'(Get_Declaration_File_Of (Entity)));
+            Source_Filename => new String'
+              (Base_Name (Get_Declaration_File_Of (Entity))));
       end if;
    end Get_Source_File;
 
@@ -2877,26 +2873,27 @@ package body Src_Info.Queries is
    --------------------------------
 
    function Get_Declarations_From_File
-     (Lib_Info : LI_File_Ptr; File_Name : String)
+     (Lib_Info : LI_File_Ptr; File_Name : VFS.Virtual_File)
       return E_Declaration_Info_List
    is
+      Base : constant String := Base_Name (File_Name);
       Sep : File_Info_Ptr_List;
    begin
       if Lib_Info.LI.Body_Info /= null
-        and then Lib_Info.LI.Body_Info.Source_Filename.all = File_Name
+        and then Lib_Info.LI.Body_Info.Source_Filename.all = Base
       then
          return Lib_Info.LI.Body_Info.Declarations;
       end if;
 
       if Lib_Info.LI.Spec_Info /= null
-        and then Lib_Info.LI.Spec_Info.Source_Filename.all = File_Name
+        and then Lib_Info.LI.Spec_Info.Source_Filename.all = Base
       then
          return Lib_Info.LI.Spec_Info.Declarations;
       end if;
 
       Sep := Lib_Info.LI.Separate_Info;
       while Sep /= null loop
-         if Sep.Value.Source_Filename.all = File_Name then
+         if Sep.Value.Source_Filename.all = Base then
             return Sep.Value.Declarations;
          end if;
          Sep := Sep.Next;
@@ -2912,7 +2909,8 @@ package body Src_Info.Queries is
    function Find_All_Possible_Declarations
      (Lib_Info    : LI_File_Ptr;
       Entity_Name : String := "";
-      In_Source_File : String := "") return Entity_Declaration_Iterator
+      In_Source_File : Virtual_File := VFS.No_File)
+      return Entity_Declaration_Iterator
    is
       Iter : Entity_Declaration_Iterator;
    begin
@@ -2933,9 +2931,8 @@ package body Src_Info.Queries is
       Iter.Current     := null;
       Iter.Sep_Source  := null;
 
-      if In_Source_File /= "" then
-         Iter.Current := Get_Declarations_From_File
-           (Lib_Info, In_Source_File);
+      if In_Source_File /= VFS.No_File then
+         Iter.Current := Get_Declarations_From_File (Lib_Info, In_Source_File);
          Iter.Uniq_List := True;
       else
          Iter.Uniq_List := False;
@@ -3072,24 +3069,18 @@ package body Src_Info.Queries is
    ------------
 
    function Create
-     (File   : String;
+     (File   : VFS.Virtual_File;
       Line   : Positive;
       Column : Natural;
       Name   : String;
       Scope  : E_Scope;
-      Kind   : E_Kind) return Entity_Information
-   is
-      F : GNAT.OS_Lib.String_Access;
+      Kind   : E_Kind) return Entity_Information is
    begin
-      if File /= "" then
-         F := new String'(File);
-      end if;
-
       return Entity_Information'
         (Name        => new String'(Name),
          Decl_Line   => Line,
          Decl_Column => Column,
-         Decl_File   => F,
+         Decl_File   => File,
          Scope       => Scope,
          Kind        => Kind);
    end Create;
@@ -3314,10 +3305,7 @@ package body Src_Info.Queries is
    begin
       return Entity1.Decl_Line = Entity2.Decl_Line
         and then Entity1.Decl_Column = Entity2.Decl_Column
-        and then ((Entity1.Decl_File = null
-                   and then Entity2.Decl_File = null)
-                  or else
-                  (Entity1.Decl_File.all = Entity2.Decl_File.all))
+        and then Entity1.Decl_File = Entity2.Decl_File
         and then Entity1.Name.all = Entity2.Name.all;
       --  In fact, we don't really need to test the names, since there is only
       --  one possible entity at any given location. However, the source files
@@ -3332,7 +3320,7 @@ package body Src_Info.Queries is
    function Is_Predefined_Entity
      (Entity : Entity_Information) return Boolean is
    begin
-      return Entity.Decl_File = null;
+      return Entity.Decl_File = VFS.No_File;
    end Is_Predefined_Entity;
 
    ---------------------
@@ -3364,7 +3352,7 @@ package body Src_Info.Queries is
                  (Me, "Process_Parents: Found a predefined entity: "
                   & Get_String (Parent.Predefined_Entity_Name));
                return Create
-                 (File   => "",
+                 (File   => VFS.No_File,
                   Line   => 1,
                   Column => 1,
                   Name => Get_String (Parent.Predefined_Entity_Name),
@@ -3382,10 +3370,10 @@ package body Src_Info.Queries is
 
       Trace (Me, "Process_Parents: Declaration not found for "
              & Get_Name (Entity) & ' '
-             & Get_Declaration_File_Of (Entity)
+             & Base_Name (Get_Declaration_File_Of (Entity))
              & Get_Declaration_Line_Of (Entity)'Img
              & Get_Declaration_Column_Of (Entity)'Img
-             & ' ' & Get_LI_Filename (Lib_Info));
+             & ' ' & Full_Name (Get_LI_Filename (Lib_Info)));
       return No_Entity_Information;
    end Process_Parents;
 
@@ -3791,7 +3779,7 @@ package body Src_Info.Queries is
    is
    begin
       return Create
-        (File   => "",
+        (File   => VFS.No_File,
          Line   => 1,
          Column => 1,
          Name   => Name,

@@ -28,7 +28,6 @@ with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Main_Window;    use Glide_Main_Window;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with String_Hash;
 with System;               use System;
@@ -38,6 +37,7 @@ with Projects.Registry;    use Projects.Registry;
 with Projects.Editor;      use Projects.Editor;
 with Types;                use Types;
 with Traces;               use Traces;
+with VFS;                  use VFS;
 
 package body Glide_Kernel.Scripts is
 
@@ -319,8 +319,9 @@ package body Glide_Kernel.Scripts is
    ----------
 
    procedure Free (File : in out File_Info) is
+      pragma Unreferenced (File);
    begin
-      Free (File.Name);
+      null;
    end Free;
 
    ---------------------
@@ -454,29 +455,7 @@ package body Glide_Kernel.Scripts is
       end if;
 
       Ent      := new File_Info;
-
-      declare
-         Name   : constant String := Get_Name (File);
-      begin
-         if Is_Absolute_Path (Name) then
-            Ent.Name := new String'(Name);
-         else
-            declare
-               Full : constant String := Get_Full_Path_From_File
-                 (Registry => Project_Registry (Get_Registry (Kernel)),
-                  Filename => Name,
-                  Use_Source_Path => True,
-                  Use_Object_Path => True);
-            begin
-               if Full /= "" then
-                  Ent.Name := new String'
-                    (Normalize_Pathname (Full, Resolve_Links => True));
-               else
-                  Ent.Name := new String'(Name);
-               end if;
-            end;
-         end if;
-      end;
+      Ent.File := Get_File (File);
 
       Set_Data
         (Instance,
@@ -686,18 +665,18 @@ package body Glide_Kernel.Scripts is
             end if;
 
             F := Get_Data (File);
-            Lib_Info := Locate_From_Source_And_Complete (Kernel, Get_Name (F));
+            Lib_Info := Locate_From_Source_And_Complete (Kernel, Get_File (F));
             if Lib_Info = No_LI_File then
                Set_Error_Msg
                  (Data, -"Xref information not found for: """
-                  & Get_Name (F) & '"');
+                  & Full_Name (Get_File (F)) & '"');
                return;
             end if;
 
             Find_Declaration_Or_Overloaded
               (Kernel      => Kernel,
                Lib_Info    => Lib_Info,
-               File_Name   => Base_Name (Get_Name (F)),
+               File_Name   => Get_File (F),
                Entity_Name => Name,
                Line        => L,
                Column      => C,
@@ -782,13 +761,13 @@ package body Glide_Kernel.Scripts is
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, File_Cmd_Parameters);
-         Info := (Name => new String'(Nth_Arg (Data, 2)));
+         Info := (File => Create (Full_Filename => Nth_Arg (Data, 2)));
          Set_Data (Instance, Info);
          Free (Info);
 
       elsif Command = "name" then
          Info     := Get_Data (Instance);
-         Set_Return_Value (Data, Info.Name.all);
+         Set_Return_Value (Data, Full_Name (Info.File));
 
       elsif Command = "project" then
          Info     := Get_Data (Instance);
@@ -797,14 +776,14 @@ package body Glide_Kernel.Scripts is
             (Get_Script (Data),
              Get_Project_From_File
              (Registry          => Project_Registry (Get_Registry (Kernel)),
-              Source_Filename   => Info.Name.all,
+              Source_Filename   => Info.File,
               Root_If_Not_Found => True)));
 
       elsif Command = "other_file" then
          Info     := Get_Data (Instance);
          Set_Return_Value
            (Data, Create_File
-            (Get_Script (Data), Other_File_Name (Kernel, Info.Name.all)));
+            (Get_Script (Data), Other_File_Name (Kernel, Info.File)));
       end if;
    end Create_File_Command_Handler;
 
@@ -1417,17 +1396,13 @@ package body Glide_Kernel.Scripts is
    end Execute_Command;
 
    --------------
-   -- Get_Name --
+   -- Get_File --
    --------------
 
-   function Get_Name (File : File_Info) return String is
+   function Get_File (File : File_Info) return Virtual_File is
    begin
-      if File.Name /= null then
-         return File.Name.all;
-      else
-         return "";
-      end if;
-   end Get_Name;
+      return File.File;
+   end Get_File;
 
    -------------
    -- Nth_Arg --
@@ -1583,11 +1558,11 @@ package body Glide_Kernel.Scripts is
 
    function Create_File
      (Script : access Scripting_Language_Record'Class;
-      File   : String) return Class_Instance
+      File   : Virtual_File) return Class_Instance
    is
       Instance : constant Class_Instance := New_Instance
         (Script, Get_File_Class (Get_Kernel (Script)));
-      Info     : File_Info := (Name => new String'(File));
+      Info     : File_Info := (File => File);
    begin
       Set_Data (Instance, Info);
       Free (Info);

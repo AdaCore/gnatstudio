@@ -35,11 +35,11 @@ package Language_Handlers.GVD is
 
    function Get_Language_From_File
      (Handler : access GVD_Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access;
+      Source_Filename : VFS.Virtual_File) return Language.Language_Access;
 
    function Get_Language_From_File
      (Handler : access GVD_Language_Handler_Record;
-      Source_Filename : String) return String;
+      Source_Filename : VFS.Virtual_File) return String;
 
    function Get_Language_By_Name
      (Handler : access GVD_Language_Handler_Record;

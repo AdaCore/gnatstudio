@@ -27,6 +27,7 @@ with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with String_Utils;            use String_Utils;
+with VFS;                     use VFS;
 
 package body Language_Handlers.GVD is
 
@@ -80,13 +81,15 @@ package body Language_Handlers.GVD is
 
    function Get_Language_From_File
      (Handler : access GVD_Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access is
+      Source_Filename : VFS.Virtual_File) return Language.Language_Access
+   is
+      Base : constant String := Base_Name (Source_Filename);
    begin
       if Handler.Languages /= null then
          for Index in Handler.Languages'Range loop
             if Handler.Languages (Index).Pattern /= null
               and then Match
-              (Handler.Languages (Index).Pattern.all, Source_Filename)
+              (Handler.Languages (Index).Pattern.all, Base)
             then
                return Handler.Languages (Index).Lang;
             end if;
@@ -102,13 +105,15 @@ package body Language_Handlers.GVD is
 
    function Get_Language_From_File
      (Handler : access GVD_Language_Handler_Record;
-      Source_Filename : String) return String is
+      Source_Filename : VFS.Virtual_File) return String
+   is
+      Base : constant String := Base_Name (Source_Filename);
    begin
       if Handler.Languages /= null then
          for Index in Handler.Languages'Range loop
             if Handler.Languages (Index).Pattern /= null
               and then Match
-              (Handler.Languages (Index).Pattern.all, Source_Filename)
+                (Handler.Languages (Index).Pattern.all, Base)
             then
                return Handler.Languages (Index).Language_Name.all;
             end if;

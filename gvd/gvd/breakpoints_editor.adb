@@ -54,8 +54,8 @@ with GVD.Process;      use GVD.Process;
 with GVD.Types;        use GVD.Types;
 with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
+with VFS;              use VFS;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Breakpoints_Editor is
 
@@ -241,12 +241,12 @@ package body Breakpoints_Editor is
          else
             Set_Page (Editor.Notebook1, 0);
 
-            if Br.File /= null then
+            if Br.File /= VFS.No_File then
                Set_Active (Editor.Location_Selected, True);
                Add_Unique_Combo_Entry
-                 (Editor.File_Combo, Base_Name (Br.File.all));
+                 (Editor.File_Combo, Base_Name (Br.File));
                Set_Text
-                 (Get_Entry (Editor.File_Combo), Base_Name (Br.File.all));
+                 (Get_Entry (Editor.File_Combo), Base_Name (Br.File));
                Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
             else
                Set_Active (Editor.Address_Selected, True);
@@ -541,14 +541,13 @@ package body Breakpoints_Editor is
             --  ??? Should also check Temporary
 
             if Current = -1
-              or else Br.File = null
-              or else Base_Name (Br.File.all) /= File
+              or else Base_Name (Br.File) /= File
               or else Br.Line /= Line
             then
                Remove := True;
                Break_Source
                  (Editor.Process.Debugger,
-                  File      => File,
+                  File      => Create_From_Base (File),
                   Line      => Line,
                   Temporary => Temporary,
                   Mode      => GVD.Types.Visible);
@@ -785,8 +784,8 @@ package body Breakpoints_Editor is
               (Editor.Breakpoint_List, Row, 4, Br.Expression.all);
          end if;
 
-         if Br.File /= null then
-            Set_Text (Editor.Breakpoint_List, Row, 4, Base_Name (Br.File.all));
+         if Br.File /= VFS.No_File then
+            Set_Text (Editor.Breakpoint_List, Row, 4, Base_Name (Br.File));
             Set_Text (Editor.Breakpoint_List, Row, 5, Integer'Image (Br.Line));
          end if;
 

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Basic_Types; use Basic_Types;
+with VFS;
 
 package GVD.Types is
 
@@ -113,7 +114,7 @@ package GVD.Types is
       --  The name of the variable to watch for watchpoints. This is left to
       --  null for breakpoints.
 
-      File        : String_Access;
+      File        : VFS.Virtual_File;
       --  The file name that contains the breakpoint.
       --  Must be stored as an absolute file name.
 

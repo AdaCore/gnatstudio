@@ -87,7 +87,7 @@ package Language_Handlers.Glide is
 
    function Get_LI_Handler_From_File
      (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String)
+      Source_Filename : VFS.Virtual_File)
       return Src_Info.LI_Handler;
    --  Return the LI handler to use for a specific file name.
    --  null is returned if the language is unknown.
@@ -112,13 +112,13 @@ package Language_Handlers.Glide is
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access;
+      Source_Filename : VFS.Virtual_File) return Language.Language_Access;
    --  Find the language of a given file.
    --  Return Unknown_Lang if no other language could be found.
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return String;
+      Source_Filename : VFS.Virtual_File) return String;
    --  Return "" if the language is unknown.
 
    function Get_Language_By_Name

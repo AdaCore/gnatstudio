@@ -27,11 +27,11 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Types;                     use Types;
 with Namet;                     use Namet;
 with Projects;                  use Projects;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Prj;
 with Projects.Registry;         use Projects.Registry;
 with Traces;                    use Traces;
+with VFS;                       use VFS;
 
 package body Language_Handlers.Glide is
 
@@ -100,7 +100,7 @@ package body Language_Handlers.Glide is
 
    function Get_Language_From_File
      (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access
+      Source_Filename : VFS.Virtual_File) return Language.Language_Access
    is
       Index : Natural;
    begin
@@ -116,11 +116,11 @@ package body Language_Handlers.Glide is
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return String
+      Source_Filename : VFS.Virtual_File) return String
    is
       Lang : constant Name_Id := Get_Language_From_File
         (Project_Registry'Class (Handler.Registry.all),
-         Base_Name (Source_Filename));
+         Source_Filename);
    begin
       if Lang = No_Name then
          return "";
@@ -340,7 +340,7 @@ package body Language_Handlers.Glide is
 
    function Get_LI_Handler_From_File
      (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String)
+      Source_Filename : VFS.Virtual_File)
       return Src_Info.LI_Handler
    is
       Lang : constant String :=
@@ -353,7 +353,8 @@ package body Language_Handlers.Glide is
          return Handler.Languages (Index).Handler;
       else
          if Index /= 0 then
-            Trace (Me, "No LI_Handler for language " & Source_Filename
+            Trace (Me, "No LI_Handler for language "
+                   & Full_Name (Source_Filename)
                    & " Index=" & Index'Img);
          end if;
 

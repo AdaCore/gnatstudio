@@ -175,7 +175,7 @@ package Debugger.Jdb is
 
    procedure Break_Source
      (Debugger  : access Jdb_Debugger;
-      File      : String;
+      File      : VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
@@ -295,7 +295,7 @@ package Debugger.Jdb is
 
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;
-      File     : String;
+      File     : VFS.Virtual_File;
       Line     : Positive) return Line_Kind;
 
    function List_Breakpoints

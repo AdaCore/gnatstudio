@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -25,7 +25,7 @@ package Src_Info.Prj_Utils is
    function Get_Source_Filename
      (Unit_Name       : Unit_Name_Type;
       Project         : Projects.Project_Type;
-      File_Must_Exist : Boolean := True) return String;
+      File_Must_Exist : Boolean := True) return VFS.Virtual_File;
    --  Return the source filename for the given Unit_Name.
    --  Project and all its imported projects are tested for possible naming
    --  schemes.
@@ -39,7 +39,7 @@ package Src_Info.Prj_Utils is
    function Get_Source_Filename
      (Unit_Name : String;
       Project   : Projects.Project_Type;
-      File_Must_Exist : Boolean := True) return String;
+      File_Must_Exist : Boolean := True) return VFS.Virtual_File;
    --  Same as function above, on a string.
 
    function Get_Unit_Name

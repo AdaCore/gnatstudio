@@ -19,10 +19,10 @@
 -----------------------------------------------------------------------
 
 with Text_IO; use Text_IO;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with SN; use SN;
 with Projects; use Projects;
+with VFS; use VFS;
 
 package body Src_Info.LI_Utils is
 
@@ -51,7 +51,7 @@ package body Src_Info.LI_Utils is
 
    procedure Convert_To_Parsed
      (File               : in out LI_File_Ptr;
-      Full_LI_Name       : String;
+      Full_LI_Name       : VFS.Virtual_File;
       Update_Timestamp   : Boolean := True;
       Compilation_Errors : Boolean := False) is
    begin
@@ -60,6 +60,8 @@ package body Src_Info.LI_Utils is
            (Parsed                   => True,
             Handler                  => File.LI.Handler,
             LI_Filename              => File.LI.LI_Filename,
+            LI_Filename_Key          => File.LI.LI_Filename_Key,
+            Project                  => File.LI.Project,
             Spec_Info                => File.LI.Spec_Info,
             Body_Info                => File.LI.Body_Info,
             Separate_Info            => File.LI.Separate_Info,
@@ -71,7 +73,8 @@ package body Src_Info.LI_Utils is
       if Update_Timestamp
         and then Is_Regular_File (Full_LI_Name)
       then
-         File.LI.LI_Timestamp := To_Timestamp (File_Time_Stamp (Full_LI_Name));
+         File.LI.LI_Timestamp := To_Timestamp
+           (File_Time_Stamp (Full_Name (Full_LI_Name)));
       end if;
    end Convert_To_Parsed;
 
@@ -178,7 +181,7 @@ package body Src_Info.LI_Utils is
      (File                    : LI_File_Ptr;
       Symbol_Name             : String := "";
       Class_Name              : String := "";
-      Filename                : String := "";
+      Filename                : VFS.Virtual_File := VFS.No_File;
       Kind                    : E_Kind := Unresolved_Entity_Kind;
       Location                : Point := Invalid_Point)
       return E_Declaration_Info_List
@@ -200,11 +203,10 @@ package body Src_Info.LI_Utils is
 
          if Dep_Ptr.Value.File = No_Source_File then
             Put_Line ("No_Source_File encountered in the Dep_Info list for "
-                      & Get_LI_Filename (File));
+                      & Full_Name (Get_LI_Filename (File)));
          end if;
 
-         exit when Get_Source_Filename (Dep_Ptr.Value.File)
-            = Base_Name (Filename);
+         exit when Get_Source_Filename (Dep_Ptr.Value.File) = Filename;
          Dep_Ptr := Dep_Ptr.Next;
       end loop;
 
@@ -286,14 +288,17 @@ package body Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File        : out LI_File_Ptr;
+      Project     : Projects.Project_Type;
       List        : LI_File_List;
-      LI_Filename : String;
+      LI_Filename : VFS.Virtual_File;
       Handler     : LI_Handler) is
    begin
       File := new LI_File_Constrained'
         (LI =>  (Parsed        => False,
                  Handler       => Handler,
-                 LI_Filename   => new String'(LI_Filename),
+                 LI_Filename_Key => new String'(Base_Name (LI_Filename)),
+                 LI_Filename   => LI_Filename,
+                 Project       => Project,
                  Body_Info     => null,
                  Spec_Info     => null,
                  Separate_Info => null,
@@ -307,12 +312,11 @@ package body Src_Info.LI_Utils is
 
    procedure Create_File_Info
      (FI_Ptr         : out File_Info_Ptr;
-      Full_Filename  : String;
+      Full_Filename  : VFS.Virtual_File;
       Set_Time_Stamp : Boolean := True;
       Unit_Name      : String := "")
    is
-      Directory_Name : constant String :=
-        Normalize_Pathname (Dir_Name (Full_Filename));
+      Directory_Name : constant String := Dir_Name (Full_Filename);
       Dir : GNAT.OS_Lib.String_Access;
       Unit : GNAT.OS_Lib.String_Access;
       Time : Timestamp := 0;
@@ -329,7 +333,7 @@ package body Src_Info.LI_Utils is
       end if;
 
       if Set_Time_Stamp then
-         Time := To_Timestamp (File_Time_Stamp (Full_Filename));
+         Time := To_Timestamp (File_Time_Stamp (Full_Name (Full_Filename)));
       end if;
 
       FI_Ptr := new File_Info'

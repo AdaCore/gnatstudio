@@ -28,6 +28,7 @@ with Gtk.Window;
 with GVD.Types;
 with Basic_Types;
 with GVD.Proc_Utils;
+with VFS;
 
 package Debugger is
 
@@ -562,7 +563,7 @@ package Debugger is
 
    procedure Break_Source
      (Debugger  : access Debugger_Root;
-      File      : String;
+      File      : VFS.Virtual_File;
       Line      : Positive;
       Temporary : Boolean := False;
       Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
@@ -756,7 +757,7 @@ package Debugger is
 
    function Line_Contains_Code
      (Debugger : access Debugger_Root;
-      File     : String;
+      File     : VFS.Virtual_File;
       Line     : Positive) return Line_Kind is abstract;
    --  Indicate whether a given file and line number contain executable code.
 

@@ -60,7 +60,6 @@ pragma Warnings (On);
 
 with GNAT.Regpat;                use GNAT.Regpat;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
-with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
 with Odd_Intl;                   use Odd_Intl;
 with Display_Items;              use Display_Items;
@@ -84,6 +83,7 @@ with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with GVD.Types;                  use GVD.Types;
 with Language_Handlers;          use Language_Handlers;
+with VFS;                        use VFS;
 
 with String_List_Utils;          use String_List_Utils;
 
@@ -659,13 +659,13 @@ package body GVD.Process is
          --  Override the language currently defined in the editor.
 
          declare
-            File_Name : constant String :=
-              Process.Current_Output (File_First .. File_Last);
+            File_Name : constant Virtual_File := Create
+              (Full_Filename =>
+                 Process.Current_Output (File_First .. File_Last));
          begin
             Set_Current_Language
               (Process.Editor_Text, Get_Language_From_File
-                 (Process.Window.Lang_Handler,
-                  File_Extension (File_Name)));
+                 (Process.Window.Lang_Handler, File_Name));
 
             Load_File (Process.Editor_Text, File_Name);
          end;
@@ -1684,7 +1684,6 @@ package body GVD.Process is
 
       Object_Callback.Emit_By_Name (GObject (Debugger), "debugger_closed");
       Debugger.Exiting := True;
-      Free (Debugger.Current_File);
       Free (Debugger.Breakpoints);
 
       if Debugger.Debugger /= null then
@@ -1987,11 +1986,10 @@ package body GVD.Process is
 
    procedure Set_Current_Source_Location
      (Process : access Visual_Debugger_Record;
-      File    : String;
+      File    : VFS.Virtual_File;
       Line    : Integer) is
    begin
-      Free (Process.Current_File);
-      Process.Current_File := new String'(File);
+      Process.Current_File := File;
       Process.Current_Line := Line;
    end Set_Current_Source_Location;
 
@@ -2001,13 +1999,9 @@ package body GVD.Process is
 
    function Get_Current_Source_File
      (Process : access Visual_Debugger_Record)
-      return String is
+      return VFS.Virtual_File is
    begin
-      if Process.Current_File = null then
-         return "";
-      else
-         return Process.Current_File.all;
-      end if;
+      return Process.Current_File;
    end Get_Current_Source_File;
 
    -----------------------------

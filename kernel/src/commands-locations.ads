@@ -23,6 +23,7 @@
 
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
 with Glide_Kernel;  use Glide_Kernel;
+with VFS;
 
 package Commands.Locations is
 
@@ -46,14 +47,14 @@ package Commands.Locations is
    procedure Create
      (Item     : out Html_Location_Command;
       Kernel   : Kernel_Handle;
-      Filename : String);
+      Filename : VFS.Virtual_File);
    --  Create a new Html_Location_Command with the specified
    --  coordinates. Filename must be an absolute file name.
 
    procedure Create
      (Item           : out Source_Location_Command;
       Kernel         : Kernel_Handle;
-      Filename       : String;
+      Filename       : VFS.Virtual_File;
       Line           : Natural := 0;
       Column         : Natural := 0;
       Column_End     : Natural := 0);
@@ -67,7 +68,7 @@ package Commands.Locations is
    --  Set the current location in Item.
 
    function Get_File
-     (Item : access Source_Location_Command_Type) return String;
+     (Item : access Source_Location_Command_Type) return VFS.Virtual_File;
    function Get_Line
      (Item : access Source_Location_Command_Type) return Natural;
    function Get_Column
@@ -86,8 +87,6 @@ package Commands.Locations is
       return Command_Return_Type;
 
    procedure Free (X : in out Generic_Location_Command_Type);
-   procedure Free (X : in out Source_Location_Command_Type);
-   procedure Free (X : in out Html_Location_Command_Type);
    --  Free memory associated to X.
 
 private
@@ -99,7 +98,7 @@ private
 
    type Source_Location_Command_Type is new Root_Command with record
       Kernel         : Kernel_Handle;
-      Filename       : String_Access;
+      Filename       : VFS.Virtual_File;
       Line           : Natural := 0;
       Column         : Natural := 0;
       Column_End     : Natural := 0;
@@ -107,7 +106,7 @@ private
 
    type Html_Location_Command_Type is new Root_Command with record
       Kernel         : Kernel_Handle;
-      Filename       : String_Access;
+      Filename       : VFS.Virtual_File;
    end record;
 
 end Commands.Locations;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -22,8 +22,12 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Namet;                   use Namet;
 with Types;                   use Types;
 with Projects;                use Projects;
+with VFS;                     use VFS;
+with Traces;                  use Traces;
 
 package body Src_Info.Prj_Utils is
+
+   Me : constant Debug_Handle := Create ("Prj_Utils");
 
    -------------------------
    -- Get_Source_Filename --
@@ -32,7 +36,7 @@ package body Src_Info.Prj_Utils is
    function Get_Source_Filename
      (Unit_Name : Unit_Name_Type;
       Project : Project_Type;
-      File_Must_Exist : Boolean := True) return String
+      File_Must_Exist : Boolean := True) return VFS.Virtual_File
    is
       N : constant String := Get_String (Unit_Name);
       --  Need to do a copy, since Name_Buffer is modified afterward
@@ -47,17 +51,18 @@ package body Src_Info.Prj_Utils is
    function Get_Source_Filename
      (Unit_Name : String;
       Project   : Project_Type;
-      File_Must_Exist : Boolean := True) return String
+      File_Must_Exist : Boolean := True) return VFS.Virtual_File
    is
       Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
       Part        : Unit_Part;
       Iter : Imported_Project_Iterator := Start (Project, Recursive => True);
+      N    : Virtual_File;
    begin
       --  Check that the '%' marker is there
       if Unit_Name'Length < Part_Marker_Len + 1
         or else Unit_Name (Unit_Name'Last - 1) /= '%'
       then
-         return "";
+         return VFS.No_File;
       end if;
 
       --  Compute the Unit_Part, strip the part marker from the Unit_Name
@@ -66,21 +71,19 @@ package body Src_Info.Prj_Utils is
       case Unit_Name (Unit_Name'Last) is
          when 'b'    => Part := Unit_Body;
          when 's'    => Part := Unit_Spec;
-         when others => return "";  --  Incorrect unit name
+         when others => return VFS.No_File;  --  Incorrect unit name
       end case;
 
       while Current (Iter) /= No_Project loop
-         declare
-            N : constant String := Get_Filename_From_Unit
-              (Current (Iter),
-               Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len),
-               Part,
-               File_Must_Exist);
-         begin
-            if N /= "" then
-               return N;
-            end if;
-         end;
+         N := Get_Filename_From_Unit
+           (Current (Iter),
+            Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len),
+            Part,
+            File_Must_Exist);
+
+         if N /= VFS.No_File then
+            return N;
+         end if;
          Next (Iter);
       end loop;
 
@@ -88,9 +91,11 @@ package body Src_Info.Prj_Utils is
       --  standard GNAT extensions. The name will be krunched appropriately by
       --  Process_With anyway
 
-      return Get_Filename_From_Unit
-        (No_Project, Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len), Part,
-         File_Must_Exist);
+      N := Get_Filename_From_Unit
+        (Project, Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len), Part,
+         File_Must_Exist, Check_Predefined_Library => True);
+
+      return N;
    end Get_Source_Filename;
 
    -------------------

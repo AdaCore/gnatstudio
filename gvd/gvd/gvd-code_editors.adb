@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -40,6 +40,7 @@ with GVD.Process;         use GVD.Process;
 with GVD.Types;           use GVD.Types;
 with Odd_Intl;            use Odd_Intl;
 with Basic_Types;         use Basic_Types;
+with VFS;                 use VFS;
 
 package body GVD.Code_Editors is
 
@@ -304,7 +305,7 @@ package body GVD.Code_Editors is
 
    procedure Load_File
      (Editor      : access Code_Editor_Record;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Set_Current : Boolean := True;
       Force       : Boolean := False)
    is
@@ -317,7 +318,7 @@ package body GVD.Code_Editors is
       --  Create the explorer tree
 
       if Top.Standalone and then Set_Current then
-         Set_Current_File (Editor.Explorer, File_Name);
+         Set_Current_File (Editor.Explorer, Base_Name (File_Name));
 
          if not Get_Pref (GVD_Prefs, Display_Explorer) then
             Hide (Editor.Explorer_Scroll);
@@ -373,7 +374,7 @@ package body GVD.Code_Editors is
    ----------------------
 
    function Get_Current_File
-     (Editor : access Code_Editor_Record) return String is
+     (Editor : access Code_Editor_Record) return Virtual_File is
    begin
       return Get_Current_File (Editor.Source);
    end Get_Current_File;

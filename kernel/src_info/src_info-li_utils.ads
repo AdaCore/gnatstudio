@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with SN;
+with VFS;
 
 private package Src_Info.LI_Utils is
 
@@ -56,7 +57,7 @@ private package Src_Info.LI_Utils is
      (File                    : LI_File_Ptr;
       Symbol_Name             : String := "";
       Class_Name              : String := "";
-      Filename                : String := "";
+      Filename                : VFS.Virtual_File := VFS.No_File;
       Kind                    : E_Kind := Unresolved_Entity_Kind;
       Location                : SN.Point := SN.Invalid_Point)
       return E_Declaration_Info_List;
@@ -67,7 +68,7 @@ private package Src_Info.LI_Utils is
 
    procedure Create_File_Info
      (FI_Ptr         : out File_Info_Ptr;
-      Full_Filename  : String;
+      Full_Filename  : VFS.Virtual_File;
       Set_Time_Stamp : Boolean := True;
       Unit_Name      : String := "");
    --  Creates an empty File_Info (without declarations)
@@ -76,8 +77,9 @@ private package Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File        : out LI_File_Ptr;
+      Project     : Projects.Project_Type;
       List        : LI_File_List;
-      LI_Filename : String;
+      LI_Filename : VFS.Virtual_File;
       Handler     : LI_Handler);
    --  Creates an empty LI_File structure.
    --  File is set to null if it couldn't be added to the global list of LI
@@ -87,7 +89,7 @@ private package Src_Info.LI_Utils is
 
    procedure Convert_To_Parsed
      (File               : in out LI_File_Ptr;
-      Full_LI_Name       : String;
+      Full_LI_Name       : VFS.Virtual_File;
       Update_Timestamp   : Boolean := True;
       Compilation_Errors : Boolean := False);
    --  Set File as parsed, ie indicate that the actual database has been parsed

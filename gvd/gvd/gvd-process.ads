@@ -50,6 +50,7 @@ with GVD.Code_Editors;
 with GVD.Text_Box.Source_Editor;
 with GVD.Types;
 with Histories;
+with VFS;
 
 with Interactive_Consoles; use Interactive_Consoles;
 
@@ -193,7 +194,7 @@ package GVD.Process is
       Separate_Data           : Boolean;
       --  Store current value of the Separate_Data preference.
 
-      Current_File            : String_Access;
+      Current_File            : VFS.Virtual_File;
       --  The file containing the current location.
 
       Interactive_Command    : Boolean := False;
@@ -403,12 +404,12 @@ package GVD.Process is
 
    procedure Set_Current_Source_Location
      (Process : access Visual_Debugger_Record;
-      File    : String;
+      File    : VFS.Virtual_File;
       Line    : Integer);
    --  Set the source location.
 
    function Get_Current_Source_File
-     (Process : access Visual_Debugger_Record) return String;
+     (Process : access Visual_Debugger_Record) return VFS.Virtual_File;
    --  Get the file containing the current location, or "" if there is none.
 
    function Get_Current_Source_Line

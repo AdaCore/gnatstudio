@@ -33,7 +33,6 @@ with Traces;
 with Unchecked_Deallocation;
 with Language_Handlers;
 with Projects;
-with Basic_Types;
 with String_Hash;
 
 package Src_Info.Queries is
@@ -71,20 +70,23 @@ package Src_Info.Queries is
    --  Free the memory associated with the entity;
 
    function Get_Name (Entity : Entity_Information) return String;
-   --  Return the name of the entity associated with Node.
+   --  Return the name of the entity associated with Node. The returned string
+   --  is UTF8-encoded
 
    function Get_Declaration_Line_Of
      (Entity : Entity_Information) return Positive;
    function Get_Declaration_Column_Of
      (Entity : Entity_Information) return Natural;
    function Get_Declaration_File_Of
-     (Entity : Entity_Information) return String;
+     (Entity : Entity_Information) return VFS.Virtual_File;
    --  Return the location of the declaration for Entity. Note that this
    --  location remains valid only until the source file are changed. It is not
    --  magically updated when the source file is changed.
    --  The declaration file might be the empty string if the exact location for
    --  the declaration could not be resolved (case of overloaded entities, or
    --  predefined entities)
+   --  The file is set to VFS.No_File if this is a predefined entity, although
+   --  it is better to check with Is_Predefined_Entity
 
    function Get_Kind (Entity : Entity_Information) return E_Kind;
    --  Return the kind of the entity. See glide_kernel.ads on how to convert
@@ -122,7 +124,7 @@ package Src_Info.Queries is
    --  Return a copy of Entity. The result must be explicitely destroyed.
 
    function Create
-     (File   : String;
+     (File   : VFS.Virtual_File;
       Line   : Positive;
       Column : Natural;
       Name   : String;
@@ -179,7 +181,7 @@ package Src_Info.Queries is
 
    procedure Find_Declaration
      (Lib_Info      : LI_File_Ptr;
-      File_Name     : String;
+      File_Name     : VFS.Virtual_File;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
@@ -199,7 +201,7 @@ package Src_Info.Queries is
 
    procedure Find_Next_Body
      (Lib_Info               : LI_File_Ptr;
-      File_Name              : String;
+      File_Name              : VFS.Virtual_File;
       Entity_Name            : String;
       Line                   : Positive;
       Column                 : Positive;
@@ -233,7 +235,8 @@ package Src_Info.Queries is
    ---------------------------
 
    function Get_Other_File_Of
-     (Lib_Info : LI_File_Ptr; Source_Filename : String) return String;
+     (Lib_Info : LI_File_Ptr;
+      Source_Filename : VFS.Virtual_File) return VFS.Virtual_File;
    --  Return the name of the spec or body for Source_Filename.
    --  If Source_Filename is a separate, then the spec of the unit is returned.
    --  The empty string is returned if there is no other file (for instance, a
@@ -252,7 +255,8 @@ package Src_Info.Queries is
    function Find_All_Possible_Declarations
      (Lib_Info       : LI_File_Ptr;
       Entity_Name    : String := "";
-      In_Source_File : String := "") return Entity_Declaration_Iterator;
+      In_Source_File : VFS.Virtual_File := VFS.No_File)
+      return Entity_Declaration_Iterator;
    --  Return the first entity declaration in Lib_Info or its imported units
    --  whose name is Entity_Name. Note that the fake declarations for
    --  unresolved overloaded entities (with E_Kind = Overloaded_Entity) are not
@@ -295,7 +299,7 @@ package Src_Info.Queries is
       Iterator               : out Entity_Reference_Iterator;
       Project                : Projects.Project_Type := Projects.No_Project;
       LI_Once                : Boolean := False;
-      In_File                : String := "");
+      In_File                : VFS.Virtual_File := VFS.No_File);
    --  Find all the references to the entity described in Decl.
    --  Root_Project should be the root project under which we are looking.
    --  Source files that don't belong to Root_Project or one of its imported
@@ -478,7 +482,6 @@ package Src_Info.Queries is
    end record;
    --  A list of dependencies.
 
-   procedure Destroy (Dep  : in out Dependency);
    procedure Destroy (List : in out Dependency_List);
    --  Destroy the given list, and deallocates all the memory associated.
    --  Has no effect if List is null.
@@ -500,7 +503,7 @@ package Src_Info.Queries is
 
    procedure Find_Dependencies
      (Lib_Info        : LI_File_Ptr;
-      Source_Filename : String;
+      Source_Filename : VFS.Virtual_File;
       Dependencies    : out Dependency_List;
       Status          : out Dependencies_Query_Status);
    --  Return the list of units on which the units associated to the given
@@ -520,7 +523,7 @@ package Src_Info.Queries is
    procedure Find_Ancestor_Dependencies
      (Root_Project    : Projects.Project_Type;
       Lang_Handler    : Language_Handlers.Language_Handler;
-      Source_Filename : String;
+      Source_Filename : VFS.Virtual_File;
       List            : LI_File_List;
       Iterator        : out Dependency_Iterator;
       Project         : Projects.Project_Type := Projects.No_Project;
@@ -777,7 +780,7 @@ private
       Name        : String_Access;
       Decl_Line   : Positive;
       Decl_Column : Natural;
-      Decl_File   : String_Access;
+      Decl_File   : VFS.Virtual_File;
       Scope       : E_Scope;
       Kind        : E_Kind;
    end record;
@@ -785,7 +788,7 @@ private
    --  language.
 
    No_Entity_Information : constant Entity_Information :=
-     (null, 1, 0, null, Global_Scope, Unresolved_Entity_Kind);
+     (null, 1, 0, VFS.No_File, Global_Scope, Unresolved_Entity_Kind);
 
    type Scope_Node;
    type Scope_List is access Scope_Node;
@@ -814,7 +817,7 @@ private
 
    type Scope_Tree is record
       Lib_Info    : LI_File_Ptr;
-      LI_Filename : String_Access;
+      LI_Filename : VFS.Virtual_File;
       Time_Stamp  : Timestamp;
       --  For efficiency, we keep an access to the LI file that was used to
       --  create the tree. However, we also keep the file name itself, so that
@@ -836,7 +839,7 @@ private
 
    Null_Scope_Tree : constant Scope_Tree :=
      (Lib_Info       => null,
-      LI_Filename    => null,
+      LI_Filename    => VFS.No_File,
       Time_Stamp     => 0,
       Body_Tree      => null,
       Spec_Tree      => null,
@@ -854,7 +857,7 @@ private
       Decl_LI : LI_File_Ptr;
       --  The file we are looking for.
 
-      Source_Filename : String_Access;
+      Source_Filename : VFS.Virtual_File;
       --  Name of the source file that we are examining.
 
       Importing : Projects.Imported_Project_Iterator;
@@ -864,7 +867,7 @@ private
       --  List of source files in the current project that have already been
       --  examined.
 
-      Source_Files : Basic_Types.String_Array_Access;
+      Source_Files : VFS.File_Array_Access;
       --  The list of source files in the current project
 
       Current_File : Natural;

@@ -24,6 +24,7 @@ with Gtk.Container;
 with Language;
 with Basic_Types;
 with GVD.Types;
+with VFS;
 
 package GVD.Text_Box.Source_Editor is
 
@@ -68,12 +69,12 @@ package GVD.Text_Box.Source_Editor is
    --  that emitted the request.
 
    function Get_Current_File
-     (Editor : access Source_Editor_Record) return String;
+     (Editor : access Source_Editor_Record) return VFS.Virtual_File;
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
 
    function Get_Debugger_Current_File
-     (Editor : access Source_Editor_Record) return String;
+     (Editor : access Source_Editor_Record) return VFS.Virtual_File;
    --  Return the name of the file at which the debugger is stopped.
    --  "" is returned if there is no current debugger file.
 
@@ -85,7 +86,7 @@ package GVD.Text_Box.Source_Editor is
 
    procedure Load_File
      (Editor      : access Source_Editor_Record;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Set_Current : Boolean := True;
       Force       : Boolean := False) is abstract;
    --  Load and append a file in the editor.
@@ -139,9 +140,9 @@ package GVD.Text_Box.Source_Editor is
 private
    type Source_Editor_Record is abstract tagged record
       Widget       : Gtk.Widget.Gtk_Widget;
-      Current_File : Basic_Types.String_Access;
+      Current_File : VFS.Virtual_File;
 
-      Debugger_Current_File : Basic_Types.String_Access;
+      Debugger_Current_File : VFS.Virtual_File;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)
 

@@ -20,7 +20,8 @@
 
 with Types;
 with Prj.PP;
-with Basic_Types;
+with VFS;
+with Glib;
 
 package Projects.Registry is
 
@@ -62,7 +63,7 @@ package Projects.Registry is
 
    function Get_Predefined_Source_Files
      (Registry : Project_Registry)
-      return Basic_Types.String_Array_Access;
+      return VFS.File_Array_Access;
    --  Return the list of sources found in the predefined project (e.g. the Ada
    --  runtime). Returned memory must be freed by the caller
 
@@ -149,7 +150,7 @@ package Projects.Registry is
 
    function Get_Project_From_File
      (Registry          : Project_Registry;
-      Source_Filename   : String;
+      Source_Filename   : VFS.Virtual_File;
       Root_If_Not_Found : Boolean := True)
       return Project_Type;
    --  Select a project by one of its source files. If no project was found and
@@ -176,7 +177,7 @@ package Projects.Registry is
 
    function Get_Full_Path_From_File
      (Registry        : Project_Registry;
-      Filename        : String;
+      Filename        : Glib.UTF8_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean) return String;
    --  Return the directory to which Source_Filename belongs.
@@ -194,7 +195,7 @@ package Projects.Registry is
 
    procedure Get_Full_Path_From_File
      (Registry        : Project_Registry;
-      Filename        : String;
+      Filename        : Glib.UTF8_String;
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean);
    --  Internal version of Get_Full_Path_From_File, which returns its result in
@@ -204,13 +205,13 @@ package Projects.Registry is
    --  Name_Len is set to 0 if the file wasn't found on the search path
 
    function Get_Language_From_File
-     (Registry : Project_Registry; Source_Filename : String)
+     (Registry : Project_Registry; Source_Filename : VFS.Virtual_File)
       return Types.Name_Id;
    --  Return the language for a file
 
    function Language_Matches
      (Registry        : Project_Registry;
-      Source_Filename : String;
+      Source_Filename : VFS.Virtual_File;
       Filter          : Projects.Name_Id_Array) return Boolean;
    --  Return True if Source_Filename's language is in Filter
 
