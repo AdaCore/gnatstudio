@@ -2229,7 +2229,7 @@ package body Gtkada.MDI is
       end if;
 
       if Get_Window (Child) /= Null_Window then
-         Draw_Child (Child, Full_Area);
+         Queue_Draw (Child);
       end if;
    end Set_Title;
 
