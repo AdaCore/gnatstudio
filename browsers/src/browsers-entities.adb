@@ -52,14 +52,14 @@ package body Browsers.Entities is
 
    Me : constant Debug_Handle := Create ("Browser.Entities");
 
-   Type_Browser_Module : Module_ID;
+   Entity_Browser_Module : Module_ID;
 
    Left_Margin : constant := 20;
    --  Indentation for the attributes and methods layouts.
 
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Type browser menu
+   --  Tools->Entity browser menu
 
    function Open_Type_Browser_Child
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
@@ -252,9 +252,9 @@ package body Browsers.Entities is
    is
    begin
       Register_Module
-        (Module                  => Type_Browser_Module,
+        (Module                  => Entity_Browser_Module,
          Kernel                  => Kernel,
-         Module_Name             => "Type_Browser",
+         Module_Name             => "Entity_Browser",
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
          MDI_Child_Tag           => Type_Browser_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);
@@ -263,7 +263,7 @@ package body Browsers.Entities is
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & (-"Tools"),
-         Text        => -"Type Browser",
+         Text        => -"Entity Browser",
          Callback    => On_Type_Browser'Access);
       Register_Command
         (Kernel, "entity.show",
@@ -376,8 +376,8 @@ package body Browsers.Entities is
    -- Open_Type_Browser --
    -----------------------
 
-   function Open_Type_Browser (Kernel : access Kernel_Handle_Record'Class)
-      return Type_Browser
+   function Open_Type_Browser
+     (Kernel : access Kernel_Handle_Record'Class) return Type_Browser
    is
       Browser : constant Type_Browser := new Type_Browser_Record;
    begin
@@ -391,7 +391,7 @@ package body Browsers.Entities is
         (Kernel          => Kernel,
          Event_On_Widget => Browser,
          Object          => Browser,
-         ID              => Type_Browser_Module,
+         ID              => Entity_Browser_Module,
          Context_Func    => Default_Browser_Context_Factory'Access);
 
       return Browser;
@@ -414,7 +414,7 @@ package body Browsers.Entities is
          Raise_Child (Child);
       else
          Child := Put (Get_MDI (Kernel), Open_Type_Browser (Kernel));
-         Set_Title (Child, -"Entities Browser");
+         Set_Title (Child, -"Entity Browser");
       end if;
 
       return Child;
