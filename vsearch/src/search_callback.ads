@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with GNAT.Regpat; use GNAT.Regpat;
+
 package Search_Callback is
 
    --  NOTE: This callback is not task safe ! It can't be used to handle two
@@ -41,9 +43,14 @@ package Search_Callback is
    function Callback
      (Match_Found : Boolean;
       File        : String;
-      Line_Nr     : Positive := 1;
-      Line_Text   : String   := "") return Boolean;
-   --  Print every match 'file:line:text'; ignore file calls.
+      Line_Nr     : Positive    := 1;
+      Line_Text   : String      := "";
+      Sub_Matches : Match_Array := (0 => No_Match))
+      return Boolean;
+   --  Print every match 'file:line:text'.
+   --  Print sub-matches '      num> ## <', showing where the num-th regexp
+   --  sub-expression matched.
+   --  Ignore file calls.
    --  Handle Gtk pending events.
 
 end Search_Callback;

@@ -33,6 +33,8 @@ with Gtk.Main;
 
 package body Search_Callback is
 
+   package Natural_IO is new Integer_IO (Natural);
+
    Continue : Boolean;
 
    ------------------
@@ -51,17 +53,37 @@ package body Search_Callback is
    function Callback
      (Match_Found : Boolean;
       File        : String;
-      Line_Nr     : Positive := 1;
-      Line_Text   : String   := "") return Boolean
+      Line_Nr     : Positive    := 1;
+      Line_Text   : String      := "";
+      Sub_Matches : Match_Array := (0 => No_Match))
+      return Boolean
    is
-      use Ada.Strings.Fixed;
-
       Dummy : Boolean;
+
+      Parentheses : String (Line_Text'Range);
+
+      use Ada.Strings;
+
+      Location : constant String :=
+        File & ':' & Fixed.Trim (Positive'Image (Line_Nr), Left);
    begin
       if Match_Found then
-         Put_Line (File
-                   & ':' & Trim (Positive'Image (Line_Nr), Ada.Strings.Left)
-                   & ':' & Line_Text);
+         Put_Line (Location & ':' & Line_Text);
+
+         if Sub_Matches (0) /= No_Match then
+            for K in Sub_Matches'Range loop
+               Natural_IO.Put (K, Width => Location'Length);
+               Parentheses := (others => ' ');
+
+               if Sub_Matches (K) /= No_Match then
+                  Parentheses
+                    (Sub_Matches (K).First .. Sub_Matches (K).Last) :=
+                      (others => '#');
+               end if;
+
+               Put_Line ('>' & Parentheses & '<');
+            end loop;
+         end if;
       end if;
 
       while Gtk.Main.Events_Pending loop
