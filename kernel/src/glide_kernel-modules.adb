@@ -356,7 +356,7 @@ package body Glide_Kernel.Modules is
    function Has_File_Information
      (Context : access File_Selection_Context) return Boolean is
    begin
-      return Context.File /= VFS.No_File;
+      return Base_Name (Context.File).all /= "";
    end Has_File_Information;
 
    ----------------------
