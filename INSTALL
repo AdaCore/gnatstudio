@@ -1,0 +1,53 @@
+
+Installing from sources
+=======================
+
+To install Glide from sources, you need to have access to all the
+tools described in design/dependencies.txt.
+
+The first thing to do is to install the GNAT compiler on your machine.
+You currently need a GNAT version more recent than 01/03/2002.
+Note that GNAT must be installed before compiling any of the other
+packages, since glib depends on a specific version of the compiler.
+
+You then need to install the gtk+ suite itself. Currently, you need at
+least a version 1.3.12.
+
+Install, in that order:
+  - pkgconfig 0.8
+    ./configure --prefix=<directory>
+    make
+    make install
+
+  - glib 1.3.12
+    ./configure --prefix=<directory>
+    make
+    make install
+
+  - atk 0.8
+   ./configure --prefix=<directory>
+   make
+   make install
+
+  - pango 0.23
+   ./configure --prefix=<directory>
+   make
+   make install
+
+You can then install the Ada code, in that order
+
+  - GtkAda
+  - glidiator + gvd
+    Be careful that some links need to be setup before compiling
+    glidiator.
+
+
+FAQ (Frequently Asked Questions)
+================================
+
+1. I have installed from source all the packages of gtk+ without any
+   problem. However, when compiling Glide itself, I get errors in some
+   headers file in glib (typically gmessage.h)
+
+   A: you need to compile glib with the same compiler that you are using
+      to compile glide.
