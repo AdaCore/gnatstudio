@@ -826,26 +826,27 @@ package body Src_Editor_Module is
                  (Get_Buffer
                     (Source_Box (Get_Widget (Mark_Record.Child)).Editor),
                   Mark_Record.Mark);
+            end if;
 
-               Node := First (Id.Stored_Marks);
+            Node := First (Id.Stored_Marks);
 
-               if Mark_Identifier_List.Data (Node).Id = Mark_Record.Id then
-                  Next (Id.Stored_Marks);
-               else
+            if Mark_Identifier_List.Data (Node).Id = Mark_Record.Id then
+               Next (Id.Stored_Marks);
+            else
+               Prev := Node;
+               Node := Next (Node);
+
+               while Node /= Null_Node loop
+                  if Mark_Identifier_List.Data (Node).Id
+                    = Mark_Record.Id
+                  then
+                     Remove_Nodes (Id.Stored_Marks, Prev, Node);
+                     exit;
+                  end if;
+
                   Prev := Node;
                   Node := Next (Node);
-
-                  while Node /= Null_Node loop
-                     if Mark_Identifier_List.Data (Node).Id
-                       = Mark_Record.Id
-                     then
-                        Remove_Nodes (Id.Stored_Marks, Prev, Node);
-                        exit;
-                     end if;
-
-                     Node := Next (Node);
-                  end loop;
-               end if;
+               end loop;
             end if;
          end;
 
@@ -1228,6 +1229,52 @@ package body Src_Editor_Module is
                Box := Source_Box (Get_Widget (Child));
                Modify_Base
                  (Get_View (Box.Editor), State_Normal, Parse (Color));
+            end if;
+         end;
+
+      elsif Command = "set_synchronized_scrolling" then
+         declare
+            Filename_1 : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Filename_2 : constant Virtual_File :=
+              Create (Nth_Arg (Data, 2), Kernel);
+            Child_1    : MDI_Child;
+            Child_2    : MDI_Child;
+         begin
+            Child_1 := Find_Editor (Kernel, Filename_1);
+            Child_2 := Find_Editor (Kernel, Filename_2);
+
+            if Child_1 /= null and then Child_2 /= null then
+               Set_Synchronized_Editor
+                 (Get_View (Source_Box (Get_Widget (Child_1)).Editor),
+                  Get_View (Source_Box (Get_Widget (Child_2)).Editor));
+
+               if Number_Of_Arguments (Data) > 2 then
+                  declare
+                     Filename_3 : constant Virtual_File :=
+                       Create (Nth_Arg (Data, 3), Kernel);
+                     Child_3 : constant MDI_Child :=
+                       Find_Editor (Kernel, Filename_3);
+                  begin
+                     if Child_3 /= null then
+                        Set_Synchronized_Editor
+                          (Get_View
+                             (Source_Box (Get_Widget (Child_2)).Editor),
+                           Get_View
+                             (Source_Box (Get_Widget (Child_3)).Editor));
+
+                        Set_Synchronized_Editor
+                          (Get_View
+                             (Source_Box (Get_Widget (Child_3)).Editor),
+                           Get_View
+                             (Source_Box (Get_Widget (Child_1)).Editor));
+                     end if;
+                  end;
+               else
+                  Set_Synchronized_Editor
+                    (Get_View (Source_Box (Get_Widget (Child_2)).Editor),
+                     Get_View (Source_Box (Get_Widget (Child_1)).Editor));
+               end if;
             end if;
          end;
       end if;
@@ -3908,6 +3955,15 @@ package body Src_Editor_Module is
          Maximum_Args => 4,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Search_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "set_synchronized_scrolling",
+         Params       => "(file1, file2, [file3])",
+         Description  => -"Synchronize the scrolling between multiple editors",
+         Minimum_Args => 2,
+         Maximum_Args => 3,
+         Handler      => Edit_Command_Handler'Access);
 
       --  Register the search functions
 
