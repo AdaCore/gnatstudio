@@ -1,33 +1,5 @@
-CC        = @CC@
-LANGUAGES = c ada
-GNATMAKE  = gnatmake
-
-AR        = ar
-AR_FLAGS  = rc
-AR_EXT    = .a
-
-OBJ_EXT  = .o
-C_EXT    = .c
-CXX_EXT  = .C
-MAIN     = ada
-
-ROOT     = @ROOT@
+CC         = @CC@
+LANGUAGES  = c ada
+AR_EXT     = .a
 GTK_PREFIX = @GTK_PREFIX@
-
-CFLAGS  = -g -O2 -DSYSTEM_INCLUDE=@opsysfile@ \
-	 @DEFS@
-LDFLAGS  = $(shell gtkada-config --libs)
-OBJ_DIR  = $(ROOT)/obj
-SRC_DIRS = $(ROOT)/gvd/gnat $(ROOT)/gvd/pixmaps \
-	   $(ROOT)/prj_editor/src \
-	   $(ROOT)/prj_editor/pixmaps \
-           $(ROOT)/gbuilder/pixmaps \
-           $(ROOT)/vcs/pixmaps \
-           $(ROOT)/widgets/cschtml \
-           $(GTK_PREFIX)/include/gtk-2.0 \
-           $(GTK_PREFIX)/lib/gtk-2.0/include \
-           $(GTK_PREFIX)/include/glib-2.0 \
-           $(GTK_PREFIX)/lib/glib-2.0/include \
-           $(GTK_PREFIX)/include/pango-1.0 \
-           $(GTK_PREFIX)/include/atk-1.0
 
