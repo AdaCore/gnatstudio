@@ -430,7 +430,7 @@ package body Glide_Kernel.Hooks is
                return new String'
                  (Description & ASCII.LF
                   & (-"This hook is of type """) & Type_Name
-                  & (-""" -- see describe_hook_type"));
+                  & (-""" -- see Hook.describe_type"));
             end if;
          elsif Description /= "" then
             return new String'(Description);
