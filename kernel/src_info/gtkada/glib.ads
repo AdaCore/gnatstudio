@@ -72,4 +72,5 @@ package Glib is
    type Guint32 is mod 2 ** 32;
    type Guint64 is mod 2 ** 64;
 
+   type Gunichar is new Guint32;
 end Glib;
