@@ -327,8 +327,6 @@ package body Docgen.Work_On_File is
               (Glide_Language_Handler (Handler), Source_Filename),
             Source_Info_List,
             Project,
-            "",
-            "",
             Local_Location,
             Local_Status);
 

@@ -97,9 +97,7 @@ package body Docgen.ALI_Utils is
          File                   => LI,
          Source_Filename        => Source_Filename,
          List                   => Source_Info_List,
-         Project                => File_Project,
-         Predefined_Source_Path => Predefined_Source_Path,
-         Predefined_Object_Path => Predefined_Object_Path);
+         Project                => File_Project);
    end Load_LI_File;
 
    -------------------------
@@ -125,6 +123,8 @@ package body Docgen.ALI_Utils is
          Default_Body_Suffix => ".adb");
 
       Set_Registry (Handler, Registry);
+      Set_Predefined_Source_Path (Registry.all, Predefined_Source_Path);
+      Set_Predefined_Object_Path (Registry.all, Predefined_Object_Path);
 
       return Language_Handler (Handler);
    end Create_Lang_Handler;
