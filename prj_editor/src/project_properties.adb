@@ -48,7 +48,6 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 with Prj;                       use Prj;
-with Prj.Ext;                   use Prj.Ext;
 with Prj.Tree;                  use Prj.Tree;
 with Prj_API;                   use Prj_API;
 with String_Utils;              use String_Utils;
@@ -60,8 +59,6 @@ with Prj_Normalize;             use Prj_Normalize;
 with Scenario_Selectors;        use Scenario_Selectors;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Namet;                     use Namet;
-with Stringt;                   use Stringt;
 
 package body Project_Properties is
    use Widget_List;
@@ -1087,17 +1084,11 @@ package body Project_Properties is
          declare
             Vars         : constant Project_Node_Array :=
               Scenario_Variables (Kernel);
-            Saved_Values : String_Id_Array (Vars'Range);
+            Saved_Values : Argument_List := Get_Current_Scenario (Vars);
             Prj_Iter     : Project_Iterator := Start (Editor.Prj_Selector);
             Ed           : Project_Editor_Page;
             View         : Project_Id;
          begin
-            --  Saved the current scenario
-            for S in Saved_Values'Range loop
-               String_To_Name_Buffer (External_Reference_Of (Vars (S)));
-               Saved_Values (S) := Value_Of (Name_Find);
-            end loop;
-
             while Current (Prj_Iter) /= Empty_Node loop
                if not Has_Been_Normalized (Current (Prj_Iter)) then
                   Normalize (Current (Prj_Iter), Recurse => False);
@@ -1112,12 +1103,11 @@ package body Project_Properties is
                         Curr : Argument_List := Current (Scenar_Iter);
                         Is_Env  : Boolean := True;
                      begin
-                        for V in Vars'Range loop
-                           Add (Get_String (External_Reference_Of (Vars (V))),
-                                Curr (V).all);
+                        Set_Environment (Vars, Curr);
 
+                        for V in Vars'Range loop
                            Is_Env := Is_Env and then Curr (V).all =
-                             Get_String (Saved_Values (V));
+                             Saved_Values (V).all;
                         end loop;
 
                         Free (Curr);
@@ -1175,10 +1165,8 @@ package body Project_Properties is
             end loop;
 
             --  Restore the scenario
-            for S in Saved_Values'Range loop
-               Add (Get_String (External_Reference_Of (Vars (S))),
-                    Get_String (Saved_Values (S)));
-            end loop;
+            Set_Environment (Vars, Saved_Values);
+            Free (Saved_Values);
          end;
 
          if Changed then
