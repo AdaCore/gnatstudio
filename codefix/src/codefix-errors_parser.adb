@@ -1066,7 +1066,7 @@ package body Codefix.Errors_Parser is
          Assign (Unallowed_Characters, (1 => ASCII.HT));
          Format_Str := Text_Ascii;
       elsif Word_Read.all = "trailing spaces" then
-         Assign (Unallowed_Characters, "([/s]+)");
+         Assign (Unallowed_Characters, "([\s]+)");
          Format_Str := Regular_Expression;
       elsif Word_Read.all = "space" then
          Assign (Unallowed_Characters, " ");
