@@ -41,6 +41,7 @@ with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Box;                  use Gtk.Box;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
+with Gtkada.MDI;               use Gtkada.MDI;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
@@ -474,6 +475,21 @@ package body Glide_Result_View is
       if Category_Created then
          Path := Get_Path (View.Model, Category_Iter);
          Dummy := Expand_Row (View.Tree, Path, True);
+         Path_Free (Path);
+
+         declare
+            MDI   : MDI_Window := Get_MDI (View.Kernel);
+            Child : MDI_Child :=
+              Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
+         begin
+            if Child /= null then
+               Grab_Focus (Child);
+               Raise_Child (Child);
+            end if;
+         end;
+
+         Path := Get_Path (View.Model, Iter);
+         Select_Path (Get_Selection (View.Tree), Path);
          Path_Free (Path);
       end if;
 
