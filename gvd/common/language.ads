@@ -275,17 +275,17 @@ package Language is
    --  Note that some of these parameters will be ignored, depending on the
    --  actual language.
    --
-   --  Indent_Level    is the number of spaces when indenting a block.
-   --  Indent_Continue is the number of spaces for a continuation line.
-   --  Indent_Decl     is the number of extra spaces for variables declaration.
-   --  Indent_Return   is the number of extra spaces for the return line in a
+   --  Indent_Level    number of spaces when indenting a block.
+   --  Indent_Continue number of spaces for a continuation line.
+   --  Indent_Decl     number of extra spaces for variables declaration.
+   --  Indent_Return   number of extra spaces for the return line in a
    --                  function declaration.
-   --  Indent_Renames  is the number of extra spaces for the renames line in a
+   --  Indent_Renames  number of extra spaces for the renames line in a
    --                  function declaration.
-   --  Indent_With     is the number of spaces when indenting a with clause
-   --  Indent_Use      is the number of spaces when indenting a use clause (top
+   --  Indent_With     number of spaces when indenting a with clause
+   --  Indent_Use      number of spaces when indenting a use clause (top
    --                  level only for now).
-   --  Indent_Record   is the number of extra spaces for a record declaration
+   --  Indent_Record   number of extra spaces for a record declaration
    --                  when the record keyword is on its own line.
 
    Default_Indent_Parameters : constant Indent_Parameters :=
@@ -297,9 +297,6 @@ package Language is
       Indent_With     => 5,
       Indent_Use      => 4,
       Indent_Record   => 3);
-
-   type Construct_Information;
-   type Construct_Access is access Construct_Information;
 
    type Language_Category is
      (Cat_Unknown,
@@ -356,6 +353,9 @@ package Language is
       Category       : access Language_Category) return String;
    --  Return a printable string for a given token and language.
    --  Category is set to the appropriate language category.
+
+   type Construct_Information;
+   type Construct_Access is access Construct_Information;
 
    type Construct_Information is record
       Token           : Generic_Token_Type;
