@@ -207,7 +207,7 @@ package body Switches_Editors is
       end case;
 
       declare
-         Str : constant String := Get_Chars (Cmd_Line);
+         Str : constant String := Get_Text (Cmd_Line);
       begin
          if Str /= "" then
             List := Argument_String_To_List (Str);
@@ -898,7 +898,7 @@ package body Switches_Editors is
 
       declare
          Arg : Argument_List_Access :=
-           Argument_String_To_List (Get_Chars (Cmd_Line));
+           Argument_String_To_List (Get_Text (Cmd_Line));
 
       begin
          Editor.Block_Refresh := True;

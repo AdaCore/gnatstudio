@@ -141,7 +141,7 @@ package body Scenario_Views is
      (GEntry : access Gtk_Widget_Record'Class;
       User   : Variable_User_Data)
    is
-      Value : constant String := Get_Chars (Gtk_Entry (GEntry));
+      Value : constant String := Get_Text (Gtk_Entry (GEntry));
    begin
       if Value /= "" then
          String_To_Name_Buffer (External_Reference_Of (User.Var));

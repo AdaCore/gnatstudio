@@ -355,7 +355,7 @@ package body Variable_Editors is
       --  anything illegal anyway.
 
       if Get_Active (Editor.Get_Environment)
-        and then Get_Chars (Get_Entry (Editor.List_Env_Variables)) = ""
+        and then Get_Text (Get_Entry (Editor.List_Env_Variables)) = ""
       then
          Button := Message_Dialog
            ("The environment variable name must be specified",
@@ -431,12 +431,12 @@ package body Variable_Editors is
                if not Get_Active (Editor.Env_Must_Be_Defined) then
                   Set_Value_As_External
                     (Editor.Var,
-                     Get_Chars (Get_Entry (Editor.List_Env_Variables)),
-                     Get_Chars (Get_Entry (Editor.Default_Env_Variable)));
+                     Get_Text (Get_Entry (Editor.List_Env_Variables)),
+                     Get_Text (Get_Entry (Editor.Default_Env_Variable)));
                else
                   Set_Value_As_External
                     (Editor.Var,
-                     Get_Chars (Get_Entry (Editor.List_Env_Variables)), "");
+                     Get_Text (Get_Entry (Editor.List_Env_Variables)), "");
                end if;
 
             else

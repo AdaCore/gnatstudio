@@ -237,7 +237,7 @@ package body Creation_Wizard is
    procedure First_Page_Checker (Wiz : access Gtk_Widget_Record'Class) is
       W : constant Prj_Wizard := Prj_Wizard (Wiz);
    begin
-      Set_Sensitive (Next_Button (W), Get_Chars (W.Project_Name)'Length /= 0);
+      Set_Sensitive (Next_Button (W), Get_Text (W.Project_Name)'Length /= 0);
    end First_Page_Checker;
 
    ----------------
