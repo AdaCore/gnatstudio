@@ -816,4 +816,68 @@ package body Codefix.Formal_Errors is
       return New_Extract;
    end Resolve_Ambiguity;
 
+   -----------------------
+   -- Remove_Conversion --
+   -----------------------
+
+   function Remove_Conversion
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Object_Name   : String) return Ada_Instruction
+   is
+      procedure Right_Paren (Current_Index : in out Integer);
+
+      New_Extract   : Ada_Instruction;
+      Current_Line  : Ptr_Extract_Line;
+      Line_Cursor   : File_Cursor := File_Cursor (Cursor);
+      Str_Line      : Dynamic_String;
+      Current_Index : Natural := 1;
+
+      procedure Right_Paren (Current_Index : in out Integer) is
+      begin
+         loop
+            if Current_Index > Get_String (Current_Line.all)'Last then
+               Current_Index := 1;
+               Current_Line := Next (Current_Line.all);
+            end if;
+
+            case Get_String (Current_Line.all) (Current_Index) is
+               when '(' =>
+                  Current_Index := Current_Index + 1;
+                  Right_Paren (Current_Index);
+               when ')' =>
+                  return;
+               when others =>
+                  Current_Index := Current_Index + 1;
+            end case;
+         end loop;
+      end Right_Paren;
+
+   begin
+      Line_Cursor.Col := 1;
+      Get_Unit (Current_Text, Cursor, New_Extract);
+      Current_Line := Get_Line (New_Extract, Line_Cursor);
+
+      Erase
+        (New_Extract,
+         Cursor,
+         Search_String (New_Extract, "(", Cursor));
+
+      Current_Index := Cursor.Col;
+      Right_Paren (Current_Index);
+
+      Assign (Str_Line, Get_String (Current_Line.all));
+      Set_String
+        (Current_Line.all,
+         Str_Line (Str_Line'First .. Current_Index - 1) &
+           Str_Line (Current_Index + 1 .. Str_Line'Last));
+
+      Free (Str_Line);
+
+      Set_Caption
+        (New_Extract, "Remove useless conversion of """ & Object_Name & """");
+
+      return New_Extract;
+   end Remove_Conversion;
+
 end Codefix.Formal_Errors;

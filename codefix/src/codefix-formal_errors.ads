@@ -141,6 +141,11 @@ package Codefix.Formal_Errors is
       Solution_Cursor : File_Cursor'Class;
       Name            : String) return Extract;
 
+   function Remove_Conversion
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Object_Name   : String) return Ada_Instruction;
+
 private
 
    type Error_Message is new File_Cursor with record
