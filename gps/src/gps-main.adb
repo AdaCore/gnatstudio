@@ -1170,6 +1170,8 @@ procedure GPS.Main is
 
       GPS.Kernel.Console.Register_Module (GPS_Main.Kernel);
 
+      GPS.Location_View.Register_Module (GPS_Main.Kernel);
+
       --  Register the remote protocols early so that other modules can access
       --  remote files.
 
@@ -1315,8 +1317,6 @@ procedure GPS.Main is
       if Active (Custom_Trace) then
          Custom_Module.Register_Module (GPS_Main.Kernel);
       end if;
-
-      GPS.Location_View.Register_Module (GPS_Main.Kernel);
 
       if Active (Refactor_Trace) then
          Refactoring_Module.Register_Module (GPS_Main.Kernel);
