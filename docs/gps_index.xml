@@ -57,13 +57,6 @@
    </file>
 
    <file>
-      <name>gvd.html</name>
-      <descr>Using the GNU Visual Debugger</descr>
-      <menu>/Help/GNAT/Using the GNU Visual Debugger</menu>
-      <category>GNAT</category>
-   </file>
-
-   <file>
       <name>gcc.html</name>
       <descr>Using GCC</descr>
       <menu>/Help/Using GCC</menu>
