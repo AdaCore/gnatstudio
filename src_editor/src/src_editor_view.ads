@@ -30,6 +30,7 @@ with Gdk.Event;
 with Pango.Font;
 
 with Gtk.Text_View;
+with Gtk.Main;
 
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Src_Editor_Buffer;
@@ -197,6 +198,9 @@ private
       --  view.
 
       Original_Text_Inserted : Boolean := False;
+
+      Connect_Expose_Id : Gtk.Main.Idle_Handler_Id;
+      --  Handler ID for the Connect_Expose idle callback.
    end record;
 
 end Src_Editor_View;
