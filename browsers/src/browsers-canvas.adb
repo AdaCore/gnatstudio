@@ -1,32 +1,26 @@
 -----------------------------------------------------------------------
+--                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001                            --
---                          ACT-Europe                               --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
 --                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
 --                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Gdk.Color;           use Gdk.Color;
+with Gdk.GC;              use Gdk.GC;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
@@ -45,8 +39,19 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Browsers;     use Glide_Kernel.Browsers;
 with GUI_Utils;                 use GUI_Utils;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
+with Layouts;                   use Layouts;
 
 package body Browsers.Canvas is
+
+   Selected_Link_Color : constant String := "#FF0000";
+   --  <preference> Color to use links whose ends are selected.
+
+   Selected_Item_Color : constant String := "#888888";
+   --  <preference> Color to use to draw the selected item.
+
+   Linked_Item_Color : constant String := "#BBBBBB";
+   --  <preference> Color to use to draw the items that are linked to the
+   --  selected item.
 
    Zoom_Levels : constant array (Positive range <>) of Guint :=
      (25, 50, 75, 100, 150, 200, 300, 400);
@@ -81,12 +86,17 @@ package body Browsers.Canvas is
 
    procedure Open_File (Browser : access Gtk_Widget_Record'Class);
    --  Open a new file for analyzis in the browser
+   --  ??? Probably should be part of Glide_Kernel.Browsers, but this is used
+   --  ??? in a contextual menu, so we need to be able to register new menus
+   --  ??? from other packages.
 
    function Contextual_Background_Menu
      (Browser : access Gtk_Widget_Record'Class;
       Event   : Gdk.Event.Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu to use in the browser
 
+   procedure Realized (Browser : access Gtk_Widget_Record'Class);
+   --  Callback for the "realized" signal.
 
    -------------
    -- Gtk_New --
@@ -119,6 +129,9 @@ package body Browsers.Canvas is
       Browser.Mask := Mask;
       Browser.Kernel := Kernel_Handle (Kernel);
 
+      Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
+      Set_Auto_Layout (Browser.Canvas, False);
+
       --  Create the  background contextual menu now, so that the key shortcuts
       --  are activated
       Menu := Contextual_Background_Menu (Browser, null);
@@ -127,8 +140,39 @@ package body Browsers.Canvas is
         (Browser.Canvas, "zoomed",
          Widget_Callback.To_Marshaller (Zoomed'Access), Browser);
 
+      Widget_Callback.Object_Connect
+        (Browser.Canvas, "realize",
+         Widget_Callback.To_Marshaller (Realized'Access), Browser);
+
       Register_Contextual_Menu (Browser, Contextual_Background_Menu'Access);
    end Initialize;
+
+   --------------
+   -- Realized --
+   --------------
+
+   procedure Realized (Browser : access Gtk_Widget_Record'Class) is
+      use type Gdk.Gdk_GC;
+      B : Glide_Browser := Glide_Browser (Browser);
+      Color : Gdk_Color;
+   begin
+      if B.Selected_Link_GC = null then
+         Gdk_New (B.Selected_Link_GC, Get_Window (B.Canvas));
+         Color := Parse (Selected_Link_Color);
+         Alloc (Get_Default_Colormap, Color);
+         Set_Foreground (B.Selected_Link_GC, Color);
+
+         Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
+         Color := Parse (Selected_Item_Color);
+         Alloc (Get_Default_Colormap, Color);
+         Set_Foreground (B.Selected_Item_GC, Color);
+
+         Gdk_New (B.Linked_Item_GC, Get_Window (B.Canvas));
+         Color := Parse (Linked_Item_Color);
+         Alloc (Get_Default_Colormap, Color);
+         Set_Foreground (B.Linked_Item_GC, Color);
+      end if;
+   end Realized;
 
    --------------
    -- Get_Mask --
@@ -301,5 +345,67 @@ package body Browsers.Canvas is
          Examine_Dependencies (B.Kernel, B, File);
       end if;
    end Open_File;
+
+   ----------------
+   -- To_Browser --
+   ----------------
+
+   function To_Browser
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class)
+      return Glide_Browser is
+   begin
+      return Glide_Browser (Get_Parent (Canvas));
+   end To_Browser;
+
+   -------------------
+   -- Selected_Item --
+   -------------------
+
+   function Selected_Item (Browser : access Glide_Browser_Record)
+      return Gtkada.Canvas.Canvas_Item is
+   begin
+      return Browser.Selected_Item;
+   end Selected_Item;
+
+   -----------------
+   -- Select_Item --
+   -----------------
+
+   procedure Select_Item
+     (Browser : access Glide_Browser_Record;
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class) is
+   begin
+      Browser.Selected_Item := Canvas_Item (Item);
+   end Select_Item;
+
+   --------------------------
+   -- Get_Selected_Link_GC --
+   --------------------------
+
+   function Get_Selected_Link_GC (Browser : access Glide_Browser_Record)
+      return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Selected_Link_GC;
+   end Get_Selected_Link_GC;
+
+   --------------------------
+   -- Get_Selected_Item_GC --
+   --------------------------
+
+   function Get_Selected_Item_GC (Browser : access Glide_Browser_Record)
+      return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Selected_Item_GC;
+   end Get_Selected_Item_GC;
+
+   ------------------------
+   -- Get_Linked_Item_GC --
+   ------------------------
+
+   function Get_Linked_Item_GC
+     (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Linked_Item_GC;
+   end Get_Linked_Item_GC;
 
 end Browsers.Canvas;
