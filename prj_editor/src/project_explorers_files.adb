@@ -62,6 +62,7 @@ with String_List_Utils;        use String_List_Utils;
 with String_Utils;             use String_Utils;
 with File_Utils;               use File_Utils;
 with Traces;                   use Traces;
+with Src_Info;
 
 package body Project_Explorers_Files is
 
@@ -351,38 +352,32 @@ package body Project_Explorers_Files is
       Node      : Gtk_Tree_Iter;
       File_Name : String)
    is
-      Buffer     : Basic_Types.String_Access;
+      use Src_Info;
+
       N          : Gtk_Tree_Iter;
-      F          : File_Descriptor;
       Lang       : Language_Access;
       Constructs : Construct_List;
-      Length     : Natural;
       Category   : Language_Category;
 
       type Gtk_Tree_Iter_Array is array (Language_Category'Range)
         of Gtk_Tree_Iter;
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
+      Languages  : constant Glide_Language_Handler :=
+        Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel));
+      Handler    : constant Src_Info.LI_Handler :=
+        Get_LI_Handler_From_File (Languages, File_Name);
 
    begin
       Push_State (Explorer.Kernel, Busy);
-      --  ??? code duplication from Expand_File_Node.
-
-      F := Open_Read (File_Name, Binary);
-
-      if F = Invalid_FD then
-         return;
-      end if;
-
-      Buffer := new String (1 .. Integer (File_Length (F)));
-      Length := Read (F, Buffer.all'Address, Buffer'Length);
-      Close (F);
 
       Lang := Get_Language_From_File
         (Glide_Language_Handler (Get_Language_Handler (Explorer.Kernel)),
          File_Name);
 
-      if Lang /= Unknown_Lang then
-         Parse_Constructs (Lang, Buffer (1 .. Length), Constructs);
+      if Lang /= null then
+         Parse_File_Constructs
+           (Handler, Get_Project_View (Explorer.Kernel),
+            Languages, File_Name, Constructs);
 
          Constructs.Current := Constructs.First;
 
@@ -410,8 +405,13 @@ package body Project_Explorers_Files is
          Free (Constructs);
       end if;
 
-      Free (Buffer);
       Pop_State (Explorer.Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Free (Constructs);
+         Pop_State (Explorer.Kernel);
    end File_Append_File_Info;
 
    ----------------------------
