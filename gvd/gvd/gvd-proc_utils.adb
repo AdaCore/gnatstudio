@@ -18,7 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
+pragma Warnings (On);
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GVD.Preferences; use GVD.Preferences;
 with GVD.Strings; use GVD.Strings;
