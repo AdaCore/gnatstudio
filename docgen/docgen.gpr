@@ -1,8 +1,5 @@
 with "../shared";
-with "../gvd/gvd.gpr";
 with "../kernel/kernel.gpr";
-with "../gvd/gvd_common.gpr";
-with "../gnat.gpr";
 
 project Docgen is
 
