@@ -21,6 +21,7 @@ with "../cpp_module/cpp_module";
 with "../aliases/aliases";
 with "../shared";
 with "../python/python";
+with "../shell/shell";
 
 project GPS is
 
