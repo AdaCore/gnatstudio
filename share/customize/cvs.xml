@@ -10,7 +10,7 @@
 
    <action name="generic_cvs_status" show-command="true" output="">
       <shell>echo "Querying status for $2-"</shell>
-      <external>cvs status "$2-"</external>
+      <external output="none">cvs status "$2-"</external>
       <shell>VCS.status_parse "Custom CVS" "%1" "$1" FALSE</shell>
    </action>
 
