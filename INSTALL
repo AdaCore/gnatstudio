@@ -12,8 +12,7 @@ GNAT must be installed before compiling any of the other
 packages, and the C compiler that comes with GNAT must be used to build
 Gtk+, since the Gtk+ packages are dependent on the particular compiler used.
 
-You then need to install the latest Gtk+ suite (currently 2.0.2) and
-the corresponding GtkAda package (2.0).
+You then need to install the latest Gtk+ suite (currently 2.0.2).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
 Once Gtk+ has been installed, extract the GPS sources:
