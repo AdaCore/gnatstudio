@@ -1576,4 +1576,15 @@ package body Odd.Code_Editors is
       return True;
    end Check_Single_Line;
 
+   ------------------
+   -- Get_Explorer --
+   ------------------
+
+   function Get_Explorer (Editor : access Code_Editor_Record'Class)
+                         return Odd.Explorer.Explorer_Access
+   is
+   begin
+      return Editor.Explorer;
+   end Get_Explorer;
+
 end Odd.Code_Editors;

@@ -175,6 +175,10 @@ package Odd.Code_Editors is
                         return Gtk.Widget.Gtk_Widget;
    --  Return the process tab in which the editor is inserted.
 
+   function Get_Explorer (Editor : access Code_Editor_Record'Class)
+                         return Odd.Explorer.Explorer_Access;
+   --  Return the explorer associated with this editor.
+
 private
 
    type Color_Array is array (Language.Language_Entity'Range) of
