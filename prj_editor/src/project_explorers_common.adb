@@ -37,6 +37,7 @@ with Traces;                    use Traces;
 with Projects.Registry;         use Projects, Projects.Registry;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Types;                     use Types;
+with VFS;                       use VFS;
 
 package body Project_Explorers_Common is
 
@@ -117,27 +118,21 @@ package body Project_Explorers_Common is
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;
       Base   : Gtk_Tree_Iter;
-      File   : String)
+      File   : VFS.Virtual_File)
    is
       Iter : Gtk_Tree_Iter;
       Lang : Language_Access;
    begin
       Append (Model, Iter, Base);
 
-      Set (Model, Iter, Absolute_Name_Column, File);
-
-      Set (Model, Iter, Base_Name_Column,
-           Locale_To_UTF8 (Base_Name (File)));
-
-      Set (Model, Iter, Icon_Column,
-           C_Proxy (Close_Pixbufs (File_Node)));
-      Set (Model, Iter, Node_Type_Column,
-           Gint (Node_Types'Pos (File_Node)));
+      Set (Model, Iter, Absolute_Name_Column, Full_Name (File));
+      Set (Model, Iter, Base_Name_Column, Base_Name (File));
+      Set (Model, Iter, Icon_Column, C_Proxy (Close_Pixbufs (File_Node)));
+      Set (Model, Iter, Node_Type_Column, Gint (Node_Types'Pos (File_Node)));
       Set (Model, Iter, Up_To_Date_Column, False);
 
       Lang := Get_Language_From_File
-        (Glide_Language_Handler (Get_Language_Handler (Kernel)),
-         File);
+        (Glide_Language_Handler (Get_Language_Handler (Kernel)), File);
 
       if Lang /= Unknown_Lang then
          Append_Dummy_Iter (Model, Iter);
@@ -164,7 +159,7 @@ package body Project_Explorers_Common is
 
    function Append_Category_Node
      (Model       : Gtk_Tree_Store;
-      File        : String;
+      File        : VFS.Virtual_File;
       Category    : Language_Category;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
@@ -191,7 +186,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, File);
+      Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
       Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
       Set (Model, N, Icon_Column,
            C_Proxy (Close_Pixbufs (Category_Node)));
@@ -209,7 +204,7 @@ package body Project_Explorers_Common is
 
    function Append_Entity_Node
      (Model       : Gtk_Tree_Store;
-      File        : String;
+      File        : VFS.Virtual_File;
       Construct   : Construct_Information;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter
    is
@@ -235,7 +230,7 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, File);
+      Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
 
       if Construct.Is_Declaration then
          if Construct.Profile /= null then
@@ -281,7 +276,7 @@ package body Project_Explorers_Common is
      (Kernel    : Kernel_Handle;
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter;
-      File_Name : String)
+      File_Name : VFS.Virtual_File)
    is
       use Src_Info;
 
@@ -302,7 +297,7 @@ package body Project_Explorers_Common is
       --  Mark the file information as up-to-date
 
       Set (Model, Node, Timestamp_Column,
-           Gint (To_Timestamp (File_Time_Stamp (File_Name))));
+           Gint (To_Timestamp (File_Time_Stamp (Full_Name (File_Name)))));
 
       --  Remove any previous information for this file.
 
@@ -323,8 +318,7 @@ package body Project_Explorers_Common is
       Push_State (Kernel, Busy);
 
       Lang := Get_Language_From_File
-        (Glide_Language_Handler (Get_Language_Handler (Kernel)),
-         File_Name);
+        (Glide_Language_Handler (Get_Language_Handler (Kernel)), File_Name);
 
       if Lang /= null then
          Parse_File_Constructs
@@ -336,7 +330,6 @@ package body Project_Explorers_Common is
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
                Category := Filter_Category (Constructs.Current.Category);
-
                if Category /= Cat_Unknown then
                   if Categories (Category) = Null_Iter then
                      Categories (Category) := Append_Category_Node
@@ -356,6 +349,8 @@ package body Project_Explorers_Common is
          end loop;
 
          Free (Constructs);
+      else
+         Trace (Me, "No known language for " & Full_Name (File_Name));
       end if;
 
       Pop_State (Kernel);
@@ -449,8 +444,9 @@ package body Project_Explorers_Common is
                   then
                      Open_File_Editor
                        (Kernel,
-                        Get_String (Model, Iter, Absolute_Name_Column),
-                        From_Path => False);
+                        Create
+                          (Full_Filename =>
+                             Get_String (Model, Iter, Absolute_Name_Column)));
                      return True;
                   end if;
 
@@ -461,10 +457,11 @@ package body Project_Explorers_Common is
 
                      Open_File_Editor
                        (Kernel,
-                        Get_String (Model, Iter, Absolute_Name_Column),
+                        Create
+                          (Full_Filename =>
+                             Get_String (Model, Iter, Absolute_Name_Column)),
                         Line   => Natural (Line),
-                        Column => Natural (Column),
-                        From_Path => False);
+                        Column => Natural (Column));
                   end if;
                   return False;
 
@@ -567,7 +564,7 @@ package body Project_Explorers_Common is
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return String is
    begin
-      return Locale_From_UTF8 (Get_String (Model, Node, Base_Name_Column));
+      return Get_String (Model, Node, Base_Name_Column);
    end Get_Base_Name;
 
    -----------------------
@@ -587,20 +584,15 @@ package body Project_Explorers_Common is
 
    function Get_File_From_Node
      (Model     : Gtk_Tree_Store;
-      Node      : Gtk_Tree_Iter;
-      Full_Path : Boolean := False)
-      return String
+      Node      : Gtk_Tree_Iter)
+      return VFS.Virtual_File
    is
-      S : constant String := Get_Absolute_Name (Model, Node);
+      Absolute : constant String := Get_Absolute_Name (Model, Node);
    begin
-      if S = "" then
-         return "";
+      if Absolute = "" then
+         return VFS.No_File;
       else
-         if Full_Path then
-            return S;
-         else
-            return Base_Name (S);
-         end if;
+         return Create (Full_Filename => Absolute);
       end if;
    end Get_File_From_Node;
 
@@ -700,12 +692,13 @@ package body Project_Explorers_Common is
 
       function Entity_Base (Name : String) return String is
       begin
+         --  ??? Should use standard UTF8 subprogams
          for C in reverse Name'Range loop
             if Name (C) = '.' then
                return Name (C + 1 .. Name'Last);
             end if;
          end loop;
-         return Locale_From_UTF8 (Name);
+         return Name;
       end Entity_Base;
 
       Iter        : constant Gtk_Tree_Iter := Find_Iter_For_Event
@@ -740,9 +733,7 @@ package body Project_Explorers_Common is
 
       Set_File_Information
         (Context      => File_Selection_Context_Access (Context),
-         Directory    => Normalize_Pathname
-           (Get_Directory_From_Node (Model, Iter)),
-         File_Name    => Get_File_From_Node (Model, Iter),
+         File         => Get_File_From_Node (Model, Iter),
          Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
          Importing_Project =>
            Get_Project_From_Node (Model, Kernel, Iter, True),

@@ -59,6 +59,7 @@ with Basic_Types;          use Basic_Types;
 with Scenario_Selectors;   use Scenario_Selectors;
 with Projects;             use Projects;
 with Project_Viewers;      use Project_Viewers;
+with VFS;                  use VFS;
 
 with Types;                use Types;
 with Snames;               use Snames;
@@ -191,14 +192,14 @@ package body Switches_Editors is
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Project_Type;
-      Files     : Argument_List);
+      Files     : File_Array);
    --  Fill the editor with the switches information for Files (or the
    --  default switches if Files is empty).
 
    function Close_Switch_Editor
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Project_Type;
-      Files     : Argument_List;
+      Files     : File_Array;
       Scenario  : access Scenario_Selector_Record'Class) return Boolean;
    --  Called when the user has closed a switch editor for a specific file.
    --  This modifies the edited project to reflect the changes done in the
@@ -238,7 +239,7 @@ package body Switches_Editors is
      (Switches : access Switches_Edit_Record'Class;
       Pkg_Name : String;
       Language : Name_Id;
-      Files    : Argument_List) return Argument_List;
+      Files    : VFS.File_Array) return Argument_List;
    --  Return the list of switches for Files, found in the package Pkg_Name,
    --  for a specific language, and for a specific list of switches. The
    --  returned array must be freed by the caller.
@@ -1286,7 +1287,7 @@ package body Switches_Editors is
               (S,
                S.Pages (P).Pkg.all,
                Get_String (S.Pages (P).Lang.all),
-               Files => (1 .. 0 => null));
+               Files => (1 .. 0 => VFS.No_File));
          begin
             Set_Text (S.Pages (P).Cmd_Line,
                       Argument_List_To_String (List));
@@ -1307,16 +1308,16 @@ package body Switches_Editors is
      (Switches           : access Switches_Edit_Record'Class;
       Project            : Project_Type;
       Scenario_Variables : Scenario_Variable_Array;
-      Files              : Argument_List) return Boolean
+      Files              : File_Array) return Boolean
    is
       Changed : Boolean := False;
 
       procedure Change_Switches
         (Page      : access Switches_Editor_Page_Record'Class;
-         File_Name : String);
+         File_Name : Virtual_File);
       --  Changes the switches for a specific package and tool.
 
-      procedure Process_File (File_Name : String);
+      procedure Process_File (File_Name : Virtual_File);
       --  Generate the switches for a specific file (or the default switches if
       --  File_Name is the empty string). Return True if the project was
       --  changed.
@@ -1327,7 +1328,7 @@ package body Switches_Editors is
 
       procedure Change_Switches
         (Page      : access Switches_Editor_Page_Record'Class;
-         File_Name : String)
+         File_Name : Virtual_File)
       is
          Language : constant Name_Id := Get_String (Page.Lang.all);
          Args     : Argument_List := Get_Switches (Page, Normalize => False);
@@ -1359,7 +1360,7 @@ package body Switches_Editors is
          end if;
 
          if not Is_Default_Value then
-            if File_Name /= "" then
+            if File_Name /= VFS.No_File then
                if Args'Length /= 0 then
                   Update_Attribute_Value_In_Scenario
                     (Project            => Rename_Prj,
@@ -1367,7 +1368,7 @@ package body Switches_Editors is
                      Attribute          =>
                        Build (Page.Pkg.all, Get_String (Name_Switches)),
                      Values             => Args,
-                     Attribute_Index    => File_Name,
+                     Attribute_Index    => Base_Name (File_Name),
                      Prepend            => False);
                else
                   Delete_Attribute
@@ -1375,7 +1376,7 @@ package body Switches_Editors is
                      Scenario_Variables => Scenario_Variables,
                      Attribute          =>
                        Build (Page.Pkg.all, Get_String (Name_Switches)),
-                     Attribute_Index    => File_Name);
+                     Attribute_Index    => Base_Name (File_Name));
                end if;
 
             elsif Args'Length /= 0 then
@@ -1407,7 +1408,7 @@ package body Switches_Editors is
       -- Process_File --
       ------------------
 
-      procedure Process_File (File_Name : String) is
+      procedure Process_File (File_Name : Virtual_File) is
       begin
          for P in Switches.Pages'Range loop
             Change_Switches (Switches.Pages (P), File_Name);
@@ -1418,10 +1419,10 @@ package body Switches_Editors is
       pragma Assert (Project /= No_Project);
 
       if Files'Length = 0 then
-         Process_File ("");
+         Process_File (VFS.No_File);
       else
          for F in Files'Range loop
-            Process_File (Files (F).all);
+            Process_File (Files (F));
          end loop;
       end if;
 
@@ -1435,7 +1436,7 @@ package body Switches_Editors is
    function Close_Switch_Editor
      (Switches     : access Switches_Edit_Record'Class;
       Project      : Project_Type;
-      Files        : Argument_List;
+      Files        : VFS.File_Array;
       Scenario     : access Scenario_Selector_Record'Class) return Boolean
    is
       Saved : Argument_List := Get_Current_Scenario
@@ -1476,7 +1477,7 @@ package body Switches_Editors is
    procedure Set_Switches
      (Editor : access Switches_Edit_Record; Project : Project_Type) is
    begin
-      Fill_Editor (Editor, Project, Files => (1 .. 0 => null));
+      Fill_Editor (Editor, Project, Files => (1 .. 0 => VFS.No_File));
    end Set_Switches;
 
    ------------------
@@ -1487,7 +1488,7 @@ package body Switches_Editors is
      (Switches : access Switches_Edit_Record'Class;
       Pkg_Name : String;
       Language : Name_Id;
-      Files    : Argument_List) return Argument_List
+      Files    : File_Array) return Argument_List
    is
       Value      : Prj.Variable_Value;
       Is_Default : Boolean;
@@ -1505,11 +1506,11 @@ package body Switches_Editors is
 
       else
          if Files'Length = 0 then
-            Get_Switches (Switches.Project, Pkg_Name, "",
+            Get_Switches (Switches.Project, Pkg_Name, VFS.No_File,
                           Language, Value, Is_Default);
          else
             --  ??? Should we merge all the switches ?
-            Get_Switches (Switches.Project, Pkg_Name, Files (Files'First).all,
+            Get_Switches (Switches.Project, Pkg_Name, Files (Files'First),
                           Language, Value, Is_Default);
          end if;
       end if;
@@ -1523,7 +1524,7 @@ package body Switches_Editors is
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Project_Type;
-      Files     : Argument_List)
+      Files     : File_Array)
    is
    begin
       Switches.Project := Project;
@@ -1544,7 +1545,7 @@ package body Switches_Editors is
             for F in Files'Range loop
                declare
                   Lang : aliased String := Get_Language_From_File
-                    (Get_Language_Handler (Switches.Kernel), Files (F).all);
+                    (Get_Language_Handler (Switches.Kernel), Files (F));
                begin
                   To_Lower (Lang);
 
@@ -1588,7 +1589,6 @@ package body Switches_Editors is
    is
       File      : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      File_Name : GNAT.OS_Lib.String_Access;
       Modified : Boolean;
       pragma Unreferenced (Item, Modified);
    begin
@@ -1596,17 +1596,15 @@ package body Switches_Editors is
               "Project unknown when editing switches");
 
       if Has_File_Information (File) then
-         File_Name := new String'(File_Information (File));
          Modified := Edit_Switches_For_Files
            (Get_Kernel (Context),
             Project_Information (File),
-            (1 => File_Name));
-         Free (File_Name);
+            (1 => File_Information (File)));
       else
          Modified := Edit_Switches_For_Files
            (Get_Kernel (Context),
             Project_Information (File),
-            (1 .. 0 => null));
+            (1 .. 0 => VFS.No_File));
       end if;
 
    exception
@@ -1621,7 +1619,7 @@ package body Switches_Editors is
    function Edit_Switches_For_Files
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type;
-      Files        : GNAT.OS_Lib.Argument_List) return Boolean
+      Files        : File_Array) return Boolean
    is
       Switches  : Switches_Edit;
       Dialog    : Gtk_Dialog;

@@ -28,6 +28,7 @@ with Language;       use Language;
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Menu;       use Gtk.Menu;
 with Projects;
+with VFS;
 
 package Project_Explorers_Common is
 
@@ -97,7 +98,7 @@ package Project_Explorers_Common is
      (Kernel : Kernel_Handle;
       Model  : Gtk_Tree_Store;
       Base   : Gtk_Tree_Iter;
-      File   : String);
+      File   : VFS.Virtual_File);
    --  Append a file node to Base in the model.
    --  File must be an absolute file name.
 
@@ -108,14 +109,14 @@ package Project_Explorers_Common is
 
    function Append_Category_Node
      (Model       : Gtk_Tree_Store;
-      File        : String;
+      File        : VFS.Virtual_File;
       Category    : Language_Category;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Add a category node in the model.
 
    function Append_Entity_Node
      (Model       : Gtk_Tree_Store;
-      File        : String;
+      File        : VFS.Virtual_File;
       Construct   : Construct_Information;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Add an entity node in the model.
@@ -124,7 +125,7 @@ package Project_Explorers_Common is
      (Kernel    : Kernel_Handle;
       Model     : Gtk_Tree_Store;
       Node      : Gtk_Tree_Iter;
-      File_Name : String);
+      File_Name : VFS.Virtual_File);
    --  Add info to a file node in the model.
 
    function Get_Node_Type
@@ -159,6 +160,7 @@ package Project_Explorers_Common is
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return String;
    --  Return the base name for Node.
+   --  Returns a UTF8-encoded string.
 
    function Get_Absolute_Name
      (Model : Gtk_Tree_Store;
@@ -175,8 +177,7 @@ package Project_Explorers_Common is
 
    function Get_File_From_Node
      (Model     : Gtk_Tree_Store;
-      Node      : Gtk_Tree_Iter;
-      Full_Path : Boolean := False) return String;
+      Node      : Gtk_Tree_Iter) return VFS.Virtual_File;
    --  Return the name of the file containing Node (or, in case Node is an
    --  Entity_Node, the name of the file that contains the entity).
    --  The full name, including directory, is returned if Full_Path is True.

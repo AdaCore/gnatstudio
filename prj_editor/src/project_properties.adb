@@ -59,6 +59,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Project_Viewers;           use Project_Viewers;
 with Languages_Lists;           use Languages_Lists;
 with Gtk.Event_Box;             use Gtk.Event_Box;
+with VFS;                       use VFS;
 
 package body Project_Properties is
    use Widget_List;
@@ -1132,8 +1133,7 @@ package body Project_Properties is
             when Edit_File =>
                Open_File_Editor
                  (Kernel,
-                  Project_Path (Project),
-                  From_Path => False);
+                  Create (Full_Filename => Project_Path (Project)));
                return;
 
             when Edit_Properties =>

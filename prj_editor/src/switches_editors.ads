@@ -38,6 +38,7 @@ with GNAT.OS_Lib;
 with Glib.Object;
 with Glide_Kernel;
 with Projects;
+with VFS;
 
 package Switches_Editors is
 
@@ -225,7 +226,7 @@ package Switches_Editors is
      (Switches           : access Switches_Edit_Record'Class;
       Project            : Projects.Project_Type;
       Scenario_Variables : Projects.Scenario_Variable_Array;
-      Files              : GNAT.OS_Lib.Argument_List)
+      Files              : VFS.File_Array)
       return Boolean;
    --  Generate the information in Project to represent the status of Switches.
    --  True is returned if at least one project was modified.
@@ -249,7 +250,7 @@ package Switches_Editors is
    function Edit_Switches_For_Files
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project      : Projects.Project_Type;
-      Files        : GNAT.OS_Lib.Argument_List) return Boolean;
+      Files        : VFS.File_Array) return Boolean;
    --  Edit the switches for a list of files. All the files will be assigned
    --  the same switches.
    --  If there are no files in Files, the default switches are edited.
@@ -324,7 +325,7 @@ private
 
    type Switches_Edit_Record is new Gtk_Notebook_Record with record
       Kernel       : Glide_Kernel.Kernel_Handle;
-      Files        : GNAT.OS_Lib.Argument_List_Access;
+      Files        : VFS.File_Array_Access;
       Project      : Projects.Project_Type;
       Pages        : Page_Array_Access;
    end record;

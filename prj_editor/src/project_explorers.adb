@@ -61,7 +61,6 @@ with Types;                    use Types;
 
 with Projects;                 use Projects;
 with Language;                 use Language;
-with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
@@ -76,6 +75,7 @@ with File_Utils;               use File_Utils;
 with GUI_Utils;                use GUI_Utils;
 with String_List_Utils;
 with Histories;                use Histories;
+with VFS;                       use VFS;
 
 with Src_Info;
 with String_Hash;
@@ -274,13 +274,13 @@ package body Project_Explorers is
 
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Files : String_Array_Access;
+      Files : File_Array_Access;
       Node : Gtk_Tree_Iter);
    --  Recompute the directories for the project.
 
    procedure Update_Directory_Node
      (Explorer         : access Project_Explorer_Record'Class;
-      Files_In_Project : String_Array_Access;
+      Files_In_Project : File_Array_Access;
       Node             : Gtk_Tree_Iter);
    --  Recompute the files for the directory. This procedure tries to keep the
    --  existing files if they are in the project view, so as to keep the
@@ -309,7 +309,7 @@ package body Project_Explorers is
    procedure Update_Node
      (Explorer         : access Project_Explorer_Record'Class;
       Node             : Gtk_Tree_Iter;
-      Files_In_Project : String_Array_Access;
+      Files_In_Project : File_Array_Access;
       Force_Expanded   : Boolean := False);
    --  Refresh the contents of the Node after the Project_View has
    --  changed. This means that possibly the list of directories has
@@ -490,11 +490,10 @@ package body Project_Explorers is
 
       Context := new File_Selection_Context;
       Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
+
       Set_File_Information
         (Context,
-         Directory    =>
-           Normalize_Pathname (Get_Directory_From_Node (T.Tree.Model, Node)),
-         File_Name    => Get_File_From_Node (T.Tree.Model, Node),
+         File         => Get_File_From_Node (T.Tree.Model, Node),
          Project      => Get_Project_From_Node
            (T.Tree.Model, T.Kernel, Node, False));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
@@ -605,7 +604,7 @@ package body Project_Explorers is
       if Node = Null_Iter
         or else (Get_Title (Child) = " ")
         or else (Get_Title (Child) =
-                   Get_File_From_Node (E.Tree.Model, Node, True))
+                   Base_Name (Get_File_From_Node (E.Tree.Model, Node)))
       then
          return;
       end if;
@@ -1187,7 +1186,7 @@ package body Project_Explorers is
          Append_File
            (Kernel => Explorer.Kernel,
             Model  => Explorer.Tree.Model,
-            File   => Data (File_Node),
+            File   => Create (Full_Filename => Data (File_Node)),
             Base   => Node);
          File_Node := Next (File_Node);
       end loop;
@@ -1203,8 +1202,8 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter)
    is
-      File_Name  : constant String :=
-        Get_File_From_Node (Explorer.Tree.Model, Node, Full_Path => True);
+      File_Name  : constant Virtual_File :=
+        Get_File_From_Node (Explorer.Tree.Model, Node);
    begin
       Append_File_Info (Explorer.Kernel, Explorer.Tree.Model, Node, File_Name);
 
@@ -1432,7 +1431,7 @@ package body Project_Explorers is
 
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class;
-      Files    : String_Array_Access;
+      Files    : File_Array_Access;
       Node     : Gtk_Tree_Iter)
    is
       function Is_Same_Directory (Dir1, Dir2 : String) return Boolean;
@@ -1630,7 +1629,7 @@ package body Project_Explorers is
 
    procedure Update_Directory_Node
      (Explorer         : access Project_Explorer_Record'Class;
-      Files_In_Project : String_Array_Access;
+      Files_In_Project : File_Array_Access;
       Node             : Gtk_Tree_Iter)
    is
       Index : Natural;
@@ -1667,7 +1666,7 @@ package body Project_Explorers is
 
                while Index <= Files_In_Project'Last loop
                   if New_File (Index)
-                    and then Base_Name (Files_In_Project (Index).all) = F
+                    and then Base_Name (Files_In_Project (Index)) = F
                   then
                      New_File (Index) := False;
                      exit;
@@ -1687,13 +1686,13 @@ package body Project_Explorers is
 
       for J in Files_In_Project'Range loop
          if New_File (J)
-           and then Dir_Name (Files_In_Project (J).all) = Dir
+           and then Dir_Name (Files_In_Project (J)) = Dir
          then
             Append_File
               (Explorer.Kernel,
                Explorer.Tree.Model,
                Node,
-               Files_In_Project (J).all);
+               Files_In_Project (J));
          end if;
       end loop;
 
@@ -1717,7 +1716,7 @@ package body Project_Explorers is
    procedure Update_Node
      (Explorer         : access Project_Explorer_Record'Class;
       Node             : Gtk_Tree_Iter;
-      Files_In_Project : String_Array_Access;
+      Files_In_Project : File_Array_Access;
       Force_Expanded   : Boolean := False)
    is
       N, N2     : Gtk_Tree_Iter;
@@ -1726,13 +1725,12 @@ package body Project_Explorers is
       N_Type    : Node_Types;
       Prj       : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Files     : String_Array_Access := Files_In_Project;
+      Files     : File_Array_Access := Files_In_Project;
       Expanded  : Boolean := Get_Expanded (Explorer.Tree, Node);
    begin
       if Files = null then
          Files := Get_Source_Files
-           (Prj, Recursive => False, Full_Path => True,
-            Normalized => Normalized_Directories);
+           (Prj, Recursive => False, Full_Path => True);
       end if;
 
       --  If the information about the node hasn't been computed before,
@@ -1811,7 +1809,7 @@ package body Project_Explorers is
       end if;
 
       if Files_In_Project = null then
-         Free (Files);
+         Unchecked_Free (Files);
       end if;
    end Update_Node;
 
@@ -2097,14 +2095,13 @@ package body Project_Explorers is
       --  Move to the next node, starting from a file node
 
       function Check_Entities
-        (File : String; Project : Project_Type) return Boolean;
+        (File : VFS.Virtual_File; Project : Project_Type) return Boolean;
       pragma Inline (Check_Entities);
       --  Check if File contains any entity matching C.
       --  Return True if there is a match
 
       procedure Mark_File_And_Projects
-        (Base           : String;
-         Full_Name      : String;
+        (File           : Virtual_File;
          Project_Marked : Boolean;
          Project        : Project_Type;
          Mark_File      : Search_Status;
@@ -2170,7 +2167,8 @@ package body Project_Explorers is
             --  The file was never parsed
             elsif Status = Unknown then
                if Check_Entities
-                 (Get_Directory_From_Node (Explorer.Tree.Model, Start) & N,
+                 (Create (Full_Filename => Get_Directory_From_Node
+                            (Explorer.Tree.Model, Start) & N),
                   Get_Project_From_Node
                      (Explorer.Tree.Model, Explorer.Kernel, Start, False))
                then
@@ -2185,9 +2183,9 @@ package body Project_Explorers is
                   --  referenced any more, we simply don't parse them
 
                   Mark_File_And_Projects
-                    (Base           => N,
-                     Full_Name      => Get_Directory_From_Node
-                       (Explorer.Tree.Model, Start) & N,
+                    (File => Create
+                       (Full_Filename => Get_Directory_From_Node
+                          (Explorer.Tree.Model, Start) & N),
                      Project_Marked => False,
                      Project        => Get_Project_From_Node
                        (Explorer.Tree.Model, Explorer.Kernel, Start, False),
@@ -2223,7 +2221,6 @@ package body Project_Explorers is
 
       begin
          while Start_Node /= Null_Iter loop
-            declare
             begin
                case Get_Node_Type (Explorer.Tree.Model, Start_Node) is
                   when Project_Node
@@ -2294,7 +2291,7 @@ package body Project_Explorers is
       --------------------
 
       function Check_Entities
-        (File      : String;
+        (File      : VFS.Virtual_File;
          Project   : Project_Type)
          return Boolean
       is
@@ -2336,21 +2333,17 @@ package body Project_Explorers is
       ----------------------------
 
       procedure Mark_File_And_Projects
-        (Base           : String;
-         Full_Name      : String;
+        (File           : Virtual_File;
          Project_Marked : Boolean;
          Project        : Project_Type;
          Mark_File      : Search_Status;
          Increment      : Search_Status)
       is
-         --  Directory name without a directory separator.
-         Dir  : constant String := Full_Name
-           (Full_Name'First ..
-            Full_Name'Last - Base'Length);
+         Dir : constant String := Dir_Name (File);
          Iter : Imported_Project_Iterator;
 
       begin
-         Set (C.Matches, Base, Mark_File);
+         Set (C.Matches, Base_Name (File), Mark_File);
 
          --  Mark the number of entries in the directory, so that if a file
          --  doesn't match we can decrease it later, and finally no longer
@@ -2401,8 +2394,8 @@ package body Project_Explorers is
             if Match (C, Project_Name (Current (Iter))) /= -1 then
                Project_Marked := False;
                Mark_File_And_Projects
-                 (Base           => Project_Name (Current (Iter)),
-                  Full_Name      => Project_Name (Current (Iter)),
+                 (File           => Create
+                    (Full_Filename => Project_Path (Current (Iter))),
                   Project_Marked => Project_Marked,
                   Project        => Current (Iter),
                   Mark_File      => Unknown,
@@ -2410,21 +2403,19 @@ package body Project_Explorers is
             end if;
 
             declare
-               Sources : String_Array_Access := Get_Source_Files
+               Sources : File_Array_Access := Get_Source_Files
                  (Project    => Current (Iter),
                   Recursive  => False,
-                  Full_Path  => True,
-                  Normalized => False);
+                  Full_Path  => True);
             begin
                Project_Marked := False;
                for S in Sources'Range loop
                   declare
-                     Base : constant String := Base_Name (Sources (S).all);
+                     Base : constant String := Base_Name (Sources (S));
                   begin
                      if C.Include_Entities then
                         Mark_File_And_Projects
-                          (Base           => Base,
-                           Full_Name      => Sources (S).all,
+                          (File           => Sources (S),
                            Project_Marked => Project_Marked,
                            Project        => Current (Iter),
                            Mark_File      => Unknown,
@@ -2436,8 +2427,7 @@ package body Project_Explorers is
 
                      elsif Match (C, Base) /= -1 then
                         Mark_File_And_Projects
-                          (Base           => Base,
-                           Full_Name      => Sources (S).all,
+                          (File           => Sources (S),
                            Project_Marked => Project_Marked,
                            Project        => Current (Iter),
                            Mark_File      => Search_Match,
@@ -2447,7 +2437,7 @@ package body Project_Explorers is
                   end;
                end loop;
 
-               Free (Sources);
+               VFS.Unchecked_Free (Sources);
             end;
 
             Next (Iter);
@@ -2551,9 +2541,12 @@ package body Project_Explorers is
               (Kernel,
                Include_Projects => False,
                Include_Files    => True);
+            --  ??? Should we work directly with a Virtual_File, so that we
+            --  are sure to match the right file, not necessarily a file with
+            --  the same base name in an extending project...
             Set_Context
               (Context  => C,
-               Look_For => File_Information (File_C),
+               Look_For => Base_Name (File_Information (File_C)),
                Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
                             Whole_Word     => True,
                             Regexp         => False));
@@ -2561,7 +2554,7 @@ package body Project_Explorers is
             if not Search (C, Kernel, Search_Backward => False) then
                Insert (Kernel,
                        -"File not found in the explorer: "
-                       & File_Information (File_C),
+                       & Base_Name (File_Information (File_C)),
                        Mode => Glide_Kernel.Console.Error);
             end if;
 

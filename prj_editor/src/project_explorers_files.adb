@@ -47,6 +47,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Unchecked_Deallocation;
 
+with VFS;                      use VFS;
 with Basic_Types;              use Basic_Types;
 with Generic_List;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
@@ -204,6 +205,7 @@ package body Project_Explorers_Files is
       Path_Found : Boolean := False;
       Iter       : Gtk_Tree_Iter;
       New_D      : Append_Directory_Idle_Data_Access;
+      VF         : Virtual_File;
 
       use String_List_Utils.String_List;
 
@@ -265,14 +267,16 @@ package body Project_Explorers_Files is
                   --  If the file belongs to the project hierarchy, we also
                   --  need to check that it is the one that really belongs to
                   --  the project, not a homonym in some other directory
-                  elsif Get_Project_From_File
-                    (Get_Registry (D.Explorer.Kernel), Name,
-                     Root_If_Not_Found => False) /= No_Project
-                    and then Dir_Name (Get_Full_Path_From_File
-                    (Get_Registry (D.Explorer.Kernel), Name, True, True)) =
-                    D.Norm_Dir.all
-                  then
-                     Append (D.Files, Name);
+                  else
+                     VF := Create (Name, D.Explorer.Kernel);
+
+                     if Get_Project_From_File
+                       (Get_Registry (D.Explorer.Kernel),
+                        VF, Root_If_Not_Found => False) /= No_Project
+                       and then Dir_Name (VF) = D.Norm_Dir.all
+                     then
+                        Append (D.Files, Name);
+                     end if;
                   end if;
 
                elsif Is_Directory (D.Norm_Dir.all & Name) then
@@ -423,7 +427,7 @@ package body Project_Explorers_Files is
            (D.Explorer.Kernel,
             D.Explorer.File_Model,
             D.Base,
-            D.Norm_Dir.all & Head (D.Files));
+            Create (Full_Filename => D.Norm_Dir.all & Head (D.Files)));
          Next (D.Files);
       end loop;
 
@@ -640,7 +644,7 @@ package body Project_Explorers_Files is
       Iter      : constant Gtk_Tree_Iter :=
         Find_Iter_For_Event (T.File_Tree, T.File_Model, Event);
       Path      : Gtk_Tree_Path;
-      File      : GNAT.OS_Lib.String_Access := null;
+      File      : Virtual_File;
       Node_Type : Node_Types;
       Check     : Gtk_Check_Menu_Item;
    begin
@@ -654,8 +658,9 @@ package body Project_Explorers_Files is
 
          case Node_Type is
             when Directory_Node | File_Node =>
-               File := new String'
-                 (Get_String (T.File_Model, Iter, Absolute_Name_Column));
+               File := Create
+                 (Full_Filename =>
+                    (Get_String (T.File_Model, Iter, Absolute_Name_Column)));
                Context := new File_Selection_Context;
 
             when Entity_Node =>
@@ -667,12 +672,10 @@ package body Project_Explorers_Files is
          end case;
       end if;
 
-      if File /= null then
+      if File /= VFS.No_File then
          Set_File_Information
            (Context   => File_Selection_Context_Access (Context),
-            Directory => Dir_Name (File.all),
-            File_Name => Base_Name (File.all));
-         Free (File);
+            File      => File);
       end if;
 
       if Menu /= null then
@@ -822,7 +825,9 @@ package body Project_Explorers_Files is
 
                when File_Node =>
                   Free_Children (T, Iter);
-                  Append_File_Info (T.Kernel, T.File_Model, Iter, Iter_Name);
+                  Append_File_Info
+                    (T.Kernel, T.File_Model, Iter,
+                     Create (Full_Filename => Iter_Name));
 
                when Project_Node | Extends_Project_Node =>
                   null;

@@ -86,6 +86,7 @@ with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
 with Histories;                use Histories;
 with GUI_Utils;                use GUI_Utils;
+with VFS;                      use VFS;
 
 with Types;         use Types;
 
@@ -319,7 +320,8 @@ package body Project_Viewers is
       Project   : Project_Type;
       Directory : String := "";
       File      : String := "");
-   --  Update the contents of the viewer
+   --  Update the contents of the viewer.
+   --  Directory and File act as filters for the information that is displayed.
 
    procedure Project_Viewers_Set
      (Viewer            : access Project_Viewer_Record'Class;
@@ -520,8 +522,10 @@ package body Project_Viewers is
          Final : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
 
-      File_Name  : constant String := Get_String
-        (Viewer.Model, Iter, File_Name_Column);
+      File_Name  : constant Virtual_File :=
+        Create
+          (Get_String (Viewer.Model, Iter, File_Name_Column),
+           Viewer.Current_Project);
       Color      : Gdk_Color;
       Value      : Prj.Variable_Value;
       Is_Default : Boolean;
@@ -694,8 +698,8 @@ package body Project_Viewers is
          File := File_Selection_Context_Access (Context);
          Update_Contents (Viewer,
                           Project_Information (File),
-                          Directory_Information (File),
-                          File_Information (File));
+                          Dir_Name (File_Information (File)),
+                          Base_Name (File_Information (File)));
       end if;
 
    exception
@@ -1150,8 +1154,9 @@ package body Project_Viewers is
          if Has_Project_Information (File_C) then
             Open_File_Editor
               (Kernel,
-               Project_Path (Project_Information (File_C)),
-               From_Path => False);
+               Create
+                 (Full_Filename =>
+                    Project_Path (Project_Information (File_C))));
          end if;
       end if;
 
@@ -1502,13 +1507,7 @@ package body Project_Viewers is
          begin
             Set_File_Information
               (Context,
-               Directory    => Dir_Name
-                 (Get_Full_Path_From_File
-                  (Registry        => Get_Registry (Kernel),
-                   Filename        => File_Name,
-                   Use_Source_Path => True,
-                   Use_Object_Path => False)),
-               File_Name    => File_Name,
+               File    => Create (File_Name, Kernel, Use_Object_Path => False),
                Project      => V.Current_Project);
          end;
       end if;
@@ -1552,15 +1551,17 @@ package body Project_Viewers is
       end loop;
 
       declare
-         Names : Argument_List (1 .. Length);
+         Names : File_Array (1 .. Length);
          N     : Natural := Names'First;
       begin
          Iter := Get_Iter_First (V.Model);
 
          while Iter /= Null_Iter loop
             if Iter_Is_Selected (Selection, Iter) then
-               Names (N) := new String'
-                 (Get_String (V.Model, Iter, File_Name_Column));
+               --  ??? This isn't really a full file name
+               Names (N) := Create_From_Base
+                 (Base_Name =>
+                    Get_String (V.Model, Iter, File_Name_Column));
                N := N + 1;
             end if;
 
@@ -1584,8 +1585,6 @@ package body Project_Viewers is
                Next (V.Model, Iter);
             end loop;
          end if;
-
-         Free (Names);
       end;
 
    exception
@@ -2380,7 +2379,7 @@ package body Project_Viewers is
         (Switches           => Switches_Edit (Widget),
          Project            => Project,
          Scenario_Variables => Scenario_Variables,
-         Files              => (1 .. 0 => null));
+         Files              => (1 .. 0 => VFS.No_File));
 
    exception
       when E : others =>
@@ -2509,18 +2508,17 @@ package body Project_Viewers is
          declare
             Full_Path : constant Boolean := Nth_Arg (Data, 2, False);
             Recursive : constant Boolean := Nth_Arg (Data, 3, False);
-            Sources   : String_Array_Access := Get_Source_Files
+            Sources   : File_Array_Access := Get_Source_Files
               (Project    => Project,
                Recursive  => Recursive,
-               Full_Path  => Full_Path,
-               Normalized => True);
+               Full_Path  => Full_Path);
          begin
             Set_Return_Value_As_List (Data);
             for S in Sources'Range loop
                Set_Return_Value
-                 (Data, Create_File (Get_Script (Data), Sources (S).all));
+                 (Data, Create_File (Get_Script (Data), Sources (S)));
             end loop;
-            Free (Sources);
+            Unchecked_Free (Sources);
          end;
 
       end if;
