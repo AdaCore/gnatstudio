@@ -91,6 +91,10 @@ package Debugger.Jdb is
 
    function Backtrace (Debugger : access Jdb_Debugger) return String;
 
+   function Info_Threads
+     (Debugger : access Jdb_Debugger)
+      return Language.Thread_Information_Array;
+
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;
       File     : String;

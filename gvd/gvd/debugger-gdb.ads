@@ -103,6 +103,10 @@ package Debugger.Gdb is
 
    function Backtrace (Debugger : access Gdb_Debugger) return String;
 
+   function Info_Threads
+     (Debugger : access Gdb_Debugger)
+      return Language.Thread_Information_Array;
+
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;
       File     : String;

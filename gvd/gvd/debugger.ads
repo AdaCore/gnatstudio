@@ -159,11 +159,12 @@ package Debugger is
    --  again in the debugger window. This is used after internal commands like
    --  "graph print", to indicate that the command has finished executing.
 
-   procedure Found_File_Name (Debugger   : access Debugger_Root;
-                              Str        : String;
-                              Name_First : out Natural;
-                              Name_Last  : out Positive;
-                              Line       : out Natural);
+   procedure Found_File_Name
+     (Debugger   : access Debugger_Root;
+      Str        : String;
+      Name_First : out Natural;
+      Name_Last  : out Positive;
+      Line       : out Natural);
    --  Search for a file name indication in Str.
    --  Str is a string output by the debugger, that might contain a reference
    --  to a specific file and line, that we want to display in the code editor
@@ -263,6 +264,12 @@ package Debugger is
       is abstract;
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
+
+   function Info_Threads
+     (Debugger  : access Debugger_Root)
+      return Language.Thread_Information_Array is abstract;
+   --  Return the current list of threads.
+   --  GDB_COMMAND: "info threads" or "info tasks"
 
    function Line_Contains_Code
      (Debugger : access Debugger_Root;
