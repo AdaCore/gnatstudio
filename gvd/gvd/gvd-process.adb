@@ -36,6 +36,7 @@ with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
 with Gtk.Object;   use Gtk.Object;
+with Gtk.Dialog;   use Gtk.Dialog;
 
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 
@@ -516,7 +517,6 @@ package body Odd.Process is
       First    : Natural := Command2'First;
       Cursor   : Gdk_Cursor;
    begin
-
       Append (Debugger.Command_History, Command);
 
       Gdk_New (Cursor, Gdk.Types.Watch);
@@ -565,7 +565,9 @@ package body Odd.Process is
 
       else
          --  Regular debugger command, send it.
-         Send (Debugger.Debugger, Command);
+         Send (Debugger.Debugger, Command,
+               Wait_For_Prompt =>
+                 not Command_In_Process (Get_Process (Debugger.Debugger)));
       end if;
 
       --  Put back the standard cursor
@@ -573,6 +575,9 @@ package body Odd.Process is
       Gdk_New (Cursor, Gdk.Types.Left_Ptr);
       Set_Cursor (Get_Window (Debugger.Window), Cursor);
       Destroy (Cursor);
+
+      Unregister_Dialog (Debugger);
+
    end Process_User_Command;
 
    ---------------------
@@ -594,5 +599,34 @@ package body Odd.Process is
       Get_Line (Buffer, Len);
       Process_User_Command (Tab, Buffer (1 .. Len));
    end Input_Available;
+
+   ---------------------
+   -- Register_Dialog --
+   ---------------------
+
+   procedure Register_Dialog
+     (Process : access Debugger_Process_Tab_Record;
+      Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class)
+   is
+   begin
+      if Process.Registered_Dialog /= null then
+         raise Program_Error;
+      end if;
+      Process.Registered_Dialog := Gtk_Dialog (Dialog);
+   end Register_Dialog;
+
+   -----------------------
+   -- Unregister_Dialog --
+   -----------------------
+
+   procedure Unregister_Dialog
+     (Process : access Debugger_Process_Tab_Record)
+   is
+   begin
+      if Process.Registered_Dialog /= null then
+         Destroy (Process.Registered_Dialog);
+         Process.Registered_Dialog := null;
+      end if;
+   end Unregister_Dialog;
 
 end Odd.Process;

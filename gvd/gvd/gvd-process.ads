@@ -28,6 +28,7 @@ with Gdk.Font;
 with Gdk.Input;
 with Gdk.Types;
 with Gtk.Object; use Gtk.Object;
+with Gtk.Dialog;
 with Gtk.Handlers;
 with Gtk.Window;
 with Gtkada.Canvas;
@@ -119,7 +120,12 @@ package Odd.Process is
 
       Command_History : String_History.History_List
         (Default_Command_History_Size, Command_History_Collapse_Entries);
-       --  The history of commands for this process.
+      --  The history of commands for this process.
+
+      Registered_Dialog : Gtk.Dialog.Gtk_Dialog := null;
+      --  Currently displayed dialog that should be deleted on next user input.
+      --  This is mostly used for question dialogs, since the user can also
+      --  type its input directly in the command window.
 
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
@@ -212,5 +218,16 @@ package Odd.Process is
    --  support highlighting.
    --  If Is_Command is True, then the string is displayed in the highlighting
    --  color, used for user commands.
+
+   procedure Register_Dialog
+     (Process : access Debugger_Process_Tab_Record;
+      Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class);
+   --  Register a dialog, that will be deleted next time a user command is
+   --  processed. Only one such dialog can be registered at any given time.
+   --  Program_Error is raised if there is already such a dialog.
+
+   procedure Unregister_Dialog (Process : access Debugger_Process_Tab_Record);
+   --  Destroy any registered dialog.
+   --  Nothing happens if there is no such dialog.
 
 end Odd.Process;
