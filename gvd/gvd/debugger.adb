@@ -64,12 +64,6 @@ package body Debugger is
    --  All it does is read all the available data and call the filters
    --  that were set for the debugger, until a prompt is found.
 
-   Can_Use_Ptys : Integer;
-   pragma Import (C, Can_Use_Ptys, "gvd_use_ptys");
-   --  This variable is set to 1 if gvd was configured to use PTYs for its
-   --  communication with the underlying debugger.
-   --  If this is set to 0, we fall back on the simpler pipes implementation.
-
    procedure Send_Internal_Pre
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
@@ -194,7 +188,7 @@ package body Debugger is
    is
       Descriptor : Process_Descriptor_Access;
    begin
-      if Use_Ptys and then Can_Use_Ptys = 1 then
+      if Use_Ptys then
          Descriptor := new TTY_Process_Descriptor;
       else
          Descriptor := new Process_Descriptor;
@@ -509,6 +503,7 @@ package body Debugger is
                   Wait_Prompt (Debugger);
                   Send_Internal_Post (Debugger, Cmd (First .. Last - 1), Mode);
                end if;
+
                Last := Last + 1;
             end loop;
 
