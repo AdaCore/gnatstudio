@@ -168,9 +168,11 @@ def kill_line():
    # caracters and the end-of-line
    if strip_str == "" and str [len (str) - 1] == '\n':
       GPS.Editor.select_text (line, line, col, col + len (str))
+   # there are non-blank caracters => kill them until the end-of-line if one
+   elif str [len (str) - 1] == '\n':
+      GPS.Editor.select_text (line, line, col, col + len (str) - 1)
    else:
-   # otherwise, kill only the caracters up to the end of line
-      GPS.Editor.select_text (line, line, col, col + len (str) - 1 )
+      GPS.Editor.select_text (line, line, col, col + len (str))
    GPS.Editor.cut()
 
 def beginning_of_buffer():
@@ -201,12 +203,11 @@ def end_of_line(file, line):
    # if there is an end of line character in str
    if str == "":
       GPS.Editor.cursor_set_position (file, line, 1)
+   # test if there is an end of line character
+   elif str [len (str) - 1] == '\n':
+      GPS.Editor.cursor_set_position (file, line, len (str))
    else:
-      # test if there is an end of line character
-      if str [len (str) - 1] == '\n':
-         GPS.Editor.cursor_set_position (file, line, len (str))
-      else:
-         GPS.Editor.cursor_set_position (file, line, len (str) + 1)
+      GPS.Editor.cursor_set_position (file, line, len (str) + 1)
 
 def goto_end_of_line():
    """   Goto the end of line. """
