@@ -38,99 +38,6 @@ package body Docgen.Backend.Text is
    Cache : constant Boolean := False;
    --  Control the templates parser cache option
 
-   --  Here we give the description of all template files used by the text
-   --  backend. To compute the final template file it is just needed to add the
-   --  extension as prefix.
-
-   type Entities_Kind is
-     (File_Header_Kind, File_Footer_Kind,
-      Comment_Kind, Keyword_Kind, String_Kind, Char_Kind,
-      Subtitle_Kind, Package_Desc_Kind, Package_Kind, With_Kind,
-      Variable_Kind, Exception_Kind, Type_Kind, Tagged_Type_Kind,
-      Calls_References_Kind, Caller_References_Kind,
-      Entity_Kind, Subprogram_Kind, Header_Kind, Footer_Kind,
-      Header_Private_Kind, Main_Frame_Kind,
-      Unit_Index_Kind, Subprogram_Index_Kind, Index_Tagged_Type_Kind,
-      Type_Index_Kind, Tagged_Type_Index_Kind, Index_Item_Kind,
-      Private_Index_Kind, Public_Index_Kind, End_Index_Kind, Block_Kind,
-      Link_Kind, Description_Kind);
-
-   --  All these declarations are work-in-progress. In a later implementation
-   --  the templates will be described into an XML file.
-
-   T_File_Header       : aliased constant String := "file_header.thtml";
-   T_File_Footer       : aliased constant String := "file_footer.thtml";
-   T_Comment           : aliased constant String := "comment.thtml";
-   T_Keyword           : aliased constant String := "keyword.thtml";
-   T_String            : aliased constant String := "string.thtml";
-   T_Char              : aliased constant String := "char.thtml";
-   T_Subtitle          : aliased constant String := "subtitle.thtml";
-   T_Package_Desc      : aliased constant String := "package_desc.thtml";
-   T_Package           : aliased constant String := "package.thtml";
-   T_With              : aliased constant String := "with.thtml";
-   T_Variable          : aliased constant String := "variable.thtml";
-   T_Exception         : aliased constant String := "exception.thtml";
-   T_Type              : aliased constant String := "type.thtml";
-   T_Tagged_Type       : aliased constant String := "tagged_type.thtml";
-   T_Calls_References  : aliased constant String := "calls_references.thtml";
-   T_Caller_References : aliased constant String := "caller_references.thtml";
-   T_Entity            : aliased constant String := "entity.thtml";
-   T_Subprogram        : aliased constant String := "subprogram.thtml";
-   T_Header            : aliased constant String := "header.thtml";
-   T_Footer            : aliased constant String := "footer.thtml";
-   T_Header_Private    : aliased constant String := "header_private.thtml";
-   T_Main_Frame        : aliased constant String := "main_frame.thtml";
-   T_Unit_Index        : aliased constant String := "unit_index.thtml";
-   T_Subprogram_Index  : aliased constant String := "subprogram_index.thtml";
-   T_Type_Index        : aliased constant String := "type_index.thtml";
-   T_Tagged_Type_Index : aliased constant String := "tagged_type_index.thtml";
-   T_Index_Item        : aliased constant String := "index_item.thtml";
-   T_Private_Index     : aliased constant String := "private_index.thtml";
-   T_Public_Index      : aliased constant String := "public_index.thtml";
-   T_End_Index         : aliased constant String := "end_index.thtml";
-   T_Index_Tagged_Type : aliased constant String := "index_tagged_type.thtml";
-   T_Block             : aliased constant String := "block.thtml";
-   T_Link              : aliased constant String := "link.thtml";
-   T_Description       : aliased constant String := "description.thtml";
-
-   type String_Access is access constant String;
-
-   Template_Table : constant array (Entities_Kind) of String_Access :=
-                      (File_Header_Kind        => T_File_Header'Access,
-                       File_Footer_Kind        => T_File_Footer'Access,
-                       Comment_Kind            => T_Comment'Access,
-                       Keyword_Kind            => T_Keyword'Access,
-                       String_Kind             => T_String'Access,
-                       Char_Kind               => T_Char'Access,
-                       Subtitle_Kind           => T_Subtitle'Access,
-                       Package_Desc_Kind       => T_Package_Desc'Access,
-                       Package_Kind            => T_Package'Access,
-                       With_Kind               => T_With'Access,
-                       Variable_Kind           => T_Variable'Access,
-                       Exception_Kind          => T_Exception'Access,
-                       Type_Kind               => T_Type'Access,
-                       Tagged_Type_Kind        => T_Tagged_Type'Access,
-                       Calls_References_Kind   => T_Calls_References'Access,
-                       Caller_References_Kind  => T_Caller_References'Access,
-                       Entity_Kind             => T_Entity'Access,
-                       Subprogram_Kind         => T_Subprogram'Access,
-                       Header_Kind             => T_Header'Access,
-                       Footer_Kind             => T_Footer'Access,
-                       Header_Private_Kind     => T_Header_Private'Access,
-                       Main_Frame_Kind         => T_Main_Frame'Access,
-                       Unit_Index_Kind         => T_Unit_Index'Access,
-                       Subprogram_Index_Kind   => T_Subprogram_Index'Access,
-                       Type_Index_Kind         => T_Type_Index'Access,
-                       Tagged_Type_Index_Kind  => T_Tagged_Type_Index'Access,
-                       Index_Item_Kind         => T_Index_Item'Access,
-                       Private_Index_Kind      => T_Private_Index'Access,
-                       Public_Index_Kind       => T_Public_Index'Access,
-                       End_Index_Kind          => T_End_Index'Access,
-                       Index_Tagged_Type_Kind  => T_Index_Tagged_Type'Access,
-                       Block_Kind              => T_Block'Access,
-                       Link_Kind               => T_Link'Access,
-                       Description_Kind        => T_Description'Access);
-
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -156,8 +63,10 @@ package body Docgen.Backend.Text is
      (B         : access Backend;
       Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String) return String;
-   --  Create a .htm file name from the full path of the source file
+   --  Create file name from the full path of the source file using the
+   --  extension provided in the backend.
    --  for ex.: from util/src/docgen.adb the name docgen_adb.htm is created
+   --  for an HTML backend for which extension is "htm".
 
    procedure Set_Name_Tags
      (B           : access Backend;
@@ -176,7 +85,7 @@ package body Docgen.Backend.Text is
       Options           : All_Options;
       Entity            : Entity_Information;
       Processed_Sources : Type_Source_File_Table.HTable);
-   --  Print a reference to a specific entity, possibly with an hyper-link.
+   --  Print a reference to a specific entity, possibly with an hyper-link
 
    function Get_Template_File_Name
      (B      : access Backend;
@@ -929,7 +838,9 @@ package body Docgen.Backend.Text is
 
       --  Create the main frame file
 
-      Frame_File := Create_File (Doc_Directory & "index.html", Binary);
+      Frame_File := Create_File
+        (Doc_Directory & "index." & B.Output_Description.Extension.all,
+         Binary);
 
       Put_Line
         (Frame_File,
@@ -1187,8 +1098,8 @@ package body Docgen.Backend.Text is
    is
       pragma Unreferenced (Kernel);
       Ext  : constant String := File_Extension (File_Name);
-      Temp : constant String := Base_Name (File_Name, Ext) & '_'
-        & Ext (Ext'First + 1 .. Ext'Last);
+      Temp : constant String := Base_Name (File_Name, Ext) & '_' &
+                                  Ext (Ext'First + 1 .. Ext'Last);
    begin
       return Temp & '.' & B.Output_Description.Extension.all;
    end Get_Text_File_Name;
@@ -1206,14 +1117,25 @@ package body Docgen.Backend.Text is
       --  System prefix
       H_Prefix   : constant String := "docgen/";
       --  Home prefix
-      Filename : constant String :=
-                   B.Output_Description.Extension.all
-                     & '/' & Template_Table (Entity).all;
    begin
-      if Is_Regular_File (Get_Home_Dir (Kernel) & H_Prefix & Filename) then
-         return Get_Home_Dir (Kernel) & H_Prefix & Filename;
+      if B.Output_Description.Entities_Templates (Entity) = null then
+         return "";
+
       else
-         return Get_System_Dir (Kernel) & S_Prefix & Filename;
+         declare
+            Des      : Output_Description renames B.Output_Description.all;
+            Filename : constant String := Des.Entities_Templates (Entity).all;
+         begin
+            --  First we look for the template file in the home directory
+
+            if Is_Regular_File
+              (Get_Home_Dir (Kernel) & H_Prefix & Filename)
+            then
+               return Get_Home_Dir (Kernel) & H_Prefix & Filename;
+            else
+               return Get_System_Dir (Kernel) & S_Prefix & Filename;
+            end if;
+         end;
       end if;
    end Get_Template_File_Name;
 
@@ -1679,13 +1601,12 @@ package body Docgen.Backend.Text is
 
    function Get_Doc_Directory
      (B      : access Backend;
-      Kernel : access Kernel_Handle_Record'Class) return String
-   is
-      pragma Unreferenced (B);
+      Kernel : access Kernel_Handle_Record'Class) return String is
    begin
       return File_Utils.Name_As_Directory
-        (Object_Path (Get_Root_Project (Get_Registry (Kernel).all),
-                      False)) & "html/";
+        (Object_Path
+           (Get_Root_Project (Get_Registry (Kernel).all), False))
+        & B.Output_Description.Extension.all & '/';
    end Get_Doc_Directory;
 
 end Docgen.Backend.Text;
