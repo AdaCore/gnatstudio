@@ -184,6 +184,11 @@ package Projects.Registry is
    --  If Use_Source_Path is true, the file is looked for on the include
    --  path. If Use_Object_Path is true, it is also looked for on the object
    --  path.
+   --
+   --  If the path is not found because the project doesn't belong to any of
+   --  the source directories defined in the project hierarchy, then the empty
+   --  string is returned.
+   --
    --  This function also works for project files, which are looked among the
    --  loaded project tree.
 
@@ -195,6 +200,8 @@ package Projects.Registry is
    --  Internal version of Get_Full_Path_From_File, which returns its result in
    --  Name_Buffer (1 .. Name_Len) for efficiency.
    --  Do not use outside of the projects.* hierarchy
+   --
+   --  Name_Len is set to 0 if the file wasn't found on the search path
 
    function Get_Language_From_File
      (Registry : Project_Registry; Source_Filename : String)
