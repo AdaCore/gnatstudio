@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,13 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 with Glide_Kernel.Project;  use Glide_Kernel.Project;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with String_List_Utils;
 with String_Utils;          use String_Utils;
 with Projects.Registry;     use Projects.Registry;
 with Basic_Types;           use Basic_Types;
+with Shell;                 use Shell;
 
 package body Codefix.GPS_Io is
 

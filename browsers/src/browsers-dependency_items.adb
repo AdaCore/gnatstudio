@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -55,6 +55,7 @@ with Fname;                     use Fname;
 with Namet;                     use Namet;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Histories;                 use Histories;
+with Shell;                     use Shell;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
