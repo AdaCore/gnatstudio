@@ -20,8 +20,6 @@
 
 with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Language.Debugger; use Language.Debugger;
 with GVD.Strings;   use GVD.Strings;
 with Items;         use Items;
@@ -816,64 +814,6 @@ package body Debugger.Gdb.Ada is
       --  Shrink the table of values.
       Shrink_Values (Result.all);
    end Parse_Array_Value;
-
-   -----------------
-   -- Thread_List --
-   -----------------
-
-   function Thread_List (Lang : access Gdb_Ada_Language) return String is
-   begin
-      return "info tasks";
-   end Thread_List;
-
-   -------------------
-   -- Thread_Switch --
-   -------------------
-
-   function Thread_Switch
-     (Lang   : access Gdb_Ada_Language;
-      Thread : Natural) return String is
-   begin
-      return "task" & Natural'Image (Thread);
-   end Thread_Switch;
-
-   -----------------------
-   -- Parse_Thread_List --
-   -----------------------
-
-   function Parse_Thread_List
-     (Lang   : access Gdb_Ada_Language;
-      Output : String) return Thread_Information_Array
-   is
-      Result      : Thread_Information_Array (1 .. 1000);
-      Num_Threads : Natural  := 0;
-      Index       : Positive := Output'First;
-      EOL         : Positive;
-
-   begin
-      while Index < Output'Last loop
-         Num_Threads := Num_Threads + 1;
-         EOL := Index;
-
-         while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
-            EOL := EOL + 1;
-         end loop;
-
-         Result (Num_Threads) :=
-           (Num_Fields => 6,
-            Information =>
-              (New_String       (Output (Index      .. Index + 3)),
-               New_String (Trim (Output (Index + 4  .. Index + 13), Left)),
-               New_String (Trim (Output (Index + 14 .. Index + 18), Left)),
-               New_String (Trim (Output (Index + 19 .. Index + 22), Left)),
-               New_String (Trim (Output (Index + 23 .. Index + 45), Left)),
-               New_String (Trim (Output (Index + 46 .. EOL - 1), Left))
-              ));
-         Index := EOL + 1;
-      end loop;
-
-      return Result (1 .. Num_Threads);
-   end Parse_Thread_List;
 
    -----------------------------------
    -- Get_Language_Debugger_Context --

@@ -50,16 +50,6 @@ package Debugger.Gdb.Cpp is
       Name      : String  := "";
       Unhandled : Boolean := False) return String;
 
-   function Thread_List (Lang : access Gdb_Cpp_Language) return String;
-
-   function Thread_Switch
-     (Lang   : access Gdb_Cpp_Language;
-      Thread : Natural) return String;
-
-   function Parse_Thread_List
-     (Lang   : access Gdb_Cpp_Language;
-      Output : String) return Thread_Information_Array;
-
    procedure Parse_Array_Type
      (Lang         : access Gdb_Cpp_Language;
       Type_Str     : String;

@@ -97,39 +97,6 @@ package body Debugger.Jdb.Java is
       raise Program_Error;
    end Parse_Array_Value;
 
-   -----------------
-   -- Thread_List --
-   -----------------
-
-   function Thread_List (Lang : access Jdb_Java_Language) return String is
-   begin
-      return "threads";
-   end Thread_List;
-
-   -------------------
-   -- Thread_Switch --
-   -------------------
-
-   function Thread_Switch
-     (Lang   : access Jdb_Java_Language;
-      Thread : Natural) return String is
-   begin
-      return "thread" & Natural'Image (Thread);
-   end Thread_Switch;
-
-   -----------------------
-   -- Parse_Thread_List --
-   -----------------------
-
-   function Parse_Thread_List
-     (Lang   : access Jdb_Java_Language;
-      Output : String) return Thread_Information_Array
-   is
-      Result : Thread_Information_Array (1 .. 0);
-   begin
-      return Result;
-   end Parse_Thread_List;
-
    -----------------------------------
    -- Get_Language_Debugger_Context --
    -----------------------------------

@@ -52,16 +52,6 @@ package Debugger.Gdb.Ada is
       Temporary : Boolean := False;
       Unhandled : Boolean := False) return String;
 
-   function Thread_List (Lang : access Gdb_Ada_Language) return String;
-
-   function Thread_Switch
-     (Lang   : access Gdb_Ada_Language;
-      Thread : Natural) return String;
-
-   function Parse_Thread_List
-     (Lang   : access Gdb_Ada_Language;
-      Output : String) return Thread_Information_Array;
-
    procedure Parse_Array_Type
      (Lang         : access Gdb_Ada_Language;
       Type_Str     : String;
