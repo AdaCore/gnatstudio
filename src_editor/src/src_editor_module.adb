@@ -35,6 +35,7 @@ with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Glide_Main_Window;         use Glide_Main_Window;
+with Basic_Types;               use Basic_Types;
 with GVD.Status_Bar;            use GVD.Status_Bar;
 with GVD.Dialogs;               use GVD.Dialogs;
 with Gtk.Box;                   use Gtk.Box;
@@ -57,7 +58,6 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
-with GNAT.Expect;               use GNAT.Expect;
 with Traces;                    use Traces;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Prj_API;                   use Prj_API;
@@ -83,8 +83,11 @@ package body Src_Editor_Module is
    Max_Number_Of_Reopens : constant Integer := 10;
    --  ??? should we have a preference for that ?
 
-   function Generate_Body_Timeout (Data : Process_Data) return Boolean;
-   --  Callback for Process_Timeout, to handle gnatstub execution
+   procedure Generate_Body_Cb (Data : Process_Data);
+   --  Callback called when gnatstub has completed.
+
+   procedure Pretty_Print_Cb (Data : Process_Data);
+   --  Callback called when gnatpp has completed.
 
    procedure Gtk_New
      (Box : out Source_Box; Editor : Source_Editor_Box);
@@ -847,10 +850,11 @@ package body Src_Editor_Module is
                Title  => -"Open file from project",
                Parent => Get_Main_Window (Kernel),
                Flags  => Modal or Destroy_With_Parent);
+      Set_Default_Size (Dialog, 300, 100);
       Set_Position (Dialog, Win_Pos_Mouse);
 
       Gtk_New (Label, -"Enter file name (use <tab> for completion):");
-      Pack_Start (Get_Vbox (Dialog), Label, Fill => True);
+      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 
       Gtk_New (Ent);
       Set_Width_Chars (Ent, 20);
@@ -1174,11 +1178,11 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Body;
 
-   ---------------------------
-   -- Generate_Body_Timeout --
-   ---------------------------
+   ----------------------
+   -- Generate_Body_Cb --
+   ----------------------
 
-   function Generate_Body_Timeout (Data : Process_Data) return Boolean is
+   procedure Generate_Body_Cb (Data : Process_Data) is
       function Body_Name (Name : String) return String;
       --  Return the name of the body corresponding to a spec file.
 
@@ -1188,38 +1192,9 @@ package body Src_Editor_Module is
          return Name (Name'First .. Name'Last - 1) & 'b';
       end Body_Name;
 
-      Fd     : Process_Descriptor_Access := Data.Descriptor;
-      Result : Expect_Match;
-      Title  : String_Access := Data.Name;
-
    begin
-      Expect (Fd.all, Result, "\n", Timeout => 1);
-
-      if Result /= Expect_Timeout then
-         Console.Insert (Data.Kernel, Expect_Out (Fd.all), Add_LF => False);
-      end if;
-
-      return True;
-
-   exception
-      when Process_Died =>
-         Console.Insert
-           (Data.Kernel, Expect_Out (Fd.all), Add_LF => False);
-         Close (Fd.all);
-         Free (Fd);
-         Open_File_Editor (Data.Kernel, Body_Name (Title.all));
-         Free (Title);
-         Pop_State (Data.Kernel);
-         return False;
-
-      when E : others =>
-         Close (Fd.all);
-         Free (Fd);
-         Free (Title);
-         Pop_State (Data.Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end Generate_Body_Timeout;
+      Open_File_Editor (Data.Kernel, Body_Name (Data.Name.all));
+   end Generate_Body_Cb;
 
    ----------------------
    -- On_Generate_Body --
@@ -1230,71 +1205,47 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      Timeout : constant Guint32 := 50;
-
       Success : Boolean;
       Title   : constant String := Get_Editor_Filename (Kernel);
-      Id      : Timeout_Handler_Id;
-      Fd      : Process_Descriptor_Access;
-
-      procedure Gnatstub (Name : String; Success : out Boolean);
-      --  Launch gnatstub process and wait for it.
-
-      --------------
-      -- Gnatstub --
-      --------------
-
-      procedure Gnatstub (Name : String; Success : out Boolean) is
-         Args   : Argument_List (1 .. 2);
-         Exec   : String_Access := Locate_Exec_On_Path ("gnatstub");
-
-      begin
-         if Exec = null then
-            Success := False;
-            return;
-         end if;
-
-         Fd := new Process_Descriptor;
-         Args (1) := new String' (Name);
-         Args (2) := new String' (Dir_Name (Name));
-         Non_Blocking_Spawn (Fd.all, Exec.all, Args, Err_To_Out => True);
-         Success := True;
-         Console.Insert
-           (Kernel, Exec.all & ' ' & Args (1).all & ' ' & Args (2).all, False);
-         Free (Exec);
-
-         for J in Args'Range loop
-            Free (Args (J));
-         end loop;
-
-      exception
-         when Invalid_Process =>
-            Success := False;
-            Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
-      end Gnatstub;
+      Args    : Argument_List (1 .. 2);
 
    begin
       if Title /= "" then
-         Push_State (Kernel, Processing);
-
          --  ??? Should check language first
-         Gnatstub (Title, Success);
+         Args (1) := new String' (Title);
+         Args (2) := new String' (Dir_Name (Title));
+         Launch_Process
+           (Kernel, "gnatstub", Args, Generate_Body_Cb'Access, Title, Success);
+         Free (Args);
 
          if Success then
             Print_Message
               (Glide_Window (Get_Main_Window (Kernel)).Statusbar,
                Help, -"Generating body...");
-            Id := Process_Timeout.Add
-              (Timeout, Generate_Body_Timeout'Access,
-               (Kernel, Fd, new String' (Title)));
          end if;
       end if;
 
    exception
       when E : others =>
-         Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Generate_Body;
+
+   ----------------------
+   -- Pretty_Print_Cb --
+   ----------------------
+
+   procedure Pretty_Print_Cb (Data : Process_Data) is
+      function Pretty_Name (Name : String) return String;
+      --  Return the name of the pretty printed file.
+
+      function Pretty_Name (Name : String) return String is
+      begin
+         return Name & ".pp";
+      end Pretty_Name;
+
+   begin
+      Open_File_Editor (Data.Kernel, Pretty_Name (Data.Name.all));
+   end Pretty_Print_Cb;
 
    ---------------------
    -- On_Pretty_Print --
@@ -1304,11 +1255,58 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Title : constant String := Get_Editor_Filename (Kernel);
+
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
    begin
-      Push_State (Kernel, Processing);
-      Trace (Me, "pretty printing " & Title);
-      Pop_State (Kernel);
+      if Context = null
+        or else not (Context.all in File_Selection_Context'Class)
+      then
+         Trace (Me, "On_Pretty_Print: context doesn't contain file name");
+         return;
+      end if;
+
+      declare
+         File_Context : constant File_Selection_Context_Access :=
+           File_Selection_Context_Access (Context);
+         Filename     : constant String := File_Information (File_Context);
+         File         : constant String :=
+           Directory_Information (File_Context) & Filename;
+         Project      : constant String :=
+           Get_Subproject_Name (Kernel, Filename);
+         Success      : Boolean;
+         Args         : Argument_List_Access;
+
+      begin
+         if File = "" then
+            return;
+         end if;
+
+         --  ??? Should check language first
+
+         if Save_All_MDI_Children (Kernel, Force => False) = False then
+            return;
+         end if;
+
+         if Project = "" then
+            Args := Argument_String_To_List ("gnat pretty " & File);
+         else
+            Args := Argument_String_To_List
+              ("pretty " & "-P" & Project & " " &
+               Scenario_Variables_Cmd_Line (Kernel) & " " & File);
+         end if;
+
+         Launch_Process
+           (Kernel, "gnat", Args.all, Pretty_Print_Cb'Access, File, Success);
+         Free (Args);
+
+         if Success then
+            Print_Message
+              (Glide_Window (Get_Main_Window (Kernel)).Statusbar,
+               Help, -"Pretty printing...");
+         end if;
+      end;
 
    exception
       when E : others =>
@@ -1659,8 +1657,7 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, -"Generate Body", "",
                      On_Generate_Body'Access, Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit, -"Pretty Print", "",
-                     On_Pretty_Print'Access, Ref_Item => -"Preferences",
-                     Sensitive => False);
+                     On_Pretty_Print'Access, Ref_Item => -"Preferences");
 
       Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To,
                      On_Goto_Line'Access,
