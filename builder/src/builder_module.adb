@@ -301,11 +301,11 @@ package body Builder_Module is
                Result := new Argument_List'
                  ((new String'("-d"),
                    new String'("-P" & Project),
-                   new String'(File)) & Vars.all);
+                   File_Arg) & Vars.all);
             else
                Result := new Argument_List'
                  ((new String'("-P" & Project),
-                   new String'(File)) & Vars.all);
+                   File_Arg) & Vars.all);
             end if;
 
          when Make_Syntax =>
