@@ -764,7 +764,7 @@ package Codefix.Errors_Parser is
    --  Fix problems like 'sth is not referenced'.
 
    type Pkg_Not_Referenced is new Error_Parser
-     (new String'("Unit_Not_Referenced"), 2)
+     (new String'("Unit_Not_Referenced"), 3)
    with null record;
 
    procedure Initialize (This : in out Pkg_Not_Referenced);
@@ -885,7 +885,7 @@ package Codefix.Errors_Parser is
    --  Fix problem 'with clause can be moved to body'
 
    type Not_Fully_Conformant is new Error_Parser
-    (new String'("Not_Fully_Conformant"), 2)
+    (new String'("Not_Fully_Conformant"), 4)
    with null record;
 
    procedure Initialize (This : in out Not_Fully_Conformant);
@@ -898,5 +898,20 @@ package Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'not fully conformant with declaration'
+
+   type Generic_Use_Unallowed is new Error_Parser
+     (new String'("Unallowed_Expression"), 1)
+   with null record;
+
+   procedure Initialize (This : in out Generic_Use_Unallowed);
+
+   procedure Fix
+     (This         : Generic_Use_Unallowed;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problems like 'a generic package is not allowed in a use clause'.
 
 end Codefix.Errors_Parser;
