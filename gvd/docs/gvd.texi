@@ -1165,7 +1165,74 @@ documentation, but usually typing @i{help} will give you an overview of
 the commands available).
 
 If the underlying debugger allows it, pressing the TAB key in this 
-window will provide completion for the command that is being typed.
+window will provide completion for the command that is being typed (or its
+arguments).
+
+GVD also adds a number of commands to the debugger to provide a simple
+text interface to some of its graphical features. These commands, as documented
+below, enable you to create scripts that automatically change the graphical
+aspect of GVD. They also permit, through the use of the @code{--tty} command
+line option, a better integration of GVD into other integrated environments
+and editors like GNU Emacs.
+
+Here is the complete lists of such commands. The arguments between square
+brackets are optional and can be omitted.
+
+@table @b
+@item graph (print|display) expression [dependent on display_num] [link_name name]
+This command creates a new item in the canvas, that shows the value of
+@var{Expression}. @var{Expression} should be the name of a variable, or one
+of its fields, that is in the current scope for the debugger.
+
+The command @code{graph print} will create a frozen item, that is not
+automatically refreshed when the debugger stops, whereas @code{graph display}
+displays an automatically refreshed item.
+
+The new item is associated with a number, that is visible in its title bar.
+These numbers can be used to create links between the items, using the
+second argument to the command, @var{dependent on}. The link itself (ie the
+line) can be given a name that is automatically displayed, using the third
+argument.
+
+@item graph (print|display) `command`
+This command is similar to the one above, except it should be used to
+display the result of a debugger command in the canvas.
+
+For instance, if you want to display the value of a variable in hexadecimal
+rather than the default decimal with gdb, you should use a command like:
+
+@smallexample
+graph display `print /x my_variable`
+@end smallexample
+
+This will evaluate the command between back-quotes every time the debugger
+stops, and display this in the canvas. The lines that have changed will
+be automatically highlighted (in red by default).
+
+This command is the one used by default to display the value of registers
+for instance.
+
+@item graph (enable|disable) display display_num [display_num ...]
+This command will change the refresh status of items in the canvas. As
+explained above, items are associated with a number visible in their title
+bar.
+
+Using the @code{graph enable} command will force the item to be automatically
+refreshed every time the debugger stops, whereas the @code{graph disable}
+command will freeze the item.
+
+@item graph undisplay display_num
+This command will remove an item from the canvas
+
+@item view (source|asm|source_asm)
+This command indicates what should be displayed in the source window.
+The first possible value indicates that only the source code should be visible,
+the second one specifies that only the assembly code should be visible,
+and the last one indicates that both should be displayed.
+
+@end table
+
+
 @c --------------------------------------------------------------------
 @node The Status Line
 @section The Status Line
