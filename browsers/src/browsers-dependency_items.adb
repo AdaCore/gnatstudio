@@ -737,7 +737,8 @@ package body Browsers.Dependency_Items is
         Select_File
           (Title             => -"Select File",
            Use_Native_Dialog =>
-             Get_Pref (Get_Kernel (Context), Use_Native_Dialogs));
+             Get_Pref (Get_Kernel (Context), Use_Native_Dialogs),
+           History           => Get_History (Get_Kernel (Context)));
       --  ??? Should set up filters to only open file from the current project.
 
    begin
