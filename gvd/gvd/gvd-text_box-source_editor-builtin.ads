@@ -144,7 +144,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
      (Editor      : access Builtin_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Gtk_Widget);
+      Process     : Gtk.Widget.Gtk_Widget);
    --  See GVD.Text_Boxes.Source_Editor for more information.
 
    function Get_Line (Editor : access Builtin_Record) return Natural;
