@@ -23,16 +23,6 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
-with Gtk.Dialog;           use Gtk.Dialog;
-with Gtk.Label;            use Gtk.Label;
-with Gtk.Size_Group;       use Gtk.Size_Group;
-with Gtk.Box;              use Gtk.Box;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtk.Enums;            use Gtk.Enums;
-with Gtk.GEntry;           use Gtk.GEntry;
-with Gtk.Stock;            use Gtk.Stock;
-with Gtkada.Dialogs;       use Gtkada.Dialogs;
-with Gtkada.MDI;           use Gtkada.MDI;
 with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
@@ -79,6 +69,7 @@ package body Glide_Kernel.Scripts is
       File_Context_Class   : Class_Type := No_Class;
       File_Location_Class  : Class_Type := No_Class;
       Entity_Context_Class : Class_Type := No_Class;
+      Hook_Class           : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -162,14 +153,11 @@ package body Glide_Kernel.Scripts is
    Col_Cst        : aliased constant String := "column";
    Shared_Lib_Cst : aliased constant String := "shared_lib";
    Module_Cst     : aliased constant String := "module";
-   Msg_Cst        : aliased constant String := "msg";
-   Param1_Cst     : aliased constant String := "param1";
    Xml_Cst        : aliased constant String := "xml";
    Attribute_Cst  : aliased constant String := "attribute";
    Package_Cst    : aliased constant String := "package";
    Index_Cst      : aliased constant String := "index";
    Tool_Cst       : aliased constant String := "tool";
-   Force_Cst      : aliased constant String := "force";
    Action_Cst     : aliased constant String := "action";
    Prefix_Cst     : aliased constant String := "prefix";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
@@ -180,17 +168,12 @@ package body Glide_Kernel.Scripts is
      (Name_Cst'Access, File_Cst'Access, Line_Cst'Access, Col_Cst'Access);
    File_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
-   Dialog_Cmd_Parameters   : constant Cst_Argument_List :=
-     (1 => Msg_Cst'Access);
    Open_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access);
    Location_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Filename_Cst'Access,
       2 => Line_Cst'Access,
       3 => Col_Cst'Access);
-   Input_Dialog_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Msg_Cst'Access,
-      2 => Param1_Cst'Access);
    Xml_Custom_Parameters : constant Cst_Argument_List :=
      (1 => Xml_Cst'Access);
    Get_Attributes_Parameters : constant Cst_Argument_List :=
@@ -198,8 +181,6 @@ package body Glide_Kernel.Scripts is
       2 => Package_Cst'Access,
       3 => Index_Cst'Access);
    Tool_Parameters : constant Cst_Argument_List := (1 => Tool_Cst'Access);
-   Save_Windows_Parameters : constant Cst_Argument_List :=
-     (1 => Force_Cst'Access);
    Exec_Action_Parameters : constant Cst_Argument_List :=
      (1 => Action_Cst'Access);
    Scenar_Var_Parameters : constant Cst_Argument_List :=
@@ -618,39 +599,6 @@ package body Glide_Kernel.Scripts is
          Glide_Kernel.Custom.Add_Customization_String
            (Kernel, Nth_Arg (Data, 1));
 
-      elsif Command = "dialog" then
-         Name_Parameters (Data, Dialog_Cmd_Parameters);
-
-         declare
-            Result : Message_Dialog_Buttons;
-            pragma Unreferenced (Result);
-         begin
-            Result := Message_Dialog
-              (Msg     => Nth_Arg (Data, 1),
-               Buttons => Button_OK,
-               Justification => Justify_Left,
-               Parent  => Get_Main_Window (Kernel));
-         end;
-
-      elsif Command = "yes_no_dialog" then
-         Name_Parameters (Data, Dialog_Cmd_Parameters);
-         Set_Return_Value
-           (Data, Message_Dialog
-            (Msg           => Nth_Arg (Data, 1),
-             Buttons       => Button_Yes + Button_No,
-             Justification => Justify_Left,
-             Dialog_Type   => Confirmation,
-             Parent        => Get_Main_Window (Kernel)) = Button_Yes);
-
-      elsif Command = "save_all" then
-         Name_Parameters (Data, Save_Windows_Parameters);
-
-         if not Save_MDI_Children
-           (Kernel, No_Children, Nth_Arg (Data, 1, False))
-         then
-            Set_Error_Msg (Data, -"Cancelled by user");
-         end if;
-
       elsif Command = "execute_action" then
          Name_Parameters (Data, Exec_Action_Parameters);
 
@@ -694,62 +642,6 @@ package body Glide_Kernel.Scripts is
          begin
             Set_Return_Value
               (Data, Scenario_Variables_Cmd_Line (Kernel, Prefix));
-         end;
-
-      elsif Command = "input_dialog" then
-         declare
-            Dialog : Gtk_Dialog;
-            Label  : Gtk_Label;
-            Group  : Gtk_Size_Group;
-            Hbox   : Gtk_Hbox;
-            Button : Gtk_Widget;
-
-            type Ent_Array
-               is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
-            Ent : Ent_Array;
-
-         begin
-            Name_Parameters (Data, Input_Dialog_Cmd_Parameters);
-            Gtk_New (Dialog,
-                     Title  => Nth_Arg (Data, 1),
-                     Parent => Get_Main_Window (Kernel),
-                     Flags  => Modal);
-
-            Gtk_New (Label, Nth_Arg (Data, 1));
-            Set_Alignment (Label, 0.0, 0.5);
-            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
-
-            Gtk_New (Group);
-
-            for Num in Ent'Range loop
-               Gtk_New_Hbox (Hbox, Homogeneous => False);
-               Pack_Start (Get_Vbox (Dialog), Hbox);
-
-               Gtk_New (Label, Nth_Arg (Data, Num) & ':');
-               Set_Alignment (Label, 0.0, 0.5);
-               Add_Widget (Group, Label);
-               Pack_Start (Hbox, Label, Expand => False);
-
-               Gtk_New (Ent (Num));
-               Set_Activates_Default (Ent (Num),  True);
-               Pack_Start (Hbox, Ent (Num));
-            end loop;
-
-            Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-            Grab_Default (Button);
-            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-            Show_All (Dialog);
-
-            Set_Return_Value_As_List (Data);
-
-            if Run (Dialog) = Gtk_Response_OK then
-               for Num in Ent'Range loop
-                  Set_Return_Value (Data, Get_Text (Ent (Num)));
-               end loop;
-            end if;
-
-            Destroy (Dialog);
          end;
 
       end if;
@@ -1352,59 +1244,6 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel,
-         Command      => "dialog",
-         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
-         Description  =>
-           -("Display a modal dialog to report information to a user. This"
-             & " blocks the interpreter until the dialog is closed."),
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "yes_no_dialog",
-         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
-         Return_Value => "boolean",
-         Description  =>
-           -("Display a modal dialog to ask a question to the user. This"
-             & " blocks the interpreter until the dialog is closed. The"
-             & " dialog has two buttons Yes and No, and the selected button"
-             & " is returned to the caller"),
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "input_dialog",
-         Params       =>
-           Parameter_Names_To_Usage (Input_Dialog_Cmd_Parameters),
-         Return_Value => "list",
-         Description  =>
-           -("Display a modal dialog and request some input from the user."
-             & " The message is displayed at the top, and one input field"
-             & " is displayed for each remaining argument. The return value"
-             & " is the value that the user has input for each of these"
-             & " parameters." & ASCII.LF
-             & "An empty list is returned if the user presses Cancel"),
-         Minimum_Args => 2,
-         Maximum_Args => 100,
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "save_all",
-         Params       => Parameter_Names_To_Usage (Save_Windows_Parameters),
-         Description  =>
-           -("Save all currently unsaved windows. This includes open editors,"
-             & " the project, and any other window that has registered some"
-             & " save callbacks." & ASCII.LF
-             & "If the force parameter is false, then a confirmation dialog"
-             & " is displayed so that the user can select which windows"
-             & " to save."),
-         Minimum_Args => 0,
-         Maximum_Args => 1,
-         Handler      => Default_Command_Handler'Access);
-      Register_Command
-        (Kernel,
          Command      => "execute_action",
          Params       => Parameter_Names_To_Usage (Exec_Action_Parameters),
          Description  =>
@@ -1441,6 +1280,8 @@ package body Glide_Kernel.Scripts is
              & " hierarchy, and their current value"),
          Minimum_Args => 0,
          Maximum_Args => 0,
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
@@ -1453,6 +1294,8 @@ package body Glide_Kernel.Scripts is
              & " external tool, for instance make or GNAT"),
          Minimum_Args => 0,
          Maximum_Args => 1,
+         Class         => Get_Project_Class (Kernel),
+         Static_Method => True,
          Handler      => Default_Command_Handler'Access);
 
       Register_Command
@@ -2279,6 +2122,24 @@ package body Glide_Kernel.Scripts is
 
       return Scripting_Data (Kernel.Scripts).Context_Class;
    end Get_Context_Class;
+
+   --------------------
+   -- Get_Hook_Class --
+   --------------------
+
+   function Get_Hook_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).Hook_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).Hook_Class := New_Class
+           (Kernel,
+            "Hook",
+            "General interface to hooks");
+      end if;
+
+      return Scripting_Data (Kernel.Scripts).Hook_Class;
+   end Get_Hook_Class;
 
    ----------------------------
    -- Get_Area_Context_Class --
