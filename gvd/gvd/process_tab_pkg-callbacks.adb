@@ -118,7 +118,8 @@ package body Process_Tab_Pkg.Callbacks is
 
          if Is_Graphic (Arg1 (Arg1'First)) then
             Text_Output_Handler
-              (Top, Arg1 (Arg1'First .. Arg1'First + Integer (Arg2) - 1));
+              (Top, Arg1 (Arg1'First .. Arg1'First + Integer (Arg2) - 1),
+               Is_Command => True);
             Set_Position
               (Top.Debugger_Text, Gint (Get_Length (Top.Debugger_Text)));
          end if;
