@@ -10237,8 +10237,9 @@ def on_changed (combo, choice):
    print "on_changed called: " + \
       my_var + " " + combo.data + " " + choice
 
-combo=GPS.Toolbar().append \
-   ("name", label="Name", on_changed=on_changed)
+combo = GPS.Combo \
+  ("name", label="name", on_changed=on_changed)
+GPS.Toolbar().append (combo)
 combo.data = "My own data"
 @end smallexample
 
@@ -10251,7 +10252,7 @@ as its first parameter. Therefore, there is no extra parameter either.
 
 Note however than whatever class the method is defined in, the first
 parameter is always an instance of the class documented in the GPS
-documentation (in this case a GPS.ToolbarEntry instance), not an
+documentation (in this case a GPS.Combo instance), not an
 instance of the current class.
 
 In this first example, since we do not have access to the instance of
@@ -10264,8 +10265,9 @@ import GPS
 class MyClass:
    my_var = "global data"
    def __init__ (self):
-      self.combo = GPS.Toolbar().append \
+      self.combo = GPS.Combo \
          ("name", label="name", on_changed=MyClass.on_changed)
+      GPS.Toolbar().append (self.combo)
       self.combo.data = "My own data"
 
    def on_changed (combo, choice):
@@ -10285,8 +10287,9 @@ and thus be different for each instance of MyClass.
 import GPS
 class MyClass:
    def __init__ (self):
-      self.combo = GPS.Toolbar().append \
+      self.combo = GPS.Combo \
          ("name", label="name", on_changed=MyClass.on_changed)
+      GPS.Toolbar().append (self.combo)
       self.combo.data = "My own data"
       self.combo.myclass = self   ## Save the instance
       self.my_var = "global data"
@@ -10313,8 +10316,9 @@ extra third argument to on_changed in the example below.
 import GPS
 class MyClass:
    def __init__ (self):
-      self.combo = GPS.Toolbar().append \
-         ("name", label="Name", on_changed=self.on_changed)
+      self.combo = GPS.Combo \
+         ("name", label="name", on_changed=self.on_changed)
+      GPS.Toolbar().append (self.combo)
       self.combo.data = "My own data"
       self.my_var = "global data"
 
