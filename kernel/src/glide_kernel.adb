@@ -146,7 +146,7 @@ package body Glide_Kernel is
         (Handle, ".:" &
          "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib");
       --  ??? This is a temporary hack for the demo. We should really compute
-      --  ??? these values from the output of gnatls -v...
+      --  these values from the output of gnatls -v...
 
       Load_Preferences
         (Handle, Get_Home_Directory & Directory_Separator & "preferences");
