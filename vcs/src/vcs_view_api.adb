@@ -1139,7 +1139,8 @@ package body VCS_View_API is
            (Kernel,
             Get_Log_From_File
               (Kernel,
-               Create (Full_Filename => String_List.Head (List)), True));
+               Create (Full_Filename => String_List.Head (List)), True),
+            Dock => Bottom);
          String_List.Next (List);
       end loop;
 
@@ -1524,7 +1525,8 @@ package body VCS_View_API is
             All_Logs_Exist := False;
             Open_File_Editor
               (Kernel,
-               Get_Log_From_File (Kernel, File, True));
+               Get_Log_From_File (Kernel, File, True),
+               Dock => Bottom);
          end if;
 
          Files_Temp := String_List.Next (Files_Temp);
