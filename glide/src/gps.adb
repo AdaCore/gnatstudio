@@ -28,6 +28,7 @@ with Glide_Menu;
 with Glide_Main_Window;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with String_Utils;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
@@ -63,8 +64,6 @@ procedure Glide2 is
    use Glide_Main_Window;
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
-
-   Directory_Separator : constant Character := GNAT.OS_Lib.Directory_Separator;
 
    Glide          : Glide_Window;
    Page           : Glide_Page.Glide_Page;
@@ -108,20 +107,14 @@ procedure Glide2 is
       end if;
 
       Bind_Text_Domain
-        ("glide", Prefix.all & GNAT.OS_Lib.Directory_Separator & "share" &
-         Directory_Separator & "locale");
+        ("glide", Format_Pathname (Prefix.all & "/share/locale"));
 
       if Home.all /= "" then
-         if Is_Directory_Separator (Home (Home'Last)) then
-            Dir := new String' (Home (Home'First .. Home'Last - 1) &
-              Directory_Separator & ".glide");
-         else
-            Dir := new String' (Home.all & Directory_Separator & ".glide");
-         end if;
-
+         Dir := new String'
+           (String_Utils.Name_As_Directory (Home.all) & ".glide");
       else
          --  Default to /
-         Dir := new String'(Directory_Separator & ".glide");
+         Dir := new String' (Format_Pathname ("/.glide"));
       end if;
 
       begin
@@ -134,13 +127,13 @@ procedure Glide2 is
          end if;
 
          if not
-           Is_Directory (Dir.all & Directory_Separator & "sessions")
+           Is_Directory (String_Utils.Name_As_Directory (Dir.all) & "sessions")
          then
-            Make_Dir (Dir.all & Directory_Separator & "sessions");
+            Make_Dir (String_Utils.Name_As_Directory (Dir.all) & "sessions");
             if not Dir_Created then
                Button := Message_Dialog
                  ((-"Created config directory ")
-                  & Dir.all & Directory_Separator & "sessions",
+                  & String_Utils.Name_As_Directory (Dir.all) & "sessions",
                   Information, Button_OK, Justification => Justify_Left);
             end if;
          end if;
@@ -190,8 +183,7 @@ begin
    Maximize (Glide);
 
    declare
-      Rc : constant String := Prefix.all & Directory_Separator & "bin" &
-        Directory_Separator & "gtkrc";
+      Rc : constant String := Format_Pathname (Prefix.all & "/bin/gtkrc");
    begin
       if Is_Regular_File (Rc) then
          Gtk.Rc.Parse (Rc);
@@ -205,12 +197,12 @@ begin
    --  ??? Should have a cleaner way of initializing Log_File
 
    declare
-      Log : aliased constant String :=
-        Glide.Home_Dir.all & Directory_Separator & "debugger.log" & ASCII.NUL;
+      Log : constant String :=
+        String_Utils.Name_As_Directory (Glide.Home_Dir.all) & "debugger.log";
    begin
       Glide.Debug_Mode := True;
       Glide.Log_Level  := GVD.Types.Hidden;
-      Glide.Log_File   := Create_File (Log'Address, Fmode => Text);
+      Glide.Log_File   := Create_File (Log, Fmode => Text);
    end;
 
    Glide_Page.Gtk_New (Page, Glide);
@@ -302,7 +294,9 @@ begin
    if not File_Opened then
       Open_Html
         (Glide.Kernel,
-         Glide.Prefix_Directory.all & "/doc/glide2/html/glide-welcome.html");
+         Format_Pathname
+           (Glide.Prefix_Directory.all &
+            "/doc/glide2/html/glide-welcome.html"));
       Maximize_Children (Get_MDI (Glide.Kernel));
    end if;
 

@@ -229,32 +229,39 @@ package body Glide_Menu is
       case Help_Context'Val (Action) is
          when Welcome_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all &
-              "/doc/glide2/html/glide-welcome.html");
+              Format_Pathname
+                (Top.Prefix_Directory.all &
+                 "/doc/glide2/html/glide-welcome.html"));
 
          when GVD_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/glide2/html/gvd.html");
+              Format_Pathname
+                (Top.Prefix_Directory.all & "/doc/glide2/html/gvd.html"));
 
          when GNAT_UG_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/glide2/html/gnat_ug.html");
+              Format_Pathname
+                (Top.Prefix_Directory.all & "/doc/glide2/html/gnat_ug.html"));
 
          when GNAT_RM_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/glide2/html/gnat_rm.html");
+              Format_Pathname
+                (Top.Prefix_Directory.all & "/doc/glide2/html/gnat_rm.html"));
 
          when ARM95_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/glide2/html/arm95.html");
+              Format_Pathname
+                (Top.Prefix_Directory.all & "/doc/glide2/html/arm95.html"));
 
          when GDB_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/glide2/html/gdb.html");
+              Format_Pathname
+                (Top.Prefix_Directory.all & "/doc/glide2/html/gdb.html"));
 
          when GCC_Help =>
             Open_Html (Top.Kernel,
-              Top.Prefix_Directory.all & "/doc/glide2/html/gcc.html");
+              Format_Pathname
+                (Top.Prefix_Directory.all & "/doc/glide2/html/gcc.html"));
       end case;
 
    exception
