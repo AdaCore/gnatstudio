@@ -53,12 +53,37 @@
 --  specific modules, since it doesn't need to know in advance the exact list
 --  of modules.
 --
+--  It is possible to dynamically register a module that hasn't been linked
+--  with the GPS executable using the procedure Dynamic_Register_Module.
+--  In order to register modules dynamically, the following conditions need
+--  to be met:
+--
+--  - compile GPS sources with -fPIC when required by the platform
+--  - bind GPS with -shared so that the shared libgnat is used: this is
+--    needed so that the same run time is used by all modules, and in
+--    particular for proper dispatching (access to a global table).
+--  - create libkernel.so and build gps with -lkernel by using the special
+--    target 'shared' in the glide directory: make -C glide shared
+--    As for libgnat, this step is needed so that global variables (e.g.
+--    the debug handlers, the module ids) are shared between modules.
+--  - create the dynamic module, including elaboration code that will be
+--    called by Dynamic_Register_Module, e.g:
+--
+--    module/obj> gnat bind -E -P../$module -C -L${module}_module_ \
+--                  -o ${module}_init.c *.ali
+--    > gcc -c -fPIC ${module}_init.c
+--    > gcc -shared -o lib${module}_module.so *.o
+--
+--   To load a module during GPS execution, use the command "insmod":
+--
+--   GPS> insmod vcs_cvs vcs__cvs
+--
 --  Contextual menus
 --  ================
 --
 --   Here is a description of the sequence of events used to display contextual
 --   menus in GPS:
---      - Each object that should have a contextual menu should call
+--      - Each object that should have a contextual menu calls
 --        Register_Contextual_Menu. The kernel will automatically setup
 --        appropriate gtk callbacks.
 --      - Whenever the user presses the right mouse button, the kernel will ask
@@ -95,8 +120,8 @@
 --
 --   All these changes can be done locally in the module, and do not need any
 --   modification to the rest of GPS itself (apart from registering the module
---   in gps.adb). This means that a user might chose not to load some of the
---   modules to simplify the GUI somewhat.
+--   itself. This means that a user might choose not to load some of the
+--   modules to simplify the GUI or to use less memory.
 
 with Gdk.Event;
 with Glib.Object;
@@ -177,14 +202,35 @@ package Glide_Kernel.Modules is
    --  See description of Module_Tooltip_Handler in Glide_Kernel and procedure
    --  Compute_Tooltip below for more details.
 
+   procedure Dynamic_Register_Module
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Shared_Lib  : String;
+      Module_Name : String;
+      Success     : out Boolean);
+   --  Register a module dynamically.
+   --  Shared_Lib is the name of the shared library containing the module.
+   --  It can either be a full name, or a short name, e.g. "vfs" for
+   --  "libvfs.so".
+   --  Module_Name is the name of the module, e.g. "vfs_module".
+   --  This procedure assumes that Shared_Lib provides two routines called
+   --  Module_Name & "_init" and Module_Name & "__register_module" with the
+   --  following profiles:
+   --
+   --  type Module_Init is access procedure;
+   --
+   --  type Register_Module is access procedure
+   --    (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --
+   --  Success is set to True if the module could be successfully registered.
+
    function Module_Name (ID : access Module_ID_Record'Class) return String;
-   --  Return the name of t he module registered as ID.
+   --  Return the name of the module registered as ID.
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class);
    --  Free all the registered modules, and call Destroy for each of these.
 
-   function Get_Priority (ID : access Module_ID_Record'Class)
-      return Module_Priority;
+   function Get_Priority
+     (ID : access Module_ID_Record'Class) return Module_Priority;
    --  Return the current priority of ID
 
    ----------------------
