@@ -468,6 +468,7 @@ package body Browsers.Call_Graph is
       Node          : Scope_Tree_Node;
       Lib_Info      : LI_File_Ptr;
       Rename        : Entity_Information;
+      Is_Renaming   : Boolean;
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
@@ -520,8 +521,8 @@ package body Browsers.Call_Graph is
          Refresh (Browser, Item);
 
          --  If we have a renaming, add the entry for the renamed entity
-         Rename := Renaming_Of (Kernel, Entity);
-         if Rename /= No_Entity_Information then
+         Renaming_Of (Kernel, Entity, Is_Renaming, Rename);
+         if Is_Renaming and then Rename /= No_Entity_Information then
             Child := Add_Entity_If_Not_Present (Browser, Rename);
             if not Has_Link (Get_Canvas (Browser), Item, Child) then
                Link := new Renaming_Link_Record;
@@ -530,6 +531,12 @@ package body Browsers.Call_Graph is
                   Src => Item, Dest => Child, Arrow => Both_Arrow);
             end if;
             Destroy (Rename);
+
+         elsif Is_Renaming then
+            Insert (Kernel,
+                    Get_Name (Entity)
+                    & (-" is a renaming of an unknown entity"),
+                    Mode => Error);
 
          else
             Iter := Start (Node);
@@ -682,6 +689,7 @@ package body Browsers.Call_Graph is
       Data          : Examine_Ancestors_Idle_Data;
       Rename        : Entity_Information;
       Link          : Glide_Browser_Link;
+      Is_Renaming   : Boolean;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -703,8 +711,8 @@ package body Browsers.Call_Graph is
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
       --  If we have a renaming, add the entry for the renamed entity
-      Rename := Renaming_Of (Kernel, Entity);
-      if Rename /= No_Entity_Information then
+      Renaming_Of (Kernel, Entity, Is_Renaming, Rename);
+      if Is_Renaming and then Rename /= No_Entity_Information then
          Child := Add_Entity_If_Not_Present (Browser, Rename);
          if not Has_Link (Get_Canvas (Browser), Item, Child) then
             Link := new Renaming_Link_Record;
@@ -713,6 +721,12 @@ package body Browsers.Call_Graph is
                Src => Item, Dest => Child, Arrow => Both_Arrow);
          end if;
          Destroy (Rename);
+
+      elsif Is_Renaming then
+         Insert (Kernel,
+                 Get_Name (Entity)
+                 & (-" is a renaming of an unknown entity"),
+                 Mode => Error);
       end if;
 
       Data := (Iter    => new Entity_Reference_Iterator,
