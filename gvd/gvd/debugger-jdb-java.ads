@@ -75,6 +75,13 @@ package Debugger.Jdb.Java is
       Name  : String;
       Field : String) return String;
 
+   ---------------------
+   -- Project support --
+   ---------------------
+
+   function Get_Project_Fields
+     (Lang : access Jdb_Java_Language) return Project_Field_Array;
+
    -------------
    -- Parsing --
    -------------

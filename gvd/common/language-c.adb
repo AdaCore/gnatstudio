@@ -50,6 +50,13 @@ package body Language.C is
             Icon           => subprogram_xpm'Access,
             Make_Entry     => null));
 
+   C_Project_Fields : constant Project_Field_Array :=
+     (1 => (Attribute_Name  => new String'("compiler_command"),
+            Attribute_Index => new String'("c"),
+            Description     => new String'("C compiler"),
+            Values          => null,
+            Editable        => True));
+
    -----------------
    -- Local types --
    -----------------
@@ -858,5 +865,17 @@ package body Language.C is
 
       return Line;
    end Uncomment_Line;
+
+   ------------------------
+   -- Get_Project_Fields --
+   ------------------------
+
+   function Get_Project_Fields
+     (Lang : access C_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return C_Project_Fields;
+   end Get_Project_Fields;
 
 end Language.C;

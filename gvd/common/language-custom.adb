@@ -22,8 +22,12 @@ with Glib;                  use Glib;
 with Glib.Xml_Int;          use Glib.Xml_Int;
 with GNAT.Regpat;           use GNAT.Regpat;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Unchecked_Deallocation;
 
 package body Language.Custom is
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Project_Field_Array, Project_Field_Array_Access);
 
    ---------------------
    -- Array_Item_Name --
@@ -90,6 +94,7 @@ package body Language.Custom is
       Comment_Start_Length,
       Comment_End_Length,
       New_Line_Comment_Start_Length : Natural := 0;
+      Tmp : Project_Field_Array_Access;
       Str           : Unbounded_String;
 
       procedure Parse_Character
@@ -195,6 +200,30 @@ package body Language.Custom is
             Lang.Keywords := new Pattern_Matcher'(Compile (Keywords));
          end if;
       end;
+
+      --  Concatenate all project fields
+
+      Node := Find_Tag (Top.Child, "Project_Field");
+      while Node /= null loop
+         if Lang.Project_Fields = null then
+            Lang.Project_Fields := new Project_Field_Array (1 .. 1);
+         else
+            Tmp := Lang.Project_Fields;
+            Lang.Project_Fields := new Project_Field_Array
+              (Tmp'First .. Tmp'Last + 1);
+            Lang.Project_Fields (Tmp'Range) := Tmp.all;
+            Unchecked_Free (Tmp);
+         end if;
+
+         Lang.Project_Fields (Lang.Project_Fields'Last) :=
+           (Attribute_Name  => new String'(Get_Attribute (Node, "name")),
+            Attribute_Index => new String'(Get_Attribute (Node, "index")),
+            Description     => new String'(Node.Value.all),
+            Values          => null,   --  ??? Not supported in XML yet
+            Editable        => True); --  ??? Not supported in XML yet
+
+         Node := Find_Tag (Node.Next, "Project_Field");
+      end loop;
 
       Node := Find_Tag (Top.Child, "Context");
 
@@ -412,5 +441,20 @@ package body Language.Custom is
          return Lang.Body_Suffix.all;
       end if;
    end Get_Body_Suffix;
+
+   ------------------------
+   -- Get_Project_Fields --
+   ------------------------
+
+   function Get_Project_Fields
+     (Lang : access Custom_Language) return Project_Field_Array
+   is
+   begin
+      if Lang.Project_Fields = null then
+         return (1 .. 0 => No_Project_Field);
+      else
+         return Lang.Project_Fields.all;
+      end if;
+   end Get_Project_Fields;
 
 end Language.Custom;

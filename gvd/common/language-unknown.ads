@@ -50,6 +50,9 @@ package Language.Unknown is
       Name  : String;
       Field : String) return String;
 
+   function Get_Project_Fields
+     (Lang : access Unknown_Language) return Project_Field_Array;
+
 private
    type Unknown_Language is new Language_Root with null record;
 

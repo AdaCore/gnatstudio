@@ -127,6 +127,18 @@ package body Debugger.Jdb.Java is
       return Record_Field_Name (Java_Lang, Name, Field);
    end Record_Field_Name;
 
+   ------------------------
+   -- Get_Project_Fields --
+   ------------------------
+
+   function Get_Project_Fields
+     (Lang : access Jdb_Java_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Get_Project_Fields (Java_Lang);
+   end Get_Project_Fields;
+
    ------------------
    -- Set_Variable --
    ------------------

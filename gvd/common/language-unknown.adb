@@ -115,4 +115,16 @@ package body Language.Unknown is
          Case_Sensitive                => True);
    end Get_Language_Context;
 
+   ------------------------
+   -- Get_Project_Fields --
+   ------------------------
+
+   function Get_Project_Fields
+     (Lang : access Unknown_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return (1 .. 0 => No_Project_Field);
+   end Get_Project_Fields;
+
 end Language.Unknown;

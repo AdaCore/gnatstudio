@@ -117,6 +117,43 @@ package Language is
       Field : String) return String is abstract;
    --  Return the name to use for a specific field of a record.
 
+   ---------------------
+   -- Project support --
+   ---------------------
+
+   type Project_Field is record
+      Attribute_Name  : Basic_Types.String_Access;
+      Attribute_Index : Basic_Types.String_Access := null;
+      Description     : Basic_Types.String_Access;
+      Values          : Basic_Types.String_Array_Access := null;
+      Editable        : Boolean := True;
+   end record;
+   No_Project_Field : constant Project_Field := (null, null, null, null, True);
+   type Project_Field_Array is array (Natural range <>) of Project_Field;
+
+   function Get_Project_Fields
+     (Lang : access Language_Root) return Project_Field_Array is abstract;
+   --  Return the list of project attributes needed to support this language.
+   --  In the project, this attribute is set with a line like:
+   --     for Attribute_Name ("Attribute_Index") use "...";
+   --  The list of valid attribute names is restricted, since the project
+   --  parser will complain if an unknown attribute is found in the project.
+   --  It is valid to have a null Attribute_Index, in case the project
+   --  attribute is not indexed. In this case, the line would look like:
+   --     for Attribute_Name use "...";
+   --
+   --  Description is the string used in the project editor to describe the
+   --  attribute.
+   --  Values is a set of possible values (in which case a combo box is used
+   --  when editing the attribute). If Editable is False, then the user can
+   --  only select one of these values. If Editable is True, any other value
+   --  can be specified by the user.
+   --
+   --  The returned value mustn't be freed by the caller.
+
+   procedure Free (Fields : in out Project_Field_Array);
+   --  Free the contents of the array
+
    ----------------------
    -- Language Context --
    ----------------------

@@ -74,6 +74,13 @@ package Debugger.Gdb.Cpp is
       Name  : String;
       Field : String) return String;
 
+   ---------------------
+   -- Project support --
+   ---------------------
+
+   function Get_Project_Fields
+     (Lang : access Gdb_Cpp_Language) return Project_Field_Array;
+
    -------------
    -- Parsing --
    -------------

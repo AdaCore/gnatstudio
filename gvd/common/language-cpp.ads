@@ -47,6 +47,13 @@ package Language.Cpp is
    function Explorer_Regexps
      (Lang : access Cpp_Language) return Explorer_Categories;
 
+   ---------------------
+   -- Project support --
+   ---------------------
+
+   function Get_Project_Fields
+     (Lang : access Cpp_Language) return Project_Field_Array;
+
    ----------------------
    -- Source Analyzing --
    ----------------------

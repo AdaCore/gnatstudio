@@ -51,6 +51,9 @@ package Language.Java is
       Name  : String;
       Field : String) return String;
 
+   function Get_Project_Fields
+     (Lang : access Java_Language) return Project_Field_Array;
+
 private
    type Java_Language is new Language_Root with null record;
 

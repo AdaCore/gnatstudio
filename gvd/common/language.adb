@@ -603,4 +603,17 @@ package body Language is
       Lang.Indent_Style  := Indent_Style;
    end Set_Indentation_Parameters;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Fields : in out Project_Field_Array) is
+   begin
+      for F in Fields'Range loop
+         Free (Fields (F).Attribute_Name);
+         Free (Fields (F).Attribute_Index);
+         Free (Fields (F).Description);
+      end loop;
+   end Free;
+
 end Language;

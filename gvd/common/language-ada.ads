@@ -69,6 +69,13 @@ package Language.Ada is
       Name  : String;
       Field : String) return String;
 
+   ---------------------
+   -- Project support --
+   ---------------------
+
+   function Get_Project_Fields
+     (Lang : access Ada_Language) return Project_Field_Array;
+
    ----------------------
    -- Source Analyzing --
    ----------------------

@@ -171,6 +171,18 @@ package body Debugger.Gdb.Cpp is
       return Record_Field_Name (Cpp_Lang, Name, Field);
    end Record_Field_Name;
 
+   ------------------------
+   -- Get_Project_Fields --
+   ------------------------
+
+   function Get_Project_Fields
+     (Lang : access Gdb_Cpp_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Get_Project_Fields (Cpp_Lang);
+   end Get_Project_Fields;
+
    ---------------------
    -- Break Exception --
    ---------------------

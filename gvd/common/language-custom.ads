@@ -71,6 +71,13 @@ package Language.Custom is
       Name  : String;
       Field : String) return String;
 
+   ---------------------
+   -- Project support --
+   ---------------------
+
+   function Get_Project_Fields
+     (Lang : access Custom_Language) return Project_Field_Array;
+
    ------------------
    -- Field access --
    ------------------
@@ -89,6 +96,7 @@ private
    type Language_Context_Access is access Language_Context;
    type Explorer_Categories_Access is access Explorer_Categories;
    type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
+   type Project_Field_Array_Access is access Project_Field_Array;
 
    type Custom_Language is new Language_Root with record
       Categories  : Explorer_Categories_Access;
@@ -97,6 +105,7 @@ private
       Name        : Glib.String_Ptr;
       Spec_Suffix : Glib.String_Ptr;
       Body_Suffix : Glib.String_Ptr;
+      Project_Fields : Project_Field_Array_Access;
    end record;
 
 end Language.Custom;

@@ -132,6 +132,18 @@ package body Debugger.Gdb.C is
       return Record_Field_Name (C_Lang, Name, Field);
    end Record_Field_Name;
 
+   ------------------------
+   -- Get_Project_Fields --
+   ------------------------
+
+   function Get_Project_Fields
+     (Lang : access Gdb_C_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Get_Project_Fields (C_Lang);
+   end Get_Project_Fields;
+
    ---------------------
    -- Break Exception --
    ---------------------

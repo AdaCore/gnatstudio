@@ -137,6 +137,18 @@ package body Debugger.Gdb.Ada is
       return Record_Field_Name (Ada_Lang, Name, Field);
    end Record_Field_Name;
 
+   ------------------------
+   -- Get_Project_Fields --
+   ------------------------
+
+   function Get_Project_Fields
+     (Lang : access Gdb_Ada_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Get_Project_Fields (Ada_Lang);
+   end Get_Project_Fields;
+
    ---------------------
    -- Break Exception --
    ---------------------
