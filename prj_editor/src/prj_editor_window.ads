@@ -32,7 +32,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Project_Trees;   use Project_Trees;
 with Project_Viewers; use Project_Viewers;
 with Scenario_Views;  use Scenario_Views;
-with Prj_Manager;     use Prj_Manager;
+with Glide_Kernel;    use Glide_Kernel;
 
 with Gtkada.MDI;      use Gtkada.MDI;
 
@@ -44,19 +44,19 @@ package Prj_Editor_Window is
       Scenar   : Scenario_View;
       MDI      : MDI_Window;
       Scrolled : Gtk_Scrolled_Window;
-      Manager  : Project_Manager;
+      Kernel   : Glide_Kernel.Kernel_Handle;
    end record;
    type Project_Editor is access all Project_Editor_Record;
    --  Window containing a project editor
 
    procedure Gtk_New
      (Prj          : out Project_Editor;
-      Project_Name : String);
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new editor window based on the contents of Project_Name
 
    procedure Initialize
      (Prj          : access Project_Editor_Record'Class;
-      Project_Name : String);
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization function
 
 end Prj_Editor_Window;

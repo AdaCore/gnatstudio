@@ -27,8 +27,6 @@
 -----------------------------------------------------------------------
 
 with Prj;          use Prj;
-with Prj.Tree;     use Prj.Tree;
-with Prj.Part;     use Prj.Part;
 with Types;        use Types;
 
 with Gtk.Window;      use Gtk.Window;
@@ -40,7 +38,8 @@ with Gtk.Widget;      use Gtk.Widget;
 with Project_Trees;   use Project_Trees;
 with Project_Viewers; use Project_Viewers;
 with Scenario_Views;  use Scenario_Views;
-with Prj_Manager;     use Prj_Manager;
+with Glide_Kernel;    use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 with Gtkada.MDI;      use Gtkada.MDI;
 
@@ -58,14 +57,14 @@ package body Prj_Editor_Window is
         Project_Editor (Get_Toplevel (Tree));
       T            : Project_Tree := Project_Tree (Tree);
       Project_View : Project_Id := Get_Selected_Project (T);
-      Dir          : Name_Id;
+      Dir          : String_Id;
 
    begin
       Clear (Prj.Viewer);  --  ??? Should delete selectively
 
       if Project_View /= No_Project then
          Dir := Get_Selected_Directory (T, Project_View);
-         if Dir = No_Name then
+         if Dir = No_String then
             Show_Project (Prj.Viewer, Project_View);
          else
             Show_Project (Prj.Viewer, Project_View, Dir);
@@ -79,10 +78,10 @@ package body Prj_Editor_Window is
 
    procedure Gtk_New
      (Prj          : out Project_Editor;
-      Project_Name : String) is
+      Kernel       : access Kernel_Handle_Record'Class) is
    begin
       Prj := new Project_Editor_Record;
-      Initialize (Prj, Project_Name);
+      Initialize (Prj, Kernel);
    end Gtk_New;
 
    ----------------
@@ -91,22 +90,14 @@ package body Prj_Editor_Window is
 
    procedure Initialize
      (Prj          : access Project_Editor_Record'Class;
-      Project_Name : String)
+      Kernel       : access Kernel_Handle_Record'Class)
    is
       Child   : MDI_Child;
-      Project : Project_Node_Id;
 
    begin
-      Parse (Project, Project_Name, Always_Errout_Finalize => True);
-
-      pragma Assert (Project /= Empty_Node);
-
       Gtk.Window.Initialize (Prj, Window_Toplevel);
       Set_Title (Prj, "Project Editor");
       Set_Default_Size (Prj, 500, 500);
-
-      --  Project manager
-      Gtk_New (Prj.Manager, Project);
 
       Gtk_New (Prj.MDI);
       Add (Prj, Prj.MDI);
@@ -115,7 +106,7 @@ package body Prj_Editor_Window is
       --  Explorer
       Gtk_New (Prj.Scrolled);
       Set_Policy (Prj.Scrolled, Policy_Automatic, Policy_Automatic);
-      Gtk_New (Prj.Tree, Prj.Manager, Columns => 1);
+      Gtk_New (Prj.Tree, Kernel);
       Add (Prj.Scrolled, Prj.Tree);
       Child := Put (Prj.MDI, Prj.Scrolled);
       Set_Title (Child, "Explorer");
@@ -131,7 +122,7 @@ package body Prj_Editor_Window is
 
       --  Scenario editor
 
-      Gtk_New (Prj.Scenar, Prj.Manager);
+      Gtk_New (Prj.Scenar, Kernel);
       Child := Put (Prj.MDI, Prj.Scenar);
       Set_Title (Child, "Current Scenario");
       Set_Dock_Side (Child, Top);
@@ -139,12 +130,12 @@ package body Prj_Editor_Window is
 
       --  Project Viewer
 
-      Gtk_New (Prj.Viewer, Prj.Manager);
+      Gtk_New (Prj.Viewer, Kernel);
       Child := Put (Prj.MDI, Prj.Viewer);
       Set_Title (Child, "Project Contents");
 
       --  Compute the current view, and initialize the explorer, scenario, ...
-      Recompute_View (Prj.Manager);
+      Recompute_View (Kernel);
 
       Maximize_Children (Prj.MDI);
    end Initialize;
