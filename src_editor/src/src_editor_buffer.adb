@@ -2452,7 +2452,8 @@ package body Src_Editor_Buffer is
          end if;
       end if;
 
-      Internal_Save_To_File (Source_Buffer (Buffer), Filename, False, Success);
+      Internal_Save_To_File
+        (Source_Buffer (Buffer), Filename, Internal, Success);
 
       if not Internal then
          if not Success then
