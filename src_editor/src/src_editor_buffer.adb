@@ -1613,11 +1613,12 @@ package body Src_Editor_Buffer is
            Get_Slice (Entity_Start, Entity_End);
          Slice : constant Unchecked_String_Access :=
            To_Unchecked_String (UTF8);
-
-         --  ??? Could it be more efficient to just substract
-         --     Get_Offset (Entity_End) - Get_Offset (Entity_Start)
-         Length : constant Integer := Integer (Strlen (UTF8));
          pragma Suppress (Access_Check, Slice);
+
+         --  Can't use Get_Offset (Entity_End) - Get_Offset (Entity_Start)
+         --  since this would give the number of chars, not bytes.
+
+         Length : constant Integer := Integer (Strlen (UTF8));
 
       begin
          Highlight_Complete := True;
