@@ -356,7 +356,7 @@ package body Src_Info.LI_Utils is
                Dep_Ptr.Next := new Dependency_File_Info_Node;
                Dep_Ptr.Next.Next := null;
                Dep_Ptr := Dep_Ptr.Next;
-               Dep_Ptr.Value.File.LI   := No_LI_File;
+               Dep_Ptr.Value.File.LI   := Tmp_LI_File_Ptr;
                Dep_Ptr.Value.File.Part := Unit_Body;
                Dep_Ptr.Value.File.Source_Filename
                                        := new String'(Referred_Filename);
