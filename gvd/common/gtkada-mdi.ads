@@ -312,7 +312,8 @@ private
       --  The size of the window, when not iconified. When in normal state,
       --  this represents the size of the window, since we can not rely on
       --  Get_Allocation_Width and Get_Allocation_Height (in case for instance
-      --  we just resized the widget but didn't go back to the main gtk loop)
+      --  we just resized the widget but didn't go back to the main gtk loop).
+      --  If these are set to -1, the child will be assigned its requested size.
 
       Uniconified_X, Uniconified_Y : Glib.Gint;
       --  Initial coordinates of the item when it is not iconified. These
@@ -327,6 +328,7 @@ private
       --  The item in the dynamic menu that represents this child.
 
       Maximize_Button : Gtk.Button.Gtk_Button;
+      Minimize_Button : Gtk.Button.Gtk_Button;
    end record;
 
    procedure Gtk_New (Child : out MDI_Child;

@@ -751,6 +751,8 @@ package body Gtkada.MDI is
       M : MDI_Window := MDI_Window (Get_User_Data (MDI, Stub));
       Alloc : Gtk_Allocation;
       Req   : Gtk_Requisition;
+      List : Widget_List.Glist;
+      C : MDI_Child;
 
    begin
       --  First, register the new size of the MDI itself
@@ -760,6 +762,22 @@ package body Gtkada.MDI is
            (Get_Window (M),
             MDI_Alloc.X, MDI_Alloc.Y, MDI_Alloc.Width, MDI_Alloc.Height);
       end if;
+
+      --  Resize the children that haven't been initialized yet.
+
+      List := First (M.Items);
+      while List /= Null_List loop
+         C := MDI_Child (Get_Data (List));
+         if C.Uniconified_Width = -1 or else C.Uniconified_Height = -1 then
+            Size_Request (C, Req);
+            C.Uniconified_Width := Req.Width;
+            C.Uniconified_Height := Req.Height;
+            Alloc := (C.X, C.Y, C.Uniconified_Width, C.Uniconified_Height);
+            Size_Allocate (C, Alloc);
+         end if;
+
+         List := Widget_List.Next (List);
+      end loop;
 
       --  Then resize all the handles and notebooks on the sides.
 
@@ -1284,7 +1302,10 @@ package body Gtkada.MDI is
 
       Activate_Child (C);
 
-      if C.State = Docked then
+      --  Can't move items inside a notebook
+      if C.State = Docked
+        or else (C.State = Normal and then MDI.Docks (None) /= null)
+      then
          return False;
       end if;
 
@@ -1358,9 +1379,10 @@ package body Gtkada.MDI is
             Y => Alloc.Y,
             Width => Alloc.Width,
             Height => Alloc.Height);
+         Size_Allocate (Child, Alloc);
 
-         Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
-         Set_USize (Child, Alloc.Width, Alloc.Height);
+         --  Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
+         --  Set_USize (Child, Alloc.Width, Alloc.Height);
       end if;
 
       MDI_Child (Child).X := Alloc.X;
@@ -1467,7 +1489,7 @@ package body Gtkada.MDI is
          if MDI.Current_Cursor = Left_Ptr and then Opaque_Move then
             Alloc :=
               (MDI.Current_X, MDI.Current_Y, MDI.Current_W, MDI.Current_H);
-            Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
+--            Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
             Size_Allocate (Child, Alloc);
 
          elsif MDI.Current_Cursor /= Left_Ptr
@@ -1476,7 +1498,6 @@ package body Gtkada.MDI is
                      or else H /= Gint (Get_Allocation_Height (C)))
          then
             Alloc := (C.X, C.Y, W, H);
-            Move (MDI.Layout, Child, Gint16 (Alloc.X), Gint16 (Alloc.Y));
             Size_Allocate (Child, Alloc);
          end if;
 
@@ -1626,6 +1647,7 @@ package body Gtkada.MDI is
    begin
       Gtk.Event_Box.Initialize (Child);
       Child.Initial := Gtk_Widget (Widget);
+      Child.Uniconified_Width := -1;
 
       Child.State := Normal;
 
@@ -1689,11 +1711,11 @@ package body Gtkada.MDI is
       Gdk.Pixmap.Create_From_Xpm_D
         (Pix, null, Get_Default_Colormap, Mask, Null_Color, Iconify_Xpm);
       Gtk_New (Pixmap, Pix, Mask);
-      Gtk_New (Button);
-      Add (Button, Pixmap);
-      Pack_End (Box2, Button, Expand => False, Fill => False);
+      Gtk_New (Child.Minimize_Button);
+      Add (Child.Minimize_Button, Pixmap);
+      Pack_End (Box2, Child.Minimize_Button, Expand => False, Fill => False);
       Widget_Callback.Object_Connect
-        (Button, "clicked",
+        (Child.Minimize_Button, "clicked",
          Widget_Callback.To_Marshaller (Iconify_Child'Access), Child);
 
       --  The child widget
@@ -1724,6 +1746,7 @@ package body Gtkada.MDI is
       return MDI_Child
    is
       C : MDI_Child;
+      Alloc : Gtk_Allocation;
    begin
       if Child.all in MDI_Child_Record'Class then
          C := MDI_Child (Child);
@@ -1745,7 +1768,10 @@ package body Gtkada.MDI is
       if MDI.Docks (None) /= null then
          Put_In_Notebook (MDI, None, C);
       else
-         Put (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
+         Put (MDI.Layout, C, 0, 0);
+         --  Put (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
+         Alloc := (C.X, C.Y, 10, 10);
+         Size_Allocate (C, Alloc);
       end if;
 
       Widget_List.Prepend (MDI.Items, Gtk_Widget (C));
@@ -1759,7 +1785,10 @@ package body Gtkada.MDI is
 
       if Realized_Is_Set (MDI) then
          Activate_Child (C);
+         Queue_Resize (MDI);
       end if;
+
+      Show_All (C);
       return C;
    end Put;
 
@@ -1980,6 +2009,7 @@ package body Gtkada.MDI is
       List : Widget_List.Glist := First (MDI.Items);
       C : MDI_Child;
       Num_Children : Gint := 0;
+      Alloc : Gtk_Allocation;
 
    begin
       Maximize_Children (MDI, False);
@@ -2010,8 +2040,10 @@ package body Gtkada.MDI is
             C.Y := Level;
             C.Uniconified_Width := W;
             C.Uniconified_Height := H;
-            Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
-            Set_USize (C, C.Uniconified_Width, H);
+            Alloc := (C.X, C.Y, C.Uniconified_Width, H);
+            Size_Allocate (C, Alloc);
+            --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
+            --  Set_USize (C, C.Uniconified_Width, H);
             Raise_Child (C);
             Level := Level + Title_Bar_Height;
          end if;
@@ -2026,8 +2058,10 @@ package body Gtkada.MDI is
          MDI.Focus_Child.Y := Level;
          MDI.Focus_Child.Uniconified_Width := W;
          MDI.Focus_Child.Uniconified_Height := H;
-         Move (MDI.Layout, MDI.Focus_Child, Gint16 (Level), Gint16 (Level));
-         Set_USize (MDI.Focus_Child, W, H);
+         Alloc := (Level, Level, W, H);
+         Size_Allocate (MDI.Focus_Child, Alloc);
+         --  Move (MDI.Layout, MDI.Focus_Child, Gint16 (Level), Gint16 (Level));
+         --  Set_USize (MDI.Focus_Child, W, H);
          Raise_Child (MDI.Focus_Child);
       end if;
    end Cascade_Children;
@@ -2043,6 +2077,7 @@ package body Gtkada.MDI is
       List : Widget_List.Glist := First (MDI.Items);
       C : MDI_Child;
       Num_Children : Gint := 0;
+      Alloc : Gtk_Allocation;
 
    begin
       Maximize_Children (MDI, False);
@@ -2067,8 +2102,10 @@ package body Gtkada.MDI is
             C.Y := 0;
             C.Uniconified_Width := W;
             C.Uniconified_Height := H;
-            Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
-            Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
+            Alloc := (C.X, C.Y, C.Uniconified_Width, C.Uniconified_Height);
+            Size_Allocate (C, Alloc);
+            --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
+            --  Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
             Level := Level + W;
          end if;
          List := Widget_List.Next (List);
@@ -2086,6 +2123,7 @@ package body Gtkada.MDI is
       List : Widget_List.Glist := First (MDI.Items);
       C : MDI_Child;
       Num_Children : Gint := 0;
+      Alloc : Gtk_Allocation;
 
    begin
       Maximize_Children (MDI, False);
@@ -2109,8 +2147,10 @@ package body Gtkada.MDI is
             C.Y := Level;
             C.Uniconified_Width := W;
             C.Uniconified_Height := H;
-            Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
-            Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
+            Alloc := (C.X, C.Y, C.Uniconified_Width, C.Uniconified_Height);
+            Size_Allocate (C, Alloc);
+            --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
+            --  Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
             Level := Level + H;
          end if;
          List := Widget_List.Next (List);
@@ -2141,6 +2181,7 @@ package body Gtkada.MDI is
       Float : Boolean)
    is
       Win : Gtk_Window;
+      Alloc : Gtk_Allocation;
    begin
       if Child.State /= Floating and then Float then
          Minimize_Child (Child, False);
@@ -2189,7 +2230,10 @@ package body Gtkada.MDI is
          if Child.MDI.Docks (None) /= null then
             Put_In_Notebook (Child.MDI, None, Child);
          else
-            Put (Child.MDI.Layout, Child, Gint16 (Child.X), Gint16 (Child.Y));
+            Alloc := (Child.X, Child.Y, Child.Uniconified_Width,
+                      Child.Uniconified_Height);
+            Put (Child.MDI.Layout, Child, 0, 0);
+            Size_Allocate (Child, Alloc);
          end if;
       end if;
 
@@ -2246,6 +2290,7 @@ package body Gtkada.MDI is
          if Side /= None then
             MDI.Docks_Size (Side) := -1;
          end if;
+         Show_All (MDI.Docks (Side));
 
       else
          --  Putting the following creates an infinite loop with the
@@ -2309,6 +2354,7 @@ package body Gtkada.MDI is
          Child.State := Docked;
       end if;
       Queue_Resize (MDI);
+      Set_Sensitive (Child.Minimize_Button, False);
    end Put_In_Notebook;
 
    --------------------------
@@ -2335,6 +2381,7 @@ package body Gtkada.MDI is
       end if;
 
       Child.State := Normal;
+      Set_Sensitive (Child.Minimize_Button, True);
    end Remove_From_Notebook;
 
    ----------------
@@ -2346,6 +2393,7 @@ package body Gtkada.MDI is
       Dock  : Boolean := True)
    is
       MDI : MDI_Window := Child.MDI;
+      Alloc : Gtk_Allocation;
    begin
       Show_All (Child);
       if Dock and then Child.Dock /= None then
@@ -2361,7 +2409,10 @@ package body Gtkada.MDI is
          else
             Ref (Child);
             Remove_From_Notebook (Child, Child.Dock);
-            Put (MDI.Layout, Child, Gint16 (Child.X), Gint16 (Child.Y));
+            Alloc := (Child.X, Child.Y, Child.Uniconified_Width,
+                      Child.Uniconified_Height);
+            Put (MDI.Layout, Child, 0, 0);
+            Size_Allocate (Child, Alloc);
             Unref (Child);
          end if;
          Child.State := Normal;
@@ -2401,14 +2452,12 @@ package body Gtkada.MDI is
       Icon_Height : constant Gint := Title_Bar_Height + 2 * Border_Thickness;
       List        : Widget_List.Glist;
       C2          : MDI_Child;
+      Alloc       : Gtk_Allocation;
 
    begin
       --  Items can't be iconified if they are maximized
 
-      if Child.State /= Iconified
-        and then Minimize
-        and then MDI.Docks (None) = null
-      then
+      if Child.State /= Iconified and then Minimize then
          Float_Child (Child, False);
          Dock_Child (Child, False);
          Child.Uniconified_X := Child.X;
@@ -2443,19 +2492,18 @@ package body Gtkada.MDI is
             List := Next (List);
          end loop;
 
-         Set_USize (Child, Icons_Width, Icon_Height);
-         Move (MDI.Layout, Child, Gint16 (Child.X), Gint16 (Child.Y));
-         Hide (Child.Maximize_Button);
+         Alloc := (Child.X, Child.Y, Icons_Width, Icon_Height);
+         Size_Allocate (Child, Alloc);
+         Set_Sensitive (Child.Maximize_Button, False);
 
       elsif Child.State = Iconified and then not Minimize then
          Child.X := Child.Uniconified_X;
          Child.Y := Child.Uniconified_Y;
-         Set_USize (Child, Child.Uniconified_Width,
-                    Child.Uniconified_Height);
-         Move (MDI.Layout, Child, Gint16 (Child.Uniconified_X),
-               Gint16 (Child.Uniconified_Y));
+         Alloc := (Child.Uniconified_X, Child.Uniconified_Y,
+                   Child.Uniconified_Width, Child.Uniconified_Height);
+         Size_Allocate (Child, Alloc);
          Child.State := Normal;
-         Show (Child.Maximize_Button);
+         Set_Sensitive (Child.Maximize_Button, True);
       end if;
 
       Activate_Child (Child);
@@ -2474,9 +2522,7 @@ package body Gtkada.MDI is
       Alloc : Gtk_Allocation;
 
    begin
-      if Maximize then
-         pragma Assert (MDI.Docks (None) = null);
-
+      if Maximize and then MDI.Docks (None) = null then
          while List /= Null_List loop
             C := MDI_Child (Get_Data (List));
             List := Next (List);
@@ -2501,7 +2547,7 @@ package body Gtkada.MDI is
                --  Remove from middle notebook and put in layout
                Ref (C);
                Remove_From_Notebook (C, None);
-               Put (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
+               Put (MDI.Layout, C, 0, 0);
                Alloc := (C.X, C.Y, C.Uniconified_Width,
                          C.Uniconified_Height);
                Size_Allocate (C, Alloc);
