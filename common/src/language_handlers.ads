@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2002                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -20,10 +20,11 @@
 
 --  This package provides some general subprograms to manipulate languages, and
 --  find the language given any filename.
---  Note that this type is abstract, and overloaded by two other types, one for
---  GVD standalone that simply uses the file extensions to guess the language,
---  and the other one for GPS that uses the project files and their naming
---  scheme.
+--  Note that this type is abstract, and should be overloaded for
+--  specialization. We used to have two types: one for GVD and one for GPS.
+--  We currently only have one for GPS that uses the project files and their
+--  naming scheme, but could provide others for e.g. simple text based tool
+--  that do not have project knowledge.
 
 with Language;
 with GNAT.OS_Lib;
@@ -37,7 +38,7 @@ package Language_Handlers is
    function Get_Language_From_File
      (Handler         : access Language_Handler_Record;
       Source_Filename : VFS.Virtual_File) return Language.Language_Access
-   is abstract;
+      is abstract;
    --  Return the name of the language used for Source_Filename.
    --  null is returned if the language wasn't recognized.
 
@@ -74,5 +75,4 @@ package Language_Handlers is
 
 private
    type Language_Handler_Record is abstract tagged null record;
-
 end Language_Handlers;
