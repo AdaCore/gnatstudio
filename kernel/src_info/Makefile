@@ -1,8 +1,12 @@
+LARGS = -largs sn/lib/db_capi.o -Lsn/lib -lpafdb
+
 build:
-	gnatmake -Pstandalone read_ali
-	gnatmake -Pstandalone read_scope_tree
-	gnatmake -Pstandalone find_ref
-	gnatmake -Pstandalone find_dep
+	gnatmake -Pstandalone read_ali $(LARGS)
+	gnatmake -Pstandalone read_many_ali $(LARGS)
+	gnatmake -Pstandalone read_scope_tree $(LARGS)
+	gnatmake -Pstandalone find_ref $(LARGS)
+	gnatmake -Pstandalone find_dep $(LARGS)
+	gnatmake -Pstandalone generate_db $(LARGS)
 
 distrib:
 	@-mkdir gvd gnat > /dev/null 2>&1
@@ -20,4 +24,4 @@ distrib:
 	cp ../../gnat/*.ad? gnat
 
 clean:
-	-rm -f standalone_obj/*
+	@for i in standalone_obj/* ; do [ -f $$i ] && rm -f $$i || true; done
