@@ -42,11 +42,12 @@ with Pango.Enums;         use Pango.Enums;
 
 with System;               use System;
 
+with Traces;               use Traces;
 with Ada.Exceptions;       use Ada.Exceptions;
-with Ada.Text_IO;          use Ada.Text_IO;
 
 package body Interactive_Consoles is
 
+   Me : constant Debug_Handle := Create ("Interactive_Consoles");
    package Console_Idle is new Gtk.Main.Idle (Interactive_Console);
 
    -----------------------
@@ -211,7 +212,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press_Handler;
 
@@ -235,7 +236,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Release_Handler;
 
@@ -529,7 +530,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Key_Press_Handler;
 
@@ -652,7 +653,7 @@ package body Interactive_Consoles is
 
    exception
       when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Mark_Set_Handler;
 
    ----------------

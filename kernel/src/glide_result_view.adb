@@ -53,13 +53,15 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
 
+with Traces;                   use Traces;
 with Commands;                 use Commands;
 with System;
 
-with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Glide_Result_View is
+
+   Me : constant Debug_Handle := Create ("Glide_Result_View");
 
    Non_Leaf_Color_Name : constant String := "blue";
    --  <preference> color to use for category and file names
@@ -887,7 +889,7 @@ package body Glide_Result_View is
 
    exception
       when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press;
 
