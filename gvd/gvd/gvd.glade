@@ -79,7 +79,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_debugger1</name>
-	    <sensitive>True</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_debugger1_activate</handler>
@@ -440,7 +439,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>preferences1</name>
-	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_preferences1_activate</handler>
@@ -1746,7 +1744,7 @@
 		<yexpand>False</yexpand>
 		<xshrink>False</xshrink>
 		<yshrink>False</yshrink>
-		<xfill>True</xfill>
+		<xfill>False</xfill>
 		<yfill>False</yfill>
 	      </child>
 
@@ -2007,7 +2005,7 @@
 		<yexpand>False</yexpand>
 		<xshrink>False</xshrink>
 		<yshrink>False</yshrink>
-		<xfill>True</xfill>
+		<xfill>False</xfill>
 		<yfill>False</yfill>
 	      </child>
 
@@ -2043,7 +2041,7 @@
 		<yexpand>False</yexpand>
 		<xshrink>False</xshrink>
 		<yshrink>False</yshrink>
-		<xfill>True</xfill>
+		<xfill>False</xfill>
 		<yfill>False</yfill>
 	      </child>
 
@@ -2079,7 +2077,7 @@
 		<yexpand>False</yexpand>
 		<xshrink>False</xshrink>
 		<yshrink>False</yshrink>
-		<xfill>True</xfill>
+		<xfill>False</xfill>
 		<yfill>False</yfill>
 	      </child>
 
@@ -2679,7 +2677,7 @@
 	      <yexpand>False</yexpand>
 	      <xshrink>False</xshrink>
 	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
+	      <xfill>False</xfill>
 	      <yfill>False</yfill>
 	    </child>
 
@@ -2715,7 +2713,7 @@
 	      <yexpand>False</yexpand>
 	      <xshrink>False</xshrink>
 	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
+	      <xfill>False</xfill>
 	      <yfill>False</yfill>
 	    </child>
 
@@ -2751,7 +2749,7 @@
 	      <yexpand>False</yexpand>
 	      <xshrink>False</xshrink>
 	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
+	      <xfill>False</xfill>
 	      <yfill>False</yfill>
 	    </child>
 
@@ -2787,7 +2785,7 @@
 	      <yexpand>False</yexpand>
 	      <xshrink>False</xshrink>
 	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
+	      <xfill>False</xfill>
 	      <yfill>False</yfill>
 	    </child>
 
@@ -2823,7 +2821,7 @@
 	      <yexpand>False</yexpand>
 	      <xshrink>False</xshrink>
 	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
+	      <xfill>False</xfill>
 	      <yfill>False</yfill>
 	    </child>
 
@@ -2971,7 +2969,7 @@
 	      <yexpand>False</yexpand>
 	      <xshrink>False</xshrink>
 	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
+	      <xfill>False</xfill>
 	      <yfill>False</yfill>
 	    </child>
 
@@ -3294,7 +3292,7 @@
 <widget>
   <class>GtkWindow</class>
   <name>process_tab</name>
-  <title>window1</title>
+  <title></title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
@@ -3731,7 +3729,7 @@
 		  <object>Breakpoints</object>
 		  <last_modification_time>Sun, 02 Jul 2000 02:25:27 GMT</last_modification_time>
 		</signal>
-		<label>Subprogram name</label>
+		<label>Subprogram Name</label>
 		<active>False</active>
 		<draw_indicator>True</draw_indicator>
 		<child>
@@ -4389,7 +4387,7 @@ read or written
 	<widget>
 	  <class>GtkLabel</class>
 	  <name>label72</name>
-	  <label>Click in the &quot;Enb&quot; column to change the status</label>
+	  <label>Click in the 'Enb' column to change the status</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>
 	  <xalign>0.05</xalign>
@@ -4948,7 +4946,6 @@ read or written
 	<widget>
 	  <class>GtkRadioButton</class>
 	  <name>jdb_button</name>
-	  <sensitive>False</sensitive>
 	  <can_focus>True</can_focus>
 	  <signal>
 	    <name>toggled</name>
@@ -5665,7 +5662,7 @@ remote
 	      <handler>on_select_all_clicked</handler>
 	      <last_modification_time>Tue, 05 Sep 2000 20:04:58 GMT</last_modification_time>
 	    </signal>
-	    <label>Select all</label>
+	    <label>Select All</label>
 	  </widget>
 
 	  <widget>
@@ -5782,7 +5779,7 @@ remote
     <widget>
       <class>GtkFrame</class>
       <name>frame</name>
-      <label>(no executable)</label>
+      <label></label>
       <label_xalign>0</label_xalign>
       <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
       <child>
