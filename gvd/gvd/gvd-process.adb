@@ -382,6 +382,9 @@ package body Odd.Process is
       Initialize_Class_Record (Process, Signals, Class_Record);
       Process.Window := Window.all'Access;
 
+      Widget_Callback.Connect
+        (Gtk_Widget (Process), "process_stopped",
+         Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
       Canvas_Handler.Connect
         (Process.Data_Canvas, "background_click",
          Canvas_Handler.To_Marshaller (On_Background_Click'Access));
