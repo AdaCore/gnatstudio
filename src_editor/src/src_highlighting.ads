@@ -61,13 +61,18 @@ package Src_Highlighting is
    --  and strings. Declared as public so that one can retrieve them from
    --  the source buffer using their names.
 
+   Highlight_Tag_Name     : constant String := "highlight_tag";
+   --  The name of the tag used to highlight parts of the buffer.
+   --  Declared as public so that one can retrieve them from the
+   --  Source Buffer using its name.
+
    function To_Font_Attributes
      (Style  : Pango.Enums.Style  := Pango.Enums.Pango_Style_Normal;
       Weight : Pango.Enums.Weight := Pango.Enums.Pango_Weight_Normal)
      return Font_Attributes;
    --  Convenience function to create a Font_Attributes structure.
 
-   function Create_Tags
+   function Create_Syntax_Tags
      (Keyword_Color     : String;
       Keyword_Font_Attr : Font_Attributes := To_Font_Attributes;
       Comment_Color     : String;
@@ -78,5 +83,14 @@ package Src_Highlighting is
    --  Create a Highlighting_Tags object using the given color names.
    --  If some colors name can not be parsed, then no special color will
    --  be used to highlight the associated source parts.
+
+   procedure Create_Highlight_Tag
+     (Tag        : out Gtk.Text_Tag.Gtk_Text_Tag;
+      Color_Name : String);
+   --  Create a tag and set the Background_Gdk property using the given Color.
+   --  The priority of this Tag is guarantied to exceed the priority of the
+   --  syntax highlighting tags to ensure that highlighting a part of the
+   --  buffer using this tag will always override their colors and font
+   --  attributes.
 
 end Src_Highlighting;
