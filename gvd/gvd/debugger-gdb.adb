@@ -109,8 +109,11 @@ package body Debugger.Gdb is
    --  Pattern to match a single line in "info breakpoint"
 
    File_Name_In_Breakpoint : constant Pattern_Matcher := Compile
-     ("at ([-~\w._/\\]+):(\d+)");
-   --  How to find file names in the info given by "info breakpoint"
+     ("at (.+):(\d+)$", Multiple_Lines);
+   --  How to find file names in the info given by "info breakpoint".
+   --  Note that we have to allow for special characters in the directory
+   --  or file name, since the user might be using some strange names. The only
+   --  restriction is that the name can not contain newline characters.
 
    Exception_In_Breakpoint : constant Pattern_Matcher := Compile
      ("on ([-\w_:]+)");
