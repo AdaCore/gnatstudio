@@ -1312,6 +1312,40 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
+<<<<<<< odd.glade
+	    <name>display_expression1</name>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_display_expression1_activate</handler>
+	      <object>main_debug_window</object>
+	      <last_modification_time>Tue, 28 Mar 2000 02:44:11 GMT</last_modification_time>
+	    </signal>
+	    <label>Display Any Expression...</label>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>display_machine_code1</name>
+	    <sensitive>False</sensitive>
+	    <accelerator>
+	      <modifiers>GDK_MOD1_MASK</modifiers>
+	      <key>GDK_4</key>
+	      <signal>activate</signal>
+	    </accelerator>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_display_machine_code1_activate</handler>
+	      <last_modification_time>Tue, 28 Mar 2000 02:41:30 GMT</last_modification_time>
+	    </signal>
+	    <label>Display Machine Code</label>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+=======
+>>>>>>> 1.47
 	    <name>more_status_display1</name>
 	    <sensitive>False</sensitive>
 	    <signal>

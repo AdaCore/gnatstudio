@@ -118,6 +118,7 @@ package Main_Debug_Window_Pkg is
       Display_Local_Variables1 : Gtk_Menu_Item;
       Display_Arguments1 : Gtk_Menu_Item;
       Display_Registers1 : Gtk_Menu_Item;
+      Display_Expression1 : Gtk_Menu_Item;
       More_Status_Display1 : Gtk_Menu_Item;
       Separator27 : Gtk_Menu_Item;
       Refresh1 : Gtk_Menu_Item;
