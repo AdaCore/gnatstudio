@@ -259,11 +259,11 @@ package Projects is
    --  Naming package
    Casing_Attribute           : constant String := "casing";
    Separate_Suffix_Attribute  : constant String := "separate_suffix";
-   Spec_Suffix_Attribute      : constant String := "specification_suffix";
-   Impl_Suffix_Attribute      : constant String := "implementation_suffix";
+   Spec_Suffix_Attribute      : constant String := "spec_suffix";
+   Impl_Suffix_Attribute      : constant String := "body_suffix";
    Dot_Replacement_Attribute  : constant String := "dot_replacement";
-   Specification_Attribute    : constant String := "specification";
-   Implementation_Attribute   : constant String := "implementation";
+   Specification_Attribute    : constant String := "spec";
+   Implementation_Attribute   : constant String := "body";
    Spec_Exception_Attribute   : constant String := "specification_exceptions";
    Impl_Exception_Attribute   : constant String := "implementation_exceptions";
 
