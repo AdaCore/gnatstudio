@@ -21,7 +21,6 @@
 with Find_Utils;
 with Glide_Kernel;
 with Gtk.Button;
-with Gtk.Check_Button;
 with Gtk.Main;
 with Gtk.Toggle_Button;
 with Gtk.Widget;
@@ -129,8 +128,6 @@ private
       Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
       Last_Search_Context    : Find_Utils.Search_Context_Access;
       Find_Next              : Boolean := False;
-
-      Auto_Hide              : Gtk.Check_Button.Gtk_Check_Button;
    end record;
 
    type Search_Regexp is record
