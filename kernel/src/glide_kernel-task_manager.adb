@@ -23,6 +23,7 @@ with GVD.Status_Bar;           use GVD.Status_Bar;
 with Glide_Main_Window;        use Glide_Main_Window;
 
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Task_Manager;             use Task_Manager;
 with Task_Manager.GUI;         use Task_Manager.GUI;
 
@@ -32,6 +33,8 @@ with Gtkada.MDI;               use Gtkada.MDI;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Glide_Intl;               use Glide_Intl;
+
+with Commands.Custom;          use Commands.Custom;
 
 package body Glide_Kernel.Task_Manager is
 
@@ -205,6 +208,9 @@ package body Glide_Kernel.Task_Manager is
    is
       Tools : constant String := "/" & (-"Tools");
       Shell : constant String := Tools &  "/" & (-"Shell Console");
+
+      Push_Command, Pop_Command : Custom_Command_Access;
+      Script                    : Scripting_Language;
    begin
       Task_Manager_Module_Id :=
         new Task_Manager_Module_Id_Record;
@@ -220,6 +226,21 @@ package body Glide_Kernel.Task_Manager is
         (Get_Task_Manager (Kernel),
          Get_Progress_Area
            (Glide_Window (Get_Main_Window (Kernel)).Statusbar));
+
+      Script := Lookup_Scripting_Language (Kernel, GPS_Shell_Name);
+
+      Create
+        (Push_Command, Kernel_Handle (Kernel), "busy_indicator.push_state",
+         Script);
+
+      Create
+        (Pop_Command, Kernel_Handle (Kernel), "busy_indicator.pop_state",
+         Script);
+
+      Set_Busy_Commands
+        (Get_Task_Manager (Kernel),
+         Command_Access (Push_Command),
+         Command_Access (Pop_Command));
 
       Register_Menu
         (Kernel,
