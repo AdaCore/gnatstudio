@@ -72,7 +72,7 @@ with Src_Info.ALI;
 procedure Glide2 is
    use Glide_Main_Window;
 
-   Me : Debug_Handle := Create ("Glide2");
+   Me : Debug_Handle := Create ("GPS");
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
@@ -99,14 +99,14 @@ procedure Glide2 is
    procedure Init_Settings is
       Dir_Created : Boolean := False;
    begin
-      Home := Getenv ("GLIDE_HOME");
+      Home := Getenv ("GPS_HOME");
 
       if Home.all = "" then
          Free (Home);
          Home := Getenv ("HOME");
       end if;
 
-      Prefix := Getenv ("GLIDE_ROOT");
+      Prefix := Getenv ("GPS_ROOT");
 
       if Prefix.all = "" then
          Free (Prefix);
@@ -119,14 +119,14 @@ procedure Glide2 is
       end if;
 
       Bind_Text_Domain
-        ("glide", Format_Pathname (Prefix.all & "/share/locale"));
+        ("gps", Format_Pathname (Prefix.all & "/share/locale"));
 
       if Home.all /= "" then
          Dir := new String'
-           (String_Utils.Name_As_Directory (Home.all) & ".glide");
+           (String_Utils.Name_As_Directory (Home.all) & ".gps");
       else
          --  Default to /
-         Dir := new String' (Format_Pathname ("/.glide"));
+         Dir := new String' (Format_Pathname ("/.gps"));
       end if;
 
       begin
@@ -328,7 +328,7 @@ begin
         (GPS.Kernel,
          Format_Pathname
            (GPS.Prefix_Directory.all &
-            "/doc/glide2/html/glide-welcome.html"));
+            "/doc/gps/html/gps-welcome.html"));
       Maximize_Children (Get_MDI (GPS.Kernel));
    end if;
 
