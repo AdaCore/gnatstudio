@@ -85,6 +85,7 @@ package body Debugger.Gdb is
    File_Name_Pattern2 : constant Pattern_Matcher :=
      Compile ("^([^:]+):(\d+): No such file or directory", Multiple_Lines);
    --  Second regexp used to detect when the current frame can not be displayed
+   --  ??? Note that this pattern won't work for locales other than english.
 
    Language_Pattern : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
@@ -141,7 +142,6 @@ package body Debugger.Gdb is
    --  or "frame".
    --  Value'First will contain the value described in the first line, and
    --  so on.
-
 
    function To_Main_Debug_Window is new
      Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
@@ -203,8 +203,10 @@ package body Debugger.Gdb is
       --  Do we have a question ?
 
       Question_Start := Match (Question_Filter_Pattern, Str);
+
       if Question_Start >= Str'First then
          Index := Question_Start;
+
          while Index < Str'Last loop
             if Str (Index) = ASCII.LF
               and then Str (Index + 1) = '>'
@@ -217,6 +219,7 @@ package body Debugger.Gdb is
                   Num     : Natural := 1;
                   First   : Positive;
                   Last    : Positive := Question_Start;
+
                begin
                   while Last < Index loop
                      --  Skips the choice number ("[n] ")
@@ -237,17 +240,20 @@ package body Debugger.Gdb is
                      Last := Last + 1;
                   end loop;
 
-                  Gtk_New (Dialog,
-                           To_Window (Window),
-                           Convert (To_Main_Debug_Window (Window),
-                                    Descriptor).Debugger,
-                           True,
-                           Choices (1 .. Num - 1));
+                  Gtk_New
+                    (Dialog,
+                     To_Window (Window),
+                     Convert (To_Main_Debug_Window (Window),
+                       Descriptor).Debugger,
+                     True,
+                     Choices (1 .. Num - 1));
                   Show_All (Dialog);
                end;
+
                return;
             end if;
             Index := Index + 1;
+
          end loop;
       end if;
    end Question_Filter;
@@ -262,12 +268,11 @@ package body Debugger.Gdb is
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Is_Internal     : Boolean := False)
-     return String
-   is
+      Is_Internal     : Boolean := False) return String is
    begin
-      Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt,
-            Is_Internal);
+      Send
+        (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt, Is_Internal);
+
       if Wait_For_Prompt then
          declare
             S : String := Expect_Out (Get_Process (Debugger));
@@ -337,8 +342,9 @@ package body Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String
    is
-      S : String := Send (Debugger, "print " & Entity);
+      S     : constant String := Send (Debugger, "print " & Entity);
       Index : Natural := S'First;
+
    begin
       --  The value is valid only if it starts with '$'
 
@@ -359,8 +365,7 @@ package body Debugger.Gdb is
 
    function Get_Uniq_Id
      (Debugger : access Gdb_Debugger;
-      Entity   : String)
-     return String
+      Entity   : String) return String
    is
       --  ??? Probably, this should be language-dependent.
       S       : String :=
@@ -369,9 +374,11 @@ package body Debugger.Gdb is
 
    begin
       Match (" (0x[0-9a-zA-Z]+)", S, Matched);
+
       if Matched (1) /= No_Match then
          return S (Matched (1).First .. Matched (1).Last);
       end if;
+
       return "";
    end Get_Uniq_Id;
 
@@ -493,7 +500,7 @@ package body Debugger.Gdb is
       Wait (Get_Process (Debugger), Num, "^(.+).*$", Timeout => -1);
       Push_Internal_Command_Status (Get_Process (Debugger), True);
 
-      --  Make sure that the prompt is what odd is expecting.
+      --  Make sure that the prompt is what we are expecting.
       Send (Debugger, "set prompt (gdb) ");
       Send (Debugger, "set width 0");
       Send (Debugger, "set height 0");
@@ -629,9 +636,10 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Display  : Boolean := False)
    is
-      Cmd   : String := Start (Get_Language (Debugger));
+      Cmd   : constant String := Start (Get_Language (Debugger));
       First : Positive;
       Last  : Positive := Cmd'First;
+
    begin
       if Cmd /= "" then
          while Last <= Cmd'Last loop
@@ -646,6 +654,7 @@ package body Debugger.Gdb is
             Last := Last + 1;
          end loop;
       end if;
+
       Set_Is_Started (Debugger, True);
    end Start;
 
@@ -677,8 +686,7 @@ package body Debugger.Gdb is
 
    procedure Step_Into_Instruction
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False)
-   is
+      Display  : Boolean := False) is
    begin
       Send (Debugger, "stepi", Display => Display);
    end Step_Into_Instruction;
@@ -689,8 +697,7 @@ package body Debugger.Gdb is
 
    procedure Step_Over_Instruction
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False)
-   is
+      Display  : Boolean := False) is
    begin
       Send (Debugger, "nexti", Display => Display);
    end Step_Over_Instruction;
@@ -754,8 +761,7 @@ package body Debugger.Gdb is
 
    function Is_Break_Command
      (Debugger : access Gdb_Debugger;
-      Command : String) return Boolean
-   is
+      Command : String) return Boolean is
    begin
       return Is_Execution_Command (Debugger, Command)
         or else Looking_At (Command, Command'First, "break")
@@ -772,8 +778,9 @@ package body Debugger.Gdb is
    -- Stack_Down --
    ----------------
 
-   procedure Stack_Down (Debugger : access Gdb_Debugger;
-                         Display  : Boolean := False) is
+   procedure Stack_Down
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False) is
    begin
       Send (Debugger, "down", Display => Display);
    end Stack_Down;
@@ -782,8 +789,9 @@ package body Debugger.Gdb is
    -- Stack_Up --
    --------------
 
-   procedure Stack_Up (Debugger : access Gdb_Debugger;
-                       Display  : Boolean := False) is
+   procedure Stack_Up
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False) is
    begin
       Send (Debugger, "up", Display => Display);
    end Stack_Up;
@@ -853,8 +861,7 @@ package body Debugger.Gdb is
    procedure Backtrace
      (Debugger : access Gdb_Debugger;
       Value    : out Backtrace_Array;
-      Len      : out Natural)
-   is
+      Len      : out Natural) is
    begin
       Send (Debugger, "where");
       Parse_Backtrace_Info
@@ -991,6 +998,7 @@ package body Debugger.Gdb is
    is
       Line_String : String := Positive'Image (Line);
       --  Use a temporary variable to remove the leading space.
+
    begin
       Send (Debugger, "info line "
             & Base_File_Name (File)
@@ -1026,8 +1034,7 @@ package body Debugger.Gdb is
 
    procedure Display_Prompt
      (Debugger : access Gdb_Debugger;
-      Wait_For_Prompt : Boolean := True)
-   is
+      Wait_For_Prompt : Boolean := True) is
    begin
       Send (Debugger, "  ", Wait_For_Prompt => Wait_For_Prompt);
    end Display_Prompt;
@@ -1054,12 +1061,13 @@ package body Debugger.Gdb is
       Last  := Matched (0).Last;
 
       if Matched (0) = No_Match then
-
          --  Try another regexp
          --  This regexp takes longer to execute when the output has a lot of
          --  lines. There wouldn't be any need to test that if we knew what
          --  is the debugger output and what is the user's program output???
+
          Match (File_Name_Pattern2, Str, Matched);
+
          if Matched (0) = No_Match then
             Name_First := 0;
             Name_Last  := 1;
@@ -1095,8 +1103,10 @@ package body Debugger.Gdb is
       S         : constant String :=
         Send (Debugger, "info sources", Is_Internal => True);
       Num_Files : Natural := 0;
+
    begin
       --  Count the number of files
+
       for J in S'Range loop
          if S (J) = ',' then
             Num_Files := Num_Files + 1;
@@ -1567,13 +1577,12 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Num      : Integer;
       Enable   : Boolean := True;
-      Display  : Boolean := False)
-   is
+      Display  : Boolean := False) is
    begin
       if Enable then
-         Send (Debugger, "enable " & Integer'Image (Num), Display => Display);
+         Send (Debugger, "enable" & Integer'Image (Num), Display => Display);
       else
-         Send (Debugger, "disable " & Integer'Image (Num), Display => Display);
+         Send (Debugger, "disable" & Integer'Image (Num), Display => Display);
       end if;
    end Enable_Breakpoint;
 
@@ -1584,10 +1593,9 @@ package body Debugger.Gdb is
    procedure Remove_Breakpoint
      (Debugger : access Gdb_Debugger;
       Num      : Integer;
-      Display  : Boolean := False)
-   is
+      Display  : Boolean := False) is
    begin
-      Send (Debugger, "delete " & Integer'Image (Num), Display => Display);
+      Send (Debugger, "delete" & Integer'Image (Num), Display => Display);
    end Remove_Breakpoint;
 
    ------------------------------
@@ -1596,12 +1604,12 @@ package body Debugger.Gdb is
 
    function Variable_Name_With_Frame
      (Debugger : access Gdb_Debugger;
-      Var      : String)
-     return String
+      Var      : String) return String
    is
-      Bt  : Backtrace_Array (1 .. 1);
-      Len : Natural;
+      Bt        : Backtrace_Array (1 .. 1);
+      Len       : Natural;
       Name_Last : Natural;
+
    begin
       Name_Last := Var'First;
       Skip_To_Char (Var, Name_Last, ':');
@@ -1765,6 +1773,7 @@ package body Debugger.Gdb is
         (Send
          (Debugger, "disassemble " & Start_Address & " " & End_Address,
           Is_Internal => True));
+
       if Start_Address /= "" then
          Range_Start_Len := Start_Address'Length;
          Range_Start (1 .. Range_Start_Len) := Start_Address;
