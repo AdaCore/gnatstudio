@@ -139,11 +139,10 @@ package body Advanced_Breakpoint_Pkg is
       Pack_Start (Advanced_Breakpoint.Vbox35, Advanced_Breakpoint.Label106, False, False, 0);
 
       Gtk_New (Advanced_Breakpoint.Scrolledwindow12);
-      Set_Policy (Advanced_Breakpoint.Scrolledwindow12, Policy_Never, Policy_Always);
+      Set_Policy (Advanced_Breakpoint.Scrolledwindow12, Policy_Automatic, Policy_Automatic);
       Pack_Start (Advanced_Breakpoint.Vbox35, Advanced_Breakpoint.Scrolledwindow12, False, False, 0);
 
       Gtk_New (Advanced_Breakpoint.Command_Descr);
-      Set_Editable (Advanced_Breakpoint.Command_Descr, True);
       Add (Advanced_Breakpoint.Scrolledwindow12, Advanced_Breakpoint.Command_Descr);
 
       Gtk_New (Advanced_Breakpoint.Hbuttonbox12);
