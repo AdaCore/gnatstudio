@@ -1315,6 +1315,7 @@ package body VCS.CVS is
       Text_File    : constant Virtual_File :=
         Create (Full_Filename => Get_Tmp_Dir & Base_Name (Current_File));
       File         : File_Type;
+      Already_Open : Boolean;
 
    begin
       Create (File, Name => Full_Name (Text_File).all);
@@ -1325,9 +1326,16 @@ package body VCS.CVS is
       end loop;
 
       Close (File);
+
+      Already_Open := Is_Open (Kernel, Text_File);
+
       Open_File_Editor (Kernel, Text_File);
-      Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
-             Reuse_If_Possible => True, After => True);
+
+      if not Already_Open then
+         Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical,
+                Reuse_If_Possible => True, After => True);
+      end if;
+
       Delete (Text_File);
 
       return True;
