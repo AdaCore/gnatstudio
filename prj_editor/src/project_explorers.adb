@@ -901,6 +901,12 @@ package body Project_Explorers is
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
                           C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
+
+                     Scroll_To_Cell
+                       (D.Explorer.File_Tree,
+                        Path, null, True,
+                        0.1, 0.1);
+
                      Path_Free (Path);
                   end;
 
