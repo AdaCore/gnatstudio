@@ -104,8 +104,12 @@ Source Navigation
 Project Handling
 * Description of the Projects::
 * Scenarios and Configuration Variables::
+* The Project Explorer (Editing Projects)::
+* The Project Menu::
 * The Project Wizard::
 * The Project Properties Editor::
+* The Switches Editor::
+* The Project Browser::
 
 Searching and Replacing
 
@@ -122,7 +126,6 @@ Source Browsing
 * Entity Browser::
 
 Debugging
-
 * The Debug Menu::
 * The Call Stack Window::
 * The Data Window::
@@ -144,7 +147,6 @@ Customization
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
 * Defining New Styles and Key Bindings::
-
 
 Environment
 * Command Line Options::
@@ -1801,9 +1803,12 @@ information.
 * Source Navigation Contextual Menus::
 @end menu
 
+@c --------------------------------------------------------------------
 @node Support for Cross References
 @section Support for Cross References
 @cindex cross references
+@c --------------------------------------------------------------------
+
 @noindent
 GPS provides cross-references for most of the entities defined in your
 application, as well as some advanced browsers like a call graph.
@@ -1883,9 +1888,12 @@ won't be detected.
 
 @end table
 
+@c --------------------------------------------------------------------
 @node The Navigate Menu
 @section The Navigate Menu
 @cindex navigate
+@c --------------------------------------------------------------------
+
 @noindent
 
 @table @b
@@ -1963,9 +1971,12 @@ Go to next tag/location. @xref{The Locations Tree}.
 
 @end table
 
+@c --------------------------------------------------------------------
 @node Source Navigation Contextual Menus
 @section Source Navigation Contextual Menus
 @cindex contextual menu
+@c --------------------------------------------------------------------
+
 @noindent
 This contextual menu is available from any source editor by right-clicking.
 If you right click over an entity, or first select text, the contextual
@@ -2039,7 +2050,6 @@ See @ref{Find All References} for more details.
 
 @end table
 
-
 @c --------------------------------------------------------------------
 @node Project Handling
 @chapter Project Handling
@@ -2063,6 +2073,7 @@ how such projects can be created and maintained.
 * The Project Wizard::
 * The Project Properties Editor::
 * The Switches Editor::
+* The Project Browser::
 @end menu
 
 @c -------------------------------------------------------------------
@@ -2115,6 +2126,20 @@ files can automatically generate Makefiles through the @file{gpr2make}
 tool provided with GNAT. Round trip editing is not available though,
 and any change you make to the generated Makefiles will be lost the
 next time the tool is run.
+
+@cindex ADA_PROJECT_PATH
+GPS uses the same mechanisms to locate the project files as GNAT
+itself: the projects can be referenced in several ways:
+
+@itemize @bullet
+@item absolute paths
+@item relative paths
+These paths, when used in a with line as described below, are relative
+to the location of the project that does the with.
+@item ADA_PROJECT_PATH
+If this environment variable is set, it contains a colon-separated
+list of directories in which the project files are searched.
+@end itemize
 
 
 @subsection Contents of project files
@@ -2439,6 +2464,13 @@ dependency between two projects
 @cindex Add Configuration Variable
 This menu item should be used to add new configuration variables, as
 described in @ref{Scenarios and Configuration Variables}.
+
+@item Edit Project Source File
+@cindex edit project source file
+This menu will load the project file into an editor, so that you can
+manually edit it. This should be used if you need to access some
+features of the project files that are not accessible graphically
+(renames statements, variables,...)
 
 @end itemize
 
@@ -2784,6 +2816,10 @@ View or the Project Browser.
 @image{project-properties}
 @end ifhtml
 
+This editor is divided into three parts:
+
+@itemize @bullet
+@item the attributes editor
 The contents of this editor is very similar to that of the project
 wizard (@pxref{The Project Wizard}). In fact, all pages but the
 @code{General} page are exactly the same, and you should therefore
@@ -2793,6 +2829,30 @@ The general page gives access to more attribute than the general page
 of the project wizard does. You can select the name of all the
 external tools that GPS is using (compilers for the various languages,
 linker, pretty-printer,...).
+
+@item the project selector
+This area, in the top-right corner of the properties editor, contains
+a list of all the projects in the hierarcht. The value in the
+attributes editor is applied to all the selected projects in this
+selector. You can never unselect the project for which you activated
+the contextual menu.
+
+Clicking in the title bar of this selector will select or unselect all
+the projects.
+
+This selector has two different possible presentations, chosen by the
+@code{show project hierarchy} preferences (see the menu
+@code{Edit->Preferences}). You can either get a sorted list of all the
+projects, each one appearing only once. Or you can have the same
+project hierarchy as displayed in the project explorer.
+
+@item the scenario selector
+This area, in the bottom-right corner of the properties editor, lists
+all the scenario variables declared for the project hierarchy. By
+selecting some or all of their values, you can chose to which scenario
+the modifications in attributes editor apply.
+
+@end itemize
 
 @c -------------------------------------------------------------------
 @node The Switches Editor
@@ -2814,6 +2874,84 @@ Double-clicking in the switches column allows you to edit the switches
 for a specific file. It is possible to edit the switches for multiple
 files at the same by selecting them before displaying the contextual
 menu.
+
+When you double-click in one of the columns that contain the switches,
+a new dialog is open that allows you to edit the switches specific to
+the selected files.
+
+This dialog has a button titled @code{Revert}. Clicking on this button
+will cancel any file-specific switch, and revert to the default
+switches defined at the project level.
+
+@c ??? Insert screenshot with revert button here
+
+@c -------------------------------------------------------------------
+@node The Project Browser
+@section The Project Browser
+@cindex project browser
+@c -------------------------------------------------------------------
+
+@noindent
+The project graph is a special kind of browser (@pxref{Source
+Browsing}). It shows the dependencies between all the project in the
+project hierarchy. Two items in this browser will be linked if one of
+them imports the other.
+
+@cindex examine projects imported by
+It is accessed through the contextual menu in the project explorer, by
+selecting the @code{Examine projects imported by...} item, when
+right-clicking on a project node.
+
+
+Clicking on the left arrow in the title bar of the items will display
+all the projects that import that project. On the other hand, clicking
+on the right arrow will display all the projects that are imported by
+that project.
+
+The contextual menu obtained when right-clicking in the background of
+the browser contains the standard entries (@code{zoom in}, @code{zoom
+out} and @code{orthogonal links}), in addition to
+
+@itemize @bullet
+@item refresh
+@cindex refresh
+The project graph is not automatically refreshed. If you change the
+dependencies in the hierarchy (adding or removing dependencies), you
+need to select this menu item to force a refresh of the browser.
+@end itemize
+
+The contextual menu obtained by right-clicking on a project item
+contains several items. Most of them are added by the project editor,
+and gives direct access to editing the properties of the project,
+adding dependencies...
+
+Some new items are added to the menu
+
+@itemize @bullet
+@item Locate in explorer
+@cindex locate in explorer
+Selecting this item will switch the focus to the project explorer, and
+highlight the first project node found that matches the project in the
+browser item. This is a convenient way to get information like the
+list of directories or source files for that project.
+
+@item Examine dependencies
+@cindex examine dependencies
+This item plays the same role as the right arrow in the title bar, and
+display all the projects in the hierarchy that are imported directly
+by the selected project
+
+@item Examine recursive dependencies
+@cindex examine recursive dependencies
+This item will display all the dependencies recursively for the
+project (ie the project it imports directlry, and the projects that
+are imported by them, and so on).
+
+@item Examine projects depending on
+@cindex examine projects depending on
+This item plays the same role as the left arrow in the title bar, and
+display all the projects that import directly the selected project.
+@end itemize
 
 @c --------------------------------------------------------------------
 @node Searching and Replacing
@@ -3103,9 +3241,6 @@ endif
 @cindex source browsing
 @c --------------------------------------------------------------------
 
-@i{This chapter is incomplete}
-@c ??? incomplete
-
 @menu
 * General Issues::
 * Call Graph::
@@ -3113,13 +3248,124 @@ endif
 * Entity Browser::
 @end menu
 
+@c --------------------------------------------------------------------
 @node General Issues
 @section General Issues
-@noindent
+@c --------------------------------------------------------------------
 
+@noindent
+GPS contains several kinds of browsers, that have a common set of
+basic functionalities. There are currently four such browsers: the
+project browser (@pxref{The Project Browser}), the call graph
+(@pxref{Call Graph}), the dependency browser (@pxref{Dependency
+Browser}) and the entity browser (@pxref{Entity Browser}).
+
+All these browsers are interactive viewers. They contain a number of
+items, whose visual representation depends on the type of information
+displayed in the browser (they can be projects, files, entities,...).
+
+In addition, the following capabilities are provided in all browsers:
+
+@table @b
+@item Scrolling
+When a lot of items are displayed in the canvas, the currently visible
+area might be too small to display all of them. In this case,
+scrollbars will be added on the sides, so that you can make other
+items visible. Scrolling can also be done with the arrow keys.
+
+@item Layout
+A basic layout algorithm is used to organize the items. This algorithm
+is layed oriented: items with no parents are put in the first layer,
+then their direct children are put in the second layer, and so
+on. Depending on the type of browser, these layers are organized
+either vertically or horizontally. This algorithm tries to preserve as
+much as possible the positions of the items that were moved
+interactively. 
+
+The @code{refresh} menu item in the background contextual menu can be
+used to recompute the layout of items at any item, even for items that
+were previously moved interactively.
+
+@item @b{Interactive moving of items}
+Items can be moved interactively with the mouse. Click and drag the
+item by clicking on its title bar. The links will still be displayed
+during the move, so that you can check whether it overlaps any other
+item. If you are trying to move the item outside of the visible part
+of the browser, the latter will be scrolled.
+
+@item Links
+Items can be linked together, and will remain connected when items are
+moved. Different types of links exist, see the description of the
+various browsers.
+
+By default, links are displayed as straight lines. You can choose to
+use orthogonal links instead, which are displayed only with vertical
+or horizontal lines. Select the entry @code{orthogonal links} in the
+background contextual menu.
+
+@item Zooming
+Several different zoom levels are available. The contextual menu in
+the background of the browser contains three entries: @code{zoom in},
+@code{zoom out} and @code{zoom}. The latter is used to select directly
+the zoom level you want.
+
+This zooming capability is generally useful when lots of items are
+displayed in the browser, to get a more general view of the layout and
+the relationships between the items.
+
+@item Selecting items
+Items can be selected by clicking inside them. Multiple items can be
+selected by holding the @key{control} key while clicking in the
+item. Alternatively, you can click and drag the mouse inside the
+background of the browser. All the items found in the selection
+rectangle when the mouse is released will be selected.
+
+Selected items are drawn with a different title bar color. All items
+linked to them also use a different title bar color, as well as the
+links. This is the most convenient way to understand the relationships
+between items when lots of them are present in the browser.
+
+@item hyper-links
+Some of the items will contain hyper links, displayed in blue by
+default, and underlined. Clicking on these will generally display new
+items. 
+
+@end table
+
+Two types of contextual menus are available in the browsers: the
+background contextual menu is available by right-clicking in the
+background area (ie outside of any item). As described above, it
+contains entries for the zooming, selecting of orthogonal links, and
+refresh; the second kind of contextual menu is available by
+right-clicking in items.
+
+The latter menu contains various entries. Most of the entries are
+added by various modules in GPS (VCS module, source
+editor,...). However, each type of browser also has some specific
+entries, which will be described in the section about the browser.
+
+There are two common items in all item contextual menus:
+
+@itemize @bullet
+@item Hide Links
+Browsers can become confusing if there are many items and many
+links. You can lighten them somewhat by selecting this menu entry. As
+a result, the item will remain in the canvas, but none of the links to
+or from it will be visible. However, selecting the item will still
+highlight linked items, so that this information remains available.
+
+@item Remove all other items
+Selecting this menu item will remove all items but the selected one.
+
+@end itemize
+
+
+@c --------------------------------------------------------------------
 @node Call Graph
 @section Call Graph
 @cindex call graph
+@c --------------------------------------------------------------------
+
 @noindent
 The call graph shows graphically the relationship between subprogram callers
 and callees.
@@ -3134,10 +3380,53 @@ and callees.
 @image{call-graph}
 @end ifhtml
 
+In this browser, clicking on the right arrow in the title bar will
+display all the entities that are called by the selected item.
 
+Clicking on the left arrow will display all the entities that call the
+selected item.
+
+This browser is accessible through the contextual menu in the project
+explorer, by selecting one of the items:
+
+@itemize @bullet
+@item References->... calls
+Display all the entities called by the selected entity. This has the
+same effect as clicking on the right title bar arrow if the item is
+already present in the call graph.
+
+@item References->... is called by
+Display all the entities called by the selected entity. This has the
+same effect as clicking on the left title bar arrow if the item is
+already present in the call graph.
+@end itemize
+
+The contextal menu available by right-clicking on the entities in the
+browser as the following new entries, in addition to the ones added by
+other modules of GPS.
+
+@itemize @bullet
+@item @code{... calls} and @code{... is called by}
+These entries are the same as described above.
+
+@item @code{Go To Spec} and @code{Go To Body}
+Selecting these will open a source editor that displays either the
+declaration or the body of the entity.
+
+@item @code{Locate in explorer}
+Selecting this menu entry will move the focus to the project explorer,
+and select the first node representing the file in which the entity is
+declared. This makes it easier to see which other entities are
+declared in the same file.
+
+@end itemize
+
+@c --------------------------------------------------------------------
 @node Dependency Browser
 @section Dependency Browser
 @cindex dependency browser
+@c --------------------------------------------------------------------
+
 @noindent
 The dependency browser shows the dependencies between source files.
 
@@ -3152,9 +3441,12 @@ The dependency browser shows the dependencies between source files.
 @end ifhtml
 
 
+@c --------------------------------------------------------------------
 @node Entity Browser
 @section Entity Browser
 @cindex entity browser
+@c --------------------------------------------------------------------
+
 @noindent
 The entity browser displays static information about any source entity.
 
