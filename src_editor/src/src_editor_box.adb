@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -2597,11 +2597,8 @@ package body Src_Editor_Box is
       end if;
 
       if After < 0 then
-         if Get_Char (End_Iter) /= ASCII.LF then
-            Forward_To_Line_End (End_Iter, Success);
-         end if;
+         Forward_Line (End_Iter, Success);
 
-         Forward_Char (End_Iter, Success);
       else
          Success := True;
 
@@ -2609,6 +2606,14 @@ package body Src_Editor_Box is
             Forward_Char (End_Iter, Success);
             exit when not Success;
          end loop;
+
+         --  Do not split a ASCII.CR & ASCII.LF pair in the middle.
+
+         if Get_Char (End_Iter) = ASCII.LF
+           and then not Ends_Line (End_Iter)
+         then
+            Forward_Char (End_Iter, Success);
+         end if;
       end if;
 
       return Get_Text (Begin_Iter, End_Iter);
@@ -2676,11 +2681,7 @@ package body Src_Editor_Box is
       end if;
 
       if After < 0 then
-         if Get_Char (End_Iter) /= ASCII.LF then
-            Forward_To_Line_End (End_Iter, Success);
-         end if;
-
-         Forward_Char (End_Iter, Success);
+         Forward_Line (End_Iter, Success);
       else
          Success := True;
 
@@ -2688,6 +2689,14 @@ package body Src_Editor_Box is
             Forward_Char (End_Iter, Success);
             exit when not Success;
          end loop;
+
+         --  Do not split a ASCII.CR & ASCII.LF pair in the middle.
+
+         if Get_Char (End_Iter) = ASCII.LF
+           and then not Ends_Line (End_Iter)
+         then
+            Forward_Char (End_Iter, Success);
+         end if;
       end if;
 
       Replace_Slice (Editor, Begin_Iter, End_Iter, Text);
