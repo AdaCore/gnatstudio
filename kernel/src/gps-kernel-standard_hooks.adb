@@ -67,6 +67,8 @@ package body GPS.Kernel.Standard_Hooks is
      (Data : in out Callback_Data'Class; Command : String);
    procedure String_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
+   procedure Project_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Line_Information_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Location_Run_Hook_Handler
@@ -631,6 +633,23 @@ package body GPS.Kernel.Standard_Hooks is
       Run_Hook (Kernel, Name, Args'Unchecked_Access);
    end File_Run_Hook_Handler;
 
+   --------------------------
+   -- Project_Hook_Handler --
+   --------------------------
+
+   procedure Project_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Get_Hook_Name (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Args   : aliased Project_Hooks_Args :=
+        (Kernel  => Kernel,
+         Project => Get_Data (Data, 2));
+      pragma Unreferenced (Command);
+   begin
+      Run_Hook (Kernel, Name, Args'Unchecked_Access);
+   end Project_Hook_Handler;
+
    -------------------------
    -- String_Hook_Handler --
    -------------------------
@@ -728,6 +747,16 @@ package body GPS.Kernel.Standard_Hooks is
       return String_Hook_Type;
    end Get_Name;
 
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Project_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Project_Hook_Type;
+   end Get_Name;
+
    -------------------
    -- Execute_Shell --
    -------------------
@@ -744,6 +773,28 @@ package body GPS.Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, Data.Value);
       Tmp := Execute (Command, D);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access Project_Hooks_Args) return Boolean
+   is
+      D : Callback_Data'Class := Create (Script, 2);
+      Tmp : Boolean;
+      P : constant Class_Instance := Create_Project (Script, Data.Project);
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, P);
+      Tmp := Execute (Command, D);
+      Free (P);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -1091,6 +1142,12 @@ package body GPS.Kernel.Standard_Hooks is
          -("Common type for all hooks that take a single string as an"
            & " argument"),
          Hook_With_Args, String_Hook_Handler'Access);
+
+      Create_Hook_Type
+        (Kernel, Project_Hook_Type,
+         -("Common type for all hooks that take a single project as an"
+           & " argument"),
+         Hook_With_Args, Project_Hook_Handler'Access);
 
       Create_Hook_Type
         (Kernel, Before_Exit_Hook_Type,

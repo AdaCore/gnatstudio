@@ -28,6 +28,7 @@ with System;
 with Gdk.Pixbuf;
 with Commands;
 with Entities;
+with Projects;
 
 package GPS.Kernel.Standard_Hooks is
 
@@ -38,16 +39,14 @@ package GPS.Kernel.Standard_Hooks is
    type File_Hooks_Args is new Hooks_Data with record
       File : VFS.Virtual_File := VFS.No_File;
    end record;
-   --  Base type for hooks that take a single file in parameter
-
    function Get_Name (Data : File_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
       Command   : GPS.Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : access File_Hooks_Args) return Boolean;
+   --  Base type for hooks that take a single file in parameter
    --  See inherited doc
-
 
    String_Hook_Type        : constant String := "string_hooks";
    type String_Hooks_Args (Length : Natural) is new Hooks_Data with record
@@ -64,6 +63,20 @@ package GPS.Kernel.Standard_Hooks is
    --  Type_Name parameter of String_Hook_Type
    --  See inherited doc
 
+   Project_Hook_Type : constant String := "project_hooks";
+   type Project_Hooks_Args is new Hooks_Data with record
+      Project : Projects.Project_Type;
+   end record;
+   function Get_Name (Data : Project_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access GPS.Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : GPS.Kernel.Scripts.Subprogram_Type;
+      Hook_Name : String;
+      Data      : access Project_Hooks_Args) return Boolean;
+   --  Hooks that take a single project as a parameter.
+   --  To create such hooks, use GPS.Kernel.Hooks.Register_Hook with a
+   --  Type_Name parameter of Project_Hook_Type.
+   --  See inherited documentation
 
    type Context_Hooks_Args is new Hooks_Data with record
       Context : GPS.Kernel.Selection_Context_Access;
