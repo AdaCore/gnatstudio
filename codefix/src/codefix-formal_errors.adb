@@ -838,5 +838,42 @@ package body Codefix.Formal_Errors is
       return Result;
    end Remove_Use_Clause;
 
+   -----------------------------------
+   -- Resolve_Unvisible_Declaration --
+   -----------------------------------
+
+   function Resolve_Unvisible_Declaration
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Pkg_Cursor    : File_Cursor'Class;
+      Seek_With     : Boolean) return Solution_List
+   is
+      Result           : Solution_List;
+      Use_Solution     : Get_Visible_Declaration_Cmd;
+      Prefix_Solution  : Get_Visible_Declaration_Cmd;
+   begin
+      Add_Use
+        (Use_Solution,
+         Current_Text,
+         Pkg_Cursor,
+         Object_Cursor.File_Name.all,
+         Seek_With);
+      Set_Caption
+        (Use_Solution, "Update with and use's clauses to show the object");
+
+      Prefix_Object
+        (Prefix_Solution,
+         Current_Text,
+         Pkg_Cursor,
+         Object_Cursor,
+         Seek_With);
+      Set_Caption
+        (Prefix_Solution, "Update with clauses and prefix the object");
+
+      Append (Result, Use_Solution);
+      Append (Result, Prefix_Solution);
+
+      return Result;
+   end Resolve_Unvisible_Declaration;
 
 end Codefix.Formal_Errors;

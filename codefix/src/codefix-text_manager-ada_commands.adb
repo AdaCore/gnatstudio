@@ -866,5 +866,138 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
+   ---------------------------------
+   -- Get_Visible_Declaration_Cmd --
+   ---------------------------------
+
+   procedure Add_Use
+     (This             : out Get_Visible_Declaration_Cmd;
+      Current_Text     : Text_Navigator_Abstr'Class;
+      Source_Position  : File_Cursor'Class;
+      File_Destination : String;
+      With_Could_Miss  : Boolean)
+   is
+      Result      : Get_Visible_Declaration_Cmd;
+      With_Cursor : File_Cursor;
+      Pkg_Name    : Dynamic_String;
+      Clauses_Str : Dynamic_String := new String'("");
+   begin
+      Assign
+        (Pkg_Name,
+         Get_Extended_Unit_Name (Current_Text, Source_Position));
+
+      if With_Could_Miss then
+         With_Cursor := File_Cursor
+           (Search_With
+              (Current_Text, File_Destination, Pkg_Name.all));
+
+         if With_Cursor = Null_File_Cursor then
+            Assign (Clauses_Str, "with " & Pkg_Name.all & "; ");
+         end if;
+      end if;
+
+      Initialize
+        (Result.Insert_With,
+         Current_Text,
+         Get_Next_With_Position (Current_Text, File_Destination),
+         Clauses_Str.all & "use " & Pkg_Name.all & ";");
+
+      Result.Insert_With_Enabled := True;
+
+      Free (Pkg_Name);
+      Free (Clauses_Str);
+
+      This := Result;
+   end Add_Use;
+
+   procedure Prefix_Object
+     (This            : out Get_Visible_Declaration_Cmd;
+      Current_Text    : Text_Navigator_Abstr'Class;
+      Source_Position : File_Cursor'Class;
+      Object_Position : File_Cursor'Class;
+      With_Could_Miss : Boolean)
+   is
+      Result      : Get_Visible_Declaration_Cmd;
+      Word        : Word_Cursor;
+      With_Cursor : File_Cursor;
+      Pkg_Name    : Dynamic_String;
+   begin
+      Assign
+        (Pkg_Name,
+         Get_Extended_Unit_Name (Current_Text, Source_Position));
+
+      if With_Could_Miss then
+         With_Cursor := File_Cursor
+           (Search_With
+              (Current_Text, Object_Position.File_Name.all, Pkg_Name.all));
+
+         if With_Cursor = Null_File_Cursor then
+            Initialize
+              (Result.Insert_With,
+               Current_Text,
+               Get_Next_With_Position
+                 (Current_Text, Object_Position.File_Name.all),
+               "with " & Pkg_Name.all & ";");
+
+            Result.Insert_With_Enabled := True;
+         end if;
+      end if;
+
+      Word := (Clone (File_Cursor (Object_Position)) with
+               String_Match => new String'
+                 (Get_Extended_Unit_Name (Current_Text, Source_Position)
+                  & "."),
+               Mode         => Text_Ascii);
+
+      Initialize
+        (Result.Prefix_Obj,
+         Current_Text,
+         Word,
+         False);
+
+      Result.Prefix_Obj_Enabled := True;
+
+      Free (Word);
+
+      This := Result;
+   end Prefix_Object;
+
+
+   procedure Execute
+     (This         : Get_Visible_Declaration_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class) is
+   begin
+      if This.Insert_With_Enabled and then not This.Prefix_Obj_Enabled then
+         Execute (This.Insert_With, Current_Text, New_Extract);
+      elsif This.Prefix_Obj_Enabled and then not This.Insert_With_Enabled then
+         Execute (This.Prefix_Obj, Current_Text, New_Extract);
+      else
+         declare
+            Extract_1, Extract_2 : Extract;
+            Success              : Boolean;
+         begin
+            Execute (This.Insert_With, Current_Text, Extract_2);
+            Execute (This.Prefix_Obj, Current_Text, Extract_1);
+
+            Merge_Extracts
+              (New_Extract,
+               Extract_1,
+               Extract_2,
+               Success,
+               True);
+
+            if not Success then
+               raise Codefix_Panic;
+            end if;
+         end;
+      end if;
+   end Execute;
+
+   procedure Free (This : in out Get_Visible_Declaration_Cmd) is
+   begin
+      Free (This.Insert_With);
+      Free (This.Prefix_Obj);
+   end Free;
 
 end Codefix.Text_Manager.Ada_Commands;

@@ -172,6 +172,13 @@ package Codefix.Formal_Errors is
       Cursor       : File_Cursor'Class) return Solution_List;
    --  Remove a use clause at the position defined by the cursor.
 
+   function Resolve_Unvisible_Declaration
+     (Current_Text  : Text_Navigator_Abstr'Class;
+      Object_Cursor : File_Cursor'Class;
+      Pkg_Cursor    : File_Cursor'Class;
+      Seek_With     : Boolean) return Solution_List;
+   --  Propose to add a use or to prefix the object.
+
 
 private
 
