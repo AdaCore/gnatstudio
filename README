@@ -29,6 +29,7 @@ gbuilder/
 glide/
 gnat/
 gnat_src -> /home/my_account/gnat/src/ada
+gtkada-> /home/my_account/gtk/GtkAda
 gvd/
 hypergrep/
 kernel/
