@@ -1044,7 +1044,7 @@ package body Builder_Module is
            (Kernel,
             Command_Access (C),
             Active   => False,
-            Show_Bar => True,
+            Show_Bar => not Shadow,
             Queue_Id => "");
       end if;
 
