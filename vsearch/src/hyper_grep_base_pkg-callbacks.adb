@@ -284,7 +284,7 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
       if Get_Active (Hyper_Grep_Window.Only_Project_Check) then
          Init_Search
            (S,
-            Get_Chars (Hyper_Grep_Window.Pattern_Entry),
+            Get_Text (Hyper_Grep_Window.Pattern_Entry),
             Get_Project_Files,
             Get_Active (Hyper_Grep_Window.Case_Check),
             Get_Active (Hyper_Grep_Window.Whole_Word_Check),
@@ -292,13 +292,13 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
             Scope);
       else
          RE := Compile
-           (Get_Chars (Hyper_Grep_Window.Files_Entry), Glob => True);
+           (Get_Text (Hyper_Grep_Window.Files_Entry), Glob => True);
 
          Init_Search
            (S,
-            Get_Chars (Hyper_Grep_Window.Pattern_Entry),
+            Get_Text (Hyper_Grep_Window.Pattern_Entry),
             RE,
-            Get_Chars (Hyper_Grep_Window.Directory_Entry),
+            Get_Text (Hyper_Grep_Window.Directory_Entry),
             Get_Active (Hyper_Grep_Window.Subdirs_Check),
             Get_Active (Hyper_Grep_Window.Case_Check),
             Get_Active (Hyper_Grep_Window.Whole_Word_Check),
@@ -324,7 +324,7 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
    exception
       when Error_In_Regexp =>
          Put_Line ("--- Bad globbing pattern: '"
-                   & Get_Chars (Hyper_Grep_Window.Files_Entry)
+                   & Get_Text (Hyper_Grep_Window.Files_Entry)
                    & "'");
 
       when E : others =>
