@@ -274,7 +274,7 @@ package body Src_Editor_Module is
    begin
       return Save_Function
         (Get_Kernel (Source_Box (Widget).Editor), Gtk_Widget (Widget), False)
-        /= Cancel;
+        = Cancel;
    end Delete_Callback;
 
    ------------------
