@@ -18,6 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
+with Interfaces.C.Strings;     use Interfaces.C.Strings;
+
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Glib.Properties;          use Glib.Properties;
@@ -63,16 +68,11 @@ with Gtkada.Handlers;          use Gtkada.Handlers;
 with GVD.Color_Combo;          use GVD.Color_Combo;
 with Pango.Font;               use Pango.Font;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with Unchecked_Deallocation;
 with GUI_Utils;                use GUI_Utils;
 with Odd_Intl;                 use Odd_Intl;
 with Pango.Layout;             use Pango.Layout;
 with String_Hash;
-with Ada.Unchecked_Deallocation;
-with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
-with Ada.Text_IO;              use Ada.Text_IO;
-with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with Case_Handling;            use Case_Handling;
 
 package body Default_Preferences is
@@ -84,15 +84,15 @@ package body Default_Preferences is
    --  in case the user-specified fonts can not be found.
 
    type Pref_Description is record
-      Value       : GNAT.OS_Lib.String_Access;
-      Page        : GNAT.OS_Lib.String_Access;
-      Param       : Glib.Param_Spec;
+      Value : GNAT.OS_Lib.String_Access;
+      Page  : GNAT.OS_Lib.String_Access;
+      Param : Glib.Param_Spec;
       --  The definition of the preference. This can be null if the preference
       --  has not been registered yet, but its value has been read in the
       --  preferences file.
 
-      Descr       : Pango.Font.Pango_Font_Description;
-      Index       : Natural;
+      Descr : Pango.Font.Pango_Font_Description;
+      Index : Natural;
    end record;
 
    type Preferences_Editor_Record is new Gtk_Dialog_Record with null record;
@@ -219,8 +219,8 @@ package body Default_Preferences is
    --  Handling of Param_Spec_Style
 
    procedure Get_Font
-     (Info    : in out Pref_Description_Access;
-      Desc    : in out Pango_Font_Description);
+     (Info : in out Pref_Description_Access;
+      Desc : in out Pango_Font_Description);
    --  Check that Desc is a valid font, and associate it with the node N.
 
    function Create_Box_For_Font
@@ -287,7 +287,7 @@ package body Default_Preferences is
    -------------
 
    procedure Destroy (Manager : in out Preferences_Manager) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Preferences_Manager_Record'Class, Preferences_Manager);
    begin
       Destroy (Manager.all);
@@ -551,8 +551,8 @@ package body Default_Preferences is
    -------------------
 
    function Get_Pref_Font
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Style) return Pango_Font_Description
+     (Manager : access Preferences_Manager_Record;
+      Pref    : Param_Spec_Style) return Pango_Font_Description
    is
       Info : Pref_Description_Access :=
         Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
@@ -578,8 +578,8 @@ package body Default_Preferences is
    --------------
 
    procedure Get_Font
-     (Info    : in out Pref_Description_Access;
-      Desc    : in out Pango_Font_Description)
+     (Info : in out Pref_Description_Access;
+      Desc : in out Pango_Font_Description)
    is
       use type Gdk.Gdk_Font;
    begin
@@ -602,8 +602,8 @@ package body Default_Preferences is
    -----------------
 
    function Get_Pref_Fg
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color
+     (Manager : access Preferences_Manager_Record;
+      Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
    is
       Info : constant Pref_Description_Access  :=
         Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
@@ -624,8 +624,8 @@ package body Default_Preferences is
    -----------------
 
    function Get_Pref_Bg
-     (Manager  : access Preferences_Manager_Record;
-      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color
+     (Manager : access Preferences_Manager_Record;
+      Pref    : Param_Spec_Style) return Gdk.Color.Gdk_Color
    is
       Info : constant Pref_Description_Access :=
         Get (Manager.Preferences, Pspec_Name (Param_Spec (Pref)));
@@ -675,7 +675,8 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name : String; Value : String)
+      Name    : String;
+      Value   : String)
    is
       Info : Pref_Description_Access := Get (Manager.Preferences, Name);
    begin
@@ -706,7 +707,8 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name : String; Value : Gint) is
+      Name    : String;
+      Value   : Gint) is
    begin
       Set_Pref (Manager, Name, Gint'Image (Value));
    end Set_Pref;
@@ -742,7 +744,8 @@ package body Default_Preferences is
 
    procedure Set_Pref
      (Manager : access Preferences_Manager_Record;
-      Name : String; Value : Boolean) is
+      Name    : String;
+      Value   : Boolean) is
    begin
       Set_Pref (Manager, Name, Boolean'Image (Value));
    end Set_Pref;
@@ -753,7 +756,7 @@ package body Default_Preferences is
 
    function Get_Page
      (Manager : access Preferences_Manager_Record;
-      Param : Param_Spec) return String
+      Param   : Param_Spec) return String
    is
       Info : constant Pref_Description_Access :=
         Get (Manager.Preferences, Pspec_Name (Param));
@@ -1036,8 +1039,8 @@ package body Default_Preferences is
    ---------------
 
    procedure Update_Fg
-     (Combo  : access GObject_Record'Class;
-      Data : Pref_Description_Access)
+     (Combo : access GObject_Record'Class;
+      Data  : Pref_Description_Access)
    is
       Color : Gdk_Color;
    begin
@@ -1053,8 +1056,8 @@ package body Default_Preferences is
    ---------------
 
    procedure Update_Bg
-     (Combo  : access GObject_Record'Class;
-      Data : Pref_Description_Access)
+     (Combo : access GObject_Record'Class;
+      Data  : Pref_Description_Access)
    is
       Color : Gdk_Color;
    begin
@@ -1083,8 +1086,8 @@ package body Default_Preferences is
    ------------------
 
    procedure Update_Color
-     (Combo  : access GObject_Record'Class;
-      Data : Pref_Description_Access)
+     (Combo : access GObject_Record'Class;
+      Data  : Pref_Description_Access)
    is
       Color : Gdk_Color;
    begin
@@ -1202,7 +1205,7 @@ package body Default_Preferences is
    -----------------
 
    procedure Select_Font
-     (Ent : access GObject_Record'Class;
+     (Ent  : access GObject_Record'Class;
       Data : Pref_Description_Access)
    is
       E      : constant Gtk_Entry := Gtk_Entry (Ent);
@@ -1484,7 +1487,7 @@ package body Default_Preferences is
 
       elsif Typ = Gdk.Color.Gdk_Color_Type then
          declare
-            Prop : constant Param_Spec_Color := Param_Spec_Color (Param);
+            Prop  : constant Param_Spec_Color := Param_Spec_Color (Param);
             Combo : Gvd_Color_Combo;
          begin
             Gtk_New (Combo);
@@ -1570,10 +1573,10 @@ package body Default_Preferences is
    ----------------------
 
    procedure Edit_Preferences
-     (Manager           : access Preferences_Manager_Record;
-      Parent            : access Gtk.Window.Gtk_Window_Record'Class;
-      On_Changed        : Action_Callback;
-      Custom_Pages      : Preferences_Page_Array)
+     (Manager      : access Preferences_Manager_Record;
+      Parent       : access Gtk.Window.Gtk_Window_Record'Class;
+      On_Changed   : Action_Callback;
+      Custom_Pages : Preferences_Page_Array)
 
    is
       Model             : Gtk_Tree_Store;
@@ -1683,9 +1686,9 @@ package body Default_Preferences is
       Tmp        : Gtk_Widget;
       pragma Unreferenced (Tmp, Num);
 
-      Saved       : Saved_Prefs_Data;
-      Iter        : Iterator;
-      Info        : Pref_Description_Access;
+      Saved      : Saved_Prefs_Data;
+      Iter       : Iterator;
+      Info       : Pref_Description_Access;
 
       Sorted_Prefs : array (0 .. Manager.Current_Index - 1)
         of Pref_Description_Access;
