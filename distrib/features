@@ -3,6 +3,10 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
+- When defining custom actions, the output of a shell command can now be
+  used to launch an external command (for instance to query switches from the
+  project first).
+
 - Compilation output is highlighted in different colours based on the type of
   the error (Error/Warning/Style)
 
