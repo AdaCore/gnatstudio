@@ -39,6 +39,7 @@ with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Glide_Main_Window;         use Glide_Main_Window;
+with Interactive_Consoles;      use Interactive_Consoles;
 with Basic_Types;               use Basic_Types;
 with GVD.Status_Bar;            use GVD.Status_Bar;
 with Gtk.Box;                   use Gtk.Box;
@@ -189,8 +190,10 @@ package body Src_Editor_Module is
    --  If Force is False, then offer a choice to the user before doing so.
 
    type Location_Idle_Data is record
-      Edit : Source_Editor_Box;
+      Edit  : Source_Editor_Box;
       Line, Column, Column_End : Natural;
+      Focus : Boolean;
+      Child : MDI_Child;
    end record;
 
    package Location_Idle is new Gtk.Main.Idle (Location_Idle_Data);
@@ -379,6 +382,10 @@ package body Src_Editor_Module is
       File   : String);
    --  Add an entry for File to the Recent menu, if needed.
 
+   function Console_Has_Focus
+     (Kernel : access Kernel_Handle_Record'Class) return Boolean;
+   --  Return True if the focus MDI child is an interactive console.
+
    function Find_Mark (Identifier : String) return Mark_Identifier_Record;
    --  Find the mark corresponding to Identifier, or return an empty
    --  record.
@@ -388,6 +395,17 @@ package body Src_Editor_Module is
       File   : String);
    --  Create the marks on the buffer corresponding to File, if File has just
    --  been open.
+
+   -----------------------
+   -- Console_Has_Focus --
+   -----------------------
+
+   function Console_Has_Focus
+     (Kernel : access Kernel_Handle_Record'Class) return Boolean is
+   begin
+      return Get_Widget (Get_Focus_Child (Get_MDI (Kernel))).all in
+        Interactive_Console_Record'Class;
+   end Console_Has_Focus;
 
    ----------
    -- Free --
@@ -1264,7 +1282,8 @@ package body Src_Editor_Module is
             if Src /= null then
                Data.Edit := Src.Editor;
                Id := Location_Idle.Add
-                 (File_Edit_Callback'Access, (Src.Editor, 1, 1, 0));
+                 (File_Edit_Callback'Access,
+                  (Src.Editor, 1, 1, 0, True, null));
 
                return Gtk_Widget (Src);
             end if;
@@ -1647,8 +1666,8 @@ package body Src_Editor_Module is
       else
          Console.Insert
            (Kernel, (-"Cannot open file ") & "'" & File & "'",
-            Add_LF         => True,
-            Mode           => Error);
+            Add_LF => True,
+            Mode   => Error);
       end if;
 
       return Box;
@@ -1660,10 +1679,14 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean is
    begin
-      Grab_Focus (D.Edit);
+      if D.Focus then
+         Grab_Focus (D.Edit);
+      elsif D.Child /= null then
+         Set_Focus_Child (D.Child);
+      end if;
 
       if Is_Valid_Location (D.Edit, D.Line) then
-         Set_Screen_Location (D.Edit, D.Line, D.Column);
+         Set_Screen_Location (D.Edit, D.Line, D.Column, D.Focus);
 
          if D.Column_End /= 0
            and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
@@ -2518,26 +2541,27 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Mode);
 
-      Source : Source_Box;
-      Edit   : Source_Editor_Box;
-      MDI    : constant MDI_Window := Get_MDI (Kernel);
+      Source    : Source_Box;
+      Edit      : Source_Editor_Box;
+      MDI       : constant MDI_Window := Get_MDI (Kernel);
+
    begin
       if Mime_Type = Mime_Source_File then
          declare
-            File       : constant String  := Get_String (Data (Data'First));
-            Line       : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column     : constant Gint    := Get_Int (Data (Data'First + 2));
-            Column_End : constant Gint    := Get_Int (Data (Data'First + 3));
-            Highlight  : constant Boolean :=
+            File        : constant String  := Get_String (Data (Data'First));
+            Line        : constant Gint    := Get_Int (Data (Data'First + 1));
+            Column      : constant Gint    := Get_Int (Data (Data'First + 2));
+            Column_End  : constant Gint    := Get_Int (Data (Data'First + 3));
+            Highlight   : constant Boolean :=
               Get_Boolean (Data (Data'First + 4));
-            New_File   : constant Boolean :=
+            New_File    : constant Boolean :=
               Get_Boolean (Data (Data'First + 6));
-            The_Data   : Source_Editor_Module :=
+            The_Data    : Source_Editor_Module :=
               Source_Editor_Module (Src_Editor_Module_Id);
-            Iter       : Child_Iterator := First_Child (MDI);
-            Child      : MDI_Child;
-
+            Iter        : Child_Iterator := First_Child (MDI);
+            Child       : MDI_Child;
             No_Location : Boolean := False;
+            Get_Focus   : Boolean;
 
          begin
             if Line = -1 then
@@ -2566,10 +2590,20 @@ package body Src_Editor_Module is
                   No_Location := True;
                end if;
 
+               Get_Focus := not Console_Has_Focus (Kernel);
+               Child := Get_Focus_Child (Get_MDI (Kernel));
                Source := Open_File
                  (Kernel, File,
                   Create_New => New_File,
-                  Focus      => not No_Location);
+                  Focus      => Get_Focus and then not No_Location);
+
+               --  Only grab again the focus on Child (in Location_Callback)
+               --  if the focus was changed by Open_File, and an interactive
+               --  console had the focus previousely.
+
+               if Get_Focus_Child (Get_MDI (Kernel)) = Child then
+                  Child := null;
+               end if;
 
                if Source /= null then
                   Edit := Source.Editor;
@@ -2585,14 +2619,14 @@ package body Src_Editor_Module is
                   --  events and initializations have taken place before we
                   --  try to scroll the editor.
 
-                  Grab_Focus (Edit);
-
                   The_Data.Location_Open_Id := Location_Idle.Add
                     (Location_Callback'Access,
-                       (Edit,
-                        Natural (Line),
-                        Natural (Column),
-                        Natural (Column_End)),
+                     (Edit,
+                      Natural (Line),
+                      Natural (Column),
+                      Natural (Column_End),
+                      Get_Focus,
+                      Child),
                      Destroy => Location_Destroy'Access);
 
                   if Highlight then
