@@ -3550,6 +3550,10 @@ where you can specify the scope of your search, which can be a set of:
 @code{Projects, Directories, Files, Entities}. The search in entities
 may take a long time, search each file is parsed during the search.
 
+@item Open Files
+Search in all the files that are currenly open in the source editor. The
+@i{Scope} entry is described in the @code{Files...} section below.
+
 @item Files...
 Search in a given set of files. An extra @i{Files} box will be displayed
 where you can specify the files by using standard shell (Unix or Windows)
