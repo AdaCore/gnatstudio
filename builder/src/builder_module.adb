@@ -800,7 +800,7 @@ package body Builder_Module is
          declare
             Args    : Argument_List_Access := Argument_String_To_List
               ("-q -u " & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
-            Prj_Arg : aliased String := "-P" & Project;
+            Prj_Arg : aliased String := "-P" & Project_Path (Prj);
 
          begin
             Insert_And_Launch
