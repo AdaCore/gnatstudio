@@ -86,6 +86,11 @@ package body CPP_Parser is
       Is_Type     => False,
       Is_Generic  => False,
       Is_Abstract => False);
+   Reference_Entity : constant E_Kind :=
+     (Reference,
+      Is_Type     => False,
+      Is_Generic  => False,
+      Is_Abstract => False);
    Array_Entity : constant E_Kind :=
      (Array_Kind,
       Is_Type     => False,
@@ -307,6 +312,7 @@ package body CPP_Parser is
    function Lookup_Entity_In_Tables
      (Handler                        : access CPP_Handler_Record'Class;
       Name                           : String;
+      Current_Source                 : Source_File;
       Tables                         : Boolean_Table_Array := All_Types_Table;
       Check_Predefined               : Boolean := True;
       Check_Template_Arguments       : Boolean := True;
@@ -332,9 +338,9 @@ package body CPP_Parser is
    --  Parent_Reference is also registered as a reference to the parent
 
    procedure Set_Subprogram_Return_Type
-     (Handler     : access CPP_Handler_Record'Class;
-      Entity      : Entity_Information;
-      Return_Type : String);
+     (Handler          : access CPP_Handler_Record'Class;
+      Entity           : Entity_Information;
+      Return_Type      : String);
    --  Set the return type for a subprogram or method entity
 
    function Find_Forward_Declaration
@@ -654,6 +660,7 @@ package body CPP_Parser is
    function Lookup_Entity_In_Tables
      (Handler                        : access CPP_Handler_Record'Class;
       Name                           : String;
+      Current_Source                 : Source_File;
       Tables                         : Boolean_Table_Array := All_Types_Table;
       Check_Predefined               : Boolean := True;
       Check_Template_Arguments       : Boolean := True;
@@ -662,14 +669,26 @@ package body CPP_Parser is
      return Entity_Information
    is
       Source  : Source_File;
-      Entity  : Entity_Information;
+      Entity, Real_Entity  : Entity_Information;
       Key     : Entity_Key;
       Key2    : Entity_Class_Key;
       Key3    : Entity_Function_Key;
       Success : Boolean;
+      Last    : Natural := Name'Last;
    begin
+      --  Handling of pointers, arrays,... => create anonymous types
+
+      while (Name (Last) = '*' and then Name (Name'First .. Last) /= "char *")
+        or else Name (Last) = '&'
+        or else Name (Last) = '['
+        or else Name (Last) = ']'
+        or else Name (Last) = ' '
+      loop
+         Last := Last - 1;
+      end loop;
+
       if Check_Predefined then
-         Entity := Get_If_Predefined (Handler, Name);
+         Entity := Get_If_Predefined (Handler, Name (Name'First .. Last));
       end if;
 
       if Entity = null then
@@ -680,7 +699,7 @@ package body CPP_Parser is
                case Table_Type is
                   when CL | CON | E | EC | FD | FR | GV | FU | MA | T | UN =>
                      Find_Key (Handler.SN_Table (Table_Type),
-                               Name           => Name,
+                               Name           => Name (Name'First .. Last),
                                Key            => Key,
                                Success        => Success);
                      if Success then
@@ -690,7 +709,7 @@ package body CPP_Parser is
                              (Key.File_Name.First .. Key.File_Name.Last));
                         Entity := Get_Or_Create
                           (Db     => Handler.Db,
-                           Name   => Name,
+                           Name   => Name (Name'First .. Last),
                            File   => Source,
                            Line   => Key.Start_Position.Line,
                            Column => Key.Start_Position.Column);
@@ -702,10 +721,10 @@ package body CPP_Parser is
                   when IV | MI | MD =>
                      if Class_Or_Function /= "" then
                         Find_Key (Handler.SN_Table (Table_Type),
-                                  Class             => Class_Or_Function,
-                                  Name              => Name,
-                                  Key               => Key2,
-                                  Success           => Success);
+                                  Class       => Class_Or_Function,
+                                  Name        => Name (Name'First .. Last),
+                                  Key         => Key2,
+                                  Success     => Success);
                         if Success then
                            Source := Get_Or_Create
                              (Handler,
@@ -713,7 +732,7 @@ package body CPP_Parser is
                                 (Key2.File_Name.First .. Key2.File_Name.Last));
                            Entity := Get_Or_Create
                              (Db     => Handler.Db,
-                              Name   => Name,
+                              Name   => Name (Name'First .. Last),
                               File   => Source,
                               Line   => Key2.Start_Position.Line,
                               Column => Key2.Start_Position.Column);
@@ -726,7 +745,7 @@ package body CPP_Parser is
                   when LV =>
                      Find_Key (Handler.SN_Table (Table_Type),
                                Function_Name     => Class_Or_Function,
-                               Name              => Name,
+                               Name              => Name (Name'First .. Last),
                                Key               => Key3,
                                Success           => Success);
                      if Success then
@@ -736,7 +755,7 @@ package body CPP_Parser is
                              (Key3.File_Name.First .. Key3.File_Name.Last));
                         Entity := Get_Or_Create
                           (Db     => Handler.Db,
-                           Name   => Name,
+                           Name   => Name (Name'First .. Last),
                            File   => Source,
                            Line   => Key3.Start_Position.Line,
                            Column => Key3.Start_Position.Column);
@@ -761,6 +780,41 @@ package body CPP_Parser is
       --  src_info-type_utils.adb:315
       if Entity = null and then Check_Class_Template_Arguments then
          null;
+      end if;
+
+      --  Do we have a pointer ?
+
+      if Entity /= null then
+         loop
+            Last := Last + 1;
+            exit when Last > Name'Last;
+
+            if Name (Last) /= ' ' then
+               Real_Entity := Get_Or_Create
+                 (Handler.Db,
+                  Name         => Name (Name'First .. Last),
+                  File         => Current_Source,
+                  Line         => Predefined_Line,
+                  Column       => Predefined_Column);
+
+               if Name (Last) = '*' then
+                  Set_Kind (Real_Entity, Access_Entity);
+                  Set_Pointed_Type (Real_Entity, Entity);
+
+               elsif Name (Last) = '&' then
+                  Set_Kind (Real_Entity, Reference_Entity);
+                  Set_Pointed_Type (Real_Entity, Entity);
+
+               elsif Name (Last) = '[' then
+                  Set_Kind (Real_Entity, Array_Entity);
+                  Set_Pointed_Type (Real_Entity, Entity);
+
+                  Last := Last + 1;
+               end if;
+
+               Entity := Real_Entity;
+            end if;
+         end loop;
       end if;
 
       if Entity = null then
@@ -848,13 +902,15 @@ package body CPP_Parser is
          if Index < V.Original.Last then
             Original := Lookup_Entity_In_Tables
               (Handler,
-               String (V.Data (Index + 2 .. V.Original.Last)),
+               V.Data (Index + 2 .. V.Original.Last),
+               Current_Source    => Get_File (Get_Declaration_Of (Entity)),
                Tables => (IV | T => True, others => False),
                Class_Or_Function => V.Data (V.Original.First .. Index - 1));
          else
             Original := Lookup_Entity_In_Tables
               (Handler,
-               String (V.Data (V.Original.First .. V.Original.Last)));
+               V.Data (V.Original.First .. V.Original.Last),
+               Current_Source   => Get_File (Get_Declaration_Of (Entity)));
          end if;
 
          if Original /= null then
@@ -978,6 +1034,7 @@ package body CPP_Parser is
          Class := Lookup_Entity_In_Tables
            (Handler,
             Entity_Class,
+            Current_Source                 => Source,
             Tables                         => (CL => True, others => False),
             Check_Predefined               => False,
             Check_Template_Arguments       => False,
@@ -1068,19 +1125,13 @@ package body CPP_Parser is
       end if;
 
       if SuccessI then
-         --  Add a reference for the class name.
-         --  Since SN doesn't give us this information, we'll assume that the
-         --  name of the method is always "class::name", ie no space, and
-         --  then compute the start of "class"
-
-         Class_Length := D.Class.Last - D.Class.First + 1;
-
          --  The class might not have been computed if the entity was already
          --  in the class. Compute it now in that case.
          if Class = null then
             Class := Lookup_Entity_In_Tables
               (Handler,
                D.Key (D.Class.First .. D.Class.Last),
+               Current_Source                 => Source,
                Tables                         => (CL => True, others => False),
                Check_Predefined               => False,
                Check_Template_Arguments       => False,
@@ -1088,8 +1139,21 @@ package body CPP_Parser is
                Class_Or_Function              => Invalid_String);
          end if;
 
+         --  Add a reference for the class name.
+         --  Since SN doesn't give us this information, we'll assume that the
+         --  name of the method is always "class::name", ie no space, and
+         --  then compute the start of "class".
+         --  Do not insert a new reference to the class is the MI and MD are
+         --  at the same location
+
+         Class_Length := D.Class.Last - D.Class.First + 1;
+
          if Class /= null
            and then M.Start_Position.Column - 2 - Class_Length > 0
+           and then (M.Start_Position.Line /=
+                       Get_Line (Get_Declaration_Of (Entity))
+                     or else M.Start_Position.Column /=
+                       Get_Column (Get_Declaration_Of (Entity)))
          then
             Add_Reference
               (Class,
@@ -1163,6 +1227,7 @@ package body CPP_Parser is
                Parent := Lookup_Entity_In_Tables
                  (Handler,
                   Base.Key (Base.Base_Class.First .. Base.Base_Class.Last),
+                  Current_Source     => Get_File (Get_Declaration_Of (Entity)),
                   Tables                      => (CL => True, others => False),
                   Check_Predefined               => False,
                   Check_Template_Arguments       => False,
@@ -1280,8 +1345,12 @@ package body CPP_Parser is
       else
          Set_Kind (Entity, Function_Entity);
          Parent := Lookup_Entity_In_Tables
-           (Handler, Return_Type (Start .. Return_Type'Last));
-         Set_Returned_Type (Entity, Parent);
+           (Handler, Return_Type (Start .. Return_Type'Last),
+            Current_Source   => Get_File (Get_Declaration_Of (Entity)));
+
+         if Parent /= null then
+            Set_Returned_Type (Entity, Parent);
+         end if;
       end if;
    end Set_Subprogram_Return_Type;
 
@@ -1429,6 +1498,7 @@ package body CPP_Parser is
                   Name    => R.Key
                     (R.Referred_Symbol_Name.First
                      .. R.Referred_Symbol_Name.Last),
+                  Current_Source    => Ref_Source,
                   Class_Or_Function => R.Key
                     (R.Referred_Class.First .. R.Referred_Class.Last),
                   Tables                         => Arr,
@@ -1632,45 +1702,16 @@ package body CPP_Parser is
    begin
       Cleanup_Entity_Name (Parent_Name, Name_Start);
 
-      --  Do we have a pointer/array/pointer to function ?
+      Parent := Lookup_Entity_In_Tables
+        (Handler, Parent_Name (Name_Start .. Parent_Name'Last),
+         Current_Source   => Get_File (Get_Declaration_Of (Entity)));
 
-      if Parent_Name (Parent_Name'Last) = '*'
-        or else (Parent_Name'Length > 2
-                 and then Parent_Name
-                   (Parent_Name'Last - 1 .. Parent_Name'Last) = "()")
-      then
-         Set_Kind (Entity, Access_Entity);
+      if Parent /= null then
+         Set_Type_Of (Entity, Is_Of_Type => Parent);
 
-         Parent := Lookup_Entity_In_Tables
-           (Handler, Parent_Name (Name_Start .. Parent_Name'Last - 2));
-         if Parent /= null then
-            Set_Pointed_Type (Entity, Points_To => Parent);
-         end if;
-
-      elsif (Parent_Name'Length > 2
-             and then Parent_Name
-               (Parent_Name'Last - 1 .. Parent_Name'Last) = "[]")
-      then
-         Set_Kind (Entity, Array_Entity);
-
-         Parent := Lookup_Entity_In_Tables
-           (Handler, Parent_Name (Name_Start .. Parent_Name'Last - 2));
-         if Parent /= null then
-            Set_Pointed_Type (Entity, Points_To => Parent);
-         end if;
-
-
-      else
-         Parent := Lookup_Entity_In_Tables
-           (Handler, Parent_Name (Name_Start .. Parent_Name'Last));
-
-         if Parent /= null then
-            Set_Type_Of (Entity, Is_Of_Type => Parent);
-
-            Kind := Get_Kind (Parent);
-            Kind.Is_Type := Entity_Is_A_Type;
-            Set_Kind (Entity, Kind);
-         end if;
+         Kind := Get_Kind (Parent);
+         Kind.Is_Type := Entity_Is_A_Type;
+         Set_Kind (Entity, Kind);
       end if;
 
       if Parent /= null and then Parent_Reference /= Invalid_Point then
