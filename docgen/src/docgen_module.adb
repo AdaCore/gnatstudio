@@ -45,6 +45,14 @@ with Docgen.Backend.Text;       use Docgen.Backend; use Docgen.Backend.Text;
 with Docgen_Registry;           use Docgen_Registry;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Stock;                 use Gtk.Stock;
+with Gtk.Radio_Button;          use Gtk.Radio_Button;
+with Gtk.Tooltips;              use Gtk.Tooltips;
+
 package body Docgen_Module is
 
    Me : constant Debug_Handle := Create ("Docgen");
@@ -175,7 +183,7 @@ package body Docgen_Module is
    -------------------------------------------
 
    function Get_Backend
-     (Kernel  : Kernel_Handle) return Docgen.Backend.Backend_Handle;
+     (Kernel : Kernel_Handle) return Docgen.Backend.Backend_Handle;
    --  Return the backend to use given the current options.
 
    procedure Generate
@@ -703,17 +711,13 @@ package body Docgen_Module is
    -----------------
 
    function Get_Backend
-     (Kernel  : Kernel_Handle) return Docgen.Backend.Backend_Handle
+     (Kernel : Kernel_Handle) return Docgen.Backend.Backend_Handle
    is
       Backends : Supported_Backends_Access :=
                    Docgen_Module (Docgen_Module_Id).Backends;
       Button   : Message_Dialog_Buttons;
       pragma Unreferenced (Button);
    begin
-      --  ??? This routine needs to be changed to display the list supported
-      --  formats in a dialog. Right now a single backend is supported for
-      --  HTML so we just use this one.
-
       if Length = 0 then
          Button := Message_Dialog
            (Msg         => "There is no document backend configured.",
@@ -724,6 +728,7 @@ package body Docgen_Module is
          return null;
       end if;
 
+      --  Check if we need to create the backend handles now
 
       if Backends = null then
          --  Initialize the backends now
@@ -740,8 +745,69 @@ package body Docgen_Module is
          end loop;
       end if;
 
-      --  ??? We have a single backend, return it for now
-      return Backends (Backends'First);
+      if Backends'Length = 1 then
+         --  A single backend is configured, used it
+         return Backends (Backends'First);
+
+      else
+         --  Open a dialog and let the user select the backend to use
+
+         declare
+            Dialog : Gtk_Dialog;
+            Label  : Gtk_Label;
+            Button : Gtk_Widget;
+            Radio  : array (1 .. Length) of Gtk_Radio_Button;
+            Tmp    : Gtk_Radio_Button;
+            Tips   : Gtk_Tooltips;
+            B_Des  : Output_Description_Access;
+            pragma Unreferenced (Button);
+         begin
+            Gtk_New
+              (Dialog, "Select formats...",
+               Get_Main_Window (Kernel), Modal or Destroy_With_Parent);
+
+            Gtk_New (Label, -"Supported documentation format.");
+            Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+            Gtk_New (Tips);
+
+            for K in Radio'Range loop
+               B_Des := Get (K);
+
+               if K = 1 then
+                  Gtk_New (Radio (K), Label => -"Format " & B_Des.Name.all);
+               else
+                  Gtk_New (Radio (K), Tmp, -"Format " & B_Des.Name.all);
+               end if;
+
+               Set_Tip (Tips, Radio (K), B_Des.Description.all);
+
+               Tmp := Radio (K);
+
+               Set_Active (Radio (K), K = 1);
+               Pack_Start (Get_Vbox (Dialog), Radio (K), Expand => False);
+            end loop;
+
+            Button := Add_Button (Dialog, Stock_Execute, Gtk_Response_OK);
+            Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+            Show_All (Dialog);
+
+            if Run (Dialog) = Gtk_Response_OK then
+               --  Check which radio button has been selected
+
+               for K in Radio'Range loop
+                  if Get_Active (Radio (K)) then
+                     Destroy (Dialog);
+                     return Backends (K);
+                  end if;
+               end loop;
+            end if;
+
+            Destroy (Dialog);
+            return null;
+         end;
+      end if;
    end Get_Backend;
 
    --------------
