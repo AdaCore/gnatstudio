@@ -1,0 +1,97 @@
+
+Description and Use of the widget's description database.
+========================================================
+
+One of the goals for Radical is for it to be as extensible as possible (and
+this as easily as possible of course). Given the number of widgets in gtk+
+proper, as well as all the widgets found in the additional libraries that we
+might want to support at some point (GNOME, gtkextra, GtkAda, ...), it is
+fundamental that adding new widgets to the GUI builder doesn't require a lot of
+coding.
+
+The basic idea is thus that each possible widget or component should be
+described in a database file, with enough information for the GUI builder and
+the code generators to manipulate that widget and generate code for it.
+
+Of course, we still need some code to instantiate the widget and modify its
+properties. This code could be automatically generated and compiled from the
+high-level description found in the database document.
+
+
+Contents of the database file
+=============================
+
+A lot of information needs to be given in this file (ideally, everything should
+be described there, so that the actual code for the GUI builder or the code
+generators doesn't have any hard-coded special handling).
+
+Here is a first list of required data:
+  - "type name"
+  - "type of widget"
+    one of "container", "dialog", ... The list should be extensible, for
+    instance if we get a "database" widget one day. At the interface level,
+    this means that the icon for the widget will go in a notebook page with
+    the given name
+  - "icon"
+    icon (file name) to use in the gui builder (tree + widget selection)
+  - "min_children"
+    minimal number of children (0 for non-container widgets)
+  - "max_children"
+    maximal number of children (0 for non-container widgets, 1 for children
+    of Gtk_Bin, -1 for most containers to indicate an unlimited number)
+  - "parent"
+    name of the parent widget.
+  - "interfaces"
+    name of the interfaces that the widget implements (gtk+-2.0 only)
+  - "signals"
+    list of all the new signals defined by that widget type. This should
+    include their parameters, return values, ... A documentation string should
+    be tolerated, for display in the GUI builder.
+  - "properties"
+    List of properties of the widget that can be changed at the GUI level. This
+    can for instance be the text associated with a label, the icon for a
+    button, ... A documentation string should be allowed
+  - "children_add"
+    Function to use to add children. Gtk+'s containers typically have several
+    such function (pack_start, pack_end, add, append_widget, ...).
+    It might be nice to find of a general way to describe which one should
+    preferably be used, and in what cases. For Gtk_Box, Add is a synonym for
+    Pack_Start_Defaults.
+    There are several additional parameters that might need to be specified
+    as well (coordinates for Gtk_Fixed, Shrink for Pack_Start, ...)
+  - "children_type"
+    name of the ancestor that a child must have. For instance, menus only
+    support Menu_Item children, and not general widgets.
+  - "style"
+    what can be changed in the style (there is no point in changing the
+    background of a label for instance, although changing the foreground
+    make sense). This could be an indication for the GUI builder to
+    transparently generate an intermediate event_box, in case the user has
+    chosen to change the background anyway (FAQ for gtk+, would be nice to
+    handle automatically).
+  - "flags"
+    A lot of general flags are needed (can the widget have the focus for
+    keyboard events, default event mask,...). These will be integrated as
+    we go along.
+
+Format of the database file
+===========================
+
+One suggestion is to create one database file per library (ie one for gtk,
+one for gtk+extra, ...). This makes handling a little bit easier (no need
+to copy several hundreds files). On the other hand, this also means that
+finding the actual description of a widget within the file is a little bit
+more cumbersome.
+
+As a result, it seems best to allow each file to contains from one to several
+widgets, leaving the organization itself to the library maintainer.
+
+Also, to make things more readable, it seems a good idea to allow for fields
+to be optional (for instance, non-container widgets do not need to specify
+min_children or max_children).
+
+Given all the requirements above, XML seems a very appropriate format.
+It allows for optional fields, fields with default values, attributes to
+fields, any order, ... And its syntax can be described in XML itself.
+
+
