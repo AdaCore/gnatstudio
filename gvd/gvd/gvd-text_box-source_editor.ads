@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Object;
 with Gtk.Widget;
 with Gtk.Container;
 with Language;
@@ -58,12 +59,12 @@ package GVD.Text_Box.Source_Editor is
    procedure Update_Breakpoints
      (Editor  : access Source_Editor_Record;
       Br      : GVD.Types.Breakpoint_Array;
-      Process : Gtk.Widget.Gtk_Widget) is abstract;
+      Process : Glib.Object.GObject) is abstract;
    --  Change the list of breakpoints to highlight in the editor.
    --  All the breakpoints that previously existed are removed from the screen,
    --  and replaced by the new ones.
    --  The breakpoints that do not apply to the current file are ignored.
-   --  Process is the Debugger_Process_Tab which corresponds to the debugger
+   --  Process is the Visual_Debugger which corresponds to the debugger
    --  that emitted the request.
 
    function Get_Current_File
@@ -110,12 +111,12 @@ package GVD.Text_Box.Source_Editor is
      (Editor      : access Source_Editor_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Gtk.Widget.Gtk_Widget) is abstract;
+      Process     : Glib.Object.GObject) is abstract;
    --  Set the current line (and draw the button on the side).
    --  If Set_Current is True, then the line becomes the current line (ie the
    --  one on which the debugger is stopped). Otherwise, Line is simply the
    --  line that we want to display in the editor.
-   --  Process is the Debugger_Process_Tab which corresponds to the debugger
+   --  Process is the Visual_Debugger which corresponds to the debugger
    --  that is stopped.
 
    function Get_Line

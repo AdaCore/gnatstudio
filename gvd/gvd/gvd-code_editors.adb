@@ -92,7 +92,7 @@ package body GVD.Code_Editors is
 
    procedure Gtk_New_Hbox
      (Editor  : out Code_Editor;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Process : access Glib.Object.GObject_Record'Class) is
    begin
       Editor := new Code_Editor_Record;
       Initialize (Editor, Process);
@@ -104,16 +104,16 @@ package body GVD.Code_Editors is
 
    procedure Initialize
      (Editor  : access Code_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
+      Process : access Glib.Object.GObject_Record'Class)
    is
-      Tab   : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Process);
+      Tab   : constant Visual_Debugger :=
+        Visual_Debugger (Process);
       Top   : constant GVD_Main_Window := Tab.Window;
       Child : MDI_Child;
 
    begin
       Initialize_Hbox (Editor);
-      Editor.Process := Gtk_Widget (Process);
+      Editor.Process := Glib.Object.GObject (Process);
       Gtk_New (Editor.Asm, Process);
       Ref (Editor.Asm);
 
@@ -123,7 +123,7 @@ package body GVD.Code_Editors is
          Set_Policy
            (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
          Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
-         Child := Put (Tab.Process_Mdi, Editor.Explorer_Scroll);
+         Child := Put (Top.Process_Mdi, Editor.Explorer_Scroll);
          Set_Title (Child, "Explorer");
          Set_Dock_Side (Child, Left);
          Dock_Child (Child);
@@ -150,7 +150,7 @@ package body GVD.Code_Editors is
    procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
       Ed : constant Code_Editor := Code_Editor (Editor);
    begin
-      if Debugger_Process_Tab (Ed.Process).Window.Standalone then
+      if Visual_Debugger (Ed.Process).Window.Standalone then
          Destroy (Ed.Source_Asm_Pane);
       end if;
 
@@ -165,10 +165,10 @@ package body GVD.Code_Editors is
      (Editor      : access Code_Editor_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Gtk_Widget)
+      Process     : Glib.Object.GObject)
    is
       Top : constant GVD_Main_Window :=
-        GVD_Main_Window (Debugger_Process_Tab (Editor.Process).Window);
+        GVD_Main_Window (Visual_Debugger (Process).Window);
 
    begin
       Editor.Source_Line := Line;
@@ -223,7 +223,7 @@ package body GVD.Code_Editors is
    -----------------
 
    function Get_Process
-     (Editor : access Code_Editor_Record'Class) return Gtk.Widget.Gtk_Widget is
+     (Editor : access Code_Editor_Record'Class) return Glib.Object.GObject is
    begin
       return Editor.Process;
    end Get_Process;
@@ -308,7 +308,7 @@ package body GVD.Code_Editors is
       Force       : Boolean := False)
    is
       Top : constant GVD_Main_Window :=
-        GVD_Main_Window (Debugger_Process_Tab (Editor.Process).Window);
+        GVD_Main_Window (Visual_Debugger (Editor.Process).Window);
 
    begin
       Load_File (Editor.Source, File_Name, Set_Current, Force);
@@ -325,7 +325,7 @@ package body GVD.Code_Editors is
 
       --  Update the name of the source file in the frame.
 
-      Update_Editor_Frame (Process => Debugger_Process_Tab (Editor.Process));
+      Update_Editor_Frame (Process => Visual_Debugger (Editor.Process));
    end Load_File;
 
    ------------------------
@@ -470,8 +470,8 @@ package body GVD.Code_Editors is
    procedure Apply_Mode
      (Editor : access Code_Editor_Record; Mode : View_Mode)
    is
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
    begin
       if Mode = Editor.Mode then
          return;
@@ -494,7 +494,7 @@ package body GVD.Code_Editors is
          when Source =>
             Attach (Editor.Source, Editor);
             Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True,
-                      Process => Gtk_Widget (Process));
+                      Process => Glib.Object.GObject (Process));
 
             if Process.Breakpoints /= null then
                Update_Breakpoints
@@ -527,7 +527,7 @@ package body GVD.Code_Editors is
 
             Highlight_Address_Range (Editor.Asm, Editor.Source_Line);
             Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True,
-                      Process => Gtk_Widget (Process));
+                      Process => Glib.Object.GObject (Process));
 
             if Process.Breakpoints /= null then
                Update_Breakpoints
@@ -575,7 +575,7 @@ package body GVD.Code_Editors is
    is
       Edit : constant Code_Editor := Code_Editor (Editor);
       Top  : constant GVD_Main_Window :=
-        GVD_Main_Window (Debugger_Process_Tab (Edit.Process).Window);
+        GVD_Main_Window (Visual_Debugger (Edit.Process).Window);
 
    begin
       if Top.Standalone

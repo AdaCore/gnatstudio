@@ -18,10 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Object;
 with Gtk.Dialog; use Gtk.Dialog;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
+with Gtk.Handlers;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.List; use Gtk.List;
@@ -29,8 +31,6 @@ with Gtk.Window; use Gtk.Window;
 with Gtk.Enums;
 with Debugger; use Debugger;
 with Basic_Types;
-with Gtk.Widget;
-with Gtk.Handlers;
 with Histories;
 
 package GVD.Dialogs is
@@ -79,13 +79,13 @@ package GVD.Dialogs is
 
    procedure Update
      (Task_Dialog : access Task_Dialog_Record;
-      Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Debugger    : access Glib.Object.GObject_Record'Class);
    --  Update the contents of the task dialog.
    --  The information is read from Debugger (which is in fact a
-   --  Debugger_Process_Tab).
+   --  Visual_Debugger).
 
    procedure On_Task_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Widget : access Glib.Object.GObject_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the task window associated with a given tab.
 
@@ -103,13 +103,13 @@ package GVD.Dialogs is
 
    procedure Update
      (Thread_Dialog : access Thread_Dialog_Record;
-      Debugger      : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Debugger      : access Glib.Object.GObject_Record'Class);
    --  Update the contents of the thread dialog.
    --  The information is read from Debugger (which is in fact a
-   --  Debugger_Process_Tab).
+   --  Visual_Debugger).
 
    procedure On_Thread_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Widget : access Glib.Object.GObject_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the thread window associated with a given tab.
 
@@ -126,36 +126,36 @@ package GVD.Dialogs is
    --  Internal initialization function
 
    procedure Update
-     (PD_Dialog : access PD_Dialog_Record;
-      Debugger   : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (PD_Dialog  : access PD_Dialog_Record;
+      Debugger   : access Glib.Object.GObject_Record'Class);
    --  Update the contents of the protection domains dialog.
    --  The information is read from Debugger (which is in fact a
-   --  Debugger_Process_Tab).
+   --  Visual_Debugger).
 
    procedure On_PD_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Widget : access Glib.Object.GObject_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the protection domains window associated with a given
    --  tab.
 
    procedure Update_Call_Stack
-     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Debugger : access Glib.Object.GObject_Record'Class);
    --  Update the contents of the call stack window.
    --  The information is read from Debugger (which is in fact a
-   --  Debugger_Process_Tab).
+   --  Visual_Debugger).
 
    procedure Show_Call_Stack_Columns
-     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Debugger : access Glib.Object.GObject_Record'Class);
    --  Show or hide the relevant column in the call stack list for a
    --  specific debugger, based on the settings in Debugger.Backtrace_Filter
 
    procedure On_Stack_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+     (Widget : access Glib.Object.GObject_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the call stack window associated with a given tab.
 
    procedure Highlight_Stack_Frame
-     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Debugger : access Glib.Object.GObject_Record'Class;
       Frame    : Natural);
    --  Highlights a specific frame in the call stack list for a specific
    --  debugger.
@@ -193,7 +193,7 @@ package GVD.Dialogs is
 
    procedure Update
      (History_Dialog : History_Dialog_Access;
-      Debugger       : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Debugger       : access Glib.Object.GObject_Record'Class);
    --  Reads the commands history from the main debug window, and fills the
    --  list with the User and Visible commands that were sent to Debugger.
 
@@ -244,7 +244,7 @@ private
       Close_Button    : Gtk_Button;
       Select_Row_Id   : Gtk.Handlers.Handler_Id;
    end record;
-   --  ??? Why not store directly the Debugger_Process_Tab in this record,
+   --  ??? Why not store directly the Visual_Debugger in this record,
    --  instead of having to convert in the callbacks ?
 
    type Task_Dialog_Record is new GVD_Dialog_Record with null record;

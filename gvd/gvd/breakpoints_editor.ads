@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -31,7 +31,7 @@ package Breakpoints_Editor is
       Advanced_Breakpoints_Location    : Advanced_Breakpoint_Access;
       Advanced_Breakpoints_Watchpoints : Advanced_Breakpoint_Access;
       Advanced_Breakpoints_Exceptions  : Advanced_Breakpoint_Access;
-      Process                          : GVD.Process.Debugger_Process_Tab;
+      Process                          : GVD.Process.Visual_Debugger;
       Enabled_Pixmap                   : Gdk.Pixmap.Gdk_Pixmap;
       Enabled_Mask                     : Gdk.Bitmap.Gdk_Bitmap;
    end record;
@@ -39,7 +39,7 @@ package Breakpoints_Editor is
 
    procedure Breakpoint_Editor
      (Editor     : in out Breakpoint_Editor_Access;
-      Process    : access GVD.Process.Debugger_Process_Tab_Record'Class);
+      Process    : access GVD.Process.Visual_Debugger_Record'Class);
    --  Open a breakpoint editor and launch a main loop until the ok or cancel
    --  button has been pressed.
    --  Editor if null is set to the created window, that is hidden on return.
@@ -57,7 +57,7 @@ package Breakpoints_Editor is
 
    procedure Set_Process
      (Editor  : access Breakpoint_Editor_Record;
-      Process : access GVD.Process.Debugger_Process_Tab_Record'Class);
+      Process : access GVD.Process.Visual_Debugger_Record'Class);
    --  Change the process on which the dialogs applies.
    --  The list of breakpoints is automatically updated for the new process.
 

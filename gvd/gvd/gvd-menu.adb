@@ -23,7 +23,6 @@ with Gdk.Window;          use Gdk.Window;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Item_Factory;    use Gtk.Item_Factory;
-with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
@@ -51,7 +50,7 @@ with Process_Proxies;     use Process_Proxies;
 with Breakpoints_Editor;  use Breakpoints_Editor;
 with Display_Items;       use Display_Items;
 
-with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Interactive_Consoles; use Interactive_Consoles;
 
 package body GVD.Menu is
 
@@ -68,7 +67,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
       if Tab = null
@@ -123,7 +122,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
       if Tab = null
@@ -162,7 +161,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
       if Tab = null
@@ -201,7 +200,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab           : constant Debugger_Process_Tab :=
+      Tab           : constant Visual_Debugger :=
         Get_Current_Process (Object);
       Process_List  : List_Select_Access;
       Success       : Boolean;
@@ -257,7 +256,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
    begin
@@ -287,7 +286,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
    begin
@@ -330,7 +329,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab         : constant Debugger_Process_Tab :=
+      Tab         : constant Visual_Debugger :=
         Get_Current_Process (Object);
       Button      : Message_Dialog_Buttons;
       Button2     : Boolean_Access := null;
@@ -415,7 +414,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Step_Into (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -433,7 +432,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Step_Into_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -451,7 +450,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Step_Over (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -469,7 +468,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Step_Over_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -487,7 +486,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Finish (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -505,7 +504,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Continue (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -523,7 +522,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Kill_Process (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -541,7 +540,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab = null then
          return;
@@ -590,9 +589,7 @@ package body GVD.Menu is
 
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (Get_Toplevel (Object));
-      Page : constant Gtk_Widget := Get_Nth_Page
-        (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
-      Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
+      Tab  : constant Visual_Debugger := Get_Current_Process (Top);
 
       use String_History;
 
@@ -613,12 +610,8 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Top : constant GVD_Main_Window :=
-        GVD_Main_Window (Get_Toplevel (Object));
-      Page : constant Gtk_Widget :=
-        Get_Nth_Page
-          (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
-      Tab : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
+      Tab : constant Visual_Debugger :=
+        Get_Current_Process (Get_Toplevel (Object));
 
    begin
       Clear (Tab.Debugger_Text);
@@ -636,24 +629,20 @@ package body GVD.Menu is
       pragma Unreferenced (Action, Widget);
 
       Top       : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Process   : Debugger_Process_Tab;
-      Page      : Gtk_Widget;
-      Num_Pages : constant Gint :=
-        Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
+      Process   : Visual_Debugger;
       Button    : Message_Dialog_Buttons;
       Item      : Gtk_Widget;
+      List      : Debugger_List_Link := Top.First_Debugger;
 
    begin
       --  ??? Is there a memory leak here ? Data_Paned might be ref'd, but
       --  not actually in a parent, and this means that it isn't destroyed
       --  when the process_tab is destroyed.
 
-      for Page_Num in 0 .. Num_Pages - 1 loop
-         Page := Get_Nth_Page (Top.Process_Notebook, Page_Num);
+      while List /= null loop
+         Process := Visual_Debugger (List.Debugger);
 
-         if Page /= null then
-            Process := Process_User_Data.Get (Page);
-
+         if Process.Debugger /= null then
             Item := Get_Item (Top.Factory, -"/Data/Call Stack");
 
             if Item = null then
@@ -681,7 +670,10 @@ package body GVD.Menu is
                Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
             end if;
          end if;
+
+         List := List.Next;
       end loop;
+
    end On_Call_Stack;
 
    ----------------
@@ -696,7 +688,7 @@ package body GVD.Menu is
       pragma Unreferenced (Action, Widget);
 
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
    begin
@@ -729,7 +721,7 @@ package body GVD.Menu is
       pragma Unreferenced (Action, Widget);
 
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
    begin
@@ -762,7 +754,7 @@ package body GVD.Menu is
       pragma Unreferenced (Action, Widget);
 
       Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
 
    begin
@@ -796,7 +788,7 @@ package body GVD.Menu is
       pragma Unreferenced (Action, Widget);
 
       Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Process : constant Visual_Debugger := Get_Current_Process (Object);
       Button  : Message_Dialog_Buttons;
 
    begin
@@ -844,7 +836,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Process : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Process /= null then
          Process_User_Command
@@ -865,7 +857,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Process : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Process /= null then
          Process_User_Command
@@ -886,7 +878,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Process : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
       if Process /= null
@@ -910,7 +902,7 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       --  ??? Should be able to remove this test at some point
       if Tab = null
@@ -979,7 +971,7 @@ package body GVD.Menu is
          return True;
       end Internal_Update_Item;
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
 
    begin
       if Tab /= null then

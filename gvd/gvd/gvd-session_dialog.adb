@@ -65,7 +65,7 @@ package body GVD.Session_Dialog is
    is
       File          : File_Type;
       Top           : constant GVD_Main_Window := GVD_Main_Window (Window);
-      Tab           : Debugger_Process_Tab;
+      Tab           : Visual_Debugger;
       Directory     : Dir_Type;
       Buffer        : String (1 .. Buffer_Length);
       Last          : Natural;
@@ -106,7 +106,7 @@ package body GVD.Session_Dialog is
 
       while Debugger_List /= null loop
          Program :=
-           Debugger_Process_Tab (Debugger_List.Debugger).Descriptor.Program;
+           Visual_Debugger (Debugger_List.Debugger).Descriptor.Program;
 
          if Program.all = "" then
             Append_Button (Open, -"<no executable>");
@@ -156,7 +156,7 @@ package body GVD.Session_Dialog is
                Active_Debuggers :=
                  Active_Debuggers + 1;
                Conversion_Table (J) := Active_Debuggers;
-               Tab := Debugger_Process_Tab (Debugger_List.Debugger);
+               Tab := Visual_Debugger (Debugger_List.Debugger);
 
                Put_Line (File, Tab.Descriptor.Program.all);
                Put_Line (File,
@@ -279,10 +279,10 @@ package body GVD.Session_Dialog is
          Get_Line (File, Buffer, Last);
 
          declare
-            Processes      : array (1 .. Num_Pages) of Debugger_Process_Tab;
+            Processes      : array (1 .. Num_Pages) of Visual_Debugger;
             Current_Button : Button_Link := Open.First_Button;
             List           : Argument_List (1 .. 0);
-            Tab            : Debugger_Process_Tab;
+            Tab            : Visual_Debugger;
             Program        : Program_Descriptor;
             Index          : Natural;
 

@@ -240,7 +240,7 @@ package body Display_Items is
    procedure Gtk_New
      (Item           : out Display_Item;
       Variable_Name  : String;
-      Debugger       : access Debugger_Process_Tab_Record'Class;
+      Debugger       : access Visual_Debugger_Record'Class;
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null;
       Link_From      : Display_Item := null;
@@ -356,7 +356,7 @@ package body Display_Items is
       Item.Entity := Entity;
       Item.Is_A_Variable := (Default_Entity = null);
       Item.Num := Get_Next_Item_Num (GVD_Canvas (Debugger.Data_Canvas));
-      Item.Debugger := Debugger_Process_Tab (Debugger);
+      Item.Debugger := Visual_Debugger (Debugger);
       Set_Valid (Item.Entity, Value_Found);
       Item.Id := Id;
 
@@ -588,8 +588,7 @@ package body Display_Items is
 
       --  First button
 
-      Set_Auto_Refresh
-        (Item, Get_Window (Item.Debugger.Data_Canvas), Item.Auto_Refresh);
+      Set_Auto_Refresh (Item, Item.Auto_Refresh);
 
       --  Second button
 
@@ -672,7 +671,7 @@ package body Display_Items is
       Alias_Item : Display_Item := null;
       Deref_Name : constant String := Dereference_Name
         (Get_Language
-         (Debugger_Process_Tab (Get_Process (GVD_Canvas (Canvas))).Debugger),
+         (Visual_Debugger (Get_Process (GVD_Canvas (Canvas))).Debugger),
          Name);
 
       function Alias_Found
@@ -1166,11 +1165,9 @@ package body Display_Items is
 
    procedure Set_Auto_Refresh
      (Item         : access Display_Item_Record;
-      Win          : Gdk.Window.Gdk_Window;
       Auto_Refresh : Boolean;
       Update_Value : Boolean := False)
    is
-      pragma Unreferenced (Win);
       Width   : constant Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
@@ -1351,7 +1348,7 @@ package body Display_Items is
          Popup
            (Contextual_Background_Menu
              (Canvas,
-              Debugger_Process_Tab
+              Visual_Debugger
                (Get_Process (Canvas)).Window.Main_Accel_Group),
             Button            => Get_Button (Event),
             Activate_Time     => Get_Time (Event));
@@ -1559,10 +1556,10 @@ package body Display_Items is
    -------------------------------
 
    procedure On_Canvas_Process_Stopped
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Object : access Glib.Object.GObject_Record'Class)
    is
       Canvas : constant GVD_Canvas :=
-        GVD_Canvas (Debugger_Process_Tab (Object).Data_Canvas);
+        GVD_Canvas (Visual_Debugger (Object).Data_Canvas);
    begin
       Recompute_All_Aliases (Canvas);
       Refresh_Canvas (Canvas);
@@ -1699,7 +1696,7 @@ package body Display_Items is
    ------------------
 
    function Get_Debugger
-     (Item : access Display_Item_Record'Class) return Debugger_Process_Tab is
+     (Item : access Display_Item_Record'Class) return Visual_Debugger is
    begin
       return Item.Debugger;
    end Get_Debugger;

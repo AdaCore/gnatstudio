@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,14 +13,14 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Glib;
+with Glib.Object;
 with Gtk.Widget;
-with Gdk.Window;
 with Items;
 with GVD.Process;
 with Gdk.Event;
@@ -41,7 +41,7 @@ package Display_Items is
    procedure Gtk_New
      (Item           : out Display_Item;
       Variable_Name  : String;
-      Debugger       : access GVD.Process.Debugger_Process_Tab_Record'CLass;
+      Debugger       : access GVD.Process.Visual_Debugger_Record'CLass;
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null;
       Link_From      : Display_Item := null;
@@ -80,7 +80,6 @@ package Display_Items is
 
    procedure Set_Auto_Refresh
      (Item          : access Display_Item_Record;
-      Win           : Gdk.Window.Gdk_Window;
       Auto_Refresh  : Boolean;
       Update_Value  : Boolean := False);
    --  Change the auto refresh status of the item, and update its pixmap.
@@ -97,8 +96,8 @@ package Display_Items is
    --  Called for clicks in the background of the canvas.
 
    procedure On_Canvas_Process_Stopped
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Called when the process associated with the Debugger_Process_Tab Object
+     (Object : access Glib.Object.GObject_Record'Class);
+   --  Called when the process associated with the Visual_Debugger Object
    --  stops to update the display items.
 
    procedure Recompute_All_Aliases
@@ -140,7 +139,7 @@ package Display_Items is
 
    function Get_Debugger
      (Item : access Display_Item_Record'Class)
-      return GVD.Process.Debugger_Process_Tab;
+      return GVD.Process.Visual_Debugger;
    --  Return the process tab to which item belongs
 
    function Is_A_Variable
@@ -192,7 +191,7 @@ private
       Name         : Basic_Types.String_Access := null;
       Entity       : Items.Generic_Type_Access := null;
       Auto_Refresh : Boolean := True;
-      Debugger     : GVD.Process.Debugger_Process_Tab;
+      Debugger     : GVD.Process.Visual_Debugger;
 
       Is_A_Variable : Boolean := True;
       --  Set to False if the item is not related to a variable

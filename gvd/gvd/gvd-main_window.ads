@@ -19,12 +19,14 @@
 -----------------------------------------------------------------------
 
 with Glib;
+with Glib.Object;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Main;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
+with Gtkada.MDI; use Gtkada.MDI;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with GVD.Dialogs; use GVD.Dialogs;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -48,7 +50,7 @@ package GVD.Main_Window is
    type Debugger_List_Link is access Debugger_List_Node;
 
    type Debugger_List_Node is record
-      Debugger : Gtk_Widget;
+      Debugger : Glib.Object.GObject;
       Next     : Debugger_List_Link;
    end record;
 
@@ -56,6 +58,9 @@ package GVD.Main_Window is
    use String_History;
 
    type GVD_Main_Window_Record is new Main_Debug_Window_Record with record
+      Process_Mdi         : Gtkada.MDI.MDI_Window;
+      --  The main widget
+
       Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
       Open_Program        : GVD_Open_Program;
@@ -93,6 +98,9 @@ package GVD.Main_Window is
       First_Debugger      : Debugger_List_Link;
       --  The pointer to the list of debuggers.
 
+      Current_Debugger    : Glib.Object.GObject;
+      --  The current visual debugger.
+
       Standalone          : Boolean := True;
       --  True if the gvd main window is used on its own (e.g, not as part
       --  of an integrated environment).
@@ -128,7 +136,7 @@ package GVD.Main_Window is
 
    procedure Update_External_Dialogs
      (Window   : access GVD_Main_Window_Record'Class;
-      Debugger : Gtk.Widget.Gtk_Widget := null);
+      Debugger : Glib.Object.GObject := null);
    --  Update the contents of all the dialogs associated with the window
    --  (backtrace, threads, ...) if they are visible.
    --  Their contents is updated based on the current debugger, unless
@@ -150,10 +158,9 @@ package GVD.Main_Window is
    procedure Prepare_Cleanup_Debuggers
      (Window : access GVD_Main_Window_Record'Class);
    --  Prepare call to Cleanup_Debuggers below by stopping all the debuggers
-   --  contained in the main notebook.
+   --  contained in the main window.
 
    procedure Cleanup_Debuggers (Window : access GVD_Main_Window_Record'Class);
-   --  Close all the debuggers associated with a given main debug window
-   --  by looking at all the pages of the main notebook.
+   --  Close all the debuggers associated with a given main debug window.
 
 end GVD.Main_Window;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -35,8 +35,8 @@ package GVD.API is
    type Main_Debug_Window is private;
    --  typedef struct _main_debug_window *main_debug_window;
 
-   type Debugger_Process_Tab is private;
-   --  typedef struct _debugger_process_tab *debugger_process_tab;
+   type Visual_Debugger is private;
+   --  typedef struct _Visual_Debugger *Visual_Debugger;
 
    type Code_Editor is private;
    --  typedef struct _code_editor *code_editor;
@@ -73,8 +73,8 @@ package GVD.API is
       Remote_Host     : chars_ptr;
       Remote_Target   : chars_ptr;
       Remote_Protocol : chars_ptr;
-      Debugger_Name   : chars_ptr) return Debugger_Process_Tab;
-   --  debugger_process_tab gvd_create_debugger
+      Debugger_Name   : chars_ptr) return Visual_Debugger;
+   --  Visual_Debugger gvd_create_debugger
    --    (main_debug_window window,
    --     debugger_type     kind,
    --     char *            executable,
@@ -87,23 +87,23 @@ package GVD.API is
    --     char *            debugger_name);
 
    function Process_Tab_Get_Widget
-     (Window : Debugger_Process_Tab) return System.Address;
-   --  GtkWidget * gvd_process_tab_get_widget (debugger_process_tab window);
+     (Window : Visual_Debugger) return System.Address;
+   --  GtkWidget * gvd_process_tab_get_widget (Visual_Debugger window);
 
    function Get_Current_Process
-     (Main_Window : Main_Debug_Window) return Debugger_Process_Tab;
-   --  debugger_process_tab gvd_get_current_process (main_debug_window window);
+     (Main_Window : Main_Debug_Window) return Visual_Debugger;
+   --  Visual_Debugger gvd_get_current_process (main_debug_window window);
 
-   procedure Close_Debugger (Debugger : Debugger_Process_Tab);
-   --  void gvd_close_debugger (debugger_process_tab debugger);
+   procedure Close_Debugger (Debugger : Visual_Debugger);
+   --  void gvd_close_debugger (Visual_Debugger debugger);
 
    procedure Process_User_Command
-     (Debugger       : Debugger_Process_Tab;
+     (Debugger       : Visual_Debugger;
       Command        : chars_ptr;
       Output_Command : Integer;
       Mode           : Visible_Command);
    --  void gvd_process_user_command
-   --    (debugger_process_tab debugger,
+   --    (Visual_Debugger debugger,
    --     char *               command,
    --     int                  output_command,
    --     visible_command      mode);
@@ -299,18 +299,18 @@ package GVD.API is
    ------------------------
 
    procedure Set_Breakpoint
-     (Process : Debugger_Process_Tab;
+     (Process : Visual_Debugger;
       File    : chars_ptr;
       Line    : Integer);
    --  void gvd_set_breakpoint
-   --    (debugger_process_tab process, char * file, int line);
+   --    (Visual_Debugger process, char * file, int line);
 
    procedure Till_Breakpoint
-     (Process : Debugger_Process_Tab;
+     (Process : Visual_Debugger;
       File    : chars_ptr;
       Line    : Integer);
    --  void gvd_till_breakpoint
-   --    (debugger_process_tab process, char * file, int line);
+   --    (Visual_Debugger process, char * file, int line);
 
    procedure Show_Current_Line_Menu (Editor : Source_Editor);
    --  void gvd_show_current_line_menu (source_editor editor);
@@ -330,7 +330,7 @@ package GVD.API is
 
 private
    type Main_Debug_Window is new System.Address;
-   type Debugger_Process_Tab is new System.Address;
+   type Visual_Debugger is new System.Address;
    type Code_Editor is new System.Address;
    type Source_Editor is new System.Address;
 

@@ -56,13 +56,13 @@ package body Debugger is
    --  Timeout in millisecond to check input from the underlying debugger
    --  when handling asynchronous commands.
 
-   package Debugger_Timeout is new Gtk.Main.Timeout (Debugger_Process_Tab);
+   package Debugger_Timeout is new Gtk.Main.Timeout (Visual_Debugger);
 
    ---------------------
    -- Local Functions --
    ---------------------
 
-   function Output_Available (Process : Debugger_Process_Tab) return Boolean;
+   function Output_Available (Process : Visual_Debugger) return Boolean;
    --  Called when waiting output from the debugger.
    --  This procedure is activated to handle asynchronous commands.
    --  All it does is read all the available data and call the filters
@@ -384,7 +384,7 @@ package body Debugger is
    -- Output_Available --
    ----------------------
 
-   function Output_Available (Process : Debugger_Process_Tab) return Boolean is
+   function Output_Available (Process : Visual_Debugger) return Boolean is
       Debugger : constant Debugger_Access := Process.Debugger;
       Mode     : Command_Type;
 
@@ -496,7 +496,7 @@ package body Debugger is
    is
       use type Gtk.Window.Gtk_Window;
       Data    : History_Data;
-      Process : Debugger_Process_Tab;
+      Process : Visual_Debugger;
 
    begin
       Set_Command_In_Process (Get_Process (Debugger));
@@ -543,7 +543,7 @@ package body Debugger is
       Cmd      : String;
       Mode     : Command_Type)
    is
-      Process : Debugger_Process_Tab;
+      Process : Visual_Debugger;
       Result  : Boolean;
 
    begin
@@ -601,7 +601,7 @@ package body Debugger is
       Wait_For_Prompt : Boolean := True;
       Mode            : Command_Type := Hidden)
    is
-      Process : Debugger_Process_Tab;
+      Process : Visual_Debugger;
       Button  : Message_Dialog_Buttons;
       Last    : Positive := Cmd'First;
       First   : Positive;
@@ -701,7 +701,7 @@ package body Debugger is
       Cmd          : String;
       Mode         : Invisible_Command := Hidden) return String
    is
-      Process : Debugger_Process_Tab;
+      Process : Visual_Debugger;
    begin
       pragma Assert (not Command_In_Process (Get_Process (Debugger)));
 

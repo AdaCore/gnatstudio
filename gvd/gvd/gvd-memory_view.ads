@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,12 +13,13 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
+with Glib.Object;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Font;              use Gdk.Font;
 with Gdk.Window;            use Gdk.Window;
@@ -142,9 +143,9 @@ package GVD.Memory_View is
 
    procedure Update
      (View    : access GVD_Memory_View_Record'Class;
-      Process : Gtk_Widget);
+      Process : Glib.Object.GObject);
    --  Updates the dialog.
-   --  Process is the new Debugger_Process_Tab.
+   --  Process is the new Visual_Debugger.
 
    procedure Update_Display (View : access GVD_Memory_View_Record'Class);
    --  Refreshes the view.

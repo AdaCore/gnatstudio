@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -38,11 +38,11 @@ package body GVD.API is
 
    function "+" is new
      Ada.Unchecked_Conversion
-       (Debugger_Process_Tab, GVD.Process.Debugger_Process_Tab);
+       (Visual_Debugger, GVD.Process.Visual_Debugger);
 
    function "-" is new
      Ada.Unchecked_Conversion
-       (GVD.Process.Debugger_Process_Tab, Debugger_Process_Tab);
+       (GVD.Process.Visual_Debugger, Visual_Debugger);
 
    function "+" is new
      Ada.Unchecked_Conversion
@@ -137,7 +137,7 @@ package body GVD.API is
    -- Close_Debugger --
    --------------------
 
-   procedure Close_Debugger (Debugger : Debugger_Process_Tab) is
+   procedure Close_Debugger (Debugger : Visual_Debugger) is
    begin
       GVD.Process.Close_Debugger (+Debugger);
    end Close_Debugger;
@@ -193,11 +193,11 @@ package body GVD.API is
       Remote_Target   : chars_ptr;
       Remote_Protocol : chars_ptr;
       Debugger_Name   : chars_ptr)
-      return Debugger_Process_Tab
+      return Visual_Debugger
    is
       use Interfaces.C;
 
-      Debugger     : Debugger_Process_Tab;
+      Debugger     : Visual_Debugger;
       Local_Params : Argument_List (1 .. N_Args);
       C_Params     : chars_ptr_array (1 .. size_t (N_Args));
       for C_Params'Address use Debugger_Args;
@@ -215,7 +215,7 @@ package body GVD.API is
 
    begin
       for J in Local_Params'Range loop
-         Local_Params (J) := new String' (Value (C_Params (size_t (J))));
+         Local_Params (J) := new String'(Value (C_Params (size_t (J))));
       end loop;
 
       Debugger := -GVD.Process.Create_Debugger
@@ -398,7 +398,7 @@ package body GVD.API is
    -------------------------
 
    function Get_Current_Process
-     (Main_Window : Main_Debug_Window) return Debugger_Process_Tab is
+     (Main_Window : Main_Debug_Window) return Visual_Debugger is
    begin
       return -GVD.Process.Get_Current_Process (+Main_Window);
    end Get_Current_Process;
@@ -546,7 +546,7 @@ package body GVD.API is
    ----------------------------
 
    function Process_Tab_Get_Widget
-     (Window : Debugger_Process_Tab) return System.Address is
+     (Window : Visual_Debugger) return System.Address is
    begin
       return Get_Object (+Window);
    end Process_Tab_Get_Widget;
@@ -556,7 +556,7 @@ package body GVD.API is
    --------------------------
 
    procedure Process_User_Command
-     (Debugger       : Debugger_Process_Tab;
+     (Debugger       : Visual_Debugger;
       Command        : chars_ptr;
       Output_Command : Integer;
       Mode           : Visible_Command) is
@@ -647,7 +647,7 @@ package body GVD.API is
    --------------------
 
    procedure Set_Breakpoint
-     (Process : Debugger_Process_Tab;
+     (Process : Visual_Debugger;
       File    : chars_ptr;
       Line    : Integer)
    is
@@ -714,7 +714,7 @@ package body GVD.API is
    ---------------------
 
    procedure Till_Breakpoint
-     (Process : Debugger_Process_Tab;
+     (Process : Visual_Debugger;
       File    : chars_ptr;
       Line    : Integer)
    is
@@ -761,4 +761,3 @@ package body GVD.API is
    end What_Now;
 
 end GVD.API;
-

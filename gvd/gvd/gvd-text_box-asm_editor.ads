@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -21,11 +21,11 @@
 --  This package implements a text area target to the display of assembly
 --  code.
 
+with Glib.Object;
 with Gdk.Bitmap;
 with Gdk.Color;
 with Gdk.Pixmap;
 with Gtk.Menu;
-with Gtk.Widget;
 with Gtkada.Types;
 with Basic_Types;
 with GVD.Types;
@@ -38,12 +38,12 @@ package GVD.Text_Box.Asm_Editor is
 
    procedure Gtk_New
      (Editor  : out Asm_Editor;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Process : access Glib.Object.GObject_Record'Class);
    --  Create a new asm editor.
 
    procedure Initialize
      (Editor  : access Asm_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class);
+      Process : access Glib.Object.GObject_Record'Class);
    --  Internal procedure.
 
    procedure Configure
@@ -114,7 +114,7 @@ private
    --  for a specific region, so it is better to keep it once we have it.
 
    type Asm_Editor_Record is new GVD_Text_Box_Record with record
-      Process         : Gtk.Widget.Gtk_Widget;
+      Process         : Glib.Object.GObject;
       Keywords_Color  : Gdk.Color.Gdk_Color;
       Strings_Color   : Gdk.Color.Gdk_Color;
       Highlight_Color : Gdk.Color.Gdk_Color;

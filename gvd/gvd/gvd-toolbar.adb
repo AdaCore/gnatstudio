@@ -158,7 +158,7 @@ package body GVD.Toolbar is
    ------------
 
    procedure On_Run (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Run (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -170,7 +170,7 @@ package body GVD.Toolbar is
    --------------
 
    procedure On_Start (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Start (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -182,7 +182,7 @@ package body GVD.Toolbar is
    -------------
 
    procedure On_Step (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Step_Into (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -194,7 +194,7 @@ package body GVD.Toolbar is
    -------------------------
 
    procedure On_Step_Instruction (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Step_Into_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -206,7 +206,7 @@ package body GVD.Toolbar is
    -------------
 
    procedure On_Next (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Step_Over (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -218,7 +218,7 @@ package body GVD.Toolbar is
    -------------------------
 
    procedure On_Next_Instruction (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Step_Over_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -230,7 +230,7 @@ package body GVD.Toolbar is
    ---------------
 
    procedure On_Finish (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Finish (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -242,7 +242,7 @@ package body GVD.Toolbar is
    -----------------
 
    procedure On_Continue (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Continue (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -254,7 +254,7 @@ package body GVD.Toolbar is
    -----------
 
    procedure On_Up (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Stack_Up (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -266,7 +266,7 @@ package body GVD.Toolbar is
    -------------
 
    procedure On_Down (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null and then Tab.Debugger /= null then
          Stack_Down (Tab.Debugger, Mode => GVD.Types.Visible);
@@ -278,7 +278,7 @@ package body GVD.Toolbar is
    ------------------
 
    procedure On_Interrupt (Object : access Gtk_Widget_Record'Class) is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab = null or else Tab.Debugger = null then
          return;

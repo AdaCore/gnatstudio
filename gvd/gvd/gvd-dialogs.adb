@@ -213,10 +213,10 @@ package body GVD.Dialogs is
 
    procedure Update
      (Task_Dialog : access Task_Dialog_Record;
-      Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class)
+      Debugger    : access Glib.Object.GObject_Record'Class)
    is
       Process : constant Process_Proxy_Access :=
-        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
+        Get_Process (Visual_Debugger (Debugger).Debugger);
       Info    : Thread_Information_Array (1 .. Max_Tasks);
       Len     : Natural;
 
@@ -236,16 +236,16 @@ package body GVD.Dialogs is
       end if;
 
       --  Read the information from the debugger
-      Info_Tasks (Debugger_Process_Tab (Debugger).Debugger, Info, Len);
+      Info_Tasks (Visual_Debugger (Debugger).Debugger, Info, Len);
       Update_Task_Thread (Task_Dialog, Info (1 .. Len));
    end Update;
 
    procedure Update
      (Thread_Dialog : access Thread_Dialog_Record;
-      Debugger      : access Gtk.Widget.Gtk_Widget_Record'Class)
+      Debugger      : access Glib.Object.GObject_Record'Class)
    is
       Process : constant Process_Proxy_Access :=
-        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
+        Get_Process (Visual_Debugger (Debugger).Debugger);
       Info    : Thread_Information_Array (1 .. Max_Tasks);
       Len     : Natural;
 
@@ -265,16 +265,16 @@ package body GVD.Dialogs is
       end if;
 
       --  Read the information from the debugger
-      Info_Threads (Debugger_Process_Tab (Debugger).Debugger, Info, Len);
+      Info_Threads (Visual_Debugger (Debugger).Debugger, Info, Len);
       Update_Task_Thread (Thread_Dialog, Info (1 .. Len));
    end Update;
 
    procedure Update
      (PD_Dialog : access PD_Dialog_Record;
-      Debugger   : access Gtk.Widget.Gtk_Widget_Record'Class)
+      Debugger   : access Glib.Object.GObject_Record'Class)
    is
       Process : constant Process_Proxy_Access :=
-        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
+        Get_Process (Visual_Debugger (Debugger).Debugger);
       Info    : PD_Information_Array (1 .. Max_PD);
       Len     : Natural;
 
@@ -294,7 +294,7 @@ package body GVD.Dialogs is
       end if;
 
       --  Read the information from the debugger
-      Info_PD (Debugger_Process_Tab (Debugger).Debugger, Info, Len);
+      Info_PD (Visual_Debugger (Debugger).Debugger, Info, Len);
       Update_PD (PD_Dialog, Info (1 .. Len));
    end Update;
 
@@ -303,10 +303,10 @@ package body GVD.Dialogs is
    -----------------------------
 
    procedure Show_Call_Stack_Columns
-     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Debugger : access Glib.Object.GObject_Record'Class)
    is
-      Process  : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Debugger);
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Debugger);
       Mask   : constant Stack_List_Mask :=
         Process.Backtrace_Mask;
       List     : constant Gtk_Clist := Process.Stack_List;
@@ -324,14 +324,14 @@ package body GVD.Dialogs is
    -----------------------
 
    procedure Update_Call_Stack
-     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Debugger : access Glib.Object.GObject_Record'Class)
    is
       Temp     : Chars_Ptr_Array (0 .. 4);
       Row      : Gint;
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
-      Tab      : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Debugger);
+      Tab      : constant Visual_Debugger :=
+        Visual_Debugger (Debugger);
       Process  : constant Process_Proxy_Access := Get_Process (Tab.Debugger);
       List     : constant Gtk_Clist := Tab.Stack_List;
       Columns  : Gint;
@@ -400,12 +400,12 @@ package body GVD.Dialogs is
 
    procedure Update
      (History_Dialog : History_Dialog_Access;
-      Debugger       : access Gtk.Widget.Gtk_Widget_Record'Class)
+      Debugger       : access Glib.Object.GObject_Record'Class)
    is
       use String_History;
 
-      Tab     : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Debugger);
+      Tab     : constant Visual_Debugger :=
+        Visual_Debugger (Debugger);
       History : History_List := Tab.Window.Command_History;
       Data    : History_Data;
       Item    : Gtk_List_Item;
@@ -444,9 +444,9 @@ package body GVD.Dialogs is
    -----------------------------
 
    procedure On_Task_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Glib.Object.GObject_Record'Class)
    is
-      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
       Update (Tab.Window.Task_Dialog, Tab);
    end On_Task_Process_Stopped;
@@ -456,9 +456,9 @@ package body GVD.Dialogs is
    -------------------------------
 
    procedure On_Thread_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Glib.Object.GObject_Record'Class)
    is
-      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
       Update (Tab.Window.Thread_Dialog, Tab);
    end On_Thread_Process_Stopped;
@@ -468,9 +468,9 @@ package body GVD.Dialogs is
    ----------------------------
 
    procedure On_PD_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Glib.Object.GObject_Record'Class)
    is
-      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
       Update (Tab.Window.PD_Dialog, Tab);
    end On_PD_Process_Stopped;
@@ -480,9 +480,9 @@ package body GVD.Dialogs is
    ------------------------------
 
    procedure On_Stack_Process_Stopped
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Glib.Object.GObject_Record'Class)
    is
-      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+      Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
       Update_Call_Stack (Tab);
    end On_Stack_Process_Stopped;
@@ -492,10 +492,10 @@ package body GVD.Dialogs is
    ---------------------------
 
    procedure Highlight_Stack_Frame
-     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class;
+     (Debugger : access Glib.Object.GObject_Record'Class;
       Frame    : Natural)
    is
-      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Debugger);
+      Tab : constant Visual_Debugger := Visual_Debugger (Debugger);
    begin
       Gtk.Handlers.Handler_Block (Tab.Stack_List, Tab.Stack_List_Select_Id);
       Unselect_All (Tab.Stack_List);

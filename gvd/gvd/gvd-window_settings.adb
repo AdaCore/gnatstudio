@@ -22,13 +22,13 @@ with Glib.Xml_Int;        use Glib.Xml_Int;
 
 with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Widget;          use Gtk.Widget;
-with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Item_Factory;    use Gtk.Item_Factory;
 
 with Gtkada.Canvas;       use Gtkada.Canvas;
 
+with Debugger;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
 with GVD.Dialogs;         use GVD.Dialogs;
@@ -37,11 +37,12 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Trace;           use GVD.Trace;
 with Odd_Intl;            use Odd_Intl;
+with String_Utils;        use String_Utils;
 
 with Ada.Strings;         use Ada.Strings;
 with Ada.Strings.Fixed;   use Ada.Strings.Fixed;
 
-with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Interactive_Consoles; use Interactive_Consoles;
 
 package body GVD.Window_Settings is
 
@@ -141,14 +142,15 @@ package body GVD.Window_Settings is
      (File_Name         : String;
       Main_Debug_Window : Gtk_Widget)
    is
-      Top       : constant GVD_Main_Window :=
+      use type Debugger.Debugger_Access;
+
+      Top           : constant GVD_Main_Window :=
         GVD_Main_Window (Main_Debug_Window);
-      Process   : Debugger_Process_Tab;
-      Page      : Gtk_Widget;
-      Num_Pages : constant Gint :=
-        Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
-      Widget    : Gtk_Widget;
-      A         : Gint;
+      Process       : Visual_Debugger;
+      Widget        : Gtk_Widget;
+      A             : Gint;
+      Debugger_List : Debugger_List_Link := Top.First_Debugger;
+      Debugger_Num  : Integer := 0;
 
    begin
       if Current_Window_Settings = null then
@@ -192,34 +194,32 @@ package body GVD.Window_Settings is
               True);
       end if;
 
-      for Page_Num in 0 .. Num_Pages - 1 loop
-         Page := Get_Nth_Page (Top.Process_Notebook, Page_Num);
+      while Debugger_List /= null loop
+         Process := Visual_Debugger (Debugger_List.Debugger);
 
-         if Page /= null then
-            Process := Process_User_Data.Get (Page);
-
+         if Process.Debugger /= null then
             declare
-               Image : constant String := Trim (Gint'Image (Page_Num), Left);
+               Img : constant String := Image (Debugger_Num);
             begin
                if Process.Data_Canvas /= null then
-                  Set (String_Gint ("Data_Height" & Image),
+                  Set (String_Gint ("Data_Height" & Img),
                        Gint (Get_Allocation_Height (Process.Data_Canvas)),
                        True);
-                  Set (String_Gint ("Data_Width" & Image),
+                  Set (String_Gint ("Data_Width" & Img),
                        Gint (Get_Allocation_Width (Process.Data_Canvas)),
                        True);
                end if;
 
                if not Top.TTY_Mode then
                   if Process.Debugger_Text /= null then
-                     Set (String_Gint ("Command_Height" & Image),
+                     Set (String_Gint ("Command_Height" & Img),
                           Gint (Get_Allocation_Height
                                   (Process.Debugger_Text)),
                           True);
                   end if;
 
                   if Process.Editor_Text /= null then
-                     Set (String_Gint ("Editor_Height" & Image),
+                     Set (String_Gint ("Editor_Height" & Img),
                           Gint (Get_Allocation_Height (Process.Editor_Text)),
                           True);
                   end if;
@@ -234,7 +234,7 @@ package body GVD.Window_Settings is
                end if;
 
                if Get_Active (Gtk_Check_Menu_Item (Widget)) then
-                  Set (String_Gint ("Stack_Width" & Image),
+                  Set (String_Gint ("Stack_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Process.Stack_Scrolledwindow)),
                        True);
@@ -245,9 +245,7 @@ package body GVD.Window_Settings is
                      A := 1;
                   end if;
 
-                  Set (String_Gint
-                       ("Stack_Num_Width"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Stack_Num_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
                               (Process.Stack_List, 0))) - A,
@@ -259,9 +257,7 @@ package body GVD.Window_Settings is
                      A := 1;
                   end if;
 
-                  Set (String_Gint
-                       ("Stack_PC_Width"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Stack_PC_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
                               (Process.Stack_List, 1))) - A,
@@ -273,9 +269,7 @@ package body GVD.Window_Settings is
                      A := 1;
                   end if;
 
-                  Set (String_Gint
-                       ("Stack_Subprogram_Width"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Stack_Subprogram_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
                               (Process.Stack_List, 2))) - A,
@@ -287,9 +281,7 @@ package body GVD.Window_Settings is
                      A := 1;
                   end if;
 
-                  Set (String_Gint
-                       ("Stack_Parameters_Width"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Stack_Parameters_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
                               (Process.Stack_List, 3))) - A,
@@ -301,17 +293,13 @@ package body GVD.Window_Settings is
                      A := 1;
                   end if;
 
-                  Set (String_Gint
-                       ("Stack_Location_Width"
-                        & Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Stack_Location_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Get_Column_Widget
                               (Process.Stack_List, 4))) - A,
                        True);
 
-                  Set (String_Gint
-                       ("Stack_Mask" &
-                        Image (Image'First + 1 .. Image'Last)),
+                  Set (String_Gint ("Stack_Mask" & Img),
                        Gint (Process.Backtrace_Mask),
                        True);
                end if;
@@ -319,13 +307,16 @@ package body GVD.Window_Settings is
                if Top.Standalone
                  and then Get_Pref (GVD_Prefs, Display_Explorer)
                then
-                  Set (String_Gint ("Explorer_Width" & Image),
+                  Set (String_Gint ("Explorer_Width" & Img),
                        Gint (Get_Allocation_Width
                              (Get_Explorer_Scroll (Process.Editor_Text))),
                        True);
                end if;
             end;
          end if;
+
+         Debugger_List := Debugger_List.Next;
+         Debugger_Num := Debugger_Num + 1;
       end loop;
 
       Print (Current_Window_Settings, File_Name => File_Name);
@@ -382,10 +373,10 @@ package body GVD.Window_Settings is
    ------------------------------
 
    function Get_Process_Tab_Geometry
-     (Page : Gint) return Process_Tab_Geometry
+     (Num : Integer) return Process_Tab_Geometry
    is
       Result : Process_Tab_Geometry;
-      Image  : constant String := Trim (Gint'Image (Page), Left);
+      Image  : constant String := Trim (Integer'Image (Num), Left);
 
    begin
       Result.Data_Height := Get_Setting (String_Gint ("Data_Height" & Image));

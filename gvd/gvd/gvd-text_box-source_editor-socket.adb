@@ -207,7 +207,7 @@ package body GVD.Text_Box.Source_Editor.Socket is
      (Editor      : access Socket_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Gtk_Widget)
+      Process     : Glib.Object.GObject)
    is
       pragma Unreferenced (Set_Current, Process);
    begin
@@ -225,7 +225,7 @@ package body GVD.Text_Box.Source_Editor.Socket is
    procedure Update_Breakpoints
      (Editor  : access Socket_Record;
       Br      : GVD.Types.Breakpoint_Array;
-      Process : Gtk.Widget.Gtk_Widget)
+      Process : Glib.Object.GObject)
    is
       pragma Unreferenced (Editor, Br, Process);
    begin

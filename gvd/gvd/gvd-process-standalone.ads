@@ -54,7 +54,7 @@ package GVD.Process.Standalone is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "") return Debugger_Process_Tab;
+      Debugger_Name   : String := "") return Visual_Debugger;
    --  Create a debugger with a given list of arguments.
    --  A new page is added to the window's main notebook.
    --  See GVD.Process.Configure for details on the arguments.

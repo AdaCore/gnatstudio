@@ -23,7 +23,6 @@ with Gtk.Clist;             use Gtk.Clist;
 with Gtk.Container;         use Gtk.Container;
 with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Handlers;          use Gtk.Handlers;
-with Gtk.Notebook;          use Gtk.Notebook;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.List;              use Gtk.List;
 with Gtk.List_Item;         use Gtk.List_Item;
@@ -68,20 +67,10 @@ package body GVD.Dialogs.Callbacks is
       Str         : constant String :=
         Get_Text (Gtk_Clist (Object), Index, 0);
       Top         : constant GVD_Dialog := GVD_Dialog (Get_Toplevel (Object));
-
       Main_Window : constant GVD_Main_Window :=
         GVD_Main_Window (Top.Main_Window);
-
-      --  Get the process notebook from the main window which is associated
-      --  with the task dialog (toplevel (object)).
-
-      Notebook    : constant Gtk_Notebook := Main_Window.Process_Notebook;
-
-      --  Get the current page in the process notebook.
-
-      Process     : constant Debugger_Process_Tab :=
-        Process_User_Data.Get (Get_Nth_Page
-          (Notebook, Get_Current_Page (Notebook)));
+      Process     : constant Visual_Debugger :=
+        Get_Current_Process (Main_Window);
       Matched     : Match_Array (0 .. 0);
       Info        : PD_Information_Array (1 .. Max_PD);
       Len         : Natural;
@@ -161,7 +150,7 @@ package body GVD.Dialogs.Callbacks is
       Dialog    : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
       Debugger  : constant Debugger_Access := Dialog.Debugger;
-      Process   : constant Debugger_Process_Tab :=
+      Process   : constant Visual_Debugger :=
         Convert (Dialog.Main_Window, Debugger);
 
    begin
@@ -193,7 +182,7 @@ package body GVD.Dialogs.Callbacks is
       Dialog    : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
       Debugger  : constant Debugger_Access := Dialog.Debugger;
-      Process   : constant Debugger_Process_Tab :=
+      Process   : constant Visual_Debugger :=
         Convert (Dialog.Main_Window, Debugger);
 
    begin
@@ -230,7 +219,7 @@ package body GVD.Dialogs.Callbacks is
       Tmp       : Gint_List.Glist := Gint_List.First (Selection);
       Button    : Message_Dialog_Buttons;
       Debugger  : constant Debugger_Access := Dialog.Debugger;
-      Process   : constant Debugger_Process_Tab :=
+      Process   : constant Visual_Debugger :=
         Convert (Dialog.Main_Window, Debugger);
 
    begin
@@ -290,10 +279,7 @@ package body GVD.Dialogs.Callbacks is
         History_Dialog_Access (Get_Toplevel (Object));
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (History_Dialog.Window);
-      Page : constant Gtk_Widget :=
-        Get_Nth_Page
-          (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
-      Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
+      Tab  : constant Visual_Debugger := Get_Current_Process (Top);
       List : constant Gtk_List :=
         History_Dialog_Access (Get_Toplevel (Object)).List;
       Item : Gtk_List_Item;

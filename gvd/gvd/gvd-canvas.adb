@@ -33,7 +33,6 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
-with Gtk.Window;       use Gtk.Window;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 
@@ -228,8 +227,8 @@ package body GVD.Canvas is
    ------------------------
 
    procedure Display_Expression (Canvas : access Gtk_Widget_Record'Class) is
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Get_Process (GVD_Canvas (Canvas)));
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Get_Process (GVD_Canvas (Canvas)));
    begin
       On_Display_Expression
         (Process.Window.all'Access, 0, Factory_Data.Null_Widget);
@@ -345,17 +344,17 @@ package body GVD.Canvas is
 
    procedure Set_Process
      (Canvas  : access GVD_Canvas_Record;
-      Process : access Gtk.Window.Gtk_Window_Record'Class) is
+      Process : access Glib.Object.GObject_Record'Class) is
    begin
-      Canvas.Process := Gtk.Window.Gtk_Window (Process);
+      Canvas.Process := Glib.Object.GObject (Process);
    end Set_Process;
 
    -----------------
    -- Get_Process --
    -----------------
 
-   function Get_Process (Canvas : access GVD_Canvas_Record)
-      return Gtk.Window.Gtk_Window is
+   function Get_Process
+     (Canvas : access GVD_Canvas_Record) return Glib.Object.GObject is
    begin
       return Canvas.Process;
    end Get_Process;
@@ -943,7 +942,7 @@ package body GVD.Canvas is
       pragma Unreferenced (Widget);
 
       Top  : constant GVD_Main_Window :=
-        GVD_Main_Window (Debugger_Process_Tab (Item.Canvas.Process).Window);
+        GVD_Main_Window (Visual_Debugger (Item.Canvas.Process).Window);
       View : constant GVD_Memory_View := Top.Memory_View;
 
    begin
@@ -1012,7 +1011,6 @@ package body GVD.Canvas is
    begin
       Set_Auto_Refresh
         (Item.Item,
-         Get_Window (Item.Canvas),
          not Get_Auto_Refresh (Item.Item),
          True);
 

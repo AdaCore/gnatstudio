@@ -121,7 +121,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (File_Length : Natural;
       Name_Length : Natural) is
    record
-      Process      : Debugger_Process_Tab;
+      Process      : Visual_Debugger;
       File         : String (1 .. File_Length);
       Line         : Integer;
       Name         : String (1 .. Name_Length);
@@ -227,7 +227,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Gtk_New
      (Editor            : out Builtin;
-      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Process           : access Glib.Object.GObject_Record'Class;
       TTY_Mode          : Boolean;
       Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
@@ -250,7 +250,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Initialize
      (Editor            : access Builtin_Record'Class;
-      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Process           : access Glib.Object.GObject_Record'Class;
       TTY_Mode          : Boolean;
       Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
@@ -271,7 +271,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
       Box.Editor := Builtin (Editor);
       Editor.Widget := Gtk_Widget (Box);
-      Editor.Process := Gtk_Widget (Process);
+      Editor.Process := Glib.Object.GObject (Process);
       Editor.Show_Line_Nums := Get_Pref (GVD_Prefs, Editor_Show_Line_Nums);
       Editor.Show_Lines_With_Code := Get_Pref
         (GVD_Prefs, Editor_Show_Line_With_Code);
@@ -366,8 +366,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Result : out Boolean;
       Num    : out Breakpoint_Identifier)
    is
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
       Breakpoints_Array : constant GVD.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
 
@@ -397,8 +397,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Button : Natural;
       Line   : Natural) return Boolean
    is
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Editor.Process);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Editor.Process);
       Result  : Boolean;
       Num     : Breakpoint_Identifier;
 
@@ -454,7 +454,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
           Auto_Refresh => False,
           File         => Get_Current_File (Source.Editor),
           Line         => Line,
-          Process      => Debugger_Process_Tab (Source.Editor.Process));
+          Process      => Visual_Debugger (Source.Editor.Process));
 
    begin
       --  Destroy the previous menu (which we couldn't do earlier because
@@ -615,7 +615,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Source.Editor);
 
       Append_To_Contextual_Menu
-        (Debugger_Process_Tab (Source.Editor.Process).Editor_Text,
+        (Visual_Debugger (Source.Editor.Process).Editor_Text,
          Source.Editor.Contextual_Menu);
 
       Show_All (Source.Editor.Contextual_Menu);
@@ -852,7 +852,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    procedure Update_Breakpoints
      (Editor  : access Builtin_Record;
       Br      : GVD.Types.Breakpoint_Array;
-      Process : Gtk.Widget.Gtk_Widget)
+      Process : Glib.Object.GObject)
    is
       pragma Unreferenced (Process);
 
@@ -1012,8 +1012,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    is
       Edit      : constant Builtin_Text_Box :=
         Builtin_Text_Box (Editor.Widget);
-      Process   : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process   : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
       Contents  : Basic_Types.String_Access;
       Error_Msg : Basic_Types.String_Access;
 
@@ -1051,10 +1051,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Update_Child (Edit);
       Update_Buttons (Editor, True);
 
-      if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
+      if Visual_Debugger (Editor.Process).Breakpoints /= null then
          Update_Breakpoints
            (Editor,
-            Debugger_Process_Tab (Editor.Process).Breakpoints.all,
+            Visual_Debugger (Editor.Process).Breakpoints.all,
             Editor.Process);
       else
          Update_Breakpoints (Editor, No_Breakpoint, Editor.Process);
@@ -1337,15 +1337,15 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Box : access Gtk_Widget_Record'Class)
    is
       Editor  : constant Builtin := Builtin_Text_Box (Box).Editor;
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
       Name    : constant String := Editor.Debugger_Current_File.all;
       Lang    : Language_Access;
 
    begin
       if Name /= "" then
          Lang := Get_Language_From_File
-           (Debugger_Process_Tab (Editor.Process).Window.Lang_Handler, Name);
+           (Visual_Debugger (Editor.Process).Window.Lang_Handler, Name);
          Set_Current_Language (Process.Editor_Text, Lang);
 
          --  Refresh the code editor itself, so that both the source window
@@ -1368,8 +1368,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
 
    function Idle_Compute_Lines (Editor : Builtin) return Boolean is
       Edit     : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
-      Process  : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process  : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
       Debug    : constant Debugger_Access := Process.Debugger;
       Line     : Integer;
       Line_Max : Integer;
@@ -1443,8 +1443,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Edit    : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
       Kind    : Line_Kind;
       Pix     : Gtk_Pixmap;
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
       Debug   : constant Debugger_Access := Process.Debugger;
       Y : Gint;
 
@@ -1517,8 +1517,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Value         : Basic_Types.String_Access;
       Variable_Name : Basic_Types.String_Access;
 
-      Debugger : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Data.Box.Process);
+      Debugger : constant Visual_Debugger :=
+        Visual_Debugger (Data.Box.Process);
 
       Context        : Items.Drawing_Context;
       Mask2          : Gdk.Types.Gdk_Modifier_Type;
@@ -1717,7 +1717,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  might have.
 
       Clear_Cache
-        (Debugger_Process_Tab (Editor.Process).Window, Force => False);
+        (Visual_Debugger (Editor.Process).Window, Force => False);
       Load_File (Editor, File_Name, False, Force => True);
       Set_Value (Get_Vadj (Get_Child (Edit)), Value);
 
@@ -1752,7 +1752,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Editor      : access Builtin_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Gtk.Widget.Gtk_Widget)
+      Process     : Glib.Object.GObject)
    is
       pragma Unreferenced (Process);
    begin

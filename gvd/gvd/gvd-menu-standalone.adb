@@ -13,12 +13,13 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Glib;                    use Glib;
+with Glib.Object;             use Glib.Object;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Window;              use Gtk.Window;
@@ -68,9 +69,9 @@ package body GVD.Menu.Standalone is
 
       Program : Program_Descriptor;
       List    : Argument_List (1 .. 0);
-      Process : Debugger_Process_Tab;
+      Process : Visual_Debugger;
       Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Tab     : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab     : constant Visual_Debugger := Get_Current_Process (Object);
       Max_Args : constant := 4;
       Args     : Argument_List (1 .. Max_Args);
       Num_Args : Natural := 0;
@@ -191,7 +192,7 @@ package body GVD.Menu.Standalone is
          return Name;
       end Substitute;
 
-      Tab       : constant Debugger_Process_Tab :=
+      Tab       : constant Visual_Debugger :=
         Get_Current_Process (Object);
       Host_File : constant String :=
         To_Host_Pathname (Get_Current_File (Tab.Editor_Text));
@@ -247,14 +248,14 @@ package body GVD.Menu.Standalone is
 
       File_Name : constant String :=
         File_Selection_Dialog (Title => -"Source name", Must_Exist => True);
-      Tab       : constant Debugger_Process_Tab :=
+      Tab       : constant Visual_Debugger :=
         Get_Current_Process (Object);
 
    begin
       Change_Dir (Dir_Name (File_Name));
       Load_File (Tab.Editor_Text, File_Name, Set_Current => False);
       Set_Line (Tab.Editor_Text, 1, Set_Current => False,
-                Process => Gtk_Widget (Tab));
+                Process => Glib.Object.GObject (Tab));
    end On_Open_Source;
 
    -----------------------
@@ -334,7 +335,7 @@ package body GVD.Menu.Standalone is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
    begin
       if Tab /= null then
          Close_Debugger (Tab);

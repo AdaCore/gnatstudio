@@ -28,7 +28,6 @@ with Gtk.List_Item;             use Gtk.List_Item;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Notebook;              use Gtk.Notebook;
 with Gtk.Rc;                    use Gtk.Rc;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -71,7 +70,7 @@ procedure GVD_Main is
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
    Directory_Separator : constant Character := GNAT.OS_Lib.Directory_Separator;
-   Process             : Debugger_Process_Tab;
+   Process             : Visual_Debugger;
    Debugger_List       : Argument_List (1 .. Argument_Count);
    Program_Args        : String_Access := new String'("");
    Debugger_Index      : Natural := 0;
@@ -607,30 +606,28 @@ begin
       exception
          when E : others =>
             declare
-               Page      : Gtk_Widget;
-               Num_Pages : constant Gint :=
-                 Gint (Page_List.Length
-                   (Get_Children (Main_Debug_Window.Process_Notebook)));
+               List : Debugger_List_Link := Main_Debug_Window.First_Debugger;
+
+               use type Debugger.Debugger_Access;
 
             begin
-               for Page_Num in 0 .. Num_Pages - 1 loop
-                  Page := Get_Nth_Page
-                    (Main_Debug_Window.Process_Notebook, Page_Num);
+               while List /= null loop
+                  Process := Visual_Debugger (List.Debugger);
 
-                  if Page /= null then
-                     Process := Process_User_Data.Get (Page);
+                  if Process.Timeout_Id /= 0 then
+                     Timeout_Remove (Process.Timeout_Id);
+                     Process.Timeout_Id := 0;
+                  end if;
 
-                     if Process.Timeout_Id /= 0 then
-                        Timeout_Remove (Process.Timeout_Id);
-                        Process.Timeout_Id := 0;
-                     end if;
-
+                  if Process.Debugger /= null then
                      Process_Proxies.Set_Command_In_Process
                        (Debugger.Get_Process (Process.Debugger), False);
                      Set_Busy (Process, False);
                      Unregister_Dialog (Process);
                      Free (Process.Current_Command);
                   end if;
+
+                  List := List.Next;
                end loop;
             end;
 

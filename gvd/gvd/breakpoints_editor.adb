@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-
 with Glib;             use Glib;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Pixmap;       use Gdk.Pixmap;
@@ -83,7 +82,7 @@ package body Breakpoints_Editor is
 
    procedure Breakpoint_Editor
      (Editor  : in out Breakpoint_Editor_Access;
-      Process : access GVD.Process.Debugger_Process_Tab_Record'Class)
+      Process : access GVD.Process.Visual_Debugger_Record'Class)
    is
       Style : Gtk_Style;
    begin
@@ -578,9 +577,9 @@ package body Breakpoints_Editor is
 
    procedure Set_Process
      (Editor  : access Breakpoint_Editor_Record;
-      Process : access GVD.Process.Debugger_Process_Tab_Record'Class) is
+      Process : access GVD.Process.Visual_Debugger_Record'Class) is
    begin
-      Editor.Process := GVD.Process.Debugger_Process_Tab (Process);
+      Editor.Process := GVD.Process.Visual_Debugger (Process);
       Update_Breakpoint_List (Editor);
 
       --  Reinitialize the contents of the file combo boxes

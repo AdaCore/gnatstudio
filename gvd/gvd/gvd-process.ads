@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;
+with Glib.Object;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Regpat; use GNAT.Regpat;
@@ -26,8 +27,6 @@ with GNAT.Expect; use GNAT.Expect;
 
 with Gdk.Color;
 with Gtk.Menu;
-with Gtk.Object;          use Gtk.Object;
-pragma Elaborate_All (Gtk.Object);
 with Gtk.Dialog;
 with Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
@@ -44,14 +43,13 @@ with Process_Proxies;     use Process_Proxies;
 with Dock_Paned;          use Dock_Paned;
 with Debugger;            use Debugger;
 with GVD.Main_Window;
-with Process_Tab_Pkg;
 with Items;
-with GVD.Text_Box.Source_Editor;
 with GVD.Code_Editors;
+with GVD.Text_Box.Source_Editor;
 with GVD.Types;
 with Histories;
 
-with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Interactive_Consoles; use Interactive_Consoles;
 
 package GVD.Process is
 
@@ -71,34 +69,31 @@ package GVD.Process is
    All_Info        : constant Stack_List_Mask := 2 ** 5 - 1;
    --  Lists the information to be displayed in the stack list window.
 
-   --------------------------
-   -- Debugger_Process_Tab --
-   --------------------------
-   --  This type represents one of the tabs in the process notebook, and
-   --  its associated debugger session.
+   ---------------------
+   -- Visual_Debugger --
+   ---------------------
+   --  This type represents a graphical debugger, and its associated debugger
+   --  session.
    --  This is the graphical part of the Debugger.* packages, and all graphic
    --  subprogram calls should be done on that type instead of on a
    --  Debugger'Class.
-   --  Note also that the real contents of the notebook page is not the
-   --  Debugger_Process_Tab_Record itself, but rather its Process_Paned
-   --  field.
    --
    --  Signals defined:
    --
    --  - "process_stopped"
-   --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
+   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
    --
    --    Generated each time the process debugged ran and then stopped (e.g
    --    on a breakpoint, after a next command, ...).
    --
    --  - "context_changed"
-   --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
+   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
    --
    --    Generated each time the context of the debuggee is changed (this
    --    includes thread switching, frame selection, ...).
    --
    --  - "executable_changed"
-   --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
+   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
    --
    --    Emitted every time the executable associated with the debugger is
    --    changed (via for instance the menu Files->Open Program).
@@ -106,16 +101,17 @@ package GVD.Process is
    --    command line.
    --
    --  - "debugger_closed"
-   --    procedure Handler (Widget : access Debugger_Process_Tab_Record'Class);
+   --    procedure Handler (Widget : access Visual_Debugger_Record'Class);
    --
    --    Emitted whenever the underlying debugger is closed.
 
 
    type Regexp_Filter_List is private;
 
-   type Debugger_Process_Tab_Record is new
-     Process_Tab_Pkg.Process_Tab_Record with
+   type Visual_Debugger_Record is
+     new Glib.Object.GObject_Record with
    record
+      Editor_Text             : GVD.Code_Editors.Code_Editor;
       Debugger_Num            : Natural;
       --  The number identifying the debugger.
 
@@ -135,11 +131,11 @@ package GVD.Process is
       Data_Scrolledwindow     : Gtk_Scrolled_Window;
       Data_Canvas             : Interactive_Canvas;
 
-      Debugger_Text           : Glide_Interactive_Console;
+      Debugger_Text           : Interactive_Console;
       Debugger_Text_Font      : Pango.Font.Pango_Font_Description;
       Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
 
-      Debuggee_Console        : Glide_Interactive_Console;
+      Debuggee_Console        : Interactive_Console;
 
       History                 : Histories.History;
       --  See Glide_Kernel.Get_History. This points to the same one as the GPS
@@ -211,28 +207,22 @@ package GVD.Process is
       Current_Line            : Integer := 0;
       --  The current line in Current_File.
    end record;
-   type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
-
-   package Process_User_Data is new User_Data (Debugger_Process_Tab);
-   --  This is used to convert from the notebook page associated with the
-   --  debugger and the Debugger_Process_Tab structure.
-   --  ??? This would not be required if Process_Tab_Record was directly
-   --  a Gtk_VPaned, instead of a toplevel window.
+   type Visual_Debugger is access all Visual_Debugger_Record'Class;
 
    procedure Gtk_New
-     (Process : out Debugger_Process_Tab;
+     (Process : out Visual_Debugger;
       Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor);
    --  Create a new debugger page and add it to Window.
 
    procedure Initialize
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor);
    --  Internal initialize procedure.
 
    procedure Configure
-     (Process         : access Debugger_Process_Tab_Record'Class;
+     (Process         : access Visual_Debugger_Record'Class;
       Kind            : GVD.Types.Debugger_Type;
       Proxy           : Process_Proxy_Access;
       Executable      : String;
@@ -261,7 +251,7 @@ package GVD.Process is
    --  Success is set to true is the debugger could be successfully started.
 
    procedure Setup_Command_Window
-     (Process : access Debugger_Process_Tab_Record'Class);
+     (Process : access Visual_Debugger_Record'Class);
    --  Set up/initialize the command window associated with Process.
 
    Debugger_Not_Supported : exception;
@@ -271,58 +261,51 @@ package GVD.Process is
    --  Raised by Convert when no debugger is found.
 
    type Regexp_Filter_Function is access procedure
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Match   : Match_Array);
    --  To be used with Add_Regexp_Filter below.
 
    procedure Add_Regexp_Filter
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Filter  : Regexp_Filter_Function;
       Regexp  : Pattern_Matcher);
    --  Add a new regexp filter.
    --  This filter will be run when output from a debugger is received
    --  that matches regexp.
 
-   function Get_Num (Tab : Debugger_Process_Tab) return Glib.Gint;
+   function Get_Num (Tab : Visual_Debugger) return Glib.Gint;
    --  Return the number identifying the debugger associated with a process tab
 
    function Convert
      (Main_Debug_Window : access GVD.Main_Window.GVD_Main_Window_Record'Class;
       Descriptor        : GNAT.Expect.Process_Descriptor'Class)
-      return Debugger_Process_Tab;
+      return Visual_Debugger;
    --  Return the debugger_descriptor associated with a Process_Descriptor.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
    function Convert
-     (Text : access GVD.Code_Editors.Code_Editor_Record'Class)
-      return Debugger_Process_Tab;
-   --  Conversion function, from the code editor to the process tab.
-   --  Note that there is a single such editor per process, even if there are
-   --  multiple threads/tasks.
-
-   function Convert
      (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
       Debugger          : access Debugger_Root'Class)
-      return Debugger_Process_Tab;
+      return Visual_Debugger;
    --  Conversion function.
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
 
    function Call_Stack_Contextual_Menu
-     (Process : access Debugger_Process_Tab_Record'Class)
+     (Process : access Visual_Debugger_Record'Class)
       return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used in the
    --  debugger command window.
 
    procedure Final_Post_Process
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Mode    : GVD.Types.Command_Type);
    --  Final post processing.
    --  Call the appropriate filters and reset Current_Output.
 
    procedure Set_Busy
-     (Debugger      : access Debugger_Process_Tab_Record;
+     (Debugger      : access Visual_Debugger_Record;
       Busy          : Boolean := True;
       Force_Refresh : Boolean := False);
    --  Enable or disable the "busy" cursor.
@@ -331,34 +314,33 @@ package GVD.Process is
 
    function Get_Current_Process
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Debugger_Process_Tab;
+      return Visual_Debugger;
    --  Return the current process tab in Main_Window.
    --  Main_Window should be a pointer to the top-level window in gvd.
    --  This returns null if there is no current debugger.
 
    procedure Process_Stopped
-     (Debugger : access Debugger_Process_Tab_Record'Class);
+     (Debugger : access Visual_Debugger_Record'Class);
    --  Emit the "process_stopped" signal.
 
    procedure Context_Changed
-     (Debugger : access Debugger_Process_Tab_Record'Class);
+     (Debugger : access Visual_Debugger_Record'Class);
    --  Emit the "context_changed" signal.
 
    procedure Executable_Changed
-     (Debugger : access Debugger_Process_Tab_Record'Class;
+     (Debugger : access Visual_Debugger_Record'Class;
       Executable_Name : String);
    --  Emit the "executable_changed" signal.
    --  This basically warns all listeners that the associated debugger is now
    --  editing a file called Executable_Name
 
-   procedure Close_Debugger
-     (Debugger : Debugger_Process_Tab);
+   procedure Close_Debugger (Debugger : Visual_Debugger);
    --  Close the debugger, remove the notebook page and modify the commmands
    --  history accordingly.
    --  Emit the "debugger_closed" signal.
 
    procedure Process_User_Command
-     (Debugger       : Debugger_Process_Tab;
+     (Debugger       : Visual_Debugger;
       Command        : String;
       Output_Command : Boolean := False;
       Mode           : GVD.Types.Visible_Command := GVD.Types.Visible);
@@ -372,7 +354,7 @@ package GVD.Process is
    --  debugger.
 
    procedure Output_Text
-     (Process      : Debugger_Process_Tab;
+     (Process      : Visual_Debugger;
       Str          : String;
       Is_Command   : Boolean := False;
       Set_Position : Boolean := False);
@@ -389,13 +371,13 @@ package GVD.Process is
    --  the debugger.
 
    procedure Register_Dialog
-     (Process : access Debugger_Process_Tab_Record;
+     (Process : access Visual_Debugger_Record;
       Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class);
    --  Register a dialog, that will be deleted next time a user command is
    --  processed. Only one such dialog can be registered at any given time.
    --  Program_Error is raised if there is already such a dialog.
 
-   procedure Unregister_Dialog (Process : access Debugger_Process_Tab_Record);
+   procedure Unregister_Dialog (Process : access Visual_Debugger_Record);
    --  Destroy any registered dialog.
    --  Nothing happens if there is no such dialog.
 
@@ -404,8 +386,8 @@ package GVD.Process is
    --------------------------
 
    procedure Update_Breakpoints
-     (Object : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Force  : Boolean);
+     (Process : access Glib.Object.GObject_Record'Class;
+      Force   : Boolean);
    --  Update the list of breakpoints every time the process is stopped.
    --  This also updates all the visual windows where the breakpoints are
    --  displayed.
@@ -413,7 +395,7 @@ package GVD.Process is
    --  there is no temporary breakpoint in the current list.
 
    function Toggle_Breakpoint_State
-     (Process        : access Debugger_Process_Tab_Record;
+     (Process        : access Visual_Debugger_Record;
       Breakpoint_Num : GVD.Types.Breakpoint_Identifier) return Boolean;
    --  Toggle the enabled/disabled state of a specific breakpoint in the
    --  current process, and return the new state.
@@ -423,7 +405,7 @@ package GVD.Process is
    --  list of breakpoints has never been parsed before).
 
    procedure Update_Editor_Frame
-     (Process : access Debugger_Process_Tab_Record);
+     (Process : access Visual_Debugger_Record);
    --  Update the editor frame with the name of the currently edited file.
 
    ---------------------
@@ -431,19 +413,17 @@ package GVD.Process is
    ---------------------
 
    procedure Set_Current_Source_Location
-     (Process : access Debugger_Process_Tab_Record;
+     (Process : access Visual_Debugger_Record;
       File    : String;
       Line    : Integer);
    --  Set the source location.
 
    function Get_Current_Source_File
-     (Process : access Debugger_Process_Tab_Record)
-   return String;
+     (Process : access Visual_Debugger_Record) return String;
    --  Get the file containing the current location, or "" if there is none.
 
    function Get_Current_Source_Line
-     (Process : access Debugger_Process_Tab_Record)
-     return Integer;
+     (Process : access Visual_Debugger_Record) return Integer;
    --  Get the current line, or 0 if there is none.
 
 private

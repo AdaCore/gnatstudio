@@ -161,25 +161,25 @@ package body Debugger.Gdb is
      ("(b~.+\.adb)|(b_.+\.c)");
 
    procedure Language_Filter
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
    --  Filter used to detect a change in the current language.
 
    procedure Running_Filter
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
    --  Filter used to detect when the program no longer runs.
 
    procedure Question_Filter1
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
    --  Filter used to detect questions from gdb.
 
    procedure Question_Filter2
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array);
    --  Filter used to detect y/n questions from gdb.
@@ -224,7 +224,7 @@ package body Debugger.Gdb is
    ---------------------
 
    procedure Language_Filter
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array)
    is
@@ -263,7 +263,7 @@ package body Debugger.Gdb is
    --------------------
 
    procedure Running_Filter
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array)
    is
@@ -278,7 +278,7 @@ package body Debugger.Gdb is
    ---------------------
 
    procedure Question_Filter1
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array)
    is
@@ -348,7 +348,7 @@ package body Debugger.Gdb is
    ----------------------
 
    procedure Question_Filter2
-     (Process : access Debugger_Process_Tab_Record'Class;
+     (Process : access Visual_Debugger_Record'Class;
       Str     : String;
       Matched : Match_Array)
    is
@@ -849,7 +849,7 @@ package body Debugger.Gdb is
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
       Cmd                 : Basic_Types.String_Access;
-      Process             : Debugger_Process_Tab;
+      Process             : Visual_Debugger;
 
    begin
       if Debugger.Remote_Target = null then
@@ -3024,6 +3024,14 @@ package body Debugger.Gdb is
       Addr_Last   : Natural;
 
    begin
+      --  Given that we no longer process graphic events when sending
+      --  commands to the debugger, Command_In_Process should never be true
+      --  here, but in any case, let's have this additional protection:
+
+      if Command_In_Process (Get_Process (Debugger)) then
+         return File_Name;
+      end if;
+
       Set_Parse_File_Name (Get_Process (Debugger), False);
 
       declare

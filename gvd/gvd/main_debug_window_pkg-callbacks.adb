@@ -19,13 +19,10 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Glib.Object;         use Glib.Object;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Main;            use Gtk.Main;
-with Gtk.Menu_Item;       use Gtk.Menu_Item;
-with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Window;          use Gtk.Window;
-with Gtkada.Types;        use Gtkada.Types;
-with Gtkada.MDI;          use Gtkada.MDI;
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
@@ -43,6 +40,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
    function Idle_Exit (Window : GVD_Main_Window) return Boolean;
    --  Idle function called to finish handling of exiting.
+
+   procedure On_Process_Notebook_Switch_Page
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+   pragma Unreferenced (On_Process_Notebook_Switch_Page);
+   --  ??? Need to update to new multi-process handling
 
    ---------------
    -- Idle_Exit --
@@ -94,26 +97,22 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      --  Arg1 : Address := To_Address (Params, 1);
-      Arg2 : constant Guint := To_Guint (Params, 2);
+      pragma Warnings (Off);
+      pragma Unreferenced (Params);
+
+      --  Arg2 : constant Guint := To_Guint (Params, 2);
       --  Number of the page that will be displayed
 
-      Page      : constant Gtk_Widget := Get_Nth_Page
-        (GVD_Main_Window (Object).Process_Notebook, Gint (Arg2));
-      Main      : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Process   : Debugger_Process_Tab;
-      Menu_Item : Gtk_Menu_Item;
-
+      Main        : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Process     : Visual_Debugger;
       Widget      : Gtk_Widget;
       WTX_Version : Natural;
 
    begin
-      Process :=
-        Debugger_Process_Tab (Process_User_Data.Get (Page));
-      Update_External_Dialogs (Main, Gtk_Widget (Process));
+      return;
+      --  ??? Need to update when using new process setting
 
-      Menu_Item := Gtk_Menu_Item (Get_Widget (Main.Factory, -"/Window"));
-      Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
+      Update_External_Dialogs (Main, GObject (Process));
 
       if Main.Breakpoints_Editor /= null then
          Set_Process
@@ -122,10 +121,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       --  Update the sensitivity of the Data/Protection Domains menu
       --  item
+
       Widget := Get_Widget (Main.Factory, -"/Data/Protection Domains");
 
       if Widget = null then
          --  This means that GVD is part of GPS
+
          Widget := Get_Widget
            (Main.Factory, -"/Debug/Data/Protection Domains");
       end if;
@@ -139,11 +140,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Set_Sensitive (Widget, True);
          end if;
       end if;
-
-   exception
-      --  The page wasn't associated with a debugger yet
-      when Gtkada.Types.Data_Error =>
-         null;
    end On_Process_Notebook_Switch_Page;
 
 end Main_Debug_Window_Pkg.Callbacks;

@@ -18,29 +18,29 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                use Glib;
-with Gtk;                 use Gtk;
-with Gtk.Accel_Group;     use Gtk.Accel_Group;
-with Gtk.Box;             use Gtk.Box;
-with Gtk.Menu_Bar;        use Gtk.Menu_Bar;
-with Gtk.Notebook;        use Gtk.Notebook;
-with Gtk.Object;          use Gtk.Object;
-with Gtk.Widget;          use Gtk.Widget;
-with Gtkada.Handlers;     use Gtkada.Handlers;
+with Glib;                  use Glib;
+with Gtk;                   use Gtk;
+with Gtk.Accel_Group;       use Gtk.Accel_Group;
+with Gtk.Box;               use Gtk.Box;
+with Gtk.Menu_Bar;          use Gtk.Menu_Bar;
+with Gtk.Menu_Item;         use Gtk.Menu_Item;
+with Gtk.Object;            use Gtk.Object;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.Types;
 with Factory_Data;
-with GVD.Types;           use GVD.Types;
-with GVD.Dialogs;         use GVD.Dialogs;
-with GVD.Preferences;     use GVD.Preferences;
-with GVD.Process;         use GVD.Process;
-with GVD.Memory_View;     use GVD.Memory_View;
-with Debugger;            use Debugger;
-with Process_Proxies;     use Process_Proxies;
+with GVD.Types;             use GVD.Types;
+with GVD.Preferences;       use GVD.Preferences;
+with GVD.Process;           use GVD.Process;
+with GVD.Memory_View;       use GVD.Memory_View;
+with Debugger;              use Debugger;
+with Process_Proxies;       use Process_Proxies;
+with Odd_Intl;              use Odd_Intl;
 
 with Language_Handlers;     use Language_Handlers;
 with Language_Handlers.GVD; use Language_Handlers.GVD;
 
-with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Interfaces.C.Strings;  use Interfaces.C.Strings;
 
 package body GVD.Main_Window is
 
@@ -58,21 +58,20 @@ package body GVD.Main_Window is
    procedure Prepare_Cleanup_Debuggers
      (Window : access GVD_Main_Window_Record'Class)
    is
-      Tab          : Debugger_Process_Tab;
-      Page         : Gtk_Widget;
-      Num_Children : constant Gint :=
-        Gint (Page_List.Length (Get_Children (Window.Process_Notebook)));
+      Debugger : Visual_Debugger;
+      List     : Debugger_List_Link := Window.First_Debugger;
 
    begin
-      for J in 0 .. Num_Children - 1 loop
-         Page := Get_Nth_Page (Window.Process_Notebook, J);
-         Tab  := Process_User_Data.Get (Page);
+      while List /= null loop
+         Debugger := Visual_Debugger (List.Debugger);
 
-         if Tab.Debugger /= null
-           and then Command_In_Process (Get_Process (Tab.Debugger))
+         if Debugger.Debugger /= null
+           and then Command_In_Process (Get_Process (Debugger.Debugger))
          then
-            Interrupt (Tab.Debugger);
+            Interrupt (Debugger.Debugger);
          end if;
+
+         List := List.Next;
       end loop;
    end Prepare_Cleanup_Debuggers;
 
@@ -83,24 +82,18 @@ package body GVD.Main_Window is
    procedure Cleanup_Debuggers
      (Window : access GVD_Main_Window_Record'Class)
    is
-      Tab  : Debugger_Process_Tab;
-      Page : Gtk_Widget;
+      Debugger : Visual_Debugger;
+      List     : Debugger_List_Link := Window.First_Debugger;
 
    begin
-      --  First switch to the last page (to prevent automatic page
-      --  switching when the other pages are deleted, which would fail)
-      Set_Page (Window.Process_Notebook, -1);
+      while List /= null loop
+         Debugger := Visual_Debugger (List.Debugger);
+         Debugger.Exiting := True;
+         Window.Current_Debugger := Glib.Object.GObject (Debugger);
 
-      loop
-         Page := Get_Nth_Page (Window.Process_Notebook, 0);
-         exit when Page = null;
-
-         Tab := Process_User_Data.Get (Page);
-         Tab.Exiting := True;
-
-         if Tab.Debugger /= null then
+         if Debugger.Debugger /= null then
             begin
-               Close (Tab.Debugger);
+               Close (Debugger.Debugger);
             exception
                when others =>
                   --  ??? Would be nice to handle more specific errors, but
@@ -110,9 +103,10 @@ package body GVD.Main_Window is
             end;
          end if;
 
-         Remove_Page (Window.Process_Notebook, 0);
+         List := List.Next;
       end loop;
 
+      Window.Current_Debugger := null;
       Free (Window.Command_History);
    end Cleanup_Debuggers;
 
@@ -146,6 +140,11 @@ package body GVD.Main_Window is
 
       Gtk_New (Main_Window.Main_Accel_Group);
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
+      Gtk_New (Main_Window.Process_Mdi, Main_Window.Main_Accel_Group);
+      Add (Main_Window.Vbox, Main_Window.Process_Mdi);
+      Set_Priorities
+        (Main_Window.Process_Mdi,
+         (Top => 1, Bottom => 2, Right => 3, Left => 4));
       Gtk_New
         (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
          Key, Main_Window.Main_Accel_Group);
@@ -155,6 +154,9 @@ package body GVD.Main_Window is
       Main_Window.Menu_Bar := Gtk_Menu_Bar (Menu);
       Pack_Start (Main_Window.Vbox, Menu, False, False, 0);
       Reorder_Child (Main_Window.Vbox, Menu, 0);
+      Set_Submenu
+        (Gtk_Menu_Item (Get_Widget (Main_Window.Factory, '/' & (-"Window"))),
+         Create_Menu (Main_Window.Process_Mdi));
 
       Gtk_New (Main_Window.Task_Dialog, Gtk_Window (Main_Window));
       Gtk_New (Main_Window.Thread_Dialog, Gtk_Window (Main_Window));
@@ -204,9 +206,11 @@ package body GVD.Main_Window is
 
    procedure Update_External_Dialogs
      (Window   : access GVD_Main_Window_Record'Class;
-      Debugger : Gtk.Widget.Gtk_Widget := null)
+      Debugger : Glib.Object.GObject := null)
    is
-      Tab : Debugger_Process_Tab := Debugger_Process_Tab (Debugger);
+      use type Glib.Object.GObject;
+
+      Tab : Visual_Debugger := Visual_Debugger (Debugger);
    begin
       if Debugger = null then
          Tab := Get_Current_Process (Window);

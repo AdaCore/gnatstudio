@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -13,18 +13,18 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Object;
 with Gtkada.Canvas;
 with Gdk.GC;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 with Gtk.Menu;
 with Gtk.Widget;
-with Gtk.Window;
 with Gtk.Accel_Group;
 with Display_Items;
 with Items;
@@ -67,11 +67,11 @@ package GVD.Canvas is
 
    procedure Set_Process
      (Canvas  : access GVD_Canvas_Record;
-      Process : access Gtk.Window.Gtk_Window_Record'Class);
+      Process : access Glib.Object.GObject_Record'Class);
    --  Set the process associated with the canvas.
 
-   function Get_Process (Canvas : access GVD_Canvas_Record)
-     return Gtk.Window.Gtk_Window;
+   function Get_Process
+     (Canvas : access GVD_Canvas_Record) return Glib.Object.GObject;
    --  Return the process tab that contains the canvas.
 
    procedure Preferences_Changed
@@ -134,7 +134,7 @@ private
    record
       Detect_Aliases : Boolean;
       Item_Num       : Integer := 0;
-      Process        : Gtk.Window.Gtk_Window;
+      Process        : Glib.Object.GObject;
       --  The process tab that contains the canvas
 
       --  The graphic contexts used to draw the canvas and its items

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;
+with Glib.Object;
 with Gdk.Bitmap;
 with Gdk.Color;
 with Gdk.Pixmap;
@@ -49,7 +50,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Gtk_New
      (Editor            : out Builtin;
-      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Process           : access Glib.Object.GObject_Record'Class;
       TTY_Mode          : Boolean;
       Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
@@ -64,7 +65,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
 
    procedure Initialize
      (Editor            : access Builtin_Record'Class;
-      Process           : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Process           : access Glib.Object.GObject_Record'Class;
       TTY_Mode          : Boolean;
       Font              : Pango.Font.Pango_Font_Description;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
@@ -93,7 +94,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
    procedure Update_Breakpoints
      (Editor  : access Builtin_Record;
       Br      : GVD.Types.Breakpoint_Array;
-      Process : Gtk.Widget.Gtk_Widget);
+      Process : Glib.Object.GObject);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Set_Show_Line_Nums
@@ -144,7 +145,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
      (Editor      : access Builtin_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Gtk.Widget.Gtk_Widget);
+      Process     : Glib.Object.GObject);
    --  See GVD.Text_Boxes.Source_Editor for more information.
 
    function Get_Line (Editor : access Builtin_Record) return Natural;
@@ -171,7 +172,7 @@ private
      Gdk.Color.Gdk_Color;
 
    type Builtin_Record is new Source_Editor_Record with record
-      Process              : Gtk.Widget.Gtk_Widget;
+      Process              : Glib.Object.GObject;
 
       Show_Line_Nums       : Boolean;
       Show_Lines_With_Code : Boolean;

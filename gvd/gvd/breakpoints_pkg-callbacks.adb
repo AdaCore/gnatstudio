@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;               use Glib;
+with Glib.Object;        use Glib.Object;
 with GVD.Types;          use GVD.Types;
 with Basic_Types;        use Basic_Types;
 with Gtk.Arguments;      use Gtk.Arguments;
@@ -423,7 +424,7 @@ package body Breakpoints_Pkg.Callbacks is
          Set_Line
            (Editor.Process.Editor_Text,
             Editor.Process.Breakpoints (Selection).Line,
-            Process => Gtk_Widget (Editor.Process));
+            Process => GObject (Editor.Process));
       end if;
    end On_View_Clicked;
 

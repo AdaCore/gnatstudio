@@ -129,7 +129,7 @@ package body GVD.Text_Box.Asm_Editor is
 
    procedure Gtk_New
      (Editor  : out Asm_Editor;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Process : access Glib.Object.GObject_Record'Class) is
    begin
       Editor := new Asm_Editor_Record;
       Initialize (Editor, Process);
@@ -141,10 +141,10 @@ package body GVD.Text_Box.Asm_Editor is
 
    procedure Initialize
      (Editor  : access Asm_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Process : access Glib.Object.GObject_Record'Class) is
    begin
       GVD.Text_Box.Initialize (Editor);
-      Editor.Process := Gtk_Widget (Process);
+      Editor.Process := Glib.Object.GObject (Process);
       Show_All (Editor);
 
       Editor_Event_Cb.Object_Connect
@@ -188,8 +188,8 @@ package body GVD.Text_Box.Asm_Editor is
       Pc     : String;
       End_Pc : String)
    is
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
       S       : String_Access;
       S2      : String_Access;
       S3      : String_Access;
@@ -373,8 +373,8 @@ package body GVD.Text_Box.Asm_Editor is
       if Button = 1 then
          declare
             Addr : constant String := Address_From_Line (Editor, Line);
-            Process : constant Debugger_Process_Tab :=
-              Debugger_Process_Tab (Editor.Process);
+            Process : constant Visual_Debugger :=
+              Visual_Debugger (Editor.Process);
 
          begin
             Is_Breakpoint_Address (Editor, Addr, Result, Num);
@@ -432,7 +432,7 @@ package body GVD.Text_Box.Asm_Editor is
          Editor);
 
       Append_To_Contextual_Menu
-        (Debugger_Process_Tab (Editor.Process).Editor_Text, Menu);
+        (Visual_Debugger (Editor.Process).Editor_Text, Menu);
 
       Show_All (Menu);
       return Menu;
@@ -479,7 +479,7 @@ package body GVD.Text_Box.Asm_Editor is
       Freeze (Get_Buttons (Editor));
 
       Get_Line_Address
-        (Debugger_Process_Tab (Editor.Process).Debugger,
+        (Visual_Debugger (Editor.Process).Debugger,
          Source_Line, Range_Start, Range_End, Range_Start_Len, Range_End_Len);
 
       if Range_Start_Len /= 0 and then Range_End_Len /= 0 then
@@ -630,8 +630,8 @@ package body GVD.Text_Box.Asm_Editor is
       Result : out Boolean;
       Num    : out Breakpoint_Identifier)
    is
-      Process : constant Debugger_Process_Tab :=
-        Debugger_Process_Tab (Editor.Process);
+      Process : constant Visual_Debugger :=
+        Visual_Debugger (Editor.Process);
       Breakpoints_Array : constant GVD.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
 
@@ -788,14 +788,14 @@ package body GVD.Text_Box.Asm_Editor is
    is
       Pos      : Grange_Float;
       Src_Line : constant Natural :=
-        Get_Line (Debugger_Process_Tab (Box.Process).Editor_Text);
+        Get_Line (Visual_Debugger (Box.Process).Editor_Text);
 
    begin
       if Box.Current_Range /= null
         and then Get_Pref (GVD_Prefs, Assembly_Range_Size) /= 0
       then
          Set_Busy
-           (Debugger_Process_Tab (Box.Process), True, Force_Refresh => True);
+           (Visual_Debugger (Box.Process), True, Force_Refresh => True);
 
          if Down then
             Pos := Get_Upper (Get_Vadj (Get_Child (Box)))
@@ -831,7 +831,7 @@ package body GVD.Text_Box.Asm_Editor is
            (Box, Gint (0), Gint (0), Gint (0), Fore => Box.Highlight_Color);
          Highlight_Address_Range (Box, Src_Line);
 
-         Set_Busy (Debugger_Process_Tab (Box.Process), False);
+         Set_Busy (Visual_Debugger (Box.Process), False);
       end if;
    end Meta_Scroll;
 

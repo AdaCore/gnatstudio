@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                  use Glib;
+with Glib.Object;
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Event;             use Gdk.Event;
@@ -123,7 +124,7 @@ package body GVD.Explorer is
    --  Create (if necessary) the contextual menu for an explorer widget.
 
    function Convert (Explorer : access Explorer_Record'Class)
-     return Debugger_Process_Tab;
+     return Visual_Debugger;
    --  Return the Process_Tab associated with an explorer.
 
    function Find_Node_From_File
@@ -300,7 +301,7 @@ package body GVD.Explorer is
    function Lang_Handler (Explorer : access Explorer_Record'Class)
       return Language_Handler is
    begin
-      return Debugger_Process_Tab
+      return Visual_Debugger
         (Get_Process (Code_Editor (Explorer.Code_Editor))).Window.Lang_Handler;
    end Lang_Handler;
 
@@ -315,7 +316,7 @@ package body GVD.Explorer is
         (Node_List.First (Get_Selection (Explorer)));
       File_Node : Gtk_Ctree_Node;
       Data      : Node_Data_Access;
-      Tab       : constant Debugger_Process_Tab := Convert (Explorer);
+      Tab       : constant Visual_Debugger := Convert (Explorer);
       Lang      : Language_Access;
       Line      : Natural := 1;
 
@@ -343,7 +344,7 @@ package body GVD.Explorer is
          if File_Node = Explorer.Current_File_Node then
             Set_Line (Code_Editor (Explorer.Code_Editor),
                       Explorer.Current_Line, Set_Current => True,
-                      Process => Gtk_Widget (Tab));
+                      Process => Glib.Object.GObject (Tab));
          end if;
 
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
@@ -373,11 +374,11 @@ package body GVD.Explorer is
             if Line /= 1 then
                Set_Line (Code_Editor (Explorer.Code_Editor), Line,
                          Set_Current => True,
-                         Process => Gtk_Widget (Tab));
+                         Process => Glib.Object.GObject (Tab));
             else
                Set_Line (Code_Editor (Explorer.Code_Editor), Line,
                          Set_Current => False,
-                         Process => Gtk_Widget (Tab));
+                         Process => Glib.Object.GObject (Tab));
             end if;
          end if;
       end if;
@@ -553,7 +554,7 @@ package body GVD.Explorer is
 
          --  Read the size of the file
          declare
-            Tab       : constant Debugger_Process_Tab := Convert (Explorer);
+            Tab       : constant Visual_Debugger := Convert (Explorer);
             Full_Name : constant String :=
               Find_File (Tab.Debugger, Data.Extension);
             S         : Basic_Types.String_Access;
@@ -896,7 +897,7 @@ package body GVD.Explorer is
    procedure On_Executable_Changed
      (Explorer : access Explorer_Record'Class)
    is
-      Tab  : constant Debugger_Process_Tab := Convert (Explorer);
+      Tab  : constant Visual_Debugger := Convert (Explorer);
       List : String_Array := Source_Files_List (Tab.Debugger);
 
    begin
@@ -920,7 +921,7 @@ package body GVD.Explorer is
       --  Check : Gtk_Check_Menu_Item;
       Mitem   : Gtk_Menu_Item;
       Tips    : Gtk_Tooltips;
-      Process : constant Debugger_Process_Tab := Convert (Exp);
+      Process : constant Visual_Debugger := Convert (Exp);
 
    begin
       if Exp.Contextual_Menu /= null then
@@ -979,7 +980,7 @@ package body GVD.Explorer is
    --------------------
 
    procedure Display_Shared (Explorer : access Explorer_Record'Class) is
-      Process : constant Debugger_Process_Tab := Convert (Explorer);
+      Process : constant Visual_Debugger := Convert (Explorer);
       Data    : Node_Data_Access := null;
       Current : Basic_Types.String_Access;
 
@@ -1015,9 +1016,9 @@ package body GVD.Explorer is
    -------------
 
    function Convert (Explorer : access Explorer_Record'Class)
-      return Debugger_Process_Tab is
+      return Visual_Debugger is
    begin
-      return Debugger_Process_Tab
+      return Visual_Debugger
         (Get_Process (Code_Editor (Explorer.Code_Editor)));
    end Convert;
 
@@ -1032,7 +1033,7 @@ package body GVD.Explorer is
       Data            : Node_Data_Access;
       Node            : Gtk_Ctree_Node;
       Next            : Gtk_Ctree_Node;
-      Process         : constant Debugger_Process_Tab := Convert (Explorer);
+      Process         : constant Visual_Debugger := Convert (Explorer);
 
    begin
       Freeze (Explorer);
@@ -1120,7 +1121,7 @@ package body GVD.Explorer is
       Data            : Node_Data_Access;
       Node            : Gtk_Ctree_Node;
       Next            : Gtk_Ctree_Node;
-      Process         : constant Debugger_Process_Tab := Convert (Explorer);
+      Process         : constant Visual_Debugger := Convert (Explorer);
       Lang            : Language_Access;
 
    begin

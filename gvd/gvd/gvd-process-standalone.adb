@@ -23,9 +23,6 @@ with Glib;                       use Glib;
 with Gdk.Input;
 with Gdk.Types;                  use Gdk.Types;
 
-with Gtk;                        use Gtk;
-with Gtk.Notebook;               use Gtk.Notebook;
-
 with Ada.Text_IO;                use Ada.Text_IO;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
@@ -55,16 +52,16 @@ package body GVD.Process.Standalone is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "") return Debugger_Process_Tab
+      Debugger_Name   : String := "") return Visual_Debugger
    is
-      Process         : Debugger_Process_Tab;
+      Process         : Visual_Debugger;
       Builtin_Source  : Builtin.Builtin;
       External_Source : Socket.Socket;
       Source          : Source_Editor;
       Success         : Boolean;
 
    begin
-      Process := new Debugger_Process_Tab_Record;
+      Process := new Visual_Debugger_Record;
 
       if Window.External_XID = 0 then
          Builtin.Gtk_New
@@ -92,7 +89,7 @@ package body GVD.Process.Standalone is
       if Success then
          return Process;
       else
-         Destroy (Process);
+         Unref (Process);
          return null;
       end if;
    end Create_Debugger;
@@ -108,17 +105,14 @@ package body GVD.Process.Standalone is
    is
       pragma Unreferenced (Source, Condition);
 
-      Tab       : Debugger_Process_Tab;
+      Tab       : Visual_Debugger;
       Buffer    : String (1 .. 8192);
       Len       : Natural;
 
       use String_History;
 
    begin
-      Tab := Process_User_Data.Get
-        (Get_Nth_Page
-          (Debugger.Process_Notebook,
-           Get_Current_Page (Debugger.Process_Notebook)));
+      Tab := Get_Current_Process (Debugger);
 
       --  If we are already processing a command, just wait until
       --  the debugger is available

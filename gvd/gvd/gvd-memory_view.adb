@@ -588,7 +588,7 @@ package body GVD.Memory_View is
      (View    : access GVD_Memory_View_Record'Class;
       Address : Long_Long_Integer)
    is
-      Process : constant Debugger_Process_Tab :=
+      Process : constant Visual_Debugger :=
         Get_Current_Process (View.Window);
 
       Width      : Gint;
@@ -643,7 +643,7 @@ package body GVD.Memory_View is
    is
       Real_Address : Long_Long_Integer;
       Index        : Integer;
-      Process      : constant Debugger_Process_Tab :=
+      Process      : constant Visual_Debugger :=
         Get_Current_Process (View.Window);
 
    begin
@@ -757,9 +757,9 @@ package body GVD.Memory_View is
 
    procedure Update
      (View    : access GVD_Memory_View_Record'Class;
-      Process : Gtk_Widget)
+      Process : Glib.Object.GObject)
    is
-      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Process);
+      Tab : constant Visual_Debugger := Visual_Debugger (Process);
       use type GNAT.OS_Lib.String_Access;
 
    begin
