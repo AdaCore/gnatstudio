@@ -14,7 +14,7 @@ project Syntax is
    end Builder;
 
    package Linker is
-      for Default_Switches ("Ada") use ("--LINK=../../glide/obj/gpslink");
+      for Default_Switches ("Ada") use ("--LINK=../../gps/obj/gpslink");
    end Linker;
 
 end Syntax;
