@@ -116,7 +116,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
    is
       pragma Unreferenced (Editor, Line, Column, Position);
    begin
-      --  Only needed by the GVD explorer, which is disabled within Glide
+      --  Only needed by the GVD explorer, which is disabled within GPS
       null;
    end Highlight_Word;
 
@@ -149,12 +149,13 @@ package body GVD.Text_Box.Source_Editor.Glide is
         or else Editor.Current_File.all /= File_Name
       then
          Free (Editor.Current_File);
-         Editor.Current_File := new String'(File_Name);
+         Editor.Current_File := new String'
+           (GNAT.OS_Lib.Normalize_Pathname (File_Name));
 
          if Set_Current then
             Free (Editor.Debugger_Current_File);
             Editor.Debugger_Current_File := new String'
-              (GNAT.OS_Lib.Normalize_Pathname (File_Name));
+              (Editor.Current_File.all);
          end if;
 
          Open_File_Editor
@@ -203,10 +204,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
             "Current Line",
             --  ??? we should get that from elsewhere.
             new Line_Information_Array'
-            (Prev_Current_Line => Line_Information_Record'
-               (Text  => null,
-                Image => Gdk.Pixbuf.Null_Pixbuf,
-                Associated_Command => null)));
+              (Prev_Current_Line => Line_Information_Record'
+                 (Text  => null,
+                  Image => Gdk.Pixbuf.Null_Pixbuf,
+                  Associated_Command => null)));
       end if;
 
       Editor.Line := Line;
