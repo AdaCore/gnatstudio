@@ -113,19 +113,6 @@ package body Language.Debugger is
       raise Program_Error;
    end Parse_Array_Value;
 
-   --------------------------
-   -- Get_Language_Context --
-   --------------------------
-
-   function Get_Language_Context
-     (Lang : access Language_Debugger) return Language_Context
-   is
-      L : Language_Context (1);
-   begin
-      raise Program_Error;
-      return L;
-   end Get_Language_Context;
-
    ------------------
    -- Set_Variable --
    ------------------
@@ -139,5 +126,18 @@ package body Language.Debugger is
    begin
       return "";
    end Set_Variable;
+
+   -----------------------------------
+   -- Get_Language_Debugger_Context --
+   -----------------------------------
+
+   function Get_Language_Debugger_Context
+     (Lang : access Language_Debugger) return Language_Debugger_Context
+   is
+      L : Language_Debugger_Context (1);
+   begin
+      raise Program_Error;
+      return L;
+   end Get_Language_Debugger_Context;
 
 end Language.Debugger;

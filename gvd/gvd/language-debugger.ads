@@ -114,7 +114,7 @@ package Language.Debugger is
    --  Return the command to use to set a variable, depending on a language
    --  specific language.
 
-   type Language_Context (Record_Field_Length : Positive) is record
+   type Language_Debugger_Context (Record_Field_Length : Positive) is record
       Record_Start : Character;
       --  Character that starts the display of record values
 
@@ -130,14 +130,16 @@ package Language.Debugger is
       Record_Field : String (1 .. Record_Field_Length);
       --  how are record field names separated from their values
    end record;
-   --  Description of some strings used in the parsing of the output for
-   --  some given languages.
+   --  Language/Debugger specific syntax description.
+   --  This describes the how variable types and values are output
+   --  by the debugger, and these are used by the common parsing
+   --  functions.
+   --  Note that this is different from Language.Language_Context,
+   --  since the fields depend on the debugger.
 
-
-   function Get_Language_Context
-     (Lang : access Language_Debugger) return Language_Context;
-   --  Return the context to use for a specific language
-   --
+   function Get_Language_Debugger_Context
+     (Lang : access Language_Debugger) return Language_Debugger_Context;
+   --  Return the language/Debugger context.
    --  The default implementation raises Program_Error (See comment above)
 
 private
