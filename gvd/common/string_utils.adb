@@ -772,8 +772,7 @@ package body String_Utils is
      (Name  : String;
       Style : Path_Style := System_Default) return String
    is
-      Dir : constant String :=
-        GNAT.Directory_Operations.Normalize_Pathname (Name, Style);
+      Dir : constant String := Format_Pathname (Name, Style);
 
    begin
       if Dir = "" then

@@ -1202,8 +1202,7 @@ package body Prj_API is
 
       if Dep_Name /= No_Project_Name_And_Node then
          if Get_Name_String (Path_Name_Of (Dep_Name.Node)) /=
-           GNAT.Directory_Operations.Normalize_Pathname
-           (Imported_Project_Location)
+           Format_Pathname (Imported_Project_Location)
          then
             Raise_Exception
               (Project_Error'Identity,
