@@ -210,7 +210,7 @@ package body VCS.Generic_VCS is
    begin
       while Node /= VCS_Info_List.Null_Node loop
          if Data (Node).Id /= null
-           and then Data (Node).Id.all = Id
+           and then To_Lower (Data (Node).Id.all) = To_Lower (Id)
          then
             return Data (Node);
          end if;
