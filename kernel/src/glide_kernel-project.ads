@@ -120,4 +120,10 @@ package Glide_Kernel.Project is
    --  i.e. not those found in subprojects.
    --  It is the caller's responsability to free the list.
 
+   function Scenario_Variables_Cmd_Line
+     (Handle : access Kernel_Handle_Record'Class)
+      return String;
+   --  Return the command line to use to set up the scenario variables when
+   --  calling an external tool that handles project files
+
 end Glide_Kernel.Project;

@@ -356,5 +356,57 @@ package body Glide_Kernel.Project is
       return Sources;
    end Get_Source_Files;
 
+   ---------------------------------
+   -- Scenario_Variables_Cmd_Line --
+   ---------------------------------
+
+   function Scenario_Variables_Cmd_Line
+     (Handle : access Kernel_Handle_Record'Class)
+      return String
+   is
+      Scenario_Variables : constant Project_Node_Array :=
+        Find_Scenario_Variables (Get_Project (Handle));
+
+      function Concat (Current : String; Index : Natural) return String;
+      --  Concat the command line line for the Index-nth variable and the
+      --  following ones to Current, and return the return
+
+      ------------
+      -- Concat --
+      ------------
+
+      function Concat (Current : String; Index : Natural) return String is
+         Ext_Ref : String_Id;
+      begin
+         if Index > Scenario_Variables'Last then
+            return Current;
+         end if;
+
+         Ext_Ref := External_Reference_Of (Scenario_Variables (Index));
+         String_To_Name_Buffer (Ext_Ref);
+
+         declare
+            Name : constant String :=
+              Name_Buffer (Name_Buffer'First .. Name_Len);
+            Value : String_Id;
+         begin
+            Value := Prj.Ext.Value_Of (Name_Find);
+            String_To_Name_Buffer (Value);
+
+            return Concat
+              (Current
+               & "-X" & Name
+               & "=""" & Name_Buffer (Name_Buffer'First .. Name_Len) & """ ",
+               Index + 1);
+         end;
+      end Concat;
+
+   begin
+      --  A recursive function is probably not the most efficient way, but this
+      --  prevents limits on the command line lengths. This also avoids the use
+      --  of unbounded strings.
+      return Concat ("", Scenario_Variables'First);
+   end Scenario_Variables_Cmd_Line;
+
 end Glide_Kernel.Project;
 
