@@ -56,44 +56,49 @@ package body Glide_Kernel.Project is
                        Argument_String_To_List (Gnatls & " -v");
       Path         : String_Access;
       GNAT_Version : aliased String_Access;
+      Langs : Argument_List := Get_Languages (Get_Project (Handle));
 
    begin
-      --  If the gnatls commands hasn't changed, no need to recompute the
-      --  predefined paths.
+      if Basic_Types.Contains (Langs, "ada", Case_Sensitive => False) then
+         --  If the gnatls commands hasn't changed, no need to recompute the
+         --  predefined paths.
 
-      if Handle.Gnatls_Cache /= null
-        and then Handle.Gnatls_Cache.all = Gnatls
-      then
-         return;
+         if Handle.Gnatls_Cache /= null
+           and then Handle.Gnatls_Cache.all = Gnatls
+         then
+            return;
+         end if;
+
+         Free (Handle.Gnatls_Cache);
+         Handle.Gnatls_Cache := new String'(Gnatls);
+
+         --  ??? Should remove, when possible, the previous predefined project
+
+         Path := Locate_Exec_On_Path (Gnatls_Args (1).all);
+
+         if Path /= null then
+            Compute_Predefined_Paths
+              (Handle.Registry.all,
+               Gnatls_Path  => Path.all,
+               Gnatls_Args  => Gnatls_Args,
+               GNAT_Version => GNAT_Version'Unchecked_Access);
+            Handle.GNAT_Version := GNAT_Version;
+
+            Free (Path);
+            Free (Gnatls_Args);
+
+         else
+            Insert (Handle,
+                    -"Command not found in path: " & Gnatls_Args (1).all,
+                    Mode => Glide_Kernel.Console.Error);
+
+            Set_Predefined_Source_Path (Handle.Registry.all, "");
+            Set_Predefined_Object_Path (Handle.Registry.all, "");
+            Free (Gnatls_Args);
+         end if;
       end if;
 
-      Free (Handle.Gnatls_Cache);
-      Handle.Gnatls_Cache := new String'(Gnatls);
-
-      --  ??? Should remove, when possible, the previous predefined project
-
-      Path := Locate_Exec_On_Path (Gnatls_Args (1).all);
-
-      if Path /= null then
-         Compute_Predefined_Paths
-           (Handle.Registry.all,
-            Gnatls_Path  => Path.all,
-            Gnatls_Args  => Gnatls_Args,
-            GNAT_Version => GNAT_Version'Unchecked_Access);
-         Handle.GNAT_Version := GNAT_Version;
-
-         Free (Path);
-         Free (Gnatls_Args);
-
-      else
-         Insert (Handle,
-                 -"Command not found in path: " & Gnatls_Args (1).all,
-                 Mode => Glide_Kernel.Console.Error);
-
-         Set_Predefined_Source_Path (Handle.Registry.all, "");
-         Set_Predefined_Object_Path (Handle.Registry.all, "");
-         Free (Gnatls_Args);
-      end if;
+      Basic_Types.Free (Langs);
    end Compute_Predefined_Paths;
 
    --------------------------
