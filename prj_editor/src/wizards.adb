@@ -18,27 +18,31 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Wizard_Window_Pkg;  use Wizard_Window_Pkg;
 with Gdk.Color;          use Gdk.Color;
 with Gdk.Font;           use Gdk.Font;
-with Gtk.Widget;         use Gtk.Widget;
-with Gtk.Button;         use Gtk.Button;
-with Gtk.Label;          use Gtk.Label;
-with Unchecked_Deallocation;
-with Gtk.Enums;          use Gtk.Enums;
-with Gtk.Frame;          use Gtk.Frame;
-with Gtk.Box;            use Gtk.Box;
-with Gtk.Style;          use Gtk.Style;
-with Gtkada.Handlers;    use Gtkada.Handlers;
-with Gtk.Event_Box;      use Gtk.Event_Box;
-with Glib;               use Glib;
 with Glib.Object;        use Glib.Object;
+with Glib;               use Glib;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Button;         use Gtk.Button;
+with Gtk.Dialog;         use Gtk.Dialog;
+with Gtk.Enums;          use Gtk.Enums;
+with Gtk.Event_Box;      use Gtk.Event_Box;
+with Gtk.Frame;          use Gtk.Frame;
+with Gtk.Label;          use Gtk.Label;
 with Gtk.Pixmap;         use Gtk.Pixmap;
+with Gtk.Stock;          use Gtk.Stock;
+with Gtk.Style;          use Gtk.Style;
+with Gtk.Widget;         use Gtk.Widget;
+with Gtkada.Handlers;    use Gtkada.Handlers;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Pango.Font;         use Pango.Font;
+with Unchecked_Deallocation;
 
+with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Intl;               use Glide_Intl;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Wizards is
 
@@ -47,6 +51,8 @@ package body Wizards is
 
    procedure Free is new Unchecked_Deallocation
      (Widget_Array, Widget_Array_Access);
+   procedure Free is new Unchecked_Deallocation
+     (GNAT.OS_Lib.String_List, String_List_Access);
 
    procedure Next_Page (Wiz : access Gtk_Widget_Record'Class);
    --  Callback for the "next" button
@@ -60,6 +66,9 @@ package body Wizards is
 
    procedure Map (Wiz : access Gtk_Widget_Record'Class);
    --  Callback for the "map" signal
+
+   procedure On_Destroy (Wiz : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal
 
    Signals : constant chars_ptr_array :=
      (1 => New_String ("switch_page"));
@@ -100,13 +109,100 @@ package body Wizards is
       Style : Gtk_Style;
       Font : Gdk_Font;
       Desc : Pango_Font_Description;
+      Event : Gtk_Event_Box;
+      Vbox2 : Gtk_Vbox;
+      Pixmap1 : Gtk_Pixmap;
+      Hbox1   : Gtk_Hbox;
+      Label   : Gtk_Label;
    begin
-      Wizard_Window_Pkg.Initialize (Wiz);
+      Gtk.Dialog.Initialize
+        (Dialog  => Wiz,
+         Title   => Title,
+         Parent  => Get_Main_Window (Kernel),
+         Flags   => Modal or Destroy_With_Parent);
+
       Initialize_Class_Record
         (Wiz, Signals, Wizard_Class_Record,
          "WizardRecord", Signal_Parameters);
 
-      Set_Title (Wiz, Title);
+      Set_Default_Size (Wiz, 640, 480);
+
+      Color := Parse (Bg);
+      Alloc (Get_Default_Colormap, Color);
+      Style := Copy (Get_Style (Wiz));
+      Set_Background (Style, State_Normal, Color);
+
+      Desc := From_String (Get_Pref (Kernel, Wizard_Title_Font));
+      Font := From_Description (Desc);
+
+      Gtk_New_Hbox (Wiz.Page_Box, False, 0);
+      Pack_Start (Get_Vbox (Wiz), Wiz.Page_Box, True, True, 0);
+
+      --  Use an event box around the toc area, so that we can use a different
+      --  color for the labels.
+      Gtk_New (Event);
+      Set_Style (Event, Style);
+      Pack_Start (Wiz.Page_Box, Event, False, True, 0);
+
+      Gtk_New_Vbox (Wiz.Toc_Box, False, 6);
+      Set_Border_Width (Wiz.Toc_Box, 7);
+      Add (Event, Wiz.Toc_Box);
+
+      --  Same thing for the title box
+      Gtk_New_Vbox (Vbox2, False, 0);
+      Pack_Start (Wiz.Page_Box, Vbox2, True, True, 0);
+
+      Gtk_New (Event);
+      Set_Style (Event, Style);
+      Set_Size_Request (Event, -1,
+                        (Get_Ascent (Font) + Get_Descent (Font)) * 3);
+      Pack_Start (Vbox2, Event, False, False, 0);
+
+      Gtk_New (Wiz.Title, Title);
+      Set_Alignment (Wiz.Title, 0.5, 0.5);
+      Set_Padding (Wiz.Title, 0, 0);
+      Set_Justify (Wiz.Title, Justify_Center);
+      Set_Line_Wrap (Wiz.Title, False);
+      Add (Event, Wiz.Title);
+
+      Set_Font_Description (Style, Desc);
+      Set_Style (Wiz.Title, Style);
+
+      --  The actual contents of the wizard is put in a frame
+      Gtk_New (Wiz.Page_Frame);
+      Set_Shadow_Type (Wiz.Page_Frame, Shadow_In);
+      Pack_Start (Vbox2, Wiz.Page_Frame, True, True, 0);
+
+      --  The Previous button
+      Gtk_New_Hbox (Hbox1, False, 0);
+      Pixmap1 := Create_Pixmap (stock_left_arrow_xpm, Wiz);
+      Pack_Start (Hbox1, Pixmap1, False, True, 0);
+      Gtk_New (Label, -"Previous");
+      Pack_Start (Hbox1, Label, True, True, 0);
+
+      Gtk_New (Wiz.Previous);
+      Set_Sensitive (Wiz.Previous, False);
+      Add (Wiz.Previous, Hbox1);
+      Pack_Start (Get_Action_Area (Wiz), Wiz.Previous);
+
+
+      --  The Next button
+      Gtk_New_Hbox (Hbox1, False, 0);
+      Pixmap1 := Create_Pixmap (stock_right_arrow_xpm, Wiz);
+      Pack_Start (Hbox1, Pixmap1, False, True, 0);
+      Gtk_New (Label, -"Next");
+      Pack_Start (Hbox1, Label, True, True, 0);
+
+      Gtk_New (Wiz.Next);
+      Add (Wiz.Next, Hbox1);
+      Pack_Start (Get_Action_Area (Wiz), Wiz.Next);
+
+      --  The Cancel and Apply button
+      Wiz.Finish :=
+        Gtk_Button (Add_Button (Wiz, Stock_Apply, Gtk_Response_Apply));
+      Wiz.Cancel :=
+        Gtk_Button (Add_Button (Wiz, Stock_Cancel, Gtk_Response_Cancel));
+
       Wiz.Current_Page := 1;
       Widget_Callback.Object_Connect
         (Previous_Button (Wiz), "clicked",
@@ -120,12 +216,8 @@ package body Wizards is
          After => True);
       Widget_Callback.Connect
         (Wiz, "map", Widget_Callback.To_Marshaller (Map'Access));
-
-      Set_Sensitive (Previous_Button (Wiz), False);
-      Set_Flags (Previous_Button (Wiz), Can_Default);
-      Set_Flags (Next_Button (Wiz), Can_Default);
-      Set_Flags (Cancel_Button (Wiz), Can_Default);
-      Set_Flags (Finish_Button (Wiz), Can_Default);
+      Widget_Callback.Connect
+        (Wiz, "destroy", Widget_Callback.To_Marshaller (On_Destroy'Access));
 
       Wiz.Normal_Style := Copy (Get_Style (Wiz));
       Set_Foreground
@@ -135,27 +227,36 @@ package body Wizards is
       Set_Foreground (Wiz.Highlight_Style, State_Normal,
                       Get_Pref (Kernel, Wizard_Toc_Highlight_Color));
 
-      Color := Parse (Bg);
-      Alloc (Get_Default_Colormap, Color);
-      Style := Copy (Get_Style (Wiz.Eventbox1));
-      Set_Background (Style, State_Normal, Color);
-      Set_Style (Wiz.Eventbox1, Style);
-      Set_Style (Wiz.Title_Box, Style);
-
-      Desc := From_String (Get_Pref (Kernel, Wizard_Title_Font));
-      Set_Font_Description (Style, Desc);
-      Set_Style (Wiz.Title, Style);
-
-      Font := From_Description (Desc);
-      Set_Size_Request (Wiz.Title_Box, -1,
-                 (Get_Ascent (Font) + Get_Descent (Font)) * 3);
-
       Wiz.Toc := new Widget_Array (1 .. Num_Pages);
       Wiz.Toc.all := (others => null);
 
       Wiz.Pages := new Widget_Array (1 .. Num_Pages);
       Wiz.Pages.all := (others => null);
+
+      Wiz.Titles := new GNAT.OS_Lib.String_List (1 .. Num_Pages);
+      Wiz.Titles.all := (others => null);
    end Initialize;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Wiz : access Gtk_Widget_Record'Class) is
+      W : Wizard := Wizard (Wiz);
+   begin
+      if W.Pages /= null then
+         for P in W.Pages'Range loop
+            Destroy (W.Pages (P));
+         end loop;
+      end if;
+
+      if W.Titles /= null then
+         for P in W.Titles'Range loop
+            Free (W.Titles (P));
+         end loop;
+         Free (W.Titles);
+      end if;
+   end On_Destroy;
 
    -----------------
    -- Switch_Page --
@@ -231,6 +332,39 @@ package body Wizards is
    end Set_Page;
 
    --------------
+   -- Add_Page --
+   --------------
+
+   procedure Add_Page
+     (Wiz          : access Wizard_Record;
+      Page         : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Title        : String;
+      Toc_Contents : String)
+   is
+      Old : Widget_Array_Access;
+      Old2 : String_List_Access;
+   begin
+      Old := Wiz.Toc;
+      Wiz.Toc := new Widget_Array (Old'First .. Old'Last + 1);
+      Wiz.Toc (Old'Range) := Old.all;
+      Free (Old);
+
+      Old := Wiz.Pages;
+      Wiz.Pages := new Widget_Array (Old'First .. Old'Last + 1);
+      Wiz.Pages (Old'Range) := Old.all;
+      Free (Old);
+
+      Old2 := Wiz.Titles;
+      Wiz.Titles := new GNAT.OS_Lib.String_List (Old2'First .. Old2'Last + 1);
+      Wiz.Titles (Old2'Range) := Old2.all;
+      Free (Old2);
+
+      Set_Toc (Wiz, Wiz.Toc'Last, Toc_Contents);
+      Set_Page (Wiz, Wiz.Pages'Last, Page);
+      Wiz.Titles (Wiz.Titles'Last) := new String' (Title);
+   end Add_Page;
+
+   --------------
    -- Add_Logo --
    --------------
 
@@ -287,6 +421,13 @@ package body Wizards is
         and then Wiz.Toc (Wiz.Current_Page) /= null
       then
          Set_Style (Wiz.Toc (Wiz.Current_Page), Wiz.Highlight_Style);
+      end if;
+
+      if Wiz.Titles /= null
+        and then Wiz.Current_Page in Wiz.Titles'Range
+        and then Wiz.Titles (Wiz.Current_Page) /= null
+      then
+         Set_Wizard_Title (Wiz, Wiz.Titles (Wiz.Current_Page).all);
       end if;
 
       --  Active the appropriate buttons

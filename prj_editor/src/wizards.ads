@@ -51,18 +51,21 @@
 --
 --  </description>
 
-with Wizard_Window_Pkg;
+with Gtk.Box;
 with Gtk.Button;
+with Gtk.Dialog;
+with Gtk.Frame;
+with Gtk.Label;
 with Gtk.Widget;
 with Gtk.Style;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 with Glide_Kernel;
+with GNAT.OS_Lib;
 
 package Wizards is
 
-   type Wizard_Record is new Wizard_Window_Pkg.Wizard_Window_Record
-     with private;
+   type Wizard_Record is new Gtk.Dialog.Gtk_Dialog_Record with private;
    type Wizard is access all Wizard_Record'Class;
 
    procedure Gtk_New
@@ -108,6 +111,13 @@ package Wizards is
    --  Note: This procedure can be called directly from the callback
    --  "switch_page", in case some of the pages take a long time to create and
    --  you want the wizard to start as fast as possible.
+
+   procedure Add_Page
+     (Wiz          : access Wizard_Record;
+      Page         : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Title        : String;
+      Toc_Contents : String);
+   --  Add a new page at the end of the wizard.
 
    function Get_Nth_Page
      (Wiz : access Wizard_Record; Page_Num : Positive)
@@ -172,10 +182,20 @@ private
    type Widget_Array is array (Positive range <>) of Gtk.Widget.Gtk_Widget;
    type Widget_Array_Access is access Widget_Array;
 
-   type Wizard_Record is new Wizard_Window_Pkg.Wizard_Window_Record with record
+   type Wizard_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
+      Cancel          : Gtk.Button.Gtk_Button;
+      Finish          : Gtk.Button.Gtk_Button;
+      Next            : Gtk.Button.Gtk_Button;
+      Previous        : Gtk.Button.Gtk_Button;
+      Toc_Box         : Gtk.Box.Gtk_Vbox;
+      Page_Box        : Gtk.Box.Gtk_Hbox;
+      Title           : Gtk.Label.Gtk_Label;
+      Page_Frame      : Gtk.Frame.Gtk_Frame;
+
       Toc             : Widget_Array_Access;
       Current_Page    : Positive;
       Pages           : Widget_Array_Access;
+      Titles          : GNAT.OS_Lib.String_List_Access;
       Highlight_Style : Gtk.Style.Gtk_Style;
       Normal_Style    : Gtk.Style.Gtk_Style;
       Has_Toc         : Boolean := False;
