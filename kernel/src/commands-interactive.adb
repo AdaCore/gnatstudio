@@ -324,4 +324,35 @@ package body Commands.Interactive is
       Set_Attribute (Action_Node, "built-in", "true");
    end To_XML;
 
+   --------------
+   -- Progress --
+   --------------
+
+   function Progress
+     (Command : access Interactive_Command_Proxy) return Progress_Record is
+   begin
+      return Progress (Command.Command);
+   end Progress;
+
+   ------------------
+   -- Set_Progress --
+   ------------------
+
+   procedure Set_Progress
+     (Command  : access Interactive_Command_Proxy;
+      Progress : Progress_Record) is
+   begin
+      Set_Progress (Command.Command, Progress);
+   end Set_Progress;
+
+   ----------
+   -- Undo --
+   ----------
+
+   function Undo (Command : access Interactive_Command_Proxy) return Boolean is
+   begin
+      return Undo (Command.Command);
+   end Undo;
+
+
 end Commands.Interactive;

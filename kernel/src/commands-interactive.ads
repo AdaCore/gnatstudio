@@ -208,6 +208,12 @@ package Commands.Interactive is
       return Command_Return_Type;
    function Name (Command : access Interactive_Command_Proxy) return String;
    procedure Free (X : in out Interactive_Command_Proxy);
+   function Progress
+     (Command : access Interactive_Command_Proxy) return Progress_Record;
+   procedure Set_Progress
+     (Command  : access Interactive_Command_Proxy;
+      Progress : Progress_Record);
+   function Undo (Command : access Interactive_Command_Proxy) return Boolean;
    --  See doc from inherited subprogram
 
 private
