@@ -1632,16 +1632,17 @@ package body Browsers.Call_Graph is
          Is_Renaming : Boolean)
       is
          pragma Unreferenced (Cb, Is_Renaming);
+         Loc : File_Location;
       begin
          if Ref /= No_Reference then
-            declare
-               Loc : constant File_Location := Get_Location (Ref);
-               R : constant String := Get_File (Loc) & ':'
-                 & Image (Get_Line (Loc)) & ':'
-                 & Image (Get_Column (Loc));
-            begin
-               Set_Return_Value (Data, R);
-            end;
+            Loc := Get_Location (Ref);
+            Set_Return_Value
+              (Data,
+               Create_File_Location
+                 (Get_Script (Data),
+                  Create_File (Get_Script (Data), Get_File (Loc)),
+                  Get_Line (Loc),
+                  Get_Column (Loc)));
          else
             Set_Return_Value (Data, -"<renaming>");
          end if;
@@ -1722,9 +1723,9 @@ package body Browsers.Call_Graph is
          Return_Value => "htable",
          Description  =>
            -("Display the list of entities called by the entity. The returned"
-             & " value is a dictionary whose keys are the entities called by"
-             & " this entity, and whose value is a list of locations where"
-             & " the entity is referenced"),
+             & " value is a dictionary whose keys are instances of Entity "
+             & " called by this entity, and whose value is a list of"
+             & " FileLocation instances where the entity is referenced"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
@@ -1735,9 +1736,9 @@ package body Browsers.Call_Graph is
          Return_Value => "htable",
          Description  =>
            -("Display the list of entities that call the entity. The returned"
-             & " value is a dictionary whose keys are the entities which call"
-             & " this entity, and whose value is a list of locations where"
-             & " the entity is referenced"),
+             & " value is a dictionary whose keys are instances of Entity "
+             & " called by this entity, and whose value is a list of"
+             & " FileLocation instances where the entity is referenced"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
