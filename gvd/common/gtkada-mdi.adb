@@ -62,7 +62,6 @@ with Gtk.Style;        use Gtk.Style;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Window;       use Gtk.Window;
 with Gtkada.Handlers;  use Gtkada.Handlers;
-with Gtkada.Types;     use Gtkada.Types;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
