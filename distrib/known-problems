@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.2.0
 
+- C228-015 Command Make "All main subprograms" fail on Windows
+  Problem:    The command make "All main subprograms" fail on Windows. GPS
+              just report immediately "process exited with status -1".
+  Workaround: Build all main procedures separately.
+
 - Missing occurrences in search
   Problem:    In some case, the search algorithm was missing some occurrences
               of the string in the files.
