@@ -63,7 +63,7 @@ package body Browsers.Canvas is
    Zoom_Steps : constant := 7;
    --  Number of steps while zooming in or out.
 
-   Me : Debug_Handle := Create ("Browsers.Canvas");
+   Me : constant Debug_Handle := Create ("Browsers.Canvas");
 
    type Cb_Data is record
       Browser : Glide_Browser;
@@ -166,8 +166,8 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class;
       Args    : Glib.Values.GValues)
    is
-      B   : Glide_Browser := Glide_Browser (Browser);
-      Win : Gdk_Window := Gdk_Window (To_C_Proxy (Args, 1));
+      B   : constant Glide_Browser := Glide_Browser (Browser);
+      Win : constant Gdk_Window := Gdk_Window (To_C_Proxy (Args, 1));
    begin
       --  Redraw the selected links if needed.
       --  IF we don't do that, then it might happen that unselected links
@@ -276,7 +276,7 @@ package body Browsers.Canvas is
       return Glide_Kernel.Selection_Context_Access
    is
       pragma Unreferenced (Event_Widget);
-      B          : Glide_Browser := Glide_Browser (Object);
+      B          : constant Glide_Browser := Glide_Browser (Object);
       Context    : Selection_Context_Access;
       Mitem      : Gtk_Menu_Item;
       Zooms_Menu : Gtk_Menu;
@@ -461,7 +461,7 @@ package body Browsers.Canvas is
    ----------------
 
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class) is
-      B : Glide_Browser := Glide_Browser (Browser);
+      B : constant Glide_Browser := Glide_Browser (Browser);
    begin
       Push_State (Get_Kernel (B), Busy);
       Layout (Get_Canvas (B), Force => True, Vertical_Layout => True);
@@ -479,7 +479,7 @@ package body Browsers.Canvas is
    -----------------------
 
    procedure Toggle_Orthogonal (Browser : access Gtk_Widget_Record'Class) is
-      B : Glide_Browser := Glide_Browser (Browser);
+      B : constant Glide_Browser := Glide_Browser (Browser);
    begin
       Set_Orthogonal_Links
         (Get_Canvas (B), not Get_Orthogonal_Links (Get_Canvas (B)));
@@ -491,7 +491,7 @@ package body Browsers.Canvas is
    -------------
 
    procedure Zoom_In (Browser : access Gtk_Widget_Record'Class) is
-      Canvas : Interactive_Canvas := Glide_Browser (Browser).Canvas;
+      Canvas : constant Interactive_Canvas := Glide_Browser (Browser).Canvas;
       Z : constant Guint := Get_Zoom (Canvas);
    begin
       for J in Zoom_Levels'Range loop
@@ -508,7 +508,7 @@ package body Browsers.Canvas is
    --------------
 
    procedure Zoom_Out (Browser : access Gtk_Widget_Record'Class) is
-      Canvas : Interactive_Canvas := Glide_Browser (Browser).Canvas;
+      Canvas : constant Interactive_Canvas := Glide_Browser (Browser).Canvas;
       Z : constant Guint := Get_Zoom (Canvas);
    begin
       for J in Zoom_Levels'Range loop
@@ -562,7 +562,7 @@ package body Browsers.Canvas is
       Item    : access Gtkada.Canvas.Buffered_Item_Record'Class)
    is
       Bg_GC : Gdk_GC;
-      Coord : Gdk_Rectangle := Get_Coord (Item);
+      Coord : constant Gdk_Rectangle := Get_Coord (Item);
    begin
       if Canvas_Item (Item) = Selected_Item (Browser) then
          Bg_GC := Browser.Selected_Item_GC;
@@ -741,7 +741,7 @@ package body Browsers.Canvas is
       GC          : Gdk.GC.Gdk_GC;
       Edge_Number : Glib.Gint)
    is
-      Browser : Glide_Browser := To_Brower (Canvas);
+      Browser : constant Glide_Browser := To_Brower (Canvas);
    begin
       if not Glide_Browser_Item (Get_Src (Link)).Hide_Links
         and then not Glide_Browser_Item (Get_Dest (Link)).Hide_Links

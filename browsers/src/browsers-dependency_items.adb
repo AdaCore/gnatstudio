@@ -64,7 +64,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Browsers.Dependency_Items is
 
-   Me : Debug_Handle := Create ("Browsers.Dependency");
+   Me : constant Debug_Handle := Create ("Browsers.Dependency");
 
    Dependency_Browser_Module_ID : Module_ID;
 
@@ -221,7 +221,7 @@ package body Browsers.Dependency_Items is
            (Mitem, "activate",
             Context_Callback.To_Marshaller (Open_File'Access),
             Slot_Object => Glide_Browser (Object),
-            User_Data   => Selection_Context_Access (Context));
+            User_Data   => Context);
 
          Gtk_New (Check, Label => -"Hide system files");
          Set_Active (Check, True);
@@ -276,7 +276,7 @@ package body Browsers.Dependency_Items is
    ----------------
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class) is
-      B : Dependency_Browser := Dependency_Browser (Browser);
+      B : constant Dependency_Browser := Dependency_Browser (Browser);
    begin
       if B.Idle_Id /= 0 then
          Idle_Remove (B.Idle_Id);
@@ -546,7 +546,7 @@ package body Browsers.Dependency_Items is
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
       Data := (Iter    => new Dependency_Iterator,
-               Browser => Dependency_Browser (Browser),
+               Browser => Browser,
                Item    => Item);
       Find_Ancestor_Dependencies (Kernel, File, Data.Iter.all);
 
@@ -660,7 +660,8 @@ package body Browsers.Dependency_Items is
    is
       pragma Unreferenced (Widget);
       Child : MDI_Child;
-      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
    begin
       Child := Open_Dependency_Browser (Kernel);
 
@@ -785,7 +786,7 @@ package body Browsers.Dependency_Items is
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel);
-      Browser : Dependency_Browser := Dependency_Browser (Child);
+      Browser : constant Dependency_Browser := Dependency_Browser (Child);
    begin
       if Selected_Item (Browser) = null then
          return null;
@@ -847,7 +848,7 @@ package body Browsers.Dependency_Items is
       Kernel          : access Kernel_Handle_Record'Class;
       Source_Filename : String)
    is
-      Handler : Glide_Language_Handler := Glide_Language_Handler
+      Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
    begin
       Item := new File_Item_Record;
@@ -870,7 +871,7 @@ package body Browsers.Dependency_Items is
       File  : Internal_File)
    is
       use type Gdk_Window;
-      B             : Dependency_Browser := Dependency_Browser (Browser);
+      B : constant Dependency_Browser := Dependency_Browser (Browser);
       Str           : constant String := Get_Source_Filename (File);
       Font          : Gdk_Font;
       Width, Height : Gint;
@@ -900,8 +901,8 @@ package body Browsers.Dependency_Items is
                       Item    : access File_Item_Record)
    is
       use type Gdk.Gdk_GC;
-      B : Dependency_Browser := Dependency_Browser (Browser);
-      Font : Gdk_Font := Get_Text_Font (Browser);
+      B : constant Dependency_Browser := Dependency_Browser (Browser);
+      Font : constant Gdk_Font := Get_Text_Font (Browser);
    begin
       Draw_Item_Background (Browser, Item);
       Draw_Text
@@ -1042,8 +1043,8 @@ package body Browsers.Dependency_Items is
      (Browser : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      B : Dependency_Browser := Dependency_Browser (Browser);
-      C : File_Selection_Context_Access :=
+      B : constant Dependency_Browser := Dependency_Browser (Browser);
+      C : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Item : File_Item;
       Other_File : constant String := Get_Other_File_Of
@@ -1085,8 +1086,9 @@ package body Browsers.Dependency_Items is
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Event);
-      Context : Selection_Context_Access := new File_Selection_Context;
-      Src     : Src_Info.Internal_File := Get_Source (Item);
+      Context : constant Selection_Context_Access :=
+         new File_Selection_Context;
+      Src     : constant Src_Info.Internal_File := Get_Source (Item);
       Filename : constant String := Get_Source_Filename (Src);
       Full_Name : constant String := Find_Source_File
         (Get_Kernel (Browser), Filename, True);

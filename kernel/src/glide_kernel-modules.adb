@@ -51,7 +51,7 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 package body Glide_Kernel.Modules is
 
-   Me : Debug_Handle := Create ("Glide_Kernel.Modules");
+   Me : constant Debug_Handle := Create ("Glide_Kernel.Modules");
 
    type Contextual_Menu_User_Data is record
       Object       : GObject;

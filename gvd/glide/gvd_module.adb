@@ -82,7 +82,7 @@ with Commands.Debugger;       use Commands.Debugger;
 
 package body GVD_Module is
 
-   Me : Debug_Handle := Create ("Debugger");
+   Me : constant Debug_Handle := Create ("Debugger");
 
    Max_Tooltip_Width : constant := 400;
    Max_Tooltip_Height : constant := 300;
@@ -833,7 +833,7 @@ package body GVD_Module is
    procedure On_Debug_Init
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      K : Kernel_Handle := Kernel_Handle (Kernel);
+      K : constant Kernel_Handle := Kernel_Handle (Kernel);
 
       Top  : constant Glide_Window := Glide_Window (Get_Main_Window (K));
       Page : constant Glide_Page.Glide_Page :=
@@ -1157,7 +1157,7 @@ package body GVD_Module is
       --  ??? we could make smart use of the case Kind = No_More_Code
       --  Clear the list and return False.
       declare
-         L : Integer := File_Line.Line;
+         L : constant Integer := File_Line.Line;
          A : Line_Information_Array (L .. L);
       begin
          if Kind = Have_Code then
@@ -1199,7 +1199,7 @@ package body GVD_Module is
       Args    : GValues)
    is
       Top          : constant Glide_Window := Glide_Window (Widget);
-      File         : String := Get_String (Nth (Args, 1));
+      File         : constant String := Get_String (Nth (Args, 1));
    begin
       Create_Debugger_Columns (Top.Kernel, File);
    end File_Edited_Cb;
@@ -1213,7 +1213,7 @@ package body GVD_Module is
       Args    : GValues)
    is
       pragma Unreferenced (Widget);
-      Context      : Selection_Context_Access :=
+      Context      : constant Selection_Context_Access :=
         To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
       Area_Context : File_Area_Context_Access;
       Timeout_Id   : Timeout_Handler_Id;

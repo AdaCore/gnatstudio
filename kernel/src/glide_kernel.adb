@@ -74,7 +74,7 @@ package body Glide_Kernel is
    Kernel_Class : GObject_Class := Uninitialized_Class;
    --  The class structure for this object
 
-   Me : Debug_Handle := Create ("glide_kernel");
+   Me : constant Debug_Handle := Create ("glide_kernel");
 
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
@@ -219,7 +219,7 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       File   : String) return Gtkada.MDI.MDI_Child
    is
-      MDI   : MDI_Window := Get_MDI (Handle);
+      MDI   : constant MDI_Window := Get_MDI (Handle);
    begin
       --  ??? the following implementation assumes that the file editors
       --  are MDI childs that have corresponding file names for title, and
@@ -265,7 +265,7 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       Force  : Boolean := False) return Boolean
    is
-      MDI    : MDI_Window := Get_MDI (Handle);
+      MDI    : constant MDI_Window := Get_MDI (Handle);
       Iter   : Child_Iterator;
       Child  : MDI_Child;
       Module : Module_ID;
@@ -706,7 +706,7 @@ package body Glide_Kernel is
       return Gtkada.MDI.MDI_Window
    is
       Top        : constant Glide_Window := Glide_Window (Handle.Main_Window);
-      Page       : Glide_Page.Glide_Page :=
+      Page       : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
    begin
       return Page.Process_Mdi;
@@ -788,7 +788,7 @@ package body Glide_Kernel is
       then
          Window.Timeout_Id := Process_Timeout.Add
            (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
-            Process_Anim'Access, (Kernel_Handle (Handle), null, null));
+            Process_Anim'Access, (Handle, null, null));
       end if;
 
       Window.State_Level := Window.State_Level + 1;
@@ -931,7 +931,7 @@ package body Glide_Kernel is
      (Kernel       : access Kernel_Handle_Record;
       In_Directory : String)
    is
-      Handler : Glide_Language_Handler :=
+      Handler : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Kernel));
       Num : constant Natural := LI_Handlers_Count (Handler);
       LI  : LI_Handler;
