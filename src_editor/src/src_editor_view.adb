@@ -986,10 +986,12 @@ package body Src_Editor_View is
       Index         : Integer;
       Replace_Cmd   : Editor_Replace_Slice;
       Tabs_Used     : Boolean := False;
-      Indented      : Boolean := False;
       Char          : Character;
       Indent_Params : Indent_Parameters;
       Use_Tabs      : Boolean := False;
+
+      Cursor_Line   : Gint;
+      Cursor_Column : Gint;
 
       function Blank_Slice (Count : Natural; Use_Tabs : Boolean) return String;
       --  Return a string representing count blanks.
@@ -1070,6 +1072,12 @@ package body Src_Editor_View is
 
       else
          return False;
+      end if;
+
+      if Use_Tabs then
+         Get_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
+      else
+         Get_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
       end if;
 
       Get_Selection_Bounds (Buffer, Start, Pos, Result);
@@ -1194,7 +1202,14 @@ package body Src_Editor_View is
                --  ??? Would be nice to indent the whole selection at once,
                --  this would make the undo/redo behavior more intuitive.
 
-               Indented := True;
+               if Current_Line = Cursor_Line then
+                  Cursor_Column := Cursor_Column - Gint (Offset - Indent);
+
+                  if Cursor_Column < 0 then
+                     Cursor_Column := 0;
+                  end if;
+               end if;
+
                Create
                  (Replace_Cmd,
                   Buffer,
@@ -1211,17 +1226,12 @@ package body Src_Editor_View is
             Get_Iter_At_Line_Offset (Buffer, Start, Current_Line);
          end loop;
 
-         if Indented then
-            if Col >= Gint (Indent) then
-               Col := Col + Gint (Indent - Offset);
+         --  Replace the cursor.
 
-               if Col < 0 then
-                  Col := 0;
-               end if;
-            end if;
-
-            Get_Iter_At_Line_Offset (Buffer, Pos, Current_Line, Col);
-            Place_Cursor (Buffer, Pos);
+         if Use_Tabs then
+            Set_Screen_Position (Buffer, Cursor_Line, Cursor_Column);
+         else
+            Set_Cursor_Position (Buffer, Cursor_Line, Cursor_Column);
          end if;
       end if;
 
