@@ -21,8 +21,9 @@ non-ps: common clean-temp-files
 static:
 
 cp_gvd:
-	@-for img in main-window breakpoints memory-view call-stack \
-	     assembly canvas process colors tasks explorer tooltips; do \
+	@-for img in main-window breakpoints bp-advanced memory-view \
+	     call-stack assembly canvas process colors tasks explorer \
+	     tooltips; do \
 	  $(CP) ../gvd/docs/$${img}.gif .; \
 	done
 
