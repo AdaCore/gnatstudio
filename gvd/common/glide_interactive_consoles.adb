@@ -133,10 +133,11 @@ package body Glide_Interactive_Consoles is
    ------------
 
    procedure Insert
-     (Console   : access Glide_Interactive_Console_Record;
-      Text      : String;
-      Add_LF    : Boolean := True;
-      Highlight : Boolean := False)
+     (Console        : access Glide_Interactive_Console_Record;
+      Text           : String;
+      Add_LF         : Boolean := True;
+      Highlight      : Boolean := False;
+      Add_To_History : Boolean := False)
    is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
@@ -158,6 +159,14 @@ package body Glide_Interactive_Consoles is
          Insert (Console.Buffer, Last_Iter, Text & ASCII.LF);
       else
          Insert (Console.Buffer, Last_Iter, Text);
+      end if;
+
+      if Add_To_History then
+         if Text (Text'Last) = ASCII.LF then
+            Prepend (Console.History, Text (Text'First .. Text'Last - 1));
+         else
+            Prepend (Console.History, Text);
+         end if;
       end if;
 
       Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
