@@ -1,5 +1,4 @@
 
-with Gtk.Main;     use Gtk.Main;
 with Prj.Tree;     use Prj.Tree;
 with Prj;          use Prj;
 with Prj.PP;       use Prj.PP;
@@ -8,6 +7,7 @@ with Prj.Proc;     use Prj.Proc;
 with Prj.Com;      use Prj.Com;
 with Errout;       use Errout;
 
+with Gtk.Main;     use Gtk.Main;
 with Gtk.Window;      use Gtk.Window;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -81,15 +81,12 @@ procedure Prj_Editor is
       pragma Assert (Project_View /= No_Project);
 
       Load (T, Project, Project_View);
-      Clear (Viewer);
       Refresh (Scenar, Project_View);
    end Refresh_Tree;
 
 begin
-
    Prj.Part.Parse (Project, "root.gpr", Always_Errout_Finalize => True);
    pragma Assert (Project /= Empty_Node);
-
 
    Gtk.Main.Init;
 
