@@ -30,6 +30,7 @@ with Prj;
 with Types;                    use Types;
 with Entities;
 
+with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
 with Glide_Result_View;        use Glide_Result_View;
@@ -229,6 +230,8 @@ package body Glide_Kernel.Project is
          Pop_State (Kernel_Handle (Kernel));
 
       elsif not Same_Project then
+         Console.Insert (Kernel, (-"Cannot find project file ") & Project,
+                         Mode => Console.Error, Add_Lf => False);
          Load_Default_Project (Kernel, Directory => Get_Current_Dir);
       end if;
    end Load_Project;
