@@ -37,7 +37,7 @@ package body Entities is
    --  easier to debug, but will of course use more memory.
 
    Add_Reference_Force_Unique : constant Debug_Handle :=
-     Create ("Entities.Force_Unique_Ref", Off);
+     Create ("Entities.Force_Unique_Ref", On);
    --  Activate this to force a check that all references are unique. This
    --  will slow down the parsing a little, but might help customers work
    --  around bugs in GPS. This should never be needed however, and is just
