@@ -531,15 +531,6 @@ package Entities is
    function "<" (Entity1, Entity2 : Entity_Information) return Boolean;
    --  sort two entities alphabetically
 
-   function Get_Documentation
-     (Entity                    : Entity_Information;
-      Declaration_File_Contents : String := "") return String;
-   --  Return the documentation for Entity. This is the block of comments
-   --  just before or just after the declaration of the entity.
-   --  Declaration_File_Contents can be provided to save loading the file from
-   --  the disk. However, if not specified, the contents of the file will be
-   --  read from the disk as appropriate.
-
    ----------------------
    -- Setting entities --
    ----------------------
