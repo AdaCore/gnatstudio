@@ -1,3 +1,4 @@
+with Projects.Registry; use Projects.Registry;
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
@@ -87,6 +88,7 @@ with Custom_Module;
 with Vsearch_Ext;
 with Help_Module;
 with Codefix_Module;
+with Python_Module;
 
 procedure GPS is
    use Glide_Main_Window;
@@ -100,7 +102,6 @@ procedure GPS is
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
    GPS            : Glide_Window;
-   Kernel         : Kernel_Handle;
    Directory      : Dir_Type;
    Str            : String (1 .. 1024);
    Last           : Natural;
@@ -450,6 +451,7 @@ procedure GPS is
       Shell.Register_Module (GPS.Kernel);
       Vsearch_Ext.Register_Module (GPS.Kernel);
       Help_Module.Register_Module (GPS.Kernel);
+      Python_Module.Register_Module (GPS.Kernel);
 
       Navigation_Module.Register_Module (GPS.Kernel);
       Metrics_Module.Register_Module (GPS.Kernel);
@@ -871,14 +873,19 @@ begin
 
    Handlers_Destroy (GPS.Kernel);
 
-   Kernel := GPS.Kernel;
-
    --  Since the call to destroy below will free the animation at some point,
    --  we no longer want to access/update it past this point.
 
    GPS.Animation_Image := null;
-   Destroy (GPS);
-   Destroy (Kernel);
+
+   declare
+      Kernel : Kernel_Handle;
+   begin
+      Kernel := GPS.Kernel;
+      Destroy (GPS);
+      Destroy (Kernel);
+   end;
+
    Projects.Registry.Finalize;
    Traces.Finalize;
 
