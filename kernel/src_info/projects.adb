@@ -1308,9 +1308,11 @@ package body Projects is
          P := Current (Iter);
          exit when P = No_Project;
 
-         Num_Languages := Num_Languages + Length
-           (P.View_Tree,
-            Get_Attribute_Value (P, Languages_Attribute).Values);
+         Val := Get_Attribute_Value (P, Languages_Attribute);
+         if Val.Kind /= Undefined then
+            Num_Languages := Num_Languages + Length (P.View_Tree, Val.Values);
+         end if;
+
          Next (Iter);
       end loop;
 
@@ -1331,14 +1333,16 @@ package body Projects is
 
             else
                Val := Get_Attribute_Value (P, Languages_Attribute);
-               Value := Val.Values;
+               if Val.Kind /= Undefined then
+                  Value := Val.Values;
 
-               while Value /= Nil_String loop
-                  Add_Language
-                    (Lang, Index,
-                     Get_String (String_Elements (P)(Value).Value));
-                  Value := String_Elements (P)(Value).Next;
-               end loop;
+                  while Value /= Nil_String loop
+                     Add_Language
+                       (Lang, Index,
+                        Get_String (String_Elements (P)(Value).Value));
+                     Value := String_Elements (P)(Value).Next;
+                  end loop;
+               end if;
             end if;
 
             Next (Iter);
