@@ -199,7 +199,10 @@ package body Glide_Consoles is
       Column      : Positive;
 
    begin
-      if Contents'Length = 0 then
+      if Contents'Length = 0
+        or else Get_Selection_Start_Pos (Console.Text) /=
+                Get_Selection_End_Pos (Console.Text)
+      then
          return False;
       end if;
 
@@ -228,9 +231,9 @@ package body Glide_Consoles is
 
          if Matched (1).First < Matched (1).Last then
             Freeze (Console.Text);
-            Claim_Selection (Console.Text, True, 0);
             Select_Region
               (Console.Text, Gint (Start) - 1, Gint (Matched (0).Last));
+            Claim_Selection (Console.Text, False, 0);
             Thaw (Console.Text);
             Open_File_Editor
               (Console.Kernel,
@@ -242,7 +245,7 @@ package body Glide_Consoles is
       return False;
 
    exception
-      when Constraint_Error =>
+      when others =>
          return False;
    end On_Button_Release;
 
