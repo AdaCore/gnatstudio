@@ -2118,6 +2118,13 @@ package body Project_Explorers is
       Free (Files);
       Thaw (Explorer.Tree);
       Pop_State (Explorer.Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Free (Files);
+         Thaw (Explorer.Tree);
+         Pop_State (Explorer.Kernel);
    end Expand_Project_Node;
 
    ---------------------------
