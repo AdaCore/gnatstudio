@@ -56,8 +56,7 @@ package body Log_Utils is
          declare
             File : File_Descriptor;
          begin
-            File :=
-              Create_New_File (Mapping, Text);
+            File := Create_New_File (Mapping, Text);
             Close (File);
          end;
       end if;
