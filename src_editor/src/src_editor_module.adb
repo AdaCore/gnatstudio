@@ -2671,7 +2671,11 @@ package body Src_Editor_Module is
       if Status = 0 then
          null;
 
-         --  Temporarily deactivated, will be done through XML files
+         --  ??? Temporarily deactivated, will be done through XML files
+         --  Note that we also want to actually pretty print the current
+         --  buffer by calling gnatpp -rf and reloading automatically
+         --  the file, so this capability needs to be provided from XML.
+
 --           Open_File_Editor
 --             (Data.Kernel,
 --              Create (Full_Filename => Data.Name.all & ".pp"));
