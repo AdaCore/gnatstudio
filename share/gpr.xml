@@ -1,35 +1,18 @@
 <?xml version="1.0"?>
-
 <Custom>
   <Language>
     <Name>Project File</Name>
+    <Parent>Ada</Parent>
     <Spec_Suffix>.gpr</Spec_Suffix>
-
     <Keywords>^(case|e(nd|xte(nds|rnal))|for|is|limited|null|others|</Keywords>
     <Keywords>p(ackage|roject)|renames|type|use|w(hen|ith))\b</Keywords>
-
     <Context>
       <New_Line_Comment_Start>--</New_Line_Comment_Start>
-      <String_Delimiter>"</String_Delimiter>
-      <Constant_Character>'</Constant_Character>
+      <String_Delimiter>&quot;</String_Delimiter>
+      <Constant_Character>&apos;</Constant_Character>
       <Can_Indent>True</Can_Indent>
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
-
-    <Categories>
-      <Category>
-        <Name>package</Name>
-        <Pattern>^[ \t]*package[ \t]+((\w|\.)+)</Pattern>
-        <Index>1</Index>
-        <Icon>package_xpm</Icon>
-      </Category>
-      <Category>
-        <Name>type</Name>
-        <Pattern>^[ \t]*type[ \t]+(\w+)</Pattern>
-        <Index>1</Index>
-        <Icon>var_xpm</Icon>
-      </Category>
-    </Categories>
   </Language>
 </Custom>
