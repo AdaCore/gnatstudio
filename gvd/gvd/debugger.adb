@@ -646,8 +646,8 @@ package body Debugger is
 
                   else
                      if Mode >= Visible then
-                        Set_Busy_Cursor
-                          (Convert (Debugger.Window, Debugger), False);
+                        Process := Convert (Debugger.Window, Debugger);
+                        Set_Busy (Process, False);
                      end if;
                   end if;
             end case;
