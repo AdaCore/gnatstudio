@@ -100,7 +100,10 @@ package Codefix.Text_Manager.Ada_Commands is
       Destination  : String := "");
    --  Set all the marks that will be needed to remove package clauses.
    --  If Destination is different from "", then the procedure Execute will add
-   --  the removed Pkg clauses at the beginning of the destination file.
+   --  the removed Pkg clauses at the beginning of the destination file. If
+   --  Word.String_Match is null, then the first with after the position
+   --  specified by the cursor will be taken.
+
 
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
@@ -219,10 +222,15 @@ private
       Remove_List : Mark_List.List;
    end record;
 
+   package String_List is new Generic_List (Dynamic_String);
+   use String_List;
+
    type Remove_Pkg_Clauses_Cmd is new Text_Command with record
       Instantiation_Pkg : Remove_Instruction_Cmd;
       Clauses_Pkg       : Remove_Elements_Cmd;
       Is_Instantiation  : Boolean;
+      Destination       : Dynamic_String;
+      Obj_List          : String_List.List;
    end record;
 
    type Remove_Entity_Cmd is new Text_Command with record
