@@ -569,6 +569,12 @@ A simple way to dock a window is to select it, and then select the
 menu @code{Window->Docked}. We will see in @ref{Moving Windows} that
 there is a more intuitive way to do the same thing.
 
+In some cases, GPS will change the color used to draw the title of the
+window in the notebook tab. This indicates that the contents of the
+window has been updated, but the window wasn't visible. Typically,
+this is used to indicate that new messages have been written in the
+messages or console window.
+
 @c --------------------------------------------------------------------
 @node Floating Windows
 @section Floating Windows
@@ -1500,6 +1506,10 @@ remove this file.
 
    @item $HOME/.gps/sessions
 Directory containing the debugging sessions.
+
+   @item $HOME/.gps/history
+Contains all the histories for the @code{Files->Reopen} and
+@code{Project->Reopen} menus, and for the combo boxes
 
    @item $HOME/.gps/gtkrc
 The theme used by the gtk+ library on which gps is based. It allows you
