@@ -24,6 +24,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with Gdk;                       use Gdk;
 with Gdk.Color;                 use Gdk.Color;
 with Gdk.GC;                    use Gdk.GC;
 with Gdk.Types;                 use Gdk.Types;
@@ -990,9 +991,20 @@ package body Src_Editor_Module is
             Line     : constant Integer := Nth_Arg (Data, 2);
             Number   : constant Integer := Nth_Arg (Data, 3);
             Child    : MDI_Child;
+            GC       : Gdk.Gdk_GC;
             Box      : Source_Box;
+
          begin
             Child := Find_Editor (Kernel, Filename);
+
+            if Number_Of_Arguments (Data) >= 4 then
+               GC := Line_Highlighting.Get_GC
+                 (Line_Highlighting.Lookup_Category (Nth_Arg (Data, 4)));
+            end if;
+
+            if GC = null then
+               GC := Id.Blank_Lines_GC;
+            end if;
 
             if Child = null then
                Set_Error_Msg (Data, -"file not open");
@@ -1002,7 +1014,7 @@ package body Src_Editor_Module is
                if Line >= 0 and then Number > 0 then
                   Add_Blank_Lines
                     (Box.Editor, Editable_Line_Type (Line),
-                    Id.Blank_Lines_GC, "", Number);
+                     GC, "", Number);
                end if;
             end if;
          end;
@@ -3287,12 +3299,13 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "add_blank_lines",
-         Params       => "(file, start_line, number_of_lines)",
+         Params       => "(file, start_line, number_of_lines, [category])",
          Description  =>
            -("Adds number_of_lines non-editable lines to the buffer editing"
-             & " file, starting at line start_line."),
+             & " file, starting at line start_line."
+             & " If category is specified, use it for highlighting"),
          Minimum_Args => 3,
-         Maximum_Args => 3,
+         Maximum_Args => 4,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
