@@ -28,6 +28,8 @@ with Ada.Unchecked_Deallocation;
 
 package GVD_Module is
 
+   Debugger_Module_ID : GPS.Kernel.Module_ID;
+
    type Debugger_List_Node;
    type Debugger_List_Link is access Debugger_List_Node;
 
