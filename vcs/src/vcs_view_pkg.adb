@@ -461,9 +461,7 @@ package body VCS_View_Pkg is
          Found := False;
 
          while List_Temp /= Null_Node and then not Found loop
-            if Full_Name (File).all = String_List.Head
-              (Data (List_Temp).Status.File_Name)
-            then
+            if File = Data (List_Temp).Status.File then
                --  The data was found in the list, override it.
 
                Set_Data
@@ -481,9 +479,7 @@ package body VCS_View_Pkg is
             List_Temp := First (Page.Stored_Status);
 
             while List_Temp /= Null_Node loop
-               if Full_Name (File).all = String_List.Head
-                 (Data (List_Temp).Status.File_Name)
-               then
+               if File = Data (List_Temp).Status.File then
                   --  The data was found in the list, override it.
                   --  and refresh the model if needed.
 
@@ -537,8 +533,7 @@ package body VCS_View_Pkg is
          declare
             S      : constant File_Status_Record :=
               File_Status_List.Data (Status_Temp);
-            File   : constant Virtual_File :=
-              Create (Full_Filename => String_List.Head (S.File_Name));
+            File   : constant Virtual_File := S.File;
          begin
             if Clear_Logs
               and then S.Status = Up_To_Date
@@ -590,16 +585,13 @@ package body VCS_View_Pkg is
          Found      := False;
 
          declare
-            File : constant Virtual_File := Create
-              (Full_Filename => String_List.Head
-                 (File_Status_List.Data (Status_Temp).File_Name));
+            File : constant Virtual_File :=
+              File_Status_List.Data (Status_Temp).File;
          begin
             while not Found
               and then Cache_Temp /= Null_Node
             loop
-               if Full_Name (File).all =
-                 String_List.Head (Data (Cache_Temp).Status.File_Name)
-               then
+               if File = Data (Cache_Temp).Status.File then
                   --  We have found an entry in the cache with the
                   --  corresponding information.
 
@@ -641,8 +633,8 @@ package body VCS_View_Pkg is
          declare
             New_Status         : constant Line_Record :=
               Copy (Data (Cache_Temp));
-            New_File_Name      : constant String :=
-              String_List.Head (New_Status.Status.File_Name);
+            New_File           : constant Virtual_File :=
+              New_Status.Status.File;
             Temp_Stored_Status : List_Node := First (Page.Stored_Status);
             Iter               : Gtk_Tree_Iter := Null_Iter;
             Success            : Boolean;
@@ -652,15 +644,10 @@ package body VCS_View_Pkg is
             while not Found
               and then Temp_Stored_Status /= Null_Node
             loop
-               if New_File_Name =
-                 String_List.Head (Data (Temp_Stored_Status).Status.File_Name)
-               then
+               if New_File = Data (Temp_Stored_Status).Status.File then
                   Found := True;
                   Set_Data (Temp_Stored_Status, New_Status);
-                  Iter := Get_Iter_From_Name
-                    (Page, Create
-                       (Full_Filename =>
-                          String_List.Head (New_Status.Status.File_Name)));
+                  Iter := Get_Iter_From_Name (Page, New_Status.Status.File);
                end if;
 
                Temp_Stored_Status := Next (Temp_Stored_Status);
@@ -733,9 +720,8 @@ package body VCS_View_Pkg is
    begin
       Success := True;
 
-      if String_List.Is_Empty (Line_Info.Status.File_Name)
-        or else GNAT.OS_Lib.Is_Directory
-        (String_List.Head (Line_Info.Status.File_Name))
+      if Line_Info.Status.File = No_File
+        or else VFS.Is_Directory (Line_Info.Status.File)
       then
          Success := False;
          return;
@@ -754,10 +740,10 @@ package body VCS_View_Pkg is
       end if;
 
       Set (Explorer.Model, Iter, Name_Column,
-           String_List.Head (Line_Info.Status.File_Name));
+           Full_Name (Line_Info.Status.File).all);
 
       Set (Explorer.Model, Iter, Base_Name_Column,
-           Base_Name (String_List.Head (Line_Info.Status.File_Name)));
+           Base_Name (Line_Info.Status.File));
 
       if not String_List.Is_Empty (Line_Info.Status.Working_Revision) then
          Set (Explorer.Model, Iter, Local_Rev_Column,
@@ -1167,9 +1153,7 @@ package body VCS_View_Pkg is
                Cache_Node := First (Page.Cached_Status);
 
                while Cache_Node /= Null_Node loop
-                  if String_List.Head
-                    (Data (Cache_Node).Status.File_Name) = Full_Name (File).all
-                  then
+                  if Data (Cache_Node).Status.File = File then
                      --  The file was found in the cache, update it.
                      Set_Data (Cache_Node,
                                (Copy_File_Status (Data (Cache_Node).Status),
@@ -1178,9 +1162,7 @@ package body VCS_View_Pkg is
                      Stored_Node := First (Page.Stored_Status);
 
                      while Stored_Node /= Null_Node loop
-                        if Full_Name (File).all = String_List.Head
-                          (Data (Stored_Node).Status.File_Name)
-                        then
+                        if File = Data (Stored_Node).Status.File then
                            Set_Data (Stored_Node,
                                      (Copy_File_Status
                                         (Data (Stored_Node).Status),

@@ -525,7 +525,7 @@ package body VCS.ClearCase is
             Version     : String_Access;
             Rep_Version : String_Access;
          begin
-            Append (Current_Status.File_Name, Data (Files_Node));
+            Current_Status.File := Create (Data (Files_Node));
 
             End_Index := Line'First;
             Skip_To_Char (Line, End_Index, ';');
@@ -628,7 +628,7 @@ package body VCS.ClearCase is
       function Status (File : in String) return File_Status_Record is
          Result : File_Status_Record;
       begin
-         Append (Result.File_Name, File);
+         Result.File := Create (File);
          return Result;
       end Status;
 

@@ -45,7 +45,7 @@ package body VCS is
    is
       Result : File_Status_Record;
    begin
-      Result.File_Name := Copy_String_List (F.File_Name);
+      Result.File := F.File;
       Result.Working_Revision := Copy_String_List (F.Working_Revision);
       Result.Repository_Revision
         := Copy_String_List (F.Repository_Revision);
@@ -163,7 +163,6 @@ package body VCS is
       use String_List;
       use File_Status_List;
    begin
-      Free (F.File_Name);
       Free (F.Working_Revision);
       Free (F.Repository_Revision);
       Free (F.Tags);

@@ -134,8 +134,8 @@ package body VCS.Generic_VCS is
    begin
       while Current_Filename /= Null_Node loop
          Current_Status := Blank_Status;
-         Append (Current_Status.File_Name,
-                 Data (Current_Filename));
+         Current_Status.File :=
+           Create (Data (Current_Filename));
 
          Current_Filename := Next (Current_Filename);
       end loop;

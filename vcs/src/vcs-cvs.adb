@@ -380,9 +380,9 @@ package body VCS.CVS is
 
                Index := First + 6;
                Skip_To_Char (Line, Index, ASCII.HT);
-               Append (Current_Status.File_Name,
-                       Locale_To_UTF8
-                         (New_Dir & Strip_Quotes (Line (7 .. Index - 1))));
+               Current_Status.File :=
+                 Create (Locale_To_UTF8
+                           (New_Dir & Strip_Quotes (Line (7 .. Index - 1))));
                --  ??? Maybe we should use Strip_Blanks.
 
                Index := First;
@@ -441,18 +441,16 @@ package body VCS.CVS is
                end if;
 
                declare
-                  S : constant String :=
-                    String_List.Head (Current_Status.File_Name);
+                  S : constant String := Full_Name (Current_Status.File).all;
                begin
                   if S'Length > New_Dir'Length + 7
                     and then S
                       (S'First + New_Dir'Length
                            .. S'First + New_Dir'Length + 7) = "no file "
                   then
-                     Free (Current_Status.File_Name);
-                     Append (Current_Status.File_Name,
-                             New_Dir &
-                             S (S'First + New_Dir'Length + 8 .. S'Last));
+                     Current_Status.File :=
+                       Create (New_Dir &
+                               S (S'First + New_Dir'Length + 8 .. S'Last));
                      Current_Status.Status := Needs_Update;
                   end if;
                end;
@@ -506,7 +504,7 @@ package body VCS.CVS is
 
       --  Append the last status.
 
-      if not Is_Empty (Current_Status.File_Name) then
+      if Current_Status.File /= VFS.No_File then
          File_Status_List.Append (Result, Current_Status);
       end if;
 
@@ -635,8 +633,7 @@ package body VCS.CVS is
             Next_Index := Index + 1;
             Skip_To_Char (Buffer (1 .. Last), Next_Index, '/');
 
-            Append (Current_Status.File_Name,
-                    New_Dir & Buffer (2 .. Index - 1));
+            Current_Status.File := Create (New_Dir & Buffer (2 .. Index - 1));
 
             F := Create (Full_Filename => New_Dir & Buffer (2 .. Index - 1));
             File_Timestamp := File_Time_Stamp (F);
@@ -651,7 +648,6 @@ package body VCS.CVS is
             if Index + 1 < Next_Index - 1 then
                File_Status_List.Append (Result, Current_Status);
             else
-               Free (Current_Status.File_Name);
                Free (Current_Status.Working_Revision);
             end if;
          end if;
@@ -681,7 +677,7 @@ package body VCS.CVS is
                while Status_Temp /= File_Status_List.Null_Node
                  and then not Found
                loop
-                  if Head (Data (Status_Temp).File_Name)
+                  if Full_Name (Data (Status_Temp).File).all
                     = Data (Filenames_Temp)
                   then
                      Found := True;

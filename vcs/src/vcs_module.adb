@@ -730,10 +730,8 @@ package body VCS_Module is
             declare
                St : File_Status_Record;
             begin
-               String_List_Utils.String_List.Append
-                 (St.File_Name,
-                  S (Matches (Index_Filename).First
-                     .. Matches (Index_Filename).Last));
+               St.File := Create (S (Matches (Index_Filename).First
+                                     .. Matches (Index_Filename).Last));
 
                Start := Integer'Max (Matches (Index_Filename).Last + 1, Start);
 

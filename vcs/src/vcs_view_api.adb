@@ -1863,17 +1863,12 @@ package body VCS_View_API is
          Status : File_Status_List.List;
       begin
          for J in F'Range loop
-            declare
-               File : String_List.List;
-            begin
-               if not Is_Directory (F (J)) then
-                  Append (File, Full_Name (F (J)).all);
-                  File_Status_List.Append
-                    (Status,
-                     (File, Unknown,
-                      Null_List, Null_List, Null_List, Null_List));
-               end if;
-            end;
+            if not Is_Directory (F (J)) then
+               File_Status_List.Append
+                 (Status,
+                  (F (J), Unknown,
+                   Null_List, Null_List, Null_List, Null_List));
+            end if;
          end loop;
 
          Display_File_Status (Kernel, Status, Ref, False, True, False);
@@ -2397,8 +2392,7 @@ package body VCS_View_API is
       while Status_Temp /= Null_Node loop
          if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
             Diff (Ref,
-                  Create (Full_Filename =>
-                            String_List.Head (Data (Status_Temp).File_Name)),
+                  Data (Status_Temp).File,
                   String_List.Head (Data (Status_Temp).Working_Revision),
                   "");
          end if;
@@ -2500,8 +2494,7 @@ package body VCS_View_API is
       while Status_Temp /= Null_Node loop
          if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
             Diff (Ref,
-                  Create (Full_Filename =>
-                            String_List.Head (Data (Status_Temp).File_Name)),
+                  Data (Status_Temp).File,
                   "",
                   String_List.Head (Data (Status_Temp).Working_Revision));
          end if;
@@ -2789,7 +2782,7 @@ package body VCS_View_API is
 
       Add_Editor_Label
         (Kernel,
-         Create (Full_Filename => Head (Status.File_Name)),
+         Status.File,
          VCS_Module_Name,
          Revision_Label.all & Status_Label.all);
 
@@ -2898,9 +2891,7 @@ package body VCS_View_API is
 
             Diff
               (Ref,
-               Create
-                 (Full_Filename => String_List.Head
-                    (File_Status_List.Head (Status).File_Name)),
+               File_Status_List.Head (Status).File,
                "",
                String_List.Head (File_Status_List.Head
                                    (Status).Working_Revision));
