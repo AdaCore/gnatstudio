@@ -919,12 +919,49 @@ package body Debugger.Gdb is
    -- Run --
    ---------
 
+   function Get_Module (Executable : String) return String;
+   --  Return the name of the module contained in Executable
+   --  Assume that the name of the module is the executable file
+   --  with no path information and no extension.
+
+   function Get_Module (Executable : String) return String is
+      Dot_Index, Dir_Sep : Natural;
+   begin
+      --  Strip path info
+
+      Dir_Sep := Executable'Last;
+
+      while Dir_Sep > Executable'First
+        and then Executable (Dir_Sep - 1) /= '/'
+        and then Executable (Dir_Sep - 1) /= Directory_Separator
+      loop
+         Dir_Sep := Dir_Sep - 1;
+      end loop;
+
+      --  Strip extensions (e.g .out)
+
+      Dot_Index := Index (Executable (Dir_Sep .. Executable'Last), ".");
+
+      if Dot_Index = 0 then
+         Dot_Index := Executable'Last + 1;
+      end if;
+
+      return Executable (Dir_Sep .. Dot_Index - 1);
+   end Get_Module;
+
    procedure Run
      (Debugger  : access Gdb_Debugger;
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      Send (Debugger, "run " & Arguments, Mode => Mode);
+      if Arguments = "" and then Debugger.Remote_Target /= null then
+         Send
+           (Debugger,
+            "run " & Get_Module (Debugger.Executable.all), Mode => Mode);
+      else
+         Send (Debugger, "run " & Arguments, Mode => Mode);
+      end if;
+
       Set_Is_Started (Debugger, True);
    end Run;
 
@@ -937,10 +974,18 @@ package body Debugger.Gdb is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      Send
-        (Debugger,
-         Start (Language_Debugger_Access (Get_Language (Debugger)))
-           & " " & Arguments, Mode => Mode);
+      if Arguments = "" and then Debugger.Remote_Target /= null then
+         Send
+           (Debugger,
+            Start (Language_Debugger_Access (Get_Language (Debugger))) &
+              " " & Get_Module (Debugger.Executable.all), Mode => Mode);
+      else
+         Send
+           (Debugger,
+            Start (Language_Debugger_Access (Get_Language (Debugger))) &
+              " " & Arguments, Mode => Mode);
+      end if;
+
       Set_Is_Started (Debugger, True);
    end Start;
 
