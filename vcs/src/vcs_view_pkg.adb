@@ -607,13 +607,15 @@ package body VCS_View_Pkg is
    is
       pragma Unreferenced (Object);
 
-      Logs       : String_List.List;
-      Files_Copy : String_List.List;
-      Files_Temp : String_List.List := Parameter.Log_Editor.Files;
+      Logs         : String_List.List;
+      Files_Copy   : String_List.List;
+      Files_Copy_2 : String_List.List;
+      Files_Temp   : String_List.List := Parameter.Log_Editor.Files;
    begin
       while not String_List.Is_Empty (Files_Temp) loop
          String_List.Append (Logs, Get_Text (Parameter.Log_Editor));
          String_List.Append (Files_Copy, String_List.Head (Files_Temp));
+         String_List.Append (Files_Copy_2, String_List.Head (Files_Temp));
          Files_Temp := String_List.Next (Files_Temp);
       end loop;
 
@@ -621,7 +623,7 @@ package body VCS_View_Pkg is
               Files_Copy,
               Logs);
       Get_Status (Parameter.VCS_Ref,
-                  Files_Copy);
+                  Files_Copy_2);
 
       Close (Parameter.Log_Editor);
    end Log_Editor_Ok_Clicked;
