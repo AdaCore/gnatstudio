@@ -256,7 +256,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Src-Editor-Display-Subprogram_Name",
          Default => True,
          Blurb   =>
-           -"Whether the subprogram name should be displayed in status lines",
+           -"Whether the subprogram names should be displayed in status lines",
          Nick    => -"Display subprogram name"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Display_Subprogram_Name),
