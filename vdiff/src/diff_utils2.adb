@@ -23,6 +23,7 @@
 
 with Ada.Text_IO;              use Ada.Text_IO;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with OS_Utils;                 use OS_Utils;
 with GNAT.Expect;              use GNAT.Expect;
 with GNAT.Regpat;              use GNAT.Regpat;
 pragma Warnings (Off);
@@ -556,7 +557,7 @@ package body Diff_Utils2 is
             Curr_Chunk.Location := 0;
 
          elsif Curr_Chunk.Location = 0 then
-            Curr_Chunk.Conflict := true;
+            Curr_Chunk.Conflict := True;
 
             for J in VRange'Range loop
                if J /= Ref and then VRange (J).Action = Append then
@@ -592,6 +593,46 @@ package body Diff_Utils2 is
 
       return Res;
    end Simplify;
+
+   ---------------------
+   -- Horizontal_Diff --
+   ---------------------
+
+   function Horizontal_Diff
+     (Line1, Line2 : String)
+      return Diff_List
+   is
+      Fich1,
+      Fich2 : File_Type;
+      V_Fich1,
+      V_Fich2 : Virtual_File;
+      Diff1 : Diff_List;
+      Success : Boolean;
+
+   begin
+      V_Fich1 := Create (Get_Tmp_Dir & ".#line1.tmp");
+      V_Fich2 := Create (Get_Tmp_Dir & ".#line2.tmp");
+
+      Create (Fich1, Out_File, Full_Name (V_Fich1));
+      Create (Fich2, Out_File, Full_Name (V_Fich2));
+
+      for J in Line1'Range loop
+         Put (Fich1, Line1 (J));
+         New_Line (Fich1);
+      end loop;
+
+      for J in Line2'Range loop
+         Put (Fich2, Line2 (J));
+         New_Line (Fich2);
+      end loop;
+
+      Close (Fich1);
+      Close (Fich2);
+      Diff1 := Diff (V_Fich1, V_Fich2);
+      Delete_File (Full_Name (V_Fich1), Success);
+      Delete_File (Full_Name (V_Fich2), Success);
+      return Diff1;
+   end Horizontal_Diff;
 
    ---------------
    -- Free_List --

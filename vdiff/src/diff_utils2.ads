@@ -62,6 +62,9 @@ package Diff_Utils2 is
    --  structure for diff3 and diff
    type Diff_Chunk_Access is access all Diff_Chunk;
 
+   Null_Chunk : constant Diff_Chunk :=
+     (Null_Range, Null_Range, Null_Range, 0, False);
+
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Chunk, Diff_Chunk_Access);
    --  Free the memory associated with the head of the list Link.
@@ -135,8 +138,16 @@ package Diff_Utils2 is
       return Diff_List;
    --  Just for Testing
 
-   function Simplify (Diff : Diff_List; Ref_File : T_Loc) return Diff_List;
+   function Simplify
+     (Diff : Diff_List; Ref_File : T_Loc) return Diff_List;
    --  calculate the displayable version of Diff with reference file Ref_File
+
+   function Horizontal_Diff
+     (Line1, Line2 : String)
+      return Diff_List;
+   --  Do a fine diff between two lines.
+   --  The only fields set in the resulting list is Range1 and Next, other
+   --  fields should be ignored.
 
 private
 
