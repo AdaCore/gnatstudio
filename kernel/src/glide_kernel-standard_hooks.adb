@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003 - 2005                     --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -416,7 +416,7 @@ package body Glide_Kernel.Standard_Hooks is
             Anchor            => Full (Anchor + 1 .. Full'Last));
       begin
          if not Run_Hook_Until_Success
-           (Kernel, Html_Action_Hook, Data'Unchecked_Access)
+           (Kernel, Html_Action_Hook, Data'Unchecked_Access, False)
          then
             Trace (Me, "No html viewer was registered");
          end if;
