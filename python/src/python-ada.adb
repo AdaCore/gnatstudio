@@ -83,9 +83,14 @@ package body Python.Ada is
    ----------
 
    procedure Free (Method : in out PyMethodDef) is
+      procedure C_Free (C : Interfaces.C.Strings.chars_ptr);
+      pragma Import (C, C_Free, "free");
+
    begin
-      Free (Method.Name);
-      Free (Method.Doc);
+      C_Free (Method.Name);
+      C_Free (Method.Doc);
+      Method.Name := Null_Ptr;
+      Method.Doc := Null_Ptr;
    end Free;
 
    ----------
