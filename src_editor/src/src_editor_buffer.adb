@@ -609,8 +609,7 @@ package body Src_Editor_Buffer is
         (Object : System.Address;
          Name   : String;
          Line   : Gint;
-         Column : Gint;
-         Last    : System.Address := System.Null_Address);
+         Column : Gint);
       pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
 
    begin

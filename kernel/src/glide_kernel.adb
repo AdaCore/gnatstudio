@@ -331,8 +331,7 @@ package body Glide_Kernel is
       procedure Internal
         (Handle  : System.Address;
          Signal  : String;
-         Context : Selection_Context_Access;
-         Last    : System.Address := System.Null_Address);
+         Context : Selection_Context_Access);
       pragma Import (C, Internal, "g_signal_emit_by_name");
    begin
       Internal
