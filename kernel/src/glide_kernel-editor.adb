@@ -42,6 +42,7 @@ with String_Utils;         use String_Utils;
 
 package body Glide_Kernel.Editor is
 
+   --  ??? Preferences
    Default_Editor_Width  : constant := 400;
    Default_Editor_Height : constant := 400;
 
