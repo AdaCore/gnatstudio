@@ -34,6 +34,7 @@ with System;
 
 with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
+with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixmap;           use Gdk.Pixmap;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
@@ -266,6 +267,13 @@ package body Project_Trees is
    --  Return the node that contains the selected directory (or, if the user
    --  selected a project directly, it returns the node of that project itself)
 
+   function Get_File_From_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+      return String_Id;
+   --  Return the file associated with Node (ie the file that contains the
+   --  entity for an Entity_Node), or file itself for a File_Node.
+   --  No_String is returned for a Directory_Node or Project_Node
+
    procedure Update_Node
      (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node);
    --  Refresh the contents of the Node after the Project_View has
@@ -291,10 +299,15 @@ package body Project_Trees is
    --  This means we need to start up with a completely new tree, no need to
    --  try to keep the current one.
 
-   procedure Node_Selected (Tree : access Gtk_Widget_Record'Class);
+   procedure Node_Selected
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node);
    --  Called when a node is selected.
    --  It provides the standard behavior when an entity is selected (open the
    --  appropriate source editor).
+
+   function Button_Press
+     (Tree : access Gtk_Widget_Record'Class; Args : Gtk_Args) return Boolean;
+   --  Callback for the "button_press" event
 
    function Filter_Category (Category : Language_Category)
       return Language_Category;
@@ -366,9 +379,11 @@ package body Project_Trees is
          Object_User_Callback.To_Marshaller (Project_Changed'Access),
          GObject (Tree));
 
-      Widget_Callback.Connect
-        (Tree, "tree_select_row",
-         Widget_Callback.To_Marshaller (Node_Selected'Access));
+      Return_Callback.Connect
+        (Tree, "button_press_event", Button_Press'Access);
+
+      --  Update the tree with the current project
+      Refresh (Kernel, GObject (Tree));
    end Gtk_New;
 
    ---------------------
@@ -1337,6 +1352,12 @@ package body Project_Trees is
       Selected_P   : Gtk_Ctree_Node := null;
       Selected_Dir : String_Access := null;
    begin
+      --  No project view => Clean up the tree
+      if Get_Project_View (T.Kernel) = No_Project then
+         Remove_Node (T, null);
+         return;
+      end if;
+
       Freeze (T);
 
       --  If the tree is empty, this simply means we never created it, so we
@@ -1508,76 +1529,118 @@ package body Project_Trees is
    is
       use type Node_List.Glist;
       Selection : Node_List.Glist := Get_Selection (Tree);
-      N : Gtk_Ctree_Node;
    begin
       if Selection /= Node_List.Null_List then
-         N := Node_List.Get_Data (Selection);
-
-         --  Loop until we get to a file
-         while N /= null loop
-            declare
-               User : constant User_Data   := Node_Get_Row_Data (Tree, N);
-            begin
-               if User.Node_Type = File_Node then
-                  return User.File;
-               end if;
-            end;
-            N := Row_Get_Parent (Node_Get_Row (N));
-         end loop;
+         return Get_File_From_Node (Tree, Node_List.Get_Data (Selection));
       end if;
       return No_String;
    end Get_Selected_File;
+
+   ------------------------
+   -- Get_File_From_Node --
+   ------------------------
+
+   function Get_File_From_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+      return String_Id
+   is
+      N : Gtk_Ctree_Node := Node;
+   begin
+      --  Loop until we get to a file
+      while N /= null loop
+         declare
+            User : constant User_Data := Node_Get_Row_Data (Tree, N);
+         begin
+            case User.Node_Type is
+               when File_Node =>
+                  return User.File;
+
+               when Project_Node
+                 | Directory_Node
+                 | Modified_Project_Node
+                 | Obj_Directory_Node =>
+                  return No_String;
+
+               when others =>
+                  null;
+            end case;
+         end;
+         N := Row_Get_Parent (Node_Get_Row (N));
+      end loop;
+      return No_String;
+   end Get_File_From_Node;
 
    -------------------
    -- Node_Selected --
    -------------------
 
-   procedure Node_Selected (Tree : access Gtk_Widget_Record'Class) is
+   procedure Node_Selected
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+   is
       use type Node_List.Glist;
-      T : Project_Tree := Project_Tree (Tree);
-      Selection : Node_List.Glist := Get_Selection (T);
-      File : constant String_Id := Get_Selected_File (T);
-      N : Gtk_Ctree_Node;
+      File : constant String_Id := Get_File_From_Node (Tree, Node);
+      N : Gtk_Ctree_Node := Node;
+      User : constant User_Data := Node_Get_Row_Data (Tree, N);
    begin
-      if Selection /= Node_List.Null_List then
-         N := Node_List.Get_Data (Selection);
-         declare
-            User : constant User_Data := Node_Get_Row_Data (T, N);
-         begin
-            case User.Node_Type is
+      case User.Node_Type is
 
-               when Entity_Node =>
-                  String_To_Name_Buffer (File);
-                  declare
-                     File_S : constant String := Name_Buffer (1 .. Name_Len);
-                     Dir_S  : constant String :=
-                       Get_Directory_From_Node (T, N);
-                  begin
-                     Go_To (T.Kernel,
-                            Dir_S & File_S,
-                            User.Sloc_Start.Line, User.Sloc_Start.Column);
-                  end;
-                  return;
+         when Entity_Node =>
+            String_To_Name_Buffer (File);
+            declare
+               File_S : constant String := Name_Buffer (1 .. Name_Len);
+               Dir_S  : constant String :=
+                 Get_Directory_From_Node (Tree, N);
+            begin
+               Go_To (Tree.Kernel,
+                      Dir_S & File_S,
+                      User.Sloc_Start.Line, User.Sloc_Start.Column);
+            end;
 
-               when File_Node =>
-                  String_To_Name_Buffer (File);
-                  declare
-                     File_S : constant String := Name_Buffer (1 .. Name_Len);
-                     Dir_S  : constant String :=
-                       Get_Directory_From_Node (T, N);
-                  begin
-                     Open_File (T.Kernel, Dir_S & File_S);
-                  end;
-                  return;
+         when File_Node =>
+            String_To_Name_Buffer (File);
+            declare
+               File_S : constant String := Name_Buffer (1 .. Name_Len);
+               Dir_S  : constant String :=
+                 Get_Directory_From_Node (Tree, N);
+            begin
+               Open_File (Tree.Kernel, Dir_S & File_S);
+            end;
 
+         when others =>
+            null;
 
-               when others =>
-                  null;
-
-            end case;
-         end;
-      end if;
+      end case;
    end Node_Selected;
+
+   ------------------
+   -- Button_Press --
+   ------------------
+
+   function Button_Press
+     (Tree : access Gtk_Widget_Record'Class; Args : Gtk_Args) return Boolean
+   is
+      use Row_List;
+      T : Project_Tree := Project_Tree (Tree);
+      Event : Gdk_Event := To_Event (Args, 1);
+      Row, Column : Gint;
+      Is_Valid : Boolean;
+      Node : Gtk_Ctree_Node;
+   begin
+      Get_Selection_Info (T, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+                          Row, Column, Is_Valid);
+      if not Is_Valid then
+         return False;
+      end if;
+
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Gdk_2button_Press
+      then
+         Node := Node_Nth (T, Guint (Row));
+         Node_Selected (T, Node);
+      end if;
+
+      return False;
+   end Button_Press;
 
 begin
    --  ??? Temporaru, this will be done in Glide itself.
