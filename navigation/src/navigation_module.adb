@@ -252,7 +252,7 @@ package body Navigation_Module is
             end if;
          end;
       else
-         Insert (Kernel, "There is no selected file", Mode => Error);
+         Insert (Kernel, -"There is no selected file", Mode => Error);
       end if;
 
       Pop_State (Kernel);
@@ -306,7 +306,6 @@ package body Navigation_Module is
          Ref_Item => -"Edit",
          Add_Before => False);
 
-      Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To, null);
       Register_Menu (Kernel, Navigate, -"Goto File Spec<->Body",
                      Stock_Convert, On_Other_File'Access);
       Register_Menu (Kernel, Navigate, -"Goto Parent Unit", "", null);
