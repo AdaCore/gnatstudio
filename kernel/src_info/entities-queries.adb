@@ -5,6 +5,7 @@ with Projects; use Projects;
 with Glib.Unicode; use Glib.Unicode;
 
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Entities.Queries is
    Me : constant Debug_Handle := Create ("Entities.Queries");
@@ -1284,5 +1285,85 @@ package body Entities.Queries is
          Iter.Index := Entity_Information_Arrays.First;
       end if;
    end Next;
+
+   -------------------------------
+   -- Find_All_Entities_In_File --
+   -------------------------------
+
+   procedure Find_All_Entities_In_File
+     (Iter                  : out Entity_Iterator;
+      File                  : Source_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      Prefix                : String := "")
+   is
+   begin
+      Update_Xref (File, File_Has_No_LI_Report);
+      Iter.Iter := Start (File.Entities, Prefix);
+      Iter.Prefix := new String'(Prefix);
+      Iter.File := File;
+
+      Iter.EL := Get (Iter.Iter);
+
+      if Iter.EL = null then
+         Next (Iter);
+      else
+         Iter.Index_In_EL := Entity_Information_Arrays.First;
+         Iter.Processing_Entities := True;
+      end if;
+   end Find_All_Entities_In_File;
+
+   ------------
+   -- At_End --
+   ------------
+
+   function At_End (Iter : Entity_Iterator) return Boolean is
+   begin
+      return not Iter.Processing_Entities
+        and then (Iter.EL = null
+                  or else Iter.Index_In_EL > Last (Iter.EL.all));
+   end At_End;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Entity_Iterator) return Entity_Information is
+   begin
+      return Iter.EL.Table (Iter.Index_In_EL);
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Entity_Iterator) is
+   begin
+      Iter.Index_In_EL := Iter.Index_In_EL + 1;
+
+      if Iter.EL = null or else Iter.Index_In_EL > Last (Iter.EL.all) then
+         Next (Iter.Iter);
+         Iter.EL := Get (Iter.Iter);
+         Iter.Index_In_EL := Entity_Information_Arrays.First;
+
+         if Iter.EL = null
+           and then Iter.Processing_Entities
+         then
+            Free (Iter.Iter);
+            Iter.Iter := Start (Iter.File.All_Entities, Iter.Prefix.all);
+            Iter.EL   := Get (Iter.Iter);
+            Iter.Processing_Entities := False;
+         end if;
+      end if;
+   end Next;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iter : in out Entity_Iterator) is
+   begin
+      Free (Iter.Iter);
+      Free (Iter.Prefix);
+   end Destroy;
 
 end Entities.Queries;

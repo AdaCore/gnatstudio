@@ -45,6 +45,34 @@ package Entities.Queries is
    --  bodies.
    --  This also returns completion for incomplete types.
 
+   --------------
+   -- Entities --
+   --------------
+
+   type Entity_Iterator is private;
+
+   procedure Find_All_Entities_In_File
+     (Iter                  : out Entity_Iterator;
+      File                  : Source_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
+      Prefix                : String := "");
+   --  Return all the entities referenced in File which have a name starting
+   --  with Prefix (or all entities if Prefix is the empty string).
+   --  Each entity returned is unique. You can get the list of references for
+   --  them by using Find_All_References below
+
+   function At_End (Iter : Entity_Iterator) return Boolean;
+   --  Whether there remains any entity to return
+
+   function Get (Iter : Entity_Iterator) return Entity_Information;
+   --  Return the current entity
+
+   procedure Next (Iter : in out Entity_Iterator);
+   --  Move to the next entity
+
+   procedure Destroy (Iter : in out Entity_Iterator);
+   --  Free the memory used by the iterator
+
    ----------------
    -- References --
    ----------------
@@ -253,6 +281,16 @@ package Entities.Queries is
 
 
 private
+
+   type Entity_Iterator is record
+      Prefix : GNAT.OS_Lib.String_Access;
+      Iter   : Entities_Tries.Iterator;
+      File   : Source_File;
+      EL     : Entity_Information_List_Access;
+      Index_In_EL : Entity_Information_Arrays.Index_Type;
+      Processing_Entities : Boolean;
+      --  Whether we are processing File.Entities or File.All_Entities
+   end record;
 
    type Dependency_Iterator is record
       Importing             : Projects.Imported_Project_Iterator;
