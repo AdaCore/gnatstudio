@@ -460,6 +460,21 @@ package Glide_Kernel is
    --  we are processing the event in the context of the key handler
 
 
+   type Key_Context_Record is abstract tagged null record;
+   type Key_Context is access all Key_Context_Record'Class;
+
+   function Get_Description
+     (Context : access Key_Context_Record) return  String is abstract;
+   --  Return the description of the context (a short string suitable for
+   --  display in the key manager GUI
+
+   function Context_Matches
+     (Context : access Key_Context_Record;
+      Event   : Event_Data) return Boolean is abstract;
+   --  Whether the current widget in Event matches the context
+
+
+
    type Key_Handler_Record is abstract tagged private;
    type Key_Handler_Access is access all Key_Handler_Record'Class;
 
@@ -470,16 +485,19 @@ package Glide_Kernel is
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
       Command        : access Commands.Root_Command'Class;
       Tooltip        : String := "";
-      On_Key_Press   : Boolean := True;
-      On_Key_Release : Boolean := False) is abstract;
+      Context        : Key_Context := null) is abstract;
    --  Register a new key/command pair in the Handler.
    --  Default_Key and Default_Mod are ignored if the key was previously
    --  overriden by the user.
    --  Name must be unique in GPS. This is the key used in the XML file
    --  to save custom key bindings, as well as to display the list of key
    --  bindings in the GUI interface.
-   --  On_Key_Press and On_Key_Release indicate which type of event should
-   --  force the execution of the command
+   --  Context indicates to which context the key binding applies. If null,
+   --  this is a key binding that applies anywhere in GPS. The context is
+   --  not deallocated by the kernel, but shouldn't be deallocated by the
+   --  caller while at least one key binding depends on it.
+   --  Not two key bindings with the same name can be registered: the second
+   --  will override the first.
 
    function Process_Event
      (Handler  : access Key_Handler_Record;
@@ -506,12 +524,6 @@ package Glide_Kernel is
    --  A default handler exists in the kernel if no module has replaced it.
    --  However, this default handler doesn't do anything (and thus all
    --  custom keys will not be activable.
-
-   procedure Set_Key_Handler_Active
-     (Kernel : access Kernel_Handle_Record; Active : Boolean);
-   --  Change the activation status of the key handler. If it is inactive,
-   --  then no key is processed by the handler. This should be used when
-   --  displaying a modal dialog.
 
    ------------
    -- Saving --
@@ -835,8 +847,7 @@ private
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
       Command        : access Commands.Root_Command'Class;
       Tooltip        : String := "";
-      On_Key_Press   : Boolean := True;
-      On_Key_Release : Boolean := False);
+      Context        : Key_Context := null);
    function Process_Event
      (Handler  : access Default_Key_Handler_Record;
       Event    : Event_Data) return Boolean;
@@ -844,9 +855,6 @@ private
    type Kernel_Handle_Record is new Glib.Object.GObject_Record with record
       Key_Handler : Key_Handler_Access := new Default_Key_Handler_Record;
       --  The kandler that processes all key events
-
-      Key_Handler_Active : Boolean := True;
-      --  Whether the key handler is active
 
       Current_Event_Data : Event_Data;
 

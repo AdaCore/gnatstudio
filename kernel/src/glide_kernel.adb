@@ -200,7 +200,6 @@ package body Glide_Kernel is
    begin
       if (Get_Event_Type (Event) = Key_Press
           or else Get_Event_Type (Event) = Key_Release)
-        and then K.Key_Handler_Active
       then
          declare
             Data   : aliased Event_Data_Record :=
@@ -208,8 +207,6 @@ package body Glide_Kernel is
                Event  => Event,
                Widget => null);
          begin
-            --  If this is a special key, no need to further dispatch the
-            --  event
             K.Current_Event_Data := Data'Unchecked_Access;
             if Process_Event (K.Key_Handler, Data'Unchecked_Access) then
                K.Current_Event_Data := null;
@@ -1802,25 +1799,14 @@ package body Glide_Kernel is
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
       Command        : access Commands.Root_Command'Class;
       Tooltip        : String := "";
-      On_Key_Press   : Boolean := True;
-      On_Key_Release : Boolean := False)
+      Context        : Key_Context := null)
    is
       pragma Unreferenced
         (Handler, Default_Key, Default_Mod, Command, Tooltip,
-         On_Key_Press, On_Key_Release, Name);
+         Context, Name);
    begin
       null;
    end Register_Key;
-
-   ----------------------------
-   -- Set_Key_Handler_Active --
-   ----------------------------
-
-   procedure Set_Key_Handler_Active
-     (Kernel : access Kernel_Handle_Record; Active : Boolean) is
-   begin
-      Kernel.Key_Handler_Active := Active;
-   end Set_Key_Handler_Active;
 
    ----------------
    -- Get_Widget --
