@@ -114,6 +114,9 @@ package body Glide_Kernel.Help is
       Event : Gdk_Event) return Boolean;
    --  Handles the scrolling through the keyboard keys
 
+   procedure On_Destroy (Html : access Gtk_Widget_Record'Class);
+   --  Called when an html browser is destroyed.
+
    ---------------
    -- Load_File --
    ---------------
@@ -349,6 +352,15 @@ package body Glide_Kernel.Help is
          return True;
    end Key_Press;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Html : access Gtk_Widget_Record'Class) is
+   begin
+      Free (Help_Browser (Html).Current_Help_File);
+   end On_Destroy;
+
    ------------------------
    -- Create_Html_Editor --
    ------------------------
@@ -386,6 +398,9 @@ package body Glide_Kernel.Help is
       Return_Callback.Object_Connect
         (Html.Csc, "key_press_event",
          Return_Callback.To_Marshaller (Key_Press'Access), Html);
+      Widget_Callback.Connect
+        (Html, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
 
       Result := Load_File (Kernel, Html, File);
 
