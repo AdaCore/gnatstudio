@@ -995,12 +995,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Editor.Current_File_Cache := Find_In_Cache
         (Process.Window, Editor.Current_File.all);
 
-      --  We need to freeze the child explicitely, since Set_Buffer will first
-      --  erase it, and then Update_Child will set its contents. If we don't
-      --  freeze, there is a flicker on the screen.
-
-      Freeze (Get_Child (Edit));
-
       --  Load the file (possibly from the remote host)
 
       Load_File (Contents, Error_Msg, Editor.Current_File_Cache,
@@ -1017,11 +1011,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       end if;
 
       Update_Child (Edit);
-
-      --  Thaw Edit before calling Update_Buttons to work around a bug in Gtk+
-
-      Thaw (Get_Child (Edit));
-
       Update_Buttons (Editor, True);
 
       if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
