@@ -186,6 +186,9 @@ package body Ada_Analyzer is
       --  No_Token is used for initializing Token values to indicate that
       --  no value has been set yet.
 
+   type Token_Set is array (Token_Type) of Boolean;
+   pragma Pack (Token_Set);
+
    subtype Reserved_Token_Type is Token_Type range Tok_Abstract .. Tok_With;
 
    subtype Token_Class_Literal is
@@ -198,6 +201,21 @@ package body Ada_Analyzer is
 
    subtype Token_Class_No_Cont is Token_Type range Tok_Function .. Tok_Colon;
    --  Do not allow a following continuation line
+
+   Is_Operator : constant Token_Set :=
+     (Tok_Double_Asterisk |
+      Tok_Minus           |
+      Tok_Plus            |
+      Tok_Asterisk        |
+      Tok_Slash           |
+      Tok_Less            |
+      Tok_Equal           |
+      Tok_Greater         |
+      Tok_Not_Equal       |
+      Tok_Greater_Equal   |
+      Tok_Less_Equal      |
+      Tok_Ampersand       => True,
+      others              => False);
 
    Max_Identifier : constant := 256;
    --  Maximum length of an identifier.
@@ -1016,6 +1034,10 @@ package body Ada_Analyzer is
          end Is_Continuation_Line;
 
       begin
+         if Indent_Done or not Format then
+            return;
+         end if;
+
          if Prev_Token = Tok_Vertical_Bar then
             if Top_Tok = Tok_When then
                --  Indent multiple-line when statements specially:
@@ -1062,6 +1084,11 @@ package body Ada_Analyzer is
 
          elsif Is_Continuation_Line then
             Do_Indent (Prec, Num_Spaces, Continuation => True);
+
+            if Is_Operator (Token) then
+               Continuation_Val := 0;
+            end if;
+
          else
             Do_Indent (Prec, Num_Spaces);
          end if;
@@ -2474,7 +2501,6 @@ package body Ada_Analyzer is
                              or else (Buffer (P + 1) /= '"'
                                       and then Buffer (P + 1) /= '('))
                         then
-                           Prev_Token    := Tok_Integer_Literal;
                            Insert_Spaces := True;
                         else
                            Insert_Spaces := False;
@@ -2614,7 +2640,18 @@ package body Ada_Analyzer is
                      Long := Long - 1;
                   end if;
 
-                  Do_Indent (P, Num_Spaces);
+                  if Num_Parens = 0
+                    and then Top_Token.Token /= Tok_When
+                  then
+                     --  If we're not inside parens or a when statement,
+                     --  then handle continuation lines here. Otherwise,
+                     --  continuation lines are already handled separately.
+
+                     Compute_Indentation
+                       (Prev_Token, Prev_Prev_Token, P, Num_Spaces);
+                  else
+                     Do_Indent (P, Num_Spaces);
+                  end if;
 
                   if Format_Operators and then Insert_Spaces then
                      Replace_Text
