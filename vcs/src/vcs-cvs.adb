@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -42,6 +42,7 @@ with VCS_Module;                use VCS_Module;
 
 with Commands;                  use Commands;
 with Commands.External;         use Commands.External;
+with Traces;                    use Traces;
 
 package body VCS.CVS is
 
@@ -53,6 +54,8 @@ package body VCS.CVS is
    VCS_CVS_Module_Name : constant String := "CVS_Connectivity";
    VCS_CVS_Module_ID   : VCS_CVS_Module_ID_Access;
    CVS_Identifier      : constant String := "CVS";
+
+   Me : constant Debug_Handle := Create (CVS_Identifier);
 
    -----------------------
    -- Local Subprograms --
@@ -952,15 +955,19 @@ package body VCS.CVS is
       Current_File : constant String := String_List.Head (Head);
       Base         : constant String := Base_Name (Current_File);
       Patch_File   : constant String := Get_Tmp_Dir & Base & "$difs";
+      Num_Lines    : Natural := 0;
       File         : File_Type;
 
    begin
       Create (File, Name => Patch_File);
 
       while L_Temp /= Null_Node loop
+         Num_Lines := Num_Lines + 1;
          Put (File, Data (L_Temp));
          L_Temp := Next (L_Temp);
       end loop;
+
+      Trace (Me, "got" & Num_Lines'Img & " lines of diff");
 
       Close (File);
       Insert (Kernel,
