@@ -148,6 +148,7 @@ package body Src_Info.CPP is
 
    procedure Sym_Default_Handler (Sym : FIL_Table);
    procedure Sym_GV_Handler      (Sym : FIL_Table);
+   procedure Sym_CON_Handler     (Sym : FIL_Table);
    procedure Sym_FD_Handler      (Sym : FIL_Table);
    procedure Sym_FU_Handler      (Sym : FIL_Table);
    procedure Sym_E_Handler       (Sym : FIL_Table);
@@ -165,6 +166,7 @@ package body Src_Info.CPP is
 
    Symbol_Handlers : array (Symbol_Type) of Symbol_Handler :=
      (GV     => Sym_GV_Handler'Access,
+      CON    => Sym_CON_Handler'Access,
       FD     => Sym_FD_Handler'Access,
       FU     => Sym_FU_Handler'Access,
       E      => Sym_E_Handler'Access,
@@ -183,7 +185,8 @@ package body Src_Info.CPP is
 
    type To_Handler is access procedure (Ref : TO_Table);
 
-   procedure Fu_To_Gv_Handler (Ref : TO_Table);
+   procedure Fu_To_Gv_Handler  (Ref : TO_Table);
+   procedure Fu_To_Con_Handler (Ref : TO_Table);
 
    -------------------
    --  To_Handlers  --
@@ -191,6 +194,7 @@ package body Src_Info.CPP is
 
    Fu_To_Handlers : array (Symbol_Type) of To_Handler :=
      (GV     => Fu_To_Gv_Handler'Access,
+      CON    => Fu_To_Con_Handler'Access,
       others => null);
 
    function Ext (S : String) return String;
@@ -944,6 +948,7 @@ package body Src_Info.CPP is
 
    procedure Sym_Default_Handler (Sym : FIL_Table) is separate;
    procedure Sym_GV_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_CON_Handler     (Sym : FIL_Table) is separate;
    procedure Sym_FD_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_FU_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
@@ -956,6 +961,7 @@ package body Src_Info.CPP is
    procedure Sym_IU_Handler      (Sym : FIL_Table) is separate;
 
    procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
+   procedure Fu_To_Con_Handler   (Ref : TO_Table) is separate;
 
 end Src_Info.CPP;
 
