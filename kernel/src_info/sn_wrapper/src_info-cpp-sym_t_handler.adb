@@ -7,11 +7,21 @@ separate (Src_Info.CPP)
 procedure Sym_T_Handler (Sym : FIL_Table)
 is
 --   Decl_Info : E_Declaration_Info_List;
+   Desc       : CType_Description;
+   Success    : Boolean;
+   Identifier : String :=
+     Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last);
 begin
 
-   Info ("Sym_T_Hanlder: """
-         & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-         & """");
+   Info ("Sym_T_Hanlder: """ & Identifier & """");
+
+   --  find original type for typedef
+   Original_Type (Identifier, Desc, Success);
+
+   if not Success then
+      Warn ("Original type for typedef " & Identifier & " not found");
+      return;
+   end if;
 
 --   Insert_Declaration
 --     (Handler           => LI_Handler (Global_CPP_Handler),
