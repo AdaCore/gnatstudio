@@ -23,6 +23,7 @@ with Glide_Kernel;
 with Glib.Object;
 with Gtk.Button;
 with Gtk.Main;
+with Gtk.Menu_Item;
 with Gtk.Toggle_Button;
 with Gtk.Widget;
 with Vsearch_Pkg;
@@ -96,6 +97,9 @@ private
       Extra_Information      : Gtk.Widget.Gtk_Widget;
       Search_Idle_Handler    : Gtk.Main.Idle_Handler_Id := 0;
       Last_Search_Context    : Find_Utils.Search_Context_Access;
+
+      Find_Menu_Item         : Gtk.Menu_Item.Gtk_Menu_Item;
+      Next_Menu_Item         : Gtk.Menu_Item.Gtk_Menu_Item;
 
       Find_Next              : Boolean := False;
    end record;

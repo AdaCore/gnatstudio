@@ -35,6 +35,7 @@ with Gtk.Label;             use Gtk.Label;
 with Gtk.List;              use Gtk.List;
 with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Main;              use Gtk.Main;
+with Gtk.Menu_Item;         use Gtk.Menu_Item;
 with Gtk.Stock;             use Gtk.Stock;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Toggle_Button;     use Gtk.Toggle_Button;
@@ -151,6 +152,10 @@ package body Vsearch_Ext is
    procedure Search_Menu_Cb
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for the menu Edit->Search
+
+   procedure Search_Next_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for menu Edit->Search Next
 
    procedure New_Predefined_Regexp
      (Vsearch : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -543,7 +548,7 @@ package body Vsearch_Ext is
          Gtk_New (Image, Stock_Id => Stock_Find, Size => Icon_Size_Button);
          Pack_Start (Box, Image, Expand => False, Fill => False);
 
-         Gtk_New (Label, -"Next");
+         Gtk_New_With_Mnemonic (Label, -"_Next");
          Pack_End (Box, Label, Expand => False, Fill => False);
 
          Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
@@ -551,8 +556,13 @@ package body Vsearch_Ext is
          Add (Vsearch.Search_Next_Button, Align);
          Add (Align, Box);
          Show_All (Align);
+
+         Set_Sensitive (Vsearch.Find_Menu_Item, False);
+         Set_Sensitive (Vsearch.Next_Menu_Item, True);
       else
          Set_Label (Vsearch.Search_Next_Button, Stock_Find);
+         Set_Sensitive (Vsearch.Find_Menu_Item, True);
+         Set_Sensitive (Vsearch.Next_Menu_Item, False);
       end if;
    end Set_First_Next_Mode;
 
@@ -641,7 +651,8 @@ package body Vsearch_Ext is
          Item := Add_Unique_Combo_Entry
            (Search.Pattern_Combo,
             Get_Nth_Search_Regexp_Name (Kernel, S),
-            Get_Nth_Search_Regexp (Kernel, S));
+            Get_Nth_Search_Regexp (Kernel, S),
+            Use_Item_String => True);
          Get_Nth_Search_Regexp_Options
            (Kernel, S, Case_Sensitive => Case_Sensitive,
             Is_Regexp => Is_Regexp);
@@ -689,6 +700,23 @@ package body Vsearch_Ext is
    begin
       Vsearch_Pkg.Initialize (Vsearch, Handle);
       Vsearch.Kernel := Handle;
+
+      --  Add the menus.
+      --  ??? This would be more suitable in a Register_Module call
+
+      Vsearch.Find_Menu_Item := Register_Menu
+        (Handle, '/' & (-"Edit"), -"Search",
+         Stock_Find, Search_Menu_Cb'Access,
+         Ref_Item => -"Select All", Add_Before => False,
+         Accel_Key => GDK_F, Accel_Mods => Control_Mask);
+      Vsearch.Next_Menu_Item := Register_Menu
+        (Handle, '/' & (-"Edit"), -"Search Next",
+         Stock_Find, Search_Next_Cb'Access,
+         Ref_Item => -"Search", Add_Before => False,
+         Accel_Key => GDK_N, Accel_Mods => Control_Mask);
+      Set_Sensitive (Vsearch.Next_Menu_Item, False);
+
+      --  Create the widget
 
       Widget_Callback.Object_Connect
         (Vsearch.Context_Entry, "changed",
@@ -824,6 +852,18 @@ package body Vsearch_Ext is
       Grab_Focus (Vsearch_Extended (Get_Search_Module (Kernel)).Pattern_Entry);
    end Search_Menu_Cb;
 
+   --------------------
+   -- Search_Next_Cb --
+   --------------------
+
+   procedure Search_Next_Cb
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      On_Search (Get_Search_Module (Kernel));
+   end Search_Next_Cb;
+
    -----------------------------
    -- Register_Default_Search --
    -----------------------------
@@ -877,12 +917,18 @@ package body Vsearch_Ext is
            and not Search_Backward and not Scope_Mask
          and not Whole_Word and not All_Occurences);
 
-      Register_Menu
-        (Kernel, '/' & (-"Edit"), -"Search",
-         Stock_Find, Search_Menu_Cb'Access,
-         Ref_Item => -"Select All", Add_Before => False,
-         Accel_Key => GDK_F, Accel_Mods => Control_Mask);
-
+      Register_Search_Pattern
+        (Kernel,
+         Name           => -"<constant string>",
+         Regexp         => "",
+         Case_Sensitive => False,
+         Is_Regexp      => False);
+      Register_Search_Pattern
+        (Kernel,
+         Name           => -"<regular expression>",
+         Regexp         => "",
+         Case_Sensitive => False,
+         Is_Regexp      => True);
    end Register_Default_Search;
 
 end Vsearch_Ext;
