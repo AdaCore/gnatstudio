@@ -2551,7 +2551,7 @@ dialog listing the possible choices to resolve the ambiguity.
 @cindex macro
 In addition, the C/C++ parser has the following limitations: namespaces
 are currently ignored (no specific processing is done for namespaces);
-minimal support for templates; no attempt is made to process the macros and 
+minimal support for templates; no attempt is made to process the macros and
 other preprocessor defines.
 Macros are considered as special entities, so it is possible to navigate
 from a macro use to its definition, but the macro content is ignored,
@@ -3916,7 +3916,7 @@ the GPS window). You can interrupt the search at any time by pressing
 the @code{Stop} button: this will stop when the next occurrence is found.
 
 This button is reset to its default value whenever you modify the searched
-pattern or the replacement text. 
+pattern or the replacement text.
 
 @item @code{"Case Sensitive"}
 @cindex case sensitive
@@ -5706,6 +5706,9 @@ Color for highlighting the current source block.
 
 @item Delimiter highlighting color
 Color for highlighting delimiters.
+
+@item Search results highlighting
+Color for highlighting the search results in the text of source editors.
 
 @end table
 
