@@ -26,18 +26,40 @@ with GNAT.IO;           use GNAT.IO;
 
 package body Glide_Kernel.Console is
 
+   function Get_Console (Kernel : access Kernel_Handle_Record'Class)
+      return Glide_Console;
+   --  Return the console associated with the kernel.
+
+   procedure Console_Destroyed
+     (Console : access Glib.Object.GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+   --  Called when the console has been destroyed.
+
+   -----------------
+   -- Get_Console --
+   -----------------
+
+   function Get_Console (Kernel : access Kernel_Handle_Record'Class)
+      return Glide_Console
+   is
+      Top : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+   begin
+      if Top /= null
+        and then Get_Current_Process (Top) /= null
+      then
+         return Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
+      end if;
+      return null;
+   end Get_Console;
+
    -----------
    -- Clear --
    -----------
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class) is
-      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Console : Glide_Console;
+      Console : constant Glide_Console := Get_Console (Kernel);
    begin
-      if Top /= null
-        and then Get_Current_Process (Top) /= null
-      then
-         Console := Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
+      if Console /= null then
          Clear (Console);
       end if;
    end Clear;
@@ -53,18 +75,48 @@ package body Glide_Kernel.Console is
       Add_LF         : Boolean := True;
       Mode           : Message_Type := Info)
    is
-      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Console : Glide_Console;
-
+      Console : constant Glide_Console := Get_Console (Kernel);
    begin
-      if Top = null
-        or else Get_Current_Process (Top) = null
-      then
+      if Console = null then
          Put_Line (Text);
       else
-         Console := Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
          Insert (Console, Text, Highlight_Sloc, Add_LF, Mode);
       end if;
    end Insert;
+
+   -----------------------
+   -- Console_Destroyed --
+   -----------------------
+
+   procedure Console_Destroyed
+     (Console : access Glib.Object.GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Console);
+      Top : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+   begin
+      if Top /= null
+        and then Get_Current_Process (Top) /= null
+      then
+         Glide_Page.Glide_Page (Get_Current_Process (Top)).Console := null;
+      end if;
+   end Console_Destroyed;
+
+   ------------------------
+   -- Initialize_Console --
+   ------------------------
+
+   procedure Initialize_Console
+     (Kernel         : access Kernel_Handle_Record'Class)
+   is
+      Console : constant Glide_Console := Get_Console (Kernel);
+   begin
+      if Console /= null then
+         Kernel_Callback.Connect
+           (Console, "destroy",
+            Kernel_Callback.To_Marshaller (Console_Destroyed'Access),
+            Kernel_Handle (Kernel));
+      end if;
+   end Initialize_Console;
 
 end Glide_Kernel.Console;
