@@ -291,7 +291,7 @@ package body Src_Editor_Buffer.Text_Handling is
       Indent_Params : Indent_Parameters;
       Indent_Kind   : Indentation_Kind;
       Result        : Boolean;
-      Char          : Character;
+      Char, Prev    : Character;
 
       ------------------
       -- Replace_Text --
@@ -348,10 +348,21 @@ package body Src_Editor_Buffer.Text_Handling is
       --  which are also reserved words like access and range for example.
 
       First := Column;
+      Char  := ' ';
 
       loop
          Backward_Char (W_Start, Result);
+         Prev := Char;
          Char := Get_Char (W_Start);
+
+         if Char = ''' and Prev = ''' then
+            --  We don't want to parse past the second quote as this is not an
+            --  attribute.
+            Forward_Char (W_Start, Result);
+            First := First + 1;
+            exit;
+         end if;
+
          exit when not Result
            or else (Char /= '''
                     and then not Is_In (Char, Word_Character_Set (Lang)));
