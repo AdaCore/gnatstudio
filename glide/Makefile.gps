@@ -1,3 +1,5 @@
+ADAFLAGS+=-largs --LINK=./gpslink
+
 ifeq ($(OS),Windows_NT)
    LN = cp -p
 else
@@ -91,9 +93,9 @@ endif
 ifeq ($(GLIDE_ROOT),True)
 
    ifeq ($(OS),Windows_NT)
-      default: resources do_links all
+      default: resources do_links gpslink all
    else
-      default: do_links all
+      default: do_links gpslink all
    endif
 
    resources: force
@@ -103,6 +105,9 @@ ifeq ($(GLIDE_ROOT),True)
    do_links: force
 	-@$(foreach f,$(GNAT_SOURCES), \
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
+
+   gpslink: force
+	gnatmake -q -Pgps gpslink
 
    include ../Makefile.gnat
    include ../builder/src/Makefile.generic
