@@ -34,6 +34,9 @@ package body Layouts is
    Min_Dist : constant Natural := 15;
    --  Minimum distance between two nodes on the same layer at the end
 
+   Max_Dist : constant Natural := 50;
+   --  Maximal distance between two nodes on the same layer
+
    Min_Vertical_Dist : constant Natural := 30;
    --  Minimum distance between two layers in the graph.
 
@@ -126,10 +129,14 @@ package body Layouts is
      (V : access Vertex'Class;
       Vertical_Layout : Boolean) return Integer is
    begin
-      if Vertical_Layout then
-         return Integer (Get_Coord (Canvas_Item (V)).Height);
+      if not Is_From_Auto_Layout (Canvas_Item (V)) then
+         return -Min_Dist;
       else
-         return Integer (Get_Coord (Canvas_Item (V)).Width);
+         if Vertical_Layout then
+            return Integer (Get_Coord (Canvas_Item (V)).Height);
+         else
+            return Integer (Get_Coord (Canvas_Item (V)).Width);
+         end if;
       end if;
    end Width;
 
@@ -141,10 +148,14 @@ package body Layouts is
      (V : access Vertex'Class;
       Vertical_Layout : Boolean) return Integer is
    begin
-      if Vertical_Layout then
-         return Integer (Get_Coord (Canvas_Item (V)).Width);
+      if not Is_From_Auto_Layout (Canvas_Item (V)) then
+         return 0;
       else
-         return Integer (Get_Coord (Canvas_Item (V)).Height);
+         if Vertical_Layout then
+            return Integer (Get_Coord (Canvas_Item (V)).Width);
+         else
+            return Integer (Get_Coord (Canvas_Item (V)).Height);
+         end if;
       end if;
    end Height;
 
@@ -623,10 +634,13 @@ package body Layouts is
             for C in 0 .. Num_Per_Line (R) - 1 loop
                Relative_Position (Get_Index (Lines (R, C))) := C;
                X (Get_Index (Lines (R, C))) := Current_X;
-               Current_X := Current_X + Min_Horizontal_Dist
-                 + Width (Lines (R, C), Vertical_Layout);
-               Max_Height := Natural'Max
-                 (Max_Height, Height (Lines (R, C), Vertical_Layout));
+
+               if Is_From_Auto_Layout (Canvas_Item (Lines (R, C))) then
+                  Current_X := Current_X + Min_Horizontal_Dist
+                    + Width (Lines (R, C), Vertical_Layout);
+                  Max_Height := Natural'Max
+                    (Max_Height, Height (Lines (R, C), Vertical_Layout));
+               end if;
             end loop;
 
             Current_Y := Current_Y + Min_Vertical_Dist + Max_Height / 2;
@@ -754,9 +768,9 @@ package body Layouts is
               - Width (Lines (Row, Column), Vertical_Layout);
          end loop;
 
-         --  Min_D (Row) := Integer'Max
-         --    (Min_Dist, Min_D (Row) / Num_Per_Line (Row));
-         Min_D (Row) := Min_Dist;
+         Min_D (Row) := Integer'Max
+           (Min_Dist, Min_D (Row) / Num_Per_Line (Row));
+         Min_D (Row) := Integer'Min (Min_D (Row), Max_Dist);
       end loop;
 
 
@@ -955,16 +969,20 @@ package body Layouts is
 
       Iter := First (Graph);
       while not At_End (Iter) loop
-         if Vertical_Layout then
-            Move_To
-              (Canvas, Canvas_Item (Get (Iter)),
-               Gint (Y (Get_Index (Get (Iter)))),
-               Gint (X (Get_Index (Get (Iter)))));
-         else
-            Move_To
-              (Canvas, Canvas_Item (Get (Iter)),
-               Gint (X (Get_Index (Get (Iter)))),
-               Gint (Y (Get_Index (Get (Iter)))));
+         if Force
+           or else Is_From_Auto_Layout (Canvas_Item (Get (Iter)))
+         then
+            if Vertical_Layout then
+               Move_To
+                 (Canvas, Canvas_Item (Get (Iter)),
+                  Gint (Y (Get_Index (Get (Iter)))),
+                  Gint (X (Get_Index (Get (Iter)))));
+            else
+               Move_To
+                 (Canvas, Canvas_Item (Get (Iter)),
+                  Gint (X (Get_Index (Get (Iter)))),
+                  Gint (Y (Get_Index (Get (Iter)))));
+            end if;
          end if;
          Next (Iter);
       end loop;
