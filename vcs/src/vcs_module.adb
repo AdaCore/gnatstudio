@@ -629,33 +629,40 @@ package body VCS_Module is
       Register_Action_Menu
         ("Status dir",
          -"Query the status of the current directory",
-         -"Query status",
+         -"Query status for directory",
          Dir_Filter,
          On_Menu_Get_Status_Dir'Access);
 
       Register_Action_Menu
-        ("Status dir (recursively)",
-         -"Query the status of the current directory recursively",
-         -"Query status (recursively)",
-         Dir_Filter,
-         On_Menu_Get_Status_Dir_Recursive'Access);
-
-      Register_Action_Menu
         ("Update dir",
          -"Update the current directory",
-         -"Update",
+         -"Update directory",
          Dir_Filter,
          On_Menu_Update_Dir'Access);
 
       Register_Action_Menu
+        ("Status dir (recursively)",
+         -"Query the status of the current directory recursively",
+         -"Query status for directory (recursively)",
+         Dir_Filter,
+         On_Menu_Get_Status_Dir_Recursive'Access);
+
+      Register_Action_Menu
         ("Update dir (recursively)",
          -"Update the current directory (recursively)",
-         -"Update (recursively)",
+         -"Update directory (recursively)",
          Dir_Filter,
          On_Menu_Update_Dir_Recursive'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, "/_" & VCS_Root, Mitem);
+
+      Register_Action_Menu
+        ("List project",
+         -"List all the files in project",
+         -"List all files in project",
+         Prj_Filter,
+         On_Menu_List_Project_Files'Access);
 
       Register_Action_Menu
         ("Status project",
@@ -665,6 +672,20 @@ package body VCS_Module is
          On_Menu_Get_Status_Project'Access);
 
       Register_Action_Menu
+        ("Update project",
+         -"Update the current project",
+         -"Update project",
+         Prj_Filter,
+         On_Menu_Update_Project'Access);
+
+      Register_Action_Menu
+        ("List project (recursively)",
+         -"List all the files in project and subprojects",
+         -"List all files in project (recursively)",
+         Prj_Filter,
+         On_Menu_List_Project_Files_Recursive'Access);
+
+      Register_Action_Menu
         ("Status project (recursively)",
          -"Query the status of the current project recursively",
          -"Query status (recursively)",
@@ -672,16 +693,9 @@ package body VCS_Module is
          On_Menu_Get_Status_Project_Recursive'Access);
 
       Register_Action_Menu
-        ("Update project",
-         -"Update the current project",
-         -"Update",
-         Prj_Filter,
-         On_Menu_Update_Project'Access);
-
-      Register_Action_Menu
         ("Update project (recursively)",
          -"Update the current project (recursively)",
-         -"Update (recursively)",
+         -"Update project (recursively)",
          Prj_Filter,
          On_Menu_Update_Project_Recursive'Access);
    end Register_Module;
