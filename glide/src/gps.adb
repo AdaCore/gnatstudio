@@ -59,6 +59,7 @@ with Welcome;                   use Welcome;
 --  Modules registered by GPS.
 with Ada_Module;
 with Aunit_Module;
+with Codefix_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
 with Browsers.Call_Graph;
@@ -361,6 +362,7 @@ procedure GPS is
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
+      Codefix_Module.Register_Module (GPS.Kernel);
 
       --  Register the supported languages and their associated LI handlers.
 
@@ -389,8 +391,6 @@ procedure GPS is
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Navigate & (-"Previous Procedure")), False);
 
-         Set_Sensitive (Find_Menu_Item
-           (GPS.Kernel, Tools & (-"Code Fixing")), False);
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Tools & (-"Profile")), False);
          Set_Sensitive (Find_Menu_Item
