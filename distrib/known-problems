@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.3.1
 
+- C901-006 No pretty printing on sub-project's files
+  Problem:    When pretty printing a file not part of the main project,
+              gps will execute the wrong command.
+  Workaround: Call gnat pretty from the Build->Run->Custom... menu
+
 - C902-001 Wrong highlighting of special C #include directives
   Problem:    In a C file, when using #include constructs with no < nor "
               (e.g. #include FOO), the source highlighting gets confused.
