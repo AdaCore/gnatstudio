@@ -59,7 +59,7 @@ package Docgen_Backend_HTML is
      (B      : access Backend_HTML;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : File_Descriptor;
-      Info   : in out Docgen.Doc_Info_Close);
+      Info   : in out Docgen.Doc_Info_Base);
 
    procedure Doc_Header
      (B                : access Backend_HTML;
