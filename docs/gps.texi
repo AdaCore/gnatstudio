@@ -8122,6 +8122,16 @@ automatically looks for source files in the list of directories, for
 instance, the list of source files should only contain base
 names. This also increases the portability of project files.
 
+@item @code{case_sensitive_index} (a boolean, default value: "false")
+
+This XML attribute is only relevant for project attributes that are
+indexed on another one (see below for more information on indexed
+attributes). It indicates whether two indexes that differ only by
+their casing should be considered the same. For instance, if the index
+is the name of one of the languages supported by GPS, the index is
+case insensitive since "Ada" is the same as "C". However, if the index
+is the name of a file on Windows, the index is case-insensitive.
+
 @end itemize
 
 
