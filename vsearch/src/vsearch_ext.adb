@@ -309,7 +309,7 @@ package body Vsearch_Ext is
          Vsearch.Search_Idle_Handler := 0;
       end if;
 
-      Close (Get_MDI (Vsearch.Kernel), Search);
+      Close (Get_MDI (Vsearch.Kernel), Search, Force => True);
    end Close_Vsearch;
 
    ----------
@@ -1060,15 +1060,9 @@ package body Vsearch_Ext is
    is
       Vsearch : constant Vsearch_Extended := Vsearch_Extended (Search);
    begin
-      --  the extra information mustn't be destroyed, since it will be reused
-      --  the next time a vsearch is displayed.
-      if Vsearch.Extra_Information /= null then
-         Ref (Vsearch.Extra_Information);
-         Remove (Vsearch.Table, Vsearch.Extra_Information);
-      end if;
-      Vsearch_Module_Id.Search := null;
-
-      return False;
+      --  This is called when the user presses "Escape" in the dialog.
+      Close_Vsearch (Vsearch);
+      return True;
    end On_Delete;
 
    ---------------------------
@@ -1096,7 +1090,6 @@ package body Vsearch_Ext is
             --  child is destroyed.
 
             Ref (Vsearch_Module_Id.Search);
-
 
             Return_Callback.Connect
               (Vsearch_Module_Id.Search, "delete_event",
