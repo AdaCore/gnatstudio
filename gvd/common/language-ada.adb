@@ -369,6 +369,28 @@ package body Language.Debugger.Ada is
         Reduce (Str (Matched (2).First .. Matched (2).Last)) & ")";
    end Make_Entry_Task;
 
+   --------------------
+   -- Is_System_File --
+   --------------------
+
+   function Is_System_File
+     (Lang : access Ada_Language;
+      File_Name : String)
+     return Boolean
+   is
+   begin
+      return (File_Name'Length > 2
+              and then File_Name (File_Name'First + 1) = '-'
+              and then (File_Name (File_Name'First) = 'a'
+                        or else File_Name (File_Name'First) = 'g'
+                        or else File_Name (File_Name'First) = 's'
+                        or else File_Name (File_Name'First) = 'i'))
+        or else File_Name = "gnat.ads"
+        or else File_Name = "ada.ads"
+        or else File_Name = "interfac.ads"
+        or else File_Name = "system.ads";
+   end Is_System_File;
+
 begin
    Compile (Keywords,
             "^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"

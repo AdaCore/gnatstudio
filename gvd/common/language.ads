@@ -141,6 +141,14 @@ package Language is
    --  Return the list of categories for a given language.
    --  By default, no category is defined, and thus the explorer is empty.
 
+   function Is_System_File
+     (Lang : access Language_Root;
+      File_Name : String)
+     return Boolean;
+   --  Return True if File_Name is the name of a system file (standard include
+   --  files in C or run-time file in Ada). These files are displayed
+   --  separately in the explorer.
+
    ------------------------
    -- Exception Handling --
    ------------------------

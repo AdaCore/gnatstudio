@@ -96,4 +96,17 @@ package body Language is
       end loop;
    end Free;
 
+   --------------------
+   -- Is_System_File --
+   --------------------
+
+   function Is_System_File
+     (Lang : access Language_Root;
+      File_Name : String)
+     return Boolean
+   is
+   begin
+      return False;
+   end Is_System_File;
+
 end Language;
