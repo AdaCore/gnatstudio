@@ -18,11 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Error;                use Glib.Error;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk;                       use Gtk;
 with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.Main;
+with Gtk.Image;                 use Gtk.Image;
+with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Window;                use Gtk.Window;
 with Gtk.Rc;
+
 with Glide_Page;
 with Glide_Menu;
 with Glide_Main_Window;
@@ -34,6 +39,7 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Gtkada.Intl;               use Gtkada.Intl;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -92,12 +98,47 @@ procedure GPS is
    Dir            : String_Access;
    File_Opened    : Boolean := False;
    Handler        : Language_Handlers.Glide.Glide_Language_Handler;
+   Splash         : Gtk_Window;
+   Timeout_Id     : Timeout_Handler_Id;
 
    procedure Init_Settings;
    --  Set up environment for GPS.
 
+   procedure Display_Splash_Screen;
+   --  Display the GPS splash screen
+
+   function Finish_Setup (Data : Process_Data) return Boolean;
+   --  Finish the set up of GPS, while the main loop is running.
+
    procedure Help;
    --  Display help on the standard output.
+
+   ---------------------------
+   -- Display_Splash_Screen --
+   ---------------------------
+
+   procedure Display_Splash_Screen is
+      File   : constant String := Format_Pathname
+        (GPS.Prefix_Directory.all & "/share/gps/" &
+         Get_Pref (GPS.Kernel, Splash_Screen));
+      Image  : Gtk_Image;
+      Pixbuf : Gdk_Pixbuf;
+      Error  : GError;
+
+   begin
+      if Is_Regular_File (File) then
+         Gtk_New (Splash, Window_Popup);
+         Set_Policy (Splash,
+                     Allow_Shrink => False,
+                     Allow_Grow   => False,
+                     Auto_Shrink  => False);
+         Set_Position (Splash, Win_Pos_Center);
+         Gdk_New_From_File (Pixbuf, File, Error);
+         Gtk_New (Image, Pixbuf);
+         Add (Splash, Image);
+         Show_All (Splash);
+      end if;
+   end Display_Splash_Screen;
 
    ----------
    -- Init --
@@ -217,6 +258,194 @@ procedure GPS is
       end if;
    end Help;
 
+   ------------------
+   -- Finish_Setup --
+   ------------------
+
+   function Finish_Setup (Data : Process_Data) return Boolean is
+      pragma Unreferenced (Data);
+
+      System_Rc : constant String :=
+        Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
+
+      Rc : constant String :=
+        String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
+
+      Log : constant String :=
+        String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
+   begin
+      --  Parse the system's RC file
+      Trace (Me, "Parsing System RC file " & System_Rc);
+      if Is_Regular_File (System_Rc) then
+         Gtk.Rc.Parse (System_Rc);
+      end if;
+
+      --  Parse the user's RC file
+      Trace (Me, "Parsing RC file " & Rc);
+      if Is_Regular_File (Rc) then
+         Gtk.Rc.Parse (Rc);
+      end if;
+
+      --  ??? Should have a cleaner way of initializing Log_File
+
+      GPS.Debug_Mode := True;
+      GPS.Log_Level  := GVD.Types.Internal;
+      GPS.Log_File   := Create_File (Log, Fmode => Text);
+
+      Glide_Page.Gtk_New (Page, GPS);
+      Initialize_Console (GPS.Kernel);
+
+      --  Register all modules
+
+      Navigation_Module.Register_Module (GPS.Kernel);
+      Metrics_Module.Register_Module (GPS.Kernel);
+      Browsers.Call_Graph.Register_Module (GPS.Kernel);
+      Browsers.Dependency_Items.Register_Module (GPS.Kernel);
+      Browsers.Projects.Register_Module (GPS.Kernel);
+      Project_Viewers.Register_Module (GPS.Kernel);
+      Project_Explorers.Register_Module (GPS.Kernel);
+      Src_Editor_Module.Register_Module (GPS.Kernel);
+      External_Editor_Module.Register_Module (GPS.Kernel);
+      Glide_Kernel.Help.Register_Module (GPS.Kernel);
+      GVD_Module.Register_Module (GPS.Kernel);
+      Builder_Module.Register_Module (GPS.Kernel);
+      Vdiff_Module.Register_Module (GPS.Kernel);
+      VCS_Module.Register_Module (GPS.Kernel);
+      VCS.CVS.Register_Module (GPS.Kernel);
+      Aunit_Module.Register_Module (GPS.Kernel);
+      Glide_Kernel.Console.Register_Module (GPS.Kernel);
+
+      --  Register the supported languages and their associated LI handlers.
+
+      Handler := Glide_Language_Handler (Get_Language_Handler (GPS.Kernel));
+
+      Register_LI_Handler
+        (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
+      Register_LI_Handler
+        (Handler, "c/c++", new Src_Info.CPP.CPP_LI_Handler_Record);
+
+      Register_Language (Handler, "Ada", Ada_Lang);
+      Add_Language_Info
+        (Handler, "Ada",
+         LI                  => Get_LI_Handler_By_Name (Handler, "Ada"),
+         Default_Spec_Suffix => ".ads",
+         Default_Body_Suffix => ".adb");
+
+      Register_Language (Handler, "c", C_Lang);
+      Add_Language_Info
+        (Handler, "c",
+         LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
+         Default_Spec_Suffix => ".h",
+         Default_Body_Suffix => ".c");
+
+      Register_Language (Handler, "c++", Cpp_Lang);
+      Add_Language_Info
+        (Handler, "c++",
+         LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
+         Default_Spec_Suffix => ".h",
+         Default_Body_Suffix => ".cc");
+
+      --  Temporarily disable unimplemented menu items
+
+      declare
+         File     : constant String := '/' & (-"File") & '/';
+         Edit     : constant String := '/' & (-"Edit") & '/';
+         Navigate : constant String := '/' & (-"Navigate") & '/';
+         Tools    : constant String := '/' & (-"Tools") & '/';
+
+      begin
+         Set_Sensitive (Find_Menu_Item (GPS.Kernel, File & (-"Print")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, File & (-"Close All")), False);
+
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Edit & (-"Preferences")), False);
+
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Navigate & (-"Start Of Statement")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Navigate & (-"End Of Statement")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Navigate & (-"Next Procedure")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Navigate & (-"Previous Procedure")), False);
+
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Tools & (-"Code Fixing")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Tools & (-"Profile")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, Tools & (-"Generate API doc")), False);
+
+         Set_Sensitive (Find_Menu_Item
+           (GPS.Kernel, File & (-"New View")), False);
+      end;
+
+      Glide_Page.Load_Desktop (Page, GPS);
+
+      loop
+         declare
+            S : constant String := Get_Argument (Do_Expansion => True);
+         begin
+            exit when S = "";
+
+            if File_Extension (S) = Project_File_Extension then
+               Load_Project (GPS.Kernel, Normalize_Pathname (S));
+               Project_Loaded := True;
+            else
+               Open_File_Editor (GPS.Kernel, S);
+               File_Opened := True;
+            end if;
+         end;
+      end loop;
+
+      --  If no project has been specified on the command line, try to open
+      --  the first one in the current directory (if any).
+
+      if not Project_Loaded then
+         Open (Directory, Get_Current_Dir);
+
+         loop
+            Read (Directory, Str, Last);
+
+            exit when Last = 0;
+
+            if File_Extension (Str (1 .. Last)) = Project_File_Extension then
+               Load_Project (GPS.Kernel, Str (1 .. Last));
+               exit;
+            end if;
+         end loop;
+
+         Close (Directory);
+      end if;
+
+      --  Call Show_All before displaying the help so that the help window will
+      --  have the focus.
+
+      Show_All (GPS);
+
+      if not File_Opened
+        and then not Has_Saved_Desktop (GPS.Kernel)
+      then
+         Open_Html
+           (GPS.Kernel,
+            Format_Pathname
+              (GPS.Prefix_Directory.all &
+               "/doc/gps/html/gps-welcome.html"));
+         Maximize_Children (Get_MDI (GPS.Kernel));
+      end if;
+
+      if Splash /= null then
+         Destroy (Splash);
+      end if;
+
+      return False;
+   end Finish_Setup;
+
 begin
    --  Initialize GtkAda
 
@@ -233,130 +462,6 @@ begin
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Set_Title (GPS, "GPS - Next Generation");
    Maximize (GPS);
-
-   declare
-      System_Rc : constant String :=
-        Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
-
-      Rc : constant String :=
-        String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
-   begin
-      --  Parse the system's RC file
-      Trace (Me, "Parsing System RC file " & System_Rc);
-      if Is_Regular_File (System_Rc) then
-         Gtk.Rc.Parse (System_Rc);
-      end if;
-
-      --  Parse the user's RC file
-      Trace (Me, "Parsing RC file " & Rc);
-      if Is_Regular_File (Rc) then
-         Gtk.Rc.Parse (Rc);
-      end if;
-   end;
-
-   --  ??? Should have a cleaner way of initializing Log_File
-
-   declare
-      Log : constant String :=
-        String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
-   begin
-      GPS.Debug_Mode := True;
-      GPS.Log_Level  := GVD.Types.Internal;
-      GPS.Log_File   := Create_File (Log, Fmode => Text);
-   end;
-
-   Glide_Page.Gtk_New (Page, GPS);
-   Initialize_Console (GPS.Kernel);
-
-   --  Register all modules
-
-   Navigation_Module.Register_Module (GPS.Kernel);
-   Metrics_Module.Register_Module (GPS.Kernel);
-   Browsers.Call_Graph.Register_Module (GPS.Kernel);
-   Browsers.Dependency_Items.Register_Module (GPS.Kernel);
-   Browsers.Projects.Register_Module (GPS.Kernel);
-   Project_Viewers.Register_Module (GPS.Kernel);
-   Project_Explorers.Register_Module (GPS.Kernel);
-   Src_Editor_Module.Register_Module (GPS.Kernel);
-   External_Editor_Module.Register_Module (GPS.Kernel);
-   Glide_Kernel.Help.Register_Module (GPS.Kernel);
-   GVD_Module.Register_Module (GPS.Kernel);
-   Builder_Module.Register_Module (GPS.Kernel);
-   Vdiff_Module.Register_Module (GPS.Kernel);
-   VCS_Module.Register_Module (GPS.Kernel);
-   VCS.CVS.Register_Module (GPS.Kernel);
-   Aunit_Module.Register_Module (GPS.Kernel);
-   Glide_Kernel.Console.Register_Module (GPS.Kernel);
-
-   --  Register the supported languages and their associated LI handlers.
-
-   Handler := Glide_Language_Handler (Get_Language_Handler (GPS.Kernel));
-
-   Register_LI_Handler
-     (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
-   Register_LI_Handler
-     (Handler, "c/c++", new Src_Info.CPP.CPP_LI_Handler_Record);
-
-   Register_Language (Handler, "Ada", Ada_Lang);
-   Add_Language_Info
-     (Handler, "Ada",
-      LI                  => Get_LI_Handler_By_Name (Handler, "Ada"),
-      Default_Spec_Suffix => ".ads",
-      Default_Body_Suffix => ".adb");
-
-   Register_Language (Handler, "c", C_Lang);
-   Add_Language_Info
-     (Handler, "c",
-      LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
-      Default_Spec_Suffix => ".h",
-      Default_Body_Suffix => ".c");
-
-   Register_Language (Handler, "c++", Cpp_Lang);
-   Add_Language_Info
-     (Handler, "c++",
-      LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
-      Default_Spec_Suffix => ".h",
-      Default_Body_Suffix => ".cc");
-
-   --  Temporarily disable unimplemented menu items
-
-   declare
-      File     : constant String := '/' & (-"File") & '/';
-      Edit     : constant String := '/' & (-"Edit") & '/';
-      Navigate : constant String := '/' & (-"Navigate") & '/';
-      Tools    : constant String := '/' & (-"Tools") & '/';
-
-   begin
-      Set_Sensitive (Find_Menu_Item (GPS.Kernel, File & (-"Print")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, File & (-"Close All")), False);
-
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Edit & (-"Preferences")), False);
-
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Navigate & (-"Start Of Statement")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Navigate & (-"End Of Statement")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Navigate & (-"Next Procedure")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Navigate & (-"Previous Procedure")), False);
-
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Tools & (-"Code Fixing")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Tools & (-"Profile")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, Tools & (-"Generate API doc")), False);
-
-      Set_Sensitive (Find_Menu_Item
-        (GPS.Kernel, File & (-"New View")), False);
-   end;
 
    loop
       case Getopt ("-version -help") is
@@ -398,58 +503,14 @@ begin
       end case;
    end loop;
 
-   Glide_Page.Load_Desktop (Page, GPS);
+   Display_Splash_Screen;
 
-   loop
-      declare
-         S : constant String := Get_Argument (Do_Expansion => True);
-      begin
-         exit when S = "";
-
-         if File_Extension (S) = Project_File_Extension then
-            Load_Project (GPS.Kernel, Normalize_Pathname (S));
-            Project_Loaded := True;
-         else
-            Open_File_Editor (GPS.Kernel, S);
-            File_Opened := True;
-         end if;
-      end;
-   end loop;
-
-   --  If no project has been specified on the command line, try to open
-   --  the first one in the current directory (if any).
-
-   if not Project_Loaded then
-      Open (Directory, Get_Current_Dir);
-
-      loop
-         Read (Directory, Str, Last);
-
-         exit when Last = 0;
-
-         if File_Extension (Str (1 .. Last)) = Project_File_Extension then
-            Load_Project (GPS.Kernel, Str (1 .. Last));
-            exit;
-         end if;
-      end loop;
-
-      Close (Directory);
-   end if;
-
-   --  Call Show_All before displaying the help so that the help window will
-   --  have the focus.
-
-   Show_All (GPS);
-
-   if not File_Opened
-     and then not Has_Saved_Desktop (GPS.Kernel)
-   then
-      Open_Html
-        (GPS.Kernel,
-         Format_Pathname
-           (GPS.Prefix_Directory.all &
-            "/doc/gps/html/gps-welcome.html"));
-      Maximize_Children (Get_MDI (GPS.Kernel));
+   if Splash = null then
+      Timeout_Id := Process_Timeout.Add
+        (1, Finish_Setup'Unrestricted_Access, (GPS.Kernel, null, null));
+   else
+      Timeout_Id := Process_Timeout.Add
+        (1000, Finish_Setup'Unrestricted_Access, (GPS.Kernel, null, null));
    end if;
 
    Gtk.Main.Main;
