@@ -36,6 +36,7 @@ with Gint_Xml;                  use Gint_Xml;
 with Browsers.Canvas;           use Browsers.Canvas;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel;              use Glide_Kernel;
@@ -292,21 +293,14 @@ package body Browsers.Dependency_Items is
       end Has_One;
 
    begin
-      Lib_Info := Locate_From_Source (Kernel, F);
+      Lib_Info := Locate_From_Source_And_Complete (Kernel, F);
       if Lib_Info = No_LI_File then
-         --  ??? Should be displayed in the status bar.
-
-         Trace (Me, "Examine_Dependencies: Couldn't find ALI file for "
-                & File);
-
-         --  ??? Should we put an item in the browser anyway, even if nothing
-         --  can be done with it anyway ? This might give more indication
-         --  to the user that we don't know anything about that file.
+         Trace (Me,
+                "Examine_Dependencies: Couldn't find ALI file for " & File);
+         Insert (Kernel, -"Couldn't find ALI file for " & File,
+                 Mode => Glide_Kernel.Console.Error);
          return;
       end if;
-
-      Complete_ALI_File_If_Needed (Kernel, Lib_Info);
-      pragma Assert (Lib_Info /= No_LI_File);
 
       Initial := File_Item (Find_File (In_Browser, F));
       if Initial = null then
@@ -511,18 +505,10 @@ package body Browsers.Dependency_Items is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Menu_Item : Gtk_Menu_Item;
       Tools : constant String := '/' & (-"Tools");
    begin
-      Gtk_New (Menu_Item, -"Dependency Browser");
-      Register_Menu (Kernel, Tools, Menu_Item);
-      Kernel_Callback.Connect
-        (Menu_Item, "activate",
-         Kernel_Callback.To_Marshaller (On_Dependency_Browser'Access),
-         Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Class Browser");
-      Register_Menu (Kernel, Tools, Menu_Item);
+      Register_Menu (Kernel, Tools, -"Dependency Browser", "",
+                     On_Dependency_Browser'Access);
    end Initialize_Module;
 
    ---------------
