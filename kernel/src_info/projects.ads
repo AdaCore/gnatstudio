@@ -114,7 +114,8 @@ package Projects is
    -----------------
 
    function Source_Dirs (Project : Project_Type) return String_Id_Array;
-   --  Return the list of source directories for Prj, as an array
+   --  Return the list of source directories for Prj, as an array. The
+   --  directories are absolute directories.
 
    function Source_Dirs
      (Project : Project_Type; Recursive : Boolean)
