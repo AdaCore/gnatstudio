@@ -615,7 +615,6 @@ package body GNAT.Expect is
       Reinitialize_Buffer (Descriptor);
 
       loop
-
          --  First, test if what is already in the buffer matches (This is
          --  required if this package is used in multi-task mode, since one of
          --  the tasks might have added something in the buffer, and we don't
@@ -650,10 +649,23 @@ package body GNAT.Expect is
             Timeout_Tmp := Integer (Try_Until - Clock) * 1000;
             if Timeout_Tmp < 0 then
                Result := Expect_Timeout;
-               return;
+               exit;
             end if;
          end if;
       end loop;
+
+      --  Even if we had the general timeout above, we have to test that the
+      --  last test we read from the external process didn't match.
+
+      Match
+        (Regexp, Descriptor.Buffer (1 .. Descriptor.Buffer_Index), Matched);
+
+      if Matched (0).First /= 0 then
+         Result := 1;
+         Descriptor.Last_Match_Start := Matched (0).First;
+         Descriptor.Last_Match_End := Matched (0).Last;
+         return;
+      end if;
    end Expect;
 
    ------------
