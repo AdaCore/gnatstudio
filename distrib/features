@@ -3,6 +3,16 @@ details, please see the documentation.
 
 New features in GPS 1.4.0
 
+- Ability to derive a language from another language in xml custom files
+
+- Dialog boxes can now be copy/pasted
+  For example, the About dialog contents can be copied, to ease reports.
+
+- C128-007 Contextual menus no longer show xref entries when no xref
+  information is available
+
+- Ability to compile C/C++ files individually
+
 - Possibility to see the differences between the current file and a specified
   VCS revision.
 
@@ -11,8 +21,7 @@ New features in GPS 1.4.0
 
 - When defining custom actions, the output of a shell command can now be
   used to launch an external command (for instance to query switches from the
-  project first). Output of previous commands can now be substituted in the
-  command line of other commands.
+  project first).
 
 - Compilation output is highlighted in different colours based on the type of
   the error (Error/Warning/Style)
@@ -37,13 +46,17 @@ New features in GPS 1.4.0
 
 - C306-012 Double-click in the editor now takes underscores into account
 
-- New preference: auto jump to first location
-
-- Opening a new directory automatically adds it to the default project
+- C612-001 New preference: auto jump to first location
 
 - MDI's central area can be split through drag-and-drop
 
 - New editor views can be created through drag-and-drop
+
+- Improved reformatting of some Ada constructs
+
+- Ability to align colons in Ada declarations
+
+- Ability to align arrows in Ada associations
 
 - Ability to format Ada operators and delimiters in the editor
 
@@ -55,6 +68,6 @@ New features in GPS 1.4.0
 
 - Navigation to start/end of current statement.
 
-- Add new casing mode "Smart Mixed". This mode does not force upper-case
+- New casing mode "Smart Mixed". This mode does not force upper-case
   letters to lower-case, in all other cases it is equivalent to the mixed
   casing mode.
