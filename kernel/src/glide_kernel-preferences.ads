@@ -169,8 +169,6 @@ package Glide_Kernel.Preferences is
    Tab_Width                 : Param_Spec_Int;
    Highlight_Column          : Param_Spec_Int;
 
-   Auto_Casing               : Param_Spec_Boolean;
-
    Indentation_Key           : Param_Spec_Key;
    Completion_Key            : Param_Spec_Key;
    Delimiters_Jump_Key       : Param_Spec_Key;
