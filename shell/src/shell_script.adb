@@ -1,4 +1,4 @@
------------------------------------------------------------------------
+------------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2003-2004                       --
@@ -30,13 +30,17 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib.Object;              use Glib.Object;
 with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel.Actions;     use Glide_Kernel.Actions;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel;             use Glide_Kernel;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Commands;                 use Commands;
+with Commands.Interactive;     use Commands.Interactive;
 with Histories;                use Histories;
 with Interactive_Consoles;     use Interactive_Consoles;
 with String_List_Utils;        use String_List_Utils;
@@ -204,7 +208,22 @@ package body Shell_Script is
 
    function New_Instance
      (Script : access Shell_Scripting_Record; Class : Class_Type)
-      return Class_Instance;
+         return Class_Instance;
+
+   ----------------------
+   -- Shell_Subprogram --
+   ----------------------
+
+   type Shell_Subprogram_Record is new Subprogram_Record with record
+      Action : Action_Record_Access;
+   end record;
+   --  subprograms in GPS shell are just GPS actions
+
+   procedure Execute
+     (Subprogram : access Shell_Subprogram_Record;
+      Args       : Callback_Data'Class);
+   procedure Free (Subprogram : in out Shell_Subprogram_Record);
+   --  See doc from inherited subprograms
 
    -------------------------
    -- Shell_Callback_Data --
@@ -228,6 +247,8 @@ package body Shell_Script is
    function Nth_Arg (Data : Shell_Callback_Data; N : Positive) return Boolean;
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive) return System.Address;
+   function Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive) return Subprogram_Type;
    function Nth_Arg
      (Data : Shell_Callback_Data; N : Positive; Class : Class_Type;
       Allow_Null : Boolean := False)
@@ -971,30 +992,6 @@ package body Shell_Script is
       return Execute_GPS_Shell_Command
         (Script.Kernel, Command, Args, Errors'Unchecked_Access);
    end Execute_Command_With_Args;
-
-   ---------------------
-   -- Execute_Command --
-   ---------------------
-
-   function Execute_Command
-     (Script  : access Shell_Scripting_Record;
-      Command : String;
-      Args    : Callback_Data'Class) return Boolean
-   is
-      Errors : aliased Boolean;
-      Result : constant String := Trim
-        (Reduce
-           (Execute_GPS_Shell_Command
-              (Script.Kernel, Command & ' ' & Argument_List_To_Quoted_String
-                 (Shell_Callback_Data (Args).Args.all),
-               Errors'Unchecked_Access)),
-         Ada.Strings.Both);
-   begin
-      if Script.Console /= null then
-         Insert (Script.Console, Result);
-      end if;
-      return Result = "1" or else Case_Insensitive_Equal (Result, "true");
-   end Execute_Command;
 
    ------------------
    -- Execute_File --
@@ -1910,5 +1907,85 @@ package body Shell_Script is
       --  anyway.
       Free_Pointer := False;
    end Primitive_Free;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script  : access Shell_Scripting_Record;
+      Command : String;
+      Args    : Callback_Data'Class) return Boolean
+   is
+      Errors : aliased Boolean;
+      Result : constant String := Trim
+        (Reduce
+           (Execute_GPS_Shell_Command
+            (Script.Kernel, Command & ' ' & Argument_List_To_Quoted_String
+                 (Shell_Callback_Data (Args).Args.all),
+               Errors'Unchecked_Access)),
+         Ada.Strings.Both);
+   begin
+      if Script.Console /= null then
+         Insert (Script.Console, Result);
+      end if;
+      return Result = "1" or else Case_Insensitive_Equal (Result, "true");
+   end Execute_Command;
+
+   -------------
+   -- Execute --
+   -------------
+
+   procedure Execute
+     (Subprogram : access Shell_Subprogram_Record;
+      Args       : Callback_Data'Class)
+   is
+      D    : Shell_Callback_Data := Shell_Callback_Data (Args);
+      Custom : Command_Access;
+   begin
+      Custom := Create_Proxy
+        (Subprogram.Action.Command,
+         (null,
+          null,
+          null,
+          D.Args,
+          null));
+
+      Launch_Background_Command
+        (Get_Kernel (Args),
+         Custom,
+         True,
+         True,
+         "",
+         True);
+   end Execute;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Subprogram : in out Shell_Subprogram_Record) is
+      pragma Unreferenced (Subprogram);
+   begin
+      null;
+   end Free;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Shell_Callback_Data; N : Positive) return Subprogram_Type
+   is
+      A : Action_Record_Access;
+   begin
+      A := Lookup_Action (Get_Kernel (Data), Nth_Arg (Data, N));
+      if A = null then
+         raise Invalid_Parameter;
+      else
+         return new Shell_Subprogram_Record'
+           (Subprogram_Record with Action => A);
+      end if;
+   end Nth_Arg;
 
 end Shell_Script;
