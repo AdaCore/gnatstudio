@@ -28,7 +28,6 @@ with Glib.Values;                use Glib.Values;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with Ada.Unchecked_Deallocation;
 with Ada.Calendar;               use Ada.Calendar;
-with GNAT.Calendar;              use GNAT.Calendar;
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with File_Utils;                 use File_Utils;
 with OS_Utils;                   use OS_Utils;
@@ -528,25 +527,7 @@ package body VFS is
    begin
       if File.Value.Connection = null then
          if Is_Regular_File (File) then
-            declare
-               T      : constant OS_Time :=
-                 File_Time_Stamp (Locale_Full_Name (File));
-               Year   : Year_Type;
-               Month  : Month_Type;
-               Day    : Day_Type;
-               Hour   : Hour_Type;
-               Minute : Minute_Type;
-               Second : Second_Type;
-            begin
-               GM_Split (T, Year, Month, Day, Hour, Minute, Second);
-               return GNAT.Calendar.Time_Of
-                 (Year   => Year,
-                  Month  => Month,
-                  Day    => Day,
-                  Hour   => Hour,
-                  Minute => Minute,
-                  Second => Second);
-            end;
+            return File_Utils.File_Time_Stamp (Locale_Full_Name (File));
          else
             return No_Time;
          end if;
