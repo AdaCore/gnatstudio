@@ -49,7 +49,6 @@ with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Traces;                    use Traces;
 with Projects;                  use Projects;
 with Glide_Intl;                use Glide_Intl;
@@ -88,9 +87,17 @@ package body Glide_Main_Window is
    package Show_Tabs_Policy_Properties is new Generic_Enumeration_Property
      ("Tabs_Policy", Tabs_Policy_Enum);
 
+   type Toolbar_Icons_Size is (Hide_Toolbar, Small_Icons, Large_Icons);
+   for Toolbar_Icons_Size'Size use Glib.Gint'Size;
+   pragma Convention (C, Toolbar_Icons_Size);
+   package Toolbar_Icons_Size_Properties is new Generic_Enumeration_Property
+     ("Toobar_Icons", Toolbar_Icons_Size);
+
    Pref_Draw_Title_Bars : Param_Spec_Boolean;
    Pref_Tabs_Policy     : Param_Spec_Enum;
    Pref_Tabs_Position   : Param_Spec_Enum;
+   Pref_Toolbar_Style   : Param_Spec_Enum;
+   Animated_Image_Small : Param_Spec_String;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -133,6 +140,12 @@ package body Glide_Main_Window is
       Context : Interactive_Command_Context)
       return Command_Return_Type;
    --  Act on the layout of windows
+
+   procedure Put_Animation
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Main_Window    : access Glide_Window_Record'Class;
+      File_From_Pref : String);
+   --  Add the animated icon to the right of the toolbar
 
    procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the project is changed.
@@ -196,7 +209,7 @@ package body Glide_Main_Window is
       Window : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
    begin
-      if not Get_Pref (Kernel, Show_Toolbar) then
+      if Window.Animation_Image = null then
          return False;
 
       elsif Advance (Window.Animation_Iter) then
@@ -273,6 +286,40 @@ package body Glide_Main_Window is
       Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
    end On_Project_Changed;
 
+   -------------------
+   -- Put_Animation --
+   -------------------
+
+   procedure Put_Animation
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Main_Window    : access Glide_Window_Record'Class;
+      File_From_Pref : String)
+   is
+      File : constant String := Normalize_Pathname
+        (File_From_Pref, Get_System_Dir (Kernel) & "/share/gps/");
+      Error  : GError;
+      Pixbuf : Gdk_Pixbuf;
+   begin
+      if Main_Window.Animation_Image /= null then
+         Destroy (Main_Window.Animation_Image);
+         Main_Window.Animation_Image := null;
+      end if;
+
+      Trace (Me, "Loading animation " & File);
+
+      if Is_Regular_File (File) then
+         Gdk_New_From_File (Main_Window.Animation, File, Error);
+         Gtk_New (Main_Window.Animation_Image, Main_Window.Animation);
+         Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
+         Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
+         Set (Main_Window.Animation_Image, Pixbuf);
+         Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
+         Show_All (Main_Window.Animation_Image);
+      else
+         Trace (Me, "Animation not found");
+      end if;
+   end Put_Animation;
+
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -294,14 +341,25 @@ package body Glide_Main_Window is
            (Boolean'Pos
               (Get_Pref (Kernel, Can_Change_Accels))));
 
-      if Get_Pref (Kernel, Show_Toolbar) then
-         Set_Size_Request (Win.Toolbar_Box, -1, -1);
-         Set_Child_Visible (Win.Toolbar_Box, True);
-         Show_All (Win.Toolbar_Box);
-      else
-         Set_Child_Visible (Win.Toolbar_Box, False);
-         Hide_All (Win.Toolbar_Box);
-      end if;
+      case Toolbar_Icons_Size'Val (Get_Pref (Kernel, Pref_Toolbar_Style)) is
+         when Hide_Toolbar =>
+            Set_Child_Visible (Win.Toolbar_Box, False);
+            Hide_All (Win.Toolbar_Box);
+         when Small_Icons  =>
+            Set_Size_Request (Win.Toolbar_Box, -1, -1);
+            Set_Child_Visible (Win.Toolbar_Box, True);
+            Show_All (Win.Toolbar_Box);
+            Set_Icon_Size (Win.Toolbar, Icon_Size_Small_Toolbar);
+            Put_Animation
+              (Kernel, Win, Get_Pref (Kernel, Animated_Image_Small));
+         when Large_Icons  =>
+            Set_Size_Request (Win.Toolbar_Box, -1, -1);
+            Set_Child_Visible (Win.Toolbar_Box, True);
+            Show_All (Win.Toolbar_Box);
+            Set_Icon_Size (Win.Toolbar, Icon_Size_Large_Toolbar);
+            Put_Animation
+              (Kernel, Win, Get_Pref (Kernel, Animated_Image));
+      end case;
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
          Set_Style (Get_Toolbar (Kernel), Toolbar_Both);
@@ -354,9 +412,6 @@ package body Glide_Main_Window is
       Prefix_Directory : String)
    is
       Box1   : Gtk_Hbox;
-      Error  : GError;
-      Pixbuf : Gdk_Pixbuf;
-
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
 
@@ -390,6 +445,25 @@ package body Glide_Main_Window is
       Register_Property
         (Main_Window.Kernel, Param_Spec (Pref_Tabs_Position), -"Windows");
 
+      Pref_Toolbar_Style := Param_Spec_Enum
+        (Toolbar_Icons_Size_Properties.Gnew_Enum
+           (Name    => "General-Toolbar-Style",
+            Nick    => -"Tool bar style",
+            Blurb   => -("Indicates how the tool bar should be displayed"),
+            Default => Large_Icons));
+      Register_Property
+        (Main_Window.Kernel, Param_Spec (Pref_Toolbar_Style), -"General");
+
+      Animated_Image_Small := Param_Spec_String (Gnew_String
+        (Name    => "General-Animated-Image-Small",
+         Nick    => -"Animated image (small)",
+         Blurb   => -("Animated image used to inform the user about"
+                      & " a command in process"),
+         Default => "gps-animation-small.gif",
+         Flags   => Param_Readable));
+      Register_Property
+        (Main_Window.Kernel, Param_Spec (Animated_Image_Small), -"General");
+
 
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
 
@@ -405,29 +479,9 @@ package body Glide_Main_Window is
       Set_Tooltips (Main_Window.Toolbar, True);
       Pack_Start (Box1, Main_Window.Toolbar, True, True);
 
-      declare
-         File : constant String := Format_Pathname
-           (Prefix_Directory & "/share/gps/" &
-            Get_Pref (Main_Window.Kernel, Animated_Image));
-      begin
-         if Is_Regular_File (File) then
-            Trace (Me, "Loading animation " & File);
-            Gtk_New (Main_Window.Animation_Frame);
-            Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_In);
-            Pack_End (Box1, Main_Window.Animation_Frame, False, False);
-
-            Gdk_New_From_File (Main_Window.Animation, File, Error);
-            Gtk_New (Main_Window.Animation_Image, Main_Window.Animation);
-            Main_Window.Animation_Iter := Get_Iter (Main_Window.Animation);
-            Pixbuf := Get_Pixbuf (Main_Window.Animation_Iter);
-            Set (Main_Window.Animation_Image, Pixbuf);
-            Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
-         else
-            --  Since we do not have the animated icon, use small icons to keep
-            --  the toolbar smaller
-            Set_Icon_Size (Main_Window.Toolbar, Icon_Size_Small_Toolbar);
-         end if;
-      end;
+      Gtk_New (Main_Window.Animation_Frame);
+      Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_In);
+      Pack_End (Box1, Main_Window.Animation_Frame, False, False);
 
       Widget_Callback.Connect
         (Main_Window, "destroy",
