@@ -457,7 +457,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Commit'Access),
+                  (On_Menu_Edit_Log'Access),
                   Selection_Context_Access (Context));
             end if;
          end;
