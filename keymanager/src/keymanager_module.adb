@@ -1104,11 +1104,20 @@ package body KeyManager_Module is
 
    procedure Add_Dialog_Grab (Dialog : access Gtk_Widget_Record'Class) is
       D   : constant Add_Editor := Add_Editor (Dialog);
-      Key : constant String := Grab_Multiple_Key (D.Grab, True);
+      Handler   : constant Key_Manager_Access :=
+        Key_Manager_Access (Get_Key_Handler (D.Kernel));
    begin
-      if Key /= "" then
-         Set_Text (D.Grab, Key);
-      end if;
+      Handler.Active := False;
+
+      declare
+         Key : constant String := Grab_Multiple_Key (D.Grab, True);
+      begin
+         if Key /= "" then
+            Set_Text (D.Grab, Key);
+         end if;
+      end;
+
+      Handler.Active := True;
 
    exception
       when E : others =>
