@@ -848,9 +848,9 @@ package body Src_Editor_Buffer is
 
       Destroy_Hook (Buffer);
 
-      if Buffer.Timeout_Id /= 0 then
+      if Buffer.Timeout_Registered then
          Timeout_Remove (Buffer.Timeout_Id);
-         Buffer.Timeout_Id := 0;
+         Buffer.Timeout_Registered := False;
 
          if Buffer.Filename /= VFS.No_File then
             Delete_File
@@ -2138,9 +2138,9 @@ package body Src_Editor_Buffer is
 
       --  Connect timeout, to handle automatic saving of buffer
 
-      if B.Timeout_Id /= 0 then
+      if B.Timeout_Registered then
          Timeout_Remove (B.Timeout_Id);
-         B.Timeout_Id := 0;
+         B.Timeout_Registered := False;
       end if;
 
       Timeout := Get_Pref (Kernel, Periodic_Save);
@@ -2148,6 +2148,7 @@ package body Src_Editor_Buffer is
       if Timeout > 0 then
          B.Timeout_Id := Buffer_Timeout.Add
            (Guint32 (Timeout) * 1000,  Automatic_Save'Access, B.all'Access);
+         B.Timeout_Registered := True;
       end if;
 
       Prev := B.Block_Highlighting;
