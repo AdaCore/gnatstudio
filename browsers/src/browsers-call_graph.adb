@@ -243,7 +243,7 @@ package body Browsers.Call_Graph is
    --  ??? Should also have line and column information
 
    function Open_Call_Graph_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child;
    --  Find, or create a new, call graph editor.
 
@@ -252,12 +252,12 @@ package body Browsers.Call_Graph is
    --  Create a new call graph browser.
 
    procedure Edit_Spec_From_Contextual
-     (Widget : access GObject_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Open an editor for the entity described in Context.
 
    procedure Edit_Body_From_Contextual
-     (Widget : access GObject_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Open an editor for the entity described in Context.
 
@@ -302,9 +302,9 @@ package body Browsers.Call_Graph is
    --  Add a new entity to the browser, if not already there.
 
    procedure Add_Entity_And_Link
-     (Cb     : Examine_Callback;
-      Entity : Entity_Information;
-      Ref    : E_Reference;
+     (Cb          : Examine_Callback;
+      Entity      : Entity_Information;
+      Ref         : E_Reference;
       Is_Renaming : Boolean);
    --  Add Entity, and possibly a link to Cb.Item to Cb.Browser
 
@@ -458,7 +458,7 @@ package body Browsers.Call_Graph is
    -----------------------------
 
    function Open_Call_Graph_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
       return Gtkada.MDI.MDI_Child
    is
       Child   : MDI_Child;
@@ -547,15 +547,15 @@ package body Browsers.Call_Graph is
    ----------------------------------------
 
    procedure Examine_Entity_Call_Graph_Iterator
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information;
-      Callback      : Examine_Callback;
-      Execute       : Execute_Callback)
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Entity   : Entity_Information;
+      Callback : Examine_Callback;
+      Execute  : Execute_Callback)
    is
-      Tree          : Scope_Tree;
-      Node          : Scope_Tree_Node;
-      Rename        : Entity_Information;
-      Is_Renaming   : Boolean;
+      Tree        : Scope_Tree;
+      Node        : Scope_Tree_Node;
+      Rename      : Entity_Information;
+      Is_Renaming : Boolean;
 
       procedure Process_Item (Node : Scope_Tree_Node);
       --  Add the call graph for Node, linking the new items to Item.
@@ -623,8 +623,8 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    procedure Examine_Entity_Call_Graph
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Entity   : Entity_Information)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information)
    is
       Child_Browser : MDI_Child;
       Cb            : Examine_Callback;
@@ -823,9 +823,9 @@ package body Browsers.Call_Graph is
    -------------------------
 
    procedure Add_Entity_And_Link
-     (Cb     : Examine_Callback;
-      Entity : Entity_Information;
-      Ref    : E_Reference;
+     (Cb          : Examine_Callback;
+      Entity      : Entity_Information;
+      Ref         : E_Reference;
       Is_Renaming : Boolean)
    is
       pragma Unreferenced (Ref);
@@ -866,8 +866,8 @@ package body Browsers.Call_Graph is
    ----------------------------------
 
    procedure Examine_Ancestors_Call_Graph
-     (Kernel        : access Kernel_Handle_Record'Class;
-      Entity        : Entity_Information)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Entity : Entity_Information)
    is
       Child_Browser : MDI_Child;
       Cb            : Examine_Callback;
@@ -900,7 +900,7 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    procedure Edit_Body_From_Contextual
-     (Widget : access GObject_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
@@ -946,7 +946,7 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    procedure Edit_Spec_From_Contextual
-     (Widget : access GObject_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
@@ -1775,8 +1775,7 @@ package body Browsers.Call_Graph is
    ------------------
 
    function Save_Desktop
-     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Node_Ptr
    is
       N : Node_Ptr;
    begin
