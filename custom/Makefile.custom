@@ -28,7 +28,6 @@ CUSTOM_OBJ_DIR = $(CUSTOM_BASE_DIR)/obj
 OBJ_DIR = $(CUSTOM_OBJ_DIR)
 
 CFLAGS = -g -O2
-ADA_SOURCES = custom_gui.adb
 
 PROJECT_FILE = custom
 
