@@ -164,6 +164,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Harness_Window : Make_Harness_Window_Access :=
         Make_Harness_Window_Access (Get_Toplevel (Object));
 
+      --  ??? This is never freed
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
       Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
       Filter_C : Filter_Show_Suites_Access := new Filter_Show_Suites;
@@ -178,7 +179,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
             Transparent => Null_Color,
             Data => box_xpm);
 
-         Gtk_New (Harness_Window.Explorer, "");
+         Gtk_New (Harness_Window.Explorer, "", "Select test harness");
          Create_From_Xpm_D
            (Filter_B.Spec_Pixmap,
             Window => null,

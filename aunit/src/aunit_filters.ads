@@ -77,7 +77,7 @@ package Aunit_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Ada;
-      Win       : in File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : in String;
       File      : in String;
       State     : out File_State;
@@ -89,7 +89,7 @@ package Aunit_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Suites;
-      Win       : in File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : in String;
       File      : in String;
       State     : out File_State;
@@ -101,7 +101,7 @@ package Aunit_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Tests;
-      Win       : in File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : in String;
       File      : in String;
       State     : out File_State;

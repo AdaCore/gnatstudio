@@ -168,7 +168,7 @@ package body Aunit_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Suites;
-      Win       : in File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : in String;
       File      : in String;
       State     : out File_State;
@@ -206,7 +206,7 @@ package body Aunit_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Tests;
-      Win       : in File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : in String;
       File      : in String;
       State     : out File_State;
@@ -238,7 +238,7 @@ package body Aunit_Filters is
 
    procedure Use_File_Filter
      (Filter    : access Filter_Show_Ada;
-      Win       : in File_Selector_Window_Access;
+      Win       : access File_Selector_Window_Record'Class;
       Dir       : in String;
       File      : in String;
       State     : out File_State;
@@ -247,6 +247,8 @@ package body Aunit_Filters is
       Text      : out GNAT.OS_Lib.String_Access)
    is
    begin
+      --  ??? In fact, we should gather all the possible extensions in the
+      --  ??? projects, as well as the naming scheme exceptions.
       if File'Length >= 4
         and then (File (File'Last - 3 .. File'Last) = ".ads"
                   or else File (File'Last - 3 .. File'Last) = ".adb")

@@ -150,7 +150,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Filter_C : Filter_Show_Tests_Access := new Filter_Show_Tests;
    begin
       if Suite_Window.Explorer = null then
-         Gtk_New (Suite_Window.Explorer, "");
+         Gtk_New (Suite_Window.Explorer, "", "Select test suite");
          Create_From_Xpm_D
            (Filter_C.Suite_Pixmap,
             Window => null,
