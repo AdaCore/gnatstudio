@@ -483,14 +483,24 @@ package body Src_Editor_Module is
          end if;
 
       elsif Modified (Box) then
-         Button := Message_Dialog
-           (Msg            =>
-              (-"Do you want to save file ") & Get_Filename (Box) & " ?",
-            Dialog_Type    => Confirmation,
-            Buttons        =>
-              Button_Yes or Button_All or Button_No or Button_Cancel,
-            Default_Button => Button_Cancel,
-            Parent         => Get_Main_Window (Kernel));
+         if Get_Filename (Box) /= "" then
+            Button := Message_Dialog
+              (Msg            =>
+                 (-"Do you want to save file ") & Get_Filename (Box) & " ?",
+               Dialog_Type    => Confirmation,
+               Buttons        =>
+                 Button_Yes or Button_All or Button_No or Button_Cancel,
+               Default_Button => Button_Cancel,
+               Parent         => Get_Main_Window (Kernel));
+         else
+            Button := Message_Dialog
+              (Msg            => -"Do you want to save file <no name> ?",
+               Dialog_Type    => Confirmation,
+               Buttons        =>
+                 Button_Yes or Button_All or Button_No or Button_Cancel,
+               Default_Button => Button_Cancel,
+               Parent         => Get_Main_Window (Kernel));
+         end if;
 
          case Button is
             when Button_Yes =>
@@ -703,42 +713,22 @@ package body Src_Editor_Module is
    is
       Child  : MDI_Child := Find_Current_Editor (Kernel);
       Source : Source_Editor_Box;
+      Old_Name : constant String := Get_Filename (Source);
    begin
       if Child = null then
          return;
       end if;
 
       Source := Source_Box (Get_Widget (Child)).Editor;
+      Save_To_File (Source, Name, Success);
 
-      declare
-         Old_Name : constant String := Get_Filename (Source);
-      begin
-         if Old_Name = ""
-           and then Name = ""
-         then
-            declare
-               New_Name : constant String := Select_File (-"Save File As");
-            begin
-               if New_Name = "" then
-                  return;
-               else
-                  Save_To_File (Source, New_Name, Success);
-               end if;
-            end;
-
-         else
-            Save_To_File (Source, Name, Success);
-         end if;
-
-         if Old_Name /= Get_Filename (Source) then
-            --  Update the title, in case "save as..." was used.
-
-            Set_Title
-              (Child, Get_Filename (Source),
-               Base_Name (Get_Filename (Source)));
-            Recompute_View (Kernel);
-         end if;
-      end;
+      --  Update the title, in case "save as..." was used.
+      if Old_Name /= Get_Filename (Source) then
+         Set_Title
+           (Child, Get_Filename (Source),
+            Base_Name (Get_Filename (Source)));
+         Recompute_View (Kernel);
+      end if;
    end Save_To_File;
 
    -------------------------

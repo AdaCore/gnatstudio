@@ -46,6 +46,7 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
+with Gtkada.File_Selector;       use Gtkada.File_Selector;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
@@ -1418,7 +1419,7 @@ package body Src_Editor_Box is
       Filename : String := "";
       Success  : out Boolean)
    is
-      File : String := Get_Filename (Editor.Source_Buffer);
+      File : constant String := Get_Filename (Editor.Source_Buffer);
    begin
       if not Editor.Writable then
          Success := False;
@@ -1429,7 +1430,34 @@ package body Src_Editor_Box is
 
       if Filename = "" then
          if File = "" then
-            Success := False;
+            declare
+               Name : constant String := Select_File (-"Save File As");
+            begin
+               if Name = "" then
+                  Success := False;
+                  return;
+               end if;
+
+               if Is_Regular_File (Name) then
+                  if Message_Dialog
+                    (Msg => Base_Name (Name)
+                       & (-" already exists. Do you want to overwrite ?"),
+                     Dialog_Type => Confirmation,
+                     Buttons => Button_OK or Button_Cancel,
+                     Title => "Confirm overwriting",
+                     Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
+                  then
+                     Success := False;
+                  end if;
+               end if;
+
+               if Success then
+                  Save_To_File (Editor.Source_Buffer, Name, Success);
+                  Set_Filename (Editor.Source_Buffer, Name);
+               end if;
+
+               Success := True;
+            end;
          else
             if not Check_Timestamp (Editor.Source_Buffer, Ask_User => False)
               and then Message_Dialog
