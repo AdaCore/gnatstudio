@@ -545,14 +545,14 @@ package body VCS_View_Pkg is
                  and then Force_Display
                then
                   Append (Page.Model, Iter, Null_Iter);
+               end if;
 
-                  if Iter /= Null_Iter then
-                     Fill_Info (Page, Iter, New_Status, Success);
-                  end if;
-               else
-                  if Iter /= Null_Iter then
-                     Remove (Page.Model, Iter);
-                  end if;
+               if Iter /= Null_Iter then
+                  Fill_Info (Page, Iter, New_Status, Success);
+               end if;
+            else
+               if Iter /= Null_Iter then
+                  Remove (Page.Model, Iter);
                end if;
             end if;
          end;
