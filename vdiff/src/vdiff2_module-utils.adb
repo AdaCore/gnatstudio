@@ -538,6 +538,38 @@ package body Vdiff2_Module.Utils is
       The_Range      : Natural;
       Line           : Integer;
 
+      procedure Add_Side_Symbol
+        (File       : Virtual_File;
+         Line_Start : Natural;
+         Line_End   : Natural;
+         Symbol     : String);
+      --  Add the specified symbol to the side of lines Line_Start to Line_End
+      --  in editors for File.
+
+      procedure Add_Side_Symbol
+        (File       : Virtual_File;
+         Line_Start : Natural;
+         Line_End   : Natural;
+         Symbol     : String)
+      is
+         Infos : Line_Information_Data;
+      begin
+         Infos := new Line_Information_Array (Line_Start .. Line_End);
+
+         for J in Infos'Range loop
+            Infos (J).Text := new String'(Symbol);
+         end loop;
+
+         Add_Line_Information
+           (Kernel,
+            File,
+            Id_Col_Vdiff,
+            Infos,
+            Normalize => False);
+
+         Unchecked_Free (Infos);
+      end Add_Side_Symbol;
+
    begin
       Trace (Me, "Show_Differences");
 
@@ -596,6 +628,10 @@ package body Vdiff2_Module.Utils is
                   VStyle (Other).all,
                   The_Range);
 
+               Add_Side_Symbol
+                 (Item.File2,
+                  Curr_Chunk.Range2.First, Curr_Chunk.Range2.Last - 1,
+                  "+");
             when Change =>
                Modification := "modified";
                The_Range := Curr_Chunk.Range2.Last - Curr_Chunk.Range2.First;
@@ -608,6 +644,15 @@ package body Vdiff2_Module.Utils is
                                VStyle (Ref).all, Offset1);
                Highlight_Line (Kernel, Item.File2, Curr_Chunk.Range2.First,
                                VStyle (Other).all, Offset2);
+
+               Add_Side_Symbol
+                 (Item.File2,
+                  Curr_Chunk.Range2.First, Curr_Chunk.Range2.Last - 1,
+                  "!");
+               Add_Side_Symbol
+                 (Item.File1,
+                  Curr_Chunk.Range1.First, Curr_Chunk.Range1.Last - 1,
+                  "!");
 
                if Offset1 < Offset2 then
                   Curr_Chunk.Range2.Blank_Lines_Mark :=
@@ -647,6 +692,10 @@ package body Vdiff2_Module.Utils is
                        Curr_Chunk.Range2.First, VStyle (Other).all,
                        Curr_Chunk.Range1.Last - Curr_Chunk.Range1.First);
 
+               Add_Side_Symbol
+                 (Item.File1,
+                  Curr_Chunk.Range1.First, Curr_Chunk.Range1.Last - 1,
+                  "-");
             when others =>
                null;
          end case;
