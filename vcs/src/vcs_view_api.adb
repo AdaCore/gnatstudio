@@ -161,118 +161,6 @@ package body VCS_View_API is
    --  Ask the user whether he wants to save the file editors for Files.
    --  Return False if the user has cancelled the action.
 
-   -------------------------------
-   -- Contextual menu callbacks --
-   -------------------------------
-
-   procedure On_Menu_Open
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Add
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Remove
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Revert
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Annotate
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Remove_Annotate
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Diff
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_View_Log
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Diff_Local
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Diff_Working_Head
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Diff_Specific
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Update
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Get_Status
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Edit_ChangeLog
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Edit_Log
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Commit
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Remove_Log
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Get_Status_Dir
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Update_Dir
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Get_Status_Dir_Recursive
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Update_Dir_Recursive
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_List_Project_Files
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_List_Project_Files_Recursive
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Get_Status_Project
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Get_Status_Project_Recursive
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Update_Project
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
-   procedure On_Menu_Update_Project_Recursive
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-
    ---------------------
    -- Get_Current_Ref --
    ---------------------
@@ -387,302 +275,27 @@ package body VCS_View_API is
       String_List.Free (Files);
    end Open;
 
-   ------------
-   -- Update --
-   ------------
-
-   procedure Update
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
-   begin
-      On_Menu_Update (Widget, Get_Current_Context (Kernel));
-   end Update;
-
-   ----------------
-   -- Get_Status --
-   ----------------
-
-   procedure Get_Status
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot get status",
-            Mode => Error);
-      else
-         On_Menu_Get_Status (Widget, Context);
-      end if;
-   end Get_Status;
-
-   ---------
-   -- Add --
-   ---------
-
-   procedure Add
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot add file",
-            Mode => Error);
-      else
-         On_Menu_Add (Widget, Context);
-      end if;
-   end Add;
-
-   ------------
-   -- Remove --
-   ------------
-
-   procedure Remove
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot remove file",
-            Mode => Error);
-      else
-         On_Menu_Remove (Widget, Context);
-      end if;
-   end Remove;
-
-   ------------
-   -- Revert --
-   ------------
-
-   procedure Revert
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle) is
-   begin
-      On_Menu_Revert (Widget, Get_Current_Context (Kernel));
-   end Revert;
-
-   ------------
-   -- Commit --
-   ------------
-
-   procedure Commit
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      --  ??? Is this the behaviour we want ?
-
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot commit", Mode => Error);
-      else
-         On_Menu_Commit (Widget, Context);
-      end if;
-   end Commit;
-
-   --------------------
-   -- View_Head_Diff --
-   --------------------
-
-   procedure View_Head_Diff
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot diff",
-            Mode => Error);
-      else
-         On_Menu_Diff (Widget, Context);
-      end if;
-   end View_Head_Diff;
-
-   --------------------
-   -- View_Work_Diff --
-   --------------------
-
-   procedure View_Work_Diff
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot diff", Mode => Error);
-      else
-         On_Menu_Diff_Local (Widget, Context);
-      end if;
-   end View_Work_Diff;
-
-   -------------------------
-   -- View_Work_Head_Diff --
-   -------------------------
-
-   procedure View_Work_Head_Diff
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot diff", Mode => Error);
-      else
-         On_Menu_Diff_Working_Head (Widget, Context);
-      end if;
-   end View_Work_Head_Diff;
-
-   ------------------------
-   -- View_Specific_Diff --
-   ------------------------
-
-   procedure View_Specific_Diff
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot diff", Mode => Error);
-      else
-         On_Menu_Diff_Specific (Widget, Context);
-      end if;
-   end View_Specific_Diff;
-
-   --------------
-   -- View_Log --
-   --------------
-
-   procedure View_Log
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot display log",
-            Mode => Error);
-      else
-         On_Menu_View_Log (Widget, Context);
-      end if;
-   end View_Log;
-
-   -------------------
-   -- View_Annotate --
-   -------------------
-
-   procedure View_Annotate
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot annotate", Mode => Error);
-      else
-         On_Menu_Annotate (Widget, Context);
-      end if;
-   end View_Annotate;
-
-   ------------------------
-   -- Remove_Annotations --
-   ------------------------
-
-   procedure Remove_Annotations
-     (Widget  : access GObject_Record'Class;
-      Kernel  : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot remove annotations",
-            Mode => Error);
-      else
-         On_Menu_Remove_Annotate (Widget, Context);
-      end if;
-   end Remove_Annotations;
-
-   --------------------
-   -- Edit_ChangeLog --
-   --------------------
-
-   procedure Edit_ChangeLog
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot edit ChangeLog",
-            Mode => Error);
-      else
-         On_Menu_Edit_ChangeLog (Widget, Context);
-      end if;
-   end Edit_ChangeLog;
-
-   --------------
-   -- Edit_Log --
-   --------------
-
-   procedure Edit_Log
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert
-           (Kernel, -"VCS: No file selected, cannot edit log", Mode => Error);
-      else
-         On_Menu_Edit_Log (Widget, Context);
-      end if;
-   end Edit_Log;
-
    -------------------------
    -- VCS_Contextual_Menu --
    -------------------------
 
    procedure VCS_Contextual_Menu
-     (Object  : access Glib.Object.GObject_Record'Class;
-      Context : access Selection_Context'Class;
-      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+     (Kernel          : Kernel_Handle;
+      Context         : Selection_Context_Access;
+      Menu            : access Gtk.Menu.Gtk_Menu_Record'Class;
+      Show_Everything : Boolean)
    is
-      pragma Unreferenced (Object);
       Item      : Gtk_Menu_Item;
       Menu_Item : Gtk_Menu_Item;
       Submenu   : Gtk_Menu;
       File_Name : File_Selection_Context_Access;
-      Kernel    : constant Kernel_Handle := Get_Kernel (Context);
-      Ref       : constant VCS_Access :=
-        Get_Current_Ref (Selection_Context_Access (Context));
+      Ref       : VCS_Access;
       Actions   : Action_Array;
+
+      File_Section    : Boolean;
+      Dir_Section     : Boolean;
+      Project_Section : Boolean;
+      Section_Active  : Boolean;
 
       procedure Add_Action
         (Action   : VCS_Action;
@@ -700,24 +313,48 @@ package body VCS_View_API is
               (Item, "activate",
                Context_Callback.To_Marshaller
                  (Callback),
-               Selection_Context_Access (Context));
+               Context);
+
+            if not Section_Active then
+               Set_Sensitive (Item, False);
+            end if;
          end if;
       end Add_Action;
 
+      Log_File : Boolean := False;
+
    begin
+      if Context = null then
+         Ref := Get_Current_Ref (Get_Project (Kernel));
+      else
+         Ref := Get_Current_Ref (Context);
+      end if;
+
       if Ref = null then
+         --  ??? Should add a menu item to add a VCS in the project.
          return;
       end if;
 
       Actions := Get_Identified_Actions (Ref);
 
-      if Context.all in File_Selection_Context'Class then
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
          File_Name := File_Selection_Context_Access (Context);
       end if;
 
-      if File_Name /= null
-        and then Has_File_Information (File_Name)
-      then
+      --  Determine which sections should be displayed.
+
+      File_Section := File_Name /= null
+        and then Has_File_Information (File_Name);
+      Dir_Section := File_Name /= null
+        and then Has_Directory_Information (File_Name);
+      Project_Section := File_Name /= null
+        and then Has_Project_Information (File_Name);
+
+      --  Look for the special case for handling log files.
+
+      if File_Section then
          declare
             File_S : constant String :=
               Full_Name (File_Information (File_Name)).all;
@@ -725,155 +362,155 @@ package body VCS_View_API is
             if File_S'Length > 4
               and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
             then
-               declare
-                  Original : constant Virtual_File :=
-                    Get_File_From_Log (Kernel, File_Information (File_Name));
-               begin
-                  if Original /= VFS.No_File
-                    and then Actions (Commit) /= null
-                  then
-                     Set_File_Information
-                       (File_Name,
-                        Original,
-                        Get_Project_From_File
-                          (Get_Registry (Kernel), Original));
+               Log_File := True;
+            end if;
+         end;
+      end if;
 
-                     Gtk_New (Item, Label => Actions (Commit).all & " ("
-                              & Krunch (Base_Name (Original)) & ")");
+      --  Fill the section relative to files.
 
-                     Append (Menu, Item);
-                     Context_Callback.Connect
-                       (Item, "activate",
-                        Context_Callback.To_Marshaller
-                          (On_Menu_Commit'Access),
-                        Selection_Context_Access (File_Name));
-                  end if;
-               end;
+      Section_Active := File_Section;
 
-            else
-               Add_Action (Status, On_Menu_Get_Status'Access);
-               Add_Action (Update, On_Menu_Update'Access);
+      if File_Section or else Show_Everything then
+         if Log_File then
+            declare
+               Original : constant Virtual_File :=
+                 Get_File_From_Log (Kernel, File_Information (File_Name));
+            begin
+               if Original /= VFS.No_File
+                 and then Actions (Commit) /= null
+               then
+                  Set_File_Information
+                    (File_Name,
+                     Original,
+                     Get_Project_From_File
+                       (Get_Registry (Kernel), Original));
 
-               if Actions (Commit) /= null then
-                  if Get_Log_From_File
-                    (Kernel, File_Information (File_Name), False) = VFS.No_File
-                  then
-                     Gtk_New
-                       (Item,
-                        Label =>
-                          Actions (Commit).all & (-" (via revision log)"));
-                  else
-                     Gtk_New (Item, Label => Actions (Commit).all);
-                  end if;
+                  Gtk_New (Item, Label => Actions (Commit).all & " ("
+                           & Krunch (Base_Name (Original)) & ")");
 
                   Append (Menu, Item);
                   Context_Callback.Connect
                     (Item, "activate",
                      Context_Callback.To_Marshaller
                        (On_Menu_Commit'Access),
-                     Selection_Context_Access (Context));
+                     Selection_Context_Access (File_Name));
+               end if;
+            end;
+
+         else
+            Add_Action (Status, On_Menu_Get_Status'Access);
+            Add_Action (Update, On_Menu_Update'Access);
+
+            if Actions (Commit) /= null then
+               if Section_Active
+                 and then Get_Log_From_File
+                   (Kernel, File_Information (File_Name), False) = VFS.No_File
+               then
+                  Gtk_New
+                    (Item,
+                     Label =>
+                       Actions (Commit).all & (-" (via revision log)"));
+               else
+                  Gtk_New (Item, Label => Actions (Commit).all);
                end if;
 
-               --  ??? append this separator only if there are items before
-               --  and after.
-
-               Gtk_New (Item);
-               Append (Menu, Item);
-
-               Add_Action (Open, On_Menu_Open'Access);
-               Add_Action (History, On_Menu_View_Log'Access);
-
-               --  ??? append this separator only if there are items before
-               --  and after.
-
-               Gtk_New (Item);
-               Append (Menu, Item);
-
-               Add_Action (Diff_Head, On_Menu_Diff'Access);
-
-               --  ??? This should be rewritten using actions.
---                 Gtk_New (Item, Label =>
---                          -"Compare working against head rev.");
---                 Append (Menu, Item);
---                 Context_Callback.Connect
---                   (Item, "activate",
---                    Context_Callback.To_Marshaller
---                      (On_Menu_Diff_Working_Head'Access),
---                    Selection_Context_Access (Context));
-
-               Add_Action (Diff, On_Menu_Diff_Specific'Access);
-
-               Gtk_New (Item);
-               Append (Menu, Item);
-
-               Add_Action (Annotate, On_Menu_Annotate'Access);
-
-               if Actions (Annotate) /= null then
-                  Gtk_New (Item, Label => -"Remove " & Actions (Annotate).all);
-                  Append (Menu, Item);
-                  Context_Callback.Connect
-                    (Item, "activate",
-                     Context_Callback.To_Marshaller
-                       (On_Menu_Remove_Annotate'Access),
-                     Selection_Context_Access (Context));
-               end if;
-
-               Gtk_New (Item, Label => -"Edit revision log");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                    (On_Menu_Edit_Log'Access),
-                  Selection_Context_Access (Context));
+                    (On_Menu_Commit'Access),
+                  Context);
 
-               Gtk_New (Item, Label => -"Edit global ChangeLog");
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Menu_Edit_ChangeLog'Access),
-                  Selection_Context_Access (Context));
-
-               Gtk_New (Item, Label => -"Remove revision log");
-               Append (Menu, Item);
-               Context_Callback.Connect
-                 (Item, "activate",
-                  Context_Callback.To_Marshaller
-                    (On_Menu_Remove_Log'Access),
-                  Selection_Context_Access (Context));
-
-               --  ??? append this separator only if there are items before
-               --  and after.
-
-               Gtk_New (Item);
-               Append (Menu, Item);
-
-               Add_Action (Add, On_Menu_Add'Access);
-               Add_Action (Remove, On_Menu_Remove'Access);
-               Add_Action (Revert, On_Menu_Revert'Access);
+               Set_Sensitive (Item, Section_Active);
             end if;
-         end;
+
+            Gtk_New (Item);
+            Append (Menu, Item);
+
+            Add_Action (Open, On_Menu_Open'Access);
+            Add_Action (History, On_Menu_View_Log'Access);
+
+            Gtk_New (Item);
+            Append (Menu, Item);
+
+            Add_Action (Diff_Head, On_Menu_Diff'Access);
+            Add_Action (Diff, On_Menu_Diff_Specific'Access);
+
+            Gtk_New (Item);
+            Append (Menu, Item);
+
+            Add_Action (Annotate, On_Menu_Annotate'Access);
+
+            if Actions (Annotate) /= null then
+               Gtk_New (Item, Label => -"Remove " & Actions (Annotate).all);
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Menu_Remove_Annotate'Access),
+                  Context);
+
+               Set_Sensitive (Item, Section_Active);
+            end if;
+
+            Gtk_New (Item, Label => -"Edit revision log");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Menu_Edit_Log'Access),
+               Context);
+            Set_Sensitive (Item, Section_Active);
+
+            Gtk_New (Item, Label => -"Edit global ChangeLog");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Menu_Edit_ChangeLog'Access),
+               Context);
+            Set_Sensitive (Item, Section_Active);
+
+            Gtk_New (Item, Label => -"Remove revision log");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (On_Menu_Remove_Log'Access),
+               Context);
+            Set_Sensitive (Item, Section_Active);
+
+            Gtk_New (Item);
+            Append (Menu, Item);
+
+            Add_Action (Add, On_Menu_Add'Access);
+            Add_Action (Remove, On_Menu_Remove'Access);
+            Add_Action (Revert, On_Menu_Revert'Access);
+         end if;
       end if;
 
-      if File_Name /= null
-        and then Has_File_Information (File_Name)
-        and then (Has_Directory_Information (File_Name)
-                  or else Has_Project_Information (File_Name))
+      if Show_Everything
+        or else (File_Section and then (Project_Section or else Dir_Section))
       then
          Gtk_New (Item);
          Append (Menu, Item);
       end if;
 
-      if File_Name /= null
-        and then Has_Directory_Information (File_Name)
-      then
-         if Has_Project_Information (File_Name)
-           or else Has_File_Information (File_Name)
+      --  Fill the section relative to directory
+
+      Section_Active := Dir_Section;
+
+      if Show_Everything or else Dir_Section then
+         if Show_Everything
+           or else Project_Section
+           or else File_Section
          then
             Gtk_New (Menu_Item, Label => -"Directory");
             Append (Menu, Menu_Item);
             Gtk_New (Submenu);
             Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+            Set_Sensitive (Menu_Item, Section_Active);
          else
             Submenu := Gtk_Menu (Menu);
          end if;
@@ -887,6 +524,7 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Get_Status_Dir'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
 
          if Actions (Update) /= null then
@@ -898,6 +536,7 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Update_Dir'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
 
          if Actions (Status) /= null then
@@ -910,6 +549,7 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Get_Status_Dir_Recursive'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
 
          if Actions (Update) /= null then
@@ -922,27 +562,31 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Update_Dir_Recursive'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
       end if;
 
-      if File_Name /= null
-        and then Has_Project_Information (File_Name)
-        and then Has_Directory_Information (File_Name)
+      if Show_Everything
+        or else ((File_Section or else Dir_Section) and then Project_Section)
       then
          Gtk_New (Item);
          Append (Menu, Item);
       end if;
 
-      if File_Name /= null
-        and then Has_Project_Information (File_Name)
-      then
-         if Has_Directory_Information (File_Name)
-           or else Has_File_Information (File_Name)
+      --  Fill the section relative to project
+
+      Section_Active := Project_Section;
+
+      if Show_Everything or else Project_Section then
+         if Show_Everything
+           or else Dir_Section
+           or else File_Section
          then
             Gtk_New (Menu_Item, Label => -"Project");
             Append (Menu, Menu_Item);
             Gtk_New (Submenu);
             Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+            Set_Sensitive (Menu_Item, Section_Active);
          else
             Submenu := Gtk_Menu (Menu);
          end if;
@@ -952,7 +596,7 @@ package body VCS_View_API is
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
-            (On_Menu_List_Project_Files'Access),
+              (On_Menu_List_Project_Files'Access),
             Selection_Context_Access (File_Name));
 
          if Actions (Status) /= null then
@@ -963,6 +607,7 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Get_Status_Project'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
 
          if Actions (Update) /= null then
@@ -973,6 +618,7 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Update_Project'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
 
          Gtk_New (Item, Label => -"List all files in project and subprojects");
@@ -980,7 +626,7 @@ package body VCS_View_API is
          Context_Callback.Connect
            (Item, "activate",
             Context_Callback.To_Marshaller
-            (On_Menu_List_Project_Files_Recursive'Access),
+              (On_Menu_List_Project_Files_Recursive'Access),
             Selection_Context_Access (File_Name));
 
          if Actions (Status) /= null then
@@ -993,6 +639,7 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Get_Status_Project_Recursive'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
 
          if Actions (Update) /= null then
@@ -1005,6 +652,7 @@ package body VCS_View_API is
                Context_Callback.To_Marshaller
                  (On_Menu_Update_Project_Recursive'Access),
                Selection_Context_Access (File_Name));
+            Set_Sensitive (Item, Section_Active);
          end if;
       end if;
    end VCS_Contextual_Menu;
@@ -1669,12 +1317,10 @@ package body VCS_View_API is
 
          if Has_Project_Information (File) then
             return Get_Current_Ref (Project_Information (File));
-         else
-            return Get_Current_Ref (Get_Project (Kernel));
          end if;
       end if;
 
-      return Get_VCS_From_Id ("");
+      return Get_Current_Ref (Get_Project (Kernel));
    end Get_Current_Ref;
 
    ------------------------
@@ -2858,97 +2504,6 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Update_All;
-
-   --------------------------------
-   -- Query_Status_For_Directory --
-   --------------------------------
-
-   procedure Query_Status_For_Directory
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert (Kernel, -"No directory selected", Mode => Error);
-      else
-         Ref (Context);
-         On_Menu_Get_Status_Dir (Widget, Context);
-         Unref (Context);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Query_Status_For_Directory;
-
-   ---------------------
-   -- Context_Factory --
-   ---------------------
-
-   procedure Update_Directory
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert (Kernel, -"No directory selected", Mode => Error);
-      else
-         On_Menu_Update_Dir (Widget, Get_Current_Context (Kernel));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Update_Directory;
-
-   ------------------------------------------
-   -- Query_Status_For_Directory_Recursive --
-   ------------------------------------------
-
-   procedure Query_Status_For_Directory_Recursive
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert (Kernel, -"No directory selected", Mode => Error);
-      else
-         On_Menu_Get_Status_Dir_Recursive
-           (Widget, Get_Current_Context (Kernel));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Query_Status_For_Directory_Recursive;
-
-   --------------------------------
-   -- Update_Directory_Recursive --
-   --------------------------------
-
-   procedure Update_Directory_Recursive
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      Context : constant Selection_Context_Access :=
-        Get_Current_Context (Kernel);
-   begin
-      if Context = null then
-         Console.Insert (Kernel, -"No directory selected", Mode => Error);
-      else
-         On_Menu_Update_Dir_Recursive (Widget, Get_Current_Context (Kernel));
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end Update_Directory_Recursive;
 
    ---------------------
    -- Context_Factory --
