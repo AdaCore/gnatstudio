@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Convert;              use Glib.Convert;
+
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -249,7 +251,7 @@ package body VCS.CVS is
             Files_Temp : List_Node := First (Filenames);
          begin
             while Files_Temp /= Null_Node loop
-               Append (Args, Base_Name (Data (Files_Temp)));
+               Append (Args, Locale_From_UTF8 (Base_Name (Data (Files_Temp))));
                Files_Temp := Next (Files_Temp);
             end loop;
          end;
@@ -297,11 +299,15 @@ package body VCS.CVS is
               Dir_Name (Data (Current_Filename));
             Current_List      : List;
          begin
-            while Current_Filename /= Null_Node
-              and then Dir_Name (Data (Current_Filename)) = Current_Directory
-            loop
-               Append (Current_List, Data (Current_Filename));
-               Current_Filename := Next (Current_Filename);
+            while Current_Filename /= Null_Node loop
+               declare
+                  File2 : constant String := Data (Current_Filename);
+               begin
+                  exit when Dir_Name (File2) /= Current_Directory;
+
+                  Append (Current_List, File2);
+                  Current_Filename := Next (Current_Filename);
+               end;
             end loop;
 
             --  At this point, Current_List should not be empty and
@@ -370,7 +376,8 @@ package body VCS.CVS is
                Index := First + 6;
                Skip_To_Char (Line, Index, ASCII.HT);
                Append (Current_Status.File_Name,
-                       New_Dir & Strip_Quotes (Line (7 .. Index - 1)));
+                       Locale_To_UTF8
+                         (New_Dir & Strip_Quotes (Line (7 .. Index - 1))));
                --  ??? Maybe we should use Strip_Blanks.
 
                Index := First;
@@ -557,7 +564,7 @@ package body VCS.CVS is
          Append (Args, "status");
 
          while Files /= Null_Node loop
-            Append (Args, Base_Name (Data (Files)));
+            Append (Args, Locale_From_UTF8 (Base_Name (Data (Files))));
             Files := Next (Files);
          end loop;
       end if;
@@ -741,11 +748,14 @@ package body VCS.CVS is
             Current_List      : String_List.List;
 
          begin
-            while Current_Filename /= Null_Node
-              and then Dir_Name (Data (Current_Filename)) = Current_Directory
-            loop
-               Append (Current_List, Data (Current_Filename));
-               Current_Filename := Next (Current_Filename);
+            while Current_Filename /= Null_Node loop
+               declare
+                  File2 : constant String := Data (Current_Filename);
+               begin
+                  exit when Dir_Name (File2) /= Current_Directory;
+                  Append (Current_List, File2);
+                  Current_Filename := Next (Current_Filename);
+               end;
             end loop;
 
             --  At this point, Current_List should not be empty and
@@ -784,11 +794,14 @@ package body VCS.CVS is
             Current_List      : String_List.List;
 
          begin
-            while Current_Filename /= Null_Node
-              and then Dir_Name (Data (Current_Filename)) = Current_Directory
-            loop
-               Append (Current_List, Data (Current_Filename));
-               Current_Filename := Next (Current_Filename);
+            while Current_Filename /= Null_Node loop
+               declare
+                  File2 : constant String := Data (Current_Filename);
+               begin
+                  exit when Dir_Name (File2) /= Current_Directory;
+                  Append (Current_List, File2);
+                  Current_Filename := Next (Current_Filename);
+               end;
             end loop;
 
             --  At this point, Current_List should not be empty and
@@ -852,7 +865,8 @@ package body VCS.CVS is
    begin
       while Filenames_Temp /= Null_Node loop
          declare
-            File     : constant String := Data (Filenames_Temp);
+            File     : constant String :=
+              Locale_From_UTF8 (Data (Filenames_Temp));
             Head     : List;
             Log_File : constant String := Get_Tmp_Dir
               & "cvs_log_" & Base_Name (File);
@@ -1137,7 +1151,7 @@ package body VCS.CVS is
             Append (Args_2, "-q");
             Append (Args_2, "update");
             Append (Args_2, "-p");
-            Append (Args_2, Base_Name (File));
+            Append (Args_2, Locale_Base_Name (File));
 
             Create (C_2,
                     Rep.Kernel,
@@ -1307,7 +1321,7 @@ package body VCS.CVS is
 
    begin
       Append (Args, "log");
-      Append (Args, Base_Name (File));
+      Append (Args, Locale_Base_Name (File));
       Append (Command_Head, Base_Name (File) & "$changelog");
 
       Create
@@ -1343,7 +1357,7 @@ package body VCS.CVS is
 
    begin
       Append (Args, "annotate");
-      Append (Args, Base_Name (File));
+      Append (Args, Locale_Base_Name (File));
       Append (Command_Head, Full_Name (File));
 
       Create
