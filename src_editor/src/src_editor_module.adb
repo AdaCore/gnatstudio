@@ -1913,6 +1913,7 @@ package body Src_Editor_Module is
          Filename : constant String :=
            Select_File
              (Title             => -"Open File",
+              Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
@@ -2074,6 +2075,7 @@ package body Src_Editor_Module is
             New_Name : constant String :=
               Select_File
                 (Title             => -"Save File As",
+                 Parent            => Get_Main_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Save_File,
                  History           => Get_History (Kernel));

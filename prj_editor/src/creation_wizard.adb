@@ -31,6 +31,7 @@ with Gtk.Handlers;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Table;             use Gtk.Table;
 with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Window;            use Gtk.Window;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.File_Selector;  use Gtkada.File_Selector;
 with Gtkada.Handlers;       use Gtkada.Handlers;
@@ -328,6 +329,7 @@ package body Creation_Wizard is
    procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class) is
       Name : constant String := Select_Directory
         (Title          => -"Select project file location",
+         Parent         => Gtk_Window (Get_Toplevel (W)),
          Base_Directory => Name_As_Directory
          (Get_Text (Prj_Wizard (W).Project_Location)),
          History        => Get_History (Prj_Wizard (W).Kernel));

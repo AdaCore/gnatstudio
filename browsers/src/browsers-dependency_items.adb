@@ -31,6 +31,7 @@ with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;      use Gtkada.Handlers;
@@ -809,10 +810,11 @@ package body Browsers.Dependency_Items is
      (Browser  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Browser);
       File : constant String :=
         Select_File
           (Title             => -"Select File",
+           Parent            =>
+             Gtk_Window (Get_Toplevel (Gtk_Widget (Browser))),
            Use_Native_Dialog =>
              Get_Pref (Get_Kernel (Context), Use_Native_Dialogs),
            Kind              => Open_File,

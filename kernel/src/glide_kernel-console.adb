@@ -392,6 +392,7 @@ package body Glide_Kernel.Console is
              (Title             => -"Save messages window as",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Save_File,
+              Parent            => Get_Main_Window (Kernel),
               History           => Get_History (Kernel));
       begin
          if File = "" then
@@ -430,6 +431,7 @@ package body Glide_Kernel.Console is
              (Title => -"Select file to load in the messages window",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
+              Parent            => Get_Main_Window (Kernel),
               History           => Get_History (Kernel));
 
       begin

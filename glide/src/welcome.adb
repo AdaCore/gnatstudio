@@ -31,6 +31,7 @@ with Gtk.Separator;        use Gtk.Separator;
 with Gtk.Size_Group;       use Gtk.Size_Group;
 with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 
@@ -370,6 +371,7 @@ package body Welcome is
       Dir : constant String := Select_Directory
         (Title             => -"Select a directory",
          Base_Directory    => Get_Text (S.Default_Dir),
+         Parent            => Gtk_Window (S),
          Use_Native_Dialog => Get_Pref (S.Kernel, Use_Native_Dialogs),
          History           => Get_History (S.Kernel));
    begin
@@ -399,6 +401,7 @@ package body Welcome is
             Base_Directory    => Dir.all,
             File_Pattern      => "*.gpr",
             Pattern_Name      => -"Project Files",
+            Parent            => Gtk_Window (Get_Toplevel (Screen)),
             Use_Native_Dialog => Get_Pref (S.Kernel, Use_Native_Dialogs),
             Kind              => Open_File,
             History           => Get_History (S.Kernel));

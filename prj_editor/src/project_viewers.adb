@@ -1373,6 +1373,7 @@ package body Project_Viewers is
                  Dir,
                  File_Pattern      => "*.gpr",
                  Pattern_Name      => "Project files",
+                 Parent            => Get_Main_Window (Get_Kernel (File)),
                  Use_Native_Dialog =>
                    Get_Pref (Get_Kernel (File), Use_Native_Dialogs),
                  Kind              => Unspecified,
@@ -1634,6 +1635,7 @@ package body Project_Viewers is
             Base_Directory    => Base_Dir,
             File_Pattern      => "*.ad*",
             Pattern_Name      => -"Ada source files",
+            Parent            => Gtk_Window (Get_Toplevel (Editor)),
             Use_Native_Dialog => Get_Pref (Ed.Kernel, Use_Native_Dialogs),
             Kind              => Unspecified,
             History           => Get_History (Ed.Kernel));

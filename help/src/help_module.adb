@@ -792,6 +792,7 @@ package body Help_Module is
              (-"Open HTML File",
               File_Pattern      => "*.htm*",
               Pattern_Name      => -"HTML files",
+              Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               History           => Get_History (Kernel));
 

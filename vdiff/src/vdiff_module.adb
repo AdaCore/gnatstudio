@@ -68,6 +68,7 @@ package body Vdiff_Module is
       File1  : constant String :=
         Select_File
           (Title             => -"Select First File",
+           Parent            => Get_Main_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
@@ -85,6 +86,7 @@ package body Vdiff_Module is
          File2 : constant String :=
            Select_File
              (Title             => -"Select Second File",
+              Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));

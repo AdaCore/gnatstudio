@@ -1958,6 +1958,7 @@ package body Src_Editor_Box is
                Name : constant String :=
                  Select_File
                    (Title             => -"Save File As",
+                    Parent            => Get_Main_Window (Editor.Kernel),
                     Default_Name      => New_Name.all,
                     Use_Native_Dialog =>
                       Get_Pref (Editor.Kernel, Use_Native_Dialogs),

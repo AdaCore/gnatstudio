@@ -27,6 +27,7 @@
 --  with Gtk.Enums; use Gtk.Enums;
 --  with Gtk.Style; use Gtk.Style;
 --  with Gtk.Widget; use Gtk.Widget;
+with Gtk.Window; use Gtk.Window;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Glide_Intl; use Glide_Intl;
 
@@ -45,6 +46,7 @@ package body Files_Extra_Info_Pkg.Callbacks is
         Files_Extra_Info_Access (Object);
       S     : constant String := Select_Directory
         (-"Select a directory",
+         Parent  => Gtk_Window (Get_Toplevel (Object)),
          History => null);  --  ??? No history
 
    begin

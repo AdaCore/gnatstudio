@@ -20,6 +20,7 @@
 
 with Glib;                         use Glib;
 with Gtk.Stock;                    use Gtk.Stock;
+with Gtk.Window;                   use Gtk.Window;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
@@ -105,6 +106,7 @@ package body Glide_Menu is
              (-"Open Project",
               File_Pattern      => "*.gpr",
               Pattern_Name      => -"Project files",
+              Parent            => Get_Main_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
@@ -134,7 +136,9 @@ package body Glide_Menu is
 
       Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
       Dir    : constant String := Select_Directory
-        (-"Select a directory", History => Get_History (Kernel));
+        (-"Select a directory",
+         History => Get_History (Kernel),
+         Parent  => Gtk_Window (Get_Main_Window (Kernel)));
 
    begin
       if Dir /= "" then
