@@ -1572,7 +1572,7 @@ package body Src_Editor_Module is
 
       while Node /= Null_Node loop
          Gtk_New (Mitem, Data (Node));
-         Prepend (Reopen_Menu, Mitem);
+         Append (Reopen_Menu, Mitem);
 
          Kernel_Callback.Connect
            (Mitem,
