@@ -208,23 +208,28 @@ package body Codefix_Module is
       pragma Unreferenced (Widget);
 
       Graphic_Codefix : Graphic_Codefix_Access;
-      Window          : MDI_Window;
       Child           : MDI_Child;
    begin
       Update_All (Codefix_Module_ID.Current_Text.all);
 
-      Gtk_New
-        (Graphic_Codefix,
-         Kernel,
-         Codefix_Module_ID.Current_Text,
-         Codefix_Module_ID.Corrector,
-         Remove_Pixmap'Access,
-         Create_Pixmap'Access);
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Graphic_Codefix_Record'Tag);
+      if Child = null then
+         Gtk_New
+           (Graphic_Codefix,
+            Kernel,
+            Codefix_Module_ID.Current_Text,
+            Codefix_Module_ID.Corrector,
+            Remove_Pixmap'Access,
+            Create_Pixmap'Access);
 
-      Window := Get_MDI (Kernel);
-      Child := Put (Window, Graphic_Codefix);
+         Child := Put (Get_MDI (Kernel), Graphic_Codefix);
+         Set_Title (Child, -"Code fixing", -"Codefix");
+      else
+         Raise_Child (Child);
+      end if;
+
       Set_Focus_Child (Child);
-      Set_Title (Child, -"Code fixing", -"Codefix");
 
    exception
       when E : others =>
