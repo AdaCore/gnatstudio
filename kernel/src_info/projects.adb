@@ -235,6 +235,7 @@ package body Projects is
                              & " is not writable. Project not saved");
             end if;
             Trace (Me, "Project file not writable: " & Project_Path (Project));
+            return;
          end if;
 
          declare
