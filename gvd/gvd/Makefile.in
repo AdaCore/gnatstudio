@@ -9,11 +9,15 @@ EXEC = odd
 
 all: $(EXEC)
 
+stylechk: clean
+	gcc -c $(ALL_CFLAGS) *_pkg.adb
+	make CFLAGS="-gnaty $(CFLAGS)"
+
 $(EXEC): force
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
 	  -largs $(LINK_FLAGS)
 
 clean:
-	rm -f *.o *.ali *~ b~*
+	rm -f *.o *.ali *~ b~* $(EXEC)
 
 force:
