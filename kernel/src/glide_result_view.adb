@@ -423,7 +423,7 @@ package body Glide_Result_View is
 
       if Is_Open (View.Kernel, File) then
          declare
-            Output : String := Create_Mark
+            Output : constant String := Create_Mark
               (View.Kernel, File, Line, Column);
          begin
             Fill_Iter
