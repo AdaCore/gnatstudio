@@ -692,8 +692,7 @@ package body Interactive_Consoles is
       --  Initialize the text buffer and the text view.
 
       Console.Prompt := new String'(Prompt);
-      Console.Handler := Handler;
-      Console.User_Data := User_Data;
+      Set_Command_Handler (Console, Handler, User_Data);
       Console.Key := new String'(String (Key));
       Console.History := History_List;
       Console.Highlight := Highlight;
@@ -808,6 +807,19 @@ package body Interactive_Consoles is
       Display_Prompt (Console);
       Console.Empty_Equals_Repeat := Empty_Equals_Repeat;
    end Initialize;
+
+   -------------------------
+   -- Set_Command_Handler --
+   -------------------------
+
+   procedure Set_Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : Command_Handler;
+      User_Data : GObject) is
+   begin
+      Console.Handler := Handler;
+      Console.User_Data := User_Data;
+   end Set_Command_Handler;
 
    -----------
    -- Clear --

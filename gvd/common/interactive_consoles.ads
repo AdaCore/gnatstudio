@@ -117,6 +117,12 @@ package Interactive_Consoles is
    --  Dynamically change the prompt. This doesn't impact the currently
    --  displayed prompt.
 
+   procedure Set_Command_Handler
+     (Console   : access Interactive_Console_Record'Class;
+      Handler   : Command_Handler;
+      User_Data : GObject);
+   --  Reset the command handler for the console
+
    procedure Set_Completion_Handler
      (Console : access Interactive_Console_Record'Class;
       Handler : GUI_Utils.Completion_Handler);
