@@ -2887,6 +2887,11 @@ package body Debugger.Gdb is
 
          if WTX_Version = 3 then
             Fill_Scope_Action (Debugger, Br, Num_Breakpoints);
+         else
+            for J in 1 .. Num_Breakpoints loop
+               Br (J).Scope := No_Scope;
+               Br (J).Action := No_Action;
+            end loop;
          end if;
 
          return Br;
