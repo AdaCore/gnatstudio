@@ -2254,7 +2254,7 @@ package body Project_Properties is
                Attr    => Description,
                Index   => Attribute_Index);
          begin
-            if Attr.Typ = Attribute_As_String then
+            if Attr.Typ = Attribute_As_String or else Current = "" then
                Set_Text (Editor.Ent, Current);
             elsif Description.Base_Name_Only then
                Set_Text (Editor.Ent, Base_Name (Current));
