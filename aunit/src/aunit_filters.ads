@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -49,7 +49,7 @@ package Aunit_Filters is
    type Filter_Show_Ada_Access is access all Filter_Show_Ada'Class;
    --  This filter shows all files, leaving only Ada files selectable.
    --  ??? Should eventually be replaced by a filter that only shows the files
-   --  ??? belonging to a project. This is easier to implement and more general
+   --  belonging to a project. This is easier to implement and more general
 
    type Filter_Show_Tests is new File_Filter_Record with record
       Suite_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
