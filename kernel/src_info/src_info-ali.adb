@@ -1547,50 +1547,73 @@ package body Src_Info.ALI is
    is
       Current_Dir_Name   : constant Character := '.';
       Dir                : String_Access;
-      Extension : constant String := File_Extension (Short_ALI_Filename);
-      Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
-      Dot_Replacement : constant String := Get_Attribute_Value
-        (Project, Dot_Replacement_Attribute, Naming_Package, Default => "-");
-      Predefined_Object_Path : constant String :=
-        Get_Predefined_Object_Path (Project_Registry (Get_Registry (Project)));
+      P : Project_Type := Project;
 
    begin
+      --  Start searching in the extending projects, in case the file was
+      --  recompiled in their context
+
+      while Extending_Project (P) /= No_Project loop
+         P := Extending_Project (P);
+      end loop;
+
       --  Compute the search path. If the objects path of the project is
       --  not null, then prepend it to the total search path.
-      while Last >= Short_ALI_Filename'First loop
+      while P /= No_Project loop
          declare
-            Path : constant String := Object_Path (Project, False);
+            Extension : constant String := File_Extension (Short_ALI_Filename);
+            Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
+            Dot_Replacement : constant String := Get_Attribute_Value
+              (P, Dot_Replacement_Attribute, Naming_Package, Default => "-");
+            Predefined_Object_Path : constant String :=
+              Get_Predefined_Object_Path (Project_Registry (Get_Registry (P)));
          begin
-            if Path /= "" then
-               Dir := Locate_Regular_File
-                 (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-                  & Extension, Path & Path_Separator &
-                  Predefined_Object_Path & Path_Separator & Current_Dir_Name);
-            else
-               Dir := Locate_Regular_File
-                 (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
-                  & Extension,
-                  Predefined_Object_Path & Path_Separator & Current_Dir_Name);
-            end if;
+            while Last >= Short_ALI_Filename'First loop
+               declare
+                  Path : constant String := Object_Path (P, False);
+               begin
+                  if Path /= "" then
+                     Dir := Locate_Regular_File
+                       (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+                        & Extension, Path & Path_Separator &
+                        Predefined_Object_Path
+                        & Path_Separator & Current_Dir_Name);
+                  else
+                     Dir := Locate_Regular_File
+                       (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+                        & Extension,
+                        Predefined_Object_Path
+                        & Path_Separator & Current_Dir_Name);
+                  end if;
+               end;
+
+               exit when Dir /= null;
+
+               --  Search the next candidate: it might be the parent if we have
+               --  a separate unit.
+
+               while Last > Short_ALI_Filename'First loop
+                  Last := Last - 1;
+                  exit when (Last + Dot_Replacement'Length - 1 <=
+                               Short_ALI_Filename'Last
+                             and then Short_ALI_Filename
+                               (Last .. Last + Dot_Replacement'Length - 1) =
+                               Dot_Replacement)
+
+                  --  Special case when there might be a confusion with the
+                  --  GNAT runtime files.
+                    or else (Dot_Replacement = "-"
+                             and then Short_ALI_Filename (Last) = '~');
+               end loop;
+               Last := Last - 1;
+            end loop;
          end;
 
-         exit when Dir /= null;
-
-         --  Search the next candidate: it might be the parent if we have a
-         --  separate unit.
-         while Last > Short_ALI_Filename'First loop
-            Last := Last - 1;
-            exit when
-              (Last + Dot_Replacement'Length - 1 <= Short_ALI_Filename'Last
-               and then Short_ALI_Filename
-                 (Last .. Last + Dot_Replacement'Length - 1) = Dot_Replacement)
-
-               --  Special case when there might be a confusion with the GNAT
-               --  runtime files.
-              or else (Dot_Replacement = "-"
-                       and then Short_ALI_Filename (Last) = '~');
-         end loop;
-         Last := Last - 1;
+         if Dir = null and then P /= Project then
+            P := Parent_Project (P);
+         else
+            P := No_Project;
+         end if;
       end loop;
 
       if Dir = null then
