@@ -59,6 +59,7 @@ unmodified in any copy.
 * Source Browsing::
 * Debugging::
 * Version Control System::
+* Tools::
 * Working in a Cross Environment::
 * Customization::
 * Environment::
@@ -79,6 +80,7 @@ Description of the main windows
 * The Status Line::
 
 Integrated Help
+* The Help Menu::
 
 Multiple Document Interface
 * Selecting Windows::
@@ -117,6 +119,7 @@ Compilation/Build
 * Ada Compilation and Build::
 * C/C++ Compilation and Build::
 * Multi-language Build::
+* The Build Menu::
 * Integrating existing build procedures with the GPS build system::
 
 Source Browsing
@@ -138,6 +141,11 @@ Version Control System
 * The VCS Explorer::
 * The VCS Menu::
 * The Version Control Contextual Menu::
+
+Tools
+* The Tools Menu::
+* Visual Comparison::
+* Code Fixing::
 
 Working in a Cross Environment
 * Customizing your Projects::
@@ -310,6 +318,41 @@ using the various contextual menus provided throughout GPS: these menus
 give direct access to the most relevant actions given the current context
 (e.g. a project, a directory, a file, an entity, @dots{}). Contextual menus
 pop up when the right mouse button is clicked.
+
+The menu bar gives access to the following items:
+
+@table @b
+
+@item File
+@xref{The File Menu}.
+
+@item Edit
+@xref{The Edit Menu}.
+
+@item Navigate
+@xref{The Navigate Menu}.
+
+@item VCS
+@xref{The VCS Menu}.
+
+@item Project
+@xref{The Project Menu}.
+
+@item Build
+@xref{The Build Menu}.
+
+@item Debug
+@xref{The Debug Menu}.
+
+@item Tools
+@xref{The Tools Menu}.
+
+@item Window
+@xref{Multiple Document Interface}.
+
+@item Help
+@xref{The Help Menu}.
+@end table
 
 @c --------------------------------------------------------------------
 @node The Tool Bar
@@ -517,7 +560,7 @@ launched, error messages.
 
 @iftex
 @cindex screen shot
-@image{messages, 12.7cm}
+@image{messages, 11.7cm}
 @end iftex
 
 @ifhtml
@@ -551,7 +594,7 @@ items or the mouse.
 
 @iftex
 @cindex screen shot
-@image{shell-window, 12.7cm}
+@image{shell-window, 11.7cm}
 @end iftex
 
 @ifhtml
@@ -590,7 +633,7 @@ search, compilation results, and so on).
 
 @iftex
 @cindex screen shot
-@image{locations-view, 12.7cm}
+@image{locations-view, 11.7cm}
 @end iftex
 
 @ifhtml
@@ -667,6 +710,10 @@ such as builds.
 @cindex HTML
 @c --------------------------------------------------------------------
 
+@menu
+* The Help Menu::
+@end menu
+
 @noindent
 By default when you start GPS, the working area contains a help window
 displaying HTML help files. On-line help for the GNAT tools is available
@@ -685,6 +732,54 @@ when not using it. You can reopen this window at any time using the
 For the best use of the integrated help, it is recommended to load small
 HTML pages each time instead of long pages which will be slow to load and
 display.
+
+@node The Help Menu
+@section The Help Menu
+@noindent
+The Help menu item provides the following entries:
+
+@table @b
+@item Zoom in
+Increase the size of the font used to display the help file.
+
+@item Zoom out
+Decrease the size of the font used to display the help file.
+
+@item Open HTML file...
+Open a file selection dialog to load an HTML file.
+
+@item Welcome
+Load the welcome page and open or raise the help window as needed.
+
+@item GNAT Programming System Tutorial
+Load the GPS tutorial.
+
+@item Using the GNAT Programming System
+Load the GPS documentation.
+
+@item Using the GNU Visual Debugger
+If available, load the GVD documentation.
+
+@item GNAT User's Guide
+If available, load the GNAT user's guide.
+
+@item GNAT Reference Manual
+If available, load the GNAT reference manual.
+
+@item Ada 95 Reference Manual
+If available, load the Ada 95 reference manual.
+
+@item Using the GNU Debugger
+If available, load the GDB documentation.
+
+@item Using GCC
+If available, load the GCC documentation.
+
+@item About
+Display a dialog giving information about the version of GPS and GNAT used.
+@c ??? add screen shot
+
+@end table
 
 @c --------------------------------------------------------------------
 @node Multiple Document Interface
@@ -1437,6 +1532,7 @@ The main menus that give access to extended functionalities related to
 source editing are described in this section.
 
 @subsection The File Menu
+@anchor{The File Menu}
 @noindent
 
 @table @b
@@ -1587,6 +1683,7 @@ windows and editors.
 @end table
 
 @subsection The Edit Menu
+@anchor{The Edit Menu}
 @cindex menu
 @cindex edit
 @noindent
@@ -3132,6 +3229,7 @@ started next time.
 * Ada Compilation and Build::
 * C/C++ Compilation and Build::
 * Multi-language Build::
+* The Build Menu::
 * Integrating existing build procedures with the GPS build system::
 @end menu
 
@@ -3148,6 +3246,10 @@ started next time.
 
 @node Multi-language Build
 @section Multi-language Build
+@noindent
+
+@node The Build Menu
+@section The Build Menu
 @noindent
 
 @node Integrating existing build procedures with the GPS build system
@@ -4025,6 +4127,55 @@ system, or whose information could not be retrieved (e.g. the version control
 server is temporarily unavailable).
 
 @end table
+
+@c --------------------------------------------------------------------
+@node Tools
+@chapter Tools
+@cindex tools
+@c --------------------------------------------------------------------
+
+@menu
+* The Tools Menu::
+* Visual Comparison::
+* Code Fixing::
+@end menu
+
+@node The Tools Menu
+@section The Tools Menu
+@noindent
+The @code{Tools} menu gives access to additional tools. Some items are
+currently disabled, meaning that these are planned tools not yet available.
+
+The list of active items includes:
+
+@table @b
+@item Call Graph
+@xref{Call Graph}.
+
+@item Dependency Browser
+@xref{Dependency Browser}.
+
+@item Entity Browser
+@xref{Entity Browser}.
+
+@item Compare
+@xref{Visual Comparison}.
+
+@item Code Fixing
+@xref{Code Fixing}.
+@end table
+
+@node Visual Comparison
+@section Visual Comparison
+@noindent
+@i{This section is incomplete}
+@c ??? incomplete
+
+@node Code Fixing
+@section Code Fixing
+@noindent
+@i{This section is incomplete}
+@c ??? incomplete
 
 @c --------------------------------------------------------------------
 @node Working in a Cross Environment
