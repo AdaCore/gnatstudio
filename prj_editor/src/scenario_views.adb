@@ -20,18 +20,16 @@
 
 with Glib;            use Glib;
 with Glib.Object;     use Glib.Object;
-with Gdk.Bitmap;      use Gdk.Bitmap;
-with Gdk.Color;       use Gdk.Color;
-with Gdk.Pixmap;      use Gdk.Pixmap;
 with Gtk.Button;      use Gtk.Button;
 with Gtk.Combo;       use Gtk.Combo;
 with Gtk.Dialog;      use Gtk.Dialog;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.GEntry;      use Gtk.GEntry;
+with Gtk.Image;       use Gtk.Image;
 with Gtk.Label;       use Gtk.Label;
 with Gtk.List;        use Gtk.List;
 with Gtk.List_Item;   use Gtk.List_Item;
-with Gtk.Pixmap;      use Gtk.Pixmap;
+with Gtk.Stock;       use Gtk.Stock;
 with Gtk.Table;       use Gtk.Table;
 with Gtk.Tooltips;    use Gtk.Tooltips;
 with Gtk.Handlers;    use Gtk.Handlers;
@@ -42,8 +40,6 @@ with Prj_API;          use Prj_API;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Variable_Editors; use Variable_Editors;
-with Pixmaps_Prj;   use Pixmaps_Prj;
-with Pixmaps_IDE;   use Pixmaps_IDE;
 with Glide_Intl;    use Glide_Intl;
 
 with Prj;      use Prj;
@@ -117,13 +113,6 @@ package body Scenario_Views is
          Homogeneous => False);
       Set_Col_Spacing (View, 0, 0);
       Set_Col_Spacing (View, 1, 10);
-
-      Create_From_Xpm_D
-        (View.Edit_Pixmap, null, Get_System, View.Edit_Mask, Null_Color,
-         stock_preferences_xpm);
-      Create_From_Xpm_D
-        (View.Delete_Pixmap, null, Get_System, View.Delete_Mask, Null_Color,
-         delete_var_xpm);
 
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
@@ -248,13 +237,13 @@ package body Scenario_Views is
    -------------
 
    procedure Refresh (View : access GObject_Record'Class; Data : GObject) is
-      V : Scenario_View := Scenario_View (Data);
-      Label : Gtk_Label;
-      Combo : Gtk_Combo;
-      Str : String_Id;
-      Row : Guint;
+      V      : constant Scenario_View := Scenario_View (Data);
+      Label  : Gtk_Label;
+      Combo  : Gtk_Combo;
+      Row    : Guint;
+      Str    : String_Id;
       Button : Gtk_Button;
-      Pix    : Gtk_Pixmap;
+      Pix    : Gtk_Image;
 
       use type Widget_List.Glist;
       Child, Tmp : Widget_List.Glist;
@@ -299,7 +288,7 @@ package body Scenario_Views is
                Row := Guint (J - Scenar_Var'First) + 1;
 
                Gtk_New (Button);
-               Gtk_New (Pix, V.Edit_Pixmap, V.Edit_Mask);
+               Gtk_New (Pix, Stock_Properties, Icon_Size_Small_Toolbar);
                Add (Button, Pix);
                Attach
                  (V, Button, 0, 1, Row, Row + 1, Xoptions => 0, Yoptions => 0);
@@ -311,7 +300,7 @@ package body Scenario_Views is
                         -"Edit variable properties");
 
                Gtk_New (Button);
-               Gtk_New (Pix, V.Delete_Pixmap, V.Delete_Mask);
+               Gtk_New (Pix, Stock_Delete, Icon_Size_Small_Toolbar);
                Add (Button, Pix);
                Attach
                  (V, Button, 1, 2, Row, Row + 1, Xoptions => 0, Yoptions => 0);
