@@ -43,7 +43,6 @@ package Ada_Analyzer is
 
       Tok_Double_Asterisk, -- **
 
-      Tok_Ampersand,       -- &            Binary_Addop
       Tok_Minus,           -- -            Binary_Addop, Unary_Addop
       Tok_Plus,            -- +            Binary_Addop, Unary_Addop
 
@@ -159,14 +158,16 @@ package Ada_Analyzer is
 
       Tok_Left_Paren,      -- (            Namext, Consk
 
+      Tok_Ampersand,       -- &            Binary_Addop
+
+      Tok_Vertical_Bar,    -- |            Cterm, Sterm, Chtok
+
       Tok_Less_Less,       -- <<           Eterm, Sterm, After_SM
       Tok_Greater_Greater, -- >>           Eterm, Sterm
 
       Tok_Colon,           -- :            Eterm, Sterm
 
       Tok_Arrow,           -- =>           Sterm, Cterm, Chtok
-
-      Tok_Vertical_Bar,    -- |            Cterm, Sterm, Chtok
 
       Tok_Dot_Dot,         -- ..           Sterm, Chtok
 
