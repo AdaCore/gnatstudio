@@ -3920,6 +3920,10 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
    else if( Declarator->base_typ == FUNCTION )
    {
       int paf;
+      char buffer [1024];
+      template_param* tp;
+
+      *buffer = 0;
 
       if( scope )
       {
@@ -3939,6 +3943,15 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
          paf = PAF_FUNC_DCL;
       }
 
+      if ( g_tp ) {
+         attr |= PAF_TEMPLATE;
+         sprintf (buffer, "template_args=<");
+         for ( tp = g_tp; tp; tp = tp->next ) {
+             strcat (buffer, tp->type.buf);
+             strcat (buffer, tp->next ? ", " : ">");
+            }
+      }
+
       Put_symbol( paf
                 , scope
                 , name
@@ -3951,12 +3964,13 @@ extern void variable( Declaration_t Declaration, Declarator_t Declarator )
                 , type.buf
                 , Declarator->types.buf
                 , Declarator->names.buf
-                , get_comment( Declarator->lineno_end )
+                , buffer
                 , Declarator->lineno_beg
                 , Declarator->charno_beg
                 , Declarator->lineno_end
                 , Declarator->charno_end
                 );
+      /* should we store template arguments of the forward declaration ??? */
    }
    else
    {
@@ -4107,6 +4121,10 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
       char *scope = get_scope( Declarator->name.buf );
       char *name  = get_name ( Declarator->name.buf );
       template_param* tp;
+      char data [1024], template_args [1024];
+
+      *data = 0;
+      *template_args = 0;
 
       if( scope )
       {
@@ -4126,7 +4144,16 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
          paf = PAF_FUNC_DEF;
       }
 
-      if ( g_tp ) attr |= PAF_TEMPLATE;
+      if ( g_tp ) {
+          attr |= PAF_TEMPLATE;
+          sprintf (template_args, "<");
+          for ( tp = g_tp; tp; tp = tp->next ) {
+              strcat (template_args, tp->type.buf);
+              strcat (template_args, tp->next ? ", " : ">");
+          }
+
+          sprintf (data, "template_args=%s", template_args);
+      }
 
       Put_symbol( paf
                 , scope
@@ -4140,7 +4167,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                 , type.buf
                 , Declarator->types.buf
                 , Declarator->names.buf
-                , comment
+                , data
                 , Declarator->lineno_beg
                 , Declarator->charno_beg
                 , Declarator->lineno_end
@@ -4177,7 +4204,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                            , tp->type_charno
                            , tp->kind /* attrs */
                            , tp->type.buf
-                           , Declaration->name.buf /* template args */
+                           , template_args
                            , (char *) 0
                            , 0
                            , tp->name_lineno
@@ -4437,6 +4464,9 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
       char *scope = Class->name.buf;
       char *name  = get_name( Declarator->name.buf );
       template_param* tp;
+      char data [1024], template_args [1024];
+
+      *data = 0;
 
       attr |= PAF_INLINE;
 
@@ -4449,7 +4479,16 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
          attr |= PAF_CONSTRUCTOR;
       }
 
-      if ( g_tp ) attr |= PAF_TEMPLATE;
+      if ( g_tp ) {
+          attr |= PAF_TEMPLATE;
+          sprintf (template_args, "<");
+          for ( tp = g_tp; tp; tp = tp->next ) {
+              strcat (template_args, tp->type.buf);
+              strcat (template_args, tp->next ? ", " : ">");
+          }
+
+          sprintf (data, "template_args=%s", template_args);
+      }
 
       paf_def = PAF_MBR_FUNC_DEF;
       paf_dcl = PAF_MBR_FUNC_DCL;
@@ -4475,7 +4514,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                    , type.buf
                    , Declarator->types.buf
                    , Declarator->names.buf
-                   , comment
+                   , data
                    , Declarator->lineno_beg
                    , Declarator->charno_beg
                    , Declarator->lineno_end
@@ -4495,7 +4534,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                 , type.buf
                 , Declarator->types.buf
                 , Declarator->names.buf
-                , comment
+                , data
                 , Declarator->lineno_beg
                 , Declarator->charno_beg
                 , Declarator->lineno_end
@@ -4533,7 +4572,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                 , type.buf
                 , Declarator->types.buf
                 , Declarator->names.buf
-                , comment
+                , data
                 , Declarator->lineno_beg
                 , Declarator->charno_beg
                 , Declarator->lineno_end
@@ -4551,7 +4590,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                    , tp->type_charno
                    , tp->kind /* attrs */
                    , tp->type.buf
-                   , Declaration->name.buf /* template args */
+                   , template_args
                    , (char *) 0
                    , 0
                    , tp->name_lineno
