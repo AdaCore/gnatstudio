@@ -79,6 +79,8 @@ package body C_Analyzer is
       Tok_Logical_Or,            -- ||
       Tok_Or_Assign,             -- |=
 
+      --  ??? mising: << >> <<= >>=
+
       Tok_Arrow,                 -- =>
 
       --  Reserved words for C:
@@ -457,7 +459,7 @@ package body C_Analyzer is
       Callback         : Entity_Callback       := null;
       Enable_Cpp       : Boolean               := False)
    is
-      --  ??? pragma Suppress (All_Checks);
+      pragma Suppress (All_Checks);
       --  For efficiency
 
       None              : constant := -1;
@@ -475,7 +477,7 @@ package body C_Analyzer is
       Index             : Natural := Buffer'First;
       Indent            : Natural := 0;
       Indent_Done       : Boolean := False;
-      Token             : Token_Type;
+      Token             : Token_Type := No_Token;
       Prev_Token        : Token_Type := No_Token;
       Curly_Level       : Integer := 0;
       Continuation_Val  : Integer := 0;
@@ -1109,7 +1111,8 @@ package body C_Analyzer is
                Do_Indent (Index, Indent);
                Top_Token := Top (Tokens);
 
-               if Top_Token.Curly_Level /= Curly_Level
+               if Top_Token.Token = No_Token
+                 or else Top_Token.Curly_Level /= Curly_Level
                  or else Top_Token.Paren_Level /= Paren_Level
                then
                   --  Record a simple block or assignment.
@@ -1159,7 +1162,8 @@ package body C_Analyzer is
 
                Do_Indent (Index, Indent);
 
-               if Top_Token.Curly_Level = Curly_Level
+               if Top_Token.Token /= No_Token
+                 and then Top_Token.Curly_Level = Curly_Level
                  and then Top_Token.Paren_Level = Paren_Level
                then
                   if Top_Token.Start_New_Line then
@@ -1175,7 +1179,8 @@ package body C_Analyzer is
                Token := Tok_Semicolon;
                Top_Token := Top (Tokens);
 
-               if Top_Token.Curly_Level = Curly_Level
+               if Top_Token.Token /= No_Token
+                 and then Top_Token.Curly_Level = Curly_Level
                  and then Top_Token.Paren_Level = Paren_Level
                then
                   if Top_Token.Token = Tok_Do then
