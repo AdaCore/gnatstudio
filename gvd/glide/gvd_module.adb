@@ -833,19 +833,26 @@ package body GVD_Module is
    procedure On_Debug_Init
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      K : constant Kernel_Handle := Kernel_Handle (Kernel);
-
-      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (K));
-      Page : constant Glide_Page.Glide_Page :=
+      K       : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Top     : constant Glide_Window := Glide_Window (Get_Main_Window (K));
+      Page    : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
+      Success : Boolean;
       use Debugger;
 
    begin
       Push_State (K, Busy);
 
-      --  Initial the debugger if necessary
+      --  Initialize the debugger if necessary
       if Page.Debugger = null then
-         Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
+         Configure
+           (Page, Gdb_Type, "", (1 .. 0 => null), "", Success => Success);
+
+         if not Success then
+            Pop_State (K);
+            return;
+         end if;
+
          Set_Sensitive (K, True);
          Page.Destroy_Id := Widget_Callback.Object_Connect
            (Top, "destroy",
@@ -909,6 +916,7 @@ package body GVD_Module is
          if Page.Data_Paned /= null then
             Close (MDI, Page.Data_Paned);
          end if;
+
          Set_Sensitive (Kernel, False);
          Pop_State (Kernel);
       end if;
