@@ -100,6 +100,7 @@ with Help_Module;
 with Codefix_Module;
 with Python_Module;
 with KeyManager_Module;
+with Theme_Manager_Module;
 --  with Docgen_Module;
 with SSH_Protocol;
 
@@ -909,6 +910,11 @@ procedure GPS is
       KeyManager_Module.Register_Module (GPS.Kernel);
       Register_Keys (GPS);
 
+      --  Load the theme manager module immediately, so that any customization
+      --  file or module can provide its own themes.
+
+      Theme_Manager_Module.Register_Module (GPS.Kernel);
+
       Vsearch_Ext.Register_Module (GPS.Kernel);
       Help_Module.Register_Module (GPS.Kernel);
 
@@ -947,6 +953,12 @@ procedure GPS is
       --  Load system files
 
       Load_All_Custom_Files (GPS.Kernel);
+
+      --  Load preferences, but only after loading custom files, to make sure
+      --  the themes loaded at startup are still overriden by the user's
+      --  local choices.
+
+      Load_Preferences (GPS.Kernel);
 
       --  Temporarily disable unimplemented menu items
 
