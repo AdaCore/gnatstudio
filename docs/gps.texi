@@ -1550,9 +1550,8 @@ on the left and one on the right of the window.
 
 The first box on the left shows the current subprogram name for languages
 that support this capability. Currently @code{Ada}, @code{C} and @code{C++}
-have this ability.
-
-@c ??? add xref to preference that enables/disables this capability
+have this ability. See @ref{The Preferences Dialog} to enable or
+disable this feature.
 
 @item The right section
 
@@ -5660,6 +5659,10 @@ when saving the file; @i{Unix} will use LF line terminators;
 @item Display line numbers
 @cindex display line numbers
 Whether the line numbers should be displayed in file editors.
+
+@item Display subprogram names
+@cindex Display subprogram names
+Whether the subprogram name should be displayed in the editor's status bar.
 
 @item Tooltips
 @cindex tooltip
