@@ -4,3 +4,4 @@ test_trie
 test_rbtree
 test_arrays
 .gpssnprj
+test_strings
