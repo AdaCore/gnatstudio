@@ -152,6 +152,9 @@ package VCS is
    --
    --  If Clear_Logs is False, then the implementation should clear the
    --  logs corresponding to files that are Up_To_Date.
+   --
+   --  Ideally, Get_Status should call VCS_View_Pkg.Display_File_Status
+   --  in order to display the status in the explorer.
 
    function Local_Get_Status
      (Rep         : access VCS_Record;
@@ -227,6 +230,9 @@ package VCS is
    --  in the standard basic diff format.
    --  If Version_1 is empty, then the local file is taken.
    --  If Version_2 is empty, then the HEAD revision is taken.
+   --
+   --  This procedure should call Glide_Kernel.Modules.Display_Differences
+   --  in order to display a GPS visual diff.
 
    procedure Log
      (Rep  : access VCS_Record;
@@ -239,6 +245,9 @@ package VCS is
       File : String) is abstract;
    --  Return annotations for the corresponding file.
    --  The result String_List.List with one element for each line.
+   --
+   --  This procedure should call Glide_Kernel.Modules.Add_Line_Information
+   --  in order to display the annotations in the GPS editors.
 
    procedure Set_Error
      (Rep            : access VCS_Record;
