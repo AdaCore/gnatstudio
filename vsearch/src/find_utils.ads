@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -183,11 +183,14 @@ package Find_Utils is
    type Current_File_Context_Access is access all Current_File_Context'Class;
    --  A special context for searching in the current file
 
+   procedure Free (Context : in out Current_File_Context);
+   --  Free the memory allocated for the context
+
    function Search
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean;
-   --  Search function for "Current File";
+   --  Search function for "Current File"
 
    -------------------
    -- Files context --
