@@ -63,6 +63,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
+with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
 with Prj_API;                   use Prj_API;
 with Src_Contexts;              use Src_Contexts;
@@ -1491,20 +1492,13 @@ package body Src_Editor_Module is
       Focus      : Boolean := True) return Source_Box
    is
       MDI        : constant MDI_Window := Get_MDI (Kernel);
-      Short_File : constant String := Base_Name (File);
       Editor     : Source_Editor_Box;
       Box        : Source_Box;
       Child      : MDI_Child;
-      Iter       : Child_Iterator := First_Child (MDI);
 
    begin
       if File /= "" then
-         loop
-            Child := Get (Iter);
-            exit when Child = null
-              or else Get_Title (Child) = File;
-            Next (Iter);
-         end loop;
+         Child := Find_Editor (Kernel, File);
 
          if Child /= null then
             if Focus then
@@ -1533,7 +1527,7 @@ package body Src_Editor_Module is
             Child := Put (MDI, Box);
 
             if File /= "" then
-               Set_Title (Child, File, Short_File);
+               Set_Title (Child, File, Basename (File));
             else
                --  Determine the number of "Untitled" files open.
 
@@ -1546,17 +1540,19 @@ package body Src_Editor_Module is
                   The_Child := Get (Iterator);
 
                   while The_Child /= null loop
-                     declare
-                        Title : constant String := Get_Title (The_Child);
-                     begin
-                        if Title'Length >= No_Name'Length
-                          and then Title
-                            (Title'First
-                               .. Title'First + No_Name'Length - 1) = No_Name
-                        then
-                           Nb_Untitled := Nb_Untitled + 1;
-                        end if;
-                     end;
+                     if Get_Widget (Child).all in Source_Box_Record'Class then
+                        declare
+                           Title : constant String := Get_Title (The_Child);
+                        begin
+                           if Title'Length >= No_Name'Length
+                             and then Title
+                               (Title'First
+                                .. Title'First + No_Name'Length - 1) = No_Name
+                           then
+                              Nb_Untitled := Nb_Untitled + 1;
+                           end if;
+                        end;
+                     end if;
 
                      Next (Iterator);
                      The_Child := Get (Iterator);
@@ -1565,14 +1561,9 @@ package body Src_Editor_Module is
                   if Nb_Untitled = 0 then
                      Set_Title (Child, -"Untitled");
                   else
-                     declare
-                        I : constant String := Natural'Image (Nb_Untitled + 1);
-                     begin
-                        Set_Title
-                          (Child,
-                           -"Untitled"
-                             & " (" & I (I'First + 1 .. I'Last) & ")");
-                     end;
+                     Set_Title
+                       (Child,
+                          -"Untitled" & " (" & Image (Nb_Untitled + 1) & ")");
                   end if;
 
                   Set_Filename (Editor, Get_Title (Child));
@@ -2468,7 +2459,9 @@ package body Src_Editor_Module is
 
                   exit when Child = null;
 
-                  if Get_Title (Child) = File then
+                  if Get_Widget (Child).all in Source_Box_Record'Class
+                    and then File_Equal (Get_Title (Child), File)
+                  then
                      Destroy (Source_Box (Get_Widget (Child)));
                   end if;
 
@@ -2575,7 +2568,7 @@ package body Src_Editor_Module is
                   exit when Child = null;
 
                   if Get_Widget (Child).all in Source_Box_Record'Class then
-                        Apply_Mime_On_Child (Child);
+                     Apply_Mime_On_Child (Child);
                   end if;
 
                   Next (Iter);
@@ -3161,39 +3154,29 @@ package body Src_Editor_Module is
       Child : MDI_Child;
    begin
       if File /= Base_Name (File) then
-         --  If the file name is not a base name, the heuristics is
-         --  straightforward.
-
          loop
             Child := Get (Iter);
-            exit when Child = null or else Get_Title (Child) = File;
+
+            exit when Child = null
+              or else (Get_Widget (Child).all in Source_Box_Record'Class
+                       and then File_Equal (Get_Title (Child), File));
             Next (Iter);
          end loop;
 
          return Child;
 
       else
-         --  If the file name is a base name, check if the focused child
-         --  corresponds to that name, otherwise look for the first editor
-         --  that corresponds.
-
-         Child := Get_Focus_Child (Get_MDI (Kernel));
-
-         if Child /= null
-           and then Base_Name (Get_Title (Child)) = File
-         then
-            return Child;
-         end if;
-
          loop
             Child := Get (Iter);
+
             exit when Child = null
-              or else Base_Name (Get_Title (Child)) = File;
+              or else (Get_Widget (Child).all in Source_Box_Record'Class
+                       and then File_Equal (Base_Name (Get_Title (Child)),
+                                            File));
             Next (Iter);
          end loop;
 
          return Child;
-
       end if;
    end Find_Editor;
 
