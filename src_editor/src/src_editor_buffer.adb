@@ -1715,16 +1715,6 @@ package body Src_Editor_Buffer is
       end loop;
    end Kill_Highlighting;
 
-   -------------------------
-   -- Forward_To_Line_End --
-   -------------------------
-
-   procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter) is
-      Result_Ignored : Boolean;
-   begin
-      Forward_To_Line_End (Iter, Result_Ignored);
-   end Forward_To_Line_End;
-
    -------------
    -- Gtk_New --
    -------------
@@ -2345,7 +2335,8 @@ package body Src_Editor_Buffer is
       Line   : Gint;
       Column : Gint := 0) return Boolean
    is
-      Iter : Gtk_Text_Iter;
+      Iter   : Gtk_Text_Iter;
+      Result : Boolean := True;
    begin
       --  First check that Line does not exceed the number of lines
       --  in the buffer.
@@ -2367,7 +2358,10 @@ package body Src_Editor_Buffer is
       --  characters in this line.
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
-      Forward_To_Line_End (Iter);
+
+      if not Ends_Line (Iter) then
+         Forward_To_Line_End (Iter, Result);
+      end if;
 
       --  Check that Column does not exceed the number of character in
       --  in the current line.
