@@ -61,6 +61,7 @@ with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Welcome;                   use Welcome;
 with DDE;
+with GUI_Utils;                 use GUI_Utils;
 
 --  Modules registered by GPS.
 with Ada_Module;
@@ -865,8 +866,8 @@ procedure GPS is
       External_Editor_Module.Register_Module (GPS.Kernel);
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
+--      Vdiff2_Module.Register_Module (GPS.Kernel);
       Vdiff_Module.Register_Module (GPS.Kernel);
-      --  Vdiff2_Module.Register_Module (GPS.Kernel);
       VCS_Module.Register_Module (GPS.Kernel);
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
@@ -1195,8 +1196,7 @@ procedure GPS is
          Save_Desktop (Kernel);
       end if;
 
-      Gtk.Accel_Map.Save
-        (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
+      Save_Accel_Map (File_Utils.Name_As_Directory (Dir.all) & "custom_key");
 
       Free_Modules (Kernel);
 
