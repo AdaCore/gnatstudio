@@ -31,6 +31,7 @@ with Glib.Object;            use Glib.Object;
 with Glib.Values;            use Glib.Values;
 with Glide_Kernel;           use Glide_Kernel;
 with Glide_Kernel.Modules;   use Glide_Kernel.Modules;
+with Glide_Kernel.Console;   use Glide_Kernel.Console;
 
 with Codefix;                use Codefix;
 with Codefix.Graphics;       use Codefix.Graphics;
@@ -101,18 +102,31 @@ package body Codefix_Module is
       Mitem : constant Codefix_Menu_Item := Codefix_Menu_Item (Widget);
       pragma Unreferenced (Context);
 
-      Result : Extract;
+      Result          : Extract;
+      Success_Execute : Boolean;
    begin
-      Execute
+      Secured_Execute
         (Mitem.Fix_Command.all,
          Codefix_Module_ID.Current_Text.all,
-         Result);
+         Result,
+         Success_Execute);
 
-      Validate_And_Commit
-        (Codefix_Module_ID.Corrector.all,
-         Codefix_Module_ID.Current_Text.all,
-         Mitem.Error,
-         Mitem.Fix_Command.all);
+      if Success_Execute then
+         Validate_And_Commit
+           (Codefix_Module_ID.Corrector.all,
+            Codefix_Module_ID.Current_Text.all,
+            Mitem.Error,
+            Mitem.Fix_Command.all);
+      else
+         Trace
+           (Me, "No more sense for " & Get_Message
+              (Get_Error_Message (Mitem.Error)));
+
+         Insert
+            (Codefix_Module_ID.Kernel,
+             "No more sense for " & Get_Message
+               (Get_Error_Message (Mitem.Error)));
+      end if;
 
    exception
       when E : others =>
@@ -268,6 +282,7 @@ package body Codefix_Module is
       Codefix_Module_ID.Current_Text := new GPS_Navigator;
       Codefix_Module_ID.Errors_Found := new Compilation_Output;
       Codefix_Module_ID.Corrector := new Correction_Manager;
+      Codefix_Module_ID.Kernel := Kernel_Handle (Kernel);
 
       GPS_Navigator (Codefix_Module_ID.Current_Text.all).Kernel :=
         Kernel_Handle (Kernel);
