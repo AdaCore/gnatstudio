@@ -20,10 +20,31 @@
 
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Text_IO;       use Ada.Text_IO;
-with Src_Info.ALI_Maps; use Src_Info.ALI_Maps;
 with String_Utils;      use String_Utils;
 
 package body Src_Info.Debug is
+
+   type Reference_Kind_To_Char_Map is array (Reference_Kind) of Character;
+
+   Reference_Kind_To_Char : constant Reference_Kind_To_Char_Map :=
+     (Reference                                => 'r',
+      Instantiation_Reference                  => ' ',
+      Modification                             => 'm',
+      Body_Entity                              => 'b',
+      Completion_Of_Private_Or_Incomplete_Type => 'c',
+      Type_Extension                           => 'x',
+      Implicit                                 => 'i',
+      Label                                    => 'l',
+      Primitive_Operation                      => 'p',
+      With_Line                                => 'w',
+      Subprogram_In_Parameter                  => '>',
+      Subprogram_In_Out_Parameter              => '=',
+      Subprogram_Out_Parameter                 => '<',
+      Subprogram_Access_Parameter              => '^',
+      Formal_Generic_Parameter                 => 'z',
+      Parent_Package                           => 'k',
+      End_Of_Spec                              => 'e',
+      End_Of_Body                              => 't');
 
    --  ??? Add the exception handlers everywhere...
 
@@ -85,7 +106,7 @@ package body Src_Info.Debug is
    begin
       if FL = Null_File_Location then
          Put ("<null file location, kind="
-              & Kind'Img & ">");
+              & Kind.Kind'Img & ">");
       else
          Put (Get_File (FL) & ":");
          if Display_Kind then
@@ -255,7 +276,7 @@ package body Src_Info.Debug is
                Put ('|');
             end if;
             Dump_Pos_And_E_Kind
-              (Fl.Value, Unresolved_Entity, Display_Kind => False);
+              (Fl.Value, Unresolved_Entity_Kind, Display_Kind => False);
             Put ('>');
          end if;
          Fl := Fl.Next;
@@ -533,53 +554,52 @@ package body Src_Info.Debug is
    -------------------
 
    function Output_E_Kind (Kind : Src_Info.E_Kind) return String is
+      function Get_Value
+        (Obj, Typ : String; Gen : String := "") return String;
+      --  Return the appropriate string depending on the type of Kind
+
+      function Get_Value
+        (Obj, Typ : String; Gen : String := "") return String is
+      begin
+         if Kind.Is_Generic then
+            return Gen;
+         elsif Kind.Is_Type then
+            return Typ;
+         else
+            return Obj;
+         end if;
+      end Get_Value;
+
    begin
-      case Kind is
-         when Overloaded_Entity                => return "@";
-         when Unresolved_Entity                => return "?";
-         when Access_Object                    => return "p";
-         when Access_Type                      => return "P";
-         when Array_Object                     => return "a";
-         when Array_Type                       => return "A";
-         when Boolean_Object                   => return "b";
-         when Boolean_Type                     => return "B";
-         when Class_Wide_Object                => return "c";
-         when Class_Wide_Type                  => return "C";
-         when Decimal_Fixed_Point_Object       => return "d";
-         when Decimal_Fixed_Point_Type         => return "D";
-         when Entry_Or_Entry_Family            => return "Y";
-         when Enumeration_Literal              => return "n";
-         when Enumeration_Object               => return "e";
-         when Enumeration_Type                 => return "E";
-         when Exception_Entity                 => return "X";
-         when Floating_Point_Object            => return "f";
-         when Floating_Point_Type              => return "F";
-         when Generic_Class                    => return "g";
-         when Generic_Function_Or_Operator     => return "v";
-         when Generic_Package                  => return "k";
-         when Generic_Procedure                => return "u";
-         when Label_On_Block                   => return "q";
-         when Label_On_Loop                    => return "l";
-         when Label_On_Statement               => return "L";
-         when Modular_Integer_Object           => return "m";
-         when Modular_Integer_Type             => return "M";
-         when Named_Number                     => return "N";
-         when Non_Generic_Function_Or_Operator => return "V";
-         when Non_Generic_Package              => return "K";
-         when Non_Generic_Procedure            => return "U";
-         when Ordinary_Fixed_Point_Object      => return "o";
-         when Ordinary_Fixed_Point_Type        => return "O";
-         when Private_Type                     => return "+";
-         when Protected_Object                 => return "w";
-         when Protected_Type                   => return "W";
-         when Record_Object                    => return "r";
-         when Record_Type                      => return "R";
-         when Signed_Integer_Object            => return "i";
-         when Signed_Integer_Type              => return "I";
-         when String_Object                    => return "s";
-         when String_Type                      => return "S";
-         when Task_Object                      => return "t";
-         when Task_Type                        => return "T";
+      case Kind.Kind is
+         when Overloaded_Entity     => return "@";
+         when Unresolved_Entity     => return "?";
+         when Access_Kind           => return Get_Value ("p", "P");
+         when Array_Kind            => return Get_Value ("a", "A");
+         when Boolean_Kind          => return Get_Value ("b", "B");
+         when Class_Wide            => return Get_Value ("c", "C", "g");
+         when Class                 => return Get_Value ("c", "C", "g");
+         when Decimal_Fixed_Point   => return Get_Value ("d", "D");
+         when Entry_Or_Entry_Family => return "Y";
+         when Enumeration_Literal   => return "n";
+         when Enumeration_Kind      => return Get_Value ("e", "E");
+         when Exception_Entity      => return "X";
+         when Floating_Point        => return Get_Value ("f", "F");
+         when Function_Or_Operator  => return Get_Value ("V", "V", "v");
+         when Package_Kind          => return Get_Value ("K", "K", "k");
+         when Procedure_Kind        => return Get_Value ("U", "U", "u");
+         when Label_On_Block        => return "q";
+         when Label_On_Loop         => return "l";
+         when Label_On_Statement    => return "L";
+         when Modular_Integer       => return Get_Value ("m", "M");
+         when Named_Number          => return "N";
+         when Ordinary_Fixed_Point  => return Get_Value ("o", "O");
+         when Private_Type          => return "+";
+         when Protected_Kind        => return Get_Value ("w", "W");
+         when Record_Kind           => return Get_Value ("r", "R");
+         when Signed_Integer        => return Get_Value ("i", "I");
+         when String_Kind           => return Get_Value ("s", "S");
+         when Task_Kind             => return Get_Value ("t", "T");
       end case;
    end Output_E_Kind;
 
