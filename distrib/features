@@ -7,7 +7,8 @@ New features in GPS 1.0.1
 
 - New contexual menu items in the editor:
   - Locate file in the explorer
-  - Remove annotations
+  - VCS->Remove annotations
+  - Debug->Set value of
 
 - Automatic word completion implemented in the source editor
 
