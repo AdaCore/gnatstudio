@@ -146,7 +146,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
               List,
               Program.Remote_Host.all,
               Program.Remote_Target.all,
-              Program.Protocol.all);
+              Program.Protocol.all,
+              Program.Debugger_Name.all);
       end if;
    end On_Open_Debugger1_Activate;
 
