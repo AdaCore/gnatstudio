@@ -1396,6 +1396,7 @@ package body GVD.Process is
       WTX_Version   : Natural := 0;
 
    begin
+      Set_Busy (Process, True);
       Setup_Command_Window (Process, History);
       Process.History := History;
       Setup_Data_Window (Process);
@@ -1436,6 +1437,7 @@ package body GVD.Process is
          when Jdb_Type =>
             Process.Debugger := new Jdb_Debugger;
          when others =>
+            Set_Busy (Process, False);
             raise Debugger_Not_Supported;
       end case;
 
@@ -1533,10 +1535,12 @@ package body GVD.Process is
          Dock_Child (Child);
       end if;
 
+      Set_Busy (Process, False);
       Success := True;
 
    exception
       when Process_Died =>
+         Set_Busy (Process, False);
          Buttons :=
            Message_Dialog
              (Expect_Out (Get_Process (Process.Debugger)) & ASCII.LF &
@@ -1558,6 +1562,7 @@ package body GVD.Process is
          --  Do not display a dialog here since the Spawn procedure displays
          --  a dialog before raising Spawn_Error.
 
+         Set_Busy (Process, False);
          Success := False;
    end Configure;
 
