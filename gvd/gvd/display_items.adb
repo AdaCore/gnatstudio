@@ -22,7 +22,6 @@ with Glib;             use Glib;
 with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
 with Gtk.Widget;       use Gtk.Widget;
-with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Window;       use Gdk.Window;
 with Gdk.Event;        use Gdk.Event;
@@ -30,6 +29,7 @@ with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Style;        use Gtk.Style;
 with Gtkada.Canvas;    use Gtkada.Canvas;
+with Pango.Layout;     use Pango.Layout;
 
 with Debugger;         use Debugger;
 with Language;         use Language;
@@ -488,14 +488,19 @@ package body Display_Items is
       Alloc_Width  : Gint;
       Alloc_Height : Gint;
       Title_Height, Title_Width : Gint;
-      Num_Width    : Gint;
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
       W, H : Gint;
+      Layout : Pango_Layout;
 
       use Gdk;
 
    begin
+      Layout := Create_Pango_Layout
+        (Item.Debugger.Data_Canvas,
+         Integer'Image (Item.Num) & ": " & Item.Name.all);
+      Set_Font_Description (Layout, Get_Pref (GVD_Prefs, Title_Font));
+
       --  Compute the required size for the value itself.
 
       Alloc_Width  := Get_Width  (Item.Entity.all) + 2 * Border_Spacing;
@@ -503,13 +508,10 @@ package body Display_Items is
 
       --  Compute the width and height of the title bar
 
-      Num_Width := GVD_Text_Width
-        (Context.Title_Font, Integer'Image (Item.Num) & ": ");
-      Title_Width := (5 + Num_Buttons) * Spacing
-        + GVD_Text_Width (Context.Title_Font, Item.Name.all)
-        + Num_Buttons * Buttons_Size + Num_Width;
-      Title_Height := Gint'Max
-        (GVD_Font_Height (Context.Title_Font), Buttons_Size)
+      Get_Pixel_Size (Layout, Title_Width, Title_Height);
+      Title_Width := Title_Width + (5 + Num_Buttons) * Spacing
+        + Num_Buttons * Buttons_Size;
+      Title_Height := Gint'Max (Title_Height, Buttons_Size)
         + 2 * Spacing;
       Item.Title_Height := Title_Height;
 
@@ -576,23 +578,12 @@ package body Display_Items is
          X2     => Alloc_Width - 1,
          Y2     => Title_Height);
 
-      if Context.Title_Font /= null then
-         Draw_Text
-           (Pixmap (Item),
-            Font   => Context.Title_Font,
-            GC     => Context.Black_GC,
-            X      => Spacing,
-            Y      => Spacing + Get_Ascent (Context.Title_Font),
-            Text   => Integer'Image (Item.Num) & ":");
-
-         Draw_Text
-           (Pixmap (Item),
-            Font   => Context.Title_Font,
-            GC     => Context.Black_GC,
-            X      => Spacing + Num_Width,
-            Y      => Spacing + Get_Ascent (Context.Title_Font),
-            Text   => Item.Name.all);
-      end if;
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Context.Black_GC,
+         X        => Spacing,
+         Y        => Spacing,
+         Layout   => Layout);
 
       --  First button
 
@@ -1771,6 +1762,7 @@ package body Display_Items is
       D.Pixmap := Pixmap;
       D.Mode := Mode;
       D.Lang := Lang;
+      D.Layout := Create_Pango_Layout (Canvas);
       return D;
    end Create_Drawing_Context;
 

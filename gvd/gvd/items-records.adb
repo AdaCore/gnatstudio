@@ -21,9 +21,11 @@
 with GNAT.IO;  use GNAT.IO;
 
 with Glib;         use Glib;
-with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
+with Pango.Enums;  use Pango.Enums;
+with Pango.Font;   use Pango.Font;
+with Pango.Layout; use Pango.Layout;
 
 with Language;        use Language;
 with Basic_Types;     use Basic_Types;
@@ -389,9 +391,9 @@ package body Items.Records is
       --  Print the name of the field F and an arrow
 
       Current_Y : Gint := Y + Item.Border_Spacing;
-      Arrow_Pos : constant Gint :=
-        X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width -
-        GVD_Text_Width (Context.Font, String'(" => "));
+      --  Arrow_Pos : constant Gint :=
+      --    X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width -
+      --    GVD_Text_Width (Context.Font, String'(" => "));
 
       ----------------------
       -- Print_Field_Name --
@@ -400,24 +402,17 @@ package body Items.Records is
       procedure Print_Field_Name (F : Integer) is
          use Gdk;
       begin
-         if Context.Font /= null then
-            Draw_Text
-              (Context.Pixmap,
-               Font => Context.Font,
-               GC   => Context.GC,
-               X    => X + Left_Border + Item.Border_Spacing,
-               Y    => Current_Y + Get_Ascent (Context.Font),
-               Text => Item.Fields (F).Name.all);
-            Draw_Text
-              (Context.Pixmap,
-               Font => Context.Font,
-               GC   => Context.GC,
-               X    => Arrow_Pos,
-               Y    => Current_Y + Get_Ascent (Context.Font),
-               Text => " => ");
-         end if;
+         Set_Text (Context.Layout,
+                   Item.Fields (F).Name.all & ASCII.HT & " => ");
+         Draw_Layout
+           (Drawable => Context.Pixmap,
+            GC       => Context.GC,
+            X        => X + Left_Border + Item.Border_Spacing,
+            Y        => Current_Y,
+            Layout   => Context.Layout);
       end Print_Field_Name;
 
+      W, H : Gint;
    begin
       Item.X := X;
       Item.Y := Y;
@@ -457,17 +452,20 @@ package body Items.Records is
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
       then
-         Draw_Text
-           (Context.Pixmap,
-            Font => Context.Type_Font,
-            GC   => Context.GC,
-            X    => X + Left_Border + Item.Border_Spacing,
-            Y    => Current_Y + Get_Ascent (Context.Type_Font),
-            Text => Get_Type_Name (Item'Access, Context));
-         Current_Y := Current_Y +
-           Get_Ascent (Context.Type_Font) +
-           Get_Descent (Context.Type_Font);
+         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
+         Set_Font_Description
+           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
+         Draw_Layout
+           (Drawable => Context.Pixmap,
+            GC       => Context.GC,
+            X        => X + Left_Border + Item.Border_Spacing,
+            Y        => Current_Y,
+            Layout   => Context.Layout);
+         Get_Pixel_Size (Context.Layout, W, H);
+         Current_Y := Current_Y + H;
       end if;
+
+      Set_Font_Description (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
 
       for F in Item.Fields'Range loop
          --  not a variant part ?
@@ -530,7 +528,9 @@ package body Items.Records is
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
+      H : Gint;
       Largest_Name : String_Access := null;
+      Line_Height  : Gint;
 
    begin
       if not Item.Valid then
@@ -550,18 +550,21 @@ package body Items.Records is
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
       then
-         Item.Type_Height := GVD_Font_Height (Context.Type_Font);
-         Total_Height := Total_Height + Item.Type_Height;
-         Total_Width := Gint'Max
-           (Total_Width,
-            GVD_Text_Width (Context.Type_Font,
-                            Get_Type_Name (Item'Access, Context)));
-
+         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
+         Set_Font_Description
+           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
+         Get_Pixel_Size (Context.Layout, Total_Width, Total_Height);
+         Item.Type_Height := Total_Height;
       else
          Item.Type_Height := 0;
       end if;
 
+      Set_Font_Description (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+
       if Item.Visible then
+         Line_Height := To_Pixels
+           (Get_Size (Get_Pref (GVD_Prefs, Value_Font)));
+
          for F in Item.Fields'Range loop
             if Largest_Name = null
               or else Item.Fields (F).Name.all'Length > Largest_Name'Length
@@ -579,9 +582,9 @@ package body Items.Records is
                  Gint'Max (Total_Width, Item.Fields (F).Value.Width);
 
                --  Keep at least enough space to print the field name
+
                Item.Fields (F).Value.Height := Gint'Max
-                 (Item.Fields (F).Value.Height,
-                  GVD_Font_Height (Context.Font));
+                 (Item.Fields (F).Value.Height, Line_Height);
                Total_Height := Total_Height + Item.Fields (F).Value.Height;
             end if;
 
@@ -607,12 +610,12 @@ package body Items.Records is
            (Item.Fields'Length - 1) * Line_Spacing;
 
          if Largest_Name = null then
-            Item.Gui_Fields_Width :=
-              GVD_Text_Width (Context.Font, String'(" => "));
+            Set_Text (Context.Layout, " => ");
          else
-            Item.Gui_Fields_Width :=
-              GVD_Text_Width (Context.Font, Largest_Name.all & " => ");
+            Set_Text (Context.Layout, Largest_Name.all & ASCII.HT & " => ");
          end if;
+
+         Get_Pixel_Size (Context.Layout, Item.Gui_Fields_Width, H);
 
          --  Keep enough space for the border (Border_Spacing on each side)
          Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border

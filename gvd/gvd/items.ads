@@ -20,7 +20,7 @@
 
 --  Generic items used to display things in the canvas.
 
-with Gdk.Font;
+with Pango.Layout;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 with Gdk.GC;
@@ -98,14 +98,12 @@ package Items is
       Modified_GC    : Gdk.GC.Gdk_GC;
       Selection_GC   : Gdk.GC.Gdk_GC;
 
-      Font           : Gdk.Font.Gdk_Font;
-      Type_Font      : Gdk.Font.Gdk_Font;
-      Command_Font   : Gdk.Font.Gdk_Font;
-
       Unknown_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Unknown_Mask   : Gdk.Bitmap.Gdk_Bitmap;
       Hidden_Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
       Hidden_Mask    : Gdk.Bitmap.Gdk_Bitmap;
+
+      Layout         : Pango.Layout.Pango_Layout;
 
       Pixmap       : Gdk.Pixmap.Gdk_Pixmap;
       Mode         : Display_Mode;
@@ -126,19 +124,10 @@ package Items is
    --  item is unknown.
    --  Hidden_Pixmap and Hidden_Mask are the icon to draw when part of an item
    --  has been folded and is hidden.
+   --  Text should be displayed through Layout.
    --
    --  All the contexts should be reset to their initial settings on exit of
    --  the Paint subprograms.
-
-   function GVD_Text_Width (F : Gdk.Font.Gdk_Font; Str : String)
-      return Glib.Gint;
-   --  Same as Gdk.Font.Text_Width, but provides special handling when F is
-   --  null because of the zooming.
-
-   function GVD_Font_Height (F : Gdk.Font.Gdk_Font) return Glib.Gint;
-   --  Return the maximal height of any character in the font (same as
-   --  Get_Ascent + Get_Descent). This also provides special handling when
-   --  the font is null because of the zooming.
 
    -----------------------------
    -- Printing and Displaying --

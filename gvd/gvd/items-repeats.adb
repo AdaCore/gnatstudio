@@ -18,13 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.IO;  use GNAT.IO;
-
-with Glib;         use Glib;
-with Gdk.Font;     use Gdk.Font;
-with Gdk.Drawable; use Gdk.Drawable;
-with Gdk.GC;       use Gdk.GC;
-with Language;     use Language;
+with GNAT.IO;         use GNAT.IO;
+with Glib;            use Glib;
+with Gdk.Drawable;    use Gdk.Drawable;
+with Gdk.GC;          use Gdk.GC;
+with Pango.Layout;    use Pango.Layout;
+with Language;        use Language;
+with GVD.Preferences; use GVD.Preferences;
 
 package body Items.Repeats is
 
@@ -166,15 +166,14 @@ package body Items.Repeats is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      if Context.Font /= null then
-         Draw_Text
-           (Context.Pixmap,
-            Font => Context.Font,
-            GC   => Context.GC,
-            X    => X + Border_Spacing,
-            Y    => Y + Border_Spacing + Get_Ascent (Context.Font),
-            Text => Str);
-      end if;
+      Set_Text (Context.Layout, Str);
+      Set_Font_Description (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+      Draw_Layout
+        (Drawable => Context.Pixmap,
+         GC       => Context.GC,
+         X        => X + Border_Spacing,
+         Y        => Y + Border_Spacing,
+         Layout   => Context.Layout);
 
       Paint (Item.Value.all, Context,
              X + Item.Repeat_Str_Width, Y + Border_Spacing);
@@ -210,12 +209,15 @@ package body Items.Repeats is
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
       else
          Size_Request (Item.Value.all, Context, Hide_Big_Items);
-         Item.Repeat_Str_Width := GVD_Text_Width (Context.Font, Str);
+
+         Set_Text (Context.Layout, Str);
+         Set_Font_Description
+           (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+         Get_Pixel_Size (Context.Layout, Item.Repeat_Str_Width, Item.Height);
          Item.Width :=
            Item.Value.Width + Item.Repeat_Str_Width + 2 * Border_Spacing;
-         Item.Height :=
-           Gint'Max (Item.Value.Height, GVD_Font_Height (Context.Font)) +
-           2 * Border_Spacing;
+         Item.Height := Gint'Max (Item.Value.Height, Item.Height)
+           + 2 * Border_Spacing;
       end if;
    end Size_Request;
 

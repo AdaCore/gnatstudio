@@ -22,10 +22,10 @@ with GNAT.IO;  use GNAT.IO;
 with Ada.Tags; use Ada.Tags;
 
 with Glib;         use Glib;
-with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
+with Pango.Layout; use Pango.Layout;
 
 with Basic_Types;     use Basic_Types;
 with GVD.Preferences; use GVD.Preferences;
@@ -563,10 +563,7 @@ package body Items.Arrays is
       X, Y    : Gint := 0)
    is
       Current_Y : Gint := Y + Border_Spacing;
-      Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width +
-        Left_Border - GVD_Text_Width (Context.Font, String'(" => "));
-
-      use Gdk;
+      W, H : Gint;
 
    begin
       Item.X := X;
@@ -612,38 +609,35 @@ package body Items.Arrays is
 
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
-        and then Context.Type_Font /= null
       then
-         Draw_Text
-           (Context.Pixmap,
-            Font => Context.Type_Font,
-            GC   => Context.GC,
-            X    => X + Border_Spacing,
-            Y    => Current_Y + Get_Ascent (Context.Type_Font),
-            Text => Get_Type_Name (Item'Access, Context));
-         Current_Y := Current_Y +
-           Get_Ascent (Context.Type_Font) + Get_Descent (Context.Type_Font);
+         Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
+         Set_Font_Description
+           (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
+         Draw_Layout
+           (Drawable => Context.Pixmap,
+            GC       => Context.GC,
+            X        => X,
+            Y        => Current_Y,
+            Layout   => Context.Layout);
+         Get_Pixel_Size (Context.Layout, W, H);
+         Current_Y := Current_Y + H;
       end if;
 
       if Show_Value (Context.Mode) then
+         Set_Font_Description
+           (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
+
          for V in Item.Values'Range loop
-            if Context.Font /= null then
-               Draw_Text
-                 (Context.Pixmap,
-                  Font => Context.Font,
-                  GC   => Context.GC,
-                  X    => X + Left_Border + Border_Spacing,
-                  Y    => Current_Y + Get_Ascent (Context.Font),
-                  Text => Index_String
-                    (Item, Item.Values (V).Index, Item.Num_Dimensions));
-               Draw_Text
-                 (Context.Pixmap,
-                  Font => Context.Font,
-                  GC   => Context.GC,
-                  X    => Arrow_Pos,
-                  Y    => Current_Y + Get_Ascent (Context.Font),
-                  Text => " => ");
-            end if;
+            Set_Text
+              (Context.Layout, Index_String
+               (Item, Item.Values (V).Index, Item.Num_Dimensions)
+               & ASCII.HT & " => ");
+            Draw_Layout
+              (Drawable => Context.Pixmap,
+               GC       => Context.GC,
+               X        => X,
+               Y        => Current_Y,
+               Layout   => Context.Layout);
 
             Paint
               (Item.Values (V).Value.all, Context,
@@ -679,6 +673,7 @@ package body Items.Arrays is
       Hide_Big_Items : Boolean := False)
    is
       Total_Height, Total_Width : Gint := 0;
+      W, H : Gint;
    begin
       if not Item.Valid then
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
@@ -703,42 +698,39 @@ package body Items.Arrays is
          if Show_Type (Context.Mode)
            and then Item.Type_Name /= null
          then
-            Item.Type_Height := GVD_Font_Height (Context.Type_Font);
-            Total_Height := Total_Height + Item.Type_Height;
-            Total_Width := Gint'Max
-              (Total_Width,
-               GVD_Text_Width
-               (Context.Type_Font, Get_Type_Name (Item'Access, Context)));
-
+            Set_Text (Context.Layout, Get_Type_Name (Item'Access, Context));
+            Set_Font_Description
+              (Context.Layout, Get_Pref (GVD_Prefs, Type_Font));
+            Get_Pixel_Size (Context.Layout, Total_Width, Total_Height);
+            Item.Type_Height := Total_Height;
          else
             Item.Type_Height := 0;
          end if;
 
          if Show_Value (Context.Mode) then
             Item.Index_Width := 20;  --  minimal width
+            Set_Font_Description
+              (Context.Layout, Get_Pref (GVD_Prefs, Value_Font));
 
             if Item.Values /= null then
                for V in Item.Values'Range loop
+                  Set_Text
+                    (Context.Layout, Index_String
+                     (Item, Item.Values (V).Index, Item.Num_Dimensions)
+                     & ASCII.HT & " => ");
+                  Get_Pixel_Size (Context.Layout, W, H);
+                  Item.Index_Width := Gint'Max (Item.Index_Width, W);
+
                   Size_Request
                     (Item.Values (V).Value.all, Context, Hide_Big_Items);
                   Total_Width  :=
                     Gint'Max (Total_Width, Item.Values (V).Value.Width);
                   Total_Height := Total_Height + Item.Values (V).Value.Height;
-                  Item.Index_Width :=
-                    Gint'Max
-                      (Item.Index_Width,
-                       GVD_Text_Width
-                         (Context.Font,
-                          Index_String (Item, Item.Values (V).Index,
-                                        Item.Num_Dimensions)));
                end loop;
 
                Total_Height :=
                  Total_Height + (Item.Values'Length - 1) * Line_Spacing;
             end if;
-
-            Item.Index_Width := Item.Index_Width
-              + GVD_Text_Width (Context.Font, String'(" => "));
          end if;
 
          --  Keep enough space for the border (Border_Spacing on each side)
