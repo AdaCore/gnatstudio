@@ -1,9 +1,29 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2003                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
 
 with Ada.Calendar;
 with GNAT.OS_Lib;
 with HTables;
 with Tries;
 with VFS;
+with Dynamic_Arrays;
 
 --  This package contains the list of all files and entities used in the
 --  current project.
@@ -224,8 +244,6 @@ package Entities is
 
 private
 
-   Not_Found : constant Natural := Natural'Last;
-
    ----------------
    -- Scope_Tree --
    ----------------
@@ -254,29 +272,14 @@ private
    -- Entity_Information_List --
    -----------------------------
 
-   type Entity_Information_Array is array (Natural range <>)
-      of Entity_Information;
-   type Entity_Information_Array_Access is access Entity_Information_Array;
-   type Entity_Information_List is record
-      List      : Entity_Information_Array_Access;
-      Past_Last : Natural;
-   end record;
+   package Entity_Information_Arrays is new Dynamic_Arrays
+     (Data                    => Entity_Information,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 5);
+   subtype Entity_Information_List is Entity_Information_Arrays.Instance;
    Null_Entity_Information_List : constant Entity_Information_List :=
-     (null, 0);
-
-   procedure Add
-     (List : in out Entity_Information_List; Item : Entity_Information);
-   --  Add a new entry in the list
-
-   procedure Remove
-     (List : in out Entity_Information_List; Item : Entity_Information);
-   --  Remove an item from the list. This is a O(n) operation.
-
-   procedure Destroy (List : in out Entity_Information_List);
-   --  Free the memory occupied by the list
-
-   function Length (List : Entity_Information_List) return Natural;
-   --  Return the number of elements in the List
+     Entity_Information_Arrays.Empty_Instance;
 
    function Find
      (List   : Entity_Information_List; Loc : File_Location)
@@ -287,19 +290,14 @@ private
    -- File_Location_List --
    ------------------------
 
-   type File_Location_Array is array (Natural range <>) of File_Location;
-   type File_Location_Array_Access is access File_Location_Array;
-   type File_Location_List is record
-      List      : File_Location_Array_Access;
-      Past_Last : Natural;
-   end record;
-   Null_File_Location_List : constant File_Location_List := (null, 0);
-
-   procedure Destroy (List : in out File_Location_List);
-   --  Free the memory allocated to the list
-
-   procedure Add (List : in out File_Location_List; Loc : File_Location);
-   --  Add a new reference in the list
+   package File_Location_Arrays is new Dynamic_Arrays
+     (Data                    => File_Location,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 5);
+   subtype File_Location_List is File_Location_Arrays.Instance;
+   Null_File_Location_List : constant File_Location_List :=
+     File_Location_Arrays.Empty_Instance;
 
    ------------------------
    -- Entity_Information --
@@ -378,27 +376,14 @@ private
    -- Source_File_List --
    ----------------------
 
-   type Source_File_Array is array (Natural range <>) of Source_File;
-   type Source_File_Array_Access is access Source_File_Array;
-   type Source_File_List is record
-      List      : Source_File_Array_Access;
-      Past_Last : Natural;
-   end record;
-   Null_Source_File_List : constant Source_File_List := (null, 0);
-
-   procedure Add (List : in out Source_File_List; Item : Source_File);
-   --  Add a new item to the list. The reference counter is automatically
-   --  incremented.
-
-   procedure Remove (List : in out Source_File_List; Item : Source_File);
-   --  Remove File from List
-
-   procedure Destroy (List : in out Source_File_List);
-   --  Free the memory allocated for List
-
-   function Find (List : Source_File_List; File : Source_File) return Natural;
-   --  Return the index of File in List, or Not_Found if the file is not
-   --  found.
+   package Source_File_Arrays is new Dynamic_Arrays
+     (Data                    => Source_File,
+      Table_Multiplier        => 1,
+      Table_Minimum_Increment => 10,
+      Table_Initial_Size      => 5);
+   subtype Source_File_List is Source_File_Arrays.Instance;
+   Null_Source_File_List : constant Source_File_List :=
+     Source_File_Arrays.Empty_Instance;
 
    -----------------
    -- Source_File --
