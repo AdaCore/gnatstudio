@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -205,6 +205,15 @@ package body Src_Info.ALI is
       File             : out Source_File);
    --  Perform the job of Get_Subunit_Source_File knowing the name of the
    --  Source Filename from which the ALI filename is derived.
+
+   procedure Get_Subunit_Source_File_With_LI
+     (Handler          : ALI_Handler;
+      ALI_Filename     : Virtual_File;
+      Source_Filename  : Virtual_File;
+      Project          : Project_Type;
+      Subunit_Name     : Name_Id;
+      File             : out Source_File);
+   --  Same as above, but the LI file is already known
 
    function Get_Source_Filename
      (Unit_Name       : Unit_Name_Type;
@@ -721,10 +730,27 @@ package body Src_Info.ALI is
       Subunit_Name     : Name_Id;
       File             : out Source_File)
    is
-      ALI_Filename : constant Virtual_File := LI_Filename_From_Source
-        (Handler, Source_Filename, Project);
-      Sep          : File_Info_Ptr_List;
+      ALI_Filename : constant Virtual_File :=
+        LI_Filename_From_Source
+          (Handler, Source_Filename, Project);
+   begin
+      Get_Subunit_Source_File_With_LI
+        (Handler, ALI_Filename, Source_Filename, Project, Subunit_Name, File);
+   end Get_Subunit_Source_File;
 
+   -------------------------------------
+   -- Get_Subunit_Source_File_With_LI --
+   -------------------------------------
+
+   procedure Get_Subunit_Source_File_With_LI
+     (Handler          : ALI_Handler;
+      ALI_Filename     : Virtual_File;
+      Source_Filename  : Virtual_File;
+      Project          : Project_Type;
+      Subunit_Name     : Name_Id;
+      File             : out Source_File)
+   is
+      Sep          : File_Info_Ptr_List;
    begin
       File :=
          (LI              => Get (Handler.Table.all, Base_Name (ALI_Filename)),
@@ -772,7 +798,7 @@ package body Src_Info.ALI is
       when others =>
          File := No_Source_File;
          raise;
-   end Get_Subunit_Source_File;
+   end Get_Subunit_Source_File_With_LI;
 
    -----------------------
    -- Load_And_Scan_ALI --
@@ -996,9 +1022,27 @@ package body Src_Info.ALI is
          Use_Object_Path => False);
 
    begin
-      Get_Source_File
-        (Handler,
-         Source, Dep.Subunit_Name, Project, Sfile);
+      if Is_Separate then
+         Get_Subunit_Source_File_With_LI
+           (Handler,
+            ALI_Filename    => Get_LI_Filename (New_LI_File),
+            Source_Filename => Source,
+            Project         => Project,
+            Subunit_Name    => Dep.Subunit_Name,
+            File            => Sfile);
+      else
+         Get_Source_File
+           (Handler,
+            Source, Dep.Subunit_Name, Project, Sfile);
+      end if;
+
+      Assert (Me, not Is_Separate
+              or else (Sfile.LI = New_LI_File),
+              "Invalid handling of separate unit LI is "
+              & Base_Name (Get_LI_Filename (Sfile.LI))
+              & " but should have been "
+              & Base_Name (Get_LI_Filename (New_LI_File)));
+
       New_Dep :=
         (File              => Sfile,
          Dep_Info          => (Depends_From_Spec => False,
@@ -1210,6 +1254,8 @@ package body Src_Info.ALI is
    is
       Dep : Dependency_File_Info_List := New_LI_File.LI.Dependencies_Info;
    begin
+      Assert (Me, Sfile.LI /= null, "null LI file");
+
       while Dep /= null loop
          exit when Dep.Value.File = Sfile;
          Dep := Dep.Next;
@@ -1217,7 +1263,8 @@ package body Src_Info.ALI is
 
       if Dep = null then
          --  Failed to find the associated dependency. This is a bug.
-         Trace (Me, "Chain_Declaration_For_Dependency: SFile not found");
+         Trace (Me, "Chain_Declaration_For_Dependency: SFile not found for "
+                & Base_Name (Get_LI_Filename (Sfile.LI)));
          raise ALI_Internal_Error;
       end if;
 
