@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -28,10 +28,6 @@ with Open_Program_Pkg.Callbacks; use Open_Program_Pkg.Callbacks;
 
 package body Open_Program_Pkg is
 
-pragma Suppress (All_Checks);
---  Checks are expensive (in code size) in this unit, and not needed,
---  since the following code is generated automatically.
-
 procedure Gtk_New (Open_Program : out Open_Program_Access) is
 begin
    Open_Program := new Open_Program_Record;
@@ -39,6 +35,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Open_Program : access Open_Program_Record'Class) is
+   pragma Suppress (All_Checks);
    Table7_Group : Widget_SList.GSList;
    Program_Combo_Items : String_List.Glist;
    Host_Combo_Items : String_List.Glist;

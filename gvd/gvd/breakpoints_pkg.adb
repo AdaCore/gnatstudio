@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -39,10 +39,6 @@ with Odd.Utils;       use Odd.Utils;
 
 package body Breakpoints_Pkg is
 
-pragma Suppress (All_Checks);
---  Checks are expensive (in code size) in this unit, and not needed,
---  since the following code is generated automatically.
-
 procedure Gtk_New (Breakpoints : out Breakpoints_Access) is
 begin
    Breakpoints := new Breakpoints_Record;
@@ -50,6 +46,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
+   pragma Suppress (All_Checks);
    Vbox15_Group : Widget_SList.GSList;
    File_Combo_Items : String_List.Glist;
    Line_Spin_Adj : Gtk_Adjustment;
@@ -597,30 +594,29 @@ begin
    Show_All (Editor);
 end Breakpoint_Editor;
 
-   -----------------
-   -- Set_Process --
-   -----------------
+-----------------
+-- Set_Process --
+-----------------
 
-   procedure Set_Process
-     (Editor  : access Breakpoints_Record;
-      Process : access Odd.Process.Debugger_Process_Tab_Record'Class)
-   is
-   begin
-      Editor.Process := Odd.Process.Debugger_Process_Tab (Process);
-      Update_Breakpoint_List (Editor);
+procedure Set_Process
+  (Editor  : access Breakpoints_Record;
+   Process : access Odd.Process.Debugger_Process_Tab_Record'Class) is
+begin
+   Editor.Process := Odd.Process.Debugger_Process_Tab (Process);
+   Update_Breakpoint_List (Editor);
 
-      --  Reinitialize the contents of the file combo boxes
-      Set_Text
-        (Get_Entry (Editor.File_Combo),
-         Base_File_Name (Get_Current_File (Process.Editor_Text)));
+   --  Reinitialize the contents of the file combo boxes
+   Set_Text
+     (Get_Entry (Editor.File_Combo),
+      Base_File_Name (Get_Current_File (Process.Editor_Text)));
 
-      --  Clear the contents of the exceptions combo (its contents is in fact
-      --  cached in gdb, so it is fast enough to call "info exceptions" again)
-      Clear_Items (Get_List (Editor.Exception_Name), 0, -1);
-      Add_Unique_Combo_Entry
-        (Editor.Exception_Name, -"All exceptions");
-      Add_Unique_Combo_Entry
-        (Editor.Exception_Name, -"All assertions");
-   end Set_Process;
+   --  Clear the contents of the exceptions combo (its contents is in fact
+   --  cached in gdb, so it is fast enough to call "info exceptions" again)
+   Clear_Items (Get_List (Editor.Exception_Name), 0, -1);
+   Add_Unique_Combo_Entry
+     (Editor.Exception_Name, -"All exceptions");
+   Add_Unique_Combo_Entry
+     (Editor.Exception_Name, -"All assertions");
+end Set_Process;
 
 end Breakpoints_Pkg;

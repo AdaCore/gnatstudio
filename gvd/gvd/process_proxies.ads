@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -189,7 +189,7 @@ package Process_Proxies is
       --  It this is not the case, it returns False and does nothing
 
    end Register_Generic;
-   --  This package must be instanciated at library level, since it needs to
+   --  This package must be instantiated at library level, since it needs to
    --  reference some internal callback function.
 
    ----------------

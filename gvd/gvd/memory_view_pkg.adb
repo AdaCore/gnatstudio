@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -36,6 +36,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Memory_View : access Memory_View_Record'Class) is
+   pragma Suppress (All_Checks);
    Size_Items : String_List.Glist;
    Format_Items : String_List.Glist;
    Value_Adj : Gtk_Adjustment;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -183,11 +183,12 @@ package body Process_Proxies is
    -- Wait --
    ----------
 
-   procedure Wait (Proxy   : access Gui_Process_Proxy;
-                   Result  : out GNAT.Expect.Expect_Match;
-                   Pattern : GNAT.Regpat.Pattern_Matcher;
-                   Matched : out GNAT.Regpat.Match_Array;
-                   Timeout : Integer := 20)
+   procedure Wait
+     (Proxy   : access Gui_Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Matched : out GNAT.Regpat.Match_Array;
+      Timeout : Integer := 20)
    is
       Tmp   : Boolean;
       Num   : Integer := 1;
@@ -296,8 +297,8 @@ package body Process_Proxies is
    -- Get_Command_Mode --
    ----------------------
 
-   function Get_Command_Mode (Proxy : access Process_Proxy)
-                             return Command_Type is
+   function Get_Command_Mode
+     (Proxy : access Process_Proxy) return Command_Type is
    begin
       return Proxy.Internal_Mode;
    end Get_Command_Mode;

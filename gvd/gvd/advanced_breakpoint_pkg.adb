@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -29,10 +29,6 @@ with Gtk.Main;
 
 package body Advanced_Breakpoint_Pkg is
 
-pragma Suppress (All_Checks);
---  Checks are expensive (in code size) in this unit, and not needed,
---  since the following code is generated automatically.
-
 procedure Gtk_New (Advanced_Breakpoint : out Advanced_Breakpoint_Access) is
 begin
    Advanced_Breakpoint := new Advanced_Breakpoint_Record;
@@ -40,6 +36,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Advanced_Breakpoint : access Advanced_Breakpoint_Record'Class) is
+   pragma Suppress (All_Checks);
    Condition_Combo_Items : String_List.Glist;
    Ignore_Count_Combo_Adj : Gtk_Adjustment;
 

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -26,8 +26,9 @@ package body Odd.Histories is
    -- Append --
    ------------
 
-   procedure Append (History : in out History_List;
-                     Data    : Data_Type)
+   procedure Append
+     (History : in out History_List;
+      Data    : Data_Type)
    is
       Element : Hlist_Link;
    begin
@@ -52,6 +53,7 @@ package body Odd.Histories is
          History.Last := Element;
          History.Length := History.Length + 1;
       end if;
+
       History.Current := History.Last;
       History.Position := After_End;
    end Append;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -58,6 +58,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Open_Session : access Open_Session_Record'Class) is
+   pragma Suppress (All_Checks);
 begin
    Gtk.Window.Initialize (Open_Session, Window_Toplevel);
    Set_Title (Open_Session, -"Open Session");
@@ -180,7 +181,6 @@ begin
      (Open_Session.Help_Button, "clicked",
       Button_Callback.To_Marshaller (On_Help_Button_Clicked'Access));
    Add (Open_Session.Hbuttonbox9, Open_Session.Help_Button);
-
 end Initialize;
 
 ------------------
