@@ -22,6 +22,7 @@ with Ada.Unchecked_Deallocation;
 
 with Ada_Analyzer; use Ada_Analyzer;
 with Language;     use Language;
+with Basic_Types;  use Basic_Types;
 
 with Generic_List;
 
@@ -166,6 +167,13 @@ package Codefix.Text_Manager is
    --  If Name is "", then the first unit with the rigth Category will be
    --  returned.
 
+   function Get_Extended_Unit_Name
+     (This     : Text_Interface'Class;
+      Cursor   : Text_Cursor'Class;
+      Category : Language_Category := Cat_Unknown)
+     return String;
+   --  Return the entire prefix of the first unit of category after the cursor.
+
    ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
@@ -270,6 +278,13 @@ package Codefix.Text_Manager is
      (This      : Text_Navigator_Abstr'Class;
       File_Name : String) return Natural;
    --  Return the number of the last line in the text loaded.
+
+   function Get_Extended_Unit_Name
+     (This     : Text_Navigator_Abstr'Class;
+      Cursor   : File_Cursor'Class;
+      Category : Language_Category := Cat_Unknown)
+     return String;
+   --  Return the entire prefix of the first unit of category after the cursor.
 
    ----------------------------------------------------------------------------
    --  type Extract_Line
@@ -737,5 +752,9 @@ private
    ----------------------------------------------------------------------------
 
    Null_File_Cursor : constant File_Cursor := (0, 0, null);
+
+   function Normalize (Str : Basic_Types.String_Access) return String;
+   --  Change the string in order to make comparaisons between lists of
+   --  parameters.
 
 end Codefix.Text_Manager;

@@ -72,6 +72,19 @@ package body Codefix.Text_Manager is
       return J > Index_Found;
    end Is_In_Comment;
 
+   ---------------
+   -- Normalize --
+   ---------------
+
+   function Normalize (Str : Basic_Types.String_Access) return String is
+   begin
+      if Str /= null then
+         return Reduce (Str.all);
+      else
+         return "";
+      end if;
+   end Normalize;
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -431,6 +444,21 @@ package body Codefix.Text_Manager is
       return Line_Max (Get_File (This, File_Name).all);
    end Line_Max;
 
+   ----------------------------
+   -- Get_Extended_Unit_Name --
+   ----------------------------
+
+   function Get_Extended_Unit_Name
+     (This     : Text_Navigator_Abstr'Class;
+      Cursor   : File_Cursor'Class;
+      Category : Language_Category := Cat_Unknown)
+     return String is
+   begin
+      return Get_Extended_Unit_Name
+        (Get_File (This, Cursor.File_Name.all).all, Cursor, Category);
+   end Get_Extended_Unit_Name;
+
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -556,10 +584,6 @@ package body Codefix.Text_Manager is
      (Current_Text : Text_Interface;
       Spec         : Construct_Information) return Construct_Information
    is
-      function Normalize (Str : Basic_Types.String_Access) return String;
-      --  Change the string in order to make comparaisons between lists of
-      --  parameters.
-
       procedure Seeker (Stop : Source_Location; Is_First : Boolean := False);
       --  Recursivly scan a token list in order to found the declaration what
       --  correpond with a body. Stop is the beginning of the current block.
@@ -622,25 +646,11 @@ package body Codefix.Text_Manager is
       Current_Scope : Ptr_Scope_Node;
       First_Scope   : Ptr_Scope_Node;
 
-      ---------------
-      -- Normalize --
-      ---------------
-
-      function Normalize (Str : Basic_Types.String_Access) return String is
-      begin
-         if Str /= null then
-            return Reduce (Str.all);
-         else
-            return "";
-         end if;
-      end Normalize;
-
       ------------
       -- Seeker --
       ------------
 
-      --  Regler les pbs de memory leaks lies a des paquetages
-      --  intra-procedures.
+      --  ??? Solve eventuals memory leaks linked to intra-packages
 
       procedure Seeker (Stop : Source_Location; Is_First : Boolean := False) is
          Current_Result : Construct_Access;
@@ -656,7 +666,7 @@ package body Codefix.Text_Manager is
             then
                Current_Scope := Get_Node
                  (Current_Scope, Current_Info.Name.all);
-               This_Scope := Current_Scope; --  Vraiment utile ?
+               This_Scope := Current_Scope; --  ???  Is it usefull ?
                Current_Result := Current_Scope.Result;
                Result := Current_Result;
             end if;
@@ -683,7 +693,6 @@ package body Codefix.Text_Manager is
                  or else (Current_Info.Sloc_End.Line = Stop.Line
                           and then Current_Info.Sloc_End.Column < Stop.Column)
                then
-                  --  Sortir du scope !!!
                   if This_Scope /= null then
                      Current_Scope := This_Scope.Root;
                   end if;
@@ -699,7 +708,7 @@ package body Codefix.Text_Manager is
                then
                   Result := Current_Info;
                   if This_Scope /= null then
-                     This_Scope.Result := Result; -- ou current result ???
+                     This_Scope.Result := Result; --  ???  or current_result ?
                   end if;
                end if;
 
@@ -712,8 +721,6 @@ package body Codefix.Text_Manager is
 
                   Current_Result := Result;
                   New_Sloc := Current_Info.Sloc_Start;
-
-                  Current_Result := Result;
 
                   Seeker (New_Sloc);
 
@@ -881,6 +888,104 @@ package body Codefix.Text_Manager is
               Next            => null);
 
    end Search_Unit;
+
+   ----------------------------
+   -- Get_Extended_Unit_Name --
+   ----------------------------
+
+   function Get_Extended_Unit_Name
+     (This     : Text_Interface'Class;
+      Cursor   : Text_Cursor'Class;
+      Category : Language_Category := Cat_Unknown)
+     return String is
+
+      Unit_Info    : Construct_Information := Get_Unit
+        (This, Cursor, After, Category_1 => Category);
+      --  ??? Is 'after' a good idea ?
+
+      Result_Name  : Dynamic_String;
+      Current_Info : Construct_Access;
+      Found        : Boolean := False;
+
+      procedure Seeker (Stop : Source_Location);
+      --  Initialize Result_Name wirth the extended prefix of unit.
+
+      ------------
+      -- Seeker --
+      ------------
+
+      procedure Seeker (Stop : Source_Location) is
+         New_Sloc     : Source_Location;
+         Current_Name : Dynamic_String;
+      begin
+         Assign (Current_Name, Current_Info.Name.all);
+
+         Current_Info := Current_Info.Prev;
+
+         while Current_Info /= null loop
+
+            if Current_Info.Category not in Construct_Category then
+
+               --  Is it the end of the scope ?
+               if Current_Info.Sloc_End.Line < Stop.Line
+                 or else (Current_Info.Sloc_End.Line = Stop.Line
+                          and then Current_Info.Sloc_End.Column < Stop.Column)
+               then
+                  return;
+               end if;
+
+
+               --  Is this unit the right one ?
+               if Current_Info.Is_Declaration = Unit_Info.Is_Declaration
+                 and then Current_Info.Name.all = Unit_Info.Name.all
+                 and then Current_Info.Sloc_Start = Unit_Info.Sloc_Start
+                 and then Normalize (Current_Info.Profile) =
+                   Normalize (Unit_Info.Profile)
+               then
+                  Result_Name := Current_Name;
+                  Found := True;
+                  return;
+
+               --  Is it the beginning of a scope ?
+               elsif (not Current_Info.Is_Declaration and then
+                      Current_Info.Category in Enclosing_Entity_Category)
+                 or else Current_Info.Category = Cat_Protected
+                 or else Current_Info.Category = Cat_Package
+               then
+
+                  New_Sloc := Current_Info.Sloc_Start;
+
+                  Seeker (New_Sloc);
+
+                  if Found then
+                     Assign
+                       (Result_Name,
+                        Current_Name.all & "." & Result_Name.all);
+                     return;
+                  end if;
+               else
+                  Current_Info := Current_Info.Prev;
+               end if;
+
+            else
+               Current_Info := Current_Info.Prev;
+            end if;
+
+         end loop;
+      end Seeker;
+
+
+   begin
+      Current_Info := This.Tokens_List.Last;
+      Seeker (Current_Info.Sloc_Start);
+
+      declare
+         Result_Stack : String := Result_Name.all;
+      begin
+         Free (Result_Name);
+         return Result_Stack;
+      end;
+   end Get_Extended_Unit_Name;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
