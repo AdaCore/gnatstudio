@@ -1,5 +1,3 @@
-with "../common/common";
-
 project Kernel is
 
    for Source_Dirs use ("src");
