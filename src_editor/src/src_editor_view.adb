@@ -662,7 +662,6 @@ package body Src_Editor_View is
       User   : Source_View)
    is
       Line : constant Gint := Get_Int (Nth (Params, 1));
-
    begin
       --  If we have the focus and are setting the position, scroll to the
       --  location
