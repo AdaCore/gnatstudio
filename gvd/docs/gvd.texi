@@ -1040,6 +1040,10 @@ window, or use the contextual menu for the specific item (see
 Dereference the selection (or by default the name under the cursor) and
 print the value in the debugger console.
 
+     @item Display @i{selection}.all
+Dereference the selection (or by default the name under the cursor) and
+display the value in the data window.
+
      @item View memory at &@i{selection}
 Bring up the memory view dialog and explore memory at the address of the 
 selection.
