@@ -462,7 +462,7 @@ package body GVD.Canvas is
 
       Gdk_New (C.Item_Context.Xref_GC, Win);
       Set_Foreground (C.Item_Context.Xref_GC, Get_Pref (Xref_Color));
-      C.Tooltip_Context.Xref_GC := C.Item_Context.Xref_Gc;
+      C.Tooltip_Context.Xref_GC := C.Item_Context.Xref_GC;
 
       if C.Item_Context.Modified_GC /= null then
          Destroy (C.Item_Context.Modified_GC);
