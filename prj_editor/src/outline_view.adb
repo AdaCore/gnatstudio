@@ -192,10 +192,22 @@ package body Outline_View is
          if Subprogram /= null then
             declare
                Subprogram_Name : constant String := Get_Name (Subprogram).all;
+               Handler : constant LI_Handler := Get_LI_Handler
+                 (Get_Database (Kernel),
+                  Source_Filename =>
+                    File_Location_Hooks_Args_Access (Data).File);
+               Case_Insensitive : constant Boolean :=
+                 Case_Insensitive_Identifiers (Handler);
             begin
                Iter := Children (Model, Get_Iter_First (Model));
                while Iter /= Null_Iter loop
-                  if Get_String (Model, Iter, 1) = Subprogram_Name then
+                  if (Case_Insensitive
+                       and then Case_Insensitive_Equal
+                        (Get_String (Model, Iter, 1), Subprogram_Name))
+                    or else
+                      (not Case_Insensitive
+                       and then Get_String (Model, Iter, 1) = Subprogram_Name)
+                  then
                      Path := Get_Path (Model, Iter);
                      Set_Cursor (Outline.Tree, Path, null, False);
                      Path_Free (Path);
