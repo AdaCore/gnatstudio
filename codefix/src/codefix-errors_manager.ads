@@ -215,6 +215,10 @@ private
       Category  : String;
       New_Error : out Error_Id);
 
+   procedure Remove_Error
+     (This : in out Correction_Manager;
+      Id   : Error_Id);
+
    type State_Node is record
       Error : Dynamic_String;
       State : Error_State := Unknown;
