@@ -57,7 +57,7 @@ unmodified in any copy.
 @menu
 * Introduction::
 * Description of the Main Windows::
-* Integrated Help::
+* Online Help::
 * Multiple Document Interface::
 * Editing Files::
 * Source Navigation::
@@ -94,7 +94,7 @@ Description of the main windows
 * The Status Line::
 * The Task Manager::
 
-Integrated Help
+Online Help
 * The Help Menu::
 * Adding New Help Files::
 
@@ -963,9 +963,9 @@ Cancel button.
 @end ifhtml
 
 @c --------------------------------------------------------------------
-@node Integrated Help
-@chapter Integrated Help
-@cindex integrated help
+@node Online Help
+@chapter Online Help
+@cindex Online help
 @cindex help
 @cindex HTML
 @c --------------------------------------------------------------------
@@ -977,11 +977,12 @@ Cancel button.
 
 @noindent
 By default when you start GPS, the working area contains a welcome page
-giving a few starting points in the integrated help.
+giving a few starting points in the online help.
 
-On-line help for the GNAT tools is available from the @code{Help} menu item.
+Online help for the GNAT tools is available from the @code{Help} menu item.
 GPS launches an external html browser to view these pages. (See
- @ref{The Preferences Dialog} on how to configure this.)
+ @ref{The Preferences Dialog} on how to configure this under Unix. Under
+Windows systems, the default HTML browser is used.)
 
 @node The Help Menu
 @section The Help Menu
@@ -7120,7 +7121,12 @@ Program used to execute commands externally.
 
 @item HTML Browser
 @cindex html
+Only used under Unix, not relevant under Windows where the default HTML
+browser is used.
 Program used to execute view HTML files, for instance the documentation.
+Empty by default, which means that GPS will try to find a suitable HTML
+browser automatically. Only change the value if GPS cannot find a HTML
+browser, or if the browser found is not your preferred one.
 
 @item Print command
 @cindex print
