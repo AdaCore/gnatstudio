@@ -23,10 +23,6 @@ use  SN.DB_Structures, DB_API;
 
 package SN.Find_Fns is
 
-   Not_Found           : exception;
-   --  Raised by the find function when key does
-   --  not correspond to a variable
-
    Invalid_Symbol_Type : exception;
    --  Raised when a bad symbol passed to To_String function
 
@@ -59,19 +55,19 @@ package SN.Find_Fns is
       Result         : out Pair);
    --  Get the value in the database DB matching the key given by the
    --  parameters. The returned value must be freed by the user.
-   --  Not_Found is raised if no matching key could be found.
+   --  No_Pair is returned if no such entry was found.
    --  Matching is done on as many parameters as possible, until one of them
    --  has the default invalid value, in which case the first entry in DB
    --  matching the parameters so far is returned, or Not_Found is raised if
    --  there are none.
 
    procedure Get_Pair
-     (DB             : DB_File;
-      Class          : String := Invalid_String;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Result         : out Pair);
+     (DB                : DB_File;
+      Class_Or_Function : String := Invalid_String;
+      Name              : String := Invalid_String;
+      Start_Position    : Point  := Invalid_Point;
+      Filename          : String := Invalid_String;
+      Result            : out Pair);
    --  Same as above, with a different index
 
    ----------
@@ -80,14 +76,44 @@ package SN.Find_Fns is
    --  The following subprograms are higher level interfaces to Get_Pair, which
    --  automatically free the Pair.
 
+   procedure Find_Key
+     (DB             : DB_File;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Key            : out Entity_Key;
+      Success        : out Boolean);
+   --  Only applicable to CL, CON, E, EC, FD, FT, FU, GV, MA, T
+
+   procedure Find_Key
+     (DB             : DB_File;
+      Class          : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Key            : out Entity_Class_Key;
+      Success        : out Boolean);
+   --  Only applicable to IV, MD, MI
+
+   procedure Find_Key
+     (DB             : DB_File;
+      Function_Name  : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Key            : out Entity_Function_Key;
+      Success        : out Boolean);
+   --  Only applicable to LV
+
+
    procedure Find
      (DB             : DB_File;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out CL_Table);
+      Tab            : out CL_Table;
+      Success        : out Boolean);
    --  Find a class in the ".cl" class.
-   --  Not_Found is raised if the class couldn't be found.
    --  If one parameter is not specified, all following parameters are ignored,
    --  and the first value matching the parameters so far is returned.
 
@@ -96,7 +122,8 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out CON_Table);
+      Tab            : out CON_Table;
+      Success        : out Boolean);
    --  Find functions for Constants table
 
    procedure Find
@@ -104,7 +131,8 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out E_Table);
+      Tab            : out E_Table;
+      Success        : out Boolean);
    --  Find functions for Enumerations table
 
    procedure Find
@@ -112,7 +140,8 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out EC_Table);
+      Tab            : out EC_Table;
+      Success        : out Boolean);
    --  Find functions for Enum-constants table
 
    procedure Find
@@ -120,7 +149,8 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out FD_Table);
+      Tab            : out FD_Table;
+      Success        : out Boolean);
    --  Find an entry in the ".fu" table.
    --  Null_FD is returned if this function couldn't be find.
 
@@ -129,7 +159,8 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out FU_Table);
+      Tab            : out FU_Table;
+      Success        : out Boolean);
    --  Find functions for Functions table
 
    procedure Find
@@ -137,7 +168,8 @@ package SN.Find_Fns is
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;
       Filename : String := Invalid_String;
-      Tab      : out GV_Table);
+      Tab      : out GV_Table;
+      Success  : out Boolean);
    --  Find functions for Variables table
 
    procedure Find
@@ -146,7 +178,8 @@ package SN.Find_Fns is
       Variable_Name  : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out IV_Table);
+      Tab            : out IV_Table;
+      Success        : out Boolean);
    --  Find functions for Instance variables table
 
    procedure Find
@@ -154,7 +187,8 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out MA_Table);
+      Tab            : out MA_Table;
+      Success        : out Boolean);
    --  Find functions for Macros table
 
    procedure Find
@@ -163,16 +197,18 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out MD_Table);
+      Tab            : out MD_Table;
+      Success        : out Boolean);
    --  Find functions for Method definitions table
 
    procedure Find
      (DB             : DB_File;
-      Class          : String := Invalid_String;
+      Class          : String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out FU_Table);
+      Tab            : out MI_Table;
+      Success        : out Boolean);
    --  Find functions for Method implementations table
 
    procedure Find
@@ -180,7 +216,8 @@ package SN.Find_Fns is
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;
       Filename : String := Invalid_String;
-      Tab      : out T_Table);
+      Tab      : out T_Table;
+      Success        : out Boolean);
    --  Find functions for Typedefs table
 
    pragma Inline (Find);

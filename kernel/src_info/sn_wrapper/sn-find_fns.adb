@@ -125,10 +125,6 @@ package body SN.Find_Fns is
       Set_Cursor_At (DB, Name, Start_Position, Filename);
       Get_Pair (DB, Next_By_Key, Result);
       Release_Cursor (DB);
-
-      if Result = No_Pair then
-         raise Not_Found;
-      end if;
    end Get_Pair;
 
    --------------
@@ -136,21 +132,83 @@ package body SN.Find_Fns is
    --------------
 
    procedure Get_Pair
+     (DB                : DB_File;
+      Class_Or_Function : String := Invalid_String;
+      Name              : String := Invalid_String;
+      Start_Position    : Point  := Invalid_Point;
+      Filename          : String := Invalid_String;
+      Result            : out Pair) is
+   begin
+      Set_Cursor_At (DB, Class_Or_Function, Name, Start_Position, Filename);
+      Get_Pair (DB, Next_By_Key, Result);
+      Release_Cursor (DB);
+   end Get_Pair;
+
+   --------------
+   -- Find_Key --
+   --------------
+
+   procedure Find_Key
+     (DB             : DB_File;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Key            : out Entity_Key;
+      Success        : out Boolean)
+   is
+      P : Pair;
+   begin
+      Get_Pair (DB, Name, Start_Position, Filename, Result => P);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Key (P, Key);
+      end if;
+   end Find_Key;
+
+   --------------
+   -- Find_Key --
+   --------------
+
+   procedure Find_Key
      (DB             : DB_File;
       Class          : String := Invalid_String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Result         : out Pair) is
+      Key            : out Entity_Class_Key;
+      Success        : out Boolean)
+   is
+      P : Pair;
    begin
-      Set_Cursor_At (DB, Class, Name, Start_Position, Filename);
-      Get_Pair (DB, Next_By_Key, Result);
-      Release_Cursor (DB);
-
-      if Result = No_Pair then
-         raise Not_Found;
+      Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Key (P, Key);
       end if;
-   end Get_Pair;
+   end Find_Key;
+
+   --------------
+   -- Find_Key --
+   --------------
+
+   procedure Find_Key
+     (DB             : DB_File;
+      Function_Name  : String := Invalid_String;
+      Name           : String := Invalid_String;
+      Start_Position : Point  := Invalid_Point;
+      Filename       : String := Invalid_String;
+      Key            : out Entity_Function_Key;
+      Success        : out Boolean)
+   is
+      P : Pair;
+   begin
+      Get_Pair
+        (DB, Function_Name, Name, Start_Position, Filename, Result => P);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Key (P, Key);
+      end if;
+   end Find_Key;
 
    ----------
    -- Find --
@@ -161,12 +219,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out CL_Table)
+      Tab            : out CL_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -178,12 +240,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out CON_Table)
+      Tab            : out CON_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -195,12 +261,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out E_Table)
+      Tab            : out E_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -212,12 +282,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out EC_Table)
+      Tab            : out EC_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -229,12 +303,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out FD_Table)
+      Tab            : out FD_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -246,12 +324,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out FU_Table)
+      Tab            : out FU_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -263,12 +345,16 @@ package body SN.Find_Fns is
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;
       Filename : String := Invalid_String;
-      Tab      : out GV_Table)
+      Tab      : out GV_Table;
+      Success  : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -281,12 +367,16 @@ package body SN.Find_Fns is
       Variable_Name  : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out IV_Table)
+      Tab            : out IV_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Class, Variable_Name, Start_Position, Filename, P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -298,12 +388,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out MA_Table)
+      Tab            : out MA_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -316,12 +410,16 @@ package body SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out MD_Table)
+      Tab            : out MD_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -333,12 +431,16 @@ package body SN.Find_Fns is
       Name     : String := Invalid_String;
       Position : Point  := Invalid_Point;
       Filename : String := Invalid_String;
-      Tab      : out T_Table)
+      Tab      : out T_Table;
+      Success  : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Name, Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ----------
@@ -347,16 +449,20 @@ package body SN.Find_Fns is
 
    procedure Find
      (DB             : DB_File;
-      Class          : String := Invalid_String;
+      Class          : String;
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out FU_Table)
+      Tab            : out FU_Table;
+      Success        : out Boolean)
    is
       P : Pair;
    begin
       Get_Pair (DB, Class, Name, Start_Position, Filename, Result => P);
-      Parse_Pair (P, Tab);
+      Success := P /= No_Pair;
+      if Success then
+         Parse_Pair (P, Tab);
+      end if;
    end Find;
 
    ---------------
