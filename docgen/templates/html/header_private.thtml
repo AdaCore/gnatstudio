@@ -1,9 +1,9 @@
 @@--
-@@-- ???
+@@-- Start a private section
 @@--
 @@-- INDENT       : spaces to be used for the indentation
-@@-- LEVEL        :
-@@-- HEADER_TITLE :
+@@-- LEVEL        : title's level
+@@-- HEADER_TITLE : the header title to ouput
 @@--
 <TABLE BGCOLOR="#9999FF" WIDTH="100%"><TR><TD><PRE>
 <H@_LEVEL_@><B>@_INDENT_@@_HEADER_TITLE_@</B></H@_LEVEL_@>
