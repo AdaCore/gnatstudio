@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -264,6 +264,10 @@ package Src_Editor_Box is
    --  Disable the highlighting of Line using colors defined in category
    --  corresponding to Id.
    --  If Line is 0, unhighlight all lines in file.
+
+   procedure Clear_Subprogram_Name
+     (Editor : access Source_Editor_Box_Record);
+   --  Clear the subprogram name label (set to empty string)
 
    function Create_Mark
      (Editor : access Source_Editor_Box_Record;
