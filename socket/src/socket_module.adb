@@ -27,11 +27,15 @@ with Ada.IO_Exceptions;       use Ada.IO_Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;    use Glide_Kernel.Scripts;
 
+with Basic_Types;             use Basic_Types;
 with Traces;                  use Traces;
 
 with Commands.Socket;         use Commands.Socket;
 with Commands;                use Commands;
+
+with Glide_Intl;              use Glide_Intl;
 
 with Ada.Unchecked_Deallocation;
 
@@ -47,17 +51,21 @@ package body Socket_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Socket_Set_Type, Socket_Set_Type_Access);
 
+   type Read_Data_Record;
+   type Read_Data_Access is access Read_Data_Record;
+
    type Socket_Module_Record is new Module_ID_Record with record
       Timeout_Handler  : Timeout_Handler_Id;
       Kernel           : Kernel_Handle;
       Commands_Present : Boolean := False;
       Commands_List    : List;
 
-      Selector : Selector_Access;
-      R_Set    : Socket_Set_Type_Access;
-      W_Set    : Socket_Set_Type_Access;
-      Address  : Sock_Addr_Type;
-      Server   : Socket_Type;
+      Selector  : Selector_Access;
+      R_Set     : Socket_Set_Type_Access;
+      W_Set     : Socket_Set_Type_Access;
+      Address   : Sock_Addr_Type;
+      Server    : Socket_Type;
+      Data_List : Read_Data_Access;
    end record;
    type Socket_Module is access all Socket_Module_Record'Class;
 
@@ -70,8 +78,10 @@ package body Socket_Module is
 
       Buffer   : String (1 .. 4096);
       Index    : Natural := 1;
+
+      Name     : String_Access := new String'("");
+      Next     : Read_Data_Access;
    end record;
-   type Read_Data_Access is access Read_Data_Record;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Selector_Type, Selector_Access);
@@ -101,6 +111,32 @@ package body Socket_Module is
    function Idle_Read (Data : Read_Data_Access) return Boolean;
    --  Read input on Data.Socket and process it.
 
+   procedure Socket_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Interactive command handler for the socket module.
+
+   function Find_Data (Id : String) return Read_Data_Access;
+   --  Find the Read_Data associated with "Id"
+   --  Return null if Id can't be found.
+
+   function Find_Data (Id : String) return Read_Data_Access is
+      Module_Data : constant Socket_Module := Socket_Module (Socket_Module_ID);
+      Temp        : Read_Data_Access;
+   begin
+      Temp := Module_Data.Data_List;
+
+      while Temp /= null loop
+         if Temp.Name.all = Id then
+            return Temp;
+         end if;
+
+         Temp := Temp.Next;
+      end loop;
+
+      return null;
+   end Find_Data;
+
    -------------
    -- Destroy --
    -------------
@@ -126,7 +162,26 @@ package body Socket_Module is
    -----------
 
    procedure Close (R : in out Read_Data_Access) is
+      Module_Data : constant Socket_Module := Socket_Module (Socket_Module_ID);
+      Temp        : Read_Data_Access;
    begin
+      Temp := Module_Data.Data_List;
+
+      if Temp = R then
+         Module_Data.Data_List := Temp.Next;
+      else
+         while Temp.Next /= R loop
+            Temp := Temp.Next;
+
+            pragma Assert (Temp /= null);
+            exit when Temp = null;
+         end loop;
+
+         if Temp /= null then
+            Temp.Next := R.Next;
+         end if;
+      end if;
+
       Empty (R.R_Set.all);
       Empty (R.W_Set.all);
       Close_Selector (R.Selector.all);
@@ -137,6 +192,7 @@ package body Socket_Module is
 
       Close_Socket (R.Socket);
 
+      Free (R.Name);
       Unchecked_Free (R);
    end Close;
 
@@ -213,20 +269,26 @@ package body Socket_Module is
                      begin
                         if Data.Buffer (1 .. Data.Index - 1) = "logout" then
                            return False;
+                        elsif Data.Index > 4
+                          and then Data.Buffer (1 .. 3) = "id "
+                        then
+                           Free (Data.Name);
+                           Data.Name :=
+                             new String'(Data.Buffer (4 .. Data.Index - 1));
+                           String'Write (Data.Channel, "id set to '" &
+                             Data.Name.all & "'" & ASCII.LF & "GPS>> ");
+                        else
+                           Create
+                             (Command,
+                              Module_Data.Kernel,
+                              Data.Buffer (1 .. Data.Index - 1),
+                              Data.Channel);
+                           Result := Execute (Command);
                         end if;
-
-                        Create
-                          (Command,
-                           Module_Data.Kernel,
-                           Data.Buffer (1 .. Data.Index - 1),
-                           Data.Channel);
-
-                        Result := Execute (Command);
                      end;
                   end if;
 
                   Data.Index := 1;
-
                end if;
          end case;
       end loop Read_Loop;
@@ -281,7 +343,11 @@ package body Socket_Module is
             Data.R_Set := new Socket_Set_Type;
             Data.W_Set := new Socket_Set_Type;
 
+            Data.Next := Module_Data.Data_List;
+            Module_Data.Data_List := Data;
+
             Set (Data.R_Set.all, Data.Socket);
+            String'Write (Data.Channel, "GPS>> ");
 
             T := Read_Timeout.Add
               (100, Idle_Read'Access, Data, Close'Access);
@@ -299,6 +365,28 @@ package body Socket_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Idle_Accept;
+
+   ----------------------------
+   -- Socket_Command_Handler --
+   ----------------------------
+
+   procedure Socket_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      Read_Data : Read_Data_Access;
+   begin
+      if Command = "send_socket" then
+         Read_Data := Find_Data (Nth_Arg (Data, 1));
+
+         if Read_Data = null then
+            Set_Error_Msg (Data, Command & ": " & (-"invalid id"));
+            return;
+         end if;
+
+         String'Write (Read_Data.Channel, Nth_Arg (Data, 2));
+      end if;
+   end Socket_Command_Handler;
 
    ---------------------
    -- Register_Module --
@@ -364,6 +452,12 @@ package body Socket_Module is
          Module_Name             => Socket_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null);
+
+      Register_Command
+        (Kernel, "send_socket",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Socket_Command_Handler'Access);
 
    exception
       when E : others =>

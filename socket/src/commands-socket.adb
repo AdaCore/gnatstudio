@@ -59,7 +59,7 @@ package body Commands.Socket is
          String'Write
            (Command.Stream,
             Execute_GPS_Shell_Command (Command.Kernel, Command.Command.all) &
-              ASCII.LF);
+            ASCII.LF & "GPS>> ");
       end if;
 
       return Success;
