@@ -2286,6 +2286,7 @@ package body Src_Info.Queries is
       Iterator               : out Entity_Reference_Iterator;
       Project                : Project_Type := No_Project;
       LI_Once                : Boolean := False;
+      File_Has_No_LI_Report  : File_Error_Reporter := null;
       In_File                : VFS.Virtual_File := VFS.No_File) is
    begin
       Iterator.Entity := Copy (Entity);
@@ -2297,6 +2298,7 @@ package body Src_Info.Queries is
             Get_Declaration_File_Of (Entity),
             Iterator.Decl_Iter,
             Project                => Project,
+            File_Has_No_LI_Report  => File_Has_No_LI_Report,
             Include_Self           => True,
             Indirect_Imports       => True,
             LI_Once                => True);
@@ -2305,6 +2307,7 @@ package body Src_Info.Queries is
            (Root_Project, Lang_Handler, In_File,
             Iterator.Decl_Iter,
             Project                => Project,
+            File_Has_No_LI_Report  => File_Has_No_LI_Report,
             Include_Self           => True,
             LI_Once                => True,
             Indirect_Imports       => True,
@@ -2613,6 +2616,14 @@ package body Src_Info.Queries is
                        Iterator.Source_Files (Iterator.Current_File),
                      Project                => Current (Iterator.Importing));
 
+                  if LI = null
+                    and then Iterator.File_Has_No_LI_Report /= null
+                  then
+                     Error
+                       (Iterator.File_Has_No_LI_Report.all,
+                        Iterator.Source_Files (Iterator.Current_File));
+                  end if;
+
                   Assert
                     (Me, LI = null or else LI.LI.Parsed,
                      "Unparsed LI returned for file "
@@ -2829,6 +2840,7 @@ package body Src_Info.Queries is
       Source_Filename    : VFS.Virtual_File;
       Iterator           : out Dependency_Iterator;
       Project            : Project_Type := No_Project;
+      File_Has_No_LI_Report  : File_Error_Reporter := null;
       Include_Self       : Boolean := False;
       LI_Once            : Boolean := False;
       Indirect_Imports   : Boolean := False;
@@ -2874,12 +2886,19 @@ package body Src_Info.Queries is
       Iterator.Source_Filename  := Source_Filename;
       Iterator.Include_Self     := Include_Self;
       Iterator.Indirect_Imports := Indirect_Imports;
+      Iterator.File_Has_No_LI_Report := File_Has_No_LI_Report;
 
       Create_Or_Complete_LI
         (Handler         => Handler,
          File            => Iterator.Decl_LI,
          Source_Filename => Source_Filename,
          Project         => Decl_Project);
+
+      if Iterator.Decl_LI = null
+        and then Iterator.File_Has_No_LI_Report /= null
+      then
+         Error (Iterator.File_Has_No_LI_Report.all, Source_Filename);
+      end if;
 
       Assert (Me,
               Iterator.Decl_LI /= null,

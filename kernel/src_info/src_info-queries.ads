@@ -283,6 +283,13 @@ package Src_Info.Queries is
    type Entity_Reference_Iterator is private;
    type Entity_Reference_Iterator_Access is access Entity_Reference_Iterator;
 
+   type File_Error_Reporter_Record is abstract tagged null record;
+   type File_Error_Reporter is access all File_Error_Reporter_Record'Class;
+   procedure Error
+     (Report : in out File_Error_Reporter_Record; File : VFS.Virtual_File)
+     is abstract;
+   --  Used to report errors while parsing files
+
    procedure Find_All_References
      (Root_Project           : Projects.Project_Type;
       Lang_Handler           : Language_Handlers.Language_Handler;
@@ -290,8 +297,11 @@ package Src_Info.Queries is
       Iterator               : out Entity_Reference_Iterator;
       Project                : Projects.Project_Type := Projects.No_Project;
       LI_Once                : Boolean := False;
+      File_Has_No_LI_Report  : File_Error_Reporter := null;
       In_File                : VFS.Virtual_File := VFS.No_File);
-   --  Find all the references to the entity described in Decl.
+   --  Find all the references to the entity described in Decl. It doesn't
+   --  return the declaration location for the entity however.
+   --
    --  Root_Project should be the root project under which we are looking.
    --  Source files that don't belong to Root_Project or one of its imported
    --  project will not be searched.
@@ -307,6 +317,8 @@ package Src_Info.Queries is
    --  If In_File is a full file name, then only the references in that file
    --  will be displayed. This is much faster, since it only requires the
    --  parsing of a single LI structure.
+   --
+   --  Source files with no LI file are reported through File_Has_No_LI_Report
    --
    --  You must destroy the iterator when you are done with it, to avoid memory
    --  leaks.
@@ -571,6 +583,7 @@ package Src_Info.Queries is
       Source_Filename    : VFS.Virtual_File;
       Iterator           : out Dependency_Iterator;
       Project            : Projects.Project_Type := Projects.No_Project;
+      File_Has_No_LI_Report : File_Error_Reporter := null;
       Include_Self       : Boolean := False;
       LI_Once            : Boolean := False;
       Indirect_Imports   : Boolean := False;
@@ -603,6 +616,9 @@ package Src_Info.Queries is
    --  If LI_Once is true, then for each LI file only one source file will be
    --  returned. This is for use when you are using the version of Get that
    --  returns a LI_File_Ptr.
+   --
+   --  Sources file with no LI file are reported through File_Has_No_LI_Report
+   --  if set.
    --
    --  You must destroy the iterator when you are done with it, to avoid memory
    --  leaks.
@@ -856,6 +872,8 @@ private
       Current_Progress : Natural;
 
       LI : LI_File_Ptr;
+
+      File_Has_No_LI_Report  : File_Error_Reporter := null;
 
       Current_Separate : File_Info_Ptr_List;
       --  The current separate in case LI is Decl_LI (since bodies depend on
