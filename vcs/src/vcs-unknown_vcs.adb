@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -147,9 +147,9 @@ package body VCS.Unknown_VCS is
    procedure Commit
      (Rep       : access Unknown_VCS_Record;
       Filenames : String_List.List;
-      Logs      : String_List.List)
+      Log       : String)
    is
-      pragma Unreferenced (Rep, Logs);
+      pragma Unreferenced (Rep, Log);
    begin
       if Filenames /= Null_List then
          Error (Head (Filenames));
