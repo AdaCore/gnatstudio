@@ -425,6 +425,7 @@ package body Glide_Kernel.Project is
                     (Kernel_Handle (Kernel),
                      Command   => "gpr2make",
                      Arguments => Args,
+                     Console   => Get_Console (Kernel),
                      Success   => Success);
                end if;
             end;
