@@ -807,6 +807,21 @@ package body Projects is
       return Unit;
    end Get_Unit_Part_From_Filename;
 
+   ---------------------------------
+   -- Get_Unit_Name_From_Filename --
+   ---------------------------------
+
+   function Get_Unit_Name_From_Filename
+     (Project : Project_Type; Filename : VFS.Virtual_File) return String
+   is
+      Unit : Unit_Part;
+      Name, Lang : Name_Id;
+   begin
+      Get_Unit_Part_And_Name_From_Filename
+        (Base_Name (Filename), Project, Unit, Name, Lang);
+      return Get_String (Name);
+   end Get_Unit_Name_From_Filename;
+
    --------------------
    -- Substitute_Dot --
    --------------------

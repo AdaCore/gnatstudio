@@ -223,6 +223,11 @@ package Projects is
    --  check in all the languages known to the project.
    --  Unit_Separate is returned if the file is neither a spec nor a body.
 
+   function Get_Unit_Name_From_Filename
+     (Project : Project_Type; Filename : VFS.Virtual_File) return String;
+   --  Return the unit name associated with a given file name, or the empty
+   --  string if the name of the unit couldn't be computed.
+
    function Delete_File_Suffix
      (Filename : String; Project : Project_Type) return Natural;
    --  Return the last index in Filename before the beginning of the file
