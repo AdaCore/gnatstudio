@@ -62,12 +62,8 @@ with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Editor;      use Glide_Kernel.Editor;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Browsers;    use Glide_Kernel.Browsers;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Switches_Editors;         use Switches_Editors;
 with Variable_Editors;         use Variable_Editors;
-with Browsers;                 use Browsers;
-with Browsers.Canvas;          use Browsers.Canvas;
 
 package body Project_Explorers is
 
@@ -344,11 +340,6 @@ package body Project_Explorers is
    procedure On_Add_Variable (Tree : access Gtk_Widget_Record'Class);
    --  Callback for the "Add variable" contextual menu item
 
-   procedure Edit_Dependencies_From_Contextual
-     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Data : Contextual_User_Data);
-   --  Examine the dependencies of a specific file
-
    function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget;
@@ -519,23 +510,6 @@ package body Project_Explorers is
       Show_All (Edit);
    end On_Add_Variable;
 
-   ---------------------------------------
-   -- Edit_Dependencies_From_Contextual --
-   ---------------------------------------
-
-   procedure Edit_Dependencies_From_Contextual
-     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Data : Contextual_User_Data)
-   is
-      Browser : MDI_Child;
-   begin
-      Browser := Open_Browser (Data.Kernel, Dependency_Browser);
-      Examine_Dependencies
-        (Data.Kernel,
-         Glide_Browser (Get_Widget (Browser)),
-         Get_String (Data.File_Name));
-   end Edit_Dependencies_From_Contextual;
-
    ------------------------------
    -- Explorer_Context_Factory --
    ------------------------------
@@ -567,7 +541,7 @@ package body Project_Explorers is
         (Context      => File_Selection_Context_Access (Context),
          Project_View => Get_Project_From_Node (T, Node),
          Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Get_File_From_Node (T, Node));
+         File_Name    => Base_File_Name (Get_File_From_Node (T, Node)));
 
       return Context;
    end Explorer_Context_Factory;
