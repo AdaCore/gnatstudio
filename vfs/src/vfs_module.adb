@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2004                    --
---                            ACT-Europe                             --
+--                      Copyright (C) 2002-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -261,10 +261,10 @@ package body VFS_Module is
       VFS_Module_Id := new Module_ID_Record;
 
       Register_Module
-        (Module                  => VFS_Module_Id,
-         Kernel                  => Kernel,
-         Module_Name             => VFS_Module_Name,
-         Priority                => Default_Priority);
+        (Module      => VFS_Module_Id,
+         Kernel      => Kernel,
+         Module_Name => VFS_Module_Name,
+         Priority    => Default_Priority);
 
       Command := new Delete_Command;
       Register_Contextual_Menu
