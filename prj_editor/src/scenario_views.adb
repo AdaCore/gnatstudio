@@ -19,6 +19,7 @@ with Namet;    use Namet;
 with Types;    use Types;
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Text_IO; use Text_IO;
 
 package body Scenario_Views is
 
@@ -118,10 +119,16 @@ package body Scenario_Views is
             Str := Prj.Ext.Value_Of  (External_Name => Name_Find);
          end if;
 
+         if V /= Vars'First then
+            Append_Text (View.Field, ", ");
+         end if;
+
          if Str = No_String then
             Append_Text
               (View.Field,
-               Get_Name_String (Name_Of (Vars (V))) & "=""""");
+               Get_Name_String (Name_Of (Vars (V))) & "=""");
+            Display_Expr (View.Field, Value_Of (Vars (V)));
+            Append_Text (View.Field, """");
 
          else
             String_To_Name_Buffer (Str);
