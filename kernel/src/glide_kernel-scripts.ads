@@ -208,7 +208,7 @@ package Glide_Kernel.Scripts is
       Key    : Class_Instance;
       Append : Boolean := False) is abstract;
    --  Move the current value of Data, as set by Set_Return_Value into a
-   --  htable. Set_Return_Value_As_Htable must have been called first.
+   --  htable.
    --  Typical usage would be:
    --     Set_Return_Value (Data, 12);
    --     Set_Return_Value_Key (Data, "key1");
