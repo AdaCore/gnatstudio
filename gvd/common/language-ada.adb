@@ -431,7 +431,7 @@ package body Language.Ada is
    begin
       New_Buffer := To_Line_Buffer (Buffer);
       Analyze_Ada_Source
-        (To_Unchecked_String (Buffer'Address), Buffer'Length,
+        (Buffer,
          New_Buffer, Indent_Params,
          Reserved_Casing, Ident_Casing, Format_Operators,
          Current_Indent => Ignore,
@@ -459,7 +459,7 @@ package body Language.Ada is
 
    begin
       Analyze_Ada_Source
-        (To_Unchecked_String (Buffer), Buffer_Length,
+        (To_Unchecked_String (Buffer) (1 .. Buffer_Length),
          New_Buffer, Indent_Params,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,
@@ -486,7 +486,7 @@ package body Language.Ada is
       Ignore     : Natural;
    begin
       Analyze_Ada_Source
-        (To_Unchecked_String (Buffer), Buffer_Length,
+        (To_Unchecked_String (Buffer) (1 .. Buffer_Length),
          New_Buffer, Default_Indent_Parameters,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,
@@ -513,7 +513,7 @@ package body Language.Ada is
       New_Buffer : Extended_Line_Buffer;
    begin
       Analyze_Ada_Source
-        (To_Unchecked_String (Buffer), Buffer_Length,
+        (To_Unchecked_String (Buffer) (1 .. Buffer_Length),
          New_Buffer, Indent_Params,
          Reserved_Casing  => Unchanged,
          Ident_Casing     => Unchanged,
