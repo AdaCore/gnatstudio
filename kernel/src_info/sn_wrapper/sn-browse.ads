@@ -63,7 +63,9 @@ package SN.Browse is
    --  files are taken only from the first DB_Directories (1)
    --  directory which is supposed to be working and corresponding
    --  to the current project.
-   --  on error an exception is thrown
+   --  On error an exception is thrown.
+   --  Temp_Name is the name of a temporary file created by dbdimp, which needs
+   --  to be deleted when the latter has finished executing
 
    procedure Delete_Database (DB_Directory : in String);
    --  Removes all files from SN DB directory except xref pool

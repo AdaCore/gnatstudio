@@ -59,9 +59,8 @@ package body SN.Browse is
          5 => new String'("-y"),
          6 => new String'(File_Name));
 
-      Trace (Me, "Spawn: " & Cbrowser_Path &
-             " " & Argument_List_To_String (Args));
-
+      Trace (Me, "Spawn: " & Cbrowser_Path
+             & " " & Argument_List_To_String (Args));
       GNAT.Expect.Non_Blocking_Spawn
         (PD, Cbrowser_Path, Args, Err_To_Out => True);
       Basic_Types.Free (Args);
@@ -77,10 +76,9 @@ package body SN.Browse is
       Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
       PD             : out GNAT.Expect.TTY.TTY_Process_Descriptor)
    is
-      LV_File_Name : constant String
-         := DB_Directories (1).all & DB_File_Name & ".lv";
-      TO_File_Name : constant String
-         := DB_Directories (1).all & DB_File_Name & ".to";
+      DB_Directory : String renames DB_Directories (1).all;
+      LV_File_Name : constant String := DB_Directory & DB_File_Name & ".lv";
+      TO_File_Name : constant String := DB_Directory & DB_File_Name & ".to";
       Dir          : Dir_Type;
       Last         : Natural;
       Dir_Entry    : String (1 .. 8192);
@@ -107,33 +105,31 @@ package body SN.Browse is
          end if;
       end if;
 
-      --  start dbimp
-      Create_Temp_File (Temp_File, Temp_Name);
+      --  At this point, the .xref files contain various commands for dbimp,
+      --  so we collect them all in a single temporary file.
+      --  These commands look like:
+      --     COMMAND;KEY;DATA
+      --  where COMMAND is between PAF_FILE .. PAF_COMMENT_DEF (see sn.h)
+      --  COMMANDS 0, -1 and -2 are used for deletion of entries in the
+      --  database (for instance "-2;0;x.c" deletes all xref for x.c)
 
+      Create_Temp_File (Temp_File, Temp_Name);
       if Temp_File = Invalid_FD then
          raise Temp_File_Failure;
       end if;
 
-      --  enumerate all .xref files in the target directory
-      --  and copy them into the temp file
+      if Is_Directory (DB_Directory) then
+         Open (Dir, DB_Directory);
 
-      --  check the directory exists
-      if Is_Directory (DB_Directories (1).all) then
-         Open (Dir, DB_Directories (1).all);
+         loop
+            Read (Dir, Dir_Entry, Last);
+            exit when Last = 0;
 
-         if not Is_Open (Dir) then
-            raise Directory_Error;
-         end if;
-
-         Read (Dir, Dir_Entry, Last); -- read first directory entry
-
-         while Last /= 0 loop
             if Tail (Dir_Entry (1 .. Last), Xref_Suffix'Length) =
               Xref_Suffix
             then
                Content := OS_Utils.Read_File
-                  (Name_As_Directory (DB_Directories (1).all)
-                    & Dir_Entry (1 .. Last));
+                 (Name_As_Directory (DB_Directory) & Dir_Entry (1 .. Last));
 
                if Content /= null then
                   if Content'Length /=
@@ -145,8 +141,6 @@ package body SN.Browse is
                   Free (Content);
                end if;
             end if;
-
-            Read (Dir, Dir_Entry, Last); -- read next directory entry
          end loop;
 
          Close (Dir);
@@ -154,20 +148,19 @@ package body SN.Browse is
 
       Close (Temp_File);
 
-      Args := new Argument_List (1 .. DB_Directories'Length + 3);
+      Args := new Argument_List (1 .. 3 + DB_Directories'Length);
       Args (1) := new String'("-f");
       Args (2) := new String'(Temp_Name);
       Args (3) := new String'("-l");
 
-      for J in DB_Directories.all'Range loop
-         Args (4 + J - DB_Directories.all'First) :=
-           new String'(DB_Directories (J).all & DB_File_Name);
+      for D in DB_Directories'Range loop
+         Args (4 + D - DB_Directories'First) :=
+           new String'(DB_Directories (D).all & DB_File_Name);
       end loop;
 
-      Trace (Me, "Spawn: " & DBIMP_Path &
-             " " & Argument_List_To_String (Args.all));
-      Non_Blocking_Spawn
-        (PD, DBIMP_Path, Args.all, Err_To_Out => True);
+      Trace (Me, "Spawn: " & DBIMP_Path
+             & " " & Argument_List_To_String (Args.all));
+      Non_Blocking_Spawn (PD, DBIMP_Path, Args.all, Err_To_Out => True);
       GNAT.OS_Lib.Free (Args);
    end Generate_Xrefs;
 
