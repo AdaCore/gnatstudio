@@ -18,35 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils;          use String_Utils;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with VFS;                   use VFS;
 
 package body Codefix.Errors_Manager is
-
-   -----------------
-   -- Cut_Message --
-   -----------------
-
-   function Cut_Message (Str : String) return String is
-      Ind : Natural := Str'First;
-   begin
-      --  ??? This needs to be synchronized with the regular expression used
-      --  to detect the error messages, and won't apply to custom messages
-      Skip_To_Char (Str, Ind, ':');
-      Ind := Ind + 1;
-      Skip_To_Char (Str, Ind, ':');
-      Ind := Ind + 1;
-      Skip_To_Char (Str, Ind, ':');
-      Ind := Ind + 2;
-
-      return Str (Ind .. Str'Last);
-   end Cut_Message;
-
-   ----------------------------------------------------------------------------
-   --  type Errors_Interface
-   ----------------------------------------------------------------------------
 
    ----------
    -- Free --
@@ -395,51 +371,14 @@ package body Codefix.Errors_Manager is
       return Error_Id
    is
       Current_Id : Error_Id := Get_First_Error (This);
-
-      function Cmp_Messages (Error : Error_Message) return Boolean;
-      --  Compare two message labels, without taking into account the
-      --  differences of the col/line format.
-
-      ------------------
-      -- Cmp_Messages --
-      ------------------
-
-      function Cmp_Messages (Error : Error_Message) return Boolean is
-         Str1 : constant String := Get_Message (Error);
-         Ind_Begin_1, Ind_End_1 : Natural := Str1'First;
-      begin
-         Skip_To_Char (Str1, Ind_End_1, ':');
-
-         if Str1 (Ind_Begin_1 .. Ind_End_1 - 1) /= Base_Name (File) then
-            return False;
-         end if;
-
-         --  ??? Shouldn't parse explicitly the error message here, since this
-         --  depends on the exact regexps
-         Ind_End_1 := Ind_End_1 + 1;
-         Ind_Begin_1 := Ind_End_1;
-         Skip_To_Char (Str1, Ind_End_1, ':');
-
-         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /= Line then
-            return False;
-         end if;
-
-         --  ??? Shouldn't parse explicitly the error message here, since this
-         --  depends on the exact regexps
-         Ind_End_1 := Ind_End_1 + 1;
-         Ind_Begin_1 := Ind_End_1;
-         Skip_To_Char (Str1, Ind_End_1, ':');
-
-         if Integer'Value (Str1 (Ind_Begin_1 .. Ind_End_1 - 1)) /= Column then
-            return False;
-         end if;
-
-         return Str1 (Ind_End_1 + 2 .. Str1'Last) = Message;
-      end Cmp_Messages;
-
+      Error      : Error_Message;
    begin
       while Current_Id /= Null_Error_Id loop
-         exit when Cmp_Messages (Get_Error_Message (Current_Id));
+         Error := Get_Error_Message (Current_Id);
+         exit when Get_Line (Error) = Line
+           and then Get_Column (Error) = Column
+           and then Get_File (Error) = File
+           and then Get_Message (Error) = Message;
          Current_Id := Next (Current_Id);
       end loop;
 

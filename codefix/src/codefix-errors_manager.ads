@@ -30,10 +30,6 @@ with Ada.Unchecked_Deallocation;
 
 package Codefix.Errors_Manager is
 
-   function Cut_Message (Str : String) return String;
-   --  Return the message label of a message without line/column/file
-   --  indication
-
    ----------------------------------------------------------------------------
    --  type Errors_Interface
    ----------------------------------------------------------------------------
@@ -46,6 +42,7 @@ package Codefix.Errors_Manager is
    procedure Free (This : in out Ptr_Errors_Interface);
 
    procedure Free (This : in out Errors_Interface) is abstract;
+   --  Free the memory associated with This. This must call the inherited Free
 
    procedure Get_Direct_Message
      (This    : in out Errors_Interface;

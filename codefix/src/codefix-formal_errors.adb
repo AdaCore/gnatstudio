@@ -37,11 +37,67 @@ package body Codefix.Formal_Errors is
    ----------------
 
    procedure Initialize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      This   : in out Error_Message; Message : String) is
+     (This       : in out Error_Message;
+      Kernel     : access Kernel_Handle_Record'Class;
+      Error_Line : String;
+      Regexp     : GNAT.Regpat.Pattern_Matcher;
+      File_Index, Line_Index, Col_Index, Msg_Index : Integer)
+   is
+      Max_Index : Integer := File_Index;
    begin
-      Assign (This.Message, Message);
-      Parse_Head (Kernel, Message, This);
+      Max_Index := Integer'Max (Max_Index, Line_Index);
+      Max_Index := Integer'Max (Max_Index, Col_Index);
+      Max_Index := Integer'Max (Max_Index, Msg_Index);
+
+      declare
+         Matches : Match_Array (0 .. Max_Index);
+         Line, Col : Integer;
+      begin
+         Match (Regexp, Error_Line, Matches);
+
+         if Matches (0) = No_Match then
+            Free (This);
+            This := Invalid_Error_Message;
+            return;
+         end if;
+
+         Set_File
+           (This, Create
+              (Error_Line
+                 (Matches (File_Index).First .. Matches (File_Index).Last),
+               Kernel));
+
+         if Matches (Line_Index) /= No_Match then
+            Line := Integer'Value
+              (Error_Line
+                 (Matches (Line_Index).First .. Matches (Line_Index).Last));
+         else
+            Line := 1;
+         end if;
+
+         if Matches (Col_Index) /= No_Match then
+            Col := Integer'Value
+              (Error_Line
+                 (Matches (Col_Index).First .. Matches (Col_Index).Last));
+         else
+            Col := 1;
+         end if;
+
+         Set_Location (This, Line => Line, Column => Col);
+
+         if Matches (Msg_Index) /= No_Match then
+            Assign (This.Message,
+                    Error_Line
+                      (Matches (Msg_Index).First .. Matches (Msg_Index).Last));
+         else
+            Assign (This.Message, "");
+         end if;
+      end;
+
+   exception
+      when Constraint_Error =>
+         Free (This);
+         This := Invalid_Error_Message;
    end Initialize;
 
    ----------------
@@ -49,11 +105,12 @@ package body Codefix.Formal_Errors is
    ----------------
 
    procedure Initialize
-     (This : in out Error_Message;
-      File : VFS.Virtual_File;
-      Line, Col : Positive) is
+     (This      : in out Error_Message;
+      File      : VFS.Virtual_File;
+      Line, Col : Positive;
+      Message   : String) is
    begin
-      Assign (This.Message, "");
+      Assign (This.Message, Message);
       Set_File (This, File);
       Set_Location (This, Line, Col);
    end Initialize;
@@ -64,7 +121,11 @@ package body Codefix.Formal_Errors is
 
    function Get_Message (This : Error_Message) return String is
    begin
-      return This.Message.all;
+      if This.Message = null then
+         return "";
+      else
+         return This.Message.all;
+      end if;
    end Get_Message;
 
    ----------
@@ -76,46 +137,6 @@ package body Codefix.Formal_Errors is
       Free (File_Cursor (This));
       Free (This.Message);
    end Free;
-
-   ----------------
-   -- Parse_Head --
-   ----------------
-
-   procedure Parse_Head
-     (Kernel : access Kernel_Handle_Record'Class;
-      Message : String;
-      This : out Error_Message)
-   is
-      Matches : Match_Array (0 .. 3);
-      Matcher : constant Pattern_Matcher :=
-        Compile ("^([^:]+):(\d+):(\d+)");
-
-   begin
-      Match (Matcher, Message, Matches);
-
-      if Matches (0) = No_Match then
-         Free (This);
-         This := Invalid_Error_Message;
-         return;
-      end if;
-
-      begin
-         Set_File
-           (This, Create
-              (Message (Matches (1).First .. Matches (1).Last),
-               Kernel));
-         Set_Location
-           (This,
-            Line => Positive'Value
-              (Message (Matches (2).First .. Matches (2).Last)),
-            Column => Positive'Value
-              (Message (Matches (3).First .. Matches (3).Last)));
-      exception
-         when Constraint_Error =>
-            Free (This);
-            This := Invalid_Error_Message;
-      end;
-   end Parse_Head;
 
    -----------
    -- Clone --

@@ -46,8 +46,6 @@ package Codefix_Module is
       Error        : Error_Id) return Gtk_Menu;
    --  Return a menu with all the possible fixes for Error
 
-   Location_Button_Name : constant String := "Codefix";
-
    procedure Create_Pixmap_And_Category
      (Kernel       : access Kernel_Handle_Record'Class;
       Session      : access Codefix_Session_Record;

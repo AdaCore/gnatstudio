@@ -21,10 +21,11 @@
 with Generic_List;
 with GNAT.OS_Lib;
 with Language; use Language;
-with Glide_Kernel;
 with VFS;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
+with GNAT.Regpat;
+with Glide_Kernel;
 
 package Codefix.Formal_Errors is
 
@@ -40,20 +41,22 @@ package Codefix.Formal_Errors is
    Invalid_Error_Message : constant Error_Message;
 
    procedure Initialize
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      This    : in out Error_Message;
-      Message : String);
-   --  Parse the message headed in order to get the col number and the
-   --  line number.
+     (This       : in out Error_Message;
+      Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Error_Line : String;
+      Regexp     : GNAT.Regpat.Pattern_Matcher;
+      File_Index, Line_Index, Col_Index, Msg_Index : Integer);
+   --  Parses an error message from the tool based on the regular expression
 
    procedure Initialize
-     (This : in out Error_Message;
-      File : VFS.Virtual_File;
-      Line, Col : Positive);
-   --  Sets the value of Line and Col field of an Error_Message.
+     (This      : in out Error_Message;
+      File      : VFS.Virtual_File;
+      Line, Col : Positive;
+      Message   : String);
+   --  Store the contents of an error message, after it has been parsed
 
    function Get_Message (This : Error_Message) return String;
-   --  Returns the message with the header.
+   --  Returns the message text (no line or column number)
 
    procedure Free (This : in out Error_Message);
    --  Frees the memory used by the object.
@@ -194,12 +197,6 @@ private
    type Error_Message is new File_Cursor with record
       Message : GNAT.OS_Lib.String_Access;
    end record;
-
-   procedure Parse_Head
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Message : String; This : out Error_Message);
-   --  Initialize Col, Line and File_Name fields of This by parsing the head
-   --  of the message.
 
    function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
