@@ -544,6 +544,11 @@ procedure GPS is
                         --  --debugger
                         Free (Debugger_Name);
                         Debugger_Name := new String'(Parameter);
+
+                        if GPS.Program_Args = null then
+                           --  --debugger implies --debug
+                           GPS.Program_Args := new String'("");
+                        end if;
                      end if;
 
                   when 'e' =>
