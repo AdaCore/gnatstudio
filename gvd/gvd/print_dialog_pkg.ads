@@ -10,6 +10,9 @@ with Gtk.Object; use Gtk.Object;
 with Generic_Values; use Generic_Values;
 package Print_Dialog_Pkg is
 
+   --  this is a temporary dialog that should be replaced in the near future
+   --  so please don't put any major effort in it.
+
    type Print_Dialog_Record is new Gtk_Dialog_Record with record
       Dialog_Vbox1 : Gtk_Vbox;
       Vbox1 : Gtk_Vbox;
@@ -27,7 +30,5 @@ package Print_Dialog_Pkg is
 
    procedure Gtk_New (Print_Dialog : out Print_Dialog_Access);
    procedure Initialize (Print_Dialog : access Print_Dialog_Record'Class);
-
-   Print_Dialog : Print_Dialog_Access;
 
 end Print_Dialog_Pkg;
