@@ -83,22 +83,6 @@ package body DB_API is
       end if;
    end Open;
 
-   ---------
-   -- Dup --
-   ---------
-
-   function Dup (DB : DB_File) return DB_File is
-      function Internal_Dup (DB : DB_File) return DB_File;
-      pragma Import (C, Internal_Dup, "ada_db_dup");
-   begin
-      if DB = null then
-         Raise_Exception (DB_Error'Identity,
-           E_Init_Failed);
-      else
-         return Internal_Dup (DB);
-      end if;
-   end Dup;
-
    -------------
    -- Is_Open --
    -------------
@@ -149,9 +133,6 @@ package body DB_API is
          Size        : Integer;
          Exact_Match : Integer);
       pragma Import (C, I_Set_Cursor, "ada_db_set_cursor");
-
-      I_Key : constant String := Key & ASCII.NUL;
-
    begin
       if DB = null then
          Raise_Exception (DB_Error'Identity,
@@ -159,7 +140,7 @@ package body DB_API is
       else
          if Position = By_Key then
             I_Set_Cursor
-              (DB, Position, I_Key'Address, I_Key'Length,
+              (DB, Position, Key'Address, Key'Length,
                Boolean'Pos (Exact_Match));
          else
             I_Set_Cursor
@@ -168,8 +149,7 @@ package body DB_API is
          end if;
 
          if Last_ErrNo (DB) /= 0 then
-            Raise_Exception (DB_Error'Identity,
-              Error_Message (DB));
+            Raise_Exception (DB_Error'Identity, Error_Message (DB));
          end if;
       end if;
    end Set_Cursor;

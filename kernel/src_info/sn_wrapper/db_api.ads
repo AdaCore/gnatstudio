@@ -75,10 +75,6 @@ package DB_API is
    --  Set_Cursor).
    --  Success holds True upon success and False otherwise
 
-   function Dup (DB : DB_File) return DB_File;
-   --  Reopens DB file and returns new DB file descriptor.
-   --  Throws DB_Error if DB file was not opened.
-
    function Is_Open (DB : DB_File) return Boolean;
    pragma Inline (Is_Open);
    --  Returns True if given DB ws successfully open,
