@@ -1802,10 +1802,15 @@ package body GVD_Module is
       if Top.First_Debugger = null then
          Id.Initialized := False;
 
-         Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
-         Id.Lines_Hook := null;
-         Remove_Hook (Kernel, Glide_Kernel.File_Edited_Hook, Id.File_Hook);
-         Id.File_Hook := null;
+         if Id.Lines_Hook /= null then
+            Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
+            Id.Lines_Hook := null;
+         end if;
+
+         if Id.File_Hook /= null then
+            Remove_Hook (Kernel, Glide_Kernel.File_Edited_Hook, Id.File_Hook);
+            Id.File_Hook := null;
+         end if;
 
          Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
          Remove_Debugger_Columns (Kernel, VFS.No_File);
