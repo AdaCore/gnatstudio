@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -30,9 +30,7 @@ with Glide_Kernel;
 
 package Vsearch_Pkg is
 
---   type Vsearch_Record is new Gtk_Window_Record with record
    type Vsearch_Record is new Gtk_Box_Record with record
-      --  Vbox_Search : Gtk_Vbox;
       Table : Gtk_Table;
       Replace_Label : Gtk_Label;
       Search_For_Label : Gtk_Label;
