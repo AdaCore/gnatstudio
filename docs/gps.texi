@@ -33,7 +33,9 @@ unmodified in any copy.
 
 @end titlepage
 
+@ifnotinfo
 @contents
+@end ifnotinfo
 
 @ifinfo
 @node Top, Introduction, (dir), (dir)
@@ -7103,5 +7105,9 @@ directory (see @ref{Files}) to start from a fresh set up.
 @c --------------------------------------------------------------------
 @unnumbered Index
 @printindex cp
+
+@ifinfo
+@contents
+@end ifinfo
 
 @bye
