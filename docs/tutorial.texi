@@ -17,7 +17,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2002, ACT-Europe.
+Copyright @copyright{} 2002-2003, ACT-Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -35,7 +35,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2002, ACT-Europe.
+Copyright @copyright{} 2002-2003, ACT-Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -135,15 +135,15 @@ As with many other properties, colors are configurable in GPS:
 Select the menu @code{Edit->Preferences}. This will open a preferences
 dialog window.
 
-Select the @code{Editor} page by clicking on the tab named @code{Editor}.
-Similarly, select the @code{Fonts & Colors} page.
+Select the @code{Editor->Fonts & Colors} page by clicking on the cross next to
+the item @code {Editor} and then selecting the @code{Fonts & Colors} item.
 
 As you go over the various lines and labels, you will notice that by
 holding the mouse over a label, a tooltip pops up displaying on-line help
 about the selected item.
 
-Change the @code{Keyword color} by clicking on the down arrow on the right
-of the @code{Keyword color} line.
+Change the background color of the @code{Keywords} by clicking on the first
+down arrow right of the @code{Keywords} line.
 
 Choose a color, e.g a light green. When you're done with the color
 selection, simply click again on the arrow, or anywhere outside the
@@ -312,7 +312,7 @@ corner of this window.
 @noindent
 
 Open the preferences dialog (menu @code{Edit->Preferences}) and
-click on the @code{Debugger} tab on the left; set the button
+click on the @code{Debugger} item on the left; set the button
 @code{Break on exceptions} to @i{True}: this will enable by default a special
 breakpoint every time an exception is raised. Click on @code{OK} to confirm your
 change.
