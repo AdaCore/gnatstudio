@@ -456,9 +456,11 @@ package body Ada_Analyzer is
       --  Increment Count and poll if needed (e.g for graphic events).
 
       procedure Do_Indent
-        (Prec       : Natural;
-         Num_Spaces : Integer);
+        (Prec         : Natural;
+         Num_Spaces   : Integer;
+         Continuation : Boolean := False);
       --  Perform indentation by inserting spaces in the buffer.
+      --  If Continuation is True, Indent_Continue extra spaces are added.
 
       function End_Of_Identifier (P : Natural) return Natural;
       --  Starting from P, scan for the end of the identifier.
@@ -481,8 +483,9 @@ package body Ada_Analyzer is
       ---------------
 
       procedure Do_Indent
-        (Prec       : Natural;
-         Num_Spaces : Integer)
+        (Prec         : Natural;
+         Num_Spaces   : Integer;
+         Continuation : Boolean := False)
       is
          Start       : Natural;
          Indentation : Integer;
@@ -501,6 +504,10 @@ package body Ada_Analyzer is
                Indentation := Num_Spaces;
             else
                Indentation := Top (Indents).all;
+            end if;
+
+            if Continuation then
+               Indentation := Indentation + Indent_Continue;
             end if;
 
             if Indent then
@@ -1118,7 +1125,7 @@ package body Ada_Analyzer is
             --  if ...
             --    and then ...
 
-            Do_Indent (Prec, Num_Spaces + Indent_Continue);
+            Do_Indent (Prec, Num_Spaces, Continuation => True);
 
          elsif Reserved = Tok_Generic then
             --  Indent before a generic entity, e.g:
@@ -1337,7 +1344,7 @@ package body Ada_Analyzer is
                      --  Indent with 2 extra spaces if the '(' is the first
                      --  non blank character on the line
 
-                     Do_Indent (P, Num_Spaces + Indent_Continue);
+                     Do_Indent (P, Num_Spaces, Continuation => True);
 
                      if Indent then
                         Padding := New_Buffer.Current.Line'Length
@@ -1880,6 +1887,17 @@ package body Ada_Analyzer is
 
                   Do_Indent (Prec, Num_Spaces);
                end if;
+
+            elsif Token not in Reserved_Token_Type
+              and then Prev_Token /= Tok_Semicolon
+              and then Prev_Token /= Tok_Colon
+              and then Prev_Token /= Tok_Arrow
+              and then Prev_Token not in Reserved_Token_Type
+            then
+               --  This is a continuation line, add extra indentation
+
+               Do_Indent (Prec, Num_Spaces, Continuation => True);
+
             else
                --  Default case, simply use Num_Spaces
 
