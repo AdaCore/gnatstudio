@@ -693,9 +693,72 @@ package body Src_Editor_Buffer is
       --  ??? Should that be a preference ?
 
       Stack                : Natural;
+      String_Tag           : Boolean;
       C                    : Character;
 
       Delimiter            : Integer;
+
+      function Check_Char (Forward : in Boolean) return Boolean;
+      --  Check current character (C) and update current procedure state.
+      --  Returns false if parsing must stop (end of file reached for example)
+
+      function Check_Char (Forward : in Boolean) return Boolean is
+
+         Val     : constant array (Boolean) of Integer := (1, -1);
+
+         Tmp     : Gtk_Text_Iter;
+         C2      : Character;
+         Success : Boolean;
+
+         procedure Move_Char;
+         pragma Inline (Move_Char);
+         --  Move one character backward or forward
+
+         procedure Move_Char is
+         begin
+            if Forward then
+               Forward_Char (Tmp, Success);
+            else
+               Backward_Char (Tmp, Success);
+            end if;
+         end Move_Char;
+
+      begin
+         if C = Delimiters (Delimiter, Closing)
+           and then not String_Tag
+         then
+            Stack := Stack + Val (Forward);
+
+         elsif C = Delimiters (Delimiter, Opening)
+           and then not String_Tag
+         then
+            Stack := Stack - Val (Forward);
+
+         elsif C = '"' then
+            String_Tag := not String_Tag;
+
+         elsif C = ''' then
+            --  Check if this is a character
+            Copy (Current, Tmp);
+
+            Move_Char;
+            if not Success then
+               return False;
+            end if;
+            Move_Char;
+            if not Success then
+               return False;
+            end if;
+            C2 := Get_Char (Tmp);
+
+            if C2 = ''' then
+               Copy (Tmp, Current);
+            end if;
+         end if;
+
+         return True;
+      end Check_Char;
+
    begin
       Get_Iter_At_Mark (Buffer, On_Cursor_Iter, Buffer.Insert_Mark);
 
@@ -720,21 +783,20 @@ package body Src_Editor_Buffer is
       end if;
 
       if Delimiter in Delimiters'Range then
-         Counter := 0;
-         Stack := 1;
+         Counter    := 0;
+         Stack      := 1;
+         String_Tag := False;
+         C          := ASCII.Nul;
+
          Backward_Char (Current, Success);
 
          while Success and then Counter < Counter_Max loop
             C := Get_Char (Current);
 
-            if C = Delimiters (Delimiter, Closing) then
-               Stack := Stack + 1;
+            Success := Check_Char (Forward => False);
+            exit when not Success;
 
-            elsif C = Delimiters (Delimiter, Opening) then
-               Stack := Stack - 1;
-            end if;
-
-            if Stack = 0 then
+            if Stack = 0 and then not String_Tag then
                Copy (Current, First_Highlight_Iter);
                Copy (On_Cursor_Iter, Last_Highlight_Iter);
 
@@ -761,22 +823,20 @@ package body Src_Editor_Buffer is
       end loop;
 
       if Delimiter in Delimiters'Range then
-         Counter := 0;
-         Stack := 1;
+         Counter    := 0;
+         Stack      := 1;
+         String_Tag := False;
+         C          := ASCII.Nul;
+
          Forward_Char (Current, Success);
 
          while Success and then Counter < Counter_Max loop
             C := Get_Char (Current);
 
-            if C = Delimiters (Delimiter, Opening) then
-               Stack := Stack + 1;
+            Success := Check_Char (Forward => True);
+            exit when not Success;
 
-            elsif C = Delimiters (Delimiter, Closing) then
-               Stack := Stack - 1;
-
-            end if;
-
-            if Stack = 0 then
+            if Stack = 0 and then not String_Tag then
                if not Highlight_Necessary then
                   Copy (On_Cursor_Iter, First_Highlight_Iter);
                else
