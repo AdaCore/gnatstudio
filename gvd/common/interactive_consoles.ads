@@ -69,11 +69,14 @@ package Interactive_Consoles is
       Font         : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
-      Wrap_Mode    : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None);
+      Wrap_Mode    : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
+      Empty_Equals_Repeat : Boolean := False);
    --  Create a new console for glide.
    --  History_List and Key are used to handle the history of commands entered
    --  by the user in the interactive window. No history is provided if
    --  History_List is null
+   --  If Empty_Equals_Repeat is True, an empty command will provoke the
+   --  execution of the last command.
 
    procedure Initialize
      (Console   : access Interactive_Console_Record'Class;
@@ -83,7 +86,8 @@ package Interactive_Consoles is
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
-      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode);
+      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode;
+      Empty_Equals_Repeat : Boolean := False);
    --  Internal initialization function.
 
    procedure Insert
@@ -195,6 +199,10 @@ private
       Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
       Idle_Registered : Boolean := False;
       --  The handler for idle callbacks.
+
+      Empty_Equals_Repeat : Boolean := True;
+      --  Whether an empty command should be equivalent to repeating the
+      --  last command.
    end record;
 
 end Interactive_Consoles;
