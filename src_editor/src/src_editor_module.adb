@@ -463,7 +463,9 @@ package body Src_Editor_Module is
       Save_To_File (Source, Name, Success);
 
       --  Update the title, in case "save as..." was used.
-      Set_Title (Child, Base_Name (Get_Filename (Source)));
+      Set_Title
+        (Child, Get_Filename (Source), Base_Name (Get_Filename (Source)));
+
    end Save_To_File;
 
    -------------------------
