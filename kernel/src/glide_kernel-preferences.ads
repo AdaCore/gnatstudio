@@ -191,6 +191,10 @@ package Glide_Kernel.Preferences is
    --  The period (in seconds) after which a source editor is automatically
    --  saved. 0 if none.
 
+   Tab_Width : constant Glib.Properties.Property_Int :=
+     Register_Property ("Src_Editor:Tab_Width", 8);
+   --  The width of a tabulation character, in characters.
+
    ---------------------
    -- External editor --
    ---------------------
