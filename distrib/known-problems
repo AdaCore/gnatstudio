@@ -6,24 +6,10 @@ Known Problems fixed in GPS 1.3.0
               to search in the current file
   Workaround: Dock the search window in one of the sides of GPS
 
-- C129-010 Editing switches might result in duplicated lines in project
-  Problem:    If you have edited a project manually, and specified upper-cased
-              indexes for attributes like Default_Switches, GPS incorrectly
-              detects them when overriding them through the GUI, and this
-              results in duplicated lines in the project
-  Workaround: No user-visible impact. However, you can use lower-case indexes
-              to avoid this problem.
-
 - C707-020 Save As fails for read-only files
   Problem:    Read-only files can not be saved, even with a different name
   Workaround: Click on the Read-Only box at the bottom of the editor to
               temporarily override the status
-
-- C611-012 Cross-references do not work with C under Solaris
-  Problem:    Under some circumstances, on Solaris, the navigation in C/C++
-              files does not work and displays the message "No cross-reference
-              information found for (...)".
-  Workaround: None.
 
 - C703-014 Locations window is raised for every compiling message
   Problem:    When the compilation outputs many error/warning messages,
@@ -74,6 +60,12 @@ Known Problems fixed in GPS 1.3.0
   Workaround: Change the current directory with File->Change Directory to be
               the one that contains the project file before doing a run or a
               debug.
+
+- C611-012 Cross-references do not work with C under Solaris
+  Problem:    Under some circumstances, on Solaris, the navigation in C/C++
+              files does not work and displays the message "No cross-reference
+              information found for (...)".
+  Workaround: None.
 
 - C611-001 Protection domain entry not accessible in GPS
   Problem:    The Protection Domains entry in the Debug->Data menu
@@ -203,6 +195,14 @@ Known Problems fixed in GPS 1.3.0
   Problem:    When querying the status of files in a directory, the removed
               files do not appear in the VCS Explorer.
   Workaround: None.
+
+- C129-010 Editing switches might result in duplicated lines in project
+  Problem:    If you have edited a project manually, and specified upper-cased
+              indexes for attributes like Default_Switches, GPS incorrectly
+              detects them when overriding them through the GUI, and this
+              results in duplicated lines in the project
+  Workaround: No user-visible impact. However, you can use lower-case indexes
+              to avoid this problem.
 
 - C115-009 Added files not displayed in the VCS Explorer
   Problem:    When a file has been locally added but not committed to the
