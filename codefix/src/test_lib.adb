@@ -92,22 +92,4 @@ package body Test_Lib is
       return Number;
    end Get_Number;
 
-   ---------------
-   -- Ambiguity --
-   ---------------
-
-   procedure Ambiguity
-     (Alternative_1, Alternative_2 : Extract;
-      Current_Text                 : Text_Navigator_Abstr'Class;
-      Delete_Choice                : out Alternative_Choice) is
-   begin
-      if Visible then
-         Put_Line ("Problem beetween");
-         Put_Line (Get_New_Text (Alternative_1, Current_Text));
-         Put_Line ("  and");
-         Put_Line (Get_New_Text (Alternative_2, Current_Text));
-      end if;
-      Delete_Choice := 0;
-   end Ambiguity;
-
 end Test_Lib;
