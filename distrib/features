@@ -1,5 +1,11 @@
 New features in GPS 1.0.1
 
+- New powerful mark system to handle e.g compiler messages and search results
+  more easily
+- Several small user interface improvements
+- The Multiple Document Interface (MDI) has been improved and can now be
+  customized
+- Documentation updates
 - When opening a file, the focus is automatically set on the editor
 - The menus File->Open & File->Save As... now remember the last directory
   selected
