@@ -200,7 +200,7 @@ package body Browsers.Projects is
          Set_Right_Arrow (V, First_With_Clause_Of (Project) /= Empty_Node);
 
          Put (Get_Canvas (Browser), V);
-         Refresh (Browser, V);
+         Refresh (V);
       end if;
 
       return V;
@@ -258,7 +258,7 @@ package body Browsers.Projects is
             With_Clause := Next_With_Clause_Of (With_Clause);
          end loop;
 
-         Refresh (Browser, Src);
+         Refresh (Src);
       end Process_Project;
 
       Src : Browser_Project_Vertex_Access;
@@ -345,7 +345,7 @@ package body Browsers.Projects is
          Next (Iter);
       end loop;
 
-      Refresh (Browser, Dest);
+      Refresh (Dest);
 
       Layout (Get_Canvas (Browser), False,
               Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));

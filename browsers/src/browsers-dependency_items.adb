@@ -355,12 +355,12 @@ package body Browsers.Dependency_Items is
       if Initial = null then
          Gtk_New (Initial, Browser, Kernel, F);
          Put (Get_Canvas (Browser), Initial);
-         Refresh (Browser, Initial);
+         Refresh (Initial);
       end if;
 
       if Get_Right_Arrow (Initial) then
          Set_Right_Arrow (Initial, False);
-         Refresh (Browser, Initial);
+         Refresh (Initial);
 
          Find_Dependencies (Lib_Info, F, List, Status);
 
@@ -393,7 +393,7 @@ package body Browsers.Dependency_Items is
                                Dest => Item);
                   end if;
 
-                  Refresh (Browser, Item);
+                  Refresh (Item);
 
                   if New_Item then
                      Put (Get_Canvas (Browser), Item);
@@ -505,7 +505,7 @@ package body Browsers.Dependency_Items is
                      Src => Child, Dest => Data.Item);
                end if;
 
-               Refresh (Data.Browser, Child);
+               Refresh (Child);
             end;
          end if;
 
@@ -547,11 +547,11 @@ package body Browsers.Dependency_Items is
       if Item = null then
          Gtk_New (Item, Browser,  Kernel, File);
          Put (Get_Canvas (Browser), Item);
-         Refresh (Browser, Item);
+         Refresh (Item);
       end if;
 
       Set_Left_Arrow (Item, False);
-      Refresh (Browser, Item);
+      Refresh (Item);
 
       --  For efficiency, do not recompute the layout for each item.
       Set_Auto_Layout (Get_Canvas (Browser), False);
@@ -1081,7 +1081,7 @@ package body Browsers.Dependency_Items is
 
             Gtk_New (Item, B,  Get_Kernel (Context), Other_File);
             Put (Get_Canvas (B), Item);
-            Refresh (B, Item);
+            Refresh (Item);
 
             Set_Auto_Layout (Get_Canvas (B), True);
             Layout (Get_Canvas (B),
