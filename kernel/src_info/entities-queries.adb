@@ -685,7 +685,6 @@ package body Entities.Queries is
    function Renaming_Of
      (Entity : Entity_Information) return Entity_Information is
    begin
-      Resolve_Partial_Entity (Entity.Rename);
       return Entity.Rename;
    end Renaming_Of;
 
