@@ -161,6 +161,9 @@ package body Odd.Menus is
    is
    begin
       Set_Detect_Aliases (Canvas, not Get_Detect_Aliases (Canvas));
+
+      --  Recompute all the aliases
+      Recompute_All_Aliases (Canvas);
    end Change_Detect_Aliases;
 
    ----------------------
