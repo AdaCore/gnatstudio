@@ -538,6 +538,29 @@ package body Docgen.Work_On_Source is
    --  if TexInfo doc is created, the file is closed only once,
    --  but the Footer has to be set behind each package.
 
+   function Get_Location_Start (Text            : in String;
+                                Line            : in Natural;
+                                Comments_Before : in Boolean) return Natural;
+   --  Return the index in Text which is the begin or the end of Line.
+   --  The search start at Text'First.
+   --  Begin: if Comments_Before is True.
+   --  End: if Comments_Before is False.
+
+   function Get_Next_Location (Text            : in String;
+                               Old_Location    : in Natural;
+                               Comments_Before : in Boolean) return Natural;
+   --  Return the index in Text which correspond to the previous or the next
+   --  new line. The search begin to the old location of new line.
+   --  Previous: if Comments_Before is True.
+   --  Next: if Comments_Before is False.
+
+   function Get_Line_From_Location_And_String
+     (Text            : in String;
+      Location        : in Natural;
+      Comments_Before : in Boolean) return String;
+   --  Return the line of Test which starts (if Comments_Before is False) or
+   --  ends (if Comments_Before is True) at Location.
+
    function Extract_Comment
      (File_Text           : String;
       Line                : Natural;
@@ -4224,64 +4247,195 @@ package body Docgen.Work_On_Source is
       Package_Description : Boolean;
       Options             : All_Options) return GNAT.OS_Lib.String_Access
    is
+      Location : Natural;
       New_Line, Old_Line  : GNAT.OS_Lib.String_Access;
       Result_Line         : GNAT.OS_Lib.String_Access;
       Temp                : GNAT.OS_Lib.String_Access;
-      J                   : Natural;
    begin
       Result_Line := new String'("");
 
-      --  The comments are under the header of the entity
-
+      --  Search of the index of the text which correspond to the comments
+      --  that we must extract.
+      --  The search is done from the begin of the string Text.
+      --  If the option Comments Above is false or if it's a package
+      --  description, this index is the "new line" which ends the source code.
+      --  Otherwise, this index is the begin of source code.
       if (not Options.Comments_Above) or else Package_Description then
-         J := Line + Header_Lines;
+         Location := Get_Location_Start
+           (File_Text,
+            Line + Header_Lines,
+            Options.Comments_Above and not Package_Description);
       else
-         --  The comments are above the header of the entity
-         J := Line - 1;
+         Location := Get_Location_Start
+           (File_Text,
+            Line,
+            Options.Comments_Above and not Package_Description);
       end if;
 
-      New_Line := new String'
-        (Get_Line_From_String (File_Text, J));
+      New_Line := new String'(Get_Line_From_Location_And_String
+                                (File_Text,
+                                 Location,
+                                 Options.Comments_Above
+                                 and not Package_Description));
 
       while Line_Is_Comment (New_Line.all) loop
-         if (not Options.Comments_Above) or Package_Description then
-            J := J + 1;
+         Location := Get_Next_Location (File_Text,
+                                        Location,
+                                        Options.Comments_Above
+                                        and not Package_Description);
 
+         if (not Options.Comments_Above) or Package_Description then
             if not (Options.Ignorable_Comments and then
                       Is_Ignorable_Comment (New_Line.all)) then
                if Package_Description then
-                  Result_Line := new String'(Result_Line.all & New_Line.all);
+                  --  Comments at the head of file
+                  Result_Line
+                    := new String'(Result_Line.all & New_Line.all);
                else
+                  --  Comments after the source code
                   Temp := Remove_Space (Kill_Prefix (New_Line.all));
                   Result_Line := new String'(Result_Line.all
                                              & Temp.all);
                end if;
             end if;
          else
-            J := J - 1;
-
             if not (Options.Ignorable_Comments and then
                       Is_Ignorable_Comment (New_Line.all)) then
-               if Package_Description then
-                  Result_Line := new String'(New_Line.all &
-                    Result_Line.all);
-               else
-                  Temp := Remove_Space (Kill_Prefix (New_Line.all));
-                  Result_Line := new String'(Temp.all
-                                             & Result_Line.all);
-                  Free (Temp);
-               end if;
+               --  Comments before the source code
+               Temp := Remove_Space (Kill_Prefix (New_Line.all));
+               Result_Line := new String'(Temp.all
+                                          & Result_Line.all);
+               Free (Temp);
             end if;
          end if;
 
          Old_Line := New_Line;
-         New_Line := new String'(Get_Line_From_String (File_Text, J));
+         --  Now, we don't parse File_Text since the begining. We start
+         --  the search immediatly at the good place. This place is given
+         --  by subprogram Get_Next_Location which begins its search at the
+         --  previous location and not at the begining of File_Text.
+         --  For memory: before, at each loop, Get_Line_From_String was
+         --  called. This subprogram made a search from the begining of
+         --  File_Text.
+         New_Line := new String'(Get_Line_From_Location_And_String
+                                   (File_Text,
+                                    Location,
+                                    Options.Comments_Above
+                                    and not Package_Description));
          Free (Old_Line);
       end loop;
 
       Free (New_Line);
       return Result_Line;
    end Extract_Comment;
+
+   ------------------------
+   -- Get_Location_Start --
+   ------------------------
+
+   function Get_Location_Start (Text            : in String;
+                                Line            : in Natural;
+                                Comments_Before : in Boolean) return Natural is
+      Lines     : Natural;
+      Index     : Natural;
+      Index_Line      : Natural;
+      Old_Index_Line : Natural;
+   begin
+      Lines      := 1;
+      Index      := Text'First;
+      Index_Line := Index;
+      Old_Index_Line := Index_Line;
+
+      if Line > 1 then
+         while Index < Text'Length and Lines < Line loop
+            if Text (Index) = ASCII.LF then
+               Lines          := Lines + 1;
+               Old_Index_Line := Index;
+               Index_Line     := Index;
+            end if;
+            Index := Index + 1;
+         end loop;
+      end if;
+      if Comments_Before then
+         return Old_Index_Line;
+      else
+         return Index_Line;
+      end if;
+   end Get_Location_Start;
+
+   ---------------------------------------
+   -- Get_Line_From_Location_And_String --
+   ---------------------------------------
+
+   function Get_Line_From_Location_And_String
+     (Text            : in String;
+      Location        : in Natural;
+      Comments_Before : in Boolean) return String is
+
+      Index_Start : Natural;
+      Index_End   : Natural;
+   begin
+      if Comments_Before then
+         if Location - 1 >= Text'First then
+            Index_Start := Location - 1;
+            Index_End   := Index_Start;
+            while Index_End > Text'First
+              and then Text (Index_End) /=  ASCII.LF
+            loop
+               Index_End := Index_End - 1;
+            end loop;
+            return Text (Index_End .. Index_Start + 1);
+         else
+            return "";
+         end if;
+      else
+         if Location + 1 <= Text'Last then
+            Index_Start := Location + 1;
+            Index_End   := Index_Start;
+
+            while Index_End < Text'Last
+              and then Text (Index_End) /=  ASCII.LF
+            loop
+               Index_End := Index_End + 1;
+            end loop;
+            return Text (Index_Start .. Index_End);
+         else
+            return "";
+         end if;
+      end if;
+   end Get_Line_From_Location_And_String;
+
+   -----------------------
+   -- Get_Next_Location --
+   -----------------------
+
+   function Get_Next_Location (Text            : in String;
+                               Old_Location    : in Natural;
+                               Comments_Before : in Boolean) return Natural is
+      Index : Natural;
+   begin
+      if Comments_Before then
+         if Old_Location - 1 >= Text'First then
+            Index := Old_Location - 1;
+            while Index > Text'First and then Text (Index) /=  ASCII.LF loop
+               Index := Index - 1;
+            end loop;
+            return Index;
+         else
+            return Text'First;
+         end if;
+      else
+         if Old_Location + 1 <= Text'Last then
+            Index := Old_Location + 1;
+            while Index < Text'Last and then Text (Index) /=  ASCII.LF loop
+               Index := Index + 1;
+            end loop;
+            return Index;
+         else
+            return Text'Last;
+         end if;
+      end if;
+   end Get_Next_Location;
 
    ------------------
    -- Remove_Space --
@@ -4329,12 +4483,11 @@ package body Docgen.Work_On_Source is
       end if;
 
       Index_End := Index_Start;
-
       while Index_End < Text'Length and then Text (Index_End) /=  ASCII.LF loop
          Index_End := Index_End + 1;
       end loop;
-
       return Text (Index_Start .. Index_End);
+
    end Get_Line_From_String;
 
    ------------------------
