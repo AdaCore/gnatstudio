@@ -9871,6 +9871,13 @@ parameters:
   Display a visual comparison between the local file and the latest
   repository revision.
 
+@item diff_base_head
+  @table @code
+    @item $1 = file
+  @end table
+  Display a visual comparison between the revision from which the file
+  has been checked-out and the latest revision.
+
 @item diff_working
   @table @code
     @item $1 = file
