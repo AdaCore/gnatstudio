@@ -134,10 +134,17 @@ Known Problems fixed in GPS 3.0.0
   Workaround: Execute your program through a script that sets the proper PATH
               and LD_LIBRARY_PATH variables
 
-- D930-006, D806-004, CB14-005 problems with the help browser under Windows
+- D806-004 Display problems with the help browser under Windows
   Problem:    Under Windows, the integrated help browser cannot display
               properly the long HTML files after a certain point.
-  Workaround: Use an external HTML browser to view thise files.
+  Workaround: Use an external HTML browser to view these files
+
+- D923-003 Closing search dialog sends GPS window into the background
+  Problem:    Under Windows, when opening the search dialog and using
+              the browse button (in the Files... option), closing the browse
+              window and the search window would sometimes not restore the
+              GPS main window in the foreground.
+  Workaround: Click on the main window to restore it in front
 
 - D831-004 Wrong indentation in multiple line function call
   Problem:    In some cases of nested parenthesized expressions, the
@@ -148,7 +155,6 @@ Known Problems fixed in GPS 3.0.0
                                (Foo ("bar")));
   Workaround: Indent the line manually, or put the first 'Foo' on the previous
               line.
-
 
 - D713-012 Improper substitution in XML files
   Problem:    When chaining multiple shell commands in an XML action, the
