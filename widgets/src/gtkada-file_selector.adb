@@ -1137,18 +1137,33 @@ package body Gtkada.File_Selector is
             --  Find out what is the biggest common prefix matching the
             --  text in the selection entry.
 
-            if S = ".." or else S = ".." & Directory_Separator then
+            if S = ".." then
                Set_Text (Win.Selection_Entry, "");
                On_Up_Button_Clicked (Object);
                return True;
             end if;
 
-            if S'Length >= 1 and then Is_Absolute_Path (S) then
-               Sep := Index (S, (1 => Directory_Separator));
-               Set_Text (Win.Selection_Entry, S (Sep + 1 .. S'Last));
-               Set_Position (Win.Selection_Entry, Gint (S'Last - Sep));
-               Change_Directory (Win, S (S'First .. Sep));
+            if S'Length >= 3 and then
+              S (S'First .. S'First + 2) = ".." & Directory_Separator
+            then
+               Set_Text (Win.Selection_Entry, S (S'First + 3 .. S'Last));
+               On_Up_Button_Clicked (Object);
                return On_Selection_Entry_Key_Press_Event (Object, Params);
+            end if;
+
+            --  Test if S has an absolute directory as prefix
+
+            if S'Length >= 1 then
+               Sep := Index (S, (1 => Directory_Separator));
+
+               if Is_Directory (S (S'First .. Sep)) then
+                  Set_Text (Win.Selection_Entry, S (Sep + 1 .. S'Last));
+                  Set_Position (Win.Selection_Entry, Gint (S'Last - Sep));
+                  Change_Directory (Win, S (S'First .. Sep));
+
+                  return On_Selection_Entry_Key_Press_Event (Object, Params);
+
+               end if;
             end if;
 
             while Last > S'First
