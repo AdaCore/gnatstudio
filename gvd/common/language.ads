@@ -430,17 +430,11 @@ package Language is
    --  Free the contents of List.
 
    function Comment_Line
-     (Lang : access Language_Root;
-      Line : String) return String;
-   --  Comment one line of code.
-   --  See Uncomment_Line below.
-
-   function Uncomment_Line
-     (Lang : access Language_Root;
-      Line : String) return String;
-   --  Uncomment one line of code.
-   --  Does nothing on a non-commented line.
-   --  Uncomment_Line (Comment_Line (A)) should return A.
+     (Lang    : access Language_Root;
+      Line    : String;
+      Comment : Boolean := True) return String;
+   --  Comment or uncomment (if Comment is false) one line of code.
+   --  Comment_Line (Comment_Line (A), Comment => False) should return A.
 
    procedure Parse_Constructs
      (Lang   : access Language_Root;

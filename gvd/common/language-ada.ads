@@ -81,12 +81,9 @@ package Language.Ada is
    ----------------------
 
    function Comment_Line
-     (Lang : access Ada_Language;
-      Line : String) return String;
-
-   function Uncomment_Line
-     (Lang : access Ada_Language;
-      Line : String) return String;
+     (Lang    : access Ada_Language;
+      Line    : String;
+      Comment : Boolean := True) return String;
 
    procedure Parse_Constructs
      (Lang   : access Ada_Language;

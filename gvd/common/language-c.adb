@@ -248,77 +248,70 @@ package body Language.C is
    ------------------
 
    function Comment_Line
-     (Lang : access C_Language;
-      Line : String) return String
+     (Lang    : access C_Language;
+      Line    : String;
+      Comment : Boolean := True) return String
    is
+      Index_Last : Integer;
+
       pragma Unreferenced (Lang);
    begin
       if Line = "" then
          return "";
       end if;
 
-      --  Append "/* " at the beginning and " */" before the line end.
+      if Comment then
+         --  Append "/* " at the beginning and " */" before the line end.
 
-      declare
-         New_Line : String (1 .. Line'Length + 3);
-         Index    : Integer;
-      begin
-         Index := Line'First;
+         declare
+            New_Line : String (1 .. Line'Length + 3);
+            Index    : Integer;
+         begin
+            Index := Line'First;
 
-         while Index <= Line'Last
-           and then Line (Index) /= ASCII.LF
-           and then Line (Index) /= ASCII.CR
-         loop
-            Index := Index + 1;
-         end loop;
+            while Index <= Line'Last
+              and then Line (Index) /= ASCII.LF
+              and then Line (Index) /= ASCII.CR
+            loop
+               Index := Index + 1;
+            end loop;
 
-         if Index = Line'First then
-            return Line;
+            if Index = Line'First then
+               return Line;
+            end if;
+
+            --  Insert the " */" before the end of line.
+
+            if Index <= Line'Last then
+               New_Line (1 .. Index - Line'First) :=
+                 Line (Line'First .. Index - 1);
+
+               New_Line (Index - Line'First + 1 .. Index - Line'First + 3) :=
+                 " */";
+               New_Line (Index - Line'First + 4 .. New_Line'Last) :=
+                 Line (Index .. Line'Last);
+
+               return "/* " & New_Line;
+            else
+               return "/* " & Line & " */";
+            end if;
+         end;
+      else
+         if Line'Length > 6
+           and then Line (Line'First .. Line'First + 2) = "/* "
+         then
+            Index_Last := Line'First + 2;
+            Skip_To_String (Line, Index_Last, " */");
+
+            if Index_Last + 2 <= Line'Last then
+               return Line (Line'First + 3 .. Index_Last - 1)
+                 & Line (Index_Last + 3 .. Line'Last);
+            end if;
          end if;
 
-         --  Insert the " */" before the end of line.
-
-         if Index <= Line'Last then
-            New_Line (1 .. Index - Line'First) :=
-              Line (Line'First .. Index - 1);
-
-            New_Line (Index - Line'First + 1 .. Index - Line'First + 3) :=
-              " */";
-            New_Line (Index - Line'First + 4 .. New_Line'Last) :=
-              Line (Index .. Line'Last);
-
-            return "/* " & New_Line;
-         else
-            return "/* " & Line & " */";
-         end if;
-      end;
-   end Comment_Line;
-
-   --------------------
-   -- Uncomment_Line --
-   --------------------
-
-   function Uncomment_Line
-     (Lang : access C_Language;
-      Line : String) return String
-   is
-      pragma Unreferenced (Lang);
-      Index_Last : Integer;
-   begin
-      if Line'Length > 6
-        and then Line (Line'First .. Line'First + 2) = "/* "
-      then
-         Index_Last := Line'First + 2;
-         Skip_To_String (Line, Index_Last, " */");
-
-         if Index_Last + 2 <= Line'Last then
-            return Line (Line'First + 3 .. Index_Last - 1)
-            & Line (Index_Last + 3 .. Line'Last);
-         end if;
+         return Line;
       end if;
-
-      return Line;
-   end Uncomment_Line;
+   end Comment_Line;
 
    ------------------------
    -- Get_Project_Fields --

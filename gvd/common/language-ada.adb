@@ -408,24 +408,16 @@ package body Language.Ada is
    ------------------
 
    function Comment_Line
-     (Lang : access Ada_Language;
-      Line : String) return String
+     (Lang    : access Ada_Language;
+      Line    : String;
+      Comment : Boolean := True) return String
    is
       pragma Unreferenced (Lang);
    begin
-      return "--  " & Line;
-   end Comment_Line;
+      if Comment then
+         return "--  " & Line;
+      end if;
 
-   --------------------
-   -- Uncomment_Line --
-   --------------------
-
-   function Uncomment_Line
-     (Lang : access Ada_Language;
-      Line : String) return String
-   is
-      pragma Unreferenced (Lang);
-   begin
       --  Skip all the spaces and HT up to the first occurrence of "--",
       --  then do the following transformations
       --  1  |  --  blabla
@@ -438,7 +430,7 @@ package body Language.Ada is
       --  => |  blabla
       --
       --  We do the first transformation in priority, so that
-      --  Uncomment_Line un-does the effects of Comment_Line, and to keep
+      --  uncommenting un-does the effects of commenting, and to keep
       --  close to the GNAT coding style.
 
       for Index in Line'First .. Line'Last - 1 loop
@@ -463,7 +455,7 @@ package body Language.Ada is
       end loop;
 
       return Line;
-   end Uncomment_Line;
+   end Comment_Line;
 
    ----------------------
    -- Parse_Constructs --

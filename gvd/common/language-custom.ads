@@ -102,12 +102,9 @@ package Language.Custom is
    --  xml file.
 
    function Comment_Line
-     (Lang : access Custom_Language;
-      Line : String) return String;
-
-   function Uncomment_Line
-     (Lang : access Custom_Language;
-      Line : String) return String;
+     (Lang    : access Custom_Language;
+      Line    : String;
+      Comment : Boolean := True) return String;
 
    procedure Parse_Constructs
      (Lang   : access Custom_Language;
@@ -156,10 +153,12 @@ private
    pragma Convention (C, Set_Construct);
 
    type Comment_Line_Proc is access
-     function (Line : String; Length : Integer) return chars_ptr;
+     function (Line : String; Comment : Boolean; Length : Integer)
+               return chars_ptr;
    pragma Convention (C, Comment_Line_Proc);
-   --  C profile for Comment/Uncomment_Line:
-   --  typedef char * (*comment_line_proc) (char *line, int length);
+   --  C profile for Comment_Line:
+   --  typedef char * (*comment_line_proc)
+   --    (char *line, char comment, int length);
 
    type Parse_Constructs_Proc is access
      procedure (Buffer        : String;
@@ -309,7 +308,6 @@ private
       Body_Suffix      : Glib.String_Ptr;
       Project_Fields   : Project_Field_Array_Access;
       Comment_Line     : Comment_Line_Proc;
-      Uncomment_Line   : Comment_Line_Proc;
       Parse_Constructs : Parse_Constructs_Proc;
       Format_Buffer    : Format_Buffer_Proc;
       Parse_Entities   : Parse_Entities_Proc;

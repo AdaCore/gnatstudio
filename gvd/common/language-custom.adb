@@ -255,8 +255,6 @@ package body Language.Custom is
          declare
             Comment   : constant String_Ptr :=
               Get_Field (Top, "Comment_Line");
-            Uncomment : constant String_Ptr :=
-              Get_Field (Top, "Uncomment_Line");
             Parse_C   : constant String_Ptr :=
               Get_Field (Top, "Parse_Constructs");
             Format    : constant String_Ptr :=
@@ -269,12 +267,6 @@ package body Language.Custom is
             if Comment /= null then
                Get_Symbol
                  (Dyn_Module, Comment.all, Lang.Comment_Line, Success);
-            end if;
-
-            if Uncomment /= null then
-               Get_Symbol
-                 (Dyn_Module, Uncomment.all,
-                  Lang.Uncomment_Line, Success);
             end if;
 
             if Parse_C /= null then
@@ -670,19 +662,33 @@ package body Language.Custom is
    ------------------
 
    function Comment_Line
-     (Lang : access Custom_Language;
-      Line : String) return String is
+     (Lang    : access Custom_Language;
+      Line    : String;
+      Comment : Boolean := True) return String is
    begin
       if Lang.Comment_Line = null then
          if Lang.Parent = null then
-            return Comment_Line (Language_Root (Lang.all)'Access, Line);
+            return Comment_Line
+              (Language_Root (Lang.all)'Access, Line, Comment);
          else
-            return Comment_Line (Lang.Parent, Line);
+            return Comment_Line (Lang.Parent, Line, Comment);
          end if;
+      end if;
+
+      if Comment then
+         declare
+            S   : chars_ptr :=
+              Lang.Comment_Line (Line, True, Line'Length);
+            Val : constant String := Value (S);
+
+         begin
+            Free (S);
+            return Val;
+         end;
       else
          declare
             S   : chars_ptr :=
-              Lang.Comment_Line (Line, Line'Length);
+              Lang.Comment_Line (Line, False, Line'Length);
             Val : constant String := Value (S);
 
          begin
@@ -691,33 +697,6 @@ package body Language.Custom is
          end;
       end if;
    end Comment_Line;
-
-   --------------------
-   -- Uncomment_Line --
-   --------------------
-
-   function Uncomment_Line
-     (Lang : access Custom_Language;
-      Line : String) return String is
-   begin
-      if Lang.Uncomment_Line = null then
-         if Lang.Parent = null then
-            return Uncomment_Line (Language_Root (Lang.all)'Access, Line);
-         else
-            return Uncomment_Line (Lang.Parent, Line);
-         end if;
-      else
-         declare
-            S   : chars_ptr :=
-              Lang.Uncomment_Line (Line, Line'Length);
-            Val : constant String := Value (S);
-
-         begin
-            Free (S);
-            return Val;
-         end;
-      end if;
-   end Uncomment_Line;
 
    ----------------------
    -- Parse_Constructs --

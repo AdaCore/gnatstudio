@@ -107,12 +107,9 @@ package Language.C is
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
    function Comment_Line
-     (Lang : access C_Language;
-      Line : String) return String;
-
-   function Uncomment_Line
-     (Lang : access C_Language;
-      Line : String) return String;
+     (Lang    : access C_Language;
+      Line    : String;
+      Comment : Boolean := True) return String;
 
 private
    type C_Language is new Language_Root with null record;
