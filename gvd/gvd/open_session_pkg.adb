@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with Gtk;                        use Gtk;
 with Gtk.Main;
