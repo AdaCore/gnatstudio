@@ -449,30 +449,34 @@ package body Browsers.Call_Graph is
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
       Item := Add_Entity_If_Not_Present (Browser, Node);
-      Item.To_Parsed := True;
-      Refresh (Browser, Item);
 
-      Iter := Start (Node);
-      while Get (Iter) /= Null_Scope_Tree_Node loop
-         if Is_Subprogram (Get (Iter)) then
-            Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
-            if not Has_Link (Get_Canvas (Browser), Item, Child) then
-               Link := new Glide_Browser_Link_Record;
-               Add_Link (Get_Canvas (Browser),
-                         Link => Link,
-                         Src => Item,
-                         Dest => Child);
+      if not Item.To_Parsed then
+         Item.To_Parsed := True;
+         Refresh (Browser, Item);
+
+         Iter := Start (Node);
+         while Get (Iter) /= Null_Scope_Tree_Node loop
+            if Is_Subprogram (Get (Iter)) then
+               Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
+               if not Has_Link (Get_Canvas (Browser), Item, Child) then
+                  Link := new Glide_Browser_Link_Record;
+                  Add_Link (Get_Canvas (Browser),
+                            Link => Link,
+                            Src => Item,
+                            Dest => Child);
+               end if;
             end if;
-         end if;
 
-         Next (Iter);
-      end loop;
+            Next (Iter);
+         end loop;
 
-      Set_Auto_Layout (Get_Canvas (Browser), True);
-      Layout (Get_Canvas (Browser),
-              Force => False,
-              Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
-      Refresh_Canvas (Get_Canvas (Browser));
+         Set_Auto_Layout (Get_Canvas (Browser), True);
+         Layout
+           (Get_Canvas (Browser),
+            Force => False,
+            Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
+         Refresh_Canvas (Get_Canvas (Browser));
+      end if;
 
       Pop_State (Kernel_Handle (Kernel));
       Free (Tree);
@@ -490,9 +494,18 @@ package body Browsers.Call_Graph is
 
    procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data) is
    begin
+      Set_Auto_Layout (Get_Canvas (Data.Browser), True);
+      Layout (Get_Canvas (Data.Browser),
+              Force => False,
+              Vertical_Layout =>
+                Get_Pref (Get_Kernel (Data.Browser),
+                          Browsers_Vertical_Layout));
+      Refresh_Canvas (Get_Canvas (Data.Browser));
+
       Data.Browser.Idle_Id := 0;
       Destroy (Data.Iter);
       Destroy (Data.Entity);
+
       Pop_State (Get_Kernel (Data.Browser));
    end Destroy_Idle;
 
@@ -532,13 +545,6 @@ package body Browsers.Call_Graph is
       Tree : Scope_Tree;
    begin
       if Get (Data.Iter.all) = No_Reference then
-         Set_Auto_Layout (Get_Canvas (Data.Browser), True);
-         Layout (Get_Canvas (Data.Browser),
-                 Force => False,
-                 Vertical_Layout =>
-                   Get_Pref (Get_Kernel (Data.Browser),
-                             Browsers_Vertical_Layout));
-         Refresh_Canvas (Get_Canvas (Data.Browser));
          return False;
 
       else
