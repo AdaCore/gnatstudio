@@ -101,11 +101,6 @@ package DB_API is
    --  Releases resources allocated before by Set_Cursor.
    --  Does nothing if cursor was not set.
 
-   function Get_Table_Name
-     (DB  : DB_File;
-      DBI : Integer) return String;
-   --  Returns name of DB table having DBI index
-
    function Get_Pair
      (DB       : DB_File;
       Movement : Cursor_Movement := Next) return Pair_Ptr;

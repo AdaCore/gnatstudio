@@ -375,21 +375,4 @@ package body DB_API is
       return Integer (I_Get_Field_Length (The_CSF, C.int (Index)));
    end Get_Field_Length;
 
-   --------------------
-   -- Get_Table_Name --
-   --------------------
-
-   function Get_Table_Name
-     (DB  : DB_File;
-      DBI : Integer) return String
-   is
-      function I_Get_File_Accessed (DB : DB_File; DBI : C.int)
-        return CStrings.chars_ptr;
-      pragma Import (C, I_Get_File_Accessed, "ada_get_table_name");
-      R : constant CStrings.chars_ptr :=
-        I_Get_File_Accessed (DB, C.int (DBI));
-   begin
-      return CStrings.Value (R);
-   end Get_Table_Name;
-
 end DB_API;

@@ -150,12 +150,13 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
     file->dbi = -1;
     file->pos = POS_FIRST;
 
-    for (i = 0, j = 0; i < num_of_files; i++) {
-	file->db[j] = dbopen(file_names[i], O_RDONLY, 0644, DB_BTREE, 0);
-	if (file->db[j] == 0) {
+    for (i = 0; i < num_of_files; i++) {
+	file->db[i] = dbopen(file_names[i], O_RDONLY, 0644, DB_BTREE, 0);
+	if (file->db[i] == 0) {
 	    file->last_errno = errno;
+	    file->fname[i] = 0;
 	} else  {
-	    file->fname[j] = strdup(file_names[i]);
+	    file->fname[i] = strdup(file_names[i]);
 	    j++;
     	}
     }
@@ -166,7 +167,7 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
 
     file->last_errno = 0; /* reset error flag if there is
 			   * at least one open file */
-    file->dbc = j - 1;
+    file->dbc = num_of_files - 1;
     file->key_p = 0;
 
     return file;
@@ -299,6 +300,16 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
 
     next_file = 0;
     do {
+	if (file->db[file->dbi] == 0) {
+	    result = 1;
+	    if (file->dbi < file->dbc) {
+		file->dbi++;
+		next_file = 1;
+	    } else {
+		next_file = 0;
+	    }
+	    continue;
+	}
 	if (next_file) {
 	    if (file->saved_pos == R_CURSOR) {
 		key.data = file->key_p;
@@ -379,9 +390,4 @@ CSF *ada_get_data(const DB_Pair * pair)
 int ada_get_dbi(const DB_Pair * pair)
 {
     return pair->dbi;
-}
-
-char* ada_get_table_name(const DB_File * file, int dbi)
-{
-    return file->fname[dbi];
 }
