@@ -1,5 +1,5 @@
 Here is the complete procedures to build Gtk+ 2.0.2 from scratch
-(systems tested are Redhat 7.1, Solaris 2.8, Tru64 5.1a).
+(systems tested are Redhat 7.1, Solaris 2.8, Tru64 5.1a, HP-UX 11.00).
 
 Note that these instructions are provided as is, and do not represent a
 100% guaranteed method. This is merely an empirical list of steps that
@@ -107,6 +107,10 @@ make install
 ########
 tar xzvf glib-2.0.3.tar.gz
 cd glib-2.0.3
+
+# Under HP-UX, apply the patch libtool-hpux.diff:
+# patch -p0 < .../libtool-hpux.diff
+
 # on Linux, Solaris and Tru64:
 ./configure --prefix=$prefix --enable-debug=minimum
 # on other systems:
@@ -122,6 +126,10 @@ cd ..
 #######
 tar xzvf atk-1.0.2.tar.gz
 cd atk-1.0.2
+
+# Under HP-UX, apply the patch libtool-hpux.diff:
+# patch -p0 < .../libtool-hpux.diff
+
 ./configure --prefix=$prefix
 make
 make install
@@ -139,13 +147,23 @@ cd pango-1.0.2
 # hangul-x,tamil-x,tamil-xft,thai-x,gurmukhi-x,bengali-x,gujarati-x,
 # devanagari-x,myanmar-x
 
+# Under HP-UX, apply the patch libtool-hpux.diff:
+# patch -p0 < .../libtool-hpux.diff
+
 ./configure --prefix=$prefix --with-included-modules=basic-x
 
-# Under Tru64, the command above fails with
+# Under HP-UX and Tru64, the command above fails with
 # checking modules to link statically... basic-x
 # configure: error: the specified module basic-x does not exist
 # Use instead:
 # ./configure --prefix=$prefix
+#
+# Modifying configure as follows works aroundi the configure bug, but then
+# make fails:
+# Replace the following line:
+#  elif echo $module | grep -- "-x\($\|,\)" > /dev/null; then
+# by:
+#  elif echo $module | grep -- "-x\($\)" > /dev/null; then
 
 make
 make install
@@ -156,11 +174,15 @@ cd ..
 #######
 tar xzvf gtk+-2.0.3.tar.gz
 cd gtk+-2.0.3
+
+# Under HP-UX, apply the patch libtool-hpux.diff:
+# patch -p0 < .../libtool-hpux.diff
+
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
   --enable-debug=minimum
 
-# Under Tru64, the command above fails with
+# Under Tru64 & HP-UX, the command above fails with
 # checking pixbuf loaders to build... xpm,png,gif,jpeg
 # configure: error: the specified loader xpm does not exist
 # Use instead:
