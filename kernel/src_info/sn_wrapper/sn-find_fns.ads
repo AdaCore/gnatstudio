@@ -49,18 +49,18 @@ package SN.Find_Fns is
    --  Point. Where is left to the first character following this
    --  representation.
 
-   procedure Find
-     (DB              : DB_File;
-      Ref_Class       : String      := Invalid_String;
-      Ref_Symbol_Name : String      := Invalid_String;
-      Ref_Type        : String      := Invalid_String;
-      Class           : String      := Invalid_String;
-      Symbol_Name     : String      := Invalid_String;
-      Sym_Type        : Symbol_Type := Undef;
-      Access_Type     : String      := Invalid_String;
-      Position        : Point       := Invalid_Point;
-      Filename        : String      := Invalid_String;
-      Tab             : out BY_Table);
+--     procedure Find
+--       (DB              : DB_File;
+--        Ref_Class       : String      := Invalid_String;
+--        Ref_Symbol_Name : String      := Invalid_String;
+--        Ref_Type        : String      := Invalid_String;
+--        Class           : String      := Invalid_String;
+--        Symbol_Name     : String      := Invalid_String;
+--        Sym_Type        : Symbol_Type := Undef;
+--        Access_Type     : String      := Invalid_String;
+--        Position        : Point       := Invalid_Point;
+--        Filename        : String      := Invalid_String;
+--        Tab             : out BY_Table);
    --  Find functions for Referred by table
 
    procedure Find
@@ -76,25 +76,8 @@ package SN.Find_Fns is
       Name           : String := Invalid_String;
       Start_Position : Point  := Invalid_Point;
       Filename       : String := Invalid_String;
-      Tab            : out COM_Table);
-   --  Find functions for Common blocks table
-
-   procedure Find
-     (DB             : DB_File;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
       Tab            : out CON_Table);
    --  Find functions for Constants table
-
-   procedure Find
-     (DB             : DB_File;
-      Common_Block   : String := Invalid_String;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out COV_Table);
-   --  Find functions for Common value table
 
    procedure Find
      (DB             : DB_File;
@@ -111,12 +94,6 @@ package SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out EC_Table);
    --  Find functions for Enum-constants table
-
-   procedure Find
-     (DB   : DB_File;
-      Name : String := Invalid_String;
-      Tab  : out F_Table);
-   --  Find functions for Project files table
 
    procedure Find
      (DB             : DB_File;
@@ -220,23 +197,6 @@ package SN.Find_Fns is
       Filename       : String := Invalid_String;
       Tab            : out FU_Table);
    --  Find functions for Method implementations table
-
-   procedure Find
-     (DB                 : DB_File;
-      Filename           : String := Invalid_String;
-      Position           : Point  := Invalid_Point;
-      Class              : String := Invalid_String;
-      Method_Or_Function : String := Invalid_String;
-      Tab                : out REM_Table);
-   --  Find functions for Remarks table
-
-   procedure Find
-     (DB       : DB_File;
-      Name     : String := Invalid_String;
-      Position : Point  := Invalid_Point;
-      Filename : String := Invalid_String;
-      Tab      : out SU_Table);
-   --  Find functions for Subroutines table
 
    procedure Find
      (DB       : DB_File;

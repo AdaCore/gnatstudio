@@ -27,200 +27,6 @@ package body SN.Find_Fns is
    ----------
    -- Find --
    ----------
-   --  Find functions for Referred by table
-
-   procedure Find
-     (DB              : DB_File;
-      Ref_Class       : String      := Invalid_String;
-      Ref_Symbol_Name : String      := Invalid_String;
-      Ref_Type        : String      := Invalid_String;
-      Class           : String      := Invalid_String;
-      Symbol_Name     : String      := Invalid_String;
-      Sym_Type        : Symbol_Type := Undef;
-      Access_Type     : String      := Invalid_String;
-      Position        : Point       := Invalid_Point;
-      Filename        : String      := Invalid_String;
-      Tab             : out BY_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Ref_Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Ref_Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Symbol_Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Ref_Symbol_Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Type = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Ref_Type'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Symbol_Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Symbol_Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Sym_Type = Undef then
-            Fall := True;
-         else
-            --  Symbol type is 3 letters at most
-            Len := Len + 3 + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Access_Type = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Access_Type'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Ref_Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Ref_Class'Length - 1)
-              := Ref_Class;
-            Pos := Pos + Ref_Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Symbol_Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Ref_Symbol_Name'Length - 1)
-              := Ref_Symbol_Name;
-            Pos := Pos + Ref_Symbol_Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Ref_Type = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Ref_Type'Length - 1)
-              := Ref_Type;
-            Pos := Pos + Ref_Type'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Symbol_Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Symbol_Name'Length - 1)
-              := Symbol_Name;
-            Pos := Pos + Symbol_Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Sym_Type = Undef then
-            Fall := True;
-         else
-            To_String (Sym_Type, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Access_Type = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Access_Type'Length - 1)
-              := Access_Type;
-            Pos := Pos + Access_Type'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   --  Find functions for Classes table
 
    procedure Find
      (DB             : DB_File;
@@ -300,87 +106,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Common blocks table
-
-   procedure Find
-     (DB             : DB_File;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out COM_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   --  Find functions for Constants table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -460,106 +188,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Common value table
-
-   procedure Find
-     (DB             : DB_File;
-      Common_Block   : String := Invalid_String;
-      Name           : String := Invalid_String;
-      Start_Position : Point  := Invalid_Point;
-      Filename       : String := Invalid_String;
-      Tab            : out COV_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Common_Block = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Common_Block'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Common_Block = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Common_Block'Length - 1)
-              := Common_Block;
-            Pos := Pos + Common_Block'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Start_Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Start_Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   --  Find functions for Enumerations table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -639,7 +270,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Enum-constants table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -719,51 +352,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Project files table
-
-   procedure Find
-     (DB   : DB_File;
-      Name : String := Invalid_String;
-      Tab  : out F_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   --  Find functions for Function table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -843,7 +434,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Symbols of files table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -960,7 +553,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Friends table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -1040,7 +635,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Functions table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -1122,7 +719,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Variables table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB       : DB_File;
@@ -1202,7 +801,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Inheritances table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -1301,7 +902,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Include table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB                : DB_File;
@@ -1381,7 +984,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Instance variables table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -1480,7 +1085,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Local variables table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -1579,7 +1186,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Macros table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -1659,7 +1268,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Method definitions table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -1758,186 +1369,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Remarks table
-
-   procedure Find
-     (DB                 : DB_File;
-      Filename           : String := Invalid_String;
-      Position           : Point  := Invalid_Point;
-      Class              : String := Invalid_String;
-      Method_Or_Function : String := Invalid_String;
-      Tab                : out REM_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Class'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Method_Or_Function = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Method_Or_Function'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Class = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Class'Length - 1)
-              := Class;
-            Pos := Pos + Class'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Method_Or_Function = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Method_Or_Function'Length - 1)
-              := Method_Or_Function;
-            Pos := Pos + Method_Or_Function'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   --  Find functions for Subroutines table
-
-   procedure Find
-     (DB       : DB_File;
-      Name     : String := Invalid_String;
-      Position : Point  := Invalid_Point;
-      Filename : String := Invalid_String;
-      Tab      : out SU_Table)
-   is
-      P    : Pair_Ptr;
-      Key  : String_Access;
-      Fall : Boolean := False;
-      Len  : Integer := 0;
-      Pos  : Integer := 1;
-   begin
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Name'Length + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            Len := Len + 11;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Len := Len + Filename'Length;
-         end if;
-      end if;
-
-      Key := new String (1 .. Len);
-      Fall := False;
-
-      if not Fall then
-         if Name = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Name'Length - 1)
-              := Name;
-            Pos := Pos + Name'Length;
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Position = Invalid_Point then
-            Fall := True;
-         else
-            To_String (Position, Key.all, Pos);
-            Key (Pos) := Field_Sep;
-            Pos := Pos + 1;
-         end if;
-      end if;
-      if not Fall then
-         if Filename = Invalid_String then
-            Fall := True;
-         else
-            Key (Pos .. Pos + Filename'Length - 1)
-              := Filename;
-            Pos := Pos + Filename'Length;
-         end if;
-      end if;
-      Set_Cursor (DB, By_Key, Key.all, False);
-      Free (Key);
-      P   := Get_Pair (DB, Next_By_Key);
-      Release_Cursor (DB);
-      if null = P then
-         raise Not_Found;
-      end if;
-      Parse_Pair (P.all, Tab);
-      Free (P);
-   end Find;
-
-   --  Find functions for Typedefs table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB       : DB_File;
@@ -2017,7 +1451,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Method implementations table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -2120,7 +1556,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Templates arguments table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB             : DB_File;
@@ -2219,7 +1657,9 @@ package body SN.Find_Fns is
       Free (P);
    end Find;
 
-   --  Find functions for Refers to table
+   ----------
+   -- Find --
+   ----------
 
    procedure Find
      (DB          : DB_File;
