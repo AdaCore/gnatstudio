@@ -31,12 +31,12 @@ with Glide_Intl; use Glide_Intl;
 
 package body Foreign_Naming_Scheme_Editor_Pkg.Callbacks is
 
-   use Gtk.Arguments;
-
    Empty_Filename : constant String := "<filename>";
 
    procedure Handle_Key (E : Foreign_Naming_Editor; Event : Gdk_Event);
    --  Handle a keypress (escape,...) in Field
+
+   use Gtk.Arguments;
 
    ----------------------------------
    -- On_Exception_List_Select_Row --

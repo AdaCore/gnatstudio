@@ -34,14 +34,14 @@ with Ada_Naming_Editors; use Ada_Naming_Editors;
 
 package body Naming_Scheme_Editor_Pkg.Callbacks is
 
-   use Gtk.Arguments;
-
    Custom_Scheme : constant Gint := 3;
    --  Index of the "<custom>" choice in the list of predefined schemes.
 
    procedure Handle_Key
      (E : Ada_Naming_Editor; Event : Gdk_Event; Field : Gtk_Entry);
    --  Handle a keypress (escape,...) in Field
+
+   use Gtk.Arguments;
 
    --------------------------------
    -- On_Standard_Scheme_Changed --
