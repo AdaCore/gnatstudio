@@ -1216,11 +1216,11 @@ package body Switches_Editors is
    ----------------------
 
    function Generate_Project
-     (Switches     : access Switches_Edit_Record'Class;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Project      : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Files        : Argument_List) return Project_Node_Array
+     (Switches           : access Switches_Edit_Record'Class;
+      Project            : Prj.Tree.Project_Node_Id;
+      Project_View       : Prj.Project_Id;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Files              : Argument_List) return Project_Node_Array
    is
       Max_Modified_Packages : constant := 5;
       --  Maximum number of packages that can be renamed (Builder, Compiler,
@@ -1290,8 +1290,7 @@ package body Switches_Editors is
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
                      Pkg_Name           => Pkg_Name,
-                     Scenario_Variables =>
-                       Scenario_Variables (Kernel),
+                     Scenario_Variables => Scenario_Variables,
                      Attribute_Name     => Get_String (Name_Switches),
                      Values             => Args,
                      Attribute_Index    => File_Name,
@@ -1300,31 +1299,28 @@ package body Switches_Editors is
                   Delete_Attribute
                     (Project            => Project,
                      Pkg_Name           => Pkg_Name,
-                     Scenario_Variables =>
-                       Scenario_Variables (Kernel),
+                     Scenario_Variables => Scenario_Variables,
                      Attribute_Name     => Get_String (Name_Switches),
                      Attribute_Index    => File_Name);
                end if;
 
             elsif Args'Length /= 0 then
                Update_Attribute_Value_In_Scenario
-                 (Project           => Project,
-                  Pkg_Name          => Pkg_Name,
-                  Scenario_Variables =>
-                    Scenario_Variables (Kernel),
-                  Attribute_Name    => Get_String (Name_Default_Switches),
-                  Values            => Args,
-                  Attribute_Index   => Get_String (Language),
-                  Prepend           => False);
+                 (Project            => Project,
+                  Pkg_Name           => Pkg_Name,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute_Name     => Get_String (Name_Default_Switches),
+                  Values             => Args,
+                  Attribute_Index    => Get_String (Language),
+                  Prepend            => False);
 
             else
                Delete_Attribute
-                 (Project           => Project,
-                  Pkg_Name          => Pkg_Name,
-                  Scenario_Variables =>
-                    Scenario_Variables (Kernel),
-                  Attribute_Name    => Get_String (Name_Default_Switches),
-                  Attribute_Index   => Get_String (Language));
+                 (Project            => Project,
+                  Pkg_Name           => Pkg_Name,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute_Name     => Get_String (Name_Default_Switches),
+                  Attribute_Index    => Get_String (Language));
             end if;
          end if;
          Free (Args);
@@ -1424,11 +1420,11 @@ package body Switches_Editors is
 
             declare
                Result : constant Project_Node_Array := Generate_Project
-                 (Switches     => Switches,
-                  Kernel       => Switches.Kernel,
-                  Project      => Project,
-                  Project_View => Project_View,
-                  Files        => Files);
+                 (Switches           => Switches,
+                  Scenario_Variables => Scenario_Variables (Switches.Kernel),
+                  Project            => Project,
+                  Project_View       => Project_View,
+                  Files              => Files);
             begin
                for R in Result'Range loop
                   Set_Project_Modified (Switches.Kernel, Result (R), True);

@@ -97,11 +97,11 @@ package Switches_Editors is
    --  automatically created.
 
    function Generate_Project
-     (Switches     : access Switches_Edit_Record'Class;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project      : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id;
-      Files        : GNAT.OS_Lib.Argument_List)
+     (Switches           : access Switches_Edit_Record'Class;
+      Project            : Prj.Tree.Project_Node_Id;
+      Project_View       : Prj.Project_Id;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Files              : GNAT.OS_Lib.Argument_List)
       return Prj_API.Project_Node_Array;
    --  Generate the information in Project to represent the status of Switches.
    --  The list of modified projects is returned (there can be several in case
