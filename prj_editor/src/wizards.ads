@@ -65,6 +65,7 @@ with Gtk.Widget;
 with Gtk.Style;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
+with Glide_Kernel;
 
 package Wizards is
 
@@ -73,7 +74,11 @@ package Wizards is
    type Wizard is access all Wizard_Record'Class;
 
    procedure Gtk_New
-     (Wiz : out Wizard; Title : String; Bg : String; Num_Pages : Positive);
+     (Wiz : out Wizard;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Title : String;
+      Bg : String;
+      Num_Pages : Positive);
    --  Create a new wizard.
    --  Bg is the color to use for the background of the table of contents.
    --  Num_Pages is the number of pages. When the last one is displayed, the
@@ -81,6 +86,7 @@ package Wizards is
 
    procedure Initialize
      (Wiz       : access Wizard_Record'Class;
+      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Title     : String;
       Bg        : String;
       Num_Pages : Positive);

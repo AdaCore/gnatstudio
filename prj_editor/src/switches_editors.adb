@@ -53,6 +53,7 @@ with Prj_API;              use Prj_API;
 with Prj_Normalize;        use Prj_Normalize;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with String_Utils;         use String_Utils;
 with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
 
@@ -63,9 +64,6 @@ with Prj;                 use Prj;
 with Prj.Tree;            use Prj.Tree;
 
 package body Switches_Editors is
-
-   Switches_Editor_Title_Font : constant String := "helvetica bold oblique 14";
-   --  <preference> Font to use for the switches editor dialog
 
    procedure Filter_Switches
      (Editor   : access Switches_Edit_Record'Class;
@@ -921,7 +919,7 @@ package body Switches_Editors is
       Pack_Start (Get_Vbox (Dialog), Label, Padding => 10);
 
       Style := Copy (Get_Style (Label));
-      Desc := From_String (Switches_Editor_Title_Font);
+      Desc := From_String (Get_Pref (Kernel, Switches_Editor_Title_Font));
       Set_Font_Description (Style, Desc);
       Set_Style (Label, Style);
 

@@ -53,6 +53,7 @@ with Interfaces.C;              use Interfaces.C;
 with Prj_API;              use Prj_API;
 with Project_Trees;        use Project_Trees;
 with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with GUI_Utils;            use GUI_Utils;
 with Switches_Editors;     use Switches_Editors;
 
@@ -64,13 +65,6 @@ with Namet;         use Namet;
 with Switches_Editors; use Switches_Editors;
 
 package body Project_Viewers is
-
-   Timestamp_Picture : constant Picture_String := "%Y/%m/%d %H:%M:%S";
-   --  <preference> Format used to display timestamps
-
-   Default_Switches_Color : constant String := "#777777";
-   --  <preference> Color to use when displaying switches that are not file
-   --  specific, but set at the project or package level.
 
    type View_Display is access procedure
      (Viewer    : access Project_Viewer_Record'Class;
@@ -392,7 +386,9 @@ package body Project_Viewers is
       T.tm_mon := T.tm_mon + 1;
       A_Time := Time_Of (1900 + T.tm_year, T.tm_mon, T.tm_mday,
                          T.tm_hour, T.tm_min, T.tm_sec);
-      Line := New_String (Image (A_Time, Timestamp_Picture));
+      Line := New_String
+        (Image (A_Time,
+                Picture_String (Get_Pref (Viewer.Kernel, Timestamp_Picture))));
       Style := null;
    end Timestamp_Display;
 
@@ -710,8 +706,7 @@ package body Project_Viewers is
       --     Widget_Callback.To_Marshaller (Explorer_Selection_Changed'Access),
       --     Viewer);
 
-      Color := Parse (Default_Switches_Color);
-      Alloc (Get_Default_Colormap, Color);
+      Color := Get_Pref (Kernel, Default_Switches_Color);
       Viewer.Default_Switches_Style := Copy (Get_Style (Viewer));
       Set_Foreground (Viewer.Default_Switches_Style, State_Normal, Color);
 

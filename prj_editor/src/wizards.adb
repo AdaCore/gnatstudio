@@ -45,16 +45,13 @@ with Gtk.Pixmap;         use Gtk.Pixmap;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Pango.Font;         use Pango.Font;
 
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+
 package body Wizards is
 
    Min_Toc_Width : constant Gint := 100;
    --  Minimal width, in pixels, for the TOC area, when it is displayed.
-
-   Highlight_Color : constant String := "yellow";
-   --  <preference> Color to use to highlight strings in the TOC.
-
-   Wizard_Title_Font : constant String := "helvetica bold oblique 14";
-   --  <preference> Font to use for the title of the pages in the wizard
 
    procedure Free is new Unchecked_Deallocation
      (Widget_Array, Widget_Array_Access);
@@ -84,10 +81,14 @@ package body Wizards is
    -------------
 
    procedure Gtk_New
-     (Wiz : out Wizard; Title : String; Bg : String; Num_Pages : Positive) is
+     (Wiz : out Wizard;
+      Kernel : access Kernel_Handle_Record'Class;
+      Title : String;
+      Bg : String;
+      Num_Pages : Positive) is
    begin
       Wiz := new Wizard_Record;
-      Wizards.Initialize (Wiz, Title, Bg, Num_Pages);
+      Wizards.Initialize (Wiz, Kernel, Title, Bg, Num_Pages);
    end Gtk_New;
 
    ----------------
@@ -96,6 +97,7 @@ package body Wizards is
 
    procedure Initialize
      (Wiz : access Wizard_Record'Class;
+      Kernel : access Kernel_Handle_Record'Class;
       Title : String;
       Bg : String;
       Num_Pages : Positive)
@@ -137,10 +139,9 @@ package body Wizards is
       Set_Foreground
         (Wiz.Normal_Style, State_Normal, White (Get_Default_Colormap));
 
-      Color := Parse (Highlight_Color);
-      Alloc (Get_Default_Colormap, Color);
       Wiz.Highlight_Style := Copy (Get_Style (Wiz));
-      Set_Foreground (Wiz.Highlight_Style, State_Normal, Color);
+      Set_Foreground (Wiz.Highlight_Style, State_Normal,
+                      Get_Pref (Kernel, Wizard_Toc_Highlight_Color));
 
       Color := Parse (Bg);
       Alloc (Get_Default_Colormap, Color);
@@ -149,7 +150,7 @@ package body Wizards is
       Set_Style (Wiz.Eventbox1, Style);
       Set_Style (Wiz.Title_Box, Style);
 
-      Desc := From_String (Wizard_Title_Font);
+      Desc := From_String (Get_Pref (Kernel, Wizard_Title_Font));
       Set_Font_Description (Style, Desc);
       Set_Style (Wiz.Title, Style);
 
