@@ -51,11 +51,11 @@ package body Language_Handlers.GVD is
      (Handler : access GVD_Language_Handler_Record'Class;
       Language_Name : String) return Natural is
    begin
-     if Handler.Languages /= null then
-        for Index in Handler.Languages'Range loop
-           if Handler.Languages (Index).Language_Name.all = Language_Name then
-              return Index;
-           end if;
+      if Handler.Languages /= null then
+         for Index in Handler.Languages'Range loop
+            if Handler.Languages (Index).Language_Name.all = Language_Name then
+               return Index;
+            end if;
          end loop;
       end if;
 
@@ -79,14 +79,14 @@ package body Language_Handlers.GVD is
      (Handler : access GVD_Language_Handler_Record;
       Source_Filename : String) return Language.Language_Access is
    begin
-     if Handler.Languages /= null then
-        for Index in Handler.Languages'Range loop
-           if Handler.Languages (Index).Pattern /= null
-             and then Match
-             (Handler.Languages (Index).Pattern.all, Source_Filename)
-           then
-              return Handler.Languages (Index).Lang;
-           end if;
+      if Handler.Languages /= null then
+         for Index in Handler.Languages'Range loop
+            if Handler.Languages (Index).Pattern /= null
+              and then Match
+              (Handler.Languages (Index).Pattern.all, Source_Filename)
+            then
+               return Handler.Languages (Index).Lang;
+            end if;
          end loop;
       end if;
 
@@ -101,14 +101,14 @@ package body Language_Handlers.GVD is
      (Handler : access GVD_Language_Handler_Record;
       Source_Filename : String) return String is
    begin
-     if Handler.Languages /= null then
-        for Index in Handler.Languages'Range loop
-           if Handler.Languages (Index).Pattern /= null
-             and then Match
-             (Handler.Languages (Index).Pattern.all, Source_Filename)
-           then
-              return Handler.Languages (Index).Language_Name.all;
-           end if;
+      if Handler.Languages /= null then
+         for Index in Handler.Languages'Range loop
+            if Handler.Languages (Index).Pattern /= null
+              and then Match
+              (Handler.Languages (Index).Pattern.all, Source_Filename)
+            then
+               return Handler.Languages (Index).Language_Name.all;
+            end if;
          end loop;
       end if;
 
@@ -267,7 +267,7 @@ package body Language_Handlers.GVD is
    procedure Reset_File_Extensions
      (Handler : access GVD_Language_Handler_Record) is
    begin
-     if Handler.Languages /= null then
+      if Handler.Languages /= null then
          for J in Handler.Languages'Range loop
             Free (Handler.Languages (J).Pattern);
          end loop;
