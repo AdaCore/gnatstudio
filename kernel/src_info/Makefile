@@ -17,7 +17,7 @@ distrib:
 	@-mkdir -p gvd gnat > /dev/null 2>&1
 	$(CP) ../../common/src/sdefault.adb common
 	$(CP) ../../common/src/file_utils.ad? common
-	$(CP) ../../common/src/a-file_utils.c common
+	$(CP) ../../common/src/file-utils.c common
 	$(CP) ../../gvd/common/htables.ad? common
 	$(CP) ../../gvd/common/string_hash.ad? common
 	$(CP) ../../gvd/common/traces.ad? common
