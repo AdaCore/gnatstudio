@@ -332,7 +332,14 @@ appear.
 In the cases that require an Emacs server, GPS will try several
 solutions if no already running server was found. It will first try to
 spawn the glide environment distributed with GNAT. If not found in the
-PATH, it will then start a standard Emacs.
+PATH, it will then start a standard Emacs. The project file currently used
+in GPS will be set appropriately the first time Emacs is spawned. This means
+that if you load a new project in GPS, or modify the paths of the current
+project, you should kill any running Emacs, so that a new one is spawned
+by GPS with the appropriate project.
+
+Of course, you can alternatively reload explicitely the project from
+Emacs itself by using the menu @code{Project->Load}
 
 
 In the preferences, there are two settings that allow you to select
