@@ -50,7 +50,12 @@ project GPS is
    package Compiler renames Shared.Compiler;
 
    package Binder is
-      for Default_Switches ("Ada") use ("-E");
+      case Shared.OS is
+         when "Windows_NT" =>
+
+         when "unix" =>
+            for Default_Switches ("Ada") use ("-E");
+      end case;
    end Binder;
 
    package Linker is
