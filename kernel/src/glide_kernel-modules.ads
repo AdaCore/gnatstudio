@@ -145,7 +145,8 @@ package Glide_Kernel.Modules is
    --  The mouse event occured in Event_Widget, and the contextual menu was
    --  registered for Object
    --  The object should also add its default entries into the menu, so that
-   --  they always appear first in the menu.
+   --  they always appear first in the menu. Note that the module will not be
+   --  asked in the second step whether new entries should be added.
    --
    --  If null is returned, no contextual menu will be displayed.
    --
