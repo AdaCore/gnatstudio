@@ -1136,24 +1136,25 @@ package body Odd.Source_Editors is
    -- Draw_Tooltip --
    ------------------
 
-   procedure Draw_Tooltip (Widget : access Gtk_Text_Record'Class;
-                           Data : in Editor_Tooltip_Data;
-                           Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
-                           Width, Height : out Glib.Gint)
+   procedure Draw_Tooltip
+     (Widget        : access Gtk_Text_Record'Class;
+      Data          : in Editor_Tooltip_Data;
+      Pixmap        : out Gdk.Pixmap.Gdk_Pixmap;
+      Width, Height : out Glib.Gint)
    is
       use type Items.Generic_Type_Access;
       Entity        : Items.Generic_Type_Access;
       Value_Found   : Boolean;
 
-      Debugger : Debugger_Process_Tab :=
+      Debugger : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Box.Process);
 
       Context : Items.Drawing_Context;
-      Mask : Gdk.Types.Gdk_Modifier_Type;
-      Win : Gdk_Window;
-      X, Y : Gint;
-   begin
+      Mask    : Gdk.Types.Gdk_Modifier_Type;
+      Win     : Gdk_Window;
+      X, Y    : Gint;
 
+   begin
       Width := 0;
       Height := 0;
 
@@ -1164,6 +1165,7 @@ package body Odd.Source_Editors is
       end if;
 
       Get_Pointer (Get_Window (Data.Box), X, Y, Mask, Win);
+
       declare
          Variable_Name : constant String :=
            Get_Entity (Data.Box,
@@ -1193,10 +1195,7 @@ package body Odd.Source_Editors is
 
          Propagate_Width (Entity.all, Width - 4);
 
-         if Width /= 0
-           and then Height /= 0
-         then
-
+         if Width /= 0 and then Height /= 0 then
             Gdk.Pixmap.Gdk_New
               (Pixmap,
                Get_Window (Debugger.Window),
