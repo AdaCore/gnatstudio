@@ -70,7 +70,7 @@ package GVD.Code_Editors is
    --  Internal procedure.
 
    procedure Apply_Mode
-     (Editor : access Code_Editor_Record; Mode : View_Mode); 
+     (Editor : access Code_Editor_Record; Mode : View_Mode);
    --  Apply mode changes to the editor.
 
    procedure Load_File
