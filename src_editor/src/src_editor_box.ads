@@ -103,6 +103,10 @@ package Src_Editor_Box is
       return Src_Editor_Buffer.Source_Buffer;
    --  Return the source buffer associated with the box
 
+   function Get_Writable
+     (Editor : access Source_Editor_Box_Record) return Boolean;
+   --  Return whether the Editor is writable.
+
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
