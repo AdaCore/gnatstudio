@@ -30,12 +30,13 @@ project GPS is
    for Object_Dir use "obj";
 
    package Builder is
-      for Default_Switches ("Ada") use ("-m", "-a", "-g");
       case Shared.Build is
          when "Debug" =>
+           for Default_Switches ("Ada") use ("-m", "-a", "-g");
            for Global_Configuration_Pragmas use "gnat_debug.adc";
 
          when "Production" =>
+           for Default_Switches ("Ada") use ("-a", "-g");
            for Global_Configuration_Pragmas use "gnat.adc";
       end case;
    end Builder;
