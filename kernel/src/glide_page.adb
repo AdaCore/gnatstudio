@@ -38,14 +38,16 @@ package body Glide_Page is
      (Page   : access Glide_Page_Record'Class;
       Window : access Glide_Window_Record'Class)
    is
-      Child : MDI_Child;
-      Box   : Gtk_Box;
+      Child    : MDI_Child;
+      Box      : Gtk_Box;
       Scrolled : Gtk_Scrolled_Window;
+
    begin
       GVD.Process.Initialize (Page, Window);
 
       Gtk_New (Page.Console_Sw);
       Set_Policy (Page.Console_Sw, Policy_Never, Policy_Always);
+      Set_USize (Page.Console_Sw, -1, 100);
       Child := Put (Page.Process_Mdi, Page.Console_Sw);
       Set_Title (Child, "Glide Console");
       Set_Dock_Side (Child, Bottom);
@@ -58,6 +60,7 @@ package body Glide_Page is
       Pack_Start (Box, Page.Scenario, Fill => True, Expand => False);
 
       Gtk_New (Scrolled);
+      Set_USize (Scrolled, 200, -1);
       Pack_Start (Box, Scrolled, Fill => True, Expand => True);
       Gtk_New (Page.Explorer, Window.Kernel);
       Add (Scrolled, Page.Explorer);
