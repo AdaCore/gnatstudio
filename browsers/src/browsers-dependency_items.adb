@@ -552,8 +552,8 @@ package body Browsers.Dependency_Items is
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
          if Has_File_Information (File_Context) then
-            Gtk_New (Item, Label => File_Information (File_Context)
-                     & (-" depends on"));
+            Gtk_New (Item, Label => (-"Examine dependencies for ") &
+                     File_Information (File_Context));
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
