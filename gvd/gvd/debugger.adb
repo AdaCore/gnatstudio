@@ -883,4 +883,40 @@ package body Debugger is
       end loop;
    end Clear_Queue;
 
+   use GVD.Proc_Utils;
+
+   --------------------
+   -- Open_Processes --
+   --------------------
+
+   procedure Open_Processes (Debugger : access Debugger_Root) is
+   begin
+      if Debugger.Remote_Host = null then
+         Open_Processes (Debugger.Handle);
+      else
+         Open_Processes (Debugger.Handle, Debugger.Remote_Host.all);
+      end if;
+   end Open_Processes;
+
+   ------------------
+   -- Next_Process --
+   ------------------
+
+   procedure Next_Process
+     (Debugger : access Debugger_Root;
+      Info     : out GVD.Proc_Utils.Process_Info;
+      Success  : out Boolean) is
+   begin
+      Next_Process (Debugger.Handle, Info, Success);
+   end Next_Process;
+
+   ---------------------
+   -- Close_Processes --
+   ---------------------
+
+   procedure Close_Processes (Debugger : access Debugger_Root) is
+   begin
+      Close_Processes (Debugger.Handle);
+   end Close_Processes;
+
 end Debugger;

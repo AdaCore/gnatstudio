@@ -26,6 +26,7 @@ with Process_Proxies;
 with GNAT.Regpat;
 with Gtk.Window;
 with GVD.Types;
+with GVD.Proc_Utils;
 
 package Debugger is
 
@@ -787,9 +788,9 @@ package Debugger is
      (Debugger : access Debugger_Root) return Endian_Type is abstract;
    --  Get the endianness of the target.
 
-   ------------------------------
-   -- Miscellaneous operations --
-   ------------------------------
+   -----------------------------
+   -- Command Line operations --
+   -----------------------------
 
    function Complete
      (Debugger   : access Debugger_Root;
@@ -798,6 +799,27 @@ package Debugger is
    --  Beginning.
    --  Note that the caller is responsible for freeing the memory allocated
    --  in the returned String_Array.
+
+   ------------------------
+   -- Process operations --
+   ------------------------
+
+   procedure Open_Processes (Debugger : access Debugger_Root);
+   --  Initialize a connection to the host and target associated with
+   --  Debugger in order to retrieve process information.
+
+   procedure Next_Process
+     (Debugger : access Debugger_Root;
+      Info     : out GVD.Proc_Utils.Process_Info;
+      Success  : out Boolean);
+   --  Return information concerning the next process.
+   --  Success is set to True if there is a remaining process, false otherwise.
+
+   procedure Close_Processes (Debugger : access Debugger_Root);
+   --  Close the connection established by Open_Processes.
+   --  Note that this function must be called before calling Open_Processes
+   --  again. In particular it ensures that all the memory associated with
+   --  the current connection is freed.
 
 private
 
@@ -827,5 +849,12 @@ private
       --  True when a user command is being handled by the debugger.
       --  ??? Would be nice to merge Process_Proxy.Command_In_Process and
       --  Main_Debug_Window.Locked with this field
+
+      Remote_Host     : GNAT.OS_Lib.String_Access;
+      Remote_Target   : GNAT.OS_Lib.String_Access;
+      Remote_Protocol : GNAT.OS_Lib.String_Access;
+
+      Handle : GVD.Proc_Utils.Process_Handle;
+      --  Handle used to implement Open/Next/Close_Process.
    end record;
 end Debugger;
