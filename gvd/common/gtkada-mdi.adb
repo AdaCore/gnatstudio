@@ -40,8 +40,8 @@ with Gdk.Main;         use Gdk.Main;
 with Gdk.Pixmap;
 with Gdk.Rectangle;    use Gdk.Rectangle;
 with Gdk.Types;        use Gdk.Types;
-with Gdk.Visual;
 with Gdk.Window;       use Gdk.Window;
+with Gdk.Window_Attr;  use Gdk.Window_Attr;
 with Gtk.Accel_Label;  use Gtk.Accel_Label;
 with Gtk.Arguments;    use Gtk.Arguments;
 with Gtk.Box;          use Gtk.Box;
@@ -104,7 +104,7 @@ package body Gtkada.MDI is
    --  <preference> True if the contents of windows should be displayed while
    --  they are moved.
 
-   Handle_Size : constant Gint := 10;
+   Handle_Size : constant Gint := 8;
    --  <preference> The default width or height of the handles.
 
    Do_Grabs : constant Boolean := True;
@@ -119,6 +119,11 @@ package body Gtkada.MDI is
    --  Extra tolerance when the user selects a corner for resizing (if the
    --  pointer is within Corner_Size in both coordinates, then we are clicking
    --  on the corner)
+
+   MDI_Class_Record        : Gtk.Object.GObject_Class :=
+     Gtk.Object.Uninitialized_Class;
+   MDI_Layout_Class_Record : Gtk.Object.GObject_Class :=
+     Gtk.Object.Uninitialized_Class;
 
    Close_Xpm : constant Interfaces.C.Strings.chars_ptr_array :=
      (New_String ("13 11 3 1"),
@@ -250,7 +255,14 @@ package body Gtkada.MDI is
    procedure Menu_Destroyed (MDI : access Gtk_Widget_Record'Class);
    --  Called when the Menu associated with a MDI is destroyed.
 
-   procedure Size_Allocate_MDI (MDI : access Gtk_Widget_Record'Class);
+   procedure Size_Allocate_MDI_Layout
+     (Layout : System.Address; Alloc : Gtk_Allocation);
+   pragma Convention (C, Size_Allocate_MDI_Layout);
+   --  Handles size allocations for the layout contained in the MDI.
+
+   procedure Size_Allocate_MDI
+     (MDI : System.Address; MDI_Alloc : Gtk_Allocation);
+   pragma Convention (C, Size_Allocate_MDI);
    --  MDI was resized, need to resize the docks as well.
 
    procedure Iconify_Child (Child : access Gtk_Widget_Record'Class);
@@ -335,9 +347,22 @@ package body Gtkada.MDI is
    ----------------
 
    procedure Initialize (MDI : access MDI_Window_Record'Class) is
+      No_Signals : chars_ptr_array (1 .. 0) := (others => Null_Ptr);
    begin
       Gtk.Fixed.Initialize (MDI);
+      Gtk.Object.Initialize_Class_Record
+        (MDI,
+         Signals      => No_Signals,
+         Class_Record => MDI_Class_Record,
+         Type_Name    => "GtkAdaMDI");
+
       Gtk_New (MDI.Layout);
+      Gtk.Object.Initialize_Class_Record
+        (MDI.Layout,
+         Signals      => No_Signals,
+         Class_Record => MDI_Layout_Class_Record,
+         Type_Name    => "GtkAdaMDI_Layout");
+
       Put (MDI, MDI.Layout, 0, 0);
 
       Widget_Callback.Connect
@@ -347,9 +372,14 @@ package body Gtkada.MDI is
          Widget_Callback.To_Marshaller (Realize_MDI_Layout'Access), MDI);
       Widget_Callback.Connect
         (MDI, "destroy", Widget_Callback.To_Marshaller (Destroy_MDI'Access));
-      Widget_Callback.Connect
-        (MDI, "size_allocate",
-         Widget_Callback.To_Marshaller (Size_Allocate_MDI'Access));
+
+      Set_Default_Size_Allocate_Handler
+        (MDI_Class_Record, Size_Allocate_MDI'Access);
+      Set_Default_Size_Allocate_Handler
+        (MDI_Layout_Class_Record, Size_Allocate_MDI_Layout'Access);
+      --  Widget_Callback.Connect
+      --    (MDI, "size_allocate",
+      --     Widget_Callback.To_Marshaller (Size_Allocate_MDI'Access));
       Return_Callback.Connect
         (MDI, "button_press_event",
          Return_Callback.To_Marshaller (Button_Pressed_MDI'Access));
@@ -378,42 +408,7 @@ package body Gtkada.MDI is
    -----------------
 
    procedure Realize_MDI (MDI : access Gtk_Widget_Record'Class) is
-      use Widget_List;
-
-      type Gdk_Window_Class is (Gdk_Input_Output, Gdk_Input_Only);
-      pragma Warnings (Off, Gdk_Input_Only);
-
-      for Gdk_Window_Class'Size use Gint'Size;
-
-      type Window_Attribute is record
-         Title         : Interfaces.C.Strings.chars_ptr;
-         Event_Mask    : Gdk.Event.Gdk_Event_Mask;
-         X, Y          : Gint := 0;
-         Width, Height : Gint := 10;
-         Wclass        : Gdk_Window_Class := Gdk_Input_Output;
-         Visual        : Gdk.Visual.Gdk_Visual;
-         Colormap      : Gdk.Color.Gdk_Colormap;
-         Window_Type   : Gdk.Window.Gdk_Window_Type;
-         Cursor        : Gdk.Cursor.Gdk_Cursor;
-         Wmclass_Name  : Interfaces.C.Strings.chars_ptr;
-         Wmclass_Class : Interfaces.C.Strings.chars_ptr;
-         Override_Redirect : Gboolean;
-      end record;
-      pragma Pack (Window_Attribute);
-
-      function My_Gdk_New
-        (Parent          : Gdk.Gdk_Window;
-         Attributes      : access Window_Attribute;
-         Attributes_Mask : Gdk.Window.Gdk_Window_Attributes_Type)
-         return Gdk.Gdk_Window;
-      pragma Import (C, My_Gdk_New, "gdk_window_new");
-
-      procedure Set_User_Data
-        (Window : Gdk.Gdk_Window; Widget : System.Address);
-      pragma Import (C, Set_User_Data, "gdk_window_set_user_data");
-
-      Window_Attr : aliased Window_Attribute;
-
+      Window_Attr : Gdk.Gdk_Window_Attr;
       M         : MDI_Window := MDI_Window (MDI);
       Color     : Gdk_Color;
       Cursor    : Gdk_Cursor;
@@ -440,32 +435,34 @@ package body Gtkada.MDI is
       Set_Exposures (M.Xor_GC, False);
       Set_Subwindow (M.Xor_GC, Include_Inferiors);
 
-      Window_Attr.Window_Type := Gdk.Window.Window_Child;
-      Window_Attr.Wclass := Gdk_Input_Output;
+      Gdk_New (Cursor, Cross);
+      Gdk_New (Window_Attr,
+               Window_Type => Window_Child,
+               Wclass      => Input_Output,
+               Cursor      => Cursor,
+               Visual      => Get_Visual (MDI),
+               Colormap    => Get_Colormap (MDI),
+               Event_Mask  => Get_Events (MDI)
+               or Exposure_Mask
+               or Button_Press_Mask
+               or Button_Release_Mask
+               or Button_Motion_Mask);
 
       for J in Left .. Bottom loop
-         Gdk_New (Cursor, Cross);
-         Window_Attr.Cursor := Cursor;
-         Window_Attr.Visual := Get_Visual (MDI);
-         Window_Attr.Colormap := Get_Colormap (MDI);
-
-         Window_Attr.Event_Mask :=
-           Get_Events (MDI)
-           or Exposure_Mask
-           or Button_Press_Mask
-           or Button_Release_Mask
-           or Button_Motion_Mask;
-         M.Handles (J) := My_Gdk_New
-           (Parent => Get_Window (MDI),
-            Attributes => Window_Attr'Access,
-            Attributes_Mask => Wa_Cursor or Wa_Colormap or Wa_Visual);
-         Set_User_Data (M.Handles (J), Glib.Object.Get_Object (MDI));
-         Destroy (Cursor);
+         Gdk_New (M.Handles (J),
+                  Parent          => Get_Window (MDI),
+                  Attributes      => Window_Attr,
+                  Attributes_Mask => Wa_Cursor or Wa_Colormap or Wa_Visual);
+         Set_User_Data (M.Handles (J), MDI);
 
          if M.Docks (J) /= null then
             Gdk.Window.Show (M.Handles (J));
          end if;
       end loop;
+
+      --  Destroy the window attribute and the cursor
+      Destroy (Cursor);
+      Destroy (Window_Attr);
 
       --  Reposition all handles correctly (since this wasn't done when
       --  Size_Allocate was called prior to realizing the MDI).
@@ -517,18 +514,6 @@ package body Gtkada.MDI is
       Orientation : Gtk_Orientation;
       First, Last : Gint;
       X, Y, W, H, Depth : Gint;
-
-      procedure Paint_Handle
-        (Style               : Gtk_Style;
-         Window              : Gdk.Gdk_Window;
-         State_Type          : Gtk_State_Type;
-         Shadow_Type         : Gtk_Shadow_Type;
-         Area                : Gdk_Rectangle;
-         Widget              : access Gtk_Widget_Record'Class;
-         Detail              : String := "paned" & ASCII.Nul;
-         X, Y, Width, Height : Gint;
-         Orientation         : Gtk_Orientation);
-      pragma Import (C, Paint_Handle, "gtk_paint_handle");
 
    begin
       if Visible_Is_Set (M) and then Mapped_Is_Set (M) then
@@ -736,18 +721,48 @@ package body Gtkada.MDI is
       end if;
    end Reposition_Handles;
 
+   ------------------------------
+   -- Size_Allocate_MDI_Layout --
+   ------------------------------
+
+   procedure Size_Allocate_MDI_Layout
+     (Layout : System.Address; Alloc : Gtk_Allocation)
+   is
+      Stub : Gtk_Widget_Record;
+      L : Gtk_Widget := Gtk_Widget (Get_User_Data (Layout, Stub));
+   begin
+      --  First, register the new size of the MDI itself
+      Set_Allocation (L, Alloc);
+      if Realized_Is_Set (L) then
+         Move_Resize
+           (Get_Window (L), Alloc.X, Alloc.Y, Alloc.Width, Alloc.Height);
+      end if;
+   end Size_Allocate_MDI_Layout;
+
    -----------------------
    -- Size_Allocate_MDI --
    -----------------------
 
-   procedure Size_Allocate_MDI (MDI : access Gtk_Widget_Record'Class) is
+   procedure Size_Allocate_MDI
+     (MDI : System.Address; MDI_Alloc : Gtk_Allocation)
+   is
       use type Widget_List.Glist;
-      M : MDI_Window := MDI_Window (MDI);
+      Stub : MDI_Window_Record;
+      M : MDI_Window := MDI_Window (Get_User_Data (MDI, Stub));
       Alloc : Gtk_Allocation;
       Req   : Gtk_Requisition;
-      MDI_Width  : constant Gint := Gint (Get_Allocation_Width (MDI));
-      MDI_Height : constant Gint := Gint (Get_Allocation_Height (MDI));
+
    begin
+      --  First, register the new size of the MDI itself
+      Set_Allocation (M, MDI_Alloc);
+      if Realized_Is_Set (M) then
+         Move_Resize
+           (Get_Window (M),
+            MDI_Alloc.X, MDI_Alloc.Y, MDI_Alloc.Width, MDI_Alloc.Height);
+      end if;
+
+      --  Then resize all the handles and notebooks on the sides.
+
       for J in Left .. Bottom loop
          if M.Docks_Size (J) = -1
            and then M.Docks (J) /= null
@@ -776,7 +791,7 @@ package body Gtkada.MDI is
             Alloc.Y := 0;
          end if;
 
-         Alloc.Height := MDI_Height - Alloc.Y;
+         Alloc.Height := MDI_Alloc.Height - Alloc.Y;
          if M.Priorities (Bottom) < M.Priorities (Left) then
             Alloc.Height := Alloc.Height - M.Docks_Size (Bottom);
          end if;
@@ -788,7 +803,7 @@ package body Gtkada.MDI is
 
       if M.Docks (Right) /= null then
          Alloc.Width := M.Docks_Size (Right);
-         Alloc.X := MDI_Width - Alloc.Width;
+         Alloc.X := MDI_Alloc.Width - Alloc.Width;
 
          if M.Priorities (Top) < M.Priorities (Right) then
             Alloc.Y := M.Docks_Size (Top);
@@ -796,7 +811,7 @@ package body Gtkada.MDI is
             Alloc.Y := 0;
          end if;
 
-         Alloc.Height := MDI_Height - Alloc.Y;
+         Alloc.Height := MDI_Alloc.Height - Alloc.Y;
          if M.Priorities (Bottom) < M.Priorities (Right) then
             Alloc.Height := Alloc.Height - M.Docks_Size (Bottom);
          end if;
@@ -816,7 +831,7 @@ package body Gtkada.MDI is
             Alloc.X := 0;
          end if;
 
-         Alloc.Width := MDI_Width - Alloc.X;
+         Alloc.Width := MDI_Alloc.Width - Alloc.X;
          if M.Priorities (Right) < M.Priorities (Top) then
             Alloc.Width := Alloc.Width - M.Docks_Size (Right);
          end if;
@@ -828,7 +843,7 @@ package body Gtkada.MDI is
 
       if M.Docks (Bottom) /= null then
          Alloc.Height := M.Docks_Size (Bottom);
-         Alloc.Y := MDI_Height - Alloc.Height;
+         Alloc.Y := MDI_Alloc.Height - Alloc.Height;
 
          if M.Priorities (Left) < M.Priorities (Bottom) then
             Alloc.X := M.Docks_Size (Left);
@@ -836,7 +851,7 @@ package body Gtkada.MDI is
             Alloc.X := 0;
          end if;
 
-         Alloc.Width := MDI_Width - Alloc.X;
+         Alloc.Width := MDI_Alloc.Width - Alloc.X;
          if M.Priorities (Right) < M.Priorities (Bottom) then
             Alloc.Width := Alloc.Width - M.Docks_Size (Right);
          end if;
@@ -857,12 +872,12 @@ package body Gtkada.MDI is
          Alloc.Y := 0;
       end if;
 
-      Alloc.Width := MDI_Width - Alloc.X;
+      Alloc.Width := MDI_Alloc.Width - Alloc.X;
       if M.Docks (Right) /= null then
          Alloc.Width := Alloc.Width - Handle_Size - M.Docks_Size (Right);
       end if;
 
-      Alloc.Height := MDI_Height - Alloc.Y;
+      Alloc.Height := MDI_Alloc.Height - Alloc.Y;
       if M.Docks (Bottom) /= null then
          Alloc.Height := Alloc.Height - Handle_Size - M.Docks_Size (Bottom);
       end if;
@@ -1729,6 +1744,7 @@ package body Gtkada.MDI is
       --  If all items are maximized, add Child to the notebook
       if MDI.Docks (None) /= null then
          Put_In_Notebook (MDI, None, C);
+         Hide (C.Maximize_Button);
       else
          Put (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
       end if;
@@ -2329,15 +2345,10 @@ package body Gtkada.MDI is
 
    procedure Dock_Child
      (Child : access MDI_Child_Record'Class;
-      Dock  : Boolean := True;
-      Side  : Dock_Side := None)
+      Dock  : Boolean := True)
    is
       MDI : MDI_Window := Child.MDI;
    begin
-      if Side /= None then
-         Child.Dock := Side;
-      end if;
-
       if Dock and then Child.Dock /= None then
          Float_Child (Child, False);
          Minimize_Child (Child, False);
@@ -2607,10 +2618,7 @@ package body Gtkada.MDI is
       end if;
 
       if C /= null then
-         Dock_Child
-           (C,
-            C.State /= Docked
-            and then (C.State /= Normal or else C.MDI.Docks (None) = null));
+         Dock_Child (C, C.State /= Docked);
       end if;
    end Dock_Cb;
 

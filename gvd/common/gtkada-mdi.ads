@@ -227,15 +227,9 @@ package Gtkada.MDI is
 
    procedure Dock_Child
      (Child : access MDI_Child_Record'Class;
-      Dock : Boolean := True;
-      Side : Dock_Side := None);
+      Dock : Boolean := True);
    --  Change the docking start of a child.
    --  If the child was floating, it is first put back in the MDI.
-   --  Side is the place where the item should be docked. If Side is None (its
-   --  default value), then the location depends on the default value you
-   --  defined with Set_Dock_Side).
-   --  Note that if Side, or the default value set for the child, is None,
-   --  then nothing is done.
 
    procedure Set_Dock_Side
      (Child : access MDI_Child_Record'Class; Side  : Dock_Side);
@@ -367,6 +361,9 @@ private
          --  The size (height or width, depending on the location) of each of
          --  the docks. The size of the middle dock depends on the size of all
          --  the others.
+         --  If the value is 0, this means there is no dock on that size.
+         --  If the value is -1, this means that the value should be
+         --  recomputed based on the size requested by the dock itself.
 
          Handles : Window_Array;
          --  The four handles that can be manipulated by the user to resize
