@@ -72,9 +72,10 @@ package body Codefix is
             Buffer : String (1 .. Current_Size);
          begin
             Get_Line (File, Buffer, Len);
-            Free (This);
-            This := new String'(Buffer (1 .. Len));
-            if Len < Current_Size then return; end if;
+            Assign (This,  String'(Buffer (1 .. Len)));
+            if Len < Current_Size then
+               return;
+            end if;
          end;
          Current_Size := Current_Size * 2;
       end loop;
