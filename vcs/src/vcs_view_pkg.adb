@@ -1143,8 +1143,7 @@ package body VCS_View_Pkg is
 
    procedure Get_Status
      (Explorer : VCS_View_Access;
-      Files    : List)
-   is
+      Files    : List) is
    begin
       if Explorer.Kernel = null then
          Push_Message (Explorer,
@@ -1192,8 +1191,7 @@ package body VCS_View_Pkg is
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
       Files    : List;
-      Ref      : VCS_Access)
-   is
+      Ref      : VCS_Access) is
    begin
       Push_Message (Explorer, Kernel, Verbose, -"Updating files:");
       Display_String_List (Explorer, Kernel, Files, Verbose);
@@ -1201,6 +1199,7 @@ package body VCS_View_Pkg is
       Push_Message (Explorer, Kernel, Verbose, -"... done." & ASCII.LF);
 
       --  If the dialog exists, then update the status for the files.
+
       if Explorer /= null then
          Get_Status (Explorer, Files);
       end if;
@@ -1223,10 +1222,7 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Update_File_List (Explorer,
-                        Explorer.Kernel,
-                        L,
-                        Explorer.VCS_Ref);
+      Update_File_List (Explorer, Explorer.Kernel, L, Explorer.VCS_Ref);
       Free (L);
    end On_Update_Button_Clicked;
 
@@ -1238,8 +1234,7 @@ package body VCS_View_Pkg is
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
       Files    : List;
-      Ref      : VCS_Access)
-   is
+      Ref      : VCS_Access) is
    begin
       Open (Ref, Files);
 
@@ -1301,8 +1296,7 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Push_Message (Explorer, Kernel, Verbose,
-                    -"Committing files :");
+      Push_Message (Explorer, Kernel, Verbose, -"Committing files:");
       Display_String_List (Explorer, Kernel, Files_List);
 
       if Explorer /= null
@@ -1352,8 +1346,9 @@ package body VCS_View_Pkg is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Explorer   : constant VCS_View_Access := VCS_View_Access (Object);
-      L          : List := Get_Selected_Files (Explorer);
+      Explorer : constant VCS_View_Access := VCS_View_Access (Object);
+      L        : List := Get_Selected_Files (Explorer);
+
    begin
       if Explorer.Current_Directory = null then
          return;
@@ -1460,11 +1455,10 @@ package body VCS_View_Pkg is
    -- Get_Ref_From_Directory --
    ----------------------------
 
-   function Get_Ref_From_Directory (Dir : in String) return VCS_Access
-   is
+   function Get_Ref_From_Directory (Dir : in String) return VCS_Access is
    begin
       --  ??? right now, we assume only CVS is implemented.
-      --  ??? we need functions in VCS.XXX to validate that a
+      --  we need functions in VCS.XXX to validate that a
       --  given entry is acceptable for a given directory.
 
       return new VCS.CVS.CVS_Record;
@@ -1523,8 +1517,8 @@ package body VCS_View_Pkg is
    ---------------------
 
    procedure Edited_Callback
-     (Object      : access Gtk_Widget_Record'Class;
-      Params      : Glib.Values.GValues)
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
    is
       Explorer      : constant VCS_View_Access := VCS_View_Access (Object);
       Iter          : Gtk_Tree_Iter;
@@ -1621,9 +1615,9 @@ package body VCS_View_Pkg is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (VCS_View : out VCS_View_Access;
-                      Kernel   : Kernel_Handle := null)
-   is
+   procedure Gtk_New
+     (VCS_View : out VCS_View_Access;
+      Kernel   : Kernel_Handle := null) is
    begin
       Init_Graphics;
 
@@ -1651,10 +1645,6 @@ package body VCS_View_Pkg is
 
    begin
       Initialize_Hbox (VCS_View);
-      --       Gtk.Window.Initialize (VCS_View, Window_Toplevel);
-      --       Set_Default_Size (VCS_View, 600, 600);
-
-      --  Set_Policy (VCS_View, False, True, False);
 
       Gtk_New_Vbox (Vbox1, False, 0);
       Pack_Start (VCS_View, Vbox1);
@@ -1798,6 +1788,3 @@ package body VCS_View_Pkg is
    end Initialize;
 
 end VCS_View_Pkg;
-
---  ??? known problems, missing features, etc
---  when there is nothing in the tree, clicking raises storage_error
