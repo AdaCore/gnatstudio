@@ -230,7 +230,8 @@ then click on @code{Goto declaration of Next}: we're now in the package
 
 @noindent
 
-Select the menu @code{Navigate->Find...}: this will open a search dialog.
+Select the menu @code{Navigate->Find/Replace...}: this will open a search
+dialog.
 In the @code{Search for:} text entry type @file{tokens.ads}. Then
 select @code{Project explorer} in the @code{Look in:} area. The search
 area provides an easy way to search for text or regular expressions in
