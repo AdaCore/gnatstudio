@@ -41,8 +41,8 @@ package body OS_Utils is
       function Get_Install_Dir (S : String) return String;
       --  S is the executable name preceeded by the absolute or relative
       --  path, e.g. "c:\usr\bin\gcc.exe" or "..\bin\gcc". Returns the absolute
-      --  or relative directory where "bin" lies (in the example "C:\usr\"
-      --  or "..\"). If the executable is not a a "bin" directory halt the
+      --  or relative directory where "bin" lies (in the example "C:\usr"
+      --  or ".."). If the executable is not a a "bin" directory halt the
       --  program and issue an error.
 
       ---------------------
@@ -73,7 +73,7 @@ package body OS_Utils is
             return "";
          end if;
 
-         return Exec (Exec'First .. Path_Last - 3);
+         return Exec (Exec'First .. Path_Last - 4);
       end Get_Install_Dir;
 
    --  Beginning of Executable_Location
