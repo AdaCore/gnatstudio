@@ -1368,7 +1368,7 @@ package body Src_Info.CPP is
         (File         => File,
          Symbol_Name  => Type_Name,
          Location     => Type_Decl,
-         Kind         => Overloaded_Entity,
+         Kind         => Overloaded_Entity_Kind,
          Negate_Kind  => True);
 
       --  Before we add the reference we have to make sure there is no
@@ -1409,7 +1409,8 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       Sym        : FIL_Table;
-      Class_Kind : E_Kind := Record_Type;
+      Class_Kind : E_Kind :=
+        (Class, Is_Type => True, Is_Generic => False);
    begin
       if Source_Filename
          = CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
@@ -1448,7 +1449,7 @@ package body Src_Info.CPP is
             Location     => CL_Tab.Start_Position);
 
          if Is_Template (CL_Tab) then
-            Class_Kind := Generic_Class;
+            Class_Kind.Is_Generic := True;
          end if;
 
          if Decl_Info = null then
@@ -1484,20 +1485,15 @@ package body Src_Info.CPP is
       Attributes  : SN_Attributes) return E_Kind
    is
       Is_Template : constant Boolean := (Attributes and SN_TEMPLATE) /= 0;
+      Kind : E_Kinds;
    begin
       if Return_Type = "void" then
-         if Is_Template then
-            return Generic_Procedure;
-         else
-            return Non_Generic_Procedure;
-         end if;
+         Kind := Procedure_Kind;
       else
-         if Is_Template then
-            return Generic_Function_Or_Operator;
-         else
-            return Non_Generic_Function_Or_Operator;
-         end if;
+         Kind := Function_Or_Operator;
       end if;
+
+      return (Kind, Is_Type => False, Is_Generic => Is_Template);
    end Get_Function_Kind;
 
    ---------------------
@@ -1510,26 +1506,22 @@ package body Src_Info.CPP is
       Attributes  : SN_Attributes) return E_Kind
    is
       Is_Template : Boolean := (Attributes and SN_TEMPLATE) /= 0;
+      Kind : E_Kinds;
    begin
       Is_Template := Is_Template or else Type_Utils.Is_Template (Class_Def);
       if Return_Type = "void" then
-         if Is_Template then
-            return Generic_Procedure;
-         else
-            return Non_Generic_Procedure;
-         end if;
+         Kind := Procedure_Kind;
       else
-         if Is_Template then
-            return Generic_Function_Or_Operator;
-         else
-            return Non_Generic_Function_Or_Operator;
-         end if;
+         Kind := Function_Or_Operator;
       end if;
+
+      return (Kind, Is_Type => False, Is_Generic => Is_Template);
    end Get_Method_Kind;
 
    ---------------------
    -- Get_Method_Kind --
    ---------------------
+
    function Get_Method_Kind
      (Handler                 : access CPP_LI_Handler_Record'Class;
       Class_Name, Return_Type : String;
@@ -1908,7 +1900,8 @@ package body Src_Info.CPP is
       Class_Def  : CL_Table;
       Success    : Boolean;
       Decl_Info  : E_Declaration_Info_List;
-      Class_Kind : E_Kind := Record_Type;
+      Class_Kind : E_Kind :=
+        (Class, Is_Type => True, Is_Generic => False);
       Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 
@@ -1928,7 +1921,7 @@ package body Src_Info.CPP is
       end if;
 
       if Is_Template (Class_Def) then
-         Class_Kind := Generic_Class;
+         Class_Kind.Is_Generic := True;
       end if;
 
       if Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last) /=
@@ -2188,7 +2181,8 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Enum_Def.Buffer
               (Enum_Def.Name.First .. Enum_Def.Name.Last),
-            Kind        => Enumeration_Type,
+            Kind        =>
+              (Enumeration_Kind, Is_Type => True, Is_Generic => False),
             Location    => Enum_Def.Start_Position,
             Filename    => Enum_Def.Buffer
               (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
@@ -2205,7 +2199,8 @@ package body Src_Info.CPP is
                Referred_Filename  => Enum_Def.Buffer
                  (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
                Location           => Enum_Def.Start_Position,
-               Kind               => Enumeration_Type,
+               Kind               =>
+                 (Enumeration_Kind, Is_Type => True, Is_Generic => False),
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -2215,8 +2210,9 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Enum_Def.Buffer
               (Enum_Def.Name.First .. Enum_Def.Name.Last),
-            Kind        => Enumeration_Type,
-            Location    => Enum_Def.Start_Position);
+            Kind        =>
+              (Enumeration_Kind, Is_Type => True, Is_Generic => False),
+           Location    => Enum_Def.Start_Position);
 
          if Decl_Info = null then
             Insert_Declaration
@@ -2227,7 +2223,8 @@ package body Src_Info.CPP is
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
                Location           => Enum_Def.Start_Position,
-               Kind               => Enumeration_Type,
+               Kind               =>
+                 (Enumeration_Kind, Is_Type => True, Is_Generic => False),
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -2286,7 +2283,7 @@ package body Src_Info.CPP is
                  (Handler.DB_Dirs, Enum_Const.DBI),
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
-               Kind              => Enumeration_Literal,
+               Kind              => (Enumeration_Literal, False, False),
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
          end if;
@@ -2308,7 +2305,7 @@ package body Src_Info.CPP is
                List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
-               Kind              => Enumeration_Literal,
+               Kind              => (Enumeration_Literal, False, False),
                Scope             => Global_Scope,
                Referred_Filename => Enum_Const.Buffer
                  (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
@@ -2777,7 +2774,7 @@ package body Src_Info.CPP is
          Decl_Info := Find_Declaration
            (File        => File,
             Symbol_Name => Ref_Id,
-            Kind        => Overloaded_Entity);
+            Kind        => Overloaded_Entity_Kind);
 
          if Decl_Info = null then
             Decl_Info := new E_Declaration_Info_Node'
@@ -2785,7 +2782,7 @@ package body Src_Info.CPP is
                          References  => null),
                Next => File.LI.Body_Info.Declarations);
             Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
-            Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
+            Decl_Info.Value.Declaration.Kind := Overloaded_Entity_Kind;
             File.LI.Body_Info.Declarations := Decl_Info;
          end if;
       end if;
@@ -3186,7 +3183,7 @@ package body Src_Info.CPP is
                  (Handler.DB_Dirs, Macro.DBI),
                Symbol_Name        => Ref_Id,
                Location           => Macro.Start_Position,
-               Kind               => Unresolved_Entity,
+               Kind               => Unresolved_Entity_Kind,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -3209,7 +3206,7 @@ package body Src_Info.CPP is
                List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Macro.Start_Position,
-               Kind              => Unresolved_Entity,
+               Kind              => Unresolved_Entity_Kind,
                Scope             => Global_Scope,
                Referred_Filename => Macro.Buffer
                  (Macro.File_Name.First .. Macro.File_Name.Last),
@@ -3394,7 +3391,7 @@ package body Src_Info.CPP is
               (File        => File,
                Symbol_Name => Ref_Id,
                Class_Name  => Ref_Class,
-               Kind        => Overloaded_Entity,
+               Kind        => Overloaded_Entity_Kind,
                Location    => Class_Def.Start_Position);
 
             if Decl_Info = null then
@@ -3404,7 +3401,7 @@ package body Src_Info.CPP is
                      References => null),
                   Next => File.LI.Body_Info.Declarations);
                Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
-               Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
+               Decl_Info.Value.Declaration.Kind := Overloaded_Entity_Kind;
                Decl_Info.Value.Declaration.Location.Line :=
                   Class_Def.Start_Position.Line;
                Decl_Info.Value.Declaration.Location.File :=
@@ -3671,7 +3668,7 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Union_Def.Buffer
               (Union_Def.Name.First .. Union_Def.Name.Last),
-            Kind        => Record_Type,
+            Kind        => (Class, Is_Type => True, Is_Generic => False),
             Location    => Union_Def.Start_Position,
             Filename    => Union_Def.Buffer
               (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
@@ -3688,7 +3685,8 @@ package body Src_Info.CPP is
                Referred_Filename  => Union_Def.Buffer
                  (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
                Location           => Union_Def.Start_Position,
-               Kind               => Record_Type,
+               Kind               =>
+                 (Class, Is_Type => True, Is_Generic => False),
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -3698,7 +3696,8 @@ package body Src_Info.CPP is
            (File        => File,
             Symbol_Name => Union_Def.Buffer
               (Union_Def.Name.First .. Union_Def.Name.Last),
-            Kind        => Record_Type,
+            Kind        =>
+              (Class, Is_Type => True, Is_Generic => False),
             Location    => Union_Def.Start_Position);
 
          if Decl_Info = null then
@@ -3710,7 +3709,8 @@ package body Src_Info.CPP is
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
                Location           => Union_Def.Start_Position,
-               Kind               => Record_Type,
+               Kind               =>
+               (Class, Is_Type => True, Is_Generic => False),
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -3896,7 +3896,7 @@ package body Src_Info.CPP is
       if not Success then -- type not found
          --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global
          --  variables with unknown type?
-         Desc.Kind := Unresolved_Entity;
+         Desc.Kind := Unresolved_Entity_Kind;
       end if;
 
       if (Var.Attributes and SN_STATIC) = SN_STATIC then
@@ -4009,7 +4009,8 @@ package body Src_Info.CPP is
            (Handler.DB_Dirs, Sym.DBI),
          Symbol_Name       => E_Id,
          Location          => Sym.Start_Position,
-         Kind              => Enumeration_Type,
+         Kind              =>
+           (Enumeration_Kind, Is_Type => True, Is_Generic => False),
          Scope             => Global_Scope,
          Declaration_Info  => Decl_Info);
    end Sym_E_Handler;
@@ -4069,7 +4070,7 @@ package body Src_Info.CPP is
               (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
-            Kind              => Enumeration_Literal,
+            Kind              => (Enumeration_Literal, False, False),
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
             Scope             => Global_Scope,
@@ -4083,7 +4084,7 @@ package body Src_Info.CPP is
               (Handler.DB_Dirs, Sym.DBI),
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
-            Kind              => Enumeration_Literal,
+            Kind              => (Enumeration_Literal, False, False),
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       end if;
@@ -4446,9 +4447,7 @@ package body Src_Info.CPP is
             Body_Entity);
       end if;
 
-      if Target_Kind = Generic_Function_Or_Operator
-        or else Target_Kind = Generic_Procedure
-      then
+      if Target_Kind.Is_Generic then
          Process_Template_Arguments
            (Sym.Symbol,
             FU_Tab,
@@ -4571,7 +4570,7 @@ package body Src_Info.CPP is
       if not Success then -- type not found
          --  ?? Is ot OK to set E_Kind to Unresolved_Entity for global vars
          --  with unknown type?
-         Desc.Kind := Unresolved_Entity;
+         Desc.Kind := Unresolved_Entity_Kind;
       end if;
 
       if (Var.Attributes and SN_STATIC) = SN_STATIC then
@@ -4859,7 +4858,7 @@ package body Src_Info.CPP is
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location          => Sym.Start_Position,
-         Kind              => Unresolved_Entity,
+         Kind              => Unresolved_Entity_Kind,
          Scope             => Global_Scope,
          Declaration_Info  => tmp_ptr);
    end Sym_MA_Handler;
@@ -5353,7 +5352,7 @@ package body Src_Info.CPP is
                if not Success then -- type not found
                   --  Set kind to Unresolved_Entity for local variables
                   --  which have unknown type.
-                  Desc.Kind := Unresolved_Entity;
+                  Desc.Kind := Unresolved_Entity_Kind;
                end if;
 
                if (Var.Attributes and SN_STATIC) = SN_STATIC then
@@ -5644,7 +5643,7 @@ package body Src_Info.CPP is
                   Symbol_Name      =>
                      Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                   Location         => Arg.Start_Position,
-                  Kind             => Private_Type,
+                  Kind             => (Private_Type, False, False),
                   Scope            => Local_Scope,
                   Declaration_Info => Decl_Info);
 
@@ -5661,7 +5660,7 @@ package body Src_Info.CPP is
                   CL_Tab);
 
                if not Success then -- type not found
-                  Desc.Kind := Unresolved_Entity;
+                  Desc.Kind := Unresolved_Entity_Kind;
                end if;
 
                if Desc.Parent_Point = Invalid_Point then
