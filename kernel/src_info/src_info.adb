@@ -1,4 +1,34 @@
-with String_Utils; use String_Utils;
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
+with String_Utils;       use String_Utils;
+with Src_Info.ALI;       use Src_Info.ALI;
+with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Unchecked_Deallocation;
 
 package body Src_Info is
@@ -482,5 +512,129 @@ package body Src_Info is
       end if;
       return Result;
    end Copy;
+
+   ---------------------------
+   -- Get_Depends_From_Spec --
+   ---------------------------
+
+   function Get_Depends_From_Spec (Dep : Dependency_Info) return Boolean is
+   begin
+      return Dep.Depends_From_Spec;
+   end Get_Depends_From_Spec;
+
+   ---------------------------
+   -- Get_Depends_From_Body --
+   ---------------------------
+
+   function Get_Depends_From_Body (Dep : Dependency_Info) return Boolean is
+   begin
+      return Dep.Depends_From_Body;
+   end Get_Depends_From_Body;
+
+   -------------------
+   -- Get_Unit_Name --
+   -------------------
+
+   procedure Get_Unit_Name
+     (Source            : in out Source_File;
+      Source_Info_List  : in out LI_File_List;
+      Project           : Prj.Project_Id;
+      Extra_Source_Path : String;
+      Extra_Object_Path : String;
+      Unit_Name         : out String_Access)
+   is
+      Success : Boolean;
+      Unit    : LI_File_Ptr;
+
+   begin
+      --  the ALI file might not have been parsed yet, so we take care of that
+      --  now.
+
+      if Is_Incomplete (Source.LI) then
+         Parse_ALI_File
+           (Find_Object_File
+            (Project, Source.LI.LI_Filename.all, Extra_Object_Path),
+            Project, Extra_Source_Path,
+            Source_Info_List, Unit, Success);
+         if Success then
+            Source.LI := Unit;
+         end if;
+      end if;
+
+      Unit_Name := Get_File_Info (Source).Unit_Name;
+   end Get_Unit_Name;
+
+   ----------------------
+   -- File_Information --
+   ----------------------
+
+   function File_Information (Dep : Dependency_File_Info_List)
+      return Source_File is
+   begin
+      return Dep.Value.File;
+   end File_Information;
+
+   ----------------------------
+   -- Dependency_Information --
+   ----------------------------
+
+   function Dependency_Information (Dep : Dependency_File_Info_List)
+      return Dependency_Info is
+   begin
+      return Dep.Value.Dep_Info;
+   end Dependency_Information;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (Dep : Dependency_File_Info_List)
+      return Dependency_File_Info_List is
+   begin
+      if Dep = null then
+         return null;
+      else
+         return Dep.Next;
+      end if;
+   end Next;
+
+   ----------------------
+   -- Make_Source_File --
+   ----------------------
+
+   function Make_Source_File
+     (LI : LI_File_Ptr; Source_Filename : String) return Source_File
+   is
+      Current_Node : File_Info_Ptr_List;
+   begin
+      pragma Assert (not Is_Incomplete (LI));
+
+      if LI.Spec_Info /= null
+        and then LI.Spec_Info.Source_Filename.all = Source_Filename
+      then
+         return (LI        => LI,
+                 Unit_Name => null,
+                 Part      => Unit_Spec);
+
+      elsif LI.Body_Info /= null
+        and then LI.Body_Info.Source_Filename.all = Source_Filename
+      then
+         return (LI        => LI,
+                 Unit_Name => null,
+                 Part      => Unit_Body);
+
+      else
+         Current_Node := LI.Separate_Info;
+         while Current_Node /= null loop
+            if Current_Node.Value.Source_Filename.all = Source_Filename then
+               return (LI        => LI,
+                       Unit_Name => Current_Node.Value.Unit_Name,
+                       Part      => Unit_Separate);
+            end if;
+         end loop;
+      end if;
+
+      return No_Source_File;
+   end Make_Source_File;
 
 end Src_Info;
