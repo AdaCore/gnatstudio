@@ -1084,9 +1084,12 @@ package body Src_Editor_View is
          Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
          After => False);
 
-      Get_Geometry (Win, X, Y, W, H, D);
-      Clear_Area_E (Win, X, Y, W, H);
-      Clear_Text_Window (View);
+      if Win /= null then
+         Get_Geometry (Win, X, Y, W, H, D);
+         Clear_Area_E (Win, X, Y, W, H);
+         Clear_Text_Window (View);
+      end if;
+
       View.Connect_Expose_Registered := False;
 
       return False;
