@@ -1153,7 +1153,7 @@ package body VCS.Generic_VCS is
                Override_Cache => Command.Override_Cache,
                Force_Display  => True,
                Clear_Logs     => Command.Clear_Logs,
-               Display        => True);
+               Display        => Command.Override_Cache);
 
             return Success;
          end if;
