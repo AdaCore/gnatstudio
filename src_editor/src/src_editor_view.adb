@@ -395,8 +395,15 @@ package body Src_Editor_View is
          end if;
 
          Gtk_New (V.Left_Contextual_Menu);
-         Gtk_New (Item, "go to line");
+         Gtk_New (Item, "Go to line");
          Add (V.Left_Contextual_Menu, Item);
+         Gtk_New (Item, "Go to previous reference");
+         Add (V.Left_Contextual_Menu, Item);
+         Gtk_New (Item, "Go to file spec/body");
+         Add (V.Left_Contextual_Menu, Item);
+         Gtk_New (Item, "Go to parent unit");
+         Add (V.Left_Contextual_Menu, Item);
+
          return V.Left_Contextual_Menu;
 
       else
@@ -405,7 +412,17 @@ package body Src_Editor_View is
          end if;
 
          Gtk_New (V.Contextual_Menu);
-         Gtk_New (Item, "Go to body/declaration");
+         Gtk_New (Item, "Go to declaration/body");
+         Add (V.Contextual_Menu, Item);
+         Gtk_New (Item, "Go to previous reference");
+         Add (V.Contextual_Menu, Item);
+         Gtk_New (Item, "List references");
+         Add (V.Contextual_Menu, Item);
+         Gtk_New (Item);
+         Add (V.Contextual_Menu, Item);
+         Gtk_New (Item, "Go to file spec/body");
+         Add (V.Contextual_Menu, Item);
+         Gtk_New (Item, "Go to parent unit");
          Add (V.Contextual_Menu, Item);
          return V.Contextual_Menu;
       end if;
