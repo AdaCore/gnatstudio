@@ -190,24 +190,29 @@ procedure GVD_Main is
          Put_Line (Standard_Error,
                    (-"Please report with the contents of the file ") &
                    Dir.all & Directory_Separator & "log");
-         Put_Line (Standard_Error, -"and the following information:");
+         Put_Line (Standard_Error, -"the following information:");
          Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
          Put_Line (Standard_Error, Exception_Information (E));
+         Put_Line (Standard_Error,
+           -("and a description as complete as possible" &
+             "(including sources) to reproduce the bug"));
       end if;
 
       Button := Message_Dialog
         ((-"Please report with the contents of the file ") &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
-         (-"and the following information:") & ASCII.LF &
+         (-"the following information:") & ASCII.LF &
          (-"Version: ") & GVD.Version & ASCII.LF &
-         Format (Exception_Information (E), Columns => 80),
+         Format (Exception_Information (E), Columns => 80) & ASCII.LF &
+         (-("and a description as complete as possible" &
+           "(including sources) to reproduce the bug")),
          Error, Button_OK,
          Title => -"Bug detected in GVD",
          Justification => Justify_Left);
    end Bug_Dialog;
 
    procedure Help is
-     use ASCII;
+      use ASCII;
    begin
       if GVD.Can_Output then
          Put_Line ("GVD " & GVD.Version & ", the GNU Visual Debugger.");
@@ -233,7 +238,6 @@ procedure GVD_Main is
       else
          Button := Message_Dialog
            ("GVD " & GVD.Version & LF &
-            "This is a beta release of GVD, the GNU Visual Debugger." & LF &
             "Usage:" & LF &
             "   gvd [options...] executable-file" & LF &
             "Options:" & LF &
