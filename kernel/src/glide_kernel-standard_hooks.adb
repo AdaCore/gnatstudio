@@ -562,9 +562,7 @@ package body Glide_Kernel.Standard_Hooks is
    is
       Name   : constant String := Nth_Arg (Data, 1);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Args   : Context_Hooks_Args :=
-        (Hooks_Data with
-         Get_Data (Nth_Arg (Data, 2, Get_Context_Class (Kernel))));
+      Args   : Context_Hooks_Args := (Hooks_Data with Get_Data (Data, 2));
       pragma Unreferenced (Command);
    begin
       Run_Hook (Kernel, Name, Args);
@@ -592,10 +590,12 @@ package body Glide_Kernel.Standard_Hooks is
    is
       D : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
+      C : constant Class_Instance := Create_Context (Script, Data.Context);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Create_Context (Script, Data.Context));
+      Set_Nth_Arg (D, 2, C);
       Tmp := Execute_Command (Script, Command, D);
+      Free (C);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -622,10 +622,12 @@ package body Glide_Kernel.Standard_Hooks is
    is
       D : Callback_Data'Class := Create (Script, 2);
       Tmp : Boolean;
+      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 2, F);
       Tmp := Execute_Command (Script, Command, D);
+      Free (F);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -652,9 +654,10 @@ package body Glide_Kernel.Standard_Hooks is
    is
       D : Callback_Data'Class := Create (Script, 8);
       Tmp  : Boolean;
+      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 2, F);
       Set_Nth_Arg (D, 3, Data.Line);
       Set_Nth_Arg (D, 4, Data.Column);
       Set_Nth_Arg (D, 5, Data.Column_End);
@@ -663,6 +666,7 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 8, Data.Force_Reload);
 
       Tmp := Execute_Command (Script, Command, D);
+      Free (F);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -689,15 +693,17 @@ package body Glide_Kernel.Standard_Hooks is
    is
       D   : Callback_Data'Class := Create (Script, 6);
       Tmp : Boolean;
+      F   : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, Data.Identifier);
-      Set_Nth_Arg (D, 3, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 3, F);
       Set_Nth_Arg (D, 4, Data.Stick_To_Data);
       Set_Nth_Arg (D, 5, Data.Every_Line);
       Set_Nth_Arg (D, 6, Data.Normalize);
 
       Tmp := Execute_Command (Script, Command, D);
+      Free (F);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -724,16 +730,18 @@ package body Glide_Kernel.Standard_Hooks is
    is
       D : Callback_Data'Class := Create (Script, 7);
       Tmp : Boolean;
+      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, Data.Identifier);
       Set_Nth_Arg (D, 3, Data.Category);
-      Set_Nth_Arg (D, 4, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 4, F);
       Set_Nth_Arg (D, 5, Data.Line);
       Set_Nth_Arg (D, 6, Data.Column);
       Set_Nth_Arg (D, 7, Data.Message);
 
       Tmp := Execute_Command (Script, Command, D);
+      Free (F);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -760,13 +768,15 @@ package body Glide_Kernel.Standard_Hooks is
    is
       D : Callback_Data'Class := Create (Script, 4);
       Tmp : Boolean;
+      F : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Create_File (Script, Data.File));
+      Set_Nth_Arg (D, 2, F);
       Set_Nth_Arg (D, 3, Data.Enable_Navigation);
       Set_Nth_Arg (D, 4, Data.Anchor);
 
       Tmp := Execute_Command (Script, Command, D);
+      Free (F);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -793,13 +803,19 @@ package body Glide_Kernel.Standard_Hooks is
    is
       D : Callback_Data'Class := Create (Script, 4);
       Tmp : Boolean;
+      F1 : constant Class_Instance := Create_File (Script, Data.Orig_File);
+      F2 : constant Class_Instance := Create_File (Script, Data.New_File);
+      F3 : constant Class_Instance := Create_File (Script, Data.Diff_File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
-      Set_Nth_Arg (D, 2, Create_File (Script, Data.Orig_File));
-      Set_Nth_Arg (D, 3, Create_File (Script, Data.New_File));
-      Set_Nth_Arg (D, 4, Create_File (Script, Data.Diff_File));
+      Set_Nth_Arg (D, 2, F1);
+      Set_Nth_Arg (D, 3, F2);
+      Set_Nth_Arg (D, 4, F3);
 
       Tmp := Execute_Command (Script, Command, D);
+      Free (F1);
+      Free (F2);
+      Free (F3);
       Free (D);
       return Tmp;
    end Execute_Shell;
