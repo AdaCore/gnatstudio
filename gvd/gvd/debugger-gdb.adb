@@ -287,7 +287,8 @@ package body Debugger.Gdb is
    function Type_Of
      (Debugger : access Gdb_Debugger; Entity : String) return String
    is
-      S : String := Send (Debugger, "ptype " & Entity, Mode => Internal);
+      S : constant String :=
+        Strip_Control_M (Send (Debugger, "ptype " & Entity, Mode => Internal));
    begin
       if S'Length > 6
         and then S (S'First .. S'First + 5) = "type ="
@@ -335,7 +336,7 @@ package body Debugger.Gdb is
       Format   : Value_Format := Decimal) return String
    is
       S : constant String :=
-        Send (Debugger, "print " & Entity, Mode => Internal);
+        Strip_Control_M (Send (Debugger, "print " & Entity, Mode => Internal));
       Index : Natural := S'First;
    begin
       --  The value is valid only if it starts with '$'
@@ -1798,7 +1799,10 @@ package body Debugger.Gdb is
       Entity    : String;
       Default   : String) return String
    is
-      S : String := Send (Debugger, "whatis " & Entity, Mode => Internal);
+      S : constant String :=
+        Strip_Control_M
+          (Send (Debugger, "whatis " & Entity, Mode => Internal));
+
    begin
       if S'Length > 6
         and then S (S'First .. S'First + 5) = "type ="
