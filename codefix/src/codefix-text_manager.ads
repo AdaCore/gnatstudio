@@ -32,6 +32,9 @@ package Codefix.Text_Manager is
    type Step_Way is (Normal_Step, Reverse_Step);
    type Relative_Position is (Before, After, Specified);
 
+   function Is_Blank (Str : String) return Boolean;
+   --  Return true if Str is only composed by white characters.
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -513,6 +516,21 @@ package Codefix.Text_Manager is
       Size         : Natural);
    --  Add to the extract size lines after each beginning of paragraph
    --  recorded.
+
+   procedure Merge
+     (This                 : out Extract;
+      Extract_1, Extract_2 : Extract'Class;
+      Current_Text         : Text_Navigator_Abstr'Class;
+      Success              : out Boolean);
+   --  Merge Extract_1 and Extract_2 into This. If no solution can be found,
+   --  then success is false.
+
+   procedure Merge
+     (New_Str : out Dynamic_String;
+      Original_Str, Str_1, Str_2 : String;
+      Success : out Boolean);
+   --  Merge Str_1 and Str_2 into This. If no solution can be found,
+   --  then success is false.
 
 private
 
