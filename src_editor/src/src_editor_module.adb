@@ -586,6 +586,8 @@ package body Src_Editor_Module is
 
       if File_Exists or else Create_New then
          Gtk_New (Editor, Kernel_Handle (Kernel));
+      else
+         return null;
       end if;
 
       if File_Exists then
