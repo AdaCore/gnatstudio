@@ -1,5 +1,5 @@
 
 MAIN=gnatpp
-MODULES=gtkada gvd common
+MODULES=gnat gtkada gvd common
 
 include ../../Makefile.common
