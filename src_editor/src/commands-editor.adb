@@ -29,6 +29,36 @@ package body Commands.Editor is
 
    Me : constant Debug_Handle := Create ("Commands.Editor");
 
+   ------------
+   -- Create --
+   ------------
+
+   procedure Create
+     (Item         : out Check_Modified_State;
+      Box          : Source_Editor_Box;
+      Queue        : Command_Queue) is
+   begin
+      Item := new Check_Modified_State_Type;
+      Item.Box := Box;
+      Item.Check_Queue := Queue;
+   end Create;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Check_Modified_State_Type) return Boolean is
+   begin
+      if Get_Position (Command.Check_Queue)
+        = Get_Saved_Position (Command.Box)
+      then
+         Set_Modified_State (Command.Box, False);
+      end if;
+
+      return True;
+   end Execute;
+
    ----------
    -- Free --
    ----------
@@ -42,6 +72,12 @@ package body Commands.Editor is
    begin
       Free (X.Text_Before);
       Free (X.Text_After);
+   end Free;
+
+   procedure Free (X : in out Check_Modified_State_Type) is
+      pragma Unreferenced (X);
+   begin
+      null;
    end Free;
 
    ---------------------

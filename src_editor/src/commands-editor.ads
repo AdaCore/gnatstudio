@@ -22,6 +22,7 @@
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Src_Editor_Buffer; use Src_Editor_Buffer;
+with Src_Editor_Box;    use Src_Editor_Box;
 
 package Commands.Editor is
 
@@ -31,10 +32,24 @@ package Commands.Editor is
    type Editor_Replace_Slice_Type is new Root_Command with private;
    type Editor_Replace_Slice is access all Editor_Replace_Slice_Type;
 
+   type Check_Modified_State_Type is new Root_Command with private;
+   type Check_Modified_State is access all Check_Modified_State_Type;
+
    type Direction_Type is (Backward, Forward);
    --  Forward direction indicates a normal command (ie the text is
    --  inserted/deleted before the cursor), and Backward direction indicates
    --  that the text is inserted/deleted after the cursor.
+
+   procedure Create
+     (Item         : out Check_Modified_State;
+      Box          : Source_Editor_Box;
+      Queue        : Command_Queue);
+   --  Create a new Check_Modified_State command.
+
+   function Execute
+     (Command : access Check_Modified_State_Type) return Boolean;
+   --  Compare the states of the associated box and queues,
+   --  and change the label in the source editor if needed.
 
    procedure Create
      (Item         : out Editor_Replace_Slice;
@@ -88,9 +103,15 @@ package Commands.Editor is
 
    procedure Free (X : in out Editor_Command_Type);
    procedure Free (X : in out Editor_Replace_Slice_Type);
+   procedure Free (X : in out Check_Modified_State_Type);
    --  Free memory associated to X.
 
 private
+
+   type Check_Modified_State_Type is new Root_Command with record
+      Box         : Source_Editor_Box;
+      Check_Queue : Command_Queue;
+   end record;
 
    type Editor_Command_Type is new Root_Command with record
       Buffer                    : Source_Buffer;
