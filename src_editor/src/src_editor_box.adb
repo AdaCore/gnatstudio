@@ -170,6 +170,9 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean;
    --  Callback for the focus_out event.
 
+   function Key_Press (Box : access GObject_Record'Class) return Boolean;
+   --  Check whether the file has been modified on disk
+
    procedure Box_Scrolled
      (Adj : access Glib.Object.GObject_Record'Class;
       Box : Source_Editor_Box);
@@ -778,6 +781,9 @@ package body Src_Editor_Box is
       Object_Return_Callback.Object_Connect
         (Box.Source_View, "focus_out_event",
          Object_Return_Callback.To_Marshaller (Focus_Out'Access), Box, False);
+      Object_Return_Callback.Object_Connect
+        (Box.Source_View, "key_press_event",
+         Object_Return_Callback.To_Marshaller (Key_Press'Access), Box);
 
       --  The Contextual Menu handling
       Register_Contextual_Menu
@@ -808,6 +814,25 @@ package body Src_Editor_Box is
       Tmp := Place_Cursor_Onscreen (Box.Source_View);
    end Box_Scrolled;
 
+   ---------------
+   -- Key_Press --
+   ---------------
+
+   function Key_Press (Box : access GObject_Record'Class) return Boolean is
+      B         : constant Source_Editor_Box := Source_Editor_Box (Box);
+   begin
+      if B.Timestamp_Mode = Check_At_Modify then
+         if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
+            --  Do not propagate the key press event
+            return True;
+         end if;
+
+         B.Timestamp_Mode := Check_At_Focus;
+      end if;
+
+      return False;
+   end Key_Press;
+
    --------------
    -- Focus_In --
    --------------
@@ -816,18 +841,29 @@ package body Src_Editor_Box is
       B         : constant Source_Editor_Box := Source_Editor_Box (Box);
       Undo_Redo : Undo_Redo_Information;
    begin
-      if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
-         --  ??? Should move focus in some other widget, to prevent edition.
-         return False;
+      if B.Timestamp_Mode = Check_At_Focus then
+         B.Timestamp_Mode := Checking;
+         if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
+            --  We'll ask again next time the user wants to modify the file.
+            B.Timestamp_Mode := Check_At_Modify;
+            return False;
+         end if;
+
+         B.Timestamp_Mode := Check_At_Focus;
       end if;
 
-      Undo_Redo := Undo_Redo_Data.Get (B.Kernel, Undo_Redo_Id);
+      --  If we are not currently asking the user (it is possible that we still
+      --  get a focus in event, if the mouse has moved outside of the dialog,
+      --  even though the dialog is modal ???
+      if B.Timestamp_Mode /= Checking then
+         Undo_Redo := Undo_Redo_Data.Get (B.Kernel, Undo_Redo_Id);
 
-      Set_Controls (Get_Queue (B.Source_Buffer),
-                    Undo_Redo.Undo_Button,
-                    Undo_Redo.Redo_Button,
-                    Undo_Redo.Undo_Menu_Item,
-                    Undo_Redo.Redo_Menu_Item);
+         Set_Controls (Get_Queue (B.Source_Buffer),
+                       Undo_Redo.Undo_Button,
+                       Undo_Redo.Redo_Button,
+                       Undo_Redo.Undo_Menu_Item,
+                       Undo_Redo.Redo_Menu_Item);
+      end if;
       return False;
    end Focus_In;
 
@@ -838,7 +874,10 @@ package body Src_Editor_Box is
    function Focus_Out (Box : access GObject_Record'Class) return Boolean is
       B         : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
-      Unset_Controls (Get_Queue (B.Source_Buffer));
+      --  If we are not currently asking the user about a timestamp change.
+      if B.Timestamp_Mode /= Checking then
+         Unset_Controls (Get_Queue (B.Source_Buffer));
+      end if;
 
       return False;
    end Focus_Out;

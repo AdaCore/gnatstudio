@@ -412,8 +412,19 @@ private
    package Editor_Tooltips is new GVD.Tooltips
      (Editor_Tooltip_Data, Src_Editor_View.Source_View_Record, Draw_Tooltip);
 
+   type Timestamp_Check_Mode is (Checking, Check_At_Focus, Check_At_Modify);
+   --  When should the source box test the timestamp of the file on disk ?
+   --  - Checking: we are already asking the user whether he wants to edit
+   --  - Check_At_Focus: check at next focus event only
+   --  - Check_At_Modify: check the next time the buffer is modified only
+   --  The goal of this type is to avoid asking the question multiple times to
+   --  the user. If he answers no the first time, we forbid editing until he
+   --  has said yes.
+
    type Source_Editor_Box_Record is new Glib.Object.GObject_Record with record
       Kernel               : Glide_Kernel.Kernel_Handle;
+
+      Timestamp_Mode       : Timestamp_Check_Mode := Check_At_Focus;
 
       Root_Container       : Gtk.Box.Gtk_Box;
       Never_Attached       : Boolean := True;
