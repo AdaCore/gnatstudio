@@ -290,8 +290,9 @@ package body Vsearch_Ext is
          Vsearch.Continue := True;
 
          if All_Occurences then
-            --  Set up Glide during the search. Everything is automatically
+            --  Set up the search. Everything is automatically
             --  put back when the idle loop terminates.
+
             Push_State (Vsearch.Kernel, Processing);
             Set_Sensitive (Vsearch.Stop_Button, True);
             Set_Sensitive (Vsearch.Search_Next_Button, False);
@@ -333,9 +334,33 @@ package body Vsearch_Ext is
    ------------------------
 
    procedure On_Search_Previous (Object : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (Object);
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+      All_Occurences : constant Boolean := Get_Active
+        (Vsearch.Search_All_Check);
+      Has_Next : Boolean;
+
    begin
-      null;
+      if Vsearch.Search_Idle_Handler /= 0 then
+         Idle_Remove (Vsearch.Search_Idle_Handler);
+         Vsearch.Search_Idle_Handler := 0;
+      end if;
+
+      if Vsearch.Last_Search_Context /= null then
+         Vsearch.Continue := True;
+
+         if All_Occurences then
+            --  Is this supported ???
+            return;
+
+         else
+            Push_State (Vsearch.Kernel, Processing);
+            Has_Next := Search
+              (Vsearch.Last_Search_Context,
+               Vsearch.Kernel,
+               Search_Backward => True);
+            Pop_State (Vsearch.Kernel);
+         end if;
+      end if;
 
    exception
       when E : others =>
@@ -556,7 +581,6 @@ package body Vsearch_Ext is
          Factory           => Current_File_Factory'Access,
          Extra_Information => null,
          Mask              => All_Options
-           and not Search_Backward
            and not All_Occurences and not Supports_Replace);
       Register_Search_Function
         (Kernel            => Kernel,
