@@ -35,7 +35,6 @@ with Gtk.Text_View;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Src_Editor_Buffer;
 
-with Generic_List;
 with Basic_Types; use Basic_Types;
 
 package Src_Editor_View is
@@ -47,8 +46,7 @@ package Src_Editor_View is
    procedure Gtk_New
      (View              : out Source_View;
       Buffer            : Src_Editor_Buffer.Source_Buffer := null;
-      Font              : Pango.Font.Pango_Font_Description;
-      Show_Line_Numbers : Boolean := False);
+      Font              : Pango.Font.Pango_Font_Description);
    --  Create a new Source_View from the given parameters.
    --  If no Buffer is given, then a new one will be created. For tasks such
    --  as source code edition, it is recommended to specify a fixed-width font,
@@ -61,19 +59,9 @@ package Src_Editor_View is
    procedure Initialize
      (View              : access Source_View_Record;
       Buffer            : Src_Editor_Buffer.Source_Buffer;
-      Font              : Pango.Font.Pango_Font_Description;
-      Show_Line_Numbers : Boolean);
+      Font              : Pango.Font.Pango_Font_Description);
    --  Internal initialization procedure.
    --  See the section "Creating your own widgets" in the documentation.
-
-   procedure Set_Show_Line_Numbers
-     (View         : access Source_View_Record;
-      Show_Numbers : Boolean := True);
-   --  Set whether the line numbers should be displayed or not.
-
-   function Get_Show_Line_Numbers
-     (View : access Source_View_Record) return Boolean;
-   --  Returns True if the line numbers are displayed.
 
    procedure Scroll_To_Cursor_Location (View : access Source_View_Record);
    --  Scroll the Source View if the position of the insert cursor is not
@@ -121,35 +109,49 @@ private
       Width : Integer;
    end record;
 
-   procedure Free (X : in out Line_Info_Width);
-
-   package Line_Info_List is new Generic_List (Line_Info_Width);
+   type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
+   type Line_Info_Width_Array_Access is access Line_Info_Width_Array;
 
    type Position is (Left, Right);
 
    type Line_Info_Display_Record is record
       Identifier    : String_Access;
+      --  This identifies the column.
+
       Starting_X    : Integer;
+      --  The pixel distance between the left border of the column and
+      --  the left border of the left window.
+
       Width         : Integer;
-      Column_Info   : Line_Info_List.List;
+      --  The pixel width of the column.
+
+      Column_Info   : Line_Info_Width_Array_Access;
+      --  The information that should be displayed in the column.
+
       Stick_To_Data : Boolean;
+      --  If Stick_To_Data is True, then the column contains information
+      --  that are relative to the file as it was opened in the first
+      --  place: when you insert or remove lines, the information should
+      --  stick to the lines they are associated with.
+      --  If Stick_To_Data is False, then the information "sticks" to
+      --  the line numbers.
    end record;
+   type Line_Info_Display_Access is access Line_Info_Display_Record;
 
    type Line_Info_Display_Array is array (Natural range <>)
-     of Line_Info_Display_Record;
+     of Line_Info_Display_Access;
 
-   type Line_Info_Display_Access is access Line_Info_Display_Array;
+   type Line_Info_Display_Array_Access is access Line_Info_Display_Array;
 
-   type List_Access is access Line_Info_List.List;
+   type Natural_Array is array (Natural range <>) of Natural;
+   type Natural_Array_Access is access Natural_Array;
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
       Saved_Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
       Pango_Font          : Pango.Font.Pango_Font_Description;
       Font                : Gdk.Font.Gdk_Font;
-      Line_Numbers_GC     : Gdk.GC.Gdk_GC;
-      Show_Line_Numbers   : Boolean;
-      LNA_Width_In_Digits : Natural;
+      Side_Column_GC      : Gdk.GC.Gdk_GC;
 
       Top_Line            : Natural := 0;
       Bottom_Line         : Natural := 0;
@@ -157,8 +159,19 @@ private
       Min_Top_Line        : Natural := 0;
       Max_Bottom_Line     : Natural := 0;
 
-      Line_Info           : Line_Info_Display_Access;
+      Line_Info           : Line_Info_Display_Array_Access;
+      --  The information that should be displayed in the left window.
+
       Total_Column_Width  : Natural := 0;
+      --  Width of the Left Window.
+
+      Original_Lines_Number : Natural := 0;
+      --  The number of lines in the file when it was first opened.
+
+      Real_Lines            : Natural_Array_Access;
+      --  This array associates original line numbers (ie lines that were
+      --  in the view the first time it was opened) with lines in the current
+      --  view.
    end record;
 
 end Src_Editor_View;
