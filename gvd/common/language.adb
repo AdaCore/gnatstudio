@@ -451,10 +451,10 @@ package body Language is
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
-      pragma Unreferenced (Lang, Indent_Params);
+      pragma Unreferenced (Lang);
 
-      Index  : Natural;
-      Blanks : Natural;
+      Tab_Width : Natural renames Indent_Params.Tab_Width;
+      Index     : Natural;
 
    begin
       if Buffer'Length = 0 then
@@ -463,21 +463,27 @@ package body Language is
          return;
       end if;
 
-      Index := Buffer'Last - 1;
+      Index  := Buffer'Last - 1;
+      Indent := 0;
 
       while Index > 1 and then Buffer (Index - 1) /= ASCII.LF loop
          Index := Index - 1;
       end loop;
 
-      Blanks := Index;
-
-      while Blanks < Buffer'Last
-        and then (Buffer (Blanks) = ' ' or else Buffer (Blanks) = ASCII.HT)
       loop
-         Blanks := Blanks + 1;
+         if Buffer (Index) = ' ' then
+            Indent := Indent + 1;
+         elsif Buffer (Index) = ASCII.HT then
+            Indent := Indent + Tab_Width - (Indent mod Tab_Width);
+         else
+            exit;
+         end if;
+
+         exit when Index = Buffer'Last;
+
+         Index := Index + 1;
       end loop;
 
-      Indent      := Blanks - Index;
       Next_Indent := Indent;
    end Next_Indentation;
 
