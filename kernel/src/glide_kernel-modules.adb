@@ -401,6 +401,31 @@ package body Glide_Kernel.Modules is
       Ref_Item    : String := "";
       Add_Before  : Boolean := True)
    is
+      procedure Add_Menu
+        (Parent : Gtk_Menu; Item : Gtk_Menu_Item; Index : Gint);
+      --  Append Item either to Parent, if not null, or directly to the menu
+      --  bar
+
+      --------------
+      -- Add_Menu --
+      --------------
+
+      procedure Add_Menu
+        (Parent : Gtk_Menu; Item : Gtk_Menu_Item; Index : Gint) is
+      begin
+         if Index = -1 then
+            if Parent = null then
+               Append (Glide_Window (Kernel.Main_Window).Menu_Bar, Item);
+            else
+               Append (Parent, Item);
+            end if;
+         elsif Add_Before then
+            Insert (Parent, Item, Index);
+         else
+            Insert (Parent, Item, Index + 1);
+         end if;
+      end Add_Menu;
+
       First, Last     : Natural := Parent_Path'First + 1;
       Parent          : Gtk_Menu := null;
       Menu_Item, Pred : Gtk_Menu_Item;
@@ -452,18 +477,7 @@ package body Glide_Kernel.Modules is
             Find_Menu_Item_By_Name
               (Glide_Window (Kernel.Main_Window).Menu_Bar,
                Parent, Ref_Item, Pred, Index);
-            if Index = -1 then
-               if Parent = null then
-                  Append (Glide_Window (Kernel.Main_Window).Menu_Bar,
-                          Menu_Item);
-               else
-                  Append (Parent, Menu_Item);
-               end if;
-            elsif Add_Before then
-               Insert (Parent, Menu_Item, Index);
-            else
-               Insert (Parent, Menu_Item, Index + 1);
-            end if;
+            Add_Menu (Parent, Menu_Item, Index);
          else
             Append (Parent, Menu_Item);
          end if;
@@ -478,13 +492,7 @@ package body Glide_Kernel.Modules is
          Find_Menu_Item_By_Name
            (Glide_Window (Kernel.Main_Window).Menu_Bar,
             Parent, Ref_Item, Pred, Index);
-         if Index = -1 then
-            Append (Parent, Item);
-         elsif Add_Before then
-            Insert (Parent, Item, Index);
-         elsif Index /= -1 then
-            Insert (Parent, Item, Index + 1);
-         end if;
+         Add_Menu (Parent, Item, Index);
 
          Show_All (Item);
       end if;
