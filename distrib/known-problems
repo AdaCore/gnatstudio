@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 2.1.0
 
-- GPS crashes when annotating large files (D621-013)
+- D621-013 GPS crashes when annotating large files
   Problem:    When querying the annotations for large files, GPS crashes before
               displaying the annotations.
   Workaround: Use the command line when annotating large files.
@@ -10,15 +10,15 @@ Known Problems fixed in GPS 2.1.0
               its foreground and background colors to the default values.
   Workaround: Set the color again explicitely.
 
-- D531-001 Over alignment of variable declarations
-  Problem:    When aligning the colon (':') character in variable declarations,
-              the computation is not stopped when encountering a blank line.
-  Workaround: Indent manually when needed.
-
 - D614-009 Errors in C files are not displayed in the Locations window
   Problem:    Under Windows, the errors produced by compilation of C files are
               not visible in the Locations window.
   Workaround: Open the Preferences, in the "Messages" section, and change the
               "File pattern" entry to
                  "^([^:]:?[^:]*):(\d+):((\d+):)? ((warning)?(\(style)?.*)".
+
+- D531-001 Over alignment of variable declarations
+  Problem:    When aligning the colon (':') character in variable declarations,
+              the computation is not stopped when encountering a blank line.
+  Workaround: Indent manually when needed.
 
