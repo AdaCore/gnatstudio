@@ -167,6 +167,7 @@ Tools
 * Visual Comparison::
 * Code Fixing::
 * Documentation Generation::
+* Metrics::
 
 Working in a Cross Environment
 * Customizing your Projects::
@@ -6289,6 +6290,7 @@ content filled from the global @file{ChangeLog} file.
 * Visual Comparison::
 * Code Fixing::
 * Documentation Generation::
+* Metrics::
 @end menu
 
 @node The Tools Menu
@@ -6338,6 +6340,9 @@ Open a view of the current source editor.
 
 @item Documentation
 @xref{Documentation Generation}.
+
+@item Metrics
+@xref{Metrics}.
 
 @end table
 
@@ -6489,7 +6494,7 @@ documentation will be generated for the file you select.
 @item The Contextual Menu
 
 When relevant (depending on the context), right-clicking with your mouse
-will show a a @code{Documentation} contextual menu.
+will show a @code{Documentation} contextual menu.
 
 From a source file contextual menu, you have one option called
 @command{Generate for <filename>}, that will generate documentation
@@ -6502,6 +6507,51 @@ or from the selected project recursively.
 
 You will find the list of all documentation options in
 @ref{The Preferences Dialog}.
+@end table
+
+@node Metrics
+@section Metrics
+@cindex Metrics
+@noindent
+
+GPS provides an interface with the GNAT software metrics generation tool
+@code{gnatmetric}.
+
+The metrics can be computed for the entire project, one source file belonging to
+the project, or (when applicable) a specific entity in the source file, e.g. a
+subprogram.
+
+The metrics generator can be invoked from two places inside GPS:
+
+@table @b
+@item @ref{The Tools Menu}
+
+@table @command
+@item Metrics->Compute metrics for current project
+Generate metrics for all files from the loaded project.
+
+@item Metrics->Compute metrics for current file
+Generate metrics for the current source file.
+
+@end table
+
+@item The Contextual Menu
+
+When relevant (depending on the context), right-clicking with your mouse
+will show metrics-related contextual menu entries.
+
+From an entity contextual menu, you have an option called
+@command{Metrics for entity} that will generate the metrics for the currently
+selected entity.
+
+From a source file contextual menu, you have an option called
+@command{Metrics for file} that will generate the metrics for
+the current file.
+
+From a project contextual menu (@pxref{The Project View}), you have an
+option @command{Metrics for project} that will generate the metrics for
+all files in the project.
+
 @end table
 
 @c --------------------------------------------------------------------
