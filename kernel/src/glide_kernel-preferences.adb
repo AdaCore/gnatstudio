@@ -169,63 +169,6 @@ package body Glide_Kernel.Preferences is
 
       -- Source Editor --
 
-      Default_Keyword_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Keyword-Color",
-         Nick    => -"Keywords color",
-         Blurb   => -"Color for highlighting keywords",
-         Default => "black"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Keyword_Color), -"Editor");
-
-      Default_Comment_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Comment-Color",
-         Default => "blue",
-         Blurb   => -"Color for highlighting comments",
-         Nick    => -"Comments color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Comment_Color), -"Editor");
-
-      Default_String_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-String-Color",
-         Default => "brown",
-         Blurb   => -"Color for highlighting strings",
-         Nick    => -"Strings color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_String_Color), -"Editor");
-
-      Default_Character_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Character-Color",
-         Default => "brown",
-         Blurb   => -"Color for highlighting character constants",
-         Nick    => -"Character constants color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Character_Color), -"Editor");
-
-      Default_HL_Line_Color   := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Highlight-Line-Color",
-         Default => "green",
-         Blurb   => -"Color for highlighting lines",
-         Nick    => -"Line highlighting color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_HL_Line_Color), -"Editor");
-
-      Default_HL_Region_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Highlight-Region-Color",
-         Default => "cyan",
-         Blurb   => -"Color for highlighting regions",
-         Nick    => -"Region highlighting color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_HL_Region_Color), -"Editor");
-
-      Automatic_Indentation := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "Src-Editor-Automatic-Indentation",
-         Default => True,
-         Blurb   => -("Whether the editor should indent automatically"
-                      & " the source"),
-         Nick    => -"Auto indent"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Automatic_Indentation), -"Editor");
-
       Strip_Blanks := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Strip-Blanks",
          Default => True,
@@ -233,64 +176,17 @@ package body Glide_Kernel.Preferences is
                       & " when saving a file"),
          Nick    => -"Strip blanks"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor");
+        (Kernel.Preferences, Param_Spec (Strip_Blanks), -"Editor:General");
 
       Display_Line_Numbers := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Display-Line_Numbers",
          Default => True,
-         Blurb   => -("Whether the line numbers should be displayed in"
-                       & " file editors"),
+         Blurb   =>
+           -("Whether the line numbers should be displayed in file editors"),
          Nick    => -"Display line numbers"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Display_Line_Numbers), -"Editor");
-
-      Source_Editor_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Default-Font",
-         Default => "Courier 10",
-         Blurb   => -"The font used in the source editor",
-         Nick    => -"Default font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Source_Editor_Font), -"Editor");
-
-      Keyword_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Keyword-Font",
-         Default => "Courier Bold 10",
-         Blurb   => -"The font used to display keywords",
-         Nick    => -"Keyword font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Keyword_Font), -"Editor");
-
-      Comment_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Comment-Font",
-         Default => "Courier Medium Oblique 10",
-         Blurb   => -"The font used to display comments",
-         Nick    => -"Comment font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Comment_Font), -"Editor");
-
-      String_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-String-Font",
-         Default => "Courier 10",
-         Blurb   => -"The font used to display strings",
-         Nick    => -"String font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (String_Font), -"Editor");
-
-      Character_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Character-Font",
-         Default => "Courier 10",
-         Blurb   => -"The font used to display characters",
-         Nick    => -"Character font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Character_Font), -"Editor");
-
-      Tooltip_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Tooltip-Font",
-         Default => "Helvetica 10",
-         Blurb   => -"The font used to display tooltips in the source editor",
-         Nick    => -"Tooltip font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Tooltip_Font), -"Editor");
+        (Kernel.Preferences, Param_Spec (Display_Line_Numbers),
+         -"Editor:General");
 
       Display_Tooltip := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Display-Tooltip",
@@ -298,7 +194,7 @@ package body Glide_Kernel.Preferences is
          Blurb   => -"Whether tooltips should be displayed automatically",
          Nick    => -"Tooltips"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Display_Tooltip), -"Editor");
+        (Kernel.Preferences, Param_Spec (Display_Tooltip), -"Editor:General");
 
       Periodic_Save := Param_Spec_Int (Gnew_Int
         (Name    => "Src-Editor-Periodic-Save",
@@ -309,7 +205,7 @@ package body Glide_Kernel.Preferences is
                       & " is automatically saved. 0 if none."),
          Nick    => -"Autosave delay"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Periodic_Save), -"Editor");
+        (Kernel.Preferences, Param_Spec (Periodic_Save), -"Editor:General");
 
       Tab_Width := Param_Spec_Int (Gnew_Int
         (Name    => "Src-Editor-Tab-Width",
@@ -320,7 +216,159 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Tabulation width",
          Flags   => Param_Readable));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor");
+        (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor:General");
+
+      Default_Keyword_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Keyword-Color",
+         Nick    => -"Keywords color",
+         Blurb   => -"Color for highlighting keywords",
+         Default => "black"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_Keyword_Color),
+         -"Editor:Fonts & Colors");
+
+      Default_Comment_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Comment-Color",
+         Default => "blue",
+         Blurb   => -"Color for highlighting comments",
+         Nick    => -"Comments color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_Comment_Color),
+         -"Editor:Fonts & Colors");
+
+      Default_String_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-String-Color",
+         Default => "brown",
+         Blurb   => -"Color for highlighting strings",
+         Nick    => -"Strings color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_String_Color),
+         -"Editor:Fonts & Colors");
+
+      Default_Character_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Character-Color",
+         Default => "brown",
+         Blurb   => -"Color for highlighting character constants",
+         Nick    => -"Character constants color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_Character_Color),
+         -"Editor:Fonts & Colors");
+
+      Default_HL_Line_Color   := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Highlight-Line-Color",
+         Default => "green",
+         Blurb   => -"Color for highlighting lines",
+         Nick    => -"Line highlighting color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_HL_Line_Color),
+         -"Editor:Fonts & Colors");
+
+      Default_HL_Region_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Highlight-Region-Color",
+         Default => "cyan",
+         Blurb   => -"Color for highlighting regions",
+         Nick    => -"Region highlighting color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
+         -"Editor:Fonts & Colors");
+
+      Source_Editor_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Default-Font",
+         Default => "Courier 10",
+         Blurb   => -"The font used in the source editor",
+         Nick    => -"Default font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Source_Editor_Font),
+         -"Editor:Fonts & Colors");
+
+      Keyword_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Keyword-Font",
+         Default => "Courier Bold 10",
+         Blurb   => -"The font used to display keywords",
+         Nick    => -"Keyword font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Keyword_Font),
+         -"Editor:Fonts & Colors");
+
+      Comment_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Comment-Font",
+         Default => "Courier Medium Oblique 10",
+         Blurb   => -"The font used to display comments",
+         Nick    => -"Comment font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Comment_Font),
+         -"Editor:Fonts & Colors");
+
+      String_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-String-Font",
+         Default => "Courier 10",
+         Blurb   => -"The font used to display strings",
+         Nick    => -"String font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (String_Font),
+         -"Editor:Fonts & Colors");
+
+      Character_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Character-Font",
+         Default => "Courier 10",
+         Blurb   => -"The font used to display characters",
+         Nick    => -"Character font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Character_Font),
+         -"Editor:Fonts & Colors");
+
+      Tooltip_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Tooltip-Font",
+         Default => "Helvetica 10",
+         Blurb   => -"The font used to display tooltips in the source editor",
+         Nick    => -"Tooltip font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Tooltip_Font),
+         -"Editor:Fonts & Colors");
+
+      Automatic_Indentation := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Src-Editor-Automatic-Indentation",
+         Default => True,
+         Blurb   => -("Whether the editor should indent automatically"
+                      & " the source"),
+         Nick    => -"Auto indentation"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Automatic_Indentation),
+         -"Editor:Indentation");
+
+      Indentation_Level := Param_Spec_Int (Gnew_Int
+        (Name    => "Src-Editor-Indent-Level",
+         Minimum => 1,
+         Maximum => 9,
+         Default => 3,
+         Blurb   => -"The number of spaces for the default indentation",
+         Nick    => -"Default indentation"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Indentation_Level),
+         -"Editor:Indentation");
+
+      Continuation_Level := Param_Spec_Int (Gnew_Int
+        (Name    => "Src-Editor-Continuation-Level",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 2,
+         Blurb   => -"The number of extra spaces for continuation lines",
+         Nick    => -"Continuation lines"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Continuation_Level),
+         -"Editor:Indentation");
+
+      Declaration_Level := Param_Spec_Int (Gnew_Int
+        (Name    => "Src-Editor-Declaration-Level",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 0,
+         Blurb   =>
+           -"The number of extra spaces for multiple line declarations",
+         Nick    => -"Declaration lines"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Declaration_Level),
+         -"Editor:Indentation");
 
       -- Project Editor --
 
@@ -503,7 +551,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "CVS-Command",
          Default => "cvs",
          Blurb   => -"General CVS command",
-         Nick    => -"CVS location"));
+         Nick    => -"CVS command"));
       Register_Property
         (Kernel.Preferences, Param_Spec (CVS_Command), -"VCS:CVS");
 

@@ -108,6 +108,9 @@ package Glide_Kernel.Preferences is
    Default_HL_Line_Color   : Param_Spec_Color;
    Default_HL_Region_Color : Param_Spec_Color;
    Automatic_Indentation   : Param_Spec_Boolean;
+   Indentation_Level       : Param_Spec_Int;
+   Continuation_Level      : Param_Spec_Int;
+   Declaration_Level       : Param_Spec_Int;
    Strip_Blanks            : Param_Spec_Boolean;
    Display_Line_Numbers    : Param_Spec_Boolean;
    Source_Editor_Font      : Param_Spec_Font;
