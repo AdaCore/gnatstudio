@@ -151,6 +151,13 @@ package body Src_Editor_Box is
       Column : Gint);
    --  Redraw the cursor position in the Line/Column areas of the status bar.
 
+   procedure Show_Which_Function
+     (Box  : Source_Editor_Box;
+      Name : String);
+   pragma Inline (Show_Which_Function);
+   --  Name if not null is the name of the enclosing subprogram, it is
+   --  displayed on the left of the status bar.
+
    procedure Cursor_Position_Changed_Handler
      (Buffer : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -413,25 +420,25 @@ package body Src_Editor_Box is
 
       if To_Body then
          Find_Next_Body
-           (Kernel             => Kernel,
-            Lib_Info           => Source_Info,
-            File_Name          => Get_Filename (Editor),
-            Entity_Name        => Entity_Name_Information (Context),
-            Line               => Contexts.Line_Information (Context),
-            Column             => Entity_Column_Information (Context),
-            Location           => Location,
-            Status             => Status);
+           (Kernel      => Kernel,
+            Lib_Info    => Source_Info,
+            File_Name   => Get_Filename (Editor),
+            Entity_Name => Entity_Name_Information (Context),
+            Line        => Contexts.Line_Information (Context),
+            Column      => Entity_Column_Information (Context),
+            Location    => Location,
+            Status      => Status);
 
       else
          Find_Declaration_Or_Overloaded
-           (Kernel             => Kernel,
-            Lib_Info           => Source_Info,
-            File_Name          => Get_Filename (Editor),
-            Entity_Name        => Entity_Name_Information (Context),
-            Line               => Contexts.Line_Information (Context),
-            Column             => Entity_Column_Information (Context),
-            Entity             => Entity,
-            Status             => Status);
+           (Kernel      => Kernel,
+            Lib_Info    => Source_Info,
+            File_Name   => Get_Filename (Editor),
+            Entity_Name => Entity_Name_Information (Context),
+            Line        => Contexts.Line_Information (Context),
+            Column      => Entity_Column_Information (Context),
+            Entity      => Entity,
+            Status      => Status);
       end if;
 
       case Status is
@@ -578,9 +585,9 @@ package body Src_Editor_Box is
       Context     : access Entity_Selection_Context'Class;
       Entity      : out Entity_Information)
    is
-      Source_Info    : LI_File_Ptr;
-      Status         : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
-      Filename       : constant Virtual_File := Get_Filename (Editor);
+      Source_Info : LI_File_Ptr;
+      Status      : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Filename    : constant Virtual_File := Get_Filename (Editor);
 
    begin
       if Filename = VFS.No_File then
@@ -830,8 +837,19 @@ package body Src_Editor_Box is
    begin
       Set_Text
         (Box.Cursor_Loc_Label,
-         Image (Integer (Line)) & ":" & Image (Integer (Column)));
+         Image (Integer (Line)) & ':' & Image (Integer (Column)));
    end Show_Cursor_Position;
+
+   -------------------------
+   -- Show_Which_Function --
+   -------------------------
+
+   procedure Show_Which_Function
+     (Box  : Source_Editor_Box;
+      Name : String) is
+   begin
+      Set_Text (Box.Function_Label, Name);
+   end Show_Which_Function;
 
    ----------------------------
    -- Status_Changed_Handler --
@@ -933,12 +951,40 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer);
 
+      Line : constant Gint :=
+        Gint (Values.Get_Int (Values.Nth (Params, 1)));
+
+      function Get_Enclosing_Subprogram return String;
+      --  Returns the name of the enclosing subprogram or package. This is
+      --  done by using the block information.
+
+      function Get_Enclosing_Subprogram return String is
+         L : File_Line_Type := File_Line_Type (Line);
+      begin
+         while L > 1 loop
+            declare
+               B_Line : constant Buffer_Line_Type :=
+                 Get_Buffer_Line (Box.Source_Buffer, L);
+               Block  : constant Block_Record :=
+                 Get_Block (Box.Source_Buffer, B_Line);
+            begin
+               if Block.Block_Type in Enclosing_Entity_Category then
+                  return Block.Name.all;
+               end if;
+               L := L - 1;
+            end;
+         end loop;
+
+         return "";
+      end Get_Enclosing_Subprogram;
+
    begin
       if Has_Focus_Is_Set (Box.Source_View) then
          Show_Cursor_Position
            (Box,
-            Line   => Values.Get_Int (Values.Nth (Params, 1)),
+            Line   => Line,
             Column => Values.Get_Int (Values.Nth (Params, 2)));
+         Show_Which_Function (Box, Name => Get_Enclosing_Subprogram);
       end if;
 
    exception
@@ -1152,11 +1198,20 @@ package body Src_Editor_Box is
          User_Data => Source_Editor_Box (Box));
 
       --  Filename area...
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_None);
-      Pack_Start (Box.Label_Box, Frame, Expand => True, Fill => True);
+      --  Gtk_New (Frame);
+      --  Set_Shadow_Type (Frame, Shadow_None);
+      --  Pack_Start (Box.Label_Box, Frame, Expand => True, Fill => True);
       --  Gtk_New (Box.Filename_Label);
       --  ??? Commented out as not used for the moment.
+
+      --  Function location area
+      Gtk_New (Frame);
+      Set_Shadow_Type (Frame, Shadow_None);
+      Pack_Start (Box.Label_Box, Frame,
+                  Expand => False, Fill => False, Padding => 2);
+      Gtk_New (Box.Function_Label);
+      Add (Frame, Box.Function_Label);
+      Set_Justify (Box.Function_Label, Justify_Left);
 
       --  Connect to source buffer signals.
 
@@ -1187,7 +1242,8 @@ package body Src_Editor_Box is
          On_Box_Destroy'Access,
          User_Data => Source_Editor_Box (Box));
 
-      Show_Cursor_Position (Source_Editor_Box (Box), Line => 1, Column => 1);
+      Show_Cursor_Position
+        (Source_Editor_Box (Box), Line => 1, Column => 1);
 
       Add_Events (Box.Source_View, Focus_Change_Mask);
       Object_Return_Callback.Object_Connect
@@ -1352,10 +1408,10 @@ package body Src_Editor_Box is
    -------------------------
 
    function Get_Contextual_Menu
-     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Object       : access Glib.Object.GObject_Record'Class;
-      Event        : Gdk.Event.Gdk_Event;
-      Menu         : Gtk.Menu.Gtk_Menu)
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Object : access Glib.Object.GObject_Record'Class;
+      Event  : Gdk.Event.Gdk_Event;
+      Menu   : Gtk.Menu.Gtk_Menu)
       return Glide_Kernel.Selection_Context_Access
    is
       Editor     : constant Source_Editor_Box := Source_Editor_Box (Object);
@@ -1817,7 +1873,7 @@ package body Src_Editor_Box is
    -- Detach --
    ------------
 
-   procedure Detach (Box    : access Source_Editor_Box_Record) is
+   procedure Detach (Box : access Source_Editor_Box_Record) is
       Parent : constant Gtk_Container :=
         Gtk_Container (Get_Parent (Box.Root_Container));
    begin
@@ -2431,6 +2487,26 @@ package body Src_Editor_Box is
    begin
       return Natural (Block.Last_Line);
    end Get_Block_End;
+
+   --------------------
+   -- Get_Block_Name --
+   --------------------
+
+   function Get_Block_Name
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
+   is
+      B_Line : constant Buffer_Line_Type :=
+        Get_Buffer_Line (Editor.Source_Buffer, Line);
+      Block : constant Block_Record :=
+        Get_Block (Editor.Source_Buffer, B_Line);
+   begin
+      if Block.Name = null then
+         return "";
+      else
+         return Block.Name.all;
+      end if;
+   end Get_Block_Name;
 
    --------------------
    -- Get_Block_Type --
