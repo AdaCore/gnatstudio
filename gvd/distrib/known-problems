@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 1.2.0
 
+- Displaying list of tasks on a non running program.
+
+  Problem:    Opening the menu Data->Tasks... will generate a bug box when the
+              program being debugged has not been started or is terminated.
+
+  Workaround: Close the task window when the program is not running.
+
 - [8715-002] Explorer does not handle files starting with no comment/blank line
   Problem:    GVD will generate a bug box when trying to open in the explorer
               window a package that starts with no blank or comment line.
@@ -12,7 +19,7 @@ Known Problems fixed in GVD 1.2.0
 
 Known Problems fixed in GVD 1.1.1
 
-- Parsing unconstrainted Ada arrays
+- Parsing unconstrained Ada arrays
   Problem:    Some arrays are incorrectly displayed by GVD, and all the items
               appear to have an index equal to 0.
   Workaround: Try to display a slice of the array ("graph display A(2..5)")
