@@ -221,7 +221,8 @@ package body Src_Editor_Module is
 
    type Location_Idle_Data is record
       Edit  : Source_Editor_Box;
-      Line, Column, Column_End : Natural;
+      Line  : Editable_Line_Type;
+      Column, Column_End : Natural;
       Kernel : Kernel_Handle;
    end record;
 
@@ -1626,13 +1627,19 @@ package body Src_Editor_Module is
 
    function File_Edit_Callback (D : Location_Idle_Data) return Boolean is
    begin
-      if Is_Valid_Location (D.Edit, D.Line) then
-         Set_Screen_Location (D.Edit, D.Line, D.Column, Force_Focus => False);
+      if Is_Valid_Position (Get_Buffer (D.Edit), D.Line) then
+         Set_Cursor_Location (D.Edit, D.Line, D.Column, Force_Focus => False);
 
          if D.Column_End /= 0
-           and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
+           and then Is_Valid_Position
+             (Get_Buffer (D.Edit), D.Line, D.Column_End)
          then
-            Select_Region (D.Edit, D.Line, D.Column, D.Line, D.Column_End);
+            Select_Region
+              (Get_Buffer (D.Edit),
+               D.Line,
+               D.Column,
+               D.Line,
+               D.Column_End);
          end if;
       end if;
 
@@ -1700,7 +1707,7 @@ package body Src_Editor_Module is
 
             if Src /= null then
                Dummy := File_Edit_Callback
-                 ((Src.Editor, Line, Column, 0, User));
+                 ((Src.Editor, Editable_Line_Type (Line), Column, 0, User));
 
                --  Add the location in the navigations button.
                declare
@@ -2152,15 +2159,21 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean is
    begin
-      if D.Line /= 0 and then Is_Valid_Location (D.Edit, D.Line) then
-         Set_Screen_Location
-           (D.Edit, D.Line, D.Column,
-            True);
+      if D.Line /= 0
+        and then Is_Valid_Position (Get_Buffer (D.Edit), D.Line)
+      then
+         Set_Cursor_Location (D.Edit, D.Line, D.Column, True);
 
          if D.Column_End /= 0
-           and then Is_Valid_Location (D.Edit, D.Line, D.Column_End)
+           and then Is_Valid_Position
+             (Get_Buffer (D.Edit), D.Line, D.Column_End)
          then
-            Select_Region (D.Edit, D.Line, D.Column, D.Line, D.Column_End);
+            Select_Region
+              (Get_Buffer (D.Edit),
+               D.Line,
+               D.Column,
+               D.Line,
+               D.Column_End);
          end if;
       end if;
 
@@ -2919,7 +2932,7 @@ package body Src_Editor_Module is
                          & Line'Img & Column'Img);
                   Tmp := Location_Callback
                     ((Edit,
-                      Natural (Line),
+                      Editable_Line_Type (Line),
                       Natural (Column),
                       Natural (Column_End),
                       Kernel_Handle (Kernel)));
