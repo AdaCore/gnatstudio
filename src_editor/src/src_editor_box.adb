@@ -31,7 +31,6 @@ with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
 with Gdk;                        use Gdk;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
-with Gdk.Font;                   use Gdk.Font;
 with Gdk.GC;                     use Gdk.GC;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Types;
@@ -706,23 +705,26 @@ package body Src_Editor_Box is
          declare
             --  ??? Missing full name of enclosing scope
             Str : constant String :=
-              "Entity: "
+              "Entity: " & ASCII.HT
               & Get_Full_Name
               (Entity,
                Locate_From_Source_And_Complete
                (Data.Box.Kernel, Get_Declaration_File_Of (Entity)),
                ".")
               & ASCII.LF
-              & "Declaration: " & Get_Declaration_File_Of (Entity) & ':'
+              & "Decl.: " & ASCII.HT
+              & Get_Declaration_File_Of (Entity) & ':'
               & Image (Get_Declaration_Line_Of (Entity)) & ASCII.LF
-              & "Kind: " & Kind_To_String (Get_Kind (Entity)) & ASCII.LF
-              & "Scope: " & Scope_To_String (Get_Scope (Entity));
+              & "Kind: " & ASCII.HT
+              & Kind_To_String (Get_Kind (Entity)) & ASCII.LF
+              & "Scope: " & ASCII.HT
+              & Scope_To_String (Get_Scope (Entity));
          begin
             Create_Pixmap_From_Text
               (Text     => Str,
                Font     => Get_Pref (Data.Box.Kernel, Tooltip_Font),
                Bg_Color => White (Get_Default_Colormap),
-               Window   => Get_Window (Widget, Text_Window_Text),
+               Widget   => Widget,
                Pixmap   => Pixmap,
                Width    => Width,
                Height   => Height);
@@ -845,7 +847,6 @@ package body Src_Editor_Box is
       if Box.Default_GC /= null then
          Unref (Box.Bg_GC);
          Unref (Box.Default_GC);
-         Unref (Box.Tooltip_Font);
       end if;
 
       Unref (Box.Source_Buffer);
