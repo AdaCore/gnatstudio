@@ -35,8 +35,12 @@ with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Traces;                   use Traces;
 with Unchecked_Deallocation;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
+with Glib.Generic_Properties;  use Glib.Generic_Properties;
 
 package body External_Editor_Module is
+
+   Me : constant Debug_Handle := Create ("External_Editor_Module");
 
    Timeout : constant Guint32 := 500;
    --  Timeout in millisecond to check the external editor processes.
@@ -44,10 +48,24 @@ package body External_Editor_Module is
    --  properly handle the death of an external process, to remove zombie
    --  processes, but we do not process the actual output.
 
-   External_Editor_User_Data : constant String := "External_Editor";
-   --  String used to identify the user data in the kernel
+   -----------------
+   -- Preferences --
+   -----------------
 
-   Me : constant Debug_Handle := Create ("External_Editor_Module");
+   type Supported_Clients is (Auto, Gnuclient, Emacsclient, Emacs, Vim, Vi);
+   for Supported_Clients'Size use Gint'Size;
+   pragma Convention (C, Supported_Clients);
+   --  The list of supported external editors.
+
+   package Supported_Client_Properties is new Generic_Enumeration_Property
+     ("Supported_Clients", Supported_Clients);
+
+   Default_External_Editor    : Param_Spec_Enum;
+   Always_Use_External_Editor : Param_Spec_Boolean;
+
+   -----------
+   -- Types --
+   -----------
 
    type External_Client is record
       Command_Name      : GNAT.OS_Lib.String_Access;
@@ -93,7 +111,7 @@ package body External_Editor_Module is
    type External_Servers is array (Supported_Servers) of External_Server;
 
    Clients : constant External_Clients :=
-     (None => (null, null, null, null),
+     (Auto      => (null, null, null, null),
       Gnuclient =>
         (Command_Name         => new String' ("gnuclient -q +%l %f"),
          Lisp_Command_Name    => new String' ("gnudoit -q %e"),
@@ -139,11 +157,12 @@ package body External_Editor_Module is
    type Process_Descriptor_Array_Access is access
      Process_Descriptor_Array;
 
-   procedure Unchecked_Free is new Unchecked_Deallocation
-     (Process_Descriptor_Array, Process_Descriptor_Array_Access);
+   ------------------------
+   -- Module description --
+   ------------------------
 
-   type External_Client_Information is record
-      Client : Supported_Clients := None;
+   type External_Editor_Module_Record is new Module_ID_Record with record
+      Client : Supported_Clients := Auto;
       --  The index of the client we are currently using
 
       Processes : Process_Descriptor_Array_Access;
@@ -153,23 +172,27 @@ package body External_Editor_Module is
       --  The timeout loop that takes care of all the spawned external
       --  editors.
    end record;
+   type External_Editor_Module_Record_Id is access all
+     External_Editor_Module_Record'Class;
 
-   type External_Client_Information_Access is access
-     External_Client_Information;
+   External_Editor_Module_Id : External_Editor_Module_Record_Id;
+   External_Editor_Module_Name : constant String := "External_Editor";
 
-   package Client_User_Data is new Glib.Object.User_Data
-     (External_Client_Information_Access);
+   -----------------
+   -- Subprograms --
+   -----------------
+
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Process_Descriptor_Array, Process_Descriptor_Array_Access);
 
    procedure Spawn_Server
      (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information;
       Success        : out Boolean);
    --  Start Emacs and the server, so that a client can connect to it.
    --  False is returned if the server could not be started.
 
    procedure Client_Command
      (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information;
       File           : String := "";
       Line           : Natural := 1;
       Column         : Natural := 1;
@@ -177,8 +200,7 @@ package body External_Editor_Module is
    --  Calls the client with the appropriate parameters
 
    procedure Select_Client
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information);
+     (Kernel         : access Kernel_Handle_Record'Class);
    --  Select the appropriate external editor to use. They are tested in the
    --  order given in Clients, and are selected if both Command_Name and
    --  Lisp_Command_Name are found on the path.
@@ -207,7 +229,6 @@ package body External_Editor_Module is
 
    procedure Spawn_New_Process
      (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information;
       Command        : String;
       Args           : GNAT.OS_Lib.Argument_List;
       Result         : out Boolean);
@@ -231,28 +252,21 @@ package body External_Editor_Module is
    -------------------
 
    procedure Select_Client
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information)
+     (Kernel         : access Kernel_Handle_Record'Class)
    is
       Path  : GNAT.OS_Lib.String_Access;
       Args  : Argument_List_Access;
       Match : Boolean;
-      Default_Client : constant String :=
-        Get_Pref (Kernel, Default_External_Editor);
+      Default_Client : constant Supported_Clients :=
+        Supported_Clients'Val (Get_Pref (Kernel, Default_External_Editor));
    begin
       --  If the user has specified a default client, use that one.
-      if Default_Client /= "" then
-         begin
-            Current_Client.Client :=
-              Supported_Clients'Value (Default_Client);
-            return;
-
-         exception
-            when others => null;
-         end;
+      if Default_Client /= Auto then
+         External_Editor_Module_Id.Client := Default_Client;
+         return;
       end if;
 
-      Current_Client.Client := None;
+      External_Editor_Module_Id.Client := Auto;
 
       for C in Clients'Range loop
          Match := False;
@@ -295,14 +309,14 @@ package body External_Editor_Module is
          end if;
 
          if Match then
-            Current_Client.Client := C;
+            External_Editor_Module_Id.Client := C;
             exit;
          end if;
       end loop;
 
-      if Current_Client.Client /= None then
+      if External_Editor_Module_Id.Client /= Auto then
          Trace (Me, "Current client is "
-                & Clients (Current_Client.Client).Command_Name.all);
+                & Clients (External_Editor_Module_Id.Client).Command_Name.all);
       else
          Trace (Me, "No available client");
       end if;
@@ -382,18 +396,17 @@ package body External_Editor_Module is
    ----------------------
 
    function External_Timeout (D : Process_Data) return Boolean is
+      pragma Unreferenced (D);
       Result : Expect_Match;
       Old : Process_Descriptor_Array_Access;
-      Current_Client : External_Client_Information_Access :=
-        Client_User_Data.Get (D.Kernel, External_Editor_User_Data);
-      J : Integer := Current_Client.Processes'First;
+      J : Integer := External_Editor_Module_Id.Processes'First;
    begin
-      while Current_Client.Processes /= null
-        and then J <= Current_Client.Processes'Last
+      while External_Editor_Module_Id.Processes /= null
+        and then J <= External_Editor_Module_Id.Processes'Last
       loop
          begin
             Expect
-              (Descriptor => Current_Client.Processes (J).all,
+              (Descriptor => External_Editor_Module_Id.Processes (J).all,
                Result     => Result,
                Regexp     => ".+",
                Timeout    => 1);
@@ -403,17 +416,19 @@ package body External_Editor_Module is
          exception
             when Process_Died =>
                Trace (Me, "External editor died");
-               Close (Current_Client.Processes (J).all);
+               Close (External_Editor_Module_Id.Processes (J).all);
 
-               if Current_Client.Processes'Length = 1 then
-                  Unchecked_Free (Current_Client.Processes);
+               if External_Editor_Module_Id.Processes'Length = 1 then
+                  Unchecked_Free (External_Editor_Module_Id.Processes);
                else
-                  Old := Current_Client.Processes;
-                  Current_Client.Processes := new Process_Descriptor_Array
-                    (1 .. Old'Length - 1);
-                  Current_Client.Processes (1 .. J - 1) := Old (1 .. J - 1);
-                  Current_Client.Processes (J .. Current_Client.Processes'Last)
-                    := Old (J + 1 .. Old'Last);
+                  Old := External_Editor_Module_Id.Processes;
+                  External_Editor_Module_Id.Processes :=
+                    new Process_Descriptor_Array (1 .. Old'Length - 1);
+                  External_Editor_Module_Id.Processes (1 .. J - 1) :=
+                    Old (1 .. J - 1);
+                  External_Editor_Module_Id.Processes
+                    (J .. External_Editor_Module_Id.Processes'Last) :=
+                    Old (J + 1 .. Old'Last);
                   Unchecked_Free (Old);
                end if;
 
@@ -422,7 +437,7 @@ package body External_Editor_Module is
          end;
       end loop;
 
-      return Current_Client.Processes /= null;
+      return External_Editor_Module_Id.Processes /= null;
    end External_Timeout;
 
    ----------------------
@@ -430,10 +445,10 @@ package body External_Editor_Module is
    ----------------------
 
    procedure External_Timeout_Destroy (D : in out Process_Data) is
+      pragma Unreferenced (D);
    begin
       Trace (Me, "Last external editor was killed");
-      Client_User_Data.Get
-        (D.Kernel, External_Editor_User_Data).Timeout_Id := 0;
+      External_Editor_Module_Id.Timeout_Id := 0;
    end External_Timeout_Destroy;
 
    -----------------------
@@ -442,7 +457,6 @@ package body External_Editor_Module is
 
    procedure Spawn_New_Process
      (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information;
       Command        : String;
       Args           : GNAT.OS_Lib.Argument_List;
       Result         : out Boolean)
@@ -457,21 +471,23 @@ package body External_Editor_Module is
          Buffer_Size => 0,
          Err_To_Out  => True);
 
-      if Current_Client.Processes = null then
-         Current_Client.Processes := new Process_Descriptor_Array (1 .. 1);
+      if External_Editor_Module_Id.Processes = null then
+         External_Editor_Module_Id.Processes :=
+           new Process_Descriptor_Array (1 .. 1);
       else
-         Old := Current_Client.Processes;
-         Current_Client.Processes := new Process_Descriptor_Array
+         Old := External_Editor_Module_Id.Processes;
+         External_Editor_Module_Id.Processes := new Process_Descriptor_Array
            (1 .. Old'Length + 1);
-         Current_Client.Processes (1 .. Old'Length) := Old.all;
+         External_Editor_Module_Id.Processes (1 .. Old'Length) := Old.all;
          Unchecked_Free (Old);
       end if;
 
-      Current_Client.Processes (Current_Client.Processes'Last) :=
+      External_Editor_Module_Id.Processes
+        (External_Editor_Module_Id.Processes'Last) :=
         new Process_Descriptor' (Process);
 
-      if Current_Client.Timeout_Id = 0 then
-         Current_Client.Timeout_Id := Process_Timeout.Add
+      if External_Editor_Module_Id.Timeout_Id = 0 then
+         External_Editor_Module_Id.Timeout_Id := Process_Timeout.Add
            (Interval => Timeout,
             Func     => External_Timeout'Access,
             D        => Process_Data'
@@ -496,7 +512,6 @@ package body External_Editor_Module is
 
    procedure Spawn_Server
      (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information;
       Success        : out Boolean)
    is
       Args    : Argument_List_Access;
@@ -504,7 +519,9 @@ package body External_Editor_Module is
 
    begin
       Success := False;
-      if Clients (Current_Client.Client).Server_Start_Command = null then
+      if Clients (External_Editor_Module_Id.Client).Server_Start_Command
+        = null
+      then
          Trace (Me, "No server start command specified");
          return;
       end if;
@@ -516,11 +533,11 @@ package body External_Editor_Module is
          if Path /= null then
             Substitute
               (Args,
-               E => Clients (Current_Client.Client)
+               E => Clients (External_Editor_Module_Id.Client)
                     .Server_Start_Command.all);
 
             Spawn_New_Process
-              (Kernel, Current_Client, Path.all, Args.all, Success);
+              (Kernel, Path.all, Args.all, Success);
             Free (Path);
             Free (Args.all);
             Unchecked_Free (Args);
@@ -569,7 +586,6 @@ package body External_Editor_Module is
 
    procedure Client_Command
      (Kernel         : access Kernel_Handle_Record'Class;
-      Current_Client : in out External_Client_Information;
       File           : String := "";
       Line           : Natural := 1;
       Column         : Natural := 1;
@@ -585,17 +601,18 @@ package body External_Editor_Module is
 
    begin
       if Extended_Lisp /= ""
-        and then Clients (Current_Client.Client).Lisp_Command_Name
+        and then Clients (External_Editor_Module_Id.Client).Lisp_Command_Name
           /= null
       then
          Args := Argument_String_To_List
-           (Clients (Current_Client.Client).Lisp_Command_Name.all);
+           (Clients (External_Editor_Module_Id.Client).Lisp_Command_Name.all);
 
       elsif Extended_Lisp = ""
-        and then Clients (Current_Client.Client).Command_Name /= null
+        and then Clients
+          (External_Editor_Module_Id.Client).Command_Name /= null
       then
          Args := Argument_String_To_List
-           (Clients (Current_Client.Client).Command_Name.all);
+           (Clients (External_Editor_Module_Id.Client).Command_Name.all);
 
       else
          Trace (Me, "No client available");
@@ -617,21 +634,23 @@ package body External_Editor_Module is
          return;
       end if;
 
-      if Clients (Current_Client.Client).Server_Start_Command /= null then
+      if Clients (External_Editor_Module_Id.Client).Server_Start_Command
+        /= null
+      then
          Result := Blocking_Spawn
            (Path.all, Args (Args'First + 1 .. Args'Last));
       else
          Spawn_New_Process
-           (Kernel, Current_Client, Path.all,
-            Args (Args'First + 1 .. Args'Last), Success);
+           (Kernel, Path.all, Args (Args'First + 1 .. Args'Last), Success);
       end if;
 
       --  If we couldn't send the command, it probably means that Emacs wasn't
       --  started, at least not with the server.
       if Result /= 0
-        and then Clients (Current_Client.Client).Server_Start_Command /= null
+        and then Clients
+          (External_Editor_Module_Id.Client).Server_Start_Command /= null
       then
-         Spawn_Server (Kernel, Current_Client, Success);
+         Spawn_Server (Kernel, Success);
 
          if Success then
             --  Give Emacs some time to start the server, and try a number of
@@ -666,7 +685,6 @@ package body External_Editor_Module is
         File_Selection_Context_Access (Context);
       Line           : Integer := 1;
       Column         : Integer := 1;
-      Current_Client : External_Client_Information_Access;
 
    begin
       Push_State (Get_Kernel (File), Busy);
@@ -678,12 +696,8 @@ package body External_Editor_Module is
            (Entity_Selection_Context_Access (Context));
       end if;
 
-      Current_Client := Client_User_Data.Get
-        (Get_Kernel (Context), External_Editor_User_Data);
-
       Client_Command
         (Kernel => Get_Kernel (Context),
-         Current_Client => Current_Client.all,
          File   => Directory_Information (File) & File_Information (File),
          Line   => Line,
          Column => Column);
@@ -737,7 +751,6 @@ package body External_Editor_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
       pragma Unreferenced (Mode);
-      Current_Client : External_Client_Information_Access;
    begin
       if Mime_Type = Mime_Source_File then
          declare
@@ -748,11 +761,8 @@ package body External_Editor_Module is
          begin
             if Is_Regular_File (File) then
                Push_State (Kernel_Handle (Kernel), Processing);
-               Current_Client := Client_User_Data.Get
-                 (Kernel, External_Editor_User_Data);
                Client_Command
                  (Kernel => Kernel,
-                  Current_Client => Current_Client.all,
                   File   => File,
                   Line   => Natural (Line),
                   Column => Natural (Column));
@@ -774,29 +784,47 @@ package body External_Editor_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Priority       : Module_Priority := Default_Priority;
-      Current_Client : External_Client_Information_Access;
-
    begin
-      --  Memory is never freed, but is only allocated once per kernel.
-      Current_Client := new External_Client_Information;
+      External_Editor_Module_Id := new External_Editor_Module_Record;
+
+      --  Create the preferences
+
+      Default_External_Editor :=
+        Param_Spec_Enum (Supported_Client_Properties.Gnew_Enum
+        (Name    => "External-Editor-Default-Editor",
+         Nick    => -"External editor",
+         Blurb   => -"The default external editor to use",
+         Default => Gnuclient));
+      Register_Property
+        (Kernel, Param_Spec (Default_External_Editor),
+         Page => -"Editor");
+
+      Always_Use_External_Editor := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "External-Editor-Always-Use-External-Editor",
+         Default => False,
+         Blurb   => -("True if all editions should be done with the external"
+                      & " editor. This will deactivate completely the"
+                      & " internal editor. False if the external editor"
+                      & " needs to be explicitely called by the user."),
+         Nick    => -"Always use external editor"));
+      Register_Property
+        (Kernel, Param_Spec (Always_Use_External_Editor), -"Editor");
 
       if Get_Pref (Kernel, Always_Use_External_Editor) then
          Priority := Priority + 1;
       end if;
 
-      Select_Client (Kernel, Current_Client.all);
+      Select_Client (Kernel);
 
-      if Current_Client.Client /= None then
+      if External_Editor_Module_Id.Client /= Auto then
          Register_Module
-           (Module                  => External_Editor_Module_Id,
+           (Module                  => Module_ID (External_Editor_Module_Id),
             Kernel                  => Kernel,
             Module_Name             => External_Editor_Module_Name,
             Priority                => Priority,
             Contextual_Menu_Handler => External_Editor_Contextual'Access,
             Mime_Handler            => Mime_Action'Access);
       end if;
-
-      Client_User_Data.Set (Kernel, Current_Client, External_Editor_User_Data);
    end Register_Module;
 
 end External_Editor_Module;

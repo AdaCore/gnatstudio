@@ -22,12 +22,6 @@ with Glide_Kernel;
 
 package External_Editor_Module is
 
-   External_Editor_Module_Id : Glide_Kernel.Module_ID;
-   External_Editor_Module_Name : constant String := "External_Editor";
-
-   type Supported_Clients is (None, Gnuclient, Emacsclient, Emacs, Vim, Vi);
-   --  The list of supported external editors.
-
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
