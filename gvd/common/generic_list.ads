@@ -138,8 +138,8 @@ private
 
    Null_Node : constant List_Node := null;
    type List is record
-      First : List_Node_Access := new List_Node '(Null_Node);
-      Last  : List_Node_Access := new List_Node '(Null_Node);
+      First : List_Node_Access;
+      Last  : List_Node_Access;
    end record;
 
    Null_List : constant List := List' (null, null);
