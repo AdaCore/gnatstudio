@@ -36,11 +36,9 @@ with Gdk.Bitmap;        use Gdk.Bitmap;
 with Gdk.Pixmap;        use Gdk.Pixmap;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with Prj;               use Prj;
 
 package body Gtkada.File_Selector.Filters is
-
-   Project_File_Suffix : constant String := ".gpr";
-   --  extension for the Glide project files
 
    ----------------------
    -- Global variables --
@@ -92,7 +90,9 @@ package body Gtkada.File_Selector.Filters is
       Pixmap := null;
       Mask   := null;
 
-      if Tail (File, Project_File_Suffix'Length) = Project_File_Suffix then
+      if Tail (File, Project_File_Extension'Length) =
+        Project_File_Extension
+      then
          State := Normal;
       else
          State := Invisible;
