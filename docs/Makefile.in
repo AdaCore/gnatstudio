@@ -12,11 +12,16 @@ IMAGES = gps_title.jpg
 
 TEXI2HTML_FLAGS=--split chapter -menu
 
-all: doc clean-temp-files
+all: doc tutorial clean-temp-files
 non-ps: common clean-temp-files
 static:
 
+tutorial: tutorial.html
+
 doc: gps.txt gps.html gps.info gps.ps
+
+tutorial.html: tutorial.texi
+	perl ./texi2html ${TEXI2HTML_FLAGS} tutorial.texi
 
 gps.html: gps.texi
 	perl ./texi2html ${TEXI2HTML_FLAGS} gps.texi
