@@ -938,6 +938,204 @@ package body Docgen.Work_On_Source is
       Close (Index_File);
    end Process_Type_Index;
 
+   -------------------------------
+   -- Process_Tagged_Type_Index --
+   -------------------------------
+
+   procedure Process_Tagged_Type_Index
+     (B               : Backend_Handle;
+      Kernel          : access Kernel_Handle_Record'Class;
+      Tagged_Type_Index_List : Docgen.Type_List_Tagged_Element.List;
+      Entity_List      : in out Type_Entity_List.List;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_File_List : in out Type_Source_File_List.List;
+      Options         : All_Options;
+      Converter       : Doc_Subprogram_Type;
+      Doc_Directory   : String;
+      Doc_Suffix      : String)
+   is
+      use Type_List_Tagged_Element;
+      use List_Entity_Handle;
+      Tagged_Type_Index_Node : Type_List_Tagged_Element.List_Node;
+      Index_File             : File_Type;
+      Data_Tagged_Type       : Doc_Info (Info_Type => Tagged_Type_Index_Info);
+      Data_Item              : Doc_Info (Info_Type => Index_Tagged_Type_Item);
+      Data_End               : Doc_Info (Info_Type => End_Of_Index_Info);
+      Doc_File_Name          : constant String := "index_tagged_type";
+      Node_Fils              : List_Entity_Handle.List_Node;
+      Tag_Elem               : Tagged_Element;
+   begin
+      Create
+        (Index_File, Out_File, Doc_Directory & Doc_File_Name & Doc_Suffix);
+      Data_Tagged_Type := Doc_Info'
+        (Tagged_Type_Index_Info,
+         Doc_Info_Options     => Options,
+         Doc_LI_Unit          => No_LI_File,
+         Doc_File_List        => TSFL.Null_List,
+         Tagged_Type_Index_File_Name => new String'(Doc_File_Name));
+      Converter (B, Kernel, Index_File,
+                 Entity_List, List_Ref_In_File,
+                 Data_Tagged_Type, Doc_Directory, Doc_Suffix);
+      Free (Data_Tagged_Type.Tagged_Type_Index_File_Name);
+
+      if not Type_List_Tagged_Element.Is_Empty (Tagged_Type_Index_List) then
+         Tagged_Type_Index_Node
+           := Type_List_Tagged_Element.First (Tagged_Type_Index_List);
+
+         while Tagged_Type_Index_Node
+           /= Type_List_Tagged_Element.Null_Node loop
+            Tag_Elem := Type_List_Tagged_Element.Data (Tagged_Type_Index_Node);
+            if Tag_Elem.Me /= null then
+
+               --  Print the tagged type itself
+               Data_Item := Doc_Info'
+                 (Index_Tagged_Type_Item,
+                  Doc_Info_Options => Options,
+                  Doc_LI_Unit      => No_LI_File,
+                  Doc_File_List    => TSFL.Null_List,
+                  Doc_Tagged_Type  => Tag_Elem.Me.all,
+                  Doc_Family       => Main,
+                  Directory        => new String'(Doc_Directory),
+                  Suffix           => new String'(Doc_Suffix));
+               Converter
+                 (B, Kernel, Index_File,
+                  Entity_List, List_Ref_In_File,
+                  Data_Item, Doc_Directory, Doc_Suffix);
+               Free (Data_Item.Directory);
+               Free (Data_Item.Suffix);
+
+               --  Print its parent
+               if Tag_Elem.My_Parent /= null then
+                  --  There's a parent
+                  if Source_File_In_List
+                    (Source_File_List,
+                     Get_Declaration_File_Of (Tag_Elem.My_Parent.all)) then
+                     --  Linkage is possible
+                     Data_Item := Doc_Info'
+                       (Index_Tagged_Type_Item,
+                        Doc_Info_Options => Options,
+                        Doc_LI_Unit      => No_LI_File,
+                        Doc_File_List    => TSFL.Null_List,
+                        Doc_Tagged_Type  =>
+                          Tag_Elem.My_Parent.all,
+                        Doc_Family       => Parent_With_Link,
+                        Directory        => new String'(Doc_Directory),
+                        Suffix           => new String'(Doc_Suffix));
+
+                  else
+                     --  No link
+                     Data_Item := Doc_Info'
+                       (Index_Tagged_Type_Item,
+                        Doc_Info_Options => Options,
+                        Doc_LI_Unit      => No_LI_File,
+                        Doc_File_List    => TSFL.Null_List,
+                        Doc_Tagged_Type  =>
+                          Tag_Elem.My_Parent.all,
+                        Doc_Family       => Parent_Without_Link,
+                        Directory        => new String'(Doc_Directory),
+                        Suffix           => new String'(Doc_Suffix));
+                  end if;
+               else
+                  --  There's no parent
+                  Data_Item := Doc_Info'
+                    (Index_Tagged_Type_Item,
+                     Doc_Info_Options => Options,
+                     Doc_LI_Unit      => No_LI_File,
+                     Doc_File_List    => TSFL.Null_List,
+                     Doc_Tagged_Type  => No_Entity_Information,
+                     Doc_Family       => No_Parent,
+                     Directory        => new String'(Doc_Directory),
+                     Suffix           => new String'(Doc_Suffix));
+               end if;
+
+               Converter
+                 (B, Kernel, Index_File,
+                  Entity_List, List_Ref_In_File,
+                  Data_Item, Doc_Directory, Doc_Suffix);
+               Free (Data_Item.Directory);
+               Free (Data_Item.Suffix);
+
+               if Tag_Elem.Number_Of_Children > 0 then
+                  --  There is at least one child
+                  Node_Fils := List_Entity_Handle.First
+                    (Tag_Elem.My_Children);
+                  while Node_Fils /= List_Entity_Handle.Null_Node loop
+                     if List_Entity_Handle.Data (Node_Fils) /= null then
+                        if Source_File_In_List
+                          (Source_File_List,
+                           Get_Declaration_File_Of
+                          (List_Entity_Handle.Data (Node_Fils).all)) then
+                           --  Linkage is possible
+                           Data_Item := Doc_Info'
+                             (Index_Tagged_Type_Item,
+                              Doc_Info_Options => Options,
+                              Doc_LI_Unit      => No_LI_File,
+                              Doc_File_List    => TSFL.Null_List,
+                              Doc_Tagged_Type  =>
+                                List_Entity_Handle.Data (Node_Fils).all,
+                              Doc_Family       => Child_With_Link,
+                           Directory        => new String'(Doc_Directory),
+                              Suffix           => new String'(Doc_Suffix));
+                        else
+                           --  No link for this child
+                           Data_Item := Doc_Info'
+                             (Index_Tagged_Type_Item,
+                              Doc_Info_Options => Options,
+                              Doc_LI_Unit      => No_LI_File,
+                              Doc_File_List    => TSFL.Null_List,
+                              Doc_Tagged_Type  =>
+                                List_Entity_Handle.Data (Node_Fils).all,
+                              Doc_Family       => Child_Without_Link,
+                           Directory        => new String'(Doc_Directory),
+                              Suffix           => new String'(Doc_Suffix));
+                        end if;
+                        Converter
+                          (B, Kernel, Index_File,
+                           Entity_List, List_Ref_In_File,
+                           Data_Item, Doc_Directory, Doc_Suffix);
+                        Free (Data_Item.Directory);
+                        Free (Data_Item.Suffix);
+                     end if;
+                     Node_Fils := List_Entity_Handle.Next (Node_Fils);
+                  end loop;
+               else
+                  --  There's no child
+                  Data_Item := Doc_Info'
+                    (Index_Tagged_Type_Item,
+                     Doc_Info_Options => Options,
+                     Doc_LI_Unit      => No_LI_File,
+                     Doc_File_List    => TSFL.Null_List,
+                     Doc_Tagged_Type  => No_Entity_Information,
+                     Doc_Family       => No_Child,
+                     Directory        => new String'(Doc_Directory),
+                     Suffix           => new String'(Doc_Suffix));
+                  Converter
+                    (B, Kernel, Index_File,
+                     Entity_List, List_Ref_In_File,
+                     Data_Item, Doc_Directory, Doc_Suffix);
+                  Free (Data_Item.Directory);
+                  Free (Data_Item.Suffix);
+               end if;
+            end if;
+            Tagged_Type_Index_Node
+              := Type_List_Tagged_Element.Next (Tagged_Type_Index_Node);
+         end loop;
+      end if;
+
+      Data_End := Doc_Info'
+        (End_Of_Index_Info,
+         Doc_Info_Options => Options,
+         Doc_LI_Unit      => No_LI_File,
+         Doc_File_List    => TSFL.Null_List,
+         End_Index_Title  => new String'("End of Index"));
+      Converter (B, Kernel, Index_File,
+                 Entity_List, List_Ref_In_File,
+                 Data_End, Doc_Directory, Doc_Suffix);
+
+      Free (Data_End.End_Index_Title);
+      Close (Index_File);
+   end Process_Tagged_Type_Index;
+
    --------------------
    -- Process_Header --
    --------------------
@@ -1256,12 +1454,10 @@ package body Docgen.Work_On_Source is
          Entity_Node_Prec := TEL.Null_Node;
 
 
-         Old_Name := null;
+         Old_Name := new String'("Old_Name");
 
          while Entity_Node /= TEL.Null_Node loop
             --  Check if the entity is a package
-
-
             Alert := False;
             if TEL.Data (Entity_Node).Kind = Package_Entity
             --  but NOT the package itself
@@ -1271,12 +1467,18 @@ package body Docgen.Work_On_Source is
               and then Get_Declaration_File_Of
                 (TEL.Data (Entity_Node).Entity) = Source_Filename
             then
-               Old_Name := TEL.Data (Entity_Node).Name;
+               --  In this case, the entity will be removed from Entity_List
+               --  So, for the next loop, the entity that will be analysed is
+               --  Entity_Node_Prec. If the current entity is the first
+               --  element of the list, Alert warns that we can't use for the
+               --  next loop Entity_Node_Prec because its value is null.
                if Old_Name = TEL.Data (Entity_Node).Name then
                   Entity_Node_Prec := Entity_Node;
                   Entity_Node := TEL.Next (Entity_Node);
-
+                  --  Avoid an infinite loop
+                  --  Temporary while bug in Get_Full_Name not fixed
                else
+                  Old_Name := TEL.Data (Entity_Node).Name;
                   if Entity_Node = TEL.First (Entity_List) then
                      Alert := True;
                   end if;
@@ -1290,7 +1492,6 @@ package body Docgen.Work_On_Source is
                   if Header /= null then
                   --  Check if the subtitle has been set already.
                   --  Can't be set before the "if"
-
                      if not First_Already_Set then
                         Converter (B,
                                    Kernel,
