@@ -1814,7 +1814,7 @@ package body Project_Explorers is
    procedure Add_Or_Update_Flat_View_Root_Node
      (Explorer     : access Project_Explorer_Record'Class)
    is
-      Iter2    : Gtk_Tree_Iter;
+      Iter2, Iter3 : Gtk_Tree_Iter;
       Imported : Project_Type_Array := Get_Imported_Projects
         (Get_Project (Explorer.Kernel),
          Direct_Only     => False,
@@ -1840,12 +1840,13 @@ package body Project_Explorers is
          end loop;
 
          if not Found then
-            Remove (Explorer.Tree.Model, Iter2);
+            Iter_Copy (Source => Iter2, Dest => Iter3);
+            Next (Explorer.Tree.Model, Iter2);
+            Remove (Explorer.Tree.Model, Iter3);
          else
             Update_Node (Explorer, Iter2, null);
+            Next (Explorer.Tree.Model, Iter2);
          end if;
-
-         Next (Explorer.Tree.Model, Iter2);
       end loop;
 
       for Im in Imported'Range loop
