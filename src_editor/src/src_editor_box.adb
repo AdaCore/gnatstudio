@@ -953,10 +953,13 @@ package body Src_Editor_Box is
    is
       pragma Unreferenced (Buffer);
 
-      Line : constant Gint := Values.Get_Int (Values.Nth (Params, 1));
-      Col  : constant Gint := Values.Get_Int (Values.Nth (Params, 2));
    begin
-      Show_Cursor_Position (Box, Line => Line, Column => Col);
+      if Has_Focus_Is_Set (Box.Source_View) then
+         Show_Cursor_Position
+           (Box,
+            Line   => Values.Get_Int (Values.Nth (Params, 1)),
+            Column => Values.Get_Int (Values.Nth (Params, 2)));
+      end if;
 
    exception
       when E : others =>
