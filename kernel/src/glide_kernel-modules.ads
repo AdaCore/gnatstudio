@@ -411,20 +411,22 @@ package Glide_Kernel.Modules is
 
    Mime_Source_File : constant String := "gps/source";
    --  There are multiple data associated with this type:
-   --     first  : full name of the source file to open (use Get_File).
-   --     second : line to display initially (use Get_Int). Ignored if 0 (in
+   --    first   : full name of the source file to open (use Get_File).
+   --    second  : line to display initially (use Get_Int). Ignored if 0 (in
    --              this case, any existing editor should be left at its current
    --              line; if there is no existing editor, open the file on line
    --              1).
    --              if set to -1, close all file editors that correspond
    --              to this file.
-   --     third  : column to display initially (use Get_Int). Ignored if line
+   --    third   : column to display initially (use Get_Int). Ignored if line
    --              is 0
-   --     fourth : If non 0, the area between third and fourth arguments should
+   --    fourth  : If non 0, the area between third and fourth arguments should
    --              be selected. (use Get_Int).
-   --     fifth  : True if the location should be stored for navigation
+   --    fifth   : True if the location should be stored for navigation
    --              with Back/Forward.
-   --     sixth  : True if a new file should be created if needed.
+   --    sixth   : True if a new file should be created if needed.
+   --    seventh : Whether to force a reload for the file, if already open.
+   --    eighth  : The dock side to put the editor in.
    --  See also the function Open_File_Editor.
 
    Mime_File_Line_Info : constant String := "gps/file_info";
@@ -487,7 +489,8 @@ package Glide_Kernel.Modules is
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
-      Force_Reload      : Boolean := False);
+      Force_Reload      : Boolean := False;
+      Dock              : Gtkada.MDI.Dock_Side := Gtkada.MDI.None);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
@@ -499,6 +502,8 @@ package Glide_Kernel.Modules is
    --
    --  If Force_Reload is true, and the file is already open, a reload is
    --  forced, and no dialog is displayed for the user ("Revert ?")
+   --
+   --  Dock is the area in which the editor will be displayed in the MDI
 
    procedure Clear_Highlighting
      (Kernel   : access Kernel_Handle_Record'Class;
