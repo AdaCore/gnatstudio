@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -24,7 +24,7 @@ with Glib.Object;                  use Glib.Object;
 with Glib.Xml_Int;                 use Glib.Xml_Int;
 with XML_Parsers;
 with Glib.Values;                  use Glib.Values;
-with GVD;
+with Config;
 with Csc_HTML_Widget;              use Csc_HTML_Widget;
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
 with GNAT.OS_Lib;                  use GNAT.OS_Lib;
@@ -1405,11 +1405,11 @@ package body Help_Module is
       end if;
 
       Button := Message_Dialog
-        (GPS_Name (Top) & " " & GVD.Version & " (" & GVD.Source_Date &
-           (-") hosted on ") & GVD.Target & LF &
+        (GPS_Name (Top) & " " & Config.Version & " (" & Config.Source_Date &
+           (-") hosted on ") & Config.Target & LF &
          (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
          (-"the GNAT Programming System") & LF & Contents.all & LF &
-         "(c) 2001-2004 ACT-Europe",
+         "(c) 2001-2005 AdaCore",
          Buttons => Button_OK,
          Title   => -"About...",
          Parent  => Get_Current_Window (Kernel));
