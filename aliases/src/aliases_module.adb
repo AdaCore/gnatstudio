@@ -29,8 +29,6 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
 with Gdk.Color;                use Gdk.Color;
 with Gdk.Event;                use Gdk.Event;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
-with Gdk.Types;                use Gdk.Types;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
 with Glib;                     use Glib;
@@ -1984,8 +1982,7 @@ package body Aliases_Module is
       Bind_Default_Key
         (Get_Key_Handler (Kernel),
          Action      => "Expand alias",
-         Default_Key => GDK_LC_o,
-         Default_Mod => Control_Mask);
+         Default_Key => "control-o");
 
       Register_Special_Alias_Entity
         (Kernel, "Current Date", 'D', Special_Entities'Access);
