@@ -514,13 +514,16 @@ package body Odd.Process is
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
          Text_Output_Handler'Access, Window.all'Address,
          After => True);
-      Id := My_Input.Add
-        (To_Gint
-         (Get_Output_Fd
-          (Get_Descriptor (Get_Process (Process.Debugger)).all)),
-         Gdk.Types.Input_Read,
-         Output_Available'Access,
-         My_Input.Data_Access (Process));
+
+      --  This filter is only required in some rare cases, since most of the
+      --  time we do some polling.
+--        Id := My_Input.Add
+--          (To_Gint
+--           (Get_Output_Fd
+--            (Get_Descriptor (Get_Process (Process.Debugger)).all)),
+--           Gdk.Types.Input_Read,
+--           Output_Available'Access,
+--           My_Input.Data_Access (Process));
 
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
@@ -635,6 +638,8 @@ package body Odd.Process is
 
                   if Item /= null then
                      Put (Process.Data_Canvas, Item);
+                     Recompute_All_Aliases
+                       (Process.Data_Canvas, Recompute_Values => False);
                   end if;
 
                --  We have a link
@@ -731,7 +736,6 @@ package body Odd.Process is
    is
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
-      Cursor   : Gdk_Cursor;
    begin
       Append (Debugger.Command_History, Command);
 
@@ -740,9 +744,7 @@ package body Odd.Process is
            (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
 
-      Gdk_New (Cursor, Gdk.Types.Watch);
-      Set_Cursor (Get_Window (Debugger.Window), Cursor);
-      Destroy (Cursor);
+      Set_Busy_Cursor (Debugger, True);
 
       --  ??? Should forbid commands that modify the configuration of the
       --  debugger, like "set annotate" for gdb, otherwise we can't be sure
@@ -772,10 +774,7 @@ package body Odd.Process is
       end if;
 
       --  Put back the standard cursor
-
-      Gdk_New (Cursor, Gdk.Types.Left_Ptr);
-      Set_Cursor (Get_Window (Debugger.Window), Cursor);
-      Destroy (Cursor);
+      Set_Busy_Cursor (Debugger, False);
 
       Unregister_Dialog (Debugger);
 
@@ -896,5 +895,24 @@ package body Odd.Process is
         (Get_Child (Get_Cur_Page
          (Main_Debug_Window_Access (Main_Window).Process_Notebook)));
    end Get_Current_Process;
+
+   ---------------------
+   -- Set_Busy_Cursor --
+   ---------------------
+
+   procedure Set_Busy_Cursor
+     (Debugger : access Debugger_Process_Tab_Record'Class;
+      Busy     : Boolean := True)
+   is
+      Cursor   : Gdk_Cursor;
+   begin
+      if Busy then
+         Gdk_New (Cursor, Gdk.Types.Watch);
+      else
+         Gdk_New (Cursor, Gdk.Types.Left_Ptr);
+      end if;
+      Set_Cursor (Get_Window (Debugger.Window), Cursor);
+      Destroy (Cursor);
+   end Set_Busy_Cursor;
 
 end Odd.Process;

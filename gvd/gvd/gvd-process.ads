@@ -197,6 +197,11 @@ package Odd.Process is
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
 
+   procedure Set_Busy_Cursor
+     (Debugger : access Debugger_Process_Tab_Record'Class;
+      Busy     : Boolean := True);
+   --  Enable or disable the "busy" cursor.
+
    function Get_Current_Process
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
      return Debugger_Process_Tab;
