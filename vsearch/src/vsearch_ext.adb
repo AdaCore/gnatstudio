@@ -172,6 +172,9 @@ package body Vsearch_Ext is
    --  Create the search context based on the current contents of the GUI.
    --  This is stored in Vsearch.Last_Search_Context.
 
+   procedure On_Destroy (Search : access Gtk_Widget_Record'Class);
+   --  Called when the search widget is destroyed
+
    ---------------
    -- Callbacks --
    ---------------
@@ -1047,6 +1050,16 @@ package body Vsearch_Ext is
          Clear_Combo => False);
    end Initialize;
 
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Search : access Gtk_Widget_Record'Class) is
+      pragma Unreferenced (Search);
+   begin
+      Vsearch_Module_Id.Search := null;
+   end On_Destroy;
+
    ---------------------------
    -- Get_Or_Create_Vsearch --
    ---------------------------
@@ -1070,6 +1083,10 @@ package body Vsearch_Ext is
 
             --  keep a reference on it so that it isn't destroyed when the MDI
             --  child is destroyed.
+
+            Widget_Callback.Connect
+              (Vsearch_Module_Id.Search, "destroy",
+               Widget_Callback.To_Marshaller (On_Destroy'Access));
 
             Ref (Vsearch_Module_Id.Search);
          end if;
