@@ -374,6 +374,9 @@ go to previous/next location;
 start/continue the debugging session, step/next execution, finish
 current procedure.
 
+The icon on the far left of the tool bar will be animated to indicate that an
+action (e.g. a build or a search) is going on in background.
+
 @c --------------------------------------------------------------------
 @node The Work Space
 @section The Work Space
