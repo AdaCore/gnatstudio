@@ -345,7 +345,7 @@ create_table(int type,int mode,int cachesize, unsigned int dbi)
 	memset((char *)&db_btree_info,0,sizeof(db_btree_info));
 	db_btree_info.cachesize = cachesize;
 
-#if _WINDOWS
+#if WIN32
 	/*
 	 * On windows we do support lower/upper case pathnames
 	 */
@@ -3447,7 +3447,7 @@ Paf_Pipe_Write MX_VARARGS_DEF(char *, arg1)
 	{
 		cou = 0;
 		Tcl_ExternalToUtfDString(NULL, tmp, len, &utfBuffer);
-#ifdef _WINDOWS
+#ifdef WIN32
 		if (WriteFile(pipe_handle,Tcl_DStringValue(&utfBuffer),
 		    Tcl_DStringLength(&utfBuffer),&cou,NULL) == FALSE)
 		{
