@@ -2138,6 +2138,11 @@ language syntax.
 @cindex uncomment
 Remove the comment delimiters from the current selection or line.
 
+@item Refill
+@cindex refill
+Refill text on the selection or current line according to the right
+margin as defined by the column highlight. @pxref{Column highlight}.
+
 @item Fold all blocks
 @cindex fold
 Collapse all the blocks in the current file.
