@@ -9,7 +9,7 @@
    <!---------------->
 
    <action name="generic_cvs_status" show-command="true" output="none">
-      <shell output="none">pwd</shell>
+      <shell>pwd</shell>
       <shell output="">echo "Querying status for files in %1"</shell>
       <external>cvs status "$2-"</external>
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
@@ -20,7 +20,7 @@
    <!-------------------->
 
    <action name="generic_cvs_status_dir" show-command="true" output="none">
-      <shell output="none">pwd</shell>
+      <shell>pwd</shell>
       <shell output="">echo "Querying status for %1"</shell>
       <external>cvs status .</external>
       <shell>VCS.status_parse "CVS" "%1" "$1" FALSE</shell>
