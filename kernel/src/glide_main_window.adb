@@ -462,6 +462,19 @@ package body Glide_Main_Window is
       return Success;
    end Execute;
 
+   --------------
+   -- GPS_Name --
+   --------------
+
+   function GPS_Name (Window : access Glide_Window_Record) return String is
+   begin
+      if Window.Public_Version then
+         return "GPS";
+      else
+         return "GPS Pro";
+      end if;
+   end GPS_Name;
+
    ----------------
    -- On_Destroy --
    ----------------
@@ -501,11 +514,14 @@ package body Glide_Main_Window is
       Info   : String := "") is
    begin
       if Info = "" then
-         Set_Title (Window, -"GPS - the GNAT Programming System (project: "
-                    & Project_Name (Get_Project (Window.Kernel)) & ')');
+         Set_Title (Window, GPS_Name (Window) &
+                    (-" - GNAT Programming System (project: ") &
+                    Project_Name (Get_Project (Window.Kernel)) & ')');
       else
-         Set_Title (Window, -"GPS - the GNAT Programming System ("
-                    & Info & ")");
+         Set_Title (Window, GPS_Name (Window) &
+                    (-" - GNAT Programming System (project: ") &
+                    Project_Name (Get_Project (Window.Kernel)) &
+                    ") - " & Info);
       end if;
    end Reset_Title;
 
