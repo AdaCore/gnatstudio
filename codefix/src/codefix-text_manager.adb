@@ -1908,17 +1908,17 @@ package body Codefix.Text_Manager is
 
       declare
          Buffer : String (1 .. Get_Old_Text_Length
-                            (Extended_Extract,
-                             Current_Text));
+                            (Extended_Extract, Current_Text) +
+                            EOL_Str'Length * Get_Number_Lines
+                              (Extended_Extract));
       begin
-
          while Current_Extract /= null loop
             Current_Length := Get_Old_Text_Length
               (Current_Extract.all,
-               Current_Text);
+               Current_Text) + EOL_Str'Length;
             Buffer (Current_Col ..
                       Current_Col + Current_Length - 1) :=
-                Get_Old_Text (Current_Extract.all, Current_Text);
+                Get_Old_Text (Current_Extract.all, Current_Text) & EOL_Str;
             Current_Col := Current_Col + Current_Length;
             Current_Extract := Current_Extract.Next;
          end loop;
