@@ -59,4 +59,8 @@ package GVD is
    --  This variable is useful for debugging, and also for systems that do
    --  not fully support the Gdk_Input package (e.g Windows).
 
+   Can_Output : constant Boolean := @CAN_OUTPUT@;
+   --  True if gvd can print text on standard output/error, false if gvd
+   --  is a GUI only process (e.g under windows).
+
 end GVD;
