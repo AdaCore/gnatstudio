@@ -98,6 +98,8 @@ begin
      (Process_Tab.Debugger_Text, "insert_text", On_Debugger_Text_Insert_Text'Access, Process_Tab);
    Widget_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "delete_text", On_Debugger_Text_Delete_Text'Access, Process_Tab);
+   Widget_Callback.Object_Connect
+     (Process_Tab.Debugger_Text, "insert_text", On_Debugger_Text_Insert_Text2'Access, Process_Tab, True);
    Add (Process_Tab.Scrolledwindow7, Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
 

@@ -41,7 +41,7 @@ package body Process_Tab_Pkg.Callbacks is
    is
       Arg1 : String := To_String (Params, 1);
       --  Arg2 : Gint := To_Gint (Params, 2);
-      Arg3 : Address := To_Address (Params, 3);
+      Position : Address := To_Address (Params, 3);
 
       Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
@@ -50,17 +50,29 @@ package body Process_Tab_Pkg.Callbacks is
       use Odd.Process;
 
    begin
-      if To_Guint_Ptr (Arg3).all < Top.Edit_Pos then
+      if To_Guint_Ptr (Position).all < Top.Edit_Pos then
          Emit_Stop_By_Name (Top.Debugger_Text, "insert_text");
       else
          if Arg1 (Arg1'First) = ASCII.LF then
+            --  ???Would be nice to display the LF character right away, so
+            --  that the user knows his command has been taken into account.
+
+            --  This would require to: insert the LF, force a screen update,
+            --  process the command, stop the emission of the signal, set the
+            --  final position of the cursor. Note that forcing a screen
+            --  update can probably only be done by using an idle handle
+            --  to call Process_User_Command, instead of calling it in this
+            --  function.
+
+            --  Can't we at least change the cursor ?
+
             Process_User_Command
               (Top, Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos)));
          end if;
       end if;
    end On_Debugger_Text_Insert_Text;
 
-   ----------------------------------
+  ----------------------------------
    -- On_Debugger_Text_Delete_Text --
    ----------------------------------
 
@@ -74,11 +86,35 @@ package body Process_Tab_Pkg.Callbacks is
       Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
    begin
-      Put_Line ("On_Debugger_Text_Delete_Text");
       if Arg2 <= Gint (Top.Edit_Pos) then
-         Put_Line ("Reject");
          Emit_Stop_By_Name (Top.Debugger_Text, "delete_text");
       end if;
    end On_Debugger_Text_Delete_Text;
+
+   -----------------------------------
+   -- On_Debugger_Text_Insert_Text2 --
+   -----------------------------------
+
+   procedure On_Debugger_Text_Insert_Text2
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Arg1 : String := To_String (Params, 1);
+      --  Arg2 : Gint := To_Gint (Params, 2);
+      --  Arg3 : Address := To_Address (Params, 3);
+      Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
+   begin
+      --  This callback is called last in the list for "insert_text".  This is
+      --  required because in the first handler On_Debugger_Text_Insert_Text,
+      --  the ASCII.LF character is inserted only after the output of the
+      --  command has been inserted. Since the emit also memorizes the
+      --  position, the character is inserted correctly. However, this leaves
+      --  the cursor at an incorrect position, which we restore here.
+
+      if Arg1 (Arg1'First) = ASCII.LF then
+         Set_Position (Top.Debugger_Text,
+                       Gint (Get_Length (Top.Debugger_Text)));
+      end if;
+   end On_Debugger_Text_Insert_Text2;
 
 end Process_Tab_Pkg.Callbacks;
