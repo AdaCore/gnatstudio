@@ -862,6 +862,8 @@ package body VCS.CVS is
             Put_Line (Ft, Data (Logs_Temp));
             Close (Ft);
 
+            Append (Arguments, Base_Name (File));
+
             Append (Head, Log_File);
 
             Create
