@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Prj;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Expect; use GNAT.Expect;
 
 package Src_Info.CPP is
 
@@ -65,15 +65,16 @@ package Src_Info.CPP is
    --  ??? In current implementation for C/C++ this function always
    --  returns Xref_Filename for Source_Filename
 
-   procedure Browse_Files
-     (File_List              : String_List_Access;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
-      Regenerate             : Boolean := False);
-   --  Creates/Updates SN database for given file list.
-   --  Creates new database if Regenerate = True.
-   --  Predefined_Source_Path and Predefined_Object_Path are ignored.
+   procedure Delete_Database (Root_Project : Prj.Project_Id);
+   --  Deletes SN project database
+
+   function Browse_File
+     (Source_File            : String;
+      Root_Project           : Prj.Project_Id) return Process_Descriptor;
+   --  Runs process to create/update SN database for given file.
+
+   function Generate_Xrefs
+     (Root_Project : Prj.Project_Id) return Process_Descriptor;
 
    procedure Add
      (HT      : in out LI_File_List;
