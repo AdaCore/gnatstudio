@@ -1239,7 +1239,20 @@ package body VCS.CVS is
          Open_File_Editor (Kernel, Current_File);
       end if;
 
-      L_Temp := Next (Next (L_Temp));
+      --  Find the beginning of the actual annotations
+
+      while L_Temp /= Null_Node loop
+         declare
+            S : constant String := Data (L_Temp);
+         begin
+            if S'Length >= 3 and then S (S'First .. S'First + 2) = "***" then
+               L_Temp := Next (L_Temp);
+               exit;
+            end if;
+         end;
+
+         L_Temp := Next (L_Temp);
+      end loop;
 
       declare
          S : constant String := Data (L_Temp);
@@ -1250,6 +1263,8 @@ package body VCS.CVS is
       end;
 
       for J in 1 .. Length loop
+         exit when L_Temp = Null_Node;
+
          declare
             S : constant String := Data (L_Temp);
          begin
