@@ -81,13 +81,20 @@ package body Glide_Main_Window is
 
       Win : constant Glide_Window := Glide_Window (Widget);
    begin
-      if Save_All_MDI_Children (Win.Kernel) then
-         Main_Quit;
-         return False;
-      else
-         return True;
-      end if;
+      Quit (Win);
+      return True;
    end Delete_Callback;
+
+   ----------
+   -- Quit --
+   ----------
+
+   procedure Quit (Main_Window : access Glide_Window_Record'Class) is
+   begin
+      if Save_All_MDI_Children (Main_Window.Kernel) then
+         Main_Quit;
+      end if;
+   end Quit;
 
    ----------------
    -- Initialize --
