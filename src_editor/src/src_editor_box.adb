@@ -1086,9 +1086,10 @@ package body Src_Editor_Box is
 
       --  Setup a minimal size for the line:column area, to avoid too much
       --  resizing.
+
       declare
          Layout : constant Pango_Layout :=
-           Create_Pango_Layout (Box.Cursor_Loc_Label, "9999:99");
+           Create_Pango_Layout (Box.Cursor_Loc_Label, "99999:999");
          Width, Height : Gint;
       begin
          Get_Pixel_Size (Layout, Width, Height);
