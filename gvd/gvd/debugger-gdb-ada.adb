@@ -236,7 +236,7 @@ package body Debugger.Gdb.Ada is
                -- Repeat values --
                -------------------
                --  This only happens inside arrays, so we can simply replace
-               --  Result (it will be delete the next time the item is
+               --  Result (it will be deleted the next time the item is
                --  parsed anyway).
 
                if Looking_At (Type_Str, Index, "<repeats ") then
