@@ -252,7 +252,7 @@ package body Src_Info.LI_Utils is
    function Find_Dependency_Declaration
      (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
-      Filename                : in String;
+      Filename                : in String := "";
       Location                : in Point) return E_Declaration_Info_List
    is
       Dep_Ptr : Dependency_File_Info_List;
