@@ -1524,7 +1524,7 @@ static void _DeclarationProcess( Declaration_t Declaration, int record )
 
          Type = f_TypeDeclaratorConcat( TypeBasic, Declarator );
 
-         f_PutConstructor( Type, Declaration->lineno, Declaration->charno, CONSTRUCTOR | DESTRUCTOR );
+         f_PutConstructor( Type, Declarator->lineno_beg, Declarator->charno_beg, CONSTRUCTOR /* | DESTRUCTOR */ );
 
          if( test_fp )
          {

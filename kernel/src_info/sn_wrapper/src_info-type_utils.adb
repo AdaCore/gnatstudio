@@ -595,6 +595,15 @@ package body Src_Info.Type_Utils is
       return (The_Class.Attributes and SN_TEMPLATE) /= 0;
    end Is_Template;
 
+   -----------------
+   -- Is_Template --
+   -----------------
+
+   function Is_Template (Func : FU_Table) return Boolean is
+   begin
+      return (Func.Attributes and SN_TEMPLATE) /= 0;
+   end Is_Template;
+
    ----------------------
    -- Plain_Class_Name --
    ----------------------

@@ -435,10 +435,23 @@ package body Src_Info.CPP is
    --  Generates list of dependency declarations for the function
    --  with given name
 
+   function Get_Function_Kind
+     (Return_Type             : String;
+      Attributes              : SN_Attributes) return E_Kind;
+   --  Returns function/procedure E_Kind after investigation of its
+   --  return type and template flag in the attributes
+
+   function Get_Method_Kind
+     (Class_Def               : CL_Table;
+      Return_Type             : String;
+      Attributes              : SN_Attributes) return E_Kind;
+   --  Returns method E_Kind after investigation of its return
+   --  type and template parameters of the class
+
    function Get_Method_Kind
      (Handler                 : access CPP_LI_Handler_Record'Class;
-      Class_Name, Return_Type : String)
-      return E_Kind;
+      Class_Name, Return_Type : String;
+      Attributes              : SN_Attributes) return E_Kind;
    --  Returns method E_Kind after investigation of its return
    --  type and template parameters of the class
 
@@ -1054,10 +1067,15 @@ package body Src_Info.CPP is
    is
       Type_Decl_Info     : E_Declaration_Info_List;
    begin
+      --  here we may confuse Overloaded_Entity and Class declaration
+      --  for when a method is overloaded it is created as Overloaded_Entity
+      --  with position pointing to the class beginning
       Type_Decl_Info := Find_Declaration
         (File         => File,
          Symbol_Name  => Type_Name,
-         Location     => Type_Decl);
+         Location     => Type_Decl,
+         Kind         => Overloaded_Entity,
+         Negate_Kind  => True);
 
       if Type_Decl_Info /= null then
          Insert_Reference
@@ -1147,24 +1165,15 @@ package body Src_Info.CPP is
       end if;
    end Find_Or_Create_Class;
 
-   ---------------------
-   -- Get_Method_Kind --
-   ---------------------
-   function Get_Method_Kind
-     (Handler                 : access CPP_LI_Handler_Record'Class;
-      Class_Name, Return_Type : String) return E_Kind
+   -----------------------
+   -- Get_Function_Kind --
+   -----------------------
+   function Get_Function_Kind
+     (Return_Type             : String;
+      Attributes              : SN_Attributes) return E_Kind
    is
-      Class_Def   : CL_Table;
-      Is_Template : Boolean := False;
+      Is_Template : Boolean := (Attributes and SN_TEMPLATE) /= 0;
    begin
-      begin -- check if this class is template
-         Class_Def := Find (Handler.SN_Table (CL), Class_Name);
-         Is_Template := Type_Utils.Is_Template (Class_Def);
-         Free (Class_Def);
-      exception
-         when DB_Error | Not_Found =>
-            null;
-      end;
       if Return_Type = "void" then
          if Is_Template then
             return Generic_Procedure;
@@ -1178,6 +1187,49 @@ package body Src_Info.CPP is
             return Non_Generic_Function_Or_Operator;
          end if;
       end if;
+   end Get_Function_Kind;
+
+   ---------------------
+   -- Get_Method_Kind --
+   ---------------------
+   function Get_Method_Kind
+     (Class_Def               : CL_Table;
+      Return_Type             : String;
+      Attributes              : SN_Attributes) return E_Kind
+   is
+      Is_Template : Boolean := (Attributes and SN_TEMPLATE) /= 0;
+   begin
+      Is_Template := Is_Template or else Type_Utils.Is_Template (Class_Def);
+      if Return_Type = "void" then
+         if Is_Template then
+            return Generic_Procedure;
+         else
+            return Non_Generic_Procedure;
+         end if;
+      else
+         if Is_Template then
+            return Generic_Function_Or_Operator;
+         else
+            return Non_Generic_Function_Or_Operator;
+         end if;
+      end if;
+   end Get_Method_Kind;
+
+   ---------------------
+   -- Get_Method_Kind --
+   ---------------------
+   function Get_Method_Kind
+     (Handler                 : access CPP_LI_Handler_Record'Class;
+      Class_Name, Return_Type : String;
+      Attributes              : SN_Attributes) return E_Kind
+   is
+      Class_Def   : CL_Table;
+      Kind        : E_Kind;
+   begin
+      Class_Def := Find (Handler.SN_Table (CL), Class_Name);
+      Kind := Get_Method_Kind (Class_Def, Return_Type, Attributes);
+      Free (Class_Def);
+      return Kind;
    end Get_Method_Kind;
 
    ------------------------------------
@@ -1334,7 +1386,8 @@ package body Src_Info.CPP is
                Kind               => Get_Method_Kind
                  (Handler,
                   Buffer (Class_Name.First .. Class_Name.Last),
-                  Buffer (Return_Type.First .. Return_Type.Last)),
+                  Buffer (Return_Type.First .. Return_Type.Last),
+                  MD_Tab.Attributes),
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -1473,11 +1526,9 @@ package body Src_Info.CPP is
             Location    => First_FD_Pos);
 
          if Decl_Info = null then
-            if Buffer (Return_Type.First .. Return_Type.Last) = "void" then
-               Target_Kind := Non_Generic_Procedure;
-            else
-               Target_Kind := Non_Generic_Function_Or_Operator;
-            end if;
+            Target_Kind := Get_Function_Kind
+              (Buffer (Return_Type.First .. Return_Type.Last),
+               FD_Tab.Attributes);
 
             Insert_Dependency_Declaration
               (Handler            => Handler,
@@ -2112,12 +2163,9 @@ package body Src_Info.CPP is
                   Decl_Info);
 
                if Decl_Info = null then -- only implementation
-                  if Fn.Buffer (Fn.Return_Type.First .. Fn.Return_Type.Last)
-                     = "void" then
-                     Target_Kind := Non_Generic_Procedure;
-                  else
-                     Target_Kind := Non_Generic_Function_Or_Operator;
-                  end if;
+                  Target_Kind := Get_Function_Kind
+                    (Fn.Buffer (Fn.Return_Type.First .. Fn.Return_Type.Last),
+                     Fn.Attributes);
 
                   Insert_Dependency_Declaration
                     (Handler            => Handler,
@@ -2282,11 +2330,10 @@ package body Src_Info.CPP is
             Return_Type    := Fn.Return_Type;
          end if;
 
-         if Buffer (Return_Type.First .. Return_Type.Last) = "void" then
-            Kind := Non_Generic_Procedure;
-         else
-            Kind := Non_Generic_Function_Or_Operator;
-         end if;
+         Kind := Get_Function_Kind
+           (Buffer (Return_Type.First .. Return_Type.Last),
+            Fn.Attributes);
+
          --  this is a function defined in the current file
          --  it may be either forward declared or implemented
          --  right away
@@ -2699,7 +2746,8 @@ package body Src_Info.CPP is
          Kind := Get_Method_Kind
            (Handler,
             Ref_Class,
-            MDecl.Buffer (MDecl.Return_Type.First .. MDecl.Return_Type.Last));
+            MDecl.Buffer (MDecl.Return_Type.First .. MDecl.Return_Type.Last),
+            MDecl.Attributes);
 
          Find_First_Forward_Declaration
            (MDecl.Buffer,
@@ -3465,12 +3513,9 @@ package body Src_Info.CPP is
 
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
-      if FD_Tab.Buffer (FD_Tab.Return_Type.First ..
-                        FD_Tab.Return_Type.Last) = "void" then
-         Target_Kind := Non_Generic_Procedure;
-      else
-         Target_Kind := Non_Generic_Function_Or_Operator;
-      end if;
+      Target_Kind := Get_Function_Kind
+        (FD_Tab.Buffer (FD_Tab.Return_Type.First .. FD_Tab.Return_Type.Last),
+         FD_Tab.Attributes);
 
       Decl_Info := Find_Declaration
         (File        => File,
@@ -3579,7 +3624,6 @@ package body Src_Info.CPP is
       Start_Position : constant Point := Sym.Start_Position;
       Body_Position  : Point := Invalid_Point;
       End_Position   : Point;
-      Is_Template    : Boolean := False;
       Ref            : TO_Table;
       Our_Ref        : Boolean;
 
@@ -3606,7 +3650,11 @@ package body Src_Info.CPP is
                Class_Def := Find
                  (Handler.SN_Table (CL),
                   Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
-               Is_Template := Type_Utils.Is_Template (Class_Def);
+               Target_Kind := Get_Method_Kind
+                 (Class_Def,
+                  FU_Tab.Buffer (FU_Tab.Return_Type.First ..
+                                 FU_Tab.Return_Type.Last),
+                  FU_Tab.Attributes);
                Find_Or_Create_Class
                   (Handler,
                    Class_Def,
@@ -3631,20 +3679,6 @@ package body Src_Info.CPP is
                when DB_Error | Not_Found =>
                   null;
             end;
-            if FU_Tab.Buffer (FU_Tab.Return_Type.First ..
-                              FU_Tab.Return_Type.Last) = "void" then
-               if Is_Template then
-                  Target_Kind := Generic_Procedure;
-               else
-                  Target_Kind := Non_Generic_Procedure;
-               end if;
-            else
-               if Is_Template then
-                  Target_Kind := Generic_Function_Or_Operator;
-               else
-                  Target_Kind := Non_Generic_Function_Or_Operator;
-               end if;
-            end if;
             End_Position := FU_Tab.End_Position;
          exception
             when DB_Error | Not_Found =>
@@ -3660,12 +3694,10 @@ package body Src_Info.CPP is
                Fu_Id,
                Sym.Start_Position,
                Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last));
-            if FU_Tab.Buffer (FU_Tab.Return_Type.First ..
-                              FU_Tab.Return_Type.Last) = "void" then
-               Target_Kind := Non_Generic_Procedure;
-            else
-               Target_Kind := Non_Generic_Function_Or_Operator;
-            end if;
+            Target_Kind := Get_Function_Kind
+               (FU_Tab.Buffer (FU_Tab.Return_Type.First ..
+                               FU_Tab.Return_Type.Last),
+                FU_Tab.Attributes);
             End_Position := FU_Tab.End_Position;
          exception
             when DB_Error | Not_Found =>
@@ -4091,7 +4123,6 @@ package body Src_Info.CPP is
       MD_Tab       : MD_Table;
       MI_Tab       : FU_Table;
       MD_Tab_Tmp   : MD_Table;
-      Is_Template  : Boolean := False;
       Found        : Boolean;
       MI_File      : LI_File_Ptr;
       use DB_Structures.Segment_Vector;
@@ -4153,7 +4184,11 @@ package body Src_Info.CPP is
          Class_Def := Find
            (Handler.SN_Table (CL),
             Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
-         Is_Template := Type_Utils.Is_Template (Class_Def);
+         Target_Kind := Get_Method_Kind
+           (Class_Def,
+            MD_Tab.Buffer (MD_Tab.Return_Type.First ..
+                           MD_Tab.Return_Type.Last),
+            MD_Tab.Attributes);
          --  Add reference to the class we belong to
          Find_Or_Create_Class
            (Handler,
@@ -4172,21 +4207,6 @@ package body Src_Info.CPP is
          when DB_Error | Not_Found =>
             null;
       end;
-
-      if MD_Tab.Buffer (MD_Tab.Return_Type.First ..
-                        MD_Tab.Return_Type.Last) = "void" then
-         if Is_Template then
-            Target_Kind := Generic_Procedure;
-         else
-            Target_Kind := Non_Generic_Procedure;
-         end if;
-      else
-         if Is_Template then
-            Target_Kind := Generic_Function_Or_Operator;
-         else
-            Target_Kind := Non_Generic_Function_Or_Operator;
-         end if;
-      end if;
 
       Decl_Info := Find_Declaration
         (File        => File,
@@ -4606,7 +4626,7 @@ package body Src_Info.CPP is
    is
       P        : Pair_Ptr;
       Ref      : TO_Table;
-      Ref_Kind : Reference_Kind := Reference;
+      Ref_Kind : Reference_Kind;
    begin
 --    Info (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last) &
 --       "::" &
@@ -4656,6 +4676,8 @@ package body Src_Info.CPP is
                  (Ref.Access_Type.First .. Ref.Access_Type.Last) = "w"
                then
                   Ref_Kind := Modification;
+               else
+                  Ref_Kind := Reference;
                end if;
                Insert_Reference (Decl_Info, File, Ref.Position, Ref_Kind);
             end if;

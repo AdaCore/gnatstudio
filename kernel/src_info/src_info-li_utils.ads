@@ -111,12 +111,15 @@ private package Src_Info.LI_Utils is
       Symbol_Name             : String := "";
       Class_Name              : String := "";
       Kind                    : E_Kind := No_Kind;
-      Location                : SN.Point := SN.Invalid_Point)
+      Location                : SN.Point := SN.Invalid_Point;
+      Negate_Kind             : Boolean := False)
       return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name, Location or (and) Kind
    --  If value for some attribute is not given then this attribute doesn't
    --  affect on searching.
    --  Return null if not found.
+   --  When Negate_Kind is true, function searches the first declaration
+   --  whose kind is NOT equal to the Kind argument.
 
    function Find_Dependency_Declaration
      (File                    : LI_File_Ptr;

@@ -50,7 +50,8 @@ package body Src_Info.LI_Utils is
       Symbol_Name             : String := "";
       Class_Name              : String := "";
       Kind                    : E_Kind := No_Kind;
-      Location                : Point := Invalid_Point)
+      Location                : Point := Invalid_Point;
+      Negate_Kind             : Boolean := False)
       return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
    --  specified E_Declaration_Info_List.
@@ -453,7 +454,8 @@ package body Src_Info.LI_Utils is
       Symbol_Name             : String := "";
       Class_Name              : String := "";
       Kind                    : E_Kind := No_Kind;
-      Location                : Point := Invalid_Point)
+      Location                : Point := Invalid_Point;
+      Negate_Kind             : Boolean := False)
       return E_Declaration_Info_List is
    begin
       if File = No_LI_File
@@ -467,7 +469,8 @@ package body Src_Info.LI_Utils is
             Symbol_Name          => Symbol_Name,
             Class_Name           => Class_Name,
             Kind                 => Kind,
-            Location             => Location);
+            Location             => Location,
+            Negate_Kind          => Negate_Kind);
       end if;
    end Find_Declaration;
 
@@ -658,7 +661,8 @@ package body Src_Info.LI_Utils is
       Symbol_Name             : String := "";
       Class_Name              : String := "";
       Kind                    : E_Kind := No_Kind;
-      Location                : Point := Invalid_Point)
+      Location                : Point := Invalid_Point;
+      Negate_Kind             : Boolean := False)
       return E_Declaration_Info_List
    is
       D_Ptr : E_Declaration_Info_List := Declaration_Info_Ptr;
@@ -684,7 +688,11 @@ package body Src_Info.LI_Utils is
              or else (Class_Name = "")
            ) and then (
              (Kind /= No_Kind
-                and then D_Ptr.Value.Declaration.Kind = Kind)
+                and then (
+                   (Negate_Kind and then D_Ptr.Value.Declaration.Kind /= Kind)
+                    or else
+                       (not Negate_Kind
+                          and then D_Ptr.Value.Declaration.Kind = Kind)))
              or else Kind = No_Kind
            )
          then
