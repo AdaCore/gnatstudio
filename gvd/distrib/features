@@ -2,4 +2,11 @@ New features in GVD 2.0.0
 
 - Support for C++ methods in the file explorer.
 - A new multiple document interface (MDI) is provided.
+- Preferences handling has changed, and the old preferences file is no
+  longer compatible. On Unix system, please use the following script to
+  convert the file:
+     cat ~/.gvd/preferences | tr ':_' '-' > /tmp/gvd_pref
+     mv /tmp/gvd_pref ~/.gvd/preferences
+  On windows system, edit the preferences file by hand, and replace the
+  semicolon and underscore characters by minus signs in all the XML tags.
 
