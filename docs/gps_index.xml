@@ -62,4 +62,11 @@
       <menu>/Help/Using GCC</menu>
       <category>General</category>
    </file>
+
+   <file>
+      <name>gps_python.html</name>
+      <descr>GPS extensions for python</descr>
+      <menu>/Help/Python extensions</menu>
+      <category>Python</category>
+   </file>
 </index>
