@@ -1080,12 +1080,59 @@ package body Prj_API is
 
       if Result /= No_Project then
          return Result;
+      else
+         return Root_Project_View;
       end if;
-
-      --  Trace (Me, "Project not found for " & Source_Filename);
-
-      return Root_Project_View;
    end Get_Project_From_File;
+
+   --------------------------------
+   -- Get_Project_From_Directory --
+   --------------------------------
+
+   function Get_Project_From_Directory
+     (Root_Project_View : Prj.Project_Id; Directory : String)
+      return Prj.Project_Id
+   is
+      procedure Directory_Belongs_To_Project
+        (Project : Project_Id; With_State : in out Project_Id);
+      --  Check if Source_Filename belongs to Project
+
+      ----------------------------------
+      -- Directory_Belongs_To_Project --
+      ----------------------------------
+
+      procedure Directory_Belongs_To_Project
+        (Project : Project_Id; With_State : in out Project_Id)
+      is
+         Dir : String_List_Id := Projects.Table (Project).Source_Dirs;
+      begin
+         if With_State = No_Project then
+            while Dir /= Nil_String loop
+               if Normalize_Pathname
+                 (Get_String (String_Elements.Table (Dir).Value)) =
+                 Directory
+               then
+                  With_State := Project;
+               end if;
+
+               Dir := String_Elements.Table (Dir).Next;
+            end loop;
+         end if;
+      end Directory_Belongs_To_Project;
+
+      procedure For_All_Projects is new For_Every_Project_Imported
+        (Project_Id, Directory_Belongs_To_Project);
+
+      Result : Project_Id := No_Project;
+   begin
+      For_All_Projects (Root_Project_View, Result);
+
+      if Result /= No_Project then
+         return Result;
+      else
+         return Root_Project_View;
+      end if;
+   end Get_Project_From_Directory;
 
    -------------------------------
    -- Create_Variable_Reference --

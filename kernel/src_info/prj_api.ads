@@ -80,6 +80,12 @@ package Prj_API is
    --  Root_Project is returned.
    --  ??? Should we have a cache
 
+   function Get_Project_From_Directory
+     (Root_Project_View : Prj.Project_Id; Directory : String)
+      return Prj.Project_Id;
+   --  Get the project corresponding to Directory.
+   --  Directory must be normalized by the caller.
+
    function Get_Project_From_View (View : Project_Id) return Project_Node_Id;
    --  Converts from a project view to the associated node in the tree.
 
