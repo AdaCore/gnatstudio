@@ -69,7 +69,13 @@ package body GVD.Preferences is
       Command   : constant String := Page_Prefix & (-"Command");
       Memory    : constant String := Page_Prefix & (-"Memory");
       Helpers   : constant String := Page_Prefix & (-"Helpers");
+      Source_Flags : Param_Flags := Param_Readable;
    begin
+      --  In standalone mode, the source editor prefs are also editable
+      if Page_Prefix = "" then
+         Source_Flags := Source_Flags or Param_Writable;
+      end if;
+
       Break_On_Exception := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Break-On-Exception",
          Nick      => -"Break On Exceptions",
@@ -114,15 +120,18 @@ package body GVD.Preferences is
          Nick      => -"Display explorer tree",
          Blurb     => -("True if the explorer on the left side of GVD should"
                         & " be displayed"),
+         Flags     => Source_Flags,
          Default   => True));
       Register_Property  (Prefs, Param_Spec (Display_Explorer), Source);
 
+      --  Hide the preferences for the source editor, unless in standalone mode
       File_Name_Bg_Color := Param_Spec_Color (Gnew_Color
         (Name      => XML_Prefix & "File-Name-Bg-Color",
          Nick      => -"File name background",
          Blurb     => -("Color used for the background of the file name in the"
                         & " editor. This is also used for the background of"
                         & " the current frame in the call stack window"),
+         Flags     => Source_Flags,
          Default   => "#BEBEBE"));
       Register_Property (Prefs, Param_Spec (File_Name_Bg_Color), Source);
 
@@ -130,13 +139,15 @@ package body GVD.Preferences is
         (Name      => XML_Prefix & "Editor-Font",
          Nick      => -"Editor font",
          Blurb     => -"Font used in the source editor",
+         Flags     => Source_Flags,
          Default   => "Courier 12"));
       Register_Property (Prefs, Param_Spec (Editor_Font), Source);
 
       Editor_Show_Line_Nums := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Editor-Show-Line-Nums",
          Nick      => -"Show line numbers",
-         Blurb   => -"True if line numbers should be displayed in the editor",
+         Blurb    => -"True if line numbers should be displayed in the editor",
+         Flags     => Source_Flags,
          Default   => True));
       Register_Property (Prefs, Param_Spec (Editor_Show_Line_Nums), Source);
 
@@ -153,6 +164,7 @@ package body GVD.Preferences is
         (Name      => XML_Prefix & "Do-Color-Highlighting",
          Nick      => -"Syntax highlighting",
          Blurb     => -"True if the editor should provide syntax highlighting",
+         Flags     => Source_Flags,
          Default   => True));
       Register_Property (Prefs, Param_Spec (Do_Color_Highlighting), Source);
 
@@ -160,6 +172,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Comments-Color",
          Nick     => -"Comments",
          Blurb    => -"Color used for comments in the source editor",
+         Flags     => Source_Flags,
          Default  => "#FF0000"));
       Register_Property (Prefs, Param_Spec (Comments_Color), Source);
 
@@ -167,6 +180,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Strings-Color",
          Nick     => -"Strings",
          Blurb    => -"Color used for strings in the source editor",
+         Flags     => Source_Flags,
          Default  => "#A52A2A"));
       Register_Property (Prefs, Param_Spec (Strings_Color), Source);
 
@@ -174,6 +188,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Keywords-Color",
          Nick     => -"Keywords",
          Blurb    => -"Color used for keywords in the source editor",
+         Flags     => Source_Flags,
          Default  => "#0000FF"));
       Register_Property (Prefs, Param_Spec (Keywords_Color), Source);
 
@@ -182,6 +197,7 @@ package body GVD.Preferences is
          Nick     => -"Highlight current line",
          Blurb    => -("True if the editor should highlight the current line"
                        & " with a background color, in addition to the arrow"),
+         Flags     => Source_Flags,
          Default  => True));
       Register_Property
         (Prefs, Param_Spec (Editor_Highlight_Current_Line), Source);
@@ -190,6 +206,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Editor-Highlight-Color",
          Nick     => -"Current line",
          Blurb    => -"Color used to highlight the current line in the editor",
+         Flags     => Source_Flags,
          Default  => "#00CC00"));
       Register_Property
         (Prefs, Param_Spec (Editor_Highlight_Color), Source);
@@ -198,6 +215,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "Tab-Size",
          Nick     => -"Tabulation size",
          Blurb   => -"Number of spaces that a tabulation character represents",
+         Flags     => Source_Flags,
          Minimum  => 1,
          Default  => Default_Tab_Size,
          Maximum  => 16));
@@ -215,6 +233,7 @@ package body GVD.Preferences is
                        & "        displayed in a manner similar to the data"
                        & ASCII.LF
                        & "        window"),
+         Flags    => Source_Flags,
          Default  => Simple));
       Register_Property (Prefs, Param_Spec (Tooltips_In_Source), Source);
 
