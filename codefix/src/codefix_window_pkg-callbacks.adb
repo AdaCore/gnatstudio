@@ -52,7 +52,6 @@ package body Codefix_Window_Pkg.Callbacks is
 
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
-      --  Arg1 : constant Gdk_Event := To_Event (Params, 1);
    begin
       Quit (Graphic_Codefix);
       return False;
@@ -118,6 +117,64 @@ package body Codefix_Window_Pkg.Callbacks is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Accept_Correction_Clicked;
+
+   -------------------------------------
+   -- On_Skip_All_Corrections_Clicked --
+   -------------------------------------
+
+   procedure On_Skip_All_Corrections_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
+   begin
+      Set_Error_State
+        (Graphic_Codefix.Automatic_Skip,
+         Get_Category (Graphic_Codefix.Current_Error),
+         Enabled);
+      On_Skip_Correction_Clicked (Object);
+   end On_Skip_All_Corrections_Clicked;
+
+   ---------------------------------------
+   -- On_Accept_All_Corrections_Clicked --
+   ---------------------------------------
+
+   procedure On_Accept_All_Corrections_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
+   begin
+      Set_Error_State
+        (Graphic_Codefix.Automatic_Fix,
+         Get_Category (Graphic_Codefix.Current_Error),
+         Enabled);
+      On_Accept_Correction_Clicked (Object);
+   end On_Accept_All_Corrections_Clicked;
+
+   ---------------------
+   -- On_Undo_Clicked --
+   ---------------------
+
+   procedure On_Undo_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end On_Undo_Clicked;
+
+   ------------------------
+   -- On_Refresh_Clicked --
+   ------------------------
+
+   procedure On_Refresh_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      pragma Unreferenced (Object);
+   begin
+      null;
+   end On_Refresh_Clicked;
 
    -------------------------------
    -- On_Cancel_Changes_Clicked --
