@@ -23,6 +23,7 @@ with Foreign_Naming_Scheme_Editor_Pkg; use Foreign_Naming_Scheme_Editor_Pkg;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
 with Glib;                             use Glib;
 with Glide_Intl;                       use Glide_Intl;
+with Glide_Kernel.Project;             use Glide_Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Clist;                        use Gtk.Clist;
 with Gtk.Combo;                        use Gtk.Combo;
@@ -179,28 +180,32 @@ package body Foreign_Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Foreign_Naming_Editor_Record;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project_View       : Prj.Project_Id;
       Display_Exceptions : Boolean := True)
    is
       Naming : constant String := Get_String (Name_Naming);
       Lang   : constant String := Get_String (Editor.Language);
-      Bodies : Argument_List := Get_Attribute_Value
-        (Project_View,
-         Attribute_Name => Get_String (Name_Implementation_Exceptions),
-         Package_Name   => Naming,
-         Index          => Lang);
       Row  : Gint;
       Text : Gtkada.Types.Chars_Ptr_Array (0 .. 0);
       Ext  : Name_Id;
+      View : Project_Id := Project_View;
    begin
+      --  If the view is null, we get the default values from the current
+      --  top-level project. It will automatically have the default extensions
+      --  set when a project was registered, unless overriden by the user
+
+      if Project_View = No_Project then
+         View := Get_Project_View (Kernel);
+      end if;
+
       --  We directly access the tables in Prj, instead of using
       --  Get_Attribute_Value, so that we also get access to the default
       --  extensions.
 
       Ext := Value_Of
         (Index => Editor.Language,
-         In_Array => Projects.Table
-           (Project_View).Naming.Specification_Suffix);
+         In_Array => Projects.Table (View).Naming.Specification_Suffix);
       if Ext /= No_Name then
          Set_Text
            (Get_Entry (Editor.Header_File_Extension), Get_String (Ext));
@@ -210,8 +215,7 @@ package body Foreign_Naming_Editors is
 
       Ext := Value_Of
         (Index => Editor.Language,
-         In_Array => Projects.Table
-           (Project_View).Naming.Implementation_Suffix);
+         In_Array => Projects.Table (View).Naming.Implementation_Suffix);
 
       if Ext /= No_Name then
          Set_Text
@@ -221,14 +225,23 @@ package body Foreign_Naming_Editors is
          Set_Text (Get_Entry (Editor.Implementation_Extension), "");
       end if;
 
-      if Display_Exceptions then
-         Clear (Editor.Exception_List);
-         for B in Bodies'Range loop
-            Text (0) := New_String (Bodies (B).all);
-            Row := Append (Editor.Exception_List, Text);
-            Free (Text);
-         end loop;
+      if Project_View /= No_Project and then Display_Exceptions then
+         declare
+            Bodies : Argument_List := Get_Attribute_Value
+              (Project_View,
+               Attribute_Name => Get_String (Name_Implementation_Exceptions),
+               Package_Name   => Naming,
+               Index          => Lang);
+         begin
+            Clear (Editor.Exception_List);
+            for B in Bodies'Range loop
+               Text (0) := New_String (Bodies (B).all);
+               Row := Append (Editor.Exception_List, Text);
+               Free (Text);
+            end loop;
+
+            Free (Bodies);
+         end;
       end if;
-      Free (Bodies);
    end Show_Project_Settings;
 end Foreign_Naming_Editors;
