@@ -44,6 +44,9 @@ begin
       End_Of_Scope_Location => Class_Def.End_Position,
       Declaration_Info      => Decl_Info);
 
+   --  Adjust EOS reference kind
+   Decl_Info.Value.Declaration.End_Of_Scope.Kind := End_Of_Spec;
+
    --  Find all the base classes for this one
    Set_Cursor
      (SN_Table (SN_IN),
@@ -79,14 +82,6 @@ begin
       Free (Super);
       Free (P);
    end loop;
-
-   Insert_Reference
-     (Declaration_Info      => Decl_Info,
-      File                  => Global_LI_File,
-      Source_Filename       =>
-        Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-      Location              => Class_Def.End_Position,
-      Kind                  => End_Of_Spec);
 
    Free (Desc);
    Free (Class_Def);
