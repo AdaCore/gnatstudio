@@ -534,7 +534,7 @@ package body Debugger.Jdb is
       Frame    : Positive;
       Mode     : Command_Type := Hidden)
    is
-      Relative_Frame : Integer := Frame - Debugger.Frame;
+      Relative_Frame : constant Integer := Frame - Debugger.Frame;
    begin
       if Relative_Frame > 0 then
          Send (Debugger, "up" & Positive'Image (Relative_Frame),
@@ -554,7 +554,7 @@ package body Debugger.Jdb is
       Value    : out Backtrace_Array;
       Len      : out Natural)
    is
-      S       : String := Send (Debugger, "wherei", Mode => Internal);
+      S       : constant String := Send (Debugger, "wherei", Mode => Internal);
       Matched : Match_Array (0 .. 6);
       First   : Positive := S'First;
    begin

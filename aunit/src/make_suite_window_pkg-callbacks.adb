@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -82,7 +82,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Suite_Window : constant Make_Suite_Window_Access :=
         Make_Suite_Window_Access (Get_Toplevel (Object));
 
-      S            : String := Get_Selection (Suite_Window.Explorer);
+      S            : constant String := Get_Selection (Suite_Window.Explorer);
       Row_Num      : Gint;
       Suite_Name   : String_Access;
       Package_Name : String_Access;
@@ -210,7 +210,7 @@ package body Make_Suite_Window_Pkg.Callbacks is
 
       use Gtk.Enums.Gint_List;
 
-      List : Gtk_Clist := Suite_Window.Test_List;
+      List : constant Gtk_Clist := Suite_Window.Test_List;
       I    : Gint;
 
    begin

@@ -802,7 +802,7 @@ package body Debugger.Gdb is
       pragma Unreferenced (Mode);
 
       Num                 : Breakpoint_Identifier;
-      No_Such_File_Regexp : Pattern_Matcher :=
+      No_Such_File_Regexp : constant Pattern_Matcher :=
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
       --  because gdb does not seem to take into account this variable at all.
@@ -1699,7 +1699,7 @@ package body Debugger.Gdb is
       File     : String;
       Line     : Positive) return Line_Kind
    is
-      Line_String : String := Positive'Image (Line);
+      Line_String : constant String := Positive'Image (Line);
       --  Use a temporary variable to remove the leading space.
 
       S : constant String :=
@@ -2169,7 +2169,7 @@ package body Debugger.Gdb is
         or else Result'Tag = Union_Type'Tag
       then
          declare
-            R : Record_Type_Access := Record_Type_Access (Result);
+            R   : constant Record_Type_Access := Record_Type_Access (Result);
             Int : Natural;
          begin
 
@@ -2544,7 +2544,8 @@ package body Debugger.Gdb is
      (Debugger : access Gdb_Debugger)
      return GVD.Types.Exception_Array
    is
-      S : String := Send (Debugger, "info exceptions", Mode => Internal);
+      S     : constant String :=
+        Send (Debugger, "info exceptions", Mode => Internal);
       Nums  : Natural := 0;
    begin
       --  Count the number of exceptions listed
@@ -2803,8 +2804,8 @@ package body Debugger.Gdb is
       Last_Index   : Integer := S'First + 2;
       Result_Index : Integer := 1;
       Last         : Integer := S'Last;
+      Endian       : constant Endian_Type := Get_Endian_Type (Debugger);
 
-      Endian       : Endian_Type := Get_Endian_Type (Debugger);
    begin
       --  Detect "Cannot access memory at ..."
 
@@ -2841,9 +2842,9 @@ package body Debugger.Gdb is
 
          for J in 1 .. Result'Length / 16 loop
             declare
-               Block : String (1 .. 16)
-                 := Result (Result'First + (J - 1) * 16
-                            .. Result'First + J * 16 - 1);
+               Block : constant String (1 .. 16) :=
+                 Result (Result'First + (J - 1) * 16 ..
+                         Result'First + J * 16 - 1);
             begin
                for K in 1 .. 8 loop
                   Result (Result'First + (J - 1) * 16 + (K - 1) * 2

@@ -64,7 +64,6 @@ package body GVD.Preferences is
      (Var : String_Tooltips_In_Source;
       Value : Tooltips_In_Source_Type;
       Override : Boolean := False);
-   pragma Inline (Set);
 
    procedure Set (Var : String; Value : String; Override : Boolean := False);
    --  Create a new entry in the current preferences, or modify the value
@@ -112,7 +111,8 @@ package body GVD.Preferences is
    --------------
 
    function Get_Pref (Name : String_Guint) return Guint is
-      Node : Node_Ptr := Find_Tag (Current_Preferences.Child, String (Name));
+      Node : constant Node_Ptr :=
+        Find_Tag (Current_Preferences.Child, String (Name));
    begin
       pragma Assert (Node /= null);
       pragma Assert (Node.Value /= null);
@@ -124,7 +124,8 @@ package body GVD.Preferences is
    --------------
 
    function Get_Pref (Name : String_String) return String is
-      Node : Node_Ptr := Find_Tag (Current_Preferences.Child, String (Name));
+      Node : constant Node_Ptr :=
+        Find_Tag (Current_Preferences.Child, String (Name));
    begin
       pragma Assert (Node /= null);
       pragma Assert (Node.Value /= null);
@@ -136,7 +137,8 @@ package body GVD.Preferences is
    --------------
 
    function Get_Pref (Name : String_Boolean) return Boolean is
-      Node : Node_Ptr := Find_Tag (Current_Preferences.Child, String (Name));
+      Node : constant Node_Ptr :=
+        Find_Tag (Current_Preferences.Child, String (Name));
    begin
       pragma Assert (Node /= null);
       pragma Assert (Node.Value /= null);
@@ -148,7 +150,8 @@ package body GVD.Preferences is
    --------------
 
    function Get_Pref (Name : String_Gint) return Gint is
-      Node : Node_Ptr := Find_Tag (Current_Preferences.Child, String (Name));
+      Node : constant Node_Ptr :=
+        Find_Tag (Current_Preferences.Child, String (Name));
    begin
       pragma Assert (Node /= null);
       pragma Assert (Node.Value /= null);
@@ -160,7 +163,8 @@ package body GVD.Preferences is
    --------------
 
    function Get_Pref (Name : String_Color) return Gdk.Color.Gdk_Color is
-      Node : Node_Ptr := Find_Tag (Current_Preferences.Child, String (Name));
+      Node  : constant Node_Ptr :=
+        Find_Tag (Current_Preferences.Child, String (Name));
       Color : Gdk_Color;
    begin
       pragma Assert (Node /= null);
@@ -176,7 +180,8 @@ package body GVD.Preferences is
    --------------
 
    function Get_Pref (Name : String_Font) return String is
-      Node : Node_Ptr := Find_Tag (Current_Preferences.Child, String (Name));
+      Node : constant Node_Ptr :=
+        Find_Tag (Current_Preferences.Child, String (Name));
    begin
       pragma Assert (Node /= null);
       pragma Assert (Node.Value /= null);
@@ -187,10 +192,11 @@ package body GVD.Preferences is
    -- Get_Pref --
    --------------
 
-   function Get_Pref (Name : String_Tooltips_In_Source)
-      return Tooltips_In_Source_Type
+   function Get_Pref
+     (Name : String_Tooltips_In_Source) return Tooltips_In_Source_Type
    is
-      Node : Node_Ptr := Find_Tag (Current_Preferences.Child, String (Name));
+      Node : constant Node_Ptr :=
+        Find_Tag (Current_Preferences.Child, String (Name));
    begin
       pragma Assert (Node /= null);
       pragma Assert (Node.Value /= null);

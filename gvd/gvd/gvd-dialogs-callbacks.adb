@@ -85,7 +85,7 @@ package body GVD.Dialogs.Callbacks is
 
       --  Get the current page in the process notebook.
 
-      Process       : Debugger_Process_Tab :=
+      Process       : constant Debugger_Process_Tab :=
         Process_User_Data.Get (Get_Nth_Page
           (Notebook, Get_Current_Page (Notebook)));
 
@@ -256,7 +256,7 @@ package body GVD.Dialogs.Callbacks is
    procedure On_Replay_Selection_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      History_Dialog : History_Dialog_Access :=
+      History_Dialog : constant History_Dialog_Access :=
         History_Dialog_Access (Get_Toplevel (Object));
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (History_Dialog.Window);
@@ -270,7 +270,7 @@ package body GVD.Dialogs.Callbacks is
 
       use Widget_List;
       Selected   : Widget_List.Glist := First (Get_Children (List));
-      Current    : Widget_List.Glist := Get_Selection (List);
+      Current    : constant Widget_List.Glist := Get_Selection (List);
 
    begin
       Freeze (History_Dialog);
@@ -278,7 +278,7 @@ package body GVD.Dialogs.Callbacks is
       while Selected /= Null_List loop
          if Index (Current, Get_Data (Selected)) /= -1 then
             declare
-               Command : String :=
+               Command : constant String :=
                  Get (Gtk_Label
                        (Get_Data
                          (Children

@@ -310,11 +310,11 @@ package body GVD.Explorer is
    procedure First_Handler
      (Explorer : access Explorer_Record'Class)
    is
-      Node      : Gtk_Ctree_Node := Node_List.Get_Data
+      Node      : constant Gtk_Ctree_Node := Node_List.Get_Data
         (Node_List.First (Get_Selection (Explorer)));
       File_Node : Gtk_Ctree_Node;
       Data      : Node_Data_Access;
-      Tab       : Debugger_Process_Tab := Convert (Explorer);
+      Tab       : constant Debugger_Process_Tab := Convert (Explorer);
       Lang      : Language_Access;
       Line      : Natural := 1;
 
@@ -537,7 +537,7 @@ package body GVD.Explorer is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Args   : Gtk_Args)
    is
-      Explorer    : Explorer_Access := Explorer_Access (Widget);
+      Explorer    : constant Explorer_Access := Explorer_Access (Widget);
       Node        : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Data        : Node_Data_Access;
 
@@ -552,8 +552,9 @@ package body GVD.Explorer is
 
          --  Read the size of the file
          declare
-            Tab       : Debugger_Process_Tab := Convert (Explorer);
-            Full_Name : String := Find_File (Tab.Debugger, Data.Extension);
+            Tab       : constant Debugger_Process_Tab := Convert (Explorer);
+            Full_Name : constant String :=
+              Find_File (Tab.Debugger, Data.Extension);
             S         : Basic_Types.String_Access;
             Error_Msg : Basic_Types.String_Access;
             Lang      : Language_Access;
@@ -657,7 +658,7 @@ package body GVD.Explorer is
       File_Name : String)
    is
       use type Row_List.Glist;
-      Extension       : String := File_Extension (File_Name);
+      Extension       : constant String := File_Extension (File_Name);
       Extension_Nodes : Row_List.Glist;
       Row_Found       : Boolean := False;
       Node            : Gtk_Ctree_Node;
@@ -789,9 +790,9 @@ package body GVD.Explorer is
       File_Name : String) return Gtk_Ctree_Node
    is
       use type Row_List.Glist;
-      Base_Name       : String := Base_File_Name (File_Name);
-      Extension       : String := File_Extension (File_Name);
-      Extension_Nodes : Row_List.Glist := Get_Row_List (Explorer);
+      Base_Name       : constant String := Base_File_Name (File_Name);
+      Extension       : constant String := File_Extension (File_Name);
+      Extension_Nodes : constant Row_List.Glist := Get_Row_List (Explorer);
       Extension_Node  : Gtk_Ctree_Node;
       Data            : Node_Data_Access;
       Row_Found       : Boolean := False;
@@ -848,7 +849,7 @@ package body GVD.Explorer is
       File_Name : String)
    is
       use type Row_List.Glist;
-      Node : Gtk_Ctree_Node := Find_Node_From_File (Tree, File_Name);
+      Node : constant Gtk_Ctree_Node := Find_Node_From_File (Tree, File_Name);
 
    begin
       --  Get rid of the highlight on the previous current file
@@ -914,11 +915,11 @@ package body GVD.Explorer is
    is
       pragma Unreferenced (Event);
 
-      Exp : Explorer_Access := Explorer_Access (Explorer);
+      Exp     : Explorer_Access := Explorer_Access (Explorer);
       --  Check : Gtk_Check_Menu_Item;
-      Mitem : Gtk_Menu_Item;
-      Tips  : Gtk_Tooltips;
-      Process : Debugger_Process_Tab := Convert (Exp);
+      Mitem   : Gtk_Menu_Item;
+      Tips    : Gtk_Tooltips;
+      Process : constant Debugger_Process_Tab := Convert (Exp);
 
    begin
       if Exp.Contextual_Menu /= null then
@@ -977,7 +978,7 @@ package body GVD.Explorer is
    --------------------
 
    procedure Display_Shared (Explorer : access Explorer_Record'Class) is
-      Process : Debugger_Process_Tab := Convert (Explorer);
+      Process : constant Debugger_Process_Tab := Convert (Explorer);
       Data    : Node_Data_Access := null;
       Current : Basic_Types.String_Access;
 
@@ -1025,12 +1026,12 @@ package body GVD.Explorer is
 
    procedure Delete_Not_Found (Explorer : access Explorer_Record'Class) is
       use type Row_List.Glist;
-      Extension_Nodes : Row_List.Glist := Get_Row_List (Explorer);
+      Extension_Nodes : constant Row_List.Glist := Get_Row_List (Explorer);
       Extension_Node  : Gtk_Ctree_Node;
       Data            : Node_Data_Access;
       Node            : Gtk_Ctree_Node;
       Next            : Gtk_Ctree_Node;
-      Process         : Debugger_Process_Tab := Convert (Explorer);
+      Process         : constant Debugger_Process_Tab := Convert (Explorer);
 
    begin
       Freeze (Explorer);
@@ -1113,12 +1114,12 @@ package body GVD.Explorer is
 
    procedure Show_System_Files (Explorer : access Explorer_Record'Class) is
       use type Row_List.Glist;
-      Extension_Nodes : Row_List.Glist := Get_Row_List (Explorer);
+      Extension_Nodes : constant Row_List.Glist := Get_Row_List (Explorer);
       Extension_Node  : Gtk_Ctree_Node;
       Data            : Node_Data_Access;
       Node            : Gtk_Ctree_Node;
       Next            : Gtk_Ctree_Node;
-      Process         : Debugger_Process_Tab := Convert (Explorer);
+      Process         : constant Debugger_Process_Tab := Convert (Explorer);
       Lang            : Language_Access;
 
    begin

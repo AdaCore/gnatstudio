@@ -380,10 +380,10 @@ package body GVD.Memory_View is
       Index      : Integer;
       Width      : Gint;
       Height     : Gint;
-      Background : Gdk_Color := Null_Color;
+      Background : constant Gdk_Color := Null_Color;
       Foreground : Gdk_Color := Null_Color;
       Current    : String_Access;
-      Old_Size   : Data_Size := View.Data;
+      Old_Size   : constant Data_Size := View.Data;
 
       Endianness : constant Endian_Type :=
         Get_Endian_Type (Get_Current_Process (View.Window).Debugger);
@@ -542,8 +542,8 @@ package body GVD.Memory_View is
                begin
                   if Endianness = Little_Endian then
                      declare
-                        B : String (1 .. View.Unit_Size)
-                          := Current (Index .. Index + View.Unit_Size - 1);
+                        B : constant String (1 .. View.Unit_Size) :=
+                          Current (Index .. Index + View.Unit_Size - 1);
                      begin
                         for J in 0 .. View.Unit_Size / 2 - 1 loop
                            S (S'First + J * 2 .. S'First + J * 2 + 1)
@@ -761,7 +761,7 @@ package body GVD.Memory_View is
      (View    : access GVD_Memory_View_Record'Class;
       Process : Gtk_Widget)
    is
-      Tab : Debugger_Process_Tab := Debugger_Process_Tab (Process);
+      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Process);
       use type GNAT.OS_Lib.String_Access;
 
    begin
@@ -881,7 +881,7 @@ package body GVD.Memory_View is
    is
       Prefix      : String (1 .. 3);
       Success     : Boolean;
-      Background  : Gdk_Color := Null_Color;
+      Background  : constant Gdk_Color := Null_Color;
       Value_Index : Integer;
       Position    : constant Gint := Get_Position (View.View);
       Bloc_Begin  : Gint := Position;
