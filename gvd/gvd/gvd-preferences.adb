@@ -20,7 +20,7 @@
 
 with Glib;                    use Glib;
 with General_Preferences_Pkg; use General_Preferences_Pkg;
-with Glib.XML;
+with Gint_Xml;                use Gint_Xml;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Extra.Font_Combo;    use Gtk.Extra.Font_Combo;
@@ -34,9 +34,6 @@ with GVD.Color_Combo;         use GVD.Color_Combo;
 with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
 
 package body GVD.Preferences is
-
-   package Gint_Xml is new Glib.XML (Gint);
-   use Gint_Xml;
 
    Current_Preferences : Node_Ptr;
    --  The XML tree that contains the current preferences.

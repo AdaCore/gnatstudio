@@ -20,7 +20,7 @@
 
 with Gtk.Widget;              use Gtk.Widget;
 with Glib;                    use Glib;
-with Glib.XML;
+with Gint_Xml;                use Gint_Xml;
 
 with Main_Debug_Window_Pkg;   use Main_Debug_Window_Pkg;
 with GVD.Memory_View;         use GVD.Memory_View;
@@ -54,12 +54,9 @@ package body GVD.Window_Settings is
    Task_Dialog_Height       : constant String_Gint := "Task_Dialog_Height";
    Task_Dialog_Width        : constant String_Gint := "Task_Dialog_Width";
 
-   --------------------
-   -- Local packages --
-   --------------------
-
-   package Gint_Xml is new Glib.XML (Gint);
-   use Gint_Xml;
+   ---------------------
+   -- Local variables --
+   ---------------------
 
    Current_Window_Settings : Node_Ptr;
 
