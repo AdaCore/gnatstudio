@@ -263,6 +263,9 @@ package body Project_Viewers is
       Context : Selection_Context_Access);
    --  Save the project described in the context.
 
+   procedure Project_View_Changed (Viewer  : access Gtk_Widget_Record'Class);
+   --  Called when the project view has changed.
+
    -------------------------
    -- Find_In_Source_Dirs --
    -------------------------
@@ -478,6 +481,20 @@ package body Project_Viewers is
       end if;
    end Select_Row;
 
+   --------------------------
+   -- Project_View_Changed --
+   --------------------------
+
+   procedure Project_View_Changed (Viewer  : access Gtk_Widget_Record'Class) is
+      V : Project_Viewer := Project_Viewer (Viewer);
+   begin
+      Clear (V);  --  ??? Should delete selectively
+      if V.Project_Filter /= No_Project then
+         V.Current_Project := Get_Project_View (V.Kernel);
+         Show_Project (V, V.Project_Filter);
+      end if;
+   end Project_View_Changed;
+
    --------------------------------
    -- Explorer_Selection_Changed --
    --------------------------------
@@ -541,6 +558,9 @@ package body Project_Viewers is
                end if;
             end loop;
          end if;
+
+      else
+         Clear (Viewer);
       end if;
    end Explorer_Selection_Changed;
 
@@ -608,6 +628,10 @@ package body Project_Viewers is
       Widget_Callback.Object_Connect
         (Kernel, Context_Changed_Signal,
          Explorer_Selection_Changed'Access,
+         Viewer);
+      Widget_Callback.Object_Connect
+        (Kernel, Project_View_Changed_Signal,
+         Widget_Callback.To_Marshaller (Project_View_Changed'Access),
          Viewer);
 
       Color := Get_Pref (Kernel, Default_Switches_Color);
@@ -821,6 +845,7 @@ package body Project_Viewers is
             Get_Pref (Kernel, Default_Widget_Width),
             Get_Pref (Kernel, Default_Widget_Height));
          Child := Put (Get_MDI (Kernel), Viewer);
+         Set_Title (Child, Project_Switches_Name);
 
          --  The initial contents of the viewer should be read immediately from
          --  the explorer, without forcing the user to do a new selection.
