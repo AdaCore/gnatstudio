@@ -3482,7 +3482,7 @@ Paf_Pipe_Write MX_VARARGS_DEF(char *, arg1)
   [irox:3.3.98]
 */
 
-int kill(int dumy, DWORD proc_id) /*sn_win32_ping*/
+int kill(DWORD proc_id, int dumy) /*sn_win32_ping*/
 {
         HANDLE hProcess;
         char debug_str[200];

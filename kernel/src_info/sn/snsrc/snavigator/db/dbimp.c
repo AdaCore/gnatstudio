@@ -207,14 +207,14 @@ check_running(char *lock_file)
 
 #ifndef _WIN32
   /* Does the S-N process still exist? */
-  if (kill(0, (pid_t) lck_sn_pid) == -1 && errno == ESRCH)
+  if (kill((pid_t) lck_sn_pid, 0) == -1 && errno == ESRCH)
     {
       /* The lock is not active, the process has died. */
       return -1;
     }
   
   /* Does the DB process still exist ? */
-  if (kill(0, (pid_t) lck_db_pid) == -1 && errno == ESRCH)
+  if (kill((pid_t) lck_db_pid, 0) == -1 && errno == ESRCH)
     {
       unsigned short chk_lck_port = 0;
       unsigned long chk_lck_sn_pid = 0;
