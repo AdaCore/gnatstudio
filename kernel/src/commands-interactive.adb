@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;   use Gdk.Event;
+with Glide_Intl;  use Glide_Intl;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -100,6 +101,19 @@ package body Commands.Interactive is
    end Execute;
 
    ----------
+   -- Name --
+   ----------
+
+   function Name (Command : access Interactive_Command_Proxy) return String is
+   begin
+      if Command.Context.Label = null then
+         return -"Interactive command";
+      else
+         return Command.Context.Label.all;
+      end if;
+   end Name;
+
+   ----------
    -- Free --
    ----------
 
@@ -121,6 +135,7 @@ package body Commands.Interactive is
       end if;
 
       Free (X.Dir);
+      Free (X.Label);
    end Free;
 
 end Commands.Interactive;
