@@ -115,7 +115,7 @@ package body Odd.Process is
       Win.Debugger.Debugger := new Gdb_Debugger;
       Initialize (Win.Debugger.Debugger);
 
-      Open (Infile, In_File, "odd.adb");
+      Open (Infile, In_File, "odd_main.adb");
       declare
          S      : String (1 .. 1024);
          Last   : Natural;
