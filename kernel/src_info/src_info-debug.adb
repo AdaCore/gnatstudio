@@ -35,6 +35,7 @@ package body Src_Info.Debug is
       Completion_Of_Private_Or_Incomplete_Type => 'c',
       Type_Extension                           => 'x',
       Implicit                                 => 'i',
+      Discriminant                             => 'd',
       Label                                    => 'l',
       Primitive_Operation                      => 'p',
       Overriding_Primitive_Operation           => 'p',
