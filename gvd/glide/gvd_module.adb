@@ -22,7 +22,7 @@ with Glib.Object;             use Glib.Object;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gtk.Enums;               use Gtk.Enums;
-with Factory_Data;            use Factory_Data;
+with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Pixmap;              use Gtk.Pixmap;
 with Gtk.Stock;               use Gtk.Stock;
@@ -30,12 +30,14 @@ with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
 with Gtkada.Handlers;         use Gtkada.Handlers;
+with Factory_Data;            use Factory_Data;
 
 with GVD.Menu;                use GVD.Menu;
 with GVD.Types;               use GVD.Types;
 with GVD.Toolbar;             use GVD.Toolbar;
 with GVD.Process;             use GVD.Process;
 with Debugger;                use Debugger;
+with Language;                use Language;
 
 with Glide_Page;              use Glide_Page;
 with Glide_Main_Window;       use Glide_Main_Window;
@@ -56,6 +58,13 @@ package body GVD_Module is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Initialization function for the module
+
+   procedure GVD_Contextual
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Generate the contextual menu entries for contextual menus in other
+   --  modules than the debugger.
 
    ---------------
    -- Callbacks --
@@ -88,6 +97,83 @@ package body GVD_Module is
    procedure On_Continue
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Continue menu
+
+   --------------------
+   -- GVD_Contextual --
+   --------------------
+
+   procedure GVD_Contextual
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Entity   : Entity_Selection_Context_Access;
+      Mitem    : Gtk_Menu_Item;
+      Line     : Integer;
+      Debugger : Debugger_Access;
+
+   begin
+      if Context.all in Entity_Selection_Context'Class then
+         Entity := Entity_Selection_Context_Access (Context);
+         Debugger := Get_Current_Process
+           (Get_Main_Window (Get_Kernel (Context))).Debugger;
+
+         if Debugger /= null and then Has_Entity_Name_Information (Entity) then
+            declare
+               Ent  : constant String := Entity_Name_Information (Entity);
+               Lang : constant Language_Access := Get_Language (Debugger);
+            begin
+               Gtk_New (Mitem);
+               Append (Menu, Mitem);
+               Gtk_New (Mitem, -"Print " & Ent);
+               Append (Menu, Mitem);
+               --  ??? Connect callbacks:
+               --  Context_Callback.Connect
+               --    (Mitem, "activate",
+               --     Context_Callback.To_Marshaller (On_Print_Var'Access),
+               --     Selection_Context_Access (Context));
+               Gtk_New (Mitem, -"Display " & Ent);
+               Append (Menu, Mitem);
+
+               if Lang /= null then
+                  declare
+                     Ent_Deref : constant String :=
+                       Dereference_Name (Lang, Ent);
+                  begin
+                     Gtk_New (Mitem, -"Print " & Ent_Deref);
+                     Append (Menu, Mitem);
+                     Gtk_New (Mitem, -"Display " & Ent_Deref);
+                     Append (Menu, Mitem);
+                  end;
+               end if;
+
+               Gtk_New (Mitem, -"View Memory at &" & Ent);
+               Append (Menu, Mitem);
+               Gtk_New (Mitem);
+               Append (Menu, Mitem);
+               Gtk_New (Mitem, -"Set breakpoint on " & Ent);
+               Append (Menu, Mitem);
+
+               if Has_Line_Information (Entity) then
+                  Line := Line_Information (Entity);
+                  Gtk_New (Mitem, -"Set breakpoint on line" & Line'Img);
+                  Append (Menu, Mitem);
+                  Gtk_New (Mitem, -"Continue until line" & Line'Img);
+                  Append (Menu, Mitem);
+               end if;
+
+               Gtk_New (Mitem);
+               Append (Menu, Mitem);
+               Gtk_New (Mitem, -"Show Current Location");
+               Append (Menu, Mitem);
+
+               --  ??? Compared to GVD, missing:
+               --  display line numbers, show lines with code
+               --  show => Source, Asm, Source+Asm
+            end;
+         end if;
+      end if;
+   end GVD_Contextual;
 
    -------------------------
    -- On_Debug_Executable --
@@ -397,7 +483,7 @@ package body GVD_Module is
         (Module_Name             => GVD_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => null);
+         Contextual_Menu_Handler => GVD_Contextual'Access);
    end Register_Module;
 
 end GVD_Module;
