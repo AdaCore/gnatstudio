@@ -70,7 +70,8 @@ package Glide_Result_View is
       Message            : String;
       Length             : Natural;
       Highlight          : Boolean := False;
-      Highlight_Category : String := "");
+      Highlight_Category : String := "";
+      Quiet              : Boolean := False);
    --  Insert a new location item for the category corresponding to
    --  Identifier. Message is the text that will be displayed next to the
    --  file location. If necessary, the category corresponding to Identifier
@@ -78,6 +79,8 @@ package Glide_Result_View is
    --  If Highlight is True, the corresponding line will be highlighted in
    --  the editor with the highlighting category identified by
    --  Highlight_Category.
+   --  If Quiet is True, the locations window will not be raised and the
+   --  cursor will not jump to the first location.
 
    procedure Insert_Result
      (Kernel             : access Kernel_Handle_Record'Class;
@@ -88,10 +91,13 @@ package Glide_Result_View is
       Column             : Positive;
       Length             : Natural := 0;
       Highlight          : Boolean := False;
-      Highlight_Category : String := "");
+      Highlight_Category : String := "";
+      Quiet              : Boolean := False);
    --  Insert a new location in the result view.
    --  This is similar to Insert, except it creates the result view if
    --  necessary.
+   --  If Quiet is True, the locations window will not be raised, and the
+   --  cursor will not jump to the first location.
 
    procedure Remove_Category
      (View          : access Result_View_Record'Class;
@@ -140,7 +146,8 @@ package Glide_Result_View is
       Col_Index_In_Regexp     : Integer := -1;
       Msg_Index_In_Regexp     : Integer := -1;
       Style_Index_In_Regexp   : Integer := -1;
-      Warning_Index_In_Regexp : Integer := -1);
+      Warning_Index_In_Regexp : Integer := -1;
+      Quiet                   : Boolean := False);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
