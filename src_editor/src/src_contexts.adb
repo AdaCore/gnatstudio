@@ -431,6 +431,7 @@ package body Src_Contexts is
       Section_End   : Integer;
       Old_State     : Recognized_Lexical_States;
       Language      : Language_Context_Access;
+      Ignored       : Natural := 0;
 
    begin  --  Scan_Buffer
       Was_Partial := False;
@@ -474,15 +475,9 @@ package body Src_Contexts is
             end if;
          end if;
 
-         for J in Last_Index .. Pos - 1 loop
-            if Buffer (J) = ASCII.LF then
-               Line := Line + 1;
-               Column := 1;
-            else
-               Column := Column + 1;
-            end if;
-         end loop;
-
+         To_Line_Column
+           (Buffer (Last_Index .. Buffer'Last), Pos,
+            Natural (Line), Column, Ignored);
          Last_Index := Pos;
       end loop;
 
