@@ -243,7 +243,7 @@ package body Builder_Module is
       Matcher : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      Timeout : Integer := 0;
+      Timeout : Integer := 1;
 
       procedure Free is new Ada.Unchecked_Deallocation
         (Process_Descriptor'Class, Process_Descriptor_Access);
