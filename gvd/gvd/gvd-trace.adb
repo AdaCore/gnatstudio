@@ -73,20 +73,31 @@ package body Odd.Trace is
       Str        : String;
       User_Data  : System.Address := System.Null_Address)
    is
-      Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
-      N      : Integer;
-      Tab    : constant Debugger_Process_Tab := Convert (Window, Descriptor);
-      Num    : constant String := Integer'Image (Tab.Debugger_Num);
-      Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
+      Window       : constant Main_Debug_Window_Access :=
+        To_Main_Window (User_Data);
+      N            : Integer;
 
    begin
-      if Get_Command_Mode (Get_Process (Tab.Debugger)) >= Window.Log_Level then
-         N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
-         N := Write
-           (Window.Log_File, Input_String'Address, Input_String'Length);
-         Output_Message (Window.Log_File, Str);
-         N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
-      end if;
+      declare
+         Tab    : constant Debugger_Process_Tab :=
+           Convert (Window, Descriptor);
+         Num    : constant String := Integer'Image (Tab.Debugger_Num);
+         Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
+
+      begin
+         if Get_Command_Mode (Get_Process (Tab.Debugger)) >=
+           Window.Log_Level
+         then
+            N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
+            N := Write
+              (Window.Log_File, Input_String'Address, Input_String'Length);
+            Output_Message (Window.Log_File, Str);
+            N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+         end if;
+      end;
+
+   exception
+      when Debugger_Not_Found => null;
    end Input_Filter;
 
    -------------------
@@ -100,18 +111,28 @@ package body Odd.Trace is
    is
       Window : constant Main_Debug_Window_Access := To_Main_Window (User_Data);
       N      : Integer;
-      Tab    : constant Debugger_Process_Tab := Convert (Window, Descriptor);
-      Num    : constant String := Integer'Image (Tab.Debugger_Num);
-      Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
 
    begin
-      if Get_Command_Mode (Get_Process (Tab.Debugger)) >= Window.Log_Level then
-         N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
-         N := Write
-           (Window.Log_File, Output_String'Address, Output_String'Length);
-         Output_Message (Window.Log_File, Str);
-         N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
-      end if;
+      declare
+         Tab    : constant Debugger_Process_Tab :=
+           Convert (Window, Descriptor);
+         Num    : constant String := Integer'Image (Tab.Debugger_Num);
+         Prefix : aliased constant String := '[' & Num (2 .. Num'Last) & "] ";
+
+      begin
+         if Get_Command_Mode (Get_Process (Tab.Debugger)) >=
+           Window.Log_Level
+         then
+            N := Write (Window.Log_File, Prefix'Address, Prefix'Length);
+            N := Write
+              (Window.Log_File, Output_String'Address, Output_String'Length);
+            Output_Message (Window.Log_File, Str);
+            N := Write (Window.Log_File, Quote_EOL'Address, Quote_EOL'Length);
+         end if;
+      end;
+
+   exception
+      when Debugger_Not_Found => null;
    end Output_Filter;
 
 end Odd.Trace;
