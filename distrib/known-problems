@@ -1,5 +1,13 @@
 Known Problems fixed in GPS 3.0.0
 
+- E310-002 Project View is slow to show the contents of C files
+  Problem:    Every time you expand the contents of a C file in the Project
+              View, GPS recomputes the cross-references information, even if
+              it was up-to-date
+  Workaround: none found. If it takes too long, it is recommanded to split
+              your sources among several project files if possible, since the
+              cross-references are computed on a per-project basis
+
 - File selector is slow to list large directories under UNIX.
   Problem:    Under non-Windows systems, the file selector can be slow to list
               the contents of large directories.
