@@ -1,32 +1,25 @@
 -----------------------------------------------------------------------
+--                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001                            --
---                          ACT-Europe                               --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
 --                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
 --                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Glib;              use Glib;
+with Glib.Graphs;       use Glib.Graphs;
 with Gdk.Color;         use Gdk.Color;
 with Gdk.Drawable;      use Gdk.Drawable;
 with Gdk.Event;         use Gdk.Event;
@@ -137,14 +130,16 @@ package body Browsers.Dependency_Items is
    procedure Update_Display
      (Item : access File_Item_Record'Class; Win : Gdk_Window)
    is
+      use type Gdk.Gdk_GC;
       Margin : constant := 2;
+      Display_Unit_Name : constant Boolean := False;
 
       Str : constant String := Get_Source_Filename (Item.Source);
       Str2 : String_Access;
       Descr : Pango_Font_Description :=
         Get_Pref (Item.Kernel, Browsers_Link_Font);
       Font : Gdk_Font;
-      GC   : Gdk_GC;
+      Bg_GC, GC   : Gdk_GC;
       Width, Height : Gint;
 
    begin
@@ -156,26 +151,49 @@ package body Browsers.Dependency_Items is
       Font := From_Description (Descr);
 
       Gdk_New (GC, Win);
-      Set_Foreground (GC, White (Get_Default_Colormap));
 
-      Get_Unit_Name (Item.Kernel, Item.Source, Str2);
+      if Canvas_Item (Item) = Selected_Item (Item.Browser) then
+         Bg_GC := Get_Selected_Item_GC (Item.Browser);
+
+      elsif Selected_Item (Item.Browser) /= null
+        and then (Has_Link (Get_Canvas (Item.Browser),
+                            From => Item, To => Selected_Item (Item.Browser))
+                  or else
+                  Has_Link (Get_Canvas (Item.Browser),
+                            From => Selected_Item (Item.Browser), To => Item))
+      then
+         Bg_GC := Get_Linked_Item_GC (Item.Browser);
+
+      else
+         Set_Foreground (GC, White (Get_Default_Colormap));
+         Bg_GC := GC;
+      end if;
+
+      if Display_Unit_Name then
+         Get_Unit_Name (Item.Kernel, Item.Source, Str2);
+      end if;
 
       Width  := String_Width (Font, Str);
+      Height := (Get_Ascent (Font) + Get_Descent (Font)) + 2 * Margin;
 
-      if Str2 /= null then
-         Width := Gint'Max (Width, String_Width (Font, Str2.all));
-      else
-         Width := Gint'Max
-           (Width, String_Width (Font, String' ("<unknown unit name>")));
+      if Display_Unit_Name then
+         if Str2 /= null then
+            Width := Gint'Max (Width, String_Width (Font, Str2.all));
+         else
+            Width := Gint'Max
+              (Width, String_Width (Font, String' ("<unknown unit name>")));
+         end if;
+
+         Height := Height + (Get_Ascent (Font) + Get_Descent (Font))
+           + 2 * Margin;
       end if;
 
       Width := Width + 4 * Margin;
-      Height := (Get_Ascent (Font) + Get_Descent (Font)) * 2 + 4 * Margin;
       Set_Screen_Size_And_Pixmap (Item, Win, Width, Height);
 
       Draw_Rectangle
         (Pixmap (Item),
-         GC     => GC,
+         GC     => Bg_GC,
          Filled => True,
          X      => 0,
          Y      => 0,
@@ -202,22 +220,24 @@ package body Browsers.Dependency_Items is
          Y     => 2 + Get_Ascent (Font),
          Text  => Str);
 
-      if Str2 /= null then
-         Draw_Text
-           (Pixmap (Item),
-            Font  => Font,
-            GC    => GC,
-            X     => 2,
-            Y     => 2 + Get_Ascent (Font) * 2 + Get_Descent (Font),
-            Text  => Str2.all);
-      else
-         Draw_Text
-           (Pixmap (Item),
-            Font  => Font,
-            GC    => GC,
-            X     => 2,
-            Y     => 2 + Get_Ascent (Font) * 2 + Get_Descent (Font),
-            Text  => "<unknown unit name>");
+      if Display_Unit_Name then
+         if Str2 /= null then
+            Draw_Text
+              (Pixmap (Item),
+               Font  => Font,
+               GC    => GC,
+               X     => 2,
+               Y     => 2 + Get_Ascent (Font) * 2 + Get_Descent (Font),
+               Text  => Str2.all);
+         else
+            Draw_Text
+              (Pixmap (Item),
+               Font  => Font,
+               GC    => GC,
+               X     => 2,
+               Y     => 2 + Get_Ascent (Font) * 2 + Get_Descent (Font),
+               Text  => "<unknown unit name>");
+         end if;
       end if;
 
       Unref (GC);
@@ -229,7 +249,24 @@ package body Browsers.Dependency_Items is
 
    procedure On_Button_Click
      (Item  : access File_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) is
+      Event : Gdk.Event.Gdk_Event_Button)
+   is
+      function Refresh_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+
+      ------------------
+      -- Refresh_Item --
+      ------------------
+
+      function Refresh_Item
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean is
+      begin
+         Update_Display (File_Item (Item), Get_Window (Canvas));
+         return True;
+      end Refresh_Item;
+
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
@@ -237,6 +274,14 @@ package body Browsers.Dependency_Items is
          Ensure_Browser_Link (Item);
          Examine_Dependencies
            (Item.Kernel, Item.Browser, Get_Source_Filename (Item.Source));
+
+      else
+         Select_Item (Item.Browser, Item);
+
+         --  ??? The complete refresh should be done elsewhere
+         For_Each_Item
+           (Get_Canvas (Item.Browser), Refresh_Item'Unrestricted_Access);
+         Refresh_Canvas (Get_Canvas (Item.Browser));
       end if;
    end On_Button_Click;
 
@@ -282,5 +327,31 @@ package body Browsers.Dependency_Items is
       Update_Display (File_Item (Item), Get_Window (Canvas));
       return True;
    end Refresh_File_Item;
+
+   ---------------
+   -- Draw_Link --
+   ---------------
+
+   procedure Draw_Link
+     (Canvas      : access Interactive_Canvas_Record'Class;
+      Link        : access Dependency_Link_Record;
+      Window      : Gdk.Window.Gdk_Window;
+      Invert_Mode : Boolean;
+      GC          : Gdk.GC.Gdk_GC)
+   is
+      Browser : Glide_Browser := To_Browser (Canvas);
+   begin
+      if Invert_Mode
+        or else
+        (Get_Src (Link) /= Vertex_Access (Selected_Item (Browser))
+         and then Get_Dest (Link) /= Vertex_Access (Selected_Item (Browser)))
+      then
+         Draw_Link
+           (Canvas, Canvas_Link_Access (Link), Window, Invert_Mode, GC);
+      else
+         Draw_Link (Canvas, Canvas_Link_Access (Link),
+                    Window, Invert_Mode, Get_Selected_Link_GC (Browser));
+      end if;
+   end Draw_Link;
 
 end Browsers.Dependency_Items;
