@@ -71,10 +71,10 @@ procedure Odd_Main is
 
       if Home /= null then
          declare
-            Dir : constant String := Home.all & Directory_separator & ".gvd";
+            Dir : constant String := Home.all & Directory_Separator & ".gvd";
          begin
             if not Is_Directory (Dir) then
-               Make_Dir (Home.all & Directory_separator & ".gvd");
+               Make_Dir (Home.all & Directory_Separator & ".gvd");
                Button := Message_Dialog
                  ((-"Created config directory ") & Dir,
                   Information, Button_OK,
