@@ -546,6 +546,8 @@ package Prj_API is
    Compiler_Command_Attribute : constant String := "compiler_command";
    Debugger_Command_Attribute : constant String := "debugger_command";
    Remote_Host_Attribute      : constant String := "remote_host";
+   Program_Host_Attribute     : constant String := "program_host";
+   Protocol_Attribute         : constant String := "protocol";
    Main_Attribute             : constant String := "main";
    Exec_Dir_Attribute         : constant String := "exec_dir";
    Vcs_File_Check             : constant String := "vcs_file_check";
