@@ -391,7 +391,9 @@ package body Projects.Registry is
          end if;
       end Report_Error;
 
-      View : Project_Id;
+      View    : Project_Id;
+      Success : Boolean;
+
    begin
       Reset (Registry, View_Only => True);
 
@@ -401,8 +403,9 @@ package body Projects.Registry is
       Prj.Reset;
       Errout.Initialize;
       Prj.Proc.Process
-        (View, Registry.Data.Root.Node,
+        (View, Success, Registry.Data.Root.Node,
          Report_Error'Unrestricted_Access);
+      --  ??? What to do with Success
 
       --  Parsing failed ? => revert to the default project
       if View = Prj.No_Project
