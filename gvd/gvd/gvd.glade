@@ -5,10 +5,9 @@
   <name>Odd</name>
   <program_name>odd</program_name>
   <directory></directory>
-  <source_directory>odd</source_directory>
-  <pixmaps_directory>pixmaps</pixmaps_directory>
+  <source_directory>.</source_directory>
+  <pixmaps_directory>../pixmaps</pixmaps_directory>
   <language>Ada 95</language>
-  <external_editor>echo &quot;GLIDE.GUI|%d/|%F|A|%W|%w&quot;</external_editor>
   <gnome_support>False</gnome_support>
   <gettext_support>True</gettext_support>
   <use_widget_names>False</use_widget_names>
