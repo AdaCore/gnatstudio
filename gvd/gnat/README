@@ -1,0 +1,3 @@
+Note: You need a recent GNAT version, at least GNAT 3.13a1, since it requires
+ an updated GNAT.Regpat package.
+
