@@ -114,9 +114,97 @@ package body Log_Utils is
    function Get_ChangeLog_From_File
      (File_Name : VFS.Virtual_File) return VFS.Virtual_File
    is
-      ChangeLog : constant String := Dir_Name (File_Name).all & "ChangeLog";
+      procedure Add_Header (Pos : Positive; Date_Header : Boolean);
+      --  Add ChangeLog headers at position POS in the file buffer content.
+      --  If Date_Header is True, adds also the ISO date tag.
+
+      ChangeLog   : constant String := Dir_Name (File_Name).all & "ChangeLog";
+      CL_File     : constant Virtual_File := Create (ChangeLog);
+      Date_Tag    : constant String := Image (Clock, ISO_Date);
+      Base_Name   : constant String := VFS.Base_Name (File_Name);
+      CL          : String_Access := Read_File (CL_File);
+      W_File      : Writable_File := Write_File (CL_File);
+      First, Last : Natural;
+      F           : Natural;
+
+      procedure Add_Header (Pos : Positive; Date_Header : Boolean) is
+         Header   : constant String :=
+           Date_Tag & "  name  <e-mail>" & ASCII.LF;
+         F_Header : constant String :=
+           ASCII.HT & "* " & Base_Name & ':' & ASCII.LF & ASCII.HT & ASCII.LF;
+
+         Old : String_Access := CL;
+      begin
+         if CL = null then
+            --  In this case Date_Header is always true
+            CL := new String'(Header & ASCII.LF & F_Header);
+
+         else
+            if Date_Header then
+               CL := new String'(CL (1 .. Pos - 1) &
+                                 Header & ASCII.LF & F_Header &
+                                 CL (Pos .. CL'Last));
+            else
+               CL := new String'(CL (1 .. Pos - 1) &
+                                 F_Header & ASCII.LF &
+                                 CL (Pos .. CL'Last));
+            end if;
+         end if;
+
+         Free (Old);
+      end Add_Header;
+
    begin
-      return VFS.Create (ChangeLog);
+      if CL = null then
+         --  Not ChangeLog content, add headers
+         Add_Header (1, True);
+
+      else
+         First := Index (CL.all, Date_Tag);
+
+         if First = 0 then
+            --  No entry for this date
+            Add_Header (1, True);
+
+         else
+            --  We have an entry for this date, look for file entry
+
+            Last := First;
+
+            while Last < CL.all'Last
+              and then not (CL (Last) = ASCII.LF
+                            and then CL (Last + 1) in '0' .. '9')
+            loop
+               Last := Last + 1;
+            end loop;
+
+            F := Index (CL (First .. Last), Base_Name);
+
+            if F = 0 then
+               --  No file entry for this date
+
+               F := First;
+
+               while CL (F) /= ASCII.LF and then F < CL'Last loop
+                  F := F + 1;
+               end loop;
+
+               F := F + 1;
+
+               while CL (F) = ASCII.CR or else CL (F) = ASCII.LF loop
+                  F := F + 1;
+               end loop;
+
+               Add_Header (F, False);
+            end if;
+         end if;
+      end if;
+
+      Write (W_File, CL.all);
+      Close (W_File);
+      Free (CL);
+
+      return CL_File;
    end Get_ChangeLog_From_File;
 
    -----------------------
@@ -288,7 +376,7 @@ package body Log_Utils is
 
                Last := First;
 
-               while Last < CL.all'Last
+               while Last < CL'Last
                  and then not (CL (Last) = ASCII.LF
                                and then CL (Last + 1) in '0' .. '9')
                loop
