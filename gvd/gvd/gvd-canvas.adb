@@ -602,17 +602,6 @@ package body GVD.Canvas is
                       Mode           => Value));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
-      Gtk_New (Mitem, Label => -"View memory at address &" & Component_Name);
-      Item_Handler.Connect
-        (Mitem, "activate",
-         Item_Handler.To_Marshaller (View_Into_Memory'Access),
-         Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => GVD_Canvas (Canvas),
-                      Item           => Display_Item (Item),
-                      Component      => Component,
-                      Component_Name => Component_Name,
-                      Mode           => Value));
-      Append (Canvas.Item_Contextual_Menu, Mitem);
       --  Display a separator
 
       Gtk_New (Mitem);
@@ -634,11 +623,24 @@ package body GVD.Canvas is
                       Mode           => Value));
       Append (Canvas.Item_Contextual_Menu, Mitem);
 
+      Gtk_New (Mitem, Label => -"View memory at &" & Component_Name);
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (View_Into_Memory'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => GVD_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value));
+      Append (Canvas.Item_Contextual_Menu, Mitem);
+
       if Is_A_Variable (Item) then
          Gtk_New (Mitem, Label => -"Set Value of " & Component_Name);
       else
          Gtk_New (Mitem, Label => -"Set Value");
       end if;
+
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Set_Value'Access),
