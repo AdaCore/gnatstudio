@@ -49,10 +49,10 @@ package SN.Browse is
    --  process spawning, file unlinking...
 
    procedure Generate_Xrefs
-     (DB_Directory : String;
-      DBIMP_Path   : String;
-      Temp_Name    : out GNAT.OS_Lib.Temp_File_Name;
-      PD           : out GNAT.Expect.Process_Descriptor);
+     (DB_Directories : GNAT.OS_Lib.String_List_Access;
+      DBIMP_Path     : String;
+      Temp_Name      : out GNAT.OS_Lib.Temp_File_Name;
+      PD             : out GNAT.Expect.Process_Descriptor);
    --  Removes .by and .to tables in the DB_Directory and
    --  does the same as  "cat *.xref | dbimp" so that generated cross
    --  reference tables should lie in the DB_Directory.
