@@ -1954,7 +1954,7 @@ package body Commands.Custom is
       Component.Command := new String'(Get_Text (Ed.Custom.Command));
 
       Free (Component.Progress_Regexp);
-      Component.Progress_Regexp := new String'(Get_Text (Ed.Regexp));
+      Component.Progress_Regexp  := new String'(Get_Text (Ed.Regexp));
       Component.Progress_Current := Natural (Get_Value_As_Int (Ed.Current));
       Component.Progress_Final   := Natural (Get_Value_As_Int (Ed.Final));
       Component.Progress_Hide    := Get_Active (Ed.Hide);

@@ -117,7 +117,7 @@ package body SSH_Protocol is
       --  Command to execute to delete a file
 
       Timestamp_Cmd       : String_Access;
-      --  Command to execute to get the timestamp. The excepted output of the
+      --  Command to execute to get the timestamp. The expected output of the
       --  command is that of the Unix "ls" utility.
       --  ??? Add support for other output formats, through regexps
 
@@ -237,11 +237,11 @@ package body SSH_Protocol is
    --  Filter all input/output of the shell
 
    procedure Open_Connection
-     (Cmd     : String;
-      Connection : access Generic_Connection_Record'Class;
+     (Cmd                  : String;
+      Connection           : access Generic_Connection_Record'Class;
       Is_Interactive_Shell : Boolean;
-      Fd      : out TTY_Process_Descriptor;
-      Is_Open : out Boolean);
+      Fd                   : out TTY_Process_Descriptor;
+      Is_Open              : out Boolean);
    --  Open a new connection with Cmd.
    --  The password is assumed to be the same as in Connection. However, if it
    --  doesn't match, the user will be asked interactively.
@@ -353,7 +353,7 @@ package body SSH_Protocol is
       Rsync.Commands.Name                  := new String'("rsync");
       Rsync.Commands.Description           := new String'
         ("This protocol uses a combination of rsh and rsync. The former is"
-         & " used for commands thqt check the status and timestamp of"
+         & " used for commands that check the status and timestamp of"
          & " files, the latter is used to transfer files in both"
          & " direction. Rsync uses an optimized algorithm so that only"
          & " the modified parts of a file are send, and is therefore very"
@@ -393,11 +393,11 @@ package body SSH_Protocol is
    ---------------------
 
    procedure Open_Connection
-     (Cmd     : String;
-      Connection : access Generic_Connection_Record'Class;
+     (Cmd                  : String;
+      Connection           : access Generic_Connection_Record'Class;
       Is_Interactive_Shell : Boolean;
-      Fd      : out TTY_Process_Descriptor;
-      Is_Open : out Boolean)
+      Fd                   : out TTY_Process_Descriptor;
+      Is_Open              : out Boolean)
    is
       Login_Match        : constant := 1;
       Passwd_Match       : constant := 2;
