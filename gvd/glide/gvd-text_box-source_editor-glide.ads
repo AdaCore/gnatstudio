@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -79,6 +79,9 @@ package GVD.Text_Box.Source_Editor.Glide is
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record);
+   --  See GVD.Text_Box.Source_Editor for more information.
+
+   procedure Unhighlight_Current_Line (Editor : access GEdit_Record);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Preferences_Changed (Editor : access GEdit_Record);

@@ -190,6 +190,30 @@ package body GVD.Text_Box.Source_Editor.Glide is
       null;
    end Highlight_Word;
 
+   ----------------------------
+   -- Highlight_Current_Line --
+   ----------------------------
+
+   procedure Unhighlight_Current_Line (Editor : access GEdit_Record) is
+      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+   begin
+      if Editor.Debugger_Current_File = VFS.No_File then
+         return;
+      end if;
+
+      declare
+         Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
+           (1 => new String'(Full_Name (Editor.Debugger_Current_File).all),
+            2 => new String'(Highlight_Category));
+      begin
+         Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
+
+         for A in Args'Range loop
+            GNAT.OS_Lib.Free (Args (A));
+         end loop;
+      end;
+   end Unhighlight_Current_Line;
+
    ----------------
    -- Initialize --
    ----------------

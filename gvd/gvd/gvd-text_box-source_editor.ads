@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -101,6 +101,11 @@ package GVD.Text_Box.Source_Editor is
    --  Highlight the current line in the editor, if required by the user.
    --  If the edited file is not the one that contains the current line,
    --  this procedure does nothing.
+
+   procedure Unhighlight_Current_Line
+     (Editor : access Source_Editor_Record) is abstract;
+   --  Unhighlight the current line in the editor if it is highlighted.
+   --  Do nothing otherwise.
 
    procedure Preferences_Changed
      (Editor : access Source_Editor_Record) is abstract;
