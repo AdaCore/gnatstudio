@@ -184,6 +184,7 @@ package body Glide_Kernel.Project is
       Gnatls : constant String := Get_Attribute_Value
         (Get_Project_View (Handle), Gnatlist_Attribute,
          Ide_Package, Default => "gnatls");
+      Path   : String_Access;
 
    begin
       --  If the gnatls commands hasn't changed, no need to recompute the
@@ -203,25 +204,29 @@ package body Glide_Kernel.Project is
       Handle.Predefined_Source_Path := new String' ("");
       Handle.Predefined_Object_Path := new String' ("");
 
-      Args (1) := new String' ("-v");
-      Non_Blocking_Spawn
-        (Fd, Gnatls, Args, Buffer_Size => 0, Err_To_Out => True);
-      Free (Args (1));
-      Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
+      Path := Locate_Exec_On_Path (Gnatls);
+      if Path /= null then
+         Args (1) := new String' ("-v");
+         Non_Blocking_Spawn
+           (Fd, Path.all, Args, Buffer_Size => 0, Err_To_Out => True);
+         Free (Path);
+         Free (Args (1));
+         Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
 
-      loop
-         Expect (Fd, Result, "\n", Timeout => -1);
+         loop
+            Expect (Fd, Result, "\n", Timeout => -1);
 
-         declare
-            S : constant String := Trim (Expect_Out (Fd), Ada.Strings.Left);
-         begin
-            if S = "Object Search Path:" & ASCII.LF then
-               Source_Path := False;
-            else
-               Add_Directory (S (S'First .. S'Last - 1));
-            end if;
-         end;
-      end loop;
+            declare
+               S : constant String := Trim (Expect_Out (Fd), Ada.Strings.Left);
+            begin
+               if S = "Object Search Path:" & ASCII.LF then
+                  Source_Path := False;
+               else
+                  Add_Directory (S (S'First .. S'Last - 1));
+               end if;
+            end;
+         end loop;
+      end if;
 
    exception
       when Process_Died =>
