@@ -138,20 +138,21 @@ package body Shell_Script is
    type Shell_Scripting is access all Shell_Scripting_Record'Class;
 
    procedure Register_Command
-     (Script       : access Shell_Scripting_Record;
-      Command      : String;
-      Params       : String := "";
-      Return_Value : String := "";
-      Description  : String;
-      Minimum_Args : Natural := 0;
-      Maximum_Args : Natural := 0;
-      Handler      : Module_Command_Function;
-      Class        : Class_Type := No_Class);
+     (Script        : access Shell_Scripting_Record;
+      Command       : String;
+      Params        : String := "";
+      Return_Value  : String := "";
+      Description   : String;
+      Minimum_Args  : Natural := 0;
+      Maximum_Args  : Natural := 0;
+      Handler       : Module_Command_Function;
+      Class         : Class_Type := No_Class;
+      Static_Method : Boolean := False);
    procedure Register_Class
      (Script        : access Shell_Scripting_Record;
       Name          : String;
       Description   : String := "";
-      As_Dictionary : Boolean := False);
+      Base          : Class_Type := No_Class);
    procedure Execute_Command
      (Script             : access Shell_Scripting_Record;
       Command            : String;
@@ -803,7 +804,8 @@ package body Shell_Script is
       Minimum_Args   : Natural := 0;
       Maximum_Args   : Natural := 0;
       Handler        : Module_Command_Function;
-      Class          : Class_Type := No_Class)
+      Class          : Class_Type := No_Class;
+      Static_Method  : Boolean := False)
    is
       function Ret_Val return String;
       --  Return a printable version of Return_Value
@@ -817,7 +819,7 @@ package body Shell_Script is
          end if;
       end Ret_Val;
 
-      pragma Unreferenced (Script);
+      pragma Unreferenced (Script, Static_Method);
       use Command_List;
       Node : Command_List.List_Node;
       Cmd, U  : GNAT.OS_Lib.String_Access;
@@ -894,9 +896,9 @@ package body Shell_Script is
      (Script        : access Shell_Scripting_Record;
       Name          : String;
       Description   : String := "";
-      As_Dictionary : Boolean := False)
+      Base          : Class_Type := No_Class)
    is
-      pragma Unreferenced (Script, Name, As_Dictionary, Description);
+      pragma Unreferenced (Script, Name, Description, Base);
    begin
       --   Classes not supported in the shell module
       null;
