@@ -1669,9 +1669,8 @@ package body Ada_Analyzer is
          procedure Skip_Blank_Lines;
          --  Skip empty lines
 
-         function Skip_Comments return Boolean;
-         --  Skip comment lines.
-         --  Return True if at least a comment has been skipped.
+         procedure Skip_Comments;
+         --  Skip comment & blank lines.
 
          -----------------------
          -- Close_Parenthesis --
@@ -1758,66 +1757,63 @@ package body Ada_Analyzer is
          -- Skip_Comments --
          -------------------
 
-         function Skip_Comments return Boolean is
+         procedure Skip_Comments is
             Prev_Start_Line : Natural;
-            Line            : Natural;
+            Last            : Natural;
+
          begin
-            if Buffer (P) = '-' and then Buffer (Next_Char (P)) = '-' then
+            while P < Buffer_Last
+              and then Buffer (P) = '-'
+              and then Buffer (P + 1) = '-'
+            loop
                Prev_Start_Line := Start_Of_Line;
                Prev_Line := Line_Count;
                First := P;
                Comments_Skipped := True;
 
-               while P < Buffer_Last
-                 and then Buffer (P) = '-'
-                 and then Buffer (Next_Char (P)) = '-'
-               loop
-                  --  If we do not indent here, then automatic indentation
-                  --  won't work for comments right after 'is' and 'begin',
-                  --  e.g:
-                  --  procedure Foo is
-                  --  begin
-                  --     --  comment
+               --  If we do not indent here, then automatic indentation
+               --  won't work for comments right after 'is' and 'begin',
+               --  e.g:
+               --  procedure Foo is
+               --  begin
+               --     --  comment
 
-                  Do_Indent (P, Num_Spaces);
-                  P := Next_Line (Buffer, Next_Char (P));
-                  New_Line (Line_Count);
-               end loop;
+               Do_Indent (P, Num_Spaces);
+               P := Next_Line (Buffer, P + 1);
+               New_Line (Line_Count);
 
-               if P = Buffer_Last or else Buffer (P - 1) = ASCII.LF then
+               if P < Buffer_Last or else Buffer (P) = ASCII.LF then
                   Last := P - 1;
-                  Line := Line_Count - 1;
-
                else
                   Last := P;
-                  Line := Line_Count;
                end if;
 
-               if Buffer (P) = ASCII.LF then
-                  P := Last;
-               end if;
+               --  Skip blank lines
+               --  ??? need to handle ASCII.CR as well, although we now
+               --  only use LF separators internally in GPS.
+
+               while P < Buffer_Last and then Buffer (P) = ASCII.LF loop
+                  New_Line (Line_Count);
+                  P := P + 1;
+               end loop;
 
                Start_Of_Line := P;
                End_Of_Line   := Line_End (Buffer, P);
-               Padding       := 0;
                Indent_Done   := False;
+               Padding := 0;
 
                if Callback /= null then
                   if Callback
                     (Comment_Text,
                        (Prev_Line, First - Prev_Start_Line + 1, First),
-                       (Line, Last - Line_Start (Buffer, Last) + 1, Last),
+                       (Prev_Line, Last - Prev_Start_Line + 1, Last),
                      False)
                   then
                      Terminated := True;
-                     return True;
+                     return;
                   end if;
                end if;
-
-               return True;
-            end if;
-
-            return False;
+            end loop;
          end Skip_Comments;
 
          ----------------------------
@@ -1846,16 +1842,8 @@ package body Ada_Analyzer is
          Terminated    := False;
 
          loop
-            loop
-               Skip_Blank_Lines;
-
-               exit when not Skip_Comments
-                 or else P >= Buffer_Last
-                 or else Is_Entity_Letter
-                   (UTF8_Get_Char (Buffer (P .. Buffer_Last)));
-
-               P := Next_Char (P);
-            end loop;
+            Skip_Blank_Lines;
+            Skip_Comments;
 
             if Terminated then
                return;
