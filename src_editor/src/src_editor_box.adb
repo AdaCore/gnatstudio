@@ -29,6 +29,7 @@ with Glide_Kernel.Console;       use Glide_Kernel.Console;
 with Glide_Kernel.Modules;       use Glide_Kernel.Modules;
 with Glide_Kernel.Project;       use Glide_Kernel.Project;
 with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
+with Glide_Kernel.Scripts;       use Glide_Kernel.Scripts;
 with Gdk;                        use Gdk;
 with Gdk.Color;                  use Gdk.Color;
 with Gdk.Event;                  use Gdk.Event;
@@ -252,6 +253,38 @@ package body Src_Editor_Box is
       Entity : String);
    --  Find the reference to Entity in Source which is closest to (Line,
    --  Column), and sets Line and Column to this new location
+
+   procedure Add_Navigation_Location
+     (Source : access Source_Editor_Box_Record'Class);
+   --  Add a navigation command to mark the given location in the source
+   --  editor. Used to remember the location before Xref navigation.
+
+   -----------------------------
+   -- Add_Navigation_Location --
+   -----------------------------
+
+   procedure Add_Navigation_Location
+     (Source : access Source_Editor_Box_Record'Class)
+   is
+      Args   : GNAT.OS_Lib.Argument_List (1 .. 5);
+      Line   : Editable_Line_Type;
+      Column : Positive;
+   begin
+      Get_Cursor_Position (Source.Source_Buffer, Line, Column);
+
+      Args (1) := new String'("edit");
+      Args (2) := new String'
+        (Full_Name (Get_Filename (Source.Source_Buffer)).all);
+      Args (3) := new String'(Editable_Line_Type'Image (Line));
+      Args (4) := new String'(Positive'Image (Column));
+      Args (5) := new String'("0");
+
+      Execute_GPS_Shell_Command (Source.Kernel, "add_location_command", Args);
+
+      for J in Args'Range loop
+         GNAT.OS_Lib.Free (Args (J));
+      end loop;
+   end Add_Navigation_Location;
 
    -----------
    -- Setup --
@@ -478,9 +511,11 @@ package body Src_Editor_Box is
       end if;
 
       if Dir_Name (Filename).all /= "" then
+         Add_Navigation_Location (Editor);
          Open_File_Editor
            (Kernel, Filename, L, C, C + Length,
             Enable_Navigation => True);
+
       else
          Destroy (Entity);
          Pop_State (Kernel_Handle (Kernel));
