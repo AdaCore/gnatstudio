@@ -551,6 +551,7 @@ package body Vsearch_Ext is
       Align : Gtk_Alignment;
    begin
       Vsearch.Find_Next := Find_Next;
+
       if Find_Next then
          Remove (Vsearch.Search_Next_Button,
                  Get_Child (Vsearch.Search_Next_Button));
@@ -718,7 +719,11 @@ package body Vsearch_Ext is
       pragma Suppress (All_Checks);
       use Search_Modules_List;
 
-      Current : List_Node := First (Search_Modules);
+      Navigate  : constant String := '/' & (-"Navigate");
+      Goto_Decl : constant String := -"Goto Declaration";
+      Current   : List_Node := First (Search_Modules);
+      Mitem     : Gtk_Menu_Item;
+
    begin
       Vsearch_Pkg.Initialize (Vsearch, Handle);
       Vsearch.Kernel := Handle;
@@ -727,17 +732,19 @@ package body Vsearch_Ext is
       --  ??? This would be more suitable in a Register_Module call
 
       Register_Menu
-        (Handle, '/' & (-"Edit"), -"Search",
+        (Handle, Navigate, -"Find",
          Stock_Find, Search_Menu_Cb'Access,
-         Ref_Item => -"Select All", Add_Before => False,
+         Ref_Item => Goto_Decl,
          Accel_Key => GDK_F, Accel_Mods => Control_Mask);
       Vsearch.Next_Menu_Item := Register_Menu
-        (Handle, '/' & (-"Edit"), -"Search Next",
-         Stock_Find, Search_Next_Cb'Access,
-         Ref_Item => -"Search", Add_Before => False,
+        (Handle, Navigate, -"Find Next",
+         "", Search_Next_Cb'Access,
+         Ref_Item => Goto_Decl,
          Accel_Key => GDK_N, Accel_Mods => Control_Mask);
       Ref (Vsearch.Next_Menu_Item);
       Set_Sensitive (Vsearch.Next_Menu_Item, False);
+      Gtk_New (Mitem);
+      Register_Menu (Handle, Navigate, Mitem, Ref_Item => Goto_Decl);
 
       --  Create the widget
 
@@ -950,13 +957,13 @@ package body Vsearch_Ext is
 
       Register_Search_Pattern
         (Kernel,
-         Name           => -"<constant string>",
+         Name           => -"Simple string",
          Regexp         => "",
          Case_Sensitive => False,
          Is_Regexp      => False);
       Register_Search_Pattern
         (Kernel,
-         Name           => -"<regular expression>",
+         Name           => -"Regular expression",
          Regexp         => "",
          Case_Sensitive => False,
          Is_Regexp      => True);
