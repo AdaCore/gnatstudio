@@ -50,6 +50,7 @@ with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Ada.Exceptions;    use Ada.Exceptions;
+with Unchecked_Deallocation;
 
 package body Glide_Kernel.Modules is
 
@@ -98,6 +99,10 @@ package body Glide_Kernel.Modules is
      (Widget  : access GObject_Record'Class;
       Command : Command_Access);
    --  Execute a single command.
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Project_Editor_Page_Array, Project_Editor_Page_Array_Access);
+   --  Free the memory used by Pages
 
    ---------------------
    -- Compute_Tooltip --
@@ -1288,5 +1293,159 @@ package body Glide_Kernel.Modules is
 
       Free (Kernel.Modules_List);
    end Free_Modules;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Data : in out Real_Kernel_Module_Data_Record) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Project_Editor_Page_Record'Class, Project_Editor_Page);
+   begin
+      if Data.Project_Editor_Pages /= null then
+         for P in Data.Project_Editor_Pages'Range loop
+            Destroy (Data.Project_Editor_Pages (P).all);
+            Unchecked_Free (Data.Project_Editor_Pages (P));
+         end loop;
+
+         Unchecked_Free (Data.Project_Editor_Pages);
+      end if;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Page : in out Project_Editor_Page_Record) is
+   begin
+      Free (Page.Label);
+      Free (Page.Toc);
+      Free (Page.Title);
+   end Destroy;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (Page         : access Project_Editor_Page_Record;
+      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project_View : Prj.Project_Id := Prj.No_Project;
+      Languages    : Argument_List)
+   is
+      pragma Unreferenced (Page, Widget, Project_View, Languages);
+   begin
+      null;
+   end Refresh;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (Page : access Project_Editor_Page_Record'Class)
+      return String is
+   begin
+      return Page.Label.all;
+   end Get_Label;
+
+   -------------
+   -- Get_Toc --
+   -------------
+
+   function Get_Toc (Page : access Project_Editor_Page_Record'Class)
+      return String is
+   begin
+      return Page.Toc.all;
+   end Get_Toc;
+
+   ---------------
+   -- Get_Title --
+   ---------------
+
+   function Get_Title (Page : access Project_Editor_Page_Record'Class)
+      return String is
+   begin
+      return Page.Title.all;
+   end Get_Title;
+
+   ----------------------------------
+   -- Register_Project_Editor_Page --
+   ----------------------------------
+
+   procedure Register_Project_Editor_Page
+     (Kernel : access Kernel_Handle_Record'Class;
+      Page   : Project_Editor_Page;
+      Label  : String;
+      Toc    : String;
+      Title  : String)
+   is
+      Tmp : Project_Editor_Page_Array_Access :=
+        Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages;
+   begin
+      if Tmp = null then
+         Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages :=
+           new Project_Editor_Page_Array (1 .. 1);
+      else
+         Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages :=
+           new Project_Editor_Page_Array (Tmp'First .. Tmp'Last + 1);
+         Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages
+           (Tmp'Range) := Tmp.all;
+      end if;
+
+      Unchecked_Free (Tmp);
+
+      Page.Label := new String' (Label);
+      Page.Toc   := new String' (Toc);
+      Page.Title := new String' (Title);
+
+      Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages
+        (Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages'Last)
+        := Page;
+   end Register_Project_Editor_Page;
+
+   --------------------------------
+   -- Project_Editor_Pages_Count --
+   --------------------------------
+
+   function Project_Editor_Pages_Count
+     (Kernel : access Kernel_Handle_Record'Class) return Natural is
+   begin
+      if Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages
+        = null
+      then
+         return 0;
+      else
+         return
+           Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages'Length;
+      end if;
+   end Project_Editor_Pages_Count;
+
+   ---------------------------------
+   -- Get_Nth_Project_Editor_Page --
+   ---------------------------------
+
+   function Get_Nth_Project_Editor_Page
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return Project_Editor_Page is
+   begin
+      if Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages /= null
+        and then Num <=
+          Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages'Length
+      then
+         return Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages
+           (Real_Module_Data (Kernel.Modules_Data).Project_Editor_Pages'First
+            + Num - 1);
+      end if;
+      return null;
+   end Get_Nth_Project_Editor_Page;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Kernel.Modules_Data := new Real_Kernel_Module_Data_Record;
+   end Initialize;
 
 end Glide_Kernel.Modules;

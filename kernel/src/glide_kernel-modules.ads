@@ -87,6 +87,7 @@ with Gtk.Menu_Item;
 with Gtk.Widget;
 with Gtkada.MDI;
 with Prj;
+with Prj.Tree;
 with Src_Info;
 with Language;
 with Basic_Types; use Basic_Types;
@@ -113,6 +114,9 @@ package Glide_Kernel.Modules is
 
    package Command_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Command_Access);
+
+   procedure Initialize (Kernel : access Kernel_Handle_Record'Class);
+   --  Initialize the internal data for this package.
 
    -------------------------
    -- Module manipulation --
@@ -302,6 +306,92 @@ package Glide_Kernel.Modules is
    --  Given an absolute path (see Register_Menu) for a menu item, return
    --  the underlying gtk menu item. Useful in particular to check or change
    --  the state of a menu item.
+
+   ----------------------
+   -- Projects edition --
+   ----------------------
+
+   type Project_Editor_Page_Record is abstract tagged private;
+   type Project_Editor_Page is access all Project_Editor_Page_Record'Class;
+   --  A page that should be inserted in the project creation wizard and the
+   --  project properties editor.
+
+   procedure Destroy (Page : in out Project_Editor_Page_Record);
+   --  Free the memory allocated for the page. Inherited subprograms should
+   --  always call the parent's Destroy.
+
+   function Widget_Factory
+     (Page         : access Project_Editor_Page_Record;
+      Project_View : Prj.Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class)
+      return Gtk.Widget.Gtk_Widget is abstract;
+   --  Return a new widget to display in the project properties editor or the
+   --  project creation wizard. This can be used to store extra information
+   --  closely associated with each projects (either in the project file itself
+   --  or in some external files).
+   --  This function should expect Project_View to be No_Project in some cases,
+   --  when called from the project wizard.
+
+   function Project_Editor
+     (Page         : access Project_Editor_Page_Record;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Boolean is abstract;
+   --  Modifies Project given the data in Widget. Widget is the same that was
+   --  created through a Project_Editor_Page_Factor.
+   --  Should return True if the project was actually modified, false
+   --  otherwise. This subprogram should not recompute the project view itself,
+   --  since this is already done once after all the modifications have been
+   --  done.
+   --  This function should expect Project_View to be No_Project in some cases,
+   --  when called from the project wizard.
+
+   procedure Refresh
+     (Page         : access Project_Editor_Page_Record;
+      Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project_View : Prj.Project_Id := Prj.No_Project;
+      Languages    : GNAT.OS_Lib.Argument_List);
+   --  Refresh the contents of Widget, that was created by Widget_Factory.
+   --  Since Project_View is still the one when the project creation wizard or
+   --  the project properties editor were initially displayed, the list of
+   --  supported languages should be read from languages.
+   --  By default, it does nothing.
+
+   function Get_Label (Page : access Project_Editor_Page_Record'Class)
+      return String;
+   --  Return the label that should be used to identify the page in the project
+   --  properties editor.
+
+   function Get_Toc (Page : access Project_Editor_Page_Record'Class)
+      return String;
+   --  Return the table-of-contents label to be used in the project creation
+   --  wizard.
+
+   function Get_Title (Page : access Project_Editor_Page_Record'Class)
+      return String;
+   --  Return the title that should be used for this page in the project
+   --  creation wizard.
+
+   procedure Register_Project_Editor_Page
+     (Kernel : access Kernel_Handle_Record'Class;
+      Page   : Project_Editor_Page;
+      Label  : String;
+      Toc    : String;
+      Title  : String);
+   --  Register a page that should be displayed both in the project wizard and
+   --  the project properties editor.
+
+   function Project_Editor_Pages_Count
+      (Kernel : access Kernel_Handle_Record'Class) return Natural;
+   --  Return the number of registered project editor pages
+
+   function Get_Nth_Project_Editor_Page
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return Project_Editor_Page;
+   --  Return the Num-th registered project editor page.
+   --  First page is number 1.
 
    --------------------
    -- Mime callbacks --
@@ -613,6 +703,25 @@ private
       Entity        : Src_Info.Queries.Entity_Information :=
         Src_Info.Queries.No_Entity_Information;
    end record;
+
+   type Project_Editor_Page_Record is abstract tagged record
+      Label, Toc, Title : GNAT.OS_Lib.String_Access;
+   end record;
+
+   type Project_Editor_Page_Array is array (Natural range <>)
+     of Project_Editor_Page;
+   type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
+
+   type Real_Kernel_Module_Data_Record is new Kernel_Module_Data_Record
+   with record
+      Project_Editor_Pages : Project_Editor_Page_Array_Access;
+      --  The pages to be added in the project properties editor and the
+      --  project creation wizard.
+   end record;
+   type Real_Module_Data is access all Real_Kernel_Module_Data_Record'Class;
+
+   procedure Destroy (Data : in out Real_Kernel_Module_Data_Record);
+   --  Free the memory associated with Data.
 
    pragma Inline (Has_Project_Information);
    pragma Inline (Has_Directory_Information);
