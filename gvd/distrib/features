@@ -1,5 +1,7 @@
 New features in GVD 1.2.0
 
+- The File->Attach Process menu now lists the tasks on the target when
+  using Tornado VxWorks.
 - The --target option now allows multiple ':' characters so that you
   can specify machine:1234 as the the machine (& port number).
   See the documentation for more details.
@@ -16,6 +18,7 @@ New features in GVD 1.2.0
 - New item in the source editor contextual menu: display dereferenced variable
 - The option "break on exceptions" has been implemented
 - The Tab key is now supported in the debugger window.
+
 New features in GVD 1.1.0
 
 - Complete documentation now available.
