@@ -11,16 +11,16 @@
               error="Body generation for non Ada files not yet supported" />
 
       <!-- Generate and load the body -->
-      <shell>save_all</shell>
-      <shell>scenario_variables_cmd_line -X</shell>
-      <external output="" 
-                on-failure="locations_parse &quot;&quot;&quot;%1 &quot;&quot;&quot; gnatstub" >gnat stub %pps %1 %F %d</external>
-      <shell>Project.root</shell>
-      <shell>Project.recompute %1</shell>
+      <shell>MDI.save_all</shell>
+      <shell>Project.scenario_variables_cmd_line -X</shell>
+      <external show-command="true"
+                output=""
+                on-failure="Locations.parse &quot;&quot;&quot;%1 &quot;&quot;&quot; gnatstub" >gnat stub %pps %1 %F %d</external>
+      <shell>Project.recompute</shell>
       <shell>File %F</shell>
       <shell>File.other_file %1</shell>
       <shell>File.name %1</shell>
-      <shell>edit %1</shell>
+      <shell>Editor.edit %1</shell>
    </action>
 
    <Submenu>
