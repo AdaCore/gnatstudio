@@ -545,7 +545,7 @@ package body Glide_Kernel.Modules is
       Image : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
       Accel_Path : constant String :=
-        Cleanup ("<gps>" & Parent_Path & '/' & Text);
+        Cleanup ("<gps>/" & Parent_Path & '/' & Text);
 
    begin
       if Stock_Image = "" then
