@@ -1686,6 +1686,8 @@ package body Src_Editor_Module is
                  (Get_Buffer (Box.Editor),
                   Interactive   => False,
                   Always_Reload => False);
+
+               Check_Writable (Box.Editor);
             end if;
          end if;
 
