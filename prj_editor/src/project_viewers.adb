@@ -425,8 +425,7 @@ package body Project_Viewers is
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Scenario_Variable_Array;
-      Ref_Project  : Project_Type)
-      return Boolean;
+      Ref_Project  : Project_Type) return Boolean;
    procedure Refresh
      (Page         : access Naming_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -440,7 +439,7 @@ package body Project_Viewers is
    type Executables_Editor_Record is new Gtk_Box_Record with record
       Executables  : Gtk_List_Store;
       Tree_View    : Gtk_Tree_View;
-      Project       : Project_Type;
+      Project      : Project_Type;
       Kernel       : Kernel_Handle;
    end record;
    type Executables_Editor is access all Executables_Editor_Record'Class;
@@ -2092,9 +2091,9 @@ package body Project_Viewers is
       Set_Active (Obj_Dir.Same,
                   Project = No_Project
                   or else Get_Attribute_Value
-                  (Project => Project,
-                   Attribute_Name => Exec_Dir_Attribute,
-                   Default => "@@@@") = "@@@@");
+                    (Project => Project,
+                     Attribute_Name => Exec_Dir_Attribute,
+                     Default => "@@@@") = "@@@@");
 
       Show_All (Obj_Dir);
       return Gtk_Widget (Obj_Dir);
