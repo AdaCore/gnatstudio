@@ -1,12 +1,5 @@
 Known Problems fixed in GPS 1.2.1
 
-- C407-019 Cross-references fails for preprocessed files
-  Problem:    When the Ada source files have been preprocessed directly by
-              gnatmake, GPS cannot do cross-references from the corresponding
-              source files.
-  Workaround: Run gnatprep separately from gnatmake (ie don't use the -gnatep
-              command line switch).
-
 - C424-012 Cancel button not working under Windows in 'Save As' dialog
   Problem:    When using the 'Save As' dialog under Windows, the cancel button
               button is ignored, saving unconditionally the file.
@@ -71,6 +64,13 @@ Known Problems fixed in GPS 1.2.1
   Workaround:  Edit the file .gps/custom_key directly.
 
 Known Problems fixed in GPS 1.2.0
+
+- C407-019 Cross-references fails for preprocessed files
+  Problem:    When the Ada source files have been preprocessed directly by
+              gnatmake, GPS cannot do cross-references from the corresponding
+              source files.
+  Workaround: Run gnatprep separately from gnatmake (ie don't use the -gnatep
+              command line switch).
 
 - C404-010 Bad indentation of task specs in some cases
   Problem:    The indentation engine will not properly parse task specs in
