@@ -326,6 +326,7 @@ package body Gtkada.File_Selector is
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
       Use_Native_Dialog : Boolean := False;
+      Kind              : File_Selector_Kind := Unspecified;
       History           : Histories.History := null) return String
    is
       function NativeFileSelection
@@ -334,7 +335,8 @@ package body Gtkada.File_Selector is
          Filepattern : String;
          Patternname : String;
          Defaultname : String;
-         Style       : Integer) return Chars_Ptr;
+         Style       : Integer;
+         Kind        : Integer) return Chars_Ptr;
       pragma Import (C, NativeFileSelection, "NativeFileSelection");
 
       function NativeFileSelectionSupported return Integer;
@@ -356,7 +358,8 @@ package body Gtkada.File_Selector is
             File_Pattern & ASCII.NUL,
             Pattern_Name & ASCII.NUL,
             Default_Name & ASCII.NUL,
-            Pos_Mouse);
+            Pos_Mouse,
+            File_Selector_Kind'Pos (Kind));
 
          declare
             Val : constant String := Interfaces.C.Strings.Value (S);

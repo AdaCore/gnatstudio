@@ -91,6 +91,8 @@ with Unchecked_Deallocation;
 
 package Gtkada.File_Selector is
 
+   type File_Selector_Kind is (Open_File, Save_File, Unspecified);
+
    function Select_File
      (Title             : String  := "Select a file";
       Base_Directory    : String  := "";
@@ -98,7 +100,8 @@ package Gtkada.File_Selector is
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
       Use_Native_Dialog : Boolean := False;
-      History           : Histories.History := null) return String;
+      Kind              : File_Selector_Kind := Unspecified;
+      History           : Histories.History  := null) return String;
    --  Create a file selection dialog, display it, and return the absolute file
    --  name that was selected, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
