@@ -1069,6 +1069,9 @@ private
 
       Hidden_Lines : Natural := 0;
       --  The number of hidden lines in the buffer.
+
+      Block_Folding : Boolean := False;
+      --  Whether the editor buffer should allow block folding.
    end record;
 
 end Src_Editor_Buffer;
