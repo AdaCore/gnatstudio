@@ -1,0 +1,82 @@
+
+# /cardiff.a/setton/src/work_gps/gps/examples/tutorial/matrix_handling/Makefile.matrix_handling
+
+ifeq ($(MATRIX_HANDLING.project),)
+MATRIX_HANDLING.project=True
+
+ifeq ($(BASE_DIR),)
+   MATRIX_HANDLING.root=True
+   MATRIX_HANDLING.base_dir:=$(shell gprcmd pwd)
+   ifeq ($(MAKE_ROOT),)
+      $(error MAKE_ROOT variable is undefined, Makefile.prolog cannot be loaded)
+   else
+      include $(MAKE_ROOT)/share/make/Makefile.prolog
+   endif
+   OBJ_EXT:=.o
+else
+   MATRIX_HANDLING.root=False
+   MATRIX_HANDLING.base_dir:=$(BASE_DIR)
+endif
+
+MATRIX_HANDLING.src_dirs:=$(MATRIX_HANDLING.base_dir)
+MATRIX_HANDLING.obj_dir:=$(MATRIX_HANDLING.base_dir)
+PROJECT_FILE:=matrix_handling
+# project Matrix_Handling
+
+# for Languages use ...
+MATRIX_HANDLING.languages:=Ada C
+LANGUAGES:=ada c
+# for Source_Dirs use ...
+MATRIX_HANDLING.source_dirs:=src/
+MATRIX_HANDLING.src_dirs:=$(shell gprcmd extend $(MATRIX_HANDLING.base_dir) '$(MATRIX_HANDLING.source_dirs)')
+# for Object_Dir use ...
+MATRIX_HANDLING.object_dir:=obj/
+MATRIX_HANDLING.obj_dir:=$(strip $(shell gprcmd to_absolute $(MATRIX_HANDLING.base_dir) $(MATRIX_HANDLING.object_dir)))
+
+# package Compiler is ...
+# for Default_Switches ("c") use ...
+MATRIX_HANDLING.compiler.default_switches.C:=-g
+CFLAGS:=$(MATRIX_HANDLING.compiler.default_switches.C)
+# for Default_Switches ("c++") use ...
+MATRIX_HANDLING.compiler.default_switches.CXX:=-g
+CXXFLAGS:=$(MATRIX_HANDLING.compiler.default_switches.CXX)
+# end Compiler;
+
+
+# package Naming is ...
+# for Spec_Suffix ("c") use ...
+MATRIX_HANDLING.naming.spec_suffix.C:=.h
+# for Body_Suffix ("c") use ...
+MATRIX_HANDLING.naming.body_suffix.C:=.c
+C_EXT:=$(MATRIX_HANDLING.naming.body_suffix.C)
+# end Naming;
+
+# for Main use ...
+MATRIX_HANDLING.main:=main.adb
+ADA_MAINS:=$(MATRIX_HANDLING.main)
+
+SRC_DIRS:=$(SRC_DIRS) $(MATRIX_HANDLING.src_dirs)
+OBJ_DIR:=$(MATRIX_HANDLING.obj_dir)
+
+# get the source files
+MATRIX_HANDLING.src_files:= $(foreach name,$(MATRIX_HANDLING.src_dirs),$(notdir $(wildcard $(name)/*)))
+
+# get the C sources
+C_SRCS:=$(filter %$(C_EXT),$(MATRIX_HANDLING.src_files))
+
+# no C++ sources
+CXX_SRCS=
+
+# if there are C sources, add the library
+ifneq ($(strip $(C_SRCS)),)
+   LIBS:=$(MATRIX_HANDLING.obj_dir)/libmatrix_handling$(AR_EXT) $(LIBS)
+endif
+
+ifeq ($(MATRIX_HANDLING.root),True)
+   include $(MAKE_ROOT)/share/make/Makefile.generic
+else
+   DEPS_PROJECTS:=$(strip $(DEPS_PROJECTS) $(MATRIX_HANDLING.base_dir)/matrix_handling)
+endif
+
+endif
+
