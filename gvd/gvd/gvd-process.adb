@@ -837,7 +837,7 @@ package body GVD.Process is
          Set_Position (Process.Data_Editor_Paned, Geometry_Info.Data_Height);
 
          if Get_Pref (Display_Explorer) then
-            Set_Position (Process.Editor_Text,
+            Set_Position (Get_Explorer_Editor_Pane (Process.Editor_Text),
                           Geometry_Info.Explorer_Width);
          end if;
 
