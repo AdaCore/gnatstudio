@@ -52,6 +52,21 @@ package Glide_Kernel.Console is
    --  Location_Id is the category that will be filled if the text contains
    --  source locations.
 
+   procedure Insert_Result
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String;
+      File     : String;
+      Text     : String;
+      Line     : Natural;
+      Column   : Natural;
+      Length   : Natural := 0);
+   --  Insert a new location in the result view.
+
+   procedure Remove_Result_Category
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String);
+   --  Remove Category from the results view, if it exists.
+
    procedure Clear (Kernel : access Kernel_Handle_Record'Class);
    --  Clear all the text in the Console.
 

@@ -189,6 +189,41 @@ package body Glide_Kernel.Console is
       end if;
    end Insert;
 
+   -------------------
+   -- Insert_Result --
+   -------------------
+
+   procedure Insert_Result
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String;
+      File     : String;
+      Text     : String;
+      Line     : Natural;
+      Column   : Natural;
+      Length   : Natural := 0)
+   is
+      View : constant Result_View := Get_Result_View (Kernel);
+   begin
+      if View /= null then
+         Insert (View, Category, File, Line, Column, Text, Length);
+      end if;
+   end Insert_Result;
+
+   ----------------------------
+   -- Remove_Result_Category --
+   ----------------------------
+
+   procedure Remove_Result_Category
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Category : String)
+   is
+      View : constant Result_View := Get_Result_View (Kernel);
+   begin
+      if View /= null then
+         Remove_Category (View, Category);
+      end if;
+   end Remove_Result_Category;
+
    -----------------------------------
    -- Interactive_Console_Destroyed --
    -----------------------------------
