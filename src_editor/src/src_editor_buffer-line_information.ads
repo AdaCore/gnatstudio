@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                       Copyright (C) 2003                          --
+--                    Copyright (C) 2003 - 2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -156,7 +156,7 @@ package Src_Editor_Buffer.Line_Information is
    procedure Highlight_Range
      (Buffer    : access Source_Buffer_Record'Class;
       Category  : String;
-      Line      : Natural;
+      Line      : Editable_Line_Type;
       Start_Col : Integer;
       End_Col   : Integer;
       Remove    : Boolean := False);
