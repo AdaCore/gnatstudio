@@ -1071,8 +1071,6 @@ package body Src_Editor_Box is
       --  Line:Column number area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
-      --  ??? Should compute the size based on the font
-      Set_Size_Request (Frame, 100, -1);
       Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Frame, Box.Cursor_Loc_Label);
