@@ -154,9 +154,9 @@ package body Task_Manager.GUI is
             Pack_End
               (Manager.Progress_Area,
                Manager.Queues (J).Bar,
-               Expand => True,
+               Expand => False,
                Fill   => True,
-               Padding => 1);
+               Padding => 0);
             Show_All (Manager. Queues (J).Bar);
          end if;
 
@@ -180,6 +180,7 @@ package body Task_Manager.GUI is
       View     : Task_Manager_Interface;
       Progress_String : String_Access;
       Name_String     : String_Access;
+      Fraction        : Gdouble;
    begin
       if not (Index in Manager.Queues'Range)
         or else not Manager.Queues (Index).Need_Refresh
@@ -226,9 +227,15 @@ package body Task_Manager.GUI is
               (Manager.Queues (Index).Bar,
                Name_String.all & " " & Progress_String.all);
 
-            Set_Fraction
-              (Manager.Queues (Index).Bar,
-               Gdouble (Progress.Current) / Gdouble (Progress.Total));
+            Fraction := Gdouble (Progress.Current)
+              / Gdouble (Progress.Total);
+
+            if Manager.Queues (Index).Total > 1 then
+               Fraction := (Fraction + Gdouble (Manager.Queues (Index).Done))
+                 / Gdouble (Manager.Queues (Index).Total);
+            end if;
+
+            Set_Fraction (Manager.Queues (Index).Bar, Fraction);
          end if;
 
          Free (Name_String);
