@@ -32,13 +32,14 @@ package body Language.C is
 
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
-       ("^\w+\s*"                       --  type specs; there can be no
-        & "([\w_*]+\s+)?"               --  more than 3 tokens, right?
+       ("^\w+\s*"                         --  type specs; there can be no
+        & "([\w_*]+\s+)?"                 --  more than 3 tokens, right?
         & "([\w_*]+\s+)?"
-        & "([*&]+\s*)?"                 --  pointer
-        & "(\(\*\s*)?([\w_*]+)\s*\)?"   --  subprogram name or access to subp
-        & "(\s[\w_]+\s*\()?"            --  handling of macros, as in
-   --                                   --  "void pa_exit PARAMS ((int))"
+        & "([*&]+\s*)?"                   --  pointer
+        & "(\(\*\s*)?([\w_]+[a-z][\w_]*)\s*\)?"
+                                          --  subprogram name or access to subp
+        & "(\s[\w_]+\s*\()?"              --  handling of macros, as in
+                                          --  "void pa_exit PARAMS ((int))"
         & "\([^(]",
         Multiple_Lines);
 
