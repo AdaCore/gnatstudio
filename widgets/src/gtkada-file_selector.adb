@@ -440,10 +440,6 @@ package body Gtkada.File_Selector is
          return False;
       end if;
 
-      --  ??? Got an invalid data when opening/closing the file selector
-      --  rapidly on a loaded machine, when reading
-      --  Win.Current_Directory_Is_Open:
-
       if not Win.Current_Directory_Is_Open then
          return False;
       end if;
