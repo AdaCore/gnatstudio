@@ -189,6 +189,10 @@ package body VCS_View_Pkg is
       Success  : Boolean;
 
    begin
+      --  ??? Here we scroll manually to the beginning of the tree view,
+      --  otherwise the call to Clear removes entries one by one from the
+      --  top, causing the tree to flicker for a long time.
+      Scroll_To_Point (Explorer.Tree, 0, 0);
       Clear (Explorer.Model);
 
       while L /= Null_Node loop
