@@ -394,7 +394,8 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot get status", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot get status",
+            Mode => Error);
       else
          On_Menu_Get_Status (Widget, Context);
       end if;
@@ -413,7 +414,8 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot add file", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot add file",
+            Mode => Error);
       else
          On_Menu_Add (Widget, Context);
       end if;
@@ -432,7 +434,8 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot remove file", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot remove file",
+            Mode => Error);
       else
          On_Menu_Remove (Widget, Context);
       end if;
@@ -468,7 +471,7 @@ package body VCS_View_API is
 
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot commit", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot commit", Mode => Error);
       else
          On_Menu_Commit (Widget, Context);
       end if;
@@ -487,7 +490,8 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot diff", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot diff",
+            Mode => Error);
       else
          On_Menu_Diff (Widget, Context);
       end if;
@@ -506,7 +510,7 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot diff", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot diff", Mode => Error);
       else
          On_Menu_Diff_Local (Widget, Context);
       end if;
@@ -525,7 +529,7 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot diff", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot diff", Mode => Error);
       else
          On_Menu_Diff_Working_Head (Widget, Context);
       end if;
@@ -544,7 +548,8 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot display log", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot display log",
+            Mode => Error);
       else
          On_Menu_View_Log (Widget, Context);
       end if;
@@ -563,7 +568,7 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot annotate", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot annotate", Mode => Error);
       else
          On_Menu_Annotate (Widget, Context);
       end if;
@@ -582,7 +587,7 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot remove annotations",
+           (Kernel, -"VCS: No file selected, cannot remove annotations",
             Mode => Error);
       else
          On_Menu_Remove_Annotate (Widget, Context);
@@ -602,7 +607,7 @@ package body VCS_View_API is
    begin
       if Context = null then
          Console.Insert
-           (Kernel, -"No file selected, cannot edit log", Mode => Error);
+           (Kernel, -"VCS: No file selected, cannot edit log", Mode => Error);
       else
          On_Menu_Edit_Log (Widget, Context);
       end if;
@@ -1428,6 +1433,8 @@ package body VCS_View_API is
       Real_Files := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (Real_Files) then
+         Console.Insert
+           (Kernel, -"VCS: No file selected, cannot commit", Mode => Error);
          return;
       end if;
 
@@ -1503,6 +1510,9 @@ package body VCS_View_API is
       List := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (List) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot open file",
+            Mode => Error);
          return;
       end if;
 
@@ -1544,6 +1554,9 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot add file",
+            Mode => Error);
          return;
       end if;
 
@@ -1570,6 +1583,9 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
+            Mode => Error);
          return;
       end if;
 
@@ -1596,6 +1612,9 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot annotate",
+            Mode => Error);
          return;
       end if;
 
@@ -1624,6 +1643,9 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Kernel, -"VCS: No file selected, cannot remove annotations",
+            Mode => Error);
          return;
       end if;
 
@@ -1657,6 +1679,9 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot update file",
+            Mode => Error);
          return;
       end if;
 
@@ -1687,6 +1712,9 @@ package body VCS_View_API is
       Files := Get_Selected_Files (Context);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Kernel, -"VCS: No file selected, cannot get status",
+            Mode => Error);
          return;
       end if;
 
@@ -1966,7 +1994,6 @@ package body VCS_View_API is
 
             if Real_Query then
                Get_Status (Ref, Dirs);
-
             else
                Status := Local_Get_Status (Ref, Dirs);
                Display_File_Status (Kernel, Status, Ref, False, True);
@@ -2132,6 +2159,14 @@ package body VCS_View_API is
       Files    : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+            Mode => Error);
+         return;
+      end if;
+
       Save_Files (Get_Kernel (Context), Files);
 
       while not String_List.Is_Empty (Files) loop
@@ -2157,6 +2192,13 @@ package body VCS_View_API is
       Files    : String_List.List;
    begin
       Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot view log",
+            Mode => Error);
+         return;
+      end if;
 
       while not String_List.Is_Empty (Files) loop
          Log (Get_Current_Ref (Context), String_List.Head (Files));
@@ -2186,12 +2228,15 @@ package body VCS_View_API is
 
    begin
       Files := Get_Selected_Files (Context);
-      Save_Files (Get_Kernel (Context), Files);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+            Mode => Error);
          return;
       end if;
 
+      Save_Files (Get_Kernel (Context), Files);
       Status := Local_Get_Status (Ref, Files);
       Status_Temp := First (Status);
 
@@ -2231,12 +2276,15 @@ package body VCS_View_API is
 
    begin
       Files := Get_Selected_Files (Context);
-      Save_Files (Get_Kernel (Context), Files);
 
       if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot diff",
+            Mode => Error);
          return;
       end if;
 
+      Save_Files (Get_Kernel (Context), Files);
       Status := Local_Get_Status (Ref, Files);
       Status_Temp := First (Status);
 
