@@ -104,6 +104,21 @@ package body Debugger is
    --  Call the first command queued for Debugger.
    --  Return False if no command are in the queue, True otherwise.
 
+   -----------------------
+   -- Connect_To_Target --
+   -----------------------
+
+   procedure Connect_To_Target
+     (Debugger : access Debugger_Root;
+      Target   : String;
+      Protocol : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      pragma Unreferenced (Debugger, Target, Protocol, Mode);
+   begin
+      null;
+   end Connect_To_Target;
+
    ----------
    -- Free --
    ----------
