@@ -1,34 +1,23 @@
 with "../../gtkada/gtkada";
+with "../../kernel/kernel";
+with "../../ada_module/ada_module";
+with "../../cpp_module/cpp_module";
+with "../../gnat";
+with "../../shared";
+
 project Standalone is
-   for Source_Dirs use
-     ("common", "gvd", "../../kernel/src_info/sn_wrapper", "gnat", ".", "tests");
+   for Source_Dirs use ("tests");
    for Object_Dir use "standalone_obj/";
+   for Main use ("test_parse.adb");
 
    package Builder is
       for Default_Switches ("Ada") use ("-m");
    end Builder;
 
-   package Compiler is
-      for Switches ("sdefault.adb") use ("-g");
-      for Default_Switches ("ada") use (
-         --  "-pg",
-             "-O2", "-gnata", "-gnatn",
-             "-gnatwue", "-gnata", "-gnatg", "-g");
-   end Compiler;
+   package Compiler renames Shared.Compiler;
 
    package Binder is
       for Default_Switches ("Ada") use ("-E");
    end Binder;
-
-   package Linker is
-      for Default_Switches ("Ada") use 
-        ("-lgccprefix", 
-     --  "-pg",
-         Project'Object_Dir & "file-utils.o");
-   end Linker;
-
-   package Naming is
-      for Implementation ("mlib.tgt") use "5lml-tgt.adb";
-   end Naming;
 
 end Standalone;
