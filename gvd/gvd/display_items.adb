@@ -211,8 +211,8 @@ package body Display_Items is
             end if;
 
             Item := new Display_Item_Record;
-            Item.Contents_Valid := Value_Found;
             Item.Entity := Entity;
+            Set_Valid (Item.Entity, Value_Found);
 
             --  If we got an exception while parsing the value, we create the
             --  item, but indicate there was a parse error. Hopefully, this
@@ -223,6 +223,7 @@ package body Display_Items is
                Item := new Display_Item_Record;
                Item.Entity := New_Simple_Type;
                Set_Value (Simple_Type (Item.Entity.all), "<parse_error>");
+               Set_Valid (Item.Entity, True);
          end;
 
          if Id /= "" then
@@ -293,8 +294,6 @@ package body Display_Items is
       --  Compute the size, hidding if necessary the big components. However,
       --  we never want the top level item to be hidden, so we force it to
       --  visible (and possibly recalculate the size).
-
-      Set_Valid (Item.Entity, Item.Contents_Valid);
 
       Size_Request
         (Item.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
@@ -512,14 +511,31 @@ package body Display_Items is
       Value_Found : Boolean;
       Entity      : Display_Item := Display_Item (Item);
    begin
-      Parse_Value
-        (Entity.Debugger.Debugger, Entity.Name.all,
-         Entity.Entity, Value_Found);
+      --  Do nothing if we are not in auto-update mode.
 
-      if not Value_Found then
-         Set_Valid (Entity.Entity, False);
+      if not Entity.Auto_Refresh then
+         return True;
       end if;
 
+      --  Parse the value
+
+      Parse_Value (Entity.Debugger.Debugger, Entity.Name.all,
+                   Entity.Entity, Value_Found);
+      Set_Valid (Entity.Entity, Value_Found);
+
+      --  ??? Should we recompute the address ?
+      --  This is part of the bigger picture for aliases detection/update.
+
+      --  Update graphically
+
+      Size_Request
+        (Entity.Entity.all, Font, Hide_Big_Items => Hide_Big_Items);
+      if not Get_Visibility (Entity.Entity.all) then
+         Set_Visibility (Entity.Entity.all, True);
+         Size_Request (Entity.Entity.all, Font);
+      end if;
+
+      Update_Display (Entity);
       Item_Resized (Canvas, Item);
 
       return True;
