@@ -1151,6 +1151,8 @@ package body VCS_View_API is
             Files := Get_Files_In_Project (Project_Information (File_Context));
             Update (Get_Current_Ref (Get_Kernel (Context)), Files);
             Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+
+            String_List.Free (Files);
          end if;
       end if;
    end On_Menu_Update_Project;
@@ -1192,6 +1194,8 @@ package body VCS_View_API is
       if Real_Query then
          Get_Status (Get_Current_Ref (Kernel), Files);
       end if;
+
+      String_List.Free (Files);
    end Query_Project_Files;
 
    --------------------------------
