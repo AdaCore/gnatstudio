@@ -21,11 +21,14 @@
 with Glib;             use Glib;
 with Glib.Object;      use Glib.Object;
 with Gdk.Drawable;     use Gdk.Drawable;
+with Gdk.Pixbuf;       use Gdk.Pixbuf;
 with Gdk.Event;        use Gdk.Event;
 with Gdk.Font;         use Gdk.Font;
+with Gtk.Enums;        use Gtk.Enums;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
+with Gtk.Stock;        use Gtk.Stock;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.MDI;       use Gtkada.MDI;
 
@@ -63,6 +66,15 @@ package body Browsers.Call_Graph is
    end record;
    package Entity_Iterator_Idle is new Gtk.Main.Idle (Entity_Idle_Data);
 
+   type Examine_Ancestors_Idle_Data is record
+      Iter    : Entity_Reference_Iterator_Access;
+      Browser : Call_Graph_Browser;
+      Item    : Entity_Item;
+      Entity  : Entity_Information;
+   end record;
+   package Examine_Ancestors_Idle is new Gtk.Main.Idle
+     (Examine_Ancestors_Idle_Data);
+
    procedure Call_Graph_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -75,10 +87,24 @@ package body Browsers.Call_Graph is
       Entity        : Entity_Information);
    --  Display the call graph for the node.
 
+   procedure Examine_Ancestors_Call_Graph
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Entity_Information);
+   --  Display the list of subprograms that call Entity.
+
+   function Examine_Ancestors_Call_Graph_Idle
+     (Data : Examine_Ancestors_Idle_Data) return Boolean;
+   --  Main idle loop for Examine_Ancestors_Call_Graph
+
    procedure Edit_Entity_Call_Graph_From_Contextual
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Show the whole call graph for the Entity described in Context.
+
+   procedure Edit_Ancestors_Call_Graph_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Show the list of subprograms that call the one described in Context.
 
    function Find_Entity
      (In_Browser : access Glide_Browser_Record'Class;
@@ -113,6 +139,11 @@ package body Browsers.Call_Graph is
       return Boolean;
    --  Find the next reference to the entity in D.
 
+   function Add_Entity_If_Not_Present
+     (Browser : access Call_Graph_Browser_Record'Class;
+      Node : Scope_Tree_Node) return Entity_Item;
+   --  Add a new entity to the browser, if not already there.
+
    -------------
    -- Gtk_New --
    -------------
@@ -135,16 +166,20 @@ package body Browsers.Call_Graph is
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information)
    is
+      B : Call_Graph_Browser := Call_Graph_Browser (Browser);
       Font : Gdk_Font;
       Width, Height : Gint;
    begin
-      Item.Entity := Entity;
-      Item.Browser     := Glide_Browser (Browser);
+      Item.Entity   := Copy (Entity);
+      Item.Browser  := Glide_Browser (Browser);
 
       Font := Get_Text_Font (Browser);
 
-      Width  := String_Width (Font, Get_Name (Entity)) + 4 * Margin;
-      Height := (Get_Ascent (Font) + Get_Descent (Font)) + 2 * Margin;
+      Width  := String_Width (Font, Get_Name (Entity)) + 4 * Margin
+        + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
+      Height := (Get_Ascent (Font) + Get_Descent (Font));
+      Height := Gint'Max (Height, Get_Height (B.Left_Arrow));
+      Height := Height + 2 * Margin;
 
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Browser), Width, Height);
@@ -171,6 +206,7 @@ package body Browsers.Call_Graph is
      (Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Item    : access Entity_Item_Record)
    is
+      B : Call_Graph_Browser := Call_Graph_Browser (Browser);
       Font : Gdk_Font := Get_Text_Font (Browser);
    begin
       Draw_Item_Background (Browser, Item);
@@ -178,9 +214,39 @@ package body Browsers.Call_Graph is
         (Pixmap (Item),
          Font  => Font,
          GC    => Get_Text_GC (Browser),
-         X     => Margin,
+         X     => Margin + Get_Width (B.Left_Arrow),
          Y     => Margin + Get_Ascent (Font),
          Text  => Get_Name (Item.Entity));
+
+      if not Item.From_Parsed then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => B.Left_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Margin,
+            Dest_Y          => Margin,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+
+      if not Item.To_Parsed then
+         Render_To_Drawable_Alpha
+           (Pixbuf          => B.Right_Arrow,
+            Drawable        => Pixmap (Item),
+            Src_X           => 0,
+            Src_Y           => 0,
+            Dest_X          => Gint (Get_Coord (Item).Width)
+              - Margin - Get_Width (B.Right_Arrow),
+            Dest_Y          => Margin,
+            Width           => -1,
+            Height          => -1,
+            Alpha           => Alpha_Full,
+            Alpha_Threshold => 128);
+      end if;
+
    end Refresh;
 
    -------------------------------
@@ -195,12 +261,18 @@ package body Browsers.Call_Graph is
    begin
       Browser := new Call_Graph_Browser_Record;
       Initialize (Browser, Kernel);
+
       Register_Contextual_Menu
         (Kernel          => Kernel,
          Event_On_Widget => Browser,
          Object          => Browser,
          ID              => Call_Graph_Module_Id,
          Context_Func    => Default_Browser_Context_Factory'Access);
+      Browser.Left_Arrow := Render_Icon
+        (Browser, Stock_Go_Back, Icon_Size_Menu);
+      Browser.Right_Arrow := Render_Icon
+        (Browser, Stock_Go_Forward, Icon_Size_Menu);
+
       Set_Size_Request
         (Browser,
          Get_Pref (Kernel, Default_Widget_Width),
@@ -281,6 +353,28 @@ package body Browsers.Call_Graph is
    end Find_Entity;
 
    -------------------------------
+   -- Add_Entity_If_Not_Present --
+   -------------------------------
+
+   function Add_Entity_If_Not_Present
+     (Browser : access Call_Graph_Browser_Record'Class;
+      Node : Scope_Tree_Node) return Entity_Item
+   is
+      Entity : Entity_Information;
+      Child  : Entity_Item;
+   begin
+      Entity := Get_Entity (Node);
+      Child := Entity_Item (Find_Entity (Browser, Entity));
+      if Child = null then
+         Gtk_New (Child, Browser, Entity => Entity);
+         Put (Get_Canvas (Browser), Child);
+      end if;
+
+      Destroy (Entity);
+      return Child;
+   end Add_Entity_If_Not_Present;
+
+   -------------------------------
    -- Examine_Entity_Call_Graph --
    -------------------------------
 
@@ -294,7 +388,6 @@ package body Browsers.Call_Graph is
       Child_Browser : MDI_Child;
       Browser : Call_Graph_Browser;
       Link : Glide_Browser_Link;
-      Node_Entity : Entity_Information;
       Tree : Scope_Tree;
       Node : Scope_Tree_Node;
 
@@ -325,33 +418,21 @@ package body Browsers.Call_Graph is
          return;
       end if;
 
+      --  Create the browser if necessary
       Child_Browser := Open_Call_Graph_Browser (Kernel);
       Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
 
       --  For efficiency, do not recompute the layout for each item
       Set_Auto_Layout (Get_Canvas (Browser), False);
 
-      Node_Entity := Get_Entity (Node);
-      Item := Entity_Item (Find_Entity (Browser, Node_Entity));
-      if Item = null then
-         Gtk_New (Item, Browser,  Entity => Node_Entity);
-         Put (Get_Canvas (Browser), Item);
-      else
-         Destroy (Node_Entity);
-      end if;
+      Item := Add_Entity_If_Not_Present (Browser, Node);
+      Item.To_Parsed := True;
+      Refresh (Browser, Item);
 
       Iter := Start (Node);
       while Get (Iter) /= Null_Scope_Tree_Node loop
          if Is_Subprogram (Get (Iter)) then
-            Node_Entity := Get_Entity (Get (Iter));
-            Child := Entity_Item (Find_Entity (Browser, Node_Entity));
-            if Child = null then
-               Gtk_New (Child, Browser, Entity => Node_Entity);
-               Put (Get_Canvas (Browser), Child);
-            else
-               Destroy (Node_Entity);
-            end if;
-
+            Child := Add_Entity_If_Not_Present (Browser, Get (Iter));
             if not Has_Link (Get_Canvas (Browser), Item, Child) then
                Link := new Glide_Browser_Link_Record;
                Add_Link (Get_Canvas (Browser),
@@ -379,6 +460,139 @@ package body Browsers.Call_Graph is
          Free (Tree);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph;
+
+   ---------------------------------------
+   -- Examine_Ancestors_Call_Graph_Idle --
+   ---------------------------------------
+
+   function Examine_Ancestors_Call_Graph_Idle
+     (Data : Examine_Ancestors_Idle_Data) return Boolean
+   is
+      procedure Add_Item (Node : Scope_Tree_Node);
+      --  Add a new item for the entity declared in Node to the browser
+
+      --------------
+      -- Add_Item --
+      --------------
+
+      procedure Add_Item (Node : Scope_Tree_Node) is
+         Child : Entity_Item;
+         Link : Glide_Browser_Link;
+      begin
+         if Is_Subprogram (Node)
+           and then Get_Parent (Node) /= Null_Scope_Tree_Node
+         then
+            Child := Add_Entity_If_Not_Present
+              (Data.Browser, Get_Parent (Node));
+
+            if not Has_Link (Get_Canvas (Data.Browser), Child, Data.Item) then
+               Link := new Glide_Browser_Link_Record;
+               Add_Link
+                 (Get_Canvas (Data.Browser), Link => Link,
+                  Src => Child, Dest => Data.Item);
+            end if;
+         end if;
+      end Add_Item;
+
+      Tree : Scope_Tree;
+      It : Entity_Reference_Iterator_Access;
+      Ent : Entity_Information;
+   begin
+      if Get (Data.Iter.all) = No_Reference then
+         It := Data.Iter;
+         Destroy (It);
+
+         Ent := Data.Entity;
+         Destroy (Ent);
+
+         Set_Auto_Layout (Get_Canvas (Data.Browser), True);
+         Layout (Get_Canvas (Data.Browser),
+                 Force => False,
+                 Vertical_Layout =>
+                   Get_Pref (Get_Kernel (Data.Browser),
+                             Browsers_Vertical_Layout));
+         Refresh_Canvas (Get_Canvas (Data.Browser));
+
+         Pop_State (Kernel_Handle (Get_Kernel (Data.Browser)));
+         return False;
+
+      else
+         begin
+            Tree := Create_Tree (Get_LI (Data.Iter.all));
+            if Tree /= Null_Scope_Tree then
+               Find_Entity_References
+                 (Tree, Data.Entity, Add_Item'Unrestricted_Access);
+               Free (Tree);
+            end if;
+
+            Next (Get_Kernel (Data.Browser), Data.Iter.all);
+            return True;
+
+         exception
+            when E : others =>
+               Trace (Me, "Unexpected exception: "
+                      & Exception_Information (E));
+               Free (Tree);
+               return True;
+         end;
+      end if;
+   end Examine_Ancestors_Call_Graph_Idle;
+
+   ----------------------------------
+   -- Examine_Ancestors_Call_Graph --
+   ----------------------------------
+
+   procedure Examine_Ancestors_Call_Graph
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Entity        : Entity_Information)
+   is
+      Browser       : Call_Graph_Browser;
+      Item          : Entity_Item;
+      Child_Browser : MDI_Child;
+      Data          : Examine_Ancestors_Idle_Data;
+      Id            : Idle_Handler_Id;
+   begin
+      Push_State (Kernel_Handle (Kernel), Busy);
+
+      --  Create the browser if it doesn't exist
+      Child_Browser := Open_Call_Graph_Browser (Kernel);
+      Browser := Call_Graph_Browser (Get_Widget (Child_Browser));
+
+      --  Look for an existing item corresponding to entity
+      Item := Entity_Item (Find_Entity (Browser, Entity));
+      if Item = null then
+         Gtk_New (Item, Browser,  Entity => Entity);
+         Put (Get_Canvas (Browser), Item);
+      end if;
+
+      Item.From_Parsed := True;
+      Refresh (Browser, Item);
+
+      --  For efficiency, do not recompute the layout for each item
+      Set_Auto_Layout (Get_Canvas (Browser), False);
+
+      --  Look for all the parents.
+
+      Data := (Iter    => new Entity_Reference_Iterator,
+               Browser => Browser,
+               Entity  => Copy (Entity),
+               Item    => Item);
+      Find_All_References (Kernel, Entity, Data.Iter.all, LI_Once => True);
+
+      --  ??? Id should be kept and possibly removed if the browser is
+      --  destroyed
+      Id := Examine_Ancestors_Idle.Add
+        (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
+         D        => Data,
+         Priority => Priority_Low_Idle);
+
+      --  All memory is freed at the end of Examine_Ancestors_Call_Graph_Idle
+
+   exception
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Examine_Ancestors_Call_Graph;
 
    ---------------------------------
    -- Edit_Source_From_Contextual --
@@ -430,10 +644,12 @@ package body Browsers.Call_Graph is
          Lib_Info := Locate_From_Source_And_Complete
            (Get_Kernel (Entity), Get_File (Get_Location (Decl)));
 
-         Node_Entity := Get_Entity (Decl);
-         Examine_Entity_Call_Graph
-           (Get_Kernel (Entity), Lib_Info, Node_Entity);
-         Destroy (Node_Entity);
+         if Lib_Info /= No_LI_File then
+            Node_Entity := Get_Entity (Decl);
+            Examine_Entity_Call_Graph
+              (Get_Kernel (Entity), Lib_Info, Node_Entity);
+            Destroy (Node_Entity);
+         end if;
 
       else
          Insert (Get_Kernel (Entity),
@@ -452,6 +668,42 @@ package body Browsers.Call_Graph is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Pop_State (Get_Kernel (Entity));
    end Edit_Entity_Call_Graph_From_Contextual;
+
+   -----------------------------------------------
+   -- Edit_Ancestors_Call_Graph_From_Contextual --
+   -----------------------------------------------
+
+   procedure Edit_Ancestors_Call_Graph_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Entity   : Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Decl     : E_Declaration_Info;
+      Info : Entity_Information;
+
+   begin
+      Push_State (Get_Kernel (Entity), Busy);
+      Decl := Get_Declaration (Entity);
+
+      Info := Get_Entity (Decl);
+      Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
+      Destroy (Info);
+
+      Pop_State (Get_Kernel (Entity));
+
+   exception
+      when E : others =>
+         Insert (Get_Kernel (Entity),
+                 -"Internal error when creating the call graph for "
+                 & Entity_Name_Information (Entity),
+                 Mode => Error);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Destroy (Info);
+         Pop_State (Get_Kernel (Entity));
+   end Edit_Ancestors_Call_Graph_From_Contextual;
 
    -------------------------
    -- Find_Next_Reference --
@@ -496,6 +748,7 @@ package body Browsers.Call_Graph is
       Decl     : E_Declaration_Info;
       Idle     : Idle_Handler_Id;
       Data     : Entity_Idle_Data;
+      Info     : Entity_Information;
    begin
       Push_State (Get_Kernel (Entity), Busy);
       Decl := Get_Declaration (Entity);
@@ -515,9 +768,14 @@ package body Browsers.Call_Graph is
                      Iter   => new Entity_Reference_Iterator,
                      Decl   => Decl);
 
-            Find_All_References (Get_Kernel (Entity), Decl, Data.Iter.all);
+            Info := Get_Entity (Decl);
+            Find_All_References (Get_Kernel (Entity), Info, Data.Iter.all);
+            Destroy (Info);
+
+            --  ??? Idle should be kept and possibly removed if the browser is
+            --  destroyed
             Idle := Entity_Iterator_Idle.Add
-              (Find_Next_Reference'Access, Data);
+              (Find_Next_Reference'Access, Data, Priority_Low_Idle);
          exception
             when others =>
                Destroy (Data.Iter);
@@ -539,17 +797,36 @@ package body Browsers.Call_Graph is
 
    procedure On_Button_Click
      (Item  : access Entity_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button) is
+      Event : Gdk.Event.Gdk_Event_Button)
+   is
+      LI : LI_File_Ptr;
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Gdk_2button_Press
       then
-         Examine_Entity_Call_Graph
-           (Get_Kernel (Item.Browser),
-            Locate_From_Source_And_Complete
+         --  Should we display the ancestors ?
+         if Gint (Get_X (Event)) < Get_Coord (Item).Width / 2 then
+            Examine_Ancestors_Call_Graph
+              (Get_Kernel (Item.Browser), Item.Entity);
+            Item.From_Parsed := True;
+
+         --  Or the subprograms we are calling ?
+         else
+            LI := Locate_From_Source_And_Complete
               (Get_Kernel (Item.Browser),
-               Get_Declaration_File_Of (Item.Entity)),
-            Item.Entity);
+               Get_Declaration_File_Of (Item.Entity));
+
+            if LI /= No_LI_File then
+               Examine_Entity_Call_Graph
+                 (Get_Kernel (Item.Browser), LI, Item.Entity);
+            end if;
+            Item.To_Parsed := True;
+         end if;
+
+         if LI = No_LI_File then
+            Trace (Me, "LI file not found for "
+                   & Get_Declaration_File_Of (Item.Entity));
+         end if;
 
          --  Make sure that the item we clicked on is still visible
          Show_Item (Get_Canvas (Item.Browser), Item);
@@ -584,13 +861,22 @@ package body Browsers.Call_Graph is
              in Subprogram_Category)
            or else not Has_Category_Information (Entity_Context)
          then
-            Gtk_New (Item, Label => (-"Examine call graph for ") &
-                     Entity_Name_Information (Entity_Context));
+            Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
+                     & " calls...");
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
                  (Edit_Entity_Call_Graph_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
+                     & " is called by...");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (Edit_Ancestors_Call_Graph_From_Contextual'Access),
                Selection_Context_Access (Context));
 
             Gtk_New (Item, Label => (-"Find all references to ") &

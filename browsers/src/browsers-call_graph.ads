@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;
+with Gdk.Pixbuf;
 with Gtk.Menu;
 with Glide_Kernel;
 with Browsers.Canvas;
@@ -27,7 +28,7 @@ with Src_Info.Queries;
 package Browsers.Call_Graph is
 
    type Call_Graph_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
-     with null record;
+     with private;
    type Call_Graph_Browser is access all Call_Graph_Browser_Record'Class;
 
    procedure Register_Module
@@ -47,8 +48,6 @@ package Browsers.Call_Graph is
       Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
       Entity  : Src_Info.Queries.Entity_Information);
    --  Create a new entity item.
-   --  You shouldn't free Entity yourself, this will be taken care of by the
-   --  item itself.
 
    procedure Initialize
      (Item    : access Entity_Item_Record'Class;
@@ -83,6 +82,15 @@ private
    with record
       Browser     : Browsers.Canvas.Glide_Browser;
       Entity      : Src_Info.Queries.Entity_Information;
+
+      From_Parsed, To_Parsed : Boolean := False;
+      --  These two booleans are set to True when the parents of the item have
+      --  been fully parsed (ie all the subprograms that call Entity), or when
+      --  all the children have been parsed.
    end record;
 
+   type Call_Graph_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
+     with record
+        Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
+     end record;
 end Browsers.Call_Graph;
