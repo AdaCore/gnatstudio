@@ -1,0 +1,23 @@
+#!/bin/sh
+# .gps_wrapper.xft
+#
+# Copyright 2002-2004 by ACT Europe.
+
+prog=`basename $0`
+root=`dirname $0`
+
+# Strip 'bin' directory to retrieve the real root
+
+root=`dirname $root`
+LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
+GTK_DATA_PREFIX=$root
+FONTCONFIG_FILE=$root/fonts/fonts.conf
+
+if [ "$GPS_DOC_PATH" = "" ]; then
+   GPS_DOC_PATH=$root/doc/gnat/html:$root/doc/gnat-cross/html
+else
+   GPS_DOC_PATH=$GPS_DOC_PATH:$root/doc/gnat/html:$root/doc/gnat-cross/html
+fi
+
+export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH FONTCONFIG_FILE PYTHONHOME
+exec $root/bin/${prog}_exe "$@"
