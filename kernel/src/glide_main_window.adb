@@ -78,16 +78,12 @@ package body Glide_Main_Window is
    Vertically_Cst : aliased constant String := "vertically";
    Name_Cst       : aliased constant String := "name";
    Child_Cst      : aliased constant String := "child";
-   Side_Cst       : aliased constant String := "side";
-   Dock_Cst       : aliased constant String := "dock";
    Float_Cst      : aliased constant String := "float";
    Reuse_Cst      : aliased constant String := "reuse";
    Visible_Only_Cst : aliased constant String := "visible_only";
    Get_Cmd_Parameters : constant Cst_Argument_List := (1 => Name_Cst'Access);
    Get_By_Child_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Child_Cst'Access);
-   Dock_Cmd_Parameters : constant Cst_Argument_List :=
-     (1 => Dock_Cst'Access, 2 => Side_Cst'Access);
    Float_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Float_Cst'Access);
    Split_Cmd_Parameters : constant Cst_Argument_List :=
@@ -474,7 +470,6 @@ package body Glide_Main_Window is
 
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
 
-      Set_Priorities (Main_Window.Process_Mdi, (Left, Top, Bottom, Right));
       Setup_Toplevel_Window (Main_Window.Process_Mdi, Main_Window);
       Main_Window.Home_Dir := new String'(Home_Dir);
       Main_Window.Prefix_Directory := new String'(Prefix_Directory);
@@ -654,11 +649,6 @@ package body Glide_Main_Window is
          Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
       Register_Command
-        (Main_Window.Kernel, "dock",
-         Class         => MDI_Window_Class,
-         Maximum_Args  => 2,
-         Handler       => Default_Window_Command_Handler'Access);
-      Register_Command
         (Main_Window.Kernel, "raise_window",
          Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
@@ -739,11 +729,6 @@ package body Glide_Main_Window is
       elsif Command = "float" then
          Name_Parameters (Data, Float_Cmd_Parameters);
          Float_Child (Child, Nth_Arg (Data, 2, True));
-
-      elsif Command = "dock" then
-         Name_Parameters (Data, Dock_Cmd_Parameters);
-         Set_Dock_Side (Child, Dock_Side'Value (Nth_Arg (Data, 3, "bottom")));
-         Dock_Child (Child, Nth_Arg (Data, 2, True));
 
       elsif Command = "raise_window" then
          Raise_Child (Child, Give_Focus => True);
