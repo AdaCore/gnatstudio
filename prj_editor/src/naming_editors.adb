@@ -175,7 +175,7 @@ package body Naming_Editors is
             Hide_All (Get_Window (Editor.Pages (P).Naming));
          end if;
 
-         if Exists and then Project /= No_Project then
+         if Exists then
             Show_Project_Settings
               (Editor.Pages (P).Naming, Kernel, Project, True);
          end if;
