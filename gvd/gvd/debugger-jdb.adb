@@ -79,7 +79,7 @@ package body Debugger.Jdb is
    function Value_Of
      (Debugger : access Jdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String
+      Format   : Value_Format := Default_Format) return String
    is
       pragma Unreferenced (Format);
       Matches : Match_Array (0 .. 0);

@@ -105,7 +105,7 @@ package Debugger.Gdb is
    function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String;
+      Format   : Value_Format := Default_Format) return String;
 
    procedure Print_Value
      (Debugger : access Gdb_Debugger;
