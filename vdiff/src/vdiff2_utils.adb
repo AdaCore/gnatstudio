@@ -81,16 +81,12 @@ package body Vdiff2_Utils is
 
    procedure Show_Merge
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Diff   : Diff_Occurrence_Link;
       Merge  : String;
-      File1  : String;
-      File2  : String;
-      File3  : String := "")
+      Item   : Diff_List_Head)
    is
-      pragma Unreferenced (File3);
+      pragma Unreferenced (Item);
       Button : Message_Dialog_Buttons;
       Args_edit       : Argument_List := (1 => new String'(Merge));
-      pragma Unreferenced (File1, File2, Diff);
    begin
       if Is_Regular_File (Merge) then
          Button := Message_Dialog
@@ -110,22 +106,18 @@ package body Vdiff2_Utils is
    ----------------------
 
    procedure Show_Differences
-     (Kernel : access Kernel_Handle_Record'Class;
-      Diff   : Diff_Occurrence_Link;
-      File1  : String;
-      File2  : String;
-      File3  : String := "")
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item   : Diff_List_Head)
    is
-      pragma Unreferenced (File3);
-      Link          : Diff_Occurrence_Link := Diff;
-      Offset1       : Natural;
-      Offset2       : Natural;
-      Args_edit     : Argument_List := (1 => new String'(File1));
+      Link      : Diff_Occurrence_Link := Item.List;
+      Offset1   : Natural;
+      Offset2   : Natural;
+      Args_edit : Argument_List := (1 => new String'(Item.File1.all));
    begin
       Register_Highlighting (Kernel);
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
-      Args_edit := (1 => new String'(File2));
+      Args_edit := (1 => new String'(Item.File2.all));
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
@@ -133,41 +125,50 @@ package body Vdiff2_Utils is
          case Link.Action is
             when Append =>
                Link.Range1.Mark := new String'
-                 (Add_Line (Kernel, File1, Link.Range1.First, Old_Style,
-                          Link.Range2.Last - Link.Range2.First));
-               Highlight_Line (Kernel, File2, Link.Range2.First,
-                               Append_Style,
-                               Link.Range2.Last - Link.Range2.First);
+                 (Add_Line (Kernel, Item.File1.all,
+                               Link.Range1.First, Old_Style,
+                               Link.Range2.Last - Link.Range2.First));
+               Highlight_Line (Kernel, Item.File2.all, Link.Range2.First,
+                                  Append_Style,
+                                  Link.Range2.Last - Link.Range2.First);
                Link.Range2.Mark := new String'
-                 (Mark_Diff_Block (Kernel, File2, Link.Range2.First));
+                 (Mark_Diff_Block (Kernel, Item.File2.all,
+                                      Link.Range2.First));
             when Change =>
                Offset1 := Link.Range1.Last - Link.Range1.First;
                Offset2 := Link.Range2.Last - Link.Range2.First;
-               Highlight_Line (Kernel, File1, Link.Range1.First,
-                               Old_Style, Offset1);
-               Highlight_Line (Kernel, File2, Link.Range2.First,
-                               Change_Style, Offset2);
+               Highlight_Line (Kernel, Item.File1.all, Link.Range1.First,
+                                  Old_Style, Offset1);
+               Highlight_Line (Kernel, Item.File2.all, Link.Range2.First,
+                                  Change_Style, Offset2);
 
                if Offset1 < Offset2 then
-                  Add_Line (Kernel, File1, Link.Range1.First, Old_Style,
-                            Offset2 - Offset1);
+                  Add_Line (Kernel, Item.File1.all,
+                               Link.Range1.Last, Old_Style,
+                               Offset2 - Offset1);
                elsif Offset1 > Offset2 then
-                  Add_Line (Kernel, File2, Link.Range2.First, Change_Style,
-                            Offset1 - Offset2);
+                  Add_Line (Kernel, Item.File2.all,
+                               Link.Range2.Last, Change_Style,
+                               Offset1 - Offset2);
                end if;
                Link.Range1.Mark := new String'
-                 (Mark_Diff_Block (Kernel, File1, Link.Range1.First));
+                 (Mark_Diff_Block (Kernel, Item.File1.all,
+                                      Link.Range1.First));
                Link.Range2.Mark := new String'
-                 (Mark_Diff_Block (Kernel, File2, Link.Range2.First));
+                 (Mark_Diff_Block (Kernel, Item.File2.all,
+                                      Link.Range2.First));
 
             when Delete =>
-               Highlight_Line (Kernel, File1, Link.Range1.First, Old_Style,
-                               Link.Range1.Last - Link.Range1.First);
+               Highlight_Line (Kernel, Item.File1.all,
+                                  Link.Range1.First, Old_Style,
+                                  Link.Range1.Last - Link.Range1.First);
                Link.Range2.Mark := new String'
-                 (Add_Line (Kernel, File2, Link.Range2.First, Remove_Style,
-                            Link.Range1.Last - Link.Range1.First));
+                 (Add_Line (Kernel, Item.File2.all,
+                               Link.Range2.First, Remove_Style,
+                               Link.Range1.Last - Link.Range1.First));
                Link.Range1.Mark := new String'
-                 (Mark_Diff_Block (Kernel, File1, Link.Range1.First));
+                 (Mark_Diff_Block (Kernel, Item.File1.all,
+                                      Link.Range1.First));
             when others =>
                null;
          end case;
@@ -175,38 +176,54 @@ package body Vdiff2_Utils is
       end loop;
    end Show_Differences;
 
+
+   procedure Show_Differences3
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item   : Diff_List_Head)
+   is
+      Link2     : constant Diff_Occurrence_Link := Item.List;
+      Args_edit : Argument_List := (1 => new String'(Item.File1.all));
+   begin
+      Register_Highlighting (Kernel);
+      Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
+      Basic_Types.Free (Args_edit);
+      Args_edit := (1 => new String'(Item.File2.all));
+      Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
+      Basic_Types.Free (Args_edit);
+
+      if Link2 = null then
+         Show_Differences (Kernel, Item);
+         return;
+      end if;
+   end Show_Differences3;
    ----------------------
    -- Hide_Differences --
    ----------------------
 
    procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Diff   : Diff_Occurrence_Link;
-      File1  : String_Access;
-      File2  : String_Access;
-      File3  : String_Access := null) is
-      pragma Unreferenced (Diff);
+      Item   : Diff_List_Head) is
    begin
-      if File1 /= null then
-         Unhighlight_Line (Kernel, File1.all, 0, Default_Style);
-         Unhighlight_Line (Kernel, File1.all, 0, Old_Style);
-         Unhighlight_Line (Kernel, File1.all, 0, Append_Style);
-         Unhighlight_Line (Kernel, File1.all, 0, Remove_Style);
-         Unhighlight_Line (Kernel, File1.all, 0, Change_Style);
+      if Item.File1 /= null then
+         Unhighlight_Line (Kernel, Item.File1.all, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File1.all, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File1.all, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File1.all, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File1.all, 0, Change_Style);
       end if;
-      if File2 /= null then
-         Unhighlight_Line (Kernel, File2.all, 0, Default_Style);
-         Unhighlight_Line (Kernel, File2.all, 0, Old_Style);
-         Unhighlight_Line (Kernel, File2.all, 0, Append_Style);
-         Unhighlight_Line (Kernel, File2.all, 0, Remove_Style);
-         Unhighlight_Line (Kernel, File2.all, 0, Change_Style);
+      if Item.File2 /= null then
+         Unhighlight_Line (Kernel, Item.File2.all, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File2.all, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File2.all, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File2.all, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File2.all, 0, Change_Style);
       end if;
-      if File3 /= null then
-         Unhighlight_Line (Kernel, File3.all, 0, Default_Style);
-         Unhighlight_Line (Kernel, File3.all, 0, Old_Style);
-         Unhighlight_Line (Kernel, File3.all, 0, Append_Style);
-         Unhighlight_Line (Kernel, File3.all, 0, Remove_Style);
-         Unhighlight_Line (Kernel, File3.all, 0, Change_Style);
+      if Item.File3 /= null then
+         Unhighlight_Line (Kernel, Item.File3.all, 0, Default_Style);
+         Unhighlight_Line (Kernel, Item.File3.all, 0, Old_Style);
+         Unhighlight_Line (Kernel, Item.File3.all, 0, Append_Style);
+         Unhighlight_Line (Kernel, Item.File3.all, 0, Remove_Style);
+         Unhighlight_Line (Kernel, Item.File3.all, 0, Change_Style);
       end if;
    end Hide_Differences;
 
@@ -248,7 +265,7 @@ package body Vdiff2_Utils is
                                     3 => new String'(Image (Number)),
                                     4 => new String'(Style));
       Res : constant String :=  Execute_GPS_Shell_Command
-                       (Kernel, "add_blank_lines", Args_Line);
+        (Kernel, "add_blank_lines", Args_Line);
    begin
       Basic_Types.Free (Args_Line);
       return Res;
