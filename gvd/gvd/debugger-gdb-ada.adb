@@ -311,7 +311,7 @@ package body Debugger.Gdb.Ada is
       elsif Result'Tag = Access_Type'Tag then
 
          --  Skip the parenthesis contents if needed
-         if Type_Str (Index) = '(' then
+         if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
             Skip_To_Char (Type_Str, Index, ')');
             Index := Index + 2;
          end if;
@@ -520,6 +520,11 @@ package body Debugger.Gdb.Ada is
 
       if Is_Simple_Type (Lang, Type_Str (Tmp_Index .. Index - 1)) then
          Set_Item_Type (R.all, New_Simple_Type);
+
+      elsif Tmp_Index + 6 <= Type_Str'Last
+        and then Type_Str (Tmp_Index .. Tmp_Index + 5) = "access"
+      then
+         Set_Item_Type (R.all, New_Access_Type);
 
       else
 
