@@ -404,7 +404,7 @@ package body Custom_Module is
                     (Kernel,
                      -("<menu_item> and <toolbar_item> are no longer"
                        & " supported. Please use the program"
-                       & " gps_convert_custom to convert to the new format."),
+                       & " gps2custom-1.3 to convert to the new format."),
                      Mode => Error);
                   raise Assert_Failure;
                else
