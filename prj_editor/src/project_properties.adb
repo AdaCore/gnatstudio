@@ -79,6 +79,8 @@ package body Project_Properties is
       Compiler           : Gtk.GEntry.Gtk_Entry;
       Debugger           : Gtk.GEntry.Gtk_Entry;
       Compilers          : Widget_Array_Access;
+      Global_Pragmas     : Gtk.GEntry.Gtk_Entry;
+      Local_Pragmas      : Gtk.GEntry.Gtk_Entry;
       Languages          : Widget_Array_Access;
       Use_Relative_Paths : Gtk.Check_Button.Gtk_Check_Button;
       Tools_Host         : Gtk.GEntry.Gtk_Entry;
@@ -470,6 +472,77 @@ package body Project_Properties is
          Get_Attribute_Value
          (Project_View, Debugger_Command_Attribute,
           Ide_Package, Default => "gdb"));
+
+      --  Configuration frame
+
+      Gtk_New (Frame, -"External configuration");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Vbox, Frame, Expand => False);
+
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
+      Gtk_New (Label, -"Global pragmas:");
+      Add_Widget (Group, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("External file that contains the configuration pragmas to use"
+                 & " for Ada sources. This file will be used both for this"
+                 & " project and all its imported projects"));
+
+      Gtk_New (Editor.Global_Pragmas);
+      Set_Width_Chars (Editor.Global_Pragmas, 0);
+      Pack_Start (Hbox, Editor.Global_Pragmas, Expand => True);
+      Set_Text
+        (Editor.Global_Pragmas,
+         Get_Attribute_Value
+         (Project_View, Global_Pragmas_Attribute,
+          Builder_Package, Default => ""));
+
+      Gtk_New (Button2, -"Browse");
+      Pack_Start (Hbox, Button2, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button2, "clicked",
+         Widget_Callback.To_Marshaller (Browse_Location'Access),
+         Slot_Object => Editor.Global_Pragmas);
+
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Pack_Start (Box, Hbox);
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
+      Gtk_New (Label, -"Local pragmas:");
+      Add_Widget (Group, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("External file that contains the configuration pragmas to use"
+                 & " for Ada sources of this project. This is combined with"
+                 & " the pragmas found in the Global Pragmas section of the"
+                 & " root project." & ASCII.NUL
+                 & "This file isn't used for imported projects"));
+
+      Gtk_New (Editor.Local_Pragmas);
+      Set_Width_Chars (Editor.Local_Pragmas, 0);
+      Pack_Start (Hbox, Editor.Local_Pragmas, Expand => True);
+      Set_Text
+        (Editor.Local_Pragmas,
+         Get_Attribute_Value
+         (Project_View, Local_Pragmas_Attribute,
+          Compiler_Package, Default => ""));
+
+      Gtk_New (Button2, -"Browse");
+      Pack_Start (Hbox, Button2, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button2, "clicked",
+         Widget_Callback.To_Marshaller (Browse_Location'Access),
+         Slot_Object => Editor.Local_Pragmas);
 
       --  Cross environment frame
 
@@ -973,6 +1046,54 @@ package body Project_Properties is
                   Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables,
                   Attribute_Name     => Protocol_Attribute);
+            end if;
+         end if;
+
+         if Project_View = No_Project
+           or else Get_Text (Editor.Global_Pragmas) /= Get_Attribute_Value
+           (Project_View, Global_Pragmas_Attribute,
+            Builder_Package, Default => "")
+         then
+            Changed := True;
+            Trace (Me, "global pragmas changed");
+
+            if Get_Text (Editor.Global_Pragmas) /= "" then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Builder_Package,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute_Name     => Global_Pragmas_Attribute,
+                  Value              => Get_Text (Editor.Global_Pragmas));
+            else
+               Delete_Attribute
+                 (Project            => Project,
+                  Pkg_Name           => Builder_Package,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute_Name     => Global_Pragmas_Attribute);
+            end if;
+         end if;
+
+         if Project_View = No_Project
+           or else Get_Text (Editor.Local_Pragmas) /= Get_Attribute_Value
+           (Project_View, Local_Pragmas_Attribute,
+            Compiler_Package, Default => "")
+         then
+            Changed := True;
+            Trace (Me, "local pragmas changed");
+
+            if Get_Text (Editor.Local_Pragmas) /= "" then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Compiler_Package,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute_Name     => Local_Pragmas_Attribute,
+                  Value              => Get_Text (Editor.Local_Pragmas));
+            else
+               Delete_Attribute
+                 (Project            => Project,
+                  Pkg_Name           => Compiler_Package,
+                  Scenario_Variables => Scenario_Variables,
+                  Attribute_Name     => Local_Pragmas_Attribute);
             end if;
          end if;
 
