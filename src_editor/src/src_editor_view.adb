@@ -1256,10 +1256,13 @@ package body Src_Editor_View is
       View   : constant Source_View   := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Key    : constant Gdk_Key_Type  := Get_Key_Val (Event);
+      K      : Gdk_Key_Type;
+      Modif  : Gdk_Modifier_Type;
 
    begin
-      if Key = GDK_Tab and then (Get_State (Event) and Control_Mask) /= 0 then
-         --  ??? Should use a preference for the key value
+      Get_Pref (Get_Kernel (Buffer), Indentation_Key, Modif, K);
+
+      if Key = K and then Get_State (Event) = Modif then
          if Do_Indentation (Buffer, Get_Language (Buffer), False) then
             return True;
          end if;
