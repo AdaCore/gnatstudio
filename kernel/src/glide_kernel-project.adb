@@ -33,6 +33,7 @@ with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
+with Prj.PP;      use Prj.PP;
 with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
@@ -47,7 +48,11 @@ with GVD.Process;        use GVD.Process;
 with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 
+with Traces;  use Traces;
+
 package body Glide_Kernel.Project is
+
+   Me : Debug_Handle := Create ("glide_kernel.project");
 
    --  ??? Preferences
    Default_Project_Width  : constant := 400;
@@ -217,6 +222,11 @@ package body Glide_Kernel.Project is
 
 
       --  Evaluate the current project
+
+      if Debug_Mode and then Active (Me) then
+         Trace (Me, "Recompute_View:");
+         Trace_Pretty_Print (Me, Handle.Project);
+      end if;
 
       Prj.Reset;
       Prj.Proc.Process
