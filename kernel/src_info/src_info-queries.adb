@@ -41,6 +41,8 @@ package body Src_Info.Queries is
 
    Me : constant Debug_Handle := Create ("SRC_INFO");
 
+   No_File : aliased VFS.Virtual_File := VFS.No_File;
+
    Is_Scope_Entity : constant E_Kind_Set :=
      (Overloaded_Entity     => False,
       Unresolved_Entity     => False,
@@ -653,13 +655,13 @@ package body Src_Info.Queries is
             Create_Or_Complete_LI
               (Handler                => Handler,
                File                   => Body_LI,
-               Source_Filename        => Get_Declaration_File_Of (Entity),
+               Source_Filename        => Get_Declaration_File_Of (Entity).all,
                Project                => Project);
 
             if Body_LI /= null then
                Internal_Find_Declaration_Or_Body
                  (Lib_Info         => Body_LI,
-                  File_Name        => Get_Declaration_File_Of (Entity),
+                  File_Name        => Get_Declaration_File_Of (Entity).all,
                   Entity_Name      => Entity_Name,
                   Line             => Get_Declaration_Line_Of (Entity),
                   Column           => Get_Declaration_Column_Of (Entity),
@@ -1792,8 +1794,8 @@ package body Src_Info.Queries is
    -- Get_Declaration_Column_Of --
    -------------------------------
 
-   function Get_Declaration_Column_Of (Entity : Entity_Information)
-      return Natural is
+   function Get_Declaration_Column_Of
+     (Entity : Entity_Information) return Natural is
    begin
       return Entity.Decl_Column;
    end Get_Declaration_Column_Of;
@@ -1803,13 +1805,13 @@ package body Src_Info.Queries is
    -----------------------------
 
    function Get_Declaration_File_Of
-     (Entity : Entity_Information) return VFS.Virtual_File is
+     (Entity : Entity_Information) return VFS.Virtual_File_Access is
    begin
       if Is_Predefined_Entity (Entity) then
          Trace (Me, "Get_Declaration_File_Of: Predefined_Entity");
-         return VFS.No_File;
+         return No_File'Access;
       else
-         return Entity.Decl_File;
+         return Entity.Decl_File'Unchecked_Access;
       end if;
    end Get_Declaration_File_Of;
 
@@ -1970,8 +1972,8 @@ package body Src_Info.Queries is
       --  Check the declaration in the list. All the declarations have the same
       --  source file, so we can simply check the first one to save some time.
       if List = null
-        or else Get_Source_Filename (List.Value.Declaration.Location.File) /=
-        Get_Declaration_File_Of (Entity)
+        or else not Is_Declaration_File_Of
+          (Entity, Get_Source_Filename (List.Value.Declaration.Location.File))
       then
          return null;
 
@@ -1990,7 +1992,7 @@ package body Src_Info.Queries is
       return E_Declaration_Info_List
    is
       D : constant E_Declaration_Info_List := Get_Declarations_From_File
-        (Lib_Info, Get_Declaration_File_Of (Entity));
+        (Lib_Info, Get_Declaration_File_Of (Entity).all);
    begin
       return Find_Declaration (D, Entity);
    end Find_Declaration_In_LI;
@@ -2282,7 +2284,7 @@ package body Src_Info.Queries is
       if In_File = VFS.No_File then
          Find_Ancestor_Dependencies
            (Root_Project, Lang_Handler,
-            Get_Declaration_File_Of (Entity),
+            Get_Declaration_File_Of (Entity).all,
             Iterator.Decl_Iter,
             Project                => Project,
             File_Has_No_LI_Report  => File_Has_No_LI_Report,
@@ -3031,7 +3033,7 @@ package body Src_Info.Queries is
 
    function Get_Other_File_Of
      (Lib_Info : LI_File_Ptr; Source_Filename : Virtual_File)
-      return Virtual_File
+      return Virtual_File_Access
    is
       Part : constant Unit_Part := Get_Unit_Part (Lib_Info, Source_Filename);
    begin
@@ -3040,15 +3042,16 @@ package body Src_Info.Queries is
       case Part is
          when Unit_Body | Unit_Separate =>
             if Lib_Info.LI.Spec_Info /= null then
-               return Lib_Info.LI.Spec_Info.Source_Filename;
+               return Lib_Info.LI.Spec_Info.Source_Filename'Access;
             end if;
 
          when Unit_Spec =>
             if Lib_Info.LI.Body_Info /= null then
-               return Lib_Info.LI.Body_Info.Source_Filename;
+               return Lib_Info.LI.Body_Info.Source_Filename'Access;
             end if;
       end case;
-      return VFS.No_File;
+
+      return No_File'Access;
    end Get_Other_File_Of;
 
    --------------------
@@ -3150,14 +3153,16 @@ package body Src_Info.Queries is
    is
       LI   : LI_File_Ptr;
       Part : Unit_Part;
+      File : constant Virtual_File_Access := Get_Declaration_File_Of (Entity);
+
    begin
-      LI   := Locate_From_Source (Handler, Get_Declaration_File_Of (Entity));
-      Part := Get_Unit_Part (LI, Get_Declaration_File_Of (Entity));
+      LI   := Locate_From_Source (Handler, File.all);
+      Part := Get_Unit_Part (LI, File.all);
 
       return Source_File'
         (LI              => LI,
          Part            => Part,
-         Source_Filename => Get_Declaration_File_Of (Entity));
+         Source_Filename => File.all);
    end Get_Source_File;
 
    -----------------
@@ -3429,7 +3434,7 @@ package body Src_Info.Queries is
    begin
       Internal_Find_Declaration_Or_Body
         (Lib_Info         => Lib_Info,
-         File_Name        => Get_Declaration_File_Of (Entity),
+         File_Name        => Get_Declaration_File_Of (Entity).all,
          Entity_Name      => Get_Name (Entity),
          Line             => Get_Declaration_Line_Of (Entity),
          Column           => Get_Declaration_Column_Of (Entity),
@@ -3681,7 +3686,7 @@ package body Src_Info.Queries is
          else
             Trace (Me, "Process_Parents: Type has no parent "
                    & Get_Name (Entity) & ' '
-                   & Base_Name (Get_Declaration_File_Of (Entity))
+                   & Base_Name (Get_Declaration_File_Of (Entity).all)
                    & Get_Declaration_Line_Of (Entity)'Img
                    & Get_Declaration_Column_Of (Entity)'Img
                    & ' ' & Full_Name (Get_LI_Filename (Lib_Info)).all);
@@ -3691,7 +3696,7 @@ package body Src_Info.Queries is
 
       Trace (Me, "Process_Parents: Declaration not found for "
              & Get_Name (Entity) & ' '
-             & Base_Name (Get_Declaration_File_Of (Entity))
+             & Base_Name (Get_Declaration_File_Of (Entity).all)
              & Get_Declaration_Line_Of (Entity)'Img
              & Get_Declaration_Column_Of (Entity)'Img
              & ' ' & Full_Name (Get_LI_Filename (Lib_Info)).all);
@@ -3993,10 +3998,10 @@ package body Src_Info.Queries is
          Create_Or_Complete_LI
            (Iter.Lib_Info.LI.Handler,
             Lib_Info,
-            Source_Filename => Get_Declaration_File_Of (Ent),
+            Source_Filename => Get_Declaration_File_Of (Ent).all,
             Project         => Get_Project_From_File
               (Project_Registry (Get_Registry (Iter.Lib_Info.LI.Project)),
-               Get_Declaration_File_Of (Ent)));
+               Get_Declaration_File_Of (Ent).all));
 
          Iter.Lib_Info := Lib_Info;
          Decl := Find_Declaration_In_LI (Lib_Info, Ent);
@@ -4101,7 +4106,7 @@ package body Src_Info.Queries is
                          or else Parent.Kind = Container_Type)
                        and then Location_Matches
                        (Parent.Value,
-                        Get_Declaration_File_Of (Iter.Entity),
+                        Get_Declaration_File_Of (Iter.Entity).all,
                         Get_Declaration_Line_Of (Iter.Entity),
                         Get_Declaration_Column_Of (Iter.Entity)) = 0
                      then
@@ -4204,10 +4209,12 @@ package body Src_Info.Queries is
       end if;
 
       Parent := Decl.Value.Declaration.Parent_Location;
+
       while Parent /= null loop
          if Parent.Kind = Container_Type then
             return True;
          end if;
+
          Parent := Parent.Next;
       end loop;
 
@@ -4232,6 +4239,7 @@ package body Src_Info.Queries is
       loop
          D := Get (Iter);
          exit when D = No_Entity_Information;
+
          if Is_Equal (D, Discr) then
             return True;
          end if;
@@ -4239,6 +4247,7 @@ package body Src_Info.Queries is
          Destroy (D);
          Next (Iter);
       end loop;
+
       return False;
    end Is_Discriminant;
 
