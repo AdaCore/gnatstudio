@@ -593,6 +593,9 @@ private
    function Is_Empty (Data : Completion_Data) return Boolean;
    --  return True if the completion data is unset.
 
+   type Line_Terminator_Style is (Unknown, LF, CR, CR_LF);
+   --  The line terminator style of the given buffer.
+
    type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
       Kernel        : Glide_Kernel.Kernel_Handle;
@@ -615,10 +618,10 @@ private
       Inserting     : Boolean := False;
       --  Used to avoid recursion, when
 
-      Queue           : Command_Queue;
+      Queue         : Command_Queue;
       --  Contains the queue of editor commands for this editor.
 
-      Saved_Position         : Integer := 0;
+      Saved_Position      : Integer := 0;
       --  The saved position in the command queue.
 
       Last_Saved_Position : Integer := 0;
@@ -642,6 +645,8 @@ private
 
       Modified_Auto  : Boolean := False;
       --  Whether the buffer has been modified since last auto save.
+
+      Line_Terminator : Line_Terminator_Style := Unknown;
 
       Timeout_Id     : Gtk.Main.Timeout_Handler_Id := 0;
 
