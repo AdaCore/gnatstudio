@@ -53,6 +53,7 @@ package body Custom_Combos is
      (Entry_Cst'Access, Choice_Cst'Access);
    Set_Text_Args : constant Cst_Argument_List :=
      (Entry_Cst'Access, Choice_Cst'Access);
+   Simple_Args : constant Cst_Argument_List := (1 => Entry_Cst'Access);
 
    -----------------------
    -- Local subprograms --
@@ -567,9 +568,11 @@ package body Custom_Combos is
          Remove_Combo_Item (Kernel, Nth_Arg (Data, 2), Nth_Arg (Data, 3));
 
       elsif Command = "entry_clear" then
+         Name_Parameters (Data, Simple_Args);
          Clear_Combo (Kernel, Nth_Arg (Data, 2));
 
       elsif Command = "entry_get_text" then
+         Name_Parameters (Data, Simple_Args);
          Set_Return_Value (Data, Get_Combo_Text (Kernel, Nth_Arg (Data, 2)));
 
       elsif Command = "entry_set_text" then
