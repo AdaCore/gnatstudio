@@ -36,14 +36,25 @@ package body Language is
    -- Looking_At --
    ----------------
 
-   procedure Looking_At (Lang      : access Language_Root;
-                         Buffer    : String;
-                         Entity    : out Language_Entity;
-                         Next_Char : out Positive)
-   is
+   procedure Looking_At
+     (Lang      : access Language_Root;
+      Buffer    : String;
+      Entity    : out Language_Entity;
+      Next_Char : out Positive) is
    begin
       Next_Char := Buffer'First + 1;
       Entity := Normal_Text;
    end Looking_At;
+
+   -----------------
+   -- Dereference --
+   -----------------
+
+   function Dereference
+     (Lang     : access Language_Root;
+      Variable : String) return String is
+   begin
+      return Variable;
+   end Dereference;
 
 end Language;

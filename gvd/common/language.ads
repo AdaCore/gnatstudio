@@ -28,6 +28,7 @@ package Language is
    Unexpected_Type : exception;
 
    procedure Free (Lang : in out Language_Access);
+   --  Free the memory pointed to by Lang and set it to null.
 
    procedure Parse_Type
      (Lang     : access Language_Root;
@@ -97,6 +98,14 @@ package Language is
    --  in the buffer (ie starting at Buffer'First).
    --  Next_Char should be set to the index of the first character after the
    --  entity.
+
+   function Dereference
+     (Lang     : access Language_Root;
+      Variable : String) return String;
+   --  Return a string corresponding to a dereference of Variable.
+   --  For example in Ada, Dereference ("var") would return "var.all".
+   --  The default implementation is a noop, for languages that do not
+   --  support dereferencing.
 
 private
    type Language_Root is abstract tagged null record;
