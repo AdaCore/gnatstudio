@@ -143,15 +143,27 @@ package body Docgen.Html_Output is
       Info   : Doc_Info);
    --  Create the header of the index of all types
 
+   procedure Doc_HTML_Tagged_Type_Index_Header
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Create the header of the tagged types index
+
+   procedure Doc_HTML_Tagged_Type_Item
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add an item (a tagged type or its parent/child) to the tagged types
+   --  index
+
    procedure Doc_HTML_Index_Item
      (File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
-   --  Add an item to an index, used for all 3 index types
+   --  Add an item to an index, used for 3 index types: units, types and
+   --  subprograms index
 
    procedure Doc_HTML_Index_End
      (File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
-   --  Add the footer to the index, used for all 3 indes files
+   --  Add the footer to the index, used for all 4 index files
 
    procedure Doc_HTML_Body
      (B      : access Backend_HTML;
@@ -219,12 +231,24 @@ package body Docgen.Html_Output is
               (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
 
          when Unit_Index_Info       =>
-            Doc_HTML_Unit_Index_Header (File, Info, Doc_Directory, Doc_Suffix);
-         when Subprogram_Index_Info => Doc_HTML_Sub_Index_Header  (File, Info);
-         when Type_Index_Info       => Doc_HTML_Type_Index_Header (File, Info);
+            Doc_HTML_Unit_Index_Header
+              (File, Info, Doc_Directory, Doc_Suffix);
+
+         when Subprogram_Index_Info =>
+            Doc_HTML_Sub_Index_Header  (File, Info);
+
+         when Type_Index_Info       =>
+            Doc_HTML_Type_Index_Header (File, Info);
+
+         when Tagged_Type_Index_Info =>
+            Doc_HTML_Tagged_Type_Index_Header (File, Info);
+
+         when Index_Tagged_Type_Item =>
+            Doc_HTML_Tagged_Type_Item (File, Info);
+
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
-         when Body_Line_Info =>
+         when Body_Line_Info        =>
             Doc_HTML_Body
               (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
       end case;
@@ -561,91 +585,7 @@ package body Docgen.Html_Output is
       File   : in Ada.Text_IO.File_Type;
       Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info)
-   is
-      package TRL renames Type_Reference_List;
-
-      procedure Print_Ref_List
-        (Local_List    : TRL.List;
-         Called_Subp   : Boolean);
-      --  Processes the Ref_List to the output file.
-      --  If Called_Subp is True, the list of the subprograms
-      --  calling the current subprogram will be printed,
-      --  if False, the list of the subprograms called within it.
-
-      ----------------------
-      --  Print_Ref_List  --
-      ----------------------
-
-      procedure Print_Ref_List
-        (Local_List    : TRL.List;
-         Called_Subp   : Boolean) is
-         use TRL;
-         Node      : TRL.List_Node;
-      begin
-         if not TRL.Is_Empty (Local_List) then
-            if Called_Subp then
-               Put_Line (File, "<H5> Subprogram is called by: </H5>");
-            else
-               Put_Line (File, "<H5> Subprogram calls: </H5>");
-            end if;
-
-            Put_Line (File, "<TABLE>");
-
-            Node := TRL.First (Local_List);
-
-            --  For every reference found write the information to doc file
-
-            while Node /= TRL.Null_Node loop
-               --  Check if the creating of a link is possible
-
-               if TRL.Data (Node).Set_Link then
-                  --  If a called subprogram => link to spec
-                  Put_Line
-                    (File,
-                     "<TR><TD><A href="""
-                     & Get_Html_File_Name
-                       (Kernel,
-                        Get_Declaration_File_Of (TRL.Data (Node).Entity))
-                     & "#"
-                     & Image
-                       (Get_Declaration_Line_Of (TRL.Data (Node).Entity))
-                     & """>"
-                     & Get_Name (TRL.Data (Node).Entity)
-                     & "</A></TD><TD> at &nbsp<I>"
-                     & Base_Name
-                       (Get_Declaration_File_Of (TRL.Data (Node).Entity))
-                     & "</I></TD><TD>:"
-                     & Image (Get_Declaration_Line_Of (TRL.Data (Node).Entity))
-                     & "</TD><TD>:"
-                     & Image
-                       (Get_Declaration_Column_Of (TRL.Data (Node).Entity))
-                     & "</TD><TR>");
-
-               else
-                  --  No link at all
-                  Put_Line
-                    (File,
-                     "<TR><TD>"
-                     & Get_Name (TRL.Data (Node).Entity)
-                     & "</TD><TD> at &nbsp<I>"
-                     & Base_Name
-                       (Get_Declaration_File_Of (TRL.Data (Node).Entity))
-                     & "</I></TD><TD>:"
-                     & Image
-                       (Get_Declaration_Line_Of (TRL.Data (Node).Entity))
-                     & "</TD><TD>:"
-                     & Image
-                       (Get_Declaration_Column_Of (TRL.Data (Node).Entity))
-                     & "</TD></TR>");
-               end if;
-               Node := TRL.Next (Node);
-            end loop;
-
-            Put_Line (File, "</TABLE>");
-         end if;
-      end Print_Ref_List;
-
+      Info   : Doc_Info) is
    begin
       Put_Line
         (File, "  <A name="""
@@ -657,7 +597,6 @@ package body Docgen.Html_Output is
       if Info.Subprogram_Entity.Is_Private then
          Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
-
 
       Format_File
         (B,
@@ -683,8 +622,10 @@ package body Docgen.Html_Output is
       Put_Line (File, Info.Subprogram_Description.all);
       Put_Line (File, " <BR>  ");
 
-      Print_Ref_List (Info.Subprogram_Entity.Called_List, True);
-      Print_Ref_List (Info.Subprogram_Entity.Calls_List, False);
+      Print_Ref_List_HTML
+        (Kernel, File, null, Info.Subprogram_Entity.Called_List, True);
+      Print_Ref_List_HTML
+        (Kernel, File, null, Info.Subprogram_Entity.Calls_List, False);
 
       Put_Line (File, "<HR> ");
    end Doc_HTML_Subprogram;
@@ -744,10 +685,8 @@ package body Docgen.Html_Output is
       Frame_File       : File_Type;
       Source_File_Node : constant Type_Source_File_List.List_Node :=
         Type_Source_File_List.First (Info.Unit_File_List);
-
    begin
       --  Create the main frame file
-
       Create (Frame_File, Out_File, Doc_Directory & "index.htm");
       Put_Line (Frame_File, "<HTML>");
       Put_Line (Frame_File, "<HEAD>");
@@ -785,6 +724,10 @@ package body Docgen.Html_Output is
       Put_Line (File, "</PRE></TD></TR></TABLE>");
       Put_Line (File, "<H4> <a href=""index_sub.htm"" " &
                 "target=""index""> Subprogram Index </a> <br>");
+      if Info.Doc_Info_Options.Tagged_Types then
+         Put_Line (File, "<a href=""index_tagged_type.htm"" " &
+                   "target=""index""> Tagged Type Index </a> <br>");
+      end if;
       Put_Line (File, " <A href=""index_type.htm"" " &
                 "target=""index""> Type Index </A> </H4><BR>");
       Put_Line (File, "<HR> <BR>");
@@ -795,9 +738,7 @@ package body Docgen.Html_Output is
    --------------------------------
 
    procedure Doc_HTML_Sub_Index_Header
-     (File : in Ada.Text_IO.File_Type; Info : Doc_Info)
-   is
-      pragma Unreferenced (Info);
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
       Put_Line (File, "<HTML> ");
       Put_Line (File, "<HEAD>");
@@ -816,6 +757,11 @@ package body Docgen.Html_Output is
       Put_Line (File, "<H4> <A href=""index_unit.htm""  " &
                 "target=""index""> Unit Index </A> <BR>");
       New_Line (File);
+      if Info.Doc_Info_Options.Tagged_Types then
+         Put_Line (File, "<A href=""index_tagged_type.htm""  " &
+                "target=""index""> Tagged Type Index </A> <BR>");
+         New_Line (File);
+      end if;
       Put_Line (File, " <A href=""index_type.htm"" " &
                 "target=""index""> Type Index </A> </H4><BR>");
       New_Line (File);
@@ -828,9 +774,7 @@ package body Docgen.Html_Output is
    --------------------------------
 
    procedure Doc_HTML_Type_Index_Header
-     (File : in Ada.Text_IO.File_Type; Info : Doc_Info)
-   is
-      pragma Unreferenced (Info);
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info) is
    begin
       Put_Line (File, "<HTML> ");
       New_Line (File);
@@ -852,12 +796,141 @@ package body Docgen.Html_Output is
       Put_Line (File, "<H4> <A href=""index_unit.htm"" " &
                 "target = ""index""> Unit Index </A> <BR>");
       New_Line (File);
+      if Info.Doc_Info_Options.Tagged_Types then
+         Put_Line (File, "<A href=""index_tagged_type.htm"" " &
+                   "target = ""index""> Tagged Type Index </A> <BR>");
+         New_Line (File);
+      end if;
       Put_Line (File, " <A href=""index_sub.htm"" " &
                 "target=""index""> Subprogram Index </A></H4> <BR>");
       New_Line (File);
       Put_Line (File, "<HR> <BR>");
       New_Line (File);
    end Doc_HTML_Type_Index_Header;
+
+   ---------------------------------------
+   -- Doc_HTML_Tagged_Type_Index_Header --
+   ---------------------------------------
+
+   procedure Doc_HTML_Tagged_Type_Index_Header
+     (File : in Ada.Text_IO.File_Type; Info : Doc_Info)
+   is
+      pragma Unreferenced (Info);
+   begin
+      Put_Line (File, "<HTML> ");
+      New_Line (File);
+      Put_Line (File, "<HEAD>");
+      Put_Line (File, "<BASE target=""main"">");
+      New_Line (File);
+      Put_Line (File, "<META http-equiv" &
+                "=""Content-Type"" content=""" &
+                "text/html; charset=" & "ISO-8859-1" & """>");
+      Put_Line (File, "</HEAD>");
+      New_Line (File);
+      Put_Line (File, "<BODY bgcolor=""white"">");
+      New_Line (File);
+      Put_Line
+        (File, "<TABLE  bgcolor=""#9999FF"" width=""100%""><TR><TD> <PRE>");
+      Put_Line (File, "<H2> Tagged Type Index </H2> ");
+      Put_Line (File, "</PRE></TD></TR></TABLE>");
+      New_Line (File);
+      Put_Line (File, "<H4> <A href=""index_unit.htm"" " &
+                "target = ""index""> Unit Index </A> <BR>");
+      New_Line (File);
+      Put_Line (File, "<A href=""index_type.htm"" " &
+                "target = ""index""> Type Index </A> <BR>");
+      New_Line (File);
+      Put_Line (File, " <A href=""index_sub.htm"" " &
+                "target=""index""> Subprogram Index </A></H4> <BR>");
+      New_Line (File);
+      Put_Line (File, "<HR> <BR>");
+      New_Line (File);
+   end Doc_HTML_Tagged_Type_Index_Header;
+
+   -------------------------------
+   -- Doc_HTML_Tagged_Type_Item --
+   -------------------------------
+   procedure Doc_HTML_Tagged_Type_Item
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info)
+   is
+      Item_Doc_File      : String_Access;
+   begin
+      case Info.Doc_Family is
+         when Main =>
+            --  The tagged type itself
+            Item_Doc_File := new String'
+              (Base_Name (Get_Doc_File_Name
+                            (Get_Declaration_File_Of
+                               (Info.Doc_Tagged_Type),
+                             Info.Directory.all,
+                             Info.Suffix.all)));
+            Put_Line
+              (File, "<BR><A href=""" & Item_Doc_File.all
+               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
+               & """ target=""main""><b>"
+               & Get_Name (Info.Doc_Tagged_Type) & "</b></A><BR>");
+            New_Line (File);
+            Free (Item_Doc_File);
+
+         when No_Parent =>
+            Put_Line (File, "No parent.<BR>");
+
+         when Parent_With_Link =>
+            --  The parent of the tagged type is declared in one of the
+            --  processed files.
+            --  A link can be made.
+            Item_Doc_File := new String'
+              (Base_Name (Get_Doc_File_Name
+                            (Get_Declaration_File_Of
+                               (Info.Doc_Tagged_Type),
+                             Info.Directory.all,
+                             Info.Suffix.all)));
+            Put_Line
+              (File, "<b>Parent object : </b><A href=""" & Item_Doc_File.all
+               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
+               & """ target=""main"">"
+               & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>");
+            New_Line (File);
+            Free (Item_Doc_File);
+
+         when Parent_Without_Link =>
+            --  The parent of the tagged type is not declared in the processed
+            --  files. Link can't be made.
+            Put_Line (File,
+                      "<b>Parent object : </b>"
+                      & Get_Name (Info.Doc_Tagged_Type)
+                      & "<BR>");
+
+         when No_Child =>
+            Put_Line (File, "No child.<BR>");
+
+         when Child_With_Link =>
+            --  This child of the tagged type is declared in one of the
+            --  processed files.
+            --  Link can be made.
+            Item_Doc_File := new String'
+              (Base_Name (Get_Doc_File_Name
+                            (Get_Declaration_File_Of
+                               (Info.Doc_Tagged_Type),
+                             Info.Directory.all,
+                             Info.Suffix.all)));
+            Put_Line
+              (File, "<b>Child object : </b><A href=""" & Item_Doc_File.all
+               & "#" & Image (Get_Declaration_Line_Of (Info.Doc_Tagged_Type))
+               & """ target=""main"">"
+               & Get_Name (Info.Doc_Tagged_Type) & "</A><BR>");
+            New_Line (File);
+            Free (Item_Doc_File);
+
+         when Child_Without_Link =>
+            --  This child of the tagged type is not declared in the processed
+            --  files. Link can't be made.
+            Put_Line (File, "<b>Child object : </b>"
+                      & Get_Name (Info.Doc_Tagged_Type)
+                      & "<BR>");
+      end case;
+   end Doc_HTML_Tagged_Type_Item;
 
    -------------------------
    -- Doc_HTML_Index_Item --
@@ -873,7 +946,7 @@ package body Docgen.Html_Output is
          & Info.Item_Name.all & "</A>");
 
       Put_Line
-        (File, " <BR> &nbsp&nbsp&nbsp&nbsp&nbsp in " &
+        (File, " <BR> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; in " &
          Base_Name (Info.Item_File));
       New_Line (File);
       Put_Line (File, "<BR>");
@@ -924,6 +997,102 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Process_Body_Files,
          Info);
    end Doc_HTML_Body;
+
+   ---------------------------
+   --  Print_Ref_List_HTML  --
+   ---------------------------
+
+   procedure Print_Ref_List_HTML
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Name_Entity : Basic_Types.String_Access;
+      Local_List  : Type_Reference_List.List;
+      Called_Subp : Boolean)
+   is
+      use Type_Reference_List;
+      use type Basic_Types.String_Access;
+      Node      : Type_Reference_List.List_Node;
+   begin
+      if not Type_Reference_List.Is_Empty (Local_List) then
+         if Name_Entity = null then
+            if Called_Subp then
+               Put_Line (File, "<H5> Subprogram is called by: </H5>");
+            else
+               Put_Line (File, "<H5> Subprogram calls: </H5>");
+            end if;
+            Put_Line (File, "<TABLE>");
+         else
+            Put_Line (File, "<TABLE>");
+            if Called_Subp then
+               Put_Line (File, "<TR><TD><H3> Subprogram <I>"
+                         & Name_Entity.all
+                         & "</I>  is called by: </H3></TD></TR>");
+            else
+               Put_Line (File, "<TR><TD><H3> Subprogram  <I>"
+                         & Name_Entity.all & "</I>  calls: </H3></TD></TR>");
+            end if;
+
+         end if;
+
+         Node := Type_Reference_List.First (Local_List);
+
+         --  For every reference found write the information to doc file
+         while Node /= Type_Reference_List.Null_Node loop
+            --  Check if the creating of a link is possible
+            if Type_Reference_List.Data (Node).Set_Link then
+               --  If a called subprogram => link to spec
+               Put_Line
+                 (File,
+                  "<TR><TD><A href="""
+                  & Get_Html_File_Name
+                    (Kernel,
+                     Get_Declaration_File_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "#"
+                  & Image
+                    (Get_Declaration_Line_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                     & """>"
+                     & Get_Name (Type_Reference_List.Data (Node).Entity)
+                  & "</A></TD><TD> at &nbsp;<I>"
+                  & Base_Name
+                    (Get_Declaration_File_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "</I></TD><TD>:"
+                  & Image (Get_Declaration_Line_Of
+                             (Type_Reference_List.Data (Node).Entity))
+                  & "</TD><TD>:"
+                  & Image
+                    (Get_Declaration_Column_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "</TD><TR>");
+
+            else
+               --  No link at all
+               Put_Line
+                 (File,
+                  "<TR><TD>"
+                  & Get_Name (Type_Reference_List.Data (Node).Entity)
+                  & "</TD><TD> at &nbsp;<I>"
+                  & Base_Name
+                    (Get_Declaration_File_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "</I></TD><TD>:"
+                  & Image
+                    (Get_Declaration_Line_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                     & "</TD><TD>:"
+                  & Image
+                    (Get_Declaration_Column_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "</TD></TR>");
+            end if;
+            Node := Type_Reference_List.Next (Node);
+         end loop;
+
+         Put_Line (File, "</TABLE>");
+      end if;
+   end Print_Ref_List_HTML;
 
    ------------------------
    -- Get_Html_File_Name --
