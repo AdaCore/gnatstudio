@@ -285,7 +285,9 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (Matches);
    begin
       Append
-        (Solutions, Should_Be (Current_Text, Message, "goto", "go[\s]*to"));
+        (Solutions,
+         Should_Be
+           (Current_Text, Message, "goto", "(go[\s]+to)", Regular_Expression));
    end Fix;
 
    -----------------------
@@ -314,8 +316,8 @@ package body Codefix.Errors_Parser is
            (Current_Text,
             Message,
             Get_Message (Message) (Matches (2).First .. Matches (2).Last),
-            Quote (Get_Message
-              (Message) (Matches (1).First .. Matches (1).Last))));
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            Text_Ascii));
    end Fix;
 
    -------------------------
@@ -336,10 +338,10 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append (Solutions, Should_Be (Current_Text, Message, ";", "\."));
+      Append
+        (Solutions, Should_Be (Current_Text, Message, ";", ".", Text_Ascii));
    end Fix;
 
    ---------------
@@ -534,6 +536,50 @@ package body Codefix.Errors_Parser is
             Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
+   -------------------
+   -- Missing_Begin --
+   -------------------
+
+   procedure Initialize (This : in out Missing_Begin) is
+   begin
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile
+              ("missing ""(begin)"" for ""declare"" at line ([\d]+)",
+               Case_Insensitive)),
+         new Pattern_Matcher'
+           (Compile
+              ("missing ""(begin)"" for procedure ""?[\w]+""? at line ([\d]+)",
+               Case_Insensitive)));
+   end Initialize;
+
+   procedure Fix
+     (This         : Missing_Begin;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List);
+
+      Line_Cursor : File_Cursor;
+   begin
+      Line_Cursor.File_Name := Message.File_Name;
+      Line_Cursor.Col := 1;
+      Line_Cursor.Line :=
+        Integer'Value (Get_Message (Message)
+                         (Matches (2).First .. Matches (2).Last));
+
+      Append
+        (Solutions,
+         Expected
+           (Current_Text,
+            Line_Cursor,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+            Position => After));
+   end Fix;
+
    ----------------
    -- Missing_Kw --
    ----------------
@@ -555,8 +601,6 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
 
       Str_Red         : Dynamic_String;
-      Position_Chosen : Relative_Position := Specified;
-
    begin
 
       Assign
@@ -567,17 +611,13 @@ package body Codefix.Errors_Parser is
          raise Uncorrectible_Message;
       end if;
 
-      if Str_Red.all = "begin"  or else Str_Red.all = "BEGIN" then
-         Position_Chosen := Before;
-      end if;
 
       Append
         (Solutions,
          Expected
            (Current_Text,
             Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Position => Position_Chosen));
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    -----------------
@@ -638,8 +678,10 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Missing_All) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("add ""all"" to type ""[\w]+"" defined at line ([0-9]+)")));
+      This.Matcher := (new Pattern_Matcher'
+        (Compile ("add ""all"" to type ""[\w]+"" defined at (line) ([0-9]+)")),
+       new Pattern_Matcher'(Compile
+        ("add ""all"" to type ""[\w]+"" defined at ([^:]+):([0-9]+)")));
    end Initialize;
 
    procedure Fix
@@ -656,18 +698,31 @@ package body Codefix.Errors_Parser is
       New_Message        : Error_Message;
       Declaration_Line   : Positive;
       Line_Red           : Dynamic_String;
-      Declaration_Cursor : File_Cursor := File_Cursor (Message);
+      Declaration_Cursor : File_Cursor := Clone (File_Cursor (Message));
 
    begin
+
+      if
+        Get_Message (Message) (Matches (1).First .. Matches (1).Last) /= "line"
+      then
+         Assign
+           (Declaration_Cursor.File_Name,
+            Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+      end if;
+
       Declaration_Line :=
         Positive'Value
-          (Get_Message (Message) (Matches (1).First .. Matches (1).Last));
+          (Get_Message (Message) (Matches (2).First .. Matches (2).Last));
 
       Declaration_Cursor.Line := Declaration_Line;
       Declaration_Cursor.Col := 1;
       Assign (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
 
       Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
+
+      if Col_Matches (0) = No_Match then
+         raise Uncorrectible_Message;
+      end if;
 
       Initialize
         (New_Message,
@@ -678,6 +733,7 @@ package body Codefix.Errors_Parser is
 
       Append (Solutions, Expected (Current_Text, New_Message, "all"));
 
+      Free (Declaration_Cursor);
       Free (New_Message);
       Free (Line_Red);
    end Fix;
@@ -1430,7 +1486,28 @@ package body Codefix.Errors_Parser is
                    (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
+   ---------------------
+   -- Missplaced_With --
+   ---------------------
 
+   procedure Initialize (This : in out Missplaced_With) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("with clause can be moved to body")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Missplaced_With;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List, Matches);
+   begin
+      Append (Solutions, Move_With_To_Body (Current_Text, Message));
+   end Fix;
 begin
 
    Add_Parser (new Agregate_Misspelling);
@@ -1446,6 +1523,7 @@ begin
    Add_Parser (new Sth_Expected_3);
    Add_Parser (new Sth_Expected_2);
    Add_Parser (new Sth_Expected);
+   Add_Parser (new Missing_Begin);
    Add_Parser (new Missing_Kw);
    Add_Parser (new Missing_Sep);
    Add_Parser (new Missing_All);
@@ -1471,6 +1549,7 @@ begin
    Add_Parser (new Constant_Expected);
    Add_Parser (new Possible_Interpretation);
    Add_Parser (new Redundant_Conversion);
+   Add_Parser (new Missplaced_With);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
