@@ -1,5 +1,8 @@
 <?xml version="1.0" ?>
 <doc>
+<submenu before="About" action="" >
+   <title>/Help/GNAT Runtime</title>
+</submenu>
 <documentation_file>
    <shell>Editor.edit "a-astaco.ads"</shell>
    <descr>Ada.Asynchronous_Task_Control</descr>
