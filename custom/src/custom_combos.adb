@@ -301,16 +301,17 @@ package body Custom_Combos is
             Mode => Error);
       else
          Combo := new Custom_Combo_Record;
-         Initialize_Hbox (Combo, Homogeneous => False);
+         Initialize_Hbox (Combo, Homogeneous => False, Spacing => -4);
 
          if Title /= "" then
             Gtk_New (Label, Title);
-            Pack_Start (Combo, Label, Expand => False);
+            Pack_Start (Combo, Label, Expand => False, Padding => 4);
          end if;
 
          Gtk_New (Combo.Combo);
          Set_Name (Combo, Id);
-         Pack_Start (Combo, Combo.Combo, Expand => True, Fill => True);
+         Pack_Start
+           (Combo, Combo.Combo, Expand => True, Fill => True, Padding => 4);
          Set_Editable (Get_Entry (Combo.Combo), False);
 
          Subprogram_Callback.Object_Connect
