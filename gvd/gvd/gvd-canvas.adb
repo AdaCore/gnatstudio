@@ -434,7 +434,7 @@ package body GVD.Canvas is
 
       Gdk_New (C.Item_Context.Selection_GC, Win);
       Set_Foreground (C.Item_Context.Selection_GC,
-                      Get_Pref (GVD_Prefs, Selection_Color));
+                      Get_Pref (GVD_Prefs, Selected_Item_Color));
       C.Tooltip_Context.Selection_GC := C.Item_Context.Selection_GC;
 
       --  The drawing context for the boxes
