@@ -970,8 +970,7 @@ package body Browsers.Entities is
             "return " & Entity_As_Link (Returned),
             Length1 => 7,
             Callback => Build (Item, Returned));
-         --  Do not free Returned, it is needed for calbacks.
-         Destroy (Returned);
+         --  Do not free Returned, it is needed for callbacks.
       end if;
    end Add_Parameters;
 
