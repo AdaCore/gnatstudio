@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -27,6 +27,7 @@ package VCS_View_Pixmaps is
    Status_Not_Registered_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
    Status_Up_To_Date_Pixbuf     : Gdk_Pixbuf := Null_Pixbuf;
    Status_Removed_Pixbuf        : Gdk_Pixbuf := Null_Pixbuf;
+   Status_Added_Pixbuf          : Gdk_Pixbuf := Null_Pixbuf;
    Status_Modified_Pixbuf       : Gdk_Pixbuf := Null_Pixbuf;
    Status_Needs_Merge_Pixbuf    : Gdk_Pixbuf := Null_Pixbuf;
    Status_Needs_Update_Pixbuf   : Gdk_Pixbuf := Null_Pixbuf;
@@ -56,5 +57,8 @@ private
 
    Needs_Update_Xpm : aliased Pixmap_Array;
    pragma Import (C, Needs_Update_Xpm, "needs_update_xpm");
+
+   Added_Xpm : aliased Pixmap_Array;
+   pragma Import (C, Added_Xpm, "added_file_xpm");
 
 end VCS_View_Pixmaps;
