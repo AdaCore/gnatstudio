@@ -194,4 +194,18 @@ package body VCS is
         (Rep.Kernel, Command_Access (C), False, True, Name (VCS_Access (Rep)));
    end Check_Files;
 
+   ------------------
+   -- Parse_Status --
+   ------------------
+
+   function Parse_Status
+     (Rep  : access VCS_Record;
+      Text : String) return File_Status_List.List
+   is
+      pragma Unreferenced (Rep, Text);
+      Result : File_Status_List.List;
+   begin
+      return Result;
+   end Parse_Status;
+
 end VCS;
