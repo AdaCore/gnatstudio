@@ -427,7 +427,7 @@ package body VCS.CVS is
       end if;
 
       Display_File_Status
-        (Kernel, Result, VCS_CVS_Module_ID.CVS_Reference, True, True);
+        (Kernel, Result, VCS_CVS_Module_ID.CVS_Reference, True, True, True);
       File_Status_List.Free (Result);
 
       return True;
