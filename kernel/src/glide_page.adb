@@ -23,8 +23,10 @@ with Gtkada.MDI;      use Gtkada.MDI;
 with GVD.Process;
 with Glide_Kernel;    use Glide_Kernel;
 with Glide_Consoles;  use Glide_Consoles;
+with GVD.Text_Box.Source_Editor.Glide;
 
 package body Glide_Page is
+   use GVD.Text_Box.Source_Editor;
 
    -------------
    -- Gtk_New --
@@ -48,9 +50,11 @@ package body Glide_Page is
    is
       Child : MDI_Child;
       Iter  : Child_Iterator;
+      Edit  : Glide.GEdit;
 
    begin
-      GVD.Process.Initialize (Page, Window);
+      Glide.Gtk_New (Edit, Window);
+      GVD.Process.Initialize (Page, Window, Source_Editor (Edit));
       Set_Priorities
         (Page.Process_Mdi, (Left => 2, Right => 4, Top => 1, Bottom => 3));
 
