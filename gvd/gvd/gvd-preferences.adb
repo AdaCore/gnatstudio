@@ -2,7 +2,7 @@
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                               AdaCore                             --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -476,7 +476,7 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "HTML-Browser",
          Nick     => -"HTML browser",
          Blurb    => -"Program used to browse HTML pages",
-         Flags    => Source_Flags,
+         Flags    => External_Flags,
          Default  => Default_HTML_Browser));
       Register_Property (Prefs, Param_Spec (Html_Browser), Helpers);
 
