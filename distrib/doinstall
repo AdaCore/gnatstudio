@@ -20,12 +20,14 @@ current_dir=`/bin/pwd`
 ## Sets the variable  $basedir
 ask_basedir() {
    clear
-   default_base_dir=`type gnatmake | cut -d' ' -f3 2>/dev/null`
-   if [ "$default_base_dir " != " " ]; then
-      default_base_dir=`cd \`dirname $default_base_dir\`/..; pwd`
+   default_dir=`(type gnatmake | cut -d' ' -f3) 2>/dev/null`
+   default_dir=`dirname $default_dir`
+
+   if [ "$default_dir " != "." -a "$default_dir " != "/usr/bin" ]; then
+      default_dir=`cd $default_dir/..; pwd`
       cat <<EOF
 
-  GNAT has been found in $default_base_dir.
+  GNAT has been found in $default_dir.
   Do you want to install GPS there too? Hit RETURN if yes or enter
   the name of the directory in which GPS should be installed:
 
@@ -38,10 +40,10 @@ EOF
    fi
 
    while [ "$basedir " = " " ]; do
-      printf "[$default_base_dir] "
+      printf "[$default_dir] "
       read basedir
       if [ " $basedir" = " " ]; then
-         basedir="$default_base_dir"
+         basedir="$default_dir"
       fi
       if echo $basedir | egrep "^[/~]" >/dev/null; then
          true
