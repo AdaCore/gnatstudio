@@ -21,15 +21,20 @@
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with ALI;
 with Atree;
 with Basic_Types;               use Basic_Types;
 with Csets;
 with Errout;
 with File_Utils;                use File_Utils;
+with String_Utils;              use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
+pragma Warnings (On);
 with Glide_Intl;                use Glide_Intl;
 with Glib.Convert;              use Glib.Convert;
 with Namet;                     use Namet;
@@ -1723,5 +1728,88 @@ package body Projects.Registry is
               (Normalize_Pathname (Locale_From_UTF8 (Name))));
       end if;
    end Create;
+
+   ------------------------------
+   -- Compute_Predefined_Paths --
+   ------------------------------
+
+   procedure Compute_Predefined_Paths
+     (Registry     : in out Project_Registry;
+      Gnatls_Path  : String;
+      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
+      GNAT_Version : out GNAT.OS_Lib.String_Access)
+   is
+      Current : GNAT.OS_Lib.String_Access := new String'("");
+
+      procedure Add_Directory (S : String);
+      --  Add S to the search path.
+      --  If Source_Path is True, the source path is modified.
+      --  Otherwise, the object path is modified.
+
+      -------------------
+      -- Add_Directory --
+      -------------------
+
+      procedure Add_Directory (S : String) is
+         Tmp : GNAT.OS_Lib.String_Access;
+      begin
+         if S = ""
+           or else S = "<Current_Directory>"
+         then
+            --  Do not include "." in the default source paths: when the user
+            --  is compiling, it would represent the object directory, when the
+            --  user is searching file it would represent whatever the current
+            --  directory is at that point, ...
+            return;
+
+         else
+            Tmp := Current;
+            Current := new String'(Current.all & Path_Separator & S);
+            Free (Tmp);
+         end if;
+      end Add_Directory;
+
+      Fd          : TTY_Process_Descriptor;
+      Result      : Expect_Match;
+
+   begin
+      Non_Blocking_Spawn
+        (Fd, Gnatls_Path,
+         Gnatls_Args (2 .. Gnatls_Args'Last),
+         Buffer_Size => 0, Err_To_Out => True);
+
+      Expect (Fd, Result, "GNATLS .+\)", Timeout => -1);
+
+      declare
+         S : constant String := Expect_Out_Match (Fd);
+      begin
+         GNAT_Version := new String'(S (S'First + 7 .. S'Last));
+      end;
+
+      Expect (Fd, Result, "Source Search Path:", Timeout => -1);
+
+      loop
+         Expect (Fd, Result, "\n", Timeout => -1);
+
+         declare
+            S : constant String :=
+              Trim (Strip_CR (Expect_Out (Fd)), Ada.Strings.Left);
+         begin
+            if S = "Object Search Path:" & ASCII.LF then
+               Set_Predefined_Source_Path (Registry, Current.all);
+               Free (Current);
+               Current := new String'("");
+            else
+               Add_Directory (S (S'First .. S'Last - 1));
+            end if;
+         end;
+      end loop;
+
+   exception
+      when Process_Died =>
+         Set_Predefined_Object_Path (Registry, Current.all);
+         Free (Current);
+         Close (Fd);
+   end Compute_Predefined_Paths;
 
 end Projects.Registry;
