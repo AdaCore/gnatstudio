@@ -1675,13 +1675,28 @@ package body Src_Info.Queries is
             while Iterator.Current_Separate /= null loop
                Ref := Check_Declarations
                  (Iterator.Current_Separate.Value.Declarations);
+               Iterator.Current_Separate := Iterator.Current_Separate.Next;
+
                if Ref /= null then
                   return Ref;
                end if;
+            end loop;
+            Iterator.Part := Unit_Dependency;
+            Iterator.Current_Dependency := LI.LI.Dependencies_Info;
+         end if;
 
-               Iterator.Current_Separate := Iterator.Current_Separate.Next;
+         if Iterator.Part = Unit_Dependency then
+            while Iterator.Current_Dependency /= null loop
+               Ref := Check_Declarations
+                 (Iterator.Current_Dependency.Value.Declarations);
+               Iterator.Current_Dependency := Iterator.Current_Dependency.Next;
+
+               if Ref /= null then
+                  return Ref;
+               end if;
             end loop;
          end if;
+
          return null;
       end Check_Decl_File;
 
@@ -1721,6 +1736,7 @@ package body Src_Info.Queries is
          while Get (Iterator.Decl_Iter) /= null loop
             Iterator.References := Check_LI (Get (Iterator.Decl_Iter));
             exit when Iterator.References /= null;
+
             Next (Lang_Handler, Iterator.Decl_Iter, List);
             Iterator.Part := None;
          end loop;

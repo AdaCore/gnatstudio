@@ -602,7 +602,8 @@ private
       LI : LI_File_Ptr;
    end record;
 
-   type Analyzed_Part is (None, Unit_Spec, Unit_Body, Unit_Separate);
+   type Analyzed_Part is
+     (None, Unit_Spec, Unit_Body, Unit_Separate, Unit_Dependency);
 
    type Entity_Reference_Iterator is record
       Entity    : Entity_Information;
@@ -616,9 +617,12 @@ private
 
       Part : Analyzed_Part := None;
       Current_Separate : File_Info_Ptr_List;
+      Current_Dependency : Dependency_File_Info_List;
       --  If the LI file we are examining is the file in which the entity was
       --  declared, we need to examine the body, spec, and separates, and part
-      --  indicates which part we are examining
+      --  indicates which part we are examining. Otherwise, an entity declared
+      --  in the body cannot be seen from other files, so we don't need to
+      --  analyze them.
    end record;
 
    type Entity_Declaration_Iterator is record
