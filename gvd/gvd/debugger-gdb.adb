@@ -2815,10 +2815,7 @@ package body Debugger.Gdb is
       End_Index   : Integer;
 
    begin
-      if Debugger.Stored_Language /= null then
-         Free (Debugger.Stored_Language);
-      end if;
-
+      Free (Debugger.Stored_Language);
       Skip_To_Char (S, First_Index, '"');
       End_Index := First_Index + 1;
 
