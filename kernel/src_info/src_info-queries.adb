@@ -1083,6 +1083,36 @@ package body Src_Info.Queries is
       procedure Compute_Scope (L : in out Scope_List; Ref : E_Reference_List);
       --  Compute the beginning and end of scope for the declaration in L.
 
+      function End_Of_Spec_Scope
+        (Ref_List : E_Reference_List) return E_Reference;
+      --  The position at which the spec of the entity finishes. This is only
+      --  set if the entity contains other entities (Ada packages, C++ clases),
+      --  but doesn't reflect the end position for the declaration of a
+      --  variable for instance. No_Reference is returned if no such end is
+      --  found.
+
+      -----------------------
+      -- End_Of_Spec_Scope --
+      -----------------------
+
+      function End_Of_Spec_Scope
+        (Ref_List : E_Reference_List) return E_Reference
+      is
+         Ref : E_Reference_List := Ref_List;
+      begin
+         while Ref /= null loop
+            if Is_End_Reference (Ref.Value.Kind)
+              and then Ref.Value.Location.File.Part = Unit_Spec
+            then
+               return Ref.Value;
+            end if;
+
+            Ref := Ref.Next;
+         end loop;
+
+         return No_Reference;
+      end End_Of_Spec_Scope;
+
       -------
       -- < --
       -------
@@ -1101,8 +1131,10 @@ package body Src_Info.Queries is
         (L : in out Scope_List; Ref : E_Reference_List)
       is
          R : E_Reference_List := Ref;
+         Eos : E_Reference;
       begin
          L.Start_Of_Scope := L.Decl.Location;
+         L.End_Of_Scope   := L.Decl.End_Of_Scope;
 
          while R /= null loop
             --  There might be multiple bodies for a given entity (for
@@ -1110,13 +1142,23 @@ package body Src_Info.Queries is
             --  the real body are referenced as bodies.
             --  We need to find the proper one
 
-            if Is_Start_Reference (R.Value.Kind)
-              and then (L.Decl.End_Of_Scope = No_Reference
-                        or else L.Decl.End_Of_Scope.Location.File =
-                          R.Value.Location.File)
-            then
-               L.Start_Of_Scope := R.Value.Location;
-               return;
+            if Is_Start_Reference (R.Value.Kind) then
+               if (L.Decl.End_Of_Scope = No_Reference
+                   or else L.Decl.End_Of_Scope.Location.File =
+                     R.Value.Location.File)
+               then
+                  L.Start_Of_Scope := R.Value.Location;
+                  L.End_Of_Scope   := L.Decl.End_Of_Scope;
+                  return;
+
+               elsif R.Value.Location.File.Part = Unit_Spec then
+                  Eos := End_Of_Spec_Scope (R);
+                  if Eos /= No_Reference then
+                     L.Start_Of_Scope := R.Value.Location;
+                     L.End_Of_Scope   := Eos;
+                     return;
+                  end if;
+               end if;
             end if;
 
             R := R.Next;
@@ -1133,8 +1175,8 @@ package body Src_Info.Queries is
             when Declaration =>
                case Loc.Typ is
                   when Declaration =>
-                     if Decl.Decl.End_Of_Scope /= No_Reference then
-                        if Decl.Decl.End_Of_Scope.Location <
+                     if Decl.End_Of_Scope /= No_Reference then
+                        if Decl.End_Of_Scope.Location <
                           Loc.Start_Of_Scope
                         then
                            return -1;
@@ -1144,20 +1186,20 @@ package body Src_Info.Queries is
 
                            return 2;
 
-                        elsif Loc.Decl.End_Of_Scope /= No_Reference
+                        elsif Loc.End_Of_Scope /= No_Reference
                           and then Decl.Start_Of_Scope <
-                            Loc.Decl.End_Of_Scope.Location
+                            Loc.End_Of_Scope.Location
                         then
                            return 0;
                         else
                            return 1;
                         end if;
 
-                     elsif Loc.Decl.End_Of_Scope /= No_Reference then
+                     elsif Loc.End_Of_Scope /= No_Reference then
                         if Decl.Start_Of_Scope < Loc.Start_Of_Scope then
                            return -1;
                         elsif Decl.Start_Of_Scope <
-                          Loc.Decl.End_Of_Scope.Location
+                          Loc.End_Of_Scope.Location
                         then
                            return 0;
                         else
@@ -1171,8 +1213,8 @@ package body Src_Info.Queries is
                      end if;
 
                   when Reference =>
-                     if Decl.Decl.End_Of_Scope /= No_Reference then
-                        if Decl.Decl.End_Of_Scope.Location <
+                     if Decl.End_Of_Scope /= No_Reference then
+                        if Decl.End_Of_Scope.Location <
                           Loc.Ref.Location
                         then
                            return -1;
@@ -1194,9 +1236,8 @@ package body Src_Info.Queries is
                   when Declaration =>
                      if Decl.Ref.Location < Loc.Start_Of_Scope then
                         return -1;
-                     elsif Loc.Decl.End_Of_Scope /= No_Reference
-                       and then Decl.Ref.Location <
-                         Loc.Decl.End_Of_Scope.Location
+                     elsif Loc.End_Of_Scope /= No_Reference
+                       and then Decl.Ref.Location < Loc.End_Of_Scope.Location
                      then
                         return 0;
                      else
@@ -1222,14 +1263,14 @@ package body Src_Info.Queries is
          if Decl.Typ = Declaration then
             case Loc.Typ is
                when Declaration =>
-                  return Decl.Decl.End_Of_Scope /= No_Reference
-                    and then not (Decl.Decl.End_Of_Scope.Location <
+                  return Decl.End_Of_Scope /= No_Reference
+                    and then not (Decl.End_Of_Scope.Location <
                                     Loc.Start_Of_Scope)
                     and then Decl.Start_Of_Scope < Loc.Start_Of_Scope;
 
                when Reference =>
-                  return Decl.Decl.End_Of_Scope /= No_Reference
-                    and then not (Decl.Decl.End_Of_Scope.Location <
+                  return Decl.End_Of_Scope /= No_Reference
+                    and then not (Decl.End_Of_Scope.Location <
                                     Loc.Ref.Location)
                     and then Decl.Start_Of_Scope < Loc.Ref.Location;
             end case;
@@ -1385,7 +1426,8 @@ package body Src_Info.Queries is
             --  Do not add labels to the scope tree, since these only bring
             --  syntactic information, and do not impact the code.
 
-            if R.Value.Kind /= Label
+            if Is_Real_Reference (R.Value.Kind)
+              and then R.Value.Kind /= Label
               and then R.Value.Location /= Decl_Start
               and then R.Value.Location /=
                 Decl.Declaration.End_Of_Scope.Location
@@ -1420,6 +1462,7 @@ package body Src_Info.Queries is
                Decl           => List.Value.Declaration'Unrestricted_Access,
                Contents       => null,
                Start_Of_Scope => Null_File_Location,
+               End_Of_Scope   => No_Reference,
                Parent         => null,
                Sibling        => null);
 
@@ -1448,6 +1491,9 @@ package body Src_Info.Queries is
                --  body
 
                if List.Value.Declaration.End_Of_Scope /= No_Reference
+
+               --  ??? Should also support C++ classes, this seems too
+               --  specialized, and End_Of_Spec_Scope seems to be better
                  and then List.Value.Declaration.Kind.Kind = Package_Kind
                  and then Start_Of_Scope.File.Part /= Unit_Spec
                then
@@ -1456,6 +1502,7 @@ package body Src_Info.Queries is
                      Decl        => List.Value.Declaration'Unrestricted_Access,
                      Contents    => null,
                      Start_Of_Scope => List.Value.Declaration.Location,
+                     End_Of_Scope => End_Of_Spec_Scope (List.Value.References),
                      Parent      => null,
                      Sibling     => null);
                   Add_Single_Entity (New_Item, T);

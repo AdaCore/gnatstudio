@@ -859,6 +859,7 @@ private
       case Typ is
          when Declaration =>
             Start_Of_Scope : File_Location;
+            End_Of_Scope : E_Reference;
             Contents : Scope_List;
 
          when Reference =>
