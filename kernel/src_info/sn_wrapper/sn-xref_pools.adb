@@ -104,7 +104,7 @@ package body SN.Xref_Pools is
 
    procedure Init (Pool : out Xref_Pool) is
    begin
-      Pool := new STable.HTable;
+      Pool := new Xref_Pool_Record;
    end Init;
 
    ----------
@@ -150,7 +150,7 @@ package body SN.Xref_Pools is
                   if Ref_Buf (Ref_Buf'First) = '1' then
                      Xref_Elmt.Valid := True;
                   end if;
-                  STable.Set (Pool.all, Xref_Elmt);
+                  STable.Set (Pool.HTable, Xref_Elmt);
                end;
 
             end loop;
@@ -174,8 +174,12 @@ package body SN.Xref_Pools is
       FD : File_Type;
       E  : Xref_Elmt_Ptr;
    begin
+      if not Pool.Changed then
+         --  pool was not changed, saving is not necessary
+         return;
+      end if;
       Create (FD, Out_File, Filename);
-      STable.Get_First (Pool.all, E);
+      STable.Get_First (Pool.HTable, E);
       while E /= Null_Xref_Elmt loop
          Put_Line (FD, E.Source_Filename.all);
          if E.Valid then
@@ -184,9 +188,10 @@ package body SN.Xref_Pools is
             Put (FD, '0');
          end if;
          Put_Line (FD, E.Xref_Filename.all);
-         STable.Get_Next (Pool.all, E);
+         STable.Get_Next (Pool.HTable, E);
       end loop;
       Close (FD);
+      Pool.Changed := False;
    exception
       when E : others =>
          begin
@@ -204,14 +209,14 @@ package body SN.Xref_Pools is
 
    procedure Free (Pool : in out Xref_Pool) is
       procedure Internal_Free is new Ada.Unchecked_Deallocation
-        (STable.HTable, Xref_Pool);
+        (Xref_Pool_Record, Xref_Pool);
       E    : Xref_Elmt_Ptr;
       Next : Xref_Elmt_Ptr;
    begin
-      STable.Get_First (Pool.all, E);
+      STable.Get_First (Pool.HTable, E);
       while E /= Null_Xref_Elmt loop
-         STable.Get_Next (Pool.all, Next);
-         STable.Remove (Pool.all, E.Source_Filename);
+         STable.Get_Next (Pool.HTable, Next);
+         STable.Remove (Pool.HTable, E.Source_Filename);
          Free (E.Xref_Filename);
          Free (E.Source_Filename);
          Free (E);
@@ -256,7 +261,7 @@ package body SN.Xref_Pools is
       N     : Integer := 0;
    begin
       --  get hashed value
-      Data := STable.Get (Pool.all, Source_Filename'Unrestricted_Access);
+      Data := STable.Get (Pool.HTable, Source_Filename'Unrestricted_Access);
       if Data /= null then
          return Data.Xref_Filename;
       end if;
@@ -289,7 +294,8 @@ package body SN.Xref_Pools is
       end loop;
 
       --  add generated file to hashtable
-      STable.Set (Pool.all, Data);
+      STable.Set (Pool.HTable, Data);
+      Pool.Changed := True;
 
       return Data.Xref_Filename;
    end Xref_Filename_For;
@@ -305,7 +311,7 @@ package body SN.Xref_Pools is
    is
       Key       : String_Access := new String' (Source_Filename);
       Xref_Elmt : Xref_Elmt_Ptr :=
-        STable.Get (Pool.all, Key);
+        STable.Get (Pool.HTable, Key);
    begin
       if Xref_Elmt = null then -- nothing to do
          return;
@@ -318,11 +324,12 @@ package body SN.Xref_Pools is
          --  remove file (ignoring errors)
          Delete_File (Full_Name, Result);
          --  remove from hashtable
-         STable.Remove (Pool.all, Key);
+         STable.Remove (Pool.HTable, Key);
          Free (Key);
          Free (Xref_Elmt.Source_Filename);
          Free (Xref_Elmt.Xref_Filename);
          Free (Xref_Elmt);
+         Pool.Changed := True;
       end;
    end Free_Filename_For;
 
@@ -335,7 +342,7 @@ package body SN.Xref_Pools is
       Pool            : Xref_Pool) return Boolean
    is
       Xref_Elmt : constant Xref_Elmt_Ptr :=
-        STable.Get (Pool.all, Source_Filename'Unrestricted_Access);
+        STable.Get (Pool.HTable, Source_Filename'Unrestricted_Access);
    begin
       return Xref_Elmt /= null and then Xref_Elmt.Valid;
    end Is_Xref_Valid;
@@ -350,10 +357,13 @@ package body SN.Xref_Pools is
       Pool            : Xref_Pool)
    is
       Xref_Elmt : Xref_Elmt_Ptr :=
-        STable.Get (Pool.all, Source_Filename'Unrestricted_Access);
+        STable.Get (Pool.HTable, Source_Filename'Unrestricted_Access);
    begin
       if Xref_Elmt /= null then
-         Xref_Elmt.Valid := Valid;
+         if Xref_Elmt.Valid /= Valid then
+            Xref_Elmt.Valid := Valid;
+            Pool.Changed := True;
+         end if;
       end if;
    end Set_Valid;
 

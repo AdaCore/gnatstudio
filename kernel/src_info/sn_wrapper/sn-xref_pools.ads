@@ -27,7 +27,7 @@ package SN.Xref_Pools is
    --  file does not exist.
 
    procedure Save (Pool : Xref_Pool; Filename : String);
-   --  Saves pool to specified file. Overwrite existing file.
+   --  Saves pool to specified file if needed. Overwrite existing file.
    --  Raises Xref_File_Error if writing failed.
 
    procedure Free (Pool : in out Xref_Pool);
@@ -110,7 +110,14 @@ private
       Hash        => Hash,
       Equal       => Equal);
 
-   type Xref_Pool is access all STable.HTable;
+   type Xref_Pool_Record is record
+      HTable  : STable.HTable;
+      Changed : Boolean := False;
+      --  set by Xref_Filename_For, Save to detect whether saving is
+      --  necessary or not
+   end record;
+
+   type Xref_Pool is access Xref_Pool_Record;
    Empty_Xref_Pool : constant Xref_Pool := null;
 
 end SN.Xref_Pools;
