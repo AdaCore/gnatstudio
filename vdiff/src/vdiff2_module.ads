@@ -21,11 +21,12 @@
 --  New Visual Diff module.
 
 with Glide_Kernel;
+with Glib.Properties.Creation; use Glib.Properties.Creation;
 
 package Vdiff2_Module is
    Vdiff_Module_ID   : Glide_Kernel.Module_ID;
    Vdiff_Module_Name : constant String := "Visual_Diff2";
-
+   Diff3_Cmd           : Param_Spec_String;
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
