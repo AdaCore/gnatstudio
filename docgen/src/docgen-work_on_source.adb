@@ -757,10 +757,10 @@ package body Docgen.Work_On_Source is
    -----------------------
 
    procedure Process_Open_File
-     (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
-      Package_Name     : String) is
+     (B            : access Docgen.Backend.Backend'Class;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Doc_File     : File_Descriptor;
+      Package_Name : String) is
    begin
       Doc_Open (B, Kernel, Doc_File, Open_Title => Package_Name);
    end Process_Open_File;
@@ -1226,9 +1226,9 @@ package body Docgen.Work_On_Source is
    --------------------
 
    procedure Process_Footer
-     (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor) is
+     (B        : access Docgen.Backend.Backend'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Doc_File : File_Descriptor) is
    begin
       Doc_Footer (B, Kernel, Doc_File);
    end Process_Footer;
@@ -1238,12 +1238,12 @@ package body Docgen.Work_On_Source is
    ---------------------------------
 
    procedure Process_Package_Description
-     (B                : access Docgen.Backend.Backend'Class;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
-      Text             : String;
-      Options          : All_Options;
-      Level            : in out Natural)
+     (B        : access Docgen.Backend.Backend'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Doc_File : File_Descriptor;
+      Text     : String;
+      Options  : All_Options;
+      Level    : in out Natural)
    is
       pragma Unreferenced (Options);
 
@@ -1252,8 +1252,6 @@ package body Docgen.Work_On_Source is
       End_Line    : Natural;
 
    begin
-
-
       Skip_Blanks (Text, Start_Line);
       End_Line := Start_Line;
 
@@ -1269,7 +1267,6 @@ package body Docgen.Work_On_Source is
       Doc_Package_Desc
         (B, Kernel, Doc_File, Level, Description => Description.all);
       Free (Description);
-
    end Process_Package_Description;
 
    --------------------------
