@@ -822,6 +822,8 @@ package body GVD.Source_Editors is
       Load_File (Contents, Error_Msg, Editor.Current_File_Cache,
                  Process.Descriptor.Remote_Host);
 
+      Set_Buffer (Editor, Contents);
+
       if Contents = null then
          Print_Message (Process.Window.Statusbar1, Error, Error_Msg.all);
          Free (Error_Msg);
@@ -829,7 +831,6 @@ package body GVD.Source_Editors is
          return;
       end if;
 
-      Set_Buffer (Editor, Contents);
       Update_Child (Editor);
       Update_Buttons (Editor, True);
 
