@@ -19,17 +19,17 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;
-with Glib;          use Glib;
+with Glib;               use Glib;
 with Gdk.GC;
-with Gdk.Color;     use Gdk.Color;
-with Gdk.Pixbuf;    use Gdk.Pixbuf;
+with Gdk.Color;          use Gdk.Color;
+with Gdk.Pixbuf;         use Gdk.Pixbuf;
 with Gtk.Button;
-with Gtk.Box;       use Gtk.Box;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtk.Text_Mark;   use Gtk.Text_Mark;
-with Gtk.Text_Buffer; use Gtk.Text_Buffer;
-with Gtk.Text_View;   use Gtk.Text_View;
-with Gtkada.MDI;                use Gtkada.MDI;
+with Gtk.Box;            use Gtk.Box;
+with Gtk.Menu_Item;      use Gtk.Menu_Item;
+with Gtk.Text_Mark;      use Gtk.Text_Mark;
+with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
+with Gtk.Text_View;      use Gtk.Text_View;
+with Gtkada.MDI;         use Gtkada.MDI;
 
 with Src_Editor_Box;
 
@@ -52,11 +52,11 @@ package Src_Editor_Module is
    Search_Result_Highlighting : constant String := "Search Results";
 
    type Undo_Redo_Information is record
-      Undo_Button          : Gtk.Button.Gtk_Button;
-      Redo_Button          : Gtk.Button.Gtk_Button;
+      Undo_Button    : Gtk.Button.Gtk_Button;
+      Redo_Button    : Gtk.Button.Gtk_Button;
 
-      Undo_Menu_Item       : Gtk.Menu_Item.Gtk_Menu_Item;
-      Redo_Menu_Item       : Gtk.Menu_Item.Gtk_Menu_Item;
+      Undo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
+      Redo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
    end record;
 
    Undo_Redo_Id : constant String := "Source_Editor_Undo_Redo_Information";
@@ -68,8 +68,8 @@ package Src_Editor_Module is
    ---------------------------------------
 
    Remove_Blank_Lines_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
-   Hide_Block_Pixbuf   : Gdk_Pixbuf := Null_Pixbuf;
-   Unhide_Block_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
+   Hide_Block_Pixbuf         : Gdk_Pixbuf := Null_Pixbuf;
+   Unhide_Block_Pixbuf       : Gdk_Pixbuf := Null_Pixbuf;
 
    -----------------------
    -- Local subprograms --
@@ -198,33 +198,33 @@ private
    --  Hook called when the "source_lines_revealed" hook is run.
 
    type Source_Editor_Module_Record is new Module_ID_Record with record
-      Kernel                   : Kernel_Handle;
-      Lines_Hook               : Lines_Revealed_Hook;
+      Kernel                : Kernel_Handle;
+      Lines_Hook            : Lines_Revealed_Hook;
 
-      Display_Line_Numbers     : Boolean    := False;
+      Display_Line_Numbers  : Boolean    := False;
 
-      Show_Subprogram_Names    : Boolean    := False;
+      Show_Subprogram_Names : Boolean    := False;
 
-      Stored_Marks             : Mark_Identifier_List.List;
-      Next_Mark_Id             : Natural := 0;
+      Stored_Marks          : Mark_Identifier_List.List;
+      Next_Mark_Id          : Natural := 0;
 
       Unopened_Files           : String_List_Utils.String_List.List;
       --  Contains a list of files for which marks have been created but
       --  that are not open.
 
-      Categories               : Highlighting_Category_Array_Access;
+      Categories            : Highlighting_Category_Array_Access;
       --  Contains a list of registered categories.
 
-      Blank_Lines_GC           : Gdk.GC.Gdk_GC := null;
-      Post_It_Note_GC          : Gdk.GC.Gdk_GC := null;
+      Blank_Lines_GC        : Gdk.GC.Gdk_GC := null;
+      Post_It_Note_GC       : Gdk.GC.Gdk_GC := null;
 
-      Editors                  : Editors_Hash.HTable;
+      Editors               : Editors_Hash.HTable;
 
       --  The following fields are related to the current search.
 
-      Search_Context           : Src_Contexts.Files_Project_Context_Access;
-      Search_File              : VFS.Virtual_File;
-      Search_Pattern           : Basic_Types.String_Access;
+      Search_Context        : Src_Contexts.Files_Project_Context_Access;
+      Search_File           : VFS.Virtual_File;
+      Search_Pattern        : Basic_Types.String_Access;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
