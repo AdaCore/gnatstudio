@@ -185,7 +185,7 @@ package body Variable_Editors is
          Set_Title (Editor, "Editing a variable");
 
          Editor.Name_Was_Changed := True;
-         Get_Name_String (Project_Nodes.Table (Var).Name);
+         Get_Name_String (Name_Of (Var));
          Set_Text (Editor.Variable_Name,
                    Name_Buffer (Name_Buffer'First .. Name_Len));
          Editor.Name_Was_Changed := False;
@@ -199,8 +199,9 @@ package body Variable_Editors is
                       Name_Buffer (Name_Buffer'First .. Name_Len));
          end if;
 
-         if Project_Nodes.Table (Var).Kind = N_Variable_Declaration then
-            if Project_Nodes.Table (Var).Expr_Kind = Single then
+         --  ??? Should be moved in prj_api
+         if Kind_Of (Var) = N_Variable_Declaration then
+            if Expression_Kind_Of (Var) = Single then
                Set_Active (Editor.Untyped_Single_Variable, True);
                Display_Expr (Editor.Single_Value, Value_Of (Var));
             else
@@ -234,19 +235,19 @@ package body Variable_Editors is
    begin
       Realize (Editable); --  Make sure that the Value_Editors are realized
       while not Done (E) loop
-         if Project_Nodes.Table (Data (E)).Kind = N_Literal_String then
-            String_To_Name_Buffer (Project_Nodes.Table (Data (E)).Value);
+         if Kind_Of (Data (E)) = N_Literal_String then
+            String_To_Name_Buffer (String_Value_Of (Data (E)));
             Insert_Text
               (Editable, Name_Buffer (Name_Buffer'First .. Name_Len), Pos);
 
          else
-            Term := Project_Nodes.Table (Data (E)).Field1;
+            Term := First_Term (Data (E));
             while Term /= Empty_Node loop
-               N := Project_Nodes.Table (Term).Field1;
+               N := Current_Term (Term);
 
-               case Project_Nodes.Table (N).Kind is
+               case Kind_Of (N) is
                   when N_Variable_Reference =>
-                     Get_Name_String (Project_Nodes.Table (N).Name);
+                     Get_Name_String (Name_Of (N));
                      Insert_Text
                        (Editable,
                         "${" & Name_Buffer (Name_Buffer'First .. Name_Len)
@@ -254,19 +255,18 @@ package body Variable_Editors is
                         Pos);
 
                   when N_Literal_String =>
-                     String_To_Name_Buffer (Project_Nodes.Table (N).Value);
+                     String_To_Name_Buffer (String_Value_Of (N));
                      Insert_Text
                        (Editable,
                         Name_Buffer (Name_Buffer'First .. Name_Len),
                         Pos);
 
                   when others =>
-                     Put_Line ("Display_Expr: "
-                               & Project_Nodes.Table (N).Kind'Img);
+                     Put_Line ("Display_Expr: " & Kind_Of (N)'Img);
                      raise Program_Error;
                end case;
 
-               Term := Project_Nodes.Table (Term).Field2;
+               Term := Next_Term (Term);
             end loop;
          end if;
 
@@ -283,20 +283,10 @@ package body Variable_Editors is
    ------------------------
 
    procedure External_As_String (Ext : Project_Node_Id) is
-      Expr, Term, N : Project_Node_Id;
+      N : Project_Node_Id;
    begin
-      pragma Assert (Ext /= Empty_Node);
-      Expr := Project_Nodes.Table (Ext).Field1;
-      pragma Assert (Expr /= Empty_Node);
-
-      Term := Project_Nodes.Table (Expr).Field1;
-      pragma Assert (Term /= Empty_Node);
-      N := Project_Nodes.Table (Term).Field1;
-
-      pragma Assert (N /= Empty_Node);
-      pragma Assert (Project_Nodes.Table (N).Kind = N_Literal_String);
-
-      String_To_Name_Buffer (Project_Nodes.Table (N).Value);
+      N := Current_Term (First_Term (External_Reference_Of (Ext)));
+      String_To_Name_Buffer (String_Value_Of (N));
    end External_As_String;
 
    -------------------------
@@ -401,7 +391,7 @@ package body Variable_Editors is
 
       --  Set the correct values for the widgets
 
-      Get_Name_String (Project_Nodes.Table (Var).Name);
+      Get_Name_String (Name_Of (Var));
       Set_Text (Editor.Data (Row).Name_Label,
                 Name_Buffer (Name_Buffer'First .. Name_Len));
 
@@ -421,20 +411,20 @@ package body Variable_Editors is
          Editor.Data (Row).Value_Edit := null;
       end if;
 
-      if Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration then
+      if Kind_Of (Var) = N_Typed_Variable_Declaration then
          Gtk_New (Editor.Data (Row).Type_Combo);
          Set_Editable (Get_Entry (Editor.Data (Row).Type_Combo), False);
          Attach (Editor.List_Variables, Editor.Data (Row).Type_Combo, 3, 4,
                  Row - 1, Row, Yoptions => 0);
          Add_Possible_Values
            (Get_List (Editor.Data (Row).Type_Combo),
-            Project_Nodes.Table (Var).Field2);
+            String_Type_Of (Var));
          Delete_Text (Get_Entry (Editor.Data (Row).Type_Combo));
          Display_Expr
            (Get_Entry (Editor.Data (Row).Type_Combo), Value_Of (Var));
          Show_All (Editor.Data (Row).Type_Combo);
 
-      elsif Project_Nodes.Table (Var).Expr_Kind = Prj.List then
+      elsif Expression_Kind_Of (Var) = Prj.List then
          Gtk_New (Editor.Data (Row).Scrolled);
          Set_Policy
            (Editor.Data (Row).Scrolled, Policy_Never, Policy_Automatic);
@@ -457,11 +447,10 @@ package body Variable_Editors is
       end if;
 
       --  The environment variable
-      if Project_Nodes.Table (Var).Field1 /= Empty_Node
-        and then Project_Nodes.Table (Project_Nodes.Table (Var).Field1).Kind
-           = N_External_Value
+      if Expression_Of (Var) /= Empty_Node
+        and then Kind_Of (Expression_Of (Var)) = N_External_Value
       then
-         External_As_String (Project_Nodes.Table (Var).Field1);
+         External_As_String (Expression_Of (Var));
          Set_Text (Editor.Data (Row).Env_Label,
                    Name_Buffer (Name_Buffer'First .. Name_Len));
       end if;
@@ -476,8 +465,8 @@ package body Variable_Editors is
       Var    : Prj.Tree.Project_Node_Id := Empty_Node) is
    begin
       pragma Assert
-        (Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration
-         or else Project_Nodes.Table (Var).Kind = N_Variable_Declaration);
+        (Kind_Of (Var) = N_Typed_Variable_Declaration
+         or else Kind_Of (Var) = N_Variable_Declaration);
 
       if Var = Empty_Node then
          --  ???  For each variable in the project
@@ -551,34 +540,33 @@ package body Variable_Editors is
                   Editor.Var := Get_Or_Create_Variable
                     (Parent,
                      Name => Get_Text (Editor.Variable_Name),
-                     Kind => Project_Nodes.Table (Expr).Expr_Kind);
+                     Kind => Expression_Kind_Of (Expr));
                end if;
 
             else
                declare
                   N : constant String := Get_Text (Editor.Variable_Name);
                begin
-                  Get_Name_String (Project_Nodes.Table (Editor.Var).Name);
+                  Get_Name_String (Name_Of (Editor.Var));
                   if Name_Buffer (Name_Buffer'First .. Name_Len) /= N then
                      Name_Len := N'Length;
                      Name_Buffer (Name_Buffer'First .. Name_Len) := N;
-                     Project_Nodes.Table (Editor.Var).Name := Name_Find;
+                     Set_Name_Of (Editor.Var, Name_Find);
                   end if;
-                  Project_Nodes.Table (Editor.Var).Expr_Kind :=
-                    Project_Nodes.Table (Expr).Expr_Kind;
+                  Set_Expression_Kind_Of
+                    (Editor.Var, Expression_Kind_Of (Expr));
 
                   if Get_Active (Editor.Typed_Variable) then
                      --  Should delete previous type
-                     Project_Nodes.Table (Editor.Var).Kind :=
-                       N_Typed_Variable_Declaration;
-                     Project_Nodes.Table (Editor.Var).Field2 := Expr;
+                     Set_Kind_Of (Editor.Var, N_Typed_Variable_Declaration);
+                     Set_String_Type_Of (Editor.Var, Expr);
                   end if;
                end;
             end if;
 
             --  Should handle environment variables as well.
             if not Get_Active (Editor.Typed_Variable) then
-               Project_Nodes.Table (Editor.Var).Field1 := Expr;
+               Set_Expression_Of (Editor.Var, Expr);
                --  ??? Else should reset the current value if needed
             end if;
             Refresh (Editor.Var_Editor, Editor.Var);
@@ -600,7 +588,7 @@ package body Variable_Editors is
         and then not Editor.Name_Was_Changed
       then
          Editor.Name_Was_Changed := True;
-         Get_Name_String (Project_Nodes.Table (Editor.Var).Name);
+         Get_Name_String (Name_Of (Editor.Var));
          Set_Label (Editor.Name_Frame,
                     "Name (old name was "
                     & Name_Buffer (Name_Buffer'First .. Name_Len) & ")");

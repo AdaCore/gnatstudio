@@ -403,11 +403,11 @@ package body Value_Editors is
             Add_Possible_Value (Line_Expr, Buffer (From .. To));
          else
             --  ??? Should reuse existing strings if possible
-            Project_Nodes.Append (Default_Project_Node (N_Literal_String));
-            Str := Project_Nodes.Last;
+            --  ??? Should be done in Prj_Api
+            Str := Default_Project_Node (N_Literal_String);
             Start_String;
             Store_String_Chars (Buffer (From .. To));
-            Project_Nodes.Table (Str).Value := End_String;
+            Set_String_Value_Of (Str, End_String);
             Concatenate (Line_Expr, Str);
          end if;
       end Add_String;
@@ -430,14 +430,13 @@ package body Value_Editors is
             Index := Index + 2;
 
          elsif Buffer (Index) = '}' and then Var_Start /= 0 then
-            Project_Nodes.Append (Default_Project_Node (N_Variable_Reference));
-            Str := Project_Nodes.Last;
+            Str := Default_Project_Node (N_Variable_Reference);
 
             --  ??? Should get the record for the actual variable, to
             --  initialize the rest.
             Name_Len := Index - Var_Start - 2;
             Name_Buffer (1 .. Name_Len) := Buffer (Var_Start + 2 .. Index - 1);
-            Project_Nodes.Table (Str).Name := Name_Find;
+            Set_Name_Of (Str, Name_Find);
             Concatenate (Line_Expr, Str);
 
             Var_Start := 0;
