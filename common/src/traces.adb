@@ -286,9 +286,10 @@ package body Traces is
 
    function Active (Handle : Debug_Handle) return Boolean is
    begin
-      --  ??? work around an elaboration problem
       if Handle = null then
+         --  In case Handle hasn't been initialized yet
          return False;
+
       else
          return Handle.Active;
       end if;
