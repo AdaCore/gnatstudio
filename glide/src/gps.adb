@@ -1214,7 +1214,7 @@ procedure GPS is
          Unexpected_Exception := True;
          Trace (Me, "Unhandled exception: " & Exception_Information (E));
 
-         if Is_Regular_File (Log_File & "." & Pid_Image) then
+         if Is_Regular_File (Pid_File) then
             Str := Pid_File'Unchecked_Access;
          else
             Str := Log_File'Unchecked_Access;
@@ -1284,6 +1284,7 @@ procedure GPS is
       if not Unexpected_Exception
         and then Is_Regular_File (Log_File & "." & Pid_Image)
       then
+         Delete_File (Log_File, Success);
          Rename_File (Log_File & "." & Pid_Image, Log_File, Success);
       end if;
 
