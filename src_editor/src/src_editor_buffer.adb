@@ -508,7 +508,8 @@ package body Src_Editor_Buffer is
             --  region to the end of the following region.
 
             Entity_Kind := Current_Entity;
-            Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
+            Backward_To_Tag_Toggle
+              (Start_Iter, Tags (Current_Entity), Result => Ignored);
             Forward_To_Tag_Toggle (End_Iter, Tags (Entity_Kind), Ignored);
             Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
 
