@@ -138,6 +138,8 @@ package body Odd.Menus is
 
       --  Recompute all the aliases
       Recompute_All_Aliases (Canvas);
+
+      Refresh_Canvas (Canvas);
    end Change_Detect_Aliases;
 
    ---------------------
