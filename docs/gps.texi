@@ -155,6 +155,7 @@ Working in a Cross Environment
 Customization
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
+* Adding Support for New Languages::
 * Defining Text Aliases::
 * Defining New Styles and Key Bindings::
 
@@ -760,7 +761,16 @@ Open a file selection dialog to load an HTML file.
 
 @item About
 Display a dialog giving information about the versions of GPS and GNAT used.
-@c ??? add screen shot
+
+@iftex
+@cindex screen shot
+@image{about} 
+@end iftex
+
+@ifhtml 
+@cindex screen shot
+@image{about}
+@end ifhtml
 
 @end table
 
@@ -2743,7 +2753,15 @@ Unsaved modified projects are shown with a special icon in the project
 explorer, displaying a red exclamation mark on top of the standard
 icon.
 
-@c ??? Insert here icon for modified project
+@iftex
+@cindex screen shot
+@image{project-modified}
+@end iftex
+
+@ifhtml 
+@cindex screen shot
+@image{project-modified}
+@end ifhtml
 
 @c -------------------------------------------------------------------
 @node The Project Menu
@@ -3087,16 +3105,6 @@ of your projects. It is accessible through the menu
 @code{Edit project properties} on any project item, e.g. from the Project
 View or the Project Browser.
 
-@iftex
-@cindex screen shot
-@image{project-properties, 12.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{project-properties}
-@end ifhtml
-
 If there was an error loading the project (invalid syntax,
 non-existing directories, @dots{}), a warning dialog is displayed when you
 select the menu. This reminds you that the project might be only
@@ -3107,6 +3115,16 @@ which is doable directly from the popup dialog.
 Fix the project file as you would for any text file, and then reload
 it manually (through the @code{Project->Open...} or
 @code{Project->Recent} menus.
+
+@iftex
+@cindex screen shot
+@image{project-properties, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{project-properties}
+@end ifhtml
 
 This editor is divided into three parts:
 
@@ -3183,7 +3201,15 @@ This dialog has a button titled @code{Revert}. Clicking on this button
 will cancel any file-specific switch, and revert to the default
 switches defined at the project level.
 
-@c ??? Insert screenshot with revert button here
+@iftex
+@cindex screen shot
+@image{switch-editor-revert, 11.7cm} 
+@end iftex
+
+@ifhtml 
+@cindex screen shot
+@image{switch-editor-revert}
+@end ifhtml
 
 @c -------------------------------------------------------------------
 @node The Project Browser
@@ -3213,7 +3239,17 @@ and gives direct access to editing the properties of the project,
 adding dependencies@dots{}
 @xref{The Project Explorer (Editing Projects)}.
 
-Some new items are added to the menu
+@iftex
+@cindex screen shot
+@image{project-browser, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{project-browser}
+@end ifhtml
+
+Some new items are added to the menu:
 
 @table @command
 @item Locate in explorer
@@ -4635,6 +4671,7 @@ debugger.
 @menu
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
+* Adding Support for New Languages::
 * Defining Text Aliases::
 * Defining New Styles and Key Bindings::
 @end menu
@@ -5523,6 +5560,13 @@ recursively.
 @end table
 
 @c --------------------------------------------------------------------------
+@node Adding Support for New Languages
+@section Adding Support for New Languages
+@c --------------------------------------------------------------------------
+
+@noindent
+
+@c --------------------------------------------------------------------------
 @node Defining Text Aliases
 @section Defining Text Aliases
 @cindex aliases
@@ -6293,12 +6337,12 @@ Log file created automatically by GPS
 @cindex aliases
 File containing the user-defined aliases (@pxref{Defining Text Aliases}).
 
-@c    @item $HOME/.gps/customize
-@c Directory containing files with user-defined customizations.
-@c You can create/edit these files to add your own menu/tool-bar entries in GPS,
-@c or define support for new languages.
-@c @pxref{Customizing the Menu Bar and the Tool Bar} and
-@c @pxref{???}.
+   @item $HOME/.gps/customize
+Directory containing files with user-defined customizations.
+You can create/edit these files to add your own menu/tool-bar entries in GPS,
+or define support for new languages.
+@pxref{Customizing the Menu Bar and the Tool Bar} and
+@pxref{Adding Support for New Languages}.
 
    @item $HOME/.gps/custom_key
 Contains all the key bindings defined in GPS. This file is
@@ -6385,9 +6429,9 @@ See @url{gps-tutorial.html}.
 Directory containing files with system-wide aliases
 (@pxref{Defining Text Aliases}).
 
-@c    @item @i{prefix}/share/gps/customize
-@c Directory containing files with system-wide customizations
-@c (@pxref{???}).
+   @item @i{prefix}/share/gps/customize
+Directory containing files with system-wide customizations
+(@pxref{Adding Support for New Languages}).
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
