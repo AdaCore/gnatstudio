@@ -1,4 +1,4 @@
-include ../gtkada/src/Makefile.common
+SO_EXT = .so
 
 default build compile link ada c c++ clean internal-clean :
 	$(MAKE) -s -f Makefile.gps $@
