@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.0.1
 
+- D526-010 GPS crash when using an empty custom external editor
+  Problem:    When using a custom external editor and specifying no custom
+              editor command, GPS will end unexpectedly.
+  Workaround: Specify a non empty custom editor command.
+
 - D524-004 Confusion on some preference tooltip
   Problem:    The tooltip displayed to describe some preferences use the
               words True/False while the preference dialog displays
