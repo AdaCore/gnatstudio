@@ -6,3 +6,9 @@ New features in GPS 2.0.0
 - Improved interface for the project wizard. The source directory selector
   now supports multiple selections.
 
+- Selection automatically put in the search entry.
+  If there is an active selection, this selection will be used as the default
+  pattern when doing a new search
+
+- Improvements in handling of ley bindings in floating windows
+
