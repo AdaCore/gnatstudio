@@ -1,9 +1,15 @@
 Known Problems fixed in GPS 1.4.0
 
+- Goto Other File fails for C files
+  Problem:    If you are editing a C file and select "Goto file spec/body" in
+              the contextual menu, a .ads file is generated, ie an Ada file
+  Workaround: This works fine if there is indeed a <file>.h in the project.
+              Otherwise, just kill the newly created editor
+
 - C916-010 Internal error when generating new testsuite
-  Problem:     When you use the Edit->Unit Testing menu and attempt to add
-               a new testsuite, GPS crashes
-  Workaround:  None known
+  Problem:    When you use the Edit->Unit Testing menu and attempt to add
+              a new testsuite, GPS crashes
+  Workaround: None known
 
 - C912-003 Removing dependency for a project other than the root project fails
   Problem:    If you remove a dependency between two projects when none of them
