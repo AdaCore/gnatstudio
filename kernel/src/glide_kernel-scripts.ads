@@ -283,10 +283,10 @@ package Glide_Kernel.Scripts is
       Name    : String) return Scripting_Language;
    --  Lookup one of the registered languages by name.
 
-   function Interpret_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+   --  function Interpret_Command
+   --    (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+   --     Command : String;
+   --     Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Execute a command in the GPS shell, and return its result.
 
 
@@ -296,6 +296,12 @@ package Glide_Kernel.Scripts is
    --  The following services are provided for use in the context of GPS. They
    --  provide access to various predefined classes shared between multiple
    --  modules.
+
+   function Get_Entity_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the class to use for entities. This encapsulates an
+   --  Entity_Information.
 
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class;

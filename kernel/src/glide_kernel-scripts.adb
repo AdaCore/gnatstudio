@@ -24,7 +24,7 @@ with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Shell_Script;         use Shell_Script;
+--  with Shell_Script;         use Shell_Script;
 with Src_Info.Queries;     use Src_Info.Queries;
 with String_Hash;
 with System;               use System;
@@ -48,6 +48,7 @@ package body Glide_Kernel.Scripts is
    type Scripting_Data_Record is new Kernel_Scripting_Data_Record with record
       Scripting_Languages : Scripting_Language_List;
       Classes             : Classes_Hash.String_Hash_Table.HTable;
+      Entity_Class        : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -63,6 +64,10 @@ package body Glide_Kernel.Scripts is
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the default commands
+
+   procedure Create_Entity_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the "create_entity" command
 
    ----------
    -- Free --
@@ -136,14 +141,14 @@ package body Glide_Kernel.Scripts is
    -- Interpret_Command --
    -----------------------
 
-   function Interpret_Command
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
-   is
-   begin
-      return Execute_GPS_Shell_Command (Kernel, Command, Args);
-   end Interpret_Command;
+   --  function Interpret_Command
+   --    (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+   --     Command : String;
+   --     Args    : GNAT.OS_Lib.Argument_List) return String
+   --  is
+   --  begin
+   --     return Execute_GPS_Shell_Command (Kernel, Command, Args);
+   --  end Interpret_Command;
 
    ---------------
    -- New_Class --
@@ -282,6 +287,49 @@ package body Glide_Kernel.Scripts is
       end if;
    end Default_Command_Handler;
 
+   -----------------------------------
+   -- Create_Entity_Command_Handler --
+   -----------------------------------
+
+   procedure Create_Entity_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      L, C   : Positive        := 1;
+      Name   : constant String := Nth_Arg (Data, 1);
+      File   : constant String := Nth_Arg (Data, 2);
+      Status : Find_Decl_Or_Body_Query_Status;
+      Entity : Entity_Information;
+      Instance : Class_Instance;
+   begin
+      if Number_Of_Arguments (Data) > 2 then
+         L := Nth_Arg (Data, 3);
+
+         if Number_Of_Arguments (Data) > 3 then
+            C := Nth_Arg (Data, 4);
+         end if;
+      end if;
+
+      Find_Declaration_Or_Overloaded
+        (Kernel      => Kernel,
+         Lib_Info    => Locate_From_Source_And_Complete (Kernel, File),
+         File_Name   => File,
+         Entity_Name => Name,
+         Line        => L,
+         Column      => C,
+         Entity      => Entity,
+         Status      => Status);
+
+      if Status /= Success and then Status /= Fuzzy_Match then
+         Set_Error_Msg (Data, "Entity not found");
+      else
+         Instance := New_Instance (Data, Get_Entity_Class (Kernel));
+         Set_Data (Instance, Entity);
+         Set_Return_Value (Data, Instance);
+      end if;
+   end Create_Entity_Command_Handler;
+
    ----------------
    -- Initialize --
    ----------------
@@ -318,6 +366,35 @@ package body Glide_Kernel.Scripts is
          Minimum_Args => 0,
          Maximum_Args => 0,
          Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "create_entity",
+         Usage        =>
+           "create_entity (entity_name, file_name, [line], [column]) -> "
+           & "Entity",
+         Description  =>
+           -"Create a new entity, from any of its references.",
+         Minimum_Args => 2,
+         Maximum_Args => 4,
+         Handler      => Create_Entity_Command_Handler'Access);
    end Register_Default_Script_Commands;
+
+   ----------------------
+   -- Get_Entity_Class --
+   ----------------------
+
+   function Get_Entity_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).Entity_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).Entity_Class := New_Class
+           (Kernel,
+            "Entity", "Represents an entity from the source, based on the"
+            & " location of its declaration");
+      end if;
+      return Scripting_Data (Kernel.Scripts).Entity_Class;
+   end Get_Entity_Class;
 
 end Glide_Kernel.Scripts;
