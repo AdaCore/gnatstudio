@@ -458,6 +458,7 @@ package body Src_Info.Debug is
    --------------------
 
    procedure Dump_LI_File (LIF : LI_File) is
+      Current : File_Info_Ptr_List;
    begin
       --  If the associated unit information file (the ALI file in the
       --  case of Ada files compiled with GNAT) has not been parsed,
@@ -501,9 +502,25 @@ package body Src_Info.Debug is
       if LIF.Body_Info /= null then
          Dump_File_Info (LIF.Body_Info.all);
       end if;
+
+      Current := LIF.Separate_Info;
+      while Current /= null loop
+         Dump_File_Info (Current.Value.all);
+         Current := Current.Next;
+      end loop;
+
       Dump_Dependency_File_Info_List (LIF.Dependencies_Info);
 
    end Dump_LI_File;
+
+   -------------------
+   -- Force_Parsing --
+   -------------------
+
+   procedure Force_Parsing (LIFP : LI_File_Ptr) is
+   begin
+      LIFP.LI.LI_Timestamp := 0;
+   end Force_Parsing;
 
    -------------------
    -- Output_E_Kind --

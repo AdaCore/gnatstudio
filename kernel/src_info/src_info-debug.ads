@@ -48,6 +48,10 @@ package Src_Info.Debug is
 
    procedure Dump (LIFL : LI_File_List);
 
+   procedure Force_Parsing (LIFP : LI_File_Ptr);
+   --  Force a parsing of the LI file on disk the next time
+   --  Create_Or_Complete_LI is called.
+
 private
 
    procedure Dump_Source_File (SF : Source_File);
