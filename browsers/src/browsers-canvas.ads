@@ -87,11 +87,28 @@ package Browsers.Canvas is
 
    procedure Select_Item
      (Browser : access General_Browser_Record;
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class);
+   --  Select Item. By default, no visual feedback is provided.
+
+   procedure Unselect_All (Browser : access General_Browser_Record);
+   --  Unselect all items
+
+   procedure Highlight_Item_And_Siblings
+     (Browser : access General_Browser_Record;
       Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Refresh_Items : Boolean := False);
-   --  Select Item.
-   --  If Refresh_Items is True, this will redraw all the items in the canvas,
-   --  by calling their Refresh subprogram
+      Old     : Gtkada.Canvas.Canvas_Item := null);
+   --  Call Refresh on Item and all its siblings. If the selection status has
+   --  changed, this will result in a change of background color for these
+   --  items.
+   --  If Old is not null, then it is also refreshed along with all its
+   --  siblings. This subprogram is optimized so that the items are refreshed
+   --  only once.
+   --  The item is not selected.
+   --  This subprogram should be overriden if the items should not appear
+   --  differently when they are selected. You also need to make sure that if
+   --  the item is refreshed later on, it isn't drawn with a different
+   --  background. Overriding Highlight_Item_And_Siblings is just for
+   --  efficiency.
 
    procedure Layout
      (Browser : access General_Browser_Record;
@@ -169,6 +186,12 @@ package Browsers.Canvas is
    --  Non dispatching variant of the Resize_And_Draw.
    --  You need to refresh the screen by calling either Item_Updated or
    --  Refresh_Canvas.
+
+   function Get_Background_GC
+     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC;
+   --  Return the graphic context to use for the background of the item. This
+   --  can be used to draw the selected item with a different color for
+   --  instance (the default behavior)
 
    procedure Resize_And_Draw
      (Item                        : access Browser_Item_Record;
@@ -360,6 +383,11 @@ package Browsers.Canvas is
    function Get_Text_GC
      (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
    --  Return the graphic context to use to draw the text in the items.
+
+   function Get_Default_Item_Background_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
+   --  Return the default graphic context to use for unselected items'
+   --  background.
 
    ----------------------
    -- Contextual menus --

@@ -124,13 +124,6 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class);
    --  Called when the user clicked in the background of the canvas
 
-   procedure Internal_Select
-     (Browser : access General_Browser_Record'Class;
-      Item    : Canvas_Item := null;
-      Refresh_Items : Boolean := False);
-   --  Internal version of Select_Item, that can also be used to unselect an
-   --  item.
-
    procedure Close_Item
      (Event : Gdk.Event.Gdk_Event; User  : access Browser_Item_Record'Class);
    --  Close an item when the user presses on the title bar button.
@@ -617,62 +610,55 @@ package body Browsers.Canvas is
       return Browser.Selected_Item;
    end Selected_Item;
 
-   ---------------------
-   -- Internal_Select --
-   ---------------------
+   ---------------------------------
+   -- Highlight_Item_And_Siblings --
+   ---------------------------------
 
-   procedure Internal_Select
-     (Browser : access General_Browser_Record'Class;
-      Item    : Canvas_Item := null;
-      Refresh_Items : Boolean := False)
+   procedure Highlight_Item_And_Siblings
+     (Browser : access General_Browser_Record;
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+      Old     : Gtkada.Canvas.Canvas_Item := null)
    is
-      Old : constant Canvas_Item := Browser.Selected_Item;
       Iter : Item_Iterator;
       It  : Canvas_Item;
    begin
-      Browser.Selected_Item := Item;
+      if Old /= null then
+         Refresh (Browser_Item (Old));
 
-      if Item /= Old and then Refresh_Items then
-
-         --  Note: it might happen that some items are drawn several
-         --  times. However, it can only happen for Old and Item, or to items
-         --  that are linked to both Old and item. On the whole, we save some
-         --  time
-         if Old /= null then
-            Refresh (Browser_Item (Old));
-
-            Iter := Start (Browser.Canvas, Old);
-            loop
-               It := Get (Iter);
-               exit when It = null;
-               Refresh (Browser_Item (It));
-               Next (Iter);
-            end loop;
-         end if;
-
-         if Item /= null then
-            Refresh (Browser_Item (Item));
-
-            Iter := Start (Browser.Canvas, Item);
-            loop
-               It := Get (Iter);
-               exit when It = null;
-
-               --  Do not refresh items that have already been refreshed
-               if Old = null
-                 or else (not Has_Link (Browser.Canvas, It, Old)
-                          and then not Has_Link (Browser.Canvas, Old, It))
-               then
-                  Refresh (Browser_Item (It));
-               end if;
-
-               Next (Iter);
-            end loop;
-         end if;
-
-         Refresh_Canvas (Browser.Canvas);
+         Iter := Start (Browser.Canvas, Old);
+         loop
+            It := Get (Iter);
+            exit when It = null;
+            Refresh (Browser_Item (It));
+            Next (Iter);
+         end loop;
       end if;
-   end Internal_Select;
+
+      if Canvas_Item (Item) /= Old then
+         Refresh (Browser_Item (Item));
+      end if;
+
+      Iter := Start (Browser.Canvas, Canvas_Item (Item));
+      loop
+         It := Get (Iter);
+         exit when It = null;
+
+         --  Do not refresh items that have already been refreshed
+         if Old = null
+           or else (not Has_Link (Browser.Canvas, It, Old)
+                    and then not Has_Link (Browser.Canvas, Old, It))
+         then
+            Refresh (Browser_Item (It));
+         end if;
+
+         Next (Iter);
+      end loop;
+
+      --  We need to redraw the whole canvas, so that the links are correctly
+      --  updated. If Highlight_Item_And_Siblings is called twice, this isn't a
+      --  problem since gtk+ will coalesce the two events anyway.
+      Refresh_Canvas (Browser.Canvas);
+   end Highlight_Item_And_Siblings;
 
    -----------------
    -- Select_Item --
@@ -680,10 +666,14 @@ package body Browsers.Canvas is
 
    procedure Select_Item
      (Browser : access General_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Refresh_Items : Boolean := False) is
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class)
+   is
+      Old : constant Canvas_Item := Browser.Selected_Item;
    begin
-      Internal_Select (Browser, Canvas_Item (Item), Refresh_Items);
+      Browser.Selected_Item := Canvas_Item (Item);
+      if Canvas_Item (Item) /= Old then
+         Highlight_Item_And_Siblings (Browser, Item, Old);
+      end if;
    end Select_Item;
 
    -------------------------
@@ -694,12 +684,25 @@ package body Browsers.Canvas is
      (Browser : access Gtk_Widget_Record'Class) is
    begin
       Grab_Focus (General_Browser (Browser).Canvas);
-      Internal_Select (General_Browser (Browser), null, True);
+      Unselect_All (General_Browser (Browser));
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Background_Click;
+
+   ------------------
+   -- Unselect_All --
+   ------------------
+
+   procedure Unselect_All (Browser : access General_Browser_Record) is
+      Old : constant Canvas_Item := Browser.Selected_Item;
+   begin
+      Browser.Selected_Item := null;
+      if Old /= null then
+         Highlight_Item_And_Siblings (Browser, Old);
+      end if;
+   end Unselect_All;
 
    -----------------
    -- Get_Text_GC --
@@ -866,7 +869,7 @@ package body Browsers.Canvas is
         and then Get_Event_Type (Event) = Button_Release
       then
          if B.Selected_Item = Canvas_Item (User) then
-            Internal_Select (B, null, True);
+            Unselect_All (B);
          end if;
 
          Remove (Get_Canvas (B), User);
@@ -937,6 +940,32 @@ package body Browsers.Canvas is
       return 0;
    end Get_Last_Button_Number;
 
+   -----------------------
+   -- Get_Background_GC --
+   -----------------------
+
+   function Get_Background_GC
+     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC is
+   begin
+      if Canvas_Item (Item) = Selected_Item (Item.Browser) then
+         return Item.Browser.Selected_Item_GC;
+
+      elsif Selected_Item (Item.Browser) /= null
+        and then Has_Link
+          (Item.Browser.Canvas,
+           From => Item, To => Selected_Item (Item.Browser))
+      then
+         return Item.Browser.Parent_Linked_Item_GC;
+      elsif Selected_Item (Item.Browser) /= null
+        and then Has_Link (Item.Browser.Canvas,
+                           From => Selected_Item (Item.Browser), To => Item)
+      then
+         return Item.Browser.Child_Linked_Item_GC;
+      else
+         return Item.Browser.Default_Item_GC;
+      end if;
+   end Get_Background_GC;
+
    ---------------------
    -- Resize_And_Draw --
    ---------------------
@@ -969,22 +998,7 @@ package body Browsers.Canvas is
 
       Set_Screen_Size (Browser_Item (Item), W, H);
 
-      if Canvas_Item (Item) = Selected_Item (Item.Browser) then
-         Bg_GC := Item.Browser.Selected_Item_GC;
-      elsif Selected_Item (Item.Browser) /= null
-        and then Has_Link
-          (Item.Browser.Canvas,
-           From => Item, To => Selected_Item (Item.Browser))
-      then
-         Bg_GC := Item.Browser.Parent_Linked_Item_GC;
-      elsif Selected_Item (Item.Browser) /= null
-        and then Has_Link (Item.Browser.Canvas,
-                           From => Selected_Item (Item.Browser), To => Item)
-      then
-         Bg_GC := Item.Browser.Child_Linked_Item_GC;
-      else
-         Bg_GC := Item.Browser.Default_Item_GC;
-      end if;
+      Bg_GC := Get_Background_GC (Browser_Item (Item));
 
       Draw_Rectangle
         (Pixmap (Item),
@@ -1181,7 +1195,7 @@ package body Browsers.Canvas is
          Show_Item (Get_Canvas (Item.Browser), Item);
 
       elsif Get_Event_Type (Event) = Button_Press then
-         Select_Item (Item.Browser, Item, True);
+         Select_Item (Item.Browser, Item);
       end if;
 
    exception
@@ -1198,7 +1212,7 @@ package body Browsers.Canvas is
       Event : Gdk.Event.Gdk_Event_Button) is
    begin
       if Get_Event_Type (Event) = Button_Press then
-         Select_Item (Item.Browser, Item, True);
+         Select_Item (Item.Browser, Item);
       end if;
 
       Raise_Item (Get_Canvas (Get_Browser (Item)), Item);
@@ -1482,5 +1496,15 @@ package body Browsers.Canvas is
          Vertical_Layout =>
            Get_Pref (Get_Kernel (Browser), Browsers_Vertical_Layout));
    end Layout;
+
+   ------------------------------------
+   -- Get_Default_Item_Background_GC --
+   ------------------------------------
+
+   function Get_Default_Item_Background_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Default_Item_GC;
+   end Get_Default_Item_Background_GC;
 
 end Browsers.Canvas;
