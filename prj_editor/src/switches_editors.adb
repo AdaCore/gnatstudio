@@ -586,6 +586,7 @@ package body Switches_Editors is
                   exception
                      when Constraint_Error =>
                         Set_Value (Editor.Num_Processes, 0.0);
+                  end;
                end if;
             end loop;
 
