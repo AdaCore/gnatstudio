@@ -26,19 +26,17 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
         (SN_Table (FD),
          Fn.Buffer (Fn.Name.First .. Fn.Name.Last));
       Decl_Info := Find_Declaration
-        (Global_LI_File,
-         Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-         "",
-         FD_Tab.Start_Position);
+        (File           => Global_LI_File,
+         Symbol_Name    => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+         Location       => FD_Tab.Start_Position);
       Free (FD_Tab);
       return Decl_Info;
    exception
       when DB_Error | Not_Found | Declaration_Not_Found =>
          Decl_Info := Find_Declaration
-           (Global_LI_File,
-            Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-            "",
-            Fn.Start_Position);
+           (File        => Global_LI_File,
+            Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+            Location    => Fn.Start_Position);
          return Decl_Info;
    end Find_Function;
 begin

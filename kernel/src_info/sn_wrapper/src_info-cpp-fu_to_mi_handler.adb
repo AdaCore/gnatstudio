@@ -52,10 +52,12 @@ begin
          begin
             --  this is a function defined in the current file
             Decl_Info := Find_Declaration
-              (Global_LI_File,
-               Method.Buffer (Method.Name.First .. Method.Name.Last),
-               Method.Buffer (Method.Class.First .. Method.Class.Last),
-               Method.Start_Position);
+              (File        => Global_LI_File,
+               Symbol_Name => Method.Buffer
+                     (Method.Name.First .. Method.Name.Last),
+               Class_Name  => Method.Buffer
+                     (Method.Class.First .. Method.Class.Last),
+               Location    => Method.Start_Position);
          exception
             when Declaration_Not_Found =>
                pragma Assert (False, "How did we get here?");

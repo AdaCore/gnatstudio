@@ -98,10 +98,10 @@ is
       pragma Assert (First_FD_Pos /= Invalid_Point);
       begin
          return Find_Declaration
-           (Global_LI_File,
-            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-            "",
-            First_FD_Pos);
+           (File        => Global_LI_File,
+            Symbol_Name => Sym.Buffer
+                             (Sym.Identifier.First .. Sym.Identifier.Last),
+            Location    => First_FD_Pos);
       exception
          when Declaration_Not_Found =>
             return null;
@@ -179,10 +179,12 @@ begin
                Start_Position := MD_Tab.Start_Position;
                begin -- locate forward declaration
                   Decl_Info := Find_Declaration
-                    (Global_LI_File,
-                     Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-                     Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-                     MD_Tab.Start_Position);
+                    (File        => Global_LI_File,
+                     Symbol_Name => Sym.Buffer
+                           (Sym.Identifier.First .. Sym.Identifier.Last),
+                     Class_Name  => Sym.Buffer
+                           (Sym.Class.First .. Sym.Class.Last),
+                     Location    => MD_Tab.Start_Position);
                exception
                   when Declaration_Not_Found =>
                      null;
