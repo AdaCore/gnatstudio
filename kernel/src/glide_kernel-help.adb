@@ -197,12 +197,12 @@ package body Glide_Kernel.Help is
       Success  : Boolean;
 
    begin
-      Push_State (Kernel_Handle (Kernel), Busy);
-
       if not Is_Regular_File (File) then
          Insert (Kernel, File & (-": File not found"), Mode => Error);
          return False;
       end if;
+
+      Push_State (Kernel_Handle (Kernel), Busy);
 
       Buffer := Read_File (File);
 
@@ -221,6 +221,7 @@ package body Glide_Kernel.Help is
       end if;
 
       Pop_State (Kernel_Handle (Kernel));
+
       return Success;
    end Load_File;
 
