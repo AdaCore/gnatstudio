@@ -159,7 +159,7 @@ package body Generic_List is
       if Is_Empty (L2) then
          return;
 
-      if Is_Empty (L1) or else Node = L1.Last then
+      elsif Is_Empty (L1) or else Node = L1.Last then
          L1.First := L2.First;
          L1.Last  := L2.Last;
 
