@@ -1039,36 +1039,15 @@ package body Src_Editor_Buffer.Line_Information is
    -----------------
 
    function Create_Mark
-     (Editor : access Source_Buffer_Record'Class;
+     (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
       Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      Buffer_Line : Buffer_Line_Type;
       Iter        : Gtk_Text_Iter;
    begin
-      --  ??? How do we deal with marks in non-present lines ?
-
-      Buffer_Line := Get_Buffer_Line (Editor, Line);
-
-      if Buffer_Line = 0 then
-         Get_Iter_At_Line_Offset (Editor, Iter, 0, 0);
-         return Create_Mark (Editor, "", Iter);
-      end if;
-
-      if Is_Valid_Position
-        (Editor, Gint (Buffer_Line - 1), Gint (Column - 1))
-      then
-         Get_Iter_At_Line_Offset
-           (Editor, Iter, Gint (Buffer_Line - 1), Gint (Column - 1));
-         return Create_Mark (Editor, "", Iter);
-
-      elsif Is_Valid_Position (Editor, Gint (Buffer_Line - 1), 1) then
-         Get_Iter_At_Line_Offset (Editor, Iter, Gint (Buffer_Line - 1), 1);
-         return Create_Mark (Editor, "", Iter);
-      end if;
-
-      Get_Iter_At_Line_Offset (Editor, Iter, 0, 0);
-      return Create_Mark (Editor, "", Iter);
+      Unfold_Line (Buffer, Line);
+      Get_Iter_At_Screen_Position (Buffer, Iter, Line, Column);
+      return Create_Mark (Buffer, "", Iter);
    end Create_Mark;
 
    ---------------
