@@ -2551,9 +2551,11 @@ package body Gtkada.MDI is
       List : Widget_List.Glist := First (MDI.Items);
       C    : MDI_Child;
       Alloc : Gtk_Allocation;
+      Old_Focus : MDI_Child;
 
    begin
       if Maximize and then MDI.Docks (None) = null then
+         Old_Focus := MDI.Focus_Child;
          while List /= Null_List loop
             C := MDI_Child (Get_Data (List));
             List := Next (List);
@@ -2565,8 +2567,8 @@ package body Gtkada.MDI is
 
          Hide (MDI.Layout);
 
-         if MDI.Focus_Child /= null then
-            Raise_Child (MDI.Focus_Child);
+         if Old_Focus /= null then
+            Activate_Child (Old_Focus);
          end if;
 
       elsif MDI.Docks (None) /= null then
