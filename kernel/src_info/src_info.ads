@@ -93,7 +93,13 @@ package Src_Info is
    --  The returned result will need to be destroyed.
 
    function Get_Source_Filename (File : Internal_File) return String;
+   function Get_Full_Source_Filename
+     (File                   : Internal_File;
+      Source_Info_List       : Src_Info.LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String) return String;
    --  Return the Filename for the given File.
+   --  The second version returns the full file name, including directory
 
    function Get_Unit_Part
      (Source_Info_List : LI_File_List; File : String) return Unit_Part;
@@ -347,12 +353,21 @@ private
    type File_Info is record
       Unit_Name         : String_Access;
       Source_Filename   : String_Access;
+      Directory_Name    : String_Access;
       File_Timestamp    : Types.Time_Stamp_Type;
       Original_Filename : String_Access;
       Original_Line     : Positive;
       Declarations      : E_Declaration_Info_List;
    end record;
    --  The information associated to a source file.
+   --  Directory_Name is set on demand only. In fact, you should only access it
+   --  through Get_Directory_Name.
+   --  This structure might be mostly empty in case we haven't parsed the LI
+   --  file associated with the source file yet. The record might have just
+   --  been created because another file depended on this one.
+   --  However, even in that case, the File_Timestamp might have been set if we
+   --  looked for the Directory_Name.
+   --
    --  ??? It is possible to optimize a bit the memory usage by allocating
    --  ??? the Source_Filename only when the naming of the unit is not
    --  ??? following the standard naming scheme. The Source_Filename could
@@ -361,6 +376,18 @@ private
    --  ??? in the data structures defined
 
    type File_Info_Ptr is access File_Info;
+
+   function Get_Directory_Name
+     (File                   : File_Info_Ptr;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String) return String;
+   --  Return the directory name for File, and cache it for future usage.
+   --  This function checks the timestamp of the file, to handle the following
+   --  scenario:
+   --  imagine a project with two sources with the same name (e.g. for Windows
+   --  and linux), but one common object directory. Changing the platform would
+   --  not reparse the LI file, but we need to detect that the timestamp for
+   --  the file is incorrect, and thus recompute the directory.
 
    type File_Info_Ptr_Node;
    type File_Info_Ptr_List is access File_Info_Ptr_Node;

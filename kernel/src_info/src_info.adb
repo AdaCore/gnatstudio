@@ -22,8 +22,21 @@ with Src_Info.ALI;       use Src_Info.ALI;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Deallocation;
+with Types;              use Types;
+
+with Prj.Env;            use Prj.Env;
+
+with Traces;             use Traces;
+--  The dependency on traces should be removed when we move this to the GNAT
+--  sources (or the GNAT tools)
 
 package body Src_Info is
+
+   Me : Debug_Handle := Create ("Src_Info");
+
+   function OS_Time_To_GNAT_Time (T : OS_Time) return Time_Stamp_Type;
+   --  This function should be imported from the body of Osint...
+
 
    procedure Free is new Unchecked_Deallocation (File_Info, File_Info_Ptr);
    procedure Free is new Unchecked_Deallocation
@@ -53,6 +66,33 @@ package body Src_Info is
      (Source_Info_List : LI_File_List; File : Internal_File)
       return Source_File;
    --  Create a new Source_File structure matching File.
+
+   --------------------------
+   -- OS_Time_To_GNAT_Time --
+   --------------------------
+
+   function OS_Time_To_GNAT_Time (T : OS_Time) return Time_Stamp_Type is
+      GNAT_Time : Time_Stamp_Type;
+      Y  : Year_Type;
+      Mo : Month_Type;
+      D  : Day_Type;
+      H  : Hour_Type;
+      Mn : Minute_Type;
+      S  : Second_Type;
+
+   begin
+      GM_Split (T, Y, Mo, D, H, Mn, S);
+      Make_Time_Stamp
+        (Year    => Nat (Y),
+         Month   => Nat (Mo),
+         Day     => Nat (D),
+         Hour    => Nat (H),
+         Minutes => Nat (Mn),
+         Seconds => Nat (S),
+         TS      => GNAT_Time);
+
+      return GNAT_Time;
+   end OS_Time_To_GNAT_Time;
 
    ----------------------------
    -- Get_Separate_File_Info --
@@ -542,8 +582,9 @@ package body Src_Info is
 
       if Is_Incomplete (Source.LI) then
          Parse_ALI_File
-           (Find_Object_File
-            (Project, Source.LI.LI.LI_Filename.all, Predefined_Object_Path),
+           (Find_File
+            (Source.LI.LI.LI_Filename.all,
+             Ada_Objects_Path (Project).all, Predefined_Object_Path),
             Project, Predefined_Source_Path, Predefined_Object_Path,
             Source_Info_List, Unit, Success);
          if Success then
@@ -601,6 +642,24 @@ package body Src_Info is
    begin
       return File.File_Name.all;
    end Get_Source_Filename;
+
+   ------------------------------
+   -- Get_Full_Source_Filename --
+   ------------------------------
+
+   function Get_Full_Source_Filename
+     (File                   : Internal_File;
+      Source_Info_List       : Src_Info.LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String) return String
+   is
+      SF : Source_File := Find_Source_File (Source_Info_List, File);
+      Ptr : File_Info_Ptr := Get_File_Info (SF);
+      Dir : constant String := Get_Directory_Name
+        (Ptr, Project, Predefined_Source_Path);
+   begin
+      return Dir & Ptr.Source_Filename.all;
+   end Get_Full_Source_Filename;
 
    -------------------------
    -- Get_Source_Filename --
@@ -714,5 +773,62 @@ package body Src_Info is
    begin
       return LI.LI.LI_Filename.all;
    end Get_LI_Filename;
+
+   ------------------------
+   -- Get_Directory_Name --
+   ------------------------
+
+   function Get_Directory_Name
+     (File                   : File_Info_Ptr;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String) return String
+   is
+      Ts : Time_Stamp_Type := Empty_Time_Stamp;
+   begin
+      --  If the timestamps mismatch, then we'll simply recompute the location
+      --  of the file. Generally, it will be because the file has been edited
+      --  since then (and it would be fine to use the same path), but it might
+      --  also be because the project has changed and we are pointing to some
+      --  other files.
+      if File.Directory_Name /= null then
+         Ts := OS_Time_To_GNAT_Time (File_Time_Stamp
+            (File.Directory_Name.all & File.Source_Filename.all));
+
+         if File.File_Timestamp /= Ts then
+            Trace (Me, "Get_Directory_Name: timestamps mismatch for file "
+                   & File.Source_Filename.all
+                   & " " & String (Ts)
+                   & " " & String (File.File_Timestamp));
+            Free (File.Directory_Name);
+         end if;
+      end if;
+
+      if File.Directory_Name = null then
+         Trace (Me, "Computing directory name for "
+                & File.Source_Filename.all);
+         File.Directory_Name := new String'
+           (Dir_Name
+            (Find_File (File.Source_Filename.all,
+                        Ada_Include_Path (Project).all,
+                        Predefined_Source_Path)));
+      end if;
+
+      --  Memorize the timestamp if necessary. This case is when we
+      --  have created a dummy entry for the file, because another
+      --  file depended on it. However, since we didn't actually parse
+      --  its LI file, we don't have any timestamp
+      --  information. Memorizing it here will allow the cache for the
+      --  directory name to work properly.
+      if File.File_Timestamp = Empty_Time_Stamp then
+         if Ts = Empty_Time_Stamp then
+            Ts := OS_Time_To_GNAT_Time (File_Time_Stamp
+              (File.Directory_Name.all & File.Source_Filename.all));
+         end if;
+
+         File.File_Timestamp := Ts;
+      end if;
+
+      return File.Directory_Name.all;
+   end Get_Directory_Name;
 
 end Src_Info;
