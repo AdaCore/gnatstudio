@@ -472,6 +472,9 @@ package body GVD.Process is
       Addr_Last   : Natural;
       Widget      : Gtk_Widget;
 
+      Pc          : Address_Type;
+      Pc_Length   : Natural := 0;
+
    begin
       if Process.Post_Processing or else Process.Current_Output = null then
          return;
@@ -485,6 +488,16 @@ package body GVD.Process is
             Process.Current_Output.all,
             File_First, File_Last, First, Last, Line,
             Addr_First, Addr_Last);
+
+         --  We have to make a temporary copy of the address, since
+         --  the call to Load_File below might modify the current_output
+         --  of the process, and thus make the address inaccessible afterwards.
+
+         if Addr_First /= 0 then
+            Pc_Length := Addr_Last - Addr_First + Pc'First;
+            Pc (Pc'First .. Pc_Length) :=
+              Process.Current_Output (Addr_First ..Addr_Last);
+         end if;
       end if;
 
       --  Do we have a file name or line number indication?
@@ -513,7 +526,7 @@ package body GVD.Process is
       if Addr_First /= 0 then
          Set_Address
            (Process.Editor_Text,
-            Process.Current_Output (Addr_First .. Addr_Last));
+            Pc (Pc'First .. Pc_Length));
       end if;
 
       Widget := Get_Widget (Process.Window.Factory, -"/Data/Call Stack");
