@@ -23,7 +23,6 @@ with Gdk.Color;             use Gdk.Color;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Main;              use Gtk.Main;
 with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Status_Bar;        use Gtk.Status_Bar;
 with Gtk.Text;              use Gtk.Text;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
@@ -298,7 +297,7 @@ package body Glide_Menu is
          return;
       end if;
 
-      Gtk_New (Editor);
+      Gtk_New (Editor, Top.Kernel);
       Gtk_New (Box, Editor);
       Attach (Editor, Box);
       Child := Put
@@ -356,11 +355,12 @@ package body Glide_Menu is
       Child  : MDI_Child;
 
    begin
-      Gtk_New (Editor);
+      Gtk_New (Editor, Top.Kernel);
       Gtk_New (Box, Editor);
       Attach (Editor, Box);
       Child := Put
         (Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi, Box);
+      Show_All (Box);
       Set_Title (Child, "No Name");
    end On_New_File;
 
@@ -675,7 +675,7 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top  : constant Glide_Window := Glide_Window (Object);
+      --  Top  : constant Glide_Window := Glide_Window (Object);
       --  Page : constant Glide_Page.Glide_Page :=
       --    Glide_Page.Glide_Page (Get_Current_Process (Top));
 
@@ -885,7 +885,7 @@ package body Glide_Menu is
             Gnatstub (Title, Success);
 
             if Success then
-               Gtk_New (Editor);
+               Gtk_New (Editor, Top.Kernel);
                Gtk_New (Box, Editor);
                Attach (Editor, Box);
                Child := Put (MDI, Box);
@@ -921,7 +921,7 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Test_Window.Name.all;
          begin
-            Gtk_New (Editor);
+            Gtk_New (Editor, Top.Kernel);
             Gtk_New (Box, Editor);
             Attach (Editor, Box);
             Child := Put
@@ -930,7 +930,7 @@ package body Glide_Menu is
             Set_Title (Child, File & ".ads");
             Load_File (Editor, File & ".ads", Success => Success);
 
-            Gtk_New (Editor);
+            Gtk_New (Editor, Top.Kernel);
             Gtk_New (Box, Editor);
             Attach (Editor, Box);
             Child := Put
@@ -970,7 +970,7 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Suite_Window.Name.all;
          begin
-            Gtk_New (Editor);
+            Gtk_New (Editor, Top.Kernel);
             Gtk_New (Box, Editor);
             Attach (Editor, Box);
             Child := Put
@@ -979,7 +979,7 @@ package body Glide_Menu is
             Set_Title (Child, File & ".ads");
             Load_File (Editor, File & ".ads", Success => Success);
 
-            Gtk_New (Editor);
+            Gtk_New (Editor, Top.Kernel);
             Gtk_New (Box, Editor);
             Attach (Editor, Box);
             Child := Put
@@ -1019,7 +1019,7 @@ package body Glide_Menu is
          declare
             File : constant String := Make_Harness_Window.Procedure_Name.all;
          begin
-            Gtk_New (Editor);
+            Gtk_New (Editor, Top.Kernel);
             Gtk_New (Box, Editor);
             Attach (Editor, Box);
             Child := Put

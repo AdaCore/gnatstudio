@@ -121,7 +121,7 @@ package body Glide_Page is
             return Source_Box (Get_Widget (Child)).Editor;
          end if;
 
-         Gtk_New (Editor);
+         Gtk_New (Editor, Top.Kernel);
          Gtk_New (Box, Editor);
          Attach (Editor, Box);
          Child := Put (MDI, Box);
