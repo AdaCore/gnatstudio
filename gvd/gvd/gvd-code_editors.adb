@@ -32,6 +32,7 @@ with Gtkada.MDI;          use Gtkada.MDI;
 
 with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
+with GVD.Main_Window;     use GVD.Main_Window;
 with Basic_Types;         use Basic_Types;
 with GVD.Types;           use GVD.Types;
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
@@ -108,7 +109,9 @@ package body GVD.Code_Editors is
      (Editor  : access Code_Editor_Record'Class;
       Process : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Tab   : constant Debugger_Process_Tab := Debugger_Process_Tab (Process);
+      Tab   : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Process);
+      Top   : constant GVD_Main_Window := Tab.Window;
       Child : MDI_Child;
 
    begin
@@ -118,17 +121,19 @@ package body GVD.Code_Editors is
       Gtk_New (Editor.Asm, Process);
       Gtk_New_Vpaned (Editor.Source_Asm_Pane);
 
-      Gtk_New (Editor.Explorer_Scroll);
-      Set_Policy
-        (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
-      Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
-      Child := Put (Tab.Process_Mdi, Editor.Explorer_Scroll);
-      Set_Title (Child, "Explorer");
-      Set_Dock_Side (Child, Left);
-      Dock_Child (Child);
+      if Top.Standalone then
+         Gtk_New (Editor.Explorer_Scroll);
+         Set_Policy
+           (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
+         Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
+         Child := Put (Tab.Process_Mdi, Editor.Explorer_Scroll);
+         Set_Title (Child, "Explorer");
+         Set_Dock_Side (Child, Left);
+         Dock_Child (Child);
 
-      Gtk_New (Editor.Explorer, Editor);
-      Add (Editor.Explorer_Scroll, Editor.Explorer);
+         Gtk_New (Editor.Explorer, Editor);
+         Add (Editor.Explorer_Scroll, Editor.Explorer);
+      end if;
 
       --  Since we are sometimes unparenting these widgets, We need to
       --  make sure they are not automatically destroyed by reference
@@ -506,8 +511,11 @@ package body GVD.Code_Editors is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Edit : constant Code_Editor := Code_Editor (Editor);
+      Top  : constant GVD_Main_Window :=
+        GVD_Main_Window (Debugger_Process_Tab (Edit.Process).Window);
+
    begin
-      if Get_Pref (Display_Explorer) then
+      if Top.Standalone and then Get_Pref (Display_Explorer) then
          GVD.Explorer.On_Executable_Changed (Edit.Explorer);
       end if;
 
