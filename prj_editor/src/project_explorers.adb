@@ -3178,10 +3178,6 @@ package body Project_Explorers is
       --  If a desktop was loaded, we do not want to force an explorer if none
       --  was saved. However, in the default case we want to open an explorer.
 
---        if not Has_Saved_Desktop (Kernel) then
---           On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
---        end if;
-
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
       Vsearch_Ext.Register_Default_Search (Kernel);
