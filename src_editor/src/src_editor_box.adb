@@ -1050,8 +1050,8 @@ package body Src_Editor_Box is
             --  kernel do the grab focus, then the source window will be
             --  scrolled up.
 
-            Grab_Focus (Editor.Source_View);
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
+            Grab_Focus (Editor.Source_View);
          end if;
 
          if Menu /= null then
