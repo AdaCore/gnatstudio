@@ -679,8 +679,7 @@ package body Debugger.Gdb.C is
 
    function Thread_List (Lang : access Gdb_C_Language) return String is
    begin
-      --  ??? Unsupported, should we raise an exception ?
-      return "";
+      return "info threads";
    end Thread_List;
 
    -------------------
@@ -691,8 +690,7 @@ package body Debugger.Gdb.C is
      (Lang   : access Gdb_C_Language;
       Thread : Natural) return String is
    begin
-      --  ??? Unsupported, should we raise an exception ?
-      return "";
+      return "thread" & Natural'Image (Thread);
    end Thread_Switch;
 
    -----------------------
