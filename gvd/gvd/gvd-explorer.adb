@@ -871,11 +871,14 @@ package body GVD.Explorer is
 
          --  Expand all the parents to make the node visible
          if not Is_Viewable (Tree, Tree.Current_File_Node) then
-            Expand (Tree, Row_Get_Parent (Node_Get_Row (Tree.Current_File_Node)));
+            Expand
+              (Tree, Row_Get_Parent (Node_Get_Row (Tree.Current_File_Node)));
          end if;
 
          --  Scroll to make the node visible
-         if Node_Is_Visible (Tree, Tree.Current_File_Node) /= Visibility_Full then
+         if Node_Is_Visible (Tree, Tree.Current_File_Node) /=
+           Visibility_Full
+         then
             Node_Moveto (Tree, Tree.Current_File_Node, 0, 0.5, 0.0);
          end if;
       end if;
