@@ -36,7 +36,15 @@ with Errout;      use Errout;
 with Namet;       use Namet;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
+with Project_Viewers;   use Project_Viewers;
+with Glide_Main_Window; use Glide_Main_Window;
+with Gtkada.MDI;        use Gtkada.MDI;
+with Glide_Page;        use Glide_Page;
+with GVD.Process;       use GVD.Process;
+
 package body Glide_Kernel.Project is
+
+   Project_Editor_Window_Name : constant String := "Project editor";
 
    ----------------------
    -- Find_Source_File --
@@ -129,6 +137,35 @@ package body Glide_Kernel.Project is
 
       Project_View_Changed (Handle);
    end Recompute_View;
+
+   -------------------------
+   -- Open_Project_Editor --
+   -------------------------
+
+   procedure Open_Project_Editor
+     (Handle : access Kernel_Handle_Record'Class)
+   is
+      Top        : constant Glide_Window := Glide_Window (Handle.Main_Window);
+      Page       : Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      MDI        : constant MDI_Window := Page.Process_Mdi;
+      Child      : MDI_Child;
+      Viewer     : Project_Viewer;
+   begin
+      if Get_Project (Handle) = Empty_Node then
+         return;
+      end if;
+
+      Child := Find_MDI_Child (MDI, Project_Editor_Window_Name);
+      if Child /= null then
+         Raise_Child (Child);
+         return;
+      end if;
+
+      Gtk_New (Viewer, Handle, Page.Explorer);
+      Child := Put (MDI, Viewer);
+      Set_Title (Child, Project_Editor_Window_Name);
+   end Open_Project_Editor;
 
 end Glide_Kernel.Project;
 
