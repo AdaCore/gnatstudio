@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                   Copyright (C) 2001-2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -29,8 +29,8 @@ package Pixmaps_Prj is
    logo_xpm               : aliased Chars_Ptr_Array (0 .. 0);
    project_closed_xpm     : aliased Chars_Ptr_Array (0 .. 0);
    project_xpm            : aliased Chars_Ptr_Array (0 .. 0);
-   project_imported_xpm   : aliased Chars_Ptr_Array (0 .. 0);
-   project_modified_xpm   : aliased Chars_Ptr_Array (0 .. 0);
+   project_ext_xpm        : aliased Chars_Ptr_Array (0 .. 0);
+   project_ext_closed_xpm : aliased Chars_Ptr_Array (0 .. 0);
    mini_folder_object_xpm : aliased Chars_Ptr_Array (0 .. 0);
    mini_page_xpm          : aliased Chars_Ptr_Array (0 .. 0);
 
@@ -39,8 +39,8 @@ private
    pragma Import (C, logo_xpm);
    pragma Import (C, project_closed_xpm);
    pragma Import (C, project_xpm);
-   pragma Import (C, project_imported_xpm);
-   pragma Import (C, project_modified_xpm);
+   pragma Import (C, project_ext_xpm);
+   pragma Import (C, project_ext_closed_xpm);
    pragma Import (C, mini_folder_object_xpm, "mini_folder_object_xpm");
    pragma Import (C, mini_page_xpm, "mini_page_xpm");
 
