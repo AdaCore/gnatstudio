@@ -8,7 +8,7 @@ project VFS is
 
    package Compiler is
       for Default_Switches ("Ada") use
-        ("-fPIC", "-g", "-O2", "-gnata", "-gnaty", "-gnatwue");
+        ("-g", "-O2", "-gnata", "-gnaty", "-gnatwue");
    end Compiler;
 
    package IDE renames Shared.IDE;

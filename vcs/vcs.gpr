@@ -11,7 +11,7 @@ project VCS is
 
    package Compiler is
       for Default_Switches ("Ada") use
-        ("-g", "-O2", "-gnaty", "-gnatwue", "-fPIC");
+        ("-g", "-O2", "-gnaty", "-gnatwue");
    end Compiler;
 
    package IDE renames Shared.IDE;
