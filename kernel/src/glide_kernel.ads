@@ -146,14 +146,12 @@ package Glide_Kernel is
    procedure Pop_State (Handle : Kernel_Handle);
    --  Undo previous state.
 
-   function Get_Home_Dir
-     (Handle : access Kernel_Handle_Record)
-     return String;
-   --  Return the Home directory. (eg ~/.glide).
+   function Get_Home_Dir (Handle : access Kernel_Handle_Record) return String;
+   --  Return the Home directory. (eg ~/.gps).
 
    function Get_Logs_Mapper
      (Handle : access Kernel_Handle_Record)
-     return Basic_Mapper.File_Mapper_Access;
+      return Basic_Mapper.File_Mapper_Access;
    --  Return the mapper for file logs.
 
    procedure Set_Logs_Mapper
@@ -185,9 +183,8 @@ package Glide_Kernel is
    --  the list of parsed LI files can be kept in the kernel
 
    function Locate_From_Source_And_Complete
-     (Handle            : access Kernel_Handle_Record;
-      Source_Filename   : String)
-      return Src_Info.LI_File_Ptr;
+     (Handle          : access Kernel_Handle_Record;
+      Source_Filename : String) return Src_Info.LI_File_Ptr;
    --  Find the ALI file for Source_Filename, and return a handle to it.
    --  null is returned if the LI file couldn't be parsed. It is guaranteed
    --  that the returned LI file has been fully parsed.
