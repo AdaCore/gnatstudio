@@ -434,7 +434,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Columns_Config := Buffer.Editable_Line_Info_Columns;
 
-      if Columns_Config.all /= null then
+      if Columns_Config /= null and then Columns_Config.all /= null then
          for J in Columns_Config.all'Range loop
             if Columns_Config.all (J).Identifier.all = Identifier then
                Stick_To_Data := False;
@@ -447,7 +447,7 @@ package body Src_Editor_Buffer.Line_Information is
       if Stick_To_Data then
          Columns_Config := Buffer.Buffer_Line_Info_Columns;
 
-         if Columns_Config.all /= null then
+         if Columns_Config /= null and then Columns_Config.all /= null then
             for J in Columns_Config.all'Range loop
                if Columns_Config.all (J).Identifier.all = Identifier then
                   Stick_To_Data := True;
@@ -588,7 +588,7 @@ package body Src_Editor_Buffer.Line_Information is
       Columns_Config := Buffer.Buffer_Line_Info_Columns;
       Stick_To_Data  := False;
 
-      if Columns_Config.all /= null then
+      if Columns_Config /= null and then Columns_Config.all /= null then
          for J in Columns_Config.all'Range loop
             if Columns_Config.all (J).Identifier.all = Identifier then
                Column := J;
@@ -601,7 +601,7 @@ package body Src_Editor_Buffer.Line_Information is
       if not Stick_To_Data then
          Columns_Config := Buffer.Editable_Line_Info_Columns;
 
-         if Columns_Config.all = null then
+         if Columns_Config = null or else Columns_Config.all = null then
             Unref (Layout);
             return;
          end if;
@@ -1719,28 +1719,30 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      for Line in reverse Buffer_Lines'Range loop
-         if Buffer_Lines (Line).Side_Info_Data /= null
-           and then Buffer_Lines
-             (Line).Side_Info_Data
-             (Buffer.Block_Highlighting_Column).Info /= null
-         then
-            Command :=
-              Buffer_Lines (Line).Side_Info_Data
-              (Buffer.Block_Highlighting_Column).Info.Associated_Command;
-
-            if Command /= null
-              and then Command.all in Unhide_Editable_Lines_Type'Class
+      if Buffer_Lines /= null then
+         for Line in reverse Buffer_Lines'Range loop
+            if Buffer_Lines (Line).Side_Info_Data /= null
+              and then Buffer_Lines
+                (Line).Side_Info_Data
+                (Buffer.Block_Highlighting_Column).Info /= null
             then
-               Result := Execute (Command);
+               Command :=
+                 Buffer_Lines (Line).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column).Info.Associated_Command;
 
-               --  Set the field Blocks_Need_Parsing to False to indicate that
-               --  even though lines have been deleted, the block information
-               --  hasn't changed.
-               Buffer.Blocks_Need_Parsing := False;
+               if Command /= null
+                 and then Command.all in Unhide_Editable_Lines_Type'Class
+               then
+                  Result := Execute (Command);
+
+                  --  Set the field Blocks_Need_Parsing to False to indicate
+                  --  that even though lines have been deleted, the block
+                  --  information hasn't changed.
+                  Buffer.Blocks_Need_Parsing := False;
+               end if;
             end if;
-         end if;
-      end loop;
+         end loop;
+      end if;
    end Unfold_All;
 
    ----------------------
