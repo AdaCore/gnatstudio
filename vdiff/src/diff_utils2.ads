@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -35,14 +35,13 @@ package Diff_Utils2 is
    Everywhere : constant T_Loc := 0;
 
    type Diff_Range is record
-      First       : Natural := 0;
-      Last        : Natural := 0;
-      Action      : Diff_Action := Nothing;
-      Mark        : String_Access := null;
-      Blank_Lines : String_Access := null;
+      First            : Natural := 0;
+      Last             : Natural := 0;
+      Action           : Diff_Action := Nothing;
+      Blank_Lines_Mark : Natural := 0;
    end record;
 
-   Null_Range : constant Diff_Range := (0, 0, Nothing, null, null);
+   Null_Range : constant Diff_Range := (0, 0, Nothing, 0);
 
    type   T_VRange  is array (1 .. 3) of Diff_Range;
    type   T_VStr    is array (1 .. 3) of String_Access;
