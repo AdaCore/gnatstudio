@@ -108,7 +108,7 @@ package body VCS_Module is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Prj.Tree.Project_Node_Id)
-      return Boolean;
+      return Project_Node_Array;
 
    -----------------------
    -- On_Open_Interface --
@@ -311,7 +311,7 @@ package body VCS_Module is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Prj.Tree.Project_Node_Id)
-      return Boolean
+      return Project_Node_Array
    is
       pragma Unreferenced (Page, Kernel, Ref_Project);
       Selector : VCS_Selector := VCS_Selector (Widget);
@@ -378,7 +378,12 @@ package body VCS_Module is
          end if;
          Changed := True;
       end if;
-      return Changed;
+
+      if Changed then
+         return (1 => Find_Project_Of_Package (Project, Ide_Package));
+      else
+         return (1 .. 0 => Empty_Node);
+      end if;
    end Project_Editor;
 
    -------------
