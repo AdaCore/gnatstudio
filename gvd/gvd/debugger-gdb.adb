@@ -545,6 +545,21 @@ package body Debugger.Gdb is
       Interrupt (Get_Descriptor (Get_Process (Debugger)).all);
    end Interrupt;
 
+   ------------------------
+   -- Is_Context_Command --
+   ------------------------
+
+   function Is_Context_Command
+     (Debugger : access Gdb_Debugger;
+      Command  : String) return Boolean is
+   begin
+      return Is_Execution_Command (Debugger, Command)
+        or else (Command'Length >= 6
+          and then Command (Command'First .. Command'First + 5) = "thread")
+        or else (Command'Length >= 4
+          and then Command (Command'First .. Command'First + 3) = "task");
+   end Is_Context_Command;
+
    --------------------------
    -- Is_Execution_Command --
    --------------------------

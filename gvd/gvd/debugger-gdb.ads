@@ -106,6 +106,10 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Command : String) return Boolean;
 
+   function Is_Context_Command
+     (Debugger : access Gdb_Debugger;
+      Command  : String) return Boolean;
+
    procedure Stack_Down
      (Debugger : access Gdb_Debugger;
       Display  : Boolean := False);

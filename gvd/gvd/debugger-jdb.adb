@@ -256,6 +256,19 @@ package body Debugger.Jdb is
       Send (Debugger, "suspend");
    end Interrupt;
 
+   ------------------------
+   -- Is_Context_Command --
+   ------------------------
+
+   function Is_Context_Command
+     (Debugger : access Jdb_Debugger;
+      Command  : String) return Boolean is
+   begin
+      return Is_Execution_Command (Debugger, Command)
+        or else (Command'Length >= 6
+          and then Command (Command'First .. Command'First + 5) = "thread");
+   end Is_Context_Command;
+
    --------------------------
    -- Is_Execution_Command --
    --------------------------

@@ -292,6 +292,13 @@ package Debugger is
    --  Return True if Command is an execution command for the specified
    --  debugger (e.g step, next, ... for gdb).
 
+   function Is_Context_Command
+     (Debugger : access Debugger_Root;
+      Command : String) return Boolean is abstract;
+   --  Return True if Command changes the context of the debugged process.
+   --  This is a superset of Is_Execution_Command (e.g includes also
+   --  Thread_Switch).
+
    ----------------------
    -- Stack Management --
    ----------------------

@@ -257,7 +257,9 @@ package body Debugger is
 
          --  Postprocessing (e.g handling of auto-update).
 
-         if Is_Execution_Command (Debugger, Cmd) then
+         if Is_Context_Command (Debugger, Cmd) then
+            Context_Changed (Convert (Debugger.Window, Debugger));
+         elsif Is_Execution_Command (Debugger, Cmd) then
             Process_Stopped (Convert (Debugger.Window, Debugger));
          end if;
       end if;

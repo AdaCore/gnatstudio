@@ -91,6 +91,10 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Command : String) return Boolean;
 
+   function Is_Context_Command
+     (Debugger : access Jdb_Debugger;
+      Command  : String) return Boolean;
+
    procedure Stack_Down
      (Debugger : access Jdb_Debugger;
       Display  : Boolean := False);
