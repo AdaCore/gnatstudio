@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001 - 2002                     --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -313,8 +313,7 @@ package Src_Editor_Buffer is
    --  Redo last undone command.
 
    function Get_Queue
-     (Buffer : access Source_Buffer_Record)
-     return Command_Queue;
+     (Buffer : access Source_Buffer_Record) return Command_Queue;
    --  Return the action queue associated to Buffer.
 
 private
