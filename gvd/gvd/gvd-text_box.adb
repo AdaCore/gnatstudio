@@ -467,13 +467,13 @@ package body GVD.Text_Box is
             Set_Value
               (Get_Vadj (Box.Child),
                Get_Value (Get_Vadj (Box.Child)) -
-                 Get_Page_Increment (Get_Vadj (Box.Child)));
+                 Get_Page_Increment (Get_Vadj (Box.Child)) / 2.0);
 
          when  5 =>
             Set_Value
               (Get_Vadj (Box.Child),
                Get_Value (Get_Vadj (Box.Child)) +
-                 Get_Page_Increment (Get_Vadj (Box.Child)));
+                 Get_Page_Increment (Get_Vadj (Box.Child)) / 2.0);
 
          when others => return False;
       end case;
