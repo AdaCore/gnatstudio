@@ -33,6 +33,8 @@ with Commands;                use Commands;
 with Commands.Custom;         use Commands.Custom;
 with String_Utils;            use String_Utils;
 
+with Ada.Unchecked_Deallocation;
+
 package body Custom_Module is
 
    Me : constant Debug_Handle := Create ("Custom_Module");
@@ -105,6 +107,8 @@ package body Custom_Module is
                      A : Argument_List_Access;
                      C : Custom_Command_Access;
 
+                     procedure Free_Array is new Ada.Unchecked_Deallocation
+                       (Object => String_List, Name => String_List_Access);
                   begin
                      if Args'Length > 1 then
                         A := new Argument_List'
@@ -117,7 +121,8 @@ package body Custom_Module is
                         Args (Args'First).all,
                         A);
 
-                     Free (Args);
+                     Free (Args (Args'First));
+                     Free_Array (Args);
 
                      if Command = null then
                         Command := Command_Access (C);
