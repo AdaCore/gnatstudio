@@ -25,8 +25,11 @@ with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 with Gdk.Pixmap;                  use Gdk.Pixmap;
+with Gdk.Color;                   use Gdk.Color;
 with Gtk;                         use Gtk;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
+with Gtk.Text_Tag;                use Gtk.Text_Tag;
+with Gtk.Text_Tag_Table;          use Gtk.Text_Tag_Table;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
@@ -55,6 +58,9 @@ with Gtk.Enums; use Gtk.Enums;
 with Commands;        use Commands;
 with Commands.Editor; use Commands.Editor;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
+
+with Src_Editor_Module.Line_Highlighting;
+use Src_Editor_Module.Line_Highlighting;
 
 package body Src_Editor_Buffer.Line_Information is
 
@@ -1913,5 +1919,66 @@ package body Src_Editor_Buffer.Line_Information is
    begin
       return Buffer.Hidden_Lines = 0 and then Buffer.Blank_Lines = 0;
    end Lines_Are_Real;
+
+   ---------------------
+   -- Highlight_Range --
+   ---------------------
+
+   procedure Highlight_Range
+     (Buffer    : access Source_Buffer_Record'Class;
+      Category  : String;
+      Line      : Natural;
+      Start_Col : Integer;
+      End_Col   : Integer;
+      Remove    : Boolean := False)
+   is
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      The_Line : Gint;
+      Tag      : Gtk_Text_Tag;
+   begin
+      The_Line :=
+        Gint (Get_Buffer_Line (Buffer, Editable_Line_Type (Line)) - 1);
+
+      if The_Line < 0 then
+         return;
+      end if;
+
+      Tag := Lookup (Get_Tag_Table (Buffer), Category);
+
+      if Tag = null then
+         if Remove then
+            return;
+         else
+            Gtk_New (Tag, Category);
+
+            Set_Property
+              (Tag, Background_Gdk_Property,
+               Get_Color (Lookup_Category (Category)));
+
+            Add (Get_Tag_Table (Buffer), Tag);
+         end if;
+      end if;
+
+      if Start_Col <= 0 then
+         Get_Iter_At_Line (Buffer, Start_Iter, The_Line);
+      else
+         Get_Iter_At_Line_Offset
+           (Buffer, Start_Iter, The_Line, Gint (Start_Col - 1));
+      end if;
+
+      if End_Col <= 0 then
+         Copy (Start_Iter, End_Iter);
+         Forward_To_Line_End (End_Iter);
+      else
+         Get_Iter_At_Line_Offset
+           (Buffer, End_Iter, The_Line, Gint (End_Col - 1));
+      end if;
+
+      if Remove then
+         Remove_Tag (Buffer, Tag, Start_Iter, End_Iter);
+      else
+         Apply_Tag (Buffer, Tag, Start_Iter, End_Iter);
+      end if;
+   end Highlight_Range;
 
 end Src_Editor_Buffer.Line_Information;

@@ -147,4 +147,16 @@ package Src_Editor_Buffer.Line_Information is
    --  If Remove_Unfold_Commands is False, will only remove block folding
    --  command.
 
+   procedure Highlight_Range
+     (Buffer    : access Source_Buffer_Record'Class;
+      Category  : String;
+      Line      : Natural;
+      Start_Col : Integer;
+      End_Col   : Integer;
+      Remove    : Boolean := False);
+   --  Highlight the given range of text with category Category.
+   --  If Start_Col <= 0, start at the beginning of line.
+   --  If End_Col <= 0, end at end of line.
+   --  If Remove is True, remove the highlighting instead of adding it.
+
 end Src_Editor_Buffer.Line_Information;
