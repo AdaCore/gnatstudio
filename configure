@@ -3016,8 +3016,6 @@ fi
 done
 
 
-GCC_VERSION=`$CC -dumpversion`
-
 ######## GNU regex checking
 echo "$as_me:$LINENO: checking for re_compile_pattern" >&5
 echo $ECHO_N "checking for re_compile_pattern... $ECHO_C" >&6
@@ -3945,7 +3943,6 @@ echo "$as_me: error: Test for GtkAda failed. See the file 'INSTALL' for help." >
 
 
 
-
 subdirs="$subdirs kernel/src_info/sn"
 
 
@@ -4589,7 +4586,6 @@ s,@opsysfile@,$opsysfile,;t t
 s,@ROOT@,$ROOT,;t t
 s,@TARGET@,$TARGET,;t t
 s,@EXEC_PREFIX@,$EXEC_PREFIX,;t t
-s,@GCC_VERSION@,$GCC_VERSION,;t t
 s,@STRIP_CR@,$STRIP_CR,;t t
 s,@USE_PTYS@,$USE_PTYS,;t t
 s,@CAN_OUTPUT@,$CAN_OUTPUT,;t t
