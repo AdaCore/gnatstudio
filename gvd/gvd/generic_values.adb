@@ -365,8 +365,138 @@ package body Generic_Values is
                         Elem_Index : Long_Integer;
                         Repeat_Num : Positive := 1)
    is
-      Tmp : Array_Item_Array_Access;
+      Tmp       : Array_Item_Array_Access;
+      To_Insert : Generic_Type_Access;
+      Index     : Positive;
    begin
+
+      --  Create the real new value (ie including the Repeat_Num)
+
+      if Repeat_Num = 1 then
+         To_Insert := Generic_Type_Access (Elem_Value);
+         To_Insert.Valid := True;
+      else
+         To_Insert := new Repeat_Type'
+           (Repeat_Num => Repeat_Num,
+            Value      => Generic_Type_Access (Elem_Value),
+            Visible    => True,
+            Selected   => False,
+            Valid      => True,
+            Width      => 0,
+            Height     => 0,
+            X          => -1,
+            Y          => -1);
+      end if;
+
+      --  If we are inserting a range, delete all old items that are covered
+      --  by this new range.
+      --  Since components are sorted by Index in Item.Values, we can speed
+      --  things up a little bit.
+
+      if Repeat_Num > 1
+        and then Item.Values /= null
+        and then Elem_Index <= Item.Values (Item.Last_Value).Index
+      then
+         declare
+            Min, Max   : Long_Integer;
+            Min2, Max2 : Long_Integer;
+
+            --  Since the range can be split in two, keep enough space.
+            Tmp      : Array_Item_Array (1 .. Item.Values'Last * 2);
+            Save     : Array_Item_Array_Access := item.Values;
+            Index    : Positive := Tmp'First;
+         begin
+            Min := Elem_Index;
+            Max := Long_Integer (Repeat_Num) + Min - 1;
+
+            for J in 1 .. Item.Last_Value loop
+
+               --  If we have a repeat type, we might have to split it.
+
+               if Item.Values (J).Value.all in Repeat_Type'Class then
+                  Min2 := Item.Values (J).Index;
+                  Max2 := Min2 - 1 + Long_Integer
+                    (Repeat_Type_Access (Item.Values (J).Value).Repeat_Num);
+
+                  --  Old one completly inside the new one => delete it
+
+                  if Min2 >= Min and then Max2 <= Max then
+                     null;
+
+                  elsif Min2 < Min and then Max2 > Max then
+                     Tmp (Index).Index := Item.Values (J).Index;
+                     Tmp (Index).Value := Clone (Item.Values (J).Value.all);
+                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                       Integer (Min - Min2);
+                     Index := Index + 1;
+
+                     Tmp (Index) := Item.Values (J);
+                     Tmp (Index).Index := Max + 1;
+                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                       Integer (Max2 - Max - 1);
+                     Index := Index + 1;
+
+                  elsif Min2 < Min and then Max2 >= Min then
+                     Tmp (Index) := Item.Values (J);
+                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                       Integer (Min - Min2);
+                     Index := Index + 1;
+
+                  elsif Min2 <= Max and then Max2 > Max then
+                     Tmp (Index) := Item.Values (J);
+                     Tmp (Index).Index := Max + 1;
+                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                       Integer (Max2 - Max - 1);
+                     Index := Index + 1;
+
+                  else
+                     Tmp (Index) := Item.Values (J);
+                     Index := Index + 1;
+                  end if;
+
+               --  Not a repeat type
+
+               elsif Item.Values (J).Index < Min
+                 or else Item.Values (J).Index > Max
+               then
+                  Tmp (Index) := Item.Values (J);
+                  Index := Index + 1;
+               end if;
+            end loop;
+
+            if Index = 1 then
+               --  Will be reallocated right below
+               Item.Values := null;
+               Item.Last_Value := 0;
+            else
+               Item.Values := new Array_Item_Array'(Tmp (1 .. Index - 1));
+               Item.Last_Value := Index - 1;
+            end if;
+            Free (Save);
+         end;
+      end if;
+
+      --  Check whether we already have an element with the same Elem_Index.
+      --  No need to handle ranges specially, since this is in fact done by
+      --  the debugger itselft (splitting ranges,...)
+
+      if Item.Values /= null then
+         for J in 1 .. Item.Last_Value loop
+            if Item.Values (J).Index = Elem_Index then
+               declare
+                  Was_Visible : Boolean := Item.Values (J).Value.Visible;
+               begin
+                  Free (Item.Values (J).Value, Only_Value => False);
+                  Item.Values (J).Value := To_Insert;
+                  Item.Values (J).Value.Visible := Was_Visible;
+               end;
+               return;
+            end if;
+         end loop;
+      end if;
+
+      --  Reserve enough space to insert the new array.
+
       if Item.Values = null then
          Item.Values := new Array_Item_Array (1 .. 100);
          Item.Last_Value := 1;
@@ -381,27 +511,23 @@ package body Generic_Values is
          Free (Tmp);
       end if;
 
-      if Item.Values (Item.Last_Value).Value /= null then
-         Free (Item.Values (Item.Last_Value).Value, Only_Value => False);
-      end if;
-      if Repeat_Num = 1 then
-         Item.Values (Item.Last_Value) :=
-           Array_Item'(Index => Elem_Index,
-                       Value => Generic_Type_Access (Elem_Value));
-         Elem_Value.Valid := True;
+      --  Insert the item, but make sure that the Values array is still sorted.
+
+      Index := 1;
+      while Index < Item.Last_Value
+        and then Item.Values (Index).Index < Elem_Index
+      loop
+         Index := Index + 1;
+      end loop;
+
+      if Index < Item.Last_Value then
+         Item.Values (Index + 1 .. Item.Last_Value) :=
+           Item.Values (Index .. Item.Last_Value - 1);
+         Item.Values (Index) :=
+           Array_Item'(Index => Elem_Index, Value => To_Insert);
       else
          Item.Values (Item.Last_Value) :=
-           Array_Item'(Index => Elem_Index,
-                       Value => new Repeat_Type'
-                         (Repeat_Num => Repeat_Num,
-                          Value      => Generic_Type_Access (Elem_Value),
-                          Visible    => True,
-                          Selected   => False,
-                          Valid      => True,
-                          Width      => 0,
-                          Height     => 0,
-                          X          => -1,
-                          Y          => -1));
+           Array_Item'(Index => Elem_Index, Value => To_Insert);
       end if;
    end Set_Value;
 

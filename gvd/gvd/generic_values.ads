@@ -584,6 +584,11 @@ private
    end record;
    --  Last_Value is the last value that is relevant in Values, or 0 if the
    --  array is empty.
+   --  Note that once the last value has been inserted into the array (ie at
+   --  the end of the parsing), Values will have the following properties:
+   --    - items are sorted by their Array_Item.Index field
+   --    - Values'Last = Last_Value, so that one can use 'Range for easier
+   --      access
 
    procedure Print (Value : Array_Type; Indent : Natural := 0);
    procedure Free (Item : access Array_Type;
