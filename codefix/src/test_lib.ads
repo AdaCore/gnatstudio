@@ -37,6 +37,9 @@ package Test_Lib is
    package Int_IO is new Integer_IO (Integer);
    use Int_IO;
 
+   Visible      : Boolean := True;
+   Capture_File : File_Type;
+
    procedure Corrections_Proposed
      (Message      : Error_Message;
       Id           : Error_Id;
