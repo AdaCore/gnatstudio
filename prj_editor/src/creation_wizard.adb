@@ -265,6 +265,8 @@ package body Creation_Wizard is
                   Get_Pref (Wiz.Kernel, Generate_Relative_Paths));
       Pack_Start (Box, Wiz.Relative_Paths, Expand => False);
 
+      Show_All (Page);
+
       return Gtk_Widget (Page);
    end First_Page;
 
@@ -337,12 +339,15 @@ package body Creation_Wizard is
          Values             => Languages);
 
       for P in 1 .. Project_Editor_Pages_Count (Wiz.Kernel) loop
-         Changed := Changed or Project_Editor
+         if Project_Editor
            (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
             Project, No_Project,
             Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P),
             Scenario_Variables => (1 .. 0 => Empty_Node),
-            Ref_Project => Project);
+            Ref_Project => Project)'Length /= 0
+         then
+            Changed := True;
+         end if;
       end loop;
 
       Save_Project (Wiz.Kernel, Project, Recursive => False);

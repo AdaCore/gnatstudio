@@ -674,19 +674,18 @@ package body Project_Properties is
                Ed.Project_View, Ed.Kernel);
             Pack_Start
               (Gtk_Box (Get_Nth_Page (Note, Gint (Page))), Ed.Pages (Page));
-
-         else
-            declare
-               Languages : Argument_List := Get_Languages (Ed);
-            begin
-               Refresh
-                 (Page        => Get_Nth_Project_Editor_Page (Ed.Kernel, Page),
-                  Widget       => Ed.Pages (Page),
-                  Project_View => Ed.Project_View,
-                  Languages    => Get_Languages (Ed));
-               Free (Languages);
-            end;
          end if;
+
+         declare
+            Languages : Argument_List := Get_Languages (Ed);
+         begin
+            Refresh
+              (Page         => Get_Nth_Project_Editor_Page (Ed.Kernel, Page),
+               Widget       => Ed.Pages (Page),
+               Project_View => Ed.Project_View,
+               Languages    => Get_Languages (Ed));
+            Free (Languages);
+         end;
 
          Flags := Get_Flags (Get_Nth_Project_Editor_Page (Ed.Kernel, Page));
 
@@ -1055,8 +1054,6 @@ package body Project_Properties is
                   Normalize (Current (Prj_Iter), Recurse => False);
                end if;
 
-               Changed := False;
-
                declare
                   Scenar_Iter : Scenario_Iterator := Start (Editor.Selector);
                begin
@@ -1085,8 +1082,13 @@ package body Project_Properties is
                         end if;
                      end;
 
-                     Changed := Changed or Process_General_Page
-                       (Editor, Current (Prj_Iter), View, Vars);
+                     if Process_General_Page
+                       (Editor, Current (Prj_Iter), View, Vars)
+                     then
+                        At_Least_One_Changed := True;
+                        Set_Project_Modified
+                          (Kernel, Current (Prj_Iter), True);
+                     end if;
 
                      --  Modify each projects
 
@@ -1100,23 +1102,26 @@ package body Project_Properties is
                           and then ((Get_Flags (Ed) and Multiple_Projects) /= 0
                                     or else Current (Prj_Iter) = Project)
                         then
-                           Changed := Changed or Project_Editor
-                             (Ed, Current (Prj_Iter), View,
-                              Kernel, Editor.Pages (P),
-                              Vars,
-                              Ref_Project => Project);
+                           declare
+                              Result : constant Project_Node_Array :=
+                                Project_Editor
+                                (Ed, Current (Prj_Iter), View,
+                                 Kernel, Editor.Pages (P),
+                                 Vars,
+                                 Ref_Project => Project);
+                           begin
+                              for R in Result'Range loop
+                                 At_Least_One_Changed := True;
+                                 Set_Project_Modified
+                                   (Kernel, Result (R), True);
+                              end loop;
+                           end;
                         end if;
                      end loop;
 
                      Next (Scenar_Iter);
                   end loop;
                end;
-
-               At_Least_One_Changed := At_Least_One_Changed or Changed;
-
-               if Changed then
-                  Set_Project_Modified (Kernel, Current (Prj_Iter), True);
-               end if;
 
                Next (Prj_Iter);
             end loop;
