@@ -35,6 +35,7 @@ with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Types;
 with Odd.Histories;
+with Odd.Memory_View;
 
 package Main_Debug_Window_Pkg is
 
@@ -64,6 +65,7 @@ package Main_Debug_Window_Pkg is
       -- Additional fields --
       -----------------------
 
+      Memory_View         : Odd.Memory_View.Odd_Memory_View;
       Odd_Preferences     : Odd_Preferences_Access;
       Open_Program        : Open_Program_Access;
       Open_Session        : Open_Session_Access;
