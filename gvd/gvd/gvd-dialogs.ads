@@ -28,6 +28,10 @@ package Odd.Dialogs is
       Main_Window : Gtk_Window;
       Information : Thread_Information_Array);
 
+   procedure Update
+     (Task_Dialog : access Task_Dialog_Record;
+      Information : Thread_Information_Array);
+
    procedure Gtk_New
      (Backtrace_Dialog : out Backtrace_Dialog_Access;
       Main_Window      : Gtk_Window;
@@ -36,6 +40,10 @@ package Odd.Dialogs is
    procedure Initialize
      (Backtrace_Dialog : access Backtrace_Dialog_Record'Class;
       Main_Window      : Gtk_Window;
+      Backtrace        : Backtrace_Array);
+
+   procedure Update
+     (Backtrace_Dialog : access Backtrace_Dialog_Record;
       Backtrace        : Backtrace_Array);
 
 private

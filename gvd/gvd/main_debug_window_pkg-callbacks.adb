@@ -433,7 +433,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Run (Tab.Debugger, Gtk_Window (Top));
+      Run (Tab.Debugger, True);
    end On_Run1_Activate;
 
    ----------------------------
@@ -459,7 +459,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Start (Tab.Debugger, Gtk_Window (Top));
+      Start (Tab.Debugger, True);
    end On_Start1_Activate;
 
    ------------------------------------------
@@ -485,7 +485,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Step_Into (Tab.Debugger, Gtk_Window (Top));
+      Step_Into (Tab.Debugger, True);
    end On_Step1_Activate;
 
    -----------------------------------
@@ -511,7 +511,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Step_Over (Tab.Debugger, Gtk_Window (Top));
+      Step_Over (Tab.Debugger, True);
    end On_Next1_Activate;
 
    -----------------------------------
@@ -548,7 +548,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Finish (Tab.Debugger, Gtk_Window (Top));
+      Finish (Tab.Debugger, True);
    end On_Finish1_Activate;
 
    ---------------------------
@@ -563,7 +563,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Continue (Tab.Debugger, Gtk_Window (Top));
+      Continue (Tab.Debugger, True);
    end On_Continue1_Activate;
 
    ------------------------------------------
@@ -753,21 +753,25 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Backtrace1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top    : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab    : Debugger_Process_Tab;
-      Bt     : Backtrace_Array (1 .. Max_Frame);
-      Len    : Natural;
+      Top      : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab      : Debugger_Process_Tab;
+      Bt       : Backtrace_Array (1 .. Max_Frame);
+      Len      : Natural;
+      Internal : Boolean;
 
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+
+      Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
+      Set_Internal_Command (Get_Process (Tab.Debugger), True);
       Backtrace (Tab.Debugger, Bt, Len);
+      Set_Internal_Command (Get_Process (Tab.Debugger), Internal);
 
       if Top.Backtrace_Dialog = null then
          Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object), Bt (1 .. Len));
       else
-         null;
-         --  Update (Top.Backtrace_Dialog, Bt (1 .. Len));
+         Update (Top.Backtrace_Dialog, Bt (1 .. Len));
       end if;
 
       Free (Bt (1 .. Len));
@@ -792,19 +796,25 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Threads1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top    : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab    : Debugger_Process_Tab;
+      Top      : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab      : Debugger_Process_Tab;
+      Internal : Boolean;
+
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+
+      Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
+      Set_Internal_Command (Get_Process (Tab.Debugger), True);
 
       if Top.Task_Dialog = null then
          Gtk_New
            (Top.Task_Dialog, Gtk_Window (Object), Info_Threads (Tab.Debugger));
       else
-         null;
-         --  Update (Top.Task_Dialog, Info_Threads (Tab.Debugger));
+         Update (Top.Task_Dialog, Info_Threads (Tab.Debugger));
       end if;
+
+      Set_Internal_Command (Get_Process (Tab.Debugger), Internal);
 
       --  Should free the memory returned by Info_Threads [MEMORY_LEAK] ???
 
@@ -845,7 +855,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Stack_Up (Tab.Debugger, Gtk_Window (Top));
+      Stack_Up (Tab.Debugger, True);
    end On_Up1_Activate;
 
    -----------------------
@@ -860,7 +870,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Stack_Down (Tab.Debugger, Gtk_Window (Top));
+      Stack_Down (Tab.Debugger, True);
    end On_Down1_Activate;
 
    --------------------------

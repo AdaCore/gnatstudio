@@ -71,8 +71,7 @@ package Debugger.Gdb is
 
    function Get_Uniq_Id
      (Debugger : access Gdb_Debugger;
-      Entity   : String)
-     return String;
+      Entity   : String) return String;
 
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
@@ -80,38 +79,38 @@ package Debugger.Gdb is
 
    procedure Run
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Start
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Step_Into
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Step_Over
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Continue
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Interrupt (Debugger : access Gdb_Debugger);
 
    procedure Stack_Down
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Stack_Up
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
       Frame    : Positive;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Break_Subprogram
      (Debugger : access Gdb_Debugger;
@@ -129,7 +128,7 @@ package Debugger.Gdb is
 
    procedure Finish
      (Debugger : access Gdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Backtrace
      (Debugger : access Gdb_Debugger;

@@ -63,4 +63,7 @@ package Odd is
    Align_Items_On_Grid : constant Boolean := True;
    --  Should items be aligned on the grid.
 
+   Max_Column_Width : constant := 200;
+   --  Maximum width (in pixels) for a column in a list.
+
 end Odd;

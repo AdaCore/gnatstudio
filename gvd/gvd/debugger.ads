@@ -99,9 +99,9 @@ package Debugger is
    --  Initialize the debugger.
    --  Spawn must have been called first.
 
-   function Highlighting_Pattern (Debugger : access Debugger_Root)
-                                 return GNAT.Regpat.Pattern_Matcher
-      is abstract;
+   function Highlighting_Pattern
+     (Debugger : access Debugger_Root)
+      return GNAT.Regpat.Pattern_Matcher is abstract;
    --  Return a regular expression that should match everything that should
    --  be highlighted in the debugger text window.
 
@@ -110,7 +110,7 @@ package Debugger is
 
    function Get_Process
      (Debugger : access Debugger_Root)
-     return Process_Proxies.Process_Proxy_Access;
+      return Process_Proxies.Process_Proxy_Access;
    --  Return the process descriptor associated with Debugger.
 
    procedure Set_Language
@@ -142,9 +142,7 @@ package Debugger is
    --  variable.
 
    function Get_Uniq_Id
-     (Debugger : access Debugger_Root;
-      Entity   : String)
-     return String;
+     (Debugger : access Debugger_Root; Entity : String) return String;
    --  Return a uniq ID for Entity.
    --  In most cases, this will be the address of the variable. However, some
    --  languages do not have addresses (Java), but since they do not allow
@@ -215,45 +213,50 @@ package Debugger is
    -- Execution Commands --
    ------------------------
 
-   --  Window parameter:
-   --  =================
-   --  In all the following subprograms, Window is the main debug window, in
-   --  which the debugger is displayed.  It is used to output the command in
-   --  the debugger command window. If null is passed for this parameter, the
-   --  command is not shown in the command window.
+   --  Display parameter:
+   --  ==================
+   --  In all the following subprograms, display is used to output the command
+   --  in the debugger command window. If False is passed for this parameter,
+   --  the command is not shown in the command window associated with the
+   --  debugger.
 
-   procedure Run (Debugger : access Debugger_Root;
-                  Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Run
+     (Debugger : access Debugger_Root;
+      Display  : Boolean := False) is abstract;
    --  Start the execution of the executable.
    --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
    --  immediately.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "run"
 
-   procedure Start (Debugger : access Debugger_Root;
-                    Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Start
+     (Debugger : access Debugger_Root;
+      Display  : Boolean := False) is abstract;
    --  Start the execution of the executable and stop at the first user line.
    --  The arguments must have been set by a call to Set_Arguments.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "begin"
 
-   procedure Step_Into (Debugger : access Debugger_Root;
-                        Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Step_Into
+     (Debugger : access Debugger_Root;
+      Display  : Boolean := False) is abstract;
    --  Step program until it reaches a different source line.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "step"
 
-   procedure Step_Over (Debugger : access Debugger_Root;
-                        Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Step_Over
+     (Debugger : access Debugger_Root;
+      Display  : Boolean := False) is abstract;
    --  Step program, proceeding over subroutines.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "next"
 
-   procedure Continue (Debugger : access Debugger_Root;
-                       Window   : Gtk.Window.Gtk_Window := null) is abstract;
+   procedure Continue
+     (Debugger : access Debugger_Root;
+      Display  : Boolean := False) is abstract;
    --  Continue program after signal or breakpoint.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "next"
 
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
@@ -265,33 +268,33 @@ package Debugger is
 
    procedure Stack_Down
      (Debugger : access Debugger_Root;
-      Window   : Gtk.Window.Gtk_Window := null) is abstract;
+      Display  : Boolean := False) is abstract;
    --  Select and print stack frame called by the current one.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "down"
 
    procedure Stack_Up
      (Debugger : access Debugger_Root;
-      Window   : Gtk.Window.Gtk_Window := null) is abstract;
+      Display  : Boolean := False) is abstract;
    --  Select and print stack frame that called the current one.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "up"
 
    procedure Stack_Frame
      (Debugger : access Debugger_Root;
       Frame    : Positive;
-      Window   : Gtk.Window.Gtk_Window := null) is abstract;
+      Display  : Boolean := False) is abstract;
    --  Select and print the selected stack frame.
    --  The first frame is 1. It is up to the real debugger to convert to the
    --  appropriate Id when needed.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "frame"
 
    procedure Finish
      (Debugger : access Debugger_Root;
-      Window   : Gtk.Window.Gtk_Window := null) is abstract;
+      Display  : Boolean := False) is abstract;
    --  Finish executing the current frame.
-   --  See above for details on Window.
+   --  See above for details on Output.
    --  GDB_COMMAND: "finish"
 
    type Backtrace_Record is record
@@ -380,6 +383,7 @@ private
 
    type Debugger_Root is abstract tagged record
       Process      : Process_Proxies.Process_Proxy_Access := null;
+      Window       : Gtk.Window.Gtk_Window;
       The_Language : Language.Language_Access;
    end record;
 end Debugger;

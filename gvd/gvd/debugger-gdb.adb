@@ -231,6 +231,8 @@ package body Debugger.Gdb is
       Last            : Natural;
 
    begin
+      Debugger.Window := Window;
+
       --  Cut each blank separated word into an argument.
       --  Note that we assume here that only one blank is put between each
       --  option (in the computation of Num_Options).
@@ -402,12 +404,13 @@ package body Debugger.Gdb is
    -- Run --
    ---------
 
-   procedure Run (Debugger : access Gdb_Debugger;
-                  Window   : Gtk.Window.Gtk_Window := null) is
+   procedure Run
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False) is
    begin
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
-                              "run" & ASCII.LF, True);
+      if Display then
+         Text_Output_Handler
+           (Convert (Debugger.Window, Debugger), "run" & ASCII.LF, True);
       end if;
       Send (Get_Process (Debugger), "run");
    end Run;
@@ -416,16 +419,18 @@ package body Debugger.Gdb is
    -- Start --
    -----------
 
-   procedure Start (Debugger : access Gdb_Debugger;
-                    Window   : Gtk.Window.Gtk_Window := null) is
+   procedure Start
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False) is
    begin
       --  ??? This should be disabled for C mode. Maybe we should directly
       --  disable the begin button ?
 
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
-                              "begin" & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, "begin");
+      if Display then
+         Text_Output_Handler
+           (Convert (Debugger.Window, Debugger),
+            "begin" & ASCII.LF, True);
+         Append (Convert (Debugger.Window, Debugger).Command_History, "begin");
       end if;
       Send (Get_Process (Debugger), "begin");
       Wait_Prompt (Debugger);
@@ -435,13 +440,14 @@ package body Debugger.Gdb is
    -- Step_Into --
    ---------------
 
-   procedure Step_Into (Debugger : access Gdb_Debugger;
-                        Window   : Gtk.Window.Gtk_Window := null) is
+   procedure Step_Into
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False) is
    begin
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
-                              "step" & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, "step");
+      if Display then
+         Text_Output_Handler
+           (Convert (Debugger.Window, Debugger), "step" & ASCII.LF, True);
+         Append (Convert (Debugger.Window, Debugger).Command_History, "step");
       end if;
       Send (Get_Process (Debugger), "step");
       Wait_Prompt (Debugger);
@@ -451,13 +457,14 @@ package body Debugger.Gdb is
    -- Step_Over --
    ---------------
 
-   procedure Step_Over (Debugger : access Gdb_Debugger;
-                        Window   : Gtk.Window.Gtk_Window := null) is
+   procedure Step_Over
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False) is
    begin
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
-                              "next" & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, "next");
+      if Display then
+         Text_Output_Handler
+           (Convert (Debugger.Window, Debugger), "next" & ASCII.LF, True);
+         Append (Convert (Debugger.Window, Debugger).Command_History, "next");
       end if;
       Send (Get_Process (Debugger), "next");
       Wait_Prompt (Debugger);
@@ -467,13 +474,14 @@ package body Debugger.Gdb is
    -- Continue --
    --------------
 
-   procedure Continue (Debugger : access Gdb_Debugger;
-                       Window   : Gtk.Window.Gtk_Window := null) is
+   procedure Continue
+     (Debugger : access Gdb_Debugger;
+      Display  : Boolean := False) is
    begin
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
-                              "cont" & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, "cont");
+      if Display then
+         Text_Output_Handler
+           (Convert (Debugger.Window, Debugger), "cont" & ASCII.LF, True);
+         Append (Convert (Debugger.Window, Debugger).Command_History, "cont");
       end if;
       Send (Get_Process (Debugger), "cont");
       Wait_Prompt (Debugger);
@@ -493,12 +501,12 @@ package body Debugger.Gdb is
    ----------------
 
    procedure Stack_Down (Debugger : access Gdb_Debugger;
-                         Window   : Gtk.Window.Gtk_Window := null) is
+                         Display  : Boolean := False) is
    begin
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
+      if Display then
+         Text_Output_Handler (Convert (Debugger.Window, Debugger),
                               "down" & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, "down");
+         Append (Convert (Debugger.Window, Debugger).Command_History, "down");
       end if;
       Send (Get_Process (Debugger), "down");
       Wait_Prompt (Debugger);
@@ -509,12 +517,12 @@ package body Debugger.Gdb is
    --------------
 
    procedure Stack_Up (Debugger : access Gdb_Debugger;
-                       Window   : Gtk.Window.Gtk_Window := null) is
+                       Display  : Boolean := False) is
    begin
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
+      if Display then
+         Text_Output_Handler (Convert (Debugger.Window, Debugger),
                               "up" & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, "up");
+         Append (Convert (Debugger.Window, Debugger).Command_History, "up");
       end if;
       Send (Get_Process (Debugger), "up");
       Wait_Prompt (Debugger);
@@ -527,14 +535,14 @@ package body Debugger.Gdb is
    procedure Stack_Frame
      (Debugger : access Gdb_Debugger;
       Frame    : Positive;
-      Window   : Gtk.Window.Gtk_Window := null)
+      Display  : Boolean := False)
    is
       Str : constant String := "frame" & Natural'Image (Frame - 1);
    begin
-      if Window /= null then
+      if Display then
          Text_Output_Handler
-           (Convert (Window, Debugger), Str & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, Str);
+           (Convert (Debugger.Window, Debugger), Str & ASCII.LF, True);
+         Append (Convert (Debugger.Window, Debugger).Command_History, Str);
       end if;
 
       Send (Get_Process (Debugger), Str);
@@ -635,12 +643,13 @@ package body Debugger.Gdb is
    ------------
 
    procedure Finish (Debugger : access Gdb_Debugger;
-                     Window   : Gtk.Window.Gtk_Window := null) is
+                     Display  : Boolean := False) is
    begin
-      if Window /= null then
-         Text_Output_Handler (Convert (Window, Debugger),
-                              "finish" & ASCII.LF, True);
-         Append (Convert (Window, Debugger).Command_History, "finish");
+      if Display then
+         Text_Output_Handler
+           (Convert (Debugger.Window, Debugger), "finish" & ASCII.LF, True);
+         Append
+           (Convert (Debugger.Window, Debugger).Command_History, "finish");
       end if;
       Send (Get_Process (Debugger), "finish");
       Wait_Prompt (Debugger);

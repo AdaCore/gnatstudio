@@ -67,38 +67,38 @@ package Debugger.Jdb is
 
    procedure Run
      (Debugger : access Jdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Start
      (Debugger : access Jdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Step_Into
      (Debugger : access Jdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Step_Over
      (Debugger : access Jdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Continue
      (Debugger : access Jdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Interrupt (Debugger : access Jdb_Debugger);
 
    procedure Stack_Down
      (Debugger : access Jdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Stack_Up
      (Debugger : access Jdb_Debugger;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Stack_Frame
      (Debugger : access Jdb_Debugger;
       Frame    : Positive;
-      Window   : Gtk.Window.Gtk_Window := null);
+      Display  : Boolean := False);
 
    procedure Break_Subprogram
      (Debugger : access Jdb_Debugger;
@@ -114,8 +114,9 @@ package Debugger.Jdb is
       Name      : String  := "";
       Unhandled : Boolean := False);
 
-   procedure Finish (Debugger : access Jdb_Debugger;
-                     Window   : Gtk.Window.Gtk_Window := null);
+   procedure Finish
+     (Debugger : access Jdb_Debugger;
+      Display  : Boolean := False);
 
    procedure Backtrace
      (Debugger : access Jdb_Debugger;
