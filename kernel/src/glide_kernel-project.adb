@@ -220,9 +220,8 @@ package body Glide_Kernel.Project is
         (Get_Project_View (Handle), Gnatlist_Attribute,
          Ide_Package, Default => "gnatls");
       Gnatls_Args : Argument_List_Access :=
-        Argument_String_To_List (Gnatls);
+        Argument_String_To_List (Gnatls & " -v");
       Path        : String_Access;
-      Verbose     : aliased String := "-v";
 
    begin
       --  If the gnatls commands hasn't changed, no need to recompute the
@@ -249,12 +248,12 @@ package body Glide_Kernel.Project is
       if Path /= null then
          Non_Blocking_Spawn
            (Fd, Path.all,
-            Gnatls_Args (2 .. Gnatls_Args'Last) & Verbose'Unchecked_Access,
+            Gnatls_Args (2 .. Gnatls_Args'Last),
             Buffer_Size => 0, Err_To_Out => True);
 
          Free (Path);
          Free (Gnatls_Args);
-         Expect (Fd, Result, "Source Search Path:\n", Timeout => -1);
+         Expect (Fd, Result, "Source Search Path:", Timeout => -1);
 
          loop
             Expect (Fd, Result, "\n", Timeout => -1);
