@@ -623,6 +623,11 @@ package body Vdiff2_Module.Utils is
 
       Edit (Kernel, Item.File1);
       Edit (Kernel, Item.File2);
+
+      --  Synchronize the scrollings.
+
+      Synchronize_Scrolling (Kernel, Item.File1, Item.File2);
+
       Split (Get_MDI (Kernel), Orientation_Horizontal);
 
       Create_Line_Information_Column
@@ -753,9 +758,14 @@ package body Vdiff2_Module.Utils is
 
       Edit (Kernel, Item.File2);
       Edit (Kernel, Item.File1);
+
       Split (Get_MDI (Kernel), Orientation_Horizontal);
       Edit (Kernel, Item.File3);
       Split (Get_MDI (Kernel), Orientation_Horizontal);
+
+      --  Synchronize the scrollings.
+
+      Synchronize_Scrolling (Kernel, Item.File1, Item.File2, Item.File3);
 
       Info (1) := new Line_Information_Array
         (1 .. Get_File_Last_Line (Kernel, Item.File1));
