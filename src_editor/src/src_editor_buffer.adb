@@ -96,13 +96,15 @@ package body Src_Editor_Buffer is
    Signals : constant Interfaces.C.Strings.chars_ptr_array :=
      (1 => New_String ("cursor_position_changed"),
       2 => New_String ("side_column_changed"),
-      3 => New_String ("status_changed"));
+      3 => New_String ("status_changed"),
+      4 => New_String ("buffer_information_changed"));
    --  The list of new signals supported by this GObject
 
    Signal_Parameters : constant Glib.Object.Signal_Parameter_Types :=
      (1 => (GType_Int, GType_Int),
       2 => (GType_None, GType_None),
-      3 => (GType_None, GType_None));
+      3 => (GType_None, GType_None),
+      4 => (GType_None, GType_None));
    --  The parameters associated to each new signal
 
    package Buffer_Callback is new Gtk.Handlers.Callback
@@ -117,6 +119,10 @@ package body Src_Editor_Buffer is
    --  This procedure is used to signal to the clients that the insert
    --  cursor position may have changed by emitting the
    --  "cursor_position_changed" signal.
+
+   procedure Buffer_Information_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "buffer_information_changed" signal.
 
    procedure Side_Column_Changed
      (Buffer : access Source_Buffer_Record'Class);
@@ -868,6 +874,22 @@ package body Src_Editor_Buffer is
    begin
       Emit_By_Name (Get_Object (Buffer), "side_column_changed" & ASCII.NUL);
    end Side_Column_Changed;
+
+   --------------------------------
+   -- Buffer_Information_Changed --
+   --------------------------------
+
+   procedure Buffer_Information_Changed
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      procedure Emit_By_Name
+        (Object : System.Address;
+         Name   : String);
+      pragma Import (C, Emit_By_Name, "g_signal_emit_by_name");
+   begin
+      Emit_By_Name
+        (Get_Object (Buffer), "buffer_information_changed" & ASCII.NUL);
+   end Buffer_Information_Changed;
 
    --------------------
    -- Status_Changed --
@@ -3236,8 +3258,52 @@ package body Src_Editor_Buffer is
       Width  : Gint := -1;
       Widths : array (Info'Range) of Gint;
       Layout : Pango_Layout;
+      Found  : Boolean := False;
 
    begin
+      --  Test if we are adding extra information, or line information.
+
+      if Info'First < 0 then
+         --  Look for an existing entry.
+
+         if Buffer.Extra_Information = null then
+            Buffer.Extra_Information := new Extra_Information_Array'
+              (1 => new Extra_Information_Record'
+                 (Identifier => new String'(Identifier),
+                  Info => new Line_Information_Record'(Info (Info'First))));
+         else
+            for J in Buffer.Extra_Information'Range loop
+               if Buffer.Extra_Information (J).Identifier.all = Identifier then
+                  Unchecked_Free (Buffer.Extra_Information (J).Info);
+                  Buffer.Extra_Information (J).Info :=
+                    new Line_Information_Record'(Info (Info'First));
+                  Found := True;
+                  exit;
+               end if;
+            end loop;
+
+            if not Found then
+               declare
+                  A : Extra_Information_Array
+                    (1 .. Buffer.Extra_Information'Last + 1);
+               begin
+                  A (1 .. Buffer.Extra_Information'Last) :=
+                    Buffer.Extra_Information.all;
+                  A (Buffer.Extra_Information'Last + 1) :=
+                    new Extra_Information_Record'
+                      (Info       => new Line_Information_Record'
+                           (Info (Info'First)),
+                       Identifier => new String'(Identifier));
+               end;
+            end if;
+         end if;
+
+         Buffer_Information_Changed (Buffer);
+         return;
+      end if;
+
+      --  If we reach this point, the info corresponds to line information.
+
       Layout := Create_Pango_Layout (Box);
       Set_Font_Description
         (Layout,
@@ -3516,5 +3582,16 @@ package body Src_Editor_Buffer is
          end if;
       end if;
    end Get_Status;
+
+   ---------------------------
+   -- Get_Extra_Information --
+   ---------------------------
+
+   function Get_Extra_Information
+     (Buffer : Source_Buffer)
+      return Extra_Information_Array_Access is
+   begin
+      return Buffer.Extra_Information;
+   end Get_Extra_Information;
 
 end Src_Editor_Buffer;
