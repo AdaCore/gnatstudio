@@ -672,6 +672,7 @@ package body Src_Editor_Box is
 
    begin
       Editor_Tooltips.Destroy_Tooltip (Box.Tooltip);
+      Unref (Box.Source_Buffer);
       Delete (Box.Source_View);
 
    exception
@@ -718,6 +719,7 @@ package body Src_Editor_Box is
          Box.Source_Buffer := Source;
       end if;
 
+      Ref (Box.Source_Buffer);
       Gtk_New (Box.Source_View, Box.Source_Buffer,
                Get_Pref (Kernel, Default_Source_Editor_Font));
       Add (Scrolling_Area, Box.Source_View);
