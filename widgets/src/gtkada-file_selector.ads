@@ -335,10 +335,10 @@ private
       Own_Main_Loop : Boolean := False;
       --  Whether the file selector is running in its own main loop or not.
 
-      Read_Idle_Handler   : Idle_Handler_Id;
+      Read_Idle_Handler   : Idle_Handler_Id := 0;
       --  Identifier for read idle loops.
 
-      Display_Idle_Handler   : Idle_Handler_Id;
+      Display_Idle_Handler   : Idle_Handler_Id := 0;
       --  Identifier for display idle loops.
 
       Home_Directory : String_Access := new String'("");
