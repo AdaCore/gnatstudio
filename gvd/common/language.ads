@@ -405,6 +405,8 @@ package Language is
 
       Profile         : Basic_Types.String_Access;
       --  Subprogram profile, if Category is in Subprogram_Category.
+      --  Note that even for Subprogram_Category, Profile can be null if the
+      --  subprogram does not have any parameter.
 
       Sloc_Start      : Source_Location;
       --  Location of beginning of the construct
