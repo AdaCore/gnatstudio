@@ -297,7 +297,13 @@ package body Src_Info is
 
       while Current_Unit /= null loop
          LI_File_HTable.Get_Next (HT, Next_Unit);
-         Destroy (Current_Unit);
+
+         --  Destroy for LI_File_Node_Ptr will free the whole list, ie
+         --  including elements that will be seen later in the table. Thus we
+         --  cannot call it here
+         Destroy (Current_Unit.Value);
+         Free (Current_Unit);
+
          Current_Unit := Next_Unit;
       end loop;
 
