@@ -7,6 +7,7 @@ with "../vsearch/vsearch";
 with "../prj_editor/prj_editor";
 with "../src_editor/src_editor";
 with "../vdiff/vdiff";
+with "../browsers/browsers";
 
 project Glide is
 
