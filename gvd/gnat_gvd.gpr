@@ -1,6 +1,10 @@
 project GNAT_GVD extends "../gnat" is
 
-  for Source_Dirs use ("gnat");
-  for Object_Dir use "gnat";
+   for Source_Dirs use ("gnat");
+   for Object_Dir use "gnat";
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-gnatpg", "-O2");
+   end Compiler;
 
 end GNAT_GVD;
