@@ -2267,10 +2267,17 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
+      Editor : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+
    begin
-      On_Goto_Line
-        (Editor => Get_Source_Box_From_MDI (Find_Current_Editor (Kernel)),
-         Kernel => Kernel);
+      if Editor /= null then
+         On_Goto_Line (Editor => Editor, Kernel => Kernel);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Line;
 
    -------------------------
