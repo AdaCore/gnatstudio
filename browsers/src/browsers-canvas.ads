@@ -26,11 +26,14 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Gdk.Event;
 with Gdk.GC;
 with Gtkada.Canvas;
 with Glide_Kernel;
+with Glib.Object;
 with Gtk.Menu;
 with Gtk.Scrolled_Window;
+with Gtk.Widget;
 
 package Browsers.Canvas is
 
@@ -97,6 +100,25 @@ package Browsers.Canvas is
    --  Return the graphic context to use to draw the items that are linked to
    --  the selected item
 
+   ----------------------
+   -- Contextual menus --
+   ----------------------
+
+   type Browser_Selection_Context is new Glide_Kernel.Selection_Context
+     with private;
+   type Browser_Selection_Context_Access is access all
+     Browser_Selection_Context'Class;
+   --  The type of context returned by the browser
+
+   function Browser_Context_Factory
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu)
+      return Glide_Kernel.Selection_Context_Access;
+   --  Return the context to use for a contextual menu in the canvas
+
 private
    type Glide_Browser_Record is new
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record with
@@ -104,7 +126,6 @@ private
          Canvas    : Gtkada.Canvas.Interactive_Canvas;
          Kernel    : Glide_Kernel.Kernel_Handle;
          Mask      : Browser_Type_Mask;
-         Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
 
          Selected_Link_GC : Gdk.GC.Gdk_GC;
          Selected_Item_GC : Gdk.GC.Gdk_GC;
@@ -112,6 +133,9 @@ private
 
          Selected_Item : Gtkada.Canvas.Canvas_Item;
       end record;
+
+   type Browser_Selection_Context is new Glide_Kernel.Selection_Context
+     with null record;
 
    pragma Inline (Get_Mask);
    pragma Inline (Get_Canvas);

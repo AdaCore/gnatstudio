@@ -29,6 +29,7 @@
 with Browsers.Canvas;
 with Glide_Kernel;
 with Gtkada.MDI;
+with Gtk.Widget;
 
 package Browsers.Module is
 
@@ -47,5 +48,10 @@ package Browsers.Module is
       File       : String);
    --  Examine the dependencies for File in In_Browser.
    --  The browser is not cleared first.
+
+   procedure Open_File
+     (Browser : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access);
+   --  Open the file described in Context for analysis in the browser.
 
 end Browsers.Module;

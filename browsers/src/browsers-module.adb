@@ -35,18 +35,19 @@ with Src_Info;                  use Src_Info;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
-with Glib.Object;   use Glib.Object;
-with Gtk.Menu;      use Gtk.Menu;
-with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtkada.Canvas; use Gtkada.Canvas;
-with Gtkada.MDI;    use Gtkada.MDI;
-with Gtk.Widget;    use Gtk.Widget;
+with Glib.Object;          use Glib.Object;
+with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
+with Gtkada.Canvas;        use Gtkada.Canvas;
+with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.MDI;           use Gtkada.MDI;
+with Gtk.Widget;           use Gtk.Widget;
 
 with Ada.Exceptions; use Ada.Exceptions;
 
 package body Browsers.Module is
 
-   Dependency_Browser_Module_Id : Module_ID;
+   Dependency_Browser_Module_ID : Module_ID;
 
    Me : Debug_Handle := Create ("Browsers.Module");
 
@@ -94,7 +95,8 @@ package body Browsers.Module is
    --  Examine the dependencies of a specific file
 
    procedure Browser_Contextual_Menu
-     (Context : access Selection_Context'Class;
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the appropriate contextual menus
 
@@ -129,6 +131,13 @@ package body Browsers.Module is
          Set_Size_Request
            (Browser, Default_Browser_Width, Default_Browser_Height);
          Set_Title (Child, "<browser>");
+
+         Register_Contextual_Menu
+           (Kernel          => Kernel,
+            Event_On_Widget => Browser,
+            Object          => Browser,
+            ID              => Dependency_Browser_Module_ID,
+            Context_Func    => Browser_Context_Factory'Access);
       end if;
 
       return Child;
@@ -398,17 +407,36 @@ package body Browsers.Module is
       Register_Menu (Kernel, "/Tools", Menu_Item);
    end Initialize_Module;
 
+   ---------------
+   -- Open_File --
+   ---------------
+
+   procedure Open_File
+     (Browser  : access Gtk_Widget_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File : constant String := Select_File (Base_Directory => "");
+      --  ??? Should set up filters to only open file from the current project.
+   begin
+      if File /= "" then
+         Examine_Dependencies
+           (Get_Kernel (Context), Glide_Browser (Browser), File);
+      end if;
+   end Open_File;
+
    -----------------------------
    -- Browser_Contextual_Menu --
    -----------------------------
 
    procedure Browser_Contextual_Menu
-     (Context : access Selection_Context'Class;
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
-      Item : Gtk_Menu_Item;
+      Item         : Gtk_Menu_Item;
       File_Context : File_Selection_Context_Access;
    begin
+      --  File selection (for instance from the explorer)
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
@@ -424,7 +452,7 @@ package body Browsers.Module is
    end Browser_Contextual_Menu;
 
 begin
-   Dependency_Browser_Module_Id := Register_Module
+   Dependency_Browser_Module_ID := Register_Module
      (Module_Name             => Dependency_Browser_Module_Name,
       Priority                => Default_Priority,
       Initializer             => Initialize_Module'Access,

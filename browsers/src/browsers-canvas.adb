@@ -31,20 +31,19 @@ with Gdk.Color;           use Gdk.Color;
 with Gdk.GC;              use Gdk.GC;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
-with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gdk.Event;           use Gdk.Event;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 
 with Glide_Kernel;              use Glide_Kernel;
-with GUI_Utils;                 use GUI_Utils;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Browsers.Module;           use Browsers.Module;
 with Layouts;                   use Layouts;
@@ -92,17 +91,6 @@ package body Browsers.Canvas is
    procedure Zoomed (Browser : access Gtk_Widget_Record'Class);
    --  Called when the Canvas has been zoomed. This redraws all the items
 
-   procedure Open_File (Browser : access Gtk_Widget_Record'Class);
-   --  Open a new file for analyzis in the browser
-   --  ??? Probably should be part of Glide_Kernel.Browsers, but this is used
-   --  ??? in a contextual menu, so we need to be able to register new menus
-   --  ??? from other packages.
-
-   function Contextual_Background_Menu
-     (Browser : access Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Gtk_Menu;
-   --  Return the contextual menu to use in the browser
-
    procedure Realized (Browser : access Gtk_Widget_Record'Class);
    --  Callback for the "realized" signal.
 
@@ -126,9 +114,7 @@ package body Browsers.Canvas is
    procedure Initialize
      (Browser : out Glide_Browser;
       Mask    : Browser_Type_Mask;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Menu : Gtk_Menu;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Gtk.Scrolled_Window.Initialize (Browser);
       Set_Policy (Browser, Policy_Automatic, Policy_Automatic);
@@ -140,10 +126,6 @@ package body Browsers.Canvas is
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
 
-      --  Create the  background contextual menu now, so that the key shortcuts
-      --  are activated
-      Menu := Contextual_Background_Menu (Browser, null);
-
       Widget_Callback.Object_Connect
         (Browser.Canvas, "zoomed",
          Widget_Callback.To_Marshaller (Zoomed'Access), Browser);
@@ -151,8 +133,6 @@ package body Browsers.Canvas is
       Widget_Callback.Object_Connect
         (Browser.Canvas, "realize",
          Widget_Callback.To_Marshaller (Realized'Access), Browser);
-
-      Register_Contextual_Menu (Browser, Contextual_Background_Menu'Access);
    end Initialize;
 
    --------------
@@ -202,51 +182,48 @@ package body Browsers.Canvas is
       return Browser.Canvas;
    end Get_Canvas;
 
-   --------------------------------
-   -- Contextual_Background_Menu --
-   --------------------------------
+   -----------------------------
+   -- Browser_Context_Factory --
+   -----------------------------
 
-   function Contextual_Background_Menu
-     (Browser : access Gtk_Widget_Record'Class;
-      Event   : Gdk.Event.Gdk_Event) return Gtk_Menu
+   function Browser_Context_Factory
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Object       : access Glib.Object.GObject_Record'Class;
+      Event        : Gdk.Event.Gdk_Event;
+      Menu         : Gtk.Menu.Gtk_Menu)
+      return Glide_Kernel.Selection_Context_Access
    is
-      B          : Glide_Browser := Glide_Browser (Browser);
+      B          : Glide_Browser := Glide_Browser (Object);
+      Context    : Browser_Selection_Context_Access :=
+        new Browser_Selection_Context;
       Mitem      : Gtk_Menu_Item;
-      Zooms_Menu : Gtk_Menu;
       Check      : Gtk_Check_Menu_Item;
-   begin
-      if B.Contextual_Background_Menu /= null then
-         return B.Contextual_Background_Menu;
-      end if;
+      Zooms_Menu : Gtk_Menu;
 
+   begin
       Unlock (Gtk.Accel_Group.Get_Default);
 
-      Gtk_New (B.Contextual_Background_Menu);
-
       Gtk_New (Mitem, Label => "Open file...");
-      Append (B.Contextual_Background_Menu, Mitem);
-      Widget_Callback.Object_Connect
+      Append (Menu, Mitem);
+      Context_Callback.Object_Connect
         (Mitem, "activate",
-         Widget_Callback.To_Marshaller (Open_File'Access), B);
-
-      Gtk_New (Mitem);
-      Append (B.Contextual_Background_Menu, Mitem);
+         Context_Callback.To_Marshaller (Open_File'Access),
+         Slot_Object => B,
+         User_Data   => Selection_Context_Access (Context));
 
       Gtk_New (Check, Label => "Hide system files");
       Set_Active (Check, True);
       Set_Sensitive (Check, False);
-      Append (B.Contextual_Background_Menu, Check);
+      Append (Menu, Check);
 
       Gtk_New (Check, Label => "Hide implicit dependencies");
       Set_Active (Check, True);
       Set_Sensitive (Check, False);
-      Append (B.Contextual_Background_Menu, Check);
-
-      Gtk_New (Mitem);
-      Append (B.Contextual_Background_Menu, Mitem);
+      Append (Menu, Check);
 
       Gtk_New (Mitem, Label => "Zoom in");
-      Append (B.Contextual_Background_Menu, Mitem);
+      Append (Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, "activate",
          Widget_Callback.To_Marshaller (Zoom_In'Access), B);
@@ -255,7 +232,7 @@ package body Browsers.Canvas is
          Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
 
       Gtk_New (Mitem, Label => "Zoom out");
-      Append (B.Contextual_Background_Menu, Mitem);
+      Append (Menu, Mitem);
       Widget_Callback.Object_Connect
         (Mitem, "activate",
          Widget_Callback.To_Marshaller (Zoom_Out'Access), B);
@@ -276,14 +253,13 @@ package body Browsers.Canvas is
       end loop;
 
       Gtk_New (Mitem, Label => "Zoom");
-      Append (B.Contextual_Background_Menu, Mitem);
+      Append (Menu, Mitem);
       Set_Submenu (Mitem, Zooms_Menu);
 
-      Show_All (B.Contextual_Background_Menu);
-
       Lock (Gtk.Accel_Group.Get_Default);
-      return B.Contextual_Background_Menu;
-   end Contextual_Background_Menu;
+
+      return Selection_Context_Access (Context);
+   end Browser_Context_Factory;
 
    -------------
    -- Zoom_In --
@@ -338,21 +314,6 @@ package body Browsers.Canvas is
    begin
       For_Each_Item (B.Canvas, Refresh_File_Item'Access);
    end Zoomed;
-
-   ---------------
-   -- Open_File --
-   ---------------
-
-   procedure Open_File (Browser : access Gtk_Widget_Record'Class) is
-      B : Glide_Browser := Glide_Browser (Browser);
-
-      File : constant String := Select_File (Base_Directory => "");
-      --  ??? Should set up filters to only open file from the current project.
-   begin
-      if File /= "" then
-         Examine_Dependencies (B.Kernel, B, File);
-      end if;
-   end Open_File;
 
    ---------------
    -- To_Brower --
