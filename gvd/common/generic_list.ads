@@ -134,14 +134,15 @@ private
 
    type List_Node_Record;
    type List_Node is access List_Node_Record;
+   type List_Node_Access is access List_Node;
 
+   Null_Node : constant List_Node := null;
    type List is record
-      First : List_Node;
-      Last  : List_Node;
+      First : List_Node_Access := new List_Node '(Null_Node);
+      Last  : List_Node_Access := new List_Node '(Null_Node);
    end record;
 
    Null_List : constant List := List' (null, null);
-   Null_Node : constant List_Node := null;
 
    type Data_Access is access Data_Type;
 
@@ -155,6 +156,9 @@ private
 
    procedure Free_Node is new
      Unchecked_Deallocation (List_Node_Record, List_Node);
+
+   procedure Free_Node_Access is new
+     Unchecked_Deallocation (List_Node, List_Node_Access);
 
    pragma Inline (First);
    pragma Inline (Prepend);
