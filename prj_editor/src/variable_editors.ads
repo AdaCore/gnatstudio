@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                          G P S                                    --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -20,10 +20,10 @@
 
 with Gtk.Cell_Renderer_Text;
 with Gtk.Tree_Store;
-with Glib.Object;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
 with Projects;
 with Glide_Kernel;
+with Commands.Interactive;
 
 package Variable_Editors is
 
@@ -48,9 +48,12 @@ package Variable_Editors is
    --  If False is returned, the the editor should be run again, since there
    --  was some incorrect information.
 
-   procedure On_Add_Variable
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
+   type Add_Variable_Command
+     is new Commands.Interactive.Interactive_Command with null record;
+   function Execute
+     (Command : access Add_Variable_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type;
    --  Callback to add a new scenario variable to a project. The variable
    --  declaration is added to the project file associated with Context, but
    --  will of course be available for all projects in the hierarchy.

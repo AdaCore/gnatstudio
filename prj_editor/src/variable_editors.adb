@@ -597,18 +597,19 @@ package body Variable_Editors is
          return False;
    end Update_Variable;
 
-   ---------------------
-   -- On_Add_Variable --
-   ---------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Add_Variable
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Add_Variable_Command;
+      Context : Commands.Interactive.Interactive_Command_Context)
+      return Commands.Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Command);
       Edit : New_Var_Edit;
    begin
-      Gtk_New (Edit, Get_Kernel (Context),
+      Gtk_New (Edit, Get_Kernel (Context.Context),
                Title => -"Creating a new variable");
       Show_All (Edit);
 
@@ -619,11 +620,7 @@ package body Variable_Editors is
       end loop;
 
       Destroy (Edit);
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Add_Variable;
+      return Commands.Success;
+   end Execute;
 
 end Variable_Editors;
