@@ -188,6 +188,21 @@ package body Glide_Kernel.Console is
    end Insert;
 
    -------------------
+   -- Raise_Console --
+   -------------------
+
+   procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class)
+   is
+      MDI   : MDI_Window := Get_MDI (Kernel);
+      Child : MDI_Child :=
+        Find_MDI_Child_By_Tag (MDI, Glide_Console_Record'Tag);
+   begin
+      if Child /= null then
+         Raise_Child (Child);
+      end if;
+   end Raise_Console;
+
+   -------------------
    -- Insert_Result --
    -------------------
 

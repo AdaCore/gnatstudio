@@ -48,6 +48,9 @@ package Glide_Kernel.Console is
    --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
 
+   procedure Raise_Console (Kernel : access Kernel_Handle_Record'Class);
+   --  If the message window is present in the MDI, raise it.
+
    procedure Insert_Result
      (Kernel   : access Kernel_Handle_Record'Class;
       Category : String;
