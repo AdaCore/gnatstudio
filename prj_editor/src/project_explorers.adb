@@ -1001,12 +1001,20 @@ package body Project_Explorers is
    begin
       Width  := 0;
       Height := 0;
+      Pixmap := null;
+      Area   := (0, 0, 0, 0);
 
       Window := Get_Bin_Window (Data.Tree);
       Get_Pointer (Window, X, Y, Mask, New_Window);
 
       Get_Path_At_Pos
         (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
+
+      --  ??? For now, we always reset Row_Found to false, since tooltips
+      --  in the explorer are too intrusive: they will appear on top of other
+      --  windows, and contextual menus.
+
+      Row_Found := False;
 
       if not Row_Found then
          return;
