@@ -1227,7 +1227,9 @@ package body Builder_Module is
 
       --  Remove all existing menus and dynamic accelerators
 
-      if Builder_Module.Build_Item /= null then
+      if Set_Shortcut
+        and then Builder_Module.Build_Item /= null
+      then
          Remove_Accelerator
            (Builder_Module.Build_Item,
             Get_Default_Accelerators (Kernel), GDK_F4, 0);
@@ -1248,16 +1250,14 @@ package body Builder_Module is
              Project => Project,
              File    => Mains (M).all));
 
-         if Set_Shortcut then
-            --  The first item in the make menu should have a key binding
-
-            if not Has_Child then
-               Add_Accelerator
-                 (Mitem, "activate", Get_Default_Accelerators (Kernel),
-                  GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
-               Builder_Module.Build_Item := Mitem;
-            end if;
-
+         --  The first item in the make menu should have a key binding
+         if Set_Shortcut
+           and then not Has_Child
+         then
+            Add_Accelerator
+              (Mitem, "activate", Get_Default_Accelerators (Kernel),
+               GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
+            Builder_Module.Build_Item := Mitem;
             Has_Child := True;
          end if;
 
