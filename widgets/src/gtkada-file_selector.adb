@@ -713,8 +713,15 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
 
+      H   : String_Access := Getenv ("HOME");
    begin
-      Change_Directory (Win, Win.Home_Directory.all);
+      if H.all /= "" then
+         Change_Directory (Win, Normalize_Pathname (H.all));
+      else
+         Change_Directory (Win, Win.Home_Directory.all);
+      end if;
+
+      Free (H);
 
    exception
       when E : others =>
