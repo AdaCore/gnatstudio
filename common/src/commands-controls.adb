@@ -181,7 +181,7 @@ package body Commands.Controls is
            (Redo_Menu_Item, "activate", On_Redo'Access, Command, True);
 
          Execute (Command);
-         Add_Queue_Change_Hook (Queue, Command_Access (Command));
+         Add_Queue_Change_Hook (Queue, Command_Access (Command), "Controls");
       end if;
    end Set_Controls;
 
