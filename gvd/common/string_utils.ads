@@ -23,57 +23,70 @@
 
 package Odd.Strings is
 
-   procedure Skip_Blanks (Type_Str : String;
-                          Index    : in out Natural;
-                          Step     : Integer := 1);
+   procedure Skip_Blanks
+     (Type_Str : String;
+      Index    : in out Natural;
+      Step     : Integer := 1);
    --  Skip all the blank characters starting from Index.
    --  Index is modified to point to the first non-blank character.
    --  Step should be either 1 or -1, depending on whether you want to search
    --  forward or backward.
 
-   procedure Skip_Hexa_Digit (Type_Str : String;
-                              Index    : in out Natural);
+   procedure Skip_To_Blank
+     (Type_Str : String;
+      Index    : in out Natural);
+   --  Skip to the next blank character
+
+   procedure Skip_Hexa_Digit
+     (Type_Str : String;
+      Index    : in out Natural);
    --  Move Index to the first character that can not be part of an hexadecimal
    --  digit. Note that an hexadecimal digit can optionally start with '0x',
    --  which is the only case where x is recognized as part of the digit.
 
-   procedure Skip_To_Char (Type_Str : String;
-                           Index    : in out Natural;
-                           Char     : Character;
-                           Step     : Integer := 1);
+   procedure Skip_To_Char
+     (Type_Str : String;
+      Index    : in out Natural;
+      Char     : Character;
+      Step     : Integer := 1);
    --  Skip every character up to the first occurence of Char in the string.
 
-   procedure Skip_To_String (Type_Str  : String;
-                             Index     : in out Natural;
-                             Substring : String);
+   procedure Skip_To_String
+     (Type_Str  : String;
+      Index     : in out Natural;
+      Substring : String);
    --  Skip every character until an occurence of Substring is found.
    --  Index is set to the first character of the occurence.
 
-   procedure Skip_Word (Type_Str : String;
-                        Index    : in out Natural;
-                        Step     : Integer := 1);
+   procedure Skip_Word
+     (Type_Str : String;
+      Index    : in out Natural;
+      Step     : Integer := 1);
    --  Skip the word starting at Index (at least one character, even if there
    --  is no word).
    --  Currently, a word is defined as any string made of alphanumeric
    --  character or underscore.
 
-   procedure Parse_Num (Type_Str : String;
-                        Index    : in out Natural;
-                        Result   : out Long_Integer);
+   procedure Parse_Num
+     (Type_Str : String;
+      Index    : in out Natural;
+      Result   : out Long_Integer);
    --  Parse the integer found at position Index in Type_Str.
    --  Index is set to the position of the first character that does not
    --  belong to the integer.
 
-   function Looking_At (Type_Str  : String;
-                        Index     : Natural;
-                        Substring : String)
-                       return Boolean;
+   function Looking_At
+     (Type_Str  : String;
+      Index     : Natural;
+      Substring : String)
+     return Boolean;
    --  Return True if the characters starting at Index in Type_Str are
    --  equivalent to Substring.
 
-   procedure Parse_Cst_String (Type_Str : String;
-                               Index    : in out Natural;
-                               Str      : out String);
+   procedure Parse_Cst_String
+     (Type_Str : String;
+      Index    : in out Natural;
+      Str      : out String);
    --  Parse the string pointed to by Index, and copy the result in Str.
    --  Index must point to the opening " character, and will be set to
    --  point after the closing " character.

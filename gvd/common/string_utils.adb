@@ -42,6 +42,25 @@ package body Odd.Strings is
       end loop;
    end Skip_Blanks;
 
+   -------------------
+   -- Skip_To_Blank --
+   -------------------
+
+   procedure Skip_To_Blank
+     (Type_Str : String;
+      Index    : in out Natural)
+   is
+   begin
+      while Index <= Type_Str'Last
+        and then Type_Str (Index) /= ' '
+        and then Type_Str (Index) /= ASCII.HT
+        and then Type_Str (Index) /= ASCII.LF
+        and then Type_Str (Index) /= ASCII.CR
+      loop
+         Index := Index + 1;
+      end loop;
+   end Skip_To_Blank;
+
    ---------------------
    -- Skip_Hexa_Digit --
    ---------------------
