@@ -1401,8 +1401,8 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Reset bottom lines
 
-      for J in Buffer_Lines'Last - Number
-        .. Buffer_Lines'Last
+      for J in Buffer_Line_Type'Max
+        (Start_Line + 1, Buffer_Lines'Last - Number) .. Buffer_Lines'Last
       loop
          if Buffer_Lines (J).Editable_Line /= 0
            and then Editable_Lines
