@@ -1059,7 +1059,7 @@ package body Src_Editor_Buffer.Line_Information is
       Line   : Editable_Line_Type;
       Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
-      Iter        : Gtk_Text_Iter;
+      Iter : Gtk_Text_Iter;
    begin
       Unfold_Line (Buffer, Line);
       Get_Iter_At_Screen_Position (Buffer, Iter, Line, Column);
