@@ -867,7 +867,7 @@ package body Project_Viewers is
             Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
             Attribute_Name     => "source_dirs",
             Values             => Dirs,
-            Attribute_Index    => No_String,
+            Attribute_Index    => "",
             Prepend            => True);
          Free (Dirs);
          Recompute_View (Get_Kernel (Context));
@@ -895,7 +895,7 @@ package body Project_Viewers is
             Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
             Attribute_Name     => "object_dir",
             Value              => Dir,
-            Attribute_Index    => No_String);
+            Attribute_Index    => "");
          Recompute_View (Get_Kernel (Context));
       end if;
    end Change_Obj_Directory_From_Contextual;
