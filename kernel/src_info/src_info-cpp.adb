@@ -830,21 +830,17 @@ package body Src_Info.CPP is
             I    : Imported_Project_Iterator := Start
               (Get_Project_From_View (Iterator.Root_Project),
                Recursive => True);
-            P    : Prj.Project_Id := Current (I);
-
          begin
-            while P /= Prj.No_Project loop
+            while Current (I) /= Prj.No_Project loop
                declare
-                  DB_Dir : constant String := Get_DB_Dir (P);
+                  DB_Dir : constant String := Get_DB_Dir (Current (I));
                   Pool   : constant Xref_Pool := Get_Xref_Pool
-                    (Iterator.Handler.Prj_HTable,
-                     DB_Dir);
+                    (Iterator.Handler.Prj_HTable, DB_Dir);
                begin
                   if Pool /= Empty_Xref_Pool then
                      Save (Pool, DB_Dir & Browse.Xref_Pool_Filename);
                   end if;
                   Next (I);
-                  P := Current (I);
                end;
             end loop;
          end;
@@ -1125,24 +1121,17 @@ package body Src_Info.CPP is
          Init (Handler.Prj_HTable);
          --  Load xref pools
          declare
-            Iterator : Imported_Project_Iterator :=
-              Start
-                (Get_Project_From_View (Project),
-                 Recursive => True);
-            P        : Prj.Project_Id := Current (Iterator);
+            Iterator : Imported_Project_Iterator := Start
+              (Get_Project_From_View (Project), Recursive => True);
             Pool     : Xref_Pool;
          begin
-            while P /= Prj.No_Project loop
+            while Current (Iterator) /= Prj.No_Project loop
                declare
-                  DB_Dir : constant String :=
-                     Get_DB_Dir (P);
+                  DB_Dir : constant String := Get_DB_Dir (Current (Iterator));
                begin
                   Load (Pool, DB_Dir & Browse.Xref_Pool_Filename);
-                  Set_Xref_Pool
-                    (Handler.Prj_HTable,
-                     DB_Dir, Pool);
+                  Set_Xref_Pool (Handler.Prj_HTable, DB_Dir, Pool);
                   Next (Iterator);
-                  P := Current (Iterator);
                end;
             end loop;
          end;
