@@ -372,6 +372,9 @@ package body Debugger is
 
    function Output_Available (Process : Debugger_Process_Tab) return Boolean is
       Debugger : constant Debugger_Access := Process.Debugger;
+      Mode     : constant Command_Type :=
+        Get_Command_Mode (Get_Process (Debugger));
+
    begin
       --  Get everything that is available (and transparently call the
       --  output filters set for Pid).
@@ -387,7 +390,7 @@ package body Debugger is
 
          --  Put back the standard cursor
 
-         if Get_Command_Mode (Get_Process (Debugger)) >= Visible then
+         if Mode >= Visible then
             Set_Busy (Process, False);
          end if;
 
@@ -413,7 +416,7 @@ package body Debugger is
             end if;
 
             Set_Command_In_Process (Get_Process (Debugger));
-            Final_Post_Process (Process);
+            Final_Post_Process (Process, Mode);
 
             if Is_Load_Command (Debugger, Current_Command) then
                Pos := Current_Command'First;
