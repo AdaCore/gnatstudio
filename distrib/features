@@ -24,3 +24,9 @@ New features in GPS 1.4.0
 - Ability to search in the files currently open in the editor
 
 - Navigation to the next/previous subprogram.
+
+- Navigation to start/end of current statement.
+
+- Add new casing mode "Smart Mixed". This mode does not force upper-case
+  letters to lower-case, in all other cases it is equivalent to the mixed
+  casing mode.
