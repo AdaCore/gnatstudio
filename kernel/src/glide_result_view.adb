@@ -226,7 +226,6 @@ package body Glide_Result_View is
    is
       File_Iter : Gtk_Tree_Iter;
       File_Path : Gtk_Tree_Path;
-      Line_Iter : Gtk_Tree_Iter;
       Category  : GNAT.OS_Lib.String_Access;
    begin
       --  Unhighight all the lines and remove all marks in children of the
@@ -258,42 +257,11 @@ package body Glide_Result_View is
       Path_Free (File_Path);
 
       while File_Iter /= Null_Iter loop
-         Line_Iter := Children (View.Tree.Model, File_Iter);
-
-         while Line_Iter /= Null_Iter loop
-            declare
-               Mark : constant String :=
-                 Get_String (View.Tree.Model, Line_Iter, Mark_Column);
-            begin
-               --  ??? Should remove the mark here !
-
-               if Get_Boolean
-                 (View.Tree.Model, Line_Iter, Highlight_Column)
-               then
-                  declare
-                     Line_Str : constant String :=
-                       Interpret_Command (View.Kernel, "get_line " & Mark);
-                     Line     : Natural;
-                  begin
-                     Line := Natural'Value (Line_Str);
-
-                     Highlight_Line
-                       (View.Kernel,
-                        Get_String
-                          (View.Tree.Model, Line_Iter, Absolute_Name_Column),
-                        Line, Category.all, False);
-                  exception
-                     when others =>
-                        Trace
-                          (Me,
-                             -"Could not get the line corresponding to mark "
-                           & Mark & ".");
-                  end;
-               end if;
-            end;
-
-            Next (View.Tree.Model, Line_Iter);
-         end loop;
+         Highlight_Line
+           (View.Kernel,
+            Get_String
+              (View.Tree.Model, File_Iter, Absolute_Name_Column),
+            0, Category.all, False);
 
          Next (View.Tree.Model, File_Iter);
       end loop;
