@@ -1770,12 +1770,6 @@ _.ada
 		<last_modification_time>Thu, 17 May 2001 04:05:45 GMT</last_modification_time>
 	      </signal>
 	      <signal>
-		<name>insert_text</name>
-		<handler>on_unit_name_entry_insert_text</handler>
-		<object>Naming_Scheme_Editor</object>
-		<last_modification_time>Thu, 17 May 2001 04:28:09 GMT</last_modification_time>
-	      </signal>
-	      <signal>
 		<name>key_press_event</name>
 		<handler>on_unit_name_entry_key_press_event</handler>
 		<object>Naming_scheme_Editor</object>
@@ -1803,12 +1797,6 @@ _.ada
 		<last_modification_time>Thu, 17 May 2001 04:05:26 GMT</last_modification_time>
 	      </signal>
 	      <signal>
-		<name>insert_text</name>
-		<handler>on_spec_filename_entry_insert_text</handler>
-		<object>Naming_Scheme_Editor</object>
-		<last_modification_time>Thu, 17 May 2001 04:28:26 GMT</last_modification_time>
-	      </signal>
-	      <signal>
 		<name>key_press_event</name>
 		<handler>on_spec_filename_entry_key_press_event</handler>
 		<object>Naming_Scheme_Editor</object>
@@ -1834,12 +1822,6 @@ _.ada
 		<handler>on_update_clicked</handler>
 		<object>Naming_Scheme_Editor</object>
 		<last_modification_time>Thu, 17 May 2001 04:05:03 GMT</last_modification_time>
-	      </signal>
-	      <signal>
-		<name>insert_text</name>
-		<handler>on_body_filename_entry_insert_text</handler>
-		<object>Naming_Scheme_Editor</object>
-		<last_modification_time>Thu, 17 May 2001 04:28:46 GMT</last_modification_time>
 	      </signal>
 	      <signal>
 		<name>key_press_event</name>

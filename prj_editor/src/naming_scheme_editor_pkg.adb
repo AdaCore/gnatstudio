@@ -30,7 +30,7 @@ begin
    Set_Modal (Naming_Scheme_Editor, False);
 
    Gtk_New
-     (Naming_Scheme_Editor.Alignment1, 0.5, 0.5, 1.0, 
+     (Naming_Scheme_Editor.Alignment1, 0.5, 0.5, 1.0,
       1.0);
    Add (Naming_Scheme_Editor, Naming_Scheme_Editor.Alignment1);
 
@@ -275,8 +275,6 @@ begin
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Unit_Name_Entry, "activate",
       Widget_Callback.To_Marshaller (On_Update_Clicked'Access), Naming_Scheme_Editor);
-   Widget_Callback.Object_Connect
-     (Naming_Scheme_Editor.Unit_Name_Entry, "insert_text", On_Unit_Name_Entry_Insert_Text'Access, Naming_Scheme_Editor);
    Return_Callback.Object_Connect
      (Naming_Scheme_Editor.Unit_Name_Entry, "key_press_event", On_Unit_Name_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
@@ -289,8 +287,6 @@ begin
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Spec_Filename_Entry, "activate",
       Widget_Callback.To_Marshaller (On_Update_Clicked'Access), Naming_Scheme_Editor);
-   Widget_Callback.Object_Connect
-     (Naming_Scheme_Editor.Spec_Filename_Entry, "insert_text", On_Spec_Filename_Entry_Insert_Text'Access, Naming_Scheme_Editor);
    Return_Callback.Object_Connect
      (Naming_Scheme_Editor.Spec_Filename_Entry, "key_press_event", On_Spec_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
@@ -303,8 +299,6 @@ begin
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Body_Filename_Entry, "activate",
       Widget_Callback.To_Marshaller (On_Update_Clicked'Access), Naming_Scheme_Editor);
-   Widget_Callback.Object_Connect
-     (Naming_Scheme_Editor.Body_Filename_Entry, "insert_text", On_Body_Filename_Entry_Insert_Text'Access, Naming_Scheme_Editor);
    Return_Callback.Object_Connect
      (Naming_Scheme_Editor.Body_Filename_Entry, "key_press_event", On_Body_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
