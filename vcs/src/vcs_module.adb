@@ -136,6 +136,7 @@ package body VCS_Module is
       Project            : Project_Type;
       Kernel             : access Kernel_Handle_Record'Class;
       Widget             : access Gtk_Widget_Record'Class;
+      Languages          : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project        : Project_Type)
       return Boolean;
@@ -424,11 +425,12 @@ package body VCS_Module is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean
    is
-      pragma Unreferenced (Page, Kernel, Ref_Project);
+      pragma Unreferenced (Page, Kernel, Ref_Project, Languages);
       Selector : constant VCS_Selector := VCS_Selector (Widget);
       Changed  : Boolean := False;
       VCS_Kind : constant String := To_Lower (Get_Attribute_Value
