@@ -78,7 +78,6 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Traces;                    use Traces;
 
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Tags;                  use Ada.Tags;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -146,6 +145,12 @@ package body Glide_Kernel is
      (Event : Gdk_Event; Kernel : System.Address);
    --  Event handler called before even gtk can do its dispatching. This
    --  intercepts all events going through the application
+
+   type GPS_MDI_Child_Record is new MDI_Child_Record with record
+      Module              : Module_ID;
+      Desktop_Independent : Boolean;
+   end record;
+   type GPS_MDI_Child is access all GPS_MDI_Child_Record'Class;
 
    --------------------------
    -- Get_Language_Handler --
@@ -293,7 +298,7 @@ package body Glide_Kernel is
    is
       Module : Module_ID;
    begin
-      Module := Get_Module_From_Child (Handle, Child);
+      Module := Get_Module_From_Child (Child);
 
       if Module /= null
         and then Module.Info.Save_Function /= null
@@ -333,26 +338,13 @@ package body Glide_Kernel is
    ---------------------------
 
    function Get_Module_From_Child
-     (Handle : access Kernel_Handle_Record;
-      Child  : Gtkada.MDI.MDI_Child) return Module_ID
-   is
-      use type Module_List.List_Node;
-      Module : Module_List.List_Node;
-
+     (Child  : Gtkada.MDI.MDI_Child) return Module_ID is
    begin
-      Module := Module_List.First (Handle.Modules_List);
-
-      while Module /= Module_List.Null_Node loop
-         if Module_List.Data (Module).Info.Child_Tag =
-           Get_Widget (Child)'Tag
-         then
-            return Module_List.Data (Module);
-         end if;
-
-         Module := Module_List.Next (Module);
-      end loop;
-
-      return null;
+      if Child.all in GPS_MDI_Child_Record'Class then
+         return GPS_MDI_Child (Child).Module;
+      else
+         return null;
+      end if;
    end Get_Module_From_Child;
 
    ---------------------------
@@ -411,7 +403,12 @@ package body Glide_Kernel is
       while Get (Iter) /= null loop
          Child := Get (Iter);
          Next (Iter);
-         Close_Child (Child);
+
+         if Child.all not in GPS_MDI_Child_Record'Class
+           or else not GPS_MDI_Child (Child).Desktop_Independent
+         then
+            Close_Child (Child);
+         end if;
       end loop;
    end Close_All_Children;
 
@@ -725,10 +722,6 @@ package body Glide_Kernel is
    function Get_Current_Module
      (Kernel : access Kernel_Handle_Record) return Module_ID
    is
-      use type Module_List.List_Node;
-
-      Module : Module_List.List_Node :=
-        Module_List.First (Kernel.Modules_List);
       C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
 
    begin
@@ -736,18 +729,7 @@ package body Glide_Kernel is
          return null;
       end if;
 
-      while Module /= Module_List.Null_Node loop
-         if Module_List.Data (Module).Info.Child_Tag = Get_Widget (C)'Tag then
-            return Module_List.Data (Module);
-         end if;
-
-         Module := Module_List.Next (Module);
-      end loop;
-
-      Trace (Me, "Get_Current_Module: No module associated with tag "
-             & External_Tag (Get_Widget (C)'Tag));
-
-      return null;
+      return Get_Module_From_Child (C);
    end Get_Current_Module;
 
    -------------------------
@@ -1868,5 +1850,28 @@ package body Glide_Kernel is
    begin
       return Data.Kernel;
    end Get_Kernel;
+
+   ---------
+   -- Put --
+   ---------
+
+   function Put
+     (Handle : access Kernel_Handle_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags : Child_Flags := All_Buttons;
+      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+      Default_Width, Default_Height : Gint := -1;
+      Module : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False) return MDI_Child
+   is
+      C : GPS_MDI_Child := new GPS_MDI_Child_Record;
+   begin
+      Initialize (C, Child, Flags);
+      C.Module := Module_ID (Module);
+      C.Desktop_Independent := Desktop_Independent;
+      return Put
+        (Get_MDI (Handle),
+         C, Flags, Focus_Widget, Default_Width, Default_Height);
+   end Put;
 
 end Glide_Kernel;
