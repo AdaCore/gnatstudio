@@ -398,6 +398,16 @@ procedure GPS is
            (GPS.Kernel, File & (-"New View")), False);
       end;
 
+      --  Print a welcome message in the console, but before parsing the error
+      --  messages, so that these are visible
+
+      Console.Insert
+        (GPS.Kernel,
+         -"Welcome to GPS " & GVD.Version & " (" & GVD.Source_Date &
+         (-") hosted on ") & GVD.Target & ASCII.LF &
+         (-"the GNAT Programming System") & ASCII.LF &
+         "(c) 2001-2002 ACT-Europe");
+
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.
 
@@ -469,13 +479,6 @@ procedure GPS is
               (GPS.Prefix_Directory.all &
                "/doc/gps/html/gps-welcome.html"));
          Maximize_Children (Get_MDI (GPS.Kernel));
-
-         Console.Insert
-           (GPS.Kernel,
-            -"Welcome to GPS " & GVD.Version & " (" & GVD.Source_Date &
-            (-") hosted on ") & GVD.Target & ASCII.LF &
-            (-"the GNAT Programming System") & ASCII.LF &
-            "(c) 2001-2002 ACT-Europe");
       end if;
 
       if Splash /= null then
