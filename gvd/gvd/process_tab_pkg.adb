@@ -151,7 +151,7 @@ begin
    end if;
 
    Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
-   Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
+--   Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
    Add (Process_Tab.Data_Scrolledwindow, Process_Tab.Data_Canvas);
 
 
