@@ -44,6 +44,7 @@ with Memory_View_Pkg;  use Memory_View_Pkg;
 
 with Odd_Intl;         use Odd_Intl;
 with String_Utils;     use String_Utils;
+with GUI_Utils;        use GUI_Utils;
 with GVD.Process;      use GVD.Process;
 with GVD.Preferences;  use GVD.Preferences;
 
@@ -588,6 +589,8 @@ package body GVD.Memory_View is
       Values : String (1 .. 2 * View.Number_Of_Bytes);
 
    begin
+      Set_Busy (Process, True);
+      Set_Busy_Cursor (Get_Window (View), True);
       Values := Get_Memory
         (Process.Debugger,
          View.Number_Of_Bytes,
@@ -601,6 +604,8 @@ package body GVD.Memory_View is
       Update_Display (View);
       Set_Text (View.Address_Entry,
                 "0x" & To_Standard_Base (Address, 16, Address_Length));
+      Set_Busy (Process, False);
+      Set_Busy_Cursor (Get_Window (View), False);
    end Display_Memory;
 
    --------------------
