@@ -121,6 +121,10 @@ package body Shell_Script is
       Free_Pointer : out Boolean);
    --  See doc from inherited subprogram
 
+   procedure Internal_Free
+     (Instance : in out Shell_Class_Instance_Record'Class);
+   --  Free the contents of Instance, but not Instance itself
+
    procedure Free_Instance (Instance : in out Shell_Class_Instance);
    package Instances_List is new Generic_List
      (Shell_Class_Instance, Free_Instance);
@@ -1848,11 +1852,9 @@ package body Shell_Script is
 
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class)
-   is
-      Free_Pointer : Boolean;
+      Value    : access Glib.Object.GObject_Record'Class) is
    begin
-      Primitive_Free (Instance.all, Free_Pointer);
+      Internal_Free (Instance.all);
       Instance.Data := (Data => Object, Obj => GObject (Value));
       Ref (Value);
    end Set_Data;
@@ -1863,11 +1865,9 @@ package body Shell_Script is
 
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
-      Value    : Integer)
-   is
-      Free_Pointer : Boolean;
+      Value    : Integer) is
    begin
-      Primitive_Free (Instance.all, Free_Pointer);
+      Internal_Free (Instance.all);
       Instance.Data := (Data => Integers, Int => Value);
    end Set_Data;
 
@@ -1878,11 +1878,9 @@ package body Shell_Script is
    procedure Set_Data
      (Instance   : access Shell_Class_Instance_Record;
       Value      : System.Address;
-      On_Destroy : Destroy_Handler := null)
-   is
-      Free_Pointer : Boolean;
+      On_Destroy : Destroy_Handler := null) is
    begin
-      Primitive_Free (Instance.all, Free_Pointer);
+      Internal_Free (Instance.all);
       Instance.Data := (Data       => Addresses,
                         Addr       => Value,
                         On_Destroy => On_Destroy);
@@ -1893,21 +1891,18 @@ package body Shell_Script is
    --------------
 
    procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record; Value : String)
-   is
-      Free_Pointer : Boolean;
+     (Instance : access Shell_Class_Instance_Record; Value : String) is
    begin
-      Primitive_Free (Instance.all, Free_Pointer);
+      Internal_Free (Instance.all);
       Instance.Data := (Data => Strings, Str => new String'(Value));
    end Set_Data;
 
-   --------------------
-   -- Primitive_Free --
-   --------------------
+   -------------------
+   -- Internal_Free --
+   -------------------
 
-   procedure Primitive_Free
-     (Instance     : in out Shell_Class_Instance_Record;
-      Free_Pointer : out Boolean) is
+   procedure Internal_Free
+     (Instance : in out Shell_Class_Instance_Record'Class) is
    begin
       case Instance.Data.Data is
          when Object =>
@@ -1929,7 +1924,18 @@ package body Shell_Script is
             end if;
             Instance.Data.Addr := System.Null_Address;
       end case;
+   end Internal_Free;
 
+   --------------------
+   -- Primitive_Free --
+   --------------------
+
+   procedure Primitive_Free
+     (Instance     : in out Shell_Class_Instance_Record;
+      Free_Pointer : out Boolean)
+   is
+      pragma Unreferenced (Instance);
+   begin
       --  Do not free the pointer, since the instance is kept in a list
       --  anyway.
       Free_Pointer := False;
