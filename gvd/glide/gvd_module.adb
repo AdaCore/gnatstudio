@@ -664,7 +664,7 @@ package body GVD_Module is
            Editor);
 
       Set_Mode (Editor, Source_Asm);
-      Child := Put (Top.Process_Mdi, Assembly);
+      Child := Put (Kernel, Assembly, Module => GVD_Module_ID);
       Set_Focus_Child (Child);
       Set_Dock_Side (Child, Right);
       Dock_Child (Child);
