@@ -196,6 +196,7 @@ package body Python.GUI is
       Stdout : aliased PyObject;
       Interpreter : Python_Interpreter;
       Data : PyObject;
+      Old : String_Access;
    begin
       if not PyArg_ParseTuple
         (Args, "Os#", Stdout'Address, S'Address, N'Address)
@@ -205,6 +206,12 @@ package body Python.GUI is
 
       Data := PyObject_GetAttrString (Stdout, "gpsdata");
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+
+      if Interpreter.Save_Output then
+         Old := Interpreter.Current_Output;
+         Interpreter.Current_Output := new String'(Old.all & Value (S));
+         Free (Old);
+      end if;
 
       Insert_Text (Interpreter, Value (S));
       Process_Gtk_Events (Interpreter);
@@ -491,6 +498,29 @@ package body Python.GUI is
 
       return null;
    end Run_Command_Get_Result;
+
+   -----------------
+   -- Run_Command --
+   -----------------
+
+   function Run_Command
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Command     : String;
+      Hide_Output : Boolean := False) return String is
+   begin
+      Interpreter.Save_Output := True;
+      Interpreter.Current_Output := new String'("");
+
+      Run_Command (Interpreter, Command, Hide_Output);
+
+      declare
+         Output : constant String := Interpreter.Current_Output.all;
+      begin
+         Free (Interpreter.Current_Output);
+         Interpreter.Save_Output := False;
+         return Output;
+      end;
+   end Run_Command;
 
    -----------------
    -- Run_Command --

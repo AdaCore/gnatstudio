@@ -70,6 +70,12 @@ package Python.GUI is
    --  command is incomplete and would require extra input (a secondary prompt
    --  in interactive mode), then it is not executed.
 
+   function Run_Command
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Command     : String;
+      Hide_Output : Boolean := False) return String;
+   --  Same as above, but also return the output of the command
+
    procedure Insert_Text
      (Interpreter : access Python_Interpreter_Record'Class;
       Text        : String);
@@ -92,6 +98,11 @@ private
       Buffer : GNAT.OS_Lib.String_Access;
       --  Buffer for the command, to be added in front of any command before
       --  executing.
+
+      Current_Output : GNAT.OS_Lib.String_Access;
+      Save_Output    : Boolean;
+      --  The output of the current command, and whether we should save it,
+      --  or discard it as soon as it has been printed in the console.
 
       History : Histories.History;
       History_Position : Integer := -1;
