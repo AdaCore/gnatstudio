@@ -83,6 +83,11 @@ package VCS_View_API is
       Kernel  : Kernel_Handle);
    --  Remove annotations for the selected files.
 
+   procedure Edit_ChangeLog
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+   --  Launch a ChangeLog editor for the selected files.
+
    procedure Edit_Log
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
