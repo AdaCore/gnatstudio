@@ -20,7 +20,7 @@ VSEARCH_SRC_DIRS = $(VSEARCH_BASE_DIR)/src $(VSEARCH_BASE_DIR)/tests
 SRC_DIRS += $(VSEARCH_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(VSEARCH_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-VSEARCH_C_SRCS := \
+VSEARCH_SRCS := \
   $(foreach name,$(VSEARCH_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 VSEARCH_OBJ_DIR = $(VSEARCH_BASE_DIR)/obj
 OBJ_DIR = $(VSEARCH_OBJ_DIR)
@@ -29,7 +29,7 @@ CFLAGS = -g -O2
 
 PROJECT_FILE = vsearch
 
-ifneq ($(strip $(VSEARCH_C_SRCS)),)
+ifneq ($(strip $(VSEARCH_SRCS)),)
    LIBS := $(VSEARCH_OBJ_DIR)/libvsearch$(AR_EXT) $(LIBS)
 endif
 

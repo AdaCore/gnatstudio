@@ -22,7 +22,7 @@ KERNEL_SRC_DIRS = $(KERNEL_BASE_DIR)/src $(KERNEL_BASE_DIR)/src_info
 SRC_DIRS += $(KERNEL_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(KERNEL_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-KERNEL_C_SRCS := \
+KERNEL_SRCS := \
   $(foreach name,$(KERNEL_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 KERNEL_OBJ_DIR = $(KERNEL_BASE_DIR)/obj
 OBJ_DIR = $(KERNEL_OBJ_DIR)
@@ -31,7 +31,7 @@ CFLAGS = -g -O2
 
 PROJECT_FILE = kernel
 
-ifneq ($(strip $(KERNEL_C_SRCS)),)
+ifneq ($(strip $(KERNEL_SRCS)),)
    LIBS := $(KERNEL_OBJ_DIR)/libkernel$(AR_EXT) $(LIBS)
 endif
 

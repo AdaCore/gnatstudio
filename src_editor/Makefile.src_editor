@@ -22,7 +22,7 @@ SRC_EDITOR_SRC_DIRS = $(SRC_EDITOR_BASE_DIR)/src
 SRC_DIRS += $(SRC_EDITOR_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(SRC_EDITOR_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-SRC_EDITOR_C_SRCS := \
+SRC_EDITOR_SRCS := \
   $(foreach name,$(SRC_EDITOR_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 SRC_EDITOR_OBJ_DIR = $(SRC_EDITOR_BASE_DIR)/obj
 OBJ_DIR = $(SRC_EDITOR_OBJ_DIR)
@@ -32,7 +32,7 @@ ADA_SOURCES = src.adb
 
 PROJECT_FILE = src_editor
 
-ifneq ($(strip $(SRC_EDITOR_C_SRCS)),)
+ifneq ($(strip $(SRC_EDITOR_SRCS)),)
    LIBS := $(SRC_EDITOR_OBJ_DIR)/libsrc_editor$(AR_EXT) $(LIBS)
 endif
 

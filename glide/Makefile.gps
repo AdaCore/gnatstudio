@@ -41,7 +41,7 @@ GLIDE_SRC_DIRS = $(GLIDE_BASE_DIR)/src $(GLIDE_BASE_DIR)/pixmaps
 SRC_DIRS += $(GLIDE_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-GLIDE_C_SRCS := \
+GLIDE_SRCS := \
   $(foreach name,$(GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 GLIDE_OBJ_DIR = $(GLIDE_BASE_DIR)/obj
 OBJ_DIR = $(GLIDE_OBJ_DIR)
@@ -52,7 +52,7 @@ EXEC = gps
 
 PROJECT_FILE = gps
 
-ifneq ($(strip $(GLIDE_C_SRCS)),)
+ifneq ($(strip $(GLIDE_SRCS)),)
    LIBS := $(GLIDE_OBJ_DIR)/libgps$(AR_EXT) $(LIBS)
 endif
 

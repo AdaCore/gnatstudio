@@ -22,7 +22,7 @@ AUNIT_SRC_DIRS = $(AUNIT_BASE_DIR)/src
 SRC_DIRS += $(AUNIT_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(AUNIT_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-AUNIT_C_SRCS := \
+AUNIT_SRCS := \
   $(foreach name,$(AUNIT_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 AUNIT_OBJ_DIR = $(AUNIT_BASE_DIR)/obj
 OBJ_DIR = $(AUNIT_OBJ_DIR)
@@ -32,7 +32,7 @@ ADA_SOURCES = aunit_gui.adb
 
 PROJECT_FILE = aunit
 
-ifneq ($(strip $(AUNIT_C_SRCS)),)
+ifneq ($(strip $(AUNIT_SRCS)),)
    LIBS := $(AUNIT_OBJ_DIR)/libaunit$(AR_EXT) $(LIBS)
 endif
 

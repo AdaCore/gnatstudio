@@ -16,7 +16,7 @@ COMMON_SRC_DIRS = $(COMMON_BASE_DIR)/src
 SRC_DIRS += $(COMMON_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(COMMON_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-COMMON_C_SRCS := \
+COMMON_SRCS := \
   $(foreach name,$(COMMON_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 COMMON_OBJ_DIR = $(COMMON_BASE_DIR)/obj
 OBJ_DIR = $(COMMON_OBJ_DIR)
@@ -25,7 +25,7 @@ CFLAGS = -g -O2
 
 PROJECT_FILE = common
 
-ifneq ($(strip $(COMMON_C_SRCS)),)
+ifneq ($(strip $(COMMON_SRCS)),)
    LIBS := $(COMMON_OBJ_DIR)/libcommon$(AR_EXT) $(LIBS)
 endif
 

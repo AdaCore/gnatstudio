@@ -15,7 +15,7 @@ METRICS_SRC_DIRS = $(METRICS_BASE_DIR)/src
 SRC_DIRS += $(METRICS_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(METRICS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-METRICS_C_SRCS := \
+METRICS_SRCS := \
   $(foreach name,$(METRICS_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 METRICS_OBJ_DIR = $(METRICS_BASE_DIR)/obj
 OBJ_DIR = $(METRICS_OBJ_DIR)
@@ -24,7 +24,7 @@ CFLAGS = -g -O2
 
 PROJECT_FILE = metrics
 
-ifneq ($(strip $(METRICS_C_SRCS)),)
+ifneq ($(strip $(METRICS_SRCS)),)
    LIBS := $(METRICS_OBJ_DIR)/libmetrics$(AR_EXT) $(LIBS)
 endif
 

@@ -18,7 +18,7 @@ GVD_GLIDE_SRC_DIRS = $(GVD_GLIDE_BASE_DIR)/glide
 SRC_DIRS += $(GVD_GLIDE_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(GVD_GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-GVD_GLIDE_C_SRCS := \
+GVD_GLIDE_SRCS := \
   $(foreach name,$(GVD_GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
 GVD_GLIDE_OBJ_DIR = $(GVD_GLIDE_BASE_DIR)/obj
 OBJ_DIR = $(GVD_GLIDE_OBJ_DIR)
@@ -27,7 +27,7 @@ CFLAGS = -g -O2
 
 PROJECT_FILE = gvd_glide
 
-ifneq ($(strip $(GVD_GLIDE_C_SRCS)),)
+ifneq ($(strip $(GVD_GLIDE_SRCS)),)
    LIBS := $(GVD_GLIDE_OBJ_DIR)/libgvd_glide$(AR_EXT) $(LIBS)
 endif
 
