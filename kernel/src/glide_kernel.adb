@@ -445,7 +445,9 @@ package body Glide_Kernel is
       if Force then
          if Children /= No_Children then
             for C in Children'Range loop
-               Save_Child (Children (C));
+               if Children (C) /= null then
+                  Save_Child (Children (C));
+               end if;
             end loop;
          else
             Iter := First_Child (MDI);
