@@ -1232,6 +1232,8 @@ package body Gtkada.MDI is
       if not Result then
          if C.State = Docked then
             Dock_Child (C, False);
+         elsif C.State = Normal and then C.MDI.Docks (None) /= null then
+            Remove_From_Notebook (C, None);
          end if;
 
          Destroy (C);
