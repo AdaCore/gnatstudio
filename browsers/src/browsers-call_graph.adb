@@ -424,12 +424,12 @@ package body Browsers.Call_Graph is
            (Item.Refs,
             "(Decl) @" & Base_Name (Get_Declaration_File_Of (Item.Entity))
             & ':' & Image (Get_Declaration_Line_Of (Item.Entity)) & '@',
-            Length1 => 0,
-            Callback => Build (Get_Kernel (Get_Browser (Item)),
-                               Item,
-                               Get_Declaration_File_Of (Item.Entity),
-                               Get_Declaration_Line_Of (Item.Entity),
-                               Get_Declaration_Column_Of (Item.Entity)));
+            Callback =>
+              (1 => Build (Get_Kernel (Get_Browser (Item)),
+                           Item,
+                           Get_Declaration_File_Of (Item.Entity),
+                           Get_Declaration_Line_Of (Item.Entity),
+                           Get_Declaration_Column_Of (Item.Entity))));
       else
          Add_Line (Item.Refs, "<Unresolved>");
       end if;
@@ -463,7 +463,7 @@ package body Browsers.Call_Graph is
             Removed := False;
             Line := 1;
             loop
-               Get_Line (Entity_Item (It).Refs, Line, Callback, Text);
+               Get_Line (Entity_Item (It).Refs, Line, 1, Callback, Text);
                exit when Text = null;
 
                if Callback /= null then
@@ -928,6 +928,9 @@ package body Browsers.Call_Graph is
       Child : Entity_Item;
       Link  : Browser_Link;
       Loc   : File_Location;
+      Line  : Natural;
+      Text  : String_Access;
+      New_Cb, Callback : Active_Area_Cb;
    begin
       Child := Add_Entity_If_Not_Present (Cb.Browser, Entity);
 
@@ -959,30 +962,71 @@ package body Browsers.Call_Graph is
 
       Loc := Get_Location (Ref);
 
+      --  Always skip the first line, which is the declaration location
+      Line := 2;
+
       if Cb.Link_From_Item then
+         New_Cb := Build
+           (Get_Kernel (Get_Browser (Child)),
+            Cb.Item, Get_File (Loc), Get_Line (Loc), Get_Column (Loc));
+
+         loop
+            Get_Line (Child.Refs, Line, 1, Callback, Text);
+            exit when Text = null;
+
+            if Show_Location_Callback_Access (Callback).Parent = Cb.Item then
+               Expand_Line
+                 (Child.Refs, Line,
+                  " @" & Image (Get_Line (Loc))
+                    & ':' & Image (Get_Column (Loc)) & '@',
+                  (1 => New_Cb));
+               return;
+            end if;
+
+            Line := Line + 1;
+         end loop;
+
          Add_Line
            (Child.Refs,
-            "@("
-            & Get_Name (Cb.Item.Entity) & ") "
+            Get_Full_Name (Cb.Item.Entity,
+                           Locate_From_Source_And_Complete
+                             (Get_Kernel (Get_Browser (Child)),
+                              Get_Declaration_File_Of (Cb.Item.Entity)))
+            & ": @"
             & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
-            Length1 => 0,
-            Callback => Build (Get_Kernel (Get_Browser (Child)),
-                               Cb.Item,
-                               Get_File (Loc),
-                               Get_Line (Loc),
-                               Get_Column (Loc)));
+            Callback => (1 => New_Cb));
+
       else
+         New_Cb := Build
+           (Get_Kernel (Get_Browser (Child)),
+            Child, Get_File (Loc), Get_Line (Loc), Get_Column (Loc));
+
+         loop
+            Get_Line (Cb.Item.Refs, Line, 1, Callback, Text);
+            exit when Text = null;
+
+            if Show_Location_Callback_Access (Callback).Parent = Cb.Item then
+               Expand_Line
+                 (Cb.Item.Refs, Line,
+                  " @" & Image (Get_Line (Loc))
+                    & ':' & Image (Get_Column (Loc)) & '@',
+                  (1 => New_Cb));
+               return;
+            end if;
+
+            Line := Line + 1;
+         end loop;
+
          Add_Line
            (Cb.Item.Refs,
-            "@("
-            & Get_Name (Child.Entity) & ") "
+            Get_Full_Name (Child.Entity,
+                           Locate_From_Source_And_Complete
+                             (Get_Kernel (Get_Browser (Child)),
+                              Get_Declaration_File_Of (Child.Entity)))
+--              Get_Name (Child.Entity)
+            & ": @"
             & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
-            Length1 => 0,
-            Callback => Build (Get_Kernel (Get_Browser (Child)),
-                               Child,
-                               Get_File (Loc),
-                               Get_Line (Loc),
-                               Get_Column (Loc)));
+            Callback => (1 => New_Cb));
       end if;
    end Add_Entity_And_Link;
 
