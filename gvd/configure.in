@@ -15,7 +15,7 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 COLOR_SELECTION="#000000"
 EXEC_COMMAND="sh -c"
-NATIVE_PS="stub"
+BUILTIN_PS="stub"
 LN="ln -f -s"
 
 AC_CANONICAL_SYSTEM
@@ -156,7 +156,7 @@ case "${host}" in
 	TARGET=pentium-mingw32msv
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c"
-	NATIVE_PS="winnt"
+	BUILTIN_PS="winnt"
 	LN="cp -p"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
@@ -189,7 +189,7 @@ AC_SUBST(TARGET_CFLAGS)
 AC_SUBST(TARGET_LFLAGS)
 AC_SUBST(TARGET)
 AC_SUBST(EXEC_COMMAND)
-AC_SUBST(NATIVE_PS)
+AC_SUBST(BUILTIN_PS)
 AC_SUBST(LN)
 
 EXEC_PREFIX="$prefix"
