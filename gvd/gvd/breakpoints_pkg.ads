@@ -39,9 +39,19 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with GVD.Process;
+with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 package Breakpoints_Pkg is
 
    type Breakpoints_Record is new Gtk_Window_Record with record
+      -----------------------
+      -- Additional fields --
+      -----------------------
+
+      Advanced_Breakpoints_Location    : Advanced_Breakpoint_Access;
+      Advanced_Breakpoints_Watchpoints : Advanced_Breakpoint_Access;
+      Advanced_Breakpoints_Exceptions  : Advanced_Breakpoint_Access;
+
+      Main_Box : Gtk_Hbox;
       Vbox1 : Gtk_Vbox;
       Notebook1 : Gtk_Notebook;
       Hbox2 : Gtk_Hbox;
@@ -72,6 +82,7 @@ package Breakpoints_Pkg is
       Vseparator1 : Gtk_Vseparator;
       Vbuttonbox2 : Gtk_Vbutton_Box;
       Add_Location : Gtk_Button;
+      Update_Location : Gtk_Button;
       Advanced_Location : Gtk_Button;
       Location : Gtk_Label;
       Hbox3 : Gtk_Hbox;
@@ -84,6 +95,7 @@ package Breakpoints_Pkg is
       Vseparator2 : Gtk_Vseparator;
       Vbuttonbox3 : Gtk_Vbutton_Box;
       Add_Watchpoint : Gtk_Button;
+      Update_Watchpoint : Gtk_Button;
       Advanced_Watchpoint : Gtk_Button;
       Watchpoint : Gtk_Label;
       Hbox4 : Gtk_Hbox;
@@ -101,6 +113,7 @@ package Breakpoints_Pkg is
       Vseparator3 : Gtk_Vseparator;
       Vbuttonbox4 : Gtk_Vbutton_Box;
       Add_Exception : Gtk_Button;
+      Update_Exception : Gtk_Button;
       Advanced_Exception : Gtk_Button;
       Except : Gtk_Label;
       Frame11 : Gtk_Frame;

@@ -60,15 +60,17 @@ procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
 begin
    Gtk.Window.Initialize (Breakpoints, Window_Toplevel);
    Set_Title (Breakpoints, -"Breakpoints");
-   Set_Policy (Breakpoints, True, True, False);
+   Set_Policy (Breakpoints, True, True, True);
    Set_Position (Breakpoints, Win_Pos_Center);
    Set_Modal (Breakpoints, False);
-   Set_Default_Size (Breakpoints, 430, 460);
    Return_Callback.Connect
      (Breakpoints, "delete_event", On_Breakpoints_Delete_Event'Access);
 
+   Gtk_New_Hbox (Breakpoints.Main_Box, False, 0);
+   Add (Breakpoints, Breakpoints.Main_Box);
+
    Gtk_New_Vbox (Breakpoints.Vbox1, False, 4);
-   Add (Breakpoints, Breakpoints.Vbox1);
+   Pack_Start (Breakpoints.Main_Box, Breakpoints.Vbox1, True, True, 0);
 
    Gtk_New (Breakpoints.Notebook1);
    Set_Scrollable (Breakpoints.Notebook1, False);
@@ -256,6 +258,14 @@ begin
       Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox2, Breakpoints.Add_Location);
 
+   Gtk_New (Breakpoints.Update_Location, -"Update");
+   Set_Sensitive (Breakpoints.Update_Location, False);
+   Set_Flags (Breakpoints.Update_Location, Can_Default);
+   Widget_Callback.Object_Connect
+     (Breakpoints.Update_Location, "clicked",
+      Widget_Callback.To_Marshaller (On_Update_Location_Clicked'Access), Breakpoints);
+   Add (Breakpoints.Vbuttonbox2, Breakpoints.Update_Location);
+
    Gtk_New (Breakpoints.Advanced_Location, -"Advanced...");
    Set_Flags (Breakpoints.Advanced_Location, Can_Default);
    Widget_Callback.Object_Connect
@@ -331,6 +341,14 @@ begin
      (Breakpoints.Add_Watchpoint, "clicked",
       Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox3, Breakpoints.Add_Watchpoint);
+
+   Gtk_New (Breakpoints.Update_Watchpoint, -"Update");
+   Set_Sensitive (Breakpoints.Update_Watchpoint, False);
+   Set_Flags (Breakpoints.Update_Watchpoint, Can_Default);
+   Widget_Callback.Object_Connect
+     (Breakpoints.Update_Watchpoint, "clicked",
+      Widget_Callback.To_Marshaller (On_Update_Watchpoint_Clicked'Access), Breakpoints);
+   Add (Breakpoints.Vbuttonbox3, Breakpoints.Update_Watchpoint);
 
    Gtk_New (Breakpoints.Advanced_Watchpoint, -"Advanced...");
    Set_Flags (Breakpoints.Advanced_Watchpoint, Can_Default);
@@ -422,6 +440,14 @@ begin
      (Breakpoints.Add_Exception, "clicked",
       Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox4, Breakpoints.Add_Exception);
+
+   Gtk_New (Breakpoints.Update_Exception, -"Update");
+   Set_Sensitive (Breakpoints.Update_Exception, False);
+   Set_Flags (Breakpoints.Update_Exception, Can_Default);
+   Widget_Callback.Object_Connect
+     (Breakpoints.Update_Exception, "clicked",
+      Widget_Callback.To_Marshaller (On_Update_Exception_Clicked'Access), Breakpoints);
+   Add (Breakpoints.Vbuttonbox4, Breakpoints.Update_Exception);
 
    Gtk_New (Breakpoints.Advanced_Exception, -"Advanced...");
    Set_Flags (Breakpoints.Advanced_Exception, Can_Default);
@@ -569,10 +595,6 @@ begin
 
    --  ??? Temporary
    Set_Sensitive (Breakpoints.Hbox3, False);
-   Set_Sensitive (Breakpoints.View, False);
-   Set_Sensitive (Breakpoints.Advanced_Location, False);
-   Set_Sensitive (Breakpoints.Advanced_Exception, False);
-
 end Initialize;
 
 procedure Breakpoint_Editor
