@@ -103,7 +103,7 @@ package Glide_Kernel.Project is
 
    function Get_Registry
      (Handle : access Kernel_Handle_Record'Class)
-      return Projects.Registry.Project_Registry'Class;
+      return Projects.Registry.Project_Registry_Access;
    --  Return the projects registry
 
    procedure Recompute_View (Handle  : access Kernel_Handle_Record'Class);

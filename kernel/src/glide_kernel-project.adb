@@ -434,9 +434,9 @@ package body Glide_Kernel.Project is
 
    function Get_Registry
      (Handle : access Kernel_Handle_Record'Class)
-      return Projects.Registry.Project_Registry'Class is
+      return Projects.Registry.Project_Registry_Access is
    begin
-      return Handle.Registry.all;
+      return Handle.Registry;
    end Get_Registry;
 
    ------------------
