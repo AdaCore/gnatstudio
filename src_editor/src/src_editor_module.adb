@@ -857,6 +857,30 @@ package body Src_Editor_Module is
             end if;
          end;
 
+      elsif Command = "cut"
+        or else Command = "copy"
+        or else Command = "paste"
+        or else Command = "select_all"
+      then
+         declare
+            Source : constant Source_Editor_Box :=
+                       Get_Source_Box_From_MDI
+                         (Find_Current_Editor (Kernel));
+
+         begin
+            if Source /= null then
+               if Command = "cut" then
+                  Cut_Clipboard (Source);
+               elsif Command = "copy" then
+                  Copy_Clipboard (Source);
+               elsif Command = "paste" then
+                  Paste_Clipboard (Source);
+               else
+                  Select_All (Source);
+               end if;
+            end if;
+         end;
+
       elsif Command = "close"
         or else Command = "undo"
         or else Command = "redo"
@@ -4215,6 +4239,46 @@ package body Src_Editor_Module is
          Description   =>
          -("Indent the current editor. Do nothing if the current GPS"
            & " window is not an editor."),
+         Minimum_Args  => 0,
+         Maximum_Args  => 0,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "cut",
+         Description   => -"Cut the selection in the current editor.",
+         Minimum_Args  => 0,
+         Maximum_Args  => 0,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "copy",
+         Description   => -"Copy the selection in the current editor.",
+         Minimum_Args  => 0,
+         Maximum_Args  => 0,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "paste",
+         Description   => -"Paste the selection in the current editor.",
+         Minimum_Args  => 0,
+         Maximum_Args  => 0,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "select_all",
+         Description   => -"Select the whole editor contents.",
          Minimum_Args  => 0,
          Maximum_Args  => 0,
          Class         => Editor_Class,
