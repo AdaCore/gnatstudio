@@ -44,7 +44,8 @@ package body Remote_Connections is
              & "Sorry, try again.).*$",
              Case_Insensitive or Multiple_Lines));
    Login_Re : constant Pattern_Matcher_Access := new Pattern_Matcher'
-     (Compile (".*ogin: *$", Case_Insensitive or Multiple_Lines));
+     (Compile ("(.*ogin|Name \(\w+:\w+\)): *$",
+               Case_Insensitive or Multiple_Lines));
    Unknown_Host_Re : constant Pattern_Matcher_Access :=
      new Pattern_Matcher'
        (Compile
