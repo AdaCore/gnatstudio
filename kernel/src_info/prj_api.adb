@@ -1016,9 +1016,11 @@ package body Prj_API is
    is
       Ref : Project_Node_Id;
    begin
-      pragma Assert
-        (Kind_Of (Var) = N_Typed_Variable_Declaration
-         or else Kind_Of (Var) = N_Variable_Declaration);
+      Assert (Me,
+              Kind_Of (Var) = N_Typed_Variable_Declaration
+              or else Kind_Of (Var) = N_Variable_Declaration,
+              "Create_Variable_Reference: unexpected node type "
+              & Kind_Of (Var)'Img);
 
       Ref := Default_Project_Node (N_Variable_Reference);
       Set_Name_Of (Ref, Prj.Tree.Name_Of (Var));
@@ -1081,6 +1083,13 @@ package body Prj_API is
    is
       With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
    begin
+      --  Make sure we are not trying to import ourselves, since otherwise it
+      --  would result in an infinite loop when manipulating the project
+
+      if Prj.Tree.Name_Of (Project) = Prj.Tree.Name_Of (Imported_Project) then
+         return;
+      end if;
+
       --  Check if it is already there. If we have the same name but not the
       --  same path, we replace it anyway
 
@@ -1117,6 +1126,10 @@ package body Prj_API is
       Next : Project_Node_Id;
       Name : Name_Id;
    begin
+      --  ??? When the project is no longer found in the hierarchy, it should
+      --  ??? also be removed from the htable in Prj.Tree, so that another
+      --  ??? project by that nane can be loaded.
+
       --  Cleanup the name
 
       declare
