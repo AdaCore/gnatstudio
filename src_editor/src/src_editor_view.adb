@@ -28,13 +28,13 @@ with Gdk.Window;                  use Gdk.Window;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gtk;                         use Gtk;
 with Gtk.Enums;                   use Gtk.Enums;
-with Gtk.Handlers;                use Gtk.Handlers;
+with Gtk.Handlers;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
-with Gtkada.Handlers;
+with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Defaults;         use Src_Editor_Defaults;
 with String_Utils;                use String_Utils;
@@ -50,9 +50,6 @@ package body Src_Editor_View is
    LNA_Border_Width : constant := 4;
    --  The number of pixels between the the LNA borders and the line number.
 
-   package Source_View_Callback is new Gtk.Handlers.Callback
-     (Widget_Type => Source_View_Record);
-
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback
      (Widget_Type => Source_Buffer_Record,
       User_Type => Source_View);
@@ -61,7 +58,7 @@ package body Src_Editor_View is
    -- Forward declarations --
    --------------------------
 
-   procedure Realize_Cb (View : access Source_View_Record'Class);
+   procedure Realize_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is realized.
    --  It performs various operations that can not be done before the widget
    --  is realized, such as setting the default font or the left border window
@@ -85,7 +82,7 @@ package body Src_Editor_View is
    --  Restore the previously saved insert cursor position when the Source_View
    --  gains the focus back.
 
-   procedure Map_Cb (View : access Source_View_Record'Class);
+   procedure Map_Cb (View : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is mapped.
    --  It performs various operations that can not be done before the widget
    --  is mapped, such as creating GCs associated to the left border window
@@ -129,7 +126,8 @@ package body Src_Editor_View is
    -- Realize_Cb --
    ----------------
 
-   procedure Realize_Cb (View : access Source_View_Record'Class) is
+   procedure Realize_Cb (Widget : access Gtk_Widget_Record'Class) is
+      View : constant Source_View := Source_View (Widget);
    begin
       --  Now that the window is realized, we can set the font and
       --  the size of the left border window size.
@@ -194,6 +192,7 @@ package body Src_Editor_View is
       --  Restore the old cursor position before we left the Source_View
       --  by moving the Insert Mark to the location where the Saved_Insert_Mark
       --  currently is.
+
       Get_Iter_At_Mark (Buffer, Saved_Insert_Iter, View.Saved_Insert_Mark);
       Place_Cursor (Buffer, Saved_Insert_Iter);
       return False;
@@ -203,11 +202,13 @@ package body Src_Editor_View is
    -- Map_Cb --
    ------------
 
-   procedure Map_Cb (View : access Source_View_Record'Class) is
+   procedure Map_Cb (View : access Gtk_Widget_Record'Class) is
    begin
       --  Now that the Source_View is mapped, we can create the Graphic
       --  Context used for writting line numbers.
-      Gdk_New (View.Line_Numbers_GC, Get_Window (View, Text_Window_Left));
+      Gdk_New
+        (Source_View (View).Line_Numbers_GC,
+         Get_Window (Source_View (View), Text_Window_Left));
    end Map_Cb;
 
    -----------------
@@ -399,33 +400,30 @@ package body Src_Editor_View is
       View.Show_Line_Numbers := Show_Line_Numbers;
       View.LNA_Width_In_Digits := Minimal_Number_Of_Digits_In_LNA;
 
-      Source_View_Callback.Connect
+      Widget_Callback.Connect
         (View, "realize",
-         Marsh => Source_View_Callback.To_Marshaller (Realize_Cb'Access),
+         Marsh => Widget_Callback.To_Marshaller (Realize_Cb'Access),
          After => True);
-      Source_View_Callback.Connect
+      Widget_Callback.Connect
         (View, "map",
-         Marsh => Source_View_Callback.To_Marshaller (Map_Cb'Access),
+         Marsh => Widget_Callback.To_Marshaller (Map_Cb'Access),
          After => True);
-      Gtkada.Handlers.Return_Callback.Connect
+      Return_Callback.Connect
         (View, "expose_event",
-         Marsh => Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Expose_Event_Cb'Access),
+         Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
          After => False);
       Source_Buffer_Callback.Connect
         (Buffer, "changed",
          Marsh => Source_Buffer_Callback.To_Marshaller (Modified_Cb'Access),
          User_Data => Source_View (View),
          After => True);
-      Gtkada.Handlers.Return_Callback.Connect
+      Return_Callback.Connect
         (View, "focus_in_event",
-         Marsh => Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Focus_In_Event_Cb'Access),
+         Marsh => Return_Callback.To_Marshaller (Focus_In_Event_Cb'Access),
          After => False);
-      Gtkada.Handlers.Return_Callback.Connect
+      Return_Callback.Connect
         (View, "focus_out_event",
-         Marsh => Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Focus_Out_Event_Cb'Access),
+         Marsh => Return_Callback.To_Marshaller (Focus_Out_Event_Cb'Access),
          After => False);
    end Initialize;
 
