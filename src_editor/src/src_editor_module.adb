@@ -684,6 +684,10 @@ package body Src_Editor_Module is
                Set_Title (Child, -"No Name");
             end if;
 
+            --  We have created a new file editor : emit the
+            --  corresponding signal.
+            --  ??? what do we do when opening an editor with no name ?
+
             File_Edited (Kernel, File);
          end if;
 
@@ -693,10 +697,6 @@ package body Src_Editor_Module is
             Delete_Callback'Access,
             Gtk_Widget (Box),
             After => False);
-
-         --  We have created a new file editor : emit the corresponding signal.
-         --  ??? what do we do when opening an editor with no name ?
-
 
          --  Update and save the "Reopen" menu state.
          declare
