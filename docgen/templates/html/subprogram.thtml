@@ -1,3 +1,14 @@
+@@--
+@@-- Used to display subprograms.
+@@--
+@@-- BLOCK  : block of text containing the subprogram spec.
+@@--          This block has been rendered with another set of templates.
+@@-- INDENT : spaces to be used for the indentation
+@@-- LINE   : line of the subprogram declaration
+@@--
+@@-- Next template is "description.thtml", used to display the subprogram
+@@-- description.
+@@--
 <A NAME="@_LINE_@"></A><BR>
 <TABLE BGCOLOR="WHITE" WIDTH="1%" CELLPADDING="0" CELLSPACING="0">
 <TR><TD><PRE>@_INDENT_@</PRE></TD>

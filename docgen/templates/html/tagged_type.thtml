@@ -1,3 +1,20 @@
+@@--
+@@-- This template is used to output tagged types.
+@@--
+@@-- INDENT        : spaces to be used for the indentation
+@@-- HAS_PARENTS   : TRUE if the type has a parent
+@@-- P_NAME        : parent's name
+@@-- P_REF_FILE    : parent's reference file (can be used in a link)
+@@-- P_DECL_FILE   : parent's declaration file name
+@@-- P_DECL_LINE   : parent's declaration line
+@@-- P_DECL_COLUMN : parent's declaration column
+@@-- HAS_CHILDREN  : idem for children
+@@-- C_REF_FILE    : idem for children
+@@-- C_DECL_LINE   : idem for children
+@@-- C_DECL_COLUMN : idem for children
+@@-- C_NAME        : idem for children
+@@-- C_DECL_FILE   : idem for children
+@@--
 <TABLE BGCOLOR="white" WIDTH="100%">
 <TR><TD>
 

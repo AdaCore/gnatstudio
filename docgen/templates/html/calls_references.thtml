@@ -1,3 +1,10 @@
+@@--
+@@-- Used to display the subprogram calls.
+@@--
+@@-- BLOCK  : block of text containing the subprogram calls. This block has
+@@--          been rendered with another set of templates.
+@@-- INDENT : spaces to be used for the indentation
+@@--
 <TABLE BGCOLOR="white" WIDTH="100%">
 <TR><TD>
 <TR><TD>

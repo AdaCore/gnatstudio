@@ -1,3 +1,10 @@
+@@--
+@@-- Used to display the with clauses.
+@@--
+@@-- BLOCK  : block of text containing the with clauses. This block has
+@@--          been rendered with another set of templates.
+@@-- INDENT : spaces to be used for the indentation
+@@--
 <TABLE BGCOLOR="WHITE" WIDTH="1%" CELLPADDING="0" CELLSPACING="0"
 <TR><TD><PRE>@_INDENT_@</PRE></TD>
 <TD bgcolor="#DDDDDD"><PRE>

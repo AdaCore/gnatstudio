@@ -1,3 +1,11 @@
+@@--
+@@-- ???
+@@--
+@@-- FAMILY   :
+@@-- REF_FILE :
+@@-- LINE     :
+@@-- NAME     :
+@@--
 @@IF@@ @_FAMILY_@ = MAIN
    <BR>
    <A HREF="@_REF_FILE_@#@_LINE_@" target="main"><B>@_NAME_@</B></A>

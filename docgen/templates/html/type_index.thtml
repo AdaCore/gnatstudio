@@ -1,3 +1,13 @@
+@@--
+@@-- Main template used for the type index.
+@@--
+@@-- TAGGEG_TYPE_INDEX [boolean] : if set the tagged type index must be
+@@--                               referenced
+@@--
+@@--
+@@-- This index file is ended by "end_index.thtml"
+@@--
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML>
 <HEAD>
 <BASE TARGET="main">

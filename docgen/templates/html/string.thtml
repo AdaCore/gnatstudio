@@ -1,1 +1,6 @@
+@@--
+@@-- Used to output a strings
+@@--
+@@-- TEXT : The string to output
+@@--
 <font color="red">@_TEXT_@</font>

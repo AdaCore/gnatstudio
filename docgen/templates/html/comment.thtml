@@ -1,1 +1,6 @@
+@@--
+@@-- Used to output a comment string
+@@--
+@@-- TEXT : The comment to output
+@@--
 <font color="green">@_TEXT_@</font>
