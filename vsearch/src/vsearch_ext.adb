@@ -1300,7 +1300,7 @@ package body Vsearch_Ext is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Navigate  : constant String := '/' & (-"Navigate");
+      Navigate  : constant String := "/_" & (-"Navigate");
       Goto_Decl : constant String := -"Goto Declaration";
       Mitem     : Gtk_Menu_Item;
    begin
