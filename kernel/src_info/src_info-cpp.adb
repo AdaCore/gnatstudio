@@ -514,6 +514,7 @@ package body Src_Info.CPP is
       Close (Tmp_File);
 
       if Num_Source_Files > 0 then
+         Close_DB_Files (Handler.SN_Table);
          SN.Browse.Browse
            (File_Name     => HI.List_Filename.all,
             DB_Directory  => Handler.DB_Dir.all,
@@ -570,6 +571,10 @@ package body Src_Info.CPP is
             end if;
 
             Iterator.State := Done;
+
+            Open_DB_Files
+              (Iterator.Handler.DB_Dir.all & Browse.DB_File_Name,
+               Iterator.Handler.SN_Table);
       end case;
 
       if Iterator.State = Done then
@@ -740,21 +745,21 @@ package body Src_Info.CPP is
         or else Handler.DB_Dir.all /= Dir
       then
          if Handler.DB_Dir /= null then
-            Close_DB_Files (Handler.SN_Table);
             Free (Handler.Xrefs);
             Free (Handler.DB_Dir);
          end if;
 
          Handler.DB_Dir := new String' (Dir);
          Load (Handler.Xrefs, Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
-         Open_DB_Files
-           (Handler.DB_Dir.all & Browse.DB_File_Name, Handler.SN_Table);
 
          --  Check that DB_Directory exists. If not, create it.
          if not Is_Directory (Handler.DB_Dir.all) then
             Make_Dir (Handler.DB_Dir.all);
          end if;
       end if;
+      Close_DB_Files (Handler.SN_Table);
+      Open_DB_Files
+        (Handler.DB_Dir.all & Browse.DB_File_Name, Handler.SN_Table);
    end Reset;
 
    ---------------------------
