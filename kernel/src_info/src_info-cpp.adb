@@ -610,19 +610,22 @@ package body Src_Info.CPP is
 
       --  If there is at least one source file, make sure the database
       --  directory exists.
+
       if Current_Source_File (Iterator) /= "" then
          Create_DB_Directory (DB_Dir);
       end if;
 
       --  Create the list of files that need to be analyzed.
+
       Create (Tmp_File, Out_File, Name => Iterator.List_Filename.all);
 
       loop
          declare
             File : constant String := Current_Source_File (Iterator);
-            Pool : Xref_Pool := Get_Xref_Pool
+            Pool : constant Xref_Pool := Get_Xref_Pool
               (Iterator.Handler.Prj_HTable,
                DB_Dir);
+
          begin
             exit when File = "";
 
@@ -835,7 +838,7 @@ package body Src_Info.CPP is
             while P /= Prj.No_Project loop
                declare
                   DB_Dir : constant String := Get_DB_Dir (P);
-                  Pool   : Xref_Pool := Get_Xref_Pool
+                  Pool   : constant Xref_Pool := Get_Xref_Pool
                     (Iterator.Handler.Prj_HTable,
                      DB_Dir);
                begin
@@ -5574,7 +5577,7 @@ package body Src_Info.CPP is
       DB_Dir     : String;
       Pool       : Xref_Pool)
    is
-      Key      : String_Access := new String'(DB_Dir);
+      Key      : constant String_Access := new String'(DB_Dir);
       Prj_Data : SN_Prj_Data :=
          SN_Prj_HTables.Get (Prj_HTable.all, Key);
    begin
