@@ -149,9 +149,15 @@ package Debugger.Jdb is
      (Debugger  : access Jdb_Debugger)
      return Odd.Types.Breakpoint_Array;
 
+   procedure Send_Completed
+     (Debugger : access Jdb_Debugger;
+      Cmd      : String);
+
 private
    type Jdb_Debugger is new Debugger.Debugger_Root with record
       Main_Class : GNAT.OS_Lib.String_Access;
+      Frame      : Natural := 1;
+      --  Current frame displayed.
    end record;
 
 end Debugger.Jdb;

@@ -38,7 +38,7 @@ package body Debugger.Jdb is
    ---------------
 
    Prompt_Regexp : constant Pattern_Matcher :=
-     Compile ("^(>|\w*\[\d+\]) ", Multiple_Lines);
+     Compile ("^(>|\w*\[(\d+)\]) ", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
 
    Highlight_Pattern : constant GNAT.Regpat.Pattern_Matcher :=
@@ -201,9 +201,20 @@ package body Debugger.Jdb is
    -----------------
 
    procedure Wait_Prompt (Debugger : access Jdb_Debugger) is
-      Num : Expect_Match;
+      Num     : Expect_Match;
+      Matches : Match_Array (0 .. 2);
+
    begin
-      Wait (Get_Process (Debugger), Num, Prompt_Regexp, Timeout => -1);
+      Wait (Get_Process (Debugger), Num, Prompt_Regexp, Matches, -1);
+
+      if Matches (2) /= No_Match then
+         declare
+            S : String := Expect_Out (Get_Process (Debugger));
+         begin
+            Debugger.Frame :=
+              Natural'Value (S (Matches (2).First .. Matches (2).Last));
+         end;
+      end if;
    end Wait_Prompt;
 
    ---------
@@ -335,9 +346,17 @@ package body Debugger.Jdb is
    procedure Stack_Frame
      (Debugger : access Jdb_Debugger;
       Frame    : Positive;
-      Display  : Boolean := False) is
+      Display  : Boolean := False)
+   is
+      Relative_Frame : Integer := Frame - Debugger.Frame;
    begin
-      Send (Debugger, "frame" & Positive'Image (Frame), Display => Display);
+      if Relative_Frame > 0 then
+         Send (Debugger, "up" & Positive'Image (Relative_Frame),
+               Display => Display);
+      else
+         Send (Debugger, "down" & Positive'Image (-Relative_Frame),
+               Display => Display);
+      end if;
    end Stack_Frame;
 
    ---------------
@@ -518,5 +537,17 @@ package body Debugger.Jdb is
    begin
       return Br;
    end List_Breakpoints;
+
+   --------------------
+   -- Send_Completed --
+   --------------------
+
+   procedure Send_Completed
+     (Debugger : access Jdb_Debugger;
+      Cmd      : String) is
+   begin
+      Send_Signal (Get_Descriptor (Get_Process (Debugger)).all, 29);
+      --  ??? SIGIO under linux
+   end Send_Completed;
 
 end Debugger.Jdb;
