@@ -2451,6 +2451,7 @@ GPS with unsaved files.
 @cindex rsh
 @cindex rsync
 @cindex telnet
+@cindex http
 @c --------------------------------------------------------------------
 
 @noindent
@@ -2550,6 +2551,10 @@ anonymous ftp connection.
 
 To use this protocol, substitute the word "ftp" to "protocol" in the example
 above.
+
+@item http
+This is the usual http protocol to download documents from the web. It is in
+particular useful for documentation
 
 @end table
 
