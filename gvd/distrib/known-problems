@@ -1,9 +1,16 @@
 Known Problems fixed in GVD 1.2.0
 
+- Dereferencing variable sometimes fails in C mode
+  Problem:    When dereferencing a variable in the data window whose name
+              already contains a dereference but no parentheses around
+              (e.g *foo instead of (*foo)), gvd does not properly dereference
+              fields contained inside such expression.
+  Workaround: Put parentheses around the original expression.
+
 - Switching files sometimes generates a Constraint_Error
   Problem:    From time to time, when you switch to a file whose number of
               lines is smaller than the line currently highlighted in the
-              source editor, a Constraint_Error was raised
+              source editor, a Constraint_Error was raised.
   Workaround: In the preferences, deactive the "Highlight current line" button.
 
 - Selecting a non-existent file in Open Source generates a bug box
