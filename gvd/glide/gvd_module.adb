@@ -346,7 +346,7 @@ package body GVD_Module is
      Generic_Debug_Command (GVD.Menu.On_Interrupt);
    --  Debug->Interrupt
 
-   procedure On_Debugger_Terminate
+   procedure On_Debug_Terminate
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Terminate
 
@@ -501,7 +501,8 @@ package body GVD_Module is
          then
             Add_Symbols (Page.Debugger, S, Mode => GVD.Types.Visible);
          else
-            Console.Insert (Kernel, (-"Could not find file: ") & S);
+            Console.Insert (Kernel, (-"Could not find file: ") & S,
+                            Mode => Error);
          end if;
       end;
 
@@ -691,12 +692,14 @@ package body GVD_Module is
             Set_Executable (Page.Debugger, S, Mode => Hidden);
             Change_Dir (Dir_Name (S));
          else
-            Console.Insert (Kernel, (-"Could not find file: ") & S);
+            Console.Insert (Kernel, (-"Could not find file: ") & S,
+                            Mode => Error);
          end if;
 
       exception
          when Executable_Not_Found =>
-            Console.Insert (Kernel, (-"Could not find file: ") & S);
+            Console.Insert (Kernel, (-"Could not find file: ") & S,
+                            Mode => Error);
       end;
 
    exception
@@ -731,7 +734,8 @@ package body GVD_Module is
          then
             Load_Core_File (Page.Debugger, S, Mode => GVD.Types.Visible);
          else
-            Console.Insert (Kernel, (-"Could not find core file: ") & S);
+            Console.Insert (Kernel, (-"Could not find core file: ") & S,
+                            Mode => Error);
          end if;
       end;
 
@@ -1106,6 +1110,12 @@ package body GVD_Module is
                Remote_Host     =>
                  Get_Attribute_Value
                    (Project_View, Remote_Host_Attribute, Ide_Package),
+               Remote_Target   =>
+                 Get_Attribute_Value
+                   (Project_View, Program_Host_Attribute, Ide_Package),
+               Remote_Protocol =>
+                 Get_Attribute_Value
+                   (Project_View, Protocol_Attribute, Ide_Package),
                Debugger_Name   => Args (1).all,
                Success => Success);
             GNAT.OS_Lib.Free (Args);
@@ -1137,11 +1147,11 @@ package body GVD_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Init;
 
-   ---------------------------
-   -- On_Debugger_Terminate --
-   ---------------------------
+   ------------------------
+   -- On_Debug_Terminate --
+   ------------------------
 
-   procedure On_Debugger_Terminate
+   procedure On_Debug_Terminate
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
@@ -1203,7 +1213,7 @@ package body GVD_Module is
       when E : others =>
          Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Debugger_Terminate;
+   end On_Debug_Terminate;
 
    --------------------
    -- Set_Breakpoint --
@@ -1779,7 +1789,7 @@ package body GVD_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
       Register_Menu (Kernel, Debug, -"Terminate", "",
-                     On_Debugger_Terminate'Access, Sensitive => False);
+                     On_Debug_Terminate'Access, Sensitive => False);
 
       --  Add debugger buttons in the toolbar
 
@@ -1850,7 +1860,7 @@ package body GVD_Module is
 
    procedure Destroy (Id : in out GVD_Module_Record) is
    begin
-      On_Debugger_Terminate (Id.Kernel, Id.Kernel);
+      On_Debug_Terminate (Id.Kernel, Id.Kernel);
    end Destroy;
 
 end GVD_Module;
