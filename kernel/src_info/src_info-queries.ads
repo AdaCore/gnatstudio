@@ -590,7 +590,6 @@ package Src_Info.Queries is
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Include_Self          : Boolean := False;
       LI_Once               : Boolean := False;
-      Indirect_Imports      : Boolean := False;
       Single_Source_File    : Boolean := False);
    --  Prepare Iterator to return the list of all files that directly import
    --  Source_Filename. The rule is the following:
@@ -626,10 +625,6 @@ package Src_Info.Queries is
    --
    --  You must destroy the iterator when you are done with it, to avoid memory
    --  leaks.
-   --
-   --  If Indirect_Imports is true, then files that indirectly import
-   --  Source_Filename are also returned. In this case, one of the Get
-   --  subprogram is not callable.
 
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;

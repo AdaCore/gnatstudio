@@ -2289,7 +2289,6 @@ package body Src_Info.Queries is
             Project                => Project,
             File_Has_No_LI_Report  => File_Has_No_LI_Report,
             Include_Self           => True,
-            Indirect_Imports       => True,
             LI_Once                => True);
       else
          Find_Ancestor_Dependencies
@@ -2299,7 +2298,6 @@ package body Src_Info.Queries is
             File_Has_No_LI_Report  => File_Has_No_LI_Report,
             Include_Self           => True,
             LI_Once                => True,
-            Indirect_Imports       => True,
             Single_Source_File     => True);
       end if;
 
@@ -2835,7 +2833,6 @@ package body Src_Info.Queries is
       File_Has_No_LI_Report  : File_Error_Reporter := null;
       Include_Self           : Boolean := False;
       LI_Once                : Boolean := False;
-      Indirect_Imports       : Boolean := False;
       Single_Source_File     : Boolean := False)
    is
       Decl_Project          : Project_Type := Project;
@@ -2877,7 +2874,6 @@ package body Src_Info.Queries is
       Iterator.Decl_LI        := Locate_From_Source (Handler, Source_Filename);
       Iterator.Source_Filename  := Source_Filename;
       Iterator.Include_Self     := Include_Self;
-      Iterator.Indirect_Imports := Indirect_Imports;
       Iterator.File_Has_No_LI_Report := File_Has_No_LI_Report;
 
       Create_Or_Complete_LI
@@ -2903,8 +2899,7 @@ package body Src_Info.Queries is
 
       else
          Iterator.Importing := Find_All_Projects_Importing
-           (Root_Project, Iterator_Decl_Project,
-            Include_Self => True);
+           (Iterator_Decl_Project, Include_Self => True);
          Iterator.Source_Files := Get_Source_Files
            (Current (Iterator.Importing),
             Recursive => False);
