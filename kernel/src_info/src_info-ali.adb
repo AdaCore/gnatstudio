@@ -639,12 +639,12 @@ package body Src_Info.ALI is
       --  If there is not LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
       if File.LI = null then
-         File.LI := new LI_File'
-           (Parsed        => False,
-            LI_Filename   => new String'(ALI_Filename),
-            Spec_Info     => null,
-            Body_Info     => null,
-            Separate_Info => null);
+         File.LI := new LI_File_Constrained'
+           (LI => (Parsed        => False,
+                   LI_Filename   => new String'(ALI_Filename),
+                   Spec_Info     => null,
+                   Body_Info     => null,
+                   Separate_Info => null));
 
          Add (List.Table, File.LI, Success);
          if not Success then
@@ -656,8 +656,8 @@ package body Src_Info.ALI is
       --  If the associated File_Info does not exist, then create it.
       case Part is
          when Unit_Spec =>
-            if File.LI.Spec_Info = null then
-               File.LI.Spec_Info := new File_Info'
+            if File.LI.LI.Spec_Info = null then
+               File.LI.LI.Spec_Info := new File_Info'
                  (Unit_Name         => null,
                   Source_Filename   => new String'(Sname),
                   File_Timestamp    => Empty_Time_Stamp,
@@ -667,8 +667,8 @@ package body Src_Info.ALI is
             end if;
 
          when Unit_Body =>
-            if File.LI.Body_Info = null then
-               File.LI.Body_Info := new File_Info'
+            if File.LI.LI.Body_Info = null then
+               File.LI.LI.Body_Info := new File_Info'
                  (Unit_Name         => null,
                   Source_Filename   => new String'(Sname),
                   File_Timestamp    => Empty_Time_Stamp,
@@ -809,12 +809,12 @@ package body Src_Info.ALI is
       --  If there is no LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
       if File.LI = null then
-         File.LI := new LI_File'
-           (Parsed        => False,
-            LI_Filename   => new String'(ALI_Filename),
-            Spec_Info     => null,
-            Body_Info     => null,
-            Separate_Info => null);
+         File.LI := new LI_File_Constrained'
+           (LI => (Parsed        => False,
+                   LI_Filename   => new String'(ALI_Filename),
+                   Spec_Info     => null,
+                   Body_Info     => null,
+                   Separate_Info => null));
          Add (List.Table, File.LI, Success);
          if not Success then
             Destroy (File.LI);
@@ -823,13 +823,13 @@ package body Src_Info.ALI is
       end if;
 
       --  If the associated File_Info does not exist, then create it.
-      Sep := File.LI.Separate_Info;
+      Sep := File.LI.LI.Separate_Info;
       while Sep /= null loop
          exit when Sep.Value.Source_Filename.all = File.Unit_Name.all;
          Sep := Sep.Next;
       end loop;
       if Sep = null then
-         File.LI.Separate_Info :=
+         File.LI.LI.Separate_Info :=
            new File_Info_Ptr_Node'
              (Value => new File_Info'
                (Unit_Name         => new String'(File.Unit_Name.all),
@@ -838,7 +838,7 @@ package body Src_Info.ALI is
                 Original_Filename => null,
                 Original_Line     => 1,
                 Declarations      => null),
-              Next => File.LI.Separate_Info);
+              Next => File.LI.LI.Separate_Info);
       end if;
 
    exception
@@ -932,9 +932,9 @@ package body Src_Info.ALI is
       --  Now save it in the proper place in New_LI_File
       case Current_Unit.Utype is
          when Is_Spec | Is_Spec_Only =>
-            New_LI_File.Spec_Info := New_File_Info;
+            New_LI_File.LI.Spec_Info := New_File_Info;
          when Is_Body | Is_Body_Only =>
-            New_LI_File.Body_Info := New_File_Info;
+            New_LI_File.LI.Body_Info := New_File_Info;
       end case;
    exception
       when others =>
@@ -975,19 +975,19 @@ package body Src_Info.ALI is
          Process_Sdep_As_External
            (New_LI_File, New_ALI, Id, Project, Source_Path, Sfiles, List);
 
-      elsif New_LI_File.Spec_Info /= null
-        and then New_LI_File.Spec_Info.Source_Filename.all =
+      elsif New_LI_File.LI.Spec_Info /= null
+        and then New_LI_File.LI.Spec_Info.Source_Filename.all =
                    Get_Name_String (Dep.Sfile)
       then
          Process_Sdep_As_Self
-           (New_LI_File, New_ALI, Id, New_LI_File.Spec_Info, Sfiles);
+           (New_LI_File, New_ALI, Id, New_LI_File.LI.Spec_Info, Sfiles);
 
-      elsif New_LI_File.Body_Info /= null
-        and then New_LI_File.Body_Info.Source_Filename.all =
+      elsif New_LI_File.LI.Body_Info /= null
+        and then New_LI_File.LI.Body_Info.Source_Filename.all =
                    Get_Name_String (Dep.Sfile)
       then
          Process_Sdep_As_Self
-           (New_LI_File, New_ALI, Id, New_LI_File.Body_Info, Sfiles);
+           (New_LI_File, New_ALI, Id, New_LI_File.LI.Body_Info, Sfiles);
 
       else
          Process_Sdep_As_External
@@ -1021,7 +1021,7 @@ package body Src_Info.ALI is
       --  This is ensured by the semantics of Get_Source_File above. If
       --  it does fail, Sep_Info will be null and we will have a
       --  Constraint_Error.
-      Sep_Info := Sfile.LI.Separate_Info;
+      Sep_Info := Sfile.LI.LI.Separate_Info;
       while Sep_Info /= null loop
          exit when Sep_Info.Value.Source_Filename.all = Dep_Filename;
          Sep_Info := Sep_Info.Next;
@@ -1060,7 +1060,7 @@ package body Src_Info.ALI is
          Finfo.Original_Line := Integer (Dep.Start_Line);
       end if;
 
-      if Finfo = New_LI_File.Body_Info then
+      if Finfo = New_LI_File.LI.Body_Info then
          --  To find the Unit_Part to associated to the Sdep (either Spec or
          --  Body), we just compare Finfo againts New_LI_File.Spec/Body_Info.
          --  Note that if this test fails, then Part should be Unit_Spec, which
@@ -1096,9 +1096,9 @@ package body Src_Info.ALI is
          Dep_Info          => (Depends_From_Spec => False,
                                Depends_From_Body => False),
          Declarations      => null);
-      New_LI_File.Dependencies_Info :=
+      New_LI_File.LI.Dependencies_Info :=
         new Dependency_File_Info_Node'
-          (Value => New_Dep, Next => New_LI_File.Dependencies_Info);
+          (Value => New_Dep, Next => New_LI_File.LI.Dependencies_Info);
       --  Save the Source_File associated to this Sdep for later use.
       Sfiles (Id) := Sfile;
    end Process_Sdep_As_External;
@@ -1145,19 +1145,21 @@ package body Src_Info.ALI is
    begin
       --  Check that we did not with ourselves nor our separates in which
       --  case the with line does not contain any information we need.
-      if New_LI_File.Spec_Info /= null
-        and then New_LI_File.Spec_Info.Source_Filename.all = Withed_File_Name
+      if New_LI_File.LI.Spec_Info /= null
+        and then New_LI_File.LI.Spec_Info.Source_Filename.all =
+           Withed_File_Name
       then
          return;
       end if;
 
-      if New_LI_File.Body_Info /= null
-        and then New_LI_File.Body_Info.Source_Filename.all = Withed_File_Name
+      if New_LI_File.LI.Body_Info /= null
+        and then New_LI_File.LI.Body_Info.Source_Filename.all =
+           Withed_File_Name
       then
          return;
       end if;
 
-      Current_Sep := New_LI_File.Separate_Info;
+      Current_Sep := New_LI_File.LI.Separate_Info;
       while Current_Sep /= null loop
          if Current_Sep.Value.Source_Filename.all = Withed_File_Name then
             return;
@@ -1168,7 +1170,7 @@ package body Src_Info.ALI is
       --  At this point, we know that we have a real dependency...
       --  Try to find the Dependency_File_Info associated to this unit and
       --  update the missing information.
-      Current_Dep := New_LI_File.Dependencies_Info;
+      Current_Dep := New_LI_File.LI.Dependencies_Info;
       while Current_Dep /= null loop
          Finfo := Get_File_Info (Current_Dep.Value.File);
          if Finfo.Source_Filename.all = Withed_File_Name
@@ -1226,7 +1228,7 @@ package body Src_Info.ALI is
       Unit_Name   : String_Access;
       Decl_Info   : E_Declaration_Info)
    is
-      Sep : File_Info_Ptr_List := New_LI_File.Separate_Info;
+      Sep : File_Info_Ptr_List := New_LI_File.LI.Separate_Info;
    begin
       while Sep /= null loop
          exit when Sep.Value.Unit_Name.all = Unit_Name.all;
@@ -1250,7 +1252,7 @@ package body Src_Info.ALI is
       Sfile       : Source_File;
       Decl_Info   : E_Declaration_Info)
    is
-      Dep : Dependency_File_Info_List := New_LI_File.Dependencies_Info;
+      Dep : Dependency_File_Info_List := New_LI_File.LI.Dependencies_Info;
    begin
       while Dep /= null loop
          exit when Dep.Value.File = Sfile;
@@ -1350,15 +1352,15 @@ package body Src_Info.ALI is
       if Sfile.LI = New_LI_File then
          case Sfile.Part is
             when Unit_Spec =>
-               New_LI_File.Spec_Info.Declarations :=
+               New_LI_File.LI.Spec_Info.Declarations :=
                   new E_Declaration_Info_Node'
                     (Value => Decl_Info,
-                     Next => New_LI_File.Spec_Info.Declarations);
+                     Next => New_LI_File.LI.Spec_Info.Declarations);
             when Unit_Body =>
-               New_LI_File.Body_Info.Declarations :=
+               New_LI_File.LI.Body_Info.Declarations :=
                   new E_Declaration_Info_Node'
                     (Value => Decl_Info,
-                     Next => New_LI_File.Body_Info.Declarations);
+                     Next => New_LI_File.LI.Body_Info.Declarations);
             when Unit_Separate =>
                Chain_Declaration_For_Separate
                  (New_LI_File, Sfile.Unit_Name, Decl_Info);
@@ -1422,26 +1424,28 @@ package body Src_Info.ALI is
       Source_Path  : String;
       List         : in out LI_File_List)
    is
+      Tmp : LI_File_Ptr;
       Sfiles      : Sdep_To_Sfile_Table
         (New_ALI.First_Sdep ..  New_ALI.Last_Sdep) :=
           (others => No_Source_File);
       ALI_Filename : constant String := Get_Name_String (New_ALI.Afile);
 
       LI_File_Is_New       : Boolean;
-      LI_File_Copy         : LI_File;
+      LI_File_Copy         : LI_File_Constrained;
       Success              : Boolean;
-   begin
 
-      New_LI_File := Get (List.Table, ALI_Filename);
-      LI_File_Is_New := New_LI_File = null;
+   begin
+      Tmp := Get (List.Table, Base_File_Name (ALI_Filename));
+      LI_File_Is_New := Tmp = null;
       if LI_File_Is_New then
-         New_LI_File := new LI_File (Parsed => True);
+         Tmp := new LI_File_Constrained'
+           (LI => (True, null, null, null, null, False, null));
       else
          --  Make a copy of the old LI_File to be able to restore it later
          --  if we encounter some problems while creating the new one.
-         LI_File_Copy := New_LI_File.all;
+         LI_File_Copy := Tmp.all;
          --  Blank the LI_File to avoid reading some relics of the old LI_File
-         New_LI_File.all :=
+         Tmp.LI :=
            (Parsed                   => True,
             LI_Filename              => null,
             Spec_Info                => null,
@@ -1452,34 +1456,38 @@ package body Src_Info.ALI is
       end if;
 
       --  Store the ALI Filename and the Compile_Errors Flag
-      New_LI_File.LI_Filename := new String'(Get_Name_String (New_ALI.Afile));
-      New_LI_File.Compilation_Errors_Found := New_ALI.Compile_Errors;
+      Tmp.LI.LI_Filename := new String'
+        (Base_File_Name (Get_Name_String (New_ALI.Afile)));
+      Tmp.LI.Compilation_Errors_Found := New_ALI.Compile_Errors;
 
       --  Build the rest of the structure
-      Process_Units (New_LI_File, New_ALI);
-      Process_Sdeps (New_LI_File, New_ALI, Project, Source_Path, Sfiles, List);
-      Process_Withs (New_LI_File, New_ALI, Project);
-      Process_Xrefs (New_LI_File, New_ALI, Sfiles);
+      Process_Units (Tmp, New_ALI);
+      Process_Sdeps (Tmp, New_ALI, Project, Source_Path, Sfiles, List);
+      Process_Withs (Tmp, New_ALI, Project);
+      Process_Xrefs (Tmp, New_ALI, Sfiles);
 
       if LI_File_Is_New then
-         Add (List.Table, New_LI_File, Success);
+         Add (List.Table, Tmp, Success);
          if not Success then
             raise ALI_Internal_Error;
          end if;
       else
-         Destroy (LI_File_Copy);
+         Destroy (LI_File_Copy.LI);
       end if;
+
+      New_LI_File := Tmp;
 
    exception
       when others =>
          --  Catch all exceptions temporarily to free all memory allocated
          --  before letting the exception propagate itself up.
          if LI_File_Is_New then
-            Destroy (New_LI_File);
+            Destroy (Tmp);
          else
-            Destroy (New_LI_File.all);
-            New_LI_File.all := LI_File_Copy;
+            Destroy (Tmp.LI);
+            Tmp.all := LI_File_Copy;
          end if;
+         New_LI_File := Tmp;
          raise;
    end Create_New_ALI;
 
