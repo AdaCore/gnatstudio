@@ -44,6 +44,14 @@ package Projects.Registry is
    --  Free the memory used by this package (you should destroy any individuals
    --  Registry instances you may have)
 
+   function Create
+     (Name            : Glib.UTF8_String;
+      Registry        : Project_Registry'Class;
+      Use_Source_Path : Boolean := True;
+      Use_Object_Path : Boolean := True) return VFS.Virtual_File;
+   --  Create a new file. This will automatically try to solve Name to an
+   --  absolute path if it currently is a base name.
+
    ------------------------
    -- Predefined project --
    ------------------------
