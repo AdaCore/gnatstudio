@@ -47,8 +47,6 @@ with GVD.Process;      use GVD.Process;
 with GVD.Status_Bar;   use GVD.Status_Bar;
 with GVD.Types;        use GVD.Types;
 
-with Ada.Text_IO;     use Ada.Text_IO;
-
 package body Display_Items is
 
    ---------------------
