@@ -1450,6 +1450,7 @@ package body Display_Items is
          end if;
 
          if It.Id /= null
+           and then It2.Is_Alias_Of = null
            and then Is_Alias_Of (It2, It.Id.all, It.Name.all, It_Deref_Name)
          then
             --  Keep only one of them:
