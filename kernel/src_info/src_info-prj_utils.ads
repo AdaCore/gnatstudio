@@ -74,6 +74,9 @@ package Src_Info.Prj_Utils is
       return Name_Id;
    --  Compute the Unit Name associated to the given Filename using the
    --  Naming information, whithout taking the exceptions into account.
+   --  ??? Note that this function does not handles krunched filenames
+   --  ??? at all (and will probably never do, since it does not have
+   --  ??? enough information to do so).
 
    function Extension_Matches
      (Filename  : File_Name_Type;
