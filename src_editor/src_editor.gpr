@@ -1,0 +1,14 @@
+project src is
+
+   for Source_Dirs use
+     (".",
+      "../../common",
+      "../../gtkada/src",
+      "../../gvd/gnat",
+      "../../gvd/gvd",
+      "../../kernel/src",
+      "../../gnat");
+
+   for Object_Dir use "../obj";
+
+end src;
