@@ -45,6 +45,7 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
 with Src_Info;                  use Src_Info;
+with Src_Info.Queries;          use Src_Info.Queries;
 
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Prj_API;                   use Prj_API;
@@ -260,6 +261,33 @@ package body Glide_Kernel is
       return File;
    end Locate_From_Source_And_Complete;
 
+   -------------------------
+   -- Find_All_References --
+   -------------------------
+
+   procedure Find_All_References
+     (Kernel       : access Kernel_Handle_Record;
+      Decl         : Src_Info.E_Declaration_Info;
+      Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
+      Project      : Prj.Project_Id := Prj.No_Project;
+      LI_Once      : Boolean := False) is
+   begin
+      Find_All_References
+        (Get_Project (Kernel), Decl, Kernel.Source_Info_List,
+         Iterator, Project, LI_Once);
+   end Find_All_References;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Kernel : access Kernel_Handle_Record;
+      Iterator : in out Entity_Reference_Iterator) is
+   begin
+      Next (Iterator, Kernel.Source_Info_List);
+   end Next;
+
    ----------------------------
    -- Reset_Source_Info_List --
    ----------------------------
@@ -395,24 +423,6 @@ package body Glide_Kernel is
          return False;
       end if;
    end Load_Desktop;
-
-   -------------------
-   -- Get_Unit_Name --
-   -------------------
-
-   procedure Get_Unit_Name
-     (Handle    : access Kernel_Handle_Record;
-      File      : in out Internal_File;
-      Unit_Name : out String_Access) is
-   begin
-      Get_Unit_Name
-        (File                   => File,
-         Source_Info_List       => Handle.Source_Info_List,
-         Project                => Get_Project_View (Handle),
-         Predefined_Source_Path => Get_Predefined_Source_Path (Handle),
-         Predefined_Object_Path => Get_Predefined_Object_Path (Handle),
-         Unit_Name              => Unit_Name);
-   end Get_Unit_Name;
 
    ----------
    -- Free --

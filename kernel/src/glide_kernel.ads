@@ -37,6 +37,7 @@ with Prj.Tree;
 with Prj;
 with Prj_API;
 with Src_Info;
+with Src_Info.Queries;
 with System;
 with Unchecked_Conversion;
 
@@ -101,11 +102,20 @@ package Glide_Kernel is
       return Src_Info.LI_File_Ptr;
    --  Find the ALI file for Source_Filename, and return a handle to it.
 
-   procedure Get_Unit_Name
-     (Handle    : access Kernel_Handle_Record;
-      File      : in out Src_Info.Internal_File;
-      Unit_Name : out GNAT.OS_Lib.String_Access);
-   --  Return the unit name for the given file
+   procedure Find_All_References
+     (Kernel       : access Kernel_Handle_Record;
+      Decl         : Src_Info.E_Declaration_Info;
+      Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
+      Project      : Prj.Project_Id := Prj.No_Project;
+      LI_Once      : Boolean := False);
+   --  See Src_Info.Queries.
+   --  This function needs to be in this package, since it requires access to
+   --  the list of LI files.
+
+   procedure Next
+     (Kernel : access Kernel_Handle_Record;
+      Iterator : in out Src_Info.Queries.Entity_Reference_Iterator);
+   --  See Src_Info.Queries.
 
    procedure Save_Desktop
      (Handle : access Kernel_Handle_Record);
