@@ -829,7 +829,18 @@ of breakpoints is in general preferable to interrupting programs.
 @noindent
    The call stack window gives a list of frames corresponding to the current
    execution stack for the current thread/task.
-   The top frame corresponds to the outermost frame where the thread is
+
+@iftex
+@cindex screen shot
+@image{call-stack, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{call-stack}
+@end ifhtml
+
+   The bottom frame corresponds to the outermost frame where the thread is
    currently stopped. This frame corresponds to the first function
    executed by the current thread (e.g main if the main thread is in C).
    You can click on any frame to switch to the caller's context, this will
@@ -877,7 +888,7 @@ of breakpoints is in general preferable to interrupting programs.
 
 @iftex
 @cindex screen shot
-@image{canvas, 12.7cm}
+@image{canvas, 9.8cm}
 @end iftex
 
 @ifhtml
@@ -1145,7 +1156,7 @@ The breakpoint editor can be accessed from the menu
 breakpoints: on source location, subprogram, address, variables, exceptions.
 
 The top area provides an interface to easily create the different kinds of
-breakpoints, while the bottom area lists the existing exception and
+breakpoints, while the bottom area lists the existing breakpoints and
 their characteristics.
 
 It is possible to access to advanced breakpoint characteristics by clicking
@@ -1510,7 +1521,7 @@ You can open the assembly window by using the menu @code{Debug->Data->Assembly}.
 @image{assembly}
 @end ifhtml
 
-The current assembly instruction is, as usual, highlighted with a green
+The current assembly instruction is highlighted with a green
 arrow on its left.  The instructions corresponding to the current source
 line are highlighted in red by default. This allows you to easily see
 where the program counter will point to, once you have pressed the "Next"
@@ -1564,7 +1575,7 @@ and can send commands (you need to refer to the underlying debugger's
 documentation, but usually typing @i{help} will give you an overview of
 the commands available).
 
-If the underlying debugger allows it, pressing the TAB key in this 
+If the underlying debugger allows it, pressing @key{Tab} in this 
 window will provide completion for the command that is being typed (or for
 its arguments).
 
@@ -1585,7 +1596,7 @@ and editors like GNU Emacs.
 Here is the complete list of such commands. The arguments between square
 brackets are optional and can be omitted.
 
-@table @b
+@table @command
 @item graph (print|display) expression [dependent on display_num] [link_name name]
 @cindex graph print
 @cindex graph display
