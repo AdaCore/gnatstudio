@@ -35,8 +35,8 @@ with Variable_Editor_Pkg;     use Variable_Editor_Pkg;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
 with Value_Editors;
 with Prj_API;
-with Prj_Manager;
 with Prj.Tree;
+with Glide_Kernel;
 
 package Variable_Editors is
 
@@ -48,7 +48,7 @@ package Variable_Editors is
 
    procedure Gtk_New
      (Editor  : out Variable_Edit;
-      Manager : access Prj_Manager.Project_Manager_Record'Class;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node);
    --  Create a new variable editor, associated with Project (and possibly
    --  one of the packages inside that project).
@@ -108,7 +108,7 @@ private
 
    type Variable_Edit_Record is new Variable_Editor_Record with record
       Num_Rows : Guint := 2;
-      Manager  : Prj_Manager.Project_Manager;
+      Kernel   : Glide_Kernel.Kernel_Handle;
       Pkg      : Prj.Tree.Project_Node_Id;
       Data     : Row_Data_Array_Access := null;
    end record;

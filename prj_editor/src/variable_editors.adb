@@ -63,6 +63,8 @@ with Pixmaps_Prj;   use Pixmaps_Prj;
 with Prj_API;       use Prj_API;
 with Prj_Manager;   use Prj_Manager;
 with Value_Editors; use Value_Editors;
+with Glide_Kernel;  use Glide_Kernel;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 
 package body Variable_Editors is
 
@@ -132,12 +134,12 @@ package body Variable_Editors is
 
    procedure Gtk_New
      (Editor  : out Variable_Edit;
-      Manager : access Project_Manager_Record'Class;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Pkg     : Prj.Tree.Project_Node_Id := Empty_Node) is
    begin
       Editor := new Variable_Edit_Record;
       Initialize (Editor);
-      Editor.Manager := Project_Manager (Manager);
+      Editor.Kernel := Kernel_Handle (Kernel);
       Editor.Pkg := Pkg;
    end Gtk_New;
 
@@ -418,10 +420,10 @@ package body Variable_Editors is
          if Str /= No_String then
             String_To_Name_Buffer (Str);
             Change_Scenario_Variable
-              (User.Editor.Manager,
+              (User.Editor.Kernel,
                Name_Buffer (Name_Buffer'First .. Name_Len),
                Get_Chars (Get_Entry (Editor.Data (User.Row).Type_Combo)));
-            Recompute_View (User.Editor.Manager);
+            Recompute_View (User.Editor.Kernel);
          end if;
       end if;
    end Typed_Value_Changed;
@@ -671,12 +673,12 @@ package body Variable_Editors is
 
       case V is
          when Valid =>
-            Expr := Get_Value (Value, Get_Project (Editor.Var_Editor.Manager));
+            Expr := Get_Value (Value, Get_Project (Editor.Var_Editor.Kernel));
 
             if Editor.Var = Empty_Node then
                Parent := Editor.Var_Editor.Pkg;
                if Parent = Empty_Node then
-                  Parent := Get_Project (Editor.Var_Editor.Manager);
+                  Parent := Get_Project (Editor.Var_Editor.Kernel);
                end if;
 
                if Get_Active (Editor.Typed_Variable) then
@@ -735,7 +737,7 @@ package body Variable_Editors is
 
             Refresh (Editor.Var_Editor, Editor.Var);
 
-            Recompute_View (Editor.Var_Editor.Manager);
+            Recompute_View (Editor.Var_Editor.Kernel);
             --  ??? We don't really need to recompute the whole view, since
             --  ??? after all we only added a variable that doesn't have any
             --  ??? influence yet.
