@@ -262,7 +262,7 @@ package body Default_Preferences is
       P : constant Param_Spec_Font := Param_Spec_Font
         (Gnew_String (Name, Nick, Blurb, Default, Flags));
    begin
-      Set_Value_Type (Param_Spec (P), Gdk.Font.Get_Type);
+      Set_Value_Type (Param_Spec (P), Pango.Font.Get_Type);
       return P;
    end Gnew_Font;
 
@@ -669,7 +669,7 @@ package body Default_Preferences is
 
             elsif Value_Type (N.Param) = GType_String
               or else Value_Type (N.Param) = Gdk_Color_Type
-              or else Value_Type (N.Param) = Gdk.Font.Get_Type
+              or else Value_Type (N.Param) = Pango.Font.Get_Type
             then
                N2.Value := new String'
                  (Default (Param_Spec_String (N.Param)));
@@ -1103,7 +1103,7 @@ package body Default_Preferences is
             return Gtk_Widget (Combo);
          end;
 
-      elsif Typ = Gdk.Font.Get_Type then
+      elsif Typ = Pango.Font.Get_Type then
          declare
             Prop : constant Param_Spec_Font := Param_Spec_Font (Param);
             Box : Gtk_Box;
