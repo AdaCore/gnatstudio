@@ -68,11 +68,9 @@ package body Src_Info.LI_Utils is
    --------------------------
 
    procedure Insert_Declaration
-     (Handler                : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      File                    : in out LI_File_Ptr;
+     (File                    : in out LI_File_Ptr;
       List                    : in out LI_File_List;
       Symbol_Name             : String;
-      Source_Filename         : String;
       Location                : Point;
       Parent_Filename         : String := "";
       Parent_Location         : Point := Invalid_Point;
@@ -82,26 +80,6 @@ package body Src_Info.LI_Utils is
       Rename_Location         : Point := Invalid_Point;
       Declaration_Info        : out E_Declaration_Info_List) is
    begin
-      if File = No_LI_File then
-         Create_Stub_For_File
-           (LI            => File,
-            Handler       => Handler,
-            List          => List,
-            Full_Filename => Source_Filename,
-            Parsed        => True);
-      else
-         --  Check that we parsed the correct file.
-         Assert (Me, LI_Handler (Handler) = File.LI.Handler,
-                 "Invalid Handler");
-         Convert_To_Parsed (File);
-      end if;
-
-      if File.LI.Body_Info = null then
-         Create_File_Info
-           (Fi_Ptr        => File.LI.Body_Info,
-            Full_Filename => Source_Filename);
-      end if;
-
       if File.LI.Body_Info.Declarations = null then
          File.LI.Body_Info.Declarations := new E_Declaration_Info_Node;
          Declaration_Info := File.LI.Body_Info.Declarations;
@@ -174,15 +152,11 @@ package body Src_Info.LI_Utils is
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Locate_From_Source (List, Referred_Filename);
-
-      if Tmp_LI_File_Ptr = No_LI_File then
-         Create_Stub_For_File
-           (LI            => Tmp_LI_File_Ptr,
-            Handler       => CPP_LI_Handler (Handler),
-            List          => List,
-            Full_Filename => Referred_Filename);
-      end if;
+      Create_Stub_For_File
+        (LI            => Tmp_LI_File_Ptr,
+         Handler       => CPP_LI_Handler (Handler),
+         List          => List,
+         Full_Filename => Referred_Filename);
 
       --  Is this a first dependencies info in this file?
       if File.LI.Dependencies_Info = null then
@@ -248,43 +222,31 @@ package body Src_Info.LI_Utils is
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Locate_From_Source (List, Referred_Filename);
 
-      if Tmp_LI_File_Ptr = No_LI_File then
+      Create_Stub_For_File
+        (LI            => Tmp_LI_File_Ptr,
+         Handler       => Handler,
+         List          => List,
+         Full_Filename => Referred_Filename,
+         Parsed        => False);
+
+      D_Ptr := Find_Declaration
+        (File              => Tmp_LI_File_Ptr,
+         Symbol_Name       => Symbol_Name,
+         Location          => Location);
+
+      if D_Ptr = null then
          Insert_Declaration
-           (Handler               => Handler,
-            File                  => Tmp_LI_File_Ptr,
-            List                  => List,
-            Symbol_Name           => Symbol_Name,
-            Source_Filename       => Referred_Filename,
-            Location              => Location,
-            Parent_Filename       => Parent_Filename,
-            Parent_Location       => Parent_Location,
-            Kind                  => Kind,
-            Scope                 => Scope,
+           (File               => Tmp_LI_File_Ptr,
+            List               => List,
+            Symbol_Name        => Symbol_Name,
+            Location           => Location,
+            Parent_Filename    => Parent_Filename,
+            Parent_Location    => Parent_Location,
+            Kind               => Kind,
+            Scope              => Scope,
             End_Of_Scope_Location => End_Of_Scope_Location,
-            Declaration_Info      => Tmp_Ptr);
-      else
-         D_Ptr := Find_Declaration
-           (File              => Tmp_LI_File_Ptr,
-            Symbol_Name       => Symbol_Name,
-            Location          => Location);
-
-         if D_Ptr = null then
-            Insert_Declaration
-              (Handler            => Handler,
-               File               => Tmp_LI_File_Ptr,
-               List               => List,
-               Symbol_Name        => Symbol_Name,
-               Source_Filename    => Referred_Filename,
-               Location           => Location,
-               Parent_Filename    => Parent_Filename,
-               Parent_Location    => Parent_Location,
-               Kind               => Kind,
-               Scope              => Scope,
-               End_Of_Scope_Location => End_Of_Scope_Location,
-               Declaration_Info   => Tmp_Ptr);
-         end if;
+            Declaration_Info   => Tmp_Ptr);
       end if;
 
       --  Is this is a first dependencies info in this file?
@@ -405,22 +367,12 @@ package body Src_Info.LI_Utils is
          end loop;
       end if;
 
-      Tmp_LI_File_Ptr := Locate_From_Source (List, Parent_Filename);
-      if Tmp_LI_File_Ptr = No_LI_File then
-         Tmp_LI_File_Ptr :=
-           Declaration_Info.Value.Declaration.Location.File.LI;
-
-         if Parent_Filename /=
-           Tmp_LI_File_Ptr.LI.Body_Info.Source_Filename.all
-         then
-            --  Create a stub for the parent
-            Create_Stub_For_File
-              (LI            => Tmp_LI_File_Ptr,
-               Handler       => Handler,
-               List          => List,
-               Full_Filename => Parent_Filename);
-         end if;
-      end if;
+      --  Create a stub for the parent, or get the existing LI
+      Create_Stub_For_File
+        (LI            => Tmp_LI_File_Ptr,
+         Handler       => Handler,
+         List          => List,
+         Full_Filename => Parent_Filename);
       FL_Ptr.all :=
         (Value => (File        => (LI              => Tmp_LI_File_Ptr,
                                    Part            => Unit_Body,
@@ -585,15 +537,22 @@ package body Src_Info.LI_Utils is
    begin
       Xref_Name := Xref_Filename_For
         (Full_Filename, Get_DB_Dir (Handler), Get_Xrefs (Handler));
-      Create_LI_File
-        (File             => LI,
-         List             => List,
-         LI_Full_Filename => Get_DB_Dir (Handler) & Xref_Name.all,
-         Handler          => LI_Handler (Handler),
-         Parsed           => Parsed);
-      Create_File_Info
-        (FI_Ptr           => LI.LI.Body_Info,
-         Full_Filename    => Full_Filename);
+      LI := Locate (List, Xref_Name.all);
+
+      if LI = null then
+         Create_LI_File
+           (File             => LI,
+            List             => List,
+            LI_Full_Filename => Get_DB_Dir (Handler) & Xref_Name.all,
+            Handler          => LI_Handler (Handler),
+            Parsed           => Parsed);
+      end if;
+
+      if LI.LI.Body_Info = null then
+         Create_File_Info
+           (FI_Ptr           => LI.LI.Body_Info,
+            Full_Filename    => Full_Filename);
+      end if;
    end Create_Stub_For_File;
 
    -----------------------------------
@@ -646,17 +605,12 @@ package body Src_Info.LI_Utils is
             Tmp_LI_File_Ptr := File;
 
          else
-            Tmp_LI_File_Ptr := Locate_From_Source (List, Parent_Filename);
-            if Tmp_LI_File_Ptr = No_LI_File then
-               --  The parent is not available, create a stub for it.
-               Trace (Me, "No parent LI available for file "
-                      & Parent_Filename);
-               Create_Stub_For_File
-                 (LI            => Tmp_LI_File_Ptr,
-                  Handler       => CPP_LI_Handler (File.LI.Handler),
-                  List          => List,
-                  Full_Filename => Parent_Filename);
-            end if;
+            --  Find the parent LI, or create a stub for it.
+            Create_Stub_For_File
+              (LI            => Tmp_LI_File_Ptr,
+               Handler       => CPP_LI_Handler (File.LI.Handler),
+               List          => List,
+               Full_Filename => Parent_Filename);
          end if;
          D_Ptr.Value.Declaration.Parent_Location := new File_Location_Node'
            (Value => (File   => (LI              => Tmp_LI_File_Ptr,
@@ -665,7 +619,7 @@ package body Src_Info.LI_Utils is
                       Line   => Parent_Location.Line,
                       Column => Parent_Location.Column),
             Next  => null);
-         --  ??? what does the procedure looks like to support multiple
+         --  ??? what does the procedure look like to support multiple
          --  inheritance?
       end if;
 
@@ -759,6 +713,7 @@ package body Src_Info.LI_Utils is
       Name    : constant GNAT.OS_Lib.String_Access :=
         new String' (Base_Name (LI_Full_Filename));
    begin
+      Trace (Me, "Create_LI_File " & Name.all & " Parsed=" & Parsed'Img);
       if Parsed then
          File := new LI_File_Constrained'
            (LI => (Parsed                   => True,
@@ -770,6 +725,12 @@ package body Src_Info.LI_Utils is
                    Compilation_Errors_Found => Compilation_Errors,
                    Separate_Info            => null,
                    LI_Timestamp             => 0));
+
+         if Is_Regular_File (File.LI.LI_Filename.all) then
+            File.LI.LI_Timestamp := To_Timestamp
+              (File_Time_Stamp (File.LI.LI_Filename.all));
+         end if;
+
       else
          File := new LI_File_Constrained'
            (LI =>  (Parsed        => False,

@@ -24,11 +24,9 @@ with Src_Info.CPP;
 private package Src_Info.LI_Utils is
 
    procedure Insert_Declaration
-     (Handler               : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      File                  : in out LI_File_Ptr;
+     (File                  : in out LI_File_Ptr;
       List                  : in out LI_File_List;
       Symbol_Name           : String;
-      Source_Filename       : String;
       Location              : SN.Point;
       Parent_Filename       : String := "";
       Parent_Location       : SN.Point := SN.Invalid_Point;
@@ -148,8 +146,8 @@ private package Src_Info.LI_Utils is
       List          : in out LI_File_List;
       Full_Filename : String;
       Parsed        : Boolean := False);
-   --  Create a stub LI file for Full_Filename. This function doesn't test
-   --  whether there is already an entry in List for Full_Filename.
+   --  Create a stub LI file for Full_Filename, if there is no matching LI file
+   --  in List.
    --  If Parsed is True, the LI file will be considered as already parsed,
    --  even though no entity will be declared for it.
 
