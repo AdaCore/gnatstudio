@@ -125,6 +125,10 @@ package Prj_API is
    --  construction.
    --  The new item can be found by accessing First_Case_Item_Of (In_Case)
 
+   procedure Add_Imported_Project
+     (Project : Project_Node_Id; Imported_Project : Project_Node_Id);
+   --  Add a new with_statement for Imported_Project.
+
    ---------------------
    -- Variable values --
    ---------------------

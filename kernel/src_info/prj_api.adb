@@ -1068,6 +1068,38 @@ package body Prj_API is
       end if;
    end Typed_Values_Count;
 
+   --------------------------
+   -- Add_Imported_Project --
+   --------------------------
+
+   procedure Add_Imported_Project
+     (Project : Project_Node_Id; Imported_Project : Project_Node_Id)
+   is
+      With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+   begin
+      --  Check if it is already there.
+      while With_Clause /= Empty_Node loop
+         if Project_Node_Of (With_Clause) = Imported_Project then
+            return;
+         end if;
+         With_Clause := Next_With_Clause_Of (With_Clause);
+      end loop;
+
+      With_Clause := Default_Project_Node (N_With_Clause);
+      Set_Project_Node_Of (With_Clause, Imported_Project);
+      Set_Name_Of (With_Clause, Prj.Tree.Name_Of (Imported_Project));
+      Set_Path_Name_Of (With_Clause, Path_Name_Of (Imported_Project));
+
+      Set_Next_With_Clause_Of (With_Clause, First_With_Clause_Of (Project));
+      Set_First_With_Clause_Of (Project, With_Clause);
+
+      Start_String;
+      Store_String_Chars (Get_Name_String (Path_Name_Of (Imported_Project)));
+      Store_String_Chars
+        (Get_Name_String (Prj.Tree.Name_Of (Imported_Project)));
+      Set_String_Value_Of (With_Clause, End_String);
+   end Add_Imported_Project;
+
 begin
    Namet.Initialize;
    Csets.Initialize;
