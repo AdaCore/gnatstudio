@@ -46,8 +46,8 @@ package Language_Handlers.GVD is
       Name    : String) return Language.Language_Access;
 
    function Known_Languages
-     (Handler : access GVD_Language_Handler_Record)
-      return GNAT.OS_Lib.Argument_List;
+     (Handler : access GVD_Language_Handler_Record;
+      Sorted  : Boolean) return GNAT.OS_Lib.Argument_List;
 
    procedure Register_Language
      (Handler : access GVD_Language_Handler_Record;

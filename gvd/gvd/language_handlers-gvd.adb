@@ -151,8 +151,10 @@ package body Language_Handlers.GVD is
    ---------------------
 
    function Known_Languages
-     (Handler : access GVD_Language_Handler_Record)
-      return Argument_List is
+     (Handler : access GVD_Language_Handler_Record;
+      Sorted  : Boolean) return Argument_List
+   is
+      pragma Unreferenced (Sorted);
    begin
       if Handler.Languages /= null then
          declare
