@@ -54,7 +54,9 @@ project Kernel is
       "src_info-queries.adb",
       "src_info-queries.ads",
       "src_info.adb",
-      "src_info.ads");
+      "src_info.ads",
+      "gvd-text_box-source_editor-glide.ads",
+      "gvd-text_box-source_editor-glide.adb");
 
    package Compiler is
       for Default_Switches ("Ada") use ("-g", "-gnata", "-O2", "-gnaty", "-gnatwue");
