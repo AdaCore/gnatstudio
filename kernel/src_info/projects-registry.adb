@@ -1889,7 +1889,8 @@ package body Projects.Registry is
       Gnatls_Path  : String;
       Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access)
    is
-      Current : GNAT.OS_Lib.String_Access := new String'("");
+      Current         : GNAT.OS_Lib.String_Access := new String'("");
+      Object_Path_Set : Boolean := False;
 
       procedure Add_Directory (S : String);
       --  Add S to the search path.
@@ -1903,8 +1904,11 @@ package body Projects.Registry is
       procedure Add_Directory (S : String) is
          Tmp : GNAT.OS_Lib.String_Access;
       begin
-         if S = ""
-           or else S = "<Current_Directory>"
+         if S = "" then
+            return;
+
+         elsif S = "<Current_Directory>"
+           and then not Object_Path_Set
          then
             --  Do not include "." in the default source paths: when the user
             --  is compiling, it would represent the object directory, when the
@@ -1931,7 +1935,7 @@ package body Projects.Registry is
       Expect (Fd, Result, "GNATLS .+(\n| )Copyright", Timeout => -1);
 
       declare
-         S : constant String := Expect_Out_Match (Fd);
+         S : constant String := Strip_CR (Expect_Out_Match (Fd));
       begin
          GNAT_Version.all := new String'(S (S'First + 7 .. S'Last - 10));
       end;
@@ -1949,6 +1953,13 @@ package body Projects.Registry is
                Set_Predefined_Source_Path (Registry, Current.all);
                Free (Current);
                Current := new String'("");
+
+            elsif S = "Project Search Path:" & ASCII.LF then
+               Object_Path_Set := True;
+               Set_Predefined_Object_Path (Registry, Current.all);
+               Free (Current);
+               Current := new String'("");
+
             else
                Add_Directory (S (S'First .. S'Last - 1));
             end if;
@@ -1957,7 +1968,13 @@ package body Projects.Registry is
 
    exception
       when Process_Died =>
-         Set_Predefined_Object_Path (Registry, Current.all);
+         if Object_Path_Set then
+            --  Is the call below sufficient ???
+            Prj.Ext.Set_Project_Path (Current.all);
+         else
+            Set_Predefined_Object_Path (Registry, Current.all);
+         end if;
+
          Free (Current);
          Close (Fd);
    end Compute_Predefined_Paths;
