@@ -73,6 +73,8 @@ package Project_Explorers_Common is
       Category_Node,
       Entity_Node,
       Modified_Project_Node);
+   subtype Directory_Node_Types
+     is Node_Types range Directory_Node .. Exec_Directory_Node;
    --  The kind of nodes one might find in the tree
 
    --------------
