@@ -1244,7 +1244,7 @@ package body Codefix.Text_Manager is
    begin
 
       loop
-         if Local_Cursor.Col > Current_Line'Last then
+         if Local_Cursor.Col > Local_Line'Last then
             Local_Cursor.Col := 1;
             Local_Cursor.Line := Local_Cursor.Line + 1;
             Assign (Local_Line, Get_Line (This, Local_Cursor));
@@ -3291,7 +3291,6 @@ package body Codefix.Text_Manager is
                  with null, Text_Ascii);
       Cursor.Mode := Word.Mode;
       Assign (Cursor.String_Match, Word.String_Match);
-
    end Make_Word_Cursor;
 
    procedure Free (This : in out Word_Mark) is
@@ -3570,6 +3569,41 @@ package body Codefix.Text_Manager is
 
       Free (Extract1);
       Free (Extract2);
+   end Execute;
+
+   -------------------
+   --  Add_Line_Cmd --
+   -------------------
+
+   procedure Initialize
+     (This         : in out Add_Line_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Position     : File_Cursor'Class;
+      Line         : String) is
+   begin
+      Assign (This.Line, Line);
+      This.Position := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Position));
+   end Initialize;
+
+   procedure Free (This : in out Add_Line_Cmd) is
+   begin
+      Free (This.Line);
+      Free (This.Position.all);
+      Free (This.Position);
+   end Free;
+
+   procedure Execute
+     (This         : Add_Line_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class)
+   is
+      Cursor : File_Cursor;
+   begin
+      Cursor := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Position.all));
+      Add_Line (New_Extract, Cursor, This.Line.all);
+      Free (Cursor);
    end Execute;
 
    --------------------
