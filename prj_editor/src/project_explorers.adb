@@ -209,8 +209,7 @@ package body Project_Explorers is
    function Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
+      Search_Backward : Boolean) return Boolean;
    --  Search the next occurrence in the explorer
 
    -----------------------
@@ -2389,10 +2388,9 @@ package body Project_Explorers is
    function Search
      (Context         : access Explorer_Search_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean
+      Search_Backward : Boolean) return Boolean
    is
-      pragma Unreferenced (Search_Backward, Interactive);
+      pragma Unreferenced (Search_Backward);
       C        : constant Explorer_Search_Context_Access :=
         Explorer_Search_Context_Access (Context);
       Explorer : constant Project_Explorer :=
@@ -2827,9 +2825,7 @@ package body Project_Explorers is
                          Whole_Word     => True,
                          Regexp         => False));
 
-         if not Search
-           (C, Kernel, Search_Backward => False, Interactive => False)
-         then
+         if not Search (C, Kernel, Search_Backward => False) then
             Insert (Kernel,
                     -"File not found in the explorer: "
                     & File_Information (File_C));
