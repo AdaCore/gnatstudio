@@ -1,0 +1,43 @@
+with Gtk.Window; use Gtk.Window;
+with Gtk.Paned; use Gtk.Paned;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Viewport; use Gtk.Viewport;
+with Gtk.Notebook; use Gtk.Notebook;
+with Gtk.Text; use Gtk.Text;
+with Gtk.Label; use Gtk.Label;
+with Gtk.Button; use Gtk.Button;
+with Gtkada.Canvas; use Gtkada.Canvas;
+with Odd_Tools.Process;
+with Glib;
+
+package Process_Tab_Pkg is
+
+   type Process_Tab_Record is new Gtk_Window_Record with record
+      -------------------------
+      --  Additional fields  --
+      -------------------------
+
+      Debugger : aliased Odd_Tools.Process.Debugger_Descriptor;
+      Edit_Pos : Glib.Guint;
+
+      -------------------------
+
+      Process_Paned : Gtk_Vpaned;
+      Vpaned6 : Gtk_Vpaned;
+      Scrolledwindow9 : Gtk_Scrolled_Window;
+      Data_Canvas : Interactive_Canvas;
+      Notebook3 : Gtk_Notebook;
+      Scrolledwindow8 : Gtk_Scrolled_Window;
+      Editor_Text : Gtk_Text;
+      Label52 : Gtk_Label;
+      Scrolledwindow7 : Gtk_Scrolled_Window;
+      Debugger_Text : Gtk_Text;
+   end record;
+   type Process_Tab_Access is access all Process_Tab_Record'Class;
+
+   procedure Gtk_New (Process_Tab : out Process_Tab_Access);
+   procedure Initialize (Process_Tab : access Process_Tab_Record'Class);
+
+   Process_Tab : Process_Tab_Access;
+
+end Process_Tab_Pkg;
