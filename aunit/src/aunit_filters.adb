@@ -51,6 +51,7 @@ package body Aunit_Filters is
       Current_Name : String_Access;
       Found        : Boolean := False;
    begin
+
       if File_Name'Length <= 4 then
          return;
       end if;
