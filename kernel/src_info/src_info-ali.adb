@@ -1335,12 +1335,12 @@ package body Src_Info.ALI is
          Decl.Scope := Local_Scope;
       end if;
 
-      if Xref_Ent.Ptype_File_Num /= No_Sdep_Id then
+      if Xref_Ent.Tref_File_Num /= No_Sdep_Id then
          Decl.Parent_Location :=
-           (File   => Copy (Sfiles (Xref_Ent.Ptype_File_Num)),
-            Line   => Positive (Xref_Ent.Ptype_Line),
-            Column => Positive (Xref_Ent.Ptype_Col));
-         Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Ptype_Type);
+           (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
+            Line   => Positive (Xref_Ent.Tref_Line),
+            Column => Positive (Xref_Ent.Tref_Col));
+         Decl.Parent_Kind := Char_To_E_Kind (Xref_Ent.Tref_Type);
       else
          Decl.Parent_Location := Null_File_Location;
          Decl.Parent_Kind := E_Kind'First;
