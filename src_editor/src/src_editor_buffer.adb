@@ -1722,6 +1722,17 @@ package body Src_Editor_Buffer is
       return Buffer.Queue;
    end Get_Queue;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel
+     (Buffer : access Source_Buffer_Record)
+     return Glide_Kernel.Kernel_Handle is
+   begin
+      return Buffer.Kernel;
+   end Get_Kernel;
+
    ------------------
    -- Get_Filename --
    ------------------

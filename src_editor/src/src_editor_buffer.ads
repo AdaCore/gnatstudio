@@ -323,6 +323,10 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Command_Queue;
    --  Return the action queue associated to Buffer.
 
+   function Get_Kernel
+     (Buffer : access Source_Buffer_Record) return Glide_Kernel.Kernel_Handle;
+   --  Return the kernel associated to Buffer.
+
    function Get_Filename
      (Buffer : access Source_Buffer_Record)
      return String;
