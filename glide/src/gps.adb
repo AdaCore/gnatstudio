@@ -254,7 +254,9 @@ procedure GPS is
             (-"   gps [-p project-file] [source1] [source2] ...") & LF &
             (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
-            (-"   --version           Show the GPS version and exit."),
+            (-"   --version           Show the GPS version and exit.") & LF &
+            LF & (-("Source files are searched everywhere on the project's " &
+                    " source path")),
             Information, Button_OK,
             Title => -"Help",
             Justification => Justify_Left);
