@@ -75,6 +75,7 @@ with Glide_Intl;               use Glide_Intl;
 with Switches_Editors;         use Switches_Editors;
 with Naming_Editors;           use Naming_Editors;
 with Language_Handlers;        use Language_Handlers;
+with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Directory_Tree;           use Directory_Tree;
 with Switches_Editors;         use Switches_Editors;
 with Traces;                   use Traces;
@@ -237,6 +238,11 @@ package body Project_Viewers is
       Kernel : Kernel_Handle);
    --  Callback for the Project->Edit Switches menu
 
+   procedure On_Project_Properties
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Callback for the Project->Edit properties menu
+
    procedure On_Add_Dependency_From_Wizard
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -304,7 +310,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean;
+      return Project_Node_Array;
 
    type Source_Editor_Record is new Project_Editor_Page_Record
      with null record;
@@ -321,7 +327,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean;
+      return Project_Node_Array;
 
    type Object_Editor_Widget_Record is new Gtk_Box_Record with record
       Obj_Dir  : Gtk_Entry;
@@ -345,7 +351,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean;
+      return Project_Node_Array;
 
    type Switches_Editor_Record is new Project_Editor_Page_Record
      with null record;
@@ -362,7 +368,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean;
+      return Project_Node_Array;
    procedure Refresh
      (Page         : access Switches_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -384,7 +390,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean;
+      return Project_Node_Array;
    procedure Refresh
      (Page         : access Naming_Editor_Record;
       Widget       : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -459,12 +465,17 @@ package body Project_Viewers is
       pragma Unreferenced (Directory, Fd);
       Value      : Variable_Value;
       Is_Default : Boolean;
-
+      Language   : constant String := Get_Language_From_File
+        (Glide_Language_Handler (Get_Language_Handler (Viewer.Kernel)),
+         File_Name,
+         Viewer.Project_Filter);
    begin
-      --  ??? Should show the switches for the specific language of the file
+      Name_Len := Language'Length;
+      Name_Buffer (1 .. Name_Len) := Language;
+
       Get_Switches
         (Viewer.Project_Filter, "compiler", File_Name,
-         Snames.Name_Ada, Value, Is_Default);
+         Name_Find, Value, Is_Default);
       Line := New_String (To_String (Value));
 
       if Is_Default then
@@ -876,6 +887,8 @@ package body Project_Viewers is
       Add_Page
         (Wiz, Load_Project_Page, -"Loading the project", -"Load project");
 
+      Show_All (Load_Project_Page);
+
       declare
          Name : constant String := Run (Wiz);
       begin
@@ -936,6 +949,36 @@ package body Project_Viewers is
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_Edit_Switches;
+
+   ---------------------------
+   -- On_Project_Properties --
+   ---------------------------
+
+   procedure On_Project_Properties
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Context : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+        and then Has_Project_Information
+        (File_Selection_Context_Access (Context))
+      then
+         Edit_Properties
+           (Project_Information (File_Selection_Context_Access (Context)),
+            Kernel);
+      else
+         Insert (Kernel, -"No selected project!");
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Message (E));
+   end On_Project_Properties;
 
    -----------------------
    -- Read_Project_Name --
@@ -1569,7 +1612,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean
+      return Project_Node_Array
    is
       pragma Unreferenced (Page, Kernel);
       Editor       : Executables_Editor := Executables_Editor (Widget);
@@ -1608,21 +1651,24 @@ package body Project_Viewers is
          if New_Mains'Length /= 0 then
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Pkg_Name           => "",
                Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Main_Attribute,
                Values             => New_Mains);
          else
             Delete_Attribute
               (Project            => Project,
-               Pkg_Name           => "",
                Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Main_Attribute);
          end if;
       end if;
 
       Free (New_Mains);
-      return Changed;
+
+      if Changed then
+         return (1 => Project);
+      else
+         return (1 .. 0 => Empty_Node);
+      end if;
    end Project_Editor;
 
    --------------------
@@ -1687,7 +1733,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean
+      return Project_Node_Array
    is
       pragma Unreferenced (Page);
       Dirs     : Argument_List := Get_Multiple_Selection
@@ -1754,6 +1800,7 @@ package body Project_Viewers is
          end if;
 
       else
+         Equal := False;
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => "",
@@ -1766,7 +1813,11 @@ package body Project_Viewers is
 
       Free (Dirs);
 
-      return not Equal;
+      if not Equal then
+         return (1 => Project);
+      else
+         return (1 .. 0 => Empty_Node);
+      end if;
    end Project_Editor;
 
    ----------------------
@@ -1902,7 +1953,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean
+      return Project_Node_Array
    is
       pragma Unreferenced (Page);
       Obj_Dir : Object_Editor_Widget := Object_Editor_Widget (Widget);
@@ -1976,7 +2027,12 @@ package body Project_Viewers is
 
       Free (New_Dir);
       Free (Exec_Dir);
-      return Changed;
+
+      if Changed then
+         return (1 => Project);
+      else
+         return (1 .. 0 => Empty_Node);
+      end if;
    end Project_Editor;
 
    --------------------
@@ -2013,7 +2069,7 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean
+      return Project_Node_Array
    is
       pragma Unreferenced (Page, Ref_Project, Scenario_Variables);
    begin
@@ -2076,15 +2132,21 @@ package body Project_Viewers is
       Widget       : access Gtk_Widget_Record'Class;
       Scenario_Variables : Prj_API.Project_Node_Array;
       Ref_Project  : Project_Node_Id)
-      return Boolean
+      return Project_Node_Array
    is
       pragma Unreferenced (Page, Kernel, Ref_Project);
    begin
-      return Create_Project_Entry
+      if Create_Project_Entry
         (Naming_Editor (Widget),
          Project            => Project,
          Project_View       => Project_View,
-         Scenario_Variables => Scenario_Variables);
+         Scenario_Variables => Scenario_Variables)
+      then
+         return (1 => Find_Project_Of_Package
+                 (Project, Get_Name_String (Name_Naming)));
+      else
+         return (1 .. 0 => Empty_Node);
+      end if;
    end Project_Editor;
 
    -------------
@@ -2125,8 +2187,12 @@ package body Project_Viewers is
         (Kernel, Project, -"Edit Switches", "",
          On_Edit_Switches'Access, Ref_Item => -"Open...", Add_Before => False);
       Register_Menu
+        (Kernel, Project, -"Edit Properties", "",
+         On_Project_Properties'Access, Ref_Item => -"Open...",
+         Add_Before => False);
+      Register_Menu
         (Kernel, Project, -"Save All", "",
-         Save_All_Projects'Access, Ref_Item => -"Edit Switches",
+         Save_All_Projects'Access, Ref_Item => -"Edit Properties",
          Add_Before => False);
 
       Register_Project_Editor_Page
