@@ -36,7 +36,6 @@
 
 with Gdk.Bitmap;
 with Gdk.Pixmap;
-with Gtk.Button;
 with Gtk.Table;
 with Glide_Kernel;
 
@@ -60,7 +59,6 @@ package Scenario_Views is
 private
    type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with record
       Kernel      : Glide_Kernel.Kernel_Handle;
-      Add_Button  : Gtk.Button.Gtk_Button;
 
       Edit_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
       Edit_Mask     : Gdk.Bitmap.Gdk_Bitmap;
