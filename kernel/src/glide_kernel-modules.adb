@@ -83,6 +83,7 @@ package body Glide_Kernel.Modules is
      (User  : Contextual_Menu_User_Data;
       Event : Gdk_Event) return Gtk_Menu;
    --  Create a contextual menu as a result of a mouse event
+   --  Return null if no menu was created.
 
    procedure Destroy_Contextual_Menu
      (User : Contextual_Menu_User_Data; Menu : Gtk_Menu);
@@ -294,6 +295,7 @@ package body Glide_Kernel.Modules is
       Menu    : Gtk_Menu := null;
 
       use type Module_List.List_Node;
+      use type Gtk.Widget.Widget_List.Glist;
    begin
       if User.Kernel.Last_Context_For_Contextual /= null then
          Unref (User.Kernel.Last_Context_For_Contextual);
@@ -333,6 +335,14 @@ package body Glide_Kernel.Modules is
       end if;
 
       Pop_State (User.Kernel);
+
+      --  If the menu is empty, destroy it.
+
+      if Children (Menu) = Gtk.Widget.Widget_List.Null_List then
+         Destroy (Menu);
+         Menu := null;
+      end if;
+
       return Menu;
    end Create_Contextual_Menu;
 
