@@ -101,6 +101,7 @@ GNAT_SOURCES= \
   prj.ads \
   prj.adb \
   rident.ads \
+  s-rident.ads \
   scans.ads \
   scans.adb \
   scn.ads \
