@@ -28,7 +28,7 @@ package body Tokens is
                when '0' .. '9' | '.' =>
                   return Token'(Kind => Val, Val => Values.Read (Word));
 
-               when '+' | '*' | '/' | '#' =>
+               when '+' | '*' | '/' =>
                   return
                     Token'(Kind => Op, Op => Values.Operations.Read (Word));
 
@@ -65,15 +65,12 @@ package body Tokens is
    begin
       case T.Kind is
          when Val =>
-            --  The token on stack is a value.
             Values.Process (T.Val);
 
          when Op =>
-            --  The token on stack is an operation on values.
             Values.Operations.Process (T.Op);
 
          when Instr =>
-            --  The token on stack is an instruction.
             Instructions.Process (T.Instr);
       end case;
    end Process;

@@ -22,8 +22,6 @@ package body Values.Operations is
       elsif Op = "/" then
          return Div;
 
-      elsif Op = "#" then
-         return Matrix;
       else
          raise Except.User_Error;
       end if;
@@ -37,61 +35,27 @@ package body Values.Operations is
       V2 : Value := Stack.Pop;
       V1 : Value := Stack.Pop;
 
-      Result   : Integer;
-      Result_M : Matrix_Type;
+      Result : Integer;
 
    begin
-      case V1.Kind is
-         when Int =>
-            case Op is
-               when Add =>
-                  Result := V1.E + V2.E;
-                  Stack.Push (new Value_Info'(Kind => Int, E => Result));
+      case Op is
+         when Add =>
+            Result := V1.E + V2.E;
 
-               when Div =>
-                  Result := V1.E / V2.E;
-                  Stack.Push (new Value_Info'(Kind => Int, E => Result));
+         when Div =>
+            Result := V1.E / V2.E;
 
-               when Mul =>
-                  Result := V1.E * V2.E;
-                  Stack.Push (new Value_Info'(Kind => Int, E => Result));
+         when Mul =>
+            Result := V1.E * V2.E;
 
-               when Sub =>
-                  Result := V1.E - V2.E;
-                  Stack.Push (new Value_Info'(Kind => Int, E => Result));
-
-               when Matrix =>
-                  Result_M := Alloc (2, 2);
-                  Set (Result_M, 1, 0, V1.E);
-                  Set (Result_M, 1, 1, V2.E);
-                  Set (Result_M, 0, 1, Stack.Pop.E);
-                  Set (Result_M, 0, 0, Stack.Pop.E);
-                  Stack.Push (new Value_Info'(Kind => Matrix, M => Result_M));
-
-            end case;
-
-         when Matrix =>
-            --  This is a Matrix operation
-
-            case Op is
-               when Add =>
-                  Result_M := V1.M + V2.M;
-
-               when Div =>
-                  raise Except.User_Error;
-
-               when Mul =>
-                  Result_M := V1.M * V2.M;
-
-               when Sub =>
-                  raise Except.User_Error;
-
-               when Matrix =>
-                  raise Except.User_Error;
-            end case;
-
-            Stack.Push (new Value_Info'(Kind => Matrix, M => Result_M));
+         when Sub =>
+            Result := V1.E - V2.E;
       end case;
+
+      --  Create an integer Value by setting the field "E" of the record
+      --  to Result.
+
+      Stack.Push (new Value_Info'(E => Result));
 
    exception
       --  If we get a Constraint_Error exception, then we had a computation
@@ -99,7 +63,6 @@ package body Values.Operations is
 
       when Constraint_Error =>
          Screen_Output.Error_Msg ("Operation error. Values popped.");
-         raise;
 
    end Process;
 
