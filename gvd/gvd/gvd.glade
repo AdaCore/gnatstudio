@@ -84,7 +84,7 @@
 	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:13:50 GMT</last_modification_time>
 	    </signal>
-	    <label>Open Debugger...</label>
+	    <label>New Debugger...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 

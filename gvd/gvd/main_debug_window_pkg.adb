@@ -85,8 +85,7 @@ begin
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Program1);
    Set_Right_Justify (Main_Debug_Window.Open_Program1, False);
 
-
-   Gtk_New (Main_Debug_Window.Open_Debugger1, -"Open Debugger...");
+   Gtk_New (Main_Debug_Window.Open_Debugger1, -"New Debugger...");
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Debugger1, "activate",
       Widget_Callback.To_Marshaller (On_Open_Debugger1_Activate'Access), Main_Debug_Window);
