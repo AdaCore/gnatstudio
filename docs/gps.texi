@@ -5427,21 +5427,18 @@ from custom menu. In order to do that, you must write your script in a
 Thus, the @code{Action} tag would look like:
 
 @smallexample
-
 <Action>cmd /c c:\.gps\my_scripts\my_command.cmd</Action>
-
 @end smallexample
 
 @cindex shell
 @cindex interactive command
 As well as external commands, you can use custom menu items to invoke GPS
 commands using the @code{GPS_Action} tag. The following example shows how to
-create menus to invoke the @code{help} interactive command and to open the
+create a menu to invoke the @code{help} interactive command and to open the
 file @file{main.c}.
 
 @cindex example
 @smallexample
-
 <Submenu>
   <Title>Edit</Title>
   <Menu_Item>
@@ -5453,8 +5450,10 @@ file @file{main.c}.
     <GPS_Action>edit main.c</GPS_Action>
   </Menu_Item>
 </Submenu>
-
 @end smallexample
+
+See below for more information on this @code{GPS_Action} tag.
+
 
 You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
@@ -5509,7 +5508,39 @@ A menu item inside a submenu.
 External command associated with a menu item.
 
 @item GPS_Action
-GPS specific command associated with a menu item.
+GPS specific command associated with a menu item. This is a command
+written in one of the shell scripts supported by GPS. You can specify
+the language as an attribute of the XML node. The name of the
+attribute is @code{lang}. The default value for this attribute is
+@code{shell}, ie the command is written with the GPS shell.
+
+@c The value of this attribute could also be "python".
+
+When programming with the GPS shell, you can execute multiple commands
+by separating them with semicolons. Therefore, the following example
+adds a menu which lists all the files used by the current file, in a
+project browser. Note: due to some current limitation of the parsing
+of the custom files, the '%' argument must be surrounded by spaces, as
+shown in the example.
+
+@smallexample
+<Menu_Item>
+  <Title>Current file uses</Title>
+  <GPS_Action lang="shell">File %f ; File.uses $1</GPS_Action>
+</Menu_Item>
+@end smallexample
+
+It is possible to mix both shell commands and external commands. For
+instance, the following command opens an xterm (on Unix systems only)
+in the current directory, which depends on the context.
+
+@smallexample
+<Menu_Item>
+  <Title>_Xterm in current directory</Title>
+  <GPS_Action lang="shell">cd %d</GPS_Action>
+  <Action>xterm</Action>
+</Menu_Item>
+@endsmallexample
 
 @end table
 
@@ -6524,6 +6555,13 @@ if you script's last command is to exit GPS.
 Inline commands can also be given directly on the command line through
 @code{--eval} command line switch.
 
+For instance, if you want to analyze an entity in the entity browser
+from the command line, you would pass the following command switches:
+
+@smallexample
+gps --eval=shell:'Entity entity_name file_name; Entity.show $1'
+@end smallexample
+
 
 
 @node The GPS Shell
@@ -6565,6 +6603,17 @@ The GPS shell provides the command @code{clear_cache} which removes
 all such values from the memory. After this command is run, you can no
 longer use references obtained from previous commands, although of
 course you can run these commands again to get a new reference.
+
+
+The return value of the 9 previous commands can easily be recalled by
+passing @code{$1}, @code{$2},@dots on the command line. For instance,
+the previous example could be rewritten as
+
+@smallexample
+GPS> Entity my_entity file_name.adb
+<Entity_0x09055790>
+GPS> Entity.find_all_refs $1
+@end smallexample
 
 In future versions of GPS, it will be possible to use more advanced scripting
 languages such as @code{Python}.
