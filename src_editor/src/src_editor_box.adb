@@ -1002,7 +1002,7 @@ package body Src_Editor_Box is
       Start_Column : out Positive;
       End_Line     : out Positive;
       End_Column   : out Positive;
-      Status       : out Src_Info.Queries.Query_Status)
+      Status       : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status)
    is
       Tmp_Line   : Natural := Line;
       Tmp_Col    : Natural := Column;
