@@ -112,6 +112,7 @@ procedure GPS is
    Home           : String_Access;
    Prefix         : String_Access;
    Dir            : String_Access;
+   Batch_Script   : String_Access;
    Target,
    Protocol,
    Debugger_Name  : String_Access;
@@ -325,6 +326,8 @@ procedure GPS is
            (-"   --debugger debugger Specify the debugger's command line");
          Put_Line ((-"   --target=TARG:PRO   ") &
                    (-"Load program on machine TARG using protocol PRO"));
+         Put_Line (-"   --batch=lang:file    Execute a script written in the");
+         Put_Line (-"                        language lang");
          New_Line;
          Put_Line (-("Source files are searched everywhere on the project's "
                    & " source path"));
@@ -338,6 +341,8 @@ procedure GPS is
             LF & (-"Options:") & LF &
             (-"   --help              Show this help message and exit.") & LF &
             (-"   --version           Show the GPS version and exit.") & LF &
+            (-"   --batch=lang:file   Execute a script written in the") & LF &
+            (-"                       language lang") & LF &
             (-"   --debug[=program]   Start a debug session") & LF &
             (-"   --debugger debugger Specify the debugger's command line") &
             LF &
@@ -660,6 +665,36 @@ procedure GPS is
          Destroy (Splash);
       end if;
 
+      if Batch_Script /= null then
+         declare
+            Executed : Boolean := False;
+         begin
+            for J in Batch_Script'Range loop
+               if Batch_Script (J) = ':' then
+                  Execute_File
+                    (Script => Lookup_Scripting_Language
+                      (GPS.Kernel, Batch_Script (Batch_Script'First .. J - 1)),
+                     Filename => Batch_Script (J + 1 .. Batch_Script'Last),
+                     Display_In_Console => True);
+                  Executed := True;
+                  exit;
+               end if;
+            end loop;
+
+            if not Executed then
+               Insert (GPS.Kernel,
+                       -"Language unknown for -batch command line switch",
+                       Mode => Error);
+            end if;
+
+         exception
+            when others =>
+               Insert (GPS.Kernel,
+                       -"Error when executing the script for -batch switch",
+                       Mode => Error);
+         end;
+      end if;
+
       return False;
    end Finish_Setup;
 
@@ -737,7 +772,7 @@ begin
 
    loop
       case Getopt ("-version -help P! -log-level= " &
-                   "-debug? -debugger= -target=")
+                   "-debug? -debugger= -target= -batch=")
       is
          -- long option names --
          when '-' =>
@@ -764,6 +799,11 @@ begin
                      Help;
                      OS_Exit (0);
                   end if;
+
+               when 'b' =>
+                  --  --batch
+                  Free (Batch_Script);
+                  Batch_Script := new String'(Parameter);
 
                -- --log-level --
                when 'l' =>
