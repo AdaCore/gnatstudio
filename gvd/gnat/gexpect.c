@@ -40,9 +40,7 @@
 #ifdef _WIN32
 
 #include <windows.h>
-//  #include <process.h>
-#include "system/windows.h"
-
+#include <process.h>
 
 /* ??? Provide a no-op for now */
 
