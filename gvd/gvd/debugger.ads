@@ -99,6 +99,14 @@ package Debugger is
    --  Initialize the debugger.
    --  Spawn must have been called first.
 
+   procedure Send
+     (Debugger     : access Debugger_Root;
+      Cmd          : String;
+      Empty_Buffer : Boolean := False) is abstract;
+   --  Send a command to the underlying process associated with Debugger.
+   --  If Empty_Buffer is True, any input waiting from the process (or in the
+   --  buffer) is first discarded before the command is sent.
+
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
       return GNAT.Regpat.Pattern_Matcher is abstract;

@@ -72,7 +72,7 @@ package body Debugger.Jdb is
    begin
       --  Empty the buffer.
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), "print " & Entity);
+      Send (Debugger, "print " & Entity);
       Wait_Prompt (Debugger);
 
       declare
@@ -153,6 +153,18 @@ package body Debugger.Jdb is
       Set_Internal_Command (Get_Process (Debugger), False);
    end Initialize;
 
+   ----------
+   -- Send --
+   ----------
+
+   procedure Send
+     (Debugger     : access Jdb_Debugger;
+      Cmd          : String;
+      Empty_Buffer : Boolean := False) is
+   begin
+     Send (Get_Process (Debugger), Cmd, Empty_Buffer);
+   end Send;
+
    -----------
    -- Close --
    -----------
@@ -160,7 +172,7 @@ package body Debugger.Jdb is
    procedure Close (Debugger : access Jdb_Debugger) is
       Result : Expect_Match;
    begin
-      Send (Get_Process (Debugger), "quit");
+      Send (Debugger, "quit");
 
       --  Ensure that jdb is terminated before closing the pipes and trying to
       --  kill it abruptly.
@@ -185,7 +197,7 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Executable : String) is
    begin
-      Send (Get_Process (Debugger), "load " & Executable);
+      Send (Debugger, "load " & Executable);
       Wait_Prompt (Debugger);
    end Set_Executable;
 
@@ -210,7 +222,7 @@ package body Debugger.Jdb is
          Text_Output_Handler (Convert (Debugger.Window, Debugger),
                               "run" & ASCII.LF, True);
       end if;
-      Send (Get_Process (Debugger), "run");
+      Send (Debugger, "run");
    end Run;
 
    -----------
@@ -220,7 +232,7 @@ package body Debugger.Jdb is
    procedure Start (Debugger : access Jdb_Debugger;
                     Display  : Boolean := False) is
    begin
-      --  Send (Get_Process (Debugger).all, "run");
+      --  Send (Debugger, "run");
       null;
    end Start;
 
@@ -236,7 +248,7 @@ package body Debugger.Jdb is
                               "step" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "step");
       end if;
-      Send (Get_Process (Debugger), "step");
+      Send (Debugger, "step");
       Wait_Prompt (Debugger);
    end Step_Into;
 
@@ -252,7 +264,7 @@ package body Debugger.Jdb is
                               "next" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "next");
       end if;
-      Send (Get_Process (Debugger), "next");
+      Send (Debugger, "next");
       Wait_Prompt (Debugger);
    end Step_Over;
 
@@ -268,7 +280,7 @@ package body Debugger.Jdb is
                               "cont" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "cont");
       end if;
-      Send (Get_Process (Debugger), "cont");
+      Send (Debugger, "cont");
       Wait_Prompt (Debugger);
    end Continue;
 
@@ -293,7 +305,7 @@ package body Debugger.Jdb is
                               "down" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "down");
       end if;
-      Send (Get_Process (Debugger), "down");
+      Send (Debugger, "down");
       Wait_Prompt (Debugger);
    end Stack_Down;
 
@@ -309,7 +321,7 @@ package body Debugger.Jdb is
                               "up" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "up");
       end if;
-      Send (Get_Process (Debugger), "up");
+      Send (Debugger, "up");
       Wait_Prompt (Debugger);
    end Stack_Up;
 
@@ -330,7 +342,7 @@ package body Debugger.Jdb is
          Append (Convert (Debugger.Window, Debugger).Command_History, Str);
       end if;
 
-      Send (Get_Process (Debugger), Str);
+      Send (Debugger, Str);
       Wait_Prompt (Debugger);
    end Stack_Frame;
 
@@ -344,7 +356,7 @@ package body Debugger.Jdb is
       Len      : out Natural) is
    begin
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), "where");
+      Send (Debugger, "where");
       Wait_Prompt (Debugger);
       declare
          S : String := Expect_Out (Get_Process (Debugger));
@@ -360,7 +372,7 @@ package body Debugger.Jdb is
    procedure Break_Subprogram
      (Debugger : access Jdb_Debugger; Name : String) is
    begin
-      Send (Get_Process (Debugger), "stop in " & Name);
+      Send (Debugger, "stop in " & Name);
       Wait_Prompt (Debugger);
    end Break_Subprogram;
 
@@ -392,7 +404,7 @@ package body Debugger.Jdb is
          Pos := File'Last;
       end if;
 
-      Send (Get_Process (Debugger),
+      Send (Debugger,
         "stop at " & File (File'First .. Pos) & ':' &
         Str (Str'First + 1 .. Str'Last));
       Wait_Prompt (Debugger);
@@ -410,7 +422,7 @@ package body Debugger.Jdb is
       if Unhandled then
          raise Unknown_Command;
       else
-         Send (Get_Process (Debugger), "catch " & Name);
+         Send (Debugger, "catch " & Name);
       end if;
 
       Wait_Prompt (Debugger);
@@ -429,7 +441,7 @@ package body Debugger.Jdb is
          Append
            (Convert (Debugger.Window, Debugger).Command_History, "step up");
       end if;
-      Send (Get_Process (Debugger), "step up");
+      Send (Debugger, "step up");
       Wait_Prompt (Debugger);
    end Finish;
 
@@ -442,7 +454,7 @@ package body Debugger.Jdb is
       return Language.Thread_Information_Array is
    begin
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), Thread_List (Get_Language (Debugger)));
+      Send (Debugger, Thread_List (Get_Language (Debugger)));
       Wait_Prompt (Debugger);
 
       declare
@@ -481,7 +493,7 @@ package body Debugger.Jdb is
 
    procedure Display_Prompt (Debugger : access Jdb_Debugger) is
    begin
-      Send (Get_Process (Debugger), "  ");
+      Send (Debugger, "  ");
       Wait_Prompt (Debugger);
    end Display_Prompt;
 

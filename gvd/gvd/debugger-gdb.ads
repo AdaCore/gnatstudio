@@ -45,6 +45,11 @@ package Debugger.Gdb is
 
    procedure Close (Debugger : access Gdb_Debugger);
 
+   procedure Send
+     (Debugger     : access Gdb_Debugger;
+      Cmd          : String;
+      Empty_Buffer : Boolean := False);
+
    procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 
    function Highlighting_Pattern

@@ -213,9 +213,7 @@ package body Debugger is
      (Debugger : access Debugger_Root'Class;
       Thread   : Natural) is
    begin
-      Send
-        (Get_Process (Debugger),
-         Thread_Switch (Get_Language (Debugger), Thread));
+      Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread));
       Wait_Prompt (Debugger);
    end Thread_Switch;
 

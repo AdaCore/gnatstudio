@@ -45,6 +45,11 @@ package Debugger.Jdb is
 
    procedure Close (Debugger : access Jdb_Debugger);
 
+   procedure Send
+     (Debugger     : access Jdb_Debugger;
+      Cmd          : String;
+      Empty_Buffer : Boolean := False);
+
    procedure Wait_Prompt (Debugger : access Jdb_Debugger);
 
    function Highlighting_Pattern

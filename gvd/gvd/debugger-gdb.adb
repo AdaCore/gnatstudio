@@ -128,7 +128,7 @@ package body Debugger.Gdb is
    function Type_Of
      (Debugger : access Gdb_Debugger; Entity : String) return String is
    begin
-      Send (Get_Process (Debugger), "ptype " & Entity, Empty_Buffer => True);
+      Send (Debugger, "ptype " & Entity, Empty_Buffer => True);
       Wait_Prompt (Debugger);
 
       declare
@@ -155,7 +155,7 @@ package body Debugger.Gdb is
    begin
       --  Empty the buffer.
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), "print " & Entity);
+      Send (Debugger, "print " & Entity);
       Wait_Prompt (Debugger);
 
       declare
@@ -195,7 +195,7 @@ package body Debugger.Gdb is
 
       --  Empty the buffer.
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), "print &(" & Entity & ")");
+      Send (Debugger, "print &(" & Entity & ")");
       Wait_Prompt (Debugger);
 
       declare
@@ -298,19 +298,19 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger);
       Set_Internal_Command (Get_Process (Debugger), True);
 
-      Send (Get_Process (Debugger), "set prompt (gdb) ");
+      Send (Debugger, "set prompt (gdb) ");
       Wait_Prompt (Debugger);
-      Send (Get_Process (Debugger), "set width 0");
+      Send (Debugger, "set width 0");
       Wait_Prompt (Debugger);
-      Send (Get_Process (Debugger), "set height 0");
+      Send (Debugger, "set height 0");
       Wait_Prompt (Debugger);
-      Send (Get_Process (Debugger), "set annotate 1");
+      Send (Debugger, "set annotate 1");
       Wait_Prompt (Debugger);
 
       --  Connect to the remote target if needed.
 
       if Debugger.Target_Command /= null then
-         Send (Get_Process (Debugger), Debugger.Target_Command.all);
+         Send (Debugger, Debugger.Target_Command.all);
          Wait_Prompt (Debugger);
       end if;
 
@@ -323,7 +323,7 @@ package body Debugger.Gdb is
       --  Detect the current language. Note that most of the work is done in
       --  fact directly by Language_Filter.
 
-      Send (Get_Process (Debugger), "show lang");
+      Send (Debugger, "show lang");
       Wait_Prompt (Debugger);
 
       --  Get the initial file name, so that we can display the appropriate
@@ -331,12 +331,24 @@ package body Debugger.Gdb is
       --  This should be done only after we have detected the current language,
       --  or no color highlighting will be provided.
 
-      Send (Get_Process (Debugger), "list");
+      Send (Debugger, "list");
       Wait_Prompt (Debugger);
-      Send (Get_Process (Debugger), "info line");
+      Send (Debugger, "info line");
       Wait_Prompt (Debugger);
       Set_Internal_Command (Get_Process (Debugger), False);
    end Initialize;
+
+   ----------
+   -- Send --
+   ----------
+
+   procedure Send
+     (Debugger     : access Gdb_Debugger;
+      Cmd          : String;
+      Empty_Buffer : Boolean := False) is
+   begin
+     Send (Get_Process (Debugger), Cmd, Empty_Buffer);
+   end Send;
 
    -----------
    -- Close --
@@ -345,7 +357,7 @@ package body Debugger.Gdb is
    procedure Close (Debugger : access Gdb_Debugger) is
       Result : Expect_Match;
    begin
-      Send (Get_Process (Debugger), "quit");
+      Send (Debugger, "quit");
 
       --  Ensure that gdb is terminated before closing the pipes and trying to
       --  kill it abruptly.
@@ -371,9 +383,9 @@ package body Debugger.Gdb is
       Executable : String) is
    begin
       if Debugger.Remote_Target then
-         Send (Get_Process (Debugger), "load " & Executable);
+         Send (Debugger, "load " & Executable);
       else
-         Send (Get_Process (Debugger), "file " & Executable);
+         Send (Debugger, "file " & Executable);
       end if;
 
       Wait_Prompt (Debugger);
@@ -381,11 +393,11 @@ package body Debugger.Gdb is
       --  Detect the current language, and get the name and line of the
       --  initial file.
       Set_Internal_Command (Get_Process (Debugger), True);
-      Send (Get_Process (Debugger), "show lang");
+      Send (Debugger, "show lang");
       Wait_Prompt (Debugger);
-      Send (Get_Process (Debugger), "list");
+      Send (Debugger, "list");
       Wait_Prompt (Debugger);
-      Send (Get_Process (Debugger), "info line");
+      Send (Debugger, "info line");
       Wait_Prompt (Debugger);
       Set_Internal_Command (Get_Process (Debugger), False);
    end Set_Executable;
@@ -412,7 +424,7 @@ package body Debugger.Gdb is
          Text_Output_Handler
            (Convert (Debugger.Window, Debugger), "run" & ASCII.LF, True);
       end if;
-      Send (Get_Process (Debugger), "run");
+      Send (Debugger, "run");
    end Run;
 
    -----------
@@ -432,7 +444,7 @@ package body Debugger.Gdb is
             "begin" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "begin");
       end if;
-      Send (Get_Process (Debugger), "begin");
+      Send (Debugger, "begin");
       Wait_Prompt (Debugger);
    end Start;
 
@@ -449,7 +461,7 @@ package body Debugger.Gdb is
            (Convert (Debugger.Window, Debugger), "step" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "step");
       end if;
-      Send (Get_Process (Debugger), "step");
+      Send (Debugger, "step");
       Wait_Prompt (Debugger);
    end Step_Into;
 
@@ -466,7 +478,7 @@ package body Debugger.Gdb is
            (Convert (Debugger.Window, Debugger), "next" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "next");
       end if;
-      Send (Get_Process (Debugger), "next");
+      Send (Debugger, "next");
       Wait_Prompt (Debugger);
    end Step_Over;
 
@@ -483,7 +495,7 @@ package body Debugger.Gdb is
            (Convert (Debugger.Window, Debugger), "cont" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "cont");
       end if;
-      Send (Get_Process (Debugger), "cont");
+      Send (Debugger, "cont");
       Wait_Prompt (Debugger);
    end Continue;
 
@@ -508,7 +520,7 @@ package body Debugger.Gdb is
                               "down" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "down");
       end if;
-      Send (Get_Process (Debugger), "down");
+      Send (Debugger, "down");
       Wait_Prompt (Debugger);
    end Stack_Down;
 
@@ -524,7 +536,7 @@ package body Debugger.Gdb is
                               "up" & ASCII.LF, True);
          Append (Convert (Debugger.Window, Debugger).Command_History, "up");
       end if;
-      Send (Get_Process (Debugger), "up");
+      Send (Debugger, "up");
       Wait_Prompt (Debugger);
    end Stack_Up;
 
@@ -545,7 +557,7 @@ package body Debugger.Gdb is
          Append (Convert (Debugger.Window, Debugger).Command_History, Str);
       end if;
 
-      Send (Get_Process (Debugger), Str);
+      Send (Debugger, Str);
       Wait_Prompt (Debugger);
    end Stack_Frame;
 
@@ -560,7 +572,7 @@ package body Debugger.Gdb is
    is
    begin
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), "where");
+      Send (Debugger, "where");
       Wait_Prompt (Debugger);
 
       declare
@@ -603,7 +615,7 @@ package body Debugger.Gdb is
    procedure Break_Subprogram
      (Debugger : access Gdb_Debugger; Name : String) is
    begin
-      Send (Get_Process (Debugger), "break " & Name);
+      Send (Debugger, "break " & Name);
       Wait_Prompt (Debugger);
    end Break_Subprogram;
 
@@ -618,7 +630,7 @@ package body Debugger.Gdb is
    is
       Str : constant String := Positive'Image (Line);
    begin
-      Send (Get_Process (Debugger),
+      Send (Debugger,
             "break " & Base_File_Name (File)
             & ':' & Str (Str'First + 1 .. Str'Last));
       Wait_Prompt (Debugger);
@@ -633,7 +645,7 @@ package body Debugger.Gdb is
       Name      : String  := "";
       Unhandled : Boolean := False) is
    begin
-      Send (Get_Process (Debugger),
+      Send (Debugger,
             Break_Exception (Get_Language (Debugger), Name, Unhandled));
       Wait_Prompt (Debugger);
    end Break_Exception;
@@ -651,7 +663,7 @@ package body Debugger.Gdb is
          Append
            (Convert (Debugger.Window, Debugger).Command_History, "finish");
       end if;
-      Send (Get_Process (Debugger), "finish");
+      Send (Debugger, "finish");
       Wait_Prompt (Debugger);
    end Finish;
 
@@ -664,7 +676,7 @@ package body Debugger.Gdb is
       return Language.Thread_Information_Array is
    begin
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), Thread_List (Get_Language (Debugger)));
+      Send (Debugger, Thread_List (Get_Language (Debugger)));
       Wait_Prompt (Debugger);
 
       declare
@@ -687,7 +699,7 @@ package body Debugger.Gdb is
       Line_String : String := Positive'Image (Line);
       --  Use a temporary variable to remove the leading space.
    begin
-      Send (Get_Process (Debugger), "info line "
+      Send (Debugger, "info line "
             & Base_File_Name (File)
             & ':' &
             Line_String (Line_String'First + 1 .. Line_String'Last));
@@ -713,7 +725,7 @@ package body Debugger.Gdb is
 
    procedure Display_Prompt (Debugger : access Gdb_Debugger) is
    begin
-      Send (Get_Process (Debugger), "  ");
+      Send (Debugger, "  ");
       Wait_Prompt (Debugger);
    end Display_Prompt;
 

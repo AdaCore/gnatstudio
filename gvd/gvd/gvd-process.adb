@@ -535,30 +535,12 @@ package body Odd.Process is
          end if;
          Display_Prompt (Debugger.Debugger);
 
-      --  ??? An internal debugging macro, to be deleted
-      elsif First + 3 <= Command2'Length
-        and then Command2 (First .. First + 3) = "play"
-      then
-         Send (Get_Process (Debugger.Debugger), "break exception");
-         Wait_Prompt (Debugger.Debugger);
-         Send (Get_Process (Debugger.Debugger), "run");
-         Wait_Prompt (Debugger.Debugger);
-         Process_User_Command (Debugger, "graph print Parse::A");
-         Text_Output_Handler (Debugger, "" & ASCII.LF);
-         Process_User_Command (Debugger, "graph print A");
-         Text_Output_Handler (Debugger, "" & ASCII.LF);
-         Process_User_Command (Debugger, "graph print Parse::S");
-         Text_Output_Handler (Debugger, "" & ASCII.LF);
-         Process_User_Command (Debugger, "graph print Parse::V");
-         Text_Output_Handler (Debugger, "" & ASCII.LF);
-         Process_User_Command (Debugger, "graph print Parse::Act");
-
       elsif Command2 = "quit" then
          Main_Quit;
 
       else
          --  Regular debugger command, send it.
-         Send (Get_Process (Debugger.Debugger), Command);
+         Send (Debugger.Debugger, Command);
 
          Wait_Prompt (Debugger.Debugger);
       end if;
