@@ -119,6 +119,22 @@ package body Project_Explorers is
 
    subtype String_Access is Basic_Types.String_Access;
 
+   type Append_Directory_Idle_Data is record
+      Explorer  : Project_Explorer;
+      Norm_Dest : String_Access;
+      Norm_Dir  : String_Access;
+      D         : GNAT.Directory_Operations.Dir_Type;
+      Depth     : Integer := 0;
+      Base      : Gtk_Tree_Iter;
+      Dirs      : String_List_Utils.String_List.List;
+      Files     : String_List_Utils.String_List.List;
+      Idle      : Boolean := False;
+   end record;
+
+   procedure Free is
+      new Unchecked_Deallocation (Append_Directory_Idle_Data,
+                                  Append_Directory_Idle_Data_Access);
+
    subtype Tree_Chars_Ptr_Array is Chars_Ptr_Array (1 .. Number_Of_Columns);
 
    type User_Data (Node_Type : Node_Types; Name_Length : Natural) is record
@@ -164,27 +180,6 @@ package body Project_Explorers is
 
    package Project_Row_Data is new Gtk.Ctree.Row_Data (User_Data);
    use Project_Row_Data;
-
-   type Append_Directory_Idle_Data is record
-      Explorer  : Project_Explorer;
-      Norm_Dest : String_Access;
-      Norm_Dir  : String_Access;
-      D         : Dir_Type;
-      Depth     : Integer := 0;
-      Base      : Gtk_Tree_Iter;
-      Dirs      : String_List_Utils.String_List.List;
-      Files     : String_List_Utils.String_List.List;
-      Idle      : Boolean := False;
-   end record;
-   type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
-   --  Custom data for the asynchronous fill function.
-
-   procedure Free is
-      new Unchecked_Deallocation (Append_Directory_Idle_Data,
-                                  Append_Directory_Idle_Data_Access);
-
-   package File_Append_Directory_Idle is
-      new Gtk.Main.Timeout (Append_Directory_Idle_Data_Access);
 
    -----------------------
    -- Local subprograms --
@@ -297,6 +292,11 @@ package body Project_Explorers is
    function Read_Directory
      (D : Append_Directory_Idle_Data_Access) return Boolean;
    --  Called by File_Append_Directory.
+
+   procedure Free_Children
+     (T    : Project_Explorer;
+      Iter : Gtk_Tree_Iter);
+   --  Free all the children of iter Iter in the file view.
 
    ---------------------
    -- Expanding nodes --
@@ -734,7 +734,7 @@ package body Project_Explorers is
    begin
       Read (D.D, File, Last);
 
-      if Last /= 0 then
+      if D.Depth >= 0 and then Last /= 0 then
          if not (Last = 1 and then File (1) = '.')
            and then not (Last = 2 and then File (1 .. 2) = "..")
          then
@@ -743,14 +743,21 @@ package body Project_Explorers is
             else
                Append (D.Files, File (File'First .. Last));
             end if;
+
+            if D.Depth = 0 then
+               D.Depth := -1;
+            end if;
          end if;
 
          return True;
       end if;
 
-      --  At this point, necessarily, Last = 0.
-
       Close (D.D);
+
+      if D.Idle then
+         Pop_State (D.Explorer.Kernel);
+         Push_State (D.Explorer.Kernel, Busy);
+      end if;
 
       Sort (D.Dirs);
       Sort (D.Files);
@@ -810,11 +817,6 @@ package body Project_Explorers is
                   Path_Free (Path);
                end;
 
-               File_Append_Directory
-                 (D.Explorer, D.Norm_Dir.all & Dir
-                  & Directory_Separator, Iter, D.Depth, D.Norm_Dest.all,
-                  D.Idle);
-
                --  Are we on the target directory ?
 
                if D.Norm_Dest.all = D.Norm_Dir.all & Dir
@@ -823,18 +825,30 @@ package body Project_Explorers is
                   declare
                      Success   : Boolean;
                      Path      : Gtk_Tree_Path;
-                     --  Expanding : Boolean := D.Explorer.Expanding;
+                     Expanding : Boolean := D.Explorer.Expanding;
                   begin
                      Path := Get_Path (D.Explorer.File_Model, Iter);
 
-                     --  D.Explorer.Expanding := True;
+                     File_Append_Directory
+                       (D.Explorer, D.Norm_Dir.all & Dir
+                        & Directory_Separator,
+                        Iter, D.Depth, D.Norm_Dest.all,
+                        False);
+
+                     D.Explorer.Expanding := True;
                      Success := Expand_Row (D.Explorer.File_Tree, Path, False);
-                     --  D.Explorer.Expanding := Expanding;
+                     D.Explorer.Expanding := Expanding;
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
                           C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
                      Path_Free (Path);
                   end;
+
+               else
+                  File_Append_Directory
+                    (D.Explorer, D.Norm_Dir.all & Dir
+                     & Directory_Separator, Iter, D.Depth, D.Norm_Dest.all,
+                     D.Idle);
                end if;
 
             else
@@ -859,6 +873,8 @@ package body Project_Explorers is
       Free (D.Norm_Dir);
       Free (D.Norm_Dest);
 
+      Pop_State (D.Explorer.Kernel);
+
       declare
          New_D : Append_Directory_Idle_Data_Access := D;
       begin
@@ -881,7 +897,7 @@ package body Project_Explorers is
       Idle      : Boolean := False)
    is
       D  : Append_Directory_Idle_Data_Access := new Append_Directory_Idle_Data;
-      Id : Timeout_Handler_Id;
+      Timeout_Id : Timeout_Handler_Id;
 
    begin
       Open (D.D, Dir);
@@ -893,7 +909,15 @@ package body Project_Explorers is
       D.Idle      := Idle;
 
       if Idle then
-         Id := File_Append_Directory_Idle.Add (20, Read_Directory'Access, D);
+         Push_State (Explorer.Kernel, Processing);
+      else
+         Push_State (Explorer.Kernel, Busy);
+      end if;
+
+      if Idle then
+         Timeout_Id
+           := File_Append_Directory_Idle.Add (20, Read_Directory'Access, D);
+         Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
       else
          while Read_Directory (D) loop
             null;
@@ -1056,19 +1080,28 @@ package body Project_Explorers is
          ID              => Explorer_Module_ID,
          Context_Func    => Explorer_Context_Factory'Access);
 
-      declare
-         Inc : String_List_Utils.String_List.List;
-         Obj : String_List_Utils.String_List.List;
-      begin
-         Inc := Parse_Path (Include_Path (Get_Project_View (Kernel), True));
-         Obj := Parse_Path (Object_Path (Get_Project_View (Kernel), True));
-         String_List_Utils.String_List.Concat (Inc, Obj);
+      --  ??? The following block is duplicated in Refresh.
+      if Get_Pref (Kernel, File_View_Shows_Only_Project) then
+         declare
+            Inc : String_List_Utils.String_List.List;
+            Obj : String_List_Utils.String_List.List;
+         begin
+            Inc := Parse_Path
+              (Include_Path (Get_Project_View (Kernel), True));
+            Obj := Parse_Path
+              (Object_Path (Get_Project_View (Kernel), True));
+            String_List_Utils.String_List.Concat (Inc, Obj);
+            File_Append_Directory
+              (Explorer,
+               Greatest_Common_Path (Inc),
+               Null_Iter, 1, Get_Current_Dir, True);
+            String_List_Utils.String_List.Free (Inc);
+         end;
+      else
          File_Append_Directory
-           (Explorer,
-            Greatest_Common_Path (Inc),
+           (Explorer, "" & Directory_Separator,
             Null_Iter, 1, Get_Current_Dir, True);
-         String_List_Utils.String_List.Free (Inc);
-      end;
+      end if;
 
       Widget_Callback.Object_Connect
         (Explorer.File_Tree, "row_expanded",
@@ -1356,6 +1389,42 @@ package body Project_Explorers is
       end if;
    end File_Tree_Collapse_Row_Cb;
 
+   -------------------
+   -- Free_Children --
+   -------------------
+
+   procedure Free_Children
+     (T    : Project_Explorer;
+      Iter : Gtk_Tree_Iter)
+   is
+      Child_Iter : Gtk_Tree_Iter
+        := Children (T.File_Model, Iter);
+      Current    : Gtk_Tree_Iter;
+      Val        : GValue;
+      User       : User_Data_Access;
+   begin
+      if Has_Child (T.File_Model, Iter) then
+         Current := Child_Iter;
+
+         while Current /= Null_Iter loop
+            --  ??? There might be a problem here : we must free children
+            --  recursively, this frees only one level.
+
+            if Node_Types'Val
+              (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)))
+              = Entity_Node
+            then
+               Get_Value (T.File_Model, Current, User_Data_Column, Val);
+               User := To_User_Data (Get_Address (Val));
+               Free (User);
+            end if;
+
+            Remove (T.File_Model, Current);
+            Current := Children (T.File_Model, Iter);
+         end loop;
+      end if;
+   end Free_Children;
+
    -----------------------------
    -- File_Tree_Expand_Row_Cb --
    -----------------------------
@@ -1368,37 +1437,6 @@ package body Project_Explorers is
       Path    : Gtk_Tree_Path := Gtk_Tree_Path (Get_Proxy (Nth (Values, 2)));
       Iter    : Gtk_Tree_Iter;
       Success : Boolean;
-
-      procedure Free_Children;
-
-      procedure Free_Children is
-         Child_Iter : Gtk_Tree_Iter
-           := Children (T.File_Model, Iter);
-         Current    : Gtk_Tree_Iter;
-         Val        : GValue;
-         User       : User_Data_Access;
-      begin
-         if Has_Child (T.File_Model, Iter) then
-            Current := Child_Iter;
-
-            while Current /= Null_Iter loop
-               --  ??? There might be a problem here : we must free children
-               --  recursively, this frees only one level.
-
-               if Node_Types'Val
-                 (Integer (Get_Int (T.File_Model, Iter, Node_Type_Column)))
-                 = Entity_Node
-               then
-                  Get_Value (T.File_Model, Current, User_Data_Column, Val);
-                  User := To_User_Data (Get_Address (Val));
-                  Free (User);
-               end if;
-
-               Remove (T.File_Model, Current);
-               Current := Children (T.File_Model, Iter);
-            end loop;
-         end if;
-      end Free_Children;
 
    begin
       if T.Expanding then
@@ -1419,14 +1457,14 @@ package body Project_Explorers is
 
             case N_Type is
                when Directory_Node =>
-                  Free_Children;
+                  Free_Children (T, Iter);
 
                   File_Append_Directory (T, Iter_Name, Iter, 1);
                   Set (T.File_Model, Iter, Icon_Column,
                        C_Proxy (T.Open_Pixbufs (Directory_Node)));
 
                when File_Node =>
-                  Free_Children;
+                  Free_Children (T, Iter);
                   File_Append_File_Info (T, Iter, Iter_Name);
 
                when Modified_Project_Node =>
@@ -2042,7 +2080,7 @@ package body Project_Explorers is
 
    function Get_File_From_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-      return String
+     return String
    is
       N : Gtk_Ctree_Node := Node;
    begin
@@ -2072,7 +2110,7 @@ package body Project_Explorers is
 
    function Get_Directory_From_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
-      return String
+     return String
    is
       N : Gtk_Ctree_Node := Node;
    begin
@@ -2156,7 +2194,7 @@ package body Project_Explorers is
       then
          return Cat_Unknown;
 
-      --  All subprograms are grouped together
+         --  All subprograms are grouped together
 
       elsif Category in Subprogram_Explorer_Category then
          return Cat_Procedure;
@@ -2491,7 +2529,7 @@ package body Project_Explorers is
    procedure Refresh
      (Kernel : access GObject_Record'Class; Explorer : GObject)
    is
-      pragma Unreferenced (Kernel);
+      K : Kernel_Handle := Kernel_Handle (Kernel);
       T : Project_Explorer := Project_Explorer (Explorer);
       Selected_Dir : String_Access := null;
    begin
@@ -2501,24 +2539,41 @@ package body Project_Explorers is
       if Get_Project_View (T.Kernel) = No_Project then
          Remove_Node (T.Tree, null);
 
-         Clear (T.File_Model);
          --  ??? must free memory associated with entities !
          return;
       end if;
 
-      declare
-         Inc : String_List_Utils.String_List.List;
-         Obj : String_List_Utils.String_List.List;
-      begin
-         Inc := Parse_Path (Include_Path (Get_Project_View (T.Kernel), True));
-         Obj := Parse_Path (Object_Path (Get_Project_View (T.Kernel), True));
-         String_List_Utils.String_List.Concat (Inc, Obj);
+      --       Free_Children (T, Get_Iter_Root (T.File_Model));
+
+      while not Timeout_Id_List.Is_Empty (T.Fill_Timeout_Ids) loop
+         Pop_State (K);
+         Timeout_Remove (Timeout_Id_List.Head (T.Fill_Timeout_Ids));
+         Timeout_Id_List.Next (T.Fill_Timeout_Ids);
+      end loop;
+
+      Clear (T.File_Model);
+
+      if Get_Pref (K, File_View_Shows_Only_Project) then
+         declare
+            Inc : String_List_Utils.String_List.List;
+            Obj : String_List_Utils.String_List.List;
+         begin
+            Inc := Parse_Path
+              (Include_Path (Get_Project_View (T.Kernel), True));
+            Obj := Parse_Path
+              (Object_Path (Get_Project_View (T.Kernel), True));
+            String_List_Utils.String_List.Concat (Inc, Obj);
+            File_Append_Directory
+              (T,
+               Greatest_Common_Path (Inc),
+               Null_Iter, 1, Get_Current_Dir, True);
+            String_List_Utils.String_List.Free (Inc);
+         end;
+      else
          File_Append_Directory
-           (T,
-            Greatest_Common_Path (Inc),
+           (T, "" & Directory_Separator,
             Null_Iter, 1, Get_Current_Dir, True);
-         String_List_Utils.String_List.Free (Inc);
-      end;
+      end if;
 
       Freeze (T.Tree);
 
@@ -3062,5 +3117,15 @@ package body Project_Explorers is
             .. Greatest_Prefix_First + Greatest_Prefix_Length - 1);
       end;
    end Greatest_Common_Path;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id) is
+      pragma Unreferenced (D);
+   begin
+      null;
+   end Free;
 
 end Project_Explorers;
