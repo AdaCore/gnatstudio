@@ -638,13 +638,8 @@ package body Project_Explorers is
       Explorer : Project_Explorer;
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
-         Gtk_New (Explorer, User);
-         Refresh (Explorer);
-         return Put
-           (User, Explorer,
-            Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height),
-            Module          => Explorer_Module_ID);
+         Explorer := Get_Or_Create_Project_View (User);
+         return Find_MDI_Child (Get_MDI (User), Explorer);
       end if;
 
       return null;

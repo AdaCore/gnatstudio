@@ -1177,18 +1177,12 @@ package body Project_Explorers_Files is
    function Load_Desktop
      (MDI  : MDI_Window;
       Node : Node_Ptr;
-      User : Kernel_Handle) return MDI_Child
-   is
-      pragma Unreferenced (MDI);
-      Files    : Project_Explorer_Files;
+      User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Project_Explorer_Files" then
-         Gtk_New (Files, User);
-         return Put
-           (User, Gtk_Widget (Files),
-            Default_Width  => Get_Pref (User, Default_Widget_Width),
-            Default_Height => Get_Pref (User, Default_Widget_Height),
-            Module => Explorer_Files_Module_Id);
+         On_Open_Explorer (MDI, User);
+         return Find_MDI_Child_By_Tag
+           (Get_MDI (User), Project_Explorer_Files_Record'Tag);
       end if;
 
       return null;
