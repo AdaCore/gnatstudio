@@ -451,6 +451,7 @@ package body Src_Info is
    procedure Destroy (FI : in out File_Info) is
    begin
       Free (FI.Source_Filename);
+      Free (FI.Directory_Name);
       Free (FI.Original_Filename);
       Destroy (FI.Declarations);
    end Destroy;
