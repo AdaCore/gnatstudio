@@ -1193,6 +1193,7 @@ package body Builder_Module is
       Menu  : Gtk_Menu;
    begin
       --  This memory is allocated once, and lives as long as the application.
+
       Builder_Module_ID := new Builder_Module_ID_Record;
       Register_Module
         (Module       => Builder_Module_ID,
@@ -1207,16 +1208,18 @@ package body Builder_Module is
                      On_Compile'Access, null, GDK_F4, Shift_Mask);
 
       --  Dynamic make menu
+
       Mitem := Register_Menu (Kernel, Build, -"Make", "", null);
       Gtk_New (Menu);
       Builder_Module_ID_Record (Builder_Module_ID.all).Make_Menu := Menu;
       Set_Submenu (Mitem, Menu);
 
-      Register_Menu (Kernel, Make, -"Custom...", "",
-                     On_Custom'Access, null, GDK_F9);
+      Register_Menu
+        (Kernel, Make, -"Custom...", "", On_Custom'Access, null, GDK_F9);
 
-      Register_Menu (Kernel, Build, -"Recompute Xref information", "",
-                     On_Compute_Xref'Access);
+      Register_Menu
+        (Kernel, Build, -"Recompute C/C++ Xref info", "",
+         On_Compute_Xref'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
