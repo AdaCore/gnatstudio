@@ -398,6 +398,9 @@ package Src_Editor_Buffer is
    procedure Do_Completion (Buffer : access Source_Buffer_Record);
    --  Complete the current insertion, or continue the current completion.
 
+   procedure Jump_To_Delimiter (Buffer : access Source_Buffer_Record);
+   --  Jump to the other delimiter, if applicable.
+
 private
    type Completion_Data is record
       Prefix : GNAT.OS_Lib.String_Access;
