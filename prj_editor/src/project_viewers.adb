@@ -507,8 +507,9 @@ package body Project_Viewers is
       S : Switches_Edit := Data.Switches;
       Project : Project_Node_Id := Get_Project_From_View
         (Data.Viewer.Current_Project);
-      Case_Item, Decl, List, Expr : Project_Node_Id;
-      New_Decl : Project_Node_Id;
+      Case_Item, Decl, List, Expr, Pkg : Project_Node_Id;
+      Switches_Name : Name_Id;
+      Found : Boolean := False;
 
    begin
       pragma Assert (Project /= Empty_Node);
@@ -519,29 +520,9 @@ package body Project_Viewers is
 
       Normalize_Project (Project);
 
-      --  Create the new instruction to be added to the project
+      --  Create the string list for all the switches
 
-      New_Decl := Default_Project_Node (N_Declarative_Item);
-
-      Decl := Default_Project_Node (N_Attribute_Declaration, Prj.List);
-      Set_Current_Item_Node (New_Decl, Decl);
-
-      Name_Len := 8;
-      Name_Buffer (1 .. Name_Len) := "switches";
-      Set_Name_Of (Decl, Name_Find);
-
-      Set_Associative_Array_Index_Of (Decl, Data.File_Name);
-
-      List := Default_Project_Node (N_Expression, Prj.List);
-      Set_Expression_Of (Decl, List);
-
-      Set_First_Term (List, Default_Project_Node (N_Term));
-      List := First_Term (List);
-
-      Set_Current_Term
-        (List, Default_Project_Node (N_Literal_String_List, Prj.List));
-      List := Current_Term (List);
-
+      List := Default_Project_Node (N_Literal_String_List, Prj.List);
       declare
          Args : Argument_List := Get_Switches (S, Compiler);
       begin
@@ -557,21 +538,40 @@ package body Project_Viewers is
          Free (Args);
       end;
 
-      --  Add the instruction to the list of declarative items
+      --  Do we already have some declarations for this variable
+      --  If yes, we simply update them. Note that we need to update all of the
+      --  declarations, in case the user has put multiple of these.
 
-      Case_Item := Current_Scenario_Case_Item
-        (Project, Get_Or_Create_Package (Project, "compiler"));
+      Name_Len := 8;
+      Name_Buffer (1 .. Name_Len) := "switches";
+      Switches_Name := Name_Find;
+
+      Pkg := Get_Or_Create_Package (Project, "compiler");
+      Case_Item := Current_Scenario_Case_Item (Project, Pkg);
+
       Decl := First_Declarative_Item_Of (Case_Item);
+      while Decl /= Empty_Node loop
+         Expr := Current_Item_Node (Decl);
 
-      if Decl = Empty_Node then
-         Set_First_Declarative_Item_Of (Case_Item, New_Decl);
+         if Kind_Of (Expr) = N_Attribute_Declaration
+           and then Name_Of (Expr) = Switches_Name
+           and then Associative_Array_Index_Of (Expr) /= No_String
+           and then String_Equal
+           (Associative_Array_Index_Of (Expr), Data.File_Name)
+         then
+            Set_Current_Term (First_Term (Expression_Of (Expr)), List);
+            Found := True;
+         end if;
 
-      else
-         while Next_Declarative_Item (Decl) /= Empty_Node loop
             Decl := Next_Declarative_Item (Decl);
-         end loop;
+      end loop;
 
-         Set_Next_Declarative_Item (Decl, New_Decl);
+      --  Create the new instruction to be added to the project
+
+      if not Found then
+         Decl := Get_Or_Create_Attribute
+           (Case_Item, "switches", Data.File_Name);
+         Set_Expression_Of (Decl, Enclose_In_Expression (List));
       end if;
 
       Recompute_View (Data.Viewer.Kernel);
