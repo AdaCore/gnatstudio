@@ -58,7 +58,7 @@ package GVD.Memory_View is
       Flags : String_Access;
       --  A string the same size as Values used to set markers on the values.
 
-      Number_Of_Bytes : Integer := 4096;
+      Number_Of_Bytes : Integer := 256;
       --  The size of the pages that are currently stored.
 
       Number_Of_Columns : Integer := 16;
@@ -72,7 +72,7 @@ package GVD.Memory_View is
       --  These numbers refer to indexes in Values pointing to the bytes that
       --  are currently selected.
 
-      Unit_Size : Integer;
+      Unit_Size : Integer := 2;
       --  The size, in number of elements from Values, of the current
       --  grouping unit (ie 2 for Bytes, 4 for Halfword, 8 for Word....)
 
