@@ -41,7 +41,7 @@ package Display_Items is
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
-      Debugger       : Odd.Process.Debugger_Process_Tab;
+      Debugger       : access Odd.Process.Debugger_Process_Tab_Record'CLass;
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null);
    --  Create a new item to display the value of Variable_Name.
@@ -58,7 +58,7 @@ package Display_Items is
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
-      Debugger       : Odd.Process.Debugger_Process_Tab;
+      Debugger       : access Odd.Process.Debugger_Process_Tab_Record'Class;
       Auto_Refresh   : Boolean := True;
       Link_From      : access Display_Item_Record'Class;
       Link_Name      : String := "";
@@ -70,8 +70,15 @@ package Display_Items is
    --  Remove the item from the canvas and free the memory occupied by it,
    --  including its type description.
 
+   function Find_Item
+     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+      Num    : Integer)
+     return Display_Item;
+   --  Return the item whose identifier is Num, or null if there is none
+
    procedure On_Button_Click (Item   : access Display_Item_Record;
                               Event  : Gdk.Event.Gdk_Event_Button);
+   --  React to button clicks on an item.
 
    procedure Set_Auto_Refresh
      (Item          : access Display_Item_Record;
@@ -121,6 +128,7 @@ package Display_Items is
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record
+         Num          : Integer;
          Name         : Odd.Types.String_Access := null;
          Entity       : Items.Generic_Type_Access := null;
          Auto_Refresh : Boolean := True;

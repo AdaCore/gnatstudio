@@ -232,7 +232,7 @@ package body Display_Items is
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
-      Debugger       : Debugger_Process_Tab;
+      Debugger       : access Debugger_Process_Tab_Record'Class;
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null)
    is
@@ -265,6 +265,7 @@ package body Display_Items is
 
                Item := new Display_Item_Record;
                Item.Entity := Entity;
+               Item.Num := Get_Next_Item_Num (Debugger.Data_Canvas);
                Set_Valid (Item.Entity, Value_Found);
 
                --  If we got an exception while parsing the value, we do not
@@ -288,10 +289,11 @@ package body Display_Items is
       else
          Item := new Display_Item_Record;
          Item.Entity := Default_Entity;
+         Item.Num := Get_Next_Item_Num (Debugger.Data_Canvas);
          Set_Valid (Item.Entity, True);
       end if;
 
-      Item.Debugger := Debugger;
+      Item.Debugger := Debugger_Process_Tab (Debugger);
       Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
       Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
    end Gtk_New;
@@ -304,7 +306,7 @@ package body Display_Items is
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
       Variable_Name  : String;
-      Debugger       : Debugger_Process_Tab;
+      Debugger       : access Debugger_Process_Tab_Record'Class;
       Auto_Refresh   : Boolean := True;
       Link_From      : access Display_Item_Record'Class;
       Link_Name      : String := "";
@@ -443,6 +445,45 @@ package body Display_Items is
       Item_Resized (Item.Debugger.Data_Canvas, Item);
    end Initialize;
 
+   ---------------
+   -- Find_Item --
+   ---------------
+
+   function Find_Item
+     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+      Num    : Integer)
+     return Display_Item
+   is
+      Found : Display_Item := null;
+
+      function Search_By_Num
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class)
+        return Boolean;
+      --  Search for the item whose number is Num.
+
+      -------------------
+      -- Search_By_Num --
+      -------------------
+
+      function Search_By_Num
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class)
+        return Boolean
+      is
+      begin
+         if Display_Item (Item).Num = Num then
+            Found := Display_Item (Item);
+            return False;
+         end if;
+         return True;
+      end Search_By_Num;
+
+   begin
+      For_Each_Item (Canvas, Search_By_Num'Unrestricted_Access);
+      return Found;
+   end Find_Item;
+
    --------------------
    -- Update_Display --
    --------------------
@@ -451,6 +492,7 @@ package body Display_Items is
       Alloc_Width  : Gint;
       Alloc_Height : Gint;
       Title_Height, Title_Width : Gint;
+      Num_Width    : Gint;
    begin
       --  Compute the required size for the value itself.
 
@@ -459,9 +501,10 @@ package body Display_Items is
 
       --  Compute the width and height of the title bar
 
+      Num_Width := String_Width (Font, Integer'Image (Item.Num) & ": ");
       Title_Width := (5 + Num_Buttons) * Spacing
         + String_Width (Title_Font, Item.Name.all)
-        + Num_Buttons * Buttons_Size;
+        + Num_Buttons * Buttons_Size + Num_Width;
       Title_Height := Gint'Max
         (Get_Ascent (Title_Font) + Get_Descent (Title_Font), Buttons_Size)
         + 2 * Spacing;
@@ -544,9 +587,17 @@ package body Display_Items is
 
       Draw_Text
         (Pixmap (Item),
-         Font   => Title_Font,
+         Font   => Font,
          GC     => Black_GC,
          X      => Spacing,
+         Y      => Spacing + Get_Ascent (Title_Font),
+         Text   => Integer'Image (Item.Num) & ":");
+
+      Draw_Text
+        (Pixmap (Item),
+         Font   => Title_Font,
+         GC     => Black_GC,
+         X      => Spacing + Num_Width,
          Y      => Spacing + Get_Ascent (Title_Font),
          Text   => Item.Name.all);
 
@@ -802,11 +853,8 @@ package body Display_Items is
             Get_Language (Item.Debugger.Debugger), "@", X, Y));
       New_Name : constant String := Dereference_Name
         (Get_Language (Item.Debugger.Debugger), Name);
-
-      --  ??? For "dependent on", we should use a display number rather than
-      --  a name, so as to be sure of which exact display we are speaking
       Cmd : String := "graph display " & New_Name & " dependent on "
-        & Item.Name.all & " link_name " & Link_Name;
+        & Integer'Image (Item.Num) & " link_name " & Link_Name;
       New_Item : Display_Item;
    begin
       Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF, Is_Command => True);
