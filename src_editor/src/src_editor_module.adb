@@ -208,6 +208,12 @@ package body Src_Editor_Module is
       Context : Selection_Context_Access);
    --  Edit a file (from a contextual menu)
 
+   procedure On_Lines_Revealed
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Display the line numbers.
+
    procedure Source_Editor_Contextual
      (Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -275,6 +281,48 @@ package body Src_Editor_Module is
       end if;
       return null;
    end Load_Desktop;
+
+   -----------------------
+   -- On_Lines_Revealed --
+   -----------------------
+
+   procedure On_Lines_Revealed
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Context      : Selection_Context_Access :=
+        To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
+      Area_Context : File_Area_Context_Access;
+      Infos        : Line_Information_Data;
+      Line1, Line2 : Integer;
+   begin
+      if Context.all in File_Area_Context'Class then
+         Area_Context := File_Area_Context_Access (Context);
+
+         Get_Area (Area_Context, Line1, Line2);
+
+         declare
+            A : Line_Information_Array (Line1 .. Line2);
+         begin
+            for J in A'Range loop
+               A (J).Line := J;
+               A (J).Text := new String' (J'Img);
+            end loop;
+
+            Infos := new Line_Information_Array' (A);
+
+            Add_Line_Information (Kernel,
+                                  Directory_Information (Area_Context) &
+                                  File_Information (Area_Context),
+                                  Src_Editor_Module_Name,
+                                  A (Line2).Text.all'Length * 6 + 2,
+                                  Infos,
+                                  False);
+         end;
+      end if;
+   end On_Lines_Revealed;
 
    ------------------
    -- Save_Desktop --
@@ -1105,6 +1153,44 @@ package body Src_Editor_Module is
 
             return Edit /= null;
          end;
+
+      elsif Mime_Type = Mime_File_Line_Info then
+         declare
+            MDI   : constant MDI_Window := Get_MDI (Kernel);
+            File  : constant String  := Get_String (Data (Data'First));
+            Id    : constant String  := Get_String (Data (Data'First + 1));
+            Width : constant Integer
+              := Integer (Get_Int (Data (Data'First + 2)));
+            Info  : Line_Information_Data :=
+              To_Line_Information (Get_Address (Data (Data'First + 3)));
+            Stick_To_Data : constant Boolean
+              := Get_Boolean (Data (Data'First + 4));
+            Child : MDI_Child;
+            Iter  : Child_Iterator := First_Child (MDI);
+
+
+         begin
+            --  Look for the corresponding file editor.
+
+            loop
+               Child := Get (Iter);
+               exit when Child = null
+                 or else Get_Title (Child) = File;
+               Next (Iter);
+            end loop;
+
+            if Child /= null then
+               --  The editor was found.
+               Add_File_Information
+                 (Source_Box (Get_Widget (Child)).Editor,
+                  Id,
+                  Width,
+                  Info,
+                  Stick_To_Data);
+
+               return True;
+            end if;
+         end;
       end if;
 
       return False;
@@ -1314,6 +1400,15 @@ package body Src_Editor_Module is
         (Toolbar, Stock_Paste, -"Paste from Clipboard", Position => 9);
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
+
+      --  Connect necessary signal to display line numbers.
+
+      Kernel_Callback.Connect
+        (Kernel,
+         Source_Lines_Revealed_Signal,
+         On_Lines_Revealed'Access,
+         Kernel_Handle (Kernel));
+
    end Register_Module;
 
 end Src_Editor_Module;
