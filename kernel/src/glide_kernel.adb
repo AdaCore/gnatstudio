@@ -51,13 +51,10 @@ with Src_Info.Queries;          use Src_Info.Queries;
 
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Prj_API;                   use Prj_API;
-with Namet;                     use Namet;
 with Generic_List;
 
-with Language;                  use Language;
-with Language.Ada;              use Language.Ada;
-with Language.C;                use Language.C;
-with Language.Cpp;              use Language.Cpp;
+with Language_Handlers;         use Language_Handlers;
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
 
 with Prj.Tree;                  use Prj.Tree;
 
@@ -88,6 +85,17 @@ package body Glide_Kernel is
    function Process_Anim (Data : Process_Data) return Boolean;
    --  Process_Timeout callback to handle image animations.
 
+   --------------------------
+   -- Get_Language_Handler --
+   --------------------------
+
+   function Get_Language_Handler
+     (Handle : access Kernel_Handle_Record)
+      return Language_Handlers.Language_Handler is
+   begin
+      return Handle.Lang_Handler;
+   end Get_Language_Handler;
+
    -------------
    -- Gtk_New --
    -------------
@@ -100,6 +108,7 @@ package body Glide_Kernel is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 .. 2 | 4 => (1 => GType_None),
          3          => (1 => GType_Pointer));
+      Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Main_Window := Main_Window;
@@ -120,13 +129,13 @@ package body Glide_Kernel is
       Load_Preferences
         (Handle, String_Utils.Name_As_Directory (Home_Dir) & "preferences");
 
-      --  ??? Should use naming schemes instead. This duplicates the
-      --  information uselessly.
-      Reset_File_Extensions;
-      Add_File_Extensions (Ada_Lang, Get_Pref (Handle, Ada_Extensions));
-      Add_File_Extensions (C_Lang,   Get_Pref (Handle, C_Extensions));
-      Add_File_Extensions (Cpp_Lang, Get_Pref (Handle, Cpp_Extensions));
-      Register_Default_Naming_Schemes;
+      --  Create the language handler. It is also set for the gvd main window,
+      --  so that the embedded gvd uses the same mechanism as the rest of glide
+      --  to guess the language for a file name.
+      Gtk_New (Handler, Handle);
+      Handle.Lang_Handler := Language_Handler (Handler);
+      Glide_Window (Handle.Main_Window).Lang_Handler :=
+        Handle.Lang_Handler;
 
       Handle.Explorer_Context := new File_Selection_Context;
       Set_Context_Information (Handle.Explorer_Context, Handle, null);
@@ -322,17 +331,13 @@ package body Glide_Kernel is
         (Get_Project_View (Handle), Base_Name (Source_Filename));
    begin
       pragma Assert (Project /= Prj.No_Project);
-      Trace (Me, "Locate_From_Source_And_Complete: "
-             & Source_Filename
-             & " "
-             & Get_Name_String (Prj.Projects.Table (Project).Name));
-
-      --  ??? Optimization: we could use only the direct object path from
-      --  Project, since we know for sure that the file belongs to it.
+      Trace (Me, "Locate_From_Source_And_Complete: " & Source_Filename);
 
       Create_Or_Complete_LI
-        (Handler                =>
-           Handler_From_Filename (Project, Source_Filename),
+        (Handler                => Get_LI_Handler_From_File
+           (Glide_Language_Handler (Handle.Lang_Handler),
+            Source_Filename,
+            Project),
          File                   => File,
          Source_Filename        => Source_Filename,
          List                   => Handle.Source_Info_List,
@@ -355,7 +360,9 @@ package body Glide_Kernel is
       LI_Once      : Boolean := False) is
    begin
       Find_All_References
-        (Get_Project (Kernel), Entity, Kernel.Source_Info_List,
+        (Get_Project (Kernel),
+         Get_Language_Handler (Kernel),
+         Entity, Kernel.Source_Info_List,
          Iterator, Project, LI_Once);
    end Find_All_References;
 
@@ -367,7 +374,7 @@ package body Glide_Kernel is
      (Kernel : access Kernel_Handle_Record;
       Iterator : in out Entity_Reference_Iterator) is
    begin
-      Next (Iterator, Kernel.Source_Info_List);
+      Next (Get_Language_Handler (Kernel), Iterator, Kernel.Source_Info_List);
    end Next;
 
    --------------------------------
@@ -381,7 +388,9 @@ package body Glide_Kernel is
       Project         : Prj.Project_Id := Prj.No_Project) is
    begin
       Find_Ancestor_Dependencies
-        (Get_Project (Kernel), Source_Filename,
+        (Get_Project (Kernel),
+         Get_Language_Handler (Kernel),
+         Source_Filename,
          Kernel.Source_Info_List, Iterator, Project,
          Include_Self => False,
          Predefined_Source_Path => Get_Predefined_Source_Path (Kernel),
@@ -396,7 +405,7 @@ package body Glide_Kernel is
      (Kernel   : access Kernel_Handle_Record;
       Iterator : in out Src_Info.Queries.Dependency_Iterator) is
    begin
-      Next (Iterator, Kernel.Source_Info_List);
+      Next (Get_Language_Handler (Kernel), Iterator, Kernel.Source_Info_List);
    end Next;
 
    ----------------------------

@@ -34,6 +34,7 @@ with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
+with Language_Handlers;
 with Prj.Tree;
 with Prj;
 with Prj_API;
@@ -199,6 +200,11 @@ package Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       Mapper : Basic_Mapper.File_Mapper_Access);
    --  Set the mapper for file logs.
+
+   function Get_Language_Handler
+     (Handle : access Kernel_Handle_Record)
+      return Language_Handlers.Language_Handler;
+   --  Return the language handler used by this kernel.
 
    --------------
    -- Contexts --
@@ -455,6 +461,9 @@ private
 
       Logs_Mapper : Basic_Mapper.File_Mapper_Access;
       --  Mapping between files and logs.
+
+      Lang_Handler : Language_Handlers.Language_Handler;
+      --  The type used to convert from file names to languages
    end record;
 
 end Glide_Kernel;
