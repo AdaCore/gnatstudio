@@ -4724,6 +4724,12 @@ Similarly, you may define a @code{Board} variable listing the different
 boards used in your environment and change the @i{Program host} and @i{Protocol}
 settings accordingly.
 
+In some cases, it is useful to provide a different body file for a given
+package (e.g. to handle target specific differences). A possible approach
+in this case is to use a configuration variable (e.g. called @code{TARGET}),
+and specify a different naming scheme for this body file (in the project
+properties, @code{Naming} tab), based on the value of @code{TARGET}.
+
 @node Debugger Issues
 @section Debugger Issues
 @cindex debugger
