@@ -472,6 +472,7 @@ package body Src_Editor_Box is
       File_Up_To_Date : Boolean;
       L, C : Natural;
       Is_Case_Sensitive : Boolean;
+      Arg  : String_Access;
    begin
       if Dir_Name (Filename).all = "" then
          Insert (Kernel, -"File not found: "
@@ -544,6 +545,10 @@ package body Src_Editor_Box is
             Open_File_Editor (Kernel, Filename, L, C, C + Length, False);
          end if;
       end if;
+
+      Arg := new String'(Full_Name (Filename).all);
+      Execute_GPS_Shell_Command (Kernel, "Editor.cursor_center", (1 => Arg));
+      Free (Arg);
    end Go_To_Closest_Match;
 
    --------------------------
