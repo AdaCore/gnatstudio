@@ -249,6 +249,7 @@ package body Welcome is
       end if;
 
       Show_All (Screen);
+      Display_Error (Screen, "");
 
       --  While the user hasn't selected a valid project...
 
