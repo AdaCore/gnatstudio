@@ -31,7 +31,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with String_Utils;              use String_Utils;
-with Src_Info;
+with Src_Info;                  use Src_Info;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GUI_Utils;                 use GUI_Utils;
 
@@ -54,7 +54,8 @@ package body Project_Explorers_Common is
          Project_Column       => GType_Int,
          Category_Column      => GType_Int,
          Up_To_Date_Column    => GType_Boolean,
-         Entity_Base_Column   => GType_String);
+         Entity_Base_Column   => GType_String,
+         Timestamp_Column     => GType_Int);
    end Columns_Types;
 
    -------------------
@@ -278,8 +279,7 @@ package body Project_Explorers_Common is
    is
       use Src_Info;
 
-      N          : Gtk_Tree_Iter;
-      pragma Unreferenced (N);
+      N, N2      : Gtk_Tree_Iter;
 
       Lang       : Language_Access;
       Constructs : Construct_List;
@@ -290,9 +290,26 @@ package body Project_Explorers_Common is
       Categories : Gtk_Tree_Iter_Array := (others => Null_Iter);
       Languages  : constant Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (Kernel));
-      Handler    : constant Src_Info.LI_Handler :=
-        Get_LI_Handler_From_File (Languages, File_Name);
+      Handler    : Src_Info.LI_Handler;
+
    begin
+      --  Mark the file information as up-to-date
+
+      Set (Model, Node, Timestamp_Column,
+           Gint (To_Timestamp (File_Time_Stamp (File_Name))));
+
+      --  Remove any previous information for this file.
+
+      N := Children (Model, Node);
+
+      while N /= Null_Iter loop
+         N2 := N;
+         Next (Model, N);
+         Remove (Model, N2);
+      end loop;
+
+      Handler := Get_LI_Handler_From_File (Languages, File_Name);
+
       if Handler = null then
          return;
       end if;
@@ -508,8 +525,16 @@ package body Project_Explorers_Common is
      (Model : Gtk_Tree_Store;
       Node  : Gtk_Tree_Iter) return Boolean is
    begin
-      return
-        Get_Boolean (Model, Node, Up_To_Date_Column);
+      case Get_Node_Type (Model, Node) is
+         when File_Node =>
+            return Timestamp (Get_Int (Model, Node, Timestamp_Column))
+              =  To_Timestamp
+                (File_Time_Stamp
+                     (Get_String (Model, Node, Absolute_Name_Column)));
+
+         when others =>
+            return Get_Boolean (Model, Node, Up_To_Date_Column);
+      end case;
    end Is_Up_To_Date;
 
    --------------------
