@@ -38,14 +38,14 @@ package Docgen is
    No_Body_Line_Needed : constant Natural := 0;
 
    type Source_File_Information is record
-      Package_Name  : GNAT.OS_Lib.String_Access;
+      Unit_Name  : GNAT.OS_Lib.String_Access;
       Doc_File_Name : GNAT.OS_Lib.String_Access;
       --  The base name of the output file that contains the documentation for
       --  this source file.
       Is_Spec       : Boolean;
    end record;
    No_Source_File_Information : constant Source_File_Information :=
-     (Package_Name => null, Doc_File_Name => null, Is_Spec => False);
+     (Unit_Name => null, Doc_File_Name => null, Is_Spec => False);
    --  Description of a source file for which documentation should be
    --  generated.
 
@@ -141,6 +141,7 @@ package Docgen is
       Is_Private          : Boolean;
       Line_In_Body        : File_Location;
       Public_Declaration  : Entity_Information := null;
+      Processed           : Boolean := False;
    end record;
    --  Description of an entity.
    --  Kind   : Simplified type of the entity.
