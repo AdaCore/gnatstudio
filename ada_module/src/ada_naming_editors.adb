@@ -30,8 +30,6 @@ with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtkada.Types;             use Gtkada.Types;
 with Casing;                   use Casing;
 with Prj;
-with Types;                    use Types;
-with Snames;                   use Snames;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with GUI_Utils;                use GUI_Utils;
 with Glide_Intl;               use Glide_Intl;
@@ -207,13 +205,12 @@ package body Ada_Naming_Editors is
       Scenario_Variables : Projects.Scenario_Variable_Array) return Boolean
    is
       Num_Rows : constant Gint := Get_Rows (Editor.GUI.Exception_List);
-      Naming   : constant String := Get_String (Name_Naming);
       Changed  : Boolean := False;
       Ada_Scheme : constant Boolean :=
         Get_Index_In_List (Editor.GUI.Standard_Scheme) = 0;
 
       procedure Update_If_Required
-        (Name : Name_Id; Value : String; Index : String);
+        (Name : Attribute_Pkg; Value : String; Index : String);
       --  Update the attribute if necessary
 
       function List_Changed (List : Associative_Array; Column : Gint)
@@ -226,7 +223,7 @@ package body Ada_Naming_Editors is
       ------------------------
 
       procedure Update_If_Required
-        (Name : Name_Id; Value : String; Index : String)
+        (Name : Attribute_Pkg; Value : String; Index : String)
       is
          Modified : Boolean := False;
       begin
@@ -237,8 +234,7 @@ package body Ada_Naming_Editors is
             declare
                Old : constant String := Get_Attribute_Value
                  (Project        => Project,
-                  Attribute_Name => Get_String (Name),
-                  Package_Name   => Naming,
+                  Attribute      => Name,
                   Index          => Index);
             begin
                Modified := Value /= Old
@@ -251,16 +247,14 @@ package body Ada_Naming_Editors is
             if Ada_Scheme then
                Delete_Attribute
                  (Project            => Project,
-                  Pkg_Name           => Naming,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Get_String (Name),
+                  Attribute          => Name,
                   Attribute_Index    => Index);
             else
                Update_Attribute_Value_In_Scenario
                  (Project            => Project,
-                  Pkg_Name           => Naming,
                   Scenario_Variables => Scenario_Variables,
-                  Attribute_Name     => Get_String (Name),
+                  Attribute          => Name,
                   Value              => Value,
                   Attribute_Index    => Index);
             end if;
@@ -334,42 +328,40 @@ package body Ada_Naming_Editors is
 
    begin
       Update_If_Required
-        (Name_Specification_Suffix,
+        (Specification_Suffix_Attribute,
          Get_Text (Get_Entry (Editor.GUI.Spec_Extension)), Ada_String);
       Update_If_Required
-        (Name_Implementation_Suffix,
+        (Implementation_Suffix_Attribute,
          Get_Text (Get_Entry (Editor.GUI.Body_Extension)), Ada_String);
       Update_If_Required
-        (Name_Separate_Suffix,
+        (Separate_Suffix_Attribute,
          Get_Text (Get_Entry (Editor.GUI.Separate_Extension)), "");
       Update_If_Required
-        (Name_Casing,
+        (Casing_Attribute,
          Prj.Image (Casing_Type'Val
                     (Get_Index_In_List (Editor.GUI.Casing))), "");
       Update_If_Required
-        (Name_Dot_Replacement, Get_Text (Editor.GUI.Dot_Replacement), "");
+        (Dot_Replacement_Attribute, Get_Text (Editor.GUI.Dot_Replacement), "");
 
       Delete_Attribute
         (Project            => Project,
-         Pkg_Name           => Naming,
          Scenario_Variables => Scenario_Variables,
-         Attribute_Name     => Get_String (Name_Specification),
+         Attribute          => Specification_Attribute,
          Attribute_Index    => Any_Attribute);
       Delete_Attribute
         (Project            => Project,
-         Pkg_Name           => Naming,
          Scenario_Variables => Scenario_Variables,
-         Attribute_Name     => Get_String (Name_Implementation),
+         Attribute          => Implementation_Attribute,
          Attribute_Index    => Any_Attribute);
 
       Changed := Changed
         or else Project = No_Project
         or else List_Changed
            (Get_Attribute_Value
-            (Project, Specification_Attribute, Naming_Package), 1)
+            (Project, Specification_Attribute), 1)
         or else List_Changed
            (Get_Attribute_Value
-            (Project, Implementation_Attribute, Naming_Package), 2);
+            (Project, Implementation_Attribute), 2);
 
       if Changed then
          for J in 0 .. Num_Rows - 1 loop
@@ -384,18 +376,16 @@ package body Ada_Naming_Editors is
                if Spec /= "" then
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
-                     Pkg_Name           => Naming,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute_Name     => Get_String (Name_Specification),
+                     Attribute          => Specification_Attribute,
                      Value              => Spec,
                      Attribute_Index    => U);
                end if;
                if Bod /= "" then
                   Update_Attribute_Value_In_Scenario
                     (Project            => Project,
-                     Pkg_Name           => Naming,
                      Scenario_Variables => Scenario_Variables,
-                     Attribute_Name     => Get_String (Name_Implementation),
+                     Attribute          => Implementation_Attribute,
                      Value              => Bod,
                      Attribute_Index    => U);
                end if;
@@ -419,19 +409,19 @@ package body Ada_Naming_Editors is
       pragma Unreferenced (Kernel);
       Row   : Gint;
       Dot_Replacement : constant String := Get_Attribute_Value
-        (Project, Dot_Replacement_Attribute, Naming_Package,
+        (Project, Dot_Replacement_Attribute,
          Default => Default_Gnat_Dot_Replacement);
       Casing : constant String := Get_Attribute_Value
-        (Project, Casing_Attribute, Naming_Package,
+        (Project, Casing_Attribute,
          Default => -Prj.Image (All_Lower_Case));
       Separate_Suffix : constant String := Get_Attribute_Value
-        (Project, Separate_Suffix_Attribute, Naming_Package,
+        (Project, Separate_Suffix_Attribute,
          Default => Default_Gnat_Separate_Suffix);
       Body_Suffix : constant String := Get_Attribute_Value
-        (Project, Impl_Suffix_Attribute, Naming_Package,
+        (Project, Impl_Suffix_Attribute,
          Index => Ada_String, Default => Default_Gnat_Body_Suffix);
       Spec_Suffix : constant String := Get_Attribute_Value
-        (Project, Spec_Suffix_Attribute, Naming_Package,
+        (Project, Spec_Suffix_Attribute,
          Index => Ada_String, Default => Default_Gnat_Spec_Suffix);
    begin
       Set_Text (Editor.GUI.Dot_Replacement,                Dot_Replacement);
@@ -446,9 +436,9 @@ package body Ada_Naming_Editors is
       if Display_Exceptions then
          declare
             Specs  : constant Associative_Array := Get_Attribute_Value
-              (Project, Specification_Attribute, Naming_Package);
+              (Project, Specification_Attribute);
             Bodies : constant Associative_Array := Get_Attribute_Value
-              (Project, Implementation_Attribute, Naming_Package);
+              (Project, Implementation_Attribute);
          begin
             for S in Specs'Range loop
                Row := Prepend

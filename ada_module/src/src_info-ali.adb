@@ -1555,7 +1555,7 @@ package body Src_Info.ALI is
             Extension : constant String := File_Extension (Short_ALI_Filename);
             Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
             Dot_Replacement : constant String := Get_Attribute_Value
-              (P, Dot_Replacement_Attribute, Naming_Package, Default => "-");
+              (P, Dot_Replacement_Attribute, Default => "-");
             Predefined_Object_Path : constant String :=
               Get_Predefined_Object_Path (Project_Registry (Get_Registry (P)));
          begin
