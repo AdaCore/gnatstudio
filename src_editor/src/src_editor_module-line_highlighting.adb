@@ -115,7 +115,6 @@ package body Src_Editor_Module.Line_Highlighting is
 
          Gdk_New (GC, Get_Window (Get_Main_Window (Module_Id.Kernel)));
 
-         declare
          begin
             Color := Parse (Color_Id.all);
 
