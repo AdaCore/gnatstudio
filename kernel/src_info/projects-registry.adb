@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Unchecked_Deallocation;
 with ALI;
 with Atree;
@@ -645,7 +646,8 @@ package body Projects.Registry is
          Set (Registry.Data.Sources, K => File, E => (Project, Lang, No_Name));
       end Record_Source;
 
-      Languages : Argument_List := Get_Languages (Project);
+      Languages  : Argument_List := Get_Languages (Project);
+      Languages2 : Argument_List := Languages;
       Dirs      : String_Array_Access;
       Dir       : Dir_Type;
       Length    : Natural;
@@ -663,7 +665,6 @@ package body Projects.Registry is
                  and then Languages (Languages'First).all = Ada_String)
       then
          Free (Languages);
-
          --  Check which directories contain source files.
 
          declare
@@ -707,20 +708,27 @@ package body Projects.Registry is
                Unit_Name => Unit,
                Lang      => Lang);
 
-            if Lang /= No_Name and then Lang /= Name_Ada then
-               Get_Name_String (Lang);
+            --  Check if the returned language belongs to the supported
+            --  languages for the project
 
-               for L in Languages'Range loop
-                  if Languages (L) /= null
-                    and then Languages (L).all = Name_Buffer (1 .. Name_Len)
-                  then
-                     Free (Languages (L));
-                     exit;
-                  end if;
+            if Lang /= No_Name then
+               Get_Name_String (Lang);
+               for C in 1 .. Name_Len loop
+                  Name_Buffer (C) := To_Lower (Name_Buffer (C));
                end loop;
 
-               Record_Source (Buffer (1 .. Length), Lang);
-               Has_File := True;
+               if Name_Buffer (1 .. Name_Len) /= Ada_String then
+                  for Index in Languages'Range loop
+                     if Languages (Index).all =
+                       Name_Buffer (1 .. Name_Len)
+                     then
+                        Record_Source (Buffer (1 .. Length), Lang);
+                        Has_File := True;
+                        Languages2 (Index) := null;
+                        exit;
+                     end if;
+                  end loop;
+               end if;
             end if;
          end loop;
 
@@ -732,11 +740,11 @@ package body Projects.Registry is
       --  Print error messages for remaining messages
 
       Length := 0;
-      for L in Languages'Range loop
-         if Languages (L) /= null
-           and then Languages (L).all /= Ada_String
+      for L in Languages2'Range loop
+         if Languages2 (L) /= null
+           and then Languages2 (L).all /= Ada_String
          then
-            Length := Length + Languages (L)'Length + 2;
+            Length := Length + Languages2 (L)'Length + 2;
          end if;
       end loop;
 
@@ -745,13 +753,13 @@ package body Projects.Registry is
             Error : String (1 .. Length);
             Index : Natural := Error'First;
          begin
-            for L in Languages'Range loop
-               if Languages (L) /= null
-                 and then Languages (L).all /= Ada_String
+            for L in Languages2'Range loop
+               if Languages2 (L) /= null
+                 and then Languages2 (L).all /= Ada_String
                then
-                  Error (Index .. Index + Languages (L)'Length + 1) :=
-                    Languages (L).all & ", ";
-                  Index := Index + Languages (L)'Length + 2;
+                  Error (Index .. Index + Languages2 (L)'Length + 1) :=
+                    Languages2 (L).all & ", ";
+                  Index := Index + Languages2 (L)'Length + 2;
                end if;
             end loop;
 
