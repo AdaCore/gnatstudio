@@ -2172,8 +2172,7 @@ package body Project_Explorers is
       pragma Inline (Next_File_Node);
       --  Move to the next node, starting from a file node
 
-      function Check_Entities
-        (File : VFS.Virtual_File; Project : Project_Type) return Boolean;
+      function Check_Entities (File : VFS.Virtual_File) return Boolean;
       pragma Inline (Check_Entities);
       --  Check if File contains any entity matching C.
       --  Return True if there is a match
@@ -2246,9 +2245,7 @@ package body Project_Explorers is
             elsif Status = Unknown then
                if Check_Entities
                  (Create (Full_Filename => Get_Directory_From_Node
-                            (Explorer.Tree.Model, Start) & N),
-                  Get_Project_From_Node
-                    (Explorer.Tree.Model, Explorer.Kernel, Start, False))
+                            (Explorer.Tree.Model, Start) & N))
                then
                   Set (C.Matches, N, Search_Match);
                   Compute_Children (Explorer, Start);
@@ -2386,10 +2383,7 @@ package body Project_Explorers is
       -- Check_Entities --
       --------------------
 
-      function Check_Entities
-        (File    : VFS.Virtual_File;
-         Project : Project_Type) return Boolean
-      is
+      function Check_Entities (File : VFS.Virtual_File) return Boolean is
          use type Entities.LI_Handler;
          Languages  : constant Glide_Language_Handler :=
            Glide_Language_Handler (Get_Language_Handler (Kernel));
@@ -2406,7 +2400,7 @@ package body Project_Explorers is
          end if;
 
          Entities.Parse_File_Constructs
-           (Handler, Project, Languages, File, Constructs);
+           (Handler, Languages, File, Constructs);
 
          Constructs.Current := Constructs.First;
 
