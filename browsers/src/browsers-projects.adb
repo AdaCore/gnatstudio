@@ -111,23 +111,23 @@ package body Browsers.Projects is
       Font : Gdk_Font := Get_Text_Font (In_Browser);
 
       function Vertex_Factory (Project_Name : Types.Name_Id)
-         return Canvas_Item;
+         return Vertex_Access;
       --  Return a new project vertex for the project
 
-      function Edge_Factory (V1, V2 : access Canvas_Item_Record'Class)
-         return Canvas_Link;
+      function Edge_Factory (V1, V2 : access Vertex'Class)
+         return Edge_Access;
       --  Return a new edge
 
       ------------------
       -- Edge_Factory --
       ------------------
 
-      function Edge_Factory (V1, V2 : access Canvas_Item_Record'Class)
-         return Canvas_Link
+      function Edge_Factory (V1, V2 : access Vertex'Class)
+         return Edge_Access
       is
          L : Glide_Browser_Link := new Glide_Browser_Link_Record;
       begin
-         return Canvas_Link (L);
+         return Edge_Access (L);
       end Edge_Factory;
 
       --------------------
@@ -135,7 +135,7 @@ package body Browsers.Projects is
       --------------------
 
       function Vertex_Factory (Project_Name : Types.Name_Id)
-         return Canvas_Item
+         return Vertex_Access
       is
          V : Browser_Project_Vertex_Access :=
            new Browser_Project_Vertex;
@@ -150,7 +150,7 @@ package body Browsers.Projects is
          Set_Screen_Size_And_Pixmap
            (V, Get_Window (In_Browser), Width, Height);
          Refresh (In_Browser, V);
-         return Canvas_Item (V);
+         return Vertex_Access (V);
       end Vertex_Factory;
 
       G : Graph;
