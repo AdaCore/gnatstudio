@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 2.0.0
 
+- D204-015 Separator between switches and arguments can be specified in the
+  XML files
+
 - Add support for casing exceptions for case insensitive languages.
 
 - Add support for global ChangeLog file. This file can be used to record
