@@ -28,7 +28,6 @@ with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
-with Creation_Wizard;         use Creation_Wizard;
 with Glide_Intl;              use Glide_Intl;
 
 with GVD.Menu;                use GVD.Menu;
@@ -61,11 +60,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Factory_Data;            use Factory_Data;
-
---  AUnit components
-with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
-with Make_Test_Window_Pkg;    use Make_Test_Window_Pkg;
-with Make_Suite_Window_Pkg;   use Make_Suite_Window_Pkg;
 
 with Ada.Exceptions;          use Ada.Exceptions;
 with GNAT.IO;                 use GNAT.IO;
@@ -160,24 +154,6 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Edit->Select All menu
 
-   procedure On_New_Test_Case
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Unit Testing->New Test Case menu
-
-   procedure On_New_Test_Suite
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Unit Testing->New Test Suite menu
-
-   procedure On_New_Test_Harness
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Unit Testing->New Test Harness menu
-
    procedure On_Preferences
      (Object : Data_Type_Access;
       Action : Guint;
@@ -195,18 +171,6 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Project->Open menu
-
-   procedure On_New_Project
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Project->New menu
-
-   procedure On_Edit_Project
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Project->Edit menu
 
    procedure On_Build
      (Object : Data_Type_Access;
@@ -380,27 +344,6 @@ package body Glide_Menu is
       when E : others =>
          Log_Exception (E);
    end On_Open_Project;
-
-   --------------------
-   -- On_New_Project --
-   --------------------
-
-   procedure On_New_Project
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Wiz : Creation_Wizard.Prj_Wizard;
-   begin
-      Gtk_New (Wiz, Glide_Window (Object).Kernel);
-      Set_Current_Page (Wiz, 1);
-      Show_All (Wiz);
-      Main;
-
-   exception
-      when E : others =>
-         Log_Exception (E);
-   end On_New_Project;
 
    -----------------
    -- On_New_File --
@@ -804,22 +747,6 @@ package body Glide_Menu is
    -- On_Debug_Executable --
    -------------------------
 
-   procedure On_Edit_Project
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      Open_Project_Editor (Glide_Window (Object).Kernel);
-
-   exception
-      when E : others =>
-         Log_Exception (E);
-   end On_Edit_Project;
-
-   -------------------------
-   -- On_Debug_Executable --
-   -------------------------
-
    procedure On_Debug_Executable
      (Object : Data_Type_Access;
       Action : Guint;
@@ -1052,106 +979,6 @@ package body Glide_Menu is
          Log_Exception (E);
    end On_Generate_Body;
 
-   ----------------------
-   -- On_New_Test_Case --
-   ----------------------
-
-   procedure On_New_Test_Case
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Make_Test_Window : Make_Test_Window_Access;
-      Top              : constant Glide_Window := Glide_Window (Object);
-
-   begin
-      Gtk_New (Make_Test_Window);
-      Show_All (Make_Test_Window);
-      Gtk.Main.Main;
-
-      if Make_Test_Window.Name /= null then
-         declare
-            File : constant String := Make_Test_Window.Name.all;
-         begin
-            Open_Or_Create (Top.Kernel, File & ".ads");
-            Open_Or_Create (Top.Kernel, File & ".adb");
-         end;
-      end if;
-
-      Free (Make_Test_Window.Name);
-      Destroy (Make_Test_Window);
-
-   exception
-      when E : others =>
-         Log_Exception (E);
-   end On_New_Test_Case;
-
-   -----------------------
-   -- On_New_Test_Suite --
-   -----------------------
-
-   procedure On_New_Test_Suite
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Make_Suite_Window : Make_Suite_Window_Access;
-      Top               : constant Glide_Window := Glide_Window (Object);
-
-   begin
-      Gtk_New (Make_Suite_Window);
-      Show_All (Make_Suite_Window);
-      Gtk.Main.Main;
-
-      if Make_Suite_Window.Name /= null then
-         declare
-            File : constant String := Make_Suite_Window.Name.all;
-         begin
-            Open_Or_Create (Top.Kernel, File & ".adb");
-         end;
-      end if;
-
-      Free (Make_Suite_Window.Name);
-      Destroy (Make_Suite_Window);
-
-   exception
-      when E : others =>
-         Log_Exception (E);
-   end On_New_Test_Suite;
-
-   -------------------------
-   -- On_New_Test_Harness --
-   -------------------------
-
-   procedure On_New_Test_Harness
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Make_Harness_Window : Make_Harness_Window_Access;
-      Top                 : constant Glide_Window := Glide_Window (Object);
-
-   begin
-      Gtk_New (Make_Harness_Window);
-      Show_All (Make_Harness_Window);
-      Gtk.Main.Main;
-
-      if Make_Harness_Window.Procedure_Name /= null then
-         declare
-            File : constant String := Make_Harness_Window.Procedure_Name.all;
-         begin
-            Open_Or_Create (Top.Kernel, File & ".adb");
-         end;
-      end if;
-
-      Free (Make_Harness_Window.Procedure_Name);
-      Destroy (Make_Harness_Window);
-
-   exception
-      when E : others =>
-         Log_Exception (E);
-   end On_New_Test_Harness;
-
    --------------------------
    -- On_Compare_Two_Files --
    --------------------------
@@ -1283,15 +1110,6 @@ package body Glide_Menu is
          Gtk_New (-"/_Edit/Paste", "<shift>INS", Stock_Paste, On_Paste'Access),
          Gtk_New (-"/_Edit/Select All", "<control>A", On_Select_All'Access),
          Gtk_New (-"/_Edit/sep2", Item_Type => Separator),
-         Gtk_New (-"/_Edit/Unit Testing", Item_Type => Branch),
-         Gtk_New (-"/_Edit/Unit Testing/New Test Case", "",
-                  On_New_Test_Case'Access),
-         Gtk_New (-"/_Edit/Unit Testing/Add Routine", "", null),
-         Gtk_New (-"/_Edit/Unit Testing/New Test Suite", "",
-                  On_New_Test_Suite'Access),
-         Gtk_New (-"/_Edit/Unit Testing/New Test Harness", "",
-                  On_New_Test_Harness'Access),
-         Gtk_New (-"/_Edit/sep3", Item_Type => Separator),
          Gtk_New (-"/_Edit/Preferences...", "",
                   Stock_Preferences, On_Preferences'Access),
 
@@ -1323,13 +1141,8 @@ package body Glide_Menu is
          Gtk_New (-"/_VCS/Annotate", "", Stock_Preferences, null),
 
          Gtk_New (-"/_Project", Item_Type => Branch),
-         Gtk_New (-"/_Project/New...", "", Stock_New, On_New_Project'Access),
          Gtk_New (-"/_Project/Open...", "", Stock_Open,
                   On_Open_Project'Access),
-         Gtk_New (-"/_Project/Edit...", "",
-                  Stock_Properties, On_Edit_Project'Access),
-         Gtk_New (-"/_Project/Add Directory...", "",
-                  Stock_Add, On_Edit_Project'Access),
          Gtk_New (-"/_Project/sep1", Item_Type => Separator),
          Gtk_New (-"/_Project/Generate API doc", "", Stock_Execute, null),
          Gtk_New (-"/_Project/sep2", Item_Type => Separator),
