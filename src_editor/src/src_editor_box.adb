@@ -30,11 +30,9 @@ with Glide_Kernel.Project;       use Glide_Kernel.Project;
 with Glide_Kernel.Preferences;   use Glide_Kernel.Preferences;
 with Gdk;                        use Gdk;
 with Gdk.Color;                  use Gdk.Color;
-with Gdk.Drawable;               use Gdk.Drawable;
 with Gdk.Event;                  use Gdk.Event;
 with Gdk.Font;                   use Gdk.Font;
 with Gdk.GC;                     use Gdk.GC;
-with Gdk.Pixmap;                 use Gdk.Pixmap;
 with Gdk.Rectangle;              use Gdk.Rectangle;
 with Gdk.Types;
 with Gdk.Window;                 use Gdk.Window;
@@ -713,46 +711,19 @@ package body Src_Editor_Box is
          end if;
 
          declare
-            Tooltip : constant String := File.all & ':' & Image (L);
-            Window  : constant Gdk.Gdk_Window :=
-              Get_Window (Widget, Text_Window_Text);
-            Color   : Gdk.Color.Gdk_Color;
-
+            Color : Gdk.Color.Gdk_Color := Parse ("#FFFFFF");
          begin
-            if Data.Box.Default_GC = null then
-               Color := Parse ("#FFFFFF");
-               Alloc (Get_Default_Colormap, Color);
-               Gdk_New (Data.Box.Default_GC, Window);
-               Gdk_New (Data.Box.Bg_GC, Window);
-               Set_Foreground (Data.Box.Bg_GC, Color);
-               Set_Background (Data.Box.Default_GC, Color);
-               Data.Box.Tooltip_Font := From_Description
-                 (Get_Pref (Data.Box.Kernel, Tooltip_Font));
-            end if;
+            Alloc (Get_Default_Colormap, Color);
 
-            Height := Get_Ascent (Data.Box.Tooltip_Font) +
-                      Get_Descent (Data.Box.Tooltip_Font);
-            Width  := String_Width (Data.Box.Tooltip_Font, Tooltip) + 4;
-            Gdk.Pixmap.Gdk_New (Pixmap, Window, Width, Height);
-            Draw_Rectangle
-              (Pixmap,
-               Data.Box.Bg_GC,
-               Filled => True,
-               X      => 0,
-               Y      => 0,
-               Width  => Width - 1,
-               Height => Height - 1);
-            Draw_Text
-              (Pixmap, Data.Box.Tooltip_Font, Data.Box.Default_GC, 2,
-               Get_Ascent (Data.Box.Tooltip_Font), Tooltip);
-            Draw_Rectangle
-              (Pixmap,
-               Data.Box.Default_GC,
-               Filled => False,
-               X      => 0,
-               Y      => 0,
-               Width  => Width - 1,
-               Height => Height - 1);
+            Create_Pixmap_From_Text
+              (Text     => File.all & ':' & Image (L),
+               Font     => Get_Pref (Data.Box.Kernel, Tooltip_Font),
+               Bg_Color => Color,
+               Window   => Get_Window (Widget, Text_Window_Text),
+               Pixmap   => Pixmap,
+               Width    => Width,
+               Height   => Height);
+
             Free (File);
          end;
       end;
