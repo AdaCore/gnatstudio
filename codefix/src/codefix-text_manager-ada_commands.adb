@@ -280,6 +280,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Word_Used    : Word_Cursor := Clone (Word);
       Clauses_List : Words_Lists.List;
       Clause_Node  : Words_Lists.List_Node;
+      Last_With    : File_Cursor;
    begin
       if Word.String_Match /= null then
          Pkg_Info := Search_Unit
@@ -350,36 +351,13 @@ package body Codefix.Text_Manager.Ada_Commands is
       end if;
 
       if Destination /= "" then
-         declare
-            Current_Cursor : File_Cursor;
-            Current_Info   : Construct_Information;
-            Found_With     : Boolean := False;
-         begin
-            Current_Cursor.File_Name := new String'(Destination);
-            Current_Cursor.Line := 1;
-            Current_Cursor.Col := 1;
+         Last_With := File_Cursor
+           (Get_Next_With_Position (Current_Text, Destination));
 
-            loop
-               Current_Info := Get_Unit
-                 (Current_Text, Current_Cursor, After);
+         This.Last_With := new Mark_Abstr'Class'
+           (Get_New_Mark (Current_Text, Last_With));
 
-               exit when Current_Info.Category /= Cat_With
-                 and then Current_Info.Category /= Cat_Use;
-
-               Found_With := True;
-               Current_Cursor.Col := Current_Info.Sloc_End.Column;
-               Current_Cursor.Line := Current_Info.Sloc_End.Line;
-            end loop;
-
-            if not Found_With then
-               Current_Cursor.Col := 1;
-               Current_Cursor.Line := Current_Info.Sloc_Start.Line - 1;
-            end if;
-
-            This.Last_With := new Mark_Abstr'Class'
-              (Get_New_Mark (Current_Text, Current_Cursor));
-            Free (Current_Cursor);
-         end;
+         Free (Last_With);
       end if;
 
    end Initialize;
