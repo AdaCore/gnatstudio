@@ -18,6 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package provides the subprograms needed to create a TexInfo
+--  documentation of the project.
+
+--  The procedure Doc_TEXI_Create of the Doc_Subprogram_Type in the
+--  package Docgen.Doc_Types will be called each time a piece of the
+--  TexInfo documentation should be created. By regarding the contents of
+--  the passed parameter Info : Doc_Info the subprogram will know which
+--  of the private subprograms is to be called to generate the right
+--  part of the documentation.
+
 with Ada.Text_IO;           use Ada.Text_IO;
 with Doc_Types;             use Doc_Types;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
