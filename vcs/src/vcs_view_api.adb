@@ -33,19 +33,30 @@ with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 
-with Prj;                       use Prj;
 with String_List_Utils;         use String_List_Utils;
 
 with VCS_Module;                use VCS_Module;
 with Log_Utils;                 use Log_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
+with Basic_Types;               use Basic_Types;
+
+with Prj;                       use Prj;
+with Prj_API;                   use Prj_API;
+with Prj.Tree;                  use Prj.Tree;
+
 with Commands;                  use Commands;
 with Commands.VCS;              use Commands.VCS;
 with Commands.External;         use Commands.External;
 
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+
 package body VCS_View_API is
+
+   Me : constant Debug_Handle := Create ("VCS_Api");
 
    -----------------------
    -- Local subprograms --
@@ -144,6 +155,17 @@ package body VCS_View_API is
      (Kernel : Kernel_Handle;
       Files  : String_List.List);
    --  ???
+
+   function Get_Files_In_Project
+     (Project_View : Prj.Project_Id;
+      Recursive    : Boolean := True) return String_List.List;
+
+   function Get_Dirs_In_Project
+     (Kernel : Kernel_Handle) return String_List.List;
+
+   function String_Array_To_String_List
+     (S : String_Id_Array) return String_List.List;
+   --  Convenience function to make a string_list out of a String_Id_Array.
 
    -------------------
    -- Check_Handler --
@@ -656,6 +678,10 @@ package body VCS_View_API is
 
    begin
       Change_Context (Explorer, Context);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Context_Changed;
 
    -------------------
@@ -728,6 +754,10 @@ package body VCS_View_API is
             String_List.Next (List);
          end loop;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Edit_Log;
 
    ------------------
@@ -864,6 +894,20 @@ package body VCS_View_API is
       Free (Args);
    end Commit_Files;
 
+   ---------------------
+   -- Get_Current_Ref --
+   ---------------------
+
+   function Get_Current_Ref
+     (Kernel : access Kernel_Handle_Record'Class)
+     return VCS_Access
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return Get_VCS_From_Id ("CVS");
+      --  ??? should get this information from the project !!
+   end Get_Current_Ref;
+
    --------------------
    -- On_Menu_Commit --
    --------------------
@@ -892,6 +936,10 @@ package body VCS_View_API is
       end if;
 
       String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Commit;
 
    ------------------
@@ -937,6 +985,10 @@ package body VCS_View_API is
 
          String_List.Free (List);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Open;
 
    -----------------
@@ -966,6 +1018,10 @@ package body VCS_View_API is
             String_List.Free (Files);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Add;
 
    --------------------
@@ -995,6 +1051,10 @@ package body VCS_View_API is
             String_List.Free (Files);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Remove;
 
    ----------------------
@@ -1020,6 +1080,10 @@ package body VCS_View_API is
                       & File_Information (File));
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Annotate;
 
    --------------------
@@ -1049,6 +1113,10 @@ package body VCS_View_API is
             String_List.Free (Files);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update;
 
    ------------------------
@@ -1085,6 +1153,10 @@ package body VCS_View_API is
             String_List.Free (Files);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status;
 
    ------------------------
@@ -1112,6 +1184,10 @@ package body VCS_View_API is
             Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Dir;
 
    ----------------------------
@@ -1137,6 +1213,10 @@ package body VCS_View_API is
             Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Dir;
 
    ----------------------------
@@ -1166,6 +1246,10 @@ package body VCS_View_API is
             String_List.Free (Files);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Update_Project;
 
    -------------------------
@@ -1235,6 +1319,10 @@ package body VCS_View_API is
                False, True);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_List_Project_Files;
 
    --------------------------------
@@ -1263,6 +1351,10 @@ package body VCS_View_API is
                True, True);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Get_Status_Project;
 
    ------------------
@@ -1289,6 +1381,10 @@ package body VCS_View_API is
                   & File_Information (File));
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff;
 
    ------------------------
@@ -1336,6 +1432,118 @@ package body VCS_View_API is
       end loop;
 
       String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff_Local;
+
+   --------------------------
+   -- Get_Files_In_Project --
+   --------------------------
+
+   function Get_Files_In_Project
+     (Project_View : Project_Id;
+      Recursive    : Boolean := True) return String_List.List
+   is
+      Result  : String_List.List;
+      Files   : String_Array_Access;
+   begin
+      Files   := Get_Source_Files (Project_View, Recursive);
+
+      for J in reverse Files.all'Range loop
+         String_List.Prepend (Result, Files.all (J).all);
+      end loop;
+
+      Free (Files);
+
+      return Result;
+   end Get_Files_In_Project;
+
+   -------------------------
+   -- Get_Dirs_In_Project --
+   -------------------------
+
+   function Get_Dirs_In_Project
+     (Kernel : Kernel_Handle) return String_List.List
+   is
+      Result   : String_List.List;
+      Project  : Project_Node_Id;
+   begin
+      Project := Get_Project (Kernel);
+
+      declare
+         Iterator : Imported_Project_Iterator := Start (Project, True);
+      begin
+         while Current (Iterator) /= Empty_Node loop
+            String_List.Concat (Result,
+                                String_Array_To_String_List
+                                (Source_Dirs (Current (Iterator))));
+            Next (Iterator);
+         end loop;
+      end;
+
+      return Result;
+   end Get_Dirs_In_Project;
+
+   ------------------------------
+   -- Query_Status_For_Project --
+   ------------------------------
+
+   procedure Query_Status_For_Project
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Ref      : constant VCS_Access := Get_Current_Ref (Kernel);
+      Explorer : VCS_View_Access;
+   begin
+      Open_Explorer (Kernel);
+      Explorer := Get_Explorer (Kernel);
+
+      Clear (Explorer);
+      Get_Status (Ref, Get_Files_In_Project (Get_Project_View (Kernel)));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Query_Status_For_Project;
+
+   ----------------
+   -- Update_All --
+   ----------------
+
+   procedure Update_All
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Dirs : constant String_List.List := Get_Dirs_In_Project (Kernel);
+      Ref  : constant VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Update (Ref, Dirs);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Update_All;
+
+   ---------------------------------
+   -- String_Array_To_String_List --
+   ---------------------------------
+
+   function String_Array_To_String_List
+     (S : String_Id_Array) return String_List.List
+   is
+      Result : String_List.List;
+   begin
+      for J in reverse S'Range loop
+         String_List.Prepend (Result, Get_String (S (J)));
+      end loop;
+
+      return Result;
+   end String_Array_To_String_List;
 
 end VCS_View_API;
