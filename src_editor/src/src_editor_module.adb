@@ -1025,7 +1025,7 @@ package body Src_Editor_Module is
          end if;
 
          Open_File_Editor (Kernel, Filename);
-         Change_Directory (Dir_Name (Filename));
+         Change_Dir (Dir_Name (Filename));
       end;
 
    exception
