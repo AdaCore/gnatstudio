@@ -383,6 +383,9 @@ package body GVD.Memory_View is
       Current    : String_Access;
       Old_Size   : Data_Size := View.Data;
 
+      Endianness : Endian_Type
+        := Get_Endian_Type (Get_Current_Process (View.Window).Debugger);
+
    begin
       if View.Values = null then
          return;
@@ -418,8 +421,7 @@ package body GVD.Memory_View is
          end if;
       end;
 
-      if Get_Endian_Type (Get_Current_Process (View.Window).Debugger)
-        = Little_Endian
+      if Endianness = Little_Endian
         and then Old_Size /= View.Data
       then
          --  Swap back to original.
@@ -499,8 +501,7 @@ package body GVD.Memory_View is
                  Conversion (Current (Index .. Index + View.Unit_Size - 1),
                              View.Unit_Size,
                              View.Display,
-                             View.Trunc));
-
+                             View.Unit_Size / 2));
             Insert
               (View.View,
                Font  => View.View_Font,
@@ -527,16 +528,34 @@ package body GVD.Memory_View is
                   Current := View.Values;
                end if;
 
-               Insert
-                 (View.View,
-                  Font  => View.View_Font,
-                  Fore  => Foreground,
-                  Back  => Background,
-                  Chars =>
-                    Conversion (Current (Index .. Index + View.Unit_Size - 1),
-                                View.Unit_Size,
-                                Text,
-                                View.Unit_Size / 2));
+               declare
+                  S : String (1 .. View.Unit_Size);
+               begin
+                  if Endianness = Little_Endian then
+                     declare
+                        B : String (1 .. View.Unit_Size)
+                          := Current (Index .. Index + View.Unit_Size - 1);
+                     begin
+                        for J in 0 .. View.Unit_Size / 2 - 1 loop
+                           S (S'First + J * 2 .. S'First + J * 2 + 1)
+                             := B (B'Last -  J * 2 - 1 .. B'Last -  J * 2);
+                        end loop;
+                     end;
+                  else
+                     S := Current (Index .. Index + View.Unit_Size - 1);
+                  end if;
+
+                  Insert
+                    (View.View,
+                     Font  => View.View_Font,
+                     Fore  => Foreground,
+                     Back  => Background,
+                     Chars =>
+                       Conversion (S,
+                                   View.Unit_Size,
+                                   Text,
+                                   View.Trunc));
+               end;
                Insert
                  (View.View,
                   Font  => View.View_Font,
