@@ -441,4 +441,28 @@ package body Find_Utils is
       return Context.Options;
    end Get_Options;
 
+   --------------------------
+   -- Get_Current_Progress --
+   --------------------------
+
+   function Get_Current_Progress
+     (Context : access Search_Context) return Integer
+   is
+      pragma Unreferenced (Context);
+   begin
+      return 0;
+   end Get_Current_Progress;
+
+   ------------------------
+   -- Get_Total_Progress --
+   ------------------------
+
+   function Get_Total_Progress
+     (Context : access Search_Context) return Integer
+   is
+      pragma Unreferenced (Context);
+   begin
+      return 1;
+   end Get_Total_Progress;
+
 end Find_Utils;

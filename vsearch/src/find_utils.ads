@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -194,6 +194,16 @@ package Find_Utils is
    --  Although the user always specifies a string, it should sometimes be
    --  interpreted differently based on whether it is a regular expression,...
    --  The subprograms below will compute the fields as needed.
+
+   function Get_Current_Progress
+     (Context : access Search_Context) return Integer;
+   --  Return the current progress level in Context (ex: the number of file
+   --  being searched. By default, return 0.
+
+   function Get_Total_Progress
+     (Context : access Search_Context) return Integer;
+   --  Return the total progress level in Context (ex: the total number of
+   --  files being searched). By default, return 1.
 
    function Search
      (Context         : access Search_Context;
