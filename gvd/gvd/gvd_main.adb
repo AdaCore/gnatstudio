@@ -3,7 +3,7 @@ with Gtk.Main;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtkada.Intl; use Gtkada.Intl;
 
-procedure Odd is
+procedure Odd_Main is
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
    Bind_Text_Domain ("Odd", "/usr/local/share/locale");
@@ -12,4 +12,4 @@ begin
    Gtk_New (Main_Debug_Window);
    Show_All (Main_Debug_Window);
    Gtk.Main.Main;
-end Odd;
+end Odd_Main;
