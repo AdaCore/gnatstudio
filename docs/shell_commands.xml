@@ -1642,7 +1642,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       </example>
       <example lang="python">
          The following example shows an integration between the GPS.Console and GPS.Process classes, so that a window containing a shell can be added to GPS.
-	 
+
             import GPS
             class Console_Process (GPS.Console, GPS.Process):
               def on_output (self, unmatched, matched):
@@ -1683,7 +1683,7 @@ already set on the console, whereas on_destroy will be called in addition to
 the one that was already set on the console.
 
 If this is not the desired behavior, you can also call destroy() on the console, and call the constructor again.
-      
+
 The subprogram on_input is called whenever the user has entered a new command in the console and pressed &lt;enter&gt; to execute it. It is called with the following parameters:
    - $1: The instance of the GPS.Console
    - $2: The command to execute
@@ -1702,18 +1702,18 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
       <param name="self">The instance of GPS.Console</param>
       <description>Clear the current contents of the console</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Console.flush">
       <param name="self">The instance of GPS.Console</param>
       <description>Do nothing, needed for compatibility with Python's file class</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Console.isatty">
       <param name="self">The instance of GPS.Console</param>
       <return>A boolean</return>
       <description>Return True if the console behaves like a terminal. Mostly needed for compatibility with Python's file class</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Console.read">
       <param name="self">The instance of GPS.Console</param>
       <return>A String</return>
@@ -1724,7 +1724,7 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
       <param name="self">The instance of GPS.Console</param>
       <return>A String</return>
       <description>Ask the user to enter a new line in the console, and returns that line. GPS is blocked until enter has been pressed in the console</description>
-  </shell_doc>    
+  </shell_doc>
 
   <!--#################################################################
     ####   Toolbar class
@@ -1880,6 +1880,21 @@ The subprogram on_destroy is called whenever the user closes the console. It is 
      <param name="self">The instance of GPS.Combo</param>
      <param name="choice">A string</param>
      <description>Set the current selection in specified entry</description>
+  </shell_doc>
+
+  <!--#################################################################
+    ####   Timeout class
+    ###################################################################-->
+
+  <shell_doc name="GPS.Timeout">
+      <param name="timeout">The timeout at which to execute the action</param>
+      <param name="action">The action/subprogram to execute</param>
+      <description>A timeout object executes a specific action repeatedly, at a specified interval, as long as it is registered.</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Timeout.remove">
+      <param name="self">The Timeout to remove</param>
+      <description>Unregister a timeout</description>
   </shell_doc>
 
   <!--#################################################################
@@ -2178,7 +2193,7 @@ Windows acts as containers for other widgets</description>
      <description>Iconify the window. This only works if windows are unmaximized within the MDI. If iconify is False, the window is de-iconified instead</description>
      <see_also name="GPS.MDI.unmaximize()"/>
   </shell_doc>
-     
+
   <shell_doc name="GPS.MDIWindow.float">
      <param name="self">An instance of GPS.MDIWindow</param>
      <param name="float" default="True">A boolean</param>
