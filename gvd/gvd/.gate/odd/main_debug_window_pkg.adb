@@ -24,7 +24,7 @@ begin
    Set_Policy (Main_Debug_Window, False, True, False);
    Set_Position (Main_Debug_Window, Win_Pos_None);
    Set_Modal (Main_Debug_Window, False);
-   Set_Default_Size (Main_Debug_Window, 700, 700);
+   Set_Default_Size (Main_Debug_Window, 800, 700);
    Return_Callback.Connect
      (Main_Debug_Window, "delete_event", On_Main_Debug_Window_Delete_Event'Access);
 
