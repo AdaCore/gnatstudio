@@ -431,6 +431,16 @@ package body Browsers.Dependency_Items is
    ------------------
 
    procedure Destroy_Idle (Data : in out Examine_Dependencies_Idle_Data) is
+      procedure Clean;
+      --  Clean up routine for Destroy_Idle.
+
+      procedure Clean is
+      begin
+         Data.Browser.Idle_Id := 0;
+         Destroy (Data.Iter);
+         Pop_State (Get_Kernel (Data.Browser));
+      end Clean;
+
    begin
       Set_Auto_Layout (Get_Canvas (Data.Browser), True);
       Layout (Get_Canvas (Data.Browser),
@@ -442,10 +452,12 @@ package body Browsers.Dependency_Items is
 
       --  Center the initial item
       Show_Item (Get_Canvas (Data.Browser), Data.Item);
+      Clean;
 
-      Data.Browser.Idle_Id := 0;
-      Destroy (Data.Iter);
-      Pop_State (Get_Kernel (Data.Browser));
+   exception
+      when E : others =>
+         Clean;
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Destroy_Idle;
 
    ----------------------------
@@ -1059,9 +1071,7 @@ package body Browsers.Dependency_Items is
       end if;
    exception
       when E : others =>
-         Trace (Me,
-                "Unexpected exception in On_Examine_Other_File "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Examine_Other_File;
 
    ------------------------
