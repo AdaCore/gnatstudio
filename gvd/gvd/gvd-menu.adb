@@ -858,6 +858,13 @@ package body GVD.Menu is
       --  prompt that the debugger prints after interruption. Calling
       --  Display_Prompt is also not acceptable, since we might be busy
       --  processing another command.
+
+      --  Note that doing anything at this point is very unsafe, since we got
+      --  called while handling a command, and this command has not been fully
+      --  handled yet, so we cannot reliably send new commands to the debugger
+      --  without creating a synchronization problem. Also, we should be able
+      --  to clean up properly the current command, which is particularly
+      --  tricky when handling an internal command.
    end On_Interrupt;
 
    ------------------------
