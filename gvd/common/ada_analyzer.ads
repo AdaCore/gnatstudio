@@ -178,6 +178,9 @@ package Ada_Analyzer is
       --  No_Token is used for initializing Token values to indicate that
       --  no value has been set yet.
 
+   subtype Reserved_Token_Type is
+     Token_Type range Tok_Abstract .. Tok_Separate;
+
    -----------
    -- Types --
    -----------
