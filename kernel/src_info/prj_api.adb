@@ -1039,6 +1039,58 @@ package body Prj_API is
         (Projects.Table (View).Name).Node;
    end Get_Project_From_View;
 
+   ---------------------------
+   -- Get_Project_From_File --
+   ---------------------------
+
+   function Get_Project_From_File
+     (Root_Project_View : Prj.Project_Id; Source_Filename : String)
+      return Prj.Project_Id
+   is
+      Result : Project_Id := No_Project;
+
+      procedure Source_Belongs_To_Project
+        (Project : Project_Id; With_State : in out Project_Id);
+      --  Check if Source_Filename belongs to Project
+
+      -------------------------------
+      -- Source_Belongs_To_Project --
+      -------------------------------
+
+      procedure Source_Belongs_To_Project
+        (Project : Project_Id; With_State : in out Project_Id)
+      is
+         Sources : String_List_Id := Projects.Table (Project).Sources;
+      begin
+         if With_State = No_Project then
+            while Sources /= Nil_String loop
+               if Get_String (String_Elements.Table (Sources).Value) =
+                 Source_Filename
+               then
+                  Trace (Me, Source_Filename & " Found in project "
+                         & Get_Name_String (Projects.Table (Project).Name));
+                  With_State := Project;
+                  return;
+               end if;
+
+               Sources := String_Elements.Table (Sources).Next;
+            end loop;
+         end if;
+      end Source_Belongs_To_Project;
+
+      procedure For_All_Projects is new For_Every_Project_Imported
+        (Project_Id, Source_Belongs_To_Project);
+   begin
+      For_All_Projects (Root_Project_View, Result);
+
+      if Result = No_Project then
+         Trace (Me, "Project not found for " & Source_Filename);
+         Result := Root_Project_View;
+      end if;
+
+      return Result;
+   end Get_Project_From_File;
+
    -------------------------------
    -- Create_Variable_Reference --
    -------------------------------
@@ -1865,6 +1917,16 @@ package body Prj_API is
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
 
+      --  ??? Should we check the default naming scheme as well ? Otherwise, it
+      --  ??? might happen that a project has its own naming scheme, but still
+      --  ??? references files in the runtime with the default naming scheme.
+
+      if GNAT.Directory_Operations.File_Extension (Filename) = ".ads" then
+         return Unit_Spec;
+      elsif GNAT.Directory_Operations.File_Extension (Filename) = ".adb" then
+         return Unit_Body;
+      end if;
+
       return Unit_Separate;
    end Get_Unit_Part_From_Filename;
 
@@ -1906,6 +1968,16 @@ package body Prj_API is
          end;
          Arr := Array_Elements.Table (Arr).Next;
       end loop;
+
+      --  ??? Should we check the default naming scheme as well ? Otherwise, it
+      --  ??? might happen that a project has its own naming scheme, but still
+      --  ??? references files in the runtime with the default naming scheme.
+
+      if GNAT.Directory_Operations.File_Extension (Filename) = ".ads" then
+         return Filename'Last - 4;
+      elsif GNAT.Directory_Operations.File_Extension (Filename) = ".adb" then
+         return Filename'Last - 4;
+      end if;
 
       return Filename'Last;
    end Delete_File_Suffix;
@@ -3090,8 +3162,7 @@ package body Prj_API is
    -----------
 
    function Start (Root_Project : Project_Node_Id; Recursive : Boolean := True)
-      return Imported_Project_Iterator
-   is
+      return Imported_Project_Iterator is
    begin
       if Recursive then
          declare
@@ -3121,6 +3192,20 @@ package body Prj_API is
          return Empty_Node;
       else
          return Get_Project_From_Name (Iterator.List (Iterator.Current));
+      end if;
+   end Current;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (Iterator : Imported_Project_Iterator)
+      return Project_Id is
+   begin
+      if Iterator.Current > Iterator.List'Last then
+         return No_Project;
+      else
+         return Get_Project_View_From_Name (Iterator.List (Iterator.Current));
       end if;
    end Current;
 

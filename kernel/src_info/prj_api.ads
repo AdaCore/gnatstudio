@@ -69,6 +69,14 @@ package Prj_API is
       return Project_Node_Id;
    --  Return the project, from its name
 
+   function Get_Project_From_File
+     (Root_Project_View : Prj.Project_Id; Source_Filename : String)
+      return Prj.Project_Id;
+   --  Return the project to which Source_Filename belongs.
+   --  If the file was not found in any of the imported projects either,
+   --  Root_Project is returned.
+   --  ??? Should we have a cache
+
    function Get_Project_From_View (View : Project_Id) return Project_Node_Id;
    --  Converts from a project view to the associated node in the tree.
 
@@ -259,6 +267,8 @@ package Prj_API is
    procedure Reset (Iterator : in out Imported_Project_Iterator);
    --  Reset the iterator to point to the first project node in the list
 
+   function Current (Iterator : Imported_Project_Iterator)
+      return Project_Id;
    function Current (Iterator : Imported_Project_Iterator)
       return Project_Node_Id;
    --  Return the project currently pointed to by the iterator.
