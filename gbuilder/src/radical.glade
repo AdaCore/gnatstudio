@@ -112,7 +112,6 @@
       <name>hpaned1</name>
       <handle_size>10</handle_size>
       <gutter_size>6</gutter_size>
-      <position>0</position>
       <child>
 	<padding>0</padding>
 	<expand>True</expand>
@@ -211,14 +210,147 @@
 		<type>GTK_TOOLBAR_ICONS</type>
 		<space_size>5</space_size>
 		<space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
-		<relief>GTK_RELIEF_NORMAL</relief>
+		<relief>GTK_RELIEF_NONE</relief>
 		<tooltips>True</tooltips>
 
 		<widget>
-		  <class>GtkButton</class>
+		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>button13</name>
-		  <label>button4</label>
+		  <name>togglebutton1</name>
+		  <tooltip>Horizontal Box</tooltip>
+		  <label></label>
+		  <icon>hbox_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton2</name>
+		  <tooltip>Vertical Box</tooltip>
+		  <label></label>
+		  <icon>vbox_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton3</name>
+		  <tooltip>Table</tooltip>
+		  <label></label>
+		  <icon>table_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton4</name>
+		  <tooltip>Packer</tooltip>
+		  <label></label>
+		  <icon>packer_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton5</name>
+		  <tooltip>Fixed Positions</tooltip>
+		  <label></label>
+		  <icon>fixed_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton6</name>
+		  <tooltip>Horizontal Button Box</tooltip>
+		  <label></label>
+		  <icon>hbuttonbox_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton7</name>
+		  <tooltip>Vertical Button Box</tooltip>
+		  <label></label>
+		  <icon>vbuttonbox_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton8</name>
+		  <tooltip>Horizontal Pane</tooltip>
+		  <label></label>
+		  <icon>hpaned_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton9</name>
+		  <tooltip>Vertical Pane</tooltip>
+		  <label></label>
+		  <icon>vpaned_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton10</name>
+		  <tooltip>Frame</tooltip>
+		  <label></label>
+		  <icon>frame_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton11</name>
+		  <tooltip>Scrolled Window</tooltip>
+		  <label></label>
+		  <icon>scrolledwindow_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton12</name>
+		  <tooltip>Layou</tooltip>
+		  <label></label>
+		  <icon>layout_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton13</name>
+		  <tooltip>Viewport</tooltip>
+		  <label></label>
+		  <icon>viewport_xpm</icon>
+		  <active>False</active>
+		</widget>
+
+		<widget>
+		  <class>GtkToggleButton</class>
+		  <child_name>Toolbar:button</child_name>
+		  <name>togglebutton14</name>
+		  <tooltip>Alignment</tooltip>
+		  <label></label>
+		  <icon>alignment_xpm</icon>
+		  <active>False</active>
 		</widget>
 	      </widget>
 	    </widget>
