@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --              GtkAda - Ada95 binding for Gtk+/Gnome                --
 --                                                                   --
---                     Copyright (C) 2001 - 2002                     --
+--                   Copyright (C) 2001-2002                         --
 --                         ACT-Europe                                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
