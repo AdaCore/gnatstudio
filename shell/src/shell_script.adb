@@ -165,6 +165,10 @@ package body Shell_Script is
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
       Errors             : access Boolean) return String;
+   function Execute_Command_With_Args
+     (Script             : access Shell_Scripting_Record;
+      Command            : String;
+      Args               : GNAT.OS_Lib.Argument_List) return String;
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
@@ -952,6 +956,21 @@ package body Shell_Script is
          end if;
       end if;
    end Execute_Command;
+
+   -------------------------------
+   -- Execute_Command_With_Args --
+   -------------------------------
+
+   function Execute_Command_With_Args
+     (Script             : access Shell_Scripting_Record;
+      Command            : String;
+      Args               : GNAT.OS_Lib.Argument_List) return String
+   is
+      Errors : aliased Boolean;
+   begin
+      return Execute_GPS_Shell_Command
+        (Script.Kernel, Command, Args, Errors'Unchecked_Access);
+   end Execute_Command_With_Args;
 
    ------------------
    -- Execute_File --
