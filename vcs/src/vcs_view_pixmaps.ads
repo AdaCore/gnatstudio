@@ -43,7 +43,7 @@ private
    pragma Import (C, Removed_Xpm, "unknown_file_xpm");
 
    Not_Registered_Xpm : aliased Pixmap_Array;
-   pragma Import (C, Not_Registered_Xpm, "unknown_file_xpm");
+   pragma Import (C, Not_Registered_Xpm, "not_registered_xpm");
 
    Modified_Xpm : aliased Pixmap_Array;
    pragma Import (C, Modified_Xpm, "modified_xpm");
