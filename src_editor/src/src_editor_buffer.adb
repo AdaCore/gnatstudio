@@ -1085,6 +1085,12 @@ package body Src_Editor_Buffer is
 
       Close (FD);
 
+      --  If the file could be saved, emit the corresponding signal.
+
+      if Success then
+         File_Saved (Buffer.Kernel, Filename);
+      end if;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
