@@ -2370,6 +2370,10 @@ package body Project_Viewers is
                  and then Get_Pref (Kernel, Generate_Relative_Paths));
       Exec : constant String := Name_As_Directory
         (Normalize_Pathname (Executables_Directory (Project)));
+      Normalized_New_Dir : constant String := Name_As_Directory
+         (Normalize_Pathname (Get_Text (Obj_Dir.Obj_Dir)));
+      Normalized_Exec_Dir : constant String := Name_As_Directory
+         (Normalize_Pathname (Get_Text (Obj_Dir.Exec_Dir)));
 
    begin
       Assert (Me, Project = Ref_Project,
@@ -2379,8 +2383,7 @@ package body Project_Viewers is
          New_Dir := new String'(Relative_Path_Name
             (Get_Text (Obj_Dir.Obj_Dir), Project_Directory (Project)));
       else
-         New_Dir := new String'(Name_As_Directory
-           (Normalize_Pathname (Get_Text (Obj_Dir.Obj_Dir))));
+         New_Dir := new String'(Normalized_New_Dir);
       end if;
 
       if Get_Active (Obj_Dir.Same) then
@@ -2389,8 +2392,7 @@ package body Project_Viewers is
          Exec_Dir := new String'(Relative_Path_Name
            (Get_Text (Obj_Dir.Exec_Dir), Project_Directory (Project)));
       else
-         Exec_Dir := new String'(Name_As_Directory
-           (Normalize_Pathname (Get_Text (Obj_Dir.Exec_Dir))));
+         Exec_Dir := new String'(Normalized_Exec_Dir);
       end if;
 
       if Get_Text (Obj_Dir.Obj_Dir) /= Name_As_Directory
@@ -2403,16 +2405,16 @@ package body Project_Viewers is
                Attribute          => Obj_Dir_Attribute);
 
          else
-            if not Is_Directory (New_Dir.all) then
+            if not Is_Directory (Normalized_New_Dir) then
                if Message_Dialog
-                 (Msg => New_Dir.all
+                 (Msg => Normalized_New_Dir & ASCII.LF
                   & (-" is not a directory, would you like to create it ?"),
                   Title => -"Directory not found",
                   Dialog_Type => Information,
                   Buttons => Button_Yes or Button_No) = Button_Yes
                then
                   begin
-                     Make_Dir (New_Dir.all);
+                     Make_Dir (Normalized_New_Dir);
                   exception
                      when Directory_Error =>
                         null;
@@ -2448,16 +2450,16 @@ package body Project_Viewers is
                Attribute          => Exec_Dir_Attribute);
 
          else
-            if not Is_Directory (Exec_Dir.all) then
+            if not Is_Directory (Normalized_Exec_Dir) then
                if Message_Dialog
-                 (Msg => Exec_Dir.all
+                 (Msg => Normalized_Exec_Dir & ASCII.LF
                   & (-" is not a directory, would you like to create it ?"),
                   Title => -"Directory not found",
                   Dialog_Type => Information,
                   Buttons => Button_Yes or Button_No) = Button_Yes
                then
                   begin
-                     Make_Dir (Exec_Dir.all);
+                     Make_Dir (Normalized_Exec_Dir);
                   exception
                      when Directory_Error =>
                         null;
