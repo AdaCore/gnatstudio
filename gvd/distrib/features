@@ -1,9 +1,15 @@
 New features in GVD 1.1.1
 
+- The --target option now allows multiple ':' characters so that you
+  can specify machine:1234 as the the machine (& port number).
+  See the documentation for more details.
 - The data window is now zoomable
 - The breakpoint editor has been enhanced, and can now set advanced properties
   like ignore_count, commands to execute when reaching the breakpoint, or
   conditions to activate the breakpoint
+- The handling of commands has been improved and is more reliable. Caching of
+  commands has also been put in place giving better user feedback on slow
+  machines.
 
 New features in GVD 1.1.0
 
