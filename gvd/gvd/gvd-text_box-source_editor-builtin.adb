@@ -298,16 +298,16 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Create_From_Xpm_D
         (Editor.Default_Pixmap,
          Null_Window,
-         Get_System,
+         Get_Default_Colormap,
          Editor.Default_Mask,
-         White (Get_System),
+         White (Get_Default_Colormap),
          Default_Icon);
       Create_From_Xpm_D
         (Editor.Stop_Pixmap,
          Null_Window,
-         Get_System,
+         Get_Default_Colormap,
          Editor.Stop_Mask,
-         White (Get_System),
+         White (Get_Default_Colormap),
          Stop_Icon);
 
       Editor.Colors (Comment_Text) := Comments_Color;

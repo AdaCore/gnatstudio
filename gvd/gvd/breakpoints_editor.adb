@@ -96,7 +96,7 @@ package body Breakpoints_Editor is
            (Editor.Enabled_Pixmap,
             Get_Window (Editor),
             Editor.Enabled_Mask,
-            White (Get_System),
+            White (Get_Default_Colormap),
             break_xpm);
 
          --  Grey background when the combo boxes are insensitive

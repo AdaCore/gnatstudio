@@ -180,7 +180,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Create_From_Xpm_D
            (Filter_C.Suite_Pixmap,
             Window => null,
-            Colormap => Get_System,
+            Colormap => Get_Default_Colormap,
             Mask => Filter_C.Suite_Bitmap,
             Transparent => Null_Color,
             Data => box_xpm);
@@ -190,7 +190,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Create_From_Xpm_D
            (Filter_B.Spec_Pixmap,
             Window => null,
-            Colormap => Get_System,
+            Colormap => Get_Default_Colormap,
             Mask => Filter_B.Spec_Bitmap,
             Transparent => Null_Color,
             Data => box_xpm);
@@ -198,7 +198,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Create_From_Xpm_D
            (Filter_B.Body_Pixmap,
             Window => null,
-            Colormap => Get_System,
+            Colormap => Get_Default_Colormap,
             Mask => Filter_B.Body_Bitmap,
             Transparent => Null_Color,
             Data => package_xpm);

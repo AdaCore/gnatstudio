@@ -25,7 +25,7 @@ begin
 --    Create_From_Xpm_D
 --      (Filter.Not_Registered_Pixmap,
 --       Window => null,
---       Colormap => Get_System,
+--       Colormap => Get_Default_Colormap,
 --       Mask => Filter.Not_Registered_Bitmap,
 --       Transparent => Null_Color,
 --       Data => box_xpm);
@@ -40,7 +40,7 @@ begin
    Create_From_Xpm_D
      (Filter.Not_Registered_Pixmap,
       Window => null,
-      Colormap => Get_System,
+      Colormap => Get_Default_Colormap,
       Mask => Filter.Not_Registered_Bitmap,
       Transparent => Null_Color,
       Data => stock_close_xpm);
@@ -48,7 +48,7 @@ begin
    Create_From_Xpm_D
      (Filter.Up_To_Date_Pixmap,
       Window => null,
-      Colormap => Get_System,
+      Colormap => Get_Default_Colormap,
       Mask => Filter.Up_To_Date_Bitmap,
       Transparent => Null_Color,
       Data => stock_button_apply_xpm);
@@ -56,7 +56,7 @@ begin
    Create_From_Xpm_D
      (Filter.Modified_Pixmap,
       Window => null,
-      Colormap => Get_System,
+      Colormap => Get_Default_Colormap,
       Mask => Filter.Modified_Bitmap,
       Transparent => Null_Color,
       Data => stock_preferences_xpm);
@@ -64,7 +64,7 @@ begin
    Create_From_Xpm_D
      (Filter.Needs_Merge_Pixmap,
       Window => null,
-      Colormap => Get_System,
+      Colormap => Get_Default_Colormap,
       Mask => Filter.Needs_Merge_Bitmap,
       Transparent => Null_Color,
       Data => stop_xpm);
@@ -72,7 +72,7 @@ begin
    Create_From_Xpm_D
      (Filter.Needs_Update_Pixmap,
       Window => null,
-      Colormap => Get_System,
+      Colormap => Get_Default_Colormap,
       Mask => Filter.Needs_Update_Bitmap,
       Transparent => Null_Color,
       Data => stock_button_cancel_xpm);

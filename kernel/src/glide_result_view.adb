@@ -714,12 +714,13 @@ package body Glide_Result_View is
       View.Kernel := Kernel;
 
       View.Non_Leaf_Color := Parse (Non_Leaf_Color_Name);
-      Alloc_Color (Get_System, View.Non_Leaf_Color, False, True, Success);
+      Alloc_Color
+        (Get_Default_Colormap, View.Non_Leaf_Color, False, True, Success);
 
       View.Category_Pixbuf := Gdk_New_From_Xpm_Data (var_xpm);
       View.File_Pixbuf     := Gdk_New_From_Xpm_Data (mini_page_xpm);
 
-      View.Leaf_Color := Black (Get_System);
+      View.Leaf_Color := Black (Get_Default_Colormap);
 
       --  Initialize the tree.
 

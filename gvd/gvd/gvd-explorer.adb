@@ -194,7 +194,7 @@ package body GVD.Explorer is
          Set_Base (Explorer.Current_File_Style, State_Normal, Color);
          Set_Base (Explorer.Current_File_Style, State_Selected, Color);
          Set_Foreground (Explorer.Current_File_Style, State_Active,
-                         Black (Get_System));
+                         Black (Get_Default_Colormap));
       end if;
    end Create_Current_File_Style;
 
@@ -231,14 +231,14 @@ package body GVD.Explorer is
       Create_From_Xpm_D
         (Explorer.Folder_Open_Pixmap,
          Window      => null,
-         Colormap    => Get_System,
+         Colormap    => Get_Default_Colormap,
          Mask        => Explorer.Folder_Open_Mask,
          Transparent => Null_Color,
          Data        => mini_ofolder_xpm);
       Create_From_Xpm_D
         (Explorer.Folder_Pixmap,
          Window      => null,
-         Colormap    => Get_System,
+         Colormap    => Get_Default_Colormap,
          Mask        => Explorer.Folder_Mask,
          Transparent => Null_Color,
          Data        => mini_folder_xpm);

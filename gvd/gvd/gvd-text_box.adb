@@ -155,9 +155,9 @@ package body GVD.Text_Box is
       Create_From_Xpm_D
         (Current_Line_Pixmap,
          Null_Window,
-         Get_System,
+         Get_Default_Colormap,
          Current_Line_Mask,
-         White (Get_System),
+         White (Get_Default_Colormap),
          Current_Line_Icon);
 
       --  Create the current line icon, and make sure it is never destroyed.

@@ -585,14 +585,15 @@ package body Src_Editor_View is
         (Source_View (View).Side_Background_GC,
          Get_Window (Source_View (View), Text_Window_Left));
       Color := Parse ("#eeeeee");
-      Alloc_Color (Get_System, Color, False, True, Success);
+      Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
 
       if Success then
          Set_Foreground
            (Source_View (View).Side_Background_GC, Color);
       else
          Set_Foreground
-           (Source_View (View).Side_Background_GC, White (Get_System));
+           (Source_View (View).Side_Background_GC,
+            White (Get_Default_Colormap));
       end if;
 
    exception
