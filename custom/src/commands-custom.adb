@@ -23,8 +23,8 @@ with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Glide_Intl;           use Glide_Intl;
-with Shell;                use Shell;
 
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
@@ -282,7 +282,7 @@ package body Commands.Custom is
          --  Arguments have been substituted, launch the command.
 
          if Command.GPS_Command then
-            Interpret_Command
+            Execute_GPS_Shell_Command
               (Command.Kernel,
                Command_To_String (Command.Command.all, New_Args.all));
             Success := True;
@@ -301,7 +301,7 @@ package body Commands.Custom is
          Free (New_Args);
 
       elsif Command.GPS_Command then
-         Interpret_Command (Command.Kernel, Command.Command.all);
+         Execute_GPS_Shell_Command (Command.Kernel, Command.Command.all);
          Success := True;
 
       else

@@ -54,9 +54,9 @@ with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Shell;             use Shell;
 
 package body Glide_Kernel.Modules is
 
@@ -1518,7 +1518,7 @@ package body Glide_Kernel.Modules is
                new String'(Image (Length)),
                new String'(Real_File.all));
 
-            Interpret_Command (Kernel, "add_location_command", Args);
+            Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
             Free (Args);
          end;
       end if;
