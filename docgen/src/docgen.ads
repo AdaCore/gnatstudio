@@ -27,18 +27,19 @@
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with List_Utils;                use List_Utils;
+with Src_Info;                  use Src_Info;
 with Generic_List;
 
 package Docgen is
 
-   Max_Line_Length : constant Natural := 160;
-   Dummy_Exception : exception;
+   Max_Line_Length     : constant Natural := 160;
+   First_File_Line     : constant Natural := 1;
+   No_Body_Line_Needed : constant Natural := 0;
 
    type Source_File_Information is record
       File_Name        : GNAT.OS_Lib.String_Access;
       Prj_File_Name    : GNAT.OS_Lib.String_Access;
       Package_Name     : GNAT.OS_Lib.String_Access;
-      Def_In_Line      : Integer;
       Other_File_Found : Boolean;
    end record;
    --  the structures for the list of the source files
@@ -76,8 +77,7 @@ package Docgen is
    --  sort the list by name
 
 
-   type Entity_Type is (Procedure_Entity,
-                        Function_Entity,
+   type Entity_Type is (Subprogram_Entity,
                         Exception_Entity,
                         Type_Entity,
                         Var_Entity,
@@ -162,6 +162,9 @@ package Docgen is
       --  build and the package files should be included there later.
       Project_Name         : GNAT.OS_Lib.String_Access;
       --  The name of the main project
+      Link_All             : Boolean := False;
+      --  Should links be created to entities whose declaration files
+      --  aren't being processed
    end record;
    --  the type containing all the information which can be
    --  set by using the opions of the command line
@@ -173,14 +176,15 @@ package Docgen is
    --  when a new output format should be added
    type Doc_Info (Info_Type : Info_Types) is
       record
-         Doc_Info_Options                    : All_Options;
+         Doc_Info_Options          : All_Options;
+         Doc_LI_Unit               : LI_File_Ptr;
+         Doc_File_List             : Type_Source_File_List.List;
 
          case Info_Type is
                --  used to at the very beginning of the file
             when Open_Info =>
                Open_Title                    : GNAT.OS_Lib.String_Access;
                Open_File                     : GNAT.OS_Lib.String_Access;
-               Open_Package_List             : Type_Source_File_List.List;
                Open_Package_Next             : GNAT.OS_Lib.String_Access;
                Open_Package_Prev             : GNAT.OS_Lib.String_Access;
 
@@ -208,15 +212,14 @@ package Docgen is
 
             when With_Info =>
                With_Header                   : GNAT.OS_Lib.String_Access;
-               With_List                     : Type_Entity_List.List;
                With_File                     : GNAT.OS_Lib.String_Access;
+               With_Header_Line              : Natural;
 
             when Package_Info =>
                Package_Entity                : Entity_List_Information;
                Package_Header                : GNAT.OS_Lib.String_Access;
                Package_Header_Line           : Natural;
                Package_Description           : GNAT.OS_Lib.String_Access;
-               Package_List                  : Type_Entity_List.List;
 
                --  used to add the package description
             when Package_Desc_Info =>
@@ -228,7 +231,6 @@ package Docgen is
                Var_Header                    : GNAT.OS_Lib.String_Access;
                Var_Header_Line               : Natural;
                Var_Description               : GNAT.OS_Lib.String_Access;
-               Var_List                      : Type_Entity_List.List;
 
                --  used to add an exception info to the information file
             when Exception_Info =>
@@ -236,7 +238,6 @@ package Docgen is
                Exception_Header              : GNAT.OS_Lib.String_Access;
                Exception_Header_Line              : Natural;
                Exception_Description         : GNAT.OS_Lib.String_Access;
-               Exception_List                : Type_Entity_List.List;
 
                --  used to add a type info to the information file
             when Type_Info =>
@@ -244,7 +245,6 @@ package Docgen is
                Type_Header                   : GNAT.OS_Lib.String_Access;
                Type_Header_Line              : Natural;
                Type_Description              : GNAT.OS_Lib.String_Access;
-               Type_List                     : Type_Entity_List.List;
 
                --  used to add an entry info to the information file
             when Entry_Info =>
@@ -253,7 +253,6 @@ package Docgen is
                Entry_Header_Line             : Natural;
                Entry_Description             : GNAT.OS_Lib.String_Access;
                Entry_Link                    : Boolean;
-               Entry_List                    : Type_Entity_List.List;
 
                --  used to add a subprogram info to the information file
             when Subprogram_Info =>
@@ -297,7 +296,6 @@ package Docgen is
             when Body_Line_Info =>
                Body_File                     : GNAT.OS_Lib.String_Access;
                Body_Text                     : GNAT.OS_Lib.String_Access;
-               Body_Entity_List              : Type_Entity_List.List;
             when others => null;  --  exception later
          end case;
       end record;
@@ -327,5 +325,22 @@ package Docgen is
    --  first the doc path is added in front of the created name
    --  then the "." in front of the suffix is replaced by "_",
    --  so that a new output format suffix can be added
+
+   function Is_Defined_In_Subprogram
+     (Entity          : String;
+      Short_Entity    : String;
+      Package_Name    : String) return Boolean;
+   --  returns true if the entity is defined within another entity and
+   --  not dierctly within the package. The function only parses the
+   --  full entity name to find a "."!
+
+   function Source_File_In_List
+     (Source_File_List : Type_Source_File_List.List;
+      Name             : String) return Boolean;
+   --  returns true if the file is found in the source file list
+
+   function Count_Points
+     (Text : String) return Natural;
+   --  returns the number of point in the given string
 
 end Docgen;
