@@ -43,8 +43,9 @@ with Gtk.Widget;
 
 with Language;
 with Language_Handlers;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Glide_Kernel;
+with Glide_Kernel.Modules;
 with Src_Info;
 with Src_Editor_Buffer;
 with Src_Editor_View;
@@ -390,6 +391,18 @@ package Src_Editor_Box is
    --  Glide_Kernel.Get_Current_Context, and might be called with Event and
    --  Menu set to null.
 
+   ----------------------
+   -- Line information --
+   ----------------------
+
+   procedure Add_File_Information
+     (Editor        : access Source_Editor_Box_Record;
+      Identifier    : String;
+      Width         : Integer;
+      Info          : Glide_Kernel.Modules.Line_Information_Data;
+      Stick_To_Data : Boolean := True);
+   --  Add the line information to the view corresponding to Editor.
+
 private
 
    ----------------------
@@ -428,7 +441,6 @@ private
       Cursor_Loc_Label     : Gtk.Label.Gtk_Label;
 
       --  The non graphical attributes
-      Filename             : String_Access;
 
       Timestamp            : Src_Info.Timestamp := 0;
       --  Timestamp of the file the last time it was checked. It it used to
