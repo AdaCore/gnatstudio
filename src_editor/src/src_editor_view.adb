@@ -538,7 +538,7 @@ package body Src_Editor_View is
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
    begin
       Save_Cursor_Position (View);
-      End_Action (Buffer);
+      External_End_Action (Buffer);
       return False;
 
    exception
@@ -893,7 +893,7 @@ package body Src_Editor_View is
         Get_Window (View, Text_Window_Left);
 
    begin
-      End_Action (Buffer);
+      External_End_Action (Buffer);
 
       if Get_Window (Event) = Left_Window
         and then Get_Event_Type (Event) = Button_Press
@@ -1246,34 +1246,48 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View   : constant Source_View   := Source_View (Widget);
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Key    : constant Gdk_Key_Type  := Get_Key_Val (Event);
-      K      : Gdk_Key_Type;
-      Modif  : Gdk_Modifier_Type;
+      View           : constant Source_View   := Source_View (Widget);
+      Buffer         : constant Source_Buffer :=
+        Source_Buffer (Get_Buffer (View));
+      Key            : constant Gdk_Key_Type  := Get_Key_Val (Event);
+
+      Indent_Key     : Gdk_Key_Type;
+      Indent_Modif   : Gdk_Modifier_Type;
+
+      Complete_Key   : Gdk_Key_Type;
+      Complete_Modif : Gdk_Modifier_Type;
 
    begin
-      Get_Pref (Get_Kernel (Buffer), Indentation_Key, Modif, K);
+      Get_Pref
+        (Get_Kernel (Buffer), Indentation_Key, Indent_Modif, Indent_Key);
 
-      if Key = K and then Get_State (Event) = Modif then
+      if Key = Indent_Key and then Get_State (Event) = Indent_Modif then
          if Do_Indentation (Buffer, Get_Language (Buffer), False) then
             return True;
          end if;
       end if;
 
+      Get_Pref
+        (Get_Kernel (Buffer), Completion_Key, Complete_Modif, Complete_Key);
+
+      if Key = Complete_Key and then Get_State (Event) = Complete_Modif then
+         Do_Completion (Buffer);
+         return True;
+      end if;
+
       case Key is
          when GDK_Return =>
+            External_End_Action (Buffer);
+
             if Do_Indentation (Buffer, Get_Language (Buffer), True) then
                return True;
-            else
-               End_Action (Buffer);
             end if;
 
          when GDK_Linefeed | GDK_Tab |
            GDK_Home | GDK_Page_Up | GDK_Page_Down | GDK_End | GDK_Begin |
            GDK_Up | GDK_Down | GDK_Left | GDK_Right
          =>
-            End_Action (Buffer);
+            External_End_Action (Buffer);
 
          when GDK_LC_z | GDK_Z =>
             if (Get_State (Event) and Control_Mask) /= 0 then
