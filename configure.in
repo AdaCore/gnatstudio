@@ -30,8 +30,8 @@ AC_ARG_WITH(python,
 [PYTHON_PATH_WITH=$withval],
 PYTHON_PATH_WITH="no")
 
-
-AC_CHECK_PROG(XMLADA_GPR, xmlada.gpr, "with_xmlada", "no_xmlada", $ADA_PROJECT_PATH)
+PROJECT_PATH=`gnatls -v | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
+AC_CHECK_PROG(XMLADA_GPR, xmlada.gpr, "with_xmlada", "no_xmlada", $PROJECT_PATH)
 IFS=' '
 
 ######## checking for local tools ###

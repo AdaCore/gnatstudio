@@ -1403,7 +1403,7 @@ else
   PYTHON_PATH_WITH="no"
 fi;
 
-
+PROJECT_PATH=`gnatls -v | awk 'BEGIN {display=0} /<Current/ {next} {if (display) {printf "%s:", $1}} /Project Search Path/ {display=1}'`
 # Extract the first word of "xmlada.gpr", so it can be a program name with args.
 set dummy xmlada.gpr; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -1415,7 +1415,7 @@ else
   ac_cv_prog_XMLADA_GPR="$XMLADA_GPR" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $ADA_PROJECT_PATH
+for as_dir in $PROJECT_PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
