@@ -384,10 +384,17 @@ package body Creation_Wizard is
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
       Changed        : Boolean := False;
       Languages      : Argument_List := Get_Languages (Wiz);
-      Project        : constant Project_Node_Id := Create_Project
-        (Name => Name, Path => Dir);
+      Project        : Project_Node_Id;
 
    begin
+      --  Avoid SE in old versions of Base_Name
+      if Name'Length > Prj.Project_File_Extension'Length then
+         Project := Create_Project
+           (Name => Base_Name (Name, Prj.Project_File_Extension), Path => Dir);
+      else
+         Project := Create_Project (Name => Name, Path => Dir);
+      end if;
+
       Set_Project_Uses_Relative_Paths (Wiz.Kernel, Project, Relative_Paths);
 
       Update_Attribute_Value_In_Scenario
@@ -412,10 +419,16 @@ package body Creation_Wizard is
       --  in case we are overwritting an existing file.
       Set_Project_Modified (Wiz.Kernel, Project, True);
 
-      Save_Project (Wiz.Kernel, Project, Recursive => False);
+      Save_Single_Project (Wiz.Kernel, Project, Langs => Languages);
 
       Free (Languages);
-      return Dir & Name & Project_File_Extension;
+
+      if Name'Length > Prj.Project_File_Extension'Length then
+         return Dir & Base_Name (Name, Prj.Project_File_Extension)
+           & Project_File_Extension;
+      else
+         return Dir & Name & Project_File_Extension;
+      end if;
    end Generate_Prj;
 
    ---------
