@@ -44,8 +44,8 @@ with Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
---  ??? why is the following line commented out
---  with Docgen_Backend_TEXI;     use Docgen_Backend_TEXI; not ready
+--  with Docgen_Backend_TEXI;     use Docgen_Backend_TEXI;
+--  this Backend is not ready
 
 package body Docgen_Module is
 
@@ -81,6 +81,11 @@ package body Docgen_Module is
       --  Should links be created to entities whose declaration files
       --  aren't being processed
 
+      Process_Tagged_Types  : Param_Spec_Boolean;
+      --  True if we indicate if we make a list with all tagged
+      --  types declared in the list of files we are processing. For each
+      --  tagged types we indicate his parent and his Children (if they exist)
+
       Options : All_Options;
       --  Group all the preferences
 
@@ -97,14 +102,15 @@ package body Docgen_Module is
      ("Type_Api_Doc", Type_Api_Doc);
 
    procedure Set_Options
-     (Type_Of_File_P       : Type_Api_Doc := HTML;
-      Process_Body_Files_P : Boolean := False;
-      Ignorable_Comments_P : Boolean := False;
-      Comments_Above_P     : Boolean := False;
-      Show_Private_P       : Boolean := False;
-      References_P         : Boolean := False;
-      One_Doc_File_P       : Boolean := False;
-      Link_All_P           : Boolean := False);
+     (Type_Of_File_P         : Type_Api_Doc := HTML;
+      Process_Body_Files_P   : Boolean := False;
+      Ignorable_Comments_P   : Boolean := False;
+      Comments_Above_P       : Boolean := False;
+      Show_Private_P         : Boolean := False;
+      References_P           : Boolean := False;
+      One_Doc_File_P         : Boolean := False;
+      Link_All_P             : Boolean := False;
+      Tagged_Types_P : Boolean := False);
    --  Set new options or reset options
    --
    --  - Type_Of_File_P is the type of the generated file (html, texi...)
@@ -119,6 +125,9 @@ package body Docgen_Module is
    --    file (only for texi)
    --  - Link_All_P indicates if links are created for entities whose
    --    declaration files aren't processed
+   --  - Tagged_Types indicates if we make a list with all tagged
+   --    types declared in the list of files we are processing. For each
+   --    tagged types we indicate his parent and his children (if they exist).
 
    procedure Array2List
      (Kernel : Kernel_Handle;
@@ -227,6 +236,8 @@ package body Docgen_Module is
         := Docgen_Module (Docgen_Module_ID).Options.One_Doc_File;
       My_Options.Link_All
         := Docgen_Module (Docgen_Module_ID).Options.Link_All;
+      My_Options.Tagged_Types
+        := Docgen_Module (Docgen_Module_ID).Options.Tagged_Types;
    end Get_Options;
 
    -------------------
@@ -241,7 +252,8 @@ package body Docgen_Module is
       Show_Private_P       : Boolean := False;
       References_P         : Boolean := False;
       One_Doc_File_P       : Boolean := False;
-      Link_All_P           : Boolean := False) is
+      Link_All_P           : Boolean := False;
+      Tagged_Types_P : Boolean := False) is
    begin
       Docgen_Module (Docgen_Module_ID).Options.Type_Of_File := Type_Of_File_P;
       Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files :=
@@ -258,6 +270,8 @@ package body Docgen_Module is
         One_Doc_File_P;
       Docgen_Module (Docgen_Module_ID).Options.Link_All :=
         Link_All_P;
+      Docgen_Module (Docgen_Module_ID).Options.Tagged_Types :=
+        Tagged_Types_P;
    end Set_Options;
 
    -----------------
@@ -308,7 +322,8 @@ package body Docgen_Module is
          Get_Pref (K, Docgen_Module (Docgen_Module_ID).Show_Private_Entities),
          Get_Pref (K, Docgen_Module (Docgen_Module_ID).Show_References),
          Get_Pref (K, Docgen_Module (Docgen_Module_ID).One_Document_File),
-         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Link_All_References));
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Link_All_References),
+         Get_Pref (K, Docgen_Module (Docgen_Module_ID).Process_Tagged_Types));
    end On_Preferences_Changed;
 
    -----------------------
@@ -772,6 +787,19 @@ package body Docgen_Module is
       Register_Property
         (Kernel,
          Param_Spec (Docgen_Module (Docgen_Module_ID).Link_All_References),
+         -"Documentation");
+
+      Docgen_Module (Docgen_Module_ID).Process_Tagged_Types
+        := Param_Spec_Boolean
+        (Gnew_Boolean
+          (Name    => "Doc-Tagged",
+           Default => False,
+           Blurb   =>
+             -("List of tagged types declared in processed files"),
+           Nick    => -"List tagged types"));
+      Register_Property
+        (Kernel,
+         Param_Spec (Docgen_Module (Docgen_Module_ID).Process_Tagged_Types),
          -"Documentation");
 
       Kernel_Callback.Connect
