@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -755,7 +755,10 @@ package body Debugger is
       Cmd      : String;
       Mode     : Invisible_Command := Hidden) return String
    is
-      Process : Visual_Debugger;
+      Process  : Visual_Debugger;
+      Last     : Natural;
+      CR_Found : Boolean;
+
    begin
       pragma Assert (not Command_In_Process (Get_Process (Debugger)));
 
@@ -764,13 +767,14 @@ package body Debugger is
       Debugger.Continuation_Line := False;
 
       declare
-         S : constant String :=
+         S : String :=
            Glib.Convert.Locale_To_UTF8 (Expect_Out (Get_Process (Debugger)));
       begin
          Send_Internal_Post (Debugger, Cmd, Mode);
 
          if Need_To_Strip_CR then
-            return Strip_CR (S);
+            Strip_CR (S, Last, CR_Found);
+            return Strip_CR (S (S'First .. Last));
          else
             return S;
          end if;
