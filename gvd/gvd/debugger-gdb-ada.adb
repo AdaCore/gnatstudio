@@ -1019,11 +1019,11 @@ package body Debugger.Gdb.Ada is
    begin
       return Info /= ""
         and then
-        (Info'Length < 16
-         or else Info (Info'First .. Info'First + 15) /= "access procedure")
+          (Info'Length < 16
+           or else Info (Info'First .. Info'First + 15) /= "access procedure")
         and then
-        (Info'Length < 15
-         or else Info (Info'First .. Info'First + 14) /= "access function");
+          (Info'Length < 15
+           or else Info (Info'First .. Info'First + 14) /= "access function");
    end Can_Tooltip_On_Entity;
 
 end Debugger.Gdb.Ada;
