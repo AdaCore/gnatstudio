@@ -20,19 +20,50 @@
 
 #include <Python.h>
 
+#undef DEBUG
+
+PyObject * ada_Py_InitModule4
+    (char *name, PyMethodDef *methods,
+     char *doc, PyObject *self,
+     int apiver)
+{
+  return Py_InitModule4 (name, methods, doc, self, apiver);
+}
+
+void ada_py_print_refcount (PyObject* obj, char* msg) {
+#ifdef DEBUG
+  if (obj) {
+    printf ("DEBUG %s obj=%p (%s) refcont=%d\n",
+	    msg, obj, obj->ob_type->tp_name, obj->ob_refcnt);
+  }
+#endif
+}
+
 void ada_py_incref (PyObject* obj) {
   Py_INCREF (obj);
+#ifdef DEBUG
+  ada_py_print_refcount (obj, "after incref");
+#endif
 }
 
 void ada_py_decref (PyObject* obj) {
+#ifdef DEBUG
+  ada_py_print_refcount (obj, "before decref");
+#endif
   Py_DECREF (obj);
 }
 
 void ada_py_xincref (PyObject* obj) {
   Py_XINCREF (obj);
+#ifdef DEBUG
+  ada_py_print_refcount (obj, "after xincref");
+#endif
 }
 
 void ada_py_xdecref (PyObject* obj) {
+#ifdef DEBUG
+  ada_py_print_refcount (obj, "before xdecref");
+#endif
   Py_XDECREF (obj);
 }
 
