@@ -38,7 +38,10 @@ with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Widget;          use Gtk.Widget;
 with Odd.Types;           use Odd.Types;
 with Odd.Preferences;     use Odd.Preferences;
+with Odd.Strings;         use Odd.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Odd.Text_Boxes is
 
@@ -739,6 +742,7 @@ package body Odd.Text_Boxes is
    procedure Highlight_Range
      (Box    : access Odd_Text_Box_Record;
       From, To : Glib.Gint;
+      Widget_From : Glib.Gint;
       Line   : Natural;
       Fore  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color)
@@ -756,37 +760,35 @@ package body Odd.Text_Boxes is
 
       if Box.Highlight_Start /= 0 then
          Freeze (Box.Child);
-         Delete_Text
-           (Box.Child,
-            Gint (Box.Highlight_Index),
-            Gint (Box.Highlight_Index_End));
+         Delete_Text (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
          Set_Point (Box.Child, Guint (Box.Highlight_Index));
          Insert
            (Box,
-            Chars => Box.Buffer (Integer (Box.Highlight_Start)
-                                 .. Integer (Box.Highlight_End) - 1));
+            Chars => Do_Tab_Expansion
+            (Box.Buffer (Integer (Box.Highlight_Start)
+                         .. Integer (Box.Highlight_End) - 1)));
          Box.Highlight_Start := 0;
          Thaw (Box.Child);
       end if;
 
       --  Highlight the new range
       if From /= 0 and then To /= 0 then
-         Freeze (Box.Child);
-         Box.Highlight_Start := From;
-         Box.Highlight_End   := To;
-         Box.Highlight_Index := From
-           + Gint (Line) * Invisible_Column_Width (Odd_Text_Box (Box)) - 1;
-         Box.Highlight_Index_End := To
-           + Gint (Line) * Invisible_Column_Width (Odd_Text_Box (Box)) - 1;
+         declare
+            S : constant String := Do_Tab_Expansion
+              (Box.Buffer (Integer (From) .. Integer (To) - 1));
+         begin
+            Freeze (Box.Child);
+            Box.Highlight_Start := From;
+            Box.Highlight_End   := To;
+            Box.Highlight_Index := Widget_From;
+            Box.Highlight_Index_End := Widget_From + S'Length;
 
-         Delete_Text (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
-         Set_Point (Box.Child, Guint (Box.Highlight_Index));
-         Insert
-           (Box,
-            Fore  => Fore,
-            Back  => Back,
-            Chars => Box.Buffer (Integer (From) .. Integer (To) - 1));
-         Thaw (Box.Child);
+            Delete_Text
+              (Box.Child, Box.Highlight_Index, Box.Highlight_Index_End);
+            Set_Point (Box.Child, Guint (Box.Highlight_Index));
+            Insert (Box, Fore  => Fore, Back  => Back, Chars => S);
+            Thaw (Box.Child);
+         end;
       end if;
    end Highlight_Range;
 

@@ -178,12 +178,15 @@ package Odd.Text_Boxes is
    procedure Highlight_Range
      (Box    : access Odd_Text_Box_Record;
       From, To : Glib.Gint;
+      Widget_From : Glib.Gint;
       Line   : Natural;
       Fore  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
       Back  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color);
    --  Highlight a specific range in the text area (the background becomes
    --  Color). If any range was already highlighted, it is restored to the
    --  default background color.
+   --  The text range is From .. To (related to the underlying buffer), and
+   --  is inserted at Widget_From in the text widget.
 
 private
    type Odd_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with record
