@@ -1759,6 +1759,7 @@ package body Project_Explorers is
       Parent_Iter : Gtk_Tree_Iter;
       Node_Type   : Node_Types;
       Project     : Project_Type;
+      N           : Name_Id;
    begin
       if Importing then
          Parent_Iter := Parent (Explorer.Tree.Model, Node);
@@ -1784,12 +1785,14 @@ package body Project_Explorers is
       end loop;
 
       if Parent_Iter /= Null_Iter then
-         Project :=
-           Get_Project_From_Name
-             (Get_Registry (Explorer.Kernel),
-              Name_Id ((Get_Int
-                        (Gtk_Tree_Model (Explorer.Tree.Model),
-                         Parent_Iter, Project_Column))));
+         N := Name_Id
+           (Get_Int (Gtk_Tree_Model (Explorer.Tree.Model),
+                     Parent_Iter, Project_Column));
+         Assert (Me, N /= No_Name,
+                 "Get_Project_From_Node: no project found");
+         Project := Get_Project_From_Name
+           (Get_Registry (Explorer.Kernel), N);
+
       else
          Project := No_Project;
       end if;
