@@ -26,6 +26,7 @@ with Gtk.Tree_Store; use Gtk.Tree_Store;
 with Glide_Kernel;   use Glide_Kernel;
 with Language;       use Language;
 with Gtk.Tree_View;  use Gtk.Tree_View;
+with Gtk.Menu;       use Gtk.Menu;
 
 package Project_Explorers_Common is
 
@@ -53,6 +54,7 @@ package Project_Explorers_Common is
    Project_Column       : constant := 7;
    Category_Column      : constant := 8;
    Up_To_Date_Column    : constant := 9;
+   Entity_Base_Column   : constant := 10;
 
    ----------------------
    -- Node definitions --
@@ -103,6 +105,7 @@ package Project_Explorers_Common is
 
    function Append_Category_Node
      (Model       : Gtk_Tree_Store;
+      File        : String;
       Category    : Language_Category;
       Parent_Iter : Gtk_Tree_Iter) return Gtk_Tree_Iter;
    --  Add a category node in the model.
@@ -159,6 +162,22 @@ package Project_Explorers_Common is
       Node  : Gtk_Tree_Iter) return String;
    --  Return the absolute name for Node.
 
+   function Get_Directory_From_Node
+     (Model : Gtk_Tree_Store;
+      Node  : Gtk_Tree_Iter)
+      return String;
+   --  Return the name of the directory to which Node belongs. This returns the
+   --  full directory name, relative to the project.
+   --  The return strings always ends with a directory separator.
+
+   function Get_File_From_Node
+     (Model     : Gtk_Tree_Store;
+      Node      : Gtk_Tree_Iter;
+      Full_Path : Boolean := False) return String;
+   --  Return the name of the file containing Node (or, in case Node is an
+   --  Entity_Node, the name of the file that contains the entity).
+   --  The full name, including directory, is returned if Full_Path is True.
+
    ----------
    -- Misc --
    ----------
@@ -186,5 +205,13 @@ package Project_Explorers_Common is
    --  location accordingly, and return whether the event should be propagated.
    --  If Add_Dummy is true, a dummy node will be added to nodes collapsed
    --  by this call.
+
+   function Context_Factory
+     (Kernel     : Kernel_Handle;
+      Tree       : access Gtk_Tree_View_Record'Class;
+      Model      : Gtk_Tree_Store;
+      Event      : Gdk_Event;
+      Menu       : Gtk_Menu) return Selection_Context_Access;
+   --  Return the context to use for the contextual menu.
 
 end Project_Explorers_Common;
