@@ -601,12 +601,7 @@ package body Prj_Normalize is
    is
       Values : External_Variable_Value_Array (1 .. Scenario_Variables'Length);
       Last_Values : Natural := Values'First - 1;
-
    begin
-      --  ??? This information should be transmitted through the kernel by the
-      --  ??? scenario editor. In fact, we could even cache the current case
-      --  ??? item there
-
       for J in Scenario_Variables'Range loop
          String_To_Name_Buffer
            (External_Reference_Of (Scenario_Variables (J)));
