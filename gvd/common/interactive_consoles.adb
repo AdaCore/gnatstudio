@@ -1078,13 +1078,13 @@ package body Interactive_Consoles is
 
          Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, End_Mark);
          Delete_Mark (Console.Buffer, End_Mark);
+         Get_End_Iter (Console.Buffer, Last_Iter);
+         Backward_Char (Last_Iter, Success);
+         return Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
       else
-         Get_Iter_At_Mark (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
+         --  Since we do not bufferize
+         return "";
       end if;
-
-      Get_End_Iter (Console.Buffer, Last_Iter);
-      Backward_Char (Last_Iter, Success);
-      return Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
    end Read;
 
 end Interactive_Consoles;
