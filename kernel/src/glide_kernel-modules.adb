@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -834,7 +834,7 @@ package body Glide_Kernel.Modules is
       if Context /= null and then Filter_Matches (Command.Filter, Context) then
          Launch_Background_Command
            (Kernel_Handle (Widget), Command.Command, Destroy_On_Exit => False,
-            Active => False, Show_Bar => False, Queue_Id => "");
+            Active => True, Show_Bar => False, Queue_Id => "");
       elsif Get_Error_Message (Command.Filter) /= "" then
          Insert (Kernel_Handle (Widget), Get_Error_Message (Command.Filter),
                  Mode => Error);
