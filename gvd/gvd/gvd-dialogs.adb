@@ -287,7 +287,7 @@ package body Odd.Dialogs is
       Item    : Gtk_List_Item;
 
    begin
-      Remove_Items
+      Remove_Items_No_Unref
         (History_Dialog.List, Get_Children (History_Dialog.List));
       Wind (History, Backward);
 

@@ -206,17 +206,25 @@ package body Odd.Dialogs.Callbacks is
       List : constant Gtk_List :=
         History_Dialog_Access (Get_Toplevel (Object)).List;
       use Widget_List;
-      Selected : Widget_List.Glist := Last (Get_Selection (List));
-
+      Selected : Widget_List.Glist := First (Get_Selection (List));
+      New_List : Widget_List.Glist;
    begin
+
       while Selected /= Null_List loop
+         Append (New_List, Get_Data (Selected));
+         Selected := Next (Selected);
+      end loop;
+
+      New_List := Last (New_List);
+      while New_List /= Null_List loop
          Process_User_Command
            (Tab,
             Get
               (Gtk_Label
-                (Get_Data (Children (Gtk_Container (Get_Data (Selected)))))));
-         Selected := Prev (Selected);
+                (Get_Data (Children (Gtk_Container (Get_Data (New_List)))))));
+         New_List := Prev (New_List);
       end loop;
+      Update (Top.History_Dialog, Gtk_Widget (Tab));
    end On_Replay_Selection_Clicked;
 
    -------------------------------
