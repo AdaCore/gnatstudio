@@ -20,6 +20,8 @@
 
 with Glib.Convert;              use Glib.Convert;
 
+with Gtk.Enums;
+
 with Gtkada.MDI;                use Gtkada.MDI;
 
 with Glide_Intl;                use Glide_Intl;
@@ -1323,7 +1325,8 @@ package body VCS.CVS is
       end loop;
 
       Close (File);
-      Open_File_Editor (Kernel, Text_File, Dock => Bottom);
+      Open_File_Editor (Kernel, Text_File);
+      Split (Get_MDI (Kernel), Gtk.Enums.Orientation_Vertical);
       Delete (Text_File);
 
       return True;
