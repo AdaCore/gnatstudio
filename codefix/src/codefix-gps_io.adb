@@ -132,7 +132,6 @@ package body Codefix.GPS_Io is
              (This.Kernel, Get_File_Name (This))
          & " -b 0");
    begin
-      Put_Line (Integer'Image (Line'Length));
       if Line (Line'Last + 1 - EOL_Str'Length .. Line'Last) /= EOL_Str then
          return Line;
       else
@@ -163,7 +162,8 @@ package body Codefix.GPS_Io is
             & " -b 0"
             & " """ & New_Value & """"));
       --  ??? Be carefull !!! In New_Value, if there is any cote,
-      --  the command will be bad interpreted !!!
+      --  the command will be bad interpreted !!! Waiting to know the
+      --  escape character before fixing this bug.
       Free (Garbage);
    end Replace;
 
