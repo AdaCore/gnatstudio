@@ -65,7 +65,7 @@ with VCS.CVS;
 with Glide_Kernel.Help;
 with Vdiff_Module;
 with Builder_Module;
-with Glide_Consoles;
+with Glide_Kernel.Console;
 with Navigation_Module;
 
 --  The LI parsers
@@ -234,7 +234,7 @@ begin
 
    declare
       System_Rc : constant String :=
-        Format_Pathname (Prefix.all & "/bin/gtkrc");
+        Format_Pathname (Prefix.all & "/etc/gps/gtkrc");
 
       Rc : constant String :=
         String_Utils.Name_As_Directory (Dir.all) & "gtkrc";
@@ -284,7 +284,7 @@ begin
    VCS_Module.Register_Module (GPS.Kernel);
    VCS.CVS.Register_Module (GPS.Kernel);
    Aunit_Module.Register_Module (GPS.Kernel);
-   Glide_Consoles.Register_Module (GPS.Kernel);
+   Glide_Kernel.Console.Register_Module (GPS.Kernel);
 
    --  Register the supported languages
 
