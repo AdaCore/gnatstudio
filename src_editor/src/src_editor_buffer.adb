@@ -86,10 +86,12 @@ package body Src_Editor_Buffer is
    Me : constant Debug_Handle := Create ("Source_Editor_Buffer");
 
    Buffer_Recompute_Interval : constant Guint32 := 200;
-   --  The interval at which to check whether the buffer should be reparsed.
+   --  The interval at which to check whether the buffer should be reparsed,
+   --  in milliseconds.
 
-   Buffer_Recompute_Delay    : constant Duration := 1000.0;
-   --  The delay between the last edit and the re-parsing of the buffer.
+   Buffer_Recompute_Delay    : constant Duration := 1.0;
+   --  The delay between the last edit and the re-parsing of the buffer,
+   --  in seconds.
 
    package Buffer_Timeout is new Gtk.Main.Timeout (Source_Buffer);
 
@@ -418,7 +420,7 @@ package body Src_Editor_Buffer is
 
    function Check_Blocks (Buffer : Source_Buffer) return Boolean is
    begin
-      if Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay < Clock then
+      if Clock < Buffer.Blocks_Request_Timestamp + Buffer_Recompute_Delay then
          return True;
       end if;
 
