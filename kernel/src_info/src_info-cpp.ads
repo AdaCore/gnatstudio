@@ -70,7 +70,15 @@ package Src_Info.CPP is
    --  ??? In current implementation for C/C++ this function always
    --  returns Xref_Filename for Source_Filename
 
+   type Iterator_State_Type is
+     (Start,         -- starting state
+      Process_Files, -- processing one file from list of source files
+      Process_Xrefs, -- processing xrefs for all files
+      Done);         -- updating done
+
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
+      State           : Iterator_State_Type := Start;
+      Process_All     : Boolean := False;
       Root_Project    : Prj.Project_Id;
       Project         : Prj.Project_Id;
       SN_Dir          : SN.String_Access;
@@ -79,6 +87,9 @@ package Src_Info.CPP is
       PD              : GNAT.Expect.Process_Descriptor;
    end record;
    --  An iterator to generate the LI database for a set of source files.
+   --  State is an internal state of iterator, it can be inconsistant with
+   --  the real iterator state, because real iterator state depends also on
+   --  internal process. State is recomputing during call to Continue.
 
    function Generate_LI_For_Source
      (Handler       : access CPP_LI_Handler_Record;

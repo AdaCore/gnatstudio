@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 with Ada.Exceptions;       use Ada.Exceptions;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Directory_Operations;
 
 with Prj;
 with Prj_API;              use Prj_API;
@@ -238,6 +239,35 @@ package body Src_Info.CPP is
    function Get_SN_Dir (Project : Prj.Project_Id) return String;
    pragma Inline (Get_SN_Dir);
 
+   function Up_To_Date
+     (Full_Source_Filename : String;
+      SN_Dir               : String;
+      Xrefs                : Xref_Pool) return Boolean;
+   --  Checks if given source file is up-to-date with corresponding
+   --  xref file. Return true if SN DB needed to be updated.
+
+   ----------------
+   -- Up_To_Date --
+   ----------------
+
+   function Up_To_Date
+     (Full_Source_Filename : String;
+      SN_Dir               : String;
+      Xrefs                : Xref_Pool) return Boolean
+   is
+      Xref_File : String :=
+        Name_As_Directory (SN_Dir) & Xref_Filename_For
+          (Full_Source_Filename, SN_Dir, Xrefs).all;
+   begin
+      if To_Timestamp (File_Time_Stamp (Full_Source_Filename)) >
+         To_Timestamp (File_Time_Stamp (Xref_File))
+      then
+         return False;
+      else
+         return True;
+      end if;
+   end Up_To_Date;
+
    ----------------------------
    -- Generate_LI_For_Source --
    ----------------------------
@@ -273,20 +303,48 @@ package body Src_Info.CPP is
    begin
       HI.SN_Dir := new String' (Get_SN_Dir (Root_Project));
 
-      --  Delete old databse
-      Browse.Delete_Database (HI.SN_Dir.all);
-
       --  Prepare the list of files
-      HI.Source_Files := Get_Source_Files (Project, Recursive);
-      HI.Current_File := HI.Source_Files'First;
+      Compute_Sources (HI, Project, Recursive);
 
-      Init (HI.Xrefs);
+      if not Is_Directory (HI.SN_Dir.all) then
+         GNAT.Directory_Operations.Make_Dir (HI.SN_Dir.all);
+         HI.Process_All := True;
+      end if;
 
-      Browse.Browse
-        (HI.Source_Files (HI.Current_File).all,
-         HI.SN_Dir.all,
-         HI.Xrefs,
-         HI.PD);
+      Load (HI.Xrefs,
+        Name_As_Directory (HI.SN_Dir.all) & Browse.Xref_Pool_Filename);
+
+      loop
+         declare
+            Current_File : String := Current_Source_File (HI);
+         begin
+            if Current_File = "" and HI.State = Start then
+               --  empty list or nothing to update
+               HI.State := Done;
+               Save (HI.Xrefs, Name_As_Directory (HI.SN_Dir.all)
+                 & Browse.Xref_Pool_Filename);
+               Free_String (HI.SN_Dir);
+               Free (HI.Xrefs);
+               return HI;
+            end if;
+
+            --  check if we need update DB for this file
+            if not Up_To_Date (Current_File, HI.SN_Dir.all, HI.Xrefs)
+               or HI.Process_All
+            then
+               --  start processing
+               HI.State := Process_Files;
+               Browse.Browse
+                 (Current_File,
+                  HI.SN_Dir.all,
+                  HI.Xrefs,
+                  HI.PD);
+               return HI;
+            else
+               Next_Source_File (HI);
+            end if;
+         end;
+      end loop;
 
       return HI;
    end Generate_LI_For_Project;
@@ -299,38 +357,73 @@ package body Src_Info.CPP is
       Success       : Boolean;
    begin
       Finished := False;
+
+      if Iterator.State = Done then
+         Finished := True;
+         return;
+      end if;
+
       Browse.Is_Alive (Iterator.PD, Process_Alive);
 
       if Process_Alive then
          return;
       end if;
 
-      if Iterator.Current_File < Iterator.Source_Files'Last then
-         --  process next file
-         Iterator.Current_File := Iterator.Current_File + 1;
+      --  process terminated, we need to start the new one
+      --  or to finish the updating
 
-         Browse.Browse
-           (Iterator.Source_Files (Iterator.Current_File).all,
-            Iterator.SN_Dir.all,
-            Iterator.Xrefs,
-            Iterator.PD);
-      elsif Iterator.Current_File = Iterator.Source_Files'Last then
-         --  begin generating xrefs
-         Iterator.Current_File := Iterator.Current_File + 1;
-         Browse.Generate_Xrefs
-           (Iterator.SN_Dir.all,
-            Iterator.Tmp_Filename,
-            Iterator.PD);
-      else
-         Finished := True;
-         Save
-           (Iterator.Xrefs,
-            Name_As_Directory (Iterator.SN_Dir.all)
-              & Browse.Xref_Pool_Filename);
-         Free (Iterator.Xrefs);
-         Delete_File (Iterator.Tmp_Filename'Address, Success);
-         Free_String (Iterator.SN_Dir);
-      end if;
+      case Iterator.State is
+
+         when Start
+            | Process_Files =>
+            loop
+               Next_Source_File (Iterator);
+               declare
+                  Next_File : String := Current_Source_File (Iterator);
+               begin
+                  if Next_File = "" then
+                     --  all files processed, start generating of xrefs
+                     Iterator.State := Process_Xrefs;
+                     Browse.Generate_Xrefs
+                       (Iterator.SN_Dir.all,
+                        Iterator.Tmp_Filename,
+                        Iterator.PD);
+                     return;
+                  else
+                     --  start processing next file
+                     --  check if we need update DB for this file
+                     if not Up_To_Date
+                            (Next_File, Iterator.SN_Dir.all, Iterator.Xrefs)
+                        or Iterator.Process_All
+                     then
+                        Iterator.State := Process_Files;
+                        Browse.Browse
+                          (Next_File,
+                           Iterator.SN_Dir.all,
+                           Iterator.Xrefs,
+                           Iterator.PD);
+                        return;
+                     else
+                        Next_Source_File (Iterator);
+                     end if;
+                  end if;
+               end;
+            end loop;
+
+         when Process_Xrefs =>
+            Finished := True;
+            Iterator.State := Done;
+            Save (Iterator.Xrefs,
+              Name_As_Directory (Iterator.SN_Dir.all)
+                & Browse.Xref_Pool_Filename);
+            Free (Iterator.Xrefs);
+            Delete_File (Iterator.Tmp_Filename'Address, Success);
+            Free_String (Iterator.SN_Dir);
+
+         when Done          =>
+            Finished := True;
+
+      end case;
 
    end Continue;
 
