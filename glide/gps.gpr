@@ -15,6 +15,7 @@ with "../navigation/navigation";
 with "../custom/custom";
 with "../help/help";
 with "../vfs/vfs";
+with "../docgen/docgen";
 with "../shared";
 
 project GPS is
