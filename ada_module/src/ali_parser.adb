@@ -749,19 +749,12 @@ package body ALI_Parser is
                       Column => Column_Type (Xref.Table (Current_Ref).Col));
 
          if Is_End_Reference (Kind) then
-            --  The info for the body is always seen second, and will override
-            --  the one for the spec
-            declare
-               Previous_End  : File_Location;
-               Previous_Kind : Reference_Kind;
-            begin
-               Get_End_Of_Scope (Entity, Previous_End, Previous_Kind);
+            --  Only insert the end-of-scope is we are parsing the ALI file
+            --  for the file that contains this end-of-scope. Otherwise, we
+            --  get duplicate references.
+            if Get_LI (Location.File) = LI then
                Set_End_Of_Scope (Entity, Location, Kind);
-
-               if Previous_End /= No_File_Location then
-                  Add_Reference (Entity, Previous_End, Previous_Kind);
-               end if;
-            end;
+            end if;
 
          elsif Kind = Primitive_Operation
            or else Kind = Overriding_Primitive_Operation
