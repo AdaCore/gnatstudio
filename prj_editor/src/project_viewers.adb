@@ -48,6 +48,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 
+with Basic_Types;              use Basic_Types;
 with String_Utils;
 with Prj_API;                  use Prj_API;
 with Creation_Wizard;          use Creation_Wizard;
@@ -270,7 +271,7 @@ package body Project_Viewers is
      (Project_View : Project_Id; File : String) return String_Id
    is
       Dirs   : String_List_Id := Projects.Table (Project_View).Source_Dirs;
-      File_A : String_Access;
+      File_A : GNAT.OS_Lib.String_Access;
 
    begin
       --  We do not use Ada_Include_Path to locate the source file,

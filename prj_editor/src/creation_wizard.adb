@@ -45,6 +45,7 @@ with Prj;      use Prj;
 with Snames;   use Snames;
 with Namet;    use Namet;
 
+with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
 with Directory_Tree;   use Directory_Tree;
 with Switches_Editors; use Switches_Editors;
