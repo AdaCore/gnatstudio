@@ -22,7 +22,6 @@ with Gtk.GEntry;
 with Gtk.Check_Button;
 
 with Wizards;
-with Naming_Editors;
 with Glide_Kernel;
 
 package Creation_Wizard is

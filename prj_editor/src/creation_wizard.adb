@@ -46,7 +46,6 @@ with Namet;    use Namet;
 
 with Basic_Types;      use Basic_Types;
 with Wizards;          use Wizards;
-with Naming_Editors;   use Naming_Editors;
 with Prj_API;          use Prj_API;
 with Pixmaps_Prj;      use Pixmaps_Prj;
 with Glide_Kernel;     use Glide_Kernel;
