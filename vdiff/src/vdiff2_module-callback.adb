@@ -340,7 +340,7 @@ package body Vdiff2_Module.Callback is
                   New_F  := Create (Full_Filename => New_File);
                   Diff_F := Create (Full_Filename => Diff_File);
                   Ref_F  := Create (Full_Filename => Ref_File);
-                  return Visual_Patch (Ref_F, New_F, Diff_F, True);
+                  return Visual_Patch (Ref_F, New_F, Diff_F, True, Ref_F);
                end;
 
             elsif New_File = "" then
@@ -356,7 +356,7 @@ package body Vdiff2_Module.Callback is
                   Orig_F := Create (Full_Filename => Orig_File);
                   Ref_F  := Create (Full_Filename => Ref_File);
                   Diff_F := Create (Full_Filename => Diff_File);
-                  return Visual_Patch (Orig_F, Ref_F, Diff_F);
+                  return Visual_Patch (Orig_F, Ref_F, Diff_F, False, Ref_F);
                end;
 
             else
@@ -406,7 +406,7 @@ package body Vdiff2_Module.Callback is
                        Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
                              Curr_Node),
                        Curr_Node);
-         Free_List (Diff.List);
+         Free_All (Diff.all);
       end if;
 
       Free (Diff);
