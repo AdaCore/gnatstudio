@@ -98,6 +98,12 @@ cd ..
 tar xzvf jpegsrc.v6b.tar.gz
 cd jpeg-6b
 ./configure --prefix=$prefix
+
+# Under HP-UX:
+# make CFLAGS="-O2 -fPIC"
+# ld -z -b -o libjpeg.sl `ar t libjpeg.a`
+# cp -p libjpeg.sl $prefix/lib
+
 make
 cp -p libjpeg.a $prefix/lib
 cp -p jpeglib.h jconfig.h jmorecfg.h $prefix/include
