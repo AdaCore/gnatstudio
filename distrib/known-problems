@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D526-029 GPS slow due to excessive X-Window traffic under Solaris
+  Problem:    Under some versions of Solaris and some remote X servers,
+              the amount of network requests exchanged between GPS and the
+              X server is high, making GPS very slow.
+  Workaround: Set the GDK_USE_XFT environment variable to "0".
+
 - D526-022 Custom switches pages not displayed in the project properties
   Problem:    When defining custom tools using XML files, if the tool is not
               defined as language-specific, the switches page is not shown
