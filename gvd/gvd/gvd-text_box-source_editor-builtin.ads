@@ -27,6 +27,7 @@ with Gtk.Menu;
 with Gtk.Widget;
 with Gtkada.Types;
 with Language;
+with Odd.Preferences;
 with Odd.Types;
 with Odd.Explorer;
 with Odd.Text_Boxes;
@@ -152,8 +153,9 @@ private
    record
       Process        : Gtk.Widget.Gtk_Widget;
 
-      Show_Line_Nums       : Boolean := Odd.Editor_Show_Line_Nums;
-      Show_Lines_With_Code : Boolean := Odd.Editor_Show_Line_With_Code;
+      Show_Line_Nums       : Boolean := Odd.Preferences.Editor_Show_Line_Nums;
+      Show_Lines_With_Code : Boolean :=
+        Odd.Preferences.Editor_Show_Line_With_Code;
       --  Whether the lines where one can set a breakpoint have a small dot
       --  on the side.
 

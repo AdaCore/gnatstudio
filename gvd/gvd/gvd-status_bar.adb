@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;            use Glib;
 with Gdk.Main;        use Gdk.Main;
 with Gdk.Types;       use Gdk.Types;
 with Gdk.Window;      use Gdk.Window;
@@ -34,13 +35,11 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Window;      use Gtk.Window;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Odd_Intl;        use Odd_Intl;
+with Odd.Preferences; use Odd.Preferences;
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body Odd.Status_Bar is
-
-   Hide_Delay : constant Guint32 := 5000;
-   --  Delay (in ms) after which the current message is hidden
 
    package Status_Timeout is new Gtk.Main.Timeout (Odd_Status_Bar);
 

@@ -25,12 +25,13 @@ with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Gdk.Types;    use Gdk.Types;
-with Language;     use Language;
-with Unchecked_Deallocation;
-with Odd.Types;    use Odd.Types;
 with Gdk.Types;    use Gdk.Types;
 
-with Odd.Types;    use Odd.Types;
+with Language;        use Language;
+with Odd.Types;       use Odd.Types;
+with Odd.Preferences; use Odd.Preferences;
+
+with Unchecked_Deallocation;
 
 package body Items.Records is
 

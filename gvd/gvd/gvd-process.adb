@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;         use Glib;
+with Glib; use Glib;
 
 with Gdk.Input;
 with Gdk.Types;
@@ -29,6 +29,7 @@ with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
 with Gdk.Event;    use Gdk.Event;
 
+with Gtk.Handlers; use Gtk.Handlers;
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Menu;     use Gtk.Menu;
 with Gtk.Widget;   use Gtk.Widget;
@@ -40,28 +41,31 @@ with Gtk.Window;   use Gtk.Window;
 
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
-with Ada.Text_IO;     use Ada.Text_IO;
-with Process_Tab_Pkg; use Process_Tab_Pkg;
-with Odd.Canvas;      use Odd.Canvas;
 with Gtkada.Types;    use Gtkada.Types;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Odd.Pixmaps;     use Odd.Pixmaps;
-with Display_Items;   use Display_Items;
-with Debugger.Gdb;    use Debugger.Gdb;
-with Debugger.Jdb;    use Debugger.Jdb;
-with Odd.Strings;     use Odd.Strings;
-with Odd.Types;       use Odd.Types;
-with Process_Proxies; use Process_Proxies;
-with Odd.Code_Editors; use Odd.Code_Editors;
-with GNAT.Regpat;     use GNAT.Regpat;
-with Gtk.Handlers;    use Gtk.Handlers;
-with Odd.Menus;       use Odd.Menus;
-with Items.Simples;   use Items.Simples;
 
-with Main_Debug_Window_Pkg;      use Main_Debug_Window_Pkg;
-with Breakpoints_Pkg;            use Breakpoints_Pkg;
-with Breakpoints_Pkg.Callbacks;  use Breakpoints_Pkg.Callbacks;
+with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with Ada.Text_IO;              use Ada.Text_IO;
+
+with GNAT.Regpat; use GNAT.Regpat;
+
+with Process_Tab_Pkg;           use Process_Tab_Pkg;
+with Display_Items;             use Display_Items;
+with Debugger.Gdb;              use Debugger.Gdb;
+with Debugger.Jdb;              use Debugger.Jdb;
+with Process_Proxies;           use Process_Proxies;
+with Items.Simples;             use Items.Simples;
+with Main_Debug_Window_Pkg;     use Main_Debug_Window_Pkg;
+with Breakpoints_Pkg;           use Breakpoints_Pkg;
+with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
+with Odd.Canvas;                use Odd.Canvas;
+with Odd.Pixmaps;               use Odd.Pixmaps;
+with Odd.Strings;               use Odd.Strings;
+with Odd.Types;                 use Odd.Types;
+with Odd.Code_Editors;          use Odd.Code_Editors;
+with Odd.Menus;                 use Odd.Menus;
+with Odd.Preferences;           use Odd.Preferences;
+
 with System;
 with Unchecked_Conversion;
 
@@ -76,9 +80,6 @@ package body Odd.Process is
    Process_User_Data_Name : constant String := "odd_editor_to_process";
    --  User data string.
    --  ??? Should use some quarks, which would be just a little bit faster.
-
-   Display_Grid           : constant Boolean := True;
-   --  Whether the grid should be displayed in the canvas.
 
    package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
      (Debugger_Process_Tab_Record, Boolean);
@@ -96,7 +97,6 @@ package body Odd.Process is
    --  Array of the signals created for this widget
    Signals : Chars_Ptr_Array :=
      "process_stopped" + "context_changed";
-
 
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
      ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
@@ -129,7 +129,7 @@ package body Odd.Process is
    --------------------
    -- Post processes --
    --------------------
-   --  For reliability reasons, it is not recommanded to directly load
+   --  For reliability reasons, it is not recommended to directly load
    --  a file in Text_Output_Handler as soon as a file indication is found
    --  in the output of the debugger.
    --  Instead, we register a "post command", to be executed when the current
@@ -272,11 +272,12 @@ package body Odd.Process is
       --  Should all the string be highlighted ?
 
       if Is_Command then
-         Insert (Process.Debugger_Text,
-                 Process.Debugger_Text_Font,
-                 Process.Debugger_Text_Highlight_Color,
-                 Null_Color,
-                 Str2);
+         Insert
+           (Process.Debugger_Text,
+            Process.Debugger_Text_Font,
+            Process.Debugger_Text_Highlight_Color,
+            Null_Color,
+            Str2);
 
       --  If not, highlight only parts of it
 

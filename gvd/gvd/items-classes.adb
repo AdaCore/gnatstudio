@@ -26,7 +26,8 @@ with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
 with Gdk.Types;    use Gdk.Types;
 
-with Items.Records; use Items.Records;
+with Items.Records;  use Items.Records;
+with Odd.Preferences; use Odd.Preferences;
 
 package body Items.Classes is
 

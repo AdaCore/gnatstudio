@@ -19,13 +19,13 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;           use Ada.Text_IO;
-with Debugger;              use Debugger;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
+
+with Glib;                  use Glib;
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
 with Gdk.Window;            use Gdk.Window;
-with Glib;                  use Glib;
 with Gtk.Adjustment;        use Gtk.Adjustment;
 with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
 with Gtk.Enums;             use Gtk.Enums;
@@ -38,26 +38,31 @@ with Gtk.Pixmap;            use Gtk.Pixmap;
 with Gtk.Text;              use Gtk.Text;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Types;          use Gtkada.Types;
+
+with Debugger;              use Debugger;
 with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with Process_Proxies;       use Process_Proxies;
+
 with Odd.Code_Editors;      use Odd.Code_Editors;
 with Odd.Explorer;          use Odd.Explorer;
 with Odd.Menus;             use Odd.Menus;
+with Odd.Preferences;       use Odd.Preferences;
 with Odd.Process;           use Odd.Process;
 with Odd.Strings;           use Odd.Strings;
 with Odd.Text_Boxes;        use Odd.Text_Boxes;
 with Odd.Types;             use Odd.Types;
 with Odd_Intl;              use Odd_Intl;
-with Process_Proxies;       use Process_Proxies;
 
 package body Odd.Source_Editors is
+
+   ---------------------
+   -- Local Constants --
+   ---------------------
 
    Line_Numbers_Width : constant Positive := 6;
    --  Number of characters reserved on the left for line numbers (including
    --  the space character)
-
-   Do_Color_Highlighting : constant Boolean := True;
-   --  Indicate whether the editor should provide color highlighting.
 
    No_Breakpoint : Breakpoint_Array (1 .. 0);
    --  Array used to reset the breakpoint list

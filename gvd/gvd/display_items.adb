@@ -21,7 +21,6 @@
 with Glib;             use Glib;
 with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.GC;           use Gdk.GC;
-with Odd.Canvas;       use Odd.Canvas;
 with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Font;         use Gdk.Font;
@@ -29,25 +28,32 @@ with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Window;       use Gdk.Window;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
-with Odd.Process;      use Odd.Process;
+with Gdk.Types;        use Gdk.Types;
+with Gdk.Event;        use Gdk.Event;
+with Gtk.Menu;         use Gtk.Menu;
+with Gtkada.Canvas;    use Gtkada.Canvas;
+
 with Process_Proxies;  use Process_Proxies;
 with Debugger;         use Debugger;
 with Language;         use Language;
-with Gdk.Types;        use Gdk.Types;
-with Gdk.Event;        use Gdk.Event;
-with Odd.Pixmaps;      use Odd.Pixmaps;
-with Gtk.Menu;         use Gtk.Menu;
-with Odd.Menus;        use Odd.Menus;
-with Odd.Types;        use Odd.Types;
-with Gtkada.Canvas;    use Gtkada.Canvas;
-
 with Items;            use Items;
 with Items.Simples;    use Items.Simples;
 
-with Odd.Status_Bar;  use Odd.Status_Bar;
+with Odd.Canvas;       use Odd.Canvas;
+with Odd.Menus;        use Odd.Menus;
+with Odd.Pixmaps;      use Odd.Pixmaps;
+with Odd.Preferences;  use Odd.Preferences;
+with Odd.Process;      use Odd.Process;
+with Odd.Status_Bar;   use Odd.Status_Bar;
+with Odd.Types;        use Odd.Types;
+
 with Ada.Text_IO;     use Ada.Text_IO;
 
 package body Display_Items is
+
+   ---------------------
+   -- Local Constants --
+   ---------------------
 
    --  The items are drawn with the following spacings:
    --
@@ -61,7 +67,6 @@ package body Display_Items is
    --  <->: Spacing
    --  Each of the two Buttons has a width and height of Buttons_Size.
 
-
    Spacing : constant Gint := 2;
    --  Space on each sides of the title.
 
@@ -71,52 +76,12 @@ package body Display_Items is
    Border_Spacing : constant Gint := 2;
    --  Space left on each side of the value
 
-   Xref_Color : constant String := "#0000FF";
-   --  Color to use for the items that are clickable (blue).
-
-   Title_Color : constant String := "#BEBEBE";
-   --  Color to use for the background of the title (grey).
-
-   Change_Color : constant String := "#FF0000";
-   --  Color used to highlight fields that have changed since the last update
-   --  (red).
-
-   Thaw_Bg_Color : constant String := "#FFFFFF";
-   --  Color used for auto-refreshed items (white)
-
-   Freeze_Bg_Color : constant String := "#AAAAAA";
-   --  Color used for frozen items (light grey)
-
-   Look_3d : constant Boolean := True;
-   --  Should the items have a 3d look ?
-
-   Title_Font_Name : constant String := "Helvetica-Bold";
-   --  Font used for the name of the item.
-
-   Title_Font_Size : constant Gint := 10;
-   --  Size of the font used for the name of the item.
-
-   Value_Font_Name : constant String := "Helvetica";
-   --  Font used to display the value of the item.
-
-   Type_Font_Name  : constant String := "Helvetica-Oblique";
-   --  Font used to display the type of the item.
-
-   Value_Font_Size : constant Gint := 10;
-   --  Size of the font used to display the value of the item.
-
-   Type_Font_Size : constant Gint := 10;
-   --  Size of the font used to display the type of the item..
-
    Num_Buttons : constant := 2;
    --  Number of buttons in the title bar.
    --  This is not user-configurable.
 
-   Hide_Big_Items : constant Boolean := True;
-   --  If True, items higher than a given limit will start in a hidden state.
-
    Item_Name_In_Link : constant String := "@";
-   --  Shortcut used to represent the derefenced item when generating a new
+   --  Shortcut used to represent the dereferenced item when generating a new
    --  item.
 
    Attach_Links_To_Components : constant Boolean := True;

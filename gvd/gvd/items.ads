@@ -305,9 +305,6 @@ package Items is
    --  Space of the column on the left of records and arrays, where the user
    --  can click to select the whole array or record.
 
-   Big_Item_Height : constant Glib.Gint := 150;
-   --  Items taller than this value will start hidden.
-
    -------------------------
    -- Read-only variables --
    -------------------------

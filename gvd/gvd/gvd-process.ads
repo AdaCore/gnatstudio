@@ -54,7 +54,7 @@ package Odd.Process is
 
    procedure Input_Available
      (Debugger  : Standard_Input_Package.Data_Access;
-      Source    : Gint;
+      Source    : Glib.Gint;
       Condition : Gdk.Types.Gdk_Input_Condition);
    --  This procedure should be used in conjunction with Standard_Input above.
    --  This is the callback input function that will retrieve the current
@@ -62,9 +62,6 @@ package Odd.Process is
    --  command (line read from Source) using Process_User_Command.
    --  Note that this handler currently assumes that Source is the standard
    --  input file descriptor.
-
-   Default_Command_History_Size : constant := 100;
-   --  Number of items in the command history list.
 
    Command_History_Collapse_Entries : constant Boolean := True;
    --  Whether we should collapse entries in the history list.
@@ -179,7 +176,7 @@ package Odd.Process is
    Debugger_Not_Found : exception;
    --  ??? This needs documentation.
 
-   function Get_Num (Tab : Debugger_Process_Tab) return Gint;
+   function Get_Num (Tab : Debugger_Process_Tab) return Glib.Gint;
    --  Return the number of the notebook page which contains the process tab.
 
    function Convert

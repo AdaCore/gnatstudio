@@ -29,7 +29,8 @@ with Gdk.Types;    use Gdk.Types;
 with Language;     use Language;
 with Unchecked_Deallocation;
 
-with Odd.Types;    use Odd.Types;
+with Odd.Types;       use Odd.Types;
+with Odd.Preferences; use Odd.Preferences;
 
 with Items.Repeats; use Items.Repeats;
 
