@@ -32,6 +32,7 @@ with Gtk.List;                use Gtk.List;
 with Odd_Intl;                use Odd_Intl;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
+with Gtk.Combo;               use Gtk.Combo;
 
 package body Breakpoints_Pkg.Callbacks is
 
@@ -43,6 +44,47 @@ package body Breakpoints_Pkg.Callbacks is
      (Editor : access Breakpoints_Record'Class;
       Args   : Gtk.Arguments.Gtk_Args);
    --  Called when a row of the breakpoint editor was selected.
+
+   ------------------------------
+   -- On_Notebook1_Switch_Page --
+   ------------------------------
+
+   procedure On_Notebook1_Switch_Page
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Editor : Breakpoints_Access := Breakpoints_Access (Object);
+      --  Arg1 : Address := To_Address (Params, 1); --  Page
+      Arg2 : Guint := To_Guint (Params, 2);     --  Page_Num
+   begin
+      --  If we selected the exceptions page, parse the list of exceptions if
+      --  required.
+      if Arg2 = 2
+        and then not Editor.Has_Exception_List
+      then
+         declare
+            Exception_Name_Items : String_List.Glist;
+            Exception_Arr        : Exception_Array :=
+              List_Exceptions (Editor.Process.Debugger);
+         begin
+            if Exception_Arr'Length > 0 then
+               Set_Sensitive (Editor.Hbox4, True);
+               String_List.Append (Exception_Name_Items, -"All exceptions");
+               for J in Exception_Arr'Range loop
+                  String_List.Append
+                    (Exception_Name_Items, Exception_Arr (J).Name.all);
+               end loop;
+               Gtk.Combo.Set_Popdown_Strings
+                 (Editor.Exception_Name, Exception_Name_Items);
+               Free_String_List (Exception_Name_Items);
+            else
+               Set_Sensitive (Editor.Hbox4, False);
+            end if;
+            Editor.Has_Exception_List := True;
+            Free (Exception_Arr);
+         end;
+      end if;
+   end On_Notebook1_Switch_Page;
 
    ----------------------------------
    -- On_Location_Selected_Toggled --

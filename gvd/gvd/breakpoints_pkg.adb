@@ -31,8 +31,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Style;       use Gtk.Style;
 with Odd.Code_Editors; use Odd.Code_Editors;
 with Odd.Strings;     use Odd.Strings;
-with Odd.Types;       use Odd.Types;
-with Debugger;        use Debugger;
+with Gdk.Color;       use Gdk.Color;
 
 package body Breakpoints_Pkg is
 
@@ -70,6 +69,8 @@ begin
 
    Gtk_New (Breakpoints.Notebook1);
    Pack_Start (Breakpoints.Vbox1, Breakpoints.Notebook1, False, True, 0);
+   Widget_Callback.Object_Connect
+     (Breakpoints.Notebook1, "switch_page", On_Notebook1_Switch_Page'Access, Breakpoints);
    Set_Scrollable (Breakpoints.Notebook1, False);
    Set_Show_Border (Breakpoints.Notebook1, True);
    Set_Show_Tabs (Breakpoints.Notebook1, True);
@@ -512,10 +513,18 @@ begin
       break_xpm);
 
    --  Grey background when the combo boxes are insensitive
-   Set_Background_Gc
-     (Get_Style (Breakpoints.Entry21),
-      State_Insensitive,
-      Get_Background_Gc (Get_Style (Breakpoints), State_Normal));
+   declare
+      Style : Gtk_Style;
+   begin
+      Gtk_New (Style);
+      Set_Base
+        (Style, State_Insensitive,
+         Gdk_Color'(Get_Background (Get_Style (Breakpoints), State_Normal)));
+      Set_Style (Get_Entry (Breakpoints.File_Combo), Style);
+      Set_Style (Get_Entry (Breakpoints.Address_Combo), Style);
+      Set_Style (Get_Entry (Breakpoints.Subprogram_Combo), Style);
+      Set_Style (Get_Entry (Breakpoints.Regexp_Combo), Style);
+   end;
 
    --  Return in the combo boxes should activate them
 
@@ -552,9 +561,6 @@ procedure Breakpoint_Editor
   (Editor     : in out Breakpoints_Access;
    Process    : access Odd.Process.Debugger_Process_Tab_Record'Class)
 is
-   Exception_Name_Items : String_List.Glist;
-   Exception_Arr        : Exception_Array :=
-     List_Exceptions (Process.Debugger);
 begin
    if Editor = null then
       Gtk_New (Editor);
@@ -562,6 +568,8 @@ begin
       --  ??? Else we should raise the window, in case it was hidden by some
       --  other window.
    end if;
+
+   Set_Page (Editor.Notebook1, 0);
 
    Editor.Process := Odd.Process.Debugger_Process_Tab (Process);
    Update_Breakpoint_List (Editor);
@@ -572,23 +580,9 @@ begin
      (Get_Entry (Editor.File_Combo),
       Base_File_Name (Get_Current_File (Process.Editor_Text)));
 
-   --  List of exceptions
+   --  List of exceptions (parsed only when the appropriate page is selected)
 
-   if Exception_Arr'Length > 0 then
-      Set_Sensitive (Editor.Hbox4, True);
-      String_List.Append (Exception_Name_Items, -"All exceptions");
-      for J in Exception_Arr'Range loop
-         String_List.Append (Exception_Name_Items, Exception_Arr (J).Name.all);
-      end loop;
-      Combo.Set_Popdown_Strings
-        (Editor.Exception_Name, Exception_Name_Items);
-      Free_String_List (Exception_Name_Items);
-
-   else
-      Set_Sensitive (Editor.Hbox4, False);
-   end if;
-
-   Free (Exception_Arr);
+   Editor.Has_Exception_List := False;
 
    Show_All (Editor);
 end Breakpoint_Editor;

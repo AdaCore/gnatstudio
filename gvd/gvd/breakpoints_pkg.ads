@@ -117,6 +117,9 @@ package Breakpoints_Pkg is
       Process   : Odd.Process.Debugger_Process_Tab;
       Enabled_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Enabled_Mask   : Gdk.Bitmap.Gdk_Bitmap;
+
+      Has_Exception_List : Boolean := False;
+      --  True when we have parsed the exceptions list
    end record;
    type Breakpoints_Access is access all Breakpoints_Record'Class;
 
