@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -154,8 +154,7 @@ package Src_Info.Queries is
 
    type Entity_Information is private;
 
-   function Get_Entity (Tree : Scope_Tree; Node : Scope_Tree_Node)
-      return Entity_Information;
+   function Get_Entity (Node : Scope_Tree_Node) return Entity_Information;
    --  Return the information for the entity defined in Node.
    --  You must to call Destroy on the returned information.
 

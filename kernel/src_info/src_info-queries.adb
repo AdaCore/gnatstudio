@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -962,8 +962,7 @@ package body Src_Info.Queries is
    -- Get_Entity --
    ----------------
 
-   function Get_Entity (Tree : Scope_Tree; Node : Scope_Tree_Node)
-      return Entity_Information is
+   function Get_Entity (Node : Scope_Tree_Node) return Entity_Information is
    begin
       return Entity_Information'
         (Name        => new String' (Node.Decl.Name.all),
