@@ -342,6 +342,7 @@ package body Glide_Kernel.Console is
          Default_Height => 120,
          Position       => Position_Bottom,
          Focus_Widget   => Gtk_Widget (Get_View (Console)),
+         Flags          => 0,
          Module         => Console_Module_Id,
          Desktop_Independent => True);
       Set_Focus_Child (Child);
