@@ -375,27 +375,16 @@ package body ALI_Parser is
    function Process_Unit (LI : LI_File; Id : Unit_Id) return Source_File is
       Base_Name     : constant String :=
         Locale_To_UTF8 (Get_String (Units.Table (Id).Sfile));
-      File_Name     : Virtual_File := Create
-        (Base_Name       => Base_Name,
-         Project         => Get_Project (LI),
-         Use_Object_Path => False);
-      --  ??? Shouldn't have to recreate the file every time. Projects
-      --  should have this in a cache
       File          : Source_File;
       Unit          : constant String := Get_String (Units.Table (Id).Uname);
    begin
       Assert (Assert_Me, LI /= null, "Null LI file parsed");
 
-      if File_Name = VFS.No_File then
-         Trace (Assert_Me, "Couldn't create Virtual_File for " & Base_Name);
-         File_Name := Create_From_Base (Base_Name);
-      end if;
-
       File := Get_Or_Create
-        (Db        => Get_Database (LI),
-         File      => File_Name,
-         LI        => LI,
-         Timestamp => File_Time_Stamp (File_Name));
+        (Db            => Get_Database (LI),
+         Full_Filename => Base_Name,
+         LI            => LI,
+         Timestamp     => File_Time_Stamp (File_Name));
 
       --  Strip the %s or %b terminator
       Set_Unit_Name (File, Unit (Unit'First .. Unit'Last - 2));
@@ -436,8 +425,6 @@ package body ALI_Parser is
       Sfile   : in out Source_Dependency)
    is
       Dep         : Sdep_Record renames Sdep.Table (Dep_Id);
-      File        : Virtual_File;
-      Timestamp   : Ada.Calendar.Time := No_Time;
       Is_Separate : constant Boolean := Dep.Subunit_Name /= No_Name;
       Base_Name   : constant String := Locale_To_UTF8 (Get_String (Dep.Sfile));
       L           : LI_File := LI;
@@ -454,34 +441,21 @@ package body ALI_Parser is
          end if;
       end loop;
 
-      --  We have a file other than the unit itself (a separate or a
-      --  dependency).
-      --  ??? Shouldn't have to create a virtual_file from scratch.
-
-      File := Create
-        (Base_Name       => Base_Name,
-         Project         => Get_Project (LI),
-         Use_Object_Path => False);
-
-      if File = VFS.No_File then
-         Trace (Assert_Me, "Couldn't create Virtual_File for " & Base_Name);
-         File := Create_From_Base (Base_Name);
-      end if;
-
-      if Is_Separate then
-         Timestamp := File_Time_Stamp (File);
-      else
+      if not Is_Separate then
          --  We do not know its ALI file
          L := null;
       end if;
 
       Sfile := (Get_Or_Create
-                  (Db        => Get_Database (LI),
-                   File      => File,
-                   LI        => L,
-                   Timestamp => Timestamp),
+                  (Db            => Get_Database (LI),
+                   Full_Filename => Base_Name,
+                   LI            => L),
                 Is_Separate => Is_Separate,
                 Is_Unit     => False);
+
+      if Is_Separate then
+         Set_Time_Stamp (Sfile.File, VFS.No_Time);
+      end if;
    end Process_Sdep;
 
    -------------------
