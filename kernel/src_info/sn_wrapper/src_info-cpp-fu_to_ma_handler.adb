@@ -6,9 +6,8 @@ separate (Src_Info.CPP)
 
 procedure Fu_To_Ma_Handler (Ref : TO_Table) is
    Macro  : MA_Table;
-   Ref_Id : String := Ref.Buffer
+   Ref_Id : constant String := Ref.Buffer
      (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-
    Decl_Info : E_Declaration_Info_List;
 begin
    if not Is_Open (SN_Table (MA)) then

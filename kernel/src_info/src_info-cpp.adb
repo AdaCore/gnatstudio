@@ -75,6 +75,7 @@ package body Src_Info.CPP is
    is
       function String_Hash_Function is
          new HTables.Hash (String_Hash_Table_Range);
+      pragma Inline (String_Hash_Function);
    begin
       return String_Hash_Function (Key.all);
    end Type_Hash_Function;
@@ -1029,7 +1030,8 @@ package body Src_Info.CPP is
      (Buffer_A, Buffer_B     : SN.String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
       Ret_Type_A, Ret_Type_B : Segment)
-      return Boolean is
+      return Boolean
+   is
       use DB_Structures.Segment_Vector;
       Ptr_A : Segment_Vector.Node_Access := Args_A;
       Ptr_B : Segment_Vector.Node_Access := Args_B;

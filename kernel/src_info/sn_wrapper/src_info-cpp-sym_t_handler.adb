@@ -6,10 +6,10 @@ separate (Src_Info.CPP)
 
 procedure Sym_T_Handler (Sym : FIL_Table)
 is
-   Decl_Info : E_Declaration_Info_List;
+   Decl_Info  : E_Declaration_Info_List;
    Desc       : CType_Description;
    Success    : Boolean;
-   Identifier : String :=
+   Identifier : constant String :=
      Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last);
 begin
 

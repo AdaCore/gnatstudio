@@ -39,7 +39,9 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
             Location    => Fn.Start_Position);
          return Decl_Info;
    end Find_Function;
+
 begin
+
    Info ("Fu_To_Fu_Handler: """
          & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                Ref.Referred_Symbol_Name.Last)

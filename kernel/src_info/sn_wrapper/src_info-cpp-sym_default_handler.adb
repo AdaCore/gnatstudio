@@ -12,8 +12,8 @@ procedure Sym_Default_Handler
 is
    --  pragma Unreferenced (Sym);
 begin
-   Info ("Sym_Default_Hanlder: """
+   Info ("Sym_Default_Hanlder: '"
          & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-         & """ : " & Symbol_Type'Image (Sym.Symbol));
+         & "' : " & Symbol_Type'Image (Sym.Symbol));
    null;
 end Sym_Default_Handler;

@@ -5,7 +5,7 @@ separate (Src_Info.CPP)
 ------------------------
 
 procedure Fu_To_E_Handler (Ref : TO_Table) is
-   Ref_Id : String := Ref.Buffer
+   Ref_Id : constant String := Ref.Buffer
      (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 begin
    Info ("Fu_To_E_Handler: """ & Ref_Id & """");

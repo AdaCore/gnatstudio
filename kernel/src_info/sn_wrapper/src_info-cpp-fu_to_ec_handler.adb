@@ -76,5 +76,6 @@ begin
          Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
       Location                => Ref.Position,
       Kind                    => Reference);
+
 end Fu_To_Ec_Handler;
 

@@ -19,7 +19,7 @@ is
    Body_Position  : Point := Invalid_Point;
    End_Position   : Point;
 
-   Fu_Id          : String := Sym.Buffer
+   Fu_Id          : constant String := Sym.Buffer
      (Sym.Identifier.First .. Sym.Identifier.Last);
 
    function Find_First_Forward_Declaration

@@ -7,7 +7,7 @@ separate (Src_Info.CPP)
 procedure Sym_E_Handler (Sym : FIL_Table)
 is
    Decl_Info : E_Declaration_Info_List;
-   E_Id      : String := Sym.Buffer
+   E_Id      : constant String := Sym.Buffer
      (Sym.Identifier.First .. Sym.Identifier.Last);
 begin
 

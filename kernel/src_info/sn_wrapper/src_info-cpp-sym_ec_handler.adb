@@ -7,10 +7,8 @@ separate (Src_Info.CPP)
 procedure Sym_EC_Handler (Sym : FIL_Table)
 is
    Decl_Info : E_Declaration_Info_List;
-
-   Ec_Id     : String := Sym.Buffer
+   Ec_Id     : constant String := Sym.Buffer
      (Sym.Identifier.First ..  Sym.Identifier.Last);
-
    Desc      : CType_Description;
    Has_Enum  : Boolean := False;
 begin
