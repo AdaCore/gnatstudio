@@ -21,12 +21,50 @@
 with Commands;                  use Commands;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
 with Ada.Unchecked_Deallocation;
+with Commands.Interactive;      use Commands.Interactive;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Traces;                    use Traces;
 
 package body Glide_Kernel.Actions is
 
+   Me : constant Debug_Handle := Create ("Actions");
+
    use Actions_Htable.String_Hash_Table;
+
+   type Menu_Command_Record is new Interactive_Command with record
+      Kernel    : Kernel_Handle;
+      Menu_Name : GNAT.OS_Lib.String_Access;
+   end record;
+   type Menu_Command is access all Menu_Command_Record'Class;
+   function Execute
+     (Command : access Menu_Command_Record;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  See doc for interactive commands
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Menu_Command_Record;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      Menu : constant Gtk_Menu_Item := Find_Menu_Item
+        (Command.Kernel, Command.Menu_Name.all);
+   begin
+      if Menu /= null then
+         Trace (Me, "Executing " & Command.Menu_Name.all);
+         Activate (Menu);
+         return Success;
+      else
+         Trace (Me, "Can't execute " & Command.Menu_Name.all);
+         return Failure;
+      end if;
+   end Execute;
 
    ----------
    -- Free --
@@ -130,12 +168,33 @@ package body Glide_Kernel.Actions is
 
    function Lookup_Action
      (Kernel : access Kernel_Handle_Record'Class;
-      Name   : String) return Action_Record_Access is
+      Name   : String) return Action_Record_Access
+   is
+      Action : Action_Record_Access;
+      Command : Menu_Command;
    begin
       if Kernel.Actions = null then
          return null;
       else
-         return Get (Actions_Htable_Access (Kernel.Actions).Table, Name);
+         Action := Get (Actions_Htable_Access (Kernel.Actions).Table, Name);
+
+         if Action = null
+           and then Name (Name'First) = '/'
+         then
+            Command := new Menu_Command_Record;
+            Command.Kernel    := Kernel_Handle (Kernel);
+            Command.Menu_Name := new String'(Name);
+
+            Action := new Action_Record'
+              (Command     => Interactive_Command_Access (Command),
+               Filter      => null,
+               Description => null,
+               Modified    => False,
+               Overriden   => False);
+            Set (Actions_Htable_Access (Kernel.Actions).Table, Name, Action);
+         end if;
+
+         return Action;
       end if;
    end Lookup_Action;
 
