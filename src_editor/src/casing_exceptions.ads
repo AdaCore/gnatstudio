@@ -25,6 +25,7 @@
 with Glib.Xml_Int;          use Glib.Xml_Int;
 with Glide_Kernel;          use Glide_Kernel;
 with Case_Handling;         use Case_Handling;
+with VFS;
 
 package Casing_Exceptions is
 
@@ -44,6 +45,7 @@ package Casing_Exceptions is
 
    procedure Casing_Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Customization routine for the casing feature, this is a callback to
