@@ -47,6 +47,7 @@ package body Projects.Editor is
      (Project_Node_Array, Project_Node_Array_Access);
 
 
+
    --------------
    -- Projects --
    --------------
@@ -1237,6 +1238,7 @@ package body Projects.Editor is
    is
       Old : Project_Node_Array_Access := To;
    begin
+      --  ??? Should use Basic_Types.Add
       if Last = To'Last then
          To := new Project_Node_Array (1 .. Old'Last * 2);
          To (1 .. Old'Length) := Old.all;
