@@ -13,6 +13,17 @@ package body New_Variable_Editor_Pkg.Callbacks is
 
 --     use Gtk.Arguments;
 
+   ------------------------------
+   -- On_Variable_Name_Changed --
+   ------------------------------
+
+   procedure On_Variable_Name_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Name_Changed (New_Var_Edit (Object));
+   end On_Variable_Name_Changed;
+
    --------------------------------
    -- On_Get_Environment_Toggled --
    --------------------------------
@@ -42,10 +53,25 @@ package body New_Variable_Editor_Pkg.Callbacks is
    is
       E : New_Var_Edit := New_Var_Edit (Object);
    begin
-      Set_Sensitive (E.List_Value, Get_Active (E.Untyped_List_Variable));
-      Set_Sensitive (E.Single_Value, Get_Active (E.Untyped_Single_Variable));
+      Set_Sensitive (E.List_Value,
+                     Get_Active (E.Untyped_List_Variable)
+                     and then not Get_Active (E.Get_Environment));
+      Set_Sensitive (E.Single_Value,
+                     Get_Active (E.Untyped_Single_Variable)
+                     and then not Get_Active (E.Get_Environment));
       Set_Sensitive (E.Enumeration_Value, Get_Active (E.Typed_Variable));
    end On_Typed_Variable_Toggled;
+
+   ----------------------------------
+   -- On_Enumeration_Value_Changed --
+   ----------------------------------
+
+   procedure On_Enumeration_Value_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Enumeration_Value_Changed;
 
    --------------------
    -- On_Add_Clicked --
@@ -54,8 +80,9 @@ package body New_Variable_Editor_Pkg.Callbacks is
    procedure On_Add_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
+      E : New_Var_Edit := New_Var_Edit (Object);
    begin
-      null;
+      Update_Variable (E);
    end On_Add_Clicked;
 
    -----------------------
