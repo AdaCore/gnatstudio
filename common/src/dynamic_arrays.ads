@@ -41,7 +41,7 @@ package Dynamic_Arrays is
    --  Table_Initial_Size specifies the size that should be allocated initially
    --  for the table.
 
-   type Index_Type is new Integer;
+   type Index_Type is new Integer range 0 .. Integer'Last;
 
    First : constant Index_Type := Index_Type'Succ (Index_Type'First);
    --  The index of the first allocated element in Table. This leaves space to
