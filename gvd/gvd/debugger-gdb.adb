@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with System;            use System;
+with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Tags;          use Ada.Tags;
 with GNAT.Regpat;       use GNAT.Regpat;
@@ -1199,20 +1200,82 @@ package body Debugger.Gdb is
       Send (Debugger, "finish", Mode => Mode);
    end Finish;
 
+   -----------------
+   -- Task_Switch --
+   -----------------
+
+   procedure Task_Switch
+     (Debugger : access Gdb_Debugger;
+      Task_Num : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "task" & Natural'Image (Task_Num), Mode => Mode);
+   end Task_Switch;
+
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   procedure Thread_Switch
+     (Debugger : access Gdb_Debugger;
+      Thread   : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "thread" & Natural'Image (Thread), Mode => Mode);
+   end Thread_Switch;
+
+   ----------------
+   -- Info_Tasks --
+   ----------------
+
+   procedure Info_Tasks
+     (Debugger : access Gdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural)
+   is
+      EOL         : Positive;
+      Output      : constant String :=
+        Send (Debugger, "info tasks", Mode => Internal);
+      Index       : Positive := Output'First;
+
+   begin
+      Len := 0;
+
+      while Index < Output'Last loop
+         Len := Len + 1;
+         EOL := Index;
+
+         while EOL <= Output'Last and then Output (EOL) /= ASCII.LF loop
+            EOL := EOL + 1;
+         end loop;
+
+         Info (Len) :=
+           (Num_Fields => 6,
+            Information =>
+              (New_String       (Output (Index      .. Index + 3)),
+               New_String (Trim (Output (Index + 4  .. Index + 13), Left)),
+               New_String (Trim (Output (Index + 14 .. Index + 18), Left)),
+               New_String (Trim (Output (Index + 19 .. Index + 22), Left)),
+               New_String (Trim (Output (Index + 23 .. Index + 45), Left)),
+               New_String (Trim (Output (Index + 46 .. EOL - 1), Left))
+              ));
+         Index := EOL + 1;
+      end loop;
+   end Info_Tasks;
+
    ------------------
    -- Info_Threads --
    ------------------
 
-   function Info_Threads
-     (Debugger : access Gdb_Debugger)
-      return Thread_Information_Array is
+   procedure Info_Threads
+     (Debugger : access Gdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural)
+   is
    begin
-      return Parse_Thread_List
-        (Language_Debugger_Access (Get_Language (Debugger)),
-         Send
-           (Debugger,
-            Thread_List (Language_Debugger_Access (Get_Language (Debugger))),
-            Mode => Internal));
+      Info (Info'First) := (Num_Fields => 1, Information => (1 => Null_Ptr));
+      Len := 0;
+      --  Not implemented ???
    end Info_Threads;
 
    ------------------------

@@ -652,24 +652,60 @@ package body Debugger.Jdb is
       Send (Debugger, "step up", Mode => Mode);
    end Finish;
 
+   -----------------
+   -- Task_Switch --
+   -----------------
+
+   procedure Task_Switch
+     (Debugger : access Jdb_Debugger;
+      Task_Num : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Thread_Switch (Debugger, Task_Num, Mode);
+   end Task_Switch;
+
+   -------------------
+   -- Thread_Switch --
+   -------------------
+
+   procedure Thread_Switch
+     (Debugger : access Jdb_Debugger;
+      Thread   : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "thread" & Natural'Image (Thread), Mode => Mode);
+   end Thread_Switch;
+
+   ----------------
+   -- Info_Tasks --
+   ----------------
+
+   procedure Info_Tasks
+     (Debugger : access Jdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural) is
+   begin
+      Info_Threads (Debugger, Info, Len);
+   end Info_Tasks;
+
    ------------------
    -- Info_Threads --
    ------------------
 
-   function Info_Threads
-     (Debugger : access Jdb_Debugger) return Thread_Information_Array
+   procedure Info_Threads
+     (Debugger : access Jdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural)
    is
-      S : String := Send
-        (Debugger,
-         Thread_List (Language_Debugger_Access (Get_Language (Debugger))),
-         True,
-         Mode => Internal);
+      S       : constant String := Send
+        (Debugger, "threads", True, Mode => Internal);
       Matches : Match_Array (0 .. 0);
+
    begin
       Match (Prompt_Regexp, S, Matches);
-      return Parse_Thread_List
-        (Jdb_Java_Language_Access (Get_Language (Debugger)),
-         S (S'First .. Matches (0).First - 1));
+      Info (Info'First) := (Num_Fields => 1, Information => (1 => Null_Ptr));
+      Len := 0;
+      --  Not implemented ???
    end Info_Threads;
 
    -----------------

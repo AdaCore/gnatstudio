@@ -641,18 +641,33 @@ package Debugger is
    procedure Free (Info : in out Thread_Information_Array);
    --  Free the dyamic memory associated with each element of the array.
 
-   procedure Thread_Switch
-     (Debugger : access Debugger_Root'Class;
-      Thread   : Natural;
-      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
-   --  Switch to a specified thread.
-   --  GDB_COMMAND: "thread" or "task"
+   procedure Task_Switch
+     (Debugger : access Debugger_Root;
+      Task_Num : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Switch to a specified task.
+   --  GDB_COMMAND: "task"
 
-   function Info_Threads
-     (Debugger  : access Debugger_Root)
-      return Thread_Information_Array is abstract;
+   procedure Thread_Switch
+     (Debugger : access Debugger_Root;
+      Thread   : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Switch to a specified thread.
+   --  GDB_COMMAND: "thread"
+
+   procedure Info_Tasks
+     (Debugger : access Debugger_Root;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural) is abstract;
+   --  Return the current list of tasks.
+   --  GDB_COMMAND: "info tasks"
+
+   procedure Info_Threads
+     (Debugger : access Debugger_Root;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural) is abstract;
    --  Return the current list of threads.
-   --  GDB_COMMAND: "info threads" or "info tasks"
+   --  GDB_COMMAND: "info threads"
 
    -----------------------------
    -- Source Related Commands --

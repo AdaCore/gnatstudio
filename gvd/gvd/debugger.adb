@@ -313,21 +313,6 @@ package body Debugger is
       return Entity;
    end Get_Uniq_Id;
 
-   -------------------
-   -- Thread_Switch --
-   -------------------
-
-   procedure Thread_Switch
-     (Debugger : access Debugger_Root'Class;
-      Thread   : Natural;
-      Mode     : Command_Type := Hidden) is
-   begin
-      Send
-        (Debugger, Thread_Switch
-           (Language_Debugger_Access (Get_Language (Debugger)), Thread),
-         Mode => Mode);
-   end Thread_Switch;
-
    -----------------------
    -- Source_Files_List --
    -----------------------

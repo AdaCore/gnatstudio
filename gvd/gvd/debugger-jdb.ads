@@ -224,9 +224,25 @@ package Debugger.Jdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural);
 
-   function Info_Threads
-     (Debugger : access Jdb_Debugger)
-      return Thread_Information_Array;
+   procedure Task_Switch
+     (Debugger : access Jdb_Debugger;
+      Task_Num : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   procedure Thread_Switch
+     (Debugger : access Jdb_Debugger;
+      Thread   : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   procedure Info_Tasks
+     (Debugger : access Jdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
+
+   procedure Info_Threads
+     (Debugger : access Jdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
 
    function Line_Contains_Code
      (Debugger : access Jdb_Debugger;

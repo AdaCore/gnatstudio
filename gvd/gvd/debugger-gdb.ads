@@ -247,12 +247,27 @@ package Debugger.Gdb is
 
    function Variable_Name_With_Frame
      (Debugger : access Gdb_Debugger;
-      Var      : String)
-     return String;
+      Var      : String) return String;
 
-   function Info_Threads
-     (Debugger : access Gdb_Debugger)
-      return Thread_Information_Array;
+   procedure Task_Switch
+     (Debugger : access Gdb_Debugger;
+      Task_Num : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   procedure Thread_Switch
+     (Debugger : access Gdb_Debugger;
+      Thread   : Natural;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   procedure Info_Tasks
+     (Debugger : access Gdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
+
+   procedure Info_Threads
+     (Debugger : access Gdb_Debugger;
+      Info     : out Thread_Information_Array;
+      Len      : out Natural);
 
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;
