@@ -18,20 +18,37 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package is the part of the Docgen tool responsable for the
+--  processing of the program structure information (for Ada it is ALI)
+--  for the source file list passed by the procedure Docgen.
+
+--  In the procedure Process_Files each file from the list will be passed
+--  to the procedure Process_One_File, while collecting information about
+--  types and subprograms of all spec files, to be able to create index
+--  lists of these entities by calling the procedures Process_Type_Index,
+--  Process_Subprogram_Index and Process_Unit_Index (the latter for the
+--  source file list) in the package Docgen.Work_On_File.
+
+--  The procedure Process_One_File creates for each file the lists of
+--  subprograms, types, exceptions, variables and packages and passes them
+--  to the procedure Process_Source in Docgen.Work_On_Source.
+
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 with Src_Info;                  use Src_Info;
 with Language_Handlers;         use Language_Handlers;
-with Doc_Types;                 use Doc_Types;
+with Doc_Types;                use Doc_Types;
 
-package Work_on_File is
+package Work_On_File is
 
    procedure Process_Files
      (Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options);
-   --  Process the files
+   --  process all files, by creating the index lists of the type
+   --  and subprogram entities and by calling Process_One_File
+   --  for each file from the list.
 
 private
 
@@ -52,7 +69,8 @@ private
       Options            : All_Options;
       Process_Body_File  : Boolean);
    --  called by Process_Files for each file from the given list
-   --  will examine that file and call the function needed (see below)
+   --  will examine that file and call the function Work_On_Source
+   --  from Docgen.Work_On_File.
 
 
-end Work_on_File;
+end Work_On_File;
