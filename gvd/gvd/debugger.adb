@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,8 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+pragma Warnings (Off);
 with GNAT.Expect;       use GNAT.Expect;
+with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
+pragma Warnings (On);
+
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with Ada.Strings;       use Ada.Strings;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Text_IO;       use Ada.Text_IO;
+with Unchecked_Conversion;
+
+with Glib;              use Glib;
+with Gtk.Window;        use Gtk.Window;
+with Gdk.Input;
+with Gdk.Types;
+
 with Items;             use Items;
 with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
@@ -27,13 +41,7 @@ with Language.Debugger; use Language.Debugger;
 with Odd.Types;         use Odd.Types;
 with Odd.Process;       use Odd.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Ada.Strings;       use Ada.Strings;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Ada.Text_IO;       use Ada.Text_IO;
-with Gtk.Window;        use Gtk.Window;
-with Odd.Preferences;
-
-with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
+with Odd.Preferences;   use Odd.Preferences;
 
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
 
@@ -41,8 +49,18 @@ package body Debugger is
 
    use String_History;
 
-   Remote_Protocol : constant String := "rsh";
-   --  How to run a process on a remote machine ?
+   package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
+
+   function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
+
+   procedure Output_Available
+     (Process   : My_Input.Data_Access;
+      Source    : Gint;
+      Condition : Gdk.Types.Gdk_Input_Condition);
+   --  Called whenever some output becomes available from the debugger.
+   --  This procedure is activated to handle asynchronous commands.
+   --  All it does is read all the available data and call the filters
+   --  that were set for the debugger, until a prompt is found.
 
    Can_Use_Ptys : Integer;
    pragma Import (C, Can_Use_Ptys, "gvd_use_ptys");
@@ -54,7 +72,7 @@ package body Debugger is
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
       Empty_Buffer     : Boolean := True;
-      Mode             : Command_Type := Hidden);
+      Mode             : Command_Type);
    --  Internal procedure used by Send. This takes care of sending the
    --  command to the debugger, but doesn't parse or even read the output.
    --  The command is displayed in the command window and added to the
@@ -63,8 +81,7 @@ package body Debugger is
    procedure Send_Internal_Post
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
-      Wait_For_Prompt  : Boolean;
-      Mode             : Command_Type := Hidden);
+      Mode             : Command_Type);
    --  Internal procedure used by Send. This takes care of processing the
    --  output of the debugger, but it doesn't read it.
    --  This should be called only if we are currently waiting for the next
@@ -175,7 +192,6 @@ package body Debugger is
    is
       Descriptor : Process_Descriptor_Access;
    begin
-
       if Odd.Preferences.Use_Ptys and then Can_Use_Ptys = 1 then
          Descriptor := new TTY_Process_Descriptor;
       else
@@ -278,9 +294,7 @@ package body Debugger is
 
    function Get_Uniq_Id
      (Debugger : access Debugger_Root;
-      Entity   : String)
-     return String
-   is
+      Entity   : String) return String is
    begin
       return Entity;
    end Get_Uniq_Id;
@@ -302,13 +316,64 @@ package body Debugger is
    -- Source_Files_List --
    -----------------------
 
-   function Source_Files_List (Debugger : access Debugger_Root)
-                              return Odd.Types.String_Array
+   function Source_Files_List
+     (Debugger : access Debugger_Root) return Odd.Types.String_Array
    is
       A : Odd.Types.String_Array (1 .. 0);
    begin
       return A;
    end Source_Files_List;
+
+   ----------------------
+   -- Output_Available --
+   ----------------------
+
+   procedure Output_Available
+     (Process   : My_Input.Data_Access;
+      Source    : Gint;
+      Condition : Gdk.Types.Gdk_Input_Condition) is
+   begin
+      --  Get everything that is available (and transparently call the
+      --  output filters set for Pid).
+      --  Nothing should be done if we are already processing a command
+      --  (ie somewhere we are blocked on a Wait call for this Debugger),
+      --  since otherwise that Wait won't see the output and will lose some
+      --  output. We don't have to do that anyway, since the other Wait will
+      --  indirectly call the output filter.
+
+      if Wait_Prompt (Process.Debugger, Timeout => 0) then
+         Gdk.Input.Remove (Process.Input_Id);
+         Process.Input_Id := 0;
+
+         --  Put back the standard cursor
+
+         Set_Command_In_Process (Get_Process (Process.Debugger), False);
+         Set_Busy_Cursor (Process, False);
+         Unregister_Dialog (Process);
+
+         --  Do the postprocessing here instead of calling Send_Internal_Post
+         --  since we need to handle post processing slightly differently
+
+         Process_Post_Processes (Get_Process (Process.Debugger));
+
+         if Is_Context_Command
+           (Process.Debugger, Process.Running_Command.all)
+         then
+            Context_Changed (Process);
+         elsif Is_Execution_Command
+           (Process.Debugger, Process.Running_Command.all)
+         then
+            Process_Stopped (Process);
+         end if;
+
+         Update_Breakpoints
+           (Process,
+            Force =>
+              Is_Break_Command
+                (Process.Debugger, Process.Running_Command.all));
+         Free (Process.Running_Command);
+      end if;
+   end Output_Available;
 
    -----------------------
    -- Send_Internal_Pre --
@@ -318,11 +383,12 @@ package body Debugger is
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
       Empty_Buffer     : Boolean := True;
-      Mode             : Command_Type := Hidden)
+      Mode             : Command_Type)
    is
       use type Gtk.Window.Gtk_Window;
       Data : History_Data;
    begin
+      Set_Command_In_Process (Get_Process (Debugger));
       Set_Command_Mode (Get_Process (Debugger), Mode);
 
       --  Display the command in the output window if necessary
@@ -360,9 +426,12 @@ package body Debugger is
    procedure Send_Internal_Post
      (Debugger         : access Debugger_Root'Class;
       Cmd              : String;
-      Wait_For_Prompt  : Boolean;
-      Mode             : Command_Type := Hidden) is
+      Mode             : Command_Type)
+   is
+      Process : Debugger_Process_Tab := Convert (Debugger.Window, Debugger);
    begin
+      Process_Post_Processes (Get_Process (Debugger));
+
       --  Not an internal command, not in text mode (for testing purposes...)
 
       if Mode /= Internal and then Debugger.Window /= null then
@@ -370,15 +439,18 @@ package body Debugger is
          --  Postprocessing (e.g handling of auto-update).
 
          if Is_Context_Command (Debugger, Cmd) then
-            Context_Changed (Convert (Debugger.Window, Debugger));
+            Context_Changed (Process);
          elsif Is_Execution_Command (Debugger, Cmd) then
-            Process_Stopped (Convert (Debugger.Window, Debugger));
+            Process_Stopped (Process);
          end if;
 
          Update_Breakpoints
-           (Convert (Debugger.Window, Debugger),
-            Force => Is_Break_Command (Debugger, Cmd));
+           (Process, Force => Is_Break_Command (Debugger, Cmd));
       end if;
+
+      Set_Command_In_Process (Get_Process (Debugger), False);
+      Set_Busy_Cursor (Process, False);
+      Unregister_Dialog (Process);
    end Send_Internal_Post;
 
    ----------
@@ -390,14 +462,48 @@ package body Debugger is
       Cmd              : String;
       Empty_Buffer     : Boolean := True;
       Wait_For_Prompt  : Boolean := True;
-      Mode             : Command_Type := Hidden) is
+      Mode             : Command_Type := Hidden)
+   is
+      Process : Debugger_Process_Tab;
    begin
-      Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+      case Mode is
+         when Invisible_Command =>
+         --  Handle global lock
+         --  if Command_In_Process (Convert (Debugger.Window, Debugger)) then
+         --     return;
+         --  end if;
 
-      if Wait_For_Prompt then
-         Wait_Prompt (Debugger);
-         Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
-      end if;
+            --  ??? Need to queue the command instead
+            if Command_In_Process (Get_Process (Debugger)) then
+               return;
+            end if;
+
+            Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+
+            if Wait_For_Prompt then
+               Wait_Prompt (Debugger);
+               Send_Internal_Post (Debugger, Cmd, Mode);
+            end if;
+
+         when Visible_Command =>
+            if Command_In_Process (Get_Process (Debugger)) then
+               return;
+            end if;
+
+            Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
+
+            if Wait_For_Prompt then
+               Process := Convert (Debugger.Window, Debugger);
+               Process.Running_Command := new String' (Cmd);
+               Process.Input_Id := My_Input.Add
+                 (To_Gint
+                  (Get_Output_Fd
+                   (Get_Descriptor (Get_Process (Debugger)).all)),
+                  Gdk.Types.Input_Read,
+                  Output_Available'Access,
+                  My_Input.Data_Access (Process));
+            end if;
+      end case;
    end Send;
 
    ---------------
@@ -409,8 +515,13 @@ package body Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Command_Type := Hidden) return String is
+      Mode            : Invisible_Command := Hidden) return String is
    begin
+      --  Block if the global lock is set
+      --  if Command_In_Process (Convert (Debugger.Window, Debugger)) then
+      --     return;
+      --  end if;
+
       Send_Internal_Pre (Debugger, Cmd, Empty_Buffer, Mode);
 
       if Wait_For_Prompt then
@@ -419,7 +530,7 @@ package body Debugger is
          declare
             S : String := Expect_Out (Get_Process (Debugger));
          begin
-            Send_Internal_Post (Debugger, Cmd, Wait_For_Prompt, Mode);
+            Send_Internal_Post (Debugger, Cmd, Mode);
             return S;
          end;
       end if;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -100,7 +100,7 @@ package Debugger is
    --  buffer) is first discarded before the command is sent.
    --  Send_Completed is called right after the command is sent to the
    --  debugger. Call Wait_Prompt before exiting if Wait_For_Prompt is True.
-   --  If Is_Internal is true, then the output of the command won't be shown
+   --  If Mode <= Hidden, then the output of the command won't be shown
    --  in the command window.
 
    function Send_Full
@@ -108,8 +108,8 @@ package Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Odd.Types.Command_Type := Odd.Types.Hidden)
-     return String;
+      Mode            : Odd.Types.Invisible_Command := Odd.Types.Hidden)
+      return String;
    --  Same as above, but also returns the output of the debugger. The full
    --  output is returned, ie this includes the final prompt. You should
    --  rather use the function Send
@@ -123,8 +123,8 @@ package Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Odd.Types.Command_Type := Odd.Types.Hidden)
-     return String is abstract;
+      Mode            : Odd.Types.Invisible_Command := Odd.Types.Hidden)
+      return String is abstract;
    --  Same as above, but return a clean version of the output, ie it deletes
    --  the final prompt if any, depending on the debugger type.
 
@@ -187,8 +187,16 @@ package Debugger is
    --  The return result be the value of access types (ie types that can be
    --  dereferenced).
 
-   procedure Wait_Prompt (Debugger : access Debugger_Root) is abstract;
+   procedure Wait_Prompt
+     (Debugger : access Debugger_Root) is abstract;
    --  Wait for the prompt.
+
+   function Wait_Prompt
+     (Debugger : access Debugger_Root;
+      Timeout  : Integer) return Boolean is abstract;
+   --  Wait for the prompt.
+   --  Timeout is the number of 50ms times to wait.
+   --  Return True if a prompt was found.
 
    procedure Display_Prompt
      (Debugger        : access Debugger_Root;
@@ -239,7 +247,8 @@ package Debugger is
    procedure Set_Executable
      (Debugger   : access Debugger_Root;
       Executable : String;
-      Mode       : Odd.Types.Command_Type := Odd.Types.Internal) is abstract;
+      Mode       : Odd.Types.Invisible_Command := Odd.Types.Internal)
+      is abstract;
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
    --  Java, where Executable should be the name of the main class.
