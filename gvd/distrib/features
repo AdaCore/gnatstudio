@@ -9,5 +9,4 @@ New features in GVD 2.0.0
      mv /tmp/gvd_pref ~/.gvd/preferences
   On windows system, edit the preferences file by hand, and replace the
   semicolon and underscore characters by minus signs in all the XML tags.
-- Support for VxWorks AE advanced breakpoints
 
