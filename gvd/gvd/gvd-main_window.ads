@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -70,6 +70,7 @@ package GVD.Main_Window is
       Task_Dialog         : Task_Dialog_Access;
       PD_Dialog           : PD_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
+      Toolbar_Space,
       Cont_Button,
       Step_Button,
       Next_Button,
@@ -112,6 +113,10 @@ package GVD.Main_Window is
 
       Lang_Handler        : Language_Handlers.Language_Handler;
       --  The type used to convert from a filename to a language
+
+      Program_Args        : String_Access;
+      --  If non null, name of program to be debugged, and additional
+      --  arguments if needed, e.g. "/path/to/hello -h"
    end record;
    type GVD_Main_Window is access all GVD_Main_Window_Record'Class;
 
