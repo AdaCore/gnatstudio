@@ -45,6 +45,11 @@ with OS_Utils;                  use OS_Utils;
 with Src_Info;                  use Src_Info;
 with Src_Info.ALI;
 
+with Language;                 use Language;
+with Language.Ada;             use Language.Ada;
+with Language.C;               use Language.C;
+with Language.Cpp;             use Language.Cpp;
+
 with Namet;                     use Namet;
 with Prj.Tree;                  use Prj.Tree;
 with Snames;                    use Snames;
@@ -238,6 +243,11 @@ package body Glide_Kernel is
 
       Load_Preferences
         (Handle, Get_Home_Directory & Directory_Separator & "preferences");
+
+      Reset_File_Extensions;
+      Add_File_Extensions (Ada_Lang, Get_Pref (Handle, Ada_Extensions));
+      Add_File_Extensions (C_Lang,   Get_Pref (Handle, C_Extensions));
+      Add_File_Extensions (Cpp_Lang, Get_Pref (Handle, Cpp_Extensions));
    end Gtk_New;
 
    ---------------------
