@@ -34,9 +34,9 @@ package body Commands.Editor is
    ------------
 
    procedure Create
-     (Item         : out Check_Modified_State;
-      Box          : Source_Editor_Box;
-      Queue        : Command_Queue) is
+     (Item  : out Check_Modified_State;
+      Box   : Source_Editor_Box;
+      Queue : Command_Queue) is
    begin
       Item := new Check_Modified_State_Type;
       Item.Box := Box;
