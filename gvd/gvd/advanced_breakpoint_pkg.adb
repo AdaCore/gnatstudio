@@ -115,7 +115,7 @@ begin
    Add (Advanced_Breakpoint.Command_Frame, Advanced_Breakpoint.Vbox12);
    Set_Border_Width (Advanced_Breakpoint.Vbox12, 7);
 
-   Gtk_New (Advanced_Breakpoint.Label13, -("Enter command to execute when program stops:"));
+   Gtk_New (Advanced_Breakpoint.Label13, -("Enter commands to execute when program stops:"));
    Pack_Start (Advanced_Breakpoint.Vbox12, Advanced_Breakpoint.Label13, False, False, 0);
    Set_Alignment (Advanced_Breakpoint.Label13, 0.0, 0.5);
    Set_Padding (Advanced_Breakpoint.Label13, 0, 0);

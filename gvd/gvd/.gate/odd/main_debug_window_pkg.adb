@@ -423,23 +423,23 @@ begin
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Abort1);
    Set_Right_Justify (Main_Debug_Window.Abort1, False);
 
-   Gtk_New (Main_Debug_Window.Commands1, -"Commands");
-   Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Commands1);
-   Set_Right_Justify (Main_Debug_Window.Commands1, False);
+   Gtk_New (Main_Debug_Window.Command1, -"Command");
+   Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Command1);
+   Set_Right_Justify (Main_Debug_Window.Command1, False);
 
-   Gtk_New (Main_Debug_Window.Commands1_Menu);
-   Set_Submenu (Main_Debug_Window.Commands1, Main_Debug_Window.Commands1_Menu);
+   Gtk_New (Main_Debug_Window.Command1_Menu);
+   Set_Submenu (Main_Debug_Window.Command1, Main_Debug_Window.Command1_Menu);
 
    Gtk_New (Main_Debug_Window.Command_History1, -"Command History...");
    Set_Sensitive (Main_Debug_Window.Command_History1, False);
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Command_History1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Command_History1_Activate'Access));
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Command_History1);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Command_History1);
    Set_Right_Justify (Main_Debug_Window.Command_History1, False);
 
    Gtk_New (Main_Debug_Window.Separator14);
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Separator14);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Separator14);
    Set_Right_Justify (Main_Debug_Window.Separator14, False);
 
    Gtk_New (Main_Debug_Window.Clear_Line1, -"Clear Line");
@@ -449,7 +449,7 @@ begin
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Clear_Line1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Clear_Line1_Activate'Access));
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Clear_Line1);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Clear_Line1);
    Set_Right_Justify (Main_Debug_Window.Clear_Line1, False);
 
    Gtk_New (Main_Debug_Window.Clear_Window1, -"Clear Window");
@@ -459,11 +459,11 @@ begin
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Clear_Window1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Clear_Window1_Activate'Access));
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Clear_Window1);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Clear_Window1);
    Set_Right_Justify (Main_Debug_Window.Clear_Window1, False);
 
    Gtk_New (Main_Debug_Window.Separator16);
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Separator16);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Separator16);
    Set_Right_Justify (Main_Debug_Window.Separator16, False);
 
    Gtk_New (Main_Debug_Window.Define_Command1, -"Define Command...");
@@ -471,7 +471,7 @@ begin
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Define_Command1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Define_Command1_Activate'Access));
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Define_Command1);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Define_Command1);
    Set_Right_Justify (Main_Debug_Window.Define_Command1, False);
 
    Gtk_New (Main_Debug_Window.Edit_Buttons1, -"Edit Buttons...");
@@ -479,7 +479,7 @@ begin
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Edit_Buttons1, "activate",
       Menu_Item_Callback.To_Marshaller (On_Edit_Buttons1_Activate'Access));
-   Add (Main_Debug_Window.Commands1_Menu, Main_Debug_Window.Edit_Buttons1);
+   Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Edit_Buttons1);
    Set_Right_Justify (Main_Debug_Window.Edit_Buttons1, False);
 
    Gtk_New (Main_Debug_Window.Data1, -"Data");

@@ -136,8 +136,8 @@ package Main_Debug_Window_Pkg is
       Kill1 : Gtk_Menu_Item;
       Interrupt1 : Gtk_Menu_Item;
       Abort1 : Gtk_Menu_Item;
-      Commands1 : Gtk_Menu_Item;
-      Commands1_Menu : Gtk_Menu;
+      Command1 : Gtk_Menu_Item;
+      Command1_Menu : Gtk_Menu;
       Command_History1 : Gtk_Menu_Item;
       Separator14 : Gtk_Menu_Item;
       Clear_Line1 : Gtk_Menu_Item;
