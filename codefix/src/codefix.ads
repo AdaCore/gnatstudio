@@ -8,6 +8,9 @@ package Codefix is
    --  most of times it is due to a bad utilisation of the functions by the
    --  programmer.
 
+   Tab_Width : constant Natural := 8;
+   --  Width of a tab in GNAT
+
    ----------------------------------------------------------------------------
    --  type Dynamic_String
    ----------------------------------------------------------------------------
