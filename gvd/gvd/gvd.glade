@@ -782,7 +782,7 @@
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:23 GMT</last_modification_time>
 	    </signal>
 	    <label>Call Stack</label>
-	    <active>True</active>
+	    <active>False</active>
 	    <always_show_toggle>True</always_show_toggle>
 	  </widget>
 
