@@ -115,9 +115,11 @@ package body Ada_Module is
    is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
+      LI      : ALI_Handler;
    begin
-      Register_LI_Handler
-        (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
+      LI := new Src_Info.ALI.ALI_Handler_Record;
+      Reset (LI);
+      Register_LI_Handler (Handler, "Ada", Src_Info.LI_Handler (LI));
 
       Register_Language (Handler, "Ada", Ada_Lang);
       Set_Language_Handler
