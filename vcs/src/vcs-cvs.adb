@@ -1207,7 +1207,7 @@ package body VCS.CVS is
       Script       : Scripting_Language;
 
    begin
-      --  ??? This assumes that the file currently opened is identical to the
+      --  ??? This assumes that the file currently open is identical to the
       --  file first checked-out from CVS. It would be necessary here to
       --  force a save of the file, and then to get a diff between that file
       --  and the one on CVS (which is given in the output of the annotation,

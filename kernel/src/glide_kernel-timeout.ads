@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,11 +38,11 @@ package Glide_Kernel.Timeout is
    --  terminates.
 
    type Process_Data is record
-      Kernel     : Kernel_Handle;
-      Descriptor : GNAT.Expect.Process_Descriptor_Access;
-      Name       : GNAT.OS_Lib.String_Access;
-      Callback   : Output_Callback;
-      Exit_Cb    : Exit_Callback;
+      Kernel        : Kernel_Handle;
+      Descriptor    : GNAT.Expect.Process_Descriptor_Access;
+      Name          : GNAT.OS_Lib.String_Access;
+      Callback      : Output_Callback;
+      Exit_Cb       : Exit_Callback;
       Callback_Data : System.Address;
    end record;
 
@@ -53,15 +53,15 @@ package Glide_Kernel.Timeout is
    package Process_Timeout is new Gtk.Main.Timeout (Process_Data);
 
    procedure Launch_Process
-     (Kernel      : Kernel_Handle;
-      Command     : String;
-      Arguments   : GNAT.OS_Lib.Argument_List;
-      Title       : String := "";
-      Callback    : Output_Callback := null;
-      Exit_Cb     : Exit_Callback := null;
-      Name        : String;
-      Success     : out Boolean;
-      Interactive : Boolean := False;
+     (Kernel        : Kernel_Handle;
+      Command       : String;
+      Arguments     : GNAT.OS_Lib.Argument_List;
+      Title         : String := "";
+      Callback      : Output_Callback := null;
+      Exit_Cb       : Exit_Callback := null;
+      Name          : String;
+      Success       : out Boolean;
+      Interactive   : Boolean := False;
       Callback_Data : System.Address := System.Null_Address);
    --  Launch a given command with arguments.
    --  Set Success to True if the command could be spawned.

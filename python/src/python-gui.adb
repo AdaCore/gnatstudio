@@ -197,12 +197,13 @@ package body Python.GUI is
 
    function Write (Self : PyObject; Args : PyObject) return PyObject is
       pragma Unreferenced (Self);
-      S : aliased chars_ptr;
-      N : aliased Integer;
-      Stdout : aliased PyObject;
+      S           : aliased chars_ptr;
+      N           : aliased Integer;
+      Stdout      : aliased PyObject;
       Interpreter : Python_Interpreter;
-      Data : PyObject;
-      Old : String_Access;
+      Data        : PyObject;
+      Old         : String_Access;
+
    begin
       if not PyArg_ParseTuple
         (Args, "Os#", Stdout'Address, S'Address, N'Address)
@@ -234,11 +235,12 @@ package body Python.GUI is
      (Self : PyObject; Args : PyObject) return PyObject
    is
       pragma Unreferenced (Self);
-      S : aliased chars_ptr;
-      N : aliased Integer;
-      Stdout : aliased PyObject;
+      S           : aliased chars_ptr;
+      N           : aliased Integer;
+      Stdout      : aliased PyObject;
       Interpreter : Python_Interpreter;
-      Data : PyObject;
+      Data        : PyObject;
+
    begin
       if not PyArg_ParseTuple
         (Args, "Os#", Stdout'Address, S'Address, N'Address)
@@ -283,12 +285,13 @@ package body Python.GUI is
 
    function Read_Line (Self : PyObject; Args : PyObject) return PyObject is
       pragma Unreferenced (Self);
-      File   : aliased PyObject;
-      Size   : aliased Integer := 0;
-      Data   : PyObject;
-      Interpreter : Python_Interpreter;
+      File          : aliased PyObject;
+      Size          : aliased Integer := 0;
+      Data          : PyObject;
+      Interpreter   : Python_Interpreter;
       Iter, Iter2   : Gtk_Text_Iter;
-      Buffer : Gtk_Text_Buffer;
+      Buffer        : Gtk_Text_Buffer;
+
    begin
       if not PyArg_ParseTuple (Args, "O|i", File'Address, Size'Address) then
          return null;
@@ -330,14 +333,14 @@ package body Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class;
       History     : Histories.History)
    is
-      Setup_Cmd   : constant String := "import sys" & ASCII.LF;
-      Main_Module : PyObject;
-      Sigint      : constant Integer := 2;
-      Old_Handler : System.Address;
-      Prompt      : PyObject;
+      Setup_Cmd      : constant String := "import sys" & ASCII.LF;
+      Main_Module    : PyObject;
+      Sigint         : constant Integer := 2;
+      Old_Handler    : System.Address;
+      Prompt         : PyObject;
       Stdout, Stderr : PyClassObject;
-      Meths       : PyObject;
-      Ignored     : Integer;
+      Meths          : PyObject;
+      Ignored        : Integer;
       pragma Unreferenced (Ignored);
 
    begin
@@ -593,11 +596,14 @@ package body Python.GUI is
       Code           : PyCodeObject;
       Tmp            : String_Access;
       Indented_Input : constant Boolean := Command'Length > 0
-        and then (Command (Command'First) = ASCII.HT
-                  or else Command (Command'First) = ' ');
-      Cmd : constant String := Interpreter.Buffer.all & Command & ASCII.LF;
-      Grab_Widget : Gtk_Widget;
+        and then
+          (Command (Command'First) = ASCII.HT
+           or else Command (Command'First) = ' ');
+      Cmd            : constant String :=
+        Interpreter.Buffer.all & Command & ASCII.LF;
+      Grab_Widget    : Gtk_Widget;
       use type Gdk_Window;
+
    begin
       Interpreter.Hide_Output := Hide_Output;
       Errors := False;
@@ -714,8 +720,7 @@ package body Python.GUI is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
          Interpreter.In_Process := False;
          Interpreter.Hide_Output := False;
          Errors := True;
@@ -728,9 +733,10 @@ package body Python.GUI is
    procedure Display_Prompt
      (Interpreter : access Python_Interpreter_Record'Class)
    is
-      Buffer : Gtk_Text_Buffer;
+      Buffer           : Gtk_Text_Buffer;
       Iter, First_Iter : Gtk_Text_Iter;
-      Ps     : PyObject;
+      Ps               : PyObject;
+
    begin
       if Interpreter.Console /= null
         and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
@@ -801,6 +807,7 @@ package body Python.GUI is
          Start       : Natural := Input'First - 1;
          Last        : Natural := Input'Last + 1;
          Obj, Item   : PyObject;
+
       begin
          for N in reverse Input'Range loop
             if Input (N) = ' ' or else Input (N) = ASCII.HT then
@@ -850,6 +857,7 @@ package body Python.GUI is
       Iter, Prompt_End : Gtk_Text_Iter;
       Success : Boolean;
       Errors  : Boolean;
+
    begin
       case Key is
          when GDK_Up | GDK_Down =>

@@ -160,10 +160,10 @@ package body Shell_Script is
       Display_In_Console : Boolean := True;
       Errors             : out Boolean);
    function Execute_Command
-     (Script  : access Shell_Scripting_Record;
-      Command : String;
+     (Script             : access Shell_Scripting_Record;
+      Command            : String;
       Display_In_Console : Boolean := True;
-      Errors  : access Boolean) return String;
+      Errors             : access Boolean) return String;
    procedure Execute_File
      (Script             : access Shell_Scripting_Record;
       Filename           : String;
@@ -174,7 +174,8 @@ package body Shell_Script is
      (Script : access Shell_Scripting_Record;
       Class  : Class_Type;
       Base   : Class_Type) return Boolean;
-   function Get_Kernel (Script : access Shell_Scripting_Record)
+   function Get_Kernel
+     (Script : access Shell_Scripting_Record)
       return Kernel_Handle;
    --  See doc from inherited subprograms
 
@@ -990,16 +991,18 @@ package body Shell_Script is
    ---------------------
 
    function Execute_Command
-     (Script  : access Shell_Scripting_Record;
-      Command : String;
+     (Script             : access Shell_Scripting_Record;
+      Command            : String;
       Display_In_Console : Boolean := True;
-      Errors  : access Boolean) return String
+      Errors             : access Boolean) return String
    is
       Err : aliased Boolean;
       Result : constant String := Execute_GPS_Shell_Command
         (Script.Kernel, Command, Err'Unchecked_Access);
+
    begin
       Errors.all := Err;
+
       if Display_In_Console and then Script.Console /= null then
          Insert (Script.Console, Result);
       end if;

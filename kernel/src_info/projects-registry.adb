@@ -336,6 +336,7 @@ package body Projects.Registry is
          Prj.Part.Parse (Node, Normalize_Project_Path (Project_Path), True);
          P := Get_Project_From_Name (Registry, Prj.Tree.Name_Of (Node));
       end if;
+
       return P;
    end Load_Or_Find;
 
@@ -790,11 +791,11 @@ package body Projects.Registry is
       begin
          String_Elements.Increment_Last;
          String_Elements.Table (String_Elements.Last) :=
-           (Value    => Get_String (File),
+           (Value         => Get_String (File),
             Display_Value => Get_String (File),
-            Flag     => False,  --  Irrelevant for files
-            Location => No_Location,
-            Next     => Prj.Projects.Table (Get_View (Project)).Sources);
+            Flag          => False,  --  Irrelevant for files
+            Location      => No_Location,
+            Next          => Prj.Projects.Table (Get_View (Project)).Sources);
          Prj.Projects.Table (Get_View (Project)).Sources :=
            String_Elements.Last;
 

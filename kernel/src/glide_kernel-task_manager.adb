@@ -224,10 +224,10 @@ package body Glide_Kernel.Task_Manager is
    -------------------------------
 
    procedure Launch_Background_Command
-     (Kernel   : access Kernel_Handle_Record'Class;
-      Command  : access Root_Command'Class;
-      Active   : Boolean;
-      Queue_Id : String := "";
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Command         : access Root_Command'Class;
+      Active          : Boolean;
+      Queue_Id        : String := "";
       Destroy_On_Exit : Boolean := True)
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);

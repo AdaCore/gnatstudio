@@ -107,10 +107,10 @@ package body Python_Module is
       Display_In_Console : Boolean := True;
       Errors             : out Boolean);
    function Execute_Command
-     (Script  : access Python_Scripting_Record;
-      Command : String;
+     (Script             : access Python_Scripting_Record;
+      Command            : String;
       Display_In_Console : Boolean;
-      Errors  : access Boolean) return String;
+      Errors             : access Boolean) return String;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
@@ -121,8 +121,8 @@ package body Python_Module is
      (Script : access Python_Scripting_Record;
       Class  : Class_Type;
       Base   : Class_Type) return Boolean;
-   function Get_Kernel (Script : access Python_Scripting_Record)
-      return Kernel_Handle;
+   function Get_Kernel
+     (Script : access Python_Scripting_Record) return Kernel_Handle;
    --  See doc from inherited subprograms
 
    --------------------------
@@ -439,10 +439,11 @@ package body Python_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Ignored      : Integer;
+      Ignored : Integer;
       pragma Unreferenced (Ignored);
-      N      : Node_Ptr;
-      Errors : Boolean;
+      N       : Node_Ptr;
+      Errors  : Boolean;
+
    begin
       Python_Module_Id := new Python_Module_Record;
       Register_Module
@@ -613,11 +614,12 @@ package body Python_Module is
    procedure Load_Python_Startup_Files
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Dir : constant String := Get_Home_Dir (Kernel) & "python_startup";
-      D   : Dir_Type;
-      File : String (1 .. 1024);
-      Last : Natural;
+      Dir    : constant String := Get_Home_Dir (Kernel) & "python_startup";
+      D      : Dir_Type;
+      File   : String (1 .. 1024);
+      Last   : Natural;
       Errors : Boolean;
+
    begin
       if Python_Module_Id = null then
          return;
@@ -646,7 +648,7 @@ package body Python_Module is
                  (Python_Module_Id.Script,
                   "import " & Base_Name (File (1 .. Last), ".py"),
                   Display_In_Console => True,
-                  Errors => Errors);
+                  Errors             => Errors);
             end if;
          end loop;
 

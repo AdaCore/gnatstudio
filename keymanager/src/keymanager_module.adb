@@ -629,7 +629,8 @@ package body KeyManager_Module is
                      Launch_Background_Command
                        (Kernel, Create_Proxy (Command.Command, Event),
                         Destroy_On_Exit => False,
-                        Active => False, Queue_Id => "");
+                        Active          => False,
+                        Queue_Id        => "");
                      return True;
                   end if;
                end if;
@@ -643,7 +644,8 @@ package body KeyManager_Module is
             Launch_Background_Command
               (Kernel, Create_Proxy (Any_Context_Command.Command, Event),
                Destroy_On_Exit => False,
-               Active => False, Queue_Id => "");
+               Active          => False,
+               Queue_Id        => "");
             return True;
          end if;
       end if;

@@ -1209,7 +1209,7 @@ package body Glide_Kernel.Modules is
       Every_Line     : Boolean := True;
       Normalize      : Boolean := True)
    is
-      Value         : GValue_Array (1 .. 5);
+      Value : GValue_Array (1 .. 5);
 
    begin
       Init (Value (2),  Glib.GType_String);

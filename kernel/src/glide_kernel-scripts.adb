@@ -69,14 +69,14 @@ package body Glide_Kernel.Scripts is
    use Classes_Hash.String_Hash_Table;
 
    type Scripting_Data_Record is new Kernel_Scripting_Data_Record with record
-      Scripting_Languages : Scripting_Language_List;
-      Classes             : Classes_Hash.String_Hash_Table.HTable;
-      Entity_Class        : Class_Type := No_Class;
-      File_Class          : Class_Type := No_Class;
-      Project_Class       : Class_Type := No_Class;
-      File_Context_Class  : Class_Type := No_Class;
-      File_Location_Class : Class_Type := No_Class;
-      Entity_Context_Class        : Class_Type := No_Class;
+      Scripting_Languages  : Scripting_Language_List;
+      Classes              : Classes_Hash.String_Hash_Table.HTable;
+      Entity_Class         : Class_Type := No_Class;
+      File_Class           : Class_Type := No_Class;
+      Project_Class        : Class_Type := No_Class;
+      File_Context_Class   : Class_Type := No_Class;
+      File_Location_Class  : Class_Type := No_Class;
+      Entity_Context_Class : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -214,8 +214,8 @@ package body Glide_Kernel.Scripts is
    ---------------------------------
 
    procedure Register_Scripting_Language
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Script  : access Scripting_Language_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Script : access Scripting_Language_Record'Class) is
    begin
       Scripting_Data (Kernel.Scripts).Scripting_Languages :=
         new Scripting_Language_Data'
@@ -228,8 +228,8 @@ package body Glide_Kernel.Scripts is
    -------------------------------
 
    function Lookup_Scripting_Language
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name    : String) return Scripting_Language
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name   : String) return Scripting_Language
    is
       Tmp : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
@@ -287,10 +287,10 @@ package body Glide_Kernel.Scripts is
    ---------------
 
    function New_Class
-     (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name          : String;
-      Description   : String := "";
-      Base          : Class_Type := No_Class) return Class_Type
+     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name        : String;
+      Description : String := "";
+      Base        : Class_Type := No_Class) return Class_Type
    is
       Tmp   : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
@@ -376,9 +376,10 @@ package body Glide_Kernel.Scripts is
      (Instance : access Class_Instance_Record'Class;
       Entity   : Entity_Information)
    is
-      Ent : constant Entity_Information_Access :=
+      Ent    : constant Entity_Information_Access :=
         new Entity_Information'(Copy (Entity));
       Script : constant Scripting_Language := Get_Script (Instance);
+
    begin
       if not Is_Subclass
         (Script, Get_Class (Instance), Get_Entity_Class (Get_Kernel (Script)))
@@ -411,9 +412,10 @@ package body Glide_Kernel.Scripts is
      (Instance : access Class_Instance_Record'Class;
       Location : File_Location_Info)
    is
-      Loc : constant File_Location_Info_Access :=
+      Loc    : constant File_Location_Info_Access :=
         new File_Location_Info'(Location);
       Script : constant Scripting_Language := Get_Script (Instance);
+
    begin
       if not Is_Subclass
         (Script, Get_Class (Instance),
@@ -432,11 +434,12 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class)
       return Entity_Information
    is
       Script : constant Scripting_Language := Get_Script (Instance);
-      Ent : Entity_Information_Access;
+      Ent    : Entity_Information_Access;
    begin
       if not Is_Subclass
         (Script, Get_Class (Instance), Get_Entity_Class (Get_Kernel (Script)))
@@ -456,7 +459,7 @@ package body Glide_Kernel.Scripts is
       return File_Location_Info
    is
       Script : constant Scripting_Language := Get_Script (Instance);
-      Loc : File_Location_Info_Access;
+      Loc    : File_Location_Info_Access;
    begin
       if not Is_Subclass
         (Script, Get_Class (Instance),
@@ -480,6 +483,7 @@ package body Glide_Kernel.Scripts is
       Ent    : File_Info_Access;
       Script : constant Scripting_Language := Get_Script (Instance);
       Kernel : constant Kernel_Handle := Get_Kernel (Script);
+
    begin
       if not Is_Subclass
         (Script, Get_Class (Instance), Get_File_Class (Kernel))
@@ -503,7 +507,7 @@ package body Glide_Kernel.Scripts is
    function Get_Data (Instance : access Class_Instance_Record'Class)
       return File_Info
    is
-      Ent : File_Info_Access;
+      Ent    : File_Info_Access;
       Script : constant Scripting_Language := Get_Script (Instance);
    begin
       if not Is_Subclass
@@ -539,7 +543,8 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class)
       return Project_Type
    is
       Script : constant Scripting_Language := Get_Script (Instance);
@@ -567,12 +572,14 @@ package body Glide_Kernel.Scripts is
    begin
       if Command = "insmod" then
          Name_Parameters (Data, Insmod_Cmd_Parameters);
+
          declare
             Shared  : constant String := Nth_Arg (Data, 1);
             Module  : constant String := Nth_Arg (Data, 2);
             Success : Boolean;
          begin
             Dynamic_Register_Module (Kernel, Shared, Module, Success);
+
             if Success then
                Set_Return_Value (Data, -"Module successfully loaded.");
             else
@@ -585,10 +592,12 @@ package body Glide_Kernel.Scripts is
             use type Module_List.List_Node;
             Current : Module_List.List_Node;
             List    : constant Module_List.List := List_Of_Modules (Kernel);
+
          begin
             Current := Module_List.First (List);
 
             Set_Return_Value_As_List (Data);
+
             while Current /= Module_List.Null_Node loop
                Set_Return_Value
                  (Data,
@@ -613,6 +622,7 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "dialog" then
          Name_Parameters (Data, Dialog_Cmd_Parameters);
+
          declare
             Result : Message_Dialog_Buttons;
             pragma Unreferenced (Result);
@@ -675,6 +685,7 @@ package body Glide_Kernel.Scripts is
             type Ent_Array
                is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
             Ent : Ent_Array;
+
          begin
             Name_Parameters (Data, Input_Dialog_Cmd_Parameters);
             Gtk_New (Dialog,
@@ -729,19 +740,21 @@ package body Glide_Kernel.Scripts is
    procedure Create_Location_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
       Location : File_Location_Info;
+
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Location_Cmd_Parameters);
 
          declare
-            File   : constant Class_Instance  :=
+            File : constant Class_Instance  :=
               Nth_Arg (Data, 2, Get_File_Class (Kernel));
-            L      : constant Integer := Nth_Arg (Data, 3);
-            C      : constant Integer := Nth_Arg (Data, 4);
+            L    : constant Integer := Nth_Arg (Data, 3);
+            C    : constant Integer := Nth_Arg (Data, 4);
+
          begin
             Set_Data (Instance, File_Location_Info'(File, L, C));
          end;
@@ -767,24 +780,27 @@ package body Glide_Kernel.Scripts is
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      Entity : Entity_Information;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Entity   : Entity_Information;
       Instance : constant Class_Instance :=
         Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
+
    begin
       if Command = Constructor_Method then
          Name_Parameters (Data, Entity_Cmd_Parameters);
 
          declare
-            Name   : constant String  := Nth_Arg (Data, 2);
-            File   : constant Class_Instance  :=
-              Nth_Arg (Data, 3, Get_File_Class (Kernel), Default => null,
+            Name     : constant String  := Nth_Arg (Data, 2);
+            File     : constant Class_Instance  :=
+              Nth_Arg (Data, 3, Get_File_Class (Kernel),
+                       Default    => null,
                        Allow_Null => True);
-            L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
-            C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
-            Status : Find_Decl_Or_Body_Query_Status;
+            L        : constant Integer := Nth_Arg (Data, 4, Default => 1);
+            C        : constant Integer := Nth_Arg (Data, 5, Default => 1);
+            Status   : Find_Decl_Or_Body_Query_Status;
             Lib_Info : LI_File_Ptr;
             F        : File_Info;
+
          begin
             if File = null then
                Entity := Create_Predefined_Entity
@@ -796,6 +812,7 @@ package body Glide_Kernel.Scripts is
 
             F := Get_Data (File);
             Lib_Info := Locate_From_Source_And_Complete (Kernel, Get_File (F));
+
             if Lib_Info = No_LI_File then
                Set_Error_Msg
                  (Data, -"Xref information not found for: """
@@ -828,6 +845,7 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "decl_file" then
          Entity := Get_Data (Instance);
+
          if not Is_Predefined_Entity (Entity) then
             Set_Return_Value
               (Data,
@@ -870,6 +888,7 @@ package body Glide_Kernel.Scripts is
                        (Get_Script (Data), Get_File (Location)),
                      Line   => Get_Line (Location),
                      Column => Get_Column (Location)));
+
             else
                Set_Error_Msg (Data, -"Body not found for the entity");
             end if;
@@ -896,11 +915,11 @@ package body Glide_Kernel.Scripts is
          Free (Info);
 
       elsif Command = "name" then
-         Info     := Get_Data (Instance);
+         Info := Get_Data (Instance);
          Set_Return_Value (Data, Full_Name (Info.File).all);
 
       elsif Command = "project" then
-         Info     := Get_Data (Instance);
+         Info := Get_Data (Instance);
          Set_Return_Value
            (Data, Create_Project
             (Get_Script (Data),
@@ -910,7 +929,7 @@ package body Glide_Kernel.Scripts is
               Root_If_Not_Found => True)));
 
       elsif Command = "other_file" then
-         Info     := Get_Data (Instance);
+         Info := Get_Data (Instance);
          Set_Return_Value
            (Data, Create_File
             (Get_Script (Data), Other_File_Name (Kernel, Info.File)));
@@ -924,12 +943,12 @@ package body Glide_Kernel.Scripts is
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
 
       procedure Set_Return_Attribute
-        (Project : Project_Type;
+        (Project          : Project_Type;
          Attr, Pkg, Index : String;
-         As_List : Boolean);
+         As_List          : Boolean);
       --  Store in Data the value of a specific attribute
 
       --------------------------
@@ -937,9 +956,11 @@ package body Glide_Kernel.Scripts is
       --------------------------
 
       procedure Set_Return_Attribute
-        (Project : Project_Type; Attr, Pkg, Index : String;  As_List : Boolean)
+        (Project          : Project_Type;
+         Attr, Pkg, Index : String;
+         As_List          : Boolean)
       is
-         List  : Argument_List := Get_Attribute_Value
+         List : Argument_List := Get_Attribute_Value
            (Project, Build (Pkg, Attr), Index);
       begin
          if As_List then
@@ -951,6 +972,7 @@ package body Glide_Kernel.Scripts is
             Set_Return_Value
               (Data, Get_Attribute_Value
                  (Project, Build (Pkg, Attr), "", Index));
+
          else
             if As_List then
                for L in List'Range loop
@@ -967,6 +989,7 @@ package body Glide_Kernel.Scripts is
 
       Instance : Class_Instance;
       Project  : Project_Type;
+
    begin
       if Command = "load" then
          Name_Parameters (Data, Open_Cmd_Parameters);
@@ -1032,9 +1055,10 @@ package body Glide_Kernel.Scripts is
          then
             Name_Parameters (Data, Tool_Parameters);
             declare
-               Tool : constant String := Nth_Arg (Data, 2);
+               Tool  : constant String := Nth_Arg (Data, 2);
                Props : constant Tool_Properties_Record :=
                  Get_Tool_Properties (Kernel, Tool);
+
             begin
                if Props = No_Tool then
                   Set_Error_Msg (Data, -"No such tool: " & Tool);
@@ -1064,6 +1088,7 @@ package body Glide_Kernel.Scripts is
       Entity   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access'(Get_Data (Instance));
       L, C     : Integer := -1;
+
    begin
       if Command = "location" then
          if Has_Line_Information (Entity) then
@@ -1105,6 +1130,7 @@ package body Glide_Kernel.Scripts is
       File     : File_Selection_Context_Access;
       Context  : Selection_Context_Access;
       L, C     : Integer := -1;
+
    begin
       if Command = Constructor_Method then
          Set_Error_Msg (Data, -"Cannot create an instance of this class");
@@ -1200,6 +1226,7 @@ package body Glide_Kernel.Scripts is
       List : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
       Tmp  : Scripting_Language_List;
+
    begin
       while List /= null loop
          Tmp := List.Next;
@@ -1288,7 +1315,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "input_dialog",
-         Params      => Parameter_Names_To_Usage (Input_Dialog_Cmd_Parameters),
+         Params       =>
+           Parameter_Names_To_Usage (Input_Dialog_Cmd_Parameters),
          Return_Value => "list",
          Description  =>
            -("Display a modal dialog and request some input from the user."
@@ -1362,7 +1390,6 @@ package body Glide_Kernel.Scripts is
          Minimum_Args => 0,
          Maximum_Args => 0,
          Handler      => Default_Command_Handler'Access);
-
 
       Register_Command
         (Kernel,
@@ -1485,11 +1512,11 @@ package body Glide_Kernel.Scripts is
          Handler       => Create_Location_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command       => "file",
-         Return_Value  => "File",
-         Description   => -"Return the file of the location",
-         Class         => Get_File_Location_Class (Kernel),
-         Handler       => Create_Location_Command_Handler'Access);
+         Command      => "file",
+         Return_Value => "File",
+         Description  => -"Return the file of the location",
+         Class        => Get_File_Location_Class (Kernel),
+         Handler      => Create_Location_Command_Handler'Access);
 
       Register_Command
         (Kernel,
@@ -1514,19 +1541,19 @@ package body Glide_Kernel.Scripts is
          Handler       => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "load",
-         Params       => Parameter_Names_To_Usage (Open_Cmd_Parameters),
-         Return_Value => "project",
-         Description  =>
-           -("Load a new project, which replaces the current root project, and"
-             & " return a handle to it. All imported projects are also"
-             & " loaded at the same time. If the project is not found, a"
-             & " default project is loaded"),
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Class        => Get_Project_Class (Kernel),
+         Command       => "load",
+         Params        => Parameter_Names_To_Usage (Open_Cmd_Parameters),
+         Return_Value  => "project",
+         Description   =>
+         -("Load a new project, which replaces the current root project, and"
+           & " return a handle to it. All imported projects are also"
+           & " loaded at the same time. If the project is not found, a"
+           & " default project is loaded"),
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Get_Project_Class (Kernel),
          Static_Method => True,
-         Handler      => Create_Project_Command_Handler'Access);
+         Handler       => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
          Command      => "name",
@@ -1547,8 +1574,9 @@ package body Glide_Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command    => "get_attribute_as_string",
-         Params     => Parameter_Names_To_Usage (Get_Attributes_Parameters, 2),
+         Command      => "get_attribute_as_string",
+         Params       =>
+           Parameter_Names_To_Usage (Get_Attributes_Parameters, 2),
          Return_Value => "string",
          Description  =>
            -("Fetch the value of the attribute in the project." & ASCII.LF
@@ -1566,8 +1594,9 @@ package body Glide_Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command    => "get_attribute_as_list",
-         Params     => Parameter_Names_To_Usage (Get_Attributes_Parameters, 2),
+         Command      => "get_attribute_as_list",
+         Params       =>
+           Parameter_Names_To_Usage (Get_Attributes_Parameters, 2),
          Return_Value => "list",
          Description  =>
            -("Fetch the value of the attribute in the project." & ASCII.LF
@@ -1585,8 +1614,8 @@ package body Glide_Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command    => "get_tool_switches_as_list",
-         Params     => Parameter_Names_To_Usage (Tool_Parameters),
+         Command      => "get_tool_switches_as_list",
+         Params       => Parameter_Names_To_Usage (Tool_Parameters),
          Return_Value => "list",
          Description  =>
            -("Same as get_attribute_as_list, but specialized for the switches"
@@ -1597,8 +1626,8 @@ package body Glide_Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command    => "get_tool_switches_as_string",
-         Params     => Parameter_Names_To_Usage (Tool_Parameters),
+         Command      => "get_tool_switches_as_string",
+         Params       => Parameter_Names_To_Usage (Tool_Parameters),
          Return_Value => "list",
          Description  =>
            -("Same as get_attribute_as_string, but specialized for the"
@@ -1607,7 +1636,6 @@ package body Glide_Kernel.Scripts is
          Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
-
 
       Register_Command
         (Kernel,
@@ -1680,6 +1708,7 @@ package body Glide_Kernel.Scripts is
             "Entity", "Represents an entity from the source, based on the"
             & " location of its declaration");
       end if;
+
       return Scripting_Data (Kernel.Scripts).Entity_Class;
    end Get_Entity_Class;
 
@@ -1696,6 +1725,7 @@ package body Glide_Kernel.Scripts is
            (Kernel,
             "File", "Represents a source file of your application");
       end if;
+
       return Scripting_Data (Kernel.Scripts).File_Class;
    end Get_File_Class;
 
@@ -1711,6 +1741,7 @@ package body Glide_Kernel.Scripts is
          Scripting_Data (Kernel.Scripts).Project_Class := New_Class
            (Kernel, "Project", "Represents a project file");
       end if;
+
       return Scripting_Data (Kernel.Scripts).Project_Class;
    end Get_Project_Class;
 
@@ -1726,6 +1757,7 @@ package body Glide_Kernel.Scripts is
          Scripting_Data (Kernel.Scripts).File_Location_Class := New_Class
            (Kernel, "FileLocation", "Represents a location in a file");
       end if;
+
       return Scripting_Data (Kernel.Scripts).File_Location_Class;
    end Get_File_Location_Class;
 
@@ -1910,6 +1942,7 @@ package body Glide_Kernel.Scripts is
          Index : Natural := Usage'First + 1;
       begin
          Usage (Usage'First) := '(';
+
          for P in Parameters'Range loop
             if Parameters'Last - P < Optional_Params_Count then
                Usage (Index) := '[';
@@ -1972,6 +2005,7 @@ package body Glide_Kernel.Scripts is
       Instance : constant Class_Instance := New_Instance
         (Script, Get_File_Class (Get_Kernel (Script)));
       Info     : File_Info := (File => File);
+
    begin
       Set_Data (Instance, Info);
       Free (Info);
@@ -2008,7 +2042,8 @@ package body Glide_Kernel.Scripts is
    is
       Instance : constant Class_Instance := New_Instance
         (Script, Get_File_Location_Class (Get_Kernel (Script)));
-      Info : constant File_Location_Info := (File, Line, Column);
+      Info     : constant File_Location_Info := (File, Line, Column);
+
    begin
       Set_Data (Instance, Info);
       return Instance;
@@ -2055,6 +2090,7 @@ package body Glide_Kernel.Scripts is
             "FileContext",
             "Represents an context that contains file information");
       end if;
+
       return Scripting_Data (Kernel.Scripts).File_Context_Class;
    end Get_File_Context_Class;
 
@@ -2073,6 +2109,7 @@ package body Glide_Kernel.Scripts is
             "Represents an context that contains entity information",
             Base => Get_File_Context_Class (Kernel));
       end if;
+
       return Scripting_Data (Kernel.Scripts).Entity_Context_Class;
    end Get_Entity_Context_Class;
 
@@ -2115,10 +2152,11 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Class_Instance_Record'Class)
+   function Get_Data
+     (Instance : access Class_Instance_Record'Class)
       return Glide_Kernel.Modules.File_Selection_Context_Access
    is
-      Script  : constant Scripting_Language := Get_Script (Instance);
+      Script : constant Scripting_Language := Get_Script (Instance);
    begin
       if not Is_Subclass
         (Script,
@@ -2139,7 +2177,7 @@ package body Glide_Kernel.Scripts is
    function Get_Data (Instance : access Class_Instance_Record'Class)
       return Glide_Kernel.Modules.Entity_Selection_Context_Access
    is
-      Script  : constant Scripting_Language := Get_Script (Instance);
+      Script : constant Scripting_Language := Get_Script (Instance);
    begin
       if not Is_Subclass
         (Script,
