@@ -2522,6 +2522,30 @@ package body Src_Editor_Box is
       end if;
    end Create_Mark;
 
+   ---------------------------
+   -- Add_Line_Highlighting --
+   ---------------------------
+
+   procedure Add_Line_Highlighting
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Natural;
+      Id     : String) is
+   begin
+      Add_Line_Highlighting (Editor.Source_Buffer, Line, Id);
+   end Add_Line_Highlighting;
+
+   ------------------------------
+   -- Remove_Line_Highlighting --
+   ------------------------------
+
+   procedure Remove_Line_Highlighting
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Natural;
+      Id     : String) is
+   begin
+      Remove_Line_Highlighting (Editor.Source_Buffer, Line, Id);
+   end Remove_Line_Highlighting;
+
    --------------------
    -- Scroll_To_Mark --
    --------------------

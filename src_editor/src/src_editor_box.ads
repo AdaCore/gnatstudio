@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -352,6 +352,22 @@ package Src_Editor_Box is
 
    procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
    --  Set the focus on the source view.
+
+   procedure Add_Line_Highlighting
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Natural;
+      Id     : String);
+   --  Enable the highlighting of Line using colors defined in category
+   --  corresponding to Id.
+   --  If Line is 0, highlight all lines in file.
+
+   procedure Remove_Line_Highlighting
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Natural;
+      Id     : String);
+   --  Disable the highlighting of Line using colors defined in category
+   --  corresponding to Id.
+   --  If Line is 0, unhighlight all lines in file.
 
    function Create_Mark
      (Editor : access Source_Editor_Box_Record;
