@@ -99,6 +99,18 @@ package Glide_Kernel.Project is
       Recursive : Boolean := False) return Boolean;
    --  See Project_Hash.Project_Modified.
 
+   function Project_Uses_Relative_Paths
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id) return Boolean;
+   --  Return true if relative paths should be used for the project.
+
+   procedure Set_Project_Uses_Relative_Paths
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Project            : Prj.Tree.Project_Node_Id;
+      Use_Relative_Paths : Boolean);
+   --  Indicates whether future modifications of the project should use
+   --  relative paths. This doesn't actually change the project.
+
    function Get_Subproject_Name
      (Handle    : access Kernel_Handle_Record'Class;
       File_Name : String) return String;

@@ -45,6 +45,7 @@ with Project_Hash;       use Project_Hash;
 with Traces;  use Traces;
 with Glide_Intl; use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 
 package body Glide_Kernel.Project is
@@ -270,6 +271,7 @@ package body Glide_Kernel.Project is
       if not Is_Regular_File (Project) then
          Console.Insert (Kernel, Project & (-" is not a regular file"),
                          Mode => Console.Error);
+         Recompute_View (Kernel);
          return;
       end if;
 
@@ -660,5 +662,44 @@ package body Glide_Kernel.Project is
    begin
       return Project_Modified (Kernel.Projects_Data, Project, Recursive);
    end Project_Modified;
+
+   ---------------------------------
+   -- Project_Uses_Relative_Paths --
+   ---------------------------------
+
+   function Project_Uses_Relative_Paths
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Project   : Prj.Tree.Project_Node_Id) return Boolean is
+   begin
+      case Get (Kernel.Projects_Data, Project).Paths_Type is
+         when Relative =>
+            return True;
+
+         when Absolute =>
+            return False;
+
+         when From_Pref =>
+            return Get_Pref (Kernel, Generate_Relative_Paths);
+      end case;
+   end Project_Uses_Relative_Paths;
+
+   -------------------------------------
+   -- Set_Project_Uses_Relative_Paths --
+   -------------------------------------
+
+   procedure Set_Project_Uses_Relative_Paths
+     (Kernel             : access Kernel_Handle_Record'Class;
+      Project            : Prj.Tree.Project_Node_Id;
+      Use_Relative_Paths : Boolean)
+   is
+      Rec : Project_Data_Record := Get (Kernel.Projects_Data, Project);
+   begin
+      if Use_Relative_Paths then
+         Rec.Paths_Type := Relative;
+      else
+         Rec.Paths_Type := Absolute;
+      end if;
+      Set (Kernel.Projects_Data, Project, Rec);
+   end Set_Project_Uses_Relative_Paths;
 
 end Glide_Kernel.Project;
