@@ -159,6 +159,10 @@ package GVD.Types is
       --  for files that can be found on the local disk. However, it is used
       --  for files that had to be downloaded from a remote machine.
 
+      CR_Stripped : Boolean := False;
+      --  True if the carriage return characters were stripped when the file
+      --  was read.
+
       Next : File_Cache_List := null;
       --  Next file in the cache list
    end record;
@@ -167,6 +171,8 @@ package GVD.Types is
    --  Line_Parsed indicates whether the line at a given index has been parsed.
    --  This array is freed once the parsing has been finished (and in the
    --  case Current_Line points to the last line with a breakpoint.
+
+   procedure Free is new Unchecked_Deallocation (File_Cache, File_Cache_List);
 
    ------------------------
    -- Program_Descriptor --
