@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -45,6 +45,7 @@ with Traces;                    use Traces;
 with Projects;                  use Projects;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glib.Values;               use Glib.Values;
 
 package body Glide_Main_Window is
 
@@ -63,9 +64,7 @@ package body Glide_Main_Window is
    procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
    --  Called when the the main window is destroyed
 
-   function Check_MDI_Selection
-     (Main_Window : access Gtk_Widget_Record'Class;
-      Event       : Gdk_Event) return Boolean;
+   function Check_MDI_Selection (Data : Event_Data) return Boolean;
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
 
@@ -196,6 +195,21 @@ package body Glide_Main_Window is
         (Get_MDI (Kernel), Get_Pref (Kernel, MDI_All_Floating));
 
       Free (Title_Font);
+
+      --  ??? Approximate algorithm, maybe we should simply use a preference,
+      --  but previous and next need to have the same modifier
+
+      Get_Pref (Kernel, MDI_Switch_Child, Main.MDI_Modifier, Main.MDI_Key);
+
+      if Main.MDI_Key = GDK_Tab then
+         Main.MDI_Reverse_Key := GDK_ISO_Left_Tab;
+      elsif Main.MDI_Key in GDK_A .. GDK_Z then
+         Main.MDI_Reverse_Key := Main.MDI_Key + (GDK_LC_a - GDK_A);
+      elsif Main.MDI_Key in GDK_LC_a .. GDK_LC_z then
+         Main.MDI_Reverse_Key := Main.MDI_Key - (GDK_LC_a - GDK_A);
+      else
+         Main.MDI_Reverse_Key := Main.MDI_Key; -- no going backward
+      end if;
    end Preferences_Changed;
 
    ----------------
@@ -266,44 +280,21 @@ package body Glide_Main_Window is
          Gtk_Widget (Main_Window),
          After => False);
 
-      Return_Callback.Connect
-        (Main_Window, "key_press_event",
-         Return_Callback.To_Marshaller (Check_MDI_Selection'Access));
-      Return_Callback.Connect
-        (Main_Window, "key_release_event",
-         Return_Callback.To_Marshaller (Check_MDI_Selection'Access));
+      Register_Key_Handlers (Main_Window.Kernel, Check_MDI_Selection'Access);
    end Initialize;
 
    -------------------------
    -- Check_MDI_Selection --
    -------------------------
 
-   function Check_MDI_Selection
-     (Main_Window : access Gtk_Widget_Record'Class;
-      Event       : Gdk_Event) return Boolean
-   is
-      Win      : constant Glide_Window := Glide_Window (Main_Window);
-      Modifier : Gdk_Modifier_Type;
-      Key      : Gdk_Key_Type;
-      Key2     : Gdk_Key_Type;
+   function Check_MDI_Selection (Data : Event_Data) return Boolean is
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Event  : constant Gdk_Event := Get_Event (Data);
+      Win : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
    begin
-      Get_Pref (Win.Kernel, MDI_Switch_Child, Modifier, Key);
-
-      --  ??? Approximate algorithm, maybe we should simply use a preference,
-      --  but previous and next need to have the same modifier
-
-      if Key = GDK_Tab then
-         Key2 := GDK_ISO_Left_Tab;
-      elsif Key in GDK_A .. GDK_Z then
-         Key2 := Key + (GDK_LC_a - GDK_A);
-      elsif Key in GDK_LC_a .. GDK_LC_z then
-         Key2 := Key - (GDK_LC_a - GDK_A);
-      else
-         Key2 := Key; -- no going backward
-      end if;
-
       return Check_Interactive_Selection_Dialog
-        (Win.Process_Mdi, Event, Modifier, Key, Key2);
+        (Get_MDI (Kernel), Event,
+         Win.MDI_Modifier, Win.MDI_Key, Win.MDI_Reverse_Key);
    end Check_MDI_Selection;
 
    ----------------

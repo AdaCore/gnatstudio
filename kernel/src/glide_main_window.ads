@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -26,6 +26,7 @@ with Gtk.Image; use Gtk.Image;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Toolbar; use Gtk.Toolbar;
 with Gtk.Main;
+with Gdk.Types;
 
 package Glide_Main_Window is
 
@@ -42,6 +43,12 @@ package Glide_Main_Window is
       Busy_Level           : Integer := 0;
       Interrupted          : Boolean := False;
       Desktop_Loaded       : Boolean := False;
+
+      MDI_Modifier         : Gdk.Types.Gdk_Modifier_Type;
+      MDI_Key              : Gdk.Types.Gdk_Key_Type;
+      MDI_Reverse_Key      : Gdk.Types.Gdk_Key_Type;
+      --  The keys used to change the current child in the MDI, cached for
+      --  efficiency
    end record;
    type Glide_Window is access all Glide_Window_Record'Class;
 
