@@ -25,6 +25,7 @@ with Prj;
 with Prj_API;              use Prj_API;
 with Src_Info;             use Src_Info;
 with Src_Info.LI_Utils;    use Src_Info.LI_Utils;
+with Src_Info.Prj_Utils;   use Src_Info.Prj_Utils;
 with Src_Info.Type_Utils;  use Src_Info.Type_Utils;
 
 with DB_API;            use DB_API;
@@ -444,17 +445,15 @@ package body Src_Info.CPP is
      (Project : Prj.Project_Id; Source_File : String)
      return SN.String_Access
    is
-      FP  : SN.String_Access;
-      NFP : SN.String_Access;
+      Path : constant String := Find_File
+        (Source_File, Include_Path (Project, Recursive => True),
+         Predefined_Path => "");
    begin
-      FP := Locate_Regular_File
-        (Source_File, Include_Path (Project, Recursive => True));
-      if FP = null then
+      if Path = "" then
          return null;
+      else
+         return new String' (Path);
       end if;
-      NFP := new String' (Normalize_Pathname (FP.all));
-      Free (FP);
-      return NFP;
    end Get_Full_Filename_In_Project;
 
    -------------------
@@ -744,15 +743,14 @@ package body Src_Info.CPP is
          Symbol_Name  => Type_Name,
          Location     => Type_Decl);
 
-      Insert_Reference
-        (Declaration_Info     => Type_Decl_Info,
-         File                 => Env.File,
-         Source_Filename      => Reference_Filename,
-         Location             => Reference_Point,
-         Kind                 => Kind);
-   exception
-      when Declaration_Not_Found => -- ignore
-         null;
+      if Type_Decl_Info /= null then
+         Insert_Reference
+           (Declaration_Info     => Type_Decl_Info,
+            File                 => Env.File,
+            Source_Filename      => Reference_Filename,
+            Location             => Reference_Point,
+            Kind                 => Kind);
+      end if;
    end Refer_Type;
 
    --------------------------
@@ -770,65 +768,63 @@ package body Src_Info.CPP is
       if Source_Filename
          = CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
       then -- this class should be declared in the current file
-         begin
+         Decl_Info := Find_Declaration
+           (File         => Env.File,
+            Symbol_Name  => CL_Tab.Buffer
+              (CL_Tab.Name.First .. CL_Tab.Name.Last),
+            Location     => CL_Tab.Start_Position);
+
+         if Decl_Info = null then
+            Sym.Buffer         := CL_Tab.Buffer;
+            Sym.File_Name      := CL_Tab.File_Name;
+            Sym.Start_Position := CL_Tab.Start_Position;
+            Sym.Identifier     := CL_Tab.Name;
+            Sym_CL_Handler (Sym, Env);
+
             Decl_Info := Find_Declaration
               (File         => Env.File,
                Symbol_Name  => CL_Tab.Buffer
-                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
+                 (CL_Tab.Name.First .. CL_Tab.Name.Last),
                Location     => CL_Tab.Start_Position);
-         exception
-            when Declaration_Not_Found => -- create it!
-               Sym.Buffer         := CL_Tab.Buffer;
-               Sym.File_Name      := CL_Tab.File_Name;
-               Sym.Start_Position := CL_Tab.Start_Position;
-               Sym.Identifier     := CL_Tab.Name;
-               Sym_CL_Handler (Sym, Env);
-               begin
-                  Decl_Info := Find_Declaration
-                    (File         => Env.File,
-                     Symbol_Name  => CL_Tab.Buffer
-                        (CL_Tab.Name.First .. CL_Tab.Name.Last),
-                     Location     => CL_Tab.Start_Position);
-               exception
-                  when Declaration_Not_Found =>
-                     Fail ("We've just called Sym_CL_Handler but it has"
-                         & " not created the declaration. Strange...");
-                     Decl_Info := null;
-               end;
-         end;
+
+            if Decl_Info = null then
+               Fail ("We've just called Sym_CL_Handler but it has"
+                       & " not created the declaration. Strange...");
+            end if;
+         end if;
+
       else -- this class should be declared as a dependency
-         begin
-            Decl_Info := Find_Dependency_Declaration
-              (File         => Env.File,
-               Symbol_Name  => CL_Tab.Buffer
-                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
-               Location     => CL_Tab.Start_Position);
-         exception
-            when Declaration_Not_Found => -- create it!
-               Insert_Dependency_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For
-                       (Source_Filename,
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => CL_Tab.Buffer
-                    (CL_Tab.Name.First .. CL_Tab.Name.Last),
-                  Referred_Filename  => CL_Tab.Buffer
-                    (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
-                  Referred_Xref_Filename =>
-                     Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For (CL_Tab.Buffer
-                       (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  Location           => CL_Tab.Start_Position,
-                  Kind               => Record_Type,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+         Decl_Info := Find_Dependency_Declaration
+           (File         => Env.File,
+            Symbol_Name  => CL_Tab.Buffer
+              (CL_Tab.Name.First .. CL_Tab.Name.Last),
+            Location     => CL_Tab.Start_Position);
+
+         if Decl_Info = null then
+            Insert_Dependency_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For
+                 (Source_Filename,
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => CL_Tab.Buffer
+                 (CL_Tab.Name.First .. CL_Tab.Name.Last),
+               Referred_Filename  => CL_Tab.Buffer
+                 (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
+               Referred_LI_Filename =>
+                 Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For (CL_Tab.Buffer
+                   (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
+                    Env.DB_Dir.all,
+                    Env.Xrefs).all,
+               Location           => CL_Tab.Start_Position,
+               Kind               => Record_Type,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
       end if;
    end Find_Or_Create_Class;
 
@@ -952,7 +948,7 @@ package body Src_Info.CPP is
          Location    => First_MD_Pos);
 
    exception
-      when DB_Error | Declaration_Not_Found =>
+      when DB_Error =>
          return null;
    end Find_First_Forward_Declaration;
 
@@ -1050,7 +1046,7 @@ package body Src_Info.CPP is
          Location    => First_FD_Pos);
 
    exception
-      when DB_Error | Declaration_Not_Found =>
+      when DB_Error =>
          return null;
    end Find_First_Forward_Declaration;
 
@@ -1098,73 +1094,70 @@ package body Src_Info.CPP is
           Class_Def.Buffer (Class_Def.File_Name.First ..
                             Class_Def.File_Name.Last)
       then
-         begin
-            Decl_Info :=
-              Find_Dependency_Declaration
-                (File        => Env.File,
-                 Symbol_Name => Class_Def.Buffer
-                   (Class_Def.Name.First .. Class_Def.Name.Last),
-                 Kind        => Record_Type,
-                 Location    => Class_Def.Start_Position,
-                 Filename    => Class_Def.Buffer
-                   (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
-         exception
-            when Declaration_Not_Found =>
-               Insert_Dependency_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                    Xref_Filename_For (Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => Class_Def.Buffer
-                    (Class_Def.Name.First .. Class_Def.Name.Last),
-                  Referred_Filename  => Class_Def.Buffer
+         Decl_Info := Find_Dependency_Declaration
+           (File        => Env.File,
+            Symbol_Name => Class_Def.Buffer
+              (Class_Def.Name.First .. Class_Def.Name.Last),
+            Kind        => Record_Type,
+            Location    => Class_Def.Start_Position,
+            Filename    => Class_Def.Buffer
+              (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+
+         if Decl_Info = null then
+            Insert_Dependency_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For
+                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => Class_Def.Buffer
+                 (Class_Def.Name.First .. Class_Def.Name.Last),
+               Referred_Filename  => Class_Def.Buffer
+                 (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
+               Referred_LI_Filename =>
+                 Name_As_Directory (Env.DB_Dir.all) & Xref_Filename_For
+                 (Class_Def.Buffer
                     (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
-                  Referred_Xref_Filename =>
-                     Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For (Class_Def.Buffer
-                       (Class_Def.File_Name.First .. Class_Def.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  Location           => Class_Def.Start_Position,
-                  Kind               => Record_Type,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               Location           => Class_Def.Start_Position,
+               Kind               => Record_Type,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
+
       else
-         begin
-            Decl_Info :=
-              Find_Declaration
-                (File        => Env.File,
-                 Symbol_Name => Class_Def.Buffer
-                   (Class_Def.Name.First .. Class_Def.Name.Last),
-                 Kind        => Record_Type,
-                 Location    => Class_Def.Start_Position);
-         exception
-            when Declaration_Not_Found =>
-               Insert_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For
-                       (Ref.Buffer (Ref.File_Name.First ..
-                                     Ref.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => Class_Def.Buffer
-                    (Class_Def.Name.First .. Class_Def.Name.Last),
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Class_Def.Start_Position,
-                  Kind               => Record_Type,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+         Decl_Info := Find_Declaration
+           (File        => Env.File,
+            Symbol_Name => Class_Def.Buffer
+              (Class_Def.Name.First .. Class_Def.Name.Last),
+            Kind        => Record_Type,
+            Location    => Class_Def.Start_Position);
+
+         if Decl_Info = null then
+            Insert_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For
+                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => Class_Def.Buffer
+                 (Class_Def.Name.First .. Class_Def.Name.Last),
+               Source_Filename    => Ref.Buffer
+                 (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location           => Class_Def.Start_Position,
+               Kind               => Record_Type,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
       end if;
+
       Insert_Reference
         (File              => Env.File,
          Declaration_Info  => Decl_Info,
@@ -1181,7 +1174,8 @@ package body Src_Info.CPP is
    ------------------------
 
    procedure Fu_To_Con_Handler
-     (Ref : TO_Table; Env : in out Handler_Environment) is
+     (Ref : TO_Table; Env : in out Handler_Environment)
+   is
       Ref_Kind     : Reference_Kind;
       Decl_Info    : E_Declaration_Info_List;
       Var          : CON_Table;
@@ -1189,6 +1183,7 @@ package body Src_Info.CPP is
       Success      : Boolean;
       Scope        : E_Scope := Global_Scope;
       Attributes   : SN_Attributes;
+      Sym          : FIL_Table;
    begin
       Info ("Fu_To_Con_Handler: "
             & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
@@ -1205,125 +1200,119 @@ package body Src_Info.CPP is
           Env.DB_Dir.all,
           Env.Xrefs).all = Get_LI_Filename (Env.File)
       then
-         begin
+         Decl_Info := Find_Declaration
+           (File                    => Env.File,
+            Symbol_Name             =>
+              Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                            Ref.Referred_Symbol_Name.Last),
+            Location                => Var.Start_Position);
+
+         if Decl_Info = null then
+            Sym.Buffer         := Var.Buffer;
+            Sym.Identifier     := Var.Name;
+            Sym.Start_Position := Var.Start_Position;
+            Sym.File_Name      := Var.File_Name;
+            Sym_CON_Handler (Sym, Env);
+
             Decl_Info := Find_Declaration
               (File                    => Env.File,
                Symbol_Name             =>
-                  Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                              Ref.Referred_Symbol_Name.Last),
+                 Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                               Ref.Referred_Symbol_Name.Last),
                Location                => Var.Start_Position);
-         exception
-            when Declaration_Not_Found =>
-               declare
-                  Sym : FIL_Table;
-               begin
-                  Sym.Buffer         := Var.Buffer;
-                  Sym.Identifier     := Var.Name;
-                  Sym.Start_Position := Var.Start_Position;
-                  Sym.File_Name      := Var.File_Name;
-                  Sym_CON_Handler (Sym, Env);
-                  Decl_Info := Find_Declaration
-                    (File                    => Env.File,
-                     Symbol_Name             =>
-                        Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                                    Ref.Referred_Symbol_Name.Last),
-                     Location                => Var.Start_Position);
-               exception
-                  when Declaration_Not_Found =>
-                     Fail ("Failed to create CON declaration");
-                     Free (Var);
-                     return;
-               end;
-         end;
+
+            if Decl_Info = null then
+               Fail ("Failed to create CON declaration");
+               Free (Var);
+               return;
+            end if;
+         end if;
       else -- another file
-         begin -- Find dependency declaration
-            Decl_Info := Find_Dependency_Declaration
-              (File                    => Env.File,
-               Symbol_Name             =>
-                  Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                              Ref.Referred_Symbol_Name.Last),
-               Filename                =>
-                  Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-               Location                => Var.Start_Position);
-         exception
-            when Declaration_Not_Found => -- dep decl does not yet exist
-               --  Collect information about the variable:
-               --  type, scope, location of type declaration...
-               Type_Name_To_Kind
-                 (Var.Buffer
-                    (Var.Declared_Type.First .. Var.Declared_Type.Last),
-                  Env.SN_Table,
-                  Env.Module_Typedefs,
-                  Desc,
-                  Success);
-               if not Success then -- unknown type
-                  Free (Var);
-                  return;
-               end if;
+         Decl_Info := Find_Dependency_Declaration
+           (File                    => Env.File,
+            Symbol_Name             =>
+              Ref.Buffer (Ref.Referred_Symbol_Name.First ..
+                            Ref.Referred_Symbol_Name.Last),
+            Filename                =>
+              Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+            Location                => Var.Start_Position);
 
-               Attributes := SN_Attributes (Var.Attributes);
+         if Decl_Info = null then
+            --  dep decl does not yet exist Collect information about the
+            --  variable: type, scope, location of type declaration...
+            Type_Name_To_Kind
+              (Var.Buffer
+                 (Var.Declared_Type.First .. Var.Declared_Type.Last),
+               Env.SN_Table,
+               Env.Module_Typedefs,
+               Desc,
+               Success);
+            if not Success then -- unknown type
+               Free (Var);
+               return;
+            end if;
 
-               if (Attributes and SN_STATIC) = SN_STATIC then
-                  Scope := Static_Local;
-               end if;
+            Attributes := SN_Attributes (Var.Attributes);
 
-               if Desc.Parent_Point = Invalid_Point then
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For (Var.Buffer
-                           (Var.File_Name.First .. Var.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       =>
-                        Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Location          => Var.Start_Position,
-                     Kind              => Type_To_Object (Desc.Kind),
-                     Scope             => Scope,
-                     Referred_Filename =>
-                        Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For (Var.Buffer
-                          (Var.File_Name.First .. Var.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                     Declaration_Info  => Decl_Info);
-               else
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       =>
-                        Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Location          => Var.Start_Position,
-                     Kind              => Type_To_Object (Desc.Kind),
-                     Scope             => Scope,
-                     Referred_Filename =>
-                        Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all) &
-                        Xref_Filename_For (Var.Buffer
-                           (Var.File_Name.First .. Var.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                     Parent_Location   => Desc.Parent_Point,
-                     Parent_Filename   => Xref_Filename_For
-                          (Desc.Parent_Filename.all,
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info  => Decl_Info);
-               end if;
-               Free (Desc);
-         end;
+            if (Attributes and SN_STATIC) = SN_STATIC then
+               Scope := Static_Local;
+            end if;
+
+            if Desc.Parent_Point = Invalid_Point then
+               Insert_Dependency_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For (Var.Buffer
+                        (Var.File_Name.First .. Var.File_Name.Last),
+                         Env.DB_Dir.all,
+                         Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       =>
+                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                  Location          => Var.Start_Position,
+                  Kind              => Type_To_Object (Desc.Kind),
+                  Scope             => Scope,
+                  Referred_Filename =>
+                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For (Var.Buffer
+                      (Var.File_Name.First .. Var.File_Name.Last),
+                       Env.DB_Dir.all, Env.Xrefs).all,
+                  Declaration_Info  => Decl_Info);
+            else
+               Insert_Dependency_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer
+                       (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       =>
+                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                  Location          => Var.Start_Position,
+                  Kind              => Type_To_Object (Desc.Kind),
+                  Scope             => Scope,
+                  Referred_Filename =>
+                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all) &
+                    Xref_Filename_For (Var.Buffer
+                      (Var.File_Name.First .. Var.File_Name.Last),
+                       Env.DB_Dir.all, Env.Xrefs).all,
+                  Parent_Location   => Desc.Parent_Point,
+                  Parent_Filename   => Xref_Filename_For
+                    (Desc.Parent_Filename.all,
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info  => Decl_Info);
+            end if;
+            Free (Desc);
+         end if;
       end if;
       Free (Var);
 
@@ -1382,72 +1371,69 @@ package body Src_Info.CPP is
          = Enum_Def.Buffer (Enum_Def.File_Name.First ..
                             Enum_Def.File_Name.Last))
       then
-         begin
-            Decl_Info :=
-              Find_Dependency_Declaration
-                (File        => Env.File,
-                 Symbol_Name => Enum_Def.Buffer
-                   (Enum_Def.Name.First .. Enum_Def.Name.Last),
-                 Kind        => Enumeration_Type,
-                 Location    => Enum_Def.Start_Position,
-                 Filename    => Enum_Def.Buffer
-                   (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
-         exception
-            when Declaration_Not_Found =>
-               Insert_Dependency_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For (Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => Enum_Def.Buffer
-                    (Enum_Def.Name.First .. Enum_Def.Name.Last),
-                  Referred_Filename  => Enum_Def.Buffer
-                    (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
-                  Referred_Xref_Filename =>
-                     Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For (Enum_Def.Buffer
-                       (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  Location           => Enum_Def.Start_Position,
-                  Kind               => Enumeration_Type,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+         Decl_Info := Find_Dependency_Declaration
+           (File        => Env.File,
+            Symbol_Name => Enum_Def.Buffer
+              (Enum_Def.Name.First .. Enum_Def.Name.Last),
+            Kind        => Enumeration_Type,
+            Location    => Enum_Def.Start_Position,
+            Filename    => Enum_Def.Buffer
+              (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+
+         if Decl_Info = null then
+            Insert_Dependency_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For (Ref.Buffer
+                   (Ref.File_Name.First .. Ref.File_Name.Last),
+                                    Env.DB_Dir.all,
+                                    Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => Enum_Def.Buffer
+                 (Enum_Def.Name.First .. Enum_Def.Name.Last),
+               Referred_Filename  => Enum_Def.Buffer
+                 (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
+               Referred_LI_Filename =>
+                 Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For (Enum_Def.Buffer
+                     (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last),
+                                      Env.DB_Dir.all,
+                                      Env.Xrefs).all,
+               Location           => Enum_Def.Start_Position,
+               Kind               => Enumeration_Type,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
+
       else
-         begin
-            Decl_Info :=
-              Find_Declaration
-                (File        => Env.File,
-                 Symbol_Name => Enum_Def.Buffer
-                   (Enum_Def.Name.First .. Enum_Def.Name.Last),
-                 Kind        => Enumeration_Type,
-                 Location    => Enum_Def.Start_Position);
-         exception
-            when Declaration_Not_Found =>
-               Insert_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For (Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => Enum_Def.Buffer
-                    (Enum_Def.Name.First .. Enum_Def.Name.Last),
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Enum_Def.Start_Position,
-                  Kind               => Enumeration_Type,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+         Decl_Info := Find_Declaration
+           (File        => Env.File,
+            Symbol_Name => Enum_Def.Buffer
+              (Enum_Def.Name.First .. Enum_Def.Name.Last),
+            Kind        => Enumeration_Type,
+            Location    => Enum_Def.Start_Position);
+
+         if Decl_Info = null then
+            Insert_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For (Ref.Buffer
+                   (Ref.File_Name.First .. Ref.File_Name.Last),
+                    Env.DB_Dir.all, Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => Enum_Def.Buffer
+                 (Enum_Def.Name.First .. Enum_Def.Name.Last),
+               Source_Filename    => Ref.Buffer
+                 (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location           => Enum_Def.Start_Position,
+               Kind               => Enumeration_Type,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
       end if;
+
       Insert_Reference
         (File              => Env.File,
          Declaration_Info  => Decl_Info,
@@ -1483,66 +1469,59 @@ package body Src_Info.CPP is
           Env.DB_Dir.all,
           Env.Xrefs).all = Get_LI_Filename (Env.File)
       then
-         begin
-            Decl_Info := Find_Declaration
-              (File                    => Env.File,
-               Symbol_Name             => Ref_Id,
-               Location                => Enum_Const.Start_Position);
-         exception
-            when Declaration_Not_Found =>
-               Insert_Declaration
-                 (Handler           => LI_Handler (Global_CPP_Handler),
-                  File              => Env.File,
-                  Xref_Filename     => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For (Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  List              => Env.List_Of_Files,
-                  Symbol_Name       => Ref_Id,
-                  Source_Filename   =>
-                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location          => Enum_Const.Start_Position,
-                  Kind              => Enumeration_Literal,
-                  Scope             => Global_Scope,
-                  Declaration_Info  => Decl_Info);
-         end;
+         Decl_Info := Find_Declaration
+           (File                    => Env.File,
+            Symbol_Name             => Ref_Id,
+            Location                => Enum_Const.Start_Position);
+
+         if Decl_Info = null then
+            Insert_Declaration
+              (Handler           => LI_Handler (Global_CPP_Handler),
+               File              => Env.File,
+               LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For (Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all, Env.Xrefs).all,
+               List              => Env.List_Of_Files,
+               Symbol_Name       => Ref_Id,
+               Source_Filename   =>
+                 Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location          => Enum_Const.Start_Position,
+               Kind              => Enumeration_Literal,
+               Scope             => Global_Scope,
+               Declaration_Info  => Decl_Info);
+         end if;
+
       else -- another file
-         begin -- Find dependency declaration
-            Decl_Info := Find_Dependency_Declaration
-              (File                    => Env.File,
-               Symbol_Name             => Ref_Id,
-               Filename                =>
-                  Enum_Const.Buffer (Enum_Const.File_Name.First ..
-                                     Enum_Const.File_Name.Last),
-               Location                => Enum_Const.Start_Position);
-         exception
-            when Declaration_Not_Found => -- dep decl does not yet exist
-               Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Global_CPP_Handler),
-                  File              => Env.File,
-                  Xref_Filename     => Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For (Ref.Buffer
-                       (Ref.File_Name.First ..  Ref.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  List              => Env.List_Of_Files,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Enum_Const.Start_Position,
-                  Kind              => Enumeration_Literal,
-                  Scope             => Global_Scope,
-                  Referred_Filename =>
-                     Enum_Const.Buffer (Enum_Const.File_Name.First ..
-                                        Enum_Const.File_Name.Last),
-                  Referred_Xref_Filename =>
-                     Name_As_Directory (Env.DB_Dir.all) &
-                     Xref_Filename_For (Enum_Const.Buffer
-                       (Enum_Const.File_Name.First ..
-                        Enum_Const.File_Name.Last),
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
-                  Declaration_Info  => Decl_Info);
-         end;
+         Decl_Info := Find_Dependency_Declaration
+           (File                    => Env.File,
+            Symbol_Name             => Ref_Id,
+            Filename                => Enum_Const.Buffer
+              (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
+            Location                => Enum_Const.Start_Position);
+
+         if Decl_Info = null then
+            Insert_Dependency_Declaration
+              (Handler           => LI_Handler (Global_CPP_Handler),
+               File              => Env.File,
+               LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For
+                 (Ref.Buffer (Ref.File_Name.First ..  Ref.File_Name.Last),
+                  Env.DB_Dir.all, Env.Xrefs).all,
+               List              => Env.List_Of_Files,
+               Symbol_Name       => Ref_Id,
+               Location          => Enum_Const.Start_Position,
+               Kind              => Enumeration_Literal,
+               Scope             => Global_Scope,
+               Referred_Filename => Enum_Const.Buffer
+                 (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
+               Referred_LI_Filename =>
+                 Name_As_Directory (Env.DB_Dir.all) &
+                 Xref_Filename_For (Enum_Const.Buffer
+                    (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
+                     Env.DB_Dir.all, Env.Xrefs).all,
+               Declaration_Info  => Decl_Info);
+         end if;
       end if;
       Free (Enum_Const);
 
@@ -1690,102 +1669,96 @@ package body Src_Info.CPP is
              Env.DB_Dir.all,
              Env.Xrefs).all = Get_LI_Filename (Env.File)
          then
-            begin
-               --  this is a function defined in the current file
-               --  it may be either forward declared or implemented
-               --  right away
-               if Forward_Declared then
-                  Decl_Info := Find_First_Forward_Declaration
-                    (FDecl.Buffer,
-                     FDecl.Name,
-                     FDecl.File_Name,
-                     FDecl.Return_Type,
-                     FDecl.Arg_Types,
-                     Env);
-                  if Decl_Info = null then
-                     raise Declaration_Not_Found;
-                  end if;
-               else -- when only body is available
-                  Decl_Info := Find_Declaration
-                    (File        => Env.File,
-                     Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-                     Location    => Fn.Start_Position);
-               end if;
-            exception
-               when Declaration_Not_Found =>
-                  --  function is in the current file, but used before
-                  --  declaration. Create forward declaration
-                  Insert_Declaration
-                    (Handler            => LI_Handler (Global_CPP_Handler),
-                     File               => Env.File,
-                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List               => Env.List_Of_Files,
-                     Symbol_Name        => Ref_Id,
-                     Source_Filename    => Ref.Buffer
-                        (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Location           => Ref.Position,
-                     Kind               => Kind,
-                     Scope              => Global_Scope,
-                     Declaration_Info   => Decl_Info);
-            end;
+            --  this is a function defined in the current file
+            --  it may be either forward declared or implemented
+            --  right away
+            if Forward_Declared then
+               Decl_Info := Find_First_Forward_Declaration
+                 (FDecl.Buffer,
+                  FDecl.Name,
+                  FDecl.File_Name,
+                  FDecl.Return_Type,
+                  FDecl.Arg_Types,
+                  Env);
+            else -- when only body is available
+               Decl_Info := Find_Declaration
+                 (File        => Env.File,
+                  Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+                  Location    => Fn.Start_Position);
+            end if;
+
+            if Decl_Info = null then
+               --  function is in the current file, but used before
+               --  declaration. Create forward declaration
+               Insert_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Env.File,
+                  LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer
+                       (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List               => Env.List_Of_Files,
+                  Symbol_Name        => Ref_Id,
+                  Source_Filename    => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location           => Ref.Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Declaration_Info   => Decl_Info);
+            end if;
          else
-            begin
-               --  this function is defined somewhere else...
-               Decl_Info := Find_Dependency_Declaration
-                 (File                 => Env.File,
-                  Symbol_Name          => Ref_Id,
-                  Filename             => Buffer
+            --  this function is defined somewhere else...
+            Decl_Info := Find_Dependency_Declaration
+              (File                 => Env.File,
+               Symbol_Name          => Ref_Id,
+               Filename             => Buffer
+                 (Filename.First .. Filename.Last),
+               Location             => Start_Position);
+
+            if Decl_Info = null then
+               Insert_Dependency_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Env.File,
+                  LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all) &
+                    Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List               => Env.List_Of_Files,
+                  Symbol_Name        => Ref_Id,
+                  Location           => Start_Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Referred_Filename  => Buffer
                     (Filename.First .. Filename.Last),
-                  Location             => Start_Position);
-            exception
-               when Declaration_Not_Found => -- insert dep decl
-                  Insert_Dependency_Declaration
-                    (Handler            => LI_Handler (Global_CPP_Handler),
-                     File               => Env.File,
-                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                        Xref_Filename_For
-                          (Ref.Buffer (Ref.File_Name.First ..
-                                       Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List               => Env.List_Of_Files,
-                     Symbol_Name        => Ref_Id,
-                     Location           => Start_Position,
-                     Kind               => Kind,
-                     Scope              => Global_Scope,
-                     Referred_Filename  => Buffer
-                       (Filename.First .. Filename.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all) &
-                        Xref_Filename_For
-                          (Buffer (Filename.First .. Filename.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info   => Decl_Info);
-            end;
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all) &
+                    Xref_Filename_For
+                    (Buffer (Filename.First .. Filename.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info   => Decl_Info);
+            end if;
          end if;
+
       else -- overloaded entity
          --  have we already declared it?
-         begin
-            Decl_Info := Find_Declaration
-              (File        => Env.File,
-               Symbol_Name => Ref_Id,
-               Kind        => Overloaded_Entity);
-         exception
-            when Declaration_Not_Found =>
-               Decl_Info := new E_Declaration_Info_Node'
-                 (Value => (Declaration => No_Declaration,
-                            References  => null),
-                  Next => Env.File.LI.Body_Info.Declarations);
-               Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
-               Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
-               Env.File.LI.Body_Info.Declarations := Decl_Info;
-         end;
+         Decl_Info := Find_Declaration
+           (File        => Env.File,
+            Symbol_Name => Ref_Id,
+            Kind        => Overloaded_Entity);
+
+         if Decl_Info = null then
+            Decl_Info := new E_Declaration_Info_Node'
+              (Value => (Declaration => No_Declaration,
+                         References  => null),
+               Next => Env.File.LI.Body_Info.Declarations);
+            Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
+            Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
+            Env.File.LI.Body_Info.Declarations := Decl_Info;
+         end if;
       end if;
 
       if Forward_Declared then
@@ -1824,6 +1797,7 @@ package body Src_Info.CPP is
       Attributes   : SN_Attributes;
       Ref_Id       : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+      Sym          : FIL_Table;
    begin
       Info ("Fu_To_GV_Handler: " & Ref_Id);
 
@@ -1836,124 +1810,119 @@ package body Src_Info.CPP is
           Env.DB_Dir.all,
           Env.Xrefs).all = Get_LI_Filename (Env.File)
       then
-         begin
+         Decl_Info := Find_Declaration
+           (File                    => Env.File,
+            Symbol_Name             => Ref_Id,
+            Location                => Var.Start_Position);
+
+         if Decl_Info = null then
+            Info ("Forward reference to the variable: " & Ref_Id);
+            Sym.Buffer         := Var.Buffer;
+            Sym.Identifier     := Var.Name;
+            Sym.Start_Position := Var.Start_Position;
+            Sym.File_Name      := Var.File_Name;
+            Sym_GV_Handler (Sym, Env);
+
             Decl_Info := Find_Declaration
               (File                    => Env.File,
                Symbol_Name             => Ref_Id,
                Location                => Var.Start_Position);
-         exception
-            when Declaration_Not_Found =>
-               Info ("Forward reference to the variable: " & Ref_Id);
-               declare
-                  Sym : FIL_Table;
-               begin
-                  Sym.Buffer         := Var.Buffer;
-                  Sym.Identifier     := Var.Name;
-                  Sym.Start_Position := Var.Start_Position;
-                  Sym.File_Name      := Var.File_Name;
-                  Sym_GV_Handler (Sym, Env);
-                  Decl_Info := Find_Declaration
-                    (File                    => Env.File,
-                     Symbol_Name             => Ref_Id,
-                     Location                => Var.Start_Position);
-               exception
-                  when Declaration_Not_Found =>
-                     Fail ("unable to create declaration for global variable "
-                           & Ref_Id);
-                     Free (Var);
-                     return;
-               end;
-         end;
+
+            if Decl_Info = null then
+               Fail ("unable to create declaration for global variable "
+                       & Ref_Id);
+               Free (Var);
+               return;
+            end if;
+         end if;
+
       else -- another file
-         begin -- Find dependency declaration
-            Decl_Info := Find_Dependency_Declaration
-              (File                    => Env.File,
-               Symbol_Name             => Ref_Id,
-               Filename                =>
-                  Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-               Location                => Var.Start_Position);
-         exception
-            when Declaration_Not_Found => -- dep decl does not yet exist
-               --  Collect information about the variable:
-               --  type, scope, location of type declaration...
-               Type_Name_To_Kind
-                 (Var.Buffer
-                    (Var.Value_Type.First .. Var.Value_Type.Last),
-                  Env.SN_Table,
-                  Env.Module_Typedefs,
-                  Desc,
-                  Success);
-               if not Success then -- unknown type
-                  Free (Var);
-                  return;
-               end if;
+         Decl_Info := Find_Dependency_Declaration
+           (File                    => Env.File,
+            Symbol_Name             => Ref_Id,
+            Filename                =>
+              Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+            Location                => Var.Start_Position);
 
-               Attributes := SN_Attributes (Var.Attributes);
+         if Decl_Info = null then
+            --  Collect information about the variable:
+            --  type, scope, location of type declaration...
+            Type_Name_To_Kind
+              (Var.Buffer
+                 (Var.Value_Type.First .. Var.Value_Type.Last),
+               Env.SN_Table,
+               Env.Module_Typedefs,
+               Desc,
+               Success);
+            if not Success then -- unknown type
+               Free (Var);
+               return;
+            end if;
 
-               if (Attributes and SN_STATIC) = SN_STATIC then
-                  Scope := Static_Local;
-               end if;
+            Attributes := SN_Attributes (Var.Attributes);
 
-               if Desc.Parent_Point = Invalid_Point then
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                              (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       =>
-                        Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Location          => Var.Start_Position,
-                     Kind              => Type_To_Object (Desc.Kind),
-                     Scope             => Scope,
-                     Referred_Filename =>
-                        Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Var.Buffer
-                              (Var.File_Name.First .. Var.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info  => Decl_Info);
-               else
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       =>
-                        Var.Buffer (Var.Name.First .. Var.Name.Last),
-                     Location          => Var.Start_Position,
-                     Kind              => Type_To_Object (Desc.Kind),
-                     Scope             => Scope,
-                     Referred_Filename =>
-                        Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Var.Buffer
-                             (Var.File_Name.First .. Var.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Parent_Location   => Desc.Parent_Point,
-                     Parent_Filename   => Xref_Filename_For
-                          (Desc.Parent_Filename.all,
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info  => Decl_Info);
-               end if;
-               Free (Desc);
-         end;
+            if (Attributes and SN_STATIC) = SN_STATIC then
+               Scope := Static_Local;
+            end if;
+
+            if Desc.Parent_Point = Invalid_Point then
+               Insert_Dependency_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       =>
+                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                  Location          => Var.Start_Position,
+                  Kind              => Type_To_Object (Desc.Kind),
+                  Scope             => Scope,
+                  Referred_Filename =>
+                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Var.Buffer
+                       (Var.File_Name.First .. Var.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info  => Decl_Info);
+            else
+               Insert_Dependency_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       =>
+                    Var.Buffer (Var.Name.First .. Var.Name.Last),
+                  Location          => Var.Start_Position,
+                  Kind              => Type_To_Object (Desc.Kind),
+                  Scope             => Scope,
+                  Referred_Filename =>
+                    Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Var.Buffer
+                       (Var.File_Name.First .. Var.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Parent_Location   => Desc.Parent_Point,
+                  Parent_Filename   => Xref_Filename_For
+                    (Desc.Parent_Filename.all,
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info  => Decl_Info);
+            end if;
+            Free (Desc);
+         end if;
       end if;
       Free (Var);
 
@@ -2002,69 +1971,67 @@ package body Src_Info.CPP is
           Env.DB_Dir.all,
           Env.Xrefs).all = Get_LI_Filename (Env.File)
       then
-         begin
-            --  look for declaration in current file
-            Decl_Info := Find_Declaration
-              (File        => Env.File,
-               Symbol_Name => Ref_Id,
-               Location    => Macro.Start_Position);
+         --  look for declaration in current file
+         Decl_Info := Find_Declaration
+           (File        => Env.File,
+            Symbol_Name => Ref_Id,
+            Location    => Macro.Start_Position);
 
-         exception
-            when Declaration_Not_Found =>
-               Insert_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For
-                       (Ref.Buffer
-                          (Ref.File_Name.First .. Ref.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => Ref_Id,
-                  Source_Filename    => Ref.Buffer
+         if Decl_Info = null then
+            Insert_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For
+                 (Ref.Buffer
                     (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Macro.Start_Position,
-                  Kind               => Unresolved_Entity,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => Ref_Id,
+               Source_Filename    => Ref.Buffer
+                 (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location           => Macro.Start_Position,
+               Kind               => Unresolved_Entity,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
+
       else
          --  look for dependency declaration
-         begin
-            Decl_Info := Find_Dependency_Declaration
-              (File                 => Env.File,
-               Symbol_Name          => Ref_Id,
-               Filename             => Macro.Buffer
+         Decl_Info := Find_Dependency_Declaration
+           (File                 => Env.File,
+            Symbol_Name          => Ref_Id,
+            Filename             => Macro.Buffer
+              (Macro.File_Name.First .. Macro.File_Name.Last),
+            Location             => Macro.Start_Position);
+
+         if Decl_Info = null then
+            Insert_Dependency_Declaration
+              (Handler           => LI_Handler (Global_CPP_Handler),
+               File              => Env.File,
+               LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For
+                 (Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               List              => Env.List_Of_Files,
+               Symbol_Name       => Ref_Id,
+               Location          => Macro.Start_Position,
+               Kind              => Unresolved_Entity,
+               Scope             => Global_Scope,
+               Referred_Filename => Macro.Buffer
                  (Macro.File_Name.First .. Macro.File_Name.Last),
-               Location             => Macro.Start_Position);
-         exception
-            when Declaration_Not_Found => -- dep decl does not yet exist
-               Insert_Dependency_Declaration
-                 (Handler           => LI_Handler (Global_CPP_Handler),
-                  File              => Env.File,
-                  Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For
-                       (Ref.Buffer
-                          (Ref.File_Name.First .. Ref.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  List              => Env.List_Of_Files,
-                  Symbol_Name       => Ref_Id,
-                  Location          => Macro.Start_Position,
-                  Kind              => Unresolved_Entity,
-                  Scope             => Global_Scope,
-                  Referred_Filename => Macro.Buffer
+               Referred_LI_Filename =>
+                 Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For
+                 (Macro.Buffer
                     (Macro.File_Name.First .. Macro.File_Name.Last),
-                  Referred_Xref_Filename =>
-                     Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For
-                       (Macro.Buffer
-                          (Macro.File_Name.First .. Macro.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  Declaration_Info  => Decl_Info);
-         end;
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               Declaration_Info  => Decl_Info);
+         end if;
       end if;
 
       Insert_Reference
@@ -2082,8 +2049,6 @@ package body Src_Info.CPP is
          Fail ("unable to find macro " & Ref_Id);
 
    end Fu_To_Ma_Handler;
-
-
 
    ------------------------
    --  Fu_To_Mi_Handler  --
@@ -2113,10 +2078,11 @@ package body Src_Info.CPP is
       function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
          return E_Declaration_Info_List;
       --  searches for forward declaration. if no fwd decl found, searches for
-      --  implementation. If nothing found throws Declaration_Not_Found
+      --  implementation. If nothing found, return null.
 
       function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
-         return E_Declaration_Info_List is
+         return E_Declaration_Info_List
+      is
          Decl_Info    : E_Declaration_Info_List;
       begin
          Decl_Info := Find_First_Forward_Declaration
@@ -2127,17 +2093,16 @@ package body Src_Info.CPP is
             MD_Tab.Return_Type,
             MD_Tab.Arg_Types,
             Env);
+
          if Decl_Info = null then
-            raise Declaration_Not_Found;
-         end if;
-         return Decl_Info;
-      exception
-         when Declaration_Not_Found =>
             return Find_Declaration
               (File        => Env.File,
                Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
                Class_Name  => Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
                Location    => Fn.Start_Position);
+         else
+            return Decl_Info;
+         end if;
       end Find_Method;
 
    begin
@@ -2256,90 +2221,85 @@ package body Src_Info.CPP is
              Env.DB_Dir.all,
              Env.Xrefs).all = Get_LI_Filename (Env.File)
          then
-            begin
-               --  this is a method defined in the current file
-               --  it may be either forward declared or implemented
-               --  right away
-               if Pure_Virtual then
-                  Decl_Info := Find_First_Forward_Declaration
-                    (MDecl.Buffer,
-                     MDecl.Class,
-                     MDecl.Name,
-                     MDecl.File_Name,
-                     MDecl.Return_Type,
-                     MDecl.Arg_Types,
-                     Env);
-                  if Decl_Info = null then
-                     raise Declaration_Not_Found;
-                  end if;
-               else
-                  Decl_Info := Find_Method (Fn, MDecl);
-               end if;
-            exception
-               when Declaration_Not_Found =>
-                  --  method is in the current file, but used before
-                  --  declaration. Create forward declaration
-                  Insert_Declaration
-                    (Handler            => LI_Handler (Global_CPP_Handler),
-                     File               => Env.File,
-                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                           (Ref.Buffer
-                              (Ref.File_Name.First .. Ref.File_Name.Last),
-                            Env.DB_Dir.all,
-                            Env.Xrefs).all,
-                     List               => Env.List_Of_Files,
-                     Symbol_Name        => Ref_Id,
-                     Source_Filename    => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Location           => Ref.Position,
-                     Kind               => Kind,
-                     Scope              => Global_Scope,
-                     Declaration_Info   => Decl_Info);
-            end;
+            --  this is a method defined in the current file it may be either
+            --  forward declared or implemented right away
+            if Pure_Virtual then
+               Decl_Info := Find_First_Forward_Declaration
+                 (MDecl.Buffer,
+                  MDecl.Class,
+                  MDecl.Name,
+                  MDecl.File_Name,
+                  MDecl.Return_Type,
+                  MDecl.Arg_Types,
+                  Env);
+            else
+               Decl_Info := Find_Method (Fn, MDecl);
+            end if;
+
+            if Decl_Info = null then
+               --  method is in the current file, but used before
+               --  declaration. Create forward declaration
+               Insert_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Env.File,
+                  LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List               => Env.List_Of_Files,
+                  Symbol_Name        => Ref_Id,
+                  Source_Filename    => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location           => Ref.Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Declaration_Info   => Decl_Info);
+            end if;
+
          else
-            begin
-               --  this method is defined somewhere else...
-               Decl_Info := Find_Dependency_Declaration
-                 (File                 => Env.File,
-                  Symbol_Name          => Ref_Id,
-                  Class_Name           => Ref_Class,
-                  Filename             => Filename_Buf
-                    (Filename.First .. Filename.Last),
-                  Location             => Start_Position);
+            --  this method is defined somewhere else...
+            Decl_Info := Find_Dependency_Declaration
+              (File                 => Env.File,
+               Symbol_Name          => Ref_Id,
+               Class_Name           => Ref_Class,
+               Filename             => Filename_Buf
+                 (Filename.First .. Filename.Last),
+               Location             => Start_Position);
+
+            if Decl_Info /= null then
                Info ("Dep Declaration for " & Ref_Id
-                  & " in " & Filename_Buf (Filename.First .. Filename.Last)
-                  & " found");
-            exception
-               when Declaration_Not_Found => -- insert dep decl
-                  Info ("Declaration not found "
-                     & " Fname = " & Filename_Buf (Filename.First ..
-                     Filename.Last) & "ref_fname = " &
-                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last));
-                  Insert_Dependency_Declaration
-                    (Handler            => LI_Handler (Global_CPP_Handler),
-                     File               => Env.File,
-                     Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
-                          Xref_Filename_For
-                          (Ref.Buffer (Ref.File_Name.First ..
-                                       Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List               => Env.List_Of_Files,
-                     Symbol_Name        => Ref_Id,
-                     Location           => Start_Position,
-                     Kind               => Kind,
-                     Scope              => Global_Scope,
-                     Referred_Filename  => Filename_Buf
-                        (Filename.First .. Filename.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Filename_Buf (Filename.First .. Filename.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info   => Decl_Info);
-            end;
+                     & " in " & Filename_Buf (Filename.First .. Filename.Last)
+                     & " found");
+
+            else
+               Info ("Declaration not found Fname = "
+                     & Filename_Buf (Filename.First .. Filename.Last)
+                     & "ref_fname = "
+                     & Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last));
+               Insert_Dependency_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Env.File,
+                  LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all) &
+                    Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List               => Env.List_Of_Files,
+                  Symbol_Name        => Ref_Id,
+                  Location           => Start_Position,
+                  Kind               => Kind,
+                  Scope              => Global_Scope,
+                  Referred_Filename  => Filename_Buf
+                    (Filename.First .. Filename.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Filename_Buf (Filename.First .. Filename.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info   => Decl_Info);
+            end if;
          end if;
 
          if not Pure_Virtual then
@@ -2360,14 +2320,8 @@ package body Src_Info.CPP is
                Class_Name  => Ref_Class,
                Kind        => Overloaded_Entity,
                Location    => Class_Def.Start_Position);
-            Free (Class_Def);
-         exception
-            when DB_Error | Not_Found =>
-               Fail ("Failed to lookup class " & Ref_Class
-                  & " for method " & Ref_Id);
-               Free (MDecl);
-               return;
-            when Declaration_Not_Found =>
+
+            if Decl_Info = null then
                Decl_Info := new E_Declaration_Info_Node'
                  (Value =>
                     (Declaration => No_Declaration,
@@ -2385,7 +2339,16 @@ package body Src_Info.CPP is
                Decl_Info.Value.Declaration.Location.Column :=
                   Class_Def.Start_Position.Column;
                Env.File.LI.Body_Info.Declarations := Decl_Info;
-               Free (Class_Def);
+            end if;
+
+            Free (Class_Def);
+
+         exception
+            when DB_Error | Not_Found =>
+               Fail ("Failed to lookup class " & Ref_Class
+                  & " for method " & Ref_Id);
+               Free (MDecl);
+               return;
          end;
       end if;
       Free (MDecl);
@@ -2430,211 +2393,198 @@ package body Src_Info.CPP is
           Env.DB_Dir.all,
           Env.Xrefs).all = Get_LI_Filename (Env.File)
       then
-         begin
-            --  look for declaration in current file
-            Decl_Info := Find_Declaration
-              (File        => Env.File,
-               Symbol_Name => Ref_Id,
-               Location    => Typedef.Start_Position);
+         --  look for declaration in current file
+         Decl_Info := Find_Declaration
+           (File        => Env.File,
+            Symbol_Name => Ref_Id,
+            Location    => Typedef.Start_Position);
 
-         exception
-            when Declaration_Not_Found =>
-               --  Declaration for type is not created yet
-               Find_Original_Type
-                 (Ref_Id,
-                  Env.SN_Table,
-                  Env.Module_Typedefs,
-                  Desc, Success);
+         if Decl_Info = null then
+            --  Declaration for type is not created yet
+            Find_Original_Type
+              (Ref_Id,
+               Env.SN_Table,
+               Env.Module_Typedefs,
+               Desc, Success);
 
-               if not Success then
-                  Fail ("unable to find type for typedef " & Ref_Id);
-                  Free (Desc);
-                  Free (Typedef);
-                  return;
-               end if;
+            if not Success then
+               Fail ("unable to find type for typedef " & Ref_Id);
+               Free (Desc);
+               Free (Typedef);
+               return;
+            end if;
 
-               if Desc.Ancestor_Point = Invalid_Point then
-                  --  unknown parent
-                  Insert_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Location          => Typedef.Start_Position,
-                     Kind              => Desc.Kind,
-                     Scope             => Global_Scope,
-                     Declaration_Info  => Decl_Info);
-               elsif Desc.Ancestor_Point = Predefined_Point then
-                  --  typedef for builin type
-                  Insert_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Location          => Typedef.Start_Position,
-                     Parent_Location   => Predefined_Point,
-                     Kind              => Desc.Kind,
-                     Scope             => Global_Scope,
-                     Declaration_Info  => Decl_Info);
-               else
-                  --  parent type found
-                  Insert_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
-                     Source_Filename   => Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Location          => Typedef.Start_Position,
-                     Parent_Location   => Desc.Ancestor_Point,
-                     Parent_Filename   => Xref_Filename_For
-                          (Desc.Ancestor_Filename.all,
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Kind              => Desc.Kind,
-                     Scope             => Global_Scope,
-                     Declaration_Info  => Decl_Info);
-               end if;
+            if Desc.Ancestor_Point = Invalid_Point then
+               --  unknown parent
+               Insert_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       => Ref_Id,
+                  Source_Filename   => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location          => Typedef.Start_Position,
+                  Kind              => Desc.Kind,
+                  Scope             => Global_Scope,
+                  Declaration_Info  => Decl_Info);
+            elsif Desc.Ancestor_Point = Predefined_Point then
+               --  typedef for builin type
+               Insert_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       => Ref_Id,
+                  Source_Filename   => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location          => Typedef.Start_Position,
+                  Parent_Location   => Predefined_Point,
+                  Kind              => Desc.Kind,
+                  Scope             => Global_Scope,
+                  Declaration_Info  => Decl_Info);
+            else
+               --  parent type found
+               Insert_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       => Ref_Id,
+                  Source_Filename   => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location          => Typedef.Start_Position,
+                  Parent_Location   => Desc.Ancestor_Point,
+                  Parent_Filename   => Xref_Filename_For
+                    (Desc.Ancestor_Filename.all,
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Kind              => Desc.Kind,
+                  Scope             => Global_Scope,
+                  Declaration_Info  => Decl_Info);
+            end if;
+         end if;
 
-         end;
       else
          --  look for dependency declaration
-         begin
-            Decl_Info := Find_Dependency_Declaration
-              (File                 => Env.File,
-               Symbol_Name          => Ref_Id,
-               Filename             => Typedef.Buffer
-                 (Typedef.File_Name.First .. Typedef.File_Name.Last),
-               Location             => Typedef.Start_Position);
-         exception
-            when Declaration_Not_Found => -- dep decl does not yet exist
+         Decl_Info := Find_Dependency_Declaration
+           (File                 => Env.File,
+            Symbol_Name          => Ref_Id,
+            Filename             => Typedef.Buffer
+              (Typedef.File_Name.First .. Typedef.File_Name.Last),
+            Location             => Typedef.Start_Position);
 
-               Find_Original_Type
-                 (Ref_Id,
-                  Env.SN_Table,
-                  Env.Module_Typedefs,
-                  Desc,
-                  Success);
+         if Decl_Info = null then
+            Find_Original_Type
+              (Ref_Id,
+               Env.SN_Table,
+               Env.Module_Typedefs,
+               Desc,
+               Success);
 
-               if not Success then
-                  Fail ("unable to find type for typedef " & Ref_Id);
-                  Free (Desc);
-                  Free (Typedef);
-                  return;
-               end if;
+            if not Success then
+               Fail ("unable to find type for typedef " & Ref_Id);
+               Free (Desc);
+               Free (Typedef);
+               return;
+            end if;
 
-               if Desc.Ancestor_Point = Invalid_Point then
-                  --  unknown parent
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First ..  Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
-                     Location          => Typedef.Start_Position,
-                     Kind              => Desc.Kind,
-                     Scope             => Global_Scope,
-                     Referred_Filename => Typedef.Buffer
+            if Desc.Ancestor_Point = Invalid_Point then
+               --  unknown parent
+               Insert_Dependency_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer
+                       (Ref.File_Name.First ..  Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       => Ref_Id,
+                  Location          => Typedef.Start_Position,
+                  Kind              => Desc.Kind,
+                  Scope             => Global_Scope,
+                  Referred_Filename => Typedef.Buffer
+                    (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Typedef.Buffer
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Typedef.Buffer
-                             (Typedef.File_Name.First ..
-                              Typedef.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info  => Decl_Info);
-               elsif Desc.Ancestor_Point = Predefined_Point then
-                  --  typedef for builtin type
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
-                     Location          => Typedef.Start_Position,
-                     Parent_Location   => Predefined_Point,
-                     Kind              => Desc.Kind,
-                     Scope             => Global_Scope,
-                     Referred_Filename => Typedef.Buffer
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info  => Decl_Info);
+            elsif Desc.Ancestor_Point = Predefined_Point then
+               --  typedef for builtin type
+               Insert_Dependency_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       => Ref_Id,
+                  Location          => Typedef.Start_Position,
+                  Parent_Location   => Predefined_Point,
+                  Kind              => Desc.Kind,
+                  Scope             => Global_Scope,
+                  Referred_Filename => Typedef.Buffer
+                    (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Typedef.Buffer
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Typedef.Buffer
-                             (Typedef.File_Name.First ..
-                              Typedef.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info  => Decl_Info);
-               else
-                  --  parent type found
-                  Insert_Dependency_Declaration
-                    (Handler           => LI_Handler (Global_CPP_Handler),
-                     File              => Env.File,
-                     Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Ref.Buffer
-                             (Ref.File_Name.First .. Ref.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     List              => Env.List_Of_Files,
-                     Symbol_Name       => Ref_Id,
-                     Location          => Typedef.Start_Position,
-                     Parent_Location   => Desc.Ancestor_Point,
-                     Parent_Filename   => Xref_Filename_For
-                          (Desc.Ancestor_Filename.all,
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                        Kind              => Desc.Kind,
-                     Scope             => Global_Scope,
-                     Referred_Filename => Typedef.Buffer
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info  => Decl_Info);
+            else
+               --  parent type found
+               Insert_Dependency_Declaration
+                 (Handler           => LI_Handler (Global_CPP_Handler),
+                  File              => Env.File,
+                  LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  List              => Env.List_Of_Files,
+                  Symbol_Name       => Ref_Id,
+                  Location          => Typedef.Start_Position,
+                  Parent_Location   => Desc.Ancestor_Point,
+                  Parent_Filename   => Xref_Filename_For
+                    (Desc.Ancestor_Filename.all,
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Kind              => Desc.Kind,
+                  Scope             => Global_Scope,
+                  Referred_Filename => Typedef.Buffer
+                    (Typedef.File_Name.First .. Typedef.File_Name.Last),
+                  Referred_LI_Filename =>
+                    Name_As_Directory (Env.DB_Dir.all)
+                    & Xref_Filename_For
+                    (Typedef.Buffer
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
-                     Referred_Xref_Filename =>
-                        Name_As_Directory (Env.DB_Dir.all)
-                        & Xref_Filename_For
-                          (Typedef.Buffer
-                             (Typedef.File_Name.First ..
-                              Typedef.File_Name.Last),
-                           Env.DB_Dir.all,
-                           Env.Xrefs).all,
-                     Declaration_Info  => Decl_Info);
-               end if;
-
-         end;
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Declaration_Info  => Decl_Info);
+            end if;
+         end if;
       end if;
 
       Insert_Reference
@@ -2687,76 +2637,71 @@ package body Src_Info.CPP is
          = Union_Def.Buffer (Union_Def.File_Name.First ..
                              Union_Def.File_Name.Last))
       then
-         begin
-            Decl_Info :=
-              Find_Dependency_Declaration
-                (File        => Env.File,
-                 Symbol_Name => Union_Def.Buffer
-                   (Union_Def.Name.First .. Union_Def.Name.Last),
-                 Kind        => Record_Type,
-                 Location    => Union_Def.Start_Position,
-                 Filename    => Union_Def.Buffer
-                   (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
-         exception
-            when Declaration_Not_Found =>
-               Insert_Dependency_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For
-                       (Ref.Buffer
-                          (Ref.File_Name.First .. Ref.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => Union_Def.Buffer
-                    (Union_Def.Name.First .. Union_Def.Name.Last),
-                  Referred_Filename  => Union_Def.Buffer
+         Decl_Info := Find_Dependency_Declaration
+           (File        => Env.File,
+            Symbol_Name => Union_Def.Buffer
+              (Union_Def.Name.First .. Union_Def.Name.Last),
+            Kind        => Record_Type,
+            Location    => Union_Def.Start_Position,
+            Filename    => Union_Def.Buffer
+              (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+
+         if Decl_Info = null then
+            Insert_Dependency_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For
+                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => Union_Def.Buffer
+                 (Union_Def.Name.First .. Union_Def.Name.Last),
+               Referred_Filename  => Union_Def.Buffer
+                 (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
+               Referred_LI_Filename =>
+                 Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For
+                 (Union_Def.Buffer
                     (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
-                  Referred_Xref_Filename =>
-                     Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For
-                       (Union_Def.Buffer
-                          (Union_Def.File_Name.First ..
-                           Union_Def.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  Location           => Union_Def.Start_Position,
-                  Kind               => Record_Type,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               Location           => Union_Def.Start_Position,
+               Kind               => Record_Type,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
+
       else
-         begin
-            Decl_Info :=
-              Find_Declaration
-                (File        => Env.File,
-                 Symbol_Name => Union_Def.Buffer
-                   (Union_Def.Name.First .. Union_Def.Name.Last),
-                 Kind        => Record_Type,
-                 Location    => Union_Def.Start_Position);
-         exception
-            when Declaration_Not_Found =>
-               Insert_Declaration
-                 (Handler            => LI_Handler (Global_CPP_Handler),
-                  File               => Env.File,
-                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all)
-                     & Xref_Filename_For
-                       (Ref.Buffer
-                          (Ref.File_Name.First .. Ref.File_Name.Last),
-                        Env.DB_Dir.all,
-                        Env.Xrefs).all,
-                  List               => Env.List_Of_Files,
-                  Symbol_Name        => Union_Def.Buffer
-                    (Union_Def.Name.First .. Union_Def.Name.Last),
-                  Source_Filename    => Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Union_Def.Start_Position,
-                  Kind               => Record_Type,
-                  Scope              => Global_Scope,
-                  Declaration_Info   => Decl_Info);
-         end;
+         Decl_Info := Find_Declaration
+           (File        => Env.File,
+            Symbol_Name => Union_Def.Buffer
+              (Union_Def.Name.First .. Union_Def.Name.Last),
+            Kind        => Record_Type,
+            Location    => Union_Def.Start_Position);
+
+         if Decl_Info = null then
+            Insert_Declaration
+              (Handler            => LI_Handler (Global_CPP_Handler),
+               File               => Env.File,
+               LI_Full_Filename   => Name_As_Directory (Env.DB_Dir.all)
+                 & Xref_Filename_For
+                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Env.DB_Dir.all,
+                  Env.Xrefs).all,
+               List               => Env.List_Of_Files,
+               Symbol_Name        => Union_Def.Buffer
+                 (Union_Def.Name.First .. Union_Def.Name.Last),
+               Source_Filename    => Ref.Buffer
+                 (Ref.File_Name.First .. Ref.File_Name.Last),
+               Location           => Union_Def.Start_Position,
+               Kind               => Record_Type,
+               Scope              => Global_Scope,
+               Declaration_Info   => Decl_Info);
+         end if;
       end if;
+
       Insert_Reference
         (File              => Env.File,
          Declaration_Info  => Decl_Info,
@@ -2808,7 +2753,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler               => LI_Handler (Global_CPP_Handler),
          File                  => Env.File,
-         Xref_Filename         => Name_As_Directory (Env.DB_Dir.all)
+         LI_Full_Filename      => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -2925,7 +2870,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+            LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -2943,7 +2888,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+            LI_Full_filename  => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3028,7 +2973,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+         LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -3085,7 +3030,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+            LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3106,7 +3051,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Xref_Filename_For
+            LI_Full_Filename  => Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
                Env.Xrefs).all,
@@ -3205,7 +3150,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+         LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -3405,7 +3350,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler               => LI_Handler (Global_CPP_Handler),
             File                  => Env.File,
-            Xref_Filename         => Xref_Filename_For
+            LI_Full_Filename      => Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
                Env.Xrefs).all,
@@ -3546,7 +3491,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+            LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3564,7 +3509,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+            LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3625,14 +3570,14 @@ package body Src_Info.CPP is
       Insert_Dependency
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Xref_Filename_For
+         LI_Full_Filename  => Xref_Filename_For
            (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Env.DB_Dir.all,
             Env.Xrefs).all,
          List              => Env.List_Of_Files,
          Referred_Filename =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Referred_Xref_Filename => Xref_Filename_For
+         Referred_LI_Filename => Xref_Filename_For
            (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Env.DB_Dir.all,
             Env.Xrefs).all);
@@ -3693,7 +3638,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+            LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
                & Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
@@ -3711,7 +3656,7 @@ package body Src_Info.CPP is
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
             File              => Env.File,
-            Xref_Filename     => Xref_Filename_For
+            LI_Full_Filename  => Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
                Env.Xrefs).all,
@@ -3762,7 +3707,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Xref_Filename_For
+         LI_Full_Filename  => Xref_Filename_For
            (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Env.DB_Dir.all,
             Env.Xrefs).all,
@@ -3891,7 +3836,7 @@ package body Src_Info.CPP is
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Env.File,
-         Xref_Filename     => Name_As_Directory (Env.DB_Dir.all)
+         LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
             & Xref_Filename_For
               (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Env.DB_Dir.all,
@@ -3960,7 +3905,7 @@ package body Src_Info.CPP is
             Insert_Declaration
               (Handler           => LI_Handler (Global_CPP_Handler),
                File              => Env.File,
-               Xref_Filename     => Xref_Filename_For
+               LI_Full_Filename  => Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
                   Env.Xrefs).all,
@@ -3980,7 +3925,7 @@ package body Src_Info.CPP is
             Insert_Declaration
               (Handler           => LI_Handler (Global_CPP_Handler),
                File              => Env.File,
-               Xref_Filename         => Name_As_Directory (Env.DB_Dir.all)
+               LI_Full_Filename  => Name_As_Directory (Env.DB_Dir.all)
                   & Xref_Filename_For
                     (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                      Env.DB_Dir.all,
@@ -4000,7 +3945,7 @@ package body Src_Info.CPP is
             Insert_Declaration
               (Handler           => LI_Handler (Global_CPP_Handler),
                File              => Env.File,
-               Xref_Filename         => Xref_Filename_For
+               LI_Full_Filename  => Xref_Filename_For
                  (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                   Env.DB_Dir.all,
                   Env.Xrefs).all,
@@ -4053,38 +3998,36 @@ package body Src_Info.CPP is
          Union_Def,
          Success);
 
-      if not Success then
-         return;
+      if Success then
+         Insert_Declaration
+           (Handler               => LI_Handler (Global_CPP_Handler),
+            File                  => Env.File,
+            LI_Full_Filename      => Xref_Filename_For
+              (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               Env.DB_Dir.all,
+               Env.Xrefs).all,
+            List                  => Env.List_Of_Files,
+            Symbol_Name           =>
+              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+            Source_Filename       =>
+              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Location              => Sym.Start_Position,
+            Kind                  => Record_Type,
+            Scope                 => Global_Scope,
+            End_Of_Scope_Location => Union_Def.End_Position,
+            Declaration_Info      => Decl_Info);
+
+         Insert_Reference
+           (Declaration_Info      => Decl_Info,
+            File                  => Env.File,
+            Source_Filename       =>
+              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Location              => Union_Def.End_Position,
+            Kind                  => End_Of_Spec);
+
+         Free (Desc);
+         Free (Union_Def);
       end if;
-
-      Insert_Declaration
-        (Handler               => LI_Handler (Global_CPP_Handler),
-         File                  => Env.File,
-         Xref_Filename         => Xref_Filename_For
-           (Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Env.DB_Dir.all,
-            Env.Xrefs).all,
-         List                  => Env.List_Of_Files,
-         Symbol_Name           =>
-           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
-         Source_Filename       =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location              => Sym.Start_Position,
-         Kind                  => Record_Type,
-         Scope                 => Global_Scope,
-         End_Of_Scope_Location => Union_Def.End_Position,
-         Declaration_Info      => Decl_Info);
-
-      Insert_Reference
-        (Declaration_Info      => Decl_Info,
-         File                  => Env.File,
-         Source_Filename       =>
-           Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-         Location              => Union_Def.End_Position,
-         Kind                  => End_Of_Spec);
-
-      Free (Desc);
-      Free (Union_Def);
    end Sym_UN_Handler;
 
 end Src_Info.CPP;
