@@ -222,21 +222,69 @@ ifeq ($(<PROJECT>_PROJECT),)
 <PROJECT>_PROJECT=True
 
 ifeq ($(BASE_DIR),)
-   include $(GNAT_ROOT)/share/Makefile.generic
-   <config section>
-   BASE_DIR=$(shell pwd)
    <PROJECT>_ROOT=True
+   <PROJECT>_BASE_DIR=$(shell pwd)
+else
+   <PROJECT>_ROOT=False
+   <PROJECT>_BASE_DIR=$(BASE_DIR)
 endif
-
-<PROJECT>_BASE_DIR := $(BASE_DIR)
 
 The variables BASE_DIR and <PROJECT>_BASE_DIR are used to handle relative
 directories.
 The variable <PROJECT>_ROOT is used to know whether the current Makefile acts
 as the main project or as a sub project.
 
-The <config section> will contain variables configuring the environment, with
-the following variables:
+- project dependencies (with clauses) are handled by the following translation:
+
+   with "../src1/project1"
+
+   is translated as:
+
+   BASE_DIR=$(<PROJECT>_BASE_DIR)/../src1
+   include $(BASE_DIR)/Makefile.project1
+
+   or, if the with clause contains an absolute path:
+
+   with "/a/b/project1"
+
+   is translated as:
+
+   BASE_DIR=/a/b
+   include $(BASE_DIR)/Makefile.project1
+
+- an optional section grouping all the typed variables of the project file
+
+  Given a type variable Var, using an environment variable ENV,
+  it is translated into a make variable
+  called <PROJECT>__VAR. This notation is used to avoid conflicts between
+  variables of different projects.
+  If the typed variable has no default value, a simple assignment is used:
+
+  <PROJECT>__VAR=$(ENV)
+
+  otherwise an "ifeq" test is used:
+
+  ifeq ($(ENV),)
+     <PROJECT>__VAR=<default value>
+  else
+     <PROJECT>__VAR=$(ENV)
+  endif
+
+  For example:
+
+  type Build_Type is ("development", "production");
+  Build : Build_Type := external ("BUILD_ENV", "development");
+
+  is translated into:
+
+  ifeq ($(BUILD_ENV),)
+    PRJ__BUILD=development
+  else
+    PRJ__BUILD=$(BUILD_ENV)
+  endif
+
+- a config section that will contain variables configuring the environment,
+  with the following:
 
    CC = <c compiler>                         optional
    CXX = <c++ compiler>                      optional
@@ -249,7 +297,7 @@ the following variables:
    ADA_SPEC = <extension of ada spec files>  optional
    ADA_BODY = <extension of ada body files>  optional
 
-Here is a detail of these variables:
+  Here is a detail of these variables:
    - A variable CC, taken from IDE.Compiler_Command ("C")
 
    - A variable CXX, taken from IDE.Compiler_Command ("C++")
@@ -301,24 +349,6 @@ Here is a detail of these variables:
    ADA_BODY = .2.ada
 
    ADA_SPEC and ADA_BODY variable are needed to handle file specific compilation
-
-- project dependencies (with clauses) are handled by the following translation:
-
-   with "../src1/project1"
-
-   is translated as:
-
-   BASE_DIR=$(<PROJECT>_BASE_DIR)/../src1
-   include $(BASE_DIR)/Makefile.project1
-
-   or, if the with clause contains an absolute path:
-
-   with "/a/b/project1"
-
-   is translated as:
-
-   BASE_DIR=/a/b
-   include $(BASE_DIR)/Makefile.project1
 
 - The attribute Source_Dirs is translated as two variables:
 
@@ -457,10 +487,10 @@ will be converted into:
 
 CFLAGS := -O
 
-ifeq ($(BUILD),debug)
+ifeq ($(<PROJECT>__BUILD),debug)
    CFLAGS := $(CFLAGS) -g
 else
-   ifeq ($(BUILD),production)
+   ifeq ($(<PROJECT>__BUILD),production)
       CFLAGS := $(CFLAGS) -O2
    else
       CFLAGS := -O2
