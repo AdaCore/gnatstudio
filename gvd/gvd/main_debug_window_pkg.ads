@@ -30,9 +30,9 @@ with Gtkada.Toolbar; use Gtkada.Toolbar;
 package Main_Debug_Window_Pkg is
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
-      Vbox1 : Gtk_Vbox;
+      Vbox : Gtk_Vbox;
       Factory : Gtk_Item_Factory;
-      Toolbar2 : Gtkada_Toolbar;
+      Toolbar : Gtkada_Toolbar;
       Button49 : Gtk_Widget;
       Button50 : Gtk_Widget;
       Button52 : Gtk_Widget;
@@ -44,9 +44,9 @@ package Main_Debug_Window_Pkg is
       Button57 : Gtk_Widget;
       Button51 : Gtk_Widget;
       Button61 : Gtk_Widget;
-      Frame7 : Gtk_Frame;
+      Frame : Gtk_Frame;
       Process_Notebook : Gtk_Notebook;
-      Statusbar1 : GVD_Status_Bar;
+      Statusbar : GVD_Status_Bar;
    end record;
    type Main_Debug_Window_Access is access all Main_Debug_Window_Record'Class;
 
