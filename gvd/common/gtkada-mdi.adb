@@ -74,41 +74,41 @@ with GUI_Utils;        use GUI_Utils;
 package body Gtkada.MDI is
 
    Title_Bar_Focus_Color : constant String := "#000088";
-   --  <preference> Color to use for the title bar of the child that has
+   --  <preferences> Color to use for the title bar of the child that has
    --  the focus
 
    Title_Bar_Color : constant String := "#AAAAAA";
-   --  <preference> Color to use for the title bar of children that do not
+   --  <preferences> Color to use for the title bar of children that do not
    --  have the focus.
 
    Title_Bar_Height : constant Gint := 15;
-   --  <preference> Height of the title bar for the children
+   --  <preferences> Height of the title bar for the children
 
    MDI_Background_Color : constant String := "#666666";
-   --  <preference> Background color to use for the MDI window
+   --  <preferences> Background color to use for the MDI window
 
    Border_Thickness : constant Gint := 4;
-   --  <preference> Thickness of the windows in the MDI
+   --  <preferences> Thickness of the windows in the MDI
 
    Title_Font_Name : constant String := "Helvetica";
-   --  <preference> Name of the font to use in the title bar
+   --  <preferences> Name of the font to use in the title bar
 
    Title_Font_Height : constant Gint := 10;
-   --  <preference> Height of the font to use in the title bar
+   --  <preferences> Height of the font to use in the title bar
 
    Icons_Width : constant Gint := 100;
-   --  <preference> Width to use for icons
+   --  <preferences> Width to use for icons
 
    Opaque_Resize : constant Boolean := False;
-   --  <preference> True if the contents of windows should be displayed while
+   --  <preferences> True if the contents of windows should be displayed while
    --  resizing widgets.
 
    Opaque_Move : constant Boolean := False;
-   --  <preference> True if the contents of windows should be displayed while
+   --  <preferences> True if the contents of windows should be displayed while
    --  they are moved.
 
    Handle_Size : constant Gint := 8;
-   --  <preference> The default width or height of the handles.
+   --  <preferences> The default width or height of the handles.
 
    Min_Width  : constant Gint := 40;
    Min_Height : constant Gint := 2 * Border_Thickness + Title_Bar_Height;
