@@ -1558,11 +1558,15 @@ package body VCS.ClearCase is
 
    procedure Log
      (Rep  : access ClearCase_Record;
-      File : Virtual_File)
+      File : Virtual_File;
+      Rev  : String)
    is
       C            : External_Command_Access;
       Command_Head : List;
       Args         : List;
+
+      pragma Unreferenced (Rev);
+      --  ??? Should implement handling of specific revision.
    begin
       Append (Args, "lshistory");
       Append (Args, Full_Name (File).all);
