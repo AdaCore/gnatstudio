@@ -249,6 +249,9 @@ package body Glide_Kernel.Project is
       Project_Changed (Kernel);
       Recompute_View (Kernel);
 
+      Set_Registry
+        (Glide_Language_Handler (Kernel.Lang_Handler), Kernel.Registry);
+
       --  Reload the default desktop
 
       if Load_Default_Desktop then
