@@ -96,7 +96,7 @@ package body Src_Editor_View is
      (Buffer : access Source_Buffer_Record'Class;
       View   : Source_View);
    --  This procedure re-evaluates the number of lines in the buffer, and
-   --  if necesary change the width of the LNA.
+   --  changes the width of the LNA if necessary.
 
    function LNA_Width_In_Digits
      (View : access Source_View_Record'Class) return Natural;
