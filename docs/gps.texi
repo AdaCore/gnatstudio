@@ -6410,7 +6410,7 @@ This tag accepts the following attributes:
 
    @smallexample
 <action name="launch tool to location" >
-  <external on-failure="locations_parse &quot;
+  <external on-failure="Locations.parse &quot;
      &quot;&quot;%1 &quot;&quot;&quot; category;
      codefix_parse &quot;&quot;&quot;%1 &quot;
      &quot;&quot; category" >tool-path</external>
@@ -8129,10 +8129,10 @@ action is stopped immediately, and no further command is performed.
 @subsubsection Saving open windows
 @c --------------------------------------------------------------------------
 
-@cindex save_all
+@cindex MDI.save_all
 Before launching the external tool, you might want to force GPS to save all
 open files, the project@dots{}. This is done using the same command GPS itself
-uses before starting a compilation. This command is called @code{save_all},
+uses before starting a compilation. This command is called @code{MDI.save_all},
 and takes one optional boolean argument which specifies whether an interactive
 dialog should be displayed for the user.
 
@@ -8141,7 +8141,7 @@ simply put it in its own @code{<shell>} command, as in:
 
 @smallexample
 <action name="test save children">
-  <shell>save_all 0</shell>
+  <shell>MDI.save_all 0</shell>
   <external>echo Run unless Cancel was pressed</external>
 </action>
 @end smallexample
@@ -8309,14 +8309,14 @@ further integration of the tool in GPS.
 
 @enumerate
 @item Parsing error messages
-@cindex locations_parse
+@cindex Locations.parse
 
 External tools can usually display error messages for the user that
 are associated with specific files and locations in these files. This is for
 instance the way the GPS builder itself analyzes the output of @code{make}.
 
 This can be done for your own tools using the shell command
-@code{locations_parse}. This command takes several arguments, so that you
+@code{Locations.parse}. This command takes several arguments, so that you
 can specify your own regular expression to find the file name, line number and
 so on in the error message. By default, it is configured to work
 seamlessly with error message of the forms:
@@ -8340,7 +8340,7 @@ with a quote.
 @smallexample
 <action name="make example" >
    <external>make</external>
-   <shell>locations_parse """%1 """ make_example</shell>
+   <shell>Locations.parse """%1 """ make_example</shell>
 </action>
 @end smallexample
 
@@ -8349,10 +8349,10 @@ with a quote.
 
 GPS has support for automatically correcting errors for some of the languages.
 You can get access to this auto-fixing feature through the @code{Codefix.parse}
-shell command, which takes the same arguments as for @code{locations_parse}.
+shell command, which takes the same arguments as for @code{Locations.parse}.
 
 This will automatically add pixmaps to the relevant entries in the location
-window, and therefore @code{locations_parse} should be called first prior to
+window, and therefore @code{Locations.parse} should be called first prior to
 calling this command.
 
 Errors can also be fixed automatically by calling the methods of the
@@ -8687,7 +8687,7 @@ double-quotes characters set. This is useful if you do not know in advance
 the contents of the string you are quoting.
 
 @smallexample
-locations_parse """%1 """ category_name
+Locations.parse """%1 """ category_name
 @end smallexample
 
 
@@ -8900,41 +8900,46 @@ GPS and its various modules define a number of standard hooks, which are
 called for instance when a new project is loaded, when a file is edited, and
 so on. You can define your own commands to be executed in such cases.
 
-@cindex hooks, list_hooks
-@cindex hooks, describe_hook
+@cindex hooks, Hook.list
+@cindex hooks, Hook.describe
 You can find out the list of hooks that GPS currently knows about by calling
-the @b{list_hooks} function, which takes no argument, and returns a list of
+the @b{Hook.list} function, which takes no argument, and returns a list of
 hook names that you can use. More advanced description for each hook is
 available through the @b{describe_hook} command.
 
 @smallexample
-GPS> list_hooks
+GPS> Hook.list
 project_changed
 open_file_action_hook
 preferences_changed
 [...]
 
-GPS> describe_hook preferences_changed
+GPS> hook preferences_changed
+GPS> Hook.describe %1
 Hook called when a file needs to be opened or closed
 This hook is of type "open_file" -- see describe_hook_type
 @end smallexample
 
-@cindex hooks, describe_hook_type
+@ifset python
+Python> GPS.Hook ("preferences_changed").describe()
+@end ifset
+
+@cindex hooks, Hook.describe_type
 The description of each hooks includes a pointer to the type of the hook, that
 is what parameters the subprograms in this hook will receive. For instance:
 
 @smallexample
-GPS> describe_hook_type "open_file"
+GPS> Hook.describe_type "open_file"
 Common type for all hooks related to opening files.
 Arguments are the following: (file, line, column,
 column_end, enable_navigation, new_file, force_reload)
 @end smallexample
 
-@cindex hooks, list_hook_types
-The list of all known hook types can be found through the @b{list_hook_types}
+@cindex hooks, Hook.list_types
+The list of all known hook types can be found through the @b{Hook.list_types}
 command. This takes no argument and returns a list of all known types of hooks.
 As before, you can more information for each of these type through a call to
-@b{describe_hook_type}.
+@b{Hook.describe_type}.
 
 
 @c ----------------------------------
@@ -8943,13 +8948,13 @@ As before, you can more information for each of these type through a call to
 
 @noindent
 You can add your own command to existing hooks through a call to the
-@b{add_hook} command. Whenever the hook is executed by GPS or another script,
+@b{Hook.add} command. Whenever the hook is executed by GPS or another script,
 your command will also be executed, and will be given the parameters that
 were specified when the hook is run. The first parameter is always the name
 of the hook being executed.
 
-This @b{add_hook} function takes two arguments: the name of the hook to which
-you want to connect, and the command to be executed.
+This @b{Hook.add} applies to an instance of the hook class, and takes one
+parameter, the command to be executed.
 
 @ifclear python
 The command can be any shell command. The arguments for the hook will be
@@ -8957,7 +8962,8 @@ appended to this command. In the following example, the message "Just executed
 the hook: project_changed" will be printed in the Shell console.
 
 @smallexample
-GPS> add_hook "project_changed" "echo Just executed the hook: "
+GPS> Hook project_changed
+GPS> Hook.add %1 "echo Just executed the hook: "
 @end smallexample
 @end ifclear
 
@@ -8970,7 +8976,7 @@ Python console whenever the project changes.
 @smallexample
 def my_callback (name):
     print "The hook " + name + " was executed by GPS"
-GPS.add_hook ("project_changed", "my_callback")
+GPS.Hook ("project_changed").add ("my_callback")
 @end smallexample
 @end ifset
 
@@ -8982,7 +8988,8 @@ hook "file_edited" receives the file name as a parameter.
 The following code will print the name of the hook ("file_edited") and the
 name of the file in the shell console every time a file is open by GPS.
 @smallexample
-GPS> add_hook "file_edited" "echo name+file="
+GPS> Hook "file_edited"
+GPS> Hook.add %1 "echo name+file="
 @end smallexample
 @end ifclear
 
@@ -8994,7 +9001,7 @@ GPS.File.
 @smallexample
 def my_file_callback (name, file):
     print "Editing " + file.name()
-GPS.add_hook ("file_edited", "my_file_callback")
+GPS.Hook ("file_edited").add ("my_file_callback")
 @end smallexample
 
 Very often, the name of the function in the second argument to add_hook will
@@ -9053,14 +9060,14 @@ def my_foo_handler (name, file, line, column, \
         return 1   ## Prevent further execution of the hook
     return 0  ## Let other subprograms in the hook do their job
 
-GPS.add_hook ("open_file_action_hook", "my_foo_handler")
+GPS.Hook ("open_file_action_hook").add ("my_foo_handler")
 @end smallexample
 
 @end ifset
 
 @c --------------------------------------------------------------------
 @subsubsection Running hooks
-@cindex hooks, run_hook
+@cindex hooks, Hook.run
 @c --------------------------------------------------------------------
 
 @noindent
@@ -9073,9 +9080,9 @@ As usual, this will result in the execution of all the functions bound to
 that hook, whether they are defined in Ada or in any of the scripting
 languages.
 
-This is done through the @b{run_hook} command. This takes a variable
-number of arguments, the first of which is always the name of the hook.
-The remaining parameters must be in the right order and of the right type
+This is done through the @b{Hook.run} command. This applies to an instance
+of the Hook class, and a variable number of arguments
+These must be in the right order and of the right type
 for that specific type of hook.
 
 @ifset python
@@ -9091,21 +9098,23 @@ description of the hook for more information on the other parameters.
 
 @ifset python
 @smallexample
-GPS.run_hook ("project_changed")
-GPS.run_hook ("open_file_action_hook", \
-              GPS.File ("test.adb"), 100, 1, 0, 1, 1, 1)
+GPS.Hook ("project_changed").run()
+GPS.Hook ("open_file_action_hook").run \
+              (GPS.File ("test.adb"), 100, 1, 0, 1, 1, 1)
 @end smallexample
 @end ifset
 
 @ifclear python
-GPS> run_hook "project_changed"
-GPS> run_hook "open_file_action_hook" %1 100 1 0 true true true
+GPS> Hook "project_changed"
+GPS> run %1
+GPS> Hook "open_file_action_hook"
+GPS> run %1 %1 100 1 0 true true true
 @end ifclear
 
 @c --------------------------------------------------------------------
 @subsubsection Creating new hooks
 @cindex hooks, creating
-@cindex hooks, register_hook
+@cindex hooks, Hook.register
 @c --------------------------------------------------------------------
 
 @noindent
@@ -9125,7 +9134,7 @@ the subprogram that is called as a result of running the hook has the right
 number of parameters. If this isn't the case, GPS will complain and display
 error messages.
 
-Creating new hooks is done through a call to @b{register_hook}. This function
+Creating new hooks is done through a call to @b{Hook.register}. This function
 takes three arguments: the name of the hook you are creating, a description
 of when the hook is executed for the interactive help, and the type of the
 hook.
@@ -9133,7 +9142,7 @@ hook.
 The name of the hook is left to you. Any character is allowed in that name,
 although using only alphanumerical characters.
 
-The description is displayed when the user calls @b{describe_hook}.
+The description is displayed when the user calls @b{Hook.describe}.
 
 The type of the hook must be one of the following:
 
@@ -9141,11 +9150,11 @@ The type of the hook must be one of the following:
 @item "" (the empty string)
 
 This indicates that the hook doesn't take any argument. None should be given
-to @b{run_hook}, apart of course from the hook name, and none should be
+to @b{Hook.run}, apart of course from the hook name, and none should be
 expected by the various commands connected to that hook, once again apart from
 the hook name itself.
 
-@item one of the values returned by @b{list_hook_types}
+@item one of the values returned by @b{Hook.list_types}
 
 This indicates that the hook is of one of the types exported by GPS itself. The
 advantage of using such explicit types as opposed to "general" is that GPS
@@ -9156,7 +9165,7 @@ is able to make more tests for the validity of the parameters.
 This indicates that the hook is of the general type that allows any number of
 parameter, of any type. Other script will be able to connect to it, but will
 not be executed when the hook is run if they do not expect the same number of
-parameters that was given to @b{run_hook}
+parameters that was given to @b{Hook.run}
 
 @end itemize
 
@@ -9168,7 +9177,7 @@ will always be executed by either giving default values for its parameter, or
 by using python's syntax to indicate a variable number of arguments.
 
 This is especially useful if you are connecting to a "general" hook, since you
-do not really know in advance how many parameters the call of @b{run_hook} will
+do not really know in advance how many parameters the call of @b{Hook.run} will
 provide.
 
 @smallexample
@@ -9180,18 +9189,19 @@ def trace (name, *args):
 def trace2 (name, arg1, arg2=100):
    print "hook=" + str (arg1) + str (arg2)
 
-register_hook ("my_custom_hook", "some description", "general")
-add_hook ("my_custom_hook", "trace2")
-run_hook ("my_custom_hook", 1, 2) ## Prints 1 2
-run_hook ("my_custom_hook", 1)    ## Prints 1 100
+Hook.register ("my_custom_hook", "some description", "general")
+Hook ("my_custom_hook").add ("trace2")
+Hook ("my_custom_hook").add (1, 2) ## Prints 1 2
+Hook ("my_custom_hook").add (1)    ## Prints 1 100
 @end smallexample
 
 @end ifset
 
 @ifclear python
-GPS> register_hook "my_custom_hook" "some description" "general"
-GPS> run_hook "my_custom_hook" 1 2
-GPS> run_hook "my_custom_hook" "arg1" "arg2" "arg3"
+GPS> Hook.register"my_custom_hook" "some description" "general"
+GPS> Hook "my_custom_hook"
+GPS> run %1 1 2
+GPS> run %2 "arg1" "arg2" "arg3"
 @end ifclear
 
 
