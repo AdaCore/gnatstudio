@@ -47,6 +47,10 @@ with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
+with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Text_Mark;            use Gtk.Text_Mark;
+with Gtk.Text_Tag;             use Gtk.Text_Tag;
+with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -58,6 +62,7 @@ with Pango.Font;               use Pango.Font;
 with Pango.Layout;             use Pango.Layout;
 with String_Utils;             use String_Utils;
 with System;                   use System;
+with String_List_Utils;        use String_List_Utils;
 
 package body GUI_Utils is
 
@@ -1037,5 +1042,98 @@ package body GUI_Utils is
       Pointer_Ungrab (0);
       Gtk.Handlers.Disconnect (In_Widget, Id);
    end Key_Grab;
+
+   -------------------
+   -- Do_Completion --
+   -------------------
+
+   procedure Do_Completion
+     (View            : access Gtk_Text_View_Record'Class;
+      Completion      : Completion_Handler;
+      Prompt_End_Mark : Gtk_Text_Mark;
+      Uneditable_Tag  : Gtk_Text_Tag;
+      User_Data       : GObject)
+   is
+      Buffer : constant Gtk_Text_Buffer := Get_Buffer (View);
+      Prompt_Iter, Last_Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Prompt_Iter, Prompt_End_Mark);
+      Get_End_Iter (Buffer, Last_Iter);
+
+      declare
+         use String_List_Utils.String_List;
+         Text        : constant String :=
+           Get_Slice (Buffer, Prompt_Iter, Last_Iter);
+         Completions : List :=  Completion (Text, User_Data);
+         Prefix      : constant String := Longest_Prefix (Completions);
+         Node        : List_Node;
+         Line        : Gint;
+         Offset      : Gint;
+         More_Than_One : constant Boolean :=
+           Completions /= Null_List
+           and then Next (First (Completions)) /= Null_Node;
+         Success     : Boolean;
+         Prev_Begin  : Gtk_Text_Iter;
+         Prev_Last   : Gtk_Text_Iter;
+         Pos         : Gtk_Text_Iter;
+      begin
+         if More_Than_One then
+            Node := First (Completions);
+
+            --  Get the range copy the current line.
+
+            Line := Get_Line (Last_Iter);
+
+            --  Get the offset of the prompt.
+
+            Offset := Get_Line_Offset (Prompt_Iter);
+
+            Get_End_Iter (Buffer, Pos);
+            Insert (Buffer, Pos, "" & ASCII.LF);
+
+            while Node /= Null_Node loop
+               Get_End_Iter (Buffer, Pos);
+               Set_Line_Offset (Pos, 0);
+               Insert (Buffer, Pos, Data (Node) & ASCII.LF);
+               Node := Next (Node);
+            end loop;
+
+            Get_Iter_At_Line_Offset (Buffer, Prev_Begin, Line, 0);
+            Copy (Prev_Begin, Prev_Last);
+            Forward_To_Line_End (Prev_Last, Success);
+
+            Get_End_Iter (Buffer, Pos);
+            Insert_Range (Buffer, Pos, Prev_Begin, Prev_Last);
+
+            Get_End_Iter (Buffer, Pos);
+            Set_Line_Offset (Pos, 0);
+
+            Get_Iter_At_Line_Offset (Buffer, Prev_Begin, Line, 0);
+            Apply_Tag (Buffer, Uneditable_Tag, Prev_Begin, Pos);
+
+            --  Restore the prompt
+
+            Get_End_Iter (Buffer, Prompt_Iter);
+            Set_Line_Offset (Prompt_Iter, Offset);
+
+            Move_Mark (Buffer, Prompt_End_Mark, Prompt_Iter);
+            Scroll_Mark_Onscreen (View, Prompt_End_Mark);
+         end if;
+
+         --  Insert the completion, if any.
+         Get_End_Iter (Buffer, Pos);
+
+         if Prefix'Length > Text'Length then
+            Insert (Buffer, Pos,
+                    Prefix (Prefix'First + Text'Length .. Prefix'Last));
+         end if;
+
+         if not More_Than_One then
+            Insert (Buffer, Pos, " ");
+         end if;
+
+         Free (Completions);
+      end;
+   end Do_Completion;
 
 end GUI_Utils;

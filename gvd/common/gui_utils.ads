@@ -39,11 +39,15 @@ with Gtk.List;
 with Gtk.List_Item;
 with Gtk.Menu;
 with Gtk.Text_Iter;
+with Gtk.Text_Mark;
+with Gtk.Text_Tag;
+with Gtk.Text_View;
 with Gtk.Tree_Store;
 with Gtk.Tree_Model;
 with Gtk.Tree_View;
 with Gtk.Widget;
 with Pango.Font;
+with String_List_Utils;
 
 package GUI_Utils is
 
@@ -122,6 +126,31 @@ package GUI_Utils is
       End_Iter   : out Gtk.Text_Iter.Gtk_Text_Iter);
    --  Find the position of the begining and the end of the entity pointed to
    --  by Start_Iter.
+
+   type Completion_Handler is access function
+     (Input     : String;
+      User_Data : Glib.Object.GObject)
+     return String_List_Utils.String_List.List;
+   --  This function should return a list of adequate elements that all
+   --  begin with Input, or a list containing only Input.
+   --  The list if freed automatically by the interactive console.
+   --
+   --  The strings returned in the list are the full replacement for Input, not
+   --  the suffixes that need to be added to Input
+
+   procedure Do_Completion
+     (View            : access Gtk.Text_View.Gtk_Text_View_Record'Class;
+      Completion      : Completion_Handler;
+      Prompt_End_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      Uneditable_Tag  : Gtk.Text_Tag.Gtk_Text_Tag;
+      User_Data       : Glib.Object.GObject);
+   --  Handles completion in a console: given the text typed since
+   --  Prompt_End_Mark, Completion will return the list of possible completion
+   --  commands. If there is only one possible completion, it is inserted
+   --  immediately, otherwise the list of possible completions is inserted in
+   --  the buffer.
+   --  Uneditable_Tag should be a tag belonging to View, whose property
+   --  Editable_Property is set to False.
 
    ---------------
    -- Tree view --
