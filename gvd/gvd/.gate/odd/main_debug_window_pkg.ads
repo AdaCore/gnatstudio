@@ -11,9 +11,9 @@ with Gtk.Button; use Gtk.Button;
 package Main_Debug_Window_Pkg is
 
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
-      Vbox1 : Gtk_Vbox;
+      Vbox : Gtk_Vbox;
       Factory : Gtk_Menu_Bar;
-      Toolbar2 : Gtk_Toolbar;
+      Toolbar : Gtk_Toolbar;
       Button49 : Gtk_Widget;
       Button50 : Gtk_Widget;
       Button52 : Gtk_Widget;
@@ -25,9 +25,9 @@ package Main_Debug_Window_Pkg is
       Button57 : Gtk_Widget;
       Button51 : Gtk_Widget;
       Button61 : Gtk_Widget;
-      Frame7 : Gtk_Frame;
+      Frame : Gtk_Frame;
       Process_Notebook : Gtk_Notebook;
-      Statusbar1 : Gtk_Statusbar;
+      Statusbar : Gtk_Statusbar;
    end record;
    type Main_Debug_Window_Access is access all Main_Debug_Window_Record'Class;
 
