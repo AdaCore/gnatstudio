@@ -36,7 +36,7 @@ procedure Initialize (General_Preferences : access General_Preferences_Record'Cl
    Memory_Modified_Combo_Items : String_List.Glist;
 
 begin
-   Gtk.Window.Initialize (General_Preferences, Window_Dialog);
+   Gtk.Window.Initialize (General_Preferences, Window_Toplevel);
    Set_Title (General_Preferences, -"Preferences");
    Set_Policy (General_Preferences, False, True, False);
    Set_Position (General_Preferences, Win_Pos_Center);

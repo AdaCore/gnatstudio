@@ -288,7 +288,7 @@
     <last_modification_time>Sun, 23 Apr 2000 19:34:12 GMT</last_modification_time>
   </signal>
   <title>Preferences</title>
-  <type>GTK_WINDOW_DIALOG</type>
+  <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_CENTER</position>
   <modal>False</modal>
   <allow_shrink>False</allow_shrink>
