@@ -48,6 +48,8 @@ with GVD.Preferences;
 with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Unchecked_Deallocation;
+with Gtk.Paned;           use Gtk.Paned;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -67,7 +69,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Page     : Gtk_Widget;
 
    begin
-      Free (Top.Command_History);
+      --  First switch to the last page (to prevent automatic page
+      --  switching when the other pages are deleted, which would fail)
+      Set_Page (Top.Process_Notebook, -1);
 
       loop
          Page := Get_Nth_Page (Top.Process_Notebook, 0);
@@ -77,6 +81,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Close (Tab.Debugger);
          Remove_Page (Top.Process_Notebook, 0);
       end loop;
+      Free (Top.Command_History);
    end Cleanup_Debuggers;
 
    ---------------------------------------
@@ -740,6 +745,53 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Edit_Buttons1_Activate;
+
+   ----------------------------
+   -- On_Call_Stack_Activate --
+   ----------------------------
+
+   procedure On_Call_Stack_Activate
+     (Object : access Gtk_Check_Menu_Item_Record'Class;
+      Window : Gtk_Window)
+   is
+      Process : Debugger_Process_Tab;
+      Page      : Gtk_Widget;
+      Num_Pages : constant Gint :=
+        Gint (Page_List.Length (Get_Children
+          (Main_Debug_Window_Access (Window).Process_Notebook)));
+   begin
+      --  ??? Is there a memory leak here ? Hpaned1 might be ref'd, but
+      --  not actually in a parent, and this means that it isn't destroyed
+      --  when the process_tab is destroyed.
+
+      for Page_Num in 0 .. Num_Pages - 1 loop
+         Page := Get_Nth_Page
+           (Main_Debug_Window_Access (Window).Process_Notebook, Page_Num);
+         if Page /= null then
+            Process := Process_User_Data.Get (Page);
+
+            if Get_Active (Object) then
+               --  Put back the canvas into the hpaned.
+               Ref (Process.Scrolledwindow12);
+               Remove (Process.Vpaned6, Process.Scrolledwindow12);
+               Add (Process.Hpaned1, Process.Scrolledwindow12);
+               Unref (Process.Scrolledwindow12);
+
+               Add (Process.Vpaned6, Process.Hpaned1);
+               Unref (Process.Hpaned1);
+            else
+               --  Ref the widget so that it is not destroyed.
+               Ref (Process.Hpaned1);
+               Remove (Process.Vpaned6, Process.Hpaned1);
+
+               Ref (Process.Scrolledwindow12);
+               Remove (Process.Hpaned1, Process.Scrolledwindow12);
+               Add (Process.Vpaned6, Process.Scrolledwindow12);
+               Show_All (Process.Scrolledwindow12);
+            end if;
+         end if;
+      end loop;
+   end On_Call_Stack_Activate;
 
    --------------------------
    -- On_Threads1_Activate --
