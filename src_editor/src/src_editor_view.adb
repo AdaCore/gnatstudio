@@ -137,6 +137,9 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "side_columns_changed" signal.
 
+   procedure Clear_Text_Window (User : Source_View);
+   --  Clear the buffer window.
+
    procedure Line_Highlight_Change_Handler
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues;
@@ -345,17 +348,11 @@ package body Src_Editor_View is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Realize_Cb;
 
-   -----------------------------------
-   -- Line_Highlight_Change_Handler --
-   -----------------------------------
+   -----------------------
+   -- Clear_Text_Window --
+   -----------------------
 
-   procedure Line_Highlight_Change_Handler
-     (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues;
-      User   : Source_View)
-   is
-      pragma Unreferenced (Params, Buffer);
-
+   procedure Clear_Text_Window (User : Source_View) is
       Win           : constant Gdk.Window.Gdk_Window :=
         Get_Window (User, Text_Window_Text);
       X, Y, W, H, D : Gint;
@@ -368,6 +365,21 @@ package body Src_Editor_View is
       Get_Geometry (Win, X, Y, W, H, D);
       Rect := Gdk_Rectangle'(X, Y, W, H);
       Gdk.Window.Invalidate_Rect (Win, Rect, True);
+   end Clear_Text_Window;
+
+   -----------------------------------
+   -- Line_Highlight_Change_Handler --
+   -----------------------------------
+
+   procedure Line_Highlight_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      pragma Unreferenced (Params, Buffer);
+
+   begin
+      Clear_Text_Window (User);
    end Line_Highlight_Change_Handler;
 
    ---------------------------------
@@ -912,6 +924,8 @@ package body Src_Editor_View is
 
       Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
       View.Saved_Cursor_Mark := Create_Mark (Buffer, "", Insert_Iter);
+
+      Clear_Text_Window (Source_View (View));
    end Initialize;
 
    --------------------
@@ -932,6 +946,7 @@ package body Src_Editor_View is
       Get_Geometry (Win, X, Y, W, H, D);
       Clear_Area_E (Win, X, Y, W, H);
 
+      Clear_Text_Window (View);
       View.Connect_Expose_Id := 0;
       return False;
    end Connect_Expose;
