@@ -304,13 +304,16 @@ package body Glide_Kernel is
       if Child /= null then
          return Child;
       else
-         for J in Handle.Open_Files'Range loop
-            if File = Handle.Open_Files (J) then
-               return Find_MDI_Child_By_Name
-                 (MDI,
-                  Full_Name (Handle.Open_Files (J), Normalize => False).all);
-            end if;
-         end loop;
+         if Handle.Open_Files /= null then
+            for J in Handle.Open_Files'Range loop
+               if File = Handle.Open_Files (J) then
+                  return Find_MDI_Child_By_Name
+                    (MDI,
+                     Full_Name
+                       (Handle.Open_Files (J), Normalize => False).all);
+               end if;
+            end loop;
+         end if;
 
          return null;
       end if;
