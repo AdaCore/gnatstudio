@@ -852,9 +852,12 @@ line.
 
 When exiting GPS, if there are tasks running in the Task Manager, a window
 will display those tasks. You can also bring up a contextual menu on the
-items in this window. When there are no more running tasks, GPS will exit.
-You can force the exit at any time by pressing the confirmation button, or
-prevent this exit by pressing the Cancel button.
+items in this window.
+You can force the exit at any time by pressing the confirmation button, which
+will kill all remaining tasks, or continue working in GPS by pressing the
+Cancel button.
+
+@c ??? Add screen shots
 
 @c --------------------------------------------------------------------
 @node Integrated Help
@@ -5609,8 +5612,8 @@ Whether the editor should provide the ability to fold/unfold blocks.
 
 @item Automatic syntax check
 @cindex automatic syntax
-Whether GPS should perform on-the-fly syntax checks for the sources files
-that are being edited.
+Whether GPS should automatically check syntax in background for the source
+files that are being edited.
 
 @item Speed Column Policy
 @cindex speed column policy
@@ -6442,10 +6445,11 @@ This tag accepts the following attributes:
 
    @smallexample
 <action name="progress" >
-   <external progress-regexp="(\d+) out of (\d+).*$"
-             progress-current="1"
-             progress-final="2"
-             progress-hide="true">gnatmake foo.adb
+   <external
+    progress-regexp="(\d+) out of (\d+).*$"
+    progress-current="1"
+    progress-final="2"
+    progress-hide="true">gnatmake foo.adb
    </external>
 </action>
    @end smallexample
@@ -6979,7 +6983,7 @@ For example, this adds an item named @code{mymenu} to the standard
 The above has the same result as
 
 @smallexample
-<menu aciton="current file uses">
+<menu action="current file uses">
    <title>/Edit/mymenu</title>
 </menu>
 @end smallexample
@@ -7141,8 +7145,8 @@ Any setting that you have defined in the customization files will be
 overridden by the user's preferences file itself, unless the user was still
 using the default value of that preference.
 
-This @code{<pref>} tag is mostly intended for use through the themes (@pxref{
-Creating themes}).
+This @code{<pref>} tag is mostly intended for use through the themes
+(@pxref{Creating themes}).
 
 @c ----------------------------------------------------------------
 @node Creating themes
@@ -8213,8 +8217,10 @@ window. The
 @smallexample
 <action name="Query compiler switches">
   <shell lang="python">GPS.Project("%p").get_attribute_as_list
-    (package="compiler", attribute="default_switches", index="ada")</shell>
-  <external> echo compiler switches= %1</external>
+    (package="compiler",
+     attribute="default_switches",
+     index="ada")</shell>
+  <external>echo compiler switches= %1</external>
 </action>
 @end smallexample
 @end ifset
