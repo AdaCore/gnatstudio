@@ -282,9 +282,8 @@ package Language is
    --                  function declaration.
    --  Indent_Renames  number of extra spaces for the renames line in a
    --                  function declaration.
-   --  Indent_With     number of spaces when indenting a with clause
-   --  Indent_Use      number of spaces when indenting a use clause (top
-   --                  level only for now).
+   --  Indent_With     number of spaces when indenting a with clause.
+   --  Indent_Use      number of spaces when indenting a use clause.
    --  Indent_Record   number of extra spaces for a record declaration
    --                  when the record keyword is on its own line.
 
@@ -301,9 +300,9 @@ package Language is
    type Language_Category is
      (Cat_Unknown,
 
-      -------------
-      -- Classes --
-      -------------
+      ------------------------
+      -- Enclosing Entities --
+      ------------------------
 
       Cat_Package,
       Cat_Procedure,
@@ -312,14 +311,19 @@ package Language is
       Cat_Protected,
       Cat_Entry,
       Cat_Namespace,
-      Cat_Class,
+      Cat_Constructor,
+      Cat_Destructor,
       Cat_Method,
 
       ----------------
       -- Data/Types --
       ----------------
 
+      Cat_Class,
       Cat_Structure,
+      Cat_Type,
+      Cat_Subtype,
+      Cat_Representation_Clause,
       Cat_Variable,
 
       ----------------
@@ -334,38 +338,39 @@ package Language is
       -- Constructs --
       ----------------
 
-      Cat_Loop,
-      Cat_If,
-      Cat_Switch,
-      Cat_Select,
-      Cat_Accept,
+      Cat_Loop_Statement,
+      Cat_If_Statement,
+      Cat_Case_Statement,
+      Cat_Select_Statement,
+      Cat_Accept_Statement,
       Cat_Declare_Block,
       Cat_Simple_Block,
       Cat_Exception_Handler);
 
-   type Generic_Token_Type is new Integer;
-   --  Generic token type.
+   subtype Enclosing_Entity_Category is Language_Category
+     range Cat_Package .. Cat_Method;
 
-   function Get_Name
-     (Lang           : access Language_Root;
-      Token          : Generic_Token_Type;
-      Is_Declaration : Boolean;
-      Category       : access Language_Category) return String;
-   --  Return a printable string for a given token and language.
-   --  Category is set to the appropriate language category.
+   subtype Data_Type_Category is Language_Category
+     range Cat_Class .. Cat_Variable;
+
+   subtype Type_Category is Data_Type_Category
+     range Cat_Class .. Cat_Subtype;
+
+   subtype Dependency_Category is Language_Category
+     range Cat_With .. Cat_Include;
+
+   subtype Construct_Category is Language_Category
+     range Cat_Loop_Statement .. Cat_Exception_Handler;
 
    type Construct_Information;
    type Construct_Access is access Construct_Information;
 
    type Construct_Information is record
-      Token           : Generic_Token_Type;
-      --  Token defining the kind of construct
+      Category        : Language_Category;
+      --  Define the kind of construct
 
       Name            : Basic_Types.String_Access;
       --  Name of the enclosing token. Null if not relevant for Token.
-
-      Profile         : Basic_Types.String_Access;
-      --  Profile (if relevant) of the construct, e.g parameters for a function
 
       Sloc_Start      : Source_Location;
       --  Location of beginning of the construct
