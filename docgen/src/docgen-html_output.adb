@@ -404,15 +404,21 @@ package body Docgen.Html_Output is
 
                   --  if a called subprogram => link to spec
                   if Called_Subp then
-                     Suffix := new String'("_adb.htm");
+                     Suffix :=
+                       new String'("_" &
+                                   Body_Suffix (TRL.Data (Node).File_Name.all)
+                                   & ".htm");
                   else
-                     Suffix := new String'("_ads.htm");
+                     Suffix :=
+                       new String'("_" &
+                                   Spec_Suffix (TRL.Data (Node).File_Name.all)
+                                   & ".htm");
                   end if;
+
                   declare
                      Body_File : constant String :=
-                       TRL.Data (Node).File_Name.all
-                       (TRL.Data (Node).File_Name'First ..
-                          TRL.Data (Node).File_Name'Last - 4)
+                       File_Name_Without_Suffix
+                         (TRL.Data (Node).File_Name.all)
                      & Suffix.all;
                   begin
                      Ada.Text_IO.Put_Line
@@ -669,9 +675,10 @@ package body Docgen.Html_Output is
 
             Ada.Text_IO.Put (File,
                              "<A href=""" &
-                             Spec_File (Spec_File'First
-                                          .. Spec_File'Last - 4) &
-                             "_adb.htm" &
+                             File_Name_Without_Suffix (Spec_File) &
+                             "_" &
+                             Body_Suffix (Spec_File)
+                             & ".htm" &
                              "#" &
                              Integer'Image (Line_In_Body) &
                              """>" &
@@ -919,23 +926,31 @@ package body Docgen.Html_Output is
 
       --  check if should set a link to the body file
       if Info.Header_Link and
-        File_Extension (Info.Header_File.all) = ".ads" then
+        Is_Spec_File (Info.Header_File.all) then
+--           Put_Line (Info.Header_File.all & "   "  &
+--                     File_Name_Without_Suffix (Info.Header_File.all) &
+--                     "   gibt body suffix:  " &
+--                     Body_Suffix (Info.Header_File.all)
+--                     & "  weil spec ist:  " &
+--                     Boolean'Image (Is_Spec_File
+--                                      (Info.Header_File.all)));
          Body_File_Name :=
-           new String '(Info.Header_File.all (Info.Header_File'First
-                                                .. Info.Header_File'Last - 4)
-                           & "_adb.htm");
-
+           new String '(File_Name_Without_Suffix (Info.Header_File.all)
+                        & "_" &
+                        Body_Suffix (Info.Header_File.all)
+                        & ".htm");
          Ada.Text_IO.Put_Line (File, "<A HREF=""" &
                                File_Name (Body_File_Name.all) &
                                """> ");
          Ada.Text_IO.Put_Line (File, Info.Header_Package.all &
                                "</A></A></I></H1>");
       --  check if should set a link to the spec file
-      elsif File_Extension (Info.Header_File.all) = ".adb" then
+      elsif not Is_Spec_File (Info.Header_File.all) then
          Body_File_Name :=
-           new String '(Info.Header_File.all (Info.Header_File'First
-                                                .. Info.Header_File'Last - 4)
-                           & "_ads.htm");
+           new String '(File_Name_Without_Suffix (Info.Header_File.all)
+                        & "_" &
+                        Spec_Suffix (Info.Header_File.all)
+                        &  ".htm");
 
          Ada.Text_IO.Put_Line (File, "<A href=""" &
                                File_Name (Body_File_Name.all) &
@@ -948,7 +963,7 @@ package body Docgen.Html_Output is
       end if;
 
       Ada.Text_IO.Put_Line (File, "</TD></TR></TABLE>");
-      if File_Extension (Info.Header_File.all) = ".adb" then
+      if not Is_Spec_File (Info.Header_File.all) then
          Ada.Text_IO.Put_Line (File, "<PRE>");
       end if;
       Ada.Text_IO.Put_Line (File, "<HR>");
@@ -962,7 +977,7 @@ package body Docgen.Html_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info) is
    begin
-      if File_Extension (Info.Footer_File.all) = ".adb" then
+      if not Is_Spec_File (Info.Footer_File.all) then
          Ada.Text_IO.Put_Line (File, "</PRE>");
       end if;
    end Doc_HTML_Footer;
@@ -1184,10 +1199,12 @@ package body Docgen.Html_Output is
    function Get_Html_File_Name
      (File : String) return String is
    begin
-      if File_Extension (File) = ".ads" then
-         return File (File'First .. File'Last - 4) & "_ads.htm";
+      if Is_Spec_File (File) then
+         return File_Name_Without_Suffix (File) & "_" &
+                Spec_Suffix (File) & ".htm";
       else
-         return File (File'First .. File'Last - 4) & "_adb.htm";
+         return File_Name_Without_Suffix (File) & "_" &
+                Body_Suffix (File) & ".htm";
       end if;
    end Get_Html_File_Name;
 
