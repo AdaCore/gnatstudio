@@ -6667,9 +6667,12 @@ from custom menu. In order to do that, you must write your script in a
 Thus, the @code{external} tag would look like:
 
 @smallexample
-<action name="my_command">
-  <external>cmd /c c:\.gps\my_scripts\my_cmd.cmd</external>
-</action>
+<?xml version="1.0" ?>
+<external_example>
+  <action name="my_command">
+    <external>cmd /c c:\.gps\my_scripts\my_cmd.cmd</external>
+  </action>
+</external_example>
 @end smallexample
 
 This tag accepts the following attributes:
@@ -6693,16 +6696,19 @@ This tag accepts the following attributes:
    The name of the action is printed in the progress bar while the action is
    executing.
 
-   @smallexample
-<action name="progress" >
-   <external
-    progress-regexp="(\d+) out of (\d+).*$"
-    progress-current="1"
-    progress-final="2"
-    progress-hide="true">gnatmake foo.adb
-   </external>
-</action>
-   @end smallexample
+@smallexample
+<?xml version="1.0" ?>
+<progress_action>
+  <action name="progress" >
+    <external
+      progress-regexp="(\d+) out of (\d+).*$"
+      progress-current="1"
+      progress-final="2"
+      progress-hide="true">gnatmake foo.adb
+    </external>
+  </action>
+</progress_action>
+@end smallexample
 
    @item progress-current (optional)
    This is the opening parenthesis count index in @code{progress-regexp}
@@ -6740,14 +6746,17 @@ single line in the XML file.
 In this group of commands the %... and $... macros can be used.
 
 @smallexample
-<action name="launch tool to location" >
-  <external>tool-path</external>
-  <on-failure>
-     <shell>Locations.parse "%1" category<shell>
-     <external>echo the error message is "%2"</external>
-  </on-failure>
-  <external>echo the tool succeeded with message %1</external>
-</action>
+<?xml version="1.0" ?>
+<action_launch_to_location>
+  <action name="launch tool to location" >
+    <external>tool-path</external>
+    <on-failure>
+      <shell>Locations.parse "%1" category<shell>
+      <external>echo the error message is "%2"</external>
+    </on-failure>
+    <external>echo the tool succeeded with message %1</external>
+  </action>
+</action_launch_to_location>
 @end smallexample
 
 @cindex shell
@@ -6766,12 +6775,15 @@ create two actions to invoke the @code{help} interactive command and to open
 the file @file{main.c}.
 
 @smallexample
-<action name="help">
-  <shell>help</shell>
-</action>
-<action name="edit">
-  <shell>edit main.c</shell>
-</action>
+<?xml version="1.0" ?>
+<help>
+  <action name="help">
+    <shell>help</shell>
+  </action>
+  <action name="edit">
+    <shell>edit main.c</shell>
+  </action>
+</help>
 @end smallexample
 
 By default, commands are expected to be written in the GPS shell language.
@@ -6788,10 +6800,13 @@ adds a menu which lists all the files used by the current file, in a
 project browser.
 
 @smallexample
-<action name="current file uses">
-  <shell lang="shell">File %f</shell>
-  <shell lang="shell">File.uses %1</shell>
-</action>
+<?xml version="1.0" ?>
+<current_file_uses>
+  <action name="current file uses">
+    <shell lang="shell">File %f</shell>
+    <shell lang="shell">File.uses %1</shell>
+  </action>
+</current_file_uses>
 @end smallexample
 
 
@@ -6812,10 +6827,13 @@ instance, the following command opens an xterm (on Unix systems only)
 in the current directory, which depends on the context.
 
 @smallexample
-<action "xterm in current directory">
-  <shell lang="shell">cd %d</shell>
-  <external>xterm</external>
-</action>
+<?xml version="1.0" ?>
+<xterm_directory>
+  <action "xterm in current directory">
+    <shell lang="shell">cd %d</shell>
+    <external>xterm</external>
+  </action>
+</xterm_directory>
 @end smallexample
 
 As seen in some of the examples above, some special strings are expanded by
@@ -7114,13 +7132,16 @@ If this attribute is specified, all other attributes are ignored. This is used
 to reference a named filter previously defined. Here is for instance how you
 can make an action depend on a named filter:
 
-  @smallexample
+@smallexample
+<?xml version="1.0" ?>
+<test_filter>
   <filter name="Test filter" language="ada" />
   <action name="Test action" >
      <filter id="Test filter" />
      <shell>pwd</shell>
   </action>
-  @end smallexample
+</test_filter>
+@end smallexample
 
   A number of predefined filters are predefined by GPS itself. The full list
   appears in the key shortcut editor, and is listed here:
@@ -7167,30 +7188,31 @@ When several attributes are specified for a @code{<filter>} node (which is not
 possible with @code{id}), they must all match for the action to be executed.
 
 @smallexample
+<?xml version="1.0" ?>
 <!-- The following filter will only match if the currently selected
      window is a text editor editing an Ada source file -->
-
-<filter_and name="Source editor in Ada" >
+<ada_editor>
+  <filter_and name="Source editor in Ada" >
     <filter language="ada" />
     <filter id="Source editor" />
-</filter_and>
+  </filter_and>
 
-<!-- The following action will only be executed for such an editor -->
+  <!-- The following action will only be executed for such an editor -->
 
-<action name="Test Ada action" >
-    <filter id="Source editor in Ada" />
-    <shell>pwd</shell>
-</action>
+  <action name="Test Ada action" >
+     <filter id="Source editor in Ada" />
+     <shell>pwd</shell>
+  </action>
 
-<!--  An action with an anonymous filter. It will be executed if the
-      selected file is in Ada, even if the file was selected through
-      the project explorer  -->
+  <!--  An action with an anonymous filter. It will be executed if the
+        selected file is in Ada, even if the file was selected through
+        the project explorer  -->
 
-<action name="Test for Ada files" >
-    <filter language="ada" />
-    <shell>pwd</shell>
-</action>
-
+  <action name="Test for Ada files" >
+      <filter language="ada" />
+      <shell>pwd</shell>
+  </action>
+</ada_editor>
 @end smallexample
 
 
@@ -7361,14 +7383,17 @@ the name of the current file in the GPS console. This contextual menu is only
 displayed in source editors.
 
 @smallexample
-<action name="print current file name" >
-   <filter module="Source_Editor" />
-   <shell>echo %f</shell>
-</action>
+<?xml version="1.0" ?>
+<print>
+  <action name="print current file name" >
+    <filter module="Source_Editor" />
+    <shell>echo %f</shell>
+  </action>
 
-<contextual action="print current file name" >
-   <Title>Print Current File Name</Title>
-</contextual>
+  <contextual action="print current file name" >
+    <Title>Print Current File Name</Title>
+  </contextual>
+</print>
 @end smallexample
 
 
@@ -7401,10 +7426,13 @@ if the user choses to see both text and icons in the tool bar.
 The following example defines a new button:
 
 @smallexample
-<button action="execute my stats">
-   <title>stats</title>
-   <pixmap>/my_pixmaps/button.jpg</pixmap>
-</button>
+<?xml version="1.0" ?>
+<stats>
+  <button action="execute my stats">
+    <title>stats</title>
+    <pixmap>/my_pixmaps/button.jpg</pixmap>
+  </button>
+</stats>
 @end smallexample
 
 @c ---------------------------------------------------------------------
@@ -7434,8 +7462,11 @@ preexisting binding. The second example below deactivates the standard binding.
 
 
 @smallexample
-<key action="expand alias">control-o</key>
-<key action="Jump to matching delimiter" />
+<?xml version="1.0" ?>
+<keys>
+  <key action="expand alias">control-o</key>
+  <key action="Jump to matching delimiter" />
+</key>
 @end smallexample
 
 Multiple actions can be bound to the same key binding. The first one with a
@@ -7577,10 +7608,13 @@ Here is a small example on how the "Ada assignment" pattern was
 defined.
 
 @smallexample
-<vsearch-pattern>
-  <name>Ada: assignment</name>
-  <regexp case-sensitive="false">\b(\w+)\s*:=</regexp>
-</vsearch-pattern>
+<?xml version="1.0" ?>
+<search>
+  <vsearch-pattern>
+    <name>Ada: assignment</name>
+    <regexp case-sensitive="false">\b(\w+)\s*:=</regexp>
+  </vsearch-pattern>
+</search>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8055,10 +8089,13 @@ insensitive languages (except if corresponding case is set to
 Unchanged). @pxref{The Preferences Dialog}.
 
 @smallexample
-<case_exceptions>
-   <word>GNAT</word>
-   <word>OS_Lib</word>
-</case_exceptions>
+<?xml version="1.0" ?>
+<exceptions>
+  <case_exceptions>
+     <word>GNAT</word>
+     <word>OS_Lib</word>
+  </case_exceptions>
+</exceptions>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8145,7 +8182,7 @@ This optional attribute specifies which package should be used in the project
 to store information about this tool, in particular its switches. You cannot
 create new packages as you wish, and must use only existing packages. Most of
 the time the default value should be used, unless you are working with one of
-the predefined packages;
+the predefined packages.
 
 If this attribute is set to "ide", then the switches cannot be set for a
 specific file, only at the project level. Support for file-specific switches
@@ -8191,10 +8228,13 @@ If at least one language is specified, the switches editor page will only be
 displayed if that language is supported by the project.
 
 @smallexample
-<tool name="My Tool" >
-  <language>Ada</language>
-  <language>C</language>
-</tool>
+<?xml version="1.0" ?>
+<my_tool>
+  <tool name="My Tool" >
+    <language>Ada</language>
+    <language>C</language>
+  </tool>
+</my_tool>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8214,9 +8254,12 @@ tool. This command line is parsed as usual, e.g. quotes are taken into account
 to avoid splitting switches each time a space is encountered.
 
 @smallexample
-<tool name="My tool" >
-   <initial-cmd-line>-a -b -c</initial-cmd-line>
-</tool>
+<?xml version="1.0" ?>
+<my_tool>
+  <tool name="My tool" >
+     <initial-cmd-line>-a -b -c</initial-cmd-line>
+  </tool>
+</my_tool>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8578,11 +8621,14 @@ way when calling external commands.
 
 @ifset python
 @smallexample
-<action name="test quotes">
-  <shell lang="python">'-a -b -c'</shell>
-  <external> echo with quotes: "%1"</external>
-  <external> echo without quotes: %2</external/>
-</action>
+<?xml version="1.0" ?>
+<quotes>
+  <action name="test quotes">
+    <shell lang="python">'-a -b -c'</shell>
+    <external> echo with quotes: "%1"</external>
+    <external> echo without quotes: %2</external/>
+  </action>
+</quotes>
 @end smallexample
 @end ifset
 
@@ -8606,10 +8652,13 @@ Since this command aborts when the user presses cancel, you can
 simply put it in its own @code{<shell>} command, as in:
 
 @smallexample
-<action name="test save children">
-  <shell>MDI.save_all 0</shell>
-  <external>echo Run unless Cancel was pressed</external>
-</action>
+<?xml version="1.0" ?>
+<save_children>
+  <action name="test save children">
+    <shell>MDI.save_all 0</shell>
+    <external>echo Run unless Cancel was pressed</external>
+  </action>
+</save_children>
 @end smallexample
 
 
@@ -8644,11 +8693,14 @@ argument of the @code{get_tool_switches_as_string} command. The last external
 command is a simple output of these switches
 
 @smallexample
-<action name="Get switches for Find">
-  <shell>Project %p</shell>
-  <shell>Project.get_tool_switches_as_string %1 Find </shell>
-  <external>echo %1</external>
-</action>
+<?xml version="1.0" ?>
+<find_switches>
+  <action name="Get switches for Find">
+    <shell>Project %p</shell>
+    <shell>Project.get_tool_switches_as_string %1 Find </shell>
+    <external>echo %1</external>
+  </action>
+</find_switches>
 @end smallexample
 
 @ifset python
@@ -8658,13 +8710,16 @@ switches for the current project, and prints them out in the messages
 window. The
 
 @smallexample
-<action name="Query compiler switches">
-  <shell lang="python">GPS.Project("%p").get_attribute_as_list
-    (package="compiler",
-     attribute="default_switches",
-     index="ada")</shell>
-  <external>echo compiler switches= %1</external>
-</action>
+<?xml version="1.0" ?>
+<query_switches>
+  <action name="Query compiler switches">
+    <shell lang="python">GPS.Project("%p").get_attribute_as_list
+      (package="compiler",
+       attribute="default_switches",
+       index="ada")</shell>
+    <external>echo compiler switches= %1</external>
+  </action>
+</query_switches>
 @end smallexample
 @end ifset
 
@@ -8711,12 +8766,15 @@ The following is a short example that queries the name of a directory and a
 file name, and displays each in the Messages window.
 
 @smallexample
-<action name="query file and dir">
-  <shell lang="python">list=GPS.input_dialog (
-     "Please enter directory and file name", "Directory", "File");
-     print ("Dir=" + list[0], "File=" + list[1])
-  </shell>
-</action>
+<?xml version="1.0" ?>
+<query_file>
+  <action name="query file and dir">
+    <shell lang="python">list=GPS.input_dialog (
+       "Please enter directory and file name", "Directory", "File");
+       print ("Dir=" + list[0], "File=" + list[1])
+    </shell>
+  </action>
+</query_file>
 @end smallexample
 
 @end ifset
@@ -8757,10 +8815,13 @@ tags underneath. If it isn't specified for the action itself, its default value
 will always be the empty string, i.e. output is sent to the GPS console.
 
 @smallexample
-<action name="ls current directory" output="default output" >
-   <shell output="Current directory" >pwd</shell>
-   <external output="Current directory contents" >/bin/ls</external>
-</action>
+<?xml version="1.0" ?>
+<ls>
+  <action name="ls current directory" output="default output" >
+     <shell output="Current directory" >pwd</shell>
+     <external output="Current directory contents" >/bin/ls</external>
+  </action>
+</ls>
 @end smallexample
 
 @c --------------------------------------------------------------------------
@@ -8807,10 +8868,13 @@ also that you should leave a space at the end, in case the output itself ends
 with a quote.
 
 @smallexample
-<action name="make example" >
-   <external>make</external>
-   <shell>Locations.parse """%1 """ make_example</shell>
-</action>
+<?xml version="1.0" ?>
+<make>
+  <action name="make example" >
+     <external>make</external>
+     <shell>Locations.parse """%1 """ make_example</shell>
+  </action>
+</make>
 @end smallexample
 
 @item Auto-correcting errors
