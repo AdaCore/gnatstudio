@@ -1036,11 +1036,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Display_Local_Variables1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Process : Debugger_Process_Tab :=
-        Process_User_Data.Get (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      S : String :=
+      Top     : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process : constant Debugger_Process_Tab :=
+        Process_User_Data.Get
+          (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      S       : constant String :=
         "graph display `" & Info_Locals (Process.Debugger) & '`';
+
    begin
       Text_Output_Handler (Process, S & ASCII.LF, Is_Command => True);
       Process_User_Command (Process, S);
@@ -1053,11 +1056,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Display_Arguments1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Process : Debugger_Process_Tab :=
-        Process_User_Data.Get (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      S : String :=
+      Top     : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process : constant Debugger_Process_Tab :=
+        Process_User_Data.Get
+          (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      S       : constant String :=
         "graph display `" & Info_Args (Process.Debugger) & '`';
+
    begin
       Text_Output_Handler (Process, S & ASCII.LF, Is_Command => True);
       Process_User_Command (Process, S);
@@ -1243,15 +1249,15 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab : Debugger_Process_Tab;
+      Top     : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process : constant Debugger_Process_Tab :=
+        Process_User_Data.Get
+          (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
 
       use type Odd.Types.String_Access;
 
    begin
-      Tab := Process_User_Data.Get
-        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-
       if Top.Print_Dialog = null then
          Gtk_New (Top.Print_Dialog);
       end if;
@@ -1262,7 +1268,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       if Top.Print_Dialog.Variable /= null then
          Process_User_Command
-           (Tab, "graph print " & Top.Print_Dialog.Variable.all);
+           (Process, "graph print " & Top.Print_Dialog.Variable.all);
       end if;
    end On_Print1_Activate;
 
@@ -1274,12 +1280,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab : Debugger_Process_Tab;
+      Top     : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process : constant Debugger_Process_Tab :=
+        Process_User_Data.Get
+          (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+
    begin
-      Tab := Process_User_Data.Get
-        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Stack_Up (Tab.Debugger, True);
+      Stack_Up (Process.Debugger, True);
    end On_Up1_Activate;
 
    -----------------------
@@ -1290,12 +1298,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab : Debugger_Process_Tab;
+      Top     : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Process : constant Debugger_Process_Tab :=
+        Process_User_Data.Get
+          (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+
    begin
-      Tab := Process_User_Data.Get
-        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Stack_Down (Tab.Debugger, True);
+      Stack_Down (Process.Debugger, True);
    end On_Down1_Activate;
 
 end Main_Debug_Window_Pkg.Callbacks;
