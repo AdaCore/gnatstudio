@@ -733,8 +733,13 @@ package body Browsers.Dependency_Items is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Browser);
-      File : constant String := Select_File (Base_Directory => "");
+      File : constant String :=
+        Select_File
+          (Title             => -"Select File",
+           Use_Native_Dialog =>
+             Get_Pref (Get_Kernel (Context), Use_Native_Dialogs));
       --  ??? Should set up filters to only open file from the current project.
+
    begin
       if File /= "" then
          Examine_Dependencies (Get_Kernel (Context), File);
