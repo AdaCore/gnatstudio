@@ -683,6 +683,20 @@ package body Src_Editor_Buffer is
 
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
       Result : Boolean;
+
+      procedure Free (X : in out Line_Info_Width_Array);
+      --  Free memory associated to X.
+
+      procedure Free (X : in out Line_Info_Width_Array) is
+      begin
+         for J in X'Range loop
+            if X (J).Info /= null then
+               Free (X (J).Info.all);
+            end if;
+
+            Unchecked_Free (X (J).Info);
+         end loop;
+      end Free;
    begin
 
       --  We do not free memory associated to Buffer.Current_Command, since
@@ -721,6 +735,11 @@ package body Src_Editor_Buffer is
             if Buffer.Editable_Lines (J).Where = In_Mark then
                Free (Buffer.Editable_Lines (J).Text);
             end if;
+
+            if Buffer.Editable_Lines (J).Side_Info_Data /= null then
+               Free (Buffer.Editable_Lines (J).Side_Info_Data.all);
+               Unchecked_Free (Buffer.Editable_Lines (J).Side_Info_Data);
+            end if;
          end loop;
 
          Unchecked_Free (Buffer.Editable_Lines);
@@ -729,6 +748,11 @@ package body Src_Editor_Buffer is
       for J in Buffer.Line_Data'Range loop
          if Buffer.Line_Data (J).Enabled_Highlights /= null then
             Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
+         end if;
+
+         if Buffer.Line_Data (J).Side_Info_Data /= null then
+            Free (Buffer.Line_Data (J).Side_Info_Data.all);
+            Unchecked_Free (Buffer.Line_Data (J).Side_Info_Data);
          end if;
       end loop;
 
