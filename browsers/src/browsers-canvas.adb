@@ -609,10 +609,17 @@ package body Browsers.Canvas is
       Item    : Canvas_Item := null;
       Refresh_Items : Boolean := False)
    is
+      Old : constant Canvas_Item := Browser.Selected_Item;
+
       function Refresh_Item
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
+         It     : access Canvas_Item_Record'Class) return Boolean;
       --  Refresh the display of an item.
+
+      function Refresh_Item_Conditional
+        (Canvas : access Interactive_Canvas_Record'Class;
+         It     : access Canvas_Item_Record'Class) return Boolean;
+      --  Same as above, but don't draw items that have already been refreshed.
 
       ------------------
       -- Refresh_Item --
@@ -620,21 +627,56 @@ package body Browsers.Canvas is
 
       function Refresh_Item
         (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean
+         It   : access Canvas_Item_Record'Class) return Boolean
       is
          pragma Unreferenced (Canvas);
       begin
-         Refresh (Browser, Glide_Browser_Item (Item));
+         Refresh (Browser, Glide_Browser_Item (It));
          return True;
       end Refresh_Item;
 
+      ------------------------------
+      -- Refresh_Item_Conditional --
+      ------------------------------
+
+      function Refresh_Item_Conditional
+        (Canvas : access Interactive_Canvas_Record'Class;
+         It   : access Canvas_Item_Record'Class) return Boolean is
+      begin
+         if Old = null
+           or else (not Has_Link (Canvas, It, Old)
+                      and then not Has_Link (Canvas, Old, It))
+         then
+            Refresh (Browser, Glide_Browser_Item (It));
+         end if;
+         return True;
+      end Refresh_Item_Conditional;
+
+      Tmp : Boolean;
    begin
       Browser.Selected_Item := Item;
 
-      if Refresh_Items then
-         --  ??? We should redraw only the items that were previously
-         --  ??? highlighted, and the new ones.
-         For_Each_Item (Browser.Canvas, Refresh_Item'Unrestricted_Access);
+      if Item /= Old and then Refresh_Items then
+
+         --  Note: it might happen that some items are drawn several
+         --  times. However, it can only happen for Old and Item, or to items
+         --  that are linked to both Old and item. On the whole, we save some
+         --  time
+         if Old /= null then
+            Tmp := Refresh_Item (Browser.Canvas, Old);
+            For_Each_Item
+              (Browser.Canvas, Refresh_Item'Unrestricted_Access, Old);
+         end if;
+
+         if Item /= null then
+            Tmp := Refresh_Item (Browser.Canvas, Item);
+            For_Each_Item
+              (Browser.Canvas, Refresh_Item_Conditional'Unrestricted_Access,
+               Item);
+         end if;
+
+         --  For_Each_Item (Browser.Canvas, Refresh_Item'Unrestricted_Access);
+
          Refresh_Canvas (Browser.Canvas);
       end if;
    end Internal_Select;
