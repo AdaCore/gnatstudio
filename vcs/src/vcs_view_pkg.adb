@@ -44,8 +44,6 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 
-with Log_Editor_Window_Pkg;     use Log_Editor_Window_Pkg;
-
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -69,30 +67,9 @@ with Prj.Tree;                  use Prj.Tree;
 
 package body VCS_View_Pkg is
 
-   -----------------
-   -- Local types --
-   -----------------
-
-   type Log_Parameter is record
-      Explorer   : VCS_View_Access;
-      Kernel     : Kernel_Handle;
-      Log_Editor : Log_Editor_Window_Access;
-      VCS_Ref    : VCS_Access;
-   end record;
-   --  This type is a convenience type used to pass parameters to some
-   --  callbacks.
-
-   type Iter_Action is access
-     procedure (Explorer : access VCS_View_Record'Class;
-                Iter     : Gtk_Tree_Iter);
-   --  Any action that occurs on one row in the tree view.
-
    --------------------
    -- Local packages --
    --------------------
-
-   package Explorer_Callback is new Gtk.Handlers.User_Callback
-     (Gtk_Widget_Record, Log_Parameter);
 
    package Explorer_Selection_Foreach is
      new Selection_Foreach (VCS_View_Record);
@@ -170,11 +147,6 @@ package body VCS_View_Pkg is
    --  Status_Record.
    --  Success tells whether the information has been filled or not.
 
-   procedure Foreach_Selected_File
-     (Explorer : access VCS_View_Record'Class;
-      Action   : Iter_Action);
-   --  Run the Action for each of the selected file.
-
    function Get_Iter_From_Name
      (Explorer : access VCS_View_Record'Class;
       Name     : String) return Gtk_Tree_Iter;
@@ -185,16 +157,6 @@ package body VCS_View_Pkg is
    ---------------
    -- Callbacks --
    ---------------
-
-   procedure Log_Editor_Text_Changed
-     (Object      : access Gtk_Widget_Record'Class;
-      Parameter   : Log_Parameter);
-   --  ???
-
-   procedure Log_Editor_Close
-     (Object      : access Gtk_Widget_Record'Class;
-      Parameter   : Log_Parameter);
-   --  ???
 
    procedure Edited_Callback
      (Object      : access Gtk_Widget_Record'Class;
@@ -497,39 +459,6 @@ package body VCS_View_Pkg is
       return Null_Iter;
    end Get_Iter_From_Name;
 
-   ---------------------------
-   -- Foreach_Selected_File --
-   ---------------------------
-
-   procedure Foreach_Selected_File
-     (Explorer : access VCS_View_Record'Class;
-      Action   : Iter_Action)
-   is
-      procedure On_Selected_Item
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access);
-      --  Launch the Action for one item.
-
-      procedure On_Selected_Item
-        (Model : Gtk.Tree_Model.Gtk_Tree_Model;
-         Path  : Gtk.Tree_Model.Gtk_Tree_Path;
-         Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-         Data  : Explorer_Selection_Foreach.Data_Type_Access)
-      is
-         pragma Unreferenced (Model, Path);
-      begin
-         Action (Data, Iter);
-      end On_Selected_Item;
-
-   begin
-      Explorer_Selection_Foreach.Selected_Foreach
-        (Get_Selection (Explorer.Tree),
-         On_Selected_Item'Unrestricted_Access,
-         Explorer_Selection_Foreach.Data_Type_Access (Explorer));
-   end Foreach_Selected_File;
-
    ------------------------
    -- Get_Selected_Files --
    ------------------------
@@ -583,174 +512,6 @@ package body VCS_View_Pkg is
         (Kernel, Message, Highlight_Sloc => False, Mode => M_Type);
    end Push_Message;
 
-   -----------------------------
-   -- Log_Editor_Text_Changed --
-   -----------------------------
-
-   procedure Log_Editor_Text_Changed
-     (Object      : access Gtk_Widget_Record'Class;
-      Parameter   : Log_Parameter)
-   is
-      pragma Unreferenced (Object);
-      use String_List;
-
-      Temp_Path : List_Node := First (Parameter.Log_Editor.Files);
-      Iter      : Gtk_Tree_Iter;
-
-   begin
-      while Temp_Path /= Null_Node loop
-         Iter := Get_Iter_From_Name
-           (Parameter.Explorer,
-            Data (Temp_Path));
-
-         if Iter /= Null_Iter then
-            Set (Parameter.Explorer.Model, Iter, Log_Column,
-                 Get_Text (Parameter.Log_Editor));
-         end if;
-
-         Temp_Path := Next (Temp_Path);
-      end loop;
-   end Log_Editor_Text_Changed;
-
-   ----------------------
-   -- Log_Editor_Close --
-   ----------------------
-
-   procedure Log_Editor_Close
-     (Object      : access Gtk_Widget_Record'Class;
-      Parameter   : Log_Parameter)
-   is
-      pragma Unreferenced (Object);
-      use String_List;
-
-      Value      : GValue;
-      Iter       : Gtk_Tree_Iter;
-      Temp_Paths : List_Node := First (Parameter.Log_Editor.Files);
-
-   begin
-      if Parameter.Explorer /= null then
-         Init (Value, GType_String);
-
-         while Temp_Paths /= Null_Node loop
-            Iter := Get_Iter_From_Name
-              (Parameter.Explorer,
-               Data (Temp_Paths));
-
-            if Iter /= Null_Iter then
-               Set (Parameter.Explorer.Model,
-                    Iter, Log_Editor_Column, GObject' (null));
-            end if;
-
-            Temp_Paths := Next (Temp_Paths);
-         end loop;
-      end if;
-   end Log_Editor_Close;
-
-   --------------
-   -- Edit_Log --
-   --------------
-
-   procedure Edit_Log
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access)
-   is
-      Log_Editor       : Log_Editor_Window_Access;
-      Parameter_Object : Log_Parameter;
-
-      procedure Create_And_Launch_Log_Editor
-        (Explorer : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter);
-      --  Creates a log editor for the given row,
-      --  displays it, and connects the necessary callbacks.
-
-      procedure Create_And_Launch_Log_Editor
-        (Explorer : access VCS_View_Record'Class;
-         Iter     : Gtk_Tree_Iter)
-      is
-         Stored_Object : GObject;
-         Child         : MDI_Child;
-         File_Name     : String
-           := Get_String (Explorer.Model, Iter, Name_Column);
-      begin
-         Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
-
-         if Stored_Object = null then
-            Gtk_New (Log_Editor);
-            Parameter_Object.Log_Editor := Log_Editor;
-
-            Set_Title (Log_Editor,
-                       -"Log editor : "
-                       & Base_Name (File_Name));
-
-            Add_File_Name (Log_Editor, File_Name);
-
-            Set (Explorer.Model,
-                 Iter, Log_Editor_Column,
-                 GObject (Log_Editor));
-
-            Set_Text (Log_Editor,
-                      Get_String (Explorer.Model, Iter, Log_Column));
-
-            Explorer_Callback.Connect
-              (Log_Editor.Log_Text,
-               "insert_text",
-               Explorer_Callback.To_Marshaller
-                (Log_Editor_Text_Changed'Access),
-               Parameter_Object,
-               After => True);
-
-            Explorer_Callback.Connect
-              (Log_Editor.Log_Text,
-               "destroy",
-               Explorer_Callback.To_Marshaller (Log_Editor_Close'Access),
-               Parameter_Object);
-
-            if Explorer.Kernel = null then
-               Show_All (Log_Editor);
-            else
-               Child := Put (Get_MDI (Explorer.Kernel), Log_Editor);
-            end if;
-         end if;
-      end Create_And_Launch_Log_Editor;
-
-      use String_List;
-
-      Temp_Files : List_Node := First (Files);
-      Child      : MDI_Child;
-
-   begin
-      pragma Assert (Ref /= null);
-
-      Parameter_Object.Explorer := VCS_View_Access (Explorer);
-      Parameter_Object.Kernel := Kernel;
-      Parameter_Object.VCS_Ref := Ref;
-
-      if Explorer /= null then
-         Foreach_Selected_File
-           (Explorer, Create_And_Launch_Log_Editor'Unrestricted_Access);
-      else
-         while Temp_Files /= Null_Node loop
-            Gtk_New (Log_Editor);
-            Parameter_Object.Log_Editor := Log_Editor;
-            Set_Title
-              (Log_Editor, -"Log editor : "
-               & Base_Name (Data (Temp_Files)));
-            Add_File_Name (Log_Editor, Data (Temp_Files));
-            Set_Text (Log_Editor, "");
-
-            if Kernel = null then
-               Show_All (Log_Editor);
-            else
-               Child := Put (Get_MDI (Kernel), Log_Editor);
-            end if;
-
-            Temp_Files := Next (Temp_Files);
-         end loop;
-      end if;
-   end Edit_Log;
-
    ---------------------
    -- Edited_Callback --
    ---------------------
@@ -762,10 +523,7 @@ package body VCS_View_Pkg is
       Explorer      : constant VCS_View_Access := VCS_View_Access (Object);
       Iter          : Gtk_Tree_Iter;
       Path_String   : String := Get_String (Nth (Params, 1));
-      Text_String   : String := Get_String (Nth (Params, 2));
       Text_Value    : GValue := Nth (Params, 2);
-      Log_Editor    : Log_Editor_Window_Access;
-      Stored_Object : GObject;
 
    begin
       Iter := Get_Iter_From_String (Explorer.Model, Path_String);
@@ -775,13 +533,6 @@ package body VCS_View_Pkg is
       end if;
 
       Set_Value (Explorer.Model, Iter, Log_Column, Text_Value);
-
-      Stored_Object := Get_Object (Explorer.Model, Iter, Log_Editor_Column);
-
-      if Stored_Object /= null then
-         Log_Editor := Log_Editor_Window_Access (Stored_Object);
-         Set_Text (Log_Editor, Text_String);
-      end if;
    end Edited_Callback;
 
    ----------------------
