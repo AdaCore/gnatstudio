@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -1040,5 +1040,43 @@ package body String_Utils is
 
       List (List'Last - List2'Length + 1 .. List'Last) := List2;
    end Append;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Path : String) return Path_Iterator is
+   begin
+      return Next (Path, (First => 0, Last => Path'First - 1));
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   function Next (Path : String; Iter : Path_Iterator) return Path_Iterator is
+      Pos : Natural := Iter.Last + 1;
+   begin
+      while Pos <= Path'Last
+        and then Path (Pos) /= Path_Separator
+      loop
+         Pos := Pos + 1;
+      end loop;
+
+      return (First => Iter.Last + 1, Last => Pos);
+   end Next;
+
+   -------------
+   -- Current --
+   -------------
+
+   function Current (Path : String; Iter : Path_Iterator) return String is
+   begin
+      if Iter.First <= Path'Last then
+         return Path (Iter.First .. Iter.Last - 1);
+      else
+         return "";
+      end if;
+   end Current;
 
 end String_Utils;

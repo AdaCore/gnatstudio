@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -243,6 +243,18 @@ package String_Utils is
    --  For example, "directory_1/directory_2/directory_3/filename"
    --  is shortened as "[...]/directory_3/filename"
 
+   type Path_Iterator is private;
+
+   function Start (Path : String) return Path_Iterator;
+   --  Return the first directory in Path
+
+   function Next (Path : String; Iter : Path_Iterator) return Path_Iterator;
+   --  Return the next iterator in Path
+
+   function Current (Path : String; Iter : Path_Iterator) return String;
+   --  Return the current directory, or the empty string if there is no more
+   --  directory.
+
    ---------------------------
    -- C String manipulation --
    ---------------------------
@@ -258,4 +270,9 @@ private
    pragma Inline (Skip_Blanks);
    pragma Inline (Skip_To_Char);
    pragma Inline (Copy_String);
+
+   type Path_Iterator is record
+      First, Last : Natural;
+   end record;
+
 end String_Utils;
