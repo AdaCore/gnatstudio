@@ -21,6 +21,7 @@
 with Glib;
 with Gdk.Color;
 with Gdk.Font;
+with Gdk.Rectangle;
 with Gtk.Box;
 with Gtk.Layout;
 with Gtk.Menu;
@@ -164,6 +165,14 @@ package Odd.Text_Boxes is
       X, Y : Glib.Gint) return String;
    --  Return the entity pointed to by the mouse.
 
+   procedure Get_Entity_Area
+     (Box    : access Odd_Text_Box_Record'Class;
+      X, Y   : in Glib.Gint;
+      Area   : out Gdk.Rectangle.Gdk_Rectangle;
+      Entity : in out Odd.Types.String_Access);
+   --  Return the entity pointed to by the mouse, as well as the smallest
+   --  rectangle containing the entity. The X,Y coordinates of the rectangle
+   --  should be relative to the X,Y arguments passed to the procedure.
 
 private
    type Odd_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with record
