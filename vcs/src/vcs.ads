@@ -115,11 +115,7 @@ package VCS is
 
    procedure Get_Status
      (Rep         : access VCS_Record;
-      Filenames   :        String_List.List;
-      Get_Status  :        Boolean          := True;
-      Get_Version :        Boolean          := True;
-      Get_Tags    :        Boolean          := False;
-      Get_Users   :        Boolean          := False) is abstract;
+      Filenames   :        String_List.List) is abstract;
    --  Return the status of a list of files.
    --  The returned File_Status_Record is to be filled only with information
    --  that have the corresponding parameter set to True, all the other fields
@@ -186,6 +182,11 @@ package VCS is
      (Rep       : access VCS_Record;
       Filenames : String_List.List) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
+
+   procedure Revert
+     (Rep       : access VCS_Record;
+      Filenames : String_List.List) is abstract;
+   --  Obtain the files in Filenames from their respective checked-in versions.
 
    procedure Diff
      (Rep       : access VCS_Record;
