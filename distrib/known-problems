@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.0
 
+- File selector is slow to list large directories under UNIX.
+  Problem:    Under non-Windows systems, the file selector can be slow to list
+              the contents of large directories.
+  Workaround: Type the name of the file/directory in the bottom entry.
+
 - E308-006 Removing main files from project doesn't update Executables attribute
   Problem:    If you remove some main units from your project through the
               Project Properties dialog, the attribute Executables is not updated
