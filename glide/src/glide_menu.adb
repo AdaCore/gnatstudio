@@ -30,6 +30,7 @@ with Glide_Intl;                   use Glide_Intl;
 
 with Glide_Kernel;                 use Glide_Kernel;
 with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;         use Glide_Kernel.Project;
 
 with Glide_Main_Window;            use Glide_Main_Window;
@@ -200,6 +201,7 @@ package body Glide_Menu is
    begin
       Save_Desktop (Top.Kernel);
 
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -214,9 +216,10 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Object, Action, Widget);
+      pragma Unreferenced (Action, Widget);
+      Top : constant Glide_Window := Glide_Window (Object);
    begin
-      null;
+      Edit_Preferences (Top.Kernel);
 
    exception
       when E : others =>
