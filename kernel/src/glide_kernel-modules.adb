@@ -1420,8 +1420,11 @@ package body Glide_Kernel.Modules is
 
       else
          declare
-            F : constant String := Find_Source_File
-              (Kernel, Filename, True);
+            F : constant String := Get_Full_Path_From_File
+              (Registry        => Get_Registry (Kernel),
+               Filename        => Filename,
+               Use_Source_Path => True,
+               Use_Object_Path => False);
          begin
             if Is_Absolute_Path (F) then
                File := new String'(F);
@@ -1469,10 +1472,11 @@ package body Glide_Kernel.Modules is
 
       if From_Path then
          declare
-            Full : constant String := Find_On_Path
-              (Project   => Get_Project (Kernel),
-               Filename  => Filename,
-               Recursive => True);
+            Full : constant String := Get_Full_Path_From_File
+              (Registry        => Get_Registry (Kernel),
+               Filename        => Filename,
+               Use_Source_Path => True,
+               Use_Object_Path => True);
          begin
             File_Found := Full /= Filename;
 
@@ -1483,20 +1487,9 @@ package body Glide_Kernel.Modules is
       end if;
 
       if not File_Found then
-         declare
-            F : constant String := Find_Source_File
-              (Kernel, Filename, True);
-         begin
-            --  If the file was found in one of the projects
-            if Is_Absolute_Path (F) then
-               Set_String (Value (1), F);
-
-            --  Else just open the relative paths. This is mostly intended
-            --  for files opened from the command line.
-            else
-               Set_String (Value (1), Normalize_Pathname (Filename));
-            end if;
-         end;
+         --  Else just open the relative paths. This is mostly intended
+         --  for files opened from the command line.
+         Set_String (Value (1), Normalize_Pathname (Filename));
       end if;
 
       Init (Value (2), Glib.GType_Int);
@@ -1961,6 +1954,37 @@ package body Glide_Kernel.Modules is
         (Kernel.Modules_Data).Search_Regexps (Num).Regexp.all;
    end Get_Nth_Search_Regexp;
 
+   ----------------------
+   -- Commands_As_List --
+   ----------------------
+
+   function Commands_As_List
+     (Prefix : String;
+      Kernel : access Glib.Object.GObject_Record'Class)
+      return String_List_Utils.String_List.List
+   is
+      use String_List_Utils.String_List;
+      use type Command_List.List_Node;
+      L       : String_List_Utils.String_List.List := Null_List;
+      Current : Command_List.List_Node :=
+        Command_List.First (Kernel_Handle (Kernel).Commands_List);
+   begin
+      while Current /= Command_List.Null_Node loop
+         declare
+            S : constant String := Command_List.Data (Current).Command.all;
+         begin
+            if S'Length >= Prefix'Length
+              and then S (S'First .. S'First + Prefix'Length - 1) = Prefix
+            then
+               Prepend (L, S);
+            end if;
+         end;
+         Current := Command_List.Next (Current);
+      end loop;
+
+      return L;
+   end Commands_As_List;
+
    ----------------------------
    -- Module_Command_Handler --
    ----------------------------
@@ -1975,6 +1999,8 @@ package body Glide_Kernel.Modules is
       use type Module_List.List_Node;
 
       Command_Node : Command_List.List_Node;
+      L            : String_List_Utils.String_List.List;
+      L2           : String_List_Utils.String_List.List_Node;
       Args_Node    : List_Node;
       Success      : Boolean;
       Result       : GNAT.OS_Lib.String_Access;
@@ -1997,30 +2023,36 @@ package body Glide_Kernel.Modules is
       if Command = "help" then
          if Is_Empty (Args) then
             Insert (-"The following commands are defined:");
-         end if;
 
-         Command_Node := Command_List.First (Kernel.Commands_List);
+            L := Commands_As_List ("", Kernel);
+            String_List_Utils.Sort (L);
 
-         while Command_Node /= Command_List.Null_Node loop
-            declare
-               Data : constant Command_Information :=
-                 Command_List.Data (Command_Node);
-            begin
-               if Is_Empty (Args) then
-                  Insert ("  " & Data.Command.all);
-               else
+            L2 := First (L);
+            while L2 /= Null_Node loop
+               Insert (" " & Data (L2));
+               L2 := String_List_Utils.String_List.Next (L2);
+            end loop;
+
+            Free (L);
+
+            Insert
+              (-"Type ""help <cmd>"" to get help about a specific command.");
+
+         else
+            Command_Node := Command_List.First (Kernel.Commands_List);
+
+            while Command_Node /= Command_List.Null_Node loop
+               declare
+                  Data : constant Command_Information :=
+                    Command_List.Data (Command_Node);
+               begin
                   if Data.Command.all = Head (Args) then
                      Insert (Data.Help.all);
                   end if;
-               end if;
-            end;
+               end;
 
-            Command_Node := Command_List.Next (Command_Node);
-         end loop;
-
-         if Is_Empty (Args) then
-            Insert (
-              -"Type ""help <cmd>"" to get help about a specific command.");
+               Command_Node := Command_List.Next (Command_Node);
+            end loop;
          end if;
 
       elsif Command = "echo" then

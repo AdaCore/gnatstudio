@@ -135,7 +135,9 @@ with Gtkada.MDI;
 with Src_Info;
 with Language;
 with Basic_Types; use Basic_Types;
+with String_List_Utils;
 with Commands; use Commands;
+with Src_Info.Queries;  use Src_Info.Queries;
 
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -989,6 +991,12 @@ package Glide_Kernel.Modules is
       Command : String;
       Args    : String_List_Utils.String_List.List);
    --  Same as above, the arguments not included in Command.
+
+   function Commands_As_List
+     (Prefix : String;
+      Kernel : access Glib.Object.GObject_Record'Class)
+      return String_List_Utils.String_List.List;
+   --  Return the list of commands. The list must be freed by the caller.
 
 private
 
