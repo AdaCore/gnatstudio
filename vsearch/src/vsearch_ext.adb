@@ -54,6 +54,7 @@ with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 with Find_Utils;            use Find_Utils;
 with GUI_Utils;             use GUI_Utils;
 with Generic_List;
+with Histories;             use Histories;
 
 with Ada.Exceptions;        use Ada.Exceptions;
 
@@ -62,6 +63,10 @@ with Traces; use Traces;
 package body Vsearch_Ext is
 
    Me : constant Debug_Handle := Create ("Vsearch_Project");
+
+   Pattern_Hist_Key : constant History_Key := "search_patterns";
+   Replace_Hist_Key : constant History_Key := "search_replace";
+   --  The key for the histories.
 
    procedure Free (Data : in out Search_Module_Data);
    --  Free the memory associated with Data
@@ -392,6 +397,8 @@ package body Vsearch_Ext is
            Widget_List.Null_List
          then
             Add_Unique_Combo_Entry (Vsearch.Pattern_Combo, Pattern);
+            Add_To_History
+              (Get_History (Vsearch.Kernel).all, Pattern_Hist_Key, Pattern);
 
             --  It sometimes happen that another entry is selected, for some
             --  reason. This also resets the options to the unwanted selection,
@@ -404,6 +411,9 @@ package body Vsearch_Ext is
 
          Add_Unique_Combo_Entry
            (Vsearch.Replace_Combo, Get_Text (Vsearch.Replace_Entry));
+         Add_To_History
+           (Get_History (Vsearch.Kernel).all, Replace_Hist_Key,
+            Get_Text (Vsearch.Replace_Entry));
       end if;
 
       if Vsearch.Last_Search_Context /= null then
@@ -810,6 +820,11 @@ package body Vsearch_Ext is
    begin
       Vsearch_Pkg.Initialize (Vsearch, Handle);
       Vsearch.Kernel := Handle;
+
+      Get_History
+        (Get_History (Handle).all, Pattern_Hist_Key, Vsearch.Pattern_Combo);
+      Get_History
+        (Get_History (Handle).all, Replace_Hist_Key, Vsearch.Replace_Combo);
 
       --  Create the widget
 
