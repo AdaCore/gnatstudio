@@ -746,6 +746,21 @@ package body Debugger.Gdb is
    procedure Close (Debugger : access Gdb_Debugger) is
       Result : Expect_Match;
    begin
+      --  If the debugger process is dead, do not attempt to communicate
+      --  with the underlying process.
+      if Get_Descriptor (Get_Process (Debugger)) = null
+        or else Get_Pid
+          (Get_Descriptor
+               (Get_Process (Debugger)).all)
+         in GNAT.Expect.Invalid_Pid .. Null_Pid
+      then
+         Free (Debugger.Process);
+         Free (Debugger.Remote_Host);
+         Free (Debugger.Remote_Target);
+         Free (Debugger.Remote_Protocol);
+         return;
+      end if;
+
       --  In case the debugger was waiting for some input, or was busy
       --  processing a command.
       --  Try to handle case were gdb is waiting on a user question.
