@@ -58,6 +58,7 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with GVD.Preferences;
 with Glide_Intl;                use Glide_Intl;
@@ -137,8 +138,12 @@ package body Browsers.Canvas is
    procedure Destroyed (Browser : access Gtk_Widget_Record'Class);
    --  Called when the browser is destroyed
 
-   procedure On_Preferences_Changed
-     (Browser : access Gtk_Widget_Record'Class);
+   type Preferences_Hook_Record is new Hook_No_Args_Record with record
+      Browser : General_Browser;
+   end record;
+   type Preferences_Hook is access all Preferences_Hook_Record'Class;
+   procedure Execute (Hook : Preferences_Hook_Record;
+                      Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
    procedure Compute_Parents
@@ -285,6 +290,7 @@ package body Browsers.Canvas is
       Parents_Pixmap  : String := Stock_Go_Back;
       Children_Pixmap : String := Stock_Go_Forward)
    is
+      Hook : Preferences_Hook;
       Scrolled : Gtk_Scrolled_Window;
       Canvas : Image_Canvas;
    begin
@@ -306,8 +312,6 @@ package body Browsers.Canvas is
       Add (Scrolled, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
       Browser.Kernel := Kernel_Handle (Kernel);
-
-      On_Preferences_Changed (Browser);
 
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
       Set_Auto_Layout (Browser.Canvas, False);
@@ -338,10 +342,11 @@ package body Browsers.Canvas is
          Gtkada.Handlers.Return_Callback.To_Marshaller (Key_Press'Access),
          Browser);
 
-      Widget_Callback.Object_Connect
-        (Kernel, "preferences_changed",
-         Widget_Callback.To_Marshaller (On_Preferences_Changed'Access),
-         Browser);
+      Hook := new Preferences_Hook_Record;
+      Hook.Browser := General_Browser (Browser);
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, Hook, Watch => GObject (Browser));
+      Execute (Hook.all, Kernel);
    end Initialize;
 
    ---------------
@@ -368,67 +373,70 @@ package body Browsers.Canvas is
       Unref (Image_Canvas (B.Canvas).Bg_GC);
    end Destroyed;
 
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Preferences_Changed
-     (Browser : access Gtk_Widget_Record'Class)
+   procedure Execute
+     (Hook : Preferences_Hook_Record;
+      Kernel : access Kernel_Handle_Record'Class)
    is
-      B               : constant General_Browser := General_Browser (Browser);
-      Kernel          : constant Kernel_Handle := Get_Kernel (B);
       Error           : GError;
       Iter            : Item_Iterator;
       Annotation_Font : Pango_Font_Description;
 
    begin
-      if Realized_Is_Set (B) then
-         B.Selected_Link_Color := Get_Pref (Kernel, Selected_Link_Color);
-         B.Unselected_Link_Color := Get_Pref (Kernel, Unselected_Link_Color);
+      if Realized_Is_Set (Hook.Browser) then
+         Hook.Browser.Selected_Link_Color :=
+           Get_Pref (Kernel, Selected_Link_Color);
+         Hook.Browser.Unselected_Link_Color :=
+           Get_Pref (Kernel, Unselected_Link_Color);
 
          Set_Foreground
-           (B.Selected_Item_GC,
+           (Hook.Browser.Selected_Item_GC,
             Get_Pref (Kernel, Glide_Kernel.Preferences.Selected_Item_Color));
          Set_Foreground
-           (B.Parent_Linked_Item_GC,
+           (Hook.Browser.Parent_Linked_Item_GC,
             Get_Pref (Kernel, Parent_Linked_Item_Color));
          Set_Foreground
-           (B.Child_Linked_Item_GC,
+           (Hook.Browser.Child_Linked_Item_GC,
             Get_Pref (Kernel, Child_Linked_Item_Color));
          Set_Foreground
-           (B.Text_GC, Get_Pref (B.Kernel, Browsers_Hyper_Link_Color));
+           (Hook.Browser.Text_GC,
+            Get_Pref (Kernel, Browsers_Hyper_Link_Color));
          Set_Foreground
-           (B.Title_GC, Get_Pref (B.Kernel, GVD.Preferences.Title_Color));
-         Set_Foreground (Image_Canvas (B.Canvas).Bg_GC,
-                         Get_Pref (B.Kernel, Browsers_Bg_Color));
+           (Hook.Browser.Title_GC,
+            Get_Pref (Kernel, GVD.Preferences.Title_Color));
+         Set_Foreground (Image_Canvas (Hook.Browser.Canvas).Bg_GC,
+                         Get_Pref (Hook.Browser.Kernel, Browsers_Bg_Color));
       end if;
 
       Annotation_Font := Copy (Get_Pref (Kernel, Default_Font));
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
-      Configure (B.Canvas, Annotation_Font => Annotation_Font);
+      Configure (Hook.Browser.Canvas, Annotation_Font => Annotation_Font);
       Free (Annotation_Font);
 
-      Image_Canvas (B.Canvas).Draw_Grid :=
+      Image_Canvas (Hook.Browser.Canvas).Draw_Grid :=
         Get_Pref (Kernel, Browsers_Draw_Grid);
 
-      if Image_Canvas (B.Canvas).Background /= null then
-         Unref (Image_Canvas (B.Canvas).Background);
+      if Image_Canvas (Hook.Browser.Canvas).Background /= null then
+         Unref (Image_Canvas (Hook.Browser.Canvas).Background);
       end if;
 
       if Get_Pref (Kernel, Browsers_Bg_Image) /= "" then
          Gdk_New_From_File
-           (Image_Canvas (B.Canvas).Background,
+           (Image_Canvas (Hook.Browser.Canvas).Background,
             Filename => Get_Pref (Kernel, Browsers_Bg_Image),
             Error    => Error);
       else
-         Image_Canvas (B.Canvas).Background := null;
+         Image_Canvas (Hook.Browser.Canvas).Background := null;
       end if;
 
-      On_Zoom (B.Canvas);
+      On_Zoom (Hook.Browser.Canvas);
 
-      Iter := Start (B.Canvas);
+      Iter := Start (Hook.Browser.Canvas);
       while Get (Iter) /= null loop
          Set_Font_Description
            (Browser_Item (Get (Iter)).Title_Layout,
@@ -438,8 +446,8 @@ package body Browsers.Canvas is
          Next (Iter);
       end loop;
 
-      Refresh_Canvas (B.Canvas);
-   end On_Preferences_Changed;
+      Refresh_Canvas (Hook.Browser.Canvas);
+   end Execute;
 
    ---------------------------
    -- Setup_Default_Toolbar --
