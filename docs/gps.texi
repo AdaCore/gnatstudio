@@ -5440,6 +5440,9 @@ Any file in the @file{customize} directory will be loaded by GPS at
 start up. Alternatively, you can also put system wide customization files
 under the directory @file{<INSTALL>/share/gps/customize}, where
 @file{<INSTALL>} is the name of the GPS installation directory.
+Files in the system directory are loaded before the files in the local
+directory, so that you can override locally any definition from the system
+directory.
 
 @cindex Unix
 @cindex Windows
@@ -6791,6 +6794,23 @@ you wish, e.g:
 @smallexample
 >>> e=GPS.Entity (name="foo", file="file.adb")
 @end smallexample
+
+On startup, GPS will automatically import (with python's @code{import}
+command) all the files with the extension @file{.py} found in the directory
+@file{$HOME/.gps/python_startup}. These files are loaded only after all
+standard GPS modules have been loaded, as well as the custom files, but
+before the script file or batch commands specified on the command lines
+with the @code{--eval} or @code{--load} switches.
+
+As a result, one can use the usual GPS functions exported to python in these
+startup scripts. Likewise, the script run from the command line can use
+functions defined in the startup files.
+
+Since the @code{import} command is used, the functions defined in this
+modules will only be accessible by prefixing their name by the name of the
+file in which they are defined. For instance if a file @file{mystartup.py}
+is copied to the startup directory, and defines the function @code{func},
+then the latter will be accessible in GPS through @code{mystartup.func}.
 
 @end ifset
 
