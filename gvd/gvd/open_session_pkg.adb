@@ -35,7 +35,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Debugger; use Debugger;
 with Odd.Process; use Odd.Process;
 with Odd.Strings; use Odd.Strings;
-with Process_Proxies; use Process_Proxies;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 with Unchecked_Deallocation;
@@ -410,10 +409,6 @@ begin
          Tab            : Debugger_Process_Tab;
          Program        : Program_Descriptor;
          Index          : Natural;
-         Tmp        : Boolean;
-         Num_Events : Positive;
-         Max_Events : constant := 30;
-         --  Limit the number of events to process in one iteration
 
       begin
          --  Read the descriptors and create the debuggers.
@@ -478,19 +473,7 @@ begin
                   Process_User_Command
                     (Tab, Buffer (Index + 3 .. Last),
                      Mode => Odd.Types.Visible);
-
-                  --  Wait until the command has been processed
-
-                  while Command_In_Process (Get_Process (Tab.Debugger)) loop
-                     Num_Events := 1;
-
-                     while Gtk.Main.Events_Pending
-                       and then Num_Events <= Max_Events
-                     loop
-                        Tmp := Gtk.Main.Main_Iteration;
-                        Num_Events := Num_Events + 1;
-                     end loop;
-                  end loop;
+                  Wait_User_Command (Tab);
                end if;
             end if;
          end loop;
