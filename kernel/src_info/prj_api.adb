@@ -26,6 +26,7 @@ with Prj.Part;         use Prj.Part;
 with Prj.Attr;         use Prj.Attr;
 with Prj.Util;         use Prj.Util;
 with Prj.Ext;          use Prj.Ext;
+with Prj.PP;           use Prj.PP;
 with Prj_Normalize;    use Prj_Normalize;
 with Snames;           use Snames;
 pragma Elaborate_All (Snames);
@@ -40,6 +41,7 @@ with String_Utils;     use String_Utils;
 with Ada.Exceptions;   use Ada.Exceptions;
 with Project_Browsers; use Project_Browsers;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Text_IO; use Ada.Text_IO;
 
 with Glide_Intl;    use Glide_Intl;
 
@@ -3042,6 +3044,58 @@ package body Prj_API is
          return Sources;
       end;
    end Source_Dirs;
+
+   ------------------
+   -- Save_Project --
+   ------------------
+
+   procedure Save_Project
+     (Project   : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean := False)
+   is
+      File : File_Type;
+
+      procedure Internal_Write_Char (C : Character);
+      procedure Internal_Write_Str (S : String);
+
+      -------------------------
+      -- Internal_Write_Char --
+      -------------------------
+
+      procedure Internal_Write_Char (C : Character) is
+      begin
+         Put (File, C);
+      end Internal_Write_Char;
+
+      ------------------------
+      -- Internal_Write_Str --
+      ------------------------
+
+      procedure Internal_Write_Str (S : String) is
+      begin
+         Put (File, S);
+      end Internal_Write_Str;
+
+      With_Clause : Project_Node_Id;
+      Name : constant String := Get_Name_String (Path_Name_Of (Project));
+
+   begin
+      Create (File, Mode => Out_File, Name => Name);
+      Pretty_Print
+        (Project => Project,
+         Eliminate_Null_Statements => True,
+         W_Char => Internal_Write_Char'Unrestricted_Access,
+         W_Str  => Internal_Write_Str'Unrestricted_Access);
+      Close (File);
+
+      if Recursive then
+         With_Clause := First_With_Clause_Of (Project);
+         while With_Clause /= Empty_Node loop
+            Save_Project (Project_Node_Of (With_Clause), Recursive);
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+      end if;
+   end Save_Project;
 
    -------------------------------------
    -- Register_Default_Naming_Schemes --

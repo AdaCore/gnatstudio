@@ -110,6 +110,12 @@ package Prj_API is
    function Source_Dirs (Project : Prj.Project_Id) return String_Id_Array;
    --  Return the list of source directories for Prj, as an array
 
+   procedure Save_Project
+     (Project   : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean := False);
+   --  Save the project to the corresponding file.
+   --  If Recursive is True, all the imported projects are saved as well.
+
    --------------------
    -- Creating nodes --
    --------------------
