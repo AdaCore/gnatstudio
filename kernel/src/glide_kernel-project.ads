@@ -111,11 +111,11 @@ package Glide_Kernel.Project is
    --  Depending on the preferences, this might open a new view of the project
    --  editor, or simply select the existing one.
 
-   function Get_Source_Files (Handle : access Kernel_Handle_Record)
-      return GNAT.OS_Lib.Argument_List;
+   function Get_Source_Files
+     (Handle : access Kernel_Handle_Record) return GNAT.OS_Lib.Argument_List;
    --  Return the list of source files belonging to the project described in
-   --  Handle. Only the direct sources of the project are currently return, ie
-   --  not those found in subprojects.
-   --  It is the caller's responsability to free the list
+   --  Handle. Only the direct sources of the project are currently returned,
+   --  i.e. not those found in subprojects.
+   --  It is the caller's responsability to free the list.
 
 end Glide_Kernel.Project;
