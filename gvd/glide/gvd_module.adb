@@ -83,7 +83,6 @@ with Glide_Intl;                use Glide_Intl;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
 with GUI_Utils;                 use GUI_Utils;
-with String_Utils;              use String_Utils;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -920,15 +919,15 @@ package body GVD_Module is
             declare
                Ent : constant String := Entity_Name_Information (Entity);
             begin
-               Gtk_New (Mitem, -"Print " & Krunch (Ent));
+               Gtk_New (Mitem, -"Print " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
                   Context_Callback.To_Marshaller (Print_Variable'Access),
                   Selection_Context_Access (Context));
-               Gtk_New (Mitem, -"Display " & Krunch (Ent));
+               Gtk_New (Mitem, -"Display " & Ent);
                Append (Submenu, Mitem);
-                  Context_Callback.Connect
+               Context_Callback.Connect
                  (Mitem, "activate",
                   Context_Callback.To_Marshaller
                     (Graph_Display_Variable'Access),
@@ -941,7 +940,7 @@ package body GVD_Module is
                if Lang /= null then
                   declare
                      Ent_Deref : constant String :=
-                       Krunch (Dereference_Name (Lang, Ent));
+                       Dereference_Name (Lang, Ent);
                   begin
                      Gtk_New (Mitem, -"Print " & Ent_Deref);
                      Append (Submenu, Mitem);
@@ -960,7 +959,7 @@ package body GVD_Module is
                   end;
                end if;
 
-               Gtk_New (Mitem, -"Set value of " & Krunch (Ent));
+               Gtk_New (Mitem, -"Set value of " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
@@ -968,7 +967,7 @@ package body GVD_Module is
                     (Set_Value'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Mitem, -"View memory at address of " & Krunch (Ent));
+               Gtk_New (Mitem, -"View memory at address of " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
@@ -977,7 +976,7 @@ package body GVD_Module is
                   Selection_Context_Access (Context));
                Gtk_New (Mitem);
                Append (Submenu, Mitem);
-               Gtk_New (Mitem, -"Set breakpoint on " & Krunch (Ent));
+               Gtk_New (Mitem, -"Set breakpoint on " & Ent);
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
