@@ -22,9 +22,12 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with Commands;                  use Commands;
 with Commands.Interactive;      use Commands.Interactive;
@@ -66,7 +69,6 @@ package body Vdiff2_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-
       Tools        : constant String := '/' & (-"Tools") & '/'
         & (-"Visual Diff") & '/';
    begin
@@ -106,7 +108,6 @@ package body Vdiff2_Module is
          Kernel                  => Kernel,
          Module_Name             => Vdiff_Module_Name,
          Priority                => Default_Priority,
-         Mime_Handler            => Mime_Action'Access,
          Contextual_Menu_Handler => VDiff_Contextual'Access);
 
       Diff3_Cmd := Param_Spec_String
@@ -173,10 +174,9 @@ package body Vdiff2_Module is
       Register_Property
         (Kernel, Param_Spec (Diff_Fine_Change_Color), -"Visual diff");
 
-      Kernel_Callback.Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),
-         Kernel_Handle (Kernel));
+      Add_Hook
+        (Kernel, Preferences_Changed_Hook, On_Preferences_Changed'Access);
+      Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
 
       Register_Menu
         (Kernel, Tools, -"Compare Two Files...", "",

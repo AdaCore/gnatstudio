@@ -25,14 +25,13 @@ with Glib.Values;          use Glib.Values;
 
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
+with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
 
 package Vdiff2_Module.Callback is
 
-   function Mime_Action
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
+   function Diff_Hook
+     (Kernel : access Kernel_Handle_Record'Class; Data : Hooks_Data'Class)
+      return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    procedure On_Compare_Three_Files
@@ -62,7 +61,7 @@ package Vdiff2_Module.Callback is
    --  Interactive command handler for the Visual_Diff module.
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle);
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
 
    procedure On_Ref_Change

@@ -27,8 +27,9 @@ with Gtkada.Dialogs;                    use Gtkada.Dialogs;
 with Gtk.Window;                        use Gtk.Window;
 
 with Glide_Kernel;                      use Glide_Kernel;
-with Glide_Kernel.Modules;              use Glide_Kernel.Modules;
+with Glide_Kernel.Contexts;             use Glide_Kernel.Contexts;
 with Glide_Kernel.Preferences;          use Glide_Kernel.Preferences;
+with Glide_Kernel.Standard_Hooks;       use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;                        use Glide_Intl;
 
 with Traces;                            use Traces;
@@ -38,7 +39,6 @@ with Diff_Utils2;                       use Diff_Utils2;
 with Vdiff2_Command_Block;              use Vdiff2_Command_Block;
 with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
-with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
 with OS_Utils;                          use OS_Utils;
 with VFS;                               use VFS;
 
@@ -301,76 +301,50 @@ package body Vdiff2_Module.Callback is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Merge_Two_Files;
 
-   -----------------
-   -- Mime_Action --
-   -----------------
+   ---------------
+   -- Diff_Hook --
+   ---------------
 
-   function Mime_Action
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
+   function Diff_Hook
+     (Kernel : access Kernel_Handle_Record'Class; Data : Hooks_Data'Class)
+      return Boolean
    is
       pragma Unreferenced (Kernel);
-      pragma Unreferenced (Mode);
-
+      D : Diff_Hooks_Args := Diff_Hooks_Args (Data);
    begin
+      if D.Orig_File = VFS.No_File then
+         if D.New_File = VFS.No_File then
+            return False;
+         end if;
 
-      if Mime_Type = Mime_Diff_File then
          declare
-            Orig_File : constant String := Get_String (Data (Data'First));
-            New_File  : constant String := Get_String (Data (Data'First + 1));
-            Diff_File : constant String := Get_String (Data (Data'First + 2));
-
-            Orig_F, New_F, Diff_F : Virtual_File;
-
+            Base     : constant String := Base_Name (D.New_File);
+            Ref_F    : constant Virtual_File :=
+              Create (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
          begin
-            if Orig_File = "" then
-               if New_File = "" then
-                  return False;
-               end if;
-
-               declare
-                  Base     : constant String := Base_Name (New_File);
-                  Ref_File : constant String := Get_Tmp_Dir & "ref$" & Base;
-                  Ref_F    : Virtual_File;
-
-               begin
-                  New_F  := Create (Full_Filename => New_File);
-                  Diff_F := Create (Full_Filename => Diff_File);
-                  Ref_F  := Create (Full_Filename => Ref_File);
-                  return Visual_Patch (Ref_F, New_F, Diff_F, True, Ref_F);
-               end;
-
-            elsif New_File = "" then
-               if Orig_File = "" then
-                  return False;
-               end if;
-
-               declare
-                  Base     : constant String := Base_Name (Orig_File);
-                  Ref_File : constant String := Get_Tmp_Dir & "ref$" & Base;
-                  Ref_F    : Virtual_File;
-               begin
-                  Orig_F := Create (Full_Filename => Orig_File);
-                  Ref_F  := Create (Full_Filename => Ref_File);
-                  Diff_F := Create (Full_Filename => Diff_File);
-                  return Visual_Patch (Orig_F, Ref_F, Diff_F, False, Ref_F);
-               end;
-
-            else
-               --  All arguments are specified
-
-               Orig_F := Create (Full_Filename => Orig_File);
-               New_F  := Create (Full_Filename => New_File);
-               Diff_F := Create (Full_Filename => Diff_File);
-               return Visual_Patch (Orig_F, New_F, Diff_F);
-            end if;
+            return Visual_Patch (Ref_F, D.New_File, D.Diff_File, True, Ref_F);
          end;
+
+      elsif D.New_File = VFS.No_File then
+         if D.Orig_File = VFS.No_File then
+            return False;
+         end if;
+
+         declare
+            Base     : constant String := Base_Name (D.Orig_File);
+            Ref_F    : constant Virtual_File := Create
+              (Full_Filename => Get_Tmp_Dir & "ref$" & Base);
+         begin
+            return Visual_Patch
+              (D.Orig_File, Ref_F, D.Diff_File, False, Ref_F);
+         end;
+
+      else
+         return Visual_Patch (D.Orig_File, D.New_File, D.Diff_File);
       end if;
 
       return False;
-   end Mime_Action;
+   end Diff_Hook;
 
    --------------------
    -- File_Closed_Cb --
@@ -451,20 +425,19 @@ package body Vdiff2_Module.Callback is
    ------------------------------
 
    procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
       Diff      : Diff_Head;
       Curr_Node : Diff_Head_List.List_Node :=
         First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
-      pragma Unreferenced (Kernel);
 
    begin
-      Register_Highlighting (K);
+      Register_Highlighting (Kernel);
 
       while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff := Data (Curr_Node);
-         Hide_Differences (K, Diff);
-         Show_Differences3 (K, Diff);
+         Hide_Differences (Kernel, Diff);
+         Show_Differences3 (Kernel, Diff);
          Set_Data (Curr_Node, Diff);
          Curr_Node := Next (Curr_Node);
       end loop;
