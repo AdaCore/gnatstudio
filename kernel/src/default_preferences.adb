@@ -986,6 +986,10 @@ package body Default_Preferences is
             Set_Text (Gtk_Entry (Ent), Data.Value.all);
          end if;
       end if;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Update_Entry;
 
    ----------------
@@ -1376,7 +1380,7 @@ package body Default_Preferences is
             Set_Editable (Spin, True);
 
             Param_Handlers.Connect
-              (Adj, "value_changed", Gint_Changed'Access, User_Data   => N);
+              (Adj, "value_changed", Gint_Changed'Access, User_Data => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Gint'Access, Adj, User_Data => N);
@@ -1396,7 +1400,7 @@ package body Default_Preferences is
             Set_Active (Toggle, Get_Pref (Manager, Prop));
 
             Param_Handlers.Connect
-              (Toggle, "toggled", Boolean_Changed'Access, User_Data   => N);
+              (Toggle, "toggled", Boolean_Changed'Access, User_Data => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Boolean'Access,
@@ -1507,7 +1511,7 @@ package body Default_Preferences is
             Param_Handlers.Connect
               (Combo, "color_changed",
                Bg_Color_Changed'Access,
-               User_Data   => N);
+               User_Data => N);
             Param_Handlers.Object_Connect
               (Manager.Pref_Editor, "preferences_changed",
                Update_Bg'Access,
