@@ -674,6 +674,7 @@ package Glide_Kernel.Modules is
    --  Check whether there is some line information, and return it. This is the
    --  location of the cursor in the file, when in an editor, or the location
    --  in the file from the messages window or the explorer for instance.
+   --  This information will not be set if multiple lines are selected.
 
    function Has_Column_Information
      (Context : access File_Selection_Context) return Boolean;
@@ -713,6 +714,7 @@ package Glide_Kernel.Modules is
    ------------------------
    -- File_Area contexts --
    ------------------------
+   --  This context is used when multiple lines are selected in an editor.
 
    type File_Area_Context is new File_Selection_Context with private;
    type File_Area_Context_Access is access all File_Area_Context'Class;
