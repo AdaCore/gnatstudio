@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.1.1
 
+- Parsing unconstrainted Ada arrays
+  Problem:    Some arrays are incorrectly displayed by GVD, and all the items
+              appear to have an index equal to 0.
+  Workaround: Try to display a slice of the array ("graph display A(2..5)")
+
 - Display the manual with no open debugger
   Problem:    It isn't possible to display the GVD manual (from the menu
               Help->Manual) when no debugger is currently open.
@@ -8,13 +13,11 @@ Known Problems fixed in GVD 1.1.1
 - Parsing C++ classes with virtual methods
   Problem:    When a class defines virtual methods, it has an extra invisible
               fields that breaks the display in the canvas.
-
   Workaround: Use the tooltips to examine the class
 
 - Parsing C++ classes with no field
   Problem:    Gvd isn't able to correctly parse C++ classes that do not define
               any new field, but only methods.
-
   Workaround: Use the tooltips to examine the class
 
 
