@@ -776,16 +776,16 @@ package body GVD_Module is
       use Debugger;
 
    begin
+      Push_State (K, Busy);
+
       --  Initial the debugger if necessary
       if Page.Debugger = null then
-         Push_State (K, Busy);
          Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
          Set_Sensitive (K, True);
          Page.Destroy_Id := Widget_Callback.Object_Connect
            (Top, "destroy",
             Widget_Callback.To_Marshaller (On_Destroy_Window'Access),
             Page);
-         Pop_State (K);
       end if;
 
       --  Load a file if necessary
@@ -799,6 +799,8 @@ package body GVD_Module is
                Insert (K, "File not found: " & Full & Data.File);
          end;
       end if;
+
+      Pop_State (K);
 
    exception
       when E : others =>
