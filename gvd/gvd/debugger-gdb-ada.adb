@@ -198,6 +198,7 @@ package body Debugger.Gdb.Ada is
 
                   Add_Ancestor (Class_Type (Result.all), 1,
                                 Class_Type_Access (Parent));
+                  Set_Type_Name (Parent, Type_Str (Index .. Last - 1));
 
                   --  Get the child (skip "with record")
 
