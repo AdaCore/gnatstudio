@@ -1581,8 +1581,8 @@ As an alternative to creating new menu items, you can create new
 buttons on the toolbar, with exactly the same syntax, by using
 the @file{<Toolbar_Item>} tag in place of the @file{<Menu_Item>} tag.
 Within this tag, the tag @file{<Pixmap>} can be used to indicate
-the location of an image file (of the type @file{jpeg}, @file{gif} or
-@file{xpm}) to be used as icon for the button. An empty @file{<Toolbar_Item>}
+the location of an image file (of the type @file{jpeg}, @file{png}, @file{gif}
+or @file{xpm}) to be used as icon for the button. An empty @file{<Toolbar_Item>}
 tag indicates a separator in the toolbar.
 
 @smallexample
