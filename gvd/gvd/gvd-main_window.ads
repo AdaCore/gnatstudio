@@ -65,6 +65,10 @@ package GVD.Main_Window is
       Thread_Dialog       : Thread_Dialog_Access;
       Task_Dialog         : Task_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
+      Cont_Button,
+      Step_Button,
+      Next_Button,
+      Finish_Button       : Gtk.Widget.Gtk_Widget;
       Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
