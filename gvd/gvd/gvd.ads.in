@@ -47,6 +47,10 @@ package GVD is
    Max_Tasks : constant := 999;
    --  Maximum number of tasks/threads displayed in the tasks/threads windows.
 
+   Max_PD : constant := 99;
+   --  Maximum number of protection domains displayed in the
+   --  protection domain window.
+
    Max_Column_Width : constant := 200;
    --  Maximum width (in pixels) for a column in a list.
 
