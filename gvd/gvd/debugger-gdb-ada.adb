@@ -323,6 +323,7 @@ package body Debugger.Gdb.Ada is
 
       if Looking_At (Type_Str, Tmp_Index, "array (<>)") then
          Result := New_Access_Type;
+         Set_Type_Name (Result, Type_Str);
          return;
       end if;
 
