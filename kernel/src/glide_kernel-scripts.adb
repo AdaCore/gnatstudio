@@ -23,6 +23,8 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glib.Object;          use Glib.Object;
 with Glide_Intl;           use Glide_Intl;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
@@ -97,6 +99,7 @@ package body Glide_Kernel.Scripts is
    Col_Cst        : aliased constant String := "column";
    Shared_Lib_Cst : aliased constant String := "shared_lib";
    Module_Cst     : aliased constant String := "module";
+   Msg_Cst        : aliased constant String := "msg";
    Project_Cmd_Parameters : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
    Insmod_Cmd_Parameters  : constant Cst_Argument_List :=
@@ -105,6 +108,8 @@ package body Glide_Kernel.Scripts is
      (Name_Cst'Access, File_Cst'Access, Line_Cst'Access, Col_Cst'Access);
    File_Cmd_Parameters     : constant Cst_Argument_List :=
      (1 => Name_Cst'Access);
+   Dialog_Cmd_Parameters   : constant Cst_Argument_List :=
+     (1 => Msg_Cst'Access);
 
    ----------
    -- Free --
@@ -431,6 +436,19 @@ package body Glide_Kernel.Scripts is
                Current := Module_List.Next (Current);
             end loop;
          end;
+
+      elsif Command = "dialog" then
+         Name_Parameters (Data, Dialog_Cmd_Parameters);
+         declare
+            Result : Message_Dialog_Buttons;
+            pragma Unreferenced (Result);
+         begin
+            Result := Message_Dialog
+              (Msg     => Nth_Arg (Data, 1),
+               Buttons => Button_OK,
+               Justification => Justify_Left,
+               Parent  => Get_Main_Window (Kernel));
+         end;
       end if;
    end Default_Command_Handler;
 
@@ -441,45 +459,65 @@ package body Glide_Kernel.Scripts is
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Entity : Entity_Information;
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
    begin
-      Name_Parameters (Data, Entity_Cmd_Parameters);
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Entity_Cmd_Parameters);
 
-      declare
-         Instance : constant Class_Instance :=
-           Nth_Arg (Data, 1, Get_Entity_Class (Kernel));
-         Name   : constant String  := Nth_Arg (Data, 2);
-         File   : constant String  := Nth_Arg (Data, 3);
-         L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
-         C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
-         Status : Find_Decl_Or_Body_Query_Status;
-         Entity : Entity_Information;
-         Lib_Info : LI_File_Ptr;
-      begin
-         Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
-         if Lib_Info = No_LI_File then
-            Set_Error_Msg (Data, -"File not found: " & File);
-            return;
-         end if;
+         declare
+            Name   : constant String  := Nth_Arg (Data, 2);
+            File   : constant String  := Nth_Arg (Data, 3);
+            L      : constant Integer := Nth_Arg (Data, 4, Default => 1);
+            C      : constant Integer := Nth_Arg (Data, 5, Default => 1);
+            Status : Find_Decl_Or_Body_Query_Status;
+            Lib_Info : LI_File_Ptr;
+         begin
+            Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
+            if Lib_Info = No_LI_File then
+               Set_Error_Msg (Data, -"File not found: " & File);
+               return;
+            end if;
 
-         Find_Declaration_Or_Overloaded
-           (Kernel      => Kernel,
-            Lib_Info    => Lib_Info,
-            File_Name   => File,
-            Entity_Name => Name,
-            Line        => L,
-            Column      => C,
-            Entity      => Entity,
-            Status      => Status);
+            Find_Declaration_Or_Overloaded
+              (Kernel      => Kernel,
+               Lib_Info    => Lib_Info,
+               File_Name   => File,
+               Entity_Name => Name,
+               Line        => L,
+               Column      => C,
+               Entity      => Entity,
+               Status      => Status);
 
-         if Status /= Success and then Status /= Fuzzy_Match then
-            Set_Error_Msg (Data, -"Entity not found");
-         else
-            Set_Data (Instance, Entity);
-            Destroy (Entity);
-         end if;
-      end;
+            if Status /= Success and then Status /= Fuzzy_Match then
+               Set_Error_Msg (Data, -"Entity not found");
+            else
+               Set_Data (Instance, Entity);
+               Destroy (Entity);
+            end if;
+         end;
+
+      elsif Command = "name" then
+         Entity := Get_Data (Instance);
+         Set_Return_Value (Data, Get_Name (Entity));
+
+      elsif Command = "decl_file" then
+         Entity := Get_Data (Instance);
+         Set_Return_Value
+           (Data,
+            Create_File
+            (Get_Script (Data), Get_Declaration_File_Of (Entity)));
+
+      elsif Command = "decl_line" then
+         Entity := Get_Data (Instance);
+         Set_Return_Value (Data, Get_Declaration_Line_Of (Entity));
+
+      elsif Command = "decl_column" then
+         Entity := Get_Data (Instance);
+         Set_Return_Value (Data, Get_Declaration_Column_Of (Entity));
+      end if;
    end Create_Entity_Command_Handler;
 
    ---------------------------------
@@ -489,16 +527,21 @@ package body Glide_Kernel.Scripts is
    procedure Create_File_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : Class_Instance;
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_File_Class (Kernel));
       Info     : File_Info;
    begin
-      Name_Parameters (Data, File_Cmd_Parameters);
-      Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
-      Info     := (Name => new String'(Nth_Arg (Data, 2)));
-      Set_Data (Instance, Info);
-      Free (Info);
+      if Command = Constructor_Method then
+         Name_Parameters (Data, File_Cmd_Parameters);
+         Info     := (Name => new String'(Nth_Arg (Data, 2)));
+         Set_Data (Instance, Info);
+         Free (Info);
+
+      elsif Command = "name" then
+         Info     := Get_Data (Instance);
+         Set_Return_Value (Data, Info.Name.all);
+      end if;
    end Create_File_Command_Handler;
 
    ------------------------------------
@@ -508,21 +551,45 @@ package body Glide_Kernel.Scripts is
    procedure Create_Project_Command_Handler
      (Data : in out Callback_Data'Class; Command : String)
    is
-      pragma Unreferenced (Command);
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Instance : Class_Instance;
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
       Project  : Project_Type;
    begin
-      Name_Parameters (Data, Project_Cmd_Parameters);
-      Instance := Nth_Arg (Data, 1, Get_Project_Class (Kernel));
-      Project  := Get_Project_From_Name
-        (Project_Registry (Get_Registry (Kernel)),
-         Get_String (Nth_Arg (Data, 2)));
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Project_Cmd_Parameters);
+         Project  := Get_Project_From_Name
+           (Project_Registry (Get_Registry (Kernel)),
+            Get_String (Nth_Arg (Data, 2)));
 
-      if Project = No_Project then
-         Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
-      else
-         Set_Data (Instance, Project);
+         if Project = No_Project then
+            Set_Error_Msg (Data, -"No such project: " & Nth_Arg (Data, 2));
+         else
+            Set_Data (Instance, Project);
+         end if;
+
+      elsif Command = "name" then
+         Project := Get_Data (Instance);
+         Set_Return_Value (Data, Project_Name (Project));
+
+      elsif Command = "ancestor_deps" then
+         declare
+            Iter : Imported_Project_Iterator;
+            P    : Project_Type;
+         begin
+            Project := Get_Data (Instance);
+            Set_Return_Value_As_List (Data);
+            Iter := Find_All_Projects_Importing
+              (Get_Project (Kernel), Project, Include_Self => True);
+
+            loop
+               P := Current (Iter);
+               exit when P = No_Project;
+               Set_Return_Value
+                 (Data, Create_Project (Get_Script (Data), P));
+               Next (Iter);
+            end loop;
+         end;
       end if;
    end Create_Project_Command_Handler;
 
@@ -564,15 +631,16 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel,
-         Command      => Constructor_Method,
+         Command      => "dialog",
          Usage        =>
-           Parameter_Names_To_Usage (Entity_Cmd_Parameters, "entity"),
-         Description  =>
-           -"Create a new entity, from any of its references.",
-         Minimum_Args => 2,
-         Maximum_Args => 4,
-         Class        => Get_Entity_Class (Kernel),
-         Handler        => Create_Entity_Command_Handler'Access);
+           Parameter_Names_To_Usage (Dialog_Cmd_Parameters, "None"),
+         Description  => -("Display a modal dialog to report information to a"
+                           & " user. This blocks the interpreter while the"
+                           & " dialog hasn't been closed."),
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Default_Command_Handler'Access);
+
 
       Register_Command
         (Kernel,
@@ -584,6 +652,57 @@ package body Glide_Kernel.Scripts is
          Maximum_Args => 1,
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "name",
+         Usage        => "() -> string",
+         Description  => -"Return the name of the file",
+         Class        => Get_File_Class (Kernel),
+         Handler      => Create_File_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => Constructor_Method,
+         Usage        =>
+           Parameter_Names_To_Usage (Entity_Cmd_Parameters, "entity"),
+         Description  =>
+           -"Create a new entity, from any of its references.",
+         Minimum_Args => 2,
+         Maximum_Args => 4,
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "name",
+         Usage        => "() -> string",
+         Description  => -"Return the name of the entity",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "decl_file",
+         Usage        => "() -> GPS.File",
+         Description  => -("Return the file in which the entity is declared."
+                           & " This file's name is empty for predefined"
+                           & " entities"),
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "decl_line",
+         Usage        => "() -> integer",
+         Description  => -("Return the line in decl_file() at which the"
+                           & " entity is defined"),
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "decl_column",
+         Usage        => "() -> integer",
+         Description  => -("Return the column in decl_file() at which the"
+                           & " entity is defined"),
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Create_Entity_Command_Handler'Access);
 
       Register_Command
         (Kernel,
@@ -593,6 +712,24 @@ package body Glide_Kernel.Scripts is
          Description  => -"Create a project handle, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "name",
+         Usage        => "() -> string",
+         Description  => -"Return the name of the project",
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "ancestor_deps",
+         Usage        => "() -> list",
+         Description  => -("Return the list of projects that might contain"
+                           & " sources that depend on the project's sources."
+                           & " When doing extensive searches, it isn't worth"
+                           & " checking other projects." & ASCII.LF
+                           & "Project itself is included in the list."),
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
    end Register_Default_Script_Commands;
@@ -831,5 +968,65 @@ package body Glide_Kernel.Scripts is
          return Usage;
       end;
    end Parameter_Names_To_Usage;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (Data : Callback_Data)
+      return Glide_Kernel.Kernel_Handle is
+   begin
+      return Get_Kernel (Get_Script (Callback_Data'Class (Data)));
+   end Get_Kernel;
+
+   -------------------
+   -- Create_Entity --
+   -------------------
+
+   function Create_Entity
+     (Script : access Scripting_Language_Record'Class;
+      Entity : Src_Info.Queries.Entity_Information) return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, Get_Entity_Class (Get_Kernel (Script)));
+   begin
+      Set_Data (Instance, Entity);
+      return Instance;
+   end Create_Entity;
+
+   -----------------
+   -- Create_File --
+   -----------------
+
+   function Create_File
+     (Script : access Scripting_Language_Record'Class;
+      File   : String) return Class_Instance
+   is
+      Instance : constant Class_Instance := New_Instance
+        (Script, Get_File_Class (Get_Kernel (Script)));
+      Info     : File_Info := (Name => new String'(File));
+   begin
+      Set_Data (Instance, Info);
+      Free (Info);
+      return Instance;
+   end Create_File;
+
+   --------------------
+   -- Create_Project --
+   --------------------
+
+   function Create_Project
+     (Script  : access Scripting_Language_Record'Class;
+      Project : Project_Type) return Class_Instance
+   is
+      Instance : Class_Instance := null;
+   begin
+      if Project /= No_Project then
+         Instance := New_Instance
+           (Script, Get_Project_Class (Get_Kernel (Script)));
+         Set_Data (Instance, Project);
+      end if;
+      return Instance;
+   end Create_Project;
 
 end Glide_Kernel.Scripts;

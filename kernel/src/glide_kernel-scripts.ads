@@ -109,8 +109,13 @@ package Glide_Kernel.Scripts is
    --  use when registering the command, through Parameter_Names_To_Usage, so
    --  that the documentation remains up-to-date.
 
-   function Get_Kernel (Data : Callback_Data) return Kernel_Handle is abstract;
-   --  Return the GPS kernel
+   function Get_Script (Data : Callback_Data) return Scripting_Language
+      is abstract;
+   --  Return the scripting language that created Data.
+
+   function Get_Kernel (Data : Callback_Data)
+      return Glide_Kernel.Kernel_Handle;
+   --  Return the kernel associated with Data
 
    function Nth_Arg
      (Data : Callback_Data; N : Positive) return String is abstract;
@@ -297,6 +302,12 @@ package Glide_Kernel.Scripts is
    --  capture the output of their interpreter. This command is mostly useful
    --  for the GPS shell.
 
+   procedure Execute_File
+     (Script             : access Scripting_Language_Record;
+      Filename           : String;
+      Display_In_Console : Boolean := True) is abstract;
+   --  Execute a script contained in an external file.
+
    function Get_Name (Script : access Scripting_Language_Record)
       return String is abstract;
    --  The name of the scripting language
@@ -420,7 +431,12 @@ package Glide_Kernel.Scripts is
       return Src_Info.Queries.Entity_Information;
    --  The Entity class stores some Entity_Information data in Instance
    --  You should destroy the entity passed to Set_Data, but not the value
-   --  returned by Get_Data.
+   --  returned by Get_Data
+
+   function Create_Entity
+     (Script : access Scripting_Language_Record'Class;
+      Entity : Src_Info.Queries.Entity_Information) return Class_Instance;
+   --  Return a new entity. Entity parameter should be freed by the caller.
 
    ----------------
    -- File_Class --
@@ -447,6 +463,11 @@ package Glide_Kernel.Scripts is
    --  You should free the file passed to Set_Data, but not the value returned
    --  by Get_Data.
 
+   function Create_File
+     (Script : access Scripting_Language_Record'Class;
+      File   : String) return Class_Instance;
+   --  Return a new file
+
    -------------------
    -- Project_Class --
    -------------------
@@ -462,6 +483,11 @@ package Glide_Kernel.Scripts is
    function Get_Data (Instance : access Class_Instance_Record'Class)
       return Projects.Project_Type;
    --  Store or get some project information in Instance
+
+   function Create_Project
+     (Script  : access Scripting_Language_Record'Class;
+      Project : Projects.Project_Type) return Class_Instance;
+   --  Return a new project
 
 
 private
