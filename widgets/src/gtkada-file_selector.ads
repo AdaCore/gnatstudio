@@ -39,7 +39,7 @@
 --  Before this widget can be used, any filters must be registered
 --  using Register_Filter.
 --
---  For a basic usage, the typical code would be :
+--  For a basic usage, the typical code would be:
 --
 --  procedure Run_File_Selector is
 --     File_Selector_Window : File_Selector_Window_Access;
@@ -54,6 +54,10 @@
 --     Gtk.Main.Main;
 --     Free (Filter_A);
 --  end Run_Test_File_Selector;
+--
+--  To handle the most common cases, a function Select_File is provided that
+--  installs automatically default filters, and runs the main loop for you.
+--
 --  </description>
 
 with Gtk.Window;          use Gtk.Window;
@@ -86,22 +90,33 @@ with Unchecked_Deallocation;
 package Gtkada.File_Selector is
 
    function Select_File
-     (Title          : String := "Select a file";
-      Base_Directory : String := "") return String;
+     (Title             : String  := "Select a file";
+      Base_Directory    : String  := "";
+      File_Pattern      : String  := "";
+      Use_Native_Dialog : Boolean := False) return String;
    --  Create a file selection dialog, display it, and return the absolute file
    --  name that was selected, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
    --  directory is invalid, then the dialog will point to the current
    --  directory.
+   --  File_Pattern is a globbing pattern, as described in GNAT.Regexp
+   --  (e.g. "{*.htm,*.html}").
+   --  If Use_Native_Dialog is True, this function will use the native file
+   --  selection widget instead of a GtkAda based one. This option has
+   --  currently no effect, but will provide in the future support for e.g.
+   --  Windows standard dialog.
 
    function Select_Directory
-     (Title          : String := "Select a directory";
-      Base_Directory : String := "") return String;
+     (Title             : String  := "Select a directory";
+      Base_Directory    : String  := "";
+      Use_Native_Dialog : Boolean := False) return String;
    --  Create a directory selection dialog, display it, and return the absolute
    --  name of the selected directory, if any, or return an empty string.
    --  Base_Directory is the directory on which the dialog starts. If the
    --  directory is invalid, then the dialog will point to the current
    --  directory.
+   --  See Select_File above for a description of the Use_Native_Dialog
+   --  parameter.
 
    type File_State is (Normal, Highlighted, Insensitive, Invisible);
    --  The state of a file :
@@ -117,16 +132,16 @@ package Gtkada.File_Selector is
      access all File_Selector_Window_Record'Class;
    --  A file selector window.
 
-   function Select_File (File_Selector : File_Selector_Window_Access)
-      return String;
+   function Select_File
+     (File_Selector : File_Selector_Window_Access) return String;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute file name is returned, or the empty string if the
    --  user cancelled the dialog.
    --  As opposed to the first version of Select_File above, this one gives
    --  the opportunity to register filters before displaying the dialog.
 
-   function Select_Directory (File_Selector : File_Selector_Window_Access)
-      return String;
+   function Select_Directory
+     (File_Selector : File_Selector_Window_Access) return String;
    --  Display File_Selector on the screen, and wait until the user selects a
    --  file. The absolute dir name is returned, or the empty string if the
    --  user cancelled the dialog.
@@ -140,14 +155,14 @@ package Gtkada.File_Selector is
    --  It will get its initial directory from the text in the Gtk_Entry, and
    --  put the result there.
 
-   function Get_Selection (Dialog : access File_Selector_Window_Record)
-      return String;
+   function Get_Selection
+     (Dialog : access File_Selector_Window_Record) return String;
    --  Return the selected file.
    --  Return an empty string if the entry does not exist.
 
    function Get_Ok_Button
      (File_Selection : access File_Selector_Window_Record)
-     return Gtk.Button.Gtk_Button;
+      return Gtk.Button.Gtk_Button;
    --  Return the OK button.
    --  The callbacks on this button should close the dialog and do something
    --  with the file selected by the user.

@@ -48,9 +48,11 @@ with Gtkada.Types;    use Gtkada.Types;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtkada.Intl;     use Gtkada.Intl;
 
-with GUI_Utils; use GUI_Utils;
-with Traces;    use Traces;
+with File_Utils;      use File_Utils;
+with GUI_Utils;       use GUI_Utils;
+with Traces;          use Traces;
 
+with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
@@ -83,6 +85,28 @@ package body Gtkada.File_Selector is
    --  This function gets one entry from Win.Remaining_Files, applies
    --  a filter to it, and displays the corresponding information in the
    --  file list.
+
+   type Regexp_Filter_Record is new File_Filter_Record with record
+      Pattern : Regexp;
+   end record;
+
+   type Regexp_Filter is access all Regexp_Filter_Record'Class;
+
+   function Regexp_File_Filter (Pattern : String) return Regexp_Filter;
+   --  Return a new filter that only shows files matching pattern.
+   --  New memory is allocated, that will be freed automatically by the file
+   --  selector where the filter is registered.
+
+   procedure Use_File_Filter
+     (Filter    : access Regexp_Filter_Record;
+      Win       : access File_Selector_Window_Record'Class;
+      Dir       : String;
+      File      : String;
+      State     : out File_State;
+      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
+      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Text      : out GNAT.OS_Lib.String_Access);
+   --  See spec for more details on this dispatching routine.
 
    ---------------
    -- Callbacks --
@@ -165,6 +189,49 @@ package body Gtkada.File_Selector is
      (Win : in out File_Selector_Window_Access);
    --  Callback used to destroy the read idle loop.
 
+   ------------------------
+   -- Regexp_File_Filter --
+   ------------------------
+
+   function Regexp_File_Filter (Pattern : String) return Regexp_Filter is
+      Filter : Regexp_Filter := new Regexp_Filter_Record;
+   begin
+      Filter.Label := new String'(Pattern);
+      Filter.Pattern :=
+        Compile
+          (Pattern        => Pattern,
+           Glob           => True,
+           Case_Sensitive => Filenames_Are_Case_Sensitive);
+      return Filter;
+   end Regexp_File_Filter;
+
+   ---------------------
+   -- Use_File_Filter --
+   ---------------------
+
+   procedure Use_File_Filter
+     (Filter    : access Regexp_Filter_Record;
+      Win       : access File_Selector_Window_Record'Class;
+      Dir       : String;
+      File      : String;
+      State     : out File_State;
+      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
+      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
+      Text      : out GNAT.OS_Lib.String_Access)
+   is
+      pragma Unreferenced (Dir, Win);
+   begin
+      Text   := null;
+      Pixmap := null;
+      Mask   := null;
+
+      if Match (File, Filter.Pattern) then
+         State := Normal;
+      else
+         State := Invisible;
+      end if;
+   end Use_File_Filter;
+
    -----------------------------
    -- On_Display_Idle_Destroy --
    -----------------------------
@@ -228,36 +295,24 @@ package body Gtkada.File_Selector is
    -----------------
 
    function Select_File
-     (Title          : String := "Select a file";
-      Base_Directory : String := "") return String
+     (Title             : String  := "Select a file";
+      Base_Directory    : String  := "";
+      File_Pattern      : String  := "";
+      Use_Native_Dialog : Boolean := False) return String
    is
-      File_Selector_Window : File_Selector_Window_Access;
+      pragma Unreferenced (Use_Native_Dialog);
+
+      File_Selector : File_Selector_Window_Access;
    begin
       Gtk_New
-        (File_Selector_Window,
-         (1 => Directory_Separator), Base_Directory, Title);
-      return Select_File (File_Selector_Window);
+        (File_Selector, (1 => Directory_Separator), Base_Directory, Title);
+
+      if File_Pattern /= "" then
+         Register_Filter (File_Selector, Regexp_File_Filter (File_Pattern));
+      end if;
+
+      return Select_File (File_Selector);
    end Select_File;
-
-   ----------------------
-   -- Select_Directory --
-   ----------------------
-
-   function Select_Directory
-     (Title          : String := "Select a directory";
-      Base_Directory : String := "") return String
-   is
-      File_Selector_Window : File_Selector_Window_Access;
-   begin
-      Gtk_New
-        (File_Selector_Window,
-         (1 => Directory_Separator), Base_Directory, Title, False);
-      return Select_Directory (File_Selector_Window);
-   end Select_Directory;
-
-   -----------------
-   -- Select_File --
-   -----------------
 
    function Select_File
      (File_Selector : File_Selector_Window_Access) return String
@@ -302,6 +357,21 @@ package body Gtkada.File_Selector is
    ----------------------
    -- Select_Directory --
    ----------------------
+
+   function Select_Directory
+     (Title             : String := "Select a directory";
+      Base_Directory    : String := "";
+      Use_Native_Dialog : Boolean := False) return String
+   is
+      pragma Unreferenced (Use_Native_Dialog);
+
+      File_Selector_Window : File_Selector_Window_Access;
+   begin
+      Gtk_New
+        (File_Selector_Window,
+         (1 => Directory_Separator), Base_Directory, Title, False);
+      return Select_Directory (File_Selector_Window);
+   end Select_Directory;
 
    function Select_Directory
      (File_Selector : File_Selector_Window_Access) return String
