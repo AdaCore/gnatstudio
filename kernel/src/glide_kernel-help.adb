@@ -85,6 +85,12 @@ package body Glide_Kernel.Help is
       Kernel : Kernel_Handle);
    --  Handler for the link_clicked signal
 
+   procedure Display_Url
+     (Kernel : access Kernel_Handle_Record'Class;
+      Html   : access Help_Browser_Record'Class;
+      Url    : String);
+   --  Display Url in Html.
+
    procedure Title_Changed
      (Object : access Glib.Object.GObject_Record'Class;
       Params : Glib.Values.GValues;
@@ -286,20 +292,17 @@ package body Glide_Kernel.Help is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Url;
 
-   ------------------
-   -- Link_Clicked --
-   ------------------
+   -----------------
+   -- Display_Url --
+   -----------------
 
-   procedure Link_Clicked
-     (Object : access Glib.Object.GObject_Record'Class;
-      Params : Glib.Values.GValues;
-      Kernel : Kernel_Handle)
+   procedure Display_Url
+     (Kernel : access Kernel_Handle_Record'Class;
+      Html   : access Help_Browser_Record'Class;
+      Url    : String)
    is
-      Html     : constant Help_Browser := Help_Browser (Object);
-      Url      : constant String := Get_String (Nth (Params, 1));
-      Result   : Boolean := True;
       Anchor   : Natural := Index (Url, "#");
-
+      Result   : Boolean := True;
    begin
       if Anchor = 0 then
          Anchor := Url'Last + 1;
@@ -327,13 +330,29 @@ package body Glide_Kernel.Help is
       end if;
 
       if Result and then Anchor < Url'Last then
-         Push_State (Kernel, Busy);
+         Push_State (Kernel_Handle (Kernel), Busy);
          Trace (Me, "jumping to anchor " & Url (Anchor .. Url'Last));
          Result := Jump_To_Anchor
            (Html.Csc, Url (Anchor + 1 .. Url'Last));
-         Pop_State (Kernel);
+         Pop_State (Kernel_Handle (Kernel));
       end if;
 
+   end Display_Url;
+
+   ------------------
+   -- Link_Clicked --
+   ------------------
+
+   procedure Link_Clicked
+     (Object : access Glib.Object.GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+      Url      : constant String := Get_String (Nth (Params, 1));
+
+   begin
+      Open_Html (Kernel, Url);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -631,9 +650,21 @@ package body Glide_Kernel.Help is
    begin
       if Mime_Type = Mime_Html_File then
          declare
-            File : constant String := Get_String (Data (Data'First));
+            File  : constant String := Get_String (Data (Data'First));
+            MDI   : constant MDI_Window := Get_MDI (Kernel);
+            Child : constant MDI_Child := Find_MDI_Child_By_Tag
+              (MDI, Help_Browser_Record'Tag);
+            Html  : Help_Browser;
          begin
-            Display_Help (Kernel, File);
+            if Child = null then
+               Display_Help (Kernel, File);
+
+               return True;
+            end if;
+
+            Html := Help_Browser (Get_Widget (Child));
+            Display_Url (Kernel, Html, File);
+            Raise_Child (Child);
          end;
 
          return True;
@@ -685,7 +716,7 @@ package body Glide_Kernel.Help is
          Filename : constant String := Select_File (File_Selector);
       begin
          if Filename /= "" then
-            Display_Help (Kernel, Filename);
+            Open_Html (Kernel, Filename);
          end if;
       end;
 
