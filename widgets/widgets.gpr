@@ -1,5 +1,6 @@
 with "../gtkada/gtkada";
 with "../gvd/gvd_common";
+with "../common/common";
 
 project Widgets is
 
