@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -38,6 +38,7 @@ with Gtk.Container;
 with Gtk.Frame;
 with Gtk.Label;
 with Gtk.Menu;
+with Gtk.Main;
 with Gtk.Handlers;
 with Gtk.Separator;
 with Gtk.Text_Mark;
@@ -497,6 +498,11 @@ private
       --  and another editor becomes Primary.
       --  This attribute is used mainly for determining whether the user
       --  should be prompted for saving the contents.
+      
+      Check_Timestamp_Registered : Boolean := False;
+      Check_Timestamp_Id         : Gtk.Main.Idle_Handler_Id;
+      --  Used to protect the idle handler from being called after the box is
+      --  destroyed.
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
