@@ -11,7 +11,12 @@
 
 @titlepage
 
-@title{Using the GNAT Programming System}
+@flushleft
+@title{Using GPS}
+@end flushleft
+@flushright
+ @titlefont{The GNAT Programming System}
+@end flushright
 @subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
