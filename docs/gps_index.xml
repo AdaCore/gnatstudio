@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<index>
+   <file>
+      <name>gps-welcome.html</name>
+      <descr>Welcome</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/Welcome</menu>
+   </file>
+
+   <file>
+      <name>gps.html</name>
+      <descr>Using the GNAT Programming System</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/Using the GNAT Programming System</menu>
+   </file>
+
+   <file>
+      <name>gps-tutorial.html</name>
+      <descr>GNAT Programming System Tutorial</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/GNAT Programming System Tutorial</menu>
+   </file>
+
+</index>
