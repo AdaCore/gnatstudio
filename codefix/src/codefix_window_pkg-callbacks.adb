@@ -186,6 +186,22 @@ package body Codefix_Window_Pkg.Callbacks is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Refresh_Clicked;
 
+   -------------------------
+   -- On_Previous_Clicked --
+   -------------------------
+
+   procedure On_Previous_Clicked
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
+   begin
+      Load_Previous_Error (Graphic_Codefix);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Previous_Clicked;
+
    -------------------------------
    -- On_Cancel_Changes_Clicked --
    -------------------------------
