@@ -20,7 +20,6 @@ procedure Initialize (Memory_View : access Memory_View_Record'Class) is
    pragma Suppress (All_Checks);
    Size_Items : String_List.Glist;
    Format_Items : String_List.Glist;
-   Value_Adj : Gtk_Adjustment;
 
 begin
    Gtk.Window.Initialize (Memory_View, Window_Toplevel);
@@ -172,70 +171,22 @@ begin
      (Memory_View.Data_Entry, "changed",
       Entry_Callback.To_Marshaller (On_Data_Entry_Changed'Access));
 
-   Gtk_New (Memory_View.Scrolledwindow);
-   Set_Policy (Memory_View.Scrolledwindow, Policy_Automatic, Policy_Automatic);
-   Pack_Start (Memory_View.Vbox20, Memory_View.Scrolledwindow, True, True, 0);
+   Gtk_New_Vseparator (Memory_View.Vseparator10);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Vseparator10, True, True, 0);
 
-   Gtk_New (Memory_View.View);
-   Set_Editable (Memory_View.View, True);
-   Return_Callback.Connect
-     (Memory_View.View, "key_press_event", On_View_Key_Press_Event'Access);
-   Text_Callback.Connect
-     (Memory_View.View, "move_cursor", On_View_Move_Cursor'Access);
-   Return_Callback.Connect
-     (Memory_View.View, "button_release_event", On_View_Button_Release_Event'Access);
-   Return_Callback.Connect
-     (Memory_View.View, "button_press_event", On_View_Button_Press_Event'Access);
-   Text_Callback.Connect
-     (Memory_View.View, "insert_text", On_View_Insert_Text'Access);
-   Add (Memory_View.Scrolledwindow, Memory_View.View);
+   Gtk_New (Memory_View.Show_Ascii, -"Show ASCII");
+   Set_Active (Memory_View.Show_Ascii, True);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Show_Ascii, False, False, 0);
+   Check_Button_Callback.Connect
+     (Memory_View.Show_Ascii, "toggled",
+      Check_Button_Callback.To_Marshaller (On_Show_Ascii_Toggled'Access));
 
-   Gtk_New_Hbox (Memory_View.Hbox13, False, 0);
-   Pack_Start (Memory_View.Vbox20, Memory_View.Hbox13, False, False, 0);
-
-   Gtk_New (Memory_View.Label99, -("Page size:"));
-   Set_Alignment (Memory_View.Label99, 0.5, 0.5);
-   Set_Padding (Memory_View.Label99, 0, 0);
-   Set_Justify (Memory_View.Label99, Justify_Center);
-   Set_Line_Wrap (Memory_View.Label99, False);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Label99, True, True, 5);
-
-   Gtk_New (Value_Adj, 256.0, 256.0, 4096.0, 256.0, 256.0, 256.0);
-   Gtk_New (Memory_View.Value, Value_Adj, 1.0, 0);
-   Set_Numeric (Memory_View.Value, True);
-   Set_Snap_To_Ticks (Memory_View.Value, False);
-   Set_Update_Policy (Memory_View.Value, Update_Always);
-   Set_Value (Memory_View.Value, 256.0);
-   Set_Wrap (Memory_View.Value, False);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Value, True, True, 0);
-
-   Gtk_New (Memory_View.Label100, -("bytes"));
-   Set_Alignment (Memory_View.Label100, 0.5, 0.5);
-   Set_Padding (Memory_View.Label100, 0, 0);
-   Set_Justify (Memory_View.Label100, Justify_Center);
-   Set_Line_Wrap (Memory_View.Label100, False);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Label100, False, False, 0);
-
-   Gtk_New (Memory_View.Hbuttonbox12);
-   Set_Spacing (Memory_View.Hbuttonbox12, 30);
-   Set_Layout (Memory_View.Hbuttonbox12, Buttonbox_Default_Style);
-   Set_Child_Size (Memory_View.Hbuttonbox12, 85, 27);
-   Set_Child_Ipadding (Memory_View.Hbuttonbox12, 7, 0);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Hbuttonbox12, True, True, 0);
-
-   Gtk_New (Memory_View.Page_Size_Button, -"OK");
-   Set_Flags (Memory_View.Page_Size_Button, Can_Default);
-   Button_Callback.Connect
-     (Memory_View.Page_Size_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Page_Size_Button_Clicked'Access));
-   Add (Memory_View.Hbuttonbox12, Memory_View.Page_Size_Button);
-
-   Gtk_New_Vseparator (Memory_View.Vseparator8);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Vseparator8, True, False, 0);
+   Gtk_New_Vseparator (Memory_View.Vseparator9);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Vseparator9, True, True, 0);
 
    Gtk_New (Memory_View.Pgup);
    Set_Flags (Memory_View.Pgup, Can_Default);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Pgup, True, True, 0);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Pgup, True, True, 0);
    Button_Callback.Connect
      (Memory_View.Pgup, "clicked",
       Button_Callback.To_Marshaller (On_Pgup_Clicked'Access));
@@ -247,7 +198,7 @@ begin
 
    Gtk_New (Memory_View.Pgdn);
    Set_Flags (Memory_View.Pgdn, Can_Default);
-   Pack_Start (Memory_View.Hbox13, Memory_View.Pgdn, True, True, 0);
+   Pack_Start (Memory_View.Hbox12, Memory_View.Pgdn, True, True, 0);
    Button_Callback.Connect
      (Memory_View.Pgdn, "clicked",
       Button_Callback.To_Marshaller (On_Pgdn_Clicked'Access));
@@ -256,6 +207,26 @@ begin
    Set_Alignment (Memory_View.Arrow2, 0.5, 0.5);
    Set_Padding (Memory_View.Arrow2, 0, 0);
    Add (Memory_View.Pgdn, Memory_View.Arrow2);
+
+   Gtk_New (Memory_View.Scrolledwindow);
+   Set_Policy (Memory_View.Scrolledwindow, Policy_Never, Policy_Never);
+   Pack_Start (Memory_View.Vbox20, Memory_View.Scrolledwindow, True, True, 0);
+
+   Gtk_New (Memory_View.Viewport);
+   Set_Shadow_Type (Memory_View.Viewport, Shadow_In);
+   Add (Memory_View.Scrolledwindow, Memory_View.Viewport);
+
+   Gtk_New (Memory_View.View);
+   Set_Editable (Memory_View.View, True);
+   Return_Callback.Connect
+     (Memory_View.View, "key_press_event", On_View_Key_Press_Event'Access);
+   Text_Callback.Connect
+     (Memory_View.View, "move_cursor", On_View_Move_Cursor'Access);
+   Return_Callback.Connect
+     (Memory_View.View, "button_release_event", On_View_Button_Release_Event'Access);
+   Return_Callback.Connect
+     (Memory_View.View, "button_press_event", On_View_Button_Press_Event'Access);
+   Add (Memory_View.Viewport, Memory_View.View);
 
    Gtk_New_Hseparator (Memory_View.Hseparator2);
    Pack_Start (Memory_View.Vbox20, Memory_View.Hseparator2, False, False, 3);
@@ -294,6 +265,10 @@ begin
      (Memory_View.Help, "clicked",
       Button_Callback.To_Marshaller (On_Help_Clicked'Access));
    Add (Memory_View.Hbuttonbox11, Memory_View.Help);
+
+   Gtk_New (Memory_View.Memory_Status_Bar);
+   Set_Border_Width (Memory_View.Memory_Status_Bar, 3);
+   Pack_Start (Memory_View.Vbox20, Memory_View.Memory_Status_Bar, False, False, 0);
 
 end Initialize;
 

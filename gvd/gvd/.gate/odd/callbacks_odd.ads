@@ -1,11 +1,12 @@
 with Gtk.Handlers;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
-with Gtk.Button; use Gtk.Button;
 with Gtk.Clist; use Gtk.Clist;
+with Gtk.Button; use Gtk.Button;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.List; use Gtk.List;
 with Gtk.Window; use Gtk.Window;
 with Gtk.GEntry; use Gtk.GEntry;
+with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Text; use Gtk.Text;
 
 package Callbacks_Odd is
@@ -13,11 +14,11 @@ package Callbacks_Odd is
    package Menu_Item_Callback is new
      Gtk.Handlers.Callback (Gtk_Menu_Item_Record);
 
-   package Button_Callback is new
-     Gtk.Handlers.Callback (Gtk_Button_Record);
-
    package C_List_Callback is new
      Gtk.Handlers.Callback (Gtk_Clist_Record);
+
+   package Button_Callback is new
+     Gtk.Handlers.Callback (Gtk_Button_Record);
 
    package Radio_Button_Callback is new
      Gtk.Handlers.Callback (Gtk_Radio_Button_Record);
@@ -30,6 +31,9 @@ package Callbacks_Odd is
 
    package Entry_Callback is new
      Gtk.Handlers.Callback (Gtk_Entry_Record);
+
+   package Check_Button_Callback is new
+     Gtk.Handlers.Callback (Gtk_Check_Button_Record);
 
    package Text_Callback is new
      Gtk.Handlers.Callback (Gtk_Text_Record);

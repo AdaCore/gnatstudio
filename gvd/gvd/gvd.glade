@@ -6403,101 +6403,10 @@ ASCII
 	  <text>Hex</text>
 	</widget>
       </widget>
-    </widget>
-
-    <widget>
-      <class>GtkScrolledWindow</class>
-      <name>scrolledwindow</name>
-      <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
-      <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
-      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
 
       <widget>
-	<class>GtkText</class>
-	<name>view</name>
-	<height>152</height>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>key_press_event</name>
-	  <handler>on_view_key_press_event</handler>
-	  <last_modification_time>Thu, 21 Sep 2000 12:54:23 GMT</last_modification_time>
-	</signal>
-	<signal>
-	  <name>move_cursor</name>
-	  <handler>on_view_move_cursor</handler>
-	  <last_modification_time>Fri, 22 Sep 2000 22:28:23 GMT</last_modification_time>
-	</signal>
-	<signal>
-	  <name>button_release_event</name>
-	  <handler>on_view_button_release_event</handler>
-	  <last_modification_time>Sun, 24 Sep 2000 01:41:24 GMT</last_modification_time>
-	</signal>
-	<signal>
-	  <name>button_press_event</name>
-	  <handler>on_view_button_press_event</handler>
-	  <last_modification_time>Sun, 24 Sep 2000 19:48:49 GMT</last_modification_time>
-	</signal>
-	<signal>
-	  <name>insert_text</name>
-	  <handler>on_view_insert_text</handler>
-	  <last_modification_time>Sun, 24 Sep 2000 22:27:33 GMT</last_modification_time>
-	</signal>
-	<editable>True</editable>
-	<text></text>
-      </widget>
-    </widget>
-
-    <widget>
-      <class>GtkHBox</class>
-      <name>hbox13</name>
-      <homogeneous>False</homogeneous>
-      <spacing>0</spacing>
-      <child>
-	<padding>0</padding>
-	<expand>False</expand>
-	<fill>False</fill>
-      </child>
-
-      <widget>
-	<class>GtkLabel</class>
-	<name>label99</name>
-	<label>Page size:</label>
-	<justify>GTK_JUSTIFY_CENTER</justify>
-	<wrap>False</wrap>
-	<xalign>0.5</xalign>
-	<yalign>0.5</yalign>
-	<xpad>0</xpad>
-	<ypad>0</ypad>
-	<child>
-	  <padding>5</padding>
-	  <expand>True</expand>
-	  <fill>True</fill>
-	</child>
-      </widget>
-
-      <widget>
-	<class>GtkSpinButton</class>
-	<name>value</name>
-	<width>56</width>
-	<can_focus>True</can_focus>
-	<climb_rate>1</climb_rate>
-	<digits>0</digits>
-	<numeric>True</numeric>
-	<update_policy>GTK_UPDATE_ALWAYS</update_policy>
-	<snap>False</snap>
-	<wrap>False</wrap>
-	<value>256</value>
-	<lower>256</lower>
-	<upper>4096</upper>
-	<step>256</step>
-	<page>256</page>
-	<page_size>256</page_size>
+	<class>GtkVSeparator</class>
+	<name>vseparator10</name>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -6506,15 +6415,17 @@ ASCII
       </widget>
 
       <widget>
-	<class>GtkLabel</class>
-	<name>label100</name>
-	<label>bytes</label>
-	<justify>GTK_JUSTIFY_CENTER</justify>
-	<wrap>False</wrap>
-	<xalign>0.5</xalign>
-	<yalign>0.5</yalign>
-	<xpad>0</xpad>
-	<ypad>0</ypad>
+	<class>GtkCheckButton</class>
+	<name>show_ascii</name>
+	<can_focus>True</can_focus>
+	<signal>
+	  <name>toggled</name>
+	  <handler>on_show_ascii_toggled</handler>
+	  <last_modification_time>Thu, 25 Jan 2001 14:35:01 GMT</last_modification_time>
+	</signal>
+	<label>Show ASCII</label>
+	<active>True</active>
+	<draw_indicator>True</draw_indicator>
 	<child>
 	  <padding>0</padding>
 	  <expand>False</expand>
@@ -6523,41 +6434,12 @@ ASCII
       </widget>
 
       <widget>
-	<class>GtkHButtonBox</class>
-	<name>hbuttonbox12</name>
-	<layout_style>GTK_BUTTONBOX_DEFAULT_STYLE</layout_style>
-	<spacing>30</spacing>
-	<child_min_width>85</child_min_width>
-	<child_min_height>27</child_min_height>
-	<child_ipad_x>7</child_ipad_x>
-	<child_ipad_y>0</child_ipad_y>
+	<class>GtkVSeparator</class>
+	<name>vseparator9</name>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
 	  <fill>True</fill>
-	</child>
-
-	<widget>
-	  <class>GtkButton</class>
-	  <name>page_size_button</name>
-	  <can_default>True</can_default>
-	  <can_focus>True</can_focus>
-	  <signal>
-	    <name>clicked</name>
-	    <handler>on_page_size_button_clicked</handler>
-	    <last_modification_time>Tue, 26 Sep 2000 23:04:01 GMT</last_modification_time>
-	  </signal>
-	  <label>OK</label>
-	</widget>
-      </widget>
-
-      <widget>
-	<class>GtkVSeparator</class>
-	<name>vseparator8</name>
-	<child>
-	  <padding>0</padding>
-	  <expand>True</expand>
-	  <fill>False</fill>
 	</child>
       </widget>
 
@@ -6614,6 +6496,55 @@ ASCII
 	  <yalign>0.5</yalign>
 	  <xpad>0</xpad>
 	  <ypad>0</ypad>
+	</widget>
+      </widget>
+    </widget>
+
+    <widget>
+      <class>GtkScrolledWindow</class>
+      <name>scrolledwindow</name>
+      <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
+      <vscrollbar_policy>GTK_POLICY_NEVER</vscrollbar_policy>
+      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
+      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>GtkViewport</class>
+	<name>viewport</name>
+	<shadow_type>GTK_SHADOW_IN</shadow_type>
+
+	<widget>
+	  <class>GtkText</class>
+	  <name>view</name>
+	  <height>152</height>
+	  <can_focus>True</can_focus>
+	  <signal>
+	    <name>key_press_event</name>
+	    <handler>on_view_key_press_event</handler>
+	    <last_modification_time>Thu, 21 Sep 2000 12:54:23 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>move_cursor</name>
+	    <handler>on_view_move_cursor</handler>
+	    <last_modification_time>Fri, 22 Sep 2000 22:28:23 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>button_release_event</name>
+	    <handler>on_view_button_release_event</handler>
+	    <last_modification_time>Sun, 24 Sep 2000 01:41:24 GMT</last_modification_time>
+	  </signal>
+	  <signal>
+	    <name>button_press_event</name>
+	    <handler>on_view_button_press_event</handler>
+	    <last_modification_time>Sun, 24 Sep 2000 19:48:49 GMT</last_modification_time>
+	  </signal>
+	  <editable>True</editable>
+	  <text></text>
 	</widget>
       </widget>
     </widget>
@@ -6694,6 +6625,17 @@ ASCII
 	</signal>
 	<label>Help</label>
       </widget>
+    </widget>
+
+    <widget>
+      <class>GtkStatusbar</class>
+      <name>memory_status_bar</name>
+      <border_width>3</border_width>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
     </widget>
   </widget>
 </widget>

@@ -28,11 +28,13 @@ with Gtk.Button; use Gtk.Button;
 with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Separator; use Gtk.Separator;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Text; use Gtk.Text;
-with Gtk.Spin_Button; use Gtk.Spin_Button;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Arrow; use Gtk.Arrow;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Viewport; use Gtk.Viewport;
+with Gtk.Text; use Gtk.Text;
+with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
+with Gtk.Status_Bar; use Gtk.Status_Bar;
 package Memory_View_Pkg is
 
    type Memory_View_Record is new Gtk_Window_Record with record
@@ -58,25 +60,23 @@ package Memory_View_Pkg is
       Label97 : Gtk_Label;
       Format : Gtk_Combo;
       Data_Entry : Gtk_Entry;
-      Scrolledwindow : Gtk_Scrolled_Window;
-      View : Gtk_Text;
-      Hbox13 : Gtk_Hbox;
-      Label99 : Gtk_Label;
-      Value : Gtk_Spin_Button;
-      Label100 : Gtk_Label;
-      Hbuttonbox12 : Gtk_Hbutton_Box;
-      Page_Size_Button : Gtk_Button;
-      Vseparator8 : Gtk_Vseparator;
+      Vseparator10 : Gtk_Vseparator;
+      Show_Ascii : Gtk_Check_Button;
+      Vseparator9 : Gtk_Vseparator;
       Pgup : Gtk_Button;
       Arrow1 : Gtk_Arrow;
       Pgdn : Gtk_Button;
       Arrow2 : Gtk_Arrow;
+      Scrolledwindow : Gtk_Scrolled_Window;
+      Viewport : Gtk_Viewport;
+      View : Gtk_Text;
       Hseparator2 : Gtk_Hseparator;
       Hbuttonbox11 : Gtk_Hbutton_Box;
       Reset : Gtk_Button;
       Submit : Gtk_Button;
       Cancel : Gtk_Button;
       Help : Gtk_Button;
+      Memory_Status_Bar : Gtk_Statusbar;
    end record;
    type Memory_View_Access is access all Memory_View_Record'Class;
 

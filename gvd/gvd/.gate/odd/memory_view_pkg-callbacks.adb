@@ -82,6 +82,39 @@ package body Memory_View_Pkg.Callbacks is
       null;
    end On_Data_Entry_Changed;
 
+   ---------------------------
+   -- On_Show_Ascii_Toggled --
+   ---------------------------
+
+   procedure On_Show_Ascii_Toggled
+     (Object : access Gtk_Check_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Show_Ascii_Toggled;
+
+   ---------------------
+   -- On_Pgup_Clicked --
+   ---------------------
+
+   procedure On_Pgup_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Pgup_Clicked;
+
+   ---------------------
+   -- On_Pgdn_Clicked --
+   ---------------------
+
+   procedure On_Pgdn_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      null;
+   end On_Pgdn_Clicked;
+
    -----------------------------
    -- On_View_Key_Press_Event --
    -----------------------------
@@ -134,54 +167,6 @@ package body Memory_View_Pkg.Callbacks is
    begin
       return False;
    end On_View_Button_Press_Event;
-
-   -------------------------
-   -- On_View_Insert_Text --
-   -------------------------
-
-   procedure On_View_Insert_Text
-     (Object : access Gtk_Text_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Arg1 : String := To_String (Params, 1);
-      Arg2 : Gint := To_Gint (Params, 2);
-      Arg3 : Address := To_Address (Params, 3);
-   begin
-      null;
-   end On_View_Insert_Text;
-
-   ---------------------------------
-   -- On_Page_Size_Button_Clicked --
-   ---------------------------------
-
-   procedure On_Page_Size_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Page_Size_Button_Clicked;
-
-   ---------------------
-   -- On_Pgup_Clicked --
-   ---------------------
-
-   procedure On_Pgup_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Pgup_Clicked;
-
-   ---------------------
-   -- On_Pgdn_Clicked --
-   ---------------------
-
-   procedure On_Pgdn_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
-   begin
-      null;
-   end On_Pgdn_Clicked;
 
    ----------------------
    -- On_Reset_Clicked --

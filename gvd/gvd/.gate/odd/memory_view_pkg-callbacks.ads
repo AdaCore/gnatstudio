@@ -22,6 +22,15 @@ package Memory_View_Pkg.Callbacks is
    procedure On_Data_Entry_Changed
      (Object : access Gtk_Entry_Record'Class);
 
+   procedure On_Show_Ascii_Toggled
+     (Object : access Gtk_Check_Button_Record'Class);
+
+   procedure On_Pgup_Clicked
+     (Object : access Gtk_Button_Record'Class);
+
+   procedure On_Pgdn_Clicked
+     (Object : access Gtk_Button_Record'Class);
+
    function On_View_Key_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
@@ -37,19 +46,6 @@ package Memory_View_Pkg.Callbacks is
    function On_View_Button_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
-
-   procedure On_View_Insert_Text
-     (Object : access Gtk_Text_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-
-   procedure On_Page_Size_Button_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
-   procedure On_Pgup_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
-   procedure On_Pgdn_Clicked
-     (Object : access Gtk_Button_Record'Class);
 
    procedure On_Reset_Clicked
      (Object : access Gtk_Button_Record'Class);
