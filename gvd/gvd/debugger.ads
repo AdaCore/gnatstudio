@@ -413,6 +413,12 @@ package Debugger is
    --  Detach the current process from the debugger.
    --  GDB_COMMAND: "detach"
 
+   procedure Kill_Process
+     (Debugger : access Debugger_Root;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Kill the current process.
+   --  GDB_COMMAND: "kill"
+
    procedure Step_Into
      (Debugger : access Debugger_Root;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
@@ -807,7 +813,8 @@ package Debugger is
    --  The returned adress should be "0x" followed by an hexadecimal number.
    --  Alternatively, it returns "" if no such variable is found.
 
-   type Endian_Type is (Little_Endian, Big_Endian);
+   type Endian_Type is (Unknown_Endian, Little_Endian, Big_Endian);
+
    function Get_Endian_Type
      (Debugger : access Debugger_Root) return Endian_Type is abstract;
    --  Get the endianness of the target.
@@ -868,11 +875,6 @@ private
 
       Command_Queue : Command_Access := null;
       --  The list of commands to be processed after the next call to wait.
-
-      Processing_User_Command : Boolean := False;
-      --  True when a user command is being handled by the debugger.
-      --  ??? Would be nice to merge Process_Proxy.Command_In_Process and
-      --  GVD_Main_Window.Locked with this field
 
       Remote_Host     : GNAT.OS_Lib.String_Access;
       Remote_Target   : GNAT.OS_Lib.String_Access;
