@@ -84,7 +84,8 @@ package GVD.Types is
       --  null for breakpoints.
 
       File        : String_Access;
-      --  The file name that contains the breakpoint
+      --  The file name that contains the breakpoint.
+      --  Must be stored as an absolute file name.
 
       Except      : String_Access;
       --  Name of the exception on which we break
