@@ -21,6 +21,7 @@ gvd
 DEPENDENCIES= \
 kernel \
 common \
+syntax \
 src_editor \
 vdiff \
 prj_editor \
