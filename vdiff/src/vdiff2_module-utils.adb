@@ -509,7 +509,6 @@ package body Vdiff2_Module.Utils is
 
    begin
       if not VDiff2_Module (Vdiff_Module_ID).Is_Active then
-         VDiff2_Module (Vdiff_Module_ID).Is_Active := True;
          VDiff_Toolbar (Kernel);
       end if;
 
