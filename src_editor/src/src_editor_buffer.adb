@@ -37,7 +37,6 @@ with Gtkada.Types;              use Gtkada.Types;
 
 with Basic_Types;               use Basic_Types;
 with Language;                  use Language;
-with Language.Unknown;          use Language.Unknown;
 with Language_Handlers;         use Language_Handlers;
 with Src_Highlighting;          use Src_Highlighting;
 
@@ -153,7 +152,8 @@ package body Src_Editor_Buffer is
    --  This procedure is just a proxy between the "insert_text" signal
    --  and the Insert_Text_Cb callback. It extracts the parameters from
    --  Params and then call Insert_Text_Cb. For efficiency reasons, the
-   --  signal is processed only when Lang is not null and not unknown.
+   --  signal is processed only when Lang is not null and the language
+   --  supports syntax highlighting.
    --
    --  Note that this handler is designed to be connected "after", in which
    --  case the Insert_Iter iterator is located at the end of the inserted
@@ -185,7 +185,8 @@ package body Src_Editor_Buffer is
    --  This procedure is just a proxy between the "delete_range" signal
    --  and the Delete_Range_Cb callback. It extracts the parameters from
    --  Params and then call Delete_Range_Cb. For efficiency reasons, the
-   --  signal is processed only when Lang is not null and not unknown.
+   --  signal is processed only when Lang is not null and the language
+   --  supports syntax highlighting.
    --
    --  Note that this handler is designed to be connected "after", in which
    --  case the Start and End iterators are equal, since the text between
@@ -575,7 +576,9 @@ package body Src_Editor_Buffer is
    begin
       Get_Text_Iter (Nth (Params, 1), Iter);
 
-      if Buffer.Lang /= null and then Buffer.Lang /= Unknown_Lang then
+      if Buffer.Lang /= null
+        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
+      then
          declare
             Text : constant String :=
               Get_String (Nth (Params, 2), Length => Length);
@@ -724,7 +727,9 @@ package body Src_Editor_Buffer is
    begin
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
 
-      if Buffer.Lang /= null and then Buffer.Lang /= Unknown_Lang then
+      if Buffer.Lang /= null
+        and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
+      then
          Delete_Range_Cb (Buffer, Start_Iter);
       end if;
 
@@ -1890,7 +1895,9 @@ package body Src_Editor_Buffer is
 
          --  Do not try to highlight an empty buffer
          if not Is_End (Buffer_Start_Iter) then
-            if Buffer.Lang /= null and then Buffer.Lang /= Unknown_Lang then
+            if Buffer.Lang /= null
+              and then Get_Language_Context (Buffer.Lang).Syntax_Highlighting
+            then
                Highlight_Slice (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
             else
                Kill_Highlighting (Buffer, Buffer_Start_Iter, Buffer_End_Iter);
