@@ -26,6 +26,7 @@ with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Clist;                use Gtk.Clist;
+with Gtk.List;                 use Gtk.List;
 with Gtk.Size_Group;           use Gtk.Size_Group;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Window;               use Gtk.Window;
@@ -99,6 +100,9 @@ package body Naming_Editors is
 
       Set_Popdown_Strings (Editor.Casing, Casing_Items);
       Free_String_List (Casing_Items);
+
+      --  Set the GNAT naming scheme
+      Select_Item (Get_List (Editor.Standard_Scheme), 0);
    end Gtk_New;
 
    ------------------------
