@@ -580,6 +580,10 @@ application. @xref{Changing Colors Fonts and Pixmaps}.
 Each file in the @code{sessions} directory represents a particular session
 saved by the user.
 
+   @item $HOME/.gps/traces_conf
+Default configuration for the system traces. This traces are used to analyse
+problems with GPS. By default, they are sent to the file @file{$HOME/.gps/log}.
+
 @end table
 
 @c --------------------------------------------------------------------
