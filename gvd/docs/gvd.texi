@@ -266,7 +266,8 @@ Give access to the general preferences in GVD.
 
 @table @i
 @item Break On Exceptions
-Whether a breakpoint on all exceptions should be set by default.
+Whether a breakpoint on all exceptions should be set by default when loading
+a program.
 
 @item Status Bar Time Out
 Time after which a message in the status bar will disappear. Messages that
