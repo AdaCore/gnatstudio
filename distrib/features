@@ -1,5 +1,6 @@
 New features in GPS 1.0.1
 
+- The search dialog is now a popup dialog by default
 - New powerful mark system to handle e.g compiler messages and search results
   more easily
 - Several small user interface improvements
