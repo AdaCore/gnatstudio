@@ -59,6 +59,19 @@ package SN.Xref_Pools is
    --  removes it from disk (in specified directory),
    --  thus makes that name able to associate with other source file name.
 
+   function Is_Xref_Valid
+     (Source_Filename : String;
+      Pool            : Xref_Pool) return Boolean;
+   --  Return valig flag for xref file associated with given source file name.
+   --  Returns False if no xref file for given file was generated yet.
+
+   procedure Set_Valid
+     (Source_Filename : String;
+      Valid           : Boolean;
+      Pool            : Xref_Pool);
+   --  Set valid flag for given source file name.
+   --  Does nothing if no xref file for givent file was generated yet.
+
 private
 
    type Hash_Range is range 1 .. 1000;
@@ -69,6 +82,7 @@ private
    type Xref_Elmt_Record is record
       Source_Filename   : String_Access;
       Xref_Filename     : String_Access;
+      Valid             : Boolean := False;
       Next              : Xref_Elmt_Ptr;
    end record;
 

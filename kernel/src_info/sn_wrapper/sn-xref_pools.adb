@@ -101,7 +101,8 @@ package body SN.Xref_Pools is
       end if;
 
       --  open file and read its content to hashtable
-      --  file format: <src_file_name>\n<xref_files_name>\n...
+      --  file format: <src_file_name>\n<valid_FLAG><xref_files_name>\n...
+      --  where <valid_flag> is either '0' or '1'
       declare
          FD : File_Type;
          Src_Buf : String (1 .. Max_Filename_Length);
@@ -125,7 +126,10 @@ package body SN.Xref_Pools is
                   Xref_Elmt.Source_Filename :=
                     new String' (Src_Buf (Src_Buf'First .. Src_Buf_Last));
                   Xref_Elmt.Xref_Filename :=
-                    new String' (Ref_Buf (Ref_Buf'First .. Ref_Buf_Last));
+                    new String' (Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
+                  if Ref_Buf (Ref_Buf'First) = '1' then
+                     Xref_Elmt.Valid := True;
+                  end if;
                   STable.Set (Pool.all, Xref_Elmt);
                end;
 
@@ -154,6 +158,11 @@ package body SN.Xref_Pools is
       STable.Get_First (Pool.all, E);
       while E /= Null_Xref_Elmt loop
          Put_Line (FD, E.Source_Filename.all);
+         if E.Valid then
+            Put (FD, '1');
+         else
+            Put (FD, '0');
+         end if;
          Put_Line (FD, E.Xref_Filename.all);
          STable.Get_Next (Pool.all, E);
       end loop;
@@ -303,5 +312,42 @@ package body SN.Xref_Pools is
          Free (Xref_Elmt);
       end;
    end Free_Filename_For;
+
+   -------------------
+   -- Is_Xref_Valid --
+   -------------------
+
+   function Is_Xref_Valid
+     (Source_Filename : String;
+      Pool            : Xref_Pool) return Boolean
+   is
+      Key       : String_Access := new String' (Source_Filename);
+      Xref_Elmt : Xref_Elmt_Ptr := STable.Get (Pool.all, Key);
+   begin
+      Free (Key);
+      if Xref_Elmt = null then
+         return False;
+      end if;
+      return Xref_Elmt.Valid;
+   end Is_Xref_Valid;
+
+   ---------------
+   -- Set_Valid --
+   ---------------
+
+   procedure Set_Valid
+     (Source_Filename : String;
+      Valid           : Boolean;
+      Pool            : Xref_Pool)
+   is
+      Key       : String_Access := new String' (Source_Filename);
+      Xref_Elmt : Xref_Elmt_Ptr := STable.Get (Pool.all, Key);
+   begin
+      Free (Key);
+      if Xref_Elmt = null then
+         return;
+      end if;
+      Xref_Elmt.Valid := Valid;
+   end Set_Valid;
 
 end SN.Xref_Pools;
