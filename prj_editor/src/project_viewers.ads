@@ -22,7 +22,7 @@ with Gtk.Box;
 with Gtk.Clist;
 with Gtk.Style;
 
-with Prj;
+with Projects;
 
 with Glide_Kernel;
 with Histories;
@@ -54,7 +54,7 @@ package Project_Viewers is
 
    procedure Show_Project
      (Viewer              : access Project_Viewer_Record;
-      Project_Filter      : Prj.Project_Id;
+      Project_Filter      : Projects.Project_Type;
       Directory_Filter    : String := "");
    --  Shows all the direct source files of Project_Filter (ie not including
    --  imported projects, but including all source directories).
@@ -83,11 +83,11 @@ private
 
       Kernel  : Glide_Kernel.Kernel_Handle;
 
-      Current_Project : Prj.Project_Id;
+      Current_Project : Projects.Project_Type;
       --  The project to which the files currently in the viewer belong. This
       --  indicates which project file should be normalized when a modification
       --  takes place.
 
-      Project_Filter : Prj.Project_Id := Prj.No_Project;
+      Project_Filter : Projects.Project_Type := Projects.No_Project;
    end record;
 end Project_Viewers;
