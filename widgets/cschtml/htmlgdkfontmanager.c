@@ -31,6 +31,9 @@ static guint real_font_sizes[CSC_HTML_FONT_STYLE_SIZE_MAX] = {
    6, 7, 8, 10, 12, 14, 16
 };
 
+/* Font size adjustment for the real_font_sizes array above, if any */
+#define FONT_ADJUST 0
+
 static void unref_fonts (gpointer key, GdkFont *font, gpointer user_data);
 
 /*****************************
@@ -108,7 +111,7 @@ html_gdk_font_manager_get_font
   if (size == 0)
     size = 3;
 
-  size = real_font_sizes [size];
+  size = real_font_sizes [size] + FONT_ADJUST;
 
   /* Compute the weight of the font */
 
