@@ -2180,8 +2180,10 @@ void f_TemplateArguments (char* str, int lineno, int charno) {
 
         Type = f_TypeFromString (ptr);
 
-        if ( Type != 0 )
+        if ( Type != 0 ) {
             f_TypeBasic (Type, lineno, charno);
+            f_TypeDestroy (Type);
+        }
 
         ptr = end + 1;
         *end = c;
