@@ -1057,7 +1057,6 @@ package body Glide_Menu is
       File        : constant String := "/_" & (-"File")    & '/';
       Edit        : constant String := "/_" & (-"Edit")    & '/';
       Gotom       : constant String := "/_" & (-"Goto")    & '/';
-      VCS         : constant String := "/_" & (-"VCS")     & '/';
       Project     : constant String := "/_" & (-"Project") & '/';
       Build       : constant String := "/_" & (-"Build")   & '/';
       Debug_Sub   : constant String := (-"Debug")          & '/';
@@ -1116,17 +1115,6 @@ package body Glide_Menu is
          Gtk_New (Gotom & (-"End Of Statement"), "", Stock_Go_Down, null),
          Gtk_New (Gotom & (-"Next Procedure"), "", Stock_Go_Forward, null),
          Gtk_New (Gotom & (-"Previous Procedure"), "", Stock_Go_Back, null),
-
-         Gtk_New (VCS & (-"Check In"), "", Stock_Goto_Last, null),
-         Gtk_New (VCS & (-"Check Out"), "", Stock_Goto_First, null),
-         Gtk_New (VCS & (-"Edit Revision History"), "", Stock_New, null),
-         Gtk_New (VCS & (-"Revert to Last Version"), "",
-                  Stock_Revert_To_Saved, null),
-         Gtk_New (VCS & (-"Undo Last Check-In"), "", Stock_Undelete, null),
-         Gtk_New (VCS & "sep1", Item_Type => Separator),
-         Gtk_New (VCS & (-"Compare with Last Version"), "",
-                  Stock_Sort_Ascending, null),
-         Gtk_New (VCS & (-"Annotate"), "", Stock_Preferences, null),
 
          Gtk_New (Project & (-"Open..."), "", Stock_Open,
                   On_Open_Project'Access),
