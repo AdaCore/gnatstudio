@@ -25,6 +25,10 @@ unmodified in any copy.
 
 @end titlepage
 
+@ifnotinfo
+@contents
+@end ifnotinfo
+
 @ifinfo
 @node Top, Introduction, (dir), (dir)
 @top GNAT Programming System Tutorial
@@ -686,7 +690,5 @@ this document includes:
 For more information, please look at the @i{User's Guide} (@url{gps.html}).
 
 @c @printindex cp
-
-@contents
 
 @bye
