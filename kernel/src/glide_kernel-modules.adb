@@ -258,7 +258,9 @@ package body Glide_Kernel.Modules is
 
       if Context /= null then
          while not Module_List.Is_Empty (Current) loop
-            if Module_List.Head (Current) /= User.ID then
+            if Module_List.Head (Current) /= User.ID
+              and then Module_List.Head (Current).Contextual_Menu /= null
+            then
                Module_List.Head (Current).Contextual_Menu
                  (Context   => Context,
                   Menu      => Menu);
