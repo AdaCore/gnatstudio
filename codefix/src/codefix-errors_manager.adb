@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002 - 2003                     --
+--                     Copyright (C) 2002 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -349,6 +349,15 @@ package body Codefix.Errors_Manager is
    begin
       return First (This.Potential_Corrections);
    end Get_First_Error;
+
+   --------------------------
+   -- Get_Number_Of_Errors --
+   --------------------------
+
+   function Get_Number_Of_Errors (This : Correction_Manager) return Natural is
+   begin
+      return Length (This.Potential_Corrections);
+   end Get_Number_Of_Errors;
 
    ------------------
    -- Search_Error --
