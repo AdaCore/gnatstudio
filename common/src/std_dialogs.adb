@@ -21,23 +21,20 @@
 with Glib;                  use Glib;
 with Gtk;                   use Gtk;
 with Gtk.Box;               use Gtk.Box;
-with Gtk.Enums;             use Gtk.Enums;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
-with Gtk.Enums;             use Gtk.Enums;
 with Gtk.Combo;             use Gtk.Combo;
 with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
-with Histories;             use Histories;
 
 package body Std_Dialogs is
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
-      Entry_Field   : Gtk_Combo;
-      Label         : Gtk_Label;
+      Entry_Field : Gtk_Combo;
+      Label       : Gtk_Label;
    end record;
    type Simple_Entry_Dialog_Access is access
      all Simple_Entry_Dialog_Record'Class;
@@ -51,13 +48,13 @@ package body Std_Dialogs is
    function Internal_Simple_Entry_Dialog
      (Dialog     : access Simple_Entry_Dialog_Record'Class;
       Parent     : access Gtk.Window.Gtk_Window_Record'Class;
-      Extra_Box  : Gtk.Check_Button.Gtk_Check_Button := null;
-      Extra_Box2 : Gtk.Check_Button.Gtk_Check_Button := null;
+      Extra_Box  : Gtk_Check_Button := null;
+      Extra_Box2 : Gtk_Check_Button := null;
       Title      : String;
       Message    : String;
       Position   : Gtk_Window_Position := Win_Pos_Mouse;
       History    : Histories.History;
-      Key        : Histories.History_Key := "") return String;
+      Key        : History_Key := "") return String;
    --  Internal version of Simple_Entry_Dialog, where Dialog is already
    --  created.
    --  Dialog is not destroyed on exit, it is your responsability to do so.
@@ -72,14 +69,14 @@ package body Std_Dialogs is
 
    function Internal_Simple_Entry_Dialog
      (Dialog          : access Simple_Entry_Dialog_Record'Class;
-      Parent          : access Gtk.Window.Gtk_Window_Record'Class;
-      Extra_Box       : Gtk.Check_Button.Gtk_Check_Button := null;
-      Extra_Box2      : Gtk.Check_Button.Gtk_Check_Button := null;
+      Parent          : access Gtk_Window_Record'Class;
+      Extra_Box       : Gtk_Check_Button := null;
+      Extra_Box2      : Gtk_Check_Button := null;
       Title           : String;
       Message         : String;
       Position        : Gtk_Window_Position := Win_Pos_Mouse;
       History         : Histories.History;
-      Key             : Histories.History_Key := "") return String
+      Key             : History_Key := "") return String
    is
       use Widget_List;
       Button   : Gtk_Widget;
@@ -155,7 +152,7 @@ package body Std_Dialogs is
    -------------------------
 
    function Simple_Entry_Dialog
-     (Parent   : access Gtk.Window.Gtk_Window_Record'Class;
+     (Parent   : access Gtk_Window_Record'Class;
       Title    : String;
       Message  : String;
       Position : Gtk_Window_Position := Win_Pos_Mouse;
@@ -182,11 +179,10 @@ package body Std_Dialogs is
    --------------------------
 
    function Display_Entry_Dialog
-     (Parent         : access Gtk.Window.Gtk_Window_Record'Class;
+     (Parent         : access Gtk_Window_Record'Class;
       Title          : String;
       Message        : String;
-      Position       : Gtk.Enums.Gtk_Window_Position :=
-        Gtk.Enums.Win_Pos_Mouse;
+      Position       : Gtk_Window_Position := Win_Pos_Mouse;
       Check_Msg      : String;
       History        : Histories.History;
       Key            : History_Key := "";
@@ -196,7 +192,7 @@ package body Std_Dialogs is
       Button2_Active : Boolean_Access := null;
       Key_Check2     : Histories.History_Key := "") return String
    is
-      Dialog          : Display_Dialog_Access;
+      Dialog : Display_Dialog_Access;
    begin
       Dialog := new Display_Dialog_Record;
       Initialize (Dialog);
