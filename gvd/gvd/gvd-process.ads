@@ -370,7 +370,7 @@ package GVD.Process is
 
    function Toggle_Breakpoint_State
      (Process        : access Debugger_Process_Tab_Record;
-      Breakpoint_Num : Integer) return Boolean;
+      Breakpoint_Num : GVD.Types.Breakpoint_Identifier) return Boolean;
    --  Toggle the enabled/disabled state of a specific breakpoint in the
    --  current process, and return the new state.
    --  The internal list of breakpoints is also updated, but no command is

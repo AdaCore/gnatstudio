@@ -1544,7 +1544,7 @@ package body GVD.Process is
 
    function Toggle_Breakpoint_State
      (Process        : access Debugger_Process_Tab_Record;
-      Breakpoint_Num : Integer) return Boolean is
+      Breakpoint_Num : Breakpoint_Identifier) return Boolean is
    begin
       --  ??? Maybe we should also update the icons in the code_editor to have
       --  an icon of a different color ?
