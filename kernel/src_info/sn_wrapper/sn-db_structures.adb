@@ -44,18 +44,6 @@ package body SN.DB_Structures is
    --  Sets Seg to the beginning and end of the copied piece of data
    --  increments Cur_Pos
 
---  function Make_Array_From_String (input : String) return Arg_String_Array;
-   --  Parses string of tokens separated by comma
-
-   procedure Make_Vector_From_String
-     (Input       : String;
-      Buffer      : GNAT.OS_Lib.String_Access;
-      Buffer_Pos  : in out Integer;
-      Vector_Root : out Segment_Vector.Node_Access);
-   pragma Unreferenced (Make_Vector_From_String);
-   --  Parses string of tokens separated by comma and stores parsed
-   --  values in vector
-
    function Get_Position_From_Comment
      (Comment  : Segment;
       Buffer   : GNAT.OS_Lib.String_Access;
@@ -460,10 +448,6 @@ package body SN.DB_Structures is
          Cur_Pos,
          Tab.Arg_Types);
 
-      --  Make_Vector_From_String (
-      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
-
       Remove_Brackets
         (Get_Field (Key_Data_Pair.Data, 6),
          Tab.Buffer,
@@ -565,10 +549,6 @@ package body SN.DB_Structures is
          Cur_Pos,
          Tab.Arg_Types);
 
-      --  Make_Vector_From_String (
-      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
-
       Remove_Brackets
         (Get_Field (Key_Data_Pair.Data, 6),
          Tab.Buffer,
@@ -642,10 +622,6 @@ package body SN.DB_Structures is
          Tab.Buffer,
          Cur_Pos,
          Tab.Arg_Types);
-
-      --  Make_Vector_From_String (
-      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
 
       Remove_Brackets
         (Get_Field (Key_Data_Pair.Data, 6),
@@ -981,10 +957,6 @@ package body SN.DB_Structures is
          Tab.Buffer,
          Cur_Pos,
          Tab.Arg_Types);
-
-      --  Make_Vector_From_String (
-      --        Remove_Brackets (Get_Field (Key_Data_Pair.Data, 5)),
-      --        Tab.Buffer, Cur_Pos, Tab.Arg_Names);
 
       Remove_Brackets
         (Get_Field (Key_Data_Pair.Data, 6),
@@ -1498,44 +1470,6 @@ package body SN.DB_Structures is
       Buffer (Seg.First .. Seg.Last) := Str (Str'First + 1 .. Str'Last - 1);
       Cur_Pos   := Seg.Last + 1;
    end Remove_Brackets;
-
-   -----------------------------
-   -- Make_Vector_From_String --
-   -----------------------------
-
-   procedure Make_Vector_From_String
-     (Input       : in String;
-      Buffer      : GNAT.OS_Lib.String_Access;
-      Buffer_Pos  : in out Integer;
-      Vector_Root : out Segment_Vector.Node_Access)
-   is
-      n, pos : Integer;
-      tmp_seg : Segment;
-   begin
-      Vector_Root := null;
-      n := 0;
-      if Input'Length = 0 then
-         return;
-      end if;
-      pos := Input'First;
-      for i in Input'First .. Input'Last loop
-         if (Input (i) = ',' and n > 0) or i = Input'Last then
-            if i = Input'Last then
-               n := n + 1;
-            end if;
-            Buffer (Buffer_Pos .. (Buffer_Pos + n - 1)) :=
-                  Input (pos .. (pos + n - 1));
-            pos := pos + n + 1;
-            tmp_seg.First := Buffer_Pos;
-            tmp_seg.Last := Buffer_Pos + n - 1;
-            Segment_Vector.Append (Vector_Root, tmp_seg);
-            Buffer_Pos := Buffer_Pos + n;
-            n := 0;
-         else
-            n := n + 1;
-         end if;
-      end loop;
-   end Make_Vector_From_String;
 
    -------------------------------
    -- Get_Position_From_Comment --
