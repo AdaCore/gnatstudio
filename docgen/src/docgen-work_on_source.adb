@@ -1914,7 +1914,6 @@ package body Docgen.Work_On_Source is
             Doc_LI_Unit      => No_LI_File,
             Doc_File_List    => TSFL.Null_List,
             Subtitle_Name    => new String'("Description"),
-            Subtitle_Kind    => Package_Desc_Info,
             Subtitle_Package => new String'(Package_Name));
          Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
          Description := Extract_Comment (Text, Line, 0, True, Options);
@@ -1991,7 +1990,6 @@ package body Docgen.Work_On_Source is
             Doc_LI_Unit      => No_LI_File,
             Doc_File_List    => TSFL.Null_List,
             Subtitle_Name    => new String'("Dependencies"),
-            Subtitle_Kind    => With_Info,
             Subtitle_Package => new String'(Package_Name));
          Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
 
@@ -2034,7 +2032,6 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          Subtitle_Name    => new String'("Packages"),
-         Subtitle_Kind    => Package_Info,
          Subtitle_Package => new String'(Package_Name));
       Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
       Free (Data_Subtitle.Subtitle_Name);
@@ -2432,7 +2429,6 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          Subtitle_Name    => new String'("Constants"),
-         Subtitle_Kind    => Var_Info,
          Subtitle_Package => new String'(Package_Name));
       Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
       Free (Data_Subtitle.Subtitle_Name);
@@ -2608,7 +2604,6 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          Subtitle_Name    => new String'("Exceptions"),
-         Subtitle_Kind    => Exception_Info,
          Subtitle_Package => new String'(Package_Name));
       Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
       Free (Data_Subtitle.Subtitle_Name);
@@ -2784,7 +2779,6 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          Subtitle_Name    => new String'("Types"),
-         Subtitle_Kind    => Type_Info,
          Subtitle_Package => new String'(Package_Name));
       Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
       Free (Data_Subtitle.Subtitle_Name);
@@ -3088,7 +3082,6 @@ package body Docgen.Work_On_Source is
          Doc_File_List    => TSFL.Null_List,
          Subtitle_Name    =>
          new String'("Tasks, Entries and Entry Families"),
-         Subtitle_Kind    => Entry_Info,
          Subtitle_Package => new String'(Package_Name));
       Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
       Free (Data_Subtitle.Subtitle_Name);
@@ -3265,7 +3258,6 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
          Subtitle_Name    => new String'("Subprograms"),
-         Subtitle_Kind    => Subprogram_Info,
          Subtitle_Package => new String'(Package_Name));
       Doc_Subtitle (B, Kernel, Doc_File, Data_Subtitle, Level);
       Free (Data_Subtitle.Subtitle_Name);
