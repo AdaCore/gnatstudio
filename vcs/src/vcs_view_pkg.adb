@@ -258,7 +258,6 @@ package body VCS_View_Pkg is
          Path, Column,
          Cell_X, Cell_Y,
          Row_Found);
-      Row_Found := False;
 
       if not Row_Found then
          return;
