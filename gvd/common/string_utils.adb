@@ -1198,37 +1198,7 @@ package body String_Utils is
      (Args  : GNAT.OS_Lib.Argument_List;
       Quote : Character := '"') return String
    is
-      Len   : Natural := 1;
-
-      function Has_Char (Arg : String; Char : Character) return Boolean;
-      --  Return True if Args contains Char
-
-      function Has_Char (Arg : String; Char : Character) return Boolean is
-      begin
-         for J in Arg'Range loop
-            if Arg (J) = Char then
-               return True;
-            end if;
-         end loop;
-
-         return False;
-      end Has_Char;
-
-      function Needs_Quotes (Arg : String) return Boolean;
-      --  Return True if Arg needs quotes.
-
-      function Needs_Quotes (Arg : String) return Boolean is
-      begin
-         for J in Arg'Range loop
-            if Arg (J) = ' ' then
-               return True;
-            end if;
-         end loop;
-
-         return False;
-      end Needs_Quotes;
-
-
+      Len : Natural := 1;
    begin
       --  Compute the maximum length of the output.
 
@@ -1243,27 +1213,27 @@ package body String_Utils is
 
       declare
          Result : String (1 .. Len + 1);
-         Index  : Natural := Result'First;
+         Ind    : Natural := Result'First;
 
       begin
          for J in Args'Range loop
             if Args (J) /= null then
-               if Needs_Quotes (Args (J).all)
-                 and then not Has_Char (Args (J).all, Quote)
+               if Index (Args (J).all, " ") > 0
+                 and then Index (Args (J).all, (1 => Quote)) = 0
                then
-                  Result (Index .. Index + Args (J)'Length + 2) :=
+                  Result (Ind .. Ind + Args (J)'Length + 2) :=
                     Quote & Args (J).all & Quote & " ";
-                  Index := Index + Args (J)'Length + 3;
+                  Ind := Ind + Args (J)'Length + 3;
 
                else
-                  Result (Index .. Index + Args (J)'Length) :=
+                  Result (Ind .. Ind + Args (J)'Length) :=
                     Args (J).all & " ";
-                  Index := Index + Args (J)'Length + 1;
+                  Ind := Ind + Args (J)'Length + 1;
                end if;
             end if;
          end loop;
 
-         return Result (1 .. Index - 1);
+         return Result (1 .. Ind - 1);
       end;
    end Argument_List_To_Quoted_String;
 
