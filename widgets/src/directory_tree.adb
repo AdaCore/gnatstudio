@@ -48,6 +48,7 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
+with File_Utils;                use File_Utils;
 with Unchecked_Deallocation;
 
 package body Directory_Tree is
@@ -72,11 +73,13 @@ package body Directory_Tree is
 
    function Add_Directory_Node
      (Tree       : access Dir_Tree_Record'Class;
-      Parent_Dir : String;
       Dir        : String;
-      Parent     : Gtk_Ctree_Node) return Gtk_Ctree_Node;
+      Parent     : Gtk_Ctree_Node;
+      Num_Subdirectories : Integer) return Gtk_Ctree_Node;
    --  Add a new node in tree to reference Dir. The new node is created as
    --  a child of Parent (or at the root of the tree if Parent is null).
+   --  Num_Subdirectories should be different from 0 if Dir contains
+   --  subdirectories.
 
    function Directory
      (Tree      : access Dir_Tree_Record'Class;
@@ -91,12 +94,6 @@ package body Directory_Tree is
    --  Check on the disk what the subdirectories of Directory (N) are, and
    --  add them to the tree.
    --  Nothing is done if the subdirectories of N have already been parsed
-
-   function Has_Subdirectories
-     (Tree : access Dir_Tree_Record'Class; Absolute_Dir : String)
-      return Boolean;
-   --  Return True if Absolute_Dir contains subdirectories.
-   --  Absolute_Dir must end with a directory separator.
 
    procedure Expand_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -211,7 +208,8 @@ package body Directory_Tree is
 
       Tree.Idle := 0;
 
-      N := Add_Directory_Node (Tree, "", Root, null);
+      N := Add_Directory_Node
+        (Tree, Root, null, Subdirectories_Count (Root));
       Widget_Callback.Connect (Tree, "tree_expand", Expand_Tree_Cb'Access);
       Widget_Callback.Connect (Tree, "tree_collapse", Collapse_Tree_Cb'Access);
       Widget_Callback.Connect
@@ -252,24 +250,6 @@ package body Directory_Tree is
          return Node_Get_Text (Tree, N, 0);
       end if;
    end Directory;
-
-   ------------------------
-   -- Has_Subdirectories --
-   ------------------------
-
-   function Has_Subdirectories
-     (Tree : access Dir_Tree_Record'Class; Absolute_Dir : String)
-      return Boolean
-   is
-      pragma Unreferenced (Tree, Absolute_Dir);
-   begin
-      --  ??? Always return True, to avoid heavy requests on the file system
-      --  Particularly useful when using network disks that may not be online,
-      --  But even on local disks, this makes a significant difference in
-      --  usability.
-
-      return True;
-   end Has_Subdirectories;
 
    ------------
    -- Filter --
@@ -363,6 +343,7 @@ package body Directory_Tree is
       Last    : Natural;
       N2      : Gtk_Ctree_Node;
       Num_Dir : Natural := 0;
+      Num_Subdirectories : Integer;
 
    begin
       --  Have we already parsed the subdirectories ?
@@ -383,15 +364,18 @@ package body Directory_Tree is
 
             exit when Last = 0;
 
-            if Is_Directory (Absolute & File (File'First .. Last))
+            Num_Subdirectories :=
+              Subdirectories_Count (Absolute & File (File'First .. Last));
+
+            if Num_Subdirectories /= -1
               and then Filter (Tree, File (File'First .. Last))
             then
                Num_Dir := Num_Dir + 1;
                N2 := Add_Directory_Node
                  (Tree,
-                  Absolute,
                   File (File'First .. Last) & Directory_Separator,
-                  N);
+                  N,
+                  Num_Subdirectories);
             end if;
          end loop;
 
@@ -419,9 +403,9 @@ package body Directory_Tree is
 
    function Add_Directory_Node
      (Tree       : access Dir_Tree_Record'Class;
-      Parent_Dir : String;
       Dir        : String;
-      Parent     : Gtk_Ctree_Node) return Gtk_Ctree_Node
+      Parent     : Gtk_Ctree_Node;
+      Num_Subdirectories : Integer) return Gtk_Ctree_Node
    is
       N, N2   : Gtk_Ctree_Node;
       Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
@@ -449,7 +433,7 @@ package body Directory_Tree is
       --  Add a dummy node so that it is possible to expand dynamically a
       --  directory
 
-      if Has_Subdirectories (Tree, Parent_Dir & Dir) then
+      if Num_Subdirectories > 0 then
          Strings (1) := New_String (".");
          N2 := Insert_Node
            (Tree,
