@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.0.0
 
+- The log files in directory log_files/ are not removed on Windows
+  Problem:    After editing and committing a file the log file is not removed
+              from the $GPS_HOME/.gps/log_files directory.
+  Workaround: Remove the file manually after exiting GPS.
+
 - CC10-007 Opaque resizing of windows on Windows doesn't work
   Problem:    If you have set the opaque mode in the preferences, and try to
               resize the windows, then GPS moves them instead.
@@ -16,8 +21,9 @@ Known Problems fixed in GPS 2.0.0
   Problem:    When a new dependency is added between two projects, an absolute
               path is almost always generated, no matter what the preference
               "Relative project paths" is.
-  Workaround: Edit the project properties, unset the "Paths should be relative",
-              and press OK. Edit again the properties and set back the button.
+  Workaround: Edit the project properties, unset the "Paths should be 
+              relative", and press OK. Edit again the properties and set back
+              the button.
               You can then save the project, and all absolute paths have been
               converted to absolute
 
