@@ -76,7 +76,6 @@ procedure GVD_Main is
    Level               : Integer;
    Debug_Type          : Debugger_Type := Gdb_Type;
    Button              : Message_Dialog_Buttons;
-   Editor              : String_Access;
    Prefix              : String_Access;
    Home                : String_Access;
    Dir                 : String_Access;
@@ -308,16 +307,6 @@ begin
       Main_Debug_Window.Log_Level  := GVD.Types.Hidden;
       Main_Debug_Window.Log_File   := Create_File (Log'Address, Fmode => Text);
    end;
-
-   Editor := Getenv ("GVD_EDITOR");
-
-   if Editor.all /= "" then
-      Main_Debug_Window.External_Editor := Editor;
-   else
-      Free (Editor);
-      Main_Debug_Window.External_Editor :=
-        new String' (Get_Pref (Default_External_Editor));
-   end if;
 
    Initialize_Option_Scan (Section_Delimiters => "-dargs -pargs");
 
