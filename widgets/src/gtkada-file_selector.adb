@@ -325,6 +325,7 @@ package body Gtkada.File_Selector is
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
       Default_Name      : String  := "";
+      Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
       Kind              : File_Selector_Kind := Unspecified;
       History           : Histories.History := null) return String
@@ -385,11 +386,12 @@ package body Gtkada.File_Selector is
             Regexp_File_Filter (File_Pattern, Pattern_Name));
       end if;
 
-      return Select_File (File_Selector);
+      return Select_File (File_Selector, Parent);
    end Select_File;
 
    function Select_File
-     (File_Selector : File_Selector_Window_Access) return String
+     (File_Selector : File_Selector_Window_Access;
+      Parent        : Gtk_Window := null) return String
    is
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
    begin
@@ -399,6 +401,7 @@ package body Gtkada.File_Selector is
 
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
+      Set_Transient_For (File_Selector, Parent);
 
       Widget_Callback.Object_Connect
         (File_Selector.Ok_Button, "clicked",
@@ -435,6 +438,7 @@ package body Gtkada.File_Selector is
    function Select_Directory
      (Title             : String := "Select a directory";
       Base_Directory    : String := "";
+      Parent            : Gtk_Window := null;
       Use_Native_Dialog : Boolean := False;
       History           : Histories.History := null) return String
    is
@@ -447,11 +451,12 @@ package body Gtkada.File_Selector is
          (1 => Directory_Separator), Base_Directory, Title, False, History);
       Set_Position (File_Selector_Window, Win_Pos_Mouse);
 
-      return Select_Directory (File_Selector_Window);
+      return Select_Directory (File_Selector_Window, Parent);
    end Select_Directory;
 
    function Select_Directory
-     (File_Selector : File_Selector_Window_Access) return String
+     (File_Selector : File_Selector_Window_Access;
+      Parent        : Gtk_Window := null) return String
    is
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
    begin
@@ -461,6 +466,7 @@ package body Gtkada.File_Selector is
 
       Register_Filter (File_Selector, Filter_A);
       Set_Modal (File_Selector, True);
+      Set_Transient_For (File_Selector, Parent);
 
       Widget_Callback.Object_Connect
         (File_Selector.Ok_Button, "clicked",
@@ -1524,7 +1530,7 @@ package body Gtkada.File_Selector is
       end if;
 
       Set_Policy (File_Selector_Window, False, True, False);
-      Set_Position (File_Selector_Window, Win_Pos_Center);
+      Set_Position (File_Selector_Window, Win_Pos_Mouse);
       Set_Modal (File_Selector_Window, False);
 
       Gtk_New_Vbox (File_Selector_Window.File_Selector_Vbox, False, 0);
@@ -1837,6 +1843,7 @@ package body Gtkada.File_Selector is
       Result : constant Gtk_Entry := Gtk_Entry (Ent);
       Name   : constant String := Select_Directory
         (-"Select directory",
+         Parent => Gtk_Window (Get_Toplevel (Ent)),
          Base_Directory =>
            Dir_Name (Normalize_Pathname
                        (Locale_From_UTF8 (Get_Text (Result)),
