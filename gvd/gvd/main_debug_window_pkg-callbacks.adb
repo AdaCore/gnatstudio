@@ -131,19 +131,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Attach_To_Process1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top      : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Label    : Gtk_Label;
-      Process  : Process_Tab_Access;
       List     : Argument_List (1 .. 0);
-      Next_Tab : Guint;
-
+      Process  : Gtk_Window;
    begin
-      Next_Tab := Page_List.Length (Get_Children (Top.Process_Notebook)) + 1;
-      Gtk_New (Label, -("Processus") & Guint'Image (Next_Tab));
-      Gtk_New (Process);
-      Append_Page (Top.Process_Notebook, Process.Process_Paned, Label);
-      Show_All (Top.Process_Notebook);
-      Create_Debugger (Process, List);
+      Process := Create_Debugger (List, Process_Name => "");
    end On_Attach_To_Process1_Activate;
 
    ---------------------------------

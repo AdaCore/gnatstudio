@@ -22,14 +22,20 @@ with Gtk; use Gtk;
 with Gtk.Main;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtkada.Intl; use Gtkada.Intl;
+with Gtk.Window;  use Gtk.Window;
+with GNAT.Os_Lib; use GNAT.Os_Lib;
+with Odd.Process; use Odd.Process;
 
 procedure Odd_Main is
+   Process_Tab : Gtk_Window;
+   List : Argument_List (1 .. 0);
 begin
    Bind_Text_Domain ("GtkAda", "/usr/local/share/locale");
    Bind_Text_Domain ("Odd", "/usr/local/share/locale");
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
    Gtk_New (Main_Debug_Window);
+   Process_Tab := Create_Debugger (List, "");
    Show_All (Main_Debug_Window);
    Gtk.Main.Main;
 end Odd_Main;

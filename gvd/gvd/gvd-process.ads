@@ -36,10 +36,21 @@ package Odd.Process is
    end record;
    --  This type holds all the informations related to a given debugger.
 
-   procedure Create_Debugger
-     (Window : access Gtk_Window_Record'Class;
-      Params : Argument_List);
+   function Create_Debugger
+     (Params       : Argument_List;
+      Process_Name : String := "")
+     return Gtk_Window;
    --  Create a debugger with a given list of arguments.
+   --  A new page is added to the main notebook. Process_Name is used as the
+   --  name of the tab, or if it is the empty string an automatic name is
+   --  chosen.
+   --  This function returns a Process_Tab_Access.
+
+   Debugger_Not_Found : exception;
+
+   function Convert (Pid : GNAT.Expect.Pipes_Id) return Debugger_Descriptor;
+   --  Return the debugger_descriptor associated with a pipes_id.
+   --  If no such page is found, an exception Debugger_Not_Found is raised.
 
    procedure Send_Command (Debugger : Debugger_Descriptor; Command : String);
    --  Send a given command to the debugger.
