@@ -132,6 +132,12 @@ package body Glide_Kernel.Help is
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
+
+      if not Is_Regular_File (File) then
+         Insert (Kernel, File & (-": File not found"), Mode => Error);
+         return False;
+      end if;
+
       Buffer := Read_File (File);
 
       if Buffer /= null then
@@ -170,6 +176,7 @@ package body Glide_Kernel.Help is
       Trace (Me, "url requested: " & Url);
 
       if Is_Absolute_Path (Url) then
+         Trace (Me, "Absolute path");
          Buffer := Read_File (Url);
       else
          declare
@@ -229,11 +236,6 @@ package body Glide_Kernel.Help is
    begin
       if Anchor = 0 then
          Anchor := Url'Last + 1;
-      end if;
-
-      if not Is_Regular_File (Url) then
-         Insert (Html.Kernel, Url & (-": File not found"), Mode => Error);
-         return;
       end if;
 
       if Is_Absolute_Path (Url) then
