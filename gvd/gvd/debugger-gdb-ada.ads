@@ -21,16 +21,61 @@
 --  This package defines the object Gdb_Ada_Language that provides support
 --  for the language Ada in Gdb.
 --
---  See language.ads for a complete spec.
+--  See language.ads and language-debugger.ads for a complete spec.
 
-with Language.Debugger.Ada;
+with Language.Debugger;
 with Items;
 with Items.Arrays;
 
 package Debugger.Gdb.Ada is
 
    type Gdb_Ada_Language is new
-     Language.Debugger.Ada.Ada_Language with private;
+     Language.Debugger.Language_Debugger with private;
+
+   --------------------
+   -- Simple Parsing --
+   --------------------
+
+   function Is_Simple_Type
+     (Lang : access Gdb_Ada_Language; Str : String) return Boolean;
+
+   function Keywords
+     (Lang : access Gdb_Ada_Language) return GNAT.Regpat.Pattern_Matcher;
+
+   function Get_Language_Context
+     (Lang : access Gdb_Ada_Language) return Language.Language_Context;
+
+   --------------
+   -- Explorer --
+   --------------
+
+   function Explorer_Regexps
+     (Lang : access Gdb_Ada_Language) return Language.Explorer_Categories;
+
+   function Is_System_File
+     (Lang : access Gdb_Ada_Language; File_Name : String) return Boolean;
+
+   ------------------------
+   -- Naming conventions --
+   ------------------------
+
+   function Dereference_Name
+     (Lang : access Gdb_Ada_Language;
+      Name : String) return String;
+
+   function Array_Item_Name
+     (Lang  : access Gdb_Ada_Language;
+      Name  : String;
+      Index : String) return String;
+
+   function Record_Field_Name
+     (Lang  : access Gdb_Ada_Language;
+      Name  : String;
+      Field : String) return String;
+
+   -------------
+   -- Parsing --
+   -------------
 
    procedure Parse_Type
      (Lang     : access Gdb_Ada_Language;
@@ -93,6 +138,6 @@ package Debugger.Gdb.Ada is
 private
 
    type Gdb_Ada_Language is new
-     Language.Debugger.Ada.Ada_Language with null record;
+     Language.Debugger.Language_Debugger with null record;
 
 end Debugger.Gdb.Ada;

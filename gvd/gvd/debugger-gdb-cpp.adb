@@ -21,6 +21,7 @@
 --  ??? Must add support for "show print vtbl"
 
 with Language.Debugger; use Language.Debugger;
+with Language.Cpp;      use Language.Cpp;
 
 with GVD.Strings;    use GVD.Strings;
 with Items;          use Items;
@@ -68,6 +69,90 @@ package body Debugger.Gdb.Cpp is
       Result   : out Generic_Type_Access);
    --  Parse the contents of a class/union in C++ (ie the part after '{'
    --  Index should point to the character after '{'
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type
+     (Lang : access Gdb_Cpp_Language; Str : String) return Boolean is
+   begin
+      return Is_Simple_Type (Cpp_Lang, Str);
+   end Is_Simple_Type;
+
+   --------------
+   -- Keywords --
+   --------------
+
+   function Keywords
+     (Lang : access Gdb_Cpp_Language) return GNAT.Regpat.Pattern_Matcher is
+   begin
+      return Keywords (Cpp_Lang);
+   end Keywords;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context
+     (Lang : access Gdb_Cpp_Language) return Language.Language_Context is
+   begin
+      return Get_Language_Context (Cpp_Lang);
+   end Get_Language_Context;
+
+   ----------------------
+   -- Explorer_Regexps --
+   ----------------------
+
+   function Explorer_Regexps
+     (Lang : access Gdb_Cpp_Language) return Language.Explorer_Categories is
+   begin
+      return Explorer_Regexps (Cpp_Lang);
+   end Explorer_Regexps;
+
+   --------------------
+   -- Is_System_File --
+   --------------------
+
+   function Is_System_File
+     (Lang : access Gdb_Cpp_Language; File_Name : String) return Boolean is
+   begin
+      return Is_System_File (Cpp_Lang, File_Name);
+   end Is_System_File;
+
+   ----------------------
+   -- Dereference_Name --
+   ----------------------
+
+   function Dereference_Name
+     (Lang : access Gdb_Cpp_Language;
+      Name : String) return String is
+   begin
+      return Dereference_Name (Cpp_Lang, Name);
+   end Dereference_Name;
+
+   ---------------------
+   -- Array_Item_Name --
+   ---------------------
+
+   function Array_Item_Name
+     (Lang  : access Gdb_Cpp_Language;
+      Name  : String;
+      Index : String) return String is
+   begin
+      return Array_Item_Name (Cpp_Lang, Name, Index);
+   end Array_Item_Name;
+
+   -----------------------
+   -- Record_Field_Name --
+   -----------------------
+
+   function Record_Field_Name
+     (Lang  : access Gdb_Cpp_Language;
+      Name  : String;
+      Field : String) return String is
+   begin
+      return Record_Field_Name (Cpp_Lang, Name, Field);
+   end Record_Field_Name;
 
    ---------------------
    -- Break Exception --

@@ -21,6 +21,7 @@
 with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Language.Debugger; use Language.Debugger;
+with Language.Ada;  use Language.Ada;
 with GVD.Strings;   use GVD.Strings;
 with Items;         use Items;
 with Items.Simples; use Items.Simples;
@@ -34,6 +35,91 @@ package body Debugger.Gdb.Ada is
 
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part
+
+   --------------------
+   -- Is_Simple_Type --
+   --------------------
+
+   function Is_Simple_Type
+     (Lang : access Gdb_Ada_Language; Str : String) return Boolean is
+   begin
+      return Is_Simple_Type (Ada_Lang, Str);
+   end Is_Simple_Type;
+
+   --------------
+   -- Keywords --
+   --------------
+
+   function Keywords
+     (Lang : access Gdb_Ada_Language) return GNAT.Regpat.Pattern_Matcher is
+   begin
+      return Keywords (Ada_Lang);
+   end Keywords;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context
+     (Lang : access Gdb_Ada_Language) return Language.Language_Context is
+   begin
+      return Get_Language_Context (Ada_Lang);
+   end Get_Language_Context;
+
+   ----------------------
+   -- Explorer_Regexps --
+   ----------------------
+
+   function Explorer_Regexps
+     (Lang : access Gdb_Ada_Language) return Language.Explorer_Categories is
+   begin
+      return Explorer_Regexps (Ada_Lang);
+   end Explorer_Regexps;
+
+   --------------------
+   -- Is_System_File --
+   --------------------
+
+   function Is_System_File
+     (Lang : access Gdb_Ada_Language; File_Name : String) return Boolean is
+   begin
+      return Is_System_File (Ada_Lang, File_Name);
+   end Is_System_File;
+
+   ----------------------
+   -- Dereference_Name --
+   ----------------------
+
+   function Dereference_Name
+     (Lang : access Gdb_Ada_Language;
+      Name : String) return String is
+   begin
+      return Dereference_Name (Ada_Lang, Name);
+   end Dereference_Name;
+
+   ---------------------
+   -- Array_Item_Name --
+   ---------------------
+
+   function Array_Item_Name
+     (Lang  : access Gdb_Ada_Language;
+      Name  : String;
+      Index : String) return String is
+   begin
+      return Array_Item_Name (Ada_Lang, Name, Index);
+   end Array_Item_Name;
+
+   -----------------------
+   -- Record_Field_Name --
+   -----------------------
+
+   function Record_Field_Name
+     (Lang  : access Gdb_Ada_Language;
+      Name  : String;
+      Field : String) return String is
+   begin
+      return Record_Field_Name (Ada_Lang, Name, Field);
+   end Record_Field_Name;
 
    ---------------------
    -- Break Exception --
