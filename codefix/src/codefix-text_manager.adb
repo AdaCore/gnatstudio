@@ -2936,29 +2936,32 @@ package body Codefix.Text_Manager is
 
       Make_Word_Cursor (This.Word, Current_Text, Word);
       Line_Cursor := File_Cursor (Word);
-      Space_Cursor := File_Cursor (Word);
 
       Assign (New_Str, Word.String_Match);
       Line_Cursor.Col := 1;
 
       if This.Position = Specified then
          Get_Line (Current_Text, Line_Cursor, New_Extract);
-         Space_Cursor.Col := Space_Cursor.Col - 1;
 
-         if This.Add_Spaces
-           and then Word.Col > 1
-           and then not Is_Separator (Get (Current_Text, Space_Cursor, 1) (1))
-         then
-            Assign (New_Str, " " & New_Str.all);
-         end if;
+         if This.Add_Spaces then
+            Space_Cursor := File_Cursor (Word);
+            Space_Cursor.Col := Space_Cursor.Col - 1;
 
-         Space_Cursor.Col := Space_Cursor.Col + 1;
+            if  Word.Col > 1
+              and then not Is_Separator
+                (Get (Current_Text, Space_Cursor, 1) (1))
+            then
+               Assign (New_Str, " " & New_Str.all);
+            end if;
 
-         if This.Add_Spaces
-           and then Word.Col < Line_Length (Current_Text, Line_Cursor)
-           and then not Is_Separator (Get (Current_Text, Space_Cursor, 1) (1))
-         then
-            Assign (New_Str, New_Str.all & " ");
+            Space_Cursor.Col := Space_Cursor.Col + 1;
+
+            if Word.Col < Line_Length (Current_Text, Line_Cursor)
+              and then not Is_Separator
+                (Get (Current_Text, Space_Cursor, 1) (1))
+            then
+               Assign (New_Str, New_Str.all & " ");
+            end if;
          end if;
 
          Add_Word (New_Extract, Word, New_Str.all);
