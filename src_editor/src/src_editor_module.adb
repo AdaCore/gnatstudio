@@ -87,6 +87,8 @@ package body Src_Editor_Module is
       Id     : Natural;
       Child  : MDI_Child;
       File   : Basic_Types.String_Access;
+      Line   : Natural;
+      Column : Natural;
       Mark   : Gtk_Text_Mark;
       Length : Natural;
    end record;
@@ -109,6 +111,10 @@ package body Src_Editor_Module is
 
       Open_File_Entry          : Gtkada_Entry;
       Open_File_Dialog         : Gtk_Dialog;
+
+      Unopened_Files           : String_List_Utils.String_List.List;
+      --  Contains a list of files for which marks have been created but
+      --  that are not open.
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
@@ -370,6 +376,12 @@ package body Src_Editor_Module is
    --  Find the mark corresponding to Identifier, or return an empty
    --  record.
 
+   procedure Fill_Marks
+     (Kernel : Kernel_Handle;
+      File   : String);
+   --  Create the marks on the buffer corresponding to File, if File has just
+   --  been open.
+
    ----------
    -- Free --
    ----------
@@ -403,13 +415,14 @@ package body Src_Editor_Module is
          Mark_Node := Mark_Identifier_List.Next (Mark_Node);
       end loop;
 
-      return  Mark_Identifier_Record'
+      return Mark_Identifier_Record'
         (Id     => 0,
          Child  => null,
          File   => null,
          Mark   => null,
+         Line   => 0,
+         Column => 0,
          Length => 0);
-
    end Find_Mark;
 
    --------------------------
@@ -511,30 +524,30 @@ package body Src_Editor_Module is
                begin
                   Child := Find_Editor (Kernel, Filename.all);
 
+                  --  Create a new mark record and insert it in the list.
+
+                  Mark_Record.File := new String'(Filename.all);
+                  Mark_Record.Id := Id.Next_Mark_Id;
+
+                  Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
+
+                  Mark_Record.Length := Length;
+
                   if Child /= null then
-                     Box := Source_Box (Get_Widget (Child));
-                     --  Create a new mark record and insert it in the list.
-
-                     Mark_Record.File := new String'(Filename.all);
-                     Mark_Record.Id := Id.Next_Mark_Id;
-
-                     Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
-
                      Mark_Record.Child := Child;
-                     Mark_Record.Length := Length;
-
+                     Box := Source_Box (Get_Widget (Child));
                      Mark_Record.Mark :=
                        Create_Mark (Box.Editor, Line, Column);
-
-                     Mark_Identifier_List.Append
-                       (Id.Stored_Marks, Mark_Record);
-
-                     Free (Filename);
-                     return Image (Mark_Record.Id);
                   else
-                     Free (Filename);
-                     return -"File not open, use command edit to open it.";
+                     Mark_Record.Line := Line;
+                     Mark_Record.Column := Column;
+                     Add_Unique_Sorted (Id.Unopened_Files, Filename.all);
                   end if;
+
+                  Mark_Identifier_List.Append (Id.Stored_Marks, Mark_Record);
+
+                  Free (Filename);
+                  return Image (Mark_Record.Id);
                end;
             end if;
 
@@ -587,11 +600,7 @@ package body Src_Editor_Module is
                Mark_Record : constant Mark_Identifier_Record
                  := Find_Mark (Filename.all);
             begin
-               Free (Filename);
-
-               if Mark_Record.Mark /= null
-                 and then Mark_Record.Child /= null
-               then
+               if Mark_Record.Child /= null then
                   Raise_Child (Mark_Record.Child);
                   Set_Focus_Child (Mark_Record.Child);
                   Grab_Focus
@@ -602,11 +611,24 @@ package body Src_Editor_Module is
                     (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
                      Mark_Record.Mark,
                      Mark_Record.Length);
-
-                  return "";
                else
-                  return "Mark not found.";
+                  if Mark_Record.File /= null
+                    and then Is_In_List
+                      (Id.Unopened_Files, Mark_Record.File.all)
+                  then
+                     Open_File_Editor (Kernel,
+                                       Mark_Record.File.all,
+                                       Mark_Record.Line,
+                                       Mark_Record.Column,
+                                       Mark_Record.Column
+                                         + Mark_Record.Length);
+                     Fill_Marks (Kernel_Handle (Kernel), Mark_Record.File.all);
+                  end if;
                end if;
+
+               Free (Filename);
+
+               return "";
             end;
          else
             return -"goto_mark: missing parameter file_name";
@@ -905,6 +927,61 @@ package body Src_Editor_Module is
       end if;
    end Edit_Command_Handler;
 
+   ----------------
+   -- Fill_Marks --
+   ----------------
+
+   procedure Fill_Marks
+     (Kernel : Kernel_Handle;
+      File   : String)
+   is
+      Id    : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+
+      use Mark_Identifier_List;
+
+      Box         : Source_Box;
+      Child       : MDI_Child;
+      Node        : List_Node;
+      Mark_Record : Mark_Identifier_Record;
+   begin
+      if Is_In_List (Id.Unopened_Files, File) then
+         Child := Find_Editor (Kernel, File);
+
+         if Child = null then
+            return;
+         end if;
+
+         Box := Source_Box (Get_Widget (Child));
+         Remove_From_List (Id.Unopened_Files, File);
+
+         Node := First (Id.Stored_Marks);
+
+         while Node /= Null_Node loop
+            Mark_Record := Data (Node);
+
+            if Mark_Record.File /= null
+              and then Mark_Record.File.all = File
+            then
+               Set_Data (Node,
+                         Mark_Identifier_Record'
+                           (Id => Mark_Record.Id,
+                            Child => Child,
+                            File => new String'(File),
+                            Line => Mark_Record.Line,
+                            Mark =>
+                              Create_Mark
+                                (Box.Editor,
+                                 Mark_Record.Line, Mark_Record.Column),
+                            Column => Mark_Record.Column,
+                            Length => Mark_Record.Length));
+            end if;
+
+            Node := Next (Node);
+         end loop;
+      end if;
+   end Fill_Marks;
+
    --------------------
    -- File_Edited_Cb --
    --------------------
@@ -941,6 +1018,7 @@ package body Src_Editor_Module is
          Unchecked_Free (Infos);
       end if;
 
+      Fill_Marks (Kernel, File);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -963,11 +1041,14 @@ package body Src_Editor_Module is
         Source_Editor_Module (Src_Editor_Module_Id);
       File  : constant String := Get_String (Nth (Args, 1));
 
-      Node      : List_Node;
-      Prev_Node : List_Node := Null_Node;
+      Node        : List_Node;
+      Mark_Record : Mark_Identifier_Record;
+      Added       : Boolean := False;
+
+      Box         : Source_Box;
+
    begin
-      --  Remove the marks corresponding to File from the list
-      --  of stored marks.
+      --  If the file has marks, store their location.
 
       Node := First (Id.Stored_Marks);
 
@@ -975,16 +1056,35 @@ package body Src_Editor_Module is
          if Data (Node).File /= null
            and then Data (Node).File.all = File
          then
-            Prev_Node := Prev (Id.Stored_Marks, Node);
-            Remove_Nodes (Id.Stored_Marks, Prev_Node, Node);
-            Node := Prev_Node;
+            Mark_Record := Data (Node);
+
+            if Mark_Record.Child /= null
+              and then Mark_Record.Mark /= null
+            then
+               Box := Source_Box (Get_Widget (Mark_Record.Child));
+
+               Mark_Record.Line := Get_Line (Box.Editor, Mark_Record.Mark);
+               Mark_Record.Column :=
+                 Get_Column (Box.Editor, Mark_Record.Mark);
+            end if;
+
+            Set_Data (Node,
+                      Mark_Identifier_Record'
+                        (Id => Mark_Record.Id,
+                         Child => null,
+                         File => new String'(File),
+                         Line => Mark_Record.Line,
+                         Mark => null,
+                         Column => Mark_Record.Column,
+                         Length => Mark_Record.Length));
+
+            if not Added then
+               Add_Unique_Sorted (Id.Unopened_Files, File);
+               Added := True;
+            end if;
          end if;
 
-         if Node = Null_Node then
-            Node := First (Id.Stored_Marks);
-         else
-            Node := Next (Node);
-         end if;
+         Node := Next (Node);
       end loop;
 
    exception
@@ -2057,9 +2157,10 @@ package body Src_Editor_Module is
       Context    : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
 
-      Area       : File_Area_Context_Access;
-      Start_Line : Integer;
-      End_Line   : Integer;
+      Area         : File_Area_Context_Access;
+      File_Context : File_Selection_Context_Access;
+      Start_Line   : Integer;
+      End_Line     : Integer;
 
 
       use String_List_Utils.String_List;
@@ -2071,17 +2172,17 @@ package body Src_Editor_Module is
         and then Has_Directory_Information
           (File_Selection_Context_Access (Context))
       then
-         Area := File_Area_Context_Access (Context);
+         File_Context := File_Selection_Context_Access (Context);
 
          declare
             Lang       : Language_Access;
             File       : constant String
-              := Directory_Information (Area) & File_Information (Area);
+              := Directory_Information (File_Context)
+            & File_Information (File_Context);
 
             Lines      : List;
             Length     : Integer := 0;
          begin
-
             if Context.all in File_Area_Context'Class then
                Area := File_Area_Context_Access (Context);
                Get_Area (Area, Start_Line, End_Line);
@@ -2180,6 +2281,10 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
    begin
       Comment_Uncomment (Kernel, Comment => True);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Comment_Lines;
 
    ------------------------
@@ -2193,6 +2298,10 @@ package body Src_Editor_Module is
 
    begin
       Comment_Uncomment (Kernel, Comment => False);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Uncomment_Lines;
 
    ---------------------
@@ -2997,6 +3106,9 @@ package body Src_Editor_Module is
       if Id.Open_File_Dialog /= null then
          Destroy (Id.Open_File_Dialog);
       end if;
+
+      String_List_Utils.String_List.Free (Id.Unopened_Files);
+      Mark_Identifier_List.Free (Id.Stored_Marks);
    end Destroy;
 
    -----------------
