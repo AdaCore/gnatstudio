@@ -697,6 +697,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         return;
+      end if;
       Set_Busy_Cursor (Tab, True);
       Start (Tab.Debugger, True);
       Set_Busy_Cursor (Tab, False);
