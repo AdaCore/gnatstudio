@@ -3339,50 +3339,13 @@
       </widget>
 
       <widget>
-	<class>GtkNotebook</class>
-	<name>file_notebook</name>
-	<can_focus>True</can_focus>
-	<show_tabs>True</show_tabs>
-	<show_border>True</show_border>
-	<tab_pos>GTK_POS_TOP</tab_pos>
-	<scrollable>True</scrollable>
-	<tab_hborder>2</tab_hborder>
-	<tab_vborder>2</tab_vborder>
-	<popup_enable>True</popup_enable>
-	<child>
-	  <shrink>True</shrink>
-	  <resize>True</resize>
-	</child>
+	<class>GtkHBox</class>
+	<name>editor_text</name>
+	<homogeneous>False</homogeneous>
+	<spacing>0</spacing>
 
 	<widget>
-	  <class>GtkFrame</class>
-	  <name>frame10</name>
-	  <label_xalign>0</label_xalign>
-	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
-
-	  <widget>
-	    <class>GtkHBox</class>
-	    <name>editor_text</name>
-	    <homogeneous>False</homogeneous>
-	    <spacing>0</spacing>
-
-	    <widget>
-	      <class>Placeholder</class>
-	    </widget>
-	  </widget>
-	</widget>
-
-	<widget>
-	  <class>GtkLabel</class>
-	  <child_name>Notebook:tab</child_name>
-	  <name>label52</name>
-	  <label>Current Thread</label>
-	  <justify>GTK_JUSTIFY_CENTER</justify>
-	  <wrap>False</wrap>
-	  <xalign>0.5</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
+	  <class>Placeholder</class>
 	</widget>
       </widget>
     </widget>
@@ -5381,6 +5344,23 @@ remote
 	</child>
 
 	<widget>
+	  <class>GtkLabel</class>
+	  <name>label94</name>
+	  <label>Session List</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0.5</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <padding>0</padding>
+	    <expand>False</expand>
+	    <fill>False</fill>
+	  </child>
+	</widget>
+
+	<widget>
 	  <class>GtkScrolledWindow</class>
 	  <name>scrolledwindow10</name>
 	  <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
@@ -5497,7 +5477,7 @@ remote
 
 	    <widget>
 	      <class>GtkVBox</class>
-	      <name>file_Buttons</name>
+	      <name>file_buttons</name>
 	      <homogeneous>False</homogeneous>
 	      <spacing>0</spacing>
 
