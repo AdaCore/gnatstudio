@@ -107,6 +107,7 @@ package body Docgen is
          Level            : Natural;
          Indent           : Natural)
       is
+--  ???
 --         Is_Spec : constant Boolean := Is_Spec_File (Kernel, File_Name);
 
 --         function Is_Operator (Op : String) return Boolean;
@@ -125,6 +126,7 @@ package body Docgen is
          --  Is_Operator  --
          -------------------
 
+--  ???
 --           function Is_Operator (Op : String) return Boolean is
 --              use List_Reference_In_File;
 --              Ref_List_Info : List_Reference_In_File.List_Node;
@@ -190,6 +192,7 @@ package body Docgen is
                      Entity_Line);
 
                when String_Text =>
+--  ???
 --                    --  In this context, we must detect overriden operators
 --                    if Text (Sloc_Start.Index) = '"'
 --                      and then
