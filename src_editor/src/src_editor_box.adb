@@ -827,15 +827,15 @@ package body Src_Editor_Box is
          Set_Entity_Information (Context, Line => To_Box_Line (Line));
 
          if Menu /= null then
-            Gtk_New (Item, -"Go to line...");
+            Gtk_New (Item, -"Goto line...");
             Add (Menu, Item);
             Set_Sensitive (Item, False);
 
-            Gtk_New (Item, -"Go to previous reference");
+            Gtk_New (Item, -"Goto previous location");
             Add (Menu, Item);
             Set_Sensitive (Item, False);
 
-            Gtk_New (Item, -"Go to file spec/body");
+            Gtk_New (Item, -"Goto file spec/body");
             Add (Menu, Item);
             Context_Callback.Object_Connect
               (Item, "activate",
@@ -844,7 +844,7 @@ package body Src_Editor_Box is
                Slot_Object => Editor,
                After       => True);
 
-            Gtk_New (Item, -"Go to parent unit");
+            Gtk_New (Item, -"Goto parent unit");
             Add (Menu, Item);
             Set_Sensitive (Item, False);
          end if;
@@ -891,11 +891,11 @@ package body Src_Editor_Box is
          end if;
 
          if Menu /= null then
-            Gtk_New (Item, -"Go to previous reference");
+            Gtk_New (Item, -"Goto previous location");
             Add (Menu, Item);
 
             if Has_Entity_Name_Information (Context) then
-               Gtk_New (Item, -"Go to declaration of "
+               Gtk_New (Item, -"Goto declaration of "
                           & Entity_Name_Information (Context));
                Add (Menu, Item);
                Context_Callback.Object_Connect
@@ -906,7 +906,7 @@ package body Src_Editor_Box is
                   Slot_Object => Editor,
                   After       => True);
 
-               Gtk_New (Item, -"Go to body of "
+               Gtk_New (Item, -"Goto body of "
                           & Entity_Name_Information (Context));
                Add (Menu, Item);
                Context_Callback.Object_Connect
@@ -918,7 +918,7 @@ package body Src_Editor_Box is
                   After       => True);
             end if;
 
-            Gtk_New (Item, -"Go to file spec/body");
+            Gtk_New (Item, -"Goto file spec/body");
             Add (Menu, Item);
             Context_Callback.Object_Connect
               (Item, "activate",
@@ -927,7 +927,7 @@ package body Src_Editor_Box is
                Slot_Object => Editor,
                After       => True);
 
-            Gtk_New (Item, -"Go to parent unit");
+            Gtk_New (Item, -"Goto parent unit");
             Add (Menu, Item);
             Set_Sensitive (Item, False);
          end if;
