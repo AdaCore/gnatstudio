@@ -1137,9 +1137,10 @@ package body Vsearch_Ext is
         (Vsearch.Replace_Entry, "changed",
          Widget_Callback.To_Marshaller (Reset_All_Occurrences'Access),
          Vsearch);
-      Kernel_Callback.Connect
+      Widget_Callback.Object_Connect
         (Vsearch.Context_Entry, "changed",
-         Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
+         Widget_Callback.To_Marshaller (Reset_All_Occurrences'Access),
+         Vsearch);
       Kernel_Callback.Connect
         (Vsearch.Search_All_Check, "toggled",
          Kernel_Callback.To_Marshaller (Reset_Search'Access), Handle);
