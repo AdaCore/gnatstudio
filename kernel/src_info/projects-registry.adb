@@ -404,12 +404,15 @@ package body Projects.Registry is
       if Registry.Data /= null then
          Unload_Project (Registry, View_Only);
       else
-         Registry.Data := new Project_Registry_Data;
-         Registry.Data.Tree := new Project_Node_Tree_Data;
-         Prj.Tree.Initialize (Registry.Data.Tree);
+         Registry.Data           := new Project_Registry_Data;
+         Registry.Data.Tree      := new Project_Node_Tree_Data;
          Registry.Data.View_Tree := new Project_Tree_Data;
          Reset (Registry.Data.Sources);
          Reset (Registry.Data.Directories);
+      end if;
+
+      if not View_Only then
+         Prj.Tree.Initialize (Registry.Data.Tree);
       end if;
 
       Prj.Initialize (Registry.Data.View_Tree);
@@ -773,9 +776,10 @@ package body Projects.Registry is
          begin
             if Ls /= "" and then Ls /= Gnatls and then Errors /= null then
                Errors
-                 (-("gnatls attribute is not the same in this project as in"
-                    & " the root project. It will be ignored in the"
-                    & " subproject."), Get_View (P),
+                 (-("Warning: the project attribute IDE.gnatlist doesn't have"
+                    & " the same value as in the root project."
+                    & " The value """ & Gnatls & """ will be used"),
+                  Get_View (P),
                   Registry.Data.View_Tree);
             end if;
          end;
