@@ -544,6 +544,7 @@ package body Docgen.Texi_Output is
          Called_Subp   : Boolean) is
          Node      : TRL.List_Node;
          Suffix    : GNAT.OS_Lib.String_Access;
+         pragma Unreferenced (Suffix);
       begin
          if not TRL.Is_Empty (Local_List) then
             if Called_Subp then
@@ -649,6 +650,7 @@ package body Docgen.Texi_Output is
 
       --  global variables for the callback function
       Last_Index, Last_Line : Natural;
+      pragma Unreferenced (Last_Line);
 
       function TEXI_Callback
         (Entity         : Language_Entity;
