@@ -410,7 +410,7 @@ package body Value_Editors is
 
       if Is_Enumeration_Type then
          --  ??? should reuse an existing type
-         Line_Expr := Get_Or_Create_Type (Project, "???");
+         Line_Expr := Create_Type (Project, "???");
       end if;
 
       while Index <= Buffer'Last loop

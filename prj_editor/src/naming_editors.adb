@@ -153,17 +153,17 @@ package body Naming_Editors is
       --  Do nothing for the standard GNAT naming scheme
       if Scheme /= 0 then
          Pack := Get_Or_Create_Package (Project, "Naming");
-         Var := Get_Or_Create_Attribute (Pack, "Casing", Kind => Single);
+         Var := Create_Attribute (Pack, "Casing", Kind => Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Casing)));
-         Var := Get_Or_Create_Attribute
+         Var := Create_Attribute
            (Pack, "Dot_Replacement", Kind => Single);
          Set_Value (Var, Get_Text (Editor.Dot_Replacement));
-         Var := Get_Or_Create_Attribute
+         Var := Create_Attribute
            (Pack, "Specification_Append", Kind => Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Spec_Extension)));
-         Var := Get_Or_Create_Attribute (Pack, "Body_Append", Kind => Single);
+         Var := Create_Attribute (Pack, "Body_Append", Kind => Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Body_Extension)));
-         Var := Get_Or_Create_Attribute
+         Var := Create_Attribute
            (Pack, "Separate_Append", Kind => Single);
          Set_Value (Var, Get_Text (Get_Entry (Editor.Separate_Extension)));
       end if;
@@ -189,12 +189,12 @@ package body Naming_Editors is
                end if;
 
                if Spec /= "" then
-                  Var := Get_Or_Create_Attribute
+                  Var := Create_Attribute
                     (Pack, "Specification", U_Id, Single);
                   Set_Value (Var, Spec);
                end if;
                if Bod /= "" then
-                  Var := Get_Or_Create_Attribute
+                  Var := Create_Attribute
                     (Pack, "Body_Part", U_Id, Single);
                   Set_Value (Var, Bod);
                end if;

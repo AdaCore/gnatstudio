@@ -51,7 +51,7 @@ package body Prj_API is
 
    Me : Debug_Handle := Create ("Prj_API");
 
-   function Internal_Get_Or_Create_Attribute
+   function Internal_Create_Node
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Array_Index : String_Id := No_String;
@@ -131,11 +131,7 @@ package body Prj_API is
       return Decl;
    end Get_Or_Create_Declaration;
 
-   --------------------------------------
-   -- Internal_Get_Or_Create_Attribute --
-   --------------------------------------
-
-   function Internal_Get_Or_Create_Attribute
+   function Internal_Create_Node
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Array_Index : String_Id := No_String;
@@ -190,55 +186,55 @@ package body Prj_API is
       end if;
 
       return Var;
-   end Internal_Get_Or_Create_Attribute;
+   end Internal_Create_Node;
 
-   ----------------------------
-   -- Get_Or_Create_Variable --
-   ----------------------------
+   ---------------------
+   -- Create_Variable --
+   ---------------------
 
-   function Get_Or_Create_Variable
+   function Create_Variable
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Kind : Variable_Kind := List)
       return Project_Node_Id is
    begin
-      return Internal_Get_Or_Create_Attribute
+      return Internal_Create_Node
         (Prj_Or_Pkg, Name, No_String, N_Variable_Declaration, Kind);
-   end Get_Or_Create_Variable;
+   end Create_Variable;
 
-   -----------------------------
-   -- Get_Or_Create_Attribute --
-   -----------------------------
+   ----------------------
+   -- Create_Attribute --
+   ----------------------
 
-   function Get_Or_Create_Attribute
+   function Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Index_Name : String_Id := No_String;
       Kind : Variable_Kind := List)
       return Project_Node_Id is
    begin
-      return Internal_Get_Or_Create_Attribute
+      return Internal_Create_Node
         (Prj_Or_Pkg, Name, Index_Name, N_Attribute_Declaration, Kind);
-   end Get_Or_Create_Attribute;
+   end Create_Attribute;
 
-   ------------------------
-   -- Get_Or_Create_Type --
-   ------------------------
+   -----------------
+   -- Create_Type --
+   -----------------
 
-   function Get_Or_Create_Type
+   function Create_Type
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String)
       return Project_Node_Id is
    begin
-      return Internal_Get_Or_Create_Attribute
+      return Internal_Create_Node
         (Prj_Or_Pkg, Name, No_String, N_String_Type_Declaration, Undefined);
-   end Get_Or_Create_Type;
+   end Create_Type;
 
-   ----------------------------------
-   -- Get_Or_Create_Typed_Variable --
-   ----------------------------------
+   ---------------------------
+   -- Create_Typed_Variable --
+   ---------------------------
 
-   function Get_Or_Create_Typed_Variable
+   function Create_Typed_Variable
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Typ  : Project_Node_Id;
@@ -248,12 +244,12 @@ package body Prj_API is
       V : Project_Node_Id;
    begin
       pragma Assert (Kind_Of (Typ) = N_String_Type_Declaration);
-      V := Internal_Get_Or_Create_Attribute
+      V := Internal_Create_Node
         (Prj_Or_Pkg, Name, No_String, N_Typed_Variable_Declaration, Single,
          Add_Before_First_Case_Or_Pkg);
       Set_String_Type_Of (V, Typ);
       return V;
-   end Get_Or_Create_Typed_Variable;
+   end Create_Typed_Variable;
 
    ------------------------
    -- Add_Possible_Value --
@@ -1346,7 +1342,7 @@ package body Prj_API is
          --  Else create the new instruction to be added to the project
 
          else
-            Decl := Get_Or_Create_Attribute
+            Decl := Create_Attribute
               (Case_Item, Attribute_Name, Attribute_Index);
             Expr := Enclose_In_Expression (List);
 
@@ -1440,7 +1436,7 @@ package body Prj_API is
          --  Else create the new instruction to be added to the project
 
          else
-            Decl := Get_Or_Create_Attribute
+            Decl := Create_Attribute
               (Case_Item, Attribute_Name, Attribute_Index, Prj.Single);
             Set_Expression_Of (Decl, Enclose_In_Expression (Val));
          end if;
@@ -1560,14 +1556,6 @@ package body Prj_API is
       if Node = Empty_Node then
          return Empty_Node;
       end if;
-
-      --  Assert (Me, not Deep_Clone or else
-      --          (Kind_Of (Node) /= N_Variable_Reference
-      --           and then Kind_Of (Node) /= N_Attribute_Reference)
-      --          or else Package_Node_Of (Node) = Empty_Node,
-      --          "Deep-cloning of " & Kind_Of (Node)'Img & " referencing"
-      --          & " other packages is incorrect",
-      --          Raise_Exception => False);
 
       Tree_Private_Part.Project_Nodes.Increment_Last;
       New_Node := Tree_Private_Part.Project_Nodes.Last;

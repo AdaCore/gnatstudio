@@ -380,12 +380,12 @@ package body Variable_Editors is
                Parent := Get_Project (Editor.Kernel);
 
                if Get_Active (Editor.Typed_Variable) then
-                  Editor.Var := Get_Or_Create_Typed_Variable
+                  Editor.Var := Create_Typed_Variable
                     (Parent,
                      Name => Get_Text (Editor.Variable_Name),
                      Typ  => Expr);
                else
-                  Editor.Var := Get_Or_Create_Variable
+                  Editor.Var := Create_Variable
                     (Parent,
                      Name => Get_Text (Editor.Variable_Name),
                      Kind => Expression_Kind_Of (Expr));

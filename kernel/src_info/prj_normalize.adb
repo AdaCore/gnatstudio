@@ -715,7 +715,7 @@ package body Prj_Normalize is
 
       if Item = Empty_Node then
          String_To_Name_Buffer (External_Name);
-         Item := Get_Or_Create_Typed_Variable
+         Item := Create_Typed_Variable
            (Project, Name_Buffer (1 .. Name_Len), Var_Type,
             Add_Before_First_Case_Or_Pkg => True);
       end if;
