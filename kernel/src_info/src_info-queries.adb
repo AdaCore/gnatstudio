@@ -3330,6 +3330,8 @@ package body Src_Info.Queries is
          while Parent /= null
            and then Parent.Kind /= Kind
          loop
+            Trace (Me, "Got parent kind=" & Parent.Kind'Img & " (looking for "
+                   & Kind'Img & ')');
             Parent := Parent.Next;
          end loop;
 
@@ -3390,6 +3392,17 @@ package body Src_Info.Queries is
    begin
       return Process_Parents (Lib_Info, Access_Type, Pointed_Type);
    end Pointed_Type;
+
+   -------------------
+   -- Returned_Type --
+   -------------------
+
+   function Returned_Type
+     (Lib_Info        : LI_File_Ptr;
+      Subprogram_Type : Entity_Information) return Entity_Information is
+   begin
+      return Process_Parents (Lib_Info, Subprogram_Type, Parent_Type);
+   end Returned_Type;
 
    ----------------------
    -- Get_Parent_Types --

@@ -407,6 +407,12 @@ package Src_Info.Queries is
       Access_Type : Entity_Information) return Entity_Information;
    --  Return the type of data pointed to by a pointer type.
 
+   function Returned_Type
+     (Lib_Info        : LI_File_Ptr;
+      Subprogram_Type : Entity_Information) return Entity_Information;
+   --  Return the type returned by a function, or No_Entity_Information for a
+   --  procedure.
+
    ---------------------------
    -- Dependencies requests --
    ---------------------------
