@@ -916,6 +916,12 @@ package body Src_Editor_Box is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+
+         return False;
    end Key_Press;
 
    --------------------------
@@ -984,6 +990,12 @@ package body Src_Editor_Box is
       end if;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+
+         return False;
    end Focus_Out;
 
    ----------------------
@@ -1304,6 +1316,10 @@ package body Src_Editor_Box is
          To_Body => False,
          Editor  => Source_Editor_Box (Widget),
          Context => C);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Declaration;
 
    -----------------------
@@ -1323,6 +1339,10 @@ package body Src_Editor_Box is
          To_Body => True,
          Editor  => Source_Editor_Box (Widget),
          Context => C);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Next_Body;
 
    -------------
