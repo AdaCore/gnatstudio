@@ -49,7 +49,8 @@ with Pango.Layout;              use Pango.Layout;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 
 with Traces; use Traces;
-with Gtk.Enums; use Gtk.Enums;
+with Gtk.Enums;   use Gtk.Enums;
+with Pango.Enums; use Pango.Enums;
 
 with Commands;        use Commands;
 with Commands.Editor; use Commands.Editor;
@@ -2027,6 +2028,7 @@ package body Src_Editor_Buffer.Line_Information is
       Start_Iter, End_Iter : Gtk_Text_Iter;
       Result   : Boolean;
       The_Line : Gint;
+      Color    : Gdk_Color;
       Tag      : Gtk_Text_Tag;
       New_Tag  : Boolean := False;
    begin
@@ -2043,9 +2045,15 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end if;
 
-      Set_Property
-        (Tag, Background_Gdk_Property,
-         Get_Color (Lookup_Category (Category)));
+      Color := Get_Color (Lookup_Category (Category));
+
+      if Color /= Null_Color then
+         Set_Property (Tag, Background_Gdk_Property, Color);
+      else
+         Set_Property
+           (Tag, Underline_Property,
+            Pango_Underline_Error);
+      end if;
 
       if New_Tag then
          Add (Get_Tag_Table (Buffer), Tag);
@@ -2064,7 +2072,10 @@ package body Src_Editor_Buffer.Line_Information is
             return;
          end if;
 
-         if Start_Col <= 0 then
+         if Start_Col <= 0
+           or else not Is_Valid_Position
+             (Buffer, The_Line, Gint (Start_Col - 1))
+         then
             Get_Iter_At_Line (Buffer, Start_Iter, The_Line);
          else
             Get_Iter_At_Line_Offset
