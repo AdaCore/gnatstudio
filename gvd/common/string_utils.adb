@@ -751,4 +751,18 @@ package body String_Utils is
       return Tail (File_Name, Suffix'Length) = Suffix;
    end Suffix_Matches;
 
+   ------------------------------
+   -- File_Name_Sans_Extension --
+   ------------------------------
+
+   function File_Name_Sans_Extension (File_Name : String) return String is
+      Ext : constant String := File_Extension (File_Name);
+   begin
+      if Ext /= "" then
+         return File_Name (File_Name'First .. File_Name'Last - Ext'Length - 1);
+      else
+         return File_Name;
+      end if;
+   end File_Name_Sans_Extension;
+
 end String_Utils;

@@ -113,20 +113,6 @@ package String_Utils is
    --  Repeat_Item_Start if the character that starts a repeat statements, as
    --  in "<repeats .. times>"
 
-   function Base_File_Name (File_Name : String) return String;
-   --  Return the base name of File_Name (ie without any directory indication)
-
-   function File_Extension (File_Name : String) return String;
-   --  Return the extension of the file (ie the part after the last '.'),
-   --  or "" if there is none.
-
-   function Suffix_Matches
-     (File_Name : String; Suffix : String) return Boolean;
-   --  Return true if File_Name has the given Suffix. This is more general
-   --  than extensions, since it doesn't need to start after a '.'.
-   --  Note that this function also return False when Filename = Extension
-   --  as this does not make sense for a source filename.
-
    function Reduce (S : String) return String;
    --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
    --  and replace multiple spaces with a single one.
@@ -137,25 +123,11 @@ package String_Utils is
    --  This function is used on Windows or when the Strip_CR preference is
    --  enabled (for systems that share dos files).
 
-   function To_Unix_Pathname (Path : String) return String;
-   --  Convert all occurences of Directory_Separator to '/'.
-   --  If Directory_Separator is different than '/', the following
-   --  additional substitutions are operated:
-   --  /cydrive/x/ -> x:\
-   --  //x/        -> x:\
-   --  where x is an arbitrary character
-
-   function To_Host_Pathname (Path : String) return String;
-   --  Convert all occurences of '/' to Directory_Separator.
-
    function Do_Tab_Expansion
      (Text : String; Tab_Size : Integer) return String;
    --  Return a version of Text after all tabs have been correctly expanded
    --  depending on the value of Tab_Size.
    --  This function works correctly with multiple-line strings.
-
-   function To_File_Name (Name : in String) return String;
-   --  Returns a file name from an ada subprogram/package name.
 
    procedure Mixed_Case (S : in out String);
    --  Return S with a casing matching Ada style.
@@ -176,6 +148,44 @@ package String_Utils is
 
    function Number_Of_Digits (N : Integer) return Natural;
    --  Return the number of digits for the given Integer number;
+
+   ----------------------------
+   -- File name manipulation --
+   ----------------------------
+
+   function Base_File_Name (File_Name : String) return String;
+   --  Return the base name of File_Name (ie without any directory indication)
+
+   function File_Extension (File_Name : String) return String;
+   --  Return the extension of the file (ie the part after the last '.'),
+   --  or "" if there is none.
+
+   function File_Name_Sans_Extension (File_Name : String) return String;
+   --  Return the file name, after removing the extension (including the last
+   --  '.')
+
+   function Suffix_Matches
+     (File_Name : String; Suffix : String) return Boolean;
+   --  Return true if File_Name has the given Suffix. This is more general
+   --  than extensions, since it doesn't need to start after a '.'.
+   --  Note that this function also return False when Filename = Extension
+   --  as this does not make sense for a source filename.
+
+   function To_Unix_Pathname (Path : String) return String;
+   --  Convert all occurences of Directory_Separator to '/'.
+   --  If Directory_Separator is different than '/', the following
+   --  additional substitutions are operated:
+   --  /cydrive/x/ -> x:\
+   --  //x/        -> x:\
+   --  where x is an arbitrary character
+
+   function To_Host_Pathname (Path : String) return String;
+   --  Convert all occurences of '/' to Directory_Separator.
+
+   function To_File_Name (Name : in String) return String;
+   --  Returns a file name from an ada subprogram/package name (ie converts '.'
+   --  and '-' to the appropriate characters).
+   --  ??? Note: this should be modified to use the naming schemes, if needed.
 
 private
    pragma Inline (Looking_At);
