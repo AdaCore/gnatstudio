@@ -2805,14 +2805,14 @@ a time.
 This menu can be used to easily switch between the last projects that
 were loaded in GPS.
 
-@item Edit Properties
+@item Edit Project Properties
 This menu applies to the currently selected project, and will open the
 project properties dialog for this project.
 
 @item Save All
 This will save all the modified projects in the hierarchy.
 
-@item Edit Switches
+@item Edit File Switches
 This menu applies to the currently selected project. This will open a
 new window in GPS, listing all the source files for this project,
 along with the switches that will be used to compile them, @xref{The
@@ -3104,7 +3104,7 @@ tool when it is called, without trying to represent it graphically.
 @noindent
 The project properties editor gives you access at any time to the properties
 of your projects. It is accessible through the menu
-@code{Project->Edit Properties}, and through the contextual menu
+@code{Project->Edit Project Properties}, and through the contextual menu
 @code{Edit project properties} on any project item, e.g. from the Project
 View or the Project Browser.
 
