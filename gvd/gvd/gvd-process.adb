@@ -28,6 +28,7 @@ with Gdk.Types;           use Gdk.Types;
 with Gdk.Event;           use Gdk.Event;
 
 with Gtk;                 use Gtk;
+with Gtk.Box;             use Gtk.Box;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
@@ -1565,7 +1566,7 @@ package body GVD.Process is
             end if;
 
             Reparent (Widget, Process);
-            Reparent (Gtk_Widget (Process.Editor_Vbox), Process.Process_Paned);
+            Reparent (Process.Editor_Vbox, Process.Process_Paned);
             Show_All (Process);
          else
             Hide (Process);
@@ -1580,7 +1581,7 @@ package body GVD.Process is
 
             --  Put back the Data into the paned
             Reparent (Widget, Process.Data_Editor_Paned);
-            Reparent (Gtk_Widget (Process.Editor_Vbox), Process.Data_Editor_Paned);
+            Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
             Add (Process.Process_Paned, Process.Data_Editor_Paned);
             Unref (Process.Data_Editor_Paned);
             Show_All (Process.Process_Paned);
