@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,21 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Text_IO; use Text_IO;
+with Text_IO;     use Text_IO;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with SN; use SN;
-with Projects; use Projects;
-with VFS; use VFS;
+with SN;          use SN;
+with Projects;    use Projects;
+with VFS;         use VFS;
 
 package body Src_Info.LI_Utils is
 
    function Find_Declaration_Internal
-     (Declaration_Info_Ptr    : E_Declaration_Info_List;
-      Symbol_Name             : String := "";
-      Class_Name              : String := "";
-      Kind                    : E_Kind := Unresolved_Entity_Kind;
-      Location                : Point := Invalid_Point;
-      Negate_Kind             : Boolean := False)
+     (Declaration_Info_Ptr : E_Declaration_Info_List;
+      Symbol_Name          : String := "";
+      Class_Name           : String := "";
+      Kind                 : E_Kind := Unresolved_Entity_Kind;
+      Location             : Point := Invalid_Point;
+      Negate_Kind          : Boolean := False)
       return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
    --  specified E_Declaration_Info_List.
@@ -101,10 +101,10 @@ package body Src_Info.LI_Utils is
    ----------------------
 
    procedure Insert_Reference
-     (Declaration_Info        : in out E_Declaration_Info_List;
-      File                    : LI_File_Ptr;
-      Location                : Point;
-      Kind                    : Reference_Kind)
+     (Declaration_Info : in out E_Declaration_Info_List;
+      File             : LI_File_Ptr;
+      Location         : Point;
+      Kind             : Reference_Kind)
    is
       R_Ptr : E_Reference_List;
    begin
@@ -143,8 +143,8 @@ package body Src_Info.LI_Utils is
                         (LI              => File,
                          Part            => Unit_Body,
                          Source_Filename => File.LI.Body_Info.Source_Filename),
-                       Line   => Location.Line,
-                       Column => Location.Column),
+                      Line   => Location.Line,
+                      Column => Location.Column),
           Kind => Kind);
 
       --  ??? We have R_Ptr.Value.Location.File.LI set to File because
@@ -156,12 +156,12 @@ package body Src_Info.LI_Utils is
    ----------------------
 
    function Find_Declaration
-     (File                    : LI_File_Ptr;
-      Symbol_Name             : String := "";
-      Class_Name              : String := "";
-      Kind                    : E_Kind := Unresolved_Entity_Kind;
-      Location                : Point := Invalid_Point;
-      Negate_Kind             : Boolean := False)
+     (File        : LI_File_Ptr;
+      Symbol_Name : String := "";
+      Class_Name  : String := "";
+      Kind        : E_Kind := Unresolved_Entity_Kind;
+      Location    : Point := Invalid_Point;
+      Negate_Kind : Boolean := False)
       return E_Declaration_Info_List is
    begin
       if File = No_LI_File
@@ -185,12 +185,12 @@ package body Src_Info.LI_Utils is
    -----------------------------------
 
    function Find_Dependency_Declaration
-     (File                    : LI_File_Ptr;
-      Symbol_Name             : String := "";
-      Class_Name              : String := "";
-      Filename                : VFS.Virtual_File := VFS.No_File;
-      Kind                    : E_Kind := Unresolved_Entity_Kind;
-      Location                : Point := Invalid_Point)
+     (File        : LI_File_Ptr;
+      Symbol_Name : String := "";
+      Class_Name  : String := "";
+      Filename    : VFS.Virtual_File := VFS.No_File;
+      Kind        : E_Kind := Unresolved_Entity_Kind;
+      Location    : Point := Invalid_Point)
       return E_Declaration_Info_List
    is
       Dep_Ptr : Dependency_File_Info_List;
@@ -381,11 +381,15 @@ package body Src_Info.LI_Utils is
       return False;
    end Belongs_To_Class;
 
+   --------------------
+   -- Find_Reference --
+   --------------------
+
    function Find_Reference
-     (Declaration_Info        : E_Declaration_Info_List;
-      File                    : LI_File_Ptr;
-      Location                : SN.Point;
-      Kind                    : Reference_Kind)
+     (Declaration_Info : E_Declaration_Info_List;
+      File             : LI_File_Ptr;
+      Location         : SN.Point;
+      Kind             : Reference_Kind)
       return E_Reference_List
    is
       Ref_Ptr : E_Reference_List := Declaration_Info.Value.References;
