@@ -139,6 +139,7 @@ package body VCS.Generic_VCS is
       Override_Cache : Boolean;
       Clear_Logs     : Boolean);
    --  Parse the status for Text using Parser.
+   --  See Parse_Status for description of the parameters.
 
    function Describe_Action
      (Ref    : access Generic_VCS_Record;
