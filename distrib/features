@@ -1,5 +1,11 @@
 New features in GPS 1.0.2
 
+- Search in the explorer can now be configured to search only projects,
+  directories or files, or any combination of them
+
+- New contextual menu in the project browser to search for an item in
+  the explorer ("Locate in explorer")
+
 - New tool to interactively fix Ada compilation errors/warnings
 
 - New menus Project->Project View and Project->Files View to replace
