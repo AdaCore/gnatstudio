@@ -1536,8 +1536,7 @@ package body Src_Info.Queries is
 
    exception
       when E : Constraint_Error | Assert_Failure =>
-         Assert (Me, False, "Unexpected exception in Create_Tree: "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Create_Tree;
 
    -----------------------
@@ -2817,7 +2816,7 @@ package body Src_Info.Queries is
 
    exception
       when E : others =>
-         Trace (Me, "Next: unexpected exception " & Exception_Message (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Next;
 
    --------------------------------
@@ -2927,8 +2926,7 @@ package body Src_Info.Queries is
          Destroy (Iterator);
 
       when E : others =>
-         Trace (Me, "Find_Ancestor_Dependencies: unexpected exception "
-                & Exception_Message (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Find_Ancestor_Dependencies;
 
    ---------
@@ -3152,7 +3150,12 @@ package body Src_Info.Queries is
       File : constant Virtual_File_Access := Get_Declaration_File_Of (Entity);
 
    begin
-      LI   := Locate_From_Source (Handler, File.all);
+      LI := Locate_From_Source (Handler, File.all);
+
+      if LI = null then
+         return No_Source_File;
+      end if;
+
       Part := Get_Unit_Part (LI, File.all);
 
       return Source_File'
