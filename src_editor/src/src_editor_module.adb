@@ -319,8 +319,8 @@ package body Src_Editor_Module is
 
       Node : List_Node;
       Filename : Basic_Types.String_Access;
-      Line   : Natural := 0;
-      Column : Natural := 0;
+      Line   : Natural := 1;
+      Column : Natural := 1;
    begin
       if Command = "edit" then
          Node := First (Args);
@@ -353,17 +353,17 @@ package body Src_Editor_Module is
 
                declare
                begin
-                  Column := Natural'Value (Data (Node));
+                  Line  := Natural'Value (Data (Node));
                exception
                   when others =>
                      Free (Filename);
                      return "edit: option -l requires a numerical value";
                end;
-            end if;
 
-            if Filename = null then
+            elsif Filename = null then
                Filename := new String'(Data (Node));
             else
+               Free (Filename);
                return "edit: too many parameters.";
             end if;
 
@@ -382,6 +382,29 @@ package body Src_Editor_Module is
             return "";
          else
             return "edit: missing parameter file_name.";
+         end if;
+
+      elsif Command = "close" then
+         Node := First (Args);
+
+         while Node /= Null_Node loop
+            if Filename = null then
+               Filename := new String'(Data (Node));
+            else
+               Free (Filename);
+               return "close: too many parameters.";
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         if Filename /= null then
+            Close_File_Editors (Kernel, Filename.all);
+            Free (Filename);
+
+            return "";
+         else
+            return "close: missing parameter file_name.";
          end if;
 
       else
@@ -2032,6 +2055,13 @@ package body Src_Editor_Module is
          & (-"Open a file editor for file_name."),
          Handler => Edit_Command_Handler'Access);
 
+      Register_Command
+        (Kernel,
+         Command => "close",
+         Help    => -"Usage:" & ASCII.LF
+         & "  close file_name" & ASCII.LF
+         & (-"Close all file editors for file_name."),
+         Handler => Edit_Command_Handler'Access);
    end Register_Module;
 
    -------------------------
