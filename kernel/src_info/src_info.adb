@@ -621,6 +621,29 @@ package body Src_Info is
       return LI.LI.LI_Filename.all;
    end Get_LI_Filename;
 
+   ---------------------------
+   -- Parse_File_Constructs --
+   ---------------------------
+
+   procedure Parse_File_Constructs
+     (Handler      : access LI_Handler_Record;
+      Root_Project : Prj.Project_Id;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : String;
+      Result       : out Language.Construct_List)
+   is
+      pragma Unreferenced (Handler, Root_Project);
+      use Language;
+
+      Lang : constant Language.Language_Access :=
+        Get_Language_From_File (Glide_Language_Handler (Languages), File_Name);
+
+   begin
+      --  Call the language specific syntax analyzer
+
+      Parse_File_Constructs (Lang, File_Name, Result);
+   end Parse_File_Constructs;
+
    ------------------------
    -- Get_Directory_Name --
    ------------------------
