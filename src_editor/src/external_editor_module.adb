@@ -59,7 +59,8 @@ package body External_Editor_Module is
    -- Preferences --
    -----------------
 
-   type Supported_Clients is (Auto, Gnuclient, Emacsclient, Emacs, Vim, Vi);
+   type Supported_Clients is
+     (Auto, Gnuclient, Emacsclient, Emacs, Vim, Vi, Custom);
    for Supported_Clients'Size use Gint'Size;
    pragma Convention (C, Supported_Clients);
    --  The list of supported external editors.
@@ -68,6 +69,7 @@ package body External_Editor_Module is
      ("Supported_Clients", Supported_Clients);
 
    Default_External_Editor    : Param_Spec_Enum;
+   Custom_Editor              : Param_Spec_String;
    Always_Use_External_Editor : Param_Spec_Boolean;
 
    type Constant_String_Access is access constant String;
@@ -149,6 +151,8 @@ package body External_Editor_Module is
      "xterm -geometry 80x50 -exec vi +%l %f";
    Vi_Extra            : aliased constant String := "vi";
 
+   Custom_Command      : aliased constant String := "<custom>";
+
    Clients : constant External_Clients :=
      (Auto      => (null, null, null, null),
       Gnuclient =>
@@ -179,7 +183,13 @@ package body External_Editor_Module is
         (Command_Name         => Vi_Command'Access,
          Lisp_Command_Name    => null,
          Server_Start_Command => null,
-         Extra_Test           => Vi_Extra'Access));
+         Extra_Test           => Vi_Extra'Access),
+
+      Custom =>
+        (Command_Name         => Custom_Command'Access,
+         Lisp_Command_Name    => null,
+         Server_Start_Command => null,
+         Extra_Test           => null));
 
    Glide_Command : aliased constant String := "glide -emacs --eval -emacs %e";
    Emacs_Server_Command : aliased constant String := "emacs --eval %e";
@@ -312,9 +322,19 @@ package body External_Editor_Module is
          Match := False;
 
          if Clients (C).Command_Name /= null then
-            Args := Argument_String_To_List (Clients (C).Command_Name.all);
+            declare
+               Command : constant String := Clients (C).Command_Name.all;
+            begin
+               if Command = Custom_Command then
+                  Args := Argument_String_To_List
+                    (Get_Pref (Kernel, Custom_Editor));
+               else
+                  Args := Argument_String_To_List (Command);
+               end if;
+            end;
 
             Path := Locate_Exec_On_Path (Args (Args'First).all);
+
             if Path /= null then
                Free (Path);
                Match := True;
@@ -475,7 +495,7 @@ package body External_Editor_Module is
       if Active (Me) then
          Trace (Me, "Spawning new process: " & Command);
          for A in Args'Range loop
-            Trace (Me, "  arg(" & A'Img & ")=" & Args (A).all);
+            Trace (Me, "  arg(" & Image (A) & ")=" & Args (A).all);
          end loop;
       end if;
 
@@ -626,8 +646,17 @@ package body External_Editor_Module is
         and then Clients
           (External_Editor_Module_Id.Client).Command_Name /= null
       then
-         Args := Argument_String_To_List
-           (Clients (External_Editor_Module_Id.Client).Command_Name.all);
+         declare
+            Command : constant String :=
+              Clients (External_Editor_Module_Id.Client).Command_Name.all;
+         begin
+            if Command = Custom_Command then
+               Args := Argument_String_To_List
+                 (Get_Pref (Kernel, Custom_Editor));
+            else
+               Args := Argument_String_To_List (Command);
+            end if;
+         end;
 
       else
          Trace (Me, "No client available");
@@ -831,6 +860,14 @@ package body External_Editor_Module is
       Register_Property
         (Kernel, Param_Spec (Default_External_Editor),
          Page => -"Editor");
+
+      Custom_Editor := Param_Spec_String (Gnew_String
+        (Name    => "External-Editor-Custom-Command",
+         Nick    => -"Custom editor command",
+         Blurb   => -"Command to use for launching a custom editor",
+         Default => "emacs +%l %f"));
+      Register_Property
+        (Kernel, Param_Spec (Custom_Editor), -"Editor");
 
       Always_Use_External_Editor := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "External-Editor-Always-Use-External-Editor",
