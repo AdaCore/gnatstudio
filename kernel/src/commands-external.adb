@@ -18,11 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GVD; use GVD;
+
 with GNAT.Expect;                use GNAT.Expect;
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
+with GNAT.Strings;
 
 with Ada.Exceptions;             use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 with Traces;                     use Traces;
 with Glide_Intl;                 use Glide_Intl;
@@ -145,11 +149,19 @@ package body Commands.External is
       Id        : Timeout_Handler_Id;
       pragma Unreferenced (Id);
 
-      Args      : GNAT.OS_Lib.Argument_List
-        (1 .. String_List.Length (Command.Args));
+      Args      : GNAT.OS_Lib.Argument_List (1 .. Length (Command.Args));
+      Real_Args : GNAT.OS_Lib.Argument_List_Access;
+
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
+
+      Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
+      Command_String : String_Access;
       Temp_Args : List_Node := First (Command.Args);
 
       Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
+
+      use type GNAT.Strings.String_List;
 
    begin
       --  ??? Must add many checks for empty lists, etc.
@@ -163,22 +175,62 @@ package body Commands.External is
          Temp_Args := Next (Temp_Args);
       end loop;
 
+      Command_String := new String'
+        (Command.Command.all & " " & Argument_List_To_String (Args));
+
       if Command.Dir'Length > 0 then
-         Trace (Me, "spawn from " & Command.Dir.all & ": " &
-                Command.Command.all & " " &
-                Argument_List_To_String (Args));
+         Trace (Me,
+                "spawn from " & Command.Dir.all & ": " & Command_String.all);
 
       else
-         Trace (Me, "spawn: " & Command.Command.all & " " &
-                Argument_List_To_String (Args));
+         Trace (Me, "spawn: " & Command_String.all);
       end if;
 
-      Non_Blocking_Spawn
-        (Command.Fd,
-         Command.Command.all,
-         Args,
-         Err_To_Out => True,
-         Buffer_Size => 0);
+      --  If we are under Windows, spawn the command using "cmd /c".
+      --  Otherwise spawn it directly.
+      --  ??? This implementation is temporary, a general way of spawning
+      --  commands should not be system-dependant
+
+      if Host = Windows then
+         Exec_Command_Args :=
+           GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
+
+         Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
+
+         Real_Args (1) := new String'(Command.Command.all);
+
+         Non_Blocking_Spawn
+           (Command.Fd,
+            Exec_Command_Args (Exec_Command_Args'First).all,
+            Exec_Command_Args
+              (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
+            & Real_Args.all
+            & Args,
+            Err_To_Out => True,
+            Buffer_Size => 0);
+
+         for J in Real_Args'Range loop
+            GNAT.OS_Lib.Free (Real_Args (J));
+         end loop;
+
+         Unchecked_Free (Real_Args);
+
+         for J in Exec_Command_Args'Range loop
+            GNAT.OS_Lib.Free (Exec_Command_Args (J));
+         end loop;
+
+         Unchecked_Free (Exec_Command_Args);
+
+      else
+         Non_Blocking_Spawn
+           (Command.Fd,
+            Command.Command.all,
+            Args,
+            Err_To_Out => True,
+            Buffer_Size => 0);
+      end if;
+
+      Free (Command_String);
 
       for J in Args'Range loop
          GNAT.OS_Lib.Free (Args (J));
