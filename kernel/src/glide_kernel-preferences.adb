@@ -915,12 +915,23 @@ package body Glide_Kernel.Preferences is
          Blurb   => -("Whether paths should be absolute or relative when the"
                       & " projects are modified"),
          Nick    => -"Relative project paths"));
-
-      --  Register this preference in the 'General' page since the other
-      --  project preferences are currently hidden.
-
       Register_Property
-        (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"General");
+        (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"Project");
+
+      Trusted_Mode := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Prj-Editor-Trusted-Mode",
+         Default => True,
+         Blurb   => -("Whether a fast algorithm should be used to load Ada"
+                      & " projects. However, this algorithm assumes several"
+                      & " things about your project:" & ASCII.LF
+                      & "   - no symbolic links are used to point to other"
+                      & " files in the project" & ASCII.LF
+                      & "   - no directory has a name which is a valid source"
+                      & " file name according to the naming scheme"),
+         Nick    => -"Fast Project Loading"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Trusted_Mode), -"Project");
+
 
       -- Wizards --
 

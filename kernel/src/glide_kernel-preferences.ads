@@ -227,6 +227,7 @@ package Glide_Kernel.Preferences is
    Variable_Ref_Background         : Param_Spec_Color;
    Invalid_Variable_Ref_Background : Param_Spec_Color;
    Generate_Relative_Paths         : Param_Spec_Boolean;
+   Trusted_Mode                    : Param_Spec_Boolean;
 
    -- Wizards --
    Wizard_Toc_Highlight_Color : Param_Spec_Color;
