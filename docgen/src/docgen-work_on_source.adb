@@ -35,6 +35,8 @@ with Projects;                  use Projects;
 with String_Utils;              use String_Utils;
 with Docgen.Backend;            use Docgen.Backend;
 with Language.Ada;              use Language.Ada;
+--  ??? This is a tempoary solution. This must be removed as soon as docgen is
+--  able manage source file structures that contains this info by themselves.
 
 package body Docgen.Work_On_Source is
 
