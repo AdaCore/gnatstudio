@@ -5719,8 +5719,8 @@ indented:
 @cindex example
 @smallexample
 variable1,
-variable2,
-variable3 : Integer;
+    variable2,
+    variable3 : Integer;
 @end smallexample
 
 @item RM style case indentation
@@ -5731,8 +5731,8 @@ Ada Reference Manual, e.g:
 @cindex example
 @smallexample
 case Value is
-when others =>
-null;
+   when others =>
+      null;
 end case;
 @end smallexample
 
@@ -6244,7 +6244,7 @@ declaration, as in the following example:
 @smallexample
 <?xml version="1.0" encoding="iso-8859-1">
 <submenu>
-<title>encoded text/title>
+  <title>encoded text/title>
 </submenu>
 @end smallexample
 
@@ -6259,7 +6259,7 @@ left to your consideration. The general format is therefore
 @smallexample
 <?xml version="1.0" ?>
 <root_node>
-...
+   ...
 </root_node>
 @end smallexample
 
@@ -6418,15 +6418,15 @@ This tag accepts the following attributes:
    @end smallexample
 
    @item progress-current (optional)
-   This is the number of the opening parenthesis in @code{progress-regexp}
+   This is the opening parenthesis count index in @code{progress-regexp}
    that contains the current step.
 
    @item progress-final   (optional)
-   This is the number of the opening parenthesis in @code{progress-regexp}
-   that contains the index of the last step. This last index can grow as
-   needed. For instance, the GNAT compiler itself will output the number of
-   the file is it currently examining, and the total number of files to be
-   examined. However, that last number will grow up, since parsing a new file
+   This is the opening parenthesis count index in @code{progress-regexp}
+   that contains the current last step. This last index can grow as
+   needed. For example, gnatmake will output the number of
+   the file it is currently examining, and the total number of files to be
+   examined. However, that last number may grow up, since parsing a new file
    might generate a list of additional files to parse later on.
 
    @item progress-hide    (optional)
@@ -6542,51 +6542,51 @@ whether the context is properly defined.
 Base name of the currently opened file.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   import os.path
-   os.path.basename (GPS.current_context().file().name())
-   @end smallexample
+@smallexample
+# python equivalent
+import os.path
+os.path.basename (GPS.current_context().file().name())
+@end smallexample
 @end ifset
 
 @item %F
 Absolute name of the currently opened file.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   GPS.current_context().file().name()
-   @end smallexample
+@smallexample
+# python equivalent
+GPS.current_context().file().name()
+@end smallexample
 @end ifset
 
 @item %d
 The currently directory.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   GPS.current_context().directory()
-   @end smallexample
+@smallexample
+# python equivalent
+GPS.current_context().directory()
+@end smallexample
 @end ifset
 
 @item %p
 The current project. This is the name of the project, not the project file.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   GPS.current_context().project().name()
-   @end smallexample
+@smallexample
+# python equivalent
+GPS.current_context().project().name()
+@end smallexample
 @end ifset
 
 @item %P
 The root project. This is the name of the project, not the project file.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   GPS.Project.root().name()
-   @end smallexample
+@smallexample
+# python equivalent
+GPS.Project.root().name()
+@end smallexample
 @end ifset
 
 @item %pp
@@ -6594,20 +6594,20 @@ The current project file pathname. If a file is selected, this is the project
 file to which the source file belongs.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   GPS.current_context().project().file().name()
-   @end smallexample
+@smallexample
+# python equivalent
+GPS.current_context().project().file().name()
+@end smallexample
 @end ifset
 
 @item %PP
 The root project pathname.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   GPS.Project.root().file().name()
-   @end smallexample
+@smallexample
+# python equivalent
+GPS.Project.root().file().name()
+@end smallexample
 @end ifset
 
 @item %pps
@@ -6617,11 +6617,11 @@ current source file doesn't belong to any project. This is mostly for use with
 the GNAT command line tools.
 
 @ifset python
-   @smallexample
-   # python equivalent
-   if GPS.current_context().project():
-      return "-P" & GPS.current_context().project().path()
-   @end smallexample
+@smallexample
+# python equivalent
+if GPS.current_context().project():
+   return "-P" & GPS.current_context().project().path()
+@end smallexample
 @end ifset
 
 @item %PPs
@@ -6649,20 +6649,20 @@ sub projects, etc@dots{}
 list the source directories.
 
 @ifset python
-   Python equivalent
-   @smallexample
-   GPS.current_context().project().source_dirs()
-   @end smallexample
+Python equivalent
+@smallexample
+GPS.current_context().project().source_dirs()
+@end smallexample
 @end ifset
 
 @item s
 list the source files.
 
 @ifset python
-   Python equivalent
-   @smallexample
-   GPS.current_context().project().sources()
-   @end smallexample
+Python equivalent
+@smallexample
+GPS.current_context().project().sources()
+@end smallexample
 @end ifset
 
 @item f
@@ -7202,7 +7202,7 @@ will override the inherited settings.
 @item Spec_Suffix
 A string describing the suffix of spec/definition files for this language.
 If the language does not have the notion of spec or definition file, you
-can ignore this value, and consider using the @code{Extensions} tag instead.
+can ignore this value, and consider using the @code{Extension} tag instead.
 This tag must be unique.
 
 @item Body_Suffix
@@ -7211,7 +7211,7 @@ This tag works in coordination with the @code{Spec_Suffix}, so that the user
 can choose to easily go from one file to the other.
 This tag must be unique.
 
-@item Extensions
+@item Extension
 A string describing one of the valid extensions for this language. There can
 be several such children. The extension must start with a '.' character
 
@@ -7741,7 +7741,7 @@ in the project.
 
 This is done through the @code{<initial-cmd-line>} tag, as a child of the
 @code{<tool>} tag. Its value is the command line that would be passed to the
-tool. This command line is parsed as usual, eg quotes are taken into account
+tool. This command line is parsed as usual, e.g. quotes are taken into account
 to avoid splitting switches each time a space is encountered.
 
 @smallexample
