@@ -46,7 +46,6 @@ package body Project_Browsers is
    --  For internal use only, for storing the names.
 
    type Name_Edge is new Edge with null record;
-   type Name_Edge_Access is access all Name_Edge'Class;
 
    procedure Destroy (V : in out Name_Vertex);
    procedure Destroy (E : in out Name_Edge);
