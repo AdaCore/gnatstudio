@@ -1149,7 +1149,7 @@ package body Help_Module is
       end if;
 
       Iter := Start (Path.all);
-      loop
+      while not At_End (Path.all, Iter) loop
          declare
             Dir : constant String := Current (Path.all, Iter);
             Full : constant String := Name_As_Directory (Dir) & Index_File;
