@@ -38,6 +38,7 @@ with Glide_Intl;                use Glide_Intl;
 with Traces;                    use Traces;
 with OS_Utils;                  use OS_Utils;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Glide_Kernel.Help is
 
@@ -126,11 +127,11 @@ package body Glide_Kernel.Help is
 
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
-      Free (Html.Current_Help_File);
       Buffer := Read_File (File);
 
       if Buffer /= null then
          Trace (Me, "loading file: " & File);
+         Free (Html.Current_Help_File);
          Html.Current_Help_File := new String' (File);
          Stream := HTML_Begin (Html.Csc);
          HTML_Write (Html.Csc, Stream, Buffer.all);
@@ -154,12 +155,11 @@ package body Glide_Kernel.Help is
      (Object : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Html     : Help_Browser := Help_Browser (Object);
-      Url      : constant String := Get_String (Nth (Params, 1));
-      Stream   : Csc_HTML_Stream :=
+      Html   : Help_Browser := Help_Browser (Object);
+      Url    : constant String := Get_String (Nth (Params, 1));
+      Stream : Csc_HTML_Stream :=
         Csc_HTML_Stream (Get_Proxy (Nth (Params, 2)));
-      Base_Dir : constant String := Dir_Name (Html.Current_Help_File.all);
-      Buffer   : String_Access;
+      Buffer : String_Access;
 
    begin
       Trace (Me, "url requested: " & Url);
@@ -167,14 +167,23 @@ package body Glide_Kernel.Help is
       if Is_Absolute_Path (Url) then
          Buffer := Read_File (Url);
       else
-         Buffer := Read_File (Base_Dir & Url);
-         Trace (Me, "url normalized: " & Base_Dir & Url);
+         declare
+            Base_Dir : constant String :=
+              Dir_Name (Html.Current_Help_File.all);
+         begin
+            Buffer := Read_File (Base_Dir & Url);
+            Trace (Me, "url normalized: " & Base_Dir & Url);
+         end;
       end if;
 
       if Buffer /= null then
          Stream_Write (Stream, Buffer.all);
          Free (Buffer);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Url_Requested;
 
    ------------
@@ -190,6 +199,10 @@ package body Glide_Kernel.Help is
       Url : constant String := Get_String (Nth (Params, 1));
    begin
       Trace (Me, "On_Url: " & Url);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Url;
 
    ------------------
@@ -205,8 +218,6 @@ package body Glide_Kernel.Help is
       Url      : constant String := Get_String (Nth (Params, 1));
       Result   : Boolean := True;
       Anchor   : Natural := Index (Url, "#");
-      Base_Dir : constant String := Dir_Name (Html.Current_Help_File.all);
-      Basename : constant String := Base_Name (Html.Current_Help_File.all);
 
    begin
       if Anchor = 0 then
@@ -218,11 +229,20 @@ package body Glide_Kernel.Help is
             Result := Load_File
               (Kernel, Html, Url (Url'First .. Anchor - 1));
          end if;
+      else
+         declare
+            Base_Dir : constant String :=
+              Dir_Name (Html.Current_Help_File.all);
+            Basename : constant String :=
+              Base_Name (Html.Current_Help_File.all);
 
-      elsif Url (Url'First .. Anchor - 1) /= Basename then
-         Result := Load_File
-           (Kernel, Html,
-            Base_Dir & Url (Url'First .. Anchor - 1));
+         begin
+            if Url (Url'First .. Anchor - 1) /= Basename then
+               Result := Load_File
+                 (Kernel, Html,
+                  Base_Dir & Url (Url'First .. Anchor - 1));
+            end if;
+         end;
       end if;
 
       if Result and then Anchor < Url'Last then
@@ -232,6 +252,10 @@ package body Glide_Kernel.Help is
            (Html.Csc, Url (Anchor + 1 .. Url'Last));
          Pop_State (Kernel_Handle (Kernel));
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Link_Clicked;
 
    -------------------
@@ -254,6 +278,10 @@ package body Glide_Kernel.Help is
       if Child /= null then
          Set_Title (Child, (-"Help: ") & Title);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Title_Changed;
 
    ---------------
@@ -305,6 +333,11 @@ package body Glide_Kernel.Help is
       end case;
 
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return True;
    end Key_Press;
 
    ------------------------
@@ -470,8 +503,14 @@ package body Glide_Kernel.Help is
 
          Child := new Node;
          Child.Tag := new String' ("File");
-         Child.Value := new String'
-           (Help_Browser (Widget).Current_Help_File.all);
+
+         if Help_Browser (Widget).Current_Help_File = null then
+            Child.Value := new String' ("");
+         else
+            Child.Value := new String'
+              (Help_Browser (Widget).Current_Help_File.all);
+         end if;
+
          Add_Child (N, Child);
          return N;
       end if;
