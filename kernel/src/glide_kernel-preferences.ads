@@ -130,11 +130,11 @@ package Glide_Kernel.Preferences is
    -- Explorer --
    --------------
 
-   Absolute_Directories : constant Glib.Properties.Property_Boolean :=
-     Register_Property ("Explorer:Absolute_Directories", False);
-   --  True if directories should be displayed as absolute names,
-   --  False if they should be relative to the current directory set by the
-   --  user.
+   Normalized_Directories : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Explorer:Normalized_Directories", False);
+   --  True if directories should be fully normalized (links, ...), False if we
+   --  should keep the name given in the project file, converted to absolute
+   --  path names based on the project's location.
 
    Show_Directories : constant Glib.Properties.Property_Boolean :=
      Register_Property ("Explorer:Show_Directories", True);
