@@ -362,7 +362,7 @@ package Language is
       --  Token defining the kind of construct
 
       Name            : Basic_Types.String_Access;
-      --  Name of the enclosing token
+      --  Name of the enclosing token. Null if not relevant for Token.
 
       Profile         : Basic_Types.String_Access;
       --  Profile (if relevant) of the construct, e.g parameters for a function
