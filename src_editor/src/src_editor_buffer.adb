@@ -698,14 +698,12 @@ package body Src_Editor_Buffer is
 
       Delimiter            : Integer;
 
-      function Check_Char (Forward : in Boolean) return Boolean;
+      function Check_Char (Forward : Boolean) return Boolean;
       --  Check current character (C) and update current procedure state.
       --  Returns false if parsing must stop (end of file reached for example)
 
-      function Check_Char (Forward : in Boolean) return Boolean is
-
+      function Check_Char (Forward : Boolean) return Boolean is
          Val     : constant array (Boolean) of Integer := (1, -1);
-
          Tmp     : Gtk_Text_Iter;
          C2      : Character;
          Success : Boolean;
@@ -742,13 +740,17 @@ package body Src_Editor_Buffer is
             Copy (Current, Tmp);
 
             Move_Char;
+
             if not Success then
                return False;
             end if;
+
             Move_Char;
+
             if not Success then
                return False;
             end if;
+
             C2 := Get_Char (Tmp);
 
             if C2 = ''' then
@@ -786,7 +788,7 @@ package body Src_Editor_Buffer is
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
-         C          := ASCII.Nul;
+         C          := ASCII.NUL;
 
          Backward_Char (Current, Success);
 
@@ -826,7 +828,7 @@ package body Src_Editor_Buffer is
          Counter    := 0;
          Stack      := 1;
          String_Tag := False;
-         C          := ASCII.Nul;
+         C          := ASCII.NUL;
 
          Forward_Char (Current, Success);
 
@@ -4643,7 +4645,6 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Do_Refill (Buffer : Source_Buffer) return Boolean is
-
       Max       : constant Positive :=
                     Positive (Get_Pref (Buffer.Kernel, Highlight_Column));
       --  Right margin, wrap line if longer than Max character
@@ -4680,7 +4681,6 @@ package body Src_Editor_Buffer is
       ----------------
 
       procedure Add_Result (Str : String; Last_Line : Boolean) is
-
          Insert_EOL : Boolean := True;
 
          procedure Add (Str : String);
