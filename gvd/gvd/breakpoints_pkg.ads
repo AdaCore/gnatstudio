@@ -39,7 +39,6 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Odd.Process;
-with Gtk.Handlers;
 package Breakpoints_Pkg is
 
    type Breakpoints_Record is new Gtk_Window_Record with record
@@ -115,7 +114,7 @@ package Breakpoints_Pkg is
       Hbuttonbox4 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
 
-      Process   : Odd.Process.Debugger_Process_Tab;
+      Process        : Odd.Process.Debugger_Process_Tab;
       Enabled_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Enabled_Mask   : Gdk.Bitmap.Gdk_Bitmap;
 
@@ -135,9 +134,6 @@ package Breakpoints_Pkg is
    --  Return the breakpoint descriptor.
    --  Note that this is your responsibility to free the memory associated with
    --  Descriptor, using Free below.
-
-   package Br_Editor_Handler is new Gtk.Handlers.Callback
-     (Breakpoints_Record);
 
 private
 
