@@ -1708,9 +1708,10 @@ package body GVD_Module is
          Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
          Top);
 
+      Id.Initialized := True;
+
       Run_Hook (K, Debugger_Started);
 
-      Id.Initialized := True;
       Pop_State (K);
 
    exception
