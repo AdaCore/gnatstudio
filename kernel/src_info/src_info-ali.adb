@@ -233,6 +233,7 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Entity
      (New_LI_File : LI_File_Ptr;
+      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Entity_Id   : Nat;
       Sfiles      : Sdep_To_Sfile_Table);
@@ -240,6 +241,7 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Section
      (New_LI_File : LI_File_Ptr;
+      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Sfiles      : Sdep_To_Sfile_Table);
    --  Save the Xref information associated to the given With_Record.
@@ -1409,6 +1411,7 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Entity
      (New_LI_File : LI_File_Ptr;
+      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Entity_Id   : Nat;
       Sfiles      : Sdep_To_Sfile_Table)
@@ -1448,6 +1451,37 @@ package body Src_Info.ALI is
       else
          Decl.Parent_Location := Null_File_Location;
          --  Decl.Parent_Kind := E_Kind'First;
+      end if;
+
+      if Xref_Ent.Rref_Line /= 0 then
+         --  Search the declaration of the renamed entity, in the entities
+         --  defined in the current LI file.
+         Sect_Loop :
+         for Sect in  Xref_Section.First .. Xref_Section.Last loop
+            if Xref_Section.Table (Sect).File_Num in
+              New_ALI.First_Sdep .. New_ALI.Last_Sdep
+            then
+               for Entity in Xref_Section.Table (Sect).First_Entity ..
+                 Xref_Section.Table (Sect).Last_Entity
+               loop
+                  for Ref in Xref_Entity.Table (Entity).First_Xref ..
+                    Xref_Entity.Table (Entity).Last_Xref
+                  loop
+                     if Xref.Table (Ref).Line = Xref_Ent.Rref_Line
+                       and then Xref.Table (Ref).Col = Xref_Ent.Rref_Col
+                       and then Xref.Table (Ref).File_Num = Xref_Sect.File_Num
+                     then
+                        Decl.Rename :=
+                          (Line  => Positive (Xref_Entity.Table (Entity).Line),
+                           Column => Natural (Xref_Entity.Table (Entity).Col),
+                           File =>
+                             Sfiles (Xref_Section.Table (Sect).File_Num));
+                        exit Sect_Loop;
+                     end if;
+                  end loop;
+               end loop;
+            end if;
+         end loop Sect_Loop;
       end if;
 
       --  ??? Note that in the part of this procedure that follows, we assume
@@ -1534,13 +1568,14 @@ package body Src_Info.ALI is
 
    procedure Process_Xref_Section
      (New_LI_File : LI_File_Ptr;
+      New_ALI     : ALIs_Record;
       Section_Id  : Nat;
       Sfiles      : Sdep_To_Sfile_Table)
    is
       Xref_Sect : Xref_Section_Record renames Xref_Section.Table (Section_Id);
    begin
       for E in Xref_Sect.First_Entity .. Xref_Sect.Last_Entity loop
-         Process_Xref_Entity (New_LI_File, Section_Id, E, Sfiles);
+         Process_Xref_Entity (New_LI_File, New_ALI, Section_Id, E, Sfiles);
       end loop;
    end Process_Xref_Section;
 
@@ -1557,7 +1592,7 @@ package body Src_Info.ALI is
          if Xref_Section.Table (Xref_Sect).File_Num in
            New_ALI.First_Sdep .. New_ALI.Last_Sdep
          then
-            Process_Xref_Section (New_LI_File, Xref_Sect, Sfiles);
+            Process_Xref_Section (New_LI_File, New_ALI, Xref_Sect, Sfiles);
          end if;
       end loop;
    end Process_Xrefs;
