@@ -75,6 +75,10 @@ package Switches_Editors is
    --  Likewise, you shouldn't call Show_All on the editor itself, but rather
    --  on the window.
 
+   procedure Set_Page
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names);
+   --  Show a specific page of the editor.
+
    ------------------------
    -- Access to switches --
    ------------------------
@@ -94,15 +98,6 @@ package Switches_Editors is
       Tool     : Tool_Names;
       Switches : GNAT.OS_Lib.Argument_List);
    --  Set the initial value for the switches, for a specific tool
-
-   procedure Filter_Switches
-     (Editor   : access Switches_Edit_Record;
-      Tool     : Tool_Names;
-      Switches : in out GNAT.OS_Lib.Argument_List);
-   --  Remove from Switches all the ones that can be set directly from
-   --  the GUI. As a result, on exit Switches will only contain non-null
-   --  values for the switches that were set manually by the user, and that
-   --  don't have GUI equivalents
 
    ---------------------------
    -- Callbacks for the GUI --

@@ -36,12 +36,22 @@ with Gtk.Spin_Button;   use Gtk.Spin_Button;
 with Gtk.Table;         use Gtk.Table;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtk.GEntry;        use Gtk.GEntry;
+with Gtk.Notebook;      use Gtk.Notebook;
 
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Unchecked_Deallocation;
 
 package body Switches_Editors is
+
+   procedure Filter_Switches
+     (Editor   : access Switches_Edit_Record'Class;
+      Tool     : Tool_Names;
+      Switches : in out GNAT.OS_Lib.Argument_List);
+   --  Remove from Switches all the ones that can be set directly from
+   --  the GUI. As a result, on exit Switches will only contain non-null
+   --  values for the switches that were set manually by the user, and that
+   --  don't have GUI equivalents
 
    -------------
    -- Gtk_New --
@@ -313,6 +323,8 @@ package body Switches_Editors is
                   Select_Item (Get_List (Combo), Level);
                end if;
                return;
+            else
+               Select_Item (Get_List (Combo), 0);
             end if;
          end loop;
       end Set_Combo;
@@ -392,7 +404,7 @@ package body Switches_Editors is
    ---------------------
 
    procedure Filter_Switches
-     (Editor   : access Switches_Edit_Record;
+     (Editor   : access Switches_Edit_Record'Class;
       Tool     : Tool_Names;
       Switches : in out GNAT.OS_Lib.Argument_List) is
    begin
@@ -567,5 +579,15 @@ package body Switches_Editors is
       Free (Switches.all);
       Internal (Switches);
    end Free;
+
+   --------------
+   -- Set_Page --
+   --------------
+
+   procedure Set_Page
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names) is
+   begin
+      Set_Page (Editor.Notebook1, Tool_Names'Pos (Tool));
+   end Set_Page;
 
 end Switches_Editors;
