@@ -2010,30 +2010,48 @@ package body Debugger.Gdb is
       Set_Parse_File_Name (Get_Process (Debugger), True);
    end Get_Line_Address;
 
-   ---------------------
-   -- Get_Memory_Byte --
-   ---------------------
+   ----------------
+   -- Get_Memory --
+   ----------------
 
-   function Get_Memory_Byte
+   function Get_Memory
      (Debugger : access Gdb_Debugger;
+      Size     : in Integer;
       Address  : in String) return String
    is
-      S : constant String := Send
-        (Debugger, "x/1bx " & Address, Mode => Internal);
-      Index : Natural := 1;
-      Test  : Natural := 1;
+      Result       : String (1 .. Size * 2);
+      Image        : String := Integer'Image (Size);
+      S            : constant String := Send
+        (Debugger,
+         "x/"
+         & Image (Image'First + 1 .. Image'Last)
+         & "bx " & Address, Mode => Internal);
+      S_Index      : Integer := S'First + 2;
+      Result_Index : Integer := 1;
    begin
-      Skip_To_String (S, Index, ":");
-      Skip_To_String (S, Test, "Cannot");
-      Skip_To_String (S (Index .. S'Last), Index, "x");
-      if Index + 2 > S'Last
-        or else Test < S'Last - 5
-      then
-         return "xx";
-      else
-         return S (Index + 1 .. Index + 2);
-      end if;
-   end Get_Memory_Byte;
+      while S_Index <= S'Last loop
+         --  Detect actual data : 0xXX right after an ASCII.HT.
+         if S (S_Index) = '0' then
+            if S (S_Index - 1) = ASCII.HT then
+               Result (Result_Index .. Result_Index + 1)
+                 := S (S_Index + 2 .. S_Index + 3);
+               Result_Index := Result_Index + 2;
+            end if;
+         end if;
+
+         --  Detect "Cannot access memory at ..."
+         if S (S_Index) = 'n' then
+            while Result_Index <= Result'Last loop
+               Result (Result_Index) := '-';
+               Result_Index := Result_Index + 1;
+            end loop;
+            S_Index := S'Last;
+         end if;
+
+         S_Index := S_Index + 1;
+      end loop;
+      return Result;
+   end Get_Memory;
 
    ---------------------
    -- Put_Memory_Byte --

@@ -668,11 +668,12 @@ package Debugger is
    -- Memory operations --
    -----------------------
 
-   function Get_Memory_Byte
+   function Get_Memory
      (Debugger : access Debugger_Root;
+      Size     : in Integer;
       Address  : in String) return String is abstract;
    --  Return the contents of the byte at a given address. The output should
-   --  be a 2-digit hexadecimal number.
+   --  be a hexadecimal string representing Size bytes, with no separator.
    --  Address is "0x" followed by an hexadecimal number.
 
    procedure Put_Memory_Byte

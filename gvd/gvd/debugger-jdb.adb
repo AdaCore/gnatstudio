@@ -868,18 +868,19 @@ package body Debugger.Jdb is
       Range_End_Len := 0;
    end Get_Line_Address;
 
-   ---------------------
-   -- Get_Memory_Byte --
-   ---------------------
+   ----------------
+   -- Get_Memory --
+   ----------------
 
-   function Get_Memory_Byte
+   function Get_Memory
      (Debugger : access Jdb_Debugger;
+      Size     : in Integer;
       Address  : in String) return String
    is
    begin
       return "";
       --  ??? Must implement this function !
-   end Get_Memory_Byte;
+   end Get_Memory;
 
    ---------------------
    -- Put_Memory_Byte --
