@@ -4171,7 +4171,9 @@ package body Prj_API is
                end loop;
 
                Free (Lang);
-               return "No source files for "
+               return Project_Name (Project_View) &
+                 Prj.Project_File_Extension
+                 & ": No source files for "
                  & Error (Error'First .. Error'Last - 2);
             end;
          end if;
