@@ -219,10 +219,12 @@ package body Glide_Kernel.Console is
    --------------------------
 
    procedure Parse_File_Locations
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Text           : String;
-      Category       : String;
-      Highlight      : Boolean := False)
+     (Kernel           : access Kernel_Handle_Record'Class;
+      Text             : String;
+      Category         : String;
+      Highlight        : Boolean := False;
+      Style_Category   : String := "";
+      Warning_Category : String := "")
    is
       File_Location : constant Pattern_Matcher :=
         Compile (Get_Pref (Kernel, File_Pattern));
@@ -232,6 +234,10 @@ package body Glide_Kernel.Console is
         Integer (Get_Pref (Kernel, Line_Pattern_Index));
       Col_Index  : constant Integer :=
         Integer (Get_Pref (Kernel, Column_Pattern_Index));
+      Style_Index  : constant Integer :=
+        Integer (Get_Pref (Kernel, Style_Pattern_Index));
+      Warning_Index : constant Integer :=
+        Integer (Get_Pref (Kernel, Warning_Pattern_Index));
       Matched    : Match_Array (0 .. 9);
       Start      : Natural := Text'First;
       Last       : Natural;
@@ -284,16 +290,30 @@ package body Glide_Kernel.Console is
                end if;
             end if;
 
-            Insert_Result
-              (Kernel,
-               Category,
-               Create
-                 (Text (Matched
-                          (File_Index).First .. Matched (File_Index).Last),
-                  Kernel),
-               Text (Last + 1 .. Real_Last),
-               Positive (Line), Positive (Column), 0,
-               Highlight);
+            declare
+               C : String_Access;
+            begin
+               if Matched (Warning_Index) /= No_Match then
+                  C := new String'(Warning_Category);
+               elsif  Matched (Style_Index) /= No_Match then
+                  C := new String'(Style_Category);
+               else
+                  C := new String'(Category);
+               end if;
+
+               Insert_Result
+                 (Kernel,
+                  C.all,
+                  Create
+                    (Text (Matched
+                             (File_Index).First .. Matched (File_Index).Last),
+                     Kernel),
+                  Text (Last + 1 .. Real_Last),
+                  Positive (Line), Positive (Column), 0,
+                  Highlight);
+
+               Free (C);
+            end;
          end if;
 
          Start := Real_Last + 1;
