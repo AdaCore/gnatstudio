@@ -32,7 +32,7 @@ Known Problems fixed in GPS 2.1.0
 
 - D525-001 GPS and Python on Windows
   Problem:    On Windows, GPS Python support does not work properly if GPS
-              is installed on a directory whose name start with a letter 'n',
+              is installed on a directory whose name starts with a letter 'n',
               'r' or 't'.
   Workaround: Install GPS in another directory.
 
