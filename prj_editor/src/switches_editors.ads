@@ -68,7 +68,10 @@ package Switches_Editors is
    function Get_Window
      (Editor : access Switches_Edit_Record) return Gtk.Widget.Gtk_Widget;
    --  Return the window to use to insert the editor in a parent container.
-   --  You should not use Editor itself, which is a top-level window.
+   --
+   --  From the moment this function is called, you should no longer use
+   --  Editor itself, but only the result of Get_Window, unless you want to
+   --  put the editor back in Editor.
    --  Likewise, you shouldn't call Show_All on the editor itself, but rather
    --  on the window.
 

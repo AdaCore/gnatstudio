@@ -51,8 +51,6 @@ package body Switches_Editors is
    begin
       Editor := new Switches_Edit_Record;
       Initialize (Editor);
-      Ref (Editor.Vbox2);
-      Unparent (Editor.Vbox2);
    end Gtk_New;
 
    -------------------
@@ -92,6 +90,10 @@ package body Switches_Editors is
    function Get_Window
      (Editor : access Switches_Edit_Record) return Gtk.Widget.Gtk_Widget is
    begin
+      if Get_Parent (Editor.Vbox2) = Gtk_Widget (Editor) then
+         Ref (Editor.Vbox2);
+         Unparent (Editor.Vbox2);
+      end if;
       return Gtk_Widget (Editor.Vbox2);
    end Get_Window;
 
