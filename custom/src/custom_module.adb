@@ -258,16 +258,23 @@ package body Custom_Module is
                begin
                   if Is_Regular_File (F) then
                      Trace (Me, "Loading " & F);
-                     File_Node := Parse (F).Child;
-                     Node := File_Node;
-                     Custom_Parsed := True;
+                     File_Node := Parse (F);
 
-                     while Node /= null loop
-                        Add_Child ("", Node);
-                        Node := Node.Next;
-                     end loop;
+                     if File_Node = null then
+                        Console.Insert
+                          (Kernel, -"Syntax error in customer file " & F,
+                           Mode => Error);
+                     else
+                        Node := File_Node.Child;
+                        Custom_Parsed := True;
 
-                     Free (File_Node);
+                        while Node /= null loop
+                           Add_Child ("", Node);
+                           Node := Node.Next;
+                        end loop;
+
+                        Free (File_Node);
+                     end if;
                   end if;
 
                exception
