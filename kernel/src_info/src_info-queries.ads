@@ -95,6 +95,10 @@ package Src_Info.Queries is
    function Is_Subprogram (Entity : Entity_Information) return Boolean;
    --  Return True if Entity is a subprogram (procedure, function,...)
 
+   function Is_Container (Entity : Entity_Information) return Boolean;
+   --  Return True if Entity contain calls or declarations of other entities
+   --  (packages, namespaces, subprograms,...)
+
    function Get_Scope (Entity : Entity_Information) return E_Scope;
    --  Return the scope of the entity.  See glide_kernel.ads on how to convert
    --  this to a string.
@@ -707,6 +711,10 @@ package Src_Info.Queries is
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean;
    --  Return True if Node is associated with a subprogram (either its
    --  declaration or a call to it).
+
+   function Is_Container (Node : Scope_Tree_Node) return Boolean;
+   --  Return True if Node is associated with a container (see Is_Container
+   --  above).
 
    function Is_Label (Node : Scope_Tree_Node) return Boolean;
    --  Return True if Node is a label, ie is not part of a scope (for instance,
