@@ -2009,11 +2009,11 @@ package body Src_Editor_Box is
       Buffer_Line : constant Gint := To_Buffer_Line (Line);
       Buffer_Col  : constant Gint := To_Buffer_Column (Column);
    begin
-      if Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, 0) then
-         if Force_Focus then
-            Grab_Focus (Editor.Source_View);
-         end if;
+      if Force_Focus then
+         Grab_Focus (Editor.Source_View);
+      end if;
 
+      if Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, 0) then
          Set_Screen_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
          Scroll_To_Cursor_Location (Editor.Source_View, True);
 
