@@ -67,6 +67,7 @@ procedure Prj_Editor is
       T : Project_Tree := Project_Tree (Tree);
    begin
       --  ??? Need to free as much memory as possible first.
+      --  ??? Maybe a call to Prj.Reset is enough
       Errout.Initialize;
       pragma Assert (Project /= Empty_Node);
       Prj.Com.Units.Set_Last (No_Unit);
@@ -121,6 +122,10 @@ begin
    Gtk_New (Scenar, Project);
    Add (Win, Scenar);
    Show_All (Win);
+
+   Widget_Callback.Object_Connect
+     (Scenar, "changed",
+      Widget_Callback.To_Marshaller (Refresh_Tree'Unrestricted_Access), Tree);
 
    Refresh_Tree (Tree);
    Main;
