@@ -1779,7 +1779,8 @@ gvd_interrupt_process (struct GVD_Process* p)
 int
 gvd_terminate_process (struct GVD_Process* p)
 {
-  return kill (p->pid, SIGKILL);
+  process_send_signal (p, SIGKILL, 1);
+  return 0;
 }
 
 /* wait for process pid to terminate and return the process status. */
