@@ -112,11 +112,11 @@ package body Odd.Process is
    --  relevant fields.
 
    Graph_Cmd_Dependent_Format : constant Pattern_Matcher := Compile
-     ("dependent\s+on\s+(\d+)\s*", Case_Insensitive);
+     ("\s+dependent\s+on\s+(\d+)\s*", Case_Insensitive);
    --  Partial analyses of the last part of a graph command
 
    Graph_Cmd_Link_Format : constant Pattern_Matcher := Compile
-     ("link_name\s+(.+)", Case_Insensitive);
+     ("\s+link_name\s+(.+)", Case_Insensitive);
    --  Partial analyses of the last part of a graph command
 
    Graph_Cmd_Format2 : constant Pattern_Matcher := Compile
@@ -860,8 +860,9 @@ package body Odd.Process is
             else
                First := Matched (Graph_Cmd_Rest_Paren).First;
                Last  := Natural'Min (Link_Name_First, Dependent_On_First);
+
                if Last = Natural'Last then
-                  Last  := Matched (Graph_Cmd_Rest_Paren).Last;
+                  Last := Matched (Graph_Cmd_Rest_Paren).Last;
                else
                   Last := Last - 1;
                end if;
