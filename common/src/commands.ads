@@ -26,8 +26,8 @@
 --  function Undo if you want your command to be undoable).
 --
 --  Commands are executed either directly (see Launch_Synchronous), or
---  through a Command_Queue. Both mechanisms are described in more details
---  below.
+--  through a Command_Queue, or through the Task_Manager.
+--  See details below.
 --
 --  One very important point: the implementation of the function
 --  Execute must call Command_Finished when the action is completed,
@@ -95,9 +95,10 @@ package Commands is
    --  completed. See comments above.
    --
    --  Do not execute this function directly. You should instead use
-   --  Launch_Synchronous or the task manager to execute a command. Otherwise,
-   --  the other actions resulting from the command (see Add_Consequence_Action
-   --  and Add_Alternate_Action) will not be executed properly.
+   --  Launch_Synchronous or the task manager, or a command queue,
+   --  to execute a command, Otherwise, the other actions resulting from the
+   --  command (see Add_Consequence_Action and Add_Alternate_Action)
+   --  will not be executed properly.
 
    function Undo (Command : access Root_Command) return Boolean;
    --  Undo a Command. Return value indicates whether the operation was
@@ -171,10 +172,6 @@ package Commands is
    --  Launching a command this way does not free memory associated to Command.
    --  WARNING: It is not possible to execute through Launch_Synchronous a
    --  command that causes its own destruction.
-   --  This is a convenient wrapper on top of Command_Queues (see below),
-   --  except that a single command and its consequence actions are executed.
-   --  You cannot executed several independent actions one after the other
-   --  using this mechanism.
    --
    --  The command and its consequence actions are not modified. As a result,
    --  you can execute the same command multiple times through calls to
@@ -186,7 +183,7 @@ package Commands is
    --  Command queues are used to store lists of commands, mostly for
    --  Undo/Redo purposes.
    --  There are also used if you need to execute several commands one after
-   --  the other, but these commands do not have strong links one to another.
+   --  the other, when these commands do not have strong links one to another.
    --  If a command should only be executed depending on the result of another
    --  command, you should use Add_Consequence_Action and Add_Alternate_Action
    --  instead.
