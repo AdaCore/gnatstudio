@@ -317,6 +317,7 @@ private
       Type_Extension                           => False,
       Implicit                                 => False,
       Label                                    => False,
+      Primitive_Operation                      => False,
       End_Of_Spec                              => True,
       End_Of_Body                              => True);
    --  True if the matching entity indicates an end-of-scope (end of subprogram
@@ -331,6 +332,7 @@ private
       Type_Extension                           => False,
       Implicit                                 => False,
       Label                                    => False,
+      Primitive_Operation                      => False,
       End_Of_Spec                              => False,
       End_Of_Body                              => False);
    --  True if the matching entity indicates an start-of-scope (start of
