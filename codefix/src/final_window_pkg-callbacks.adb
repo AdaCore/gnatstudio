@@ -22,8 +22,6 @@ with Ada.Exceptions;         use Ada.Exceptions;
 
 with Gtk.Widget;             use Gtk.Widget;
 
-with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-
 with Traces;                 use Traces;
 
 package body Final_Window_Pkg.Callbacks is
@@ -40,9 +38,6 @@ package body Final_Window_Pkg.Callbacks is
       Final_Window : constant Final_Window_Access :=
         Final_Window_Access (Object);
    begin
-      Commit
-        (Final_Window.Graphic_Codefix.Corrector.all,
-         Final_Window.Graphic_Codefix.Current_Text.all);
       Quit (Final_Window.Graphic_Codefix);
       Destroy (Final_Window);
 
@@ -61,6 +56,7 @@ package body Final_Window_Pkg.Callbacks is
       Final_Window : constant Final_Window_Access :=
         Final_Window_Access (Object);
    begin
+      Cancel_All_Fixes (Final_Window.Graphic_Codefix);
       Quit (Final_Window.Graphic_Codefix);
       Destroy (Final_Window);
 
