@@ -456,7 +456,10 @@ package body Debugger.Gdb is
       Entity   : String) return String
    is
       --  ??? Probably, this should be language-dependent.
-      S       : String :=
+      --  In particular, in C, &(*A) returns A, not an address, which causes
+      --  unexpected wrong aliases to be detected.
+
+      S       : constant String :=
         Send (Debugger, "print &(" & Entity & ")", Mode => Internal);
       Matched : Match_Array (0 .. 1);
 
