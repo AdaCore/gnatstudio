@@ -261,6 +261,11 @@ package body Gtkada.MDI is
    procedure Menu_Destroyed (MDI : access Gtk_Widget_Record'Class);
    --  Called when the Menu associated with a MDI is destroyed.
 
+   function Compute_Workspace_Size (MDI : access MDI_Window_Record'Class)
+      return Gtk_Allocation;
+   --  Return the allocation to use for the workspace area of the MDI (which is
+   --  either the layout or the middle notebook).
+
    procedure Size_Allocate_MDI_Layout
      (Layout : System.Address; Alloc : Gtk_Allocation);
    pragma Convention (C, Size_Allocate_MDI_Layout);
@@ -889,6 +894,42 @@ package body Gtkada.MDI is
       end if;
    end Size_Allocate_MDI_Layout;
 
+   ----------------------------
+   -- Compute_Workspace_Size --
+   ----------------------------
+
+   function Compute_Workspace_Size (MDI : access MDI_Window_Record'Class)
+      return Gtk_Allocation
+   is
+      Alloc : Gtk_Allocation;
+   begin
+      if MDI.Docks (Left) /= null then
+         Alloc.X := MDI.Docks_Size (Left) + Handle_Size;
+      else
+         Alloc.X := 0;
+      end if;
+
+      if MDI.Docks (Top) /= null then
+         Alloc.Y := MDI.Docks_Size (Top) + Handle_Size;
+      else
+         Alloc.Y := 0;
+      end if;
+
+      Alloc.Width := Get_Allocation_Width (MDI) - Allocation_Int (Alloc.X);
+      if MDI.Docks (Right) /= null then
+         Alloc.Width := Alloc.Width -
+           Allocation_Int (Handle_Size + MDI.Docks_Size (Right));
+      end if;
+
+      Alloc.Height := Get_Allocation_Height (MDI) - Allocation_Int (Alloc.Y);
+      if MDI.Docks (Bottom) /= null then
+         Alloc.Height := Alloc.Height -
+           Allocation_Int (Handle_Size + MDI.Docks_Size (Bottom));
+      end if;
+
+      return Alloc;
+   end Compute_Workspace_Size;
+
    -----------------------
    -- Size_Allocate_MDI --
    -----------------------
@@ -1056,29 +1097,7 @@ package body Gtkada.MDI is
       end if;
 
       --  Middle container
-      if M.Docks (Left) /= null then
-         Alloc.X := M.Docks_Size (Left) + Handle_Size;
-      else
-         Alloc.X := 0;
-      end if;
-
-      if M.Docks (Top) /= null then
-         Alloc.Y := M.Docks_Size (Top) + Handle_Size;
-      else
-         Alloc.Y := 0;
-      end if;
-
-      Alloc.Width := MDI_Alloc.Width - Allocation_Int (Alloc.X);
-      if M.Docks (Right) /= null then
-         Alloc.Width := Alloc.Width -
-           Allocation_Int (Handle_Size + M.Docks_Size (Right));
-      end if;
-
-      Alloc.Height := MDI_Alloc.Height - Allocation_Int (Alloc.Y);
-      if M.Docks (Bottom) /= null then
-         Alloc.Height := Alloc.Height -
-           Allocation_Int (Handle_Size + M.Docks_Size (Bottom));
-      end if;
+      Alloc := Compute_Workspace_Size (M);
 
       if M.Docks (None) /= null then
          Size_Allocate (M.Docks (None), Alloc);
@@ -2386,7 +2405,7 @@ package body Gtkada.MDI is
 
    procedure Cascade_Children (MDI : access MDI_Window_Record) is
       use type Widget_List.Glist;
-      Level        : Gint := 0;
+      Level        : Gint := 1;
       W, H         : Gint;
       List         : Widget_List.Glist := First (MDI.Items);
       C            : MDI_Child;
@@ -2406,48 +2425,30 @@ package body Gtkada.MDI is
          List := Widget_List.Next (List);
       end loop;
 
-      W := Gint (Get_Allocation_Width (MDI.Layout))
-        - (Num_Children - 1) * Title_Bar_Height;
-      H := Gint (Get_Allocation_Height (MDI.Layout))
-        - (Num_Children - 1) * Title_Bar_Height;
+      Alloc := Compute_Workspace_Size (MDI);
+      W := Gint (Alloc.Width)  - (Num_Children - 1) * Title_Bar_Height;
+      H := Gint (Alloc.Height) - (Num_Children - 1) * Title_Bar_Height;
 
       List := First (MDI.Items);
 
       --  Resize all children, except the one that has the focus (since
-      --  we want it to be on top)
+      --  we want it to be on top). Note that the list is traverse from the
+      --  top-most child to the bottom-most one.
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
          List := Widget_List.Next (List);
 
-         if (C.State = Normal or else C.State = Iconified)
-           and then C /= MDI.Focus_Child
-         then
-            C.X := Level;
-            C.Y := Level;
-            C.Uniconified_Width := W;
+         if (C.State = Normal or else C.State = Iconified) then
+            C.X := (Num_Children - Level) * Title_Bar_Height;
+            C.Y := C.X;
+            C.Uniconified_Width  := W;
             C.Uniconified_Height := H;
-            Alloc := (C.X, C.Y,
-                      Allocation_Int (C.Uniconified_Width),
-                      Allocation_Int (H));
+            Alloc := (C.X, C.Y, Allocation_Int (W), Allocation_Int (H));
             Size_Allocate (C, Alloc);
-            Raise_Child (C);
-            Level := Level + Title_Bar_Height;
+            Level := Level + 1;
          end if;
       end loop;
-
-      if MDI.Focus_Child /= null
-        and then (MDI.Focus_Child.State = Normal
-                  or else MDI.Focus_Child.State = Iconified)
-      then
-         MDI.Focus_Child.X := Level;
-         MDI.Focus_Child.Y := Level;
-         MDI.Focus_Child.Uniconified_Width := W;
-         MDI.Focus_Child.Uniconified_Height := H;
-         Alloc := (Level, Level, Allocation_Int (W), Allocation_Int (H));
-         Size_Allocate (MDI.Focus_Child, Alloc);
-         Raise_Child (MDI.Focus_Child);
-      end if;
    end Cascade_Children;
 
    -----------------------
@@ -3630,8 +3631,10 @@ package body Gtkada.MDI is
                Add ("State", State_Type'Image (Child.State));
                Add ("Title", Child.Title.all);
                Add ("Short_Title", Child.Short_Title.all);
-               Add ("Height", Guint'Image (Get_Allocation_Height (Child)));
-               Add ("Width", Guint'Image (Get_Allocation_Width (Child)));
+               Add ("Height",
+                    Allocation_Int'Image (Get_Allocation_Height (Child)));
+               Add ("Width",
+                    Allocation_Int'Image (Get_Allocation_Width (Child)));
                Add ("Y", Gint'Image (Child.Y));
                Add ("X", Gint'Image (Child.X));
                Add_Child (Child_Node, Widget_Node);
