@@ -301,9 +301,30 @@ package body Debugger.Gdb.Ada is
          declare
             First, Last : Long_Integer;
          begin
-            Parse_Num (Type_Str, Index, First);
+            --  The dimensions might not be numbers.
+            --  For instance, when a record field is an array constrained by
+            --  a discriminant, the range has the discriminant's name in it.
+            --  ??? Should we have some flag that indicate the dynamic aspect
+            --  of the bounds, instead of relying on special values.
+
+            if Type_Str (Index) in '0' .. '9'
+              or else Type_Str (Index) = '-'
+            then
+               Parse_Num (Type_Str, Index, First);
+            else
+               First := Long_Integer'Last;
+               Skip_To_Char (Type_Str, Index, ' ');
+            end if;
             Index := Index + 4;  --  skips ' .. '
-            Parse_Num (Type_Str, Index, Last);
+
+            if Type_Str (Index) in '0' .. '9'
+              or else Type_Str (Index) = '-'
+            then
+               Parse_Num (Type_Str, Index, Last);
+            else
+               Last := Long_Integer'First;
+               Skip_To_Char (Type_Str, Index, ' ');
+            end if;
             Index := Index + 2;  --  skips ', ' or ') '
             Set_Dimensions (R.all, Num_Dim, (First, Last));
             Num_Dim := Num_Dim + 1;
@@ -561,6 +582,9 @@ package body Debugger.Gdb.Ada is
    is
       Dim     : Natural := 0;            --  current dimension
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
+      Bounds  : Dimension;
+      Lengths : array (1 ..  Num_Dimensions (Result.all)) of Long_Integer;
+      --  The number of items in each dimension.
 
       procedure Parse_Item;
       --  Parse the value of a single item, and add it to the contents of
@@ -589,7 +613,19 @@ package body Debugger.Gdb.Ada is
          end loop;
 
          if Type_Str (Int) = '=' then
-            Index := Int + 3;  --  skip "field_name => ";
+
+            --  Looking at "index => ".
+            --  If we have an array with dynamic bounds, now is a good time to
+            --  find the index
+            Bounds := Get_Dimensions (Result.all, Dim);
+            if Bounds.Last < Bounds.First
+              and then Bounds.First = Long_Integer'Last
+            then
+               Parse_Num (Type_Str, Index, Bounds.First);
+               Set_Dimensions (Result.all, Dim, Bounds);
+            end if;
+
+            Index := Int + 3;  --  skip "index => ";
 
             --  If we are not parsing the most internal dimension, we in fact
             --  saw the start of a new dimension, as in:
@@ -616,12 +652,39 @@ package body Debugger.Gdb.Ada is
                     Elem_Index => Current_Index,
                     Repeat_Num => Repeat_Num);
          Current_Index := Current_Index + Long_Integer (Repeat_Num);
+         Lengths (Dim) := Lengths (Dim) + Long_Integer (Repeat_Num);
       end Parse_Item;
 
    begin
       loop
          case Type_Str (Index) is
             when ')' =>
+               --  If we have an array with a dynamic range (ie not known
+               --  until we parse the value), now is a good time to
+               --  get the range.
+
+               Bounds := Get_Dimensions (Result.all, Dim);
+
+               if Bounds.Last < Bounds.First then
+                  if Bounds.First = Long_Integer'Last
+                    and then Bounds.Last = Long_Integer'First
+                  then
+                     --  if we did not find the bound before, this is because
+                     --  it is a 1.
+                     Set_Dimensions (Result.all, Dim, (1, Lengths (Dim)));
+
+                  elsif Bounds.First = Long_Integer'Last then
+                     Set_Dimensions
+                       (Result.all, Dim,
+                        (Bounds.Last - Lengths (Dim) + 1, Bounds.Last));
+
+                  elsif Bounds.Last = Long_Integer'First then
+                     Set_Dimensions
+                       (Result.all, Dim,
+                        (Bounds.First, Bounds.First + Lengths (Dim) - 1));
+                  end if;
+               end if;
+
                Dim := Dim - 1;
                Index := Index + 1;
 
@@ -636,6 +699,7 @@ package body Debugger.Gdb.Ada is
                else
                   Dim := Dim + 1;
                   Index := Index + 1;
+                  Lengths (Dim) := 0;
                end if;
 
             when ',' | ' ' =>
