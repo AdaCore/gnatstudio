@@ -227,8 +227,10 @@ package body Navigation_Module is
          end;
 
       elsif Mime_Type = Mime_Html_File then
+         --  ??? This should be done by the help module itself
          declare
-            File       : constant String  := Get_String (Data (Data'First));
+            File       : constant String := Get_String (Data (Data'First));
+            Anchor     : constant String := Get_String (Data (Data'First + 2));
             Navigate   : constant Boolean :=
               Get_Boolean (Data (Data'First + 1));
             Html_Command : Html_Location_Command;
@@ -237,7 +239,12 @@ package body Navigation_Module is
                return False;
             end if;
 
-            Create (Html_Command, Kernel_Handle (Kernel), File);
+            if Anchor = "" then
+               Create (Html_Command, Kernel_Handle (Kernel), File);
+            else
+               Create
+                 (Html_Command, Kernel_Handle (Kernel), File & '#' & Anchor);
+            end if;
 
             if N_Data.Current_Location /= null then
                Prepend (N_Data.Back, N_Data.Current_Location);
