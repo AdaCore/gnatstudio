@@ -297,8 +297,8 @@ package body HTables is
             E := Get_Element (E1.Iter);
             exit when E = null;
 
-            Free (E);
             Get_Next (Hash_Table, E1);
+            Free (E);
          end loop;
 
          Reset (Hash_Table.Table);
