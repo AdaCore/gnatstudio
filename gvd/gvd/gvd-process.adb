@@ -185,24 +185,39 @@ package body Odd.Process is
    is
       function To_Main_Debug_Window is new
         Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
-      Process    : constant Debugger_Process_Tab :=
+      Process     : constant Debugger_Process_Tab :=
         Convert (To_Main_Debug_Window (Window), Descriptor);
 
-      File_First : Natural;
-      File_Last  : Positive;
-      Line       : Natural;
-      Initial_Internal_Command : Boolean := True;
+      File_First  : Natural;
+      File_Last   : Positive;
+      Line        : Natural;
+      First, Last : Natural;
+      Initial_Internal_Command : Boolean;
 
    begin
+      Found_File_Name
+        (Process.Debugger,
+         Str, File_First, File_Last, First, Last, Line);
+
       --  Do not show the output if we have an internal command
-      if not Is_Internal_Command (Get_Process (Process.Debugger)) then
-         Text_Output_Handler (Process, Str);
+      --  ??? Should output it anyway if in -fullname mode (external
+      --  IDE - e.g Emacs - support).
+
+      if Is_Internal_Command (Get_Process (Process.Debugger)) then
+         Initial_Internal_Command := True;
+      else
+         Initial_Internal_Command := False;
+
+         if First = 0 then
+            Text_Output_Handler (Process, Str);
+         else
+            Text_Output_Handler (Process, Str (Str'First .. First - 1));
+            Text_Output_Handler (Process, Str (Last + 1 .. Str'Last));
+         end if;
+
          Process.Edit_Pos := Get_Length (Process.Debugger_Text);
          Set_Point (Process.Debugger_Text, Process.Edit_Pos);
-         Initial_Internal_Command := False;
       end if;
-
-      Found_File_Name (Process.Debugger, Str, File_First, File_Last, Line);
 
       --  Do we have a file name ?
 
@@ -465,7 +480,7 @@ package body Odd.Process is
          Wait_Prompt (Debugger.Debugger);
       end if;
 
-      Set_Internal_Command (Get_Process (Debugger.Debugger), True);
+      Set_Internal_Command (Get_Process (Debugger.Debugger), False);
 
       --  Put back the standard cursor
 
@@ -473,5 +488,25 @@ package body Odd.Process is
       Set_Cursor (Get_Window (Debugger.Window), Cursor);
       Destroy (Cursor);
    end Process_User_Command;
+
+   ---------------------
+   -- Input_Available --
+   ---------------------
+
+   procedure Input_Available
+     (Debugger  : Standard_Input_Package.Data_Access;
+      Source    : Gint;
+      Condition : Gdk.Types.Gdk_Input_Condition)
+   is
+      Tab       : Debugger_Process_Tab;
+      Buffer    : String (1 .. 8192);
+      Len       : Natural;
+
+   begin
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Debugger.Process_Notebook)));
+      Get_Line (Buffer, Len);
+      Process_User_Command (Tab, Buffer (1 .. Len));
+   end Input_Available;
 
 end Odd.Process;
