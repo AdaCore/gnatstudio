@@ -1066,7 +1066,7 @@ package body Browsers.Dependency_Items is
             Refresh_Canvas (Get_Canvas (B));
 
          end if;
-         Select_Item (B, Item, True);
+         Select_Item (B, Item);
       end if;
    exception
       when E : others =>

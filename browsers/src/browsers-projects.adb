@@ -285,7 +285,7 @@ package body Browsers.Projects is
          --
          --  As a side effect, this also refreshes the canvas
 
-         Select_Item (Browser, Src, Refresh_Items => True);
+         Select_Item (Browser, Src);
          Show_Item (Get_Canvas (Browser), Src);
       end if;
 
@@ -674,7 +674,7 @@ package body Browsers.Projects is
       end loop;
 
       if First_Match /= null then
-         Select_Item (Browser, First_Match, Refresh_Items => True);
+         Select_Item (Browser, First_Match);
          Show_Item (Get_Canvas (Browser), First_Match);
          return True;
       else
