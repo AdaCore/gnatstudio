@@ -43,6 +43,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body GVD.Text_Boxes is
 
+   Layout_Width : constant := 20;
+   --  Width for the area reserved for the buttons in the source/asm editor.
 
    package Box_Cb is new Callback (GVD_Text_Box_Record);
    package Box_Event_Cb is new Return_Callback (GVD_Text_Box_Record, Boolean);
