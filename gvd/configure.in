@@ -115,7 +115,7 @@ esac
 
 
 machfile="'\"m/${machine}.h\"'"
-opsysfile="'\"s/${opsys}.h\"'"
+opsysfile="'\"system/${opsys}.h\"'"
 
 AC_SUBST(opsysfile)
 
