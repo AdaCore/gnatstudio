@@ -7,7 +7,7 @@
 <custom>
    <project_attribute
        name="languages" 
-       editor_page="General"
+       editor_page="Languages"
        editor_section="Languages"
        label=""
        description="List of languages for the source files of this project"
@@ -18,7 +18,7 @@
    <project_attribute
        name="Compiler_Command"
        package="IDE"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="Tools"
        description="The command to compile the source files for a given language"
        label="compiler">
@@ -50,7 +50,7 @@
    <project_attribute
        name="gnatlist"
        package="IDE"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="Ada Tools"
        description="The gnatls command used to find where the Ada run time files are installed"
        label="Gnatls">
@@ -73,7 +73,7 @@
    <project_attribute
        name="debugger_command"
        package="IDE"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="Tools"
        description="The application to use when debugging applications. Only gdb and its variants are currently supported by GPS"
        label="Debugger">
@@ -95,7 +95,7 @@
    <project_attribute
        name="global_configuration_pragmas"
        package="Builder"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources. This file will be used both for this project and all its imported projects"
        label="Global pragmas"
@@ -106,7 +106,7 @@
    <project_attribute
        name="local_configuration_pragmas"
        package="Compiler"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="External configuration"
        description="External file that contains the configuration pragmas to use for Ada sources in this project. This is the combined with the pragmas found in the Global pragmas attribute of the root project"
        label="Local pragmas"
@@ -117,7 +117,7 @@
    <project_attribute
        name="remote_host"
        package="IDE"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="Cross environment"
        description="Name or IP address of the machine on which the application should be compiled, debugged and run. It is recommended that you always start GPS locally, and work remotely on your application. Leave this field blank when working locally"
        label="Tools host">
@@ -127,7 +127,7 @@
    <project_attribute
        name="program_host"
        package="IDE"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="Cross environment"
        description="Name or IP address of the embedded target. This field should be left blank if you are not working on an embedded application"
        label="Program host">
@@ -137,7 +137,7 @@
    <project_attribute
        name="communication_protocol"
        package="IDE"
-       editor_page="General"
+       editor_page="Languages"
        editor_section="Cross environment"
        description="Protocol used to connect to the embedded target. This field should be left blank if you are not working on an embedded application"
        label="Protocol">
