@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                   GVD - The GNU Visual Debugger                   --
+--                                                                   --
+--                      Copyright (C) 2001-2002                      --
+--                              ACT-Europe                           --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Generic_Stack;
 with Basic_Types;
 with Ada.Unchecked_Deallocation;
@@ -8,7 +28,7 @@ package Ada_Analyzer is
    --  Note: the following type is taken from Scans (GNAT sources).
    --  The following type is used to identify token types returned by Scan.
    --  The class column in this table indicates the token classes which
-   --  apply to the token, as defined by subsquent subtype declarations.
+   --  apply to the token, as defined by subsequent subtype declarations.
 
    type Token_Type is (
 
@@ -202,6 +222,9 @@ package Ada_Analyzer is
 
       Sloc          : Source_Location;
       --  Source location for this entity
+
+      Sloc_Name     : Source_Location;
+      --  Source location for the name of this entity, if relevant
    end record;
    --  Extended information for a token
 
