@@ -927,10 +927,6 @@ procedure GPS is
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Navigate & (-"Goto Parent Unit")), False);
          Set_Sensitive (Find_Menu_Item
-           (GPS.Kernel, Navigate & (-"Start Of Statement")), False);
-         Set_Sensitive (Find_Menu_Item
-           (GPS.Kernel, Navigate & (-"End Of Statement")), False);
-         Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Tools & (-"Profile")), False);
          Set_Sensitive (Find_Menu_Item
            (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
