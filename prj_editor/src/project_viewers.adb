@@ -68,7 +68,6 @@ with Variable_Editors;         use Variable_Editors;
 
 with Prj;           use Prj;
 with Prj.Tree;      use Prj.Tree;
-with Prj.PP;        use Prj.PP;
 with Stringt;       use Stringt;
 with Types;         use Types;
 with Namet;         use Namet;

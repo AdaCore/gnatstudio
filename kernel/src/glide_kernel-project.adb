@@ -25,7 +25,6 @@ with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
-with Prj.PP;      use Prj.PP;
 with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
