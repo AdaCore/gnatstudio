@@ -1286,7 +1286,7 @@ package body GVD_Module is
       Page   : constant GPS_Debugger :=
         GPS_Debugger (Get_Current_Process (Top));
       Id     : constant GVD_Module   := GVD_Module (GVD_Module_ID);
-      Editor : constant Code_Editor  := Page.Editor_Text;
+      Editor : Code_Editor;
 
       use Debugger;
 
@@ -1301,6 +1301,7 @@ package body GVD_Module is
 
       Push_State (Kernel, Busy);
       Page.Exiting := True;
+      Editor := Page.Editor_Text;
 
       Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
       Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
