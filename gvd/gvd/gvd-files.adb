@@ -77,6 +77,7 @@ package body GVD.Files is
       Result        : Expect_Match;
       Descriptor    : GNAT.Expect.Process_Descriptor;
       Should_Delete : Boolean := False;
+      Num_Tries     : constant Integer := 5;
 
    begin
       Error_Msg := null;
@@ -133,7 +134,17 @@ package body GVD.Files is
 
          Free (Args (1));
          Free (Args (2));
-         F := Open_Read (Tmp_File'Address, Binary);
+
+         --  Work around a weird behavior of some rcp that do not make
+         --  the file available immediately.
+
+         for J in 1 .. Num_Tries loop
+            F := Open_Read (Tmp_File'Address, Binary);
+            exit when File_Length (F) > 0;
+            Close (F);
+            F := Invalid_FD;
+            delay 0.1;
+         end loop;
       end if;
 
 
