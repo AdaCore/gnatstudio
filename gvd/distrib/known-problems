@@ -1,5 +1,13 @@
 Known Problems in GVD 1.0.1
 
+- Wrong handling of double in C structs.
+  Problem:
+     When trying to display a C structure containing a double, GVD would
+     recurse infinitely, causing a stack overflow.
+  Workaround:
+     Print such variables in the debugger window instead.
+  Status: Fixed in GVD 1.0.2
+
 - Incorrect highlighting of ex-current line
   Problem: When the current line (with green background) changes, the previous
            one is incorrectly syntax-highlighted (comments are still in black)
