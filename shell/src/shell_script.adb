@@ -402,7 +402,7 @@ package body Shell_Script is
 
    function Instance_From_Name
      (Script : access Shell_Scripting_Record'Class;
-      Name : String) return Shell_Class_Instance
+      Name   : String) return Shell_Class_Instance
    is
       Index : Natural := Name'First;
    begin
