@@ -31,7 +31,6 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
 with System;                   use System;
 with Ada.Exceptions;           use Ada.Exceptions;
-with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Gdk.Color;                use Gdk.Color;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -41,16 +40,11 @@ with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Main;                 use Gtk.Main;
-with Gtk.Menu;                 use Gtk.Menu;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Menu_Shell;           use Gtk.Menu_Shell;
 with Gtk.Paned;                use Gtk.Paned;
 with Gtk.Frame;                use Gtk.Frame;
-with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Box;                  use Gtk.Box;
-with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Gtk.Vbutton_Box;          use Gtk.Vbutton_Box;
@@ -69,7 +63,6 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Separator;            use Gtk.Separator;
 with Traces;                   use Traces;
-with Glide_Main_Window;        use Glide_Main_Window;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
@@ -79,6 +72,9 @@ package body KeyManager_Module is
 
    Menu_Context_Name : constant String := "Menus";
    --  -"Menus" will need to be translated
+
+   Disabled_String   : constant String := "";
+   --  Displayed for the shortcut of unassigned actions
 
    type Keys_Header_Num is range 0 .. 1000;
    type Key_Binding is record
@@ -188,7 +184,6 @@ package body KeyManager_Module is
 
    procedure On_Grab_Key (Editor : access Gtk_Widget_Record'Class);
    procedure On_Remove_Key (Editor : access Gtk_Widget_Record'Class);
-   procedure On_Add_Key (Editor : access Gtk_Widget_Record'Class);
    --  Handle the "Grab", "Remove" and "Add" buttons
 
    function Grab_Multiple_Key
@@ -205,18 +200,10 @@ package body KeyManager_Module is
       Kernel  : Kernel_Handle;
       View    : Gtk_Tree_View;
       Model   : Gtk_Tree_Store;
+      Help        : Gtk_Text_Buffer;
+      Action_Name : Gtk_Label;
    end record;
    type Keys_Editor is access all Keys_Editor_Record'Class;
-
-   type Add_Editor_Record is new Gtk_Dialog_Record with record
-      View        : Gtk_Tree_View;
-      Model       : Gtk_Tree_Store;
-      Help        : Gtk_Text_Buffer;
-      Grab        : Gtk_Entry;
-      Action_Name : Gtk_Label;
-      Kernel      : Kernel_Handle;
-   end record;
-   type Add_Editor is access all Add_Editor_Record'Class;
 
    procedure Fill_Editor (Editor : access Keys_Editor_Record'Class);
    --  Fill the contents of the editor
@@ -240,11 +227,8 @@ package body KeyManager_Module is
       Binding : out Key_Description_List);
    --  Search the description of a command in the table
 
-   procedure Add_Selection_Changed (Dialog : access Gtk_Widget_Record'Class);
-   --  Called when the selection in the "Add" dialog has changed
-
-   procedure Add_Dialog_Grab (Dialog : access Gtk_Widget_Record'Class);
-   --  Called when "grab" is pressed in the "Add" dialog.
+   procedure Add_Selection_Changed (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the selection has changed
 
    procedure Get_Secondary_Keymap
      (Table  : in out Key_Htable.HTable;
@@ -809,6 +793,12 @@ package body KeyManager_Module is
                          Descr  => Accel_Path (First .. Accel_Path'Last),
                          Changed => False,
                          Key    => Image (Accel_Key, Accel_Mods));
+         else
+            Iter := Set (Model  => Editor.Model,
+                         Parent => Menu_Iter,
+                         Descr  => Accel_Path (First .. Accel_Path'Last),
+                         Changed => False,
+                         Key    => -Disabled_String);
          end if;
       end Process_Menu_Binding;
 
@@ -823,7 +813,31 @@ package body KeyManager_Module is
          Binding : Key_Description_List;
          Parent  : Gtk_Tree_Iter;
          Action  : Action_Record;
+         Action_Iter : Action_Iterator := Start (Editor.Kernel);
       begin
+         loop
+            Action := Get (Action_Iter);
+            exit when Action = No_Action;
+
+            Parent := Find_Parent (Editor.Model, Action.Context);
+            if Parent = Null_Iter then
+               if Action.Context = null then
+                  Parent := Set (Editor.Model, Null_Iter, -"General");
+               else
+                  Parent := Set
+                    (Editor.Model, Null_Iter, Get_Name (Action.Context));
+               end if;
+            end if;
+
+            Parent := Set
+              (Model   => Editor.Model,
+               Parent  => Parent,
+               Descr   => Get (Action_Iter),
+               Changed => False,
+               Key     => -Disabled_String);
+            Next (Editor.Kernel, Action_Iter);
+         end loop;
+
          Get_First (Table, Iter);
          loop
             Binding := Get_Element (Iter);
@@ -841,24 +855,29 @@ package body KeyManager_Module is
                   Action := Lookup_Action (Handler.Kernel, Binding.Action.all);
                   if Action /= No_Action then
                      Parent := Find_Parent (Editor.Model, Action.Context);
-                     if Parent = Null_Iter then
-                        if Action.Context = null then
-                           Parent := Set
-                             (Editor.Model, Null_Iter, Descr => -"General");
-                        else
-                           Parent := Set
-                             (Editor.Model, Null_Iter,
-                              Get_Name (Action.Context));
-                        end if;
+                     if Parent /= Null_Iter then
+                        Parent := Children (Editor.Model, Parent);
+                        while Parent /= Null_Iter loop
+                           if Get_String (Editor.Model, Parent, Action_Column)
+                             = Binding.Action.all
+                           then
+                              Set
+                                (Editor.Model,
+                                 Parent,
+                                 Key_Column,
+                                 Prefix
+                                 & Image (Get_Key (Iter).Key,
+                                          Get_Key (Iter).Modifier));
+                              Set
+                                (Editor.Model,
+                                 Parent,
+                                 Changed_Column,
+                                 Binding.Changed);
+                              exit;
+                           end if;
+                           Next (Editor.Model, Parent);
+                        end loop;
                      end if;
-
-                     Parent := Set
-                       (Model   => Editor.Model,
-                        Parent  => Parent,
-                        Descr   => Binding.Action.all,
-                        Changed => Binding.Changed,
-                        Key     => Prefix & Image (Get_Key (Iter).Key,
-                                                   Get_Key (Iter).Modifier));
                   end if;
                end if;
                Binding := Next (Binding);
@@ -903,14 +922,20 @@ package body KeyManager_Module is
          then
             Child := Children (Editor.Model, Context_Iter);
             while Child /= Null_Iter loop
-               Value (Get_String (Editor.Model, Child, Key_Column),
-                      Key, Modif);
-               Change_Entry
-                 (Accel_Path =>
-                    Get_String (Editor.Model, Child, Action_Column),
-                  Accel_Key  => Key,
-                  Accel_Mods => Modif,
-                  Replace => True);
+               declare
+                  Str : constant String :=
+                    Get_String (Editor.Model, Child, Key_Column);
+               begin
+                  if Str /= -Disabled_String then
+                     Value (Str, Key, Modif);
+                     Change_Entry
+                       (Accel_Path =>
+                          Get_String (Editor.Model, Child, Action_Column),
+                        Accel_Key  => Key,
+                        Accel_Mods => Modif,
+                        Replace => True);
+                  end if;
+               end;
                Next (Editor.Model, Child);
             end loop;
 
@@ -918,13 +943,20 @@ package body KeyManager_Module is
          else
             Child := Children (Editor.Model, Context_Iter);
             while Child /= Null_Iter loop
-               Bind_Default_Key_Internal
-                 (Handler,
-                  Action       =>
-                    Get_String (Editor.Model, Child, Action_Column),
-                  Default_Key  => Get_String (Editor.Model, Child, Key_Column),
-                  Changed => Get_Boolean
-                    (Editor.Model, Child, Changed_Column));
+               declare
+                  Str : constant String :=
+                    Get_String (Editor.Model, Child, Key_Column);
+               begin
+                  if Str /= -Disabled_String then
+                     Bind_Default_Key_Internal
+                       (Handler,
+                        Action       =>
+                          Get_String (Editor.Model, Child, Action_Column),
+                        Default_Key  => Str,
+                        Changed => Get_Boolean
+                          (Editor.Model, Child, Changed_Column));
+                  end if;
+               end;
                Next (Editor.Model, Child);
             end loop;
          end if;
@@ -1046,7 +1078,7 @@ package body KeyManager_Module is
       Ed        : constant Keys_Editor := Keys_Editor (Editor);
       Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
-      Iter, P   : Gtk_Tree_Iter;
+      Iter      : Gtk_Tree_Iter;
    begin
       Get_Selected (Selection, Model, Iter);
 
@@ -1054,11 +1086,7 @@ package body KeyManager_Module is
       if Iter /= Null_Iter
         and then Children (Model, Iter) = Null_Iter
       then
-         P := Parent (Ed.Model, Iter);
-         Remove (Ed.Model, Iter);
-         if Children (Model, P) = Null_Iter then
-            Remove (Ed.Model, P);
-         end if;
+         Set (Ed.Model, Iter, Key_Column, -Disabled_String);
       end if;
 
    exception
@@ -1070,9 +1098,9 @@ package body KeyManager_Module is
    -- Add_Selection_Changed --
    ---------------------------
 
-   procedure Add_Selection_Changed (Dialog : access Gtk_Widget_Record'Class) is
-      D : constant Add_Editor := Add_Editor (Dialog);
-      Selection : constant Gtk_Tree_Selection := Get_Selection (D.View);
+   procedure Add_Selection_Changed (Editor : access Gtk_Widget_Record'Class) is
+      Ed : constant Keys_Editor := Keys_Editor (Editor);
+      Selection : constant Gtk_Tree_Selection := Get_Selection (Ed.View);
       Model     : Gtk_Tree_Model;
       Iter      : Gtk_Tree_Iter;
       Action    : Action_Record;
@@ -1083,354 +1111,21 @@ package body KeyManager_Module is
       if Iter /= Null_Iter
         and then Children (Model, Iter) = Null_Iter
       then
-         Action := Lookup_Action (D.Kernel, Get_String (Model, Iter, 0));
+         Action := Lookup_Action (Ed.Kernel, Get_String (Model, Iter, 0));
 
          if Action.Description /= null then
-            Set_Text (D.Help, Action.Description.all);
+            Set_Text (Ed.Help, Action.Description.all);
          else
-            Set_Text (D.Help, "");
+            Set_Text (Ed.Help, "");
          end if;
 
-         Set_Text (D.Action_Name, Get_String (Model, Iter, 0));
+         Set_Text (Ed.Action_Name, Get_String (Model, Iter, 0));
       end if;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Add_Selection_Changed;
-
-   ---------------------
-   -- Add_Dialog_Grab --
-   ---------------------
-
-   procedure Add_Dialog_Grab (Dialog : access Gtk_Widget_Record'Class) is
-      D   : constant Add_Editor := Add_Editor (Dialog);
-      Handler   : constant Key_Manager_Access :=
-        Key_Manager_Access (Get_Key_Handler (D.Kernel));
-   begin
-      Handler.Active := False;
-
-      declare
-         Key : constant String := Grab_Multiple_Key (D.Grab, True);
-      begin
-         if Key /= "" then
-            Set_Text (D.Grab, Key);
-         end if;
-      end;
-
-      Handler.Active := True;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
-   end Add_Dialog_Grab;
-
-   ----------------
-   -- On_Add_Key --
-   ----------------
-
-   procedure On_Add_Key (Editor : access Gtk_Widget_Record'Class) is
-      function Set
-        (Model   : Gtk_Tree_Store;
-         Name    : String;
-         Parent  : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter;
-      --  Add a new line into the model
-
-      procedure Add_Menu
-        (Model  : Gtk_Tree_Store;
-         Parent : Gtk_Tree_Iter;
-         Menu   : access Gtk_Menu_Shell_Record'Class;
-         Path   : String);
-      --  Add all the menus and submenus of Menu as children of Parent
-
-      --------------
-      -- Add_Menu --
-      --------------
-
-      procedure Add_Menu
-        (Model  : Gtk_Tree_Store;
-         Parent : Gtk_Tree_Iter;
-         Menu   : access Gtk_Menu_Shell_Record'Class;
-         Path   : String)
-      is
-         use Widget_List;
-         Children : Widget_List.Glist := Get_Children (Menu);
-         Tmp      : Widget_List.Glist := First (Children);
-         W, Child : Gtk_Widget;
-         Iter     : Gtk_Tree_Iter;
-         pragma Unreferenced (Iter);
-      begin
-         while Tmp /= Null_List loop
-            W := Get_Data (Tmp);
-            if W.all in Gtk_Menu_Record'Class then
-               Add_Menu (Model, Parent,
-                         Gtk_Menu (W),
-                         Path & Get_Title (Gtk_Menu (W)) & '/');
-
-            elsif W.all in Gtk_Menu_Shell_Record'Class then
-               Add_Menu (Model, Parent, Gtk_Menu_Shell (W), Path);
-
-            elsif W.all in Gtk_Menu_Item_Record'Class then
-               --  ??? The best thing would be to get the accel_path for W.
-               --  However, the function _gtk_widget_get_accel_path is not
-               --  exported by gtk+, so we have to emulate this as best we
-               --  can...
-               --
-               --  This approach is however not really good, since menus
-               --  with no accel_path are still referenced. Maybe we should
-               --  generate the accel_path on the fly when saving this dialog.
-
-               Child := Get_Child (Gtk_Menu_Item (W));
-
-               --  Child is null for separators
-
-               if Child /= null then
-                  --  The child is not an accel label only for togglemenu items
-                  --  as far as could be seen (Window menu), and we do not want
-                  --  to generate shortcuts for these anyway
-
-                  if Child.all in Gtk_Label_Record'Class then
-                     declare
-                        Label : constant String :=
-                          Get_Text (Gtk_Label (Child));
-                     begin
-                        if Get_Submenu (Gtk_Menu_Item (W)) /= null then
-                           Add_Menu
-                             (Model, Parent,
-                              Gtk_Menu_Shell (Get_Submenu (Gtk_Menu_Item (W))),
-                              Path & Label & '/');
-
-                        else
-                           Iter := Set (Model, Path & Label, Parent);
-                        end if;
-                     end;
-                  end if;
-               end if;
-            end if;
-
-            Tmp := Next (Tmp);
-         end loop;
-
-         Free (Children);
-      end Add_Menu;
-
-      ---------
-      -- Set --
-      ---------
-
-      function Set
-        (Model   : Gtk_Tree_Store;
-         Name    : String;
-         Parent  : Gtk_Tree_Iter := Null_Iter) return Gtk_Tree_Iter
-      is
-         procedure Internal
-           (Tree, Iter : System.Address;
-            Col1  : Gint; Value1 : String;
-            Final : Gint := -1);
-         pragma Import (C, Internal, "gtk_tree_store_set");
-
-         Iter : Gtk_Tree_Iter;
-      begin
-         Append (Model, Iter, Parent);
-         Internal
-           (Get_Object (Model), Iter'Address,
-            Col1 => Action_Column,  Value1 => Name & ASCII.NUL);
-         return Iter;
-      end Set;
-
-      Ed        : constant Keys_Editor := Keys_Editor (Editor);
-      Hbox      : Gtk_Box;
-      Pane      : Gtk_Paned;
-      Dialog    : Add_Editor;
-      Button    : Gtk_Widget;
-      Text      : Gtk_Text_View;
-      Scrolled  : Gtk_Scrolled_Window;
-      Col       : Gtk_Tree_View_Column;
-      Render    : Gtk_Cell_Renderer_Text;
-      Action_Iter : Action_Iterator;
-      Action    : Action_Record;
-      Parent    : Gtk_Tree_Iter;
-      Grab      : Gtk_Button;
-      Num       : Gint;
-      Event     : Gtk_Event_Box;
-      Frame     : Gtk_Frame;
-      Sep       : Gtk_Separator;
-      Color     : Gdk_Color;
-      pragma Unreferenced (Button, Num);
-
-   begin
-      Dialog := new Add_Editor_Record;
-      Initialize (Dialog,
-                  Title  => -"Add key binding",
-                  Parent => Gtk_Window (Editor),
-                  Flags  => Modal or Destroy_With_Parent);
-      Set_Default_Size (Dialog, 640, 480);
-
-      Dialog.Kernel := Ed.Kernel;
-
-      Gtk_New (Dialog.Model, (0 => GType_String));
-      Gtk_New (Dialog.View, Dialog.Model);
-
-      Widget_Callback.Object_Connect
-        (Get_Selection (Dialog.View), "changed",
-         Widget_Callback.To_Marshaller (Add_Selection_Changed'Access),
-         Dialog);
-
-      Gtk_New_Hpaned (Pane);
-      Pack_Start (Get_Vbox (Dialog), Pane, Expand => True, Fill => True);
-
-      Gtk_New (Scrolled);
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-
-      Gtk_New (Frame);
-      Add (Frame, Scrolled);
-      Pack1 (Pane, Frame, False, False);
-      Add (Scrolled, Dialog.View);
-
-      --  Right area
-
-      Gtk_New_Vbox (Hbox, Homogeneous => False);
-
-      Gtk_New (Frame);
-      Add (Frame, Hbox);
-      Pack2 (Pane, Frame, False, False);
-
-      --  Name of current action
-
-      Gtk_New (Event);
-      Pack_Start (Hbox, Event, Expand => False);
-      Color := Parse ("#0e79bd");
-      --  ??? Should be shared with the preferences dialog and wizard
-      Alloc (Get_Default_Colormap, Color);
-      Set_Style (Event, Copy (Get_Style (Event)));
-      Set_Background (Get_Style (Event), State_Normal, Color);
-
-      Gtk_New (Dialog.Action_Name, "Current action");
-      Set_Alignment (Dialog.Action_Name, 0.1, 0.5);
-      Add (Event, Dialog.Action_Name);
-
-      Gtk_New_Hseparator (Sep);
-      Pack_Start (Hbox, Sep, Expand => False);
-
-      --  Help on current action
-
-      Gtk_New (Dialog.Help);
-      Gtk_New (Scrolled);
-      Pack_Start (Hbox, Scrolled, Expand => True, Fill => True);
-
-      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Gtk_New (Text, Dialog.Help);
-      Set_Wrap_Mode (Text, Wrap_Word);
-      Add (Scrolled, Text);
-
-      Gtk_New (Render);
-
-      Gtk_New (Col);
-      Num := Append_Column (Dialog.View, Col);
-      Set_Title (Col, -"Action");
-      Pack_Start (Col, Render, True);
-      Add_Attribute (Col, Render, "text", 0);
-      Set_Clickable (Col, True);
-      Set_Resizable (Col, True);
-      Set_Sort_Column_Id (Col, 0);
-      Clicked (Col);
-
-      Add_Menu (Dialog.Model,
-                Set (Dialog.Model, -"Menus"),
-                Glide_Window (Get_Main_Window (Ed.Kernel)).Menu_Bar,
-                "<gps>/");
-
-      Action_Iter := Start (Ed.Kernel);
-      loop
-         Action := Get (Action_Iter);
-         exit when Action = No_Action;
-
-         Parent := Find_Parent (Dialog.Model, Action.Context);
-         if Parent = Null_Iter then
-            if Action.Context = null then
-               Parent := Set (Dialog.Model, -"General");
-            else
-               Parent := Set (Dialog.Model, Get_Name (Action.Context));
-            end if;
-         end if;
-
-         Parent := Set (Dialog.Model, Get (Action_Iter), Parent);
-         Next (Ed.Kernel, Action_Iter);
-      end loop;
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Hbox, Expand => False);
-
-      Gtk_New (Dialog.Grab);
-      Set_Editable (Dialog.Grab, False);
-      Pack_Start (Hbox, Dialog.Grab, Expand => True, Fill => True);
-
-      Gtk_New (Grab, -"Grab");
-      Pack_Start (Hbox, Grab, Expand => False);
-      Widget_Callback.Object_Connect
-        (Grab, "clicked",
-         Widget_Callback.To_Marshaller (Add_Dialog_Grab'Access),
-         Dialog);
-
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Dialog);
-
-      --  The initial position has been computed, and now we want to make sure
-      --  that selecting new items will not resize the pane every time.
-      Set_Position (Pane, Get_Position (Pane));
-
-      while Run (Dialog) = Gtk_Response_OK loop
-         declare
-            Iter  : Gtk_Tree_Iter;
-            Model : Gtk_Tree_Model;
-            Result : Message_Dialog_Buttons;
-            pragma Unreferenced (Result);
-         begin
-            Get_Selected (Get_Selection (Dialog.View), Model, Iter);
-
-            if Iter /= Null_Iter
-              and then Children (Model, Iter) = Null_Iter
-              and then Get_Text (Dialog.Grab) /= ""
-            then
-               declare
-                  Parent : constant String := Get_String
-                    (Model, Gtk.Tree_Model.Parent (Model, Iter), 0);
-                  S : constant String := Get_Text (Dialog.Grab);
-               begin
-                  if Parent = -Menu_Context_Name
-                    and then Index (S, " ") /= 0
-                  then
-                     Result := Message_Dialog
-                       (Msg => -"Menu shortcuts cannot use multiple keymaps",
-                        Dialog_Type => Message_Dialog_Type'(Error),
-                        Buttons     => Button_OK,
-                        Title       => -"Invalid key shortcut",
-                        Parent      => Gtk_Window (Dialog));
-                  else
-                     Iter := Set
-                       (Ed.Model,
-                        Parent => Find_Parent
-                          (Gtk_Tree_Store (Ed.Model), Parent),
-                        Descr   => Get_String (Model, Iter, 0),
-                        Changed => True,
-                        Key     => S);
-                     exit;
-                  end if;
-               end;
-            else
-               exit;
-            end if;
-         end;
-      end loop;
-
-      Destroy (Dialog);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception " & Exception_Information (E));
-   end On_Add_Key;
 
    ------------------
    -- On_Edit_Keys --
@@ -1442,11 +1137,17 @@ package body KeyManager_Module is
       Editor   : Keys_Editor;
       Scrolled : Gtk_Scrolled_Window;
       Bbox     : Gtk_Vbutton_Box;
-      Box      : Gtk_Box;
+      Box, Hbox : Gtk_Box;
       Button   : Gtk_Button;
       Col      : Gtk_Tree_View_Column;
       Render   : Gtk_Cell_Renderer_Text;
       Num      : Gint;
+      Frame    : Gtk_Frame;
+      Pane     : Gtk_Paned;
+      Sep      : Gtk_Separator;
+      Event    : Gtk_Event_Box;
+      Color    : Gdk_Color;
+      Text     : Gtk_Text_View;
       Action   : Gtk_Widget;
       pragma Unreferenced (Widget, Num, Action);
    begin
@@ -1462,20 +1163,63 @@ package body KeyManager_Module is
       Gtk_New_Hbox (Box, Homogeneous => False);
       Pack_Start (Get_Vbox (Editor), Box);
 
+      Gtk_New_Vpaned (Pane);
+      Pack_Start (Box, Pane);
+
+      --  List of macros
+
       Gtk_New (Scrolled);
       Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
-      Pack_Start (Box, Scrolled, Expand => True, Fill => True);
+      Pack1 (Pane, Scrolled, True, True);
+
+      Gtk_New
+        (Editor.Model,
+         (Action_Column  => GType_String,
+          Key_Column     => GType_String,
+          Changed_Column => GType_Boolean));
+      Gtk_New (Editor.View, Editor.Model);
+      Add (Scrolled, Editor.View);
+
+      --  Bottom area
+      Gtk_New (Frame);
+      Pack2 (Pane, Frame, False, False);
+
+      Gtk_New_Vbox (Hbox, Homogeneous => False);
+      Add (Frame, Hbox);
+
+      --  Name of current action
+
+      Gtk_New (Event);
+      Pack_Start (Hbox, Event, Expand => False);
+      Color := Parse ("#0e79bd");
+      --  ??? Should be shared with the preferences dialog and wizard
+      Alloc (Get_Default_Colormap, Color);
+      Set_Style (Event, Copy (Get_Style (Event)));
+      Set_Background (Get_Style (Event), State_Normal, Color);
+
+      Gtk_New (Editor.Action_Name, "Current action");
+      Set_Alignment (Editor.Action_Name, 0.1, 0.5);
+      Add (Event, Editor.Action_Name);
+
+      Gtk_New_Hseparator (Sep);
+      Pack_Start (Hbox, Sep, Expand => False);
+
+      --  Help on current action
+
+      Gtk_New (Editor.Help);
+      Gtk_New (Scrolled);
+      Pack_Start (Hbox, Scrolled, Expand => True, Fill => True);
+
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Gtk_New (Text, Editor.Help);
+      Set_Wrap_Mode (Text, Wrap_Word);
+      Add (Scrolled, Text);
+
+      --  Buttons area
 
       Gtk_New (Bbox);
       Set_Layout (Bbox, Buttonbox_Start);
       Pack_Start (Box, Bbox, Expand => False);
-
-      Gtk_New_From_Stock (Button, Stock_Add);
-      Pack_Start (Bbox, Button);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Add_Key'Access),
-         Editor);
 
       Gtk_New_From_Stock (Button, Stock_Remove);
       Pack_Start (Bbox, Button);
@@ -1491,13 +1235,10 @@ package body KeyManager_Module is
          Widget_Callback.To_Marshaller (On_Grab_Key'Access),
          Editor);
 
-      Gtk_New
-        (Editor.Model,
-         (Action_Column  => GType_String,
-          Key_Column     => GType_String,
-          Changed_Column => GType_Boolean));
-      Gtk_New (Editor.View, Editor.Model);
-      Add (Scrolled, Editor.View);
+      Widget_Callback.Object_Connect
+        (Get_Selection (Editor.View), "changed",
+         Widget_Callback.To_Marshaller (Add_Selection_Changed'Access),
+         Editor);
 
       Gtk_New (Render);
 
