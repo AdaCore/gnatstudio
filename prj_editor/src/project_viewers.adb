@@ -882,6 +882,19 @@ package body Project_Viewers is
    procedure Read_Project_Name
      (Kernel : access Kernel_Handle_Record'Class; Project : Project_Node_Id)
    is
+      procedure Report_Error (Msg : String);
+      --  Report an error to the console
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (Msg : String) is
+      begin
+         Console.Insert (Kernel, Msg);
+      end Report_Error;
+
+
       Dialog : Gtk_Dialog;
       Label  : Gtk_Label;
       Text   : Gtk_Entry;
@@ -905,10 +918,11 @@ package body Project_Viewers is
       Show_All (Dialog);
       if Run (Dialog) = Gtk_Response_OK then
          Rename_And_Move
-           (Root_Project => Project,
-            Project      => Project,
-            New_Name     => Get_Text (Text),
-            New_Path     => Dir_Name (Project_Path (View)));
+           (Root_Project  => Project,
+            Project       => Project,
+            New_Name      => Get_Text (Text),
+            New_Path      => Dir_Name (Project_Path (View)),
+            Report_Errors => Report_Error'Unrestricted_Access);
          Project_Changed (Kernel);
          Recompute_View (Kernel);
       end if;
@@ -916,12 +930,6 @@ package body Project_Viewers is
       Destroy (Dialog);
 
    exception
-      when Project_Error =>
-         Insert (Kernel,
-                 -"Couldn't rename the project to " & Get_Text (Text)
-                 & ASCII.LF & (-"Project already exists"),
-                 Mode => Glide_Kernel.Console.Error);
-
       when E : others =>
          Trace (Me, "Unexpected exception "
                 & Exception_Information (E));
@@ -1010,6 +1018,19 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
+      procedure Report_Error (Msg : String);
+      --  Report an error to the console
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (Msg : String) is
+      begin
+         Console.Insert (Get_Kernel (Context), Msg);
+      end Report_Error;
+
       Prj : Project_Node_Id;
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
@@ -1023,13 +1044,11 @@ package body Project_Viewers is
          begin
             if Name /= "" then
                Prj := Get_Project_From_View (Project_Information (File));
-               Add_Imported_Project (Prj, Name);
+               Add_Imported_Project
+                 (Prj, Name, Report_Error'Unrestricted_Access);
                Set_Project_Modified (Get_Kernel (Context), Prj, True);
                Recompute_View (Get_Kernel (Context));
             end if;
-         exception
-            when E : Project_Warning | Project_Error =>
-               Console.Insert (Get_Kernel (Context), Exception_Message (E));
          end;
 
          Destroy (Wiz);
@@ -1118,9 +1137,6 @@ package body Project_Viewers is
       end if;
 
    exception
-      when E : Project_Warning | Project_Error =>
-         Console.Insert (Get_Kernel (Context), Exception_Message (E));
-
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Message (E));
    end On_Add_Dependency_From_Existing;
