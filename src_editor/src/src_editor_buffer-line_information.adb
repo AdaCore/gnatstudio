@@ -1195,7 +1195,7 @@ package body Src_Editor_Buffer.Line_Information is
          then
             declare
                EN : constant Editable_Line_Type := Editable_Line_Type (Number);
-               El : Editable_Line_Type := Editable_Lines'First;
+               El : Editable_Line_Type := Ref_Editable_Line;
                Ref_Line_In_Buffer : Editable_Line_Type := 1;
                --  The next editable line that is in a buffer.
 
@@ -1353,7 +1353,7 @@ package body Src_Editor_Buffer.Line_Information is
          begin
             Find_Next_Line_In_Buffer;
 
-            while El >= Editable_Lines'First loop
+            loop
                if Editable_Lines (El).Where = In_Mark then
                   --  Find the whole range of lines to move up
 
@@ -1390,6 +1390,7 @@ package body Src_Editor_Buffer.Line_Information is
                      end if;
                   end loop;
                else
+                  exit when Editable_Lines (El).Buffer_Line <= End_Line;
                   El := El - 1;
                end if;
             end loop;
@@ -1407,8 +1408,7 @@ package body Src_Editor_Buffer.Line_Information is
            and then Editable_Lines
              (Buffer_Lines (J).Editable_Line).Where = In_Buffer
          then
-            Editable_Lines
-              (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
+            Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line := 0;
          end if;
 
          Buffer_Lines (J) := New_Line_Data;
