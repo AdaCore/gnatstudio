@@ -1,9 +1,9 @@
 @@--
-@@-- ???
+@@-- Used to ouput the package declaration or ending
 @@--
 @@-- INDENT : spaces to be used for the indentation
-@@-- NAME   :
-@@-- BLOCK  :
+@@-- NAME   : name of the package, used to reference it
+@@-- BLOCK  : the package declaration or ending
 @@--
 <A NAME="@_NAME_@"></A><BR>
 <TABLE BGCOLOR="WHITE" WIDTH="1%" CELLPADDING="0" CELLSPACING="0">
