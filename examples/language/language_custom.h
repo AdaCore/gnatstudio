@@ -1,6 +1,6 @@
 /* See comments in language_custom.ads */
 
-typedef char * (*comment_line_proc) (char *line, int length);
+typedef char * (*comment_line_proc) (char *line, char comment, int length);
 
 typedef struct
   {

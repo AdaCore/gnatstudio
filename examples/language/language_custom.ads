@@ -202,13 +202,13 @@ package Language_Custom is
    type Construct_List_Access is access all Construct_List;
 
    type Comment_Line_Proc is access
-     function (Line : String; Reserved : Integer) return chars_ptr;
+     function (Line : String; Comment : Boolean; Reserved : Integer)
+               return chars_ptr;
    pragma Convention (C, Comment_Line_Proc);
-   --  Profile for Comment/Uncomment_Line routines
-   --  Comment_Line: Comment one line of code.
-   --  Uncomment_Line: Uncomment one line of code.
-   --  Does nothing on a non-commented line.
-   --  Uncomment_Line (Comment_Line (A)) should return A.
+   --  Profile for Comment_Line routine
+   --  If Comment is True, comment one line of code.
+   --  Otherwise, uncomment one line of code.
+   --  Comment_Line (Comment_Line (A), Comment => False) should return A.
 
    type Parse_Constructs_Proc is access
      procedure (Buffer    : String;
