@@ -264,7 +264,7 @@ package body Task_Manager is
                   Free (Queue.Id);
 
                   if Queue.Bar /= null then
-                     Destroy (Queue.Bar);
+                     Destroy (Get_Parent (Queue.Bar));
                      Queue.Bar := null;
                   end if;
 

@@ -23,6 +23,9 @@ with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
+with Gtk.Button;               use Gtk.Button;
+with Gtk.Box;                  use Gtk.Box;
+with Gtk.Image;                use Gtk.Image;
 with Gtk.Progress_Bar;         use Gtk.Progress_Bar;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -31,10 +34,11 @@ with Gtk.Handlers;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Enums;
+with Gtk.Enums;                use Gtk.Enums;
 
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Glide_Intl;               use Glide_Intl;
@@ -105,6 +109,11 @@ package body Task_Manager.GUI is
       Params  : GValues;
       Manager : Manager_Contextual_Menus.Callback_User_Data) return Boolean;
    --  Callback for a "button_press_event" on a progress bar.
+
+   procedure Interrupt_Build
+     (Object    : access GObject_Record'Class;
+      User_Data : Manager_Index_Record);
+   --  Callback to interrupt a task
 
    procedure Refresh_Command
      (Manager : Task_Manager_Access;
@@ -213,6 +222,19 @@ package body Task_Manager.GUI is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Resume_Command;
+
+   ---------------------
+   -- Interrupt_Build --
+   ---------------------
+
+   procedure Interrupt_Build
+     (Object    : access GObject_Record'Class;
+      User_Data : Manager_Index_Record)
+   is
+      pragma Unreferenced (Object);
+   begin
+      Interrupt_Command (User_Data.Manager, User_Data.Index);
+   end Interrupt_Build;
 
    --------------------------
    -- On_Interrupt_Command --
@@ -466,6 +488,10 @@ package body Task_Manager.GUI is
    procedure Refresh (Manager : Task_Manager_Access) is
       View : Task_Manager_Interface;
       Need_GUI_Refresh : Boolean;
+      Box : Gtk_Box;
+      Button : Gtk_Button;
+      Image  : Gtk_Image;
+      Pixbuf : Gdk_Pixbuf;
 
    begin
       if Manager.GUI /= null then
@@ -495,7 +521,8 @@ package body Task_Manager.GUI is
       then
          for J in Manager.Queues'Range loop
             if Manager.Queues (J).Bar /= null then
-               Remove (Manager.Progress_Area, Manager.Queues (J).Bar);
+               Remove (Manager.Progress_Area,
+                       Get_Parent (Manager.Queues (J).Bar));
             end if;
 
             if Manager.Queues (J).Show_Bar then
@@ -521,9 +548,21 @@ package body Task_Manager.GUI is
            and then Manager.Progress_Area /= null
          then
             if Manager.Queues (J).Show_Bar then
+               Gtk_New_Hbox (Box, Homogeneous => False);
+               Pack_Start (Box, Manager.Queues (J).Bar,
+                           Expand => True, Fill => True);
+
+               Gtk_New (Button);
+               Pixbuf := Render_Icon
+                 (Button, Stock_Close, Icon_Size_Menu);
+               Gtk_New (Image, Pixbuf);
+               Add (Button, Image);
+               Set_Relief (Button, Relief_None);
+               Pack_Start (Box, Button, Expand => False);
+
                Pack_End
                  (Manager.Progress_Area,
-                  Manager.Queues (J).Bar,
+                  Box,
                   Expand  => False,
                   Fill    => True,
                   Padding => 0);
@@ -534,11 +573,16 @@ package body Task_Manager.GUI is
                   On_Progress_Bar_Button_Pressed'Access,
                   (null, null, (Manager, J)));
 
+               Task_Manager_Handler.Connect
+                 (Button, "clicked",
+                  Interrupt_Build'Access,
+                  User_Data => (Manager, J));
+
                Manager_Contextual_Menus.Register_Contextual_Menu
                  (Manager.Queues (J).Bar,
                   (Manager, J), Menu_Create'Access, Menu_Destroy'Access);
 
-               Show_All (Manager. Queues (J).Bar);
+               Show_All (Box);
             end if;
          end if;
 
