@@ -34,15 +34,15 @@ with Gtkada.MDI;          use Gtkada.MDI;
 with GVD.Explorer;        use GVD.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Main_Window;     use GVD.Main_Window;
-with Basic_Types;         use Basic_Types;
+with GVD.Process;         use GVD.Process;
 with GVD.Types;           use GVD.Types;
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Text_Box.Source_Editor.Builtin;
 with GVD.Text_Box.Source_Editor.Socket;
+with GVD.Text_Box.Source_Editor.Glide;
 with Odd_Intl;            use Odd_Intl;
-
-with GVD.Process;         use GVD.Process;
+with Basic_Types;         use Basic_Types;
 
 package body GVD.Code_Editors is
 
@@ -320,20 +320,28 @@ package body GVD.Code_Editors is
    is
       Builtin_Source  : Builtin.Builtin;
       External_Source : Socket.Socket;
+      Glide_Editor    : Glide.GEdit;
+      Main            : constant GVD_Main_Window :=
+        Debugger_Process_Tab (Editor.Process).Window;
 
    begin
       Configure (Editor.Asm, Ps_Font_Name, Font_Size, Current_Line_Icon,
                  Stop_Icon, Strings_Color, Keywords_Color);
 
-      if External_XID = 0 then
-         pragma Assert (Editor.Source = null);
+      pragma Assert (Editor.Source = null);
+
+      if not Main.Standalone then
+         Glide.Gtk_New (Glide_Editor, Main);
+         Editor.Source := Source_Editor (Glide_Editor);
+
+      elsif External_XID = 0 then
          Builtin.Gtk_New
            (Builtin_Source, Editor.Process, TTY_Mode, Ps_Font_Name,
             Font_Size, Default_Icon, Current_Line_Icon, Stop_Icon,
             Comments_Color, Strings_Color, Keywords_Color);
          Editor.Source := Source_Editor (Builtin_Source);
+
       else
-         pragma Assert (Editor.Source = null);
          Socket.Gtk_New (External_Source, External_XID, TTY_Mode);
          Editor.Source := Source_Editor (External_Source);
       end if;
@@ -355,16 +363,18 @@ package body GVD.Code_Editors is
    -- Display_Selection --
    -----------------------
 
-   procedure Display_Selection (Editor : access Code_Editor_Record)
-   is
+   procedure Display_Selection (Editor : access Code_Editor_Record) is
       Node : Gtk_Ctree_Node;
       use Node_List;
+
    begin
       if Get_Selection (Editor.Explorer) = Null_List then
          return;
       end if;
+
       Node := Node_List.Get_Data
         (Node_List.First (Get_Selection (Editor.Explorer)));
+
       if Node_Is_Visible (Editor.Explorer, Node) /= Visibility_Full then
          Node_Moveto (Editor.Explorer, Node, 0, 0.1, 0.1);
       end if;

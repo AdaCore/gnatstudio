@@ -937,9 +937,11 @@ package body GVD.Process is
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
 
-      Child := Put (Process.Process_Mdi, Process.Editor_Text);
-      Set_Title (Child, "Editor");
-      Maximize_Children (Process.Process_Mdi);
+      if Window.Standalone then
+         Child := Put (Process.Process_Mdi, Process.Editor_Text);
+         Set_Title (Child, "Editor");
+         Maximize_Children (Process.Process_Mdi);
+      end if;
 
       --  Remove the stack window if needed.
 
@@ -964,9 +966,11 @@ package body GVD.Process is
 
       --  Set the graphical parameters.
 
-      if Is_Regular_File (Window.Gvd_Home_Dir.all
-                          & Directory_Separator
-                          & "window_settings")
+      if Window.Standalone
+        and then Is_Regular_File
+          (Window.Gvd_Home_Dir.all
+           & Directory_Separator
+           & "window_settings")
       then
          Geometry_Info := Get_Process_Tab_Geometry
            (Page_Num (Window.Process_Notebook, Process.Process_Mdi));
@@ -1795,10 +1799,12 @@ package body GVD.Process is
    procedure Update_Editor_Frame
      (Process : access Debugger_Process_Tab_Record) is
    begin
-      --  Set the label text.
-      Set_Title
-        (Find_MDI_Child (Process.Process_Mdi, Process.Editor_Text),
-         Base_File_Name (Get_Current_File (Process.Editor_Text)));
+      if Process.Window.Standalone then
+         --  Set the label text.
+         Set_Title
+           (Find_MDI_Child (Process.Process_Mdi, Process.Editor_Text),
+            Base_File_Name (Get_Current_File (Process.Editor_Text)));
+      end if;
    end Update_Editor_Frame;
 
 end GVD.Process;
