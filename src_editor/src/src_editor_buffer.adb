@@ -87,7 +87,10 @@ package body Src_Editor_Buffer is
    use Src_Editor_Buffer.Line_Information;
    use type System.Address;
 
-   Me : constant Debug_Handle := Create ("Source_Editor_Buffer");
+   Me                   : constant Debug_Handle :=
+     Create ("Source_Editor_Buffer");
+   Indent_On_Block_Info : constant Debug_Handle :=
+     Create ("Source_Editor_Buffer.Indent_On_Block_Info", Default => Off);
 
    Buffer_Recompute_Interval : constant Guint32 := 200;
    --  The interval at which to check whether the buffer should be reparsed,
@@ -4620,33 +4623,42 @@ package body Src_Editor_Buffer is
 
       Line := Get_Line (End_Pos);
 
-      if Line = Current_Line + 1 and then Has_Block_Information (Buffer) then
-         --  Take advantage of the precomputed block information to only
-         --  compute indentation inside the current block, since this is
-         --  much more efficient, in particular on big files.
+      if Active (Indent_On_Block_Info) then
+         if Line = Current_Line + 1
+           and then Has_Block_Information (Buffer)
+         then
+            --  Take advantage of the precomputed block information to only
+            --  compute indentation inside the current block, since this is
+            --  much more efficient, in particular on big files.
+            --  ??? Unfortunately, this does not work properly on some
+            --  constructs, so disable it by default until these issues
+            --  can be resolved (see TODO).
 
-         Block := Get_Block
-           (Buffer, Buffer_Line_Type (Line + 1), Force_Compute => False);
-         Offset_Line := Block.First_Line;
-         Get_Iter_At_Line_Offset
-           (Buffer, Iter, Gint (Get_Buffer_Line (Buffer, Offset_Line) - 1), 0);
+            Block := Get_Block
+              (Buffer, Buffer_Line_Type (Line + 1), Force_Compute => False);
+            Offset_Line := Block.First_Line;
 
-         loop
-            exit when Ends_Line (Iter);
+            Get_Iter_At_Line_Offset
+              (Buffer, Iter,
+               Gint (Get_Buffer_Line (Buffer, Offset_Line) - 1), 0);
 
-            Char := Get_Char (Iter);
+            loop
+               exit when Ends_Line (Iter);
 
-            exit when not Is_Space (Char);
+               Char := Get_Char (Iter);
 
-            if Char = Character'Pos (ASCII.HT) then
-               Indent_Offset :=
-                 Indent_Offset + Tab_Width - (Indent_Offset mod Tab_Width);
-            else
-               Indent_Offset := Indent_Offset + 1;
-            end if;
+               exit when not Is_Space (Char);
 
-            Forward_Char (Iter, Result);
-         end loop;
+               if Char = Character'Pos (ASCII.HT) then
+                  Indent_Offset :=
+                    Indent_Offset + Tab_Width - (Indent_Offset mod Tab_Width);
+               else
+                  Indent_Offset := Indent_Offset + 1;
+               end if;
+
+               Forward_Char (Iter, Result);
+            end loop;
+         end if;
       end if;
 
       if Lines_Are_Real (Buffer) then
