@@ -20,6 +20,7 @@
 
 with Gtkada.Canvas;   use Gtkada.Canvas;
 with Gtk.Handlers;    use Gtk.Handlers;
+with GVD.Preferences; use GVD.Preferences;
 
 package body GVD.Canvas is
 
@@ -57,6 +58,7 @@ package body GVD.Canvas is
    procedure Gtk_New (Canvas : out GVD_Canvas) is
    begin
       Canvas := new GVD_Canvas_Record;
+      Canvas.Detect_Aliases := Current_Preferences.Default_Detect_Aliases;
       Initialize (Canvas);
    end Gtk_New;
 

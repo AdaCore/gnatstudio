@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gtkada.Canvas;
-with GVD.Preferences;
 with Gtk.Window;
 
 package GVD.Canvas is
@@ -63,9 +62,8 @@ private
 
    type GVD_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
    record
-      Detect_Aliases : Boolean := GVD.Preferences.Default_Detect_Aliases;
+      Detect_Aliases : Boolean;
       Item_Num       : Integer := 0;
-
       Process        : Gtk.Window.Gtk_Window;
       --  The process tab that contains the canvas
    end record;

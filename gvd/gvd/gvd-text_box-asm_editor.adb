@@ -149,10 +149,11 @@ package body GVD.Asm_Editors is
 
       Editor.Strings_Color  := Parse (Strings_Color);
       Alloc (Get_System, Editor.Strings_Color);
-      Editor.Keywords_Color := Parse (Keywords_Color);
+      Editor.Keywords_Color := Parse (Current_Preferences.Keywords_Color.all);
       Alloc (Get_System, Editor.Keywords_Color);
 
-      Editor.Highlight_Color := Parse (Asm_Highlight_Color);
+      Editor.Highlight_Color :=
+        Parse (Current_Preferences.Asm_Highlight_Color.all);
       Alloc (Get_System, Editor.Highlight_Color);
    end Configure;
 
