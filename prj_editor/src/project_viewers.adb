@@ -160,6 +160,8 @@ package body Project_Viewers is
      (1 => Recursive_Cst'Access);
    Source_Dirs_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
      := (1 => Recursive_Cst'Access);
+   Languages_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
+     := (1 => Recursive_Cst'Access);
    Add_Source_Dir_Cmd_Parameters :
      constant Glide_Kernel.Scripts.Cst_Argument_List :=
      (1 => Directory_Cst'Access);
@@ -1842,6 +1844,19 @@ package body Project_Viewers is
             Unchecked_Free (Sources);
          end;
 
+      elsif Command = "languages" then
+         Name_Parameters (Data, Languages_Cmd_Parameters);
+         declare
+            Langs : Argument_List := Get_Languages
+              (Project => Project, Recursive => Nth_Arg (Data, 2, False));
+         begin
+            Set_Return_Value_As_List (Data);
+            for L in Langs'Range loop
+               Set_Return_Value (Data, Langs (L).all);
+            end loop;
+            Free (Langs);
+         end;
+
       elsif Command = "source_dirs" then
          Name_Parameters (Data, Source_Dirs_Cmd_Parameters);
          declare
@@ -3075,6 +3090,12 @@ package body Project_Viewers is
         (Kernel, "source_dirs",
          Minimum_Args => Source_Dirs_Cmd_Parameters'Length - 1,
          Maximum_Args => Source_Dirs_Cmd_Parameters'Length,
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Project_Command_Handler'Access);
+      Register_Command
+        (Kernel, "languages",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
          Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
       Register_Command
