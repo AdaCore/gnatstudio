@@ -23,6 +23,7 @@ with Glib.Object;      use Glib.Object;
 with Gdk.Drawable;     use Gdk.Drawable;
 with Gdk.Event;        use Gdk.Event;
 with Gdk.Font;         use Gdk.Font;
+with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtkada.Canvas;    use Gtkada.Canvas;
@@ -34,6 +35,7 @@ with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with String_Utils;     use String_Utils;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
@@ -59,6 +61,13 @@ package body Browsers.Call_Graph is
 
    Vertical_Layout : Boolean := True;
    --  <preferences> Should the layout of the graph be vertical or horizontal ?
+
+   type Entity_Idle_Data is record
+      Kernel : Kernel_Handle;
+      Iter   : Entity_Reference_Iterator_Access;
+      Decl   : E_Declaration_Info;
+   end record;
+   package Entity_Iterator_Idle is new Gtk.Main.Idle (Entity_Idle_Data);
 
    procedure Call_Graph_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
@@ -100,6 +109,15 @@ package body Browsers.Call_Graph is
      (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Open an editor for the entity described in Context.
+
+   procedure Find_All_References_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  List all the references to the entity
+
+   function Find_Next_Reference (D : Entity_Idle_Data)
+      return Boolean;
+   --  Find the next reference to the entity in D.
 
    -------------
    -- Gtk_New --
@@ -403,36 +421,15 @@ package body Browsers.Call_Graph is
         Entity_Selection_Context_Access (Context);
       Lib_Info : LI_File_Ptr;
       Decl     : E_Declaration_Info;
-      Status   : Find_Decl_Or_Body_Query_Status;
-      Location : File_Location;
       Node_Entity   : Entity_Information;
 
    begin
       Push_State (Get_Kernel (Entity), Busy);
+      Decl := Get_Declaration (Entity);
 
-      Lib_Info := Locate_From_Source_And_Complete
-        (Get_Kernel (Entity), File_Information (Entity));
+      if Decl /= No_Declaration_Info then
+         --  ??? Should check that Decl.Kind is a subprogram
 
-      if Lib_Info = No_LI_File then
-         Trace (Me, "Edit_File_Call_Graph_From_Contextual: Couldn't find"
-                & " LI file for " & File_Information (Entity));
-         Pop_State (Get_Kernel (Entity));
-         return;
-      end if;
-
-      Find_Declaration_Or_Body
-        (Lib_Info           => Lib_Info,
-         File_Name          => File_Information (Entity),
-         Entity_Name        => Entity_Name_Information (Entity),
-         Line               => Line_Information (Entity),
-         Column             => Column_Information (Entity),
-         Entity_Declaration => Decl,
-         Location           => Location,
-         Status             => Status);
-
-      --  ??? Should check that Decl.Kind is a subprogram
-
-      if Status = Success then
          Lib_Info := Locate_From_Source_And_Complete
            (Get_Kernel (Entity), Get_File (Get_Location (Decl)));
 
@@ -458,6 +455,86 @@ package body Browsers.Call_Graph is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Pop_State (Get_Kernel (Entity));
    end Edit_Entity_Call_Graph_From_Contextual;
+
+   -------------------------
+   -- Find_Next_Reference --
+   -------------------------
+
+   function Find_Next_Reference (D : Entity_Idle_Data)
+      return Boolean
+   is
+      It : Entity_Reference_Iterator_Access;
+   begin
+      if Get (D.Iter.all) = No_Reference then
+         It := D.Iter;
+         Destroy (It);
+         Pop_State (D.Kernel);
+         return False;
+
+      else
+         Insert (D.Kernel,
+                 Get_File (Get_Location (Get (D.Iter.all)))
+                 & ':'
+                 & Image (Get_Line (Get_Location (Get (D.Iter.all))))
+                 & ':'
+                 & Image (Get_Column (Get_Location (Get (D.Iter.all))))
+                 & ' '
+                 & Get_Entity_Name (D.Decl));
+         Next (D.Kernel, D.Iter.all);
+         return True;
+      end if;
+   end Find_Next_Reference;
+
+   -----------------------------------------
+   -- Find_All_References_From_Contextual --
+   -----------------------------------------
+
+   procedure Find_All_References_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Entity   : Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Decl     : E_Declaration_Info;
+      Idle     : Idle_Handler_Id;
+      Data     : Entity_Idle_Data;
+   begin
+      Push_State (Get_Kernel (Entity), Busy);
+      Decl := Get_Declaration (Entity);
+
+      if Decl /= No_Declaration_Info then
+         begin
+            Insert (Get_Kernel (Entity),
+                    Get_File (Get_Location (Decl))
+                    & ':'
+                    & Image (Get_Line (Get_Location (Decl)))
+                    & ':'
+                    & Image (Get_Column (Get_Location (Decl)))
+                    & ' '
+                    & Get_Entity_Name (Decl));
+
+            Data := (Kernel => Get_Kernel (Entity),
+                     Iter   => new Entity_Reference_Iterator,
+                     Decl   => Decl);
+
+            Find_All_References (Get_Kernel (Entity), Decl, Data.Iter.all);
+            Idle := Entity_Iterator_Idle.Add
+              (Find_Next_Reference'Access, Data);
+         exception
+            when others =>
+               Destroy (Data.Iter);
+               raise;
+         end;
+      else
+         Pop_State (Get_Kernel (Entity));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Pop_State (Get_Kernel (Entity));
+   end Find_All_References_From_Contextual;
 
    ---------------------
    -- On_Button_Click --
@@ -517,6 +594,15 @@ package body Browsers.Call_Graph is
               (Item, "activate",
                Context_Callback.To_Marshaller
                  (Edit_Entity_Call_Graph_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => (-"Find all references to ") &
+                     Entity_Name_Information (Entity_Context));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (Find_All_References_From_Contextual'Access),
                Selection_Context_Access (Context));
          end if;
       end if;
