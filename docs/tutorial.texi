@@ -142,8 +142,8 @@ As you go over the various lines and labels, you will notice that by
 holding the mouse over a label, a tooltip pops up displaying on-line help
 about the selected item.
 
-Change the background color of the @code{Keywords} by clicking on the first
-down arrow right of the @code{Keywords} line.
+Change the background color of the @code{Keywords} by clicking on the last
+down arrow, at the right of the @code{Keywords} line.
 
 Choose a color, e.g a light green. When you're done with the color
 selection, simply click again on the arrow, or anywhere outside the
@@ -166,10 +166,11 @@ build of the @i{sdc} application. Note also that a key binding
 is associated with this menu item (@key{F4}).
 
 The build has generated a number of errors in a new window: the @i{Locations}
-tree, displayed in the bottom area.
+tree, displayed in the bottom area. The errors are also highlighted in the
+corresponding source editor.
 
-Click on the first error message (@i{sdc.adb, 28:6  : (style) bad indentation})
-to jump to the @file{sdc.adb} source editor,
+GPS has automatically jumped to the first error message
+(@i{sdc.adb, 28:6  : (style) bad indentation}),
 at the line (28) and column (06) of the error.
 
 Fix the error by hand by inserting a space.
@@ -292,10 +293,10 @@ As for the undo/redo capability in the source editor, the
 @noindent
 It is now time to run the application: select the menu
 @code{Build->Run->sdc}, which will open a dialog window.
-Type @code{../input.txt} in the text entry: this is the name of a text
+Type @code{input.txt} in the text entry: this is the name of a text
 file that will be passed as argument to the @i{sdc} program.
 
-Now click on @code{OK}: a new window titled @code{Run: sdc ../input.txt}
+Now click on @code{OK}: a new window titled @code{Run: sdc input.txt}
 is created at the bottom of the main window where the sdc application
 runs and displays an unexpected internal error: this is a good opportunity
 to use the integrated debugger.
@@ -312,7 +313,7 @@ corner of this window.
 
 Open the preferences dialog (menu @code{Edit->Preferences}) and
 click on the @code{Debugger} item on the left; set the button
-@code{Break on exceptions} to @i{True}: this will enable by default a special
+@code{Break on exceptions} to @i{Enabled}: this will enable by default a special
 breakpoint every time an exception is raised. Click on @code{OK} to confirm your
 change.
 
@@ -327,7 +328,7 @@ stack, various pieces of information can be displayed or
 removed in the call stack. From this contextual menu, add the
 @code{Frame Number} info by clicking on it.
 
-Now select the menu @code{Debug->Run...}. Notice that @code{../input.txt} has
+Now select the menu @code{Debug->Run...}. Notice that @code{input.txt} has
 been filled automatically for you since the two menus @code{Build->Run...} and
 @code{Debug->Run...} are synchronized. Click on @code{OK}: the debugger should
 stop on an exception (@code{Contraint_Error} in the file @file{stack.adb}, at
@@ -346,8 +347,8 @@ window a box containing the different fields of @code{T}, each clearly
 separated.
 
 On @code{T} data display, select the contextual menu
-@code{Show Value + Type}: this displays for all fields both their type and
-value.
+@code{Display->Show Value + Type}: this displays for all fields both their
+type and value.
 
 Special colors are used in the data display: blue for pointers that can be
 dereferenced by a double-click (double click on @code{T.val}); red for fields
@@ -429,9 +430,9 @@ menu @code{References->Find all references to View}: this highlights the
 grouped by files (@file{stack.ads} and @file{stack.adb}).
 
 The first location is highlighted automatically: this is the spec of the
-procedure @code{View}. Now click in the tree on @file{stack.adb}: two locations
-are listed, at line 90 and 97. Click on each of these locations: they correspond
-to the procedure body.
+procedure @code{View}. Now click in the tree on the @code{+} sign at the left
+of @file{stack.adb}: two locations are listed, at line 90 and 97.
+Click on each of these locations: they correspond to the procedure body.
 
 The @code{Find all references} capability is another way to list all the uses of
 an entity, and it confirms that @code{View} isn't called in our project.
@@ -526,7 +527,7 @@ new systems. Currently GPS supports CVS and ClearCase. Select @code{CVS}.
 
 Click on @code{Forward}: this is the source directories selection,
 used to specify the project's sources. Open @file{tutorial}, click on
-@code{struct}, and add it by clicking on the left arrow.
+@code{struct}, and add it by clicking on the down arrow.
 
 Click on @code{Forward}: this is the @code{Build} and @code{Exec} directory
 selection, used to store object, ali files, ...
@@ -547,7 +548,7 @@ Click on @code{Add}, open the @code{common} directory and select
 @code{sdc.adb}.
 
 Click on @code{Forward}: we're now in the switch selector.
-Select @code{Recompile if switches changed}, @code{Debug information}.
+Select @code{Recompile if switches changed}.
 
 Click on @code{Ada} page.
 
@@ -599,11 +600,10 @@ Now, let's take a look at the switches set in the project.
 @section Switch editor
 @noindent
 
-Select the menu item @code{Project->Edit switches}: a global
+Select the menu item @code{Project->Edit File Switches}: a global
 switch editor is displayed in the working area.
 
-Now click on the @code{sdc} project in the project explorer:
-the editor now lists the switches associated with each file in the project and
+The editor lists the switches associated with each file in the project and
 the gray area shows the default (global) switches; you will also notice
 that @file{screen_output.adb} has specific switches, which are highlighted
 using a different font.
@@ -629,7 +629,7 @@ Click on the right arrow of @file{tokens.ads} to display the files that
 @section Project dependencies
 @noindent
 
-On the @i{sdc} project, select the contextual menu
+Back in the project explorer on the @i{sdc} project, select the contextual menu
 @code{Add dependency->From project file...}, then open the @i{tutorial}
 directory and click on the @code{projects} subdirectory. Select the file
 @code{prj1.gpr}.
