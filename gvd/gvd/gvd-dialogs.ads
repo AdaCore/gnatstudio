@@ -28,10 +28,8 @@ with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.List; use Gtk.List;
 with Gtk.Window; use Gtk.Window;
-with Gtk.Enums;
 with Debugger; use Debugger;
 with Basic_Types;
-with Histories;
 
 package GVD.Dialogs is
 
@@ -184,42 +182,6 @@ package GVD.Dialogs is
       Debugger       : access Glib.Object.GObject_Record'Class);
    --  Reads the commands history from the main debug window, and fills the
    --  list with the User and Visible commands that were sent to Debugger.
-
-   function Simple_Entry_Dialog
-     (Parent    : access Gtk.Window.Gtk_Window_Record'Class;
-      Title     : String;
-      Message   : String;
-      Position  : Gtk.Enums.Gtk_Window_Position := Gtk.Enums.Win_Pos_Mouse;
-      History   : Histories.History := null;
-      Key       : Histories.History_Key := "") return String;
-   --  Open a simple dialog, with a single entry field, and returns the
-   --  contents of this field (or ASCII.NUL) if the user selected cancel).
-   --  The dialog is set up as a child of Parent, so that, depending on the
-   --  window manager, it isn't displayed below it.
-   --  if Key is not the empty string, then the combobox's content is
-   --  initialized from the corresponding entry in History.
-   --  Position indicates where the dialog should be positionned.
-
-   type Boolean_Access is access all Boolean;
-
-   function Display_Entry_Dialog
-     (Parent         : access Gtk.Window.Gtk_Window_Record'Class;
-      Title          : String;
-      Message        : String;
-      Position       : Gtk.Enums.Gtk_Window_Position :=
-        Gtk.Enums.Win_Pos_Mouse;
-      Check_Msg      : String;
-      History        : Histories.History;
-      Key            : Histories.History_Key := "";
-
-      Button_Active  : access Boolean;
-      Key_Check      : Histories.History_Key;
-
-      Check_Msg2     : String := "";
-      Button2_Active : Boolean_Access := null;
-      Key_Check2     : Histories.History_Key := "") return String;
-   --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
-   --  expressions to display.
 
    procedure Freeze (Dialog : History_Dialog_Access);
    procedure Thaw (Dialog : History_Dialog_Access);

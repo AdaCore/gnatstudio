@@ -33,38 +33,21 @@ with GVD.Call_Stack;        use GVD.Call_Stack;
 with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
 pragma Elaborate_All (Odd_Intl);
-with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Dialog;            use Gtk.Dialog;
 with Gtk.Label;             use Gtk.Label;
 with Gtk.Enums;             use Gtk.Enums;
-with Gtk.Combo;             use Gtk.Combo;
 with Gtk.Handlers;
 with Gtk.List_Item;         use Gtk.List_Item;
-with Gtk.Check_Button;      use Gtk.Check_Button;
 with Gtk.Stock;             use Gtk.Stock;
 with Process_Proxies;       use Process_Proxies;
 with GNAT.OS_Lib;
-with Histories;             use Histories;
 with Interactive_Consoles;  use Interactive_Consoles;
 with Config;                use Config;
 
 package body GVD.Dialogs is
 
    Question_Titles : constant Chars_Ptr_Array := "" + (-"Choice");
-
-   type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
-      Entry_Field   : Gtk_Combo;
-      Label         : Gtk_Label;
-   end record;
-   type Simple_Entry_Dialog_Access is access
-     all Simple_Entry_Dialog_Record'Class;
-
-   type Display_Dialog_Record is new Simple_Entry_Dialog_Record with record
-      Check  : Gtk_Check_Button;
-      Check2 : Gtk_Check_Button;
-   end record;
-   type Display_Dialog_Access is access all Display_Dialog_Record'Class;
 
    procedure Initialize
      (Dialog      : access GVD_Dialog_Record'Class;
@@ -76,20 +59,6 @@ package body GVD.Dialogs is
      (Dialog : access GVD_Dialog_Record'Class);
    --  Common initializations between task and thread dialogs.
 
-   function Internal_Simple_Entry_Dialog
-     (Dialog          : access Simple_Entry_Dialog_Record'Class;
-      Parent          : access Gtk.Window.Gtk_Window_Record'Class;
-      Extra_Box       : Gtk.Check_Button.Gtk_Check_Button := null;
-      Extra_Box2      : Gtk.Check_Button.Gtk_Check_Button := null;
-      Title           : String;
-      Message         : String;
-      Position        : Gtk_Window_Position := Win_Pos_Mouse;
-      History         : Histories.History;
-      Key             : Histories.History_Key := "") return String;
-   --  Internal version of Simple_Entry_Dialog, where Dialog is already
-   --  created.
-   --  Dialog is not destroyed on exit, it is your responsability to do so.
-
    function Delete_Dialog
      (Dialog : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when the user deletes a dialog by clicking on the small
@@ -99,10 +68,6 @@ package body GVD.Dialogs is
      (Dialog   : access GVD_Dialog_Record'Class;
       Info     : in out Thread_Information_Array);
    --  Common operations between task and thread dialogs.
-
-   procedure Ok_Simple_Entry
-     (Simple_Dialog : access Gtk_Widget_Record'Class);
-   --  "Ok" was pressed in a simple entry dialog
 
    -------------
    -- Gtk_New --
@@ -661,176 +626,6 @@ package body GVD.Dialogs is
          Free (Questions (Q).Description);
       end loop;
    end Free;
-
-   ----------------------------------
-   -- Internal_Simple_Entry_Dialog --
-   ----------------------------------
-
-   function Internal_Simple_Entry_Dialog
-     (Dialog          : access Simple_Entry_Dialog_Record'Class;
-      Parent          : access Gtk.Window.Gtk_Window_Record'Class;
-      Extra_Box       : Gtk.Check_Button.Gtk_Check_Button := null;
-      Extra_Box2      : Gtk.Check_Button.Gtk_Check_Button := null;
-      Title           : String;
-      Message         : String;
-      Position        : Gtk_Window_Position := Win_Pos_Mouse;
-      History         : Histories.History;
-      Key             : Histories.History_Key := "") return String
-   is
-      use Widget_List;
-      Button   : Gtk_Widget;
-      pragma Unreferenced (Button);
-
-      Box      : Gtk_Box;
-      Vbox     : Gtk_Box;
-
-   begin
-      Set_Transient_For (Dialog, Parent);
-      Set_Modal (Dialog);
-      Set_Position (Dialog, Position);
-
-      Gtk_New_Vbox (Vbox);
-      Pack_Start (Get_Vbox (Dialog), Vbox, False);
-
-      Gtk_New_Hbox (Box);
-      Pack_Start (Vbox, Box, False, Padding => 10);
-
-      Gtk_New (Dialog.Label, Message);
-      Set_Alignment (Dialog.Label, 0.0, 0.5);
-      Pack_Start (Box, Dialog.Label, False, Padding => 10);
-
-      Gtk_New (Dialog.Entry_Field);
-      Set_Case_Sensitive (Dialog.Entry_Field);
-      Pack_Start (Box, Dialog.Entry_Field, Padding => 10);
-      Disable_Activate (Dialog.Entry_Field);
-      Widget_Callback.Object_Connect
-        (Get_Entry (Dialog.Entry_Field), "activate",
-         Widget_Callback.To_Marshaller (Ok_Simple_Entry'Access),
-         Dialog);
-
-      if Key /= "" and then History /= null then
-         Get_History (History.all, Key, Dialog.Entry_Field);
-      end if;
-
-      if Extra_Box /= null then
-         Gtk_New_Hbox (Box);
-         Pack_Start (Vbox, Box);
-         Pack_Start (Box, Extra_Box, Padding => 10);
-      end if;
-
-      if Extra_Box2 /= null then
-         Gtk_New_Hbox (Box);
-         Pack_Start (Vbox, Box);
-         Pack_Start (Box, Extra_Box2, Padding => 10);
-      end if;
-
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Set_Title (Dialog, Title);
-
-      Show_All (Dialog);
-
-      if Run (Dialog) = Gtk_Response_OK then
-         declare
-            S : constant String := Get_Text (Get_Entry (Dialog.Entry_Field));
-         begin
-            if History /= null then
-               Add_To_History (History.all, Key, S);
-            end if;
-
-            return S;
-         end;
-      end if;
-
-      return (1 => ASCII.NUL);
-   end Internal_Simple_Entry_Dialog;
-
-   -------------------------
-   -- Simple_Entry_Dialog --
-   -------------------------
-
-   function Simple_Entry_Dialog
-     (Parent   : access Gtk.Window.Gtk_Window_Record'Class;
-      Title    : String;
-      Message  : String;
-      Position : Gtk_Window_Position := Win_Pos_Mouse;
-      History  : Histories.History := null;
-      Key      : History_Key := "") return String
-   is
-      Dialog          : Simple_Entry_Dialog_Access;
-   begin
-      Dialog := new Simple_Entry_Dialog_Record;
-      Initialize (Dialog);
-
-      declare
-         S : constant String := Internal_Simple_Entry_Dialog
-           (Dialog, Parent, null, null, Title,
-            Message, Position, History, Key);
-      begin
-         Destroy (Dialog);
-         return S;
-      end;
-   end Simple_Entry_Dialog;
-
-   --------------------------
-   -- Display_Entry_Dialog --
-   --------------------------
-
-   function Display_Entry_Dialog
-     (Parent         : access Gtk.Window.Gtk_Window_Record'Class;
-      Title          : String;
-      Message        : String;
-      Position       : Gtk.Enums.Gtk_Window_Position :=
-        Gtk.Enums.Win_Pos_Mouse;
-      Check_Msg      : String;
-      History        : Histories.History;
-      Key            : History_Key := "";
-      Button_Active  : access Boolean;
-      Key_Check      : Histories.History_Key;
-      Check_Msg2     : String := "";
-      Button2_Active : Boolean_Access := null;
-      Key_Check2     : Histories.History_Key := "") return String
-   is
-      Dialog          : Display_Dialog_Access;
-   begin
-      Dialog := new Display_Dialog_Record;
-      Initialize (Dialog);
-      Gtk_New (Dialog.Check, Check_Msg);
-      Associate (History.all, Key_Check, Dialog.Check);
-
-      if Check_Msg2 /= "" then
-         Gtk_New (Dialog.Check2, Check_Msg2);
-         Associate (History.all, Key_Check2, Dialog.Check2);
-      end if;
-
-      declare
-         S : constant String := Internal_Simple_Entry_Dialog
-           (Dialog, Parent, Dialog.Check, Dialog.Check2,
-            Title, Message, Position, History, Key);
-         R : Boolean;
-      begin
-         R := Get_Active (Dialog.Check);
-         Button_Active.all := R;
-
-         if Dialog.Check2 /= null then
-            Button2_Active.all := Get_Active (Dialog.Check2);
-         end if;
-
-         Destroy (Dialog);
-         return S;
-      end;
-   end Display_Entry_Dialog;
-
-   ---------------------
-   -- Ok_Simple_Entry --
-   ---------------------
-
-   procedure Ok_Simple_Entry
-     (Simple_Dialog : access Gtk_Widget_Record'Class) is
-   begin
-      Response (Gtk_Dialog (Simple_Dialog), Gtk_Response_OK);
-   end Ok_Simple_Entry;
 
    -------------------
    -- Delete_Dialog --
