@@ -26,6 +26,7 @@ with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Interfaces.C.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Case_Util;            use GNAT.Case_Util;
 with Ada.Exceptions;            use Ada.Exceptions;
 
 with Glib;                     use Glib;
@@ -2530,7 +2531,7 @@ package body Project_Explorers is
          declare
             S : String := Language_Category'Image (Category);
          begin
-            Lower_Case (S);
+            To_Lower (S);
 
             --  Skip the "Cat_" part
             return S (S'First + 4 .. S'Last);
