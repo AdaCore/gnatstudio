@@ -1065,7 +1065,7 @@ package body Src_Editor_View is
          end loop;
       end Find_Non_Blank;
 
-   begin
+   begin  --  Do_Indentation
       if Lang = null
         or else not Can_Indent (Lang)
       then
@@ -1079,13 +1079,14 @@ package body Src_Editor_View is
 
          Use_Tabs := Get_Pref (Kernel, Ada_Use_Tabs);
          Indent_Params :=
-           (Indent_Level    =>
+           (Indent_Level      =>
               Integer (Get_Pref (Kernel, Ada_Indentation_Level)),
-            Indent_Continue =>
+            Indent_Continue   =>
               Integer (Get_Pref (Kernel, Ada_Continuation_Level)),
-            Indent_Decl     =>
+            Indent_Decl       =>
               Integer (Get_Pref (Kernel, Ada_Declaration_Level)),
-            Tab_Width       => Tab_Len);
+            Tab_Width         => Tab_Len,
+            Indent_Case_Extra => Get_Pref (Kernel, Ada_Indent_Case_Extra));
 
       elsif Lang.all in C_Language'Class then
          if not Get_Pref (Kernel, C_Automatic_Indentation) then
@@ -1094,11 +1095,12 @@ package body Src_Editor_View is
 
          Use_Tabs := Get_Pref (Kernel, C_Use_Tabs);
          Indent_Params :=
-           (Indent_Level    =>
+           (Indent_Level      =>
               Integer (Get_Pref (Kernel, C_Indentation_Level)),
-            Indent_Continue => 0,
-            Indent_Decl     => 0,
-            Tab_Width       => Tab_Len);
+            Indent_Continue   => 0,
+            Indent_Decl       => 0,
+            Tab_Width         => Tab_Len,
+            Indent_Case_Extra => False);
 
       else
          return False;
