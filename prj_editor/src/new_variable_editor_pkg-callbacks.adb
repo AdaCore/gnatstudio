@@ -7,7 +7,6 @@
 --  with Gtk.Enums; use Gtk.Enums;
 --  with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
-with Gtk.Frame;  use Gtk.Frame;
 with Variable_Editors; use Variable_Editors;
 
 package body New_Variable_Editor_Pkg.Callbacks is
@@ -24,7 +23,14 @@ package body New_Variable_Editor_Pkg.Callbacks is
       E : New_Var_Edit := New_Var_Edit (Object);
    begin
       Set_Sensitive
-        (E.List_Env_Variables, Get_Active (E.Get_Environment));
+        (E.Environment_Table, Get_Active (E.Get_Environment));
+      Set_Sensitive
+        (E.Untyped_List_Variable, not Get_Active (E.Get_Environment));
+      Set_Sensitive
+        (E.Untyped_Single_Variable, not Get_Active (E.Get_Environment));
+      if Get_Active (E.Get_Environment) then
+         Set_Active (E.Typed_Variable, True);
+      end if;
    end On_Get_Environment_Toggled;
 
    -------------------------------
@@ -36,23 +42,10 @@ package body New_Variable_Editor_Pkg.Callbacks is
    is
       E : New_Var_Edit := New_Var_Edit (Object);
    begin
-      if Get_Active (E.Typed_Variable) then
-         Set_Label (E.Value_Frame, "List of possible values");
-      else
-         Set_Label (E.Value_Frame, "Current value");
-      end if;
+      Set_Sensitive (E.List_Value, Get_Active (E.Untyped_List_Variable));
+      Set_Sensitive (E.Single_Value, Get_Active (E.Untyped_Single_Variable));
+      Set_Sensitive (E.Enumeration_Value, Get_Active (E.Typed_Variable));
    end On_Typed_Variable_Toggled;
-
-   ----------------------------
-   -- On_Concatenate_Clicked --
-   ----------------------------
-
-   procedure On_Concatenate_Clicked
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Concatenate_Clicked;
 
    --------------------
    -- On_Add_Clicked --
