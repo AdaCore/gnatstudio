@@ -2073,18 +2073,13 @@ package body Src_Editor_Module is
    ----------------------
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer) is
-      function Body_Name (Name : String) return String;
-      --  Return the name of the body corresponding to a spec file.
-
-      function Body_Name (Name : String) return String is
-      begin
-         --  ??? Should ask the project module instead
-         return Name (Name'First .. Name'Last - 1) & 'b';
-      end Body_Name;
-
+      Body_Name : constant String := Other_File_Name
+        (Data.Kernel, Data.Name.all, Full_Name => True);
    begin
-      if Status = 0 then
-         Open_File_Editor (Data.Kernel, Body_Name (Data.Name.all));
+      if Status = 0
+        and then Is_Regular_File (Body_Name)
+      then
+         Open_File_Editor (Data.Kernel, Body_Name);
       end if;
    end Generate_Body_Cb;
 
@@ -2116,7 +2111,7 @@ package body Src_Editor_Module is
          File         : constant String :=
            Directory_Information (File_Context) & Filename;
          Success      : Boolean;
-         Args         : Argument_List (1 .. 2);
+         Args         : Argument_List (1 .. 4);
          Lang         : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
 
@@ -2140,12 +2135,22 @@ package body Src_Editor_Module is
             return;
          end if;
 
-         Args (1) := new String'(File);
-         Args (2) := new String'(Dir_Name (File));
-         Launch_Process
-           (Kernel, "gnatstub", Args, "", null,
-            Generate_Body_Cb'Access, File, Success);
-         Free (Args);
+         Args (1) := new String'("stub");
+         Args (2) := new String'("-P" & Get_Subproject_Name (Kernel, File));
+         Args (3) := new String'(File);
+         Args (4) := new String'(Dir_Name (File));
+
+         declare
+            Scenar : Argument_List_Access := Argument_String_To_List
+              (Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
+         begin
+            Launch_Process
+              (Kernel, "gnat", Args (1 .. 2) & Scenar.all & Args (3 .. 4),
+               "", null,
+               Generate_Body_Cb'Access, File, Success);
+            Free (Args);
+            Free (Scenar);
+         end;
 
          if Success then
             Print_Message
