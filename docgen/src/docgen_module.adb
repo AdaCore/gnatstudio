@@ -41,6 +41,7 @@ with Gtk.Menu;                 use Gtk.Menu;
 with File_Utils;               use File_Utils;
 with Projects.Registry;        use Projects.Registry;
 with Src_Info.Queries;         use Src_Info.Queries;
+with String_Utils;             use String_Utils;
 
 package body Docgen_Module is
 
@@ -53,28 +54,35 @@ package body Docgen_Module is
      ("Type_Api_Doc", Type_Api_Doc);
 
    --  Docgen preferences
-   Type_Generated_File  : Param_Spec_Enum;
+   Type_Generated_File   : Param_Spec_Enum;
    --  Type of the generated file (html, texi...)
+
    Generate_Body_Files   : Param_Spec_Boolean;
    --  Create also the body documentation?
-   Ignore_Some_Comments    : Param_Spec_Boolean;
+
+   Ignore_Some_Comments  : Param_Spec_Boolean;
    --  Ignore all comments with "--!"
-   Comments_Above_Header : Param_Spec_Boolean;
-   --  Doc comments for entities above the header
+
+   Comments_Before       : Param_Spec_Boolean;
+   --  Find doc comments for entities before the entity itself
+
    Show_Private_Entities : Param_Spec_Boolean;
    --  Show also private entities
-   References_Research   : Param_Spec_Boolean;
+
+   Show_References       : Param_Spec_Boolean;
    --  True if the program should search for the references
    --  Adding information like "subprogram called by..."
+
    One_Document_File     : Param_Spec_Boolean;
    --  Used for TexInfo: True, if the project.texi file should be
    --  build and the package files should be included there later.
+
    Link_All_References   : Param_Spec_Boolean;
    --  Should links be created to entities whose declaration files
    --  aren't being processed
 
    Options : All_Options;
-   --  It contains all the preferences
+   --  Group all the preferences
 
    procedure Set_Options
      (Type_Of_File_P       : Type_Api_Doc := HTML;
@@ -86,6 +94,7 @@ package body Docgen_Module is
       One_Doc_File_P       : Boolean := False;
       Link_All_P           : Boolean := False);
    --  Set new options or reset options
+   --  ??? Need to document each parameter.
 
    procedure Array2List
      (Kernel : Kernel_Handle;
@@ -147,11 +156,11 @@ package body Docgen_Module is
    --  It calls Generate_Project
 
    procedure Generate_Project
-     (Kernel : Kernel_Handle;
-      recursive : Boolean);
+     (Kernel    : Kernel_Handle;
+      Recursive : Boolean);
    --  Generate the doc for the project
-   --  If recursive is true, it generates the direct sources of
-   --     the project and also the sources from imported projects
+   --  If Recursive is true, it generates the direct sources of
+   --  the project and also the sources from imported projects
 
    procedure Choose_Menu_File
       (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -235,14 +244,15 @@ package body Docgen_Module is
    is
       pragma Unreferenced (Kernel);
    begin
-      Set_Options (Type_Api_Doc'Val (Get_Pref (K, Type_Generated_File)),
-                  Get_Pref (K, Generate_Body_Files),
-                  Get_Pref (K, Ignore_Some_Comments),
-                  Get_Pref (K, Comments_Above_Header),
-                  Get_Pref (K, Show_Private_Entities),
-                  Get_Pref (K, References_Research),
-                  Get_Pref (K, One_Document_File),
-                  Get_Pref (K, Link_All_References));
+      Set_Options
+        (Type_Api_Doc'Val (Get_Pref (K, Type_Generated_File)),
+         Get_Pref (K, Generate_Body_Files),
+         Get_Pref (K, Ignore_Some_Comments),
+         Get_Pref (K, Comments_Before),
+         Get_Pref (K, Show_Private_Entities),
+         Get_Pref (K, Show_References),
+         Get_Pref (K, One_Document_File),
+         Get_Pref (K, Link_All_References));
    end On_Preferences_Changed;
 
    -----------------------
@@ -258,6 +268,8 @@ package body Docgen_Module is
       Item         : Gtk_Menu_Item;
       File_Context : File_Selection_Context_Access;
       Submenu      : Gtk_Menu;
+      File         : Virtual_File;
+
    begin
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
@@ -283,14 +295,15 @@ package body Docgen_Module is
             null;
 
          elsif Has_File_Information (File_Context) then
-            Gtk_New (Item, -"Documentation For This File");
+            File := File_Information (File_Context);
+            Gtk_New (Item, -"Generate doc for " & Krunch (Base_Name (File)));
             File_Project_Cb.Object_Connect
                (Item, "activate",
                 File_Project_Cb.To_Marshaller (On_Generate_File'Access),
                 Slot_Object => Get_Kernel (Context),
                 User_Data => File_Project_Record'
                   (Project => No_Project,
-                   File    => File_Information (File_Context)));
+                   File    => File));
             Append (Menu, Item);
          end if;
       end if;
@@ -305,18 +318,18 @@ package body Docgen_Module is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class)
    is
-   pragma Unreferenced (Project);
-      Mitem        : Gtk_Menu_Item;
-      Mitem_Bis    : Gtk_Menu_Item;
+      pragma Unreferenced (Project);
+      Mitem     : Gtk_Menu_Item;
+      Mitem_Bis : Gtk_Menu_Item;
 
    begin
       if Menu = null then
          Gtk_New (Menu);
       end if;
 
-      Gtk_New (Mitem, -"For This Project Only");
+      Gtk_New (Mitem, -"Generate project");
       Append (Menu, Mitem);
-      Gtk_New (Mitem_Bis, -"For This Project And Imported Projects");
+      Gtk_New (Mitem_Bis, -"Generate project & subprojects");
       Append (Menu, Mitem_Bis);
 
       File_Project_Cb.Object_Connect
@@ -335,9 +348,9 @@ package body Docgen_Module is
             File    => VFS.No_File));
    end Add_Doc_Menu_Project;
 
-   ---------------------------
-   --  On_Generate_Project  --
-   ---------------------------
+   -------------------------
+   -- On_Generate_Project --
+   -------------------------
 
    procedure On_Generate_Project
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
@@ -384,6 +397,7 @@ package body Docgen_Module is
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
       File    : Virtual_File;
+
    begin
       if Context.all in File_Selection_Context'Class
         and then Has_File_Information (File_Selection_Context_Access (Context))
@@ -404,7 +418,7 @@ package body Docgen_Module is
    procedure Choose_Menu_Project
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-   pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget);
    begin
       Generate_Project (Kernel, False);
    end Choose_Menu_Project;
@@ -416,31 +430,36 @@ package body Docgen_Module is
    procedure Choose_Menu_Project_Recursive
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-   pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget);
    begin
       Generate_Project (Kernel, True);
    end Choose_Menu_Project_Recursive;
 
-   -----------------------
-   --  Generate_Project --
-   -----------------------
+   ----------------------
+   -- Generate_Project --
+   ----------------------
 
    procedure Generate_Project
-     (Kernel : Kernel_Handle;
-      recursive : Boolean)
+     (Kernel    : Kernel_Handle;
+      Recursive : Boolean)
    is
       Sources : VFS.File_Array_Access;
-      Project            : Project_Type;
+      Project : Project_Type;
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
       Source_File_List : Type_Source_File_List.List;
+
    begin
-      if Context.all in File_Selection_Context'Class and
-        Has_Project_Information
-          (File_Selection_Context_Access (Context)) then
+      --  ??? Should use the root project if current context has not
+      --  project info
+
+      if Context.all in File_Selection_Context'Class
+        and then Has_Project_Information
+          (File_Selection_Context_Access (Context))
+      then
          Project := Project_Information
            (File_Selection_Context_Access (Context));
-         Sources := Get_Source_Files (Project, recursive);
+         Sources := Get_Source_Files (Project, Recursive);
          Array2List (Kernel, Sources, Source_File_List);
          Generate (Kernel, Source_File_List);
       end if;
@@ -453,14 +472,15 @@ package body Docgen_Module is
    procedure Choose_Menu_File
     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-   pragma Unreferenced (Widget);
+      pragma Unreferenced (Widget);
       File  : constant Virtual_File :=
         Select_File
-          (Title             => -"Select File",
+          (Title             => -"Generate Documentation For",
            Parent            => Get_Main_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
+
    begin
       if File = VFS.No_File then
          return;
@@ -513,31 +533,30 @@ package body Docgen_Module is
       Generate (Kernel, Source_File_List);
    end Generate_File;
 
-   ----------------
-   --  Generate  --
-   ----------------
+   --------------
+   -- Generate --
+   --------------
 
    procedure Generate
      (Kernel : Kernel_Handle;
-      List : in out Type_Source_File_List.List)
+      List   : in out Type_Source_File_List.List)
    is
       use Type_Source_File_List;
    begin
       Push_State (Kernel, Busy);
 
-      --  ??? Shouldn't always generate in /tmp/
       --  ??? Should give a choice of the format
       Process_Files
         (List,
          Kernel,
          Options,
-         Doc_Suffix    => ".htm",
-         Converter     => Doc_HTML_Create'Access);
+         Doc_Suffix => ".htm",
+         Converter  => Doc_HTML_Create'Access);
       Free (List);
 
-         --  ??? Should open the appropriate file, this one is only valid
-         --  for html
-         --  ??? <frameset> not support by internal html viewer,
+      --  ??? Should open the appropriate file, this one is only valid for html
+      --  ??? <frameset> not supported by internal html viewer.
+
       declare
          Doc_Directory_Root : constant String := File_Utils.Name_As_Directory
            (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
@@ -564,96 +583,91 @@ package body Docgen_Module is
    is
       Docgen_Module_ID : Module_ID;
 
-      Tools : constant String := '/' & (-"Tools");
-      Generate : constant String := '/' & (-"_Generate API doc");
+      Tools    : constant String := '/' & (-"Tools");
+      Generate : constant String := '/' & (-"_Documentation");
+
    begin
       Register_Module
-        (Module      => Docgen_Module_ID,
-         Kernel      => Kernel,
-         Module_Name => "Docgen",
+        (Module                  => Docgen_Module_ID,
+         Kernel                  => Kernel,
+         Module_Name             => "Docgen",
          Contextual_Menu_Handler => Docgen_Contextual'Access,
-         Priority     => Default_Priority);
+         Priority                => Default_Priority);
 
       Type_Generated_File := Param_Spec_Enum
         (Type_Api_Doc_Properties.Gnew_Enum
-           (Name    => "Type_Generated_File",
+           (Name    => "Doc-Output",
             Default => HTML,
-            Blurb   => -"Choose the type of file generated by Docgens",
-            Nick    => -"Type of file generated by Docgen"));
+            Blurb   => -"Choose the kind of documentation generated",
+            Nick    => -"Output"));
       Register_Property
         (Kernel, Param_Spec (Type_Generated_File), -"Documentation");
 
       Generate_Body_Files := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Generate_Body_Files",
+          (Name    => "Doc-Process-Body",
            Default => False,
-           Blurb   =>
-             -("Whether Docgen should generate body files"),
-           Nick    => -"Generate also body files"));
+           Blurb   => -"Whether body files should be processed",
+           Nick    => -"Process body files"));
       Register_Property
         (Kernel, Param_Spec (Generate_Body_Files), -"Documentation");
 
       Ignore_Some_Comments := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Ignore_Some_Comments",
+          (Name    => "Doc-Ignore-Special-Comments",
            Default => False,
            Blurb   =>
              -("Whether Docgen should ignore all comments with --!"),
-           Nick    => -"Ignore all comments with --!"));
+           Nick    => -"Ignore comments with --!"));
       Register_Property
         (Kernel,
          Param_Spec (Ignore_Some_Comments),
          -"Documentation");
 
-      Comments_Above_Header := Param_Spec_Boolean
+      Comments_Before := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Comments_Above_Header",
+          (Name    => "Doc-Comments-Before",
            Default => False,
            Blurb   =>
-             -("Whether Docgen puts comments for entities above the header"),
-           Nick    => -"Comments for entities above the header"));
+             -("Whether comments are found before corresponding entities"),
+           Nick    => -"Comments before entities"));
       Register_Property
-        (Kernel,
-         Param_Spec (Comments_Above_Header),
-         -"Documentation");
+        (Kernel, Param_Spec (Comments_Before), -"Documentation");
 
       Show_Private_Entities := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Show_Private_Entities",
+          (Name    => "Doc-Show-Private",
            Default => False,
-           Blurb   =>
-             -("Whether Docgen should show also private entities"),
-           Nick    => -"Show also private entities"));
+           Blurb   => -"Whether Docgen should show private entities",
+           Nick    => -"Show private entities"));
       Register_Property
         (Kernel,
          Param_Spec (Show_Private_Entities),
          -"Documentation");
 
-      References_Research := Param_Spec_Boolean
+      Show_References := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "References_Research",
+          (Name    => "Doc-References",
            Default => False,
            Blurb   =>
-             -("Whether Docgen should search for the references"),
-           Nick    => -"Search for the references"));
+             -("Whether Docgen should compute references (e.g. call graph)"),
+           Nick    => -"Compute references"));
       Register_Property
-        (Kernel,
-         Param_Spec (References_Research),
-         -"Documentation");
+        (Kernel, Param_Spec (Show_References), -"Documentation");
 
       One_Document_File := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "One_Document_File",
+          (Name    => "Doc-Texi-Single",
            Default => False,
            Blurb   =>
-             -("Whether Docgen should generate API doc in one file (TexInfo"),
-           Nick    => -"Only one file (for TexInfo)"));
+             -("Whether Docgen should generate doc in one file (TexInfo"),
+           Nick    => -"Single file (for TexInfo)"));
       Register_Property (Kernel, Param_Spec (One_Document_File),
                            -"Documentation");
 
       Link_All_References := Param_Spec_Boolean
         (Gnew_Boolean
-          (Name    => "Link_All_References",
+          (Name    => "Doc-Xref-All",
            Default => False,
            Blurb   =>
              -("Links for entities declared in files which are not processed"),
@@ -673,27 +687,26 @@ package body Docgen_Module is
       Register_Menu
         (Kernel,
          Tools & Generate,
-         -"_Loaded Project",
+         -"Generate _project",
          Callback => Choose_Menu_Project'Access);
 
       Register_Menu
         (Kernel,
          Tools & Generate,
-         -"Loaded Project & _Imported Projects",
+         -"Generate project & _subprojects",
          Callback => Choose_Menu_Project_Recursive'Access);
 
       Register_Menu
         (Kernel,
          Tools & Generate,
-         -"_File",
-         Callback => Choose_Menu_File'Access);
+         -"Generate _current file",
+         Callback => Choose_Menu_Current_File'Access);
 
       Register_Menu
         (Kernel,
          Tools & Generate,
-         -"_Current buffer",
-         Callback => Choose_Menu_Current_File'Access);
-
+         -"Generate _for ...",
+         Callback => Choose_Menu_File'Access);
    end Register_Module;
 
 end Docgen_Module;
