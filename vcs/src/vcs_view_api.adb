@@ -1650,6 +1650,13 @@ package body VCS_View_API is
       end if;
 
       while not String_List.Is_Empty (Files) loop
+         Create_Line_Information_Column
+           (Kernel        => Get_Kernel (Context),
+            File          => String_List.Head (Files),
+            Identifier    => Annotation_Id,
+            Stick_To_Data => True,
+            Every_Line    => False);
+
          Annotate (Get_Current_Ref (Context), String_List.Head (Files));
          String_List.Next (Files);
       end loop;
