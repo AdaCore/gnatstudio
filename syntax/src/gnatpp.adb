@@ -18,18 +18,20 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada_Analyzer;     use Ada_Analyzer;
-with Ada.Command_Line; use Ada.Command_Line;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
-with Basic_Types;      use Basic_Types;
-with Language;         use Language;
-with Line_Buffers;     use Line_Buffers;
+with Ada_Analyzer;              use Ada_Analyzer;
+with C_Analyzer;                use C_Analyzer;
+with Ada.Command_Line;          use Ada.Command_Line;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Basic_Types;               use Basic_Types;
+with Language;                  use Language;
+with Line_Buffers;              use Line_Buffers;
 
 procedure Gnatpp is
    subtype String_Access is Basic_Types.String_Access;
 
    F          : File_Descriptor;
-   Name       : constant String := Argument (1) & ASCII.NUL;
+   Name       : constant String := Argument (1);
    Buffer     : String_Access;
    Length     : Integer;
    pragma Unreferenced (Length);
@@ -61,10 +63,19 @@ begin
    Length := Read (F, Buffer.all'Address, Buffer'Length);
    Close (F);
    New_Buffer := To_Line_Buffer (Buffer.all);
-   Analyze_Ada_Source
-     (Buffer.all,
-      Indent_Params => (3, 2, 2, 8, True, Lower, Mixed, True, False),
-      Replace => Replace_Cb'Unrestricted_Access);
+
+   if File_Extension (Name) = ".c" then
+      Analyze_C_Source
+        (Buffer.all,
+         Indent_Params => (2, 2, 2, 8, False, Lower, Mixed, False, True),
+         Replace => Replace_Cb'Unrestricted_Access);
+   else
+      Analyze_Ada_Source
+        (Buffer.all,
+         Indent_Params => (3, 2, 2, 8, True, Lower, Mixed, True, False),
+         Replace => Replace_Cb'Unrestricted_Access);
+   end if;
+
    Print (New_Buffer);
    Free (New_Buffer);
    Free (Buffer);

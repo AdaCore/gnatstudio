@@ -18,20 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada_Analyzer;     use Ada_Analyzer;
-with Ada.Command_Line; use Ada.Command_Line;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
-with GNAT.Case_Util;   use GNAT.Case_Util;
-with Ada.Text_IO;      use Ada.Text_IO;
-with String_Utils;     use String_Utils;
-with Basic_Types;      use Basic_Types;
-with Language;         use Language;
+with Ada_Analyzer;              use Ada_Analyzer;
+with C_Analyzer;                use C_Analyzer;
+with Ada.Command_Line;          use Ada.Command_Line;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.Case_Util;            use GNAT.Case_Util;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Text_IO;               use Ada.Text_IO;
+with String_Utils;              use String_Utils;
+with Basic_Types;               use Basic_Types;
+with Language;                  use Language;
 
 procedure Gnatparse is
    subtype String_Access is Basic_Types.String_Access;
 
    F           : File_Descriptor;
-   Name        : constant String := Argument (1) & ASCII.NUL;
+   Name        : constant String := Argument (1);
    Buffer      : String_Access;
    Length      : Integer;
    pragma Unreferenced (Length);
@@ -44,10 +46,18 @@ begin
    Length := Read (F, Buffer.all'Address, Buffer'Length);
    Close (F);
 
-   Analyze_Ada_Source
-     (Buffer.all, Default_Indent_Parameters,
-      Format     => False,
-      Constructs => Constructs'Unchecked_Access);
+   if File_Extension (Name) = ".c" then
+      Analyze_C_Source
+        (Buffer.all, Default_Indent_Parameters,
+         Format     => False,
+         Constructs => Constructs'Unchecked_Access);
+
+   else
+      Analyze_Ada_Source
+        (Buffer.all, Default_Indent_Parameters,
+         Format     => False,
+         Constructs => Constructs'Unchecked_Access);
+   end if;
 
    Free (Buffer);
    Info := Constructs.First;
