@@ -207,6 +207,9 @@ void ada_db_close(DB_File * file)
 {
   int i;
 
+  if (file->fname == NULL)
+    return;
+
   file->last_errno = 0;
   if (file->key_p) {
     free (file->key_p);
