@@ -70,11 +70,14 @@ package body Gui_Support is
 
    begin
       Iter := Get_Iter_From_String (M, Path_String);
+
       if Iter /= Null_Iter then
          --  Can't click on an already active item, for a radio renderer, since
          --  we want at least one selected item
-         if not Boolean_Get (M, Iter, Data) then
+
+         if not Get_Boolean (M, Iter, Data) then
             Tmp := Get_Iter_Root (M);
+
             while Tmp /= Null_Iter loop
                Set (M, Tmp, Data, False);
                Next (M, Tmp);
