@@ -136,7 +136,7 @@ package body Python_Module is
    function Get_Name (Script : access Python_Scripting_Record) return String;
    function Is_Subclass
      (Script : access Python_Scripting_Record;
-      Class  : Class_Type;
+      Instance : access Class_Instance_Record'Class;
       Base   : Class_Type) return Boolean;
    function Get_Kernel
      (Script : access Python_Scripting_Record) return Kernel_Handle;
@@ -256,33 +256,41 @@ package body Python_Module is
    ---------------------------
 
    type Python_Class_Instance_Record is new Class_Instance_Record with record
-      Script : Python_Scripting;
-      Data   : PyObject;
+      Script  : Python_Scripting;
+      Counter : Natural;
+      Data    : PyObject;
    end record;
    type Python_Class_Instance is access all Python_Class_Instance_Record'Class;
+   --  Counter is the reference counter for the Python_Class_Instance, not for
+   --  the python object Data itself.
+   --  Both do not have the same value: Python itself can do its own ref/decref
+   --  internally, and we are not aware of these. On the other hand, Nth_Arg
+   --  will return a newly allocated pointer, which needs to be freed when
+   --  Free is called, even though the pyhon object itself might still exists.
 
    function New_Instance
      (Script : access Python_Scripting_Record;
       Class : Class_Type) return Class_Instance;
-   function Get_Class (Instance : access Python_Class_Instance_Record)
-      return Class_Type;
-   function Get_Data (Instance : access Python_Class_Instance_Record)
-      return Glib.Object.GObject;
    function Get_Data
-     (Instance : access Python_Class_Instance_Record) return String;
-   function Get_Data (Instance : access Python_Class_Instance_Record)
+     (Instance : access Python_Class_Instance_Record;
+      Class    : Class_Type) return String;
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record; Class : Class_Type)
       return System.Address;
-   function Get_Data (Instance : access Python_Class_Instance_Record)
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record; Class : Class_Type)
       return Integer;
    procedure Set_Data
      (Instance : access Python_Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class);
+      Class    : Class_Type;
+      Value    : String);
    procedure Set_Data
-     (Instance : access Python_Class_Instance_Record; Value : String);
-   procedure Set_Data
-     (Instance : access Python_Class_Instance_Record; Value : Integer);
+     (Instance : access Python_Class_Instance_Record;
+      Class    : Class_Type;
+      Value    : Integer);
    procedure Set_Data
      (Instance   : access Python_Class_Instance_Record;
+      Class      : Class_Type;
       Value      : System.Address;
       On_Destroy : Destroy_Handler := null);
    function Get_Script (Instance : access Python_Class_Instance_Record)
@@ -338,14 +346,6 @@ package body Python_Module is
    procedure Setup_Return_Value (Data : in out Python_Callback_Data'Class);
    --  Mark Data as containing a return value, and free the previous value if
    --  there is any
-
-   function Convert is new Ada.Unchecked_Conversion (System.Address, GObject);
-   function Convert is new Ada.Unchecked_Conversion (GObject, System.Address);
-
-   procedure Unref_Gobject (Data : System.Address);
-   pragma Convention (C, Unref_Gobject);
-   --  Called when the GObject Data is no longer necessary in the python object
-   --  it is associated with.
 
    procedure Trace_Dump (Name : String; Obj : PyObject);
    pragma Unreferenced (Trace_Dump);
@@ -1782,7 +1782,10 @@ package body Python_Module is
 
       --  The following call doesn't modify the refcounf of Item.
       Inst := new Python_Class_Instance_Record'
-        (Class_Instance_Record with Script => Data.Script, Data => Item);
+        (Class_Instance_Record with
+         Script  => Data.Script,
+         Counter => 1,
+         Data    => Item);
 
       Py_INCREF (Item);
 
@@ -1802,12 +1805,12 @@ package body Python_Module is
    -----------------
 
    function Is_Subclass
-     (Script : access Python_Scripting_Record;
-      Class  : Class_Type;
-      Base   : Class_Type) return Boolean
+     (Script   : access Python_Scripting_Record;
+      Instance : access Class_Instance_Record'Class;
+      Base     : Class_Type) return Boolean
    is
-      C : constant PyObject := Lookup_Class_Object
-        (Script.GPS_Module, Get_Name (Class));
+      C : constant PyObject := PyObject_GetAttrString
+        (Python_Class_Instance (Instance).Data, "__class__");
       B : constant PyObject := Lookup_Class_Object
         (Script.GPS_Module, Get_Name (Base));
    begin
@@ -2050,50 +2053,21 @@ package body Python_Module is
 
       return new Python_Class_Instance_Record'
         (Class_Instance_Record with
-         Script => Python_Scripting (Script),
-         Data   => PyInstance_NewRaw (Klass, null));
+         Script  => Python_Scripting (Script),
+         Counter => 1,
+         Data    => PyInstance_NewRaw (Klass, null));
    end New_Instance;
 
-   ---------------
-   -- Get_Class --
-   ---------------
-
-   function Get_Class (Instance : access Python_Class_Instance_Record)
-      return Class_Type
-   is
-      Class : constant PyObject :=
-        PyObject_GetAttrString (Instance.Data, "__class__");
-   begin
-      if Class = null then
-         return No_Class;
-      else
-         return New_Class
-           (Instance.Script.Kernel,
-            PyString_AsString (PyObject_GetAttrString (Class, "__name__")));
-      end if;
-   end Get_Class;
-
    --------------
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Python_Class_Instance_Record)
-      return Glib.Object.GObject
-   is
-      Addr : constant System.Address := Get_Data (Instance);
-   begin
-      return Convert (Addr);
-   end Get_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data (Instance : access Python_Class_Instance_Record)
-      return Integer
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record;
+      Class    : Class_Type) return Integer
    is
       Item : constant PyObject := PyObject_GetAttrString
-        (Instance.Data, GPS_Data_Attr);
+        (Instance.Data, GPS_Data_Attr & Get_Name (Class));
    begin
       if Item = null or else not PyInt_Check (Item) then
          raise Invalid_Data;
@@ -2106,10 +2080,11 @@ package body Python_Module is
    --------------
 
    function Get_Data
-     (Instance : access Python_Class_Instance_Record) return String
+     (Instance : access Python_Class_Instance_Record;
+      Class    : Class_Type) return String
    is
       Item : constant PyObject := PyObject_GetAttrString
-        (Instance.Data, GPS_Data_Attr);
+        (Instance.Data, GPS_Data_Attr & Get_Name (Class));
    begin
       if Item = null or else not PyString_Check (Item) then
          raise Invalid_Data;
@@ -2121,11 +2096,12 @@ package body Python_Module is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Python_Class_Instance_Record)
-      return System.Address
+   function Get_Data
+     (Instance : access Python_Class_Instance_Record;
+      Class    : Class_Type) return System.Address
    is
       Item : constant PyObject := PyObject_GetAttrString
-        (Instance.Data, GPS_Data_Attr);
+        (Instance.Data, GPS_Data_Attr & Get_Name (Class));
       Result : System.Address;
    begin
       if Item = null or else not PyCObject_Check (Item) then
@@ -2136,14 +2112,19 @@ package body Python_Module is
       return Result;
    end Get_Data;
 
-   -------------------
-   -- Unref_Gobject --
-   -------------------
+   --------------
+   -- Set_Data --
+   --------------
 
-   procedure Unref_Gobject (Data : System.Address) is
+   procedure Set_Data
+     (Instance : access Python_Class_Instance_Record;
+      Class    : Class_Type;
+      Value    : Integer) is
    begin
-      Unref (GObject'(Convert (Data)));
-   end Unref_Gobject;
+      PyObject_SetAttrString
+        (Instance.Data, GPS_Data_Attr & Get_Name (Class),
+         PyInt_FromLong (long (Value)));
+   end Set_Data;
 
    --------------
    -- Set_Data --
@@ -2151,33 +2132,12 @@ package body Python_Module is
 
    procedure Set_Data
      (Instance : access Python_Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class) is
-   begin
-      Set_Data
-        (Instance, Convert (GObject (Value)),
-         On_Destroy => Unref_Gobject'Access);
-   end Set_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : access Python_Class_Instance_Record; Value : Integer) is
+      Class    : Class_Type;
+      Value    : String) is
    begin
       PyObject_SetAttrString
-        (Instance.Data, GPS_Data_Attr, PyInt_FromLong (long (Value)));
-   end Set_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : access Python_Class_Instance_Record; Value : String) is
-   begin
-      PyObject_SetAttrString
-        (Instance.Data, GPS_Data_Attr, PyString_FromString (Value));
+        (Instance.Data, GPS_Data_Attr & Get_Name (Class),
+         PyString_FromString (Value));
    end Set_Data;
 
    --------------
@@ -2186,13 +2146,15 @@ package body Python_Module is
 
    procedure Set_Data
      (Instance   : access Python_Class_Instance_Record;
+      Class      : Class_Type;
       Value      : System.Address;
       On_Destroy : Destroy_Handler := null)
    is
       Data : constant PyObject := PyCObject_FromVoidPtr
         (Value, PyCObject_Destructor (On_Destroy));
    begin
-      PyObject_SetAttrString (Instance.Data, GPS_Data_Attr, Data);
+      PyObject_SetAttrString
+        (Instance.Data, GPS_Data_Attr & Get_Name (Class), Data);
       Py_DECREF (Data);
    end Set_Data;
 
@@ -2205,7 +2167,8 @@ package body Python_Module is
       Free_Pointer : out Boolean) is
    begin
       Py_DECREF (Instance.Data);
-      Free_Pointer := True;
+      Instance.Counter := Instance.Counter - 1;
+      Free_Pointer := Instance.Counter = 0;
    end Primitive_Free;
 
    ---------
@@ -2214,6 +2177,7 @@ package body Python_Module is
 
    procedure Ref (Instance : access Python_Class_Instance_Record) is
    begin
+      Instance.Counter := Instance.Counter + 1;
       Py_INCREF (Instance.Data);
    end Ref;
 
