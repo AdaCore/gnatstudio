@@ -648,7 +648,7 @@ package body Glide_Kernel.Scripts is
            Parameter_Names_To_Usage (Dialog_Cmd_Parameters, "None"),
          Description  =>
            -("Display a modal dialog to report information to a user. This"
-             & " blocks the interpreter while the dialog hasn't been closed."),
+             & " blocks the interpreter until the dialog is closed."),
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Default_Command_Handler'Access);
