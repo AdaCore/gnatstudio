@@ -1,4 +1,8 @@
-LN = ln -fs
+ifeq ($(OS),Windows_NT)
+   LN = cp -p
+else
+   LN = ln -s
+endif
 
 ifeq ($(GLIDE_PROJECT),)
 GLIDE_PROJECT=True
