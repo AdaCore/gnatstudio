@@ -255,9 +255,9 @@ package body Src_Editor_Buffer is
    procedure Destroy_Hook (Buffer : access Source_Buffer_Record'Class) is
    begin
       --  Remove the completion data.
+
       String_List_Utils.String_List.Free (Buffer.Completion.List);
       GNAT.OS_Lib.Free (Buffer.Completion.Prefix);
-
    end Destroy_Hook;
 
    --------------------
