@@ -80,7 +80,8 @@ package body VCS.CVS is
      (Rep       : access CVS_Record;
       Filenames : String_List.List;
       Arguments : String_List.List);
-   --  ???
+   --  Launch a simple cvs command, ie "cvs" followed by Arguments then
+   --  Filenames. User must free Filenames and Arguments.
 
    procedure Real_Simple_Action
      (Rep       : access CVS_Record;
@@ -192,7 +193,6 @@ package body VCS.CVS is
             Args_Temp := Next (Args_Temp);
          end loop;
       end;
-
 
       if Head (Filenames) /= Dir_Name (Head (Filenames)) then
          declare
@@ -732,6 +732,8 @@ package body VCS.CVS is
 
       Simple_Action (Rep, Filenames, Arguments);
 
+      Free (Arguments);
+
       while Node /= Null_Node loop
          Open_File_Editor (Rep.Kernel, Data (Node));
          Node := Next (Node);
@@ -764,6 +766,8 @@ package body VCS.CVS is
 
          Simple_Action (Rep, Single_File, Arguments);
 
+         Free (Arguments);
+         Free (Single_File);
          Logs_Temp      := Next (Logs_Temp);
          Filenames_Temp := Next (Filenames_Temp);
       end loop;
@@ -785,8 +789,8 @@ package body VCS.CVS is
    begin
       String_List.Append (Arguments, "update");
       String_List.Append (Arguments, "-d");
-
       Simple_Action (Rep, Filenames, Arguments);
+      String_List.Free (Arguments);
    end Update;
 
    -----------
@@ -801,6 +805,7 @@ package body VCS.CVS is
    begin
       String_List.Append (Arguments, "update");
       Simple_Action (Rep, Filenames, Arguments);
+      String_List.Free (Arguments);
    end Merge;
 
    ---------
@@ -818,6 +823,7 @@ package body VCS.CVS is
       String_List.Append (Arguments, "add");
 
       Simple_Action (Rep, Filenames, Arguments);
+      String_List.Free (Arguments);
 
       String_List.Append (Arguments_2, "-Q");
       String_List.Append (Arguments_2, "commit");
