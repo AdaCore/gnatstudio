@@ -13,6 +13,7 @@ default build compile link ada c c++ clean:
 
 install-common:
 	$(MKDIR) $(bindir)
+	$(MKDIR) $(sharedir)
 	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)
 	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)
 	$(MAKE) -C docs install
