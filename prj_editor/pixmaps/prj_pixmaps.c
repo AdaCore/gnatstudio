@@ -6,4 +6,3 @@
 #include "project_ext_closed_xpm"
 #include "project_ext_xpm"
 #include "mini-folder_object_xpm"
-#include "mini_page_xpm"
