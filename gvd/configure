@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.32 
+# From configure.in Revision: 1.33 
 #############################################################
 #
 #  Checking for Gnat
@@ -1751,6 +1751,7 @@ fi
 
 
 
+
 EXEC_PREFIX="$prefix"
 
 
@@ -1940,6 +1941,7 @@ s%@TARGET_LFLAGS@%$TARGET_LFLAGS%g
 s%@TARGET@%$TARGET%g
 s%@EXEC_COMMAND@%$EXEC_COMMAND%g
 s%@NATIVE_PS@%$NATIVE_PS%g
+s%@LN@%$LN%g
 s%@EXEC_PREFIX@%$EXEC_PREFIX%g
 
 CEOF
