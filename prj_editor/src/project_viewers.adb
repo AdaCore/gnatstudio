@@ -554,6 +554,8 @@ package body Project_Viewers is
    procedure Destroy (Module : in out Prj_Editor_Module_Id_Record) is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Project_Editor_Page_Record'Class, Project_Editor_Page);
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Switches_Page_Creator_Record'Class, Switches_Page_Creator);
    begin
       if Module.Project_Editor_Pages /= null then
          for P in Module.Project_Editor_Pages'Range loop
@@ -562,6 +564,14 @@ package body Project_Viewers is
          end loop;
 
          Unchecked_Free (Module.Project_Editor_Pages);
+      end if;
+
+      if Module.Switches_Pages /= null then
+         for P in Module.Switches_Pages'Range loop
+            Destroy (Module.Switches_Pages (P).Creator);
+            Unchecked_Free (Module.Switches_Pages (P).Creator);
+         end loop;
+         Unchecked_Free (Module.Switches_Pages);
       end if;
 
       Unchecked_Free (Module.Switches_Pages);
