@@ -75,6 +75,12 @@ private package Src_Info.LI_Utils is
       Parent_Location         : in Point);
    --  Adds a new parent to the list of parent locations for given declaration
 
+   procedure Set_End_Of_Scope
+     (Declaration_Info        : in out E_Declaration_Info_List;
+      Location                : in Point;
+      Kind                    : in Reference_Kind := End_Of_Body);
+   --  Sets given value for End_Of_Scope attribute
+
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;

@@ -431,8 +431,6 @@ package body Src_Info.LI_Utils is
       end if;
       Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
-         --  FIXME, should also search for LI_File in current
-         --  declaration as well
          if Parent_Filename = Declaration_Info.Value.Declaration
                                  .Location.File.Source_Filename.all
          then
@@ -451,6 +449,31 @@ package body Src_Info.LI_Utils is
          Column      => Parent_Location.Column);
       FL_Ptr.Next := null;
    end Add_Parent;
+
+   ------------------------
+   --  Set_End_Of_Scope  --
+   ------------------------
+
+   procedure Set_End_Of_Scope
+     (Declaration_Info        : in out E_Declaration_Info_List;
+      Location                : in Point;
+      Kind                    : in Reference_Kind := End_Of_Body) is
+   begin
+      Declaration_Info.Value.Declaration.End_Of_Scope.Location.Line
+                                                         := Location.Line;
+      Declaration_Info.Value.Declaration.End_Of_Scope.Location.Column
+                                                         := Location.Column;
+      Declaration_Info.Value.Declaration.End_Of_Scope.Location.File.LI
+                      := Declaration_Info.Value.Declaration.Location.File.LI;
+      Declaration_Info.Value.Declaration.End_Of_Scope.Location.File.Part
+                      := Unit_Body;
+      Declaration_Info.Value.Declaration
+        .End_Of_Scope.Location.File.Source_Filename :=
+          new String'
+            (Declaration_Info.Value.Declaration
+               .Location.File.Source_Filename.all);
+      Declaration_Info.Value.Declaration.End_Of_Scope.Kind := Kind;
+   end Set_End_Of_Scope;
 
    ------------------------
    --  Insert_Reference  --
