@@ -471,7 +471,6 @@ package body GVD.Process is
       Addr_First  : Natural := 0;
       Addr_Last   : Natural;
       Widget      : Gtk_Widget;
-
       Pc          : Address_Type;
       Pc_Length   : Natural := 0;
 
