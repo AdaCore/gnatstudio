@@ -3008,7 +3008,48 @@ package body Src_Editor_Buffer is
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
       Copy (Iter, End_Iter);
-      Forward_Chars (End_Iter, Length, Result);
+
+      --  If the file contains blank lines, we need to move step by step here
+      --  and ignore blank lines.
+
+      if Buffer.Blank_Lines = 0 then
+         Forward_Chars (End_Iter, Length, Result);
+      else
+         declare
+            Remaining : Gint := Length;
+            Success   : Boolean;
+            Buff_Line : Gint;
+         begin
+            Buff_Line := Get_Line (End_Iter);
+
+            Advance_Char :
+            loop
+               exit Advance_Char when Remaining = 0;
+
+               Forward_Char (End_Iter, Success);
+               exit Advance_Char when not Success;
+
+               if Get_Line (End_Iter) /= Buff_Line then
+                  Buff_Line := Get_Line (End_Iter);
+
+                  --  We have moved the End_Iter to another line. We need to
+                  --  check whether this line is a blank line, and in this case
+                  --  we move to the next line until we have found a non-blank
+                  --  line.
+
+                  while Get_Editable_Line
+                      (Buffer, Buffer_Line_Type (Buff_Line + 1)) = 0
+                  loop
+                     Forward_Line (End_Iter, Success);
+                     exit Advance_Char when not Success;
+                  end loop;
+               end if;
+
+               Remaining := Remaining - 1;
+            end loop Advance_Char;
+         end;
+      end if;
+
       Delete_Interactive (Buffer, Iter, End_Iter, True, Result);
 
       if not Enable_Undo then
