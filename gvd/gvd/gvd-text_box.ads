@@ -40,10 +40,10 @@ package GVD.Text_Boxes is
    type GVD_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with private;
    type GVD_Text_Box is access all GVD_Text_Box_Record'Class;
 
-   procedure Gtk_New (Box   : out GVD_Text_Box);
+   procedure Gtk_New (Box : out GVD_Text_Box);
    --  Create a new box.
 
-   procedure Initialize (Box   : access GVD_Text_Box_Record'Class);
+   procedure Initialize (Box : access GVD_Text_Box_Record'Class);
    --  Initialize a new box structure
 
    procedure Configure
@@ -62,10 +62,10 @@ package GVD.Text_Boxes is
    --  destroyed.
 
    procedure Insert
-     (Box    : access GVD_Text_Box_Record;
-      Fore   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Back   : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Chars  : in String := "");
+     (Box   : access GVD_Text_Box_Record;
+      Fore  : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Back  : in Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Chars : in String := "");
    --  Insert some text in the child text.
 
    procedure Set_Line
@@ -94,20 +94,19 @@ package GVD.Text_Boxes is
    --  Return the location (in pixels) for a given line.
 
    function Line_From_Pixels
-     (Box  : access GVD_Text_Box_Record;
-      Y    : Glib.Gint) return Natural;
+     (Box : access GVD_Text_Box_Record;
+      Y   : Glib.Gint) return Natural;
    --  Return the line for a given location in pixels.
 
    function Index_From_Line
-     (Box : access GVD_Text_Box_Record'Class; Line : Natural)
-     return Natural;
+     (Box : access GVD_Text_Box_Record'Class; Line : Natural) return Natural;
    --  Return the index in the buffer at which Line starts.
 
    procedure Move_N_Columns
      (Box     : access Gvd_Text_Box_Record'Class;
       Index   : in out Natural;
       Columns : Integer);
-   --  Moves the current Index by Columns columns to the left, while
+   --  Move the current Index by Columns columns to the left, while
    --  staying on the current line. Index will never be moved to the next
    --  line.
    --  Note that Columns is the number of visible columns in the widget, ie
@@ -186,12 +185,12 @@ package GVD.Text_Boxes is
    --  Area is not relevant if the Entity returned is null.
 
    procedure Highlight_Range
-     (Box    : access GVD_Text_Box_Record;
-      From, To : Glib.Gint;
+     (Box         : access GVD_Text_Box_Record;
+      From, To    : Glib.Gint;
       Widget_From : Glib.Gint;
-      Line   : Natural;
-      Fore  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
-      Back  : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color);
+      Line        : Natural;
+      Fore        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      Back        : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color);
    --  Highlight a specific range in the text area (the background becomes
    --  Color). If any range was already highlighted, it is restored to the
    --  default background color.
