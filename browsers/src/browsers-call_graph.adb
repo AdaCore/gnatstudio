@@ -41,9 +41,12 @@ with Src_Info.Queries;         use Src_Info.Queries;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Glide_Result_View;        use Glide_Result_View;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Commands.Generic_Asynchronous; use Commands;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
@@ -1086,7 +1089,7 @@ package body Browsers.Call_Graph is
          Col := 1;
       end if;
 
-      Console.Insert_Result
+      Insert_Result
         (Kernel, Category, File, Name, Line, Col, Name'Length);
    end Print_Ref;
 
