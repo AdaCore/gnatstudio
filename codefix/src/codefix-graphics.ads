@@ -43,14 +43,16 @@ package Codefix.Graphics is
    use Vdiff_Lists;
 
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
-      Current_Text       : Ptr_Text_Navigator;
-      Corrector          : Correction_Manager;
-      Errors_Found       : Ptr_Errors_Interface;
-      Successful_Update  : Boolean;
-      Nb_Tabs            : Integer := 0;
-      Current_Error      : Error_Id := Null_Error_Id;
-      Kernel             : Kernel_Handle;
-      Vdiff_List         : Vdiff_Lists.List;
+      Current_Text      : Ptr_Text_Navigator;
+      Corrector         : Correction_Manager;
+      Errors_Found      : Ptr_Errors_Interface;
+      Successful_Update : Boolean;
+      Nb_Tabs           : Integer := 0;
+      Current_Error     : Error_Id := Null_Error_Id;
+      Kernel            : Kernel_Handle;
+      Vdiff_List        : Vdiff_Lists.List;
+      Automatic_Skip    : State_List;
+      Automatic_Fix     : State_List;
    end record;
 
    type Graphic_Codefix_Access is access all Graphic_Codefix_Record;
