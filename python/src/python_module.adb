@@ -87,6 +87,9 @@ package body Python_Module is
 
    Python_Module_Id : Python_Module_Record_Access;
 
+   procedure Destroy (Module : in out Python_Module_Record);
+   --  Called when the module is destroyed
+
    procedure Destroy (Script : access Python_Scripting_Record);
    procedure Register_Command
      (Script        : access Python_Scripting_Record;
@@ -2254,7 +2257,21 @@ package body Python_Module is
    is
       pragma Unreferenced (Subprogram);
    begin
-      return Scripting_Language (Python_Module_Id.Script);
+      if Python_Module_Id = null then
+         return null;
+      else
+         return Scripting_Language (Python_Module_Id.Script);
+      end if;
    end Get_Script;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Python_Module_Record) is
+   begin
+      Python_Module_Id := null;
+      Module.Script := null;
+   end Destroy;
 
 end Python_Module;
