@@ -172,6 +172,12 @@ package String_Utils is
    --  GNAT.Directories.File_Extension instead. it is kept for compatibility
    --  with 3.14 only.
 
+   function Relative_Path_Name
+     (File_Name : String; Base_Name : String) return String;
+   --  Modifies File_Name so that it is relative to Base_Name.
+   --  Both names are first normalized to platform specific conventions, but
+   --  the links are not resolved.
+
    function Name_As_Directory
      (Name  : String;
       Style : GNAT.Directory_Operations.Path_Style :=
