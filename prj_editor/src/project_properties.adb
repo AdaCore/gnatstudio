@@ -794,6 +794,7 @@ package body Project_Properties is
                Attribute_Name     => Gnatlist_Attribute,
                Value              => Get_Text (Editor.Gnatls));
             Changed := True;
+            Trace (Me, "gnatls changed");
          end if;
 
          if Project_View = No_Project
@@ -807,6 +808,7 @@ package body Project_Properties is
                Attribute_Name     => Debugger_Command_Attribute,
                Value              => Get_Text (Editor.Debugger));
             Changed := True;
+            Trace (Me, "debugger command changed");
          end if;
 
          declare
@@ -836,6 +838,8 @@ package body Project_Properties is
                            Value => Get_Text (Ent),
                            Attribute_Index => Languages (J).all);
                         Changed := True;
+                        Trace (Me, "Compiler changed for "
+                               & Languages (J).all);
                      end if;
                   end loop;
 
@@ -849,6 +853,7 @@ package body Project_Properties is
                         Scenario_Variables => Scenario_Variables,
                         Attribute_Name     => Languages_Attribute,
                         Values             => New_Languages);
+                     Trace (Me, "List of languages changed");
                   end if;
 
                   Free (Project_Languages);
@@ -856,6 +861,7 @@ package body Project_Properties is
 
             else
                Changed := True;
+               Trace (Me, "No project view initially");
                Update_Attribute_Value_In_Scenario
                  (Project           => Project,
                   Pkg_Name          => "",
@@ -885,6 +891,7 @@ package body Project_Properties is
             Ide_Package, Default => "")
          then
             Changed := True;
+            Trace (Me, "Remote_Host changed");
 
             if Get_Text (Editor.Tools_Host) /= "" then
                Update_Attribute_Value_In_Scenario
@@ -908,6 +915,7 @@ package body Project_Properties is
             Ide_Package, Default => "")
          then
             Changed := True;
+            Trace (Me, "Program_Host changed");
 
             if Get_Text (Editor.Program_Host) /= "" then
                Update_Attribute_Value_In_Scenario
@@ -931,6 +939,7 @@ package body Project_Properties is
             Ide_Package, Default => "")
          then
             Changed := True;
+            Trace (Me, "Protocol changed");
 
             if Get_Text (Editor.Protocol) /= "" then
                Update_Attribute_Value_In_Scenario
@@ -954,7 +963,6 @@ package body Project_Properties is
 
       Editor  : Properties_Editor;
       Changed : Boolean := False;
-      At_Least_One_Changed : Boolean := False;
       Project : constant Project_Node_Id :=
         Get_Project_From_View (Project_View);
       Response : Gtk_Response_Type;
@@ -968,18 +976,7 @@ package body Project_Properties is
 
          exit when Response /= Gtk_Response_OK;
 
-         if Is_Valid_Project_Name (Get_Text (Editor.Name)) then
-            exit when Is_Directory
-              (Name_As_Directory (Get_Text (Editor.Path)));
-
-            Response2 := Message_Dialog
-              (Msg     => Name_As_Directory (Get_Text (Editor.Path))
-               & (-" is not a valid directory"),
-               Buttons => Button_OK,
-               Dialog_Type => Error,
-               Title   => -"Error",
-               Parent  => Get_Main_Window (Kernel));
-         else
+         if not Is_Valid_Project_Name (Get_Text (Editor.Name)) then
             Response2 := Message_Dialog
               (Msg     => -("Invalid name for the project (only lower"
                             & " case letters, digits and underscores"),
@@ -987,6 +984,45 @@ package body Project_Properties is
                Dialog_Type => Error,
                Title   => -"Error",
                Parent  => Get_Main_Window (Kernel));
+
+         elsif not Is_Directory
+           (Name_As_Directory (Get_Text (Editor.Path)))
+         then
+            Response2 := Message_Dialog
+              (Msg     => Name_As_Directory (Get_Text (Editor.Path))
+               & (-" is not a valid directory"),
+               Buttons => Button_OK,
+               Dialog_Type => Error,
+               Title   => -"Error",
+               Parent  => Get_Main_Window (Kernel));
+
+         else
+            declare
+               New_Name : constant String := Base_Name
+                 (Get_Text (Editor.Name), Prj.Project_File_Extension);
+               New_Path : constant String :=
+                 Name_As_Directory (Get_Text (Editor.Path));
+            begin
+               if (New_Name /= Project_Name (Project_View)
+                   or else New_Path /= Dir_Name (Project_Path (Project_View)))
+                 and then Is_Regular_File
+                 (New_Path & New_Name & Prj.Project_File_Extension)
+               then
+                  Response2 := Message_Dialog
+                    (Msg => New_Path & New_Name & Prj.Project_File_Extension
+                     & (-" already exists. Do you want to overwrite ?"),
+                     Buttons => Button_Yes or Button_No,
+                     Dialog_Type => Error,
+                     Title   => -"Error",
+                     Parent  => Get_Main_Window (Kernel));
+
+                  if Response2 = Button_Yes then
+                     exit;
+                  end if;
+               else
+                  exit;
+               end if;
+            end;
          end if;
       end loop;
 
@@ -1039,11 +1075,11 @@ package body Project_Properties is
                Project_Changed (Kernel);
 
                Changed := True;
+               Trace (Me, "Project was renamed or moved");
             end if;
          end;
 
          if Changed then
-            At_Least_One_Changed := True;
             Set_Project_Modified (Kernel, Project, True);
          end if;
 
@@ -1079,7 +1115,7 @@ package body Project_Properties is
                            Add (Get_String (External_Reference_Of (Vars (V))),
                                 Curr (V).all);
 
-                           Is_Env := Is_Env and then Curr (V).all /=
+                           Is_Env := Is_Env and then Curr (V).all =
                              Get_String (Saved_Values (V));
                         end loop;
 
@@ -1097,7 +1133,7 @@ package body Project_Properties is
                      if Process_General_Page
                        (Editor, Current (Prj_Iter), View, Vars)
                      then
-                        At_Least_One_Changed := True;
+                        Changed := True;
                         Set_Project_Modified
                           (Kernel, Current (Prj_Iter), True);
                      end if;
@@ -1121,9 +1157,10 @@ package body Project_Properties is
                                  Ref_Project => Project);
                            begin
                               for R in Result'Range loop
-                                 At_Least_One_Changed := True;
+                                 Changed := True;
                                  Set_Project_Modified
                                    (Kernel, Result (R), True);
+                                 Trace (Me, "Change in page " & P'Img);
                               end loop;
                            end;
                         end if;
@@ -1143,7 +1180,7 @@ package body Project_Properties is
             end loop;
          end;
 
-         if At_Least_One_Changed then
+         if Changed then
             Recompute_View (Kernel);
          end if;
       end if;
