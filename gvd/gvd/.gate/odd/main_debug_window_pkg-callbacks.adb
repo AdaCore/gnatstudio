@@ -641,17 +641,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Backtrace1_Activate;
 
-   ----------------------------
-   -- On_Registers1_Activate --
-   ----------------------------
-
-   procedure On_Registers1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Registers1_Activate;
-
    --------------------------
    -- On_Threads1_Activate --
    --------------------------
@@ -871,6 +860,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Display_Arguments1_Activate;
+
+   ------------------------------------
+   -- On_Display_Registers1_Activate --
+   ------------------------------------
+
+   procedure On_Display_Registers1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Display_Registers1_Activate;
 
    --------------------------------------
    -- On_More_Status_Display1_Activate --

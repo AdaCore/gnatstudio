@@ -676,14 +676,6 @@ begin
    Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Backtrace1);
    Set_Right_Justify (Main_Debug_Window.Backtrace1, False);
 
-   Gtk_New (Main_Debug_Window.Registers1, -"Registers...");
-   Set_Sensitive (Main_Debug_Window.Registers1, False);
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Registers1, "activate",
-      Widget_Callback.To_Marshaller (On_Registers1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Registers1);
-   Set_Right_Justify (Main_Debug_Window.Registers1, False);
-
    Gtk_New (Main_Debug_Window.Threads1, -"Threads...");
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Threads1, "activate",
@@ -901,6 +893,13 @@ begin
       Widget_Callback.To_Marshaller (On_Display_Arguments1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_Arguments1);
    Set_Right_Justify (Main_Debug_Window.Display_Arguments1, False);
+
+   Gtk_New (Main_Debug_Window.Display_Registers1, -"Display Registers");
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Display_Registers1, "activate",
+      Widget_Callback.To_Marshaller (On_Display_Registers1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_Registers1);
+   Set_Right_Justify (Main_Debug_Window.Display_Registers1, False);
 
    Gtk_New (Main_Debug_Window.More_Status_Display1, -"More Status Display...");
    Set_Sensitive (Main_Debug_Window.More_Status_Display1, False);
