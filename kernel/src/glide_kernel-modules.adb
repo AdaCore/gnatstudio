@@ -41,6 +41,7 @@ with Gtk.Dnd;           use Gtk.Dnd;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Handlers;      use Gtk.Handlers;
 with Gtk.Image;         use Gtk.Image;
+with Gtk.Main;          use Gtk.Main;
 with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
@@ -89,6 +90,7 @@ package body Glide_Kernel.Modules is
    type Contextual_Menu_Record (Uses_Action : Boolean) is record
       Name   : GNAT.OS_Lib.String_Access;
       Label  : Contextual_Menu_Label_Creator;
+      Pix    : GNAT.OS_Lib.String_Access;
       Next   : Contextual_Menu_Access;
 
       case Uses_Action is
@@ -163,8 +165,10 @@ package body Glide_Kernel.Modules is
      (Glib.Object.GObject_Record, Boolean, Menu_Factory_User_Data);
 
    procedure Add_Contextual_Menu
-     (Kernel : access Kernel_Handle_Record'Class;
-      Menu   : Contextual_Menu_Access);
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Menu          : Contextual_Menu_Access;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True);
    --  Add a new contextual menu in the list
 
    ---------------
@@ -464,12 +468,15 @@ package body Glide_Kernel.Modules is
    -----------------------
 
    procedure Contextual_Action
-     (Kernel : access GObject_Record'Class; Action : Contextual_Menu_Access)
+     (Kernel : access GObject_Record'Class;
+      Action : Contextual_Menu_Access)
    is
       C       : Command_Access;
       Context : Interactive_Command_Context;
    begin
+      Push_State (Kernel_Handle (Kernel), Busy);
       Context.Context := Get_Current_Context (Kernel_Handle (Kernel));
+      Context.Event   := Get_Current_Event;
       Ref (Context.Context);
 
       if Action.Uses_Action then
@@ -484,6 +491,12 @@ package body Glide_Kernel.Modules is
          Active          => True,
          Show_Bar        => False,
          Destroy_On_Exit => True);
+      Pop_State (Kernel_Handle (Kernel));
+   exception
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
+         Trace (Exception_Handle, "Unexpected exception while executing "
+                & Action.Name.all & " " & Exception_Information (E));
    end Contextual_Action;
 
    ----------------------------
@@ -504,7 +517,10 @@ package body Glide_Kernel.Modules is
       Matches : Boolean;
       Parent_Menu : Gtk_Menu;
       Full_Name : GNAT.OS_Lib.String_Access;
+      Image : Gtk_Image_Menu_Item;
+      Pix   : Gtk_Image;
 
+      use type GNAT.OS_Lib.String_Access;
       use type Module_List.List_Node;
       use type Gtk.Widget.Widget_List.Glist;
    begin
@@ -559,7 +575,17 @@ package body Glide_Kernel.Modules is
                else
                   --  Implicit filters for %p, ...
                   if Full_Name.all /= "" then
-                     Gtk_New (Item, Base_Name (Full_Name.all));
+                     if C.Pix = null then
+                        Gtk_New (Item, Base_Name (Full_Name.all));
+                     else
+                        Gtk_New (Image, Base_Name (Full_Name.all));
+                        Gtk_New (Pix,
+                                 Stock_Id => C.Pix.all,
+                                 Size     => Icon_Size_Menu);
+                        Set_Image (Image, Pix);
+                        Item := Gtk_Menu_Item (Image);
+                     end if;
+
                      Action_Callback.Object_Connect
                        (Item, "activate",
                         Action_Callback.To_Marshaller
@@ -1175,17 +1201,27 @@ package body Glide_Kernel.Modules is
    -------------------------
 
    procedure Add_Contextual_Menu
-     (Kernel : access Kernel_Handle_Record'Class;
-      Menu   : Contextual_Menu_Access)
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Menu          : Contextual_Menu_Access;
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True)
    is
-      C : Contextual_Menu_Access;
+      C, Previous : Contextual_Menu_Access;
    begin
       if Kernel.Contextual /= System.Null_Address then
          C := Convert (Kernel.Contextual);
-         while C.Next /= null loop
+         while C.Next /= null
+           and then C.Name.all /= Ref_Item
+         loop
+            Previous := C;
             C := C.Next;
          end loop;
 
+         if Add_Before and then Ref_Item /= "" then
+            C := Previous;
+         end if;
+
+         Menu.Next := C.Next;
          C.Next := Menu;
       else
          Kernel.Contextual := Convert (Menu);
@@ -1198,18 +1234,26 @@ package body Glide_Kernel.Modules is
    ------------------------------
 
    procedure Register_Contextual_Menu
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Name            : String;
-      Action          : Action_Record_Access;
-      Label           : String := "";
-      Custom          : Custom_Expansion := null)
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Action_Record_Access;
+      Label         : String := "";
+      Custom        : Custom_Expansion := null;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True)
    is
       T : Contextual_Label_Param;
+      Pix : GNAT.OS_Lib.String_Access;
    begin
       if Label /= "" then
          T        := new Contextual_Label_Parameters;
          T.Label  := new String'(Label);
          T.Custom := Custom;
+      end if;
+
+      if Stock_Image /= "" then
+         Pix := new String'(Stock_Image);
       end if;
 
       Add_Contextual_Menu
@@ -1218,8 +1262,11 @@ package body Glide_Kernel.Modules is
            (Uses_Action => True,
             Name        => new String'(Name),
             Action      => Action,
+            Pix         => Pix,
             Next        => null,
-            Label       => Contextual_Menu_Label_Creator (T)));
+            Label       => Contextual_Menu_Label_Creator (T)),
+         Ref_Item,
+         Add_Before);
    end Register_Contextual_Menu;
 
    ------------------------------
@@ -1227,19 +1274,31 @@ package body Glide_Kernel.Modules is
    ------------------------------
 
    procedure Register_Contextual_Menu
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Name            : String;
-      Action          : Action_Record_Access;
-      Label           : access Contextual_Menu_Label_Creator_Record'Class) is
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Action_Record_Access;
+      Label         : access Contextual_Menu_Label_Creator_Record'Class;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True)
+   is
+      Pix : GNAT.OS_Lib.String_Access;
    begin
+      if Stock_Image /= "" then
+         Pix := new String'(Stock_Image);
+      end if;
+
       Add_Contextual_Menu
         (Kernel,
          new Contextual_Menu_Record'
            (Uses_Action => True,
             Name        => new String'(Name),
             Action      => Action,
+            Pix         => Pix,
             Next        => null,
-            Label       => Contextual_Menu_Label_Creator (Label)));
+            Label       => Contextual_Menu_Label_Creator (Label)),
+         Ref_Item,
+         Add_Before);
    end Register_Contextual_Menu;
 
    ------------------------------
@@ -1247,41 +1306,19 @@ package body Glide_Kernel.Modules is
    ------------------------------
 
    procedure Register_Contextual_Menu
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Name            : String;
-      Action          : Commands.Interactive.Interactive_Command_Access;
-      Filter          : Glide_Kernel.Action_Filter := null;
-      Label           : access Contextual_Menu_Label_Creator_Record'Class) is
-   begin
-      Add_Contextual_Menu
-        (Kernel,
-         new Contextual_Menu_Record'
-           (Uses_Action => False,
-            Name        => new String'(Name),
-            Command     => Action,
-            Filter      => Filter,
-            Next        => null,
-            Label       => Contextual_Menu_Label_Creator (Label)));
-   end Register_Contextual_Menu;
-
-   ------------------------------
-   -- Register_Contextual_Menu --
-   ------------------------------
-
-   procedure Register_Contextual_Menu
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Name           : String;
-      Action         : Commands.Interactive.Interactive_Command_Access := null;
-      Filter         : Glide_Kernel.Action_Filter := null;
-      Label          : String := "";
-      Custom         : Custom_Expansion := null)
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Commands.Interactive.Interactive_Command_Access;
+      Filter        : Glide_Kernel.Action_Filter := null;
+      Label         : access Contextual_Menu_Label_Creator_Record'Class;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True)
    is
-      T : Contextual_Label_Param;
+      Pix : GNAT.OS_Lib.String_Access;
    begin
-      if Label /= "" then
-         T        := new Contextual_Label_Parameters;
-         T.Label  := new String'(Label);
-         T.Custom := Custom;
+      if Stock_Image /= "" then
+         Pix := new String'(Stock_Image);
       end if;
 
       Add_Contextual_Menu
@@ -1291,8 +1328,53 @@ package body Glide_Kernel.Modules is
             Name        => new String'(Name),
             Command     => Action,
             Filter      => Filter,
+            Pix         => Pix,
             Next        => null,
-            Label       => Contextual_Menu_Label_Creator (T)));
+            Label       => Contextual_Menu_Label_Creator (Label)),
+         Ref_Item,
+         Add_Before);
+   end Register_Contextual_Menu;
+
+   ------------------------------
+   -- Register_Contextual_Menu --
+   ------------------------------
+
+   procedure Register_Contextual_Menu
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Commands.Interactive.Interactive_Command_Access := null;
+      Filter        : Glide_Kernel.Action_Filter := null;
+      Label         : String := "";
+      Custom        : Custom_Expansion := null;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True)
+   is
+      T : Contextual_Label_Param;
+      Pix : GNAT.OS_Lib.String_Access;
+   begin
+      if Label /= "" then
+         T        := new Contextual_Label_Parameters;
+         T.Label  := new String'(Label);
+         T.Custom := Custom;
+      end if;
+
+      if Stock_Image /= "" then
+         Pix := new String'(Stock_Image);
+      end if;
+
+      Add_Contextual_Menu
+        (Kernel,
+         new Contextual_Menu_Record'
+           (Uses_Action => False,
+            Name        => new String'(Name),
+            Command     => Action,
+            Filter      => Filter,
+            Pix         => Pix,
+            Next        => null,
+            Label       => Contextual_Menu_Label_Creator (T)),
+         Ref_Item,
+         Add_Before);
    end Register_Contextual_Menu;
 
 end Glide_Kernel.Modules;

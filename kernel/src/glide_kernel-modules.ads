@@ -308,11 +308,14 @@ package Glide_Kernel.Modules is
    --  empty string is returned, the contextual entry will not be displayed
 
    procedure Register_Contextual_Menu
-     (Kernel           : access Kernel_Handle_Record'Class;
-      Name             : String;
-      Action           : Action_Record_Access;
-      Label            : String := "";
-      Custom           : Custom_Expansion := null);
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Action_Record_Access;
+      Label         : String := "";
+      Custom        : Custom_Expansion := null;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True);
    --  Register a new contextual menu entry to tbe displayed.
    --  This menu will only be shown when the filter associated with the Action
    --  matches. The name used in the menu will be Title (or Name if label isn't
@@ -321,41 +324,61 @@ package Glide_Kernel.Modules is
    --     %d => current directory
    --     %p => current project name
    --     %l => current line
-   --     %c => current column
+   --     %c => current columns
    --     %a => current category
    --     %e => current entity name
    --     %i => current importing project
    --     %C => value returned by Custom (the menu will not appear if this
    --           returns the empty string or Custom is undefined)
    --  The label might contain a path to indicate submenus.
+   --  Image will be added to the left of the contextual menu entry.
+   --  Ref_Item is the name of another contextual menu (not a label), relative
+   --  to which the menu should be placed. There is no garantee that the new
+   --  entry will appear just before or just after that item, in particular if
+   --  other entries had the same requirement.
+   --  If Action is null, then a separator will be added to the contextual
+   --  menu instead. It is added in a submenu if Label is not the empty string
 
    procedure Register_Contextual_Menu
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Name            : String;
-      Action          : Action_Record_Access;
-      Label           : access Contextual_Menu_Label_Creator_Record'Class);
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Action_Record_Access;
+      Label         : access Contextual_Menu_Label_Creator_Record'Class;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True);
    --  Same as above, except the label of the menu is computed dynamically
 
    procedure Register_Contextual_Menu
-     (Kernel          : access Kernel_Handle_Record'Class;
-      Name            : String;
-      Action          : Commands.Interactive.Interactive_Command_Access;
-      Filter          : Glide_Kernel.Action_Filter := null;
-      Label           : access Contextual_Menu_Label_Creator_Record'Class);
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Commands.Interactive.Interactive_Command_Access;
+      Filter        : Glide_Kernel.Action_Filter := null;
+      Label         : access Contextual_Menu_Label_Creator_Record'Class;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True);
    --  Same as above, except the action to execute is defined internally
    --  When the command is executed, the Context.Context field will be set to
-   --  the current selection context.
+   --  the current selection context, and Context.Event to the event that
+   --  triggered the menu.
+   --  Action doesn't need to Push_State/Pop_State, nor handle unexpected
+   --  exceptions, since this is already done by its caller. This keeps the
+   --  code shorter.
 
    procedure Register_Contextual_Menu
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Name           : String;
-      Action         : Commands.Interactive.Interactive_Command_Access := null;
-      Filter         : Glide_Kernel.Action_Filter := null;
-      Label          : String := "";
-      Custom         : Custom_Expansion := null);
-   --  Same as above, but the menu title is a string where %P, %F,... are
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Name          : String;
+      Action        : Commands.Interactive.Interactive_Command_Access := null;
+      Filter        : Glide_Kernel.Action_Filter := null;
+      Label         : String := "";
+      Custom        : Custom_Expansion := null;
+      Stock_Image   : String := "";
+      Ref_Item      : String := "";
+      Add_Before    : Boolean := True);
+   --  Same as above, but the menu title is a string where %p, %f,... are
    --  substituted.
-   --  A separator is inserted if Action is null
+   --  A separator is inserted if Action is null and the Filter matches
 
    --------------
    -- Tooltips --
