@@ -87,6 +87,9 @@ with Debugger_Pixmaps;        use Debugger_Pixmaps;
 with Commands;                use Commands;
 with Commands.Debugger;       use Commands.Debugger;
 
+with GVD.Text_Box.Source_Editor.Glide;
+use  GVD.Text_Box.Source_Editor.Glide;
+
 package body GVD_Module is
 
    Me : constant Debug_Handle := Create ("Debugger");
@@ -997,6 +1000,11 @@ package body GVD_Module is
       end if;
 
       Remove_Debugger_Columns (Kernel, "");
+      Free_Debug_Info
+        (GEdit
+           (Get_Source
+              (Debugger_Process_Tab
+                 (Get_Current_Process ((Top))).Editor_Text)));
 
    exception
       when E : others =>
