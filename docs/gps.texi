@@ -219,7 +219,7 @@ will create a default internal project with the following properties:
 By clicking on the @code{Create} button, you will start a wizard allowing
 you to specify most of the properties for a new project. Once the project
 is created, GPS will save it and load it automatically.
-See ??? for more details on the project wizard.
+@c See ??? for more details on the project wizard.
 
 @item Open existing project
 You can select an existing project by clicking on the @code{Browse} button,
@@ -238,7 +238,7 @@ If no project file can be found in the current directory, GPS will start
 with the default project.
 
 To reset this properties, you can go to the menu @code{Edit->Preferences}.
-See ???.
+@c See ???.
 
 @item Quit
 If you click on this button, GPS will terminate immediately.
