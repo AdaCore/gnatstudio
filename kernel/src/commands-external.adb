@@ -27,6 +27,7 @@ with Ada.Exceptions;             use Ada.Exceptions;
 with Traces;                     use Traces;
 with Glide_Intl;                 use Glide_Intl;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
+with String_Utils;               use String_Utils;
 
 package body Commands.External is
 
@@ -92,14 +93,14 @@ package body Commands.External is
             when Expect_Timeout =>
                return True;
             when others =>
-               String_List.Append (D.Output, Expect_Out (D.Fd));
+               String_List.Append (D.Output, Strip_CR (Expect_Out (D.Fd)));
          end case;
       end loop;
 
    exception
       when Process_Died =>
          declare
-            S       : constant String := Expect_Out (D.Fd);
+            S       : constant String := Strip_CR (Expect_Out (D.Fd));
             Success : Boolean := True;
          begin
             if S /= "" then
