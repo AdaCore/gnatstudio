@@ -276,6 +276,13 @@ package Debugger.Gdb is
       Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
+   procedure Set_Scope_Action
+     (Debugger : access Gdb_Debugger;
+      Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Num      : GVD.Types.Breakpoint_Identifier := 0;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Finish
      (Debugger : access Gdb_Debugger;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
@@ -395,6 +402,8 @@ private
       WTX_Version     : Integer := -1;
       Endian          : Endian_Type := Unknown_Endian;
       Has_Terminated  : Boolean := False;
+      Default_Scope   : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Default_Action  : GVD.Types.Action_Type := GVD.Types.No_Action;
    end record;
 
    procedure Internal_Parse_Value

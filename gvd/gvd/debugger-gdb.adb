@@ -141,6 +141,11 @@ package body Debugger.Gdb is
      ("^\tignore next (\d+) hits");
    --  How to detect the ignore count in "info breakpoint"
 
+   Breakpoint_Extra_Info : constant Pattern_Matcher := Compile
+     ("^(\d+)\s+(task|pd|any)\s+(task|pd|all)(.*)$", Multiple_Lines);
+   --  Pattern to match a single line in "info
+   --  breakpoints-extra-info"
+
    Question_Filter_Pattern1 : constant Pattern_Matcher :=
      Compile ("^\[0\] .*> ", Multiple_Lines + Single_Line);
 
@@ -1328,7 +1333,9 @@ package body Debugger.Gdb is
         or else Looking_At (Command, Command'First, "begin")
         or else Looking_At (Command, Command'First, "ignore")
         or else Looking_At (Command, Command'First, "command")
-        or else Looking_At (Command, Command'First, "condition");
+        or else Looking_At (Command, Command'First, "condition")
+        or else Looking_At (Command, Command'First, "set break-command")
+        or else Looking_At (Command, Command'First, "change-break");
    end Is_Break_Command;
 
    ----------------
@@ -1698,6 +1705,68 @@ package body Debugger.Gdb is
       Send (Debugger, "ignore " & Breakpoint_Identifier'Image (Num)
             & " " & Integer'Image (Count), Mode => Mode);
    end Set_Breakpoint_Ignore_Count;
+
+   ----------------------
+   -- Set_Scope_Action --
+   ----------------------
+
+   procedure Set_Scope_Action
+     (Debugger : access Gdb_Debugger;
+      Scope    : GVD.Types.Scope_Type := GVD.Types.No_Scope;
+      Action   : GVD.Types.Action_Type := GVD.Types.No_Action;
+      Num      : GVD.Types.Breakpoint_Identifier := 0;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      Scope_String : Basic_Types.String_Access;
+      Action_String : Basic_Types.String_Access;
+   begin
+      if Scope /= No_Scope then
+         if Scope = Current_Task then
+            Scope_String := new String'("task");
+         elsif Scope = Tasks_In_PD then
+            Scope_String := new String'("pd");
+         elsif Scope = Any_Task then
+            Scope_String := new String'("any");
+         end if;
+
+         --  If the breakpoint identifier is 0, then set the
+         --  session-wide default scope, otherwise change only the
+         --  scope of the breakpoint indicated by Num
+
+         --  ??? These commands are sent as Internal to avoid the call
+         --  to Update_Breakpoints in Send_Internal_Post, which causes
+         --  the Action radio button to jump to its previous setting
+         if Num = 0 then
+            Send (Debugger, "set break-command-scope "
+                  & Scope_String.all, Mode => GVD.Types.Internal);
+         else
+            Send (Debugger, "change-breakpoint-scope " & Num'Img
+                  & " " & Scope_String.all, Mode => GVD.Types.Internal);
+         end if;
+      end if;
+
+      if Action /= No_Action then
+         if Action = Current_Task then
+            Action_String := new String'("task");
+         elsif Action = Tasks_In_PD then
+            Action_String := new String'("pd");
+         elsif Action = All_Tasks then
+            Action_String := new String'("all");
+         end if;
+
+         --  If the breakpoint identifier is 0, then set the
+         --  session-wide default action, otherwise change only the
+         --  scope of breakpoint indicated by Num
+
+         if Num = 0 then
+            Send (Debugger, "set break-command-action "
+                  & Action_String.all, Mode => Mode);
+         else
+            Send (Debugger, "change-breakpoint-action " & Num'Img
+                  & " " & Action_String.all, Mode => Mode);
+         end if;
+      end if;
+   end Set_Scope_Action;
 
    ------------
    -- Finish --
@@ -2570,6 +2639,74 @@ package body Debugger.Gdb is
       Index : Natural := S'First;
       Tmp   : Natural;
 
+      WTX_Version : Natural;
+
+      procedure Fill_Scope_Action
+        (Debugger        : access Gdb_Debugger;
+         List            : in out Breakpoint_Array;
+         Num_Breakpoints : Natural);
+      --  Assign values of Scope and Action for the breakpoints in
+      --  List as reported by the debugger.
+
+      procedure Fill_Scope_Action
+        (Debugger        : access Gdb_Debugger;
+         List            : in out Breakpoint_Array;
+         Num_Breakpoints : Natural)
+      is
+         S : constant String :=
+           Send (Debugger, "info breakpoints-extra-info",
+                 Mode => Internal);
+
+         Index   : Natural := S'First;
+         Num     : Natural;
+         Matched : Match_Array (0 .. 4);
+         Scope   : GVD.Types.Scope_Type;
+         Action  : GVD.Types.Action_Type;
+
+      begin
+         --  skip the first line
+         Skip_To_Char (S, Index, ASCII.LF);
+         Index := Index + 1;
+
+         for J in 1 .. Num_Breakpoints loop
+            Match (Breakpoint_Extra_Info, S (Index .. S'Last), Matched);
+
+            if Matched (0) /= No_Match then
+               --  get the breakpoint identifier
+               Num := Integer'Value
+                 (S (Matched (1).First .. Matched (1).Last));
+
+               --  get the scope value
+               if S (Matched (2).First .. Matched (2).Last) = "task" then
+                  Scope := Current_Task;
+               elsif S (Matched (2).First .. Matched (2).Last) = "pd" then
+                  Scope := Tasks_In_PD;
+               elsif S (Matched (2).First .. Matched (2).Last) = "any" then
+                  Scope := Any_Task;
+               else
+                  raise Program_Error;
+               end if;
+
+               --  get the action value
+               if S (Matched (3).First .. Matched (3).Last) = "task" then
+                  Action := Current_Task;
+               elsif S (Matched (3).First .. Matched (3).Last) = "pd" then
+                  Action := Tasks_In_PD;
+               elsif S (Matched (3).First .. Matched (3).Last) = "all" then
+                  Action := All_Tasks;
+               else
+                  raise Program_Error;
+               end if;
+
+               List (J).Scope := Scope;
+               List (J).Action := Action;
+
+               Skip_To_Char (S, Index, ASCII.LF);
+               Index := Index + 1;
+            end if;
+         end loop;
+      end Fill_Scope_Action;
+
    begin
       --  Skip the first line (that indicates there is no breakpoints,
       --  or that gives the title of each column).
@@ -2724,6 +2861,14 @@ package body Debugger.Gdb is
 
             Num := Num + 1;
          end loop;
+
+         --  Fill the breakpoints extra information
+         Info_WTX (Debugger, WTX_Version);
+
+         if WTX_Version = 3 then
+            Fill_Scope_Action (Debugger, Br, Num_Breakpoints);
+         end if;
+
          return Br;
       end;
    end List_Breakpoints;
