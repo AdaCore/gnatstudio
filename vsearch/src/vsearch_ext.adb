@@ -952,8 +952,6 @@ package body Vsearch_Ext is
            (Child, "unfloat_child",
             Widget_Callback.To_Marshaller (Unfloat_Vsearch'Access));
 
-         Ref (Vsearch);
-
       else
          Vsearch := Vsearch_Extended (Get_Initial_Window (Child));
       end if;
