@@ -141,8 +141,6 @@ Searching and Replacing
 
 Compilation/Build
 * The Build Menu::
-@c * Multi-language Build::
-* Integrating existing build procedures with the GPS build system::
 
 Source Browsing
 * General Issues::
@@ -2481,7 +2479,7 @@ For now, the support for remote files is only available through the GPS
 shell window. You start editing a remote file by typing a line similar to
 
 @smallexample
-edit protocol://user@@machine/full/path
+Editor.edit protocol://user@@machine/full/path
 @end smallexample
 
 where "protocol" should be replaced by the name of the protocol you want to
@@ -4087,8 +4085,6 @@ errors or warnings (see @ref{Code Fixing}).
 
 @menu
 * The Build Menu::
-@c * Multi-language Build::
-* Integrating existing build procedures with the GPS build system::
 @end menu
 
 @node The Build Menu
@@ -4182,109 +4178,6 @@ Recompute the cross-reference information for C and C++ source files.
 Interrupt the current compilation or build.
 
 @end table
-
-@c @node Multi-language Build
-@c @section Multi-language Build
-@c @noindent
-
-@c ??? missing doc for multi language builds: explain how the generated
-@c make files work, ...
-
-@node Integrating existing build procedures with the GPS build system
-@section Integrating existing build procedures with the GPS build system
-@noindent
-@i{Note that this capability is not fully supported yet.}
-
-Since the multi-language build system provided by GPS is based on makefiles,
-it is possible to integrate existing build scripts and makefiles. In the
-following section, we will call such projects that integrate with existing
-build procedures a @i{foreign project}.
-
-You first need to provide your own @code{Makefile.<project>} file, that will
-provide stubs to the real build commands.
-
-Then to tell GPS that it should not generate automatically the makefile
-corresponding to a given project, set the read-only attribute on the
-makefile, e.g under Unix:
-@cindex Unix
-
-@cindex example
-@smallexample
-$ chmod -w Makefile.<project>
-@end smallexample
-
-@cindex Windows
-or under Windows:
-
-@smallexample
-@cindex example
-> attrib +r Makefile.<project>
-@end smallexample
-
-This way when saving the project, GPS knows that the existing makefile
-should not be overridden.
-
-Depending on your project, you will need to define some or all of the
-following targets in the makefile stub:
-
-@table @b
-@item internal-build
-This is the main rule, used for building all the files for a foreign
-project.
-
-@item internal-clean
-This is an optional rule, used to clean the temporary files, e.g. the
-object files generated during the build.
-
-@item SRC_DIRS
-Blank separated list of source directories.
-
-@item LDFLAGS
-Linker options (e.g. libraries or objects to link with).
-
-@item DEPS_PROJECTS
-List of projects (foreign or non foreign) that this project depends upon.
-
-@end table
-
-For example, suppose we have a foreign project called @code{Foo},
-with an existing makefile, here is how Makefile.foo would look like:
-
-@cindex example
-@smallexample
-ifeq ($(FOO_PROJECT),)
-FOO_PROJECT=True
-
-ifeq ($(BASE_DIR),)
-   BASE_DIR=$(shell pwd)
-   FOO_ROOT=True
-
-# Redirect clean to the real clean rule
-   internal-clean:
-        $(MAKE) clean
-
-# Ditto for the build rule
-   internal-build:
-        $(MAKE) build
-endif
-
-FOO_BASE_DIR := $(BASE_DIR)
-
-# Add our source directories to the default search path
-# so that other projects can reference our include files
-FOO_SRC_DIRS = $(FOO_BASE_DIR)/include $(FOO_BASE_DIR)/include2
-SRC_DIRS += $(FOO_SRC_DIRS)
-
-# Add <build>/libfoo.a, built by the internal-build rule above, to the
-# list of libraries to link with
-LDFLAGS += $(FOO_BASE_DIR)/<build>/libfoo.a
-
-ifneq ($(FOO_ROOT),True)
-   DEPS_PROJECTS += $(FOO_BASE_DIR)/foo
-endif
-
-endif
-@end smallexample
 
 @c --------------------------------------------------------------------
 @node Source Browsing
@@ -6057,6 +5950,10 @@ the declarations lines and hit the reformat key.
 @item Align associations on arrows
 Whether the editor should automatically align arrows in associations
 (e.g. aggregates or function calls). See also previous preference.
+
+@item Align declarations on colon
+Whether the editor should align variable declarations based on the colon
+character.
 
 @end table
 
@@ -10220,14 +10117,15 @@ Contains the user and e-mail to use in the global ChangeLog
 files. Note that the common usage is to have two spaces between the
 name and the e-mail. Ex: "John Does  <john.doe@@home.com>"
 
-@c Currently disabled, since this is not well supported yet
-@c    @item GDK_USE_XFT
-@c @cindex GDK_USE_XFT
-@c If this variable is set to 1, then the fonts used in most parts of gps will be
-@c anti-aliased fonts, provided your Xserver supports the Xft extension, and you
-@c have installed anti-aliased fonts on your system, like the true-type fonts
-@c available at @url{http://keithp.com/~keithp/truetype.tar.gz}
-@c @cindex url
+   @item GDK_USE_XFT
+@cindex GDK_USE_XFT
+Only relevant to Linux and Solaris (8 and above) systems.
+If this variable is set to 1, then the fonts used in most parts of gps will be
+anti-aliased fonts.
+
+This option is enabled by default when running GPS locally (@code{DISPLAY} set
+to @code{":0.0"}) and disabled otherwise. Setting this variable explicitely
+overrides the default behavior.
 
 @end table
 
