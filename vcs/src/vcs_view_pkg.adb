@@ -60,7 +60,8 @@ with VCS.CVS;
 
 with VCS_View_Pixmaps; use VCS_View_Pixmaps;
 
-with Glide_Intl; use Glide_Intl;
+with Glide_Kernel.Console;    use Glide_Kernel.Console;
+with Glide_Intl;      use Glide_Intl;
 
 package body VCS_View_Pkg is
 
@@ -146,12 +147,6 @@ package body VCS_View_Pkg is
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   type Message_Type is (Info, Error, Verbose);
-   --  We are dealing with 3 types of messages :
-   --   - Info for general information
-   --   - Error for signaling errors
-   --   - Verbose for detailed information
 
    procedure Idle;
    --  This procedure will be called whenever the process in the background is
@@ -562,20 +557,20 @@ package body VCS_View_Pkg is
       M_Type   : Message_Type;
       Message  : String) is
    begin
-      --  ??? Right now we display any message.
-      --  Later, we may want to be able to
-      --    - use a different color for error messages
-      --    - let the user decide what kind of message he wants
-      --    - pass the message to the glide console instead
-      --  and so on...
+      if Explorer.Kernel = null then
+         if M_Type = Error then
+            Insert (Explorer.Message_Text,
+                    Chars => -"    Error : ");
+         end if;
 
-      if M_Type = Error then
          Insert (Explorer.Message_Text,
-                 Chars => -"    Error : ");
+                 Chars => Message & ASCII.LF);
+      else
+         Insert (Explorer.Kernel,
+                 Message,
+                 Highlight_Sloc => False,
+                 Mode           => M_Type);
       end if;
-
-      Insert (Explorer.Message_Text,
-              Chars => Message & ASCII.LF);
    end Push_Message;
 
    ---------------------------
@@ -670,7 +665,6 @@ package body VCS_View_Pkg is
 
          if Stored_Object = null then
             Gtk_New (Log_Editor);
-            --  Parameter_Object := new Explorer_And_Log_Record;
 
             Parameter_Object.Explorer := VCS_View_Access (Explorer);
             Parameter_Object.Log_Editor := Log_Editor;
@@ -1386,8 +1380,9 @@ package body VCS_View_Pkg is
       Init_Graphics;
 
       VCS_View := new VCS_View_Record;
-      VCS_View_Pkg.Initialize (VCS_View);
       VCS_View.Kernel := Kernel;
+
+      VCS_View_Pkg.Initialize (VCS_View);
 
       Show_Files (VCS_View, "");
    end Gtk_New;
@@ -1539,16 +1534,18 @@ package body VCS_View_Pkg is
          VCS_View);
       Pack_Start (Hbox1, Toolbar1, False, False, 3);
 
-      Gtk_New_Hbox (Hbox2, False, 0);
-      Pack_Start (Vbox1, Hbox2, True, True, 3);
+      if VCS_View.Kernel = null then
+         Gtk_New_Hbox (Hbox2, False, 0);
+         Pack_Start (Vbox1, Hbox2, True, True, 3);
 
-      Gtk_New (Scrolledwindow2);
-      Set_Policy (Scrolledwindow2, Policy_Never, Policy_Always);
-      Pack_Start (Hbox2, Scrolledwindow2, True, True, 3);
+         Gtk_New (Scrolledwindow2);
+         Set_Policy (Scrolledwindow2, Policy_Never, Policy_Always);
+         Pack_Start (Hbox2, Scrolledwindow2, True, True, 3);
 
-      Gtk_New (VCS_View.Message_Text);
-      Set_Editable (VCS_View.Message_Text, False);
-      Add (Scrolledwindow2, VCS_View.Message_Text);
+         Gtk_New (VCS_View.Message_Text);
+         Set_Editable (VCS_View.Message_Text, False);
+         Add (Scrolledwindow2, VCS_View.Message_Text);
+      end if;
    end Initialize;
 
 end VCS_View_Pkg;
