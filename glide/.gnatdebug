@@ -44,19 +44,20 @@ MODULE.PROJECT_PROPERTIES = yes
 MODULE.PROJECT_VIEWER     = yes
 MODULE.CPP                = yes
 
---  Misc
+--  Change behavior of GPS. These debug handle do not add extra logs
 
-EXPLORERS.TOOLTIPS        = no
+EXPLORERS.TOOLTIPS                = yes
+ON_THE_FLY_CASING                 = yes
+ENTITIES.FORCE_UNIQUE_REF         = yes
+ENTITIES.QUERIES_FILE_GRANULARITY = yes
+ENTITIES.ASSERT                   = no
 
 --  Debug handles related to the cross-references database
 
 ALI=no
 ALI.Assert=no
 CPP=no
-ENTITIES.ASSERT=no
 ENTITIES.DEBUG=no
-ENTITIES.FORCE_UNIQUE_REF=yes
-ENTITIES.QUERIES_FILE_GRANULARITY=yes
 
 --  Debug handles related to scripts
 
@@ -65,6 +66,4 @@ GLIDE_KERNEL.SCRIPTS=no
 PYTHON.OUT=no
 COMMANDS.CUSTOM=no
 HOOKS=no
-ON_THE_FLY_CASING=no
-
 EXPECT=no
