@@ -510,9 +510,17 @@ package body Switches_Editors is
               = Switch
             then
                if Switches (J)'Length > Switch'Length then
-                  Level := Gint'Value
-                    (Switches (J) (Switches (J)'First + Switch'Length
-                                  .. Switches (J)'Last));
+                  --  We need to catch the exception here: If the user started
+                  --  with  "-O2 -gnato" and deleted some characters so as to
+                  --  get "-O2-gnato", then we cannot interpret the switches.
+                  begin
+                     Level := Gint'Value
+                       (Switches (J) (Switches (J)'First + Switch'Length
+                                      .. Switches (J)'Last));
+                  exception
+                     when Constraint_Error =>
+                        Level := 0;
+                  end;
                else
                   Level := 0;
                end if;
@@ -521,7 +529,6 @@ package body Switches_Editors is
                  and then Switches (J).all = "-O"
                then
                   Select_Item (Get_List (Combo), 1);
-
                else
                   Select_Item (Get_List (Combo), Level);
                end if;
@@ -973,13 +980,16 @@ package body Switches_Editors is
          Change_Switches (Ada_Compiler, "compiler");
       end if;
 
-      if (Get_Pages (S) and C_Page) /= 0 then
-         Change_Switches (C_Compiler, "c_compiler");
-      end if;
+      --  ??? This code needs to be commented out while the project parser
+      --  doesn't know about the packages c_compiler and cpp_compiler
 
-      if (Get_Pages (S) and Cpp_Page) /= 0 then
-         Change_Switches (Cpp_Compiler, "cpp_compiler");
-      end if;
+      --  if (Get_Pages (S) and C_Page) /= 0 then
+      --     Change_Switches (C_Compiler, "c_compiler");
+      --  end if;
+
+      --  if (Get_Pages (S) and Cpp_Page) /= 0 then
+      --     Change_Switches (Cpp_Compiler, "cpp_compiler");
+      --  end if;
 
       if (Get_Pages (S) and Binder_Page) /= 0 then
          Change_Switches (Binder, "gnatbind");
