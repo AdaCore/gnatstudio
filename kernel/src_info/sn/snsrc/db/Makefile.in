@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p1 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -142,7 +142,7 @@ VERSION = @VERSION@
 WINFLAGS = @WINFLAGS@
 ac_cv_c_itclsh = @ac_cv_c_itclsh@
 
-SUBDIRS = PORT include
+SUBDIRS = PORT
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
