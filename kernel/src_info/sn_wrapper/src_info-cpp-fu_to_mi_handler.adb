@@ -22,34 +22,34 @@ procedure Fu_To_Mi_Handler (Ref : TO_Table) is
      (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
    Attributes   : SN_Attributes;
 
-   function Find_Method (Fn : MI_Table) return E_Declaration_Info_List;
+   function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
+      return E_Declaration_Info_List;
    --  searches for forward declaration. if no fwd decl found, searches for
    --  implementation. If nothing found throws Declaration_Not_Found
    --  TODO multiple forward declarations
 
-   function Find_Method (Fn : MI_Table) return E_Declaration_Info_List is
+   function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
+      return E_Declaration_Info_List is
       Decl_Info    : E_Declaration_Info_List;
-      MD_Tab       : MD_Table;
    begin
-      MD_Tab := Find
-        (SN_Table (MD),
-         Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
-         Fn.Buffer (Fn.Name.First .. Fn.Name.Last));
-      Decl_Info := Find_Declaration
-        (File           => Global_LI_File,
-         Symbol_Name    => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-         Class_Name     => Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
-         Location       => MD_Tab.Start_Position);
-      Free (MD_Tab);
+      Decl_Info := Find_First_Forward_Declaration
+        (MD_Tab.Buffer,
+         MD_Tab.Class,
+         MD_Tab.Name,
+         MD_Tab.File_Name,
+         MD_Tab.Return_Type,
+         MD_Tab.Arg_Types);
+      if Decl_Info = null then
+         raise Declaration_Not_Found;
+      end if;
       return Decl_Info;
    exception
-      when DB_Error | Not_Found | Declaration_Not_Found =>
-         Decl_Info := Find_Declaration
+      when Declaration_Not_Found =>
+         return Find_Declaration
            (File        => Global_LI_File,
             Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
             Class_Name  => Fn.Buffer (Fn.Class.First .. Fn.Class.Last),
             Location    => Fn.Start_Position);
-         return Decl_Info;
    end Find_Method;
 
 begin
@@ -67,23 +67,18 @@ begin
       exit when P = null;
       MDecl_Tmp := Parse_Pair (P.all);
       Free (P);
-      if Cmp_Arg_Types
-        (MDecl_Tmp.Buffer,
-         Ref.Buffer,
-         MDecl_Tmp.Arg_Types,
-         Ref.Caller_Argument_Types)
-      then
-         Overloaded := not Init;
-         if Init then
-            Init  := False;
-            MDecl := MDecl_Tmp;
-         else
-            Free (MDecl_Tmp);
-         end if;
+      if Init then
+         Init  := False;
+         MDecl := MDecl_Tmp;
       else
+         Overloaded := not Cmp_Arg_Types -- skip multiple fws decls
+           (MDecl_Tmp.Buffer,
+            MDecl.Buffer,
+            MDecl_Tmp.Arg_Types,
+            MDecl.Arg_Types);
          Free (MDecl_Tmp);
+         exit when Overloaded;
       end if;
-      exit when Overloaded;
    end loop;
 
    if Init then -- declaration for the referred method not found
@@ -109,9 +104,9 @@ begin
          Free (P);
          Init := False;
          exit when Cmp_Arg_Types
-           (MDecl_Tmp.Buffer,
+           (MDecl.Buffer,
             Fn.Buffer,
-            MDecl_Tmp.Arg_Types,
+            MDecl.Arg_Types,
             Fn.Arg_Types);
          Init := True;
          Free (Fn);
@@ -168,13 +163,18 @@ begin
             --  it may be either forward declared or implemented
             --  right away
             if Pure_Virtual then
-               Decl_Info := Find_Declaration
-                 (File           => Global_LI_File,
-                  Symbol_Name    => Ref_Id,
-                  Class_Name     => Ref_Class,
-                  Location       => MDecl.Start_Position);
+               Decl_Info := Find_First_Forward_Declaration
+                 (MDecl.Buffer,
+                  MDecl.Class,
+                  MDecl.Name,
+                  MDecl.File_Name,
+                  MDecl.Return_Type,
+                  MDecl.Arg_Types);
+               if Decl_Info = null then
+                  raise Declaration_Not_Found;
+               end if;
             else
-               Decl_Info := Find_Method (Fn);
+               Decl_Info := Find_Method (Fn, MDecl);
             end if;
          exception
             when Declaration_Not_Found =>
@@ -219,8 +219,11 @@ begin
                   Declaration_Info   => Decl_Info);
          end;
       end if;
+
+      if not Pure_Virtual then
+         Free (Fn);
+      end if;
    else -- overloaded entity
-      Free (MDecl);
       --  have we already declared it?
       begin
          Decl_Info := Find_Declaration
@@ -241,7 +244,7 @@ begin
             Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
       end;
    end if;
-   Free (Fn);
+   Free (MDecl);
 
    Insert_Reference
      (Decl_Info,

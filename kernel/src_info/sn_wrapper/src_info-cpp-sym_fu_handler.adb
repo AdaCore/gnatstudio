@@ -99,13 +99,24 @@ begin
    --  We should also try to find GPS declaration created during
    --  FD processing and not create new declaration.
    if Sym.Symbol = MI then
-      Decl_Info      := Find_First_Forward_Declaration (MI_Tab);
+      Decl_Info      := Find_First_Forward_Declaration
+        (MI_Tab.Buffer,
+         MI_Tab.Class,
+         MI_Tab.Name,
+         MI_Tab.File_Name,
+         MI_Tab.Return_Type,
+         MI_Tab.Arg_Types);
       if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
          Body_Position  := Sym.Start_Position;
       end if;
    else
       --  Try to find forward declaration
-      Decl_Info      := Find_First_Forward_Declaration (FU_Tab);
+      Decl_Info      := Find_First_Forward_Declaration
+        (FU_Tab.Buffer,
+         FU_Tab.Name,
+         FU_Tab.File_Name,
+         FU_Tab.Return_Type,
+         FU_Tab.Arg_Types);
       if Decl_Info /= null then -- Body_Entity is inserted only w/ fwd decl
          Body_Position  := Sym.Start_Position;
       end if;

@@ -1075,14 +1075,25 @@ package body Src_Info.CPP is
    end Cmp_Prototypes;
 
    function Find_First_Forward_Declaration
-     (Fn : FU_Table) return E_Declaration_Info_List;
+     (Buffer       : SN.String_Access;
+      Name         : Segment;
+      Filename     : Segment;
+      Return_Type  : Segment;
+      Arg_Types    : Segment_Vector.Node_Access)
+      return E_Declaration_Info_List;
    --  Attempts to find the first forward declaration
    --  for the function. Returns null if not found or
    --  forward declaration is in another file which
    --  has not been yet processed
 
    function Find_First_Forward_Declaration
-     (Fn : MI_Table) return E_Declaration_Info_List;
+     (Buffer       : SN.String_Access;
+      Class_Name   : Segment;
+      Name         : Segment;
+      Filename     : Segment;
+      Return_Type  : Segment;
+      Arg_Types    : Segment_Vector.Node_Access)
+      return E_Declaration_Info_List;
    --  Attempts to find the first forward declaration
    --  for the method. Returns null if not found or
    --  forward declaration is in another file which
@@ -1092,7 +1103,13 @@ package body Src_Info.CPP is
    -- Find_First_Forward_Declaration --
    ------------------------------------
    function Find_First_Forward_Declaration
-     (Fn : MI_Table) return E_Declaration_Info_List
+     (Buffer       : SN.String_Access;
+      Class_Name   : Segment;
+      Name         : Segment;
+      Filename     : Segment;
+      Return_Type  : Segment;
+      Arg_Types    : Segment_Vector.Node_Access)
+      return E_Declaration_Info_List
    is
       P            : Pair_Ptr;
       MD_Tab       : MD_Table;
@@ -1110,8 +1127,8 @@ package body Src_Info.CPP is
       Set_Cursor
         (SN_Table (MD),
          By_Key,
-         Fn.Buffer (Fn.Class.First .. Fn.Class.Last) & Field_Sep
-            & Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         Buffer (Class_Name.First .. Class_Name.Last) & Field_Sep
+            & Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
@@ -1124,14 +1141,14 @@ package body Src_Info.CPP is
          --  Update position of the first forward declaration
          exit when (MD_Tab.Buffer (MD_Tab.File_Name.First ..
                                    MD_Tab.File_Name.Last)
-            = Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last))
+            = Buffer (Filename.First .. Filename.Last))
             and then Cmp_Prototypes
               (MD_Tab.Buffer,
-               Fn.Buffer,
+               Buffer,
                MD_Tab.Arg_Types,
-               Fn.Arg_Types,
+               Arg_Types,
                MD_Tab.Return_Type,
-               Fn.Return_Type);
+               Return_Type);
          Free (MD_Tab);
       end loop;
 
@@ -1139,8 +1156,8 @@ package body Src_Info.CPP is
       Set_Cursor
         (SN_Table (MD),
          By_Key,
-         Fn.Buffer (Fn.Class.First .. Fn.Class.Last) & Field_Sep
-            & Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         Buffer (Class_Name.First .. Class_Name.Last) & Field_Sep
+            & Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
@@ -1169,7 +1186,8 @@ package body Src_Info.CPP is
       pragma Assert (First_MD_Pos /= Invalid_Point); -- DB inconsistency?
       return Find_Declaration
         (File        => Global_LI_File,
-         Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+         Symbol_Name => Buffer (Name.First .. Name.Last),
+         Class_Name  => Buffer (Class_Name.First .. Class_Name.Last),
          Location    => First_MD_Pos);
 
    exception
@@ -1181,7 +1199,12 @@ package body Src_Info.CPP is
    -- Find_First_Forward_Declaration --
    ------------------------------------
    function Find_First_Forward_Declaration
-     (Fn : FU_Table) return E_Declaration_Info_List
+     (Buffer       : SN.String_Access;
+      Name         : Segment;
+      Filename     : Segment;
+      Return_Type  : Segment;
+      Arg_Types    : Segment_Vector.Node_Access)
+      return E_Declaration_Info_List
    is
       P            : Pair_Ptr;
       FD_Tab       : FD_Table;
@@ -1202,7 +1225,7 @@ package body Src_Info.CPP is
       Set_Cursor
         (SN_Table (FD),
          By_Key,
-         Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
@@ -1215,14 +1238,14 @@ package body Src_Info.CPP is
          --  Update position of the first forward declaration
          exit when (FD_Tab.Buffer (FD_Tab.File_Name.First ..
                                  FD_Tab.File_Name.Last)
-               = Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last))
+               = Buffer (Filename.First .. Filename.Last))
             and then Cmp_Prototypes
               (FD_Tab.Buffer,
-               Fn.Buffer,
+               Buffer,
                FD_Tab.Arg_Types,
-               Fn.Arg_Types,
+               Arg_Types,
                FD_Tab.Return_Type,
-               Fn.Return_Type);
+               Return_Type);
          Free (FD_Tab);
       end loop;
 
@@ -1230,7 +1253,7 @@ package body Src_Info.CPP is
       Set_Cursor
         (SN_Table (FD),
          By_Key,
-         Fn.Buffer (Fn.Name.First .. Fn.Name.Last) & Field_Sep,
+         Buffer (Name.First .. Name.Last) & Field_Sep,
          False);
 
       loop
@@ -1261,7 +1284,7 @@ package body Src_Info.CPP is
       pragma Assert (First_FD_Pos /= Invalid_Point); -- DB inconsistency?
       return Find_Declaration
         (File        => Global_LI_File,
-         Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+         Symbol_Name => Buffer (Name.First .. Name.Last),
          Location    => First_FD_Pos);
 
    exception
