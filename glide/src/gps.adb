@@ -485,6 +485,9 @@ begin
         ("gtk-font-name=""" &
          To_String (Get_Pref (GPS.Kernel, Default_Font)) &
          '"' & ASCII.LF &
+         "gtk-can-change-accels=" &
+         Integer'Image (Boolean'Pos
+           (Get_Pref (GPS.Kernel, Can_Change_Accels))) & ASCII.LF &
          "gtk-key-theme-name=""" &
          Get_Pref (GPS.Kernel, Key_Theme_Name) & '"');
    end if;
