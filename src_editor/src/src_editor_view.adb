@@ -557,8 +557,8 @@ package body Src_Editor_View is
                Height        : Gint;
                X             : Gint;
 
-               Bracket_Length : constant := 6;
-               --  The length of upper and lower parts of the barcket.
+               Bracket_Length : constant := 15;
+               --  The length of upper and lower parts of the bracket.
 
                Bracket_Offset : constant := 2;
                --  The distance between brackets and text.
