@@ -682,10 +682,10 @@ package body Glide_Kernel is
    is
       Files : File_Array_Access := Handle.Open_Files;
    begin
-      Run_Hook (Handle, File_Edited_Hook,
-                File_Hooks_Args'(Hooks_Data with File => File));
-
       if not Is_Open (Handle, File) then
+         Run_Hook (Handle, File_Edited_Hook,
+                   File_Hooks_Args'(Hooks_Data with File => File));
+
          if Files = null then
             Handle.Open_Files := new File_Array (1 .. 1);
          else
