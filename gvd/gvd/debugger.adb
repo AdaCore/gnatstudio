@@ -64,8 +64,6 @@ package body Debugger is
    -- Local Functions --
    ---------------------
 
-   function To_Gint is new Ada.Unchecked_Conversion (File_Descriptor, Gint);
-
    function Output_Available (Process : Debugger_Process_Tab) return Boolean;
    --  Called when waiting output from the debugger.
    --  This procedure is activated to handle asynchronous commands.
