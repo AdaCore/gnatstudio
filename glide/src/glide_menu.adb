@@ -1068,6 +1068,7 @@ package body Glide_Menu is
       Compare_Sub : constant String := (-"Compare")        & '/';
       Window      : constant String := "/_" & (-"Window");
       Help        : constant String := "/_" & (-"Help")    & '/';
+
    begin
       return new Gtk_Item_Factory_Entry_Array'
         (Gtk_New (File & (-"New"), "", Stock_New, On_New_File'Access),
@@ -1099,7 +1100,7 @@ package body Glide_Menu is
          Gtk_New
            (Edit & (-"Select All"), "<control>A", On_Select_All'Access),
          Gtk_New (Edit & "sep2", Item_Type => Separator),
-         Gtk_New (Edit & (-"Preferences..."), "",
+         Gtk_New (Edit & (-"Preferences"), "",
                   Stock_Preferences, On_Preferences'Access),
 
          Gtk_New (Gotom & (-"Goto Line..."), "", Stock_Jump_To, null),
@@ -1152,14 +1153,14 @@ package body Glide_Menu is
          Gtk_New (Debug & Session_Sub & (-"Open..."), "", Stock_Open, null),
          Gtk_New (Debug & Session_Sub & (-"Save As..."), "",
                   Stock_Save_As, null),
-         Gtk_New (Debug & Session_Sub & (-"Command History..."), "",
+         Gtk_New (Debug & Session_Sub & (-"Command History"), "",
                   Stock_Index, null),
          Gtk_New (Debug & Data_Sub & (-"Call Stack"), "", null, Check_Item),
          Gtk_New (Debug & Data_Sub & (-"Threads"), "", null),
          Gtk_New (Debug & Data_Sub & (-"Tasks"), "", null),
          Gtk_New (Debug & Data_Sub & "sep1", Item_Type => Separator),
-         Gtk_New (Debug & Data_Sub & (-"Edit Breakpoints..."), "", null),
-         Gtk_New (Debug & Data_Sub & (-"Examine Memory..."), "", null),
+         Gtk_New (Debug & Data_Sub & (-"Edit Breakpoints"), "", null),
+         Gtk_New (Debug & Data_Sub & (-"Examine Memory"), "", null),
          Gtk_New (Debug & Data_Sub & "sep2", Item_Type => Separator),
          Gtk_New (Debug & Data_Sub & (-"Display Local Variables"),
                   "<alt>L", null),
@@ -1184,9 +1185,9 @@ package body Glide_Menu is
 
          Gtk_New (Tools & (-"Pretty Print"), "", null),
          Gtk_New (Tools & (-"Generate Body"), "", On_Generate_Body'Access),
-         Gtk_New (Tools & (-"Call Graph..."), "", null),
-         Gtk_New (Tools & (-"Metrics..."), "", null),
-         Gtk_New (Tools & (-"Code Fixing..."), "", null),
+         Gtk_New (Tools & (-"Call Graph"), "", null),
+         Gtk_New (Tools & (-"Metrics"), "", null),
+         Gtk_New (Tools & (-"Code Fixing"), "", null),
          Gtk_New (Tools & (-"Profile"), "", null),
          Gtk_New (Tools & (-"Memory Analyzer"), "", null),
          Gtk_New (Tools & Compare_Sub & (-"Two Files..."), "",
