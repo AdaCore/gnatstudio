@@ -988,7 +988,7 @@ private
       Editable_Lines      : Editable_Line_Array_Access;
       --  Reference array for editable lines.
 
-      Last_Editable_Line  : Editable_Line_Type := 0;
+      Last_Editable_Line  : Editable_Line_Type := 1;
       --  The last editable line in the buffer (corresponds to an index in
       --  Editable_Lines)
 
