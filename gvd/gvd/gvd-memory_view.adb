@@ -924,15 +924,23 @@ package body GVD.Memory_View is
               Fore => View.Modified_Color,
               Chars => Char);
 
-      while Get_Chars (View.View, Bloc_Begin - 1, Bloc_Begin) /=
-        Data_Separator (Data_Separator'Last .. Data_Separator'Last)
+      while Bloc_Begin > 0
+        and then Get_Chars (View.View, Bloc_Begin - 1, Bloc_Begin) /=
+                 Data_Separator (Data_Separator'Last .. Data_Separator'Last)
       loop
          Bloc_Begin := Bloc_Begin - 1;
       end loop;
 
-      while Get_Chars (View.View, Bloc_End, Bloc_End + 1) /=
-        Data_Separator (Data_Separator'First .. Data_Separator'First)
       loop
+         declare
+            S : constant String :=
+                  Get_Chars (View.View, Bloc_End, Bloc_End + 1);
+         begin
+            exit when S = ""
+              or else S = Data_Separator
+                            (Data_Separator'First .. Data_Separator'First);
+         end;
+
          Bloc_End := Bloc_End + 1;
       end loop;
 
