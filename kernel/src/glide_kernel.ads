@@ -185,6 +185,9 @@ private
 
       Preferences : Gint_Xml.Node_Ptr;
       --  The XML tree that contains the current preferences
+
+      Current_Editor : Gtkada.MDI.MDI_Child;
+      --  The last editor that had the focus
    end record;
 
 end Glide_Kernel;
