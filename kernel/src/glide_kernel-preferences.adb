@@ -418,7 +418,7 @@ package body Glide_Kernel.Preferences is
          Default => True,
          Blurb   => -("Whether paths should be absolute or relative when the"
                       & " projects are modified"),
-         Nick    => -"Relative Paths"));
+         Nick    => -"Relative paths"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Generate_Relative_Paths), -"Project");
 

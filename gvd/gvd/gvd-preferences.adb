@@ -97,7 +97,7 @@ package body GVD.Preferences is
 
       Break_On_Exception := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Break-On-Exception",
-         Nick      => -"Break On Exceptions",
+         Nick      => -"Break on exceptions",
          Blurb     =>
            -"True if process should be stopped when an exception is raised",
          Default   => False));
@@ -254,7 +254,7 @@ package body GVD.Preferences is
 
       Should_Strip_CR := Param_Spec_Boolean (Gnew_Boolean
         (Name     => XML_Prefix & "Should-Strip-CR",
-         Nick     => -"Strip Carriage return",
+         Nick     => -"Strip carriage return",
          Blurb    => -("True if the carriage return characters should be"
                        & " removed when reading a file. This is for"
                        & " compatibility between unix and windows systems"),
