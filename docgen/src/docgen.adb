@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Generic_List;
 with VFS;                       use VFS;
@@ -87,24 +86,6 @@ package body Docgen is
          B.Last_Line := Value;
       end Set_Last_Line;
 
-      -----------------------
-      -- Launch_Doc_Create --
-      -----------------------
-
-      procedure Launch_Doc_Create
-        (B                : Backend_Handle;
-         Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-         File             : in Ada.Text_IO.File_Type;
-         List_Ref_In_File : in out List_Reference_In_File.List;
-         Info             : in out Docgen.Doc_Info;
-         Doc_Directory    : String;
-         Doc_Suffix       : String;
-         Level            : Natural) is
-      begin
-         Doc_Create (B, Kernel, File, List_Ref_In_File,
-                     Info, Doc_Directory, Doc_Suffix, Level);
-      end Launch_Doc_Create;
-
       -----------------
       -- Format_File --
       -----------------
@@ -112,21 +93,23 @@ package body Docgen is
       procedure Format_File
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
-         File             : Ada.Text_IO.File_Type;
+         File             : File_Descriptor;
          List_Ref_In_File : in out List_Reference_In_File.List;
-         LI_Unit          : LI_File_Ptr;
          Text             : String;
          File_Name        : VFS.Virtual_File;
          Entity_Line      : Natural;
          Line_In_Body     : Natural;
-         Source_File_List : Type_Source_File_List.List;
-         Link_All         : Boolean;
          Is_Body          : Boolean;
-         Process_Body     : Boolean;
-         Info             : Doc_Info;
+         Info             : Doc_Info_Base'Class;
          Level            : Natural;
          Indent           : Natural)
       is
+         LI_Unit          : LI_File_Ptr renames Info.Doc_LI_Unit;
+         Source_File_List : Type_Source_File_List.List renames
+           Info.Doc_File_List;
+         Link_All         : Boolean renames Info.Doc_Info_Options.Link_All;
+         Process_Body     : Boolean renames
+           Info.Doc_Info_Options.Process_Body_Files;
 
          function Is_Operator (Op : String) return Boolean;
          --  Indicates if op is a subprogram which overloads an operator
@@ -230,13 +213,13 @@ package body Docgen is
                                       Sloc_End.Index - 1)))
                        or else
                          (Is_Spec_File (Kernel, File_Name)
-                          and then
                            --  For a spec file, we know immediatly the nature
                            --  of the word
-                            Info.Info_Type = Subprogram_Info
+                          and then Info in Doc_Info_Subprogram'Class
                           and then
-                            Text (Sloc_Start.Index + 1 .. Sloc_End.Index - 1)
-                            = Get_Name (Info.Subprogram_Entity.Entity))
+                            Text (Sloc_Start.Index + 1 .. Sloc_End.Index - 1) =
+                            Get_Name (Doc_Info_Subprogram
+                                        (Info).Subprogram_Entity.Entity))
                      then
                         --  Function which overrides an operator
                            Format_Identifier
@@ -354,14 +337,14 @@ package body Docgen is
    ---------------------
 
    procedure Format_All_Link
-     (B                   : access Backend'Class;
+     (B                   : access Docgen_Backend.Backend'Class;
       List_Ref_In_File    : in out List_Reference_In_File.List;
       Start_Index         : Natural;
       Start_Line          : Natural;
       Start_Column        : Natural;
       End_Index           : Natural;
       Kernel              : access Kernel_Handle_Record'Class;
-      File                : Ada.Text_IO.File_Type;
+      File                : File_Descriptor;
       LI_Unit             : LI_File_Ptr;
       Text                : String;
       File_Name           : VFS.Virtual_File;
@@ -490,7 +473,7 @@ package body Docgen is
 
             --  We create a link on the declaration for this entity
             if Result then
-               Format_Link
+               Docgen_Backend.Format_Link
                  (B,
                   Start_Index, Start_Line, Start_Column, End_Index,
                   Kernel, File, LI_Unit, Text, File_Name, Entity_Line,
