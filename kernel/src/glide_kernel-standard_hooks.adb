@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
+--                     Copyright (C) 2003 - 2005                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -54,7 +54,6 @@ package body Glide_Kernel.Standard_Hooks is
       File           : Virtual_File;
       Identifier     : String;
       Info           : Line_Information_Data;
-      Stick_To_Data  : Boolean := True;
       Every_Line     : Boolean := True;
       Normalize      : Boolean := True);
    --  Create the Mime info for adding/creating/removing line information,
@@ -115,7 +114,6 @@ package body Glide_Kernel.Standard_Hooks is
       File           : Virtual_File;
       Identifier     : String;
       Info           : Line_Information_Data;
-      Stick_To_Data  : Boolean := True;
       Every_Line     : Boolean := True;
       Normalize      : Boolean := True)
    is
@@ -125,7 +123,6 @@ package body Glide_Kernel.Standard_Hooks is
          Identifier        => Identifier,
          File              => File,
          Info              => Info,
-         Stick_To_Data     => Stick_To_Data,
          Every_Line        => Every_Line,
          Normalize         => Normalize);
    begin
@@ -186,7 +183,6 @@ package body Glide_Kernel.Standard_Hooks is
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : Virtual_File;
       Identifier     : String;
-      Stick_To_Data  : Boolean := True;
       Every_Line     : Boolean := True;
       Normalize      : Boolean := True)
    is
@@ -199,7 +195,6 @@ package body Glide_Kernel.Standard_Hooks is
          File,
          Identifier,
          A_Access,
-         Stick_To_Data,
          Every_Line,
          Normalize);
       Unchecked_Free (A_Access);
@@ -494,9 +489,8 @@ package body Glide_Kernel.Standard_Hooks is
          File              => Get_File
            (Get_Data (Nth_Arg (Data, 3, Get_File_Class (Kernel)))),
          Info              => null,
-         Stick_To_Data     => Nth_Arg (Data, 4),
-         Every_Line        => Nth_Arg (Data, 5),
-         Normalize         => Nth_Arg (Data, 6));
+         Every_Line        => Nth_Arg (Data, 4),
+         Normalize         => Nth_Arg (Data, 5));
       pragma Unreferenced (Command);
    begin
       Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
@@ -733,16 +727,15 @@ package body Glide_Kernel.Standard_Hooks is
       Hook_Name : String;
       Data      : File_Line_Hooks_Args) return Boolean
    is
-      D   : Callback_Data'Class := Create (Script, 6);
+      D   : Callback_Data'Class := Create (Script, 5);
       Tmp : Boolean;
       F   : constant Class_Instance := Create_File (Script, Data.File);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, Data.Identifier);
       Set_Nth_Arg (D, 3, F);
-      Set_Nth_Arg (D, 4, Data.Stick_To_Data);
-      Set_Nth_Arg (D, 5, Data.Every_Line);
-      Set_Nth_Arg (D, 6, Data.Normalize);
+      Set_Nth_Arg (D, 4, Data.Every_Line);
+      Set_Nth_Arg (D, 5, Data.Normalize);
 
       Tmp := Execute (Command, D);
       Free (F);
