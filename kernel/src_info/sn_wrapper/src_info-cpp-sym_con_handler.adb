@@ -9,7 +9,7 @@ is
    Desc              : CType_Description;
    Var               : GV_Table;
    Success           : Boolean;
-   tmp_ptr           : E_Declaration_Info_List;
+   Decl_Info         : E_Declaration_Info_List;
    Attributes        : SN_Attributes;
    Scope             : E_Scope := Global_Scope;
 begin
@@ -44,6 +44,7 @@ begin
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Global_LI_File,
+         List              => Global_LI_File_List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
@@ -51,11 +52,12 @@ begin
          Location          => Sym.Start_Position,
          Kind              => Type_To_Object (Desc.Kind),
          Scope             => Scope,
-         Declaration_Info  => tmp_ptr);
+         Declaration_Info  => Decl_Info);
    else
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Global_LI_File,
+         List              => Global_LI_File_List,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
@@ -65,7 +67,7 @@ begin
          Scope             => Scope,
          Parent_Location   => Desc.Parent_Point,
          Parent_Filename   => Desc.Parent_Filename.all,
-         Declaration_Info  => tmp_ptr);
+         Declaration_Info  => Decl_Info);
 
       --  add reference to the type of this variable
       Refer_Type
