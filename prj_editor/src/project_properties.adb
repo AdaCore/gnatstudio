@@ -2839,14 +2839,18 @@ package body Project_Properties is
       Dialog    : Gtk_Dialog;
       Button    : Gtk_Widget;
       Typ       : Attribute_Type;
+      Edit_Mode : Boolean;
    begin
-      if Get_Event_Type (Event) = Gdk_2button_Press
-        and then Get_Button (Event) = 1
-      then
-         Get_Path_At_Pos
-           (Ed.View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-            Path, Column, Cell_X, Cell_Y, Row_Found);
+      Get_Path_At_Pos
+        (Ed.View, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+         Path, Column, Cell_X, Cell_Y, Row_Found);
 
+      if Row_Found
+        and then Get_Button (Event) = 1
+        and then (Get_Event_Type (Event) = Gdk_2button_Press or else
+            (Get_Event_Type (Event) = Button_Press
+             and then Path_Is_Selected (Get_Selection (Ed.View), Path)))
+      then
          if Row_Found then
             Iter := Get_Iter (Ed.Model, Path);
 
