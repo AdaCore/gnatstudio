@@ -45,12 +45,15 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 with VCS;
 
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 with VCS_View_API;              use VCS_View_API;
 with VCS_Module;                use VCS_Module;
+
+with Log_Utils;                 use Log_Utils;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
@@ -276,7 +279,8 @@ package body VCS_View_Pkg is
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
-      Force_Display  : Boolean := False)
+      Force_Display  : Boolean := False;
+      Clear_Logs     : Boolean := False)
    is
       use File_Status_List;
 
@@ -289,6 +293,43 @@ package body VCS_View_Pkg is
       Page          : VCS_Page_Access;
 
    begin
+      --  Free the logs associated to the files that are up-to-date.
+
+      if Clear_Logs then
+         while Status_Temp /= Null_Node loop
+            declare
+               S      : File_Status_Record := Data (Status_Temp);
+               File   : constant String := String_List.Head (S.File_Name);
+            begin
+               if S.Status = Up_To_Date then
+                  declare
+                     Log   : constant String
+                       := Get_Log_From_File (Kernel, File);
+                     Dummy : Boolean;
+                  begin
+                     if Log /= ""
+                       and then GNAT.OS_Lib.Is_Regular_File (Log)
+                     then
+                        GNAT.OS_Lib.Delete_File (Log, Dummy);
+                     end if;
+
+                     Remove_File_From_Mapping (Kernel, File);
+                  end;
+               end if;
+
+
+            exception
+               when E : others =>
+                  Trace (Me, "Unexpected exception: "
+                           & Exception_Information (E));
+            end;
+
+            Status_Temp := Next (Status_Temp);
+         end loop;
+
+         Status_Temp := First (Status);
+      end if;
+
       if Child = null then
          return;
       else

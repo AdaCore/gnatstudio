@@ -53,7 +53,8 @@ package VCS_View_Pkg is
       Status         : File_Status_List.List;
       VCS_Identifier : VCS_Access;
       Override_Cache : Boolean;
-      Force_Display  : Boolean := False);
+      Force_Display  : Boolean := False;
+      Clear_Logs     : Boolean := False);
    --  Display Status in the explorer.
    --  Status must be freed by the user after calling this function.
    --  If Override_Cache is set to True, then the cache will be updated
@@ -62,6 +63,9 @@ package VCS_View_Pkg is
    --  If Force_Display is True, then files that are not already visible
    --  will be added to the list. Otherwise this function only updates
    --  status for files that are currently visible in the view.
+   --  If Clear_Logs is True, then the log files corresponding
+   --  to the files that have an "Up_To_Date" status will be deleted,
+   --  as well as the corresponding file/log mapping for those files.
 
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
