@@ -679,7 +679,7 @@ If force is True, then the user will not be asked whether to save the current pr
   <shell_doc name="GPS.Project.rename">
        <param name="self">An instance of GPS.Project</param>
        <param name="name">A string</param>
-       <param name="path" default="<current path>">A string</param>
+       <param name="path" default="&lt;current path&gt;">A string</param>
        <description>Rename and move a project file (the project will only be put in the new directory when it is saved, but will not be removed from its original directory). You must call GPS.Project.recompute() sometime after changing the name.</description>
   </shell_doc>
 
