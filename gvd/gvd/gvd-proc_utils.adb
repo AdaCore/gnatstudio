@@ -29,6 +29,10 @@ with Ada.Unchecked_Deallocation;
 
 package body GVD.Proc_Utils is
 
+   type Process_Record is record
+      Descriptor : Process_Descriptor_Access;
+   end record;
+
    procedure Free is new Ada.Unchecked_Deallocation
      (Process_Record, Process_Handle);
 
@@ -106,7 +110,6 @@ package body GVD.Proc_Utils is
 
    begin
       Handle := new Process_Record;
-      Handle.Remote := False;
 
       if Use_Ptys then
          Handle.Descriptor := new TTY_Process_Descriptor;
@@ -147,7 +150,6 @@ package body GVD.Proc_Utils is
 
    begin
       Handle := new Process_Record;
-      Handle.Remote := True;
 
       if Use_Ptys then
          Handle.Descriptor := new TTY_Process_Descriptor;
