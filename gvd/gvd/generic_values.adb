@@ -1509,6 +1509,7 @@ package body Generic_Values is
                     Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0)
    is
+      Text_GC : Gdk_GC := Context.Xref_GC;
    begin
       Item.X := X;
       Item.Y := Y;
@@ -1530,9 +1531,13 @@ package body Generic_Values is
         Set_Function (Context.GC, Copy_Invert);
       end if;
 
+      if Item.Has_Changed then
+         Text_GC := Context.Modified_GC;
+      end if;
+
       Draw_Text (Context.Pixmap,
                  Font => Context.Font,
-                 GC   => Context.Xref_Gc,
+                 GC   => Text_GC,
                  X    => X,
                  Y    => Y + Get_Ascent (Context.Font),
                  Text => Item.Value.all);
