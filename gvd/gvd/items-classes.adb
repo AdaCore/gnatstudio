@@ -1,0 +1,408 @@
+-----------------------------------------------------------------------
+--                 Odd - The Other Display Debugger                  --
+--                                                                   --
+--                         Copyright (C) 2000                        --
+--                 Emmanuel Briot and Arnaud Charlet                 --
+--                                                                   --
+-- Odd is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with GNAT.IO;  use GNAT.IO;
+
+with Glib;         use Glib;
+with Gdk.Font;     use Gdk.Font;
+with Gdk.Drawable; use Gdk.Drawable;
+with Gdk.GC;       use Gdk.GC;
+with Language;     use Language;
+with Gdk.Types;    use Gdk.Types;
+
+with Items.Records; use Items.Records;
+
+package body Items.Classes is
+
+   --------------------
+   -- New_Class_Type --
+   --------------------
+
+   function New_Class_Type (Num_Ancestors : Natural)
+                           return Generic_Type_Access
+   is
+   begin
+      return new Class_Type (Num_Ancestors);
+   end New_Class_Type;
+
+   ------------------
+   -- Add_Ancestor --
+   ------------------
+
+   procedure Add_Ancestor (Item     : in out Class_Type;
+                           Num      : Positive;
+                           Ancestor : Class_Type_Access)
+   is
+   begin
+      pragma Assert (Num <= Item.Num_Ancestors);
+      if Item.Ancestors (Num) /= null then
+         Free (Item.Ancestors (Num), Only_Value => False);
+      end if;
+      Item.Ancestors (Num) := Ancestor;
+      Item.Valid := True;
+      Item.Ancestors (Num).Valid := True;
+   end Add_Ancestor;
+
+   ---------------
+   -- Set_Child --
+   ---------------
+
+   procedure Set_Child (Item  : in out Class_Type;
+                        Child : Record_Type_Access)
+   is
+   begin
+      pragma Assert (Item.Child = null);
+      if Item.Child /= null then
+         Free (Item.Child, Only_Value => False);
+      end if;
+      Item.Child := Child;
+   end Set_Child;
+
+   ---------------
+   -- Get_Child --
+   ---------------
+
+   function Get_Child (Item : Class_Type) return Generic_Type_Access is
+   begin
+      return Generic_Type_Access (Item.Child);
+   end Get_Child;
+
+   ------------------
+   -- Get_Ancestor --
+   ------------------
+
+   function Get_Ancestor (Item : Class_Type;
+                          Num  : Positive)
+                         return Generic_Type_Access
+   is
+   begin
+      pragma Assert (Num <= Item.Num_Ancestors);
+      return Generic_Type_Access (Item.Ancestors (Num));
+   end Get_Ancestor;
+
+   -----------------------
+   -- Get_Num_Ancestors --
+   -----------------------
+
+   function Get_Num_Ancestors (Item : Class_Type) return Natural is
+   begin
+      return Item.Num_Ancestors;
+   end Get_Num_Ancestors;
+
+   -----------
+   -- Print --
+   -----------
+
+   procedure Print (Value : Class_Type; Indent : Natural := 0) is
+   begin
+      Put ("{Class ");
+      for A in Value.Ancestors'Range loop
+         New_Line;
+         Put (String'(1 .. Indent + 3 => ' '));
+         Put ("Ancestor" & A'Img & " => ");
+
+         if Value.Ancestors (A) = null then
+            Put (" <unknown>");
+         else
+            Print (Value.Ancestors (A).all, Indent + 3);
+         end if;
+      end loop;
+
+      New_Line;
+      Put (String'(1 .. Indent + 3 => ' '));
+      Put ("Child => ");
+
+      Print (Value.Child.all, Indent + 3);
+      Put ("}");
+   end Print;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Item : access Class_Type;
+                   Only_Value : Boolean := False)
+   is
+      I : Generic_Type_Access := Generic_Type_Access (Item);
+   begin
+      for A in Item.Ancestors'Range loop
+         Free (Item.Ancestors (A), Only_Value);
+      end loop;
+      Free (Item.Child, Only_Value);
+      if not Only_Value then
+         Free_Internal (I);
+      end if;
+   end Free;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (Value : Class_Type) return Generic_Type_Access
+   is
+      R : Class_Type_Access := new Class_Type (Value.Num_Ancestors);
+   begin
+      for A in Value.Ancestors'Range loop
+         R.Ancestors (A) :=
+           Class_Type_Access (Clone (Value.Ancestors (A).all));
+      end loop;
+      R.Child := Record_Type_Access (Clone (Value.Child.all));
+      return Generic_Type_Access (R);
+   end Clone;
+
+   -----------
+   -- Paint --
+   -----------
+
+   procedure Paint (Item    : in out Class_Type;
+                    Context : Drawing_Context;
+                    X, Y    : Glib.Gint := 0)
+   is
+      Current_Y : Gint := Y;
+   begin
+      Item.X := X;
+      Item.Y := Y;
+
+      if not Item.Valid
+        or else (Item.Ancestors'Length = 0
+                 and then not Item.Child.Valid)
+      then
+         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
+                         Unknown_Mask, X + Left_Border, Y + Border_Spacing);
+         return;
+      end if;
+
+      if not Item.Visible then
+         Display_Pixmap (Context.Pixmap, Context.GC, Hidden_Pixmap,
+                         Hidden_Mask, X + Left_Border, Current_Y);
+         return;
+      end if;
+
+      if Item.Selected then
+        Draw_Rectangle (Context.Pixmap,
+                        Context.GC,
+                        Filled => True,
+                        X      => X,
+                        Y      => Y,
+                        Width  => Item.Width,
+                        Height => Item.Height);
+        Set_Function (Context.GC, Copy_Invert);
+      end if;
+
+      for A in Item.Ancestors'Range loop
+
+         --  Draw the ancestor if it isn't a null record.
+
+         if Item.Ancestors (A) /= null
+           and then Item.Ancestors (A).Height /= 0
+         then
+            --  Do not add Left_Border to X, since each of the ancestor is
+            --  itself a Class_Type and will already draw it.
+            Paint (Item.Ancestors (A).all, Context, X, Current_Y);
+            Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
+         end if;
+      end loop;
+
+      if Item.Child.Height /= 0 then
+         Paint (Item.Child.all, Context, X + Left_Border, Current_Y);
+      end if;
+
+      if Item.Selected then
+        Set_Function (Context.GC, Copy);
+      end if;
+   end Paint;
+
+   ------------------
+   -- Size_Request --
+   ------------------
+
+   procedure Size_Request
+     (Item           : in out Class_Type;
+      Font           : Gdk.Font.Gdk_Font;
+      Hide_Big_Items : Boolean := False)
+   is
+      Total_Height, Total_Width : Gint := 0;
+   begin
+
+      if not Item.Valid then
+         Item.Width := Unknown_Width;
+         Item.Height := Unknown_Height;
+         return;
+      end if;
+
+      if Item.Visible then
+         for A in Item.Ancestors'Range loop
+            if Item.Ancestors (A) /= null then
+               Size_Request (Item.Ancestors (A).all, Font, Hide_Big_Items);
+
+               --  If we don't have an null record
+               if Item.Ancestors (A).Height /= 0 then
+                  Total_Height := Total_Height + Item.Ancestors (A).Height
+                    + Line_Spacing;
+               end if;
+               Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
+            end if;
+         end loop;
+
+         Size_Request (Item.Child.all, Font, Hide_Big_Items);
+
+         Total_Width := Gint'Max (Total_Width, Item.Child.Width) + Left_Border;
+         Item.Child.Width := Total_Width;
+
+         --  Dont print an extra border around, since each ancestors and child
+         --  are records and already have their own borders.
+         Item.Width  := Total_Width;
+         Item.Height := Total_Height + Item.Child.Height;
+
+         if Hide_Big_Items and then Item.Height > Big_Item_Height then
+            Item.Visible := False;
+         end if;
+      end if;
+
+      if not Item.Visible then
+         Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
+         Item.Height := 2 * Border_Spacing + Hidden_Height;
+      end if;
+   end Size_Request;
+
+   ------------------------
+   -- Get_Component_Name --
+   ------------------------
+
+   function Get_Component_Name (Item : access Class_Type;
+                                Lang : access Language_Root'Class;
+                                Name : String;
+                                X, Y : Glib.Gint)
+                               return String
+   is
+      Total_Height : Gint := 0;
+   begin
+      if not Item.Visible then
+         return Name;
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X <= Left_Border then
+         return Name;
+      end if;
+
+      for A in Item.Ancestors'Range loop
+         if Y <= Total_Height + Item.Ancestors (A).Height then
+            --  Do not substract Left_Border from X, since the ancestor is
+            --  a Class_Type and already has it.
+            return Get_Component_Name
+              (Item.Ancestors (A), Lang, Name, X, Y - Total_Height);
+         end if;
+         Total_Height := Total_Height + Item.Ancestors (A).Height;
+      end loop;
+
+      return Get_Component_Name
+        (Item.Child, Lang, Name, X - Left_Border, Y - Total_Height);
+   end Get_Component_Name;
+
+   -------------------
+   -- Get_Component --
+   -------------------
+
+   function Get_Component (Item : access Class_Type;
+                           X, Y : Glib.Gint)
+                          return Generic_Type_Access
+   is
+      Total_Height : Gint := 0;
+   begin
+      if not Item.Valid or else not Item.Visible then
+         return Generic_Type_Access (Item);
+      end if;
+
+      --  Click in the left column ? => Select the whole item
+
+      if X < Left_Border then
+         return Generic_Type_Access (Item);
+      end if;
+
+      for A in Item.Ancestors'Range loop
+         if Y <= Total_Height + Item.Ancestors (A).Height then
+            return Get_Component (Item.Ancestors (A), X, Y - Total_Height);
+         end if;
+         Total_Height := Total_Height + Item.Ancestors (A).Height;
+      end loop;
+
+      return Get_Component (Item.Child, X - Left_Border, Y - Total_Height);
+   end Get_Component;
+
+   -------------
+   -- Replace --
+   -------------
+
+   function Replace
+     (Parent       : access Class_Type;
+      Current      : access Generic_Type'Class;
+      Replace_With : access Generic_Type'Class)
+     return Generic_Type_Access
+   is
+   begin
+      for A in Parent.Ancestors'Range loop
+         if Parent.Ancestors (A) = Class_Type_Access (Current) then
+            Free (Parent.Ancestors (A), Only_Value => False);
+            Parent.Ancestors (A) := Class_Type_Access (Replace_With);
+            return Generic_Type_Access (Replace_With);
+         end if;
+      end loop;
+      if Parent.Child = Record_Type_Access (Current) then
+         Free (Parent.Child, Only_Value => False);
+         Parent.Child := Record_Type_Access (Replace_With);
+         return Generic_Type_Access (Replace_With);
+      end if;
+      return null;
+   end Replace;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Class_Type) is
+   begin
+      for A in Item.Ancestors'Range loop
+         Reset_Recursive (Item.Ancestors (A));
+      end loop;
+      if Item.Child /= null then
+         Reset_Recursive (Item.Child);
+      end if;
+   end Reset_Recursive;
+
+   ---------------------
+   -- Propagate_Width --
+   ---------------------
+
+   procedure Propagate_Width (Item  : in out Class_Type;
+                              Width : Glib.Gint)
+   is
+   begin
+      Item.Width := Width;
+      if Item.Visible then
+         for A in Item.Ancestors'Range loop
+            Propagate_Width (Item.Ancestors (A).all, Width);
+         end loop;
+         Propagate_Width (Item.Child.all, Width - Left_Border);
+      end if;
+   end Propagate_Width;
+
+end Items.Classes;
