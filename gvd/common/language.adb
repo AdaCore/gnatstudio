@@ -207,7 +207,7 @@ package body Language is
          Found := Context.New_Line_Comment_Start.all =
            Buffer (First .. First + Context.New_Line_Comment_Start'Length - 1);
       else
-         Found := Match (Context.New_Line_Comment_Start.all,
+         Found := Match (Context.New_Line_Comment_Start_Regexp.all,
                          Buffer (First .. Buffer'Last));
       end if;
 
