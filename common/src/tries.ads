@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2003                           --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -85,12 +85,11 @@ package Tries is
    procedure Dump (Tree : Trie_Tree);
    --  Dump function for debugging purposes.
 
-
    --  The functions below are lower-level versions of Get and Insert.
    --  They should be used with care.
    --  The idea is to avoid doing two search in the trie tree when checking
    --  whether an item is already there, and then inserting it in the tree.
-   --  This will only works if the tree hasn't been modified since the return
+   --  This will only work if the tree hasn't been modified since the return
    --  of Find_Cell_Child.
 
    type Cell_Pointer is private;
@@ -105,7 +104,6 @@ package Tries is
 
    function Get (Pointer : Cell_Pointer) return Data_Type;
    --  Return the data found in the pointed type
-
 
 private
    --  The structure of the tree is the following: this is n-ary tree. Each
