@@ -1052,7 +1052,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Run (Tab.Debugger, Mode => User);
+      Run (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Run1_Toolbar_Activate;
 
@@ -1127,10 +1127,19 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Page : Gtk_Widget := Get_Nth_Page
         (Main_Debug_Window_Access (Object).Process_Notebook, Gint (Arg2));
+      Process : Debugger_Process_Tab;
    begin
+      Process :=
+        Debugger_Process_Tab (Process_User_Data.Get (Page));
       Update_External_Dialogs
-        (Main_Debug_Window_Access (Object),
-         Gtk_Widget (Process_User_Data.Get (Page)));
+        (Main_Debug_Window_Access (Object), Gtk_Widget (Process));
+
+      if Main_Debug_Window_Access (Object).Breakpoints_Editor /= null then
+         Set_Process
+           (Breakpoints_Access
+            (Main_Debug_Window_Access (Object).Breakpoints_Editor),
+            Process);
+      end if;
 
    exception
       --  The page wasn't associated with a debugger yet
