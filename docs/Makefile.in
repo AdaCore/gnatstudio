@@ -41,7 +41,7 @@ gps_pg.html gps_pg.ps:            gps_pg.texi
 gps.html gps.ps gps.info gps.txt: ${TEXI}
 
 %.html::
-	perl ./texi2html $< ${TEXI2HTML_FLAGS} -out_file $@
+	perl ./texi2html $< ${TEXI2HTML_FLAGS}
 
 %.ps::
 ifneq (${TEX},)
