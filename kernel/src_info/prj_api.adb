@@ -1481,6 +1481,9 @@ package body Prj_API is
         (Imported_Project_Location, Prj.Project_File_Extension);
       Dep_ID   : Name_Id;
       Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
+      Imported : constant String := Normalize_Pathname
+        (Name          => Imported_Project_Location,
+         Resolve_Links => True);
 
    begin
       Output.Set_Special_Output (Report_Errors);
@@ -1492,7 +1495,7 @@ package body Prj_API is
 
       if Dep_Name /= No_Project_Name_And_Node then
          if Format_Pathname (Get_String (Path_Name_Of (Dep_Name.Node))) /=
-           Format_Pathname (Imported_Project_Location)
+           Imported
          then
             if Report_Errors /= null then
                Report_Errors
@@ -1507,7 +1510,7 @@ package body Prj_API is
          end if;
 
       else
-         Prj.Part.Parse (Imported_Project, Imported_Project_Location,
+         Prj.Part.Parse (Imported_Project, Imported,
                          Always_Errout_Finalize => True);
       end if;
 
