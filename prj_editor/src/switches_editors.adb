@@ -1196,7 +1196,7 @@ package body Switches_Editors is
 
             --  Builder page
             when 1 =>
-               Gtk_New (Page, "Make", "builder", Ada_String, 1, 2);
+               Gtk_New (Page, "Make", Builder_Package, Ada_String, 1, 2);
 
                Gtk_New (Frame, -"Dependencies");
                Set_Border_Width (Frame, 5);
@@ -1220,7 +1220,7 @@ package body Switches_Editors is
 
             --  Ada compiler page
             when 2 =>
-               Gtk_New (Page, "Ada", "compiler", Ada_String, 3, 2);
+               Gtk_New (Page, "Ada", Compiler_Package, Ada_String, 3, 2);
 
                Gtk_New (Frame, -"Code generation");
                Set_Border_Width (Frame, 5);
@@ -1442,7 +1442,7 @@ package body Switches_Editors is
 
             --  C compiler page
             when 3 =>
-               Gtk_New (Page, "C", "compiler", C_String, 2, 2);
+               Gtk_New (Page, "C", Compiler_Package, C_String, 2, 2);
 
                Gtk_New (Frame, -"Code generation");
                Set_Border_Width (Frame, 5);
@@ -1500,7 +1500,7 @@ package body Switches_Editors is
 
             --  C++ compiler page
             when 4 =>
-               Gtk_New (Page, "C++", "compiler", C_String, 2, 2);
+               Gtk_New (Page, "C++", Compiler_Package, C_String, 2, 2);
 
                Gtk_New (Frame, -"Code generation");
                Set_Border_Width (Frame, 5);
@@ -1693,7 +1693,7 @@ package body Switches_Editors is
 
             --  Binder page
             when 6 =>
-               Gtk_New (Page, "Binder", "binder", Ada_String, 1, 1);
+               Gtk_New (Page, "Binder", Binder_Package, Ada_String, 1, 1);
                Gtk_New_Vbox (Box, False, 0);
                Attach (Page, Box, 0, 1, 0, 1);
                Create_Check
@@ -1706,7 +1706,7 @@ package body Switches_Editors is
 
             --  Linker page
             when 7 =>
-               Gtk_New (Page, "Linker", "linker", Ada_String, 1, 1);
+               Gtk_New (Page, "Linker", Linker_Package, Ada_String, 1, 1);
                Gtk_New_Vbox (Box, False, 0);
                Attach (Page, Box, 0, 1, 0, 1);
                Create_Check (Page, Box, -"Strip symbols", "-s");
@@ -2039,11 +2039,11 @@ package body Switches_Editors is
          Is_Default : Boolean;
       begin
          if Project = No_Project then
-            if Pkg_Name = "builder" then
+            if Pkg_Name = Builder_Package then
                return Clone (Default_Builder_Switches);
-            elsif Pkg_Name = "compiler" then
+            elsif Pkg_Name = Compiler_Package then
                return Clone (Default_Compiler_Switches);
-            elsif Pkg_Name = "linker" then
+            elsif Pkg_Name = Linker_Package then
                return Clone (Default_Linker_Switches);
             else
                return (1 .. 0 => null);
