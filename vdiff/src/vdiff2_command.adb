@@ -47,6 +47,23 @@ package body Vdiff2_Command is
       Item.Action    := Action;
    end Create;
 
+   -------------------------
+   --  Unchecked_Execute  --
+   -------------------------
+
+   procedure Unchecked_Execute
+     (Command : access Diff_Command;
+      Diff    : in out Diff_Head_List.List_Node)
+   is
+      Tmp : Diff_Head_Access := new Diff_Head;
+   begin
+      if Diff /= Diff_Head_List.Null_Node then
+         Tmp.all := Data (Diff);
+         Command.Action (Command.Kernel, Tmp);
+      end if;
+      Free (Tmp);
+   end Unchecked_Execute;
+
    -------------
    -- Execute --
    -------------
@@ -57,7 +74,7 @@ package body Vdiff2_Command is
    is
       Context       : constant Selection_Context_Access
         := Get_Current_Context (Command.Kernel);
-      CurrNode      : Diff_Head_List.List_Node :=
+      Curr_Node      : Diff_Head_List.List_Node :=
         First (Command.List_Diff.all);
       Diff          : Diff_Head_Access := new Diff_Head;
       Selected_File : GNAT.OS_Lib.String_Access;
@@ -70,31 +87,18 @@ package body Vdiff2_Command is
          Selected_File := new String'
            (Directory_Information (File_Selection_Context_Access (Context)) &
             File_Information (File_Selection_Context_Access (Context)));
-         while CurrNode /= Diff_Head_List.Null_Node
-         loop
-            Diff.all := Data (CurrNode);
-            exit when (
-                         (Diff.File1 /= null
-                          and then
-                          Diff.File1.all = Selected_File.all)
-                       or else
-                         (Diff.File2 /= null
-                          and then
-                          Diff.File2.all = Selected_File.all)
-                       or else
-                         (Diff.File3 /= null
-                          and then
-                          Diff.File3.all = Selected_File.all));
-            CurrNode := Next (CurrNode);
-         end loop;
-         if CurrNode /= Diff_Head_List.Null_Node then
+
+         Curr_Node := Is_In_Diff_List (Selected_File, Command.List_Diff.all);
+
+         if Curr_Node /= Diff_Head_List.Null_Node then
+            Diff.all := Data (Curr_Node);
             Command.Action (Command.Kernel, Diff);
             if Diff /= null then
-               Set_Data (CurrNode, Diff.all);
+               Set_Data (Curr_Node, Diff.all);
             else
                Remove_Nodes (Command.List_Diff.all,
-                             Prev (Command.List_Diff.all, CurrNode),
-                             CurrNode);
+                             Prev (Command.List_Diff.all, Curr_Node),
+                             Curr_Node);
             end if;
             Free (Selected_File);
             Free (Diff);
@@ -105,6 +109,41 @@ package body Vdiff2_Command is
       when others =>
          return Failure;
    end Execute;
+
+   ---------------------
+   -- Is_In_Diff_List --
+   ---------------------
+
+   function Is_In_Diff_List
+     (Selected_File : GNAT.OS_Lib.String_Access;
+      List          : Diff_Head_List.List)
+      return Diff_Head_List.List_Node
+   is
+      Curr_Node : Diff_Head_List.List_Node :=
+        First (List);
+      Diff      : Diff_Head_Access := new Diff_Head;
+
+   begin
+      while Curr_Node /= Diff_Head_List.Null_Node
+      loop
+         Diff.all := Data (Curr_Node);
+         exit when (
+                      (Diff.File1 /= null
+                       and then
+                       Diff.File1.all = Selected_File.all)
+                    or else
+                      (Diff.File2 /= null
+                       and then
+                       Diff.File2.all = Selected_File.all)
+                    or else
+                      (Diff.File3 /= null
+                       and then
+                       Diff.File3.all = Selected_File.all));
+         Curr_Node := Next (Curr_Node);
+      end loop;
+      Free (Diff);
+      return Curr_Node;
+   end Is_In_Diff_List;
 
    ---------------------
    -- Next_Difference --
@@ -296,3 +335,4 @@ package body Vdiff2_Command is
    end Remove_Difference;
 
 end Vdiff2_Command;
+
