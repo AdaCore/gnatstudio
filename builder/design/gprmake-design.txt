@@ -3,11 +3,14 @@ Design of a multi-language tool build, called gprmake.
 The purpose of this tool is handle automatically multi-language builds,
 based on the GNAT Project files.
 
-Similarly, other GNAT tools will be reviewed wrt support for mult-language
-support. In particular:
+Similarly, other GNAT tools will be reviewed wrt multi-language support.
+In particular:
 
 - gnatclean: verify that gnatclean handles multi-language objects/projects.
+  See D612-002.
+
 - gnatname: add support for non Ada languages in gnatname.
+
 - gnatls: ditto.
 
 Requirements:
@@ -26,6 +29,18 @@ Requirements:
   gnat version) as much as possible.
 - Be as compatible as possible with gpr2make
 - Provide useful defaults to ease set up and use with GNU compilers.
+
+Note: a prototype implementation of gprmake exists, which mimic closely the
+implementation of gpr2make+Makefile.generic. In the document below, we will,
+for simplicity, refer to the whole gpr2make+Makefile.generic+Makefile.prolog+
+gprcmd as 'gpr2make', without distinguishing which file does actually what.
+
+Since gpr2make was based on GNU makefiles, and gprmake is a tool written in
+Ada, sharing code with other GNAT tools (in particular the project parser),
+some decisions made for gpr2make do not necessarily make sense for gprmake.
+
+Although the behavior of the tool will be similar, the design and
+implementation is expected to be different.
 
 Related tools:
 - gnatmake
@@ -100,7 +115,7 @@ Input needed from gprmake:
     Therefore, in order to support and generalize the use of gnatmake for Ada
     files on one hand, and on the other hand, support the invocation of
     'external tools' to handle build of a set of sources, we could add a new
-    attribute Builder'Builder_Driver (<language>) that will, if specified, be
+    attribute Builder'Driver (<language>) that will, if specified, be
     called to check sources and compile them if needed. In this case, gprmake
     won't perform any timestamp check nor compilation for the sources of the
     designated language.
@@ -109,7 +124,7 @@ Input needed from gprmake:
   - Use existing packages 'Compiler', 'Builder'
 
   - Add new attributes:
-    - Builder'Builder_Driver (<language>): If set, use this tool to check
+    - Builder'Driver (<language>): If set, use this tool to check
       dependencies of sources for a given language, and rebuild them if
       needed.
       Defaults to ("<prefix>gnatmake", "-c", "-P", <Project_Name>) for "ada".
@@ -121,15 +136,20 @@ Input needed from gprmake:
       - possibly others in the future, such as "Diab"
       This attribute is used by gprmake to set various defaults and change the
       way the build is handled in some cases.
+      For now, any value other than "GNU" is considered as non-gnu compiler
+      (e.g. "unknown").
 
-    - Compiler'Compiler_Driver (<language>): name of the tool that knows
+    - Compiler'Driver (<language>): name of the tool that knows
       how to compile files of the given language. Defaults to "<prefix>gcc"
       where <prefix> is an optional prefix computed based on the name
       of the gprmake tool when launched (e.g. calling powerpc-elf-gprmake
-      will set the default Compiler_Driver to "powerpc-elf-gcc").
+      will set the default Compiler'Driver to "powerpc-elf-gcc").
 
     - Compiler'Compilation_Option (<language>): list of switches to be
-      used to tell the Compiler_Driver to compile-only (defaults to ("-c")).
+      used to tell the Compiler'Driver to compile-only
+      Defaults to ("-c") for non GNU compilers.
+      Defaults to ("-c", "-x", <language>) for GNU compilers.
+
       Note: there's a potential risk of misuse of this attribute vs
       Default_Switches (<language>)
 
@@ -137,7 +157,7 @@ Input needed from gprmake:
     following attributes:
 
     - Compiler'Dependency_Kind (<language>): kind of dependency produced
-      by Compiler_Driver (<language>).
+      by Compiler'Driver (<language>).
       Recognized values are:
       - "ali"  (default for "Ada")
       - "makefile"  (default for other languages)
@@ -145,7 +165,7 @@ Input needed from gprmake:
       This option tells gprmake how to retrieve the dependency information
 
     - Compiler'Dependency_Option (<language>): list of switches to
-      be used to tell the Compiler_Driver to generate a dependency file
+      be used to tell the Compiler'Driver to generate a dependency file
       as part of the compilation process, e.g: ("-Wp,-MD,"),
       appended by Object_Dir & "file".d
       Defaults to ("-Wp,-MD,") for "c" and "c++" if the Compiler_Kind is set
@@ -174,7 +194,7 @@ Input needed from gprmake:
       and the source search path will be set via additional switches or
       environment variables.
       Defaults to:
-      (Compiler_Driver (<language>), "-M") & Default_Switches (<language>)
+      (Compiler'Driver (<language>), "-M") & Default_Switches (<language>)
 
       If set and Compiler'Dependency_Option isn't, this command is called right
       after a source file has been recompiled.
@@ -183,6 +203,43 @@ Input needed from gprmake:
        to the empty value, gprmake will consider that sources for this language
        have no dependencies and will only compare the timestamp of the object
        and source file.
+
+    - Handle of search path
+      The source search path is extracted from the Source_Dirs attribute.
+      Depending on the compiler, gprmake will need to:
+
+      - use compiler switches (-I/path)
+      - set an environment variable (ADA_INCLUDE_PATH, CPATH)
+
+      New attributes are therefore added to tell gprmake how to behave:
+
+      - New attribute Compiler'Path_Env (<language>)
+        Defaults to ADA_INCLUDE_PATH for "ada"
+        Defaults to CPATH for "c" and "c++"
+        Defaults to "" otherwise
+
+        If not null, gprmake will set this environment variable to the list
+        of source directories for a given project before compiling the
+        project's sources, if some compilations are needed.
+        This list is concatenated and separated by the
+        appropriate Path_Separator (":" under unix, ";" under Windows), and
+        concatenated with the previous value of this env var, if any.
+
+      - New attribute Compiler'Include_Option (<language>)
+        Simple string, defaults to "-I" for all languages.
+
+        If Compiler'Path_Env is null, each source dir is put on the command
+        line, prepended with Compiler'Include_Option, e.g:
+        if Source_Dirs is set to ("/a/b", "../foo"), gprmake appends
+        ("-I/a/b", "-I../foo") to the compilation switches, translating if
+        needed relative paths to absolute paths, resolved based on the
+        project file's directory.
+
+      Note: if a compiler uses/requires another mechanism to pass include
+      options (such as an input file), this can be achieved by using a wrapper
+      that will generate the input file, either from an environment variable
+      (preferred to work around command line limitations) or from the
+      command line.
 
   TBC
 
@@ -201,8 +258,13 @@ Input needed from gprmake:
 
     - java: it seems that recompiling java files is handled either by IDEs
     directly or using tools such as 'ant', which is a make-like tool written in
-    Java. Using 'ant' is in line with the Builder'Builder_Driver attribute
+    Java. Using 'ant' is in line with the Builder'Driver attribute
     proposed.
+
+    - assembler: no dependencies with assembler files.
+    With a GNU toolchain, using default values should work out of the
+    box: "gcc" as the Compiler'Driver, and ("-c", "-x", "assembler") for the
+    Compiler'Compilation_Option. No dependency files will be created.
 
   - for simplicity, gprmake will, at least in a first step, only understand
     Makefile fragments.
@@ -220,6 +282,11 @@ Input needed from gprmake:
     Compiler'Compute_Dependency would be set to a wrapper that would
     first call gcc -c -gnatc, and then gnatmake -M on the resulting ali file.
 
+  Note: as opposed to gpr2make which needed to post process the Makefile
+  fragments (*.d files), gprmake does not need to modify these files, since
+  the extra capability can be handled by the tool directly. Namely, handling
+  of added/removed files in the project.
+
   - switch added to the compiler to generate the dependency (optional)
 
   - post processing command to call to generate/update the dependency (optional)
@@ -231,31 +298,84 @@ Input needed from gprmake:
   instance, to provide source navigation in GPS).
 
   -> This can be achieved by specifying an empty or special value to
-  Builder'Builder_Driver (e.g. "null").
+  Builder'Driver (e.g. "null").
 
 - Specify how to handle bind phase between languages
   TBC
+  New attribute Binder'Driver (<language>)
+  Defaults to "<prefix>gnatbind" for "ada"
+  Defaults to "" for other languages
+
+  If non null, Binder'Driver (<language>) is called for each language
+  supported by the project.
+
+  ??? which option should be passed to gnatbind ? Should -P project be passed
+  we well ?
 
 - Specify how to handle link phase between languages
   TBC
 
   Examples, to be generalized:
-  - C: use Compiler_Driver ("c") (e.g. gcc)
-  - C++: use Compiler_Driver ("c++") (e.g. g++)
+  - C: use Compiler'Driver ("c") (e.g. gcc)
+  - C++: use Compiler'Driver ("c++") (e.g. g++)
   - Ada: use gnatlink with GNAT
-  - C & C++: use Compiler_Driver ("c++")
+  - C & C++: use Compiler'Driver ("c++")
   - C & Ada: use gnatlink with GNAT
   - Ada & C++: use gnatlink --LINK=Compiler_Command ("c++")
 
-  Idea: could have some defaults built-in, as listed above, and have a way
-  to specify the command to call for linking. Arguments passed to this command:
-  for each language used in the project, provide name of the language compiler
-  command, list of all objects for this language & associated linker options
-  (such as libraries). This command will typically be a wrapper doing some
-  tests and computation based on the language list.
+  Add new attribute Linker'Driver (<language>) which defaults to:
+  - <prefix>gnatlink for Ada
+  - Compiler'Driver (<language>) for other languages
+
+  Add new attribute Linker'Default_Driver to specify the name of the tool
+  called to handle linking. Empty by default, meaning that a built-in driver
+  is used, which behaves as follows:
+
+  Add new attribute Linker'Output_Option, which defaults to
+  "-o". This is the switch used to specify the output name.
+
+  - for projects with a single language, call Linker'Driver (<language>)
+  followed by (Linker'Output_Option (<language>)) & (<executable name>) if
+  Linker'Output_Option is not null;
+  followed by the object of the main unit, followed by lib<project>.a,
+  followed by Linker'Default_Switches (<language>) or
+  Linker'Switches (<main>) if defined.
+
+  executable name is computed based on the project info and defaults, as
+  done by gnatmake for Ada projects.
+
+  - for projects with multiple languages excluding Ada, call
+  Linker'Driver (<language of the main unit>) followed by the same arguments
+  as single language projects.
+
+  - Ada+C ???
+  - Ada+C++ ???
+
+  Arguments passed to Linker'Default_Driver:
+  for each language used in the project, provide the language, the name of the
+  language linker driver, object of the main source if available,
+  language of the main source, list of all objects for this language &
+  associated linker options (such as libraries). This command will typically
+  be a wrapper doing some tests and computation based on the language list.
+
+  At link time, when some sources or executable are not up-to-date,
+  an archive is built containing the object files of each non Ada language
+  source and recreated in the object directory of the main project as
+  lib<project>.a.
+
+  If a previous archive exists, it is removed before creating a new one, so
+  as to avoid picking obsolete object files coming from deleted or moved source
+  files.
+
+  Linker'Default_Switches (<language>) or Linker'Switches (<executable>)
+  are taken into account by gprmake and added to the end of the link options,
+  after the lib<project>.a file.
 
 - How to handle default values ?
   Lots of default values are suggested in this document.
   Would it be worth having a meta-configuration file used to set/change
   these default values ?
 
+MISSING:
+
+- more details on command line options supported
