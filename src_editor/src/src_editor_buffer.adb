@@ -1163,6 +1163,9 @@ package body Src_Editor_Buffer is
 
       if Buffer.Filename /= VFS.No_File then
          File_Closed (Buffer.Kernel, Buffer.Filename);
+
+      elsif Buffer.File_Identifier /= VFS.No_File then
+         File_Closed (Buffer.Kernel, Buffer.File_Identifier);
       end if;
 
       Destroy_Hook (Buffer);
