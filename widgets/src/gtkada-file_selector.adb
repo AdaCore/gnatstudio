@@ -1260,6 +1260,7 @@ package body Gtkada.File_Selector is
       end Matcher;
 
       use Gdk.Types;
+
    begin
       if Get_Key_Val (Event) = GDK_Tab then
          declare
