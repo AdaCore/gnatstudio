@@ -225,6 +225,24 @@ check_aunit: force
 	@[ -f ${AUNIT_SRC}/aunit_make_test.glade ] || \
 	   (echo "AUnit sources not found in ${AUNIT_SRC}, see README"; false)
 
+###################
+## kernel module ##
+###################
+
+ifneq (,$(findstring kernel,$(MODULES)))
+
+# Location of glide kernel sources. See the README file at the top-level for
+# information on how to setup the required links
+KERNEL_SRC=../../kernel
+
+MODULE_INCLUDE+=-I${KERNEL_SRC}/src
+endif
+
+.PHONY: check_kernel
+check_kernel: force
+	@[ -f ${KERNEL_SRC}/src/glide_kernel.ads ] || \
+	   (echo "kernel sources not found in ${KERNEL_SRC}, see README"; false)
+
 ##################
 ## glide module ##
 ##################
@@ -241,7 +259,7 @@ endif
 .PHONY: check_glide
 check_glide: force
 	@[ -f ${GLIDE_SRC}/src/glide.adb ] || \
-	   (echo "hypergrep sources not found in ${GLIDE_SRC}, see README"; false)
+	   (echo "glide sources not found in ${GLIDE_SRC}, see README"; false)
 
 #############
 ## General ##
