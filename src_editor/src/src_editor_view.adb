@@ -77,6 +77,9 @@ package body Src_Editor_View is
    function Connect_Expose (View : Source_View) return Boolean;
    --  Connect Expose_Event_Cb to the expose event. Emit an expose event.
 
+   function Idle_Column_Redraw (View : Source_View) return Boolean;
+   --  Redraw the side columns in an idle loop.
+
    procedure Realize_Cb (Widget : access Gtk_Widget_Record'Class);
    --  This procedure is invoked when the Source_View widget is realized.
    --  It performs various operations that can not be done before the widget
@@ -135,6 +138,12 @@ package body Src_Editor_View is
       Params : Glib.Values.GValues;
       User   : Source_View);
    --  Callback for the "side_columns_changed" signal.
+
+   procedure Side_Columns_Config_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for the "side_columns_configuration_changed" signal.
 
    procedure Clear_Text_Window (User : Source_View);
    --  Clear the buffer window.
@@ -273,6 +282,10 @@ package body Src_Editor_View is
       if View.Connect_Expose_Id /= 0 then
          Idle_Remove (View.Connect_Expose_Id);
       end if;
+
+      if View.Idle_Redraw_Id /= 0 then
+         Idle_Remove (View.Idle_Redraw_Id);
+      end if;
    end Delete;
 
    ---------------------
@@ -395,13 +408,54 @@ package body Src_Editor_View is
       --  Clear the side columns cache.
 
       User.Buffer_Top_Line := 0;
-      User.Bottom_Line := User.Bottom_Line + 1;
 
       if User.Side_Column_Buffer /= null then
          Gdk.Pixmap.Unref (User.Side_Column_Buffer);
          User.Side_Column_Buffer := null;
       end if;
+
+      if Realized_Is_Set (User) then
+         Redraw_Columns (User);
+      end if;
    end Side_Columns_Change_Handler;
+
+   ----------------------------------------
+   -- Side_Columns_Config_Change_Handler --
+   ----------------------------------------
+
+   procedure Side_Columns_Config_Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      pragma Unreferenced (Buffer, Params);
+   begin
+      User.Side_Columns_Up_To_Date := False;
+
+      User.Buffer_Top_Line := 0;
+
+      User.Idle_Redraw_Id := Source_View_Idle.Add
+        (Idle_Column_Redraw'Access, User);
+   end Side_Columns_Config_Change_Handler;
+
+   ------------------------
+   -- Idle_Column_Redraw --
+   ------------------------
+
+   function Idle_Column_Redraw (View : Source_View) return Boolean is
+   begin
+      if View.Side_Column_Buffer /= null then
+         Gdk.Pixmap.Unref (View.Side_Column_Buffer);
+         View.Side_Column_Buffer := null;
+      end if;
+
+      if Realized_Is_Set (View) then
+         Redraw_Columns (View);
+      end if;
+
+      View.Idle_Redraw_Id := 0;
+      return False;
+   end Idle_Column_Redraw;
 
    --------------------
    -- Change_Handler --
@@ -515,21 +569,25 @@ package body Src_Editor_View is
 
             --  Compute the smallest connected area that needs refresh.
 
-            Find_Top_Line :
-            while Top_Line <= Bottom_Line loop
-               exit Find_Top_Line when Line_Needs_Refresh (Buffer, Top_Line);
+            if View.Side_Columns_Up_To_Date then
+               Find_Top_Line :
+               while Top_Line <= Bottom_Line loop
+                  exit Find_Top_Line when
+                    Line_Needs_Refresh (Buffer, Top_Line);
 
-               Top_Line := Top_Line + 1;
-            end loop Find_Top_Line;
+                  Top_Line := Top_Line + 1;
+               end loop Find_Top_Line;
 
-            Find_Bottom_Line :
-            while Bottom_Line >= Top_Line loop
-               exit Find_Bottom_Line when
-                 Line_Needs_Refresh (Buffer, Bottom_Line);
+               Find_Bottom_Line :
+               while Bottom_Line >= Top_Line loop
+                  exit Find_Bottom_Line when
+                    Line_Needs_Refresh (Buffer, Bottom_Line);
 
-               Bottom_Line := Bottom_Line - 1;
-            end loop Find_Bottom_Line;
-
+                  Bottom_Line := Bottom_Line - 1;
+               end loop Find_Bottom_Line;
+            else
+               View.Side_Columns_Up_To_Date := True;
+            end if;
             --  If necessary, emit the Source_Lines_Revealed signal.
 
             if Bottom_Line >= Top_Line then
@@ -895,6 +953,12 @@ package body Src_Editor_View is
       Source_Buffer_Callback.Connect
         (Buffer, "side_column_changed",
          Cb        => Side_Columns_Change_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, "side_column_configuration_changed",
+         Cb        => Side_Columns_Config_Change_Handler'Access,
          User_Data => Source_View (View),
          After     => True);
 
@@ -1286,10 +1350,20 @@ package body Src_Editor_View is
 
       if Total_Width = 0 then
          Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
+         View.Buffer_Column_Size := 1;
          return;
       end if;
 
-      Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
+      if Total_Width /= View.Buffer_Column_Size then
+         View.Buffer_Column_Size := Total_Width;
+         Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
+
+         --  Force the redraw
+         if View.Side_Column_Buffer /= null then
+            Gdk.Pixmap.Unref (View.Side_Column_Buffer);
+            View.Side_Column_Buffer := null;
+         end if;
+      end if;
 
       --  Create the graphical elements
 
