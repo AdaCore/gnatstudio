@@ -61,6 +61,10 @@ package Codefix.Merge_Utils is
         (This : Merged_Unit) return Merge_Info is <>;
       --  Return the Merge_Info of an unit.
 
+      with procedure Set_Merge_Info
+        (This : in out Merged_Unit; Value : Merge_Info) is <>;
+      --  Set the value of an unit's Merge_Info.
+
       with procedure Append
         (This : in out Merge_Type; Object : Merged_Unit) is <>;
       --  Add an unit in This.
@@ -184,6 +188,7 @@ private
    function Is_Null (This : String_Iterator) return Boolean;
    function "<" (Left, Right : String_Iterator) return Boolean;
    function Get_Merge_Info (This : String_Char) return Merge_Info;
+   procedure Set_Merge_Info (This : in out String_Char; Value : Merge_Info);
    procedure Append (This : in out Mergable_String; Object : String_Char);
    function Clone (This : String_Char) return String_Char;
    procedure Merge_Null
