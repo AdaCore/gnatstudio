@@ -30,6 +30,7 @@ with Prj.Tree;  use Prj.Tree;
 with Namet;     use Namet;
 with Output;    use Output;
 with Stringt;   use Stringt;
+with Traces;    use Traces;
 
 package body Prj.PP is
 
@@ -452,5 +453,54 @@ package body Prj.PP is
          Output.Write_Eol;
       end if;
    end Pretty_Print;
+
+   ------------------------
+   -- Trace_Pretty_Print --
+   ------------------------
+
+   procedure Trace_Pretty_Print
+     (Handle  : Traces.Debug_Handle;
+      Project : Prj.Tree.Project_Node_Id)
+   is
+      Buffer : String (1 .. 10000);
+      Buffer_Index : Natural := Buffer'First - 1;
+
+      procedure Write_Char (C : Character);
+      procedure Write_Str  (S : String);
+      --  Required functions to instanciate Pretty_Print
+
+      ----------------
+      -- Write_Char --
+      ----------------
+
+      procedure Write_Char (C : Character) is
+      begin
+         --  if C = ASCII.LF then
+            --  Trace (Handle, Buffer (Buffer'First .. Buffer_Index));
+            --  Buffer_Index := Buffer'First - 1;
+         --  elsif Buffer_Index < Buffer'Last then
+            Buffer_Index := Buffer_Index + 1;
+            Buffer (Buffer_Index) := C;
+         --  end if;
+      end Write_Char;
+
+      ---------------
+      -- Write_Str --
+      ---------------
+
+      procedure Write_Str  (S : String) is
+      begin
+         Buffer (Buffer_Index + 1 .. Buffer_Index + S'Length) := S;
+         Buffer_Index := Buffer_Index + S'Length;
+      end Write_Str;
+
+   begin
+      if Active (Handle) then
+         Pretty_Print
+           (Project, 3, False,
+            Write_Char'Unrestricted_Access, Write_Str'Unrestricted_Access);
+         Trace (Handle, Buffer (Buffer'First .. Buffer_Index));
+      end if;
+   end Trace_Pretty_Print;
 
 end Prj.PP;

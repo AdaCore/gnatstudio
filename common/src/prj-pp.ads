@@ -29,6 +29,7 @@
 --  This package is used to output a project file from a project file tree.
 
 with Prj.Tree;
+with Traces;
 
 package Prj.PP is
 
@@ -51,5 +52,11 @@ package Prj.PP is
    --  If Eliminate_Null_Statements is True, then declarative item lists that
    --  do not have any item will not be output. Otherwise, "null;" is output,
    --  which isn't a valid project syntax.
+
+   procedure Trace_Pretty_Print
+     (Handle  : Traces.Debug_Handle;
+      Project : Prj.Tree.Project_Node_Id);
+   --  Same as above, but prints the project file to the debug handle, if it is
+   --  active.
 
 end Prj.PP;
