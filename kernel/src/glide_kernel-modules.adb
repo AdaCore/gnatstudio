@@ -826,7 +826,8 @@ package body Glide_Kernel.Modules is
             C := C.Next;
          end loop;
 
-         Unref (Context);
+         --  Do not Unref context, it will be automatically freed the next
+         --  time a contextual menu is displayed
       end if;
 
       Pop_State (User.Kernel);
