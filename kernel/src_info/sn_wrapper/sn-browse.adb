@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with GNAT.Directory_Operations,
      GNAT.IO_Aux,
      GNAT.Expect,
@@ -28,10 +48,12 @@ package body SN.Browse is
    -------------------
    -- Output_Filter --
    -------------------
+
    procedure Output_Filter
      (PD        : in GNAT.Expect.Process_Descriptor'Class;
       Str       : in String;
-      User_Data : in System.Address := System.Null_Address) is
+      User_Data : in System.Address := System.Null_Address)
+   is
       pragma Unreferenced (PD);
       pragma Unreferenced (Str);
       pragma Unreferenced (User_Data);
@@ -77,10 +99,8 @@ package body SN.Browse is
       Temp_Name    : out GNAT.OS_Lib.Temp_File_Name;
       PD           : out GNAT.Expect.Process_Descriptor)
    is
-      LV_File_Name : constant String :=
-        DB_Directory & DB_File_Name & ".lv" & ASCII.NUL;
-      TO_File_Name : constant String :=
-        DB_Directory & DB_File_Name & ".to" & ASCII.NUL;
+      LV_File_Name : constant String := DB_Directory & DB_File_Name & ".lv";
+      TO_File_Name : constant String := DB_Directory & DB_File_Name & ".to";
       Dir          : Dir_Type;
       Last         : Natural;
       Dir_Entry    : String (1 .. 1024);
@@ -94,14 +114,16 @@ package body SN.Browse is
    begin
       --  remove .to and .lv tables
       if File_Exists (LV_File_Name) then
-         Delete_File (LV_File_Name'Address, Success);
+         Delete_File (LV_File_Name, Success);
+
          if not Success then
             raise Unlink_Failure;
          end if;
       end if;
 
       if File_Exists (TO_File_Name) then
-         Delete_File (TO_File_Name'Address, Success);
+         Delete_File (TO_File_Name, Success);
+
          if not Success then
             raise Unlink_Failure;
          end if;
@@ -109,6 +131,7 @@ package body SN.Browse is
 
       --  start dbimp
       Create_Temp_File (Temp_File, Temp_Name);
+
       if Temp_File = Invalid_FD then
          raise Temp_File_Failure;
       end if;
@@ -116,6 +139,7 @@ package body SN.Browse is
       --  enumerate all .xref files in the target directory
       --  and copy them into the temp file
       Open (Dir, DB_Directory);
+
       if not Is_Open (Dir) then
          raise Directory_Error;
       end if;
@@ -161,10 +185,12 @@ package body SN.Browse is
    begin
       Status := False;
       GNAT.Expect.Expect (PD, Result, "", 1);
+
       if Result = GNAT.Expect.Expect_Timeout then
          Status := True;
          return;
       end if;
+
       GNAT.Expect.Close (PD);
 
    exception
