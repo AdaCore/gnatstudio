@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -245,7 +245,7 @@ package body GVD.Color_Combo is
       Gdk_New (Tmp_Gc, Get_Window (Combo));
       Set_Foreground (Tmp_Gc, Combo.Color);
       Get (Pixmap, Val, Mask);
-      Draw_Rectangle (Val, Tmp_Gc, True, 5, 20, 16, 4);
+      Draw_Rectangle (Val, Tmp_Gc, True, 21, 13, 16, 4);
       Draw (Pixmap, Full_Area);
       Unref (Tmp_Gc);
    end Display_Button;
