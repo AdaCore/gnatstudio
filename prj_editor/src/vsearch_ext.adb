@@ -154,7 +154,7 @@ package body Vsearch_Ext is
       end Reset_Search;
 
    begin
-      Set_Busy (Vsearch.Kernel, True);
+      Push_State (Vsearch.Kernel, Computing);
       Highlight := Parse (Highlight_File);
       Alloc (Get_Default_Colormap, Highlight);
 
@@ -232,15 +232,15 @@ package body Vsearch_Ext is
       --     end case;
       end if;
 
-      Set_Busy (Vsearch.Kernel, False);
+      Pop_State (Vsearch.Kernel);
 
    exception
       when Error_In_Regexp =>
-         Set_Busy (Vsearch.Kernel, False);
+         Pop_State (Vsearch.Kernel);
          Trace (Me, "Bad regexp: " & Get_Text (Vsearch.Files_Entry));
 
       when E : others =>
-         Set_Busy (Vsearch.Kernel, False);
+         Pop_State (Vsearch.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Search_Next;
 
@@ -262,7 +262,7 @@ package body Vsearch_Ext is
       --  Found   : Boolean;
 
    begin
-      Set_Busy (Vsearch.Kernel, True);
+      Push_State (Vsearch.Kernel, Computing);
       --  ??? Should be registered in the module
 
       --  case Vsearch.Context is
@@ -274,7 +274,7 @@ package body Vsearch_Ext is
       --        null;
       --  end case;
 
-      Set_Busy (Vsearch.Kernel, True);
+      Pop_State (Vsearch.Kernel);
    end On_Search_Previous;
 
    --------------------

@@ -188,14 +188,14 @@ package body Browsers.Projects is
    is
       Browser : MDI_Child;
    begin
-      Set_Busy (Get_Kernel (Context), True);
+      Push_State (Get_Kernel (Context), Busy);
       Browser := Open_Project_Browser (Get_Kernel (Context));
       Examine_Project_Hierarchy
         (Get_Kernel (Context),
          Glide_Browser (Get_Widget (Browser)),
          Get_Project_From_View
          (Project_Information (File_Selection_Context_Access (Context))));
-      Set_Busy (Get_Kernel (Context), False);
+      Pop_State (Get_Kernel (Context));
    end On_Examine_Prj_Hierarchy;
 
    ------------------------

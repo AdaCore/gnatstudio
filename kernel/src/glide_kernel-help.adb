@@ -119,7 +119,7 @@ package body Glide_Kernel.Help is
       Success  : Boolean;
 
    begin
-      Set_Busy (Kernel_Handle (Kernel), True);
+      Push_State (Kernel_Handle (Kernel), Busy);
       Buffer := Read_File (File);
 
       if Buffer /= null then
@@ -136,7 +136,7 @@ package body Glide_Kernel.Help is
          Success := False;
       end if;
 
-      Set_Busy (Kernel_Handle (Kernel), False);
+      Pop_State (Kernel_Handle (Kernel));
       return Success;
    end Load_File;
 

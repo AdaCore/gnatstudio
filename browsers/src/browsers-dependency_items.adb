@@ -299,7 +299,7 @@ package body Browsers.Dependency_Items is
       end Has_One;
 
    begin
-      Set_Busy (Kernel_Handle (Kernel), True);
+      Push_State (Kernel_Handle (Kernel), Busy);
       Lib_Info := Locate_From_Source_And_Complete (Kernel, F);
 
       if Lib_Info = No_LI_File then
@@ -307,7 +307,7 @@ package body Browsers.Dependency_Items is
                 "Examine_Dependencies: Couldn't find ALI file for " & File);
          Insert (Kernel, -"Couldn't find ALI file for " & File,
                  Mode => Glide_Kernel.Console.Error);
-         Set_Busy (Kernel_Handle (Kernel), False);
+         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
@@ -371,11 +371,11 @@ package body Browsers.Dependency_Items is
          Refresh_Canvas (Get_Canvas (In_Browser));
       end if;
 
-      Set_Busy (Kernel_Handle (Kernel), False);
+      Pop_State (Kernel_Handle (Kernel));
 
    exception
       when others =>
-         Set_Busy (Kernel_Handle (Kernel), False);
+         Pop_State (Kernel_Handle (Kernel));
          raise;
    end Examine_Dependencies;
 
