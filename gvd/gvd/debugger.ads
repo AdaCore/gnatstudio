@@ -146,6 +146,12 @@ package Debugger is
    function Backtrace (Debugger : Debugger_Root) return String is abstract;
    --  Return the current backtrace.
 
+   function Line_Contains_Code
+     (Debugger : Debugger_Root;
+      File     : String;
+      Line     : Positive) return Boolean is abstract;
+   --  Indicate whether a given file and line number contain executable code.
+
    Unknown_Command : exception;
    --  Raised when a command is not recognized either by the debugger, or for
    --  the currently activate language.
