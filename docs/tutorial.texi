@@ -334,7 +334,7 @@ removed in the call stack. From this contextual menu, add the
 Now select the menu @code{Debug->Run...}. Notice that @code{input.txt} has
 been filled automatically for you since the two menus @code{Build->Run...} and
 @code{Debug->Run...} are synchronized. Click on @code{OK}: the debugger should
-stop on an exception (@code{Contraint_Error} in the file @file{stack.adb}, at
+stop on an exception (@code{Constraint_Error} in the file @file{stack.adb}, at
 line 49).
 
 Go up in the call stack by clicking on the @code{tokens.process} line
