@@ -6,8 +6,4 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
-   procedure On_Process_Notebook_Switch_Page
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args);
-
 end Main_Debug_Window_Pkg.Callbacks;

@@ -31,7 +31,7 @@ procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
 begin
    Gtk.Window.Initialize (Breakpoints, Window_Toplevel);
    Set_Title (Breakpoints, -"Breakpoints");
-   Set_Policy (Breakpoints, True, True, True);
+   Set_Policy (Breakpoints, False, True, True);
    Set_Position (Breakpoints, Win_Pos_Center);
    Set_Modal (Breakpoints, False);
    Return_Callback.Connect
@@ -225,6 +225,7 @@ begin
    Pack_Start (Breakpoints.Hbox2, Breakpoints.Vbuttonbox2, False, False, 0);
 
    Gtk_New (Breakpoints.Add_Location, -"Add");
+   Set_Relief (Breakpoints.Add_Location, Relief_Normal);
    Set_Flags (Breakpoints.Add_Location, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Add_Location, "clicked",
@@ -232,6 +233,7 @@ begin
    Add (Breakpoints.Vbuttonbox2, Breakpoints.Add_Location);
 
    Gtk_New (Breakpoints.Update_Location, -"Update");
+   Set_Relief (Breakpoints.Update_Location, Relief_Normal);
    Set_Sensitive (Breakpoints.Update_Location, False);
    Set_Flags (Breakpoints.Update_Location, Can_Default);
    Widget_Callback.Object_Connect
@@ -240,6 +242,7 @@ begin
    Add (Breakpoints.Vbuttonbox2, Breakpoints.Update_Location);
 
    Gtk_New (Breakpoints.Advanced_Location, -"Advanced >>");
+   Set_Relief (Breakpoints.Advanced_Location, Relief_Normal);
    Set_Flags (Breakpoints.Advanced_Location, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Advanced_Location, "clicked",
@@ -309,6 +312,7 @@ begin
    Pack_Start (Breakpoints.Hbox3, Breakpoints.Vbuttonbox3, False, True, 0);
 
    Gtk_New (Breakpoints.Add_Watchpoint, -"Add");
+   Set_Relief (Breakpoints.Add_Watchpoint, Relief_Normal);
    Set_Flags (Breakpoints.Add_Watchpoint, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Add_Watchpoint, "clicked",
@@ -316,6 +320,7 @@ begin
    Add (Breakpoints.Vbuttonbox3, Breakpoints.Add_Watchpoint);
 
    Gtk_New (Breakpoints.Update_Watchpoint, -"Update");
+   Set_Relief (Breakpoints.Update_Watchpoint, Relief_Normal);
    Set_Sensitive (Breakpoints.Update_Watchpoint, False);
    Set_Flags (Breakpoints.Update_Watchpoint, Can_Default);
    Widget_Callback.Object_Connect
@@ -324,6 +329,7 @@ begin
    Add (Breakpoints.Vbuttonbox3, Breakpoints.Update_Watchpoint);
 
    Gtk_New (Breakpoints.Advanced_Watchpoint, -"Advanced >>");
+   Set_Relief (Breakpoints.Advanced_Watchpoint, Relief_Normal);
    Set_Flags (Breakpoints.Advanced_Watchpoint, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Advanced_Watchpoint, "clicked",
@@ -370,6 +376,7 @@ begin
    Set_Visibility (Breakpoints.Combo_Entry25, True);
 
    Gtk_New (Breakpoints.Load_Exception_List, -"Load List");
+   Set_Relief (Breakpoints.Load_Exception_List, Relief_Normal);
    Pack_Start (Breakpoints.Hbox14, Breakpoints.Load_Exception_List, False, False, 0);
    Widget_Callback.Object_Connect
      (Breakpoints.Load_Exception_List, "clicked",
@@ -408,6 +415,7 @@ begin
    Pack_Start (Breakpoints.Hbox4, Breakpoints.Vbuttonbox4, False, False, 0);
 
    Gtk_New (Breakpoints.Add_Exception, -"Add");
+   Set_Relief (Breakpoints.Add_Exception, Relief_Normal);
    Set_Flags (Breakpoints.Add_Exception, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Add_Exception, "clicked",
@@ -415,6 +423,7 @@ begin
    Add (Breakpoints.Vbuttonbox4, Breakpoints.Add_Exception);
 
    Gtk_New (Breakpoints.Update_Exception, -"Update");
+   Set_Relief (Breakpoints.Update_Exception, Relief_Normal);
    Set_Sensitive (Breakpoints.Update_Exception, False);
    Set_Flags (Breakpoints.Update_Exception, Can_Default);
    Widget_Callback.Object_Connect
@@ -423,6 +432,7 @@ begin
    Add (Breakpoints.Vbuttonbox4, Breakpoints.Update_Exception);
 
    Gtk_New (Breakpoints.Advanced_Exception, -"Advanced >>");
+   Set_Relief (Breakpoints.Advanced_Exception, Relief_Normal);
    Set_Flags (Breakpoints.Advanced_Exception, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Advanced_Exception, "clicked",
@@ -484,6 +494,7 @@ begin
    Pack_Start (Breakpoints.Vbox16, Breakpoints.Hbuttonbox8, False, False, 0);
 
    Gtk_New (Breakpoints.Remove, -"Remove");
+   Set_Relief (Breakpoints.Remove, Relief_Normal);
    Set_Flags (Breakpoints.Remove, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Remove, "clicked",
@@ -491,6 +502,7 @@ begin
    Add (Breakpoints.Hbuttonbox8, Breakpoints.Remove);
 
    Gtk_New (Breakpoints.View, -"View");
+   Set_Relief (Breakpoints.View, Relief_Normal);
    Set_Flags (Breakpoints.View, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.View, "clicked",
@@ -505,6 +517,7 @@ begin
    Pack_Start (Breakpoints.Vbox1, Breakpoints.Hbuttonbox4, False, False, 0);
 
    Gtk_New (Breakpoints.Ok_Button, -"Close");
+   Set_Relief (Breakpoints.Ok_Button, Relief_Normal);
    Set_Flags (Breakpoints.Ok_Button, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Ok_Button, "clicked",

@@ -126,6 +126,7 @@ begin
    Set_Visibility (Open_Program.Program_Entry, True);
 
    Gtk_New (Open_Program.Open_Button, -"...");
+   Set_Relief (Open_Program.Open_Button, Relief_Normal);
    Attach (Open_Program.Table7, Open_Program.Open_Button, 6, 7, 0, 1,
      0, 0,
      0, 0);
@@ -271,6 +272,7 @@ begin
    Pack_Start (Open_Program.Vbox13, Open_Program.Hbuttonbox7, False, True, 0);
 
    Gtk_New (Open_Program.Ok_Button, -"OK");
+   Set_Relief (Open_Program.Ok_Button, Relief_Normal);
    Set_Flags (Open_Program.Ok_Button, Can_Default);
    Button_Callback.Connect
      (Open_Program.Ok_Button, "clicked",
@@ -278,6 +280,7 @@ begin
    Add (Open_Program.Hbuttonbox7, Open_Program.Ok_Button);
 
    Gtk_New (Open_Program.Cancel_Button, -"Cancel");
+   Set_Relief (Open_Program.Cancel_Button, Relief_Normal);
    Set_Flags (Open_Program.Cancel_Button, Can_Default);
    Button_Callback.Connect
      (Open_Program.Cancel_Button, "clicked",

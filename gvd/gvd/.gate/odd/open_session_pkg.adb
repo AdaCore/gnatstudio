@@ -97,6 +97,7 @@ begin
    Pack_Start (Open_Session.Vbox19, Open_Session.Hbuttonbox10, False, False, 0);
 
    Gtk_New (Open_Session.Select_All, -"Select All");
+   Set_Relief (Open_Session.Select_All, Relief_Normal);
    Set_Flags (Open_Session.Select_All, Can_Default);
    Button_Callback.Connect
      (Open_Session.Select_All, "clicked",
@@ -104,6 +105,7 @@ begin
    Add (Open_Session.Hbuttonbox10, Open_Session.Select_All);
 
    Gtk_New (Open_Session.Unselect_All, -"Unselect All");
+   Set_Relief (Open_Session.Unselect_All, Relief_Normal);
    Set_Flags (Open_Session.Unselect_All, Can_Default);
    Button_Callback.Connect
      (Open_Session.Unselect_All, "clicked",
@@ -121,6 +123,7 @@ begin
    Pack_End (Open_Session.Vbox17, Open_Session.Hbuttonbox9, False, False, 1);
 
    Gtk_New (Open_Session.Ok_Button, -"OK");
+   Set_Relief (Open_Session.Ok_Button, Relief_Normal);
    Set_Flags (Open_Session.Ok_Button, Can_Default);
    Button_Callback.Connect
      (Open_Session.Ok_Button, "clicked",
@@ -128,6 +131,7 @@ begin
    Add (Open_Session.Hbuttonbox9, Open_Session.Ok_Button);
 
    Gtk_New (Open_Session.Cancel_Button, -"Cancel");
+   Set_Relief (Open_Session.Cancel_Button, Relief_Normal);
    Set_Flags (Open_Session.Cancel_Button, Can_Default);
    Button_Callback.Connect
      (Open_Session.Cancel_Button, "clicked",

@@ -92,6 +92,7 @@ begin
    Pack_Start (Memory_View.Hbox8, Memory_View.Vbuttonbox6, False, False, 0);
 
    Gtk_New (Memory_View.Address_View, -"View");
+   Set_Relief (Memory_View.Address_View, Relief_Normal);
    Set_Flags (Memory_View.Address_View, Can_Default);
    Button_Callback.Connect
      (Memory_View.Address_View, "clicked",
@@ -99,6 +100,7 @@ begin
    Add (Memory_View.Vbuttonbox6, Memory_View.Address_View);
 
    Gtk_New (Memory_View.Search_Button, -"Search");
+   Set_Relief (Memory_View.Search_Button, Relief_Normal);
    Set_Sensitive (Memory_View.Search_Button, False);
    Set_Flags (Memory_View.Search_Button, Can_Default);
    Add (Memory_View.Vbuttonbox6, Memory_View.Search_Button);
@@ -185,6 +187,7 @@ begin
    Pack_Start (Memory_View.Hbox12, Memory_View.Vseparator9, True, True, 0);
 
    Gtk_New (Memory_View.Pgup);
+   Set_Relief (Memory_View.Pgup, Relief_Normal);
    Set_Flags (Memory_View.Pgup, Can_Default);
    Pack_Start (Memory_View.Hbox12, Memory_View.Pgup, True, True, 0);
    Button_Callback.Connect
@@ -197,6 +200,7 @@ begin
    Add (Memory_View.Pgup, Memory_View.Arrow1);
 
    Gtk_New (Memory_View.Pgdn);
+   Set_Relief (Memory_View.Pgdn, Relief_Normal);
    Set_Flags (Memory_View.Pgdn, Can_Default);
    Pack_Start (Memory_View.Hbox12, Memory_View.Pgdn, True, True, 0);
    Button_Callback.Connect
@@ -237,6 +241,7 @@ begin
    Pack_Start (Memory_View.Vbox20, Memory_View.Hbuttonbox11, False, False, 0);
 
    Gtk_New (Memory_View.Reset, -"Undo changes");
+   Set_Relief (Memory_View.Reset, Relief_Normal);
    Set_Flags (Memory_View.Reset, Can_Default);
    Button_Callback.Connect
      (Memory_View.Reset, "clicked",
@@ -244,6 +249,7 @@ begin
    Add (Memory_View.Hbuttonbox11, Memory_View.Reset);
 
    Gtk_New (Memory_View.Submit, -"Submit changes");
+   Set_Relief (Memory_View.Submit, Relief_Normal);
    Set_Flags (Memory_View.Submit, Can_Default);
    Button_Callback.Connect
      (Memory_View.Submit, "clicked",
@@ -251,6 +257,7 @@ begin
    Add (Memory_View.Hbuttonbox11, Memory_View.Submit);
 
    Gtk_New (Memory_View.Cancel, -"Close");
+   Set_Relief (Memory_View.Cancel, Relief_Normal);
    Set_Flags (Memory_View.Cancel, Can_Default);
    Button_Callback.Connect
      (Memory_View.Cancel, "clicked",
