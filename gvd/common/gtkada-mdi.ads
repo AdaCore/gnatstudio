@@ -28,7 +28,10 @@
 
 with Glib;
 with Gdk.GC;
+pragma Warnings (Off);
+with Gdk.Cursor;
 with Gdk.Types;
+pragma Warnings (On);
 with Gtk.Button;
 with Gtk.Event_Box;
 with Gtk.Handlers;
@@ -341,6 +344,9 @@ private
 
    type Notebook_Array is array (Dock_Side) of MDI_Child;
 
+   use Gdk.Cursor;
+   use Gdk.Types;
+
    type MDI_Window_Record is new Gtk.Layout.Gtk_Layout_Record with record
       X_Root, Y_Root : Glib.Gint;
       --  Root coordinates of the button_press event that generated a move
@@ -348,7 +354,7 @@ private
       Selected_Child : MDI_Child;
       --  The child being moved
 
-      Current_Cursor : Gdk.Types.Gdk_Cursor_Type := Gdk.Types.Left_Ptr;
+      Current_Cursor : Gdk_Cursor_Type := Left_Ptr;
 
       Focus_Child : MDI_Child := null;
       --  The widget that currently has the focus.
