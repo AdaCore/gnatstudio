@@ -26,11 +26,15 @@ with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
 
+with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Text_IO;          use Ada.Text_IO;
+with Traces;               use Traces;
 
 with Ada.Unchecked_Deallocation;
 
 package body Commands.Custom is
+
+   Me : constant Debug_Handle := Create ("Commands.Custom");
 
    ----------
    -- Free --
@@ -289,6 +293,12 @@ package body Commands.Custom is
       end if;
 
       return Success;
+
+   exception
+      when E : others =>
+         --  ??? Would be nice to display an error dialog here
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Execute;
 
 end Commands.Custom;
