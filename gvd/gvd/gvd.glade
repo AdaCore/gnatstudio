@@ -3575,8 +3575,9 @@
 	<can_focus>True</can_focus>
 	<signal>
 	  <name>clicked</name>
-	  <handler>on_reset_button_clicked</handler>
-	  <last_modification_time>Tue, 02 May 2000 10:31:59 GMT</last_modification_time>
+	  <handler>on_apply_button_clicked</handler>
+	  <object>General_Preferences</object>
+	  <last_modification_time>Tue, 23 Jan 2001 23:11:08 GMT</last_modification_time>
 	</signal>
 	<label>Apply</label>
       </widget>
@@ -3588,8 +3589,9 @@
 	<can_focus>True</can_focus>
 	<signal>
 	  <name>clicked</name>
-	  <handler>on_help_button_clicked</handler>
-	  <last_modification_time>Tue, 02 May 2000 10:32:09 GMT</last_modification_time>
+	  <handler>on_cancel_button_clicked</handler>
+	  <object>General_Preferences</object>
+	  <last_modification_time>Tue, 23 Jan 2001 23:11:38 GMT</last_modification_time>
 	</signal>
 	<label>Cancel</label>
       </widget>
