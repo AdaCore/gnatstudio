@@ -28,7 +28,7 @@ with VFS; use VFS;
 
 package body DDE is
 
-   type DDE_Operation is (FileOpen);
+   type DDE_Operation is (Unsupported, FileOpen);
    --  DDE operations supported by GPS
 
    --  Win32 constants, types and subprograms supporting DDEML
@@ -149,34 +149,42 @@ package body DDE is
             Data_Raw := DdeAccessData (hData, Data_Len'Unchecked_Access);
 
             declare
-               Data : String (1 .. Integer (Data_Len) - 1);
-               --  Ignore trailing 0
+               Data : String (1 .. Integer (Data_Len));
                for Data'Address use Data_Raw;
 
                Pos : constant Natural := Index (Data, ":");
-               Operation : constant DDE_Operation :=
-                 DDE_Operation'Value (Data (1 .. Pos - 1));
-               Argument : constant String := Data (Pos + 1 .. Data'Last);
+               Operation : DDE_Operation;
+               Argument : constant String :=
+                 Data (Pos + 1 .. Index (Data, ASCII.Nul & "") - 1);
+               --  The data block is terminated by a nul character
 
             begin
-               Res := DdeUnaccessData (hData); --  Release the resource
+               begin
+                  Operation := DDE_Operation'Value (Data (1 .. Pos - 1));
+               exception
+                  when Constraint_Error =>
+                     Operation := Unsupported;
+                     --  Catch an unsupported DDE operation
+               end;
 
                case Operation is
+                  when Unsupported =>
+                     null;
                   when FileOpen =>
                      Glide_Kernel.Modules.Open_File_Editor
                        (Kernel_Local, Create (Full_Filename => Argument));
                end case;
 
-            exception
-               when others =>
-                  Res := DdeUnaccessData (hData); --  Release the resource
             end;
+
+            Res := DdeUnaccessData (hData); --  Release the resource
 
          when others =>
             return 0;
       end case;
 
       return 1;
+
    end DDE_Callback;
 
    -------------------------
