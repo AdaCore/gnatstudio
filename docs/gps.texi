@@ -1751,6 +1751,7 @@ Under Windows, this is the standard file selector. Under other platforms,
 this is a built-in file selector described in @ref{The File Selector}.
 
 @item Open From Project...
+@anchor{Open From Project}
 @cindex open
 @cindex project
 Open a dialog where you can easily and rapidly select a source file from your
@@ -1954,7 +1955,7 @@ Create a new test case. See AUnit documentation for more details.
 Create a new test suite. See AUnit documentation for more details.
 
 @item New Test Harness...
-Create a new harness. See AUnit documentation for more details.
+Create a new test harness. See AUnit documentation for more details.
 
 @end table
 
@@ -2031,8 +2032,9 @@ the same file a second time, it will open a new editor, instead of
 reusing the existing one.
 
 @cindex Windows
-To enable this capability, the xterm executable must found in the PATH,
-and thus is not currently supported on Windows systems.
+To enable this capability, the xterm executable must be found in the PATH,
+and thus is not supported on Windows systems. Under Windows systems,
+you can use the @code{custom} editor instead.
 
 
 @item vi
@@ -3474,8 +3476,13 @@ substrings. "sensitive" will no longer match "insensitive".
 @item @code{"Regular Expression"}
 @cindex regular expression
 This button commutes between fixed string patterns and regular
-expressions. As mentioned above, you can also commute between these two modes
+expressions. You can also commute between these two modes
 by selecting the arrow on the right of the @code{Search for:} field.
+The grammar followed by the regular expressions is similar to the Perl and
+Python regular expressions grammar, and is documented in the GNAT run time file
+@file{g-regpat.ads}. To open it from GPS, you can use the open from project
+dialog (@code{File->Open From Project...}) and type g-regpat.ads. See
+@ref{Open From Project} for more information on this dialog.
 
 @end table
 
@@ -4939,8 +4946,8 @@ The default external editor to use.
 @anchor{custom editor command}
 Specify the command line for launching a custom editor.
 It is assumed that the command will create a new window/terminal as needed.
-If the editor itself does not provide this capability (such as vi or pico),
-you can use an external terminal command, e.g:
+If the editor itself does not provide this capability (such as vi or pico under
+unix systems), you can use an external terminal command, e.g:
 
 @smallexample
 xterm -geometry 80x50 -exec vi +%l %f
@@ -5856,11 +5863,9 @@ Here is an example of a language definition for the GPS project files:
   <Language>
     <Name>Project File</Name>
     <Spec_Suffix>.gpr</Spec_Suffix>
-
     <Keywords>^(case|e(nd|xte(nds|rnal))|for|is|</Keywords>
     <Keywords>limited|null|others|</Keywords>
     <Keywords>p(ackage|roject)|renames|type|use|w(hen|ith))\b</Keywords>
-
     <Context>
       <New_Line_Comment_Start>--</New_Line_Comment_Start>
       <String_Delimiter>"</String_Delimiter>
@@ -5869,7 +5874,6 @@ Here is an example of a language definition for the GPS project files:
       <Syntax_Highlighting>True</Syntax_Highlighting>
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
-
     <Categories>
       <Category>
         <Name>package</Name>
@@ -5895,13 +5899,7 @@ Here is an example of a language definition for the GPS project files:
 
 @noindent
 GPS provides a mechanism known as @b{aliases}. These are defined
-through the menu @code{Edit->Aliases}. Each alias has a name, which
-is generally a short string of characters. When you type them in any
-textual entry in GPS (generally a source editor, but also entry fields
-for instance in the file selector), and then press the special
-activation key (by default @key{control-o}, controlled by a
-preference), this name is removed from the source editor, and replaced
-by the text you have associated with it.
+through the menu @code{Edit->Aliases}.
 
 @iftex
 @cindex screen shot
@@ -5912,6 +5910,13 @@ by the text you have associated with it.
 @cindex screen shot
 @image{aliases}
 @end ifhtml
+
+Each alias has a name, which is generally a short string of characters.
+When you type them in any textual entry in GPS (generally a source editor, but
+also entry fields for instance in the file selector), and then press the special
+activation key (by default @key{control-o}, controlled by a
+preference), this name is removed from the source editor, and replaced
+by the text you have associated with it.
 
 Alias names may be composed of any character, but must start with a
 letter. GPS will jump to the start of each word before the current
@@ -6713,22 +6718,16 @@ Perl, Tcl or Lisp. This section is not a tutorial on python
 programming. See @url{http://www.python.org/doc/current/} to access the
 documentation for the current version of python.
 
-The python shell is accessible through the @code{Python} window at the
-bottom of the GPS window. However, GPS might not have been compiled
-with support for python, and therefore python might not be available
-to you.
+If python support has been enabled, the python shell is accessible through the
+@code{Python} window at the bottom of the GPS window. You can also
+display it by using the menu @file{Tools->Python Console}.
 
-If a script is executed that requires user input, the whole GPS environment
-is frozen. This is to prevent the user from selecting a menu that would in
-turn launch a new python command while the previous one has not finished to
-execute.
+You can type @code{help(GPS)} in the python console to see the list of
+functions exported by GPS to python. This list is also given in
+@ref{Python Commands}.
 
-Type @code{help(GPS)} to see the list of functions exported by GPS to
-python. This list is also given in @ref{Python Commands} at the end
-of this documentation.
-
-The same example that was used to show the GPS shell is now done
-through python. As you can notice, the name of the commands is
+The same example that was used to show the GPS shell follows, now using
+python. As you can notice, the name of the commands is
 similar, although they are not run exactly in the same
 way. Specifically, GPS benefits from the object-oriented aspects of
 python to create classes and instances of these classes.
@@ -6736,7 +6735,7 @@ python to create classes and instances of these classes.
 In the first line, a new instance of the class Entity is created
 through the @code{create_entity} function. Various methods can then be
 applied to that instance, including @code{find_all_refs}, which lists
-all references to that entity in the location window
+all references to that entity in the location window:
 
 @smallexample
 >>> e=GPS.Entity ("entity_name", "file_name.adb")
@@ -6748,7 +6747,7 @@ been modified, so that most GPS functions will return an instance of a
 class, but still display their output in a user-readable manner.
 
 Python has extensive introspection capabilities. Continuing the
-previous example, one can find what class @code{e} is an instance of
+previous example, you can find what class @code{e} is an instance of
 with the following command:
 
 @smallexample
@@ -6770,7 +6769,7 @@ applied to @code{e}, as in the following example:
 Note that the list of methods may vary depending on what modules were
 loaded in GPS, since each module can add its own methods to any class.
 
-Finally, the list of all existing modules and objects currently known
+In addition, the list of all existing modules and objects currently known
 in the interpreter can be found with the following command:
 
 @smallexample
@@ -6778,7 +6777,7 @@ in the interpreter can be found with the following command:
 ['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
 @end smallexample
 
-You can load and execute python scripts with the @code{execfile} command,
+You can also load and execute python scripts with the @code{execfile} command,
 as in the following example:
 
 @smallexample
@@ -6786,12 +6785,11 @@ as in the following example:
 @end smallexample
 
 Python supports named parameters. Most functions exported by GPS define
-names for their parameters, so that you can use this Python's feature, and
+names for their parameters, so that you can use this Python feature, and
 make your scripts more readable. A notable exception to this rule are the
-functions that take a variable number of parameters,
-
+functions that take a variable number of parameters.
 Using named parameters allows you to specify the parameters in any order
-you wish.
+you wish, e.g:
 
 @smallexample
 >>> e=GPS.Entity (name="foo", file="file.adb")
