@@ -30,6 +30,7 @@ with Browsers.Canvas;           use Browsers.Canvas;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Intl;                use Glide_Intl;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
 with String_Utils;              use String_Utils;
@@ -395,16 +396,17 @@ package body Browsers.Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item : Gtk_Menu_Item;
+      Tools : constant String := '/' & (-"Tools");
    begin
-      Gtk_New (Menu_Item, "Dependency Browser");
-      Register_Menu (Kernel, "/Tools", Menu_Item);
+      Gtk_New (Menu_Item, -"Dependency Browser");
+      Register_Menu (Kernel, Tools, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_Dependency_Browser'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, "Class Browser");
-      Register_Menu (Kernel, "/Tools", Menu_Item);
+      Gtk_New (Menu_Item, -"Class Browser");
+      Register_Menu (Kernel, Tools, Menu_Item);
    end Initialize_Module;
 
    ---------------
@@ -441,7 +443,7 @@ package body Browsers.Module is
          File_Context := File_Selection_Context_Access (Context);
 
          Gtk_New (Item, Label => File_Information (File_Context)
-                  & " depends on...");
+                  & (-" depends on..."));
          Append (Menu, Item);
          Context_Callback.Connect
            (Item, "activate",
