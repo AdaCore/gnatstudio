@@ -270,13 +270,13 @@ package body Glide_Kernel is
 
    procedure Find_All_References
      (Kernel       : access Kernel_Handle_Record;
-      Decl         : Src_Info.E_Declaration_Info;
+      Entity       : Src_Info.Queries.Entity_Information;
       Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
       Project      : Prj.Project_Id := Prj.No_Project;
       LI_Once      : Boolean := False) is
    begin
       Find_All_References
-        (Get_Project (Kernel), Decl, Kernel.Source_Info_List,
+        (Get_Project (Kernel), Entity, Kernel.Source_Info_List,
          Iterator, Project, LI_Once);
    end Find_All_References;
 
