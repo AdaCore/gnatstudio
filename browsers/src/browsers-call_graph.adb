@@ -68,11 +68,6 @@ package body Browsers.Call_Graph is
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
-   All_Refs_Category : constant String := "References for: ";
-   --  String used as a category title. This needs to be translated when used,
-   --  therefore the following comment is for translation purposes:
-   --     -"References for: "
-
    Automatically_Check_To_Dependencies : constant Boolean := True;
    --  If True, then every time an item is added to the call graph we check,
    --  and if no to dependency exists, the right arrow is not displayed.
@@ -80,6 +75,21 @@ package body Browsers.Call_Graph is
    Locations_At_A_Time : constant := 20;
    --  Number of locations that will be inserted in the locations view in
    --  each idle processing.
+
+   function All_Refs_Category (Entity : Entity_Information) return String;
+   --  Return the category title when doing a find all refs on a given entity.
+
+   -----------------------
+   -- All_Refs_Category --
+   -----------------------
+
+   function All_Refs_Category (Entity : Entity_Information) return String is
+      Decl  : constant File_Location := Get_Declaration_Of (Entity);
+   begin
+      return -"References for " & Get_Name (Entity).all
+        & " ("  & Krunch (Base_Name (Get_Filename (Decl.File)))
+        & ":" & Image (Decl.Line) & ")";
+   end All_Refs_Category;
 
    ------------------------
    -- Call graph browser --
@@ -1280,8 +1290,7 @@ package body Browsers.Call_Graph is
 
       while Count < Locations_At_A_Time loop
          if At_End (Data.Iter.all) then
-            Recount_Category
-              (Data.Kernel, Data.Category.all & Get_Name (Data.Entity).all);
+            Recount_Category (Data.Kernel, Data.Category.all);
             Result := Success;
             exit;
 
@@ -1303,7 +1312,7 @@ package body Browsers.Call_Graph is
                Print_Ref
                  (Data.Kernel, Location,
                   Get_Name (Data.Entity).all,
-                  Data.Category.all & Get_Name (Data.Entity).all);
+                  Data.Category.all);
             end if;
 
             Count := Count + 1;
@@ -1336,8 +1345,7 @@ package body Browsers.Call_Graph is
    begin
       if Info /= null then
          begin
-            Remove_Result_Category
-              (Kernel, Category_Title & Get_Name (Info).all);
+            Remove_Result_Category (Kernel, Category_Title);
 
             Ref (Info);
             Data := (Kernel         => Kernel_Handle (Kernel),
@@ -1376,11 +1384,14 @@ package body Browsers.Call_Graph is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
+      Entity : Entity_Information;
    begin
+      Entity := Get_Entity (Entity_Selection_Context_Access (Context));
       Find_All_References_Internal
         (Get_Kernel (Context),
-         Get_Entity (Entity_Selection_Context_Access (Context)),
-         Category_Title => -All_Refs_Category,
+         Entity,
+         Category_Title => All_Refs_Category (Entity),
          Include_Writes => True,
          Include_Reads  => True);
    end Find_All_References_From_Contextual;
@@ -1739,15 +1750,17 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
+      Entity  : Entity_Information;
 
    begin
       if Context /= null
         and then Context.all in Entity_Selection_Context'Class
       then
+         Entity := Get_Entity (Entity_Selection_Context_Access (Context));
          Find_All_References_Internal
            (Kernel,
-            Get_Entity (Entity_Selection_Context_Access (Context)),
-            Category_Title => -All_Refs_Category,
+            Entity,
+            Category_Title => All_Refs_Category (Entity),
             Include_Writes => True,
             Include_Reads  => True);
 
@@ -1840,7 +1853,7 @@ package body Browsers.Call_Graph is
       if Command = "find_all_refs" then
          Find_All_References_Internal
            (Kernel, Entity,
-            Category_Title => -All_Refs_Category,
+            Category_Title => All_Refs_Category (Entity),
             Include_Writes => True,
             Include_Reads  => True);
 
