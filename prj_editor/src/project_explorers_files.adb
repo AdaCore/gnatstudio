@@ -563,14 +563,13 @@ package body Project_Explorers_Files is
             --  Are we on the path to the target directory ?
 
             if not Path_Found
-              and then D.Norm_Dir.all'Length + Dir'Length
-                <= D.Norm_Dest.all'Length
+              and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
                 and then
                   ((Filenames_Are_Case_Sensitive
-                   and then (D.Norm_Dest.all
-                               (D.Norm_Dest.all'First
-                                  .. D.Norm_Dest.all'First
-                                    + D.Norm_Dir.all'Length + Dir'Length - 1)
+                    and then (D.Norm_Dest
+                               (D.Norm_Dest'First
+                                .. D.Norm_Dest'First
+                                  + D.Norm_Dir'Length + Dir'Length - 1)
                                    = D.Norm_Dir.all & Dir))
                    or else
                      (not Filenames_Are_Case_Sensitive
