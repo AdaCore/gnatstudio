@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                      Copyright (C) 2001-2002                      --
+--                      Copyright (C) 2001-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -38,11 +38,12 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.Combo;    use Gtkada.Combo;
 with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
-with Projects.Editor; use Projects, Projects.Editor;
-with Glide_Kernel;     use Glide_Kernel;
+with Projects.Editor;      use Projects, Projects.Editor;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Hooks;   use Glide_Kernel.Hooks;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Variable_Editors; use Variable_Editors;
-with Glide_Intl;    use Glide_Intl;
+with Variable_Editors;     use Variable_Editors;
+with Glide_Intl;           use Glide_Intl;
 
 with Namet;    use Namet;
 with Traces;   use Traces;
@@ -50,9 +51,6 @@ with Traces;   use Traces;
 package body Scenario_Views is
 
    Me : constant Debug_Handle := Create ("Scenario_Views");
-
-   procedure Refresh (View : access GObject_Record'Class; Data : GObject);
-   --  Callback when the current view of the project has changed
 
    procedure Add_Possible_Values
      (List : access Gtk_List_Record'Class;
@@ -83,6 +81,15 @@ package body Scenario_Views is
    package View_Callback is new Gtk.Handlers.User_Callback_With_Setup
      (Gtk_Widget_Record, Variable_User_Data, Setup);
 
+   type Refresh_Hook_Record is new Hook_No_Args_Record with record
+      View : Scenario_View;
+   end record;
+   type Refresh_Hook is access all Refresh_Hook_Record'Class;
+   procedure Execute
+     (Hook : Refresh_Hook_Record; Kernel : access Kernel_Handle_Record'Class);
+   --  Callback when some aspect of the project has changed, to refresh the
+   --  view.
+
    -----------
    -- Setup --
    -----------
@@ -111,7 +118,10 @@ package body Scenario_Views is
 
    procedure Initialize
      (View   : access Scenario_View_Record'Class;
-      Kernel : access Kernel_Handle_Record'Class) is
+      Kernel : access Kernel_Handle_Record'Class)
+   is
+      Hook : constant Refresh_Hook := new Refresh_Hook_Record'
+        (Hook_No_Args_Record with View => Scenario_View (View));
    begin
       View.Kernel := Kernel_Handle (Kernel);
       Gtk.Table.Initialize
@@ -125,15 +135,12 @@ package body Scenario_Views is
       --  We do not need to connect to "project_changed", since it is always
       --  emitted at the same time as a "project_view_changed", and we do the
       --  same thing in both cases.
-      Object_User_Callback.Connect
-        (Kernel, Project_View_Changed_Signal,
-         Object_User_Callback.To_Marshaller (Refresh'Access), GObject (View));
-      Object_User_Callback.Connect
-        (Kernel, Variable_Changed_Signal,
-         Object_User_Callback.To_Marshaller (Refresh'Access), GObject (View));
+      Add_Hook
+        (Kernel, Project_View_Changed_Hook, Hook, Watch => GObject (View));
+      Add_Hook (Kernel, Variable_Changed_Hook, Hook, Watch => GObject (View));
 
       --  Update the viewer with the current project
-      Refresh (Kernel, GObject (View));
+      Execute (Hook.all, Kernel);
    end Initialize;
 
    ----------------------------
@@ -224,7 +231,7 @@ package body Scenario_Views is
             Ext_Variable_Name        => External_Reference_Of (Data.Var),
             Keep_Choice              => Value_Of (Data.Var),
             Delete_Direct_References => False);
-         Variable_Changed (Data.View.Kernel);
+         Run_Hook (Data.View.Kernel, Variable_Changed_Hook);
 
          --  Recompute the view so that the explorer is updated graphically.
          Recompute_View (Data.View.Kernel);
@@ -234,12 +241,13 @@ package body Scenario_Views is
    end Delete_Variable;
 
    -------------
-   -- Refresh --
+   -- Execute --
    -------------
 
-   procedure Refresh (View : access GObject_Record'Class; Data : GObject) is
-      pragma Unreferenced (View);
-      V      : constant Scenario_View := Scenario_View (Data);
+   procedure Execute
+     (Hook : Refresh_Hook_Record; Kernel : access Kernel_Handle_Record'Class)
+   is
+      V      : constant Scenario_View := Hook.View;
       Label  : Gtk_Label;
       Combo  : Gtkada_Combo;
       Row    : Guint;
@@ -273,14 +281,14 @@ package body Scenario_Views is
       Widget_List.Free (Child);
 
       --  No project view => Clean up the scenario viewer
-      if Get_Project (V.Kernel) = No_Project then
+      if Get_Project (Kernel) = No_Project then
          Resize (V, Rows => 1, Columns => 4);
          Hide_All (V);
 
       else
          declare
             Scenar_Var : constant Scenario_Variable_Array :=
-              Scenario_Variables (V.Kernel);
+              Scenario_Variables (Kernel);
          begin
             Resize (V, Rows => Guint (Scenar_Var'Length) + 1, Columns => 4);
 
@@ -334,6 +342,6 @@ package body Scenario_Views is
          end;
          Show_All (V);
       end if;
-   end Refresh;
+   end Execute;
 
 end Scenario_Views;
