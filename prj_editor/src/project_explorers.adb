@@ -2583,7 +2583,8 @@ package body Project_Explorers is
    is
       Index : Natural;
       N, N2 : Gtk_Ctree_Node;
-      Dir : constant String := Name_As_Directory (Get_String (Data.Directory));
+      Dir : constant String := Name_As_Directory (Normalize_Pathname
+         (Get_String (Data.Directory), Resolve_Links => False));
 
       type Boolean_Array is array (Files_In_Project'Range) of Boolean;
       New_File : Boolean_Array := (others => True);
@@ -2632,7 +2633,7 @@ package body Project_Explorers is
          then
             N := Add_File_Node
               (Explorer         => Explorer,
-               File             => Files_In_Project (J).all,
+               File             => Base_Name (Files_In_Project (J).all),
                Parent_Node      => Node);
          end if;
       end loop;
