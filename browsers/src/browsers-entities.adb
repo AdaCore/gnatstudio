@@ -930,8 +930,9 @@ package body Browsers.Entities is
       Subs : Subprogram_Iterator := Get_Subprogram_Parameters
         (Lib_Info   => Lib_Info, Subprogram => Item.Entity);
       Typ, Parameter : Entity_Information;
-      Returned : Entity_Information := Returned_Type
+      Returned       : constant Entity_Information := Returned_Type
         (Lib_Info, Item.Entity);
+
    begin
       loop
          Parameter := Get (Subs);
