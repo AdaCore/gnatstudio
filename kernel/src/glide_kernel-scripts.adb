@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1516,19 +1516,22 @@ package body Glide_Kernel.Scripts is
               (Kernel              => Get_Kernel (Data),
                Title               => Title,
                History             => History_Key ("console_" & Title),
-               Create_If_Not_Exist => True,
+               Create_If_Not_Exist => Title /= "Python"
+                 and then Title /= "Shell",
                Force_Create        => Force);
             Set_Data (Inst, Widget => Gtk_Widget (Console));
 
-            if On_Input /= null then
-               Set_Command_Handler
-                 (Console, On_Console_Input'Access, On_Input.all'Address);
-            end if;
+            if Console /= null then
+               if On_Input /= null then
+                  Set_Command_Handler
+                    (Console, On_Console_Input'Access, On_Input.all'Address);
+               end if;
 
-            if On_Destroy /= null then
-               Subprogram_Callback.Connect
-                 (Console, "destroy", On_Console_Destroy'Access,
-                  User_Data => On_Destroy);
+               if On_Destroy /= null then
+                  Subprogram_Callback.Connect
+                    (Console, "destroy", On_Console_Destroy'Access,
+                     User_Data => On_Destroy);
+               end if;
             end if;
          end;
 
