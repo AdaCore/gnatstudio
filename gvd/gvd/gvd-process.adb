@@ -28,7 +28,12 @@ with Gtk.Main;  use Gtk.Main;
 
 with Ada.Text_IO;     use Ada.Text_IO;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
+with Gdk.Pixmap;      use Gdk.Pixmap;
+with Gtk.Style;       use Gtk.Style;
+with Gtk.Clist;       use Gtk.Clist;
 with Gtkada.Canvas;   use Gtkada.Canvas;
+with Gtkada.Types;    use Gtkada.Types;
+with Odd.Pixmaps;     use Odd.Pixmaps;
 with Display_Items;   use Display_Items;
 with Generic_Values;  use Generic_Values;
 with Debugger.Gdb;    use Debugger.Gdb;
@@ -66,7 +71,7 @@ package body Odd.Process is
       Win    : Process_Tab_Access :=
         Process_Tab_Access (Debugger.Window);
       Result : Expect_Match;
-      Pid    : Pipes_Id_Access := Get_Process (Debugger.Debugger);
+      Pid    : Pipes_Id_Access := Get_Process (Debugger.Debugger.all);
 
    begin
       Expect (Pid.all, Result, "\(gdb\) ", 0);
@@ -74,7 +79,7 @@ package body Odd.Process is
       --  Need to Parse (Expect_Out)
 
       if TTY_Emulation then
-         Put (Expect_Out (Get_Process (Debugger.Debugger).all));
+         Put (Expect_Out (Get_Process (Debugger.Debugger.all).all));
       else
          Freeze (Win.Debugger_Text);
          Load (Font, "-adobe-helvetica-bold-*-*-*-*-140-*-*-*-*-*-*");
@@ -83,7 +88,7 @@ package body Odd.Process is
             Font,
             Black (Get_System),
             White (Get_System),
-            Expect_Out (Get_Process (Debugger.Debugger).all));
+            Expect_Out (Get_Process (Debugger.Debugger.all).all));
          Win.Edit_Pos := Get_Length (Win.Debugger_Text);
          Thaw (Win.Debugger_Text);
          Set_Position (Win.Debugger_Text, Gint (Win.Edit_Pos));
@@ -98,19 +103,45 @@ package body Odd.Process is
      (Window : access Gtk_Window_Record'Class;
       Params : Argument_List)
    is
-      Id       : Gint;
-      Win      : Process_Tab_Access := Process_Tab_Access (Window);
+      Id     : Gint;
+      Win    : Process_Tab_Access := Process_Tab_Access (Window);
+      Infile : File_Type;
 
    begin
       Win.Debugger.Window := Window.all'Access;
-      Set_Language
-        (Win.Debugger.Debugger, Win.Debugger.Language'Unchecked_Access);
-      Set_Debugger
-        (Win.Debugger.Language, Win.Debugger.Debugger'Unchecked_Access);
+
+      --  ??? This should be a parameter
+
+      Win.Debugger.Debugger := new Gdb_Debugger;
       Initialize (Win.Debugger.Debugger);
 
+      Open (Infile, In_File, "odd.adb");
+      declare
+         S      : String (1 .. 1024);
+         Last   : Natural;
+         Row    : Gint;
+         Pixmap : Gdk.Gdk_Pixmap;
+         Mask   : Gdk.Gdk_Bitmap;
+         Style  : Gtk_Style := Get_Style (Win.Editor_Text);
+         Texts  : constant Chars_Ptr_Array := (0 => Null_Ptr);
+
+      begin
+         Realize (Win.Editor_Text);
+         Create_From_Xpm_D
+           (Pixmap, Get_Clist_Window (Win.Editor_Text),
+            Mask, Get_White (Style), stop_xpm);
+
+         while not End_Of_File (Infile) loop
+            Get_Line (File => Infile, Item => S, Last => Last);
+            Row := Append (Win.Editor_Text, Texts);
+            Set_Pixtext
+              (Win.Editor_Text, Row, 0, S (1 .. Last), 5, Pixmap, Mask);
+         end loop;
+      end;
+      Close (Infile);
+
       Id := My_Input.Add
-        (To_Gint (Get_Output_Fd (Get_Process (Win.Debugger.Debugger).all)),
+        (To_Gint (Get_Output_Fd (Get_Process (Win.Debugger.Debugger.all).all)),
          Gdk.Types.Input_Read,
          Output_Handler'Access,
          Win.Debugger'Access);
@@ -138,17 +169,17 @@ package body Odd.Process is
             declare
                Var : String := Command (Command'First + 12 .. Command'Last);
             begin
-               The_Type := Parse_Type (Debugger.Debugger, Var);
+               The_Type := Parse_Type (Debugger.Debugger.all, Var);
 
                if The_Type /= null then
-                  Parse_Value (Debugger.Debugger, Var, The_Type);
+                  Parse_Value (Debugger.Debugger.all, Var, The_Type);
                   --  Gtk_New (Item, Get_Window (Win.Data_Canvas), Var,
                   --           ???);
                   --  Put (Win.Data_Canvas, Item, 10, 10);
                end if;
             end;
          else
-            Send (Get_Process (Debugger.Debugger).all,
+            Send (Get_Process (Debugger.Debugger.all).all,
               Command (Command'First + 6 .. Command'Last));
          end if;
 
@@ -159,7 +190,7 @@ package body Odd.Process is
 
          --  Regular debugger command, send it.
 
-         Send (Get_Process (Debugger.Debugger).all, Command);
+         Send (Get_Process (Debugger.Debugger.all).all, Command);
       end if;
    end Send_Command;
 
