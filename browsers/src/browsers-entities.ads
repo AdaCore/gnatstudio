@@ -91,7 +91,8 @@ private
       return Glib.Gint;
    procedure Reset
      (Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Item : access Type_Item_Record);
+      Item : access Type_Item_Record;
+      Parent_Removed, Child_Removed : Boolean);
    --  See doc for inherited subprograms
 
    procedure Draw_Straight_Line

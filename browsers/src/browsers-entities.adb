@@ -59,6 +59,9 @@ package body Browsers.Entities is
 
    Type_Browser_Module : Module_ID;
 
+   Left_Margin : constant := 20;
+   --  Indentation for the attributes and methods layouts.
+
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Type browser menu
@@ -89,12 +92,14 @@ package body Browsers.Entities is
    --  Same as above, but adapted for contextual menus
 
    procedure Add_Item_And_Link
-     (Item      : access Type_Item_Record'Class;
-      Entity    : Entity_Information;
-      Link_Name : String;
-      Parent_Link : Boolean);
+     (Item         : access Type_Item_Record'Class;
+      Entity       : Entity_Information;
+      Link_Name    : String;
+      Parent_Link  : Boolean;
+      Reverse_Link : Boolean := False);
    --  Create a new item displaying the information for Entity, and link it
-   --  with Item.
+   --  with Item. If Reverse_Link is False, link goes from Item to Entity,
+   --  otherwise it goes in the opposite direction.
    --  If Parent_Link is true, then the link used is a Parent_Link_Record.
 
    procedure Browser_Contextual_Menu
@@ -487,7 +492,7 @@ package body Browsers.Entities is
             if Last - List.Lines (L)'First + 1 = List.Lengths (L) then
                Display (L);
                First   := Last;
-               X2      := Second_Column;
+               X2      := X + Second_Column;
             end if;
 
             if List.Lines (L)(Last) = '@' then
@@ -739,8 +744,7 @@ package body Browsers.Entities is
       Entity  : Entity_Information) is
    begin
       Initialize (Item, Browser);
-      Set_Title (Item, Get_Name (Entity)
-                 & ": " & (-Kind_To_String (Get_Kind (Entity))));
+      Set_Title (Item, Get_Name (Entity));
       Item.Entity := Copy (Entity);
    end Initialize;
 
@@ -882,9 +886,18 @@ package body Browsers.Entities is
          Parameter := Get (Subs);
          exit when Parameter = No_Entity_Information;
 
+         --  In some cases, access parameters reference their pointed type
+         --  through Pointed_Type. However, if that access type is a renaming
+         --  of another type, we'll need to try Get_Variable_Type if
+         --  Pointed_Type didn't return anything.
+
+         Typ := No_Entity_Information;
+
          if Get_Kind (Parameter).Kind = Access_Kind then
             Typ := Pointed_Type (Lib_Info, Parameter);
-         else
+         end if;
+
+         if Typ = No_Entity_Information then
             Typ := Get_Variable_Type (Lib_Info, Parameter);
          end if;
 
@@ -984,21 +997,15 @@ package body Browsers.Entities is
       Entity   : Entity_Information;
       Prefix   : String)
    is
-      Typ : Entity_Information := Get_Variable_Type (Lib_Info, Entity);
+      Typ : constant Entity_Information :=
+        Get_Variable_Type (Lib_Info, Entity);
    begin
       if Typ = No_Entity_Information then
          Add_Line (List, Prefix & " ???", Length1 => Prefix'Length + 1);
-
-      elsif Is_Predefined_Entity (Typ) then
-         Add_Line
-           (List,
-            Prefix & " " & Get_Name (Typ),
-            Length1 => Prefix'Length + 1);
-         Destroy (Typ);
       else
          Add_Line
            (List,
-            Prefix & ' ' & Entity_As_Link (Typ),
+            Prefix & ": " & Entity_As_Link (Typ),
             Length1 => Prefix'Length + 1,
             Callback => Build (Item, Typ, Prefix));
          --  Do not free Typ, needed for callbacks
@@ -1010,10 +1017,11 @@ package body Browsers.Entities is
    -----------------------
 
    procedure Add_Item_And_Link
-     (Item        : access Type_Item_Record'Class;
-      Entity      : Entity_Information;
-      Link_Name   : String;
-      Parent_Link : Boolean)
+     (Item         : access Type_Item_Record'Class;
+      Entity       : Entity_Information;
+      Link_Name    : String;
+      Parent_Link  : Boolean;
+      Reverse_Link : Boolean := False)
    is
       Canvas   : constant Interactive_Canvas :=
         Get_Canvas (Get_Browser (Item));
@@ -1023,14 +1031,28 @@ package body Browsers.Entities is
       New_Item := Add_Or_Select_Item
         (Type_Browser (Get_Browser (Item)), Entity);
 
-      if not Has_Link (Canvas, Item, New_Item, Link_Name) then
-         if Parent_Link then
-            Link := new Parent_Link_Record;
+      if Reverse_Link then
+         if not Has_Link (Canvas, Item, New_Item, Link_Name) then
+            if Parent_Link then
+               Link := new Parent_Link_Record;
+            else
+               Link := new Canvas_Link_Record;
+            end if;
+
+            Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name,
+                      Arrow => No_Arrow);
+         end if;
+
+      else
+         if not Has_Link (Canvas, New_Item, Item, Link_Name) then
+            if Parent_Link then
+               Link := new Parent_Link_Record;
+            else
+               Link := new Canvas_Link_Record;
+            end if;
+
             Add_Link (Canvas, Link, New_Item, Item, Descr => Link_Name,
                       Arrow => No_Arrow);
-         else
-            Link := new Canvas_Link_Record;
-            Add_Link (Canvas, Link, Item, New_Item, Descr => Link_Name);
          end if;
       end if;
    end Add_Item_And_Link;
@@ -1079,9 +1101,48 @@ package body Browsers.Entities is
      (Event : Gdk_Event;
       Item  : access Browser_Item_Record'Class)
    is
-      pragma Unreferenced (Event, Item);
+      Iter   : Entity_Reference_Iterator;
+      Child  : Child_Type_Iterator;
+      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
+      LI     : LI_File_Ptr;
+      C      : Entity_Information;
    begin
-      null;
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Release
+      then
+         Find_All_References
+           (Kernel       => Kernel,
+            Entity       => Type_Item (Item).Entity,
+            Iterator     => Iter,
+            LI_Once      => True);
+
+         while Get (Iter) /= No_Reference loop
+            LI := Get_LI (Iter);
+
+            Child := Get_Children_Types (LI, Type_Item (Item).Entity);
+
+            loop
+               C := Get (Child);
+               exit when C = No_Entity_Information;
+
+               Add_Item_And_Link
+                 (Type_Item (Item), C, "", Parent_Link => True,
+                  Reverse_Link => True);
+
+               Destroy (C);
+               Next (Child);
+            end loop;
+
+            Destroy (Child);
+
+            Next (Kernel, Iter);
+         end loop;
+
+         Destroy (Iter);
+
+         Type_Item (Item).Children_Computed := True;
+         Refresh (Item);  --  ??? Could refresh only the title bar
+      end if;
    end Find_Children_Types;
 
    -------------------------
@@ -1116,7 +1177,7 @@ package body Browsers.Entities is
       W, H, Layout_H, Layout_W1, Layout_W2,
         Meth_Layout_W1, Meth_Layout_W2, Meth_Layout_H : Gint;
       Y : Gint;
-      Attr_Lines, Meth_Lines : Xref_List;
+      General_Lines, Attr_Lines, Meth_Lines : Xref_List;
       Parent : Entity_Information;
       Lib_Info : LI_File_Ptr;
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
@@ -1128,6 +1189,7 @@ package body Browsers.Entities is
       Lib_Info := Locate_From_Source_And_Complete
         (Kernel, Get_Declaration_File_Of (Item.Entity));
 
+      Add_Line (General_Lines, -Kind_To_String (Get_Kind (Item.Entity)));
 
       if not Get_Kind (Item.Entity).Is_Type then
          Add_Type (Attr_Lines, Item, Lib_Info, Item.Entity, "Of type: ");
@@ -1200,13 +1262,15 @@ package body Browsers.Entities is
          end case;
       end if;
 
-      declare
-         Parent : Entity_Information := Get
-           (Get_Parent_Types (Lib_Info, Item.Entity));
-      begin
-         Item.Parents_Computed := Parent = No_Entity_Information;
-         Destroy (Parent);
-      end;
+      if Item.Parents_Computed = False then
+         declare
+            Parent : Entity_Information := Get
+              (Get_Parent_Types (Lib_Info, Item.Entity));
+         begin
+            Item.Parents_Computed := Parent = No_Entity_Information;
+            Destroy (Parent);
+         end;
+      end if;
 
       Layout := Create_Pango_Layout (Get_Browser (Item), "");
       Set_Font_Description
@@ -1214,14 +1278,21 @@ package body Browsers.Entities is
          Get_Pref (Get_Kernel (Get_Browser (Item)), Browsers_Link_Font));
 
       Get_Pixel_Size
+        (Get_Browser (Item), General_Lines, Layout_W1, Layout_W2, Layout_H,
+         Layout);
+      W := Gint'Max (Width, Layout_W1 + Layout_W2);
+      H := Height + Layout_H;
+
+      Get_Pixel_Size
         (Get_Browser (Item), Attr_Lines, Layout_W1, Layout_W2, Layout_H,
          Layout);
+      W := Gint'Max (Width, Layout_W1 + Layout_W2 + Left_Margin);
+
       Get_Pixel_Size
         (Get_Browser (Item), Meth_Lines, Meth_Layout_W1, Meth_Layout_W2,
          Meth_Layout_H, Layout);
-      W := Gint'Max (Width, Layout_W1 + Layout_W2);
-      W := Gint'Max (W, Meth_Layout_W1 + Meth_Layout_W2);
-      H := Height + Layout_H + 4 * Margin + Meth_Layout_H;
+      W := Gint'Max (W, Meth_Layout_W1 + Meth_Layout_W2 + Left_Margin);
+      H := H + Layout_H + 4 * Margin + Meth_Layout_H;
 
       Resize_And_Draw
         (Browser_Item_Record (Item.all)'Access, W, H,
@@ -1229,7 +1300,9 @@ package body Browsers.Entities is
 
       Y := Margin + Yoffset;
 
-      Display_Lines (Item, Attr_Lines, Margin + Xoffset, Y,
+      Display_Lines (Item, General_Lines, Margin + Xoffset, Y, 0, Layout);
+
+      Display_Lines (Item, Attr_Lines, Margin + Xoffset + Left_Margin, Y,
                      Layout_W1, Layout);
 
       if Layout_H /= 0 and then Meth_Layout_H /= 0 then
@@ -1242,7 +1315,7 @@ package body Browsers.Entities is
             Y2       => Y);
       end if;
 
-      Display_Lines (Item, Meth_Lines, Margin + Xoffset, Y,
+      Display_Lines (Item, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
                      Meth_Layout_W1, Layout);
 
       if Show_Primitive_Button then
@@ -1507,13 +1580,20 @@ package body Browsers.Entities is
    -- Reset --
    -----------
 
-   procedure Reset (Browser : access General_Browser_Record'Class;
-                    Item : access Type_Item_Record)
+   procedure Reset
+     (Browser : access General_Browser_Record'Class;
+      Item : access Type_Item_Record;
+      Parent_Removed, Child_Removed : Boolean)
    is
       pragma Unreferenced (Browser);
    begin
-      Item.Parents_Computed := False;
-      Item.Children_Computed := False;
+      if Parent_Removed then
+         Item.Parents_Computed := False;
+      end if;
+
+      if Child_Removed then
+         Item.Children_Computed := False;
+      end if;
    end Reset;
 
    ---------------------------------
