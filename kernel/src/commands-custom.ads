@@ -199,6 +199,10 @@ private
       end record;
    type Custom_Component is access all Custom_Component_Record'Class;
 
+   function Get_Name
+     (Component : access Custom_Component_Record) return String;
+   --  See doc from inherited subprogram
+
    procedure Free (Component : in out Custom_Component_Record);
    --  Free the memory occupied by Component
 
@@ -215,12 +219,14 @@ private
    end record;
 
    function Component_Editor
-     (Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget;
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget;
    procedure Update_From_Editor
      (Component : access Shell_Component_Record;
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
    function Component_Editor
-     (Component : access External_Component_Record)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Component : access External_Component_Record)
       return Gtk.Widget.Gtk_Widget;
    procedure Update_From_Editor
      (Component : access External_Component_Record;

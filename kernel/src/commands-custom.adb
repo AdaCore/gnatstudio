@@ -26,6 +26,7 @@ with Glide_Kernel.Timeout; use Glide_Kernel.Timeout;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Glide_Intl;           use Glide_Intl;
 
+with Glib;                 use Glib;
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gtk.Widget;           use Gtk.Widget;
@@ -34,6 +35,10 @@ with Gtk.Tooltips;         use Gtk.Tooltips;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Label;            use Gtk.Label;
+with Gtk.Combo;            use Gtk.Combo;
+with Gtk.Enums;            use Gtk.Enums;
+with Gtk.Size_Group;       use Gtk.Size_Group;
+with Gtk.Spin_Button;      use Gtk.Spin_Button;
 
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
@@ -84,6 +89,39 @@ package body Commands.Custom is
    type Command_Editor_Widget is access all Command_Editor_Record'Class;
    --  This widget is used to graphically edit a custom command
 
+   type Custom_Component_Editor is record
+      Command      : Gtk_Entry;
+      Show_Command : Gtk_Check_Button;
+      Output       : Gtk_Entry;
+   end record;
+   --  This widget is used to edit a Custom_Component_Record
+
+   procedure Component_Editor
+     (Component : access Custom_Component_Record'Class;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Editor    : access Gtk_Box_Record'Class;
+      Custom    : out Custom_Component_Editor;
+      Size      : Gtk_Size_Group);
+   --  Add the widgets required to edit Component to Editor
+
+   type Shell_Component_Editor_Record is new Gtk_Box_Record with record
+      Custom       : Custom_Component_Editor;
+      Lang         : Gtk_Combo;
+   end record;
+   type Shell_Component_Editor is access
+     all Shell_Component_Editor_Record'Class;
+   --  This widget is used to graphically edit a shell component
+
+   type External_Component_Editor_Record is new Gtk_Box_Record with record
+      Custom       : Custom_Component_Editor;
+      Regexp       : Gtk_Entry;
+      Current      : Gtk_Spin_Button;
+      Final        : Gtk_Spin_Button;
+      Hide         : Gtk_Check_Button;
+   end record;
+   type External_Component_Editor is
+     access all External_Component_Editor_Record'Class;
+   --  This widget is used to graphically edit an external component
 
    procedure Check_Save_Output
      (Kernel           : access Kernel_Handle_Record'Class;
@@ -154,7 +192,8 @@ package body Commands.Custom is
 
    function From_XML
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr) return Components_Array_Access;
+      Command : Glib.Xml_Int.Node_Ptr;
+      Name    : String) return Components_Array_Access;
    --  Create a list of components from an XML node
 
    function Output_Substitution
@@ -712,7 +751,8 @@ package body Commands.Custom is
 
    function From_XML
      (Kernel  : access Kernel_Handle_Record'Class;
-      Command : Glib.Xml_Int.Node_Ptr) return Components_Array_Access
+      Command : Glib.Xml_Int.Node_Ptr;
+      Name    : String) return Components_Array_Access
    is
       N, M   : Node_Ptr := Command;
       Count  : Natural := 0;
@@ -726,6 +766,17 @@ package body Commands.Custom is
             Count := Count + 1;
 
          elsif N.Tag.all = "on-failure" then
+            if N.Value /= null
+              and then N.Value.all /= ""
+            then
+               Insert (Kernel,
+                       "<on-failure> can only contain <shell> and <external>"
+                       & " tags, not a string, in definition of action """
+                       & Name & """",
+                       Mode => Error);
+               return new Components_Array (1 .. 0);
+            end if;
+
             M := N.Child;
             while M /= null loop
                if M.Tag.all = "shell"
@@ -734,12 +785,14 @@ package body Commands.Custom is
                   Count := Count + 1;
                elsif M.Tag.all = "on-failure" then
                   Insert (Kernel,
-                          "Nested <on-failure> nodes not supported",
+                          "Nested <on-failure> nodes not supported, in "
+                          & "definition of action """ & Name & """",
                           Mode => Error);
                   return new Components_Array (1 .. 0);
                else
                   Insert (Kernel,
-                          "Unknown tag in action definition: " & M.Tag.all,
+                          "Unknown tag in action definition: " & M.Tag.all
+                          & " in definition of action """ & Name & """",
                           Mode => Error);
                   return new Components_Array (1 .. 0);
                end if;
@@ -757,7 +810,8 @@ package body Commands.Custom is
 
          else
             Insert (Kernel,
-                    "Unknown tag in action definition: " & N.Tag.all,
+                    "Unknown tag " & N.Tag.all & " in definition of action """
+                    & Name & """",
                     Mode => Error);
             return new Components_Array (1 .. 0);
          end if;
@@ -781,7 +835,8 @@ package body Commands.Custom is
                 External_Component_Record'Class
             then
                Insert (Kernel,
-                       "<on-failure> can only follow an <external> node",
+                       "<on-failure> can only follow an <external> node, in"
+                       & " definition of action """ & Name & """",
                        Mode => Error);
                return new Components_Array (1 .. 0);
             end if;
@@ -824,7 +879,7 @@ package body Commands.Custom is
       Item.Default_Output_Destination := new String'(Default_Output);
       Item.Default_Show_Command := Show_Command;
       Item.Name := new String'(Name);
-      Item.Components := From_XML (Kernel, Command);
+      Item.Components := From_XML (Kernel, Command, Name);
    end Create;
 
    ------------------------
@@ -1604,7 +1659,8 @@ package body Commands.Custom is
       end if;
       Set_Tip (Get_Tooltips (Command.Kernel), Box.Output,
                -("Name of the window in which the output will be displayed."
-                 & " New windows are created as appropriate."));
+                 & " New windows are created as appropriate. This can be"
+                 & " overriden for each command below"));
       Pack_Start (Hbox, Box.Output, Expand => True);
 
       return Gtk.Widget.Gtk_Widget (Box);
@@ -1641,13 +1697,99 @@ package body Commands.Custom is
    -- Component_Editor --
    ----------------------
 
-   function Component_Editor
-     (Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget
+   procedure Component_Editor
+     (Component : access Custom_Component_Record'Class;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Editor    : access Gtk_Box_Record'Class;
+      Custom    : out Custom_Component_Editor;
+      Size      : Gtk_Size_Group)
    is
+      Box   : Gtk_Box;
       Label : Gtk_Label;
    begin
-      Gtk_New (Label, -"Shell: " & Component.Command.all);
-      return Gtk.Widget.Gtk_Widget (Label);
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Editor, Box, Expand => False);
+      Gtk_New    (Label, -"Command: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New    (Custom.Command);
+      Set_Text   (Custom.Command, Component.Command.all);
+      Pack_Start (Box, Custom.Command, Expand => True, Fill => True);
+      Set_Tip (Get_Tooltips (Kernel), Custom.Command,
+               -"The command to execute");
+
+      Gtk_New (Custom.Show_Command, -"Show command");
+      Pack_Start (Editor, Custom.Show_Command, Expand => False);
+      Set_Active (Custom.Show_Command, Component.Show_Command);
+      Set_Tip (Get_Tooltips (Kernel), Custom.Show_Command,
+               -("Whether the text of the command should be displayed in the"
+                 & " output window. This overrides the default setup for the"
+                 & " action"));
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Editor, Box, Expand => False);
+      Gtk_New (Label, -"Output in: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Custom.Output);
+      Pack_Start (Box, Custom.Output, Expand => True);
+      Set_Tip (Get_Tooltips (Kernel), Custom.Output,
+               -("Name of the window in which the output of the command should"
+                 & " be displayed. A new window will be created if necessary."
+                 & " This value can be inherited from the action's own setup"
+                 & " by specifying ""<use default>"""));
+
+      if Component.Output = null then
+         Set_Text (Custom.Output, -"<use default>");
+      else
+         Set_Text (Custom.Output, Component.Output.all);
+      end if;
+   end Component_Editor;
+
+   ----------------------
+   -- Component_Editor --
+   ----------------------
+
+   function Component_Editor
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Component : access Shell_Component_Record) return Gtk.Widget.Gtk_Widget
+   is
+      Editor : constant Shell_Component_Editor :=
+        new Shell_Component_Editor_Record;
+      Box    : Gtk_Box;
+      Label  : Gtk_Label;
+      List   : Gtk.Enums.String_List.Glist;
+      Languages : constant Scripting_Language_Array :=
+        Get_Scripting_Languages (Kernel);
+      Size   : Gtk_Size_Group;
+   begin
+      Initialize_Vbox (Editor, Homogeneous => False);
+
+      Gtk_New (Size);
+      Component_Editor (Component, Kernel, Editor, Editor.Custom, Size);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Editor, Box, Expand => False);
+      Gtk_New (Label, -"Language: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Editor.Lang);
+      Pack_Start (Box, Editor.Lang, Expand => True);
+
+      Set_Tip (Get_Tooltips (Kernel), Get_Entry (Editor.Lang),
+               -("The language in which the command is written"));
+
+      for L in Languages'Range loop
+         Gtk.Enums.String_List.Append (List, Get_Name (Languages (L)));
+      end loop;
+      Set_Popdown_Strings (Editor.Lang, List);
+
+      Set_Text (Get_Entry (Editor.Lang), Get_Name (Component.Script));
+
+      return Gtk.Widget.Gtk_Widget (Editor);
    end Component_Editor;
 
    ------------------------
@@ -1668,13 +1810,79 @@ package body Commands.Custom is
    ----------------------
 
    function Component_Editor
-     (Component : access External_Component_Record)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Component : access External_Component_Record)
       return Gtk.Widget.Gtk_Widget
    is
+      Editor : constant External_Component_Editor :=
+        new External_Component_Editor_Record;
       Label : Gtk_Label;
+      Box   : Gtk_Box;
+      Size  : Gtk_Size_Group;
    begin
+      Initialize_Vbox (Editor, Homogeneous => False);
+      Gtk_New (Size);
+      Component_Editor (Component, Kernel, Editor, Editor.Custom, Size);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Editor, Box, Expand => False);
+      Gtk_New (Label, -"Progress regexp: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Editor.Regexp);
+      Pack_Start (Box, Editor.Regexp, Expand => True, Fill => True);
+      Set_Text (Editor.Regexp, Component.Progress_Regexp.all);
+      Set_Tip (Get_Tooltips (Kernel), Editor.Regexp,
+               -("Regular expression, matched against each line of the output."
+                 & " If it matches, its contents is analyzed to find the"
+                 & " current progress of the action, and display a progress"
+                 & " bar at the bottom of GPS's window. Leave this empty"
+                 & " to ignore this feature."));
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Editor, Box, Expand => False);
+      Gtk_New (Label, -"Current progress at: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Editor.Current, 0.0, 20.0, 1.0);
+      Pack_Start (Box, Editor.Current, Expand => False);
+      Set_Value (Editor.Current, Gdouble (Component.Progress_Current));
+      Set_Tip (Get_Tooltips (Kernel), Editor.Current,
+               -("Index of the open parenthesis the group that matches the"
+                 & " current progress of the command. 0 is for the whole"
+                 & " string matched by the regexp, 1 for the first open"
+                 & " parenthesis, and so on..."));
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Editor, Box, Expand => False);
+      Gtk_New (Label, -"Final progress at: ");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add_Widget (Size, Label);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New (Editor.Final, 0.0, 20.0, 1.0);
+      Pack_Start (Box, Editor.Final, Expand => False);
+      Set_Value (Editor.Final, Gdouble (Component.Progress_Final));
+      Set_Tip (Get_Tooltips (Kernel), Editor.Final,
+               -("Index of the open parenthesis the group that matches the"
+                 & " final progress of the command. This group should match"
+                 & " a number which indicates the total to reach to complete"
+                 & " the command. This total might change after each line of"
+                 & " the output, since some tools might not know in advance"
+                 & " how much processing they have to do."));
+
+      Gtk_New (Editor.Hide, -"Hide progress output");
+      Pack_Start (Editor, Editor.Hide, Expand => False);
+      Set_Active (Editor.Hide, Component.Progress_Hide);
+      Set_Tip (Get_Tooltips (Kernel), Editor.Hide,
+               -("Whether the lines matching the regexp should be hidden"
+                 & " when the output is displayed in the GPS window. This"
+                 & " allows tools to output special lines just for GPS, but"
+                 & " which are invisible to the user"));
+
       Gtk_New (Label, -"External: " & Component.Command.all);
-      return Gtk.Widget.Gtk_Widget (Label);
+      return Gtk.Widget.Gtk_Widget (Editor);
    end Component_Editor;
 
    ------------------------
@@ -1689,5 +1897,15 @@ package body Commands.Custom is
    begin
       null;
    end Update_From_Editor;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Component : access Custom_Component_Record) return String is
+   begin
+      return Component.Command.all;
+   end Get_Name;
 
 end Commands.Custom;
