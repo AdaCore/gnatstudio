@@ -942,7 +942,7 @@ private
       --  ??? Should be only for languages where it makes sense, for instance
       --  in derived type. Can be left to null otherwise.
 
-      Source_Filename   : VFS.Virtual_File;
+      Source_Filename   : aliased VFS.Virtual_File;
       File_Timestamp    : Ada.Calendar.Time;
       Original_Filename : String_Access;
       Original_Line     : Positive;
