@@ -49,6 +49,7 @@ with GVD.Trace;           use GVD.Trace;
 with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
 with GVD.Code_Editors;    use GVD.Code_Editors;
+with GVD.Files;           use GVD.Files;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Memory_View;     use GVD.Memory_View;
@@ -319,6 +320,22 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Load_File (Tab.Editor_Text, File_Name, Set_Current => False);
       Set_Line (Tab.Editor_Text, 1, Set_Current => False);
    end On_Open_Source1_Activate;
+
+   ---------------------------------
+   -- On_Reload_Sources1_Activate --
+   ---------------------------------
+
+   procedure On_Reload_Sources1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Top : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Editor : constant Code_Editor :=
+        Get_Current_Process (Object).Editor_Text;
+   begin
+      GVD.Files.Clear_Cache (Top, Force => True);
+      Load_File (Editor, Get_Current_File (Editor), Force => True);
+   end On_Reload_Sources1_Activate;
 
    -------------------------------
    -- On_Open_Session1_Activate --

@@ -41,6 +41,9 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Source1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
+   procedure On_Reload_Sources1_Activate
+     (Object : access Gtk_Widget_Record'Class);
+
    procedure On_Open_Session1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
