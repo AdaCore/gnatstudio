@@ -663,6 +663,7 @@ package body Glide_Kernel.Preferences is
       Browsers_Bg_Image := Param_Spec_String (Gnew_String
         (Name    => "Browsers-Bg-Image",
          Nick    => -"Background image",
+         Flags   => Param_Readable,
          Blurb   =>
            -("Image to draw in the background of browsers. If left empty,"
              & " no image is drawn. Using a large image will slow down"
@@ -676,6 +677,7 @@ package body Glide_Kernel.Preferences is
         (Name    => "Browsers-Draw-Grid",
          Default => True,
          Blurb   => -("Whether a grid should be displayed in the browsers"),
+         Flags   => Param_Readable,
          Nick    => -"Draw grid"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Browsers_Draw_Grid),
