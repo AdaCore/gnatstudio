@@ -362,6 +362,17 @@ package Glide_Kernel.Scripts is
    --  Command can never be a list of commands (no semicolon or newline
    --  separated).
 
+   function Execute_Command_With_Args
+     (Script             : access Scripting_Language_Record;
+      Command            : String;
+      Args               : GNAT.OS_Lib.Argument_List) return String;
+   --  Execute a command, the arguments of which are already splitted and
+   --  unquoted.
+   --  This procedure needs only be implemented for the GPS shell, in all other
+   --  language you should keep the default which raises Program_Error, since
+   --  this function is not used anywhere but for shell commands.
+   --  All output is hidden
+
    procedure Execute_File
      (Script             : access Scripting_Language_Record;
       Filename           : String;

@@ -1809,6 +1809,21 @@ package body Glide_Kernel.Scripts is
    end Get_File_Location_Class;
 
    -------------------------------
+   -- Execute_Command_With_Args --
+   -------------------------------
+
+   function Execute_Command_With_Args
+     (Script             : access Scripting_Language_Record;
+      Command            : String;
+      Args               : GNAT.OS_Lib.Argument_List) return String
+   is
+      pragma Unreferenced (Script, Command, Args);
+   begin
+      raise Program_Error;
+      return "";
+   end Execute_Command_With_Args;
+
+   -------------------------------
    -- Execute_GPS_Shell_Command --
    -------------------------------
 
@@ -1830,11 +1845,14 @@ package body Glide_Kernel.Scripts is
    procedure Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) is
+      Args    : GNAT.OS_Lib.Argument_List)
+   is
+      Output : constant String := Execute_Command_With_Args
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+         Command, Args);
+      pragma Unreferenced (Output);
    begin
-      Execute_GPS_Shell_Command
-        (Kernel,
-         Command & ' ' & Argument_List_To_Quoted_String (Args));
+      null;
    end Execute_GPS_Shell_Command;
 
    -------------------------------
@@ -1846,9 +1864,9 @@ package body Glide_Kernel.Scripts is
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List) return String is
    begin
-      return Execute_GPS_Shell_Command
-        (Kernel,
-         Command & ' ' & Argument_List_To_Quoted_String (Args));
+      return Execute_Command_With_Args
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name),
+         Command, Args);
    end Execute_GPS_Shell_Command;
 
    -------------------------------
