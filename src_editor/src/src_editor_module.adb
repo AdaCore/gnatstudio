@@ -26,6 +26,7 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk;                       use Gdk;
 with Gdk.Color;                 use Gdk.Color;
+with Gdk.Event;                 use Gdk.Event;
 with Gdk.GC;                    use Gdk.GC;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
@@ -129,6 +130,16 @@ package body Src_Editor_Module is
       4 => Scope_Cst'Access);
    Project_Search_Parameters : constant Cst_Argument_List :=
      File_Search_Parameters & (5 => Recursive_Cst'Access);
+
+   type Clipboard_Kind is (Cut, Copy, Paste);
+   type Clipboard_Command is new Interactive_Command with record
+      Kernel : Kernel_Handle;
+      Kind   : Clipboard_Kind;
+   end record;
+   function Execute
+     (Command : access Clipboard_Command; Event : Gdk_Event)
+      return Command_Return_Type;
+   --  Perform the various actions associated with the clipboard
 
    procedure Generate_Body_Cb (Data : Process_Data; Status : Integer);
    --  Callback called when gnatstub has completed.
@@ -243,18 +254,6 @@ package body Src_Editor_Module is
    procedure On_Print
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Print menu
-
-   procedure On_Cut
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Cut menu
-
-   procedure On_Copy
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Copy menu
-
-   procedure On_Paste
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Edit->Paste menu
 
    procedure On_Select_All
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -2146,65 +2145,29 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_All_Editors;
 
-   ------------
-   -- On_Cut --
-   ------------
-
-   procedure On_Cut
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Source : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      if Source /= null then
-         Cut_Clipboard (Source);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Cut;
-
    -------------
-   -- On_Copy --
+   -- Execute --
    -------------
 
-   procedure On_Copy
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   function Execute
+     (Command : access Clipboard_Command; Event : Gdk_Event)
+      return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
+      pragma Unreferenced (Event);
       Source : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+        Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
    begin
       if Source /= null then
-         Copy_Clipboard (Source);
+         case Command.Kind is
+            when Cut   => Cut_Clipboard (Source);
+            when Copy  => Copy_Clipboard (Source);
+            when Paste => Paste_Clipboard (Source);
+         end case;
+         return Commands.Success;
+      else
+         return Commands.Failure;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Copy;
-
-   --------------
-   -- On_Paste --
-   --------------
-
-   procedure On_Paste
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-      Source : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   begin
-      if Source /= null then
-         Paste_Clipboard (Source);
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Paste;
+   end Execute;
 
    -------------------
    -- On_Select_All --
@@ -3188,18 +3151,58 @@ package body Src_Editor_Module is
       Register_Menu
         (Kernel, Edit, Mitem, Ref_Item => "Redo", Add_Before => False);
 
+      Insert_Space (Toolbar, Position => 3);
+      Undo_Redo.Undo_Button := Insert_Stock
+        (Toolbar, Stock_Undo, -"Undo Previous Action", Position => 4);
+      Set_Sensitive (Undo_Redo.Undo_Button, False);
+      Undo_Redo.Redo_Button := Insert_Stock
+        (Toolbar, Stock_Redo, -"Redo Previous Action", Position => 5);
+      Set_Sensitive (Undo_Redo.Redo_Button, False);
+
+      Append_Space (Toolbar);
+
+      Command := new Clipboard_Command;
+      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Clipboard_Command (Command.all).Kind   := Cut;
+      Register_Action
+        (Kernel, -"Cut to Clipboard", Command,
+         -"Cut the current selection to the clipboard",
+         Src_Action_Context);
       Register_Menu (Kernel, Edit, -"_Cut",  Stock_Cut,
-                     On_Cut'Access, null,
+                     null, Command_Access (Command),
                      GDK_Delete, Shift_Mask,
                      Ref_Item => -"Preferences");
+      Register_Button
+        (Kernel, Stock_Cut, Command_Access (Command), -"Cut To Clipboard");
+
+      Command := new Clipboard_Command;
+      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Clipboard_Command (Command.all).Kind   := Copy;
+      Register_Action
+        (Kernel, -"Copy to Clipboard", Command,
+         -"Copy the current selection to the clipboard",
+         Src_Action_Context);
       Register_Menu (Kernel, Edit, -"C_opy",  Stock_Copy,
-                     On_Copy'Access, null,
+                     null, Command_Access (Command),
                      GDK_Insert, Control_Mask,
                      Ref_Item => -"Preferences");
+      Register_Button
+        (Kernel, Stock_Copy, Command_Access (Command), -"Copy To Clipboard");
+
+      Command := new Clipboard_Command;
+      Clipboard_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Clipboard_Command (Command.all).Kind   := Paste;
+      Register_Action
+        (Kernel, -"Paste From Clipboard", Command,
+         -"Paste the contents of the clipboard into the current editor",
+         Src_Action_Context);
       Register_Menu (Kernel, Edit, -"P_aste",  Stock_Paste,
-                     On_Paste'Access, null,
+                     null, Command_Access (Command),
                      GDK_Insert, Shift_Mask,
                      Ref_Item => -"Preferences");
+      Register_Button
+        (Kernel, Stock_Paste, Command_Access (Command),
+         -"Paste From Clipboard");
 
       --  ??? This should be bound to Ctrl-A, except this would interfer with
       --  Emacs keybindings for people who want to use them.
@@ -3256,33 +3259,6 @@ package body Src_Editor_Module is
          Kernel_Callback.To_Marshaller (On_Save'Access),
          Kernel_Handle (Kernel));
 
-      Insert_Space (Toolbar, Position => 3);
-      Undo_Redo.Undo_Button := Insert_Stock
-        (Toolbar, Stock_Undo, -"Undo Previous Action", Position => 4);
-      Set_Sensitive (Undo_Redo.Undo_Button, False);
-      Undo_Redo.Redo_Button := Insert_Stock
-        (Toolbar, Stock_Redo, -"Redo Previous Action", Position => 5);
-      Set_Sensitive (Undo_Redo.Redo_Button, False);
-
-      Insert_Space (Toolbar, Position => 6);
-      Button := Insert_Stock
-        (Toolbar, Stock_Cut, -"Cut to Clipboard", Position => 7);
-      Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Cut'Access),
-         Kernel_Handle (Kernel));
-      Button := Insert_Stock
-        (Toolbar, Stock_Copy, -"Copy to Clipboard", Position => 8);
-      Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Copy'Access),
-         Kernel_Handle (Kernel));
-      Button := Insert_Stock
-        (Toolbar, Stock_Paste, -"Paste from Clipboard", Position => 9);
-      Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Paste'Access),
-         Kernel_Handle (Kernel));
       Kernel_Callback.Connect
         (Kernel, File_Saved_Signal,
          File_Saved_Cb'Access,
