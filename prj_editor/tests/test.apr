@@ -1,0 +1,37 @@
+project Test is
+
+   type OS_Type is ("Linux", "Windows");
+   OS : OS_Type := external ("OS", "Linux");
+
+
+   OS3 : OS_Type := "Linux"; --  not a scenario variable
+   OS4 := external ("OS", "foo");  --  not a scenario variable
+
+   case OS is
+       when "Linux" => 
+          for Source_Dirs use ("os=linux/");
+       when "Windows" => 
+          for Source_Dirs use ("os=windows/");
+   end case;
+
+   type Target_Type is ("Devel", "Release");
+   Target : Target_Type := external ("TARGET", "Devel");
+
+   package Gnatmake is
+     OS2 : OS_Type := external ("OS2", "Windows");
+     case OS is
+         when "Linux" =>
+             for Switches use Gnatmake'Switches & ("-mlinux");
+         when "Windows" =>
+             for Switches use Gnatmake'Switches & ("-mwindows");
+     end case;
+
+     case Target is
+         when "Devel" =>
+             for Switches use Gnatmake'Switches & ("-g");
+         when "Release" =>
+             for Switches use Gnatmake'Switches & ("-O2");
+     end case;
+   end Gnatmake;
+
+end Test;
