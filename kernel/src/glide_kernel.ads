@@ -515,6 +515,11 @@ package Glide_Kernel is
       File    : String);
    --  Emits the "file_edited" signal.
 
+   procedure File_Saved
+     (Handle  : access Kernel_Handle_Record;
+      File    : String);
+   --  Emits the "file_saved" signal
+
    procedure Preferences_Changed (Handle : access Kernel_Handle_Record);
    --  Emits the "preferences_changed" signal.
 
@@ -601,6 +606,7 @@ package Glide_Kernel is
    Variable_Changed_Signal       : constant String := "variable_changed";
    Source_Lines_Revealed_Signal  : constant String := "source_lines_revealed";
    File_Edited_Signal            : constant String := "file_edited";
+   File_Saved_Signal             : constant String := "file_saved";
    Preferences_Changed_Signal    : constant String := "preferences_changed";
    Search_Regexps_Changed_Signal : constant String := "search_regexps_changed";
    Search_Reset_Signal           : constant String := "search_reset";
