@@ -27,11 +27,12 @@
 -----------------------------------------------------------------------
 
 with Glide_Main_Window; use Glide_Main_Window;
-with Glide_Page; use Glide_Page;
-with Gtk.Box; use Gtk.Box;
-with Gtkada.MDI; use Gtkada.MDI;
-with Src_Editor_Box; use Src_Editor_Box;
-with GVD.Process; use GVD.Process;
+with Glide_Page;        use Glide_Page;
+with Gtk.Box;           use Gtk.Box;
+with Gtk.Widget;        use Gtk.Widget;
+with Gtkada.MDI;        use Gtkada.MDI;
+with Src_Editor_Box;    use Src_Editor_Box;
+with GVD.Process;       use GVD.Process;
 
 package body Glide_Kernel.Editor is
 
@@ -58,6 +59,28 @@ package body Glide_Kernel.Editor is
       File   : String) return Source_Editor_Box;
    --  Open a file and return the handle associated with it.
    --  ??? Need more comments.
+
+   function Get_Current_Editor
+     (Top : Glide_Window) return Source_Editor_Box;
+   --  Return the source editor that has currently the focus in the MDI
+   --  window associated with Top, null the focus child is not an editor.
+
+   ------------------------
+   -- Get_Current_Editor --
+   ------------------------
+
+   function Get_Current_Editor (Top : Glide_Window) return Source_Editor_Box is
+      MDI    : constant MDI_Window :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
+      Source : Gtk_Widget := Get_Widget (Get_Focus_Child (MDI));
+
+   begin
+      if Source.all in Source_Box_Record'Class then
+         return Source_Box (Source).Editor;
+      else
+         return null;
+      end if;
+   end Get_Current_Editor;
 
    -------------
    -- Gtk_New --
@@ -196,5 +219,89 @@ package body Glide_Kernel.Editor is
       Set_Cursor_Location (Edit, Line, Column);
       Highlight_Line (Edit, Line);
    end Go_To;
+
+   ------------------
+   -- Save_To_File --
+   ------------------
+
+   procedure Save_To_File
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Name    : String := "";
+      Success : out Boolean)
+   is
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
+   begin
+      if Source = null then
+         return;
+      end if;
+
+      Save_To_File (Source, Name, Success);
+   end Save_To_File;
+
+   -------------------
+   -- Cut_Clipboard --
+   -------------------
+
+   procedure Cut_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
+   begin
+      if Source = null then
+         return;
+      end if;
+
+      Cut_Clipboard (Source);
+   end Cut_Clipboard;
+
+   --------------------
+   -- Copy_Clipboard --
+   --------------------
+
+   procedure Copy_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
+   begin
+      if Source = null then
+         return;
+      end if;
+
+      Copy_Clipboard (Source);
+   end Copy_Clipboard;
+
+   ---------------------
+   -- Paste_Clipboard --
+   ---------------------
+
+   procedure Paste_Clipboard (Kernel : access Kernel_Handle_Record'Class) is
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
+   begin
+      if Source = null then
+         return;
+      end if;
+
+      Paste_Clipboard (Source);
+   end Paste_Clipboard;
+
+   ----------------
+   -- Select_All --
+   ----------------
+
+   procedure Select_All (Kernel : access Kernel_Handle_Record'Class) is
+      Top     : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Source  : constant Source_Editor_Box := Get_Current_Editor (Top);
+
+   begin
+      if Source = null then
+         return;
+      end if;
+
+      Select_All (Source);
+   end Select_All;
 
 end Glide_Kernel.Editor;

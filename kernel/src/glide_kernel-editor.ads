@@ -34,7 +34,9 @@ package Glide_Kernel.Editor is
 
    procedure New_View
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Create a new editor and add it in the MDI.
+   --  Create a new view for the current editor and add it in the MDI.
+   --  The current editor is the focus child in the MDI. If the focus child
+   --  is not an editor, nothing happens.
 
    procedure Open_File
      (Kernel : access Kernel_Handle_Record'Class;
@@ -51,5 +53,24 @@ package Glide_Kernel.Editor is
       Column : Natural := 0);
    --  Go to the specified file at Line:Column
    --  Depending on the preferences, this may or may not open a new editor.
+
+   procedure Save_To_File
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Name    : String := "";
+      Success : out Boolean);
+   --  Save the current editor to Name, or its associated filename if Name is
+   --  null.
+
+   procedure Cut_Clipboard (Kernel : access Kernel_Handle_Record'Class);
+   --  Copy the currently-selected text to the clipboard and then delete it.
+
+   procedure Copy_Clipboard (Kernel : access Kernel_Handle_Record'Class);
+   --  Copy the currently-selected text to the clipboard.
+
+   procedure Paste_Clipboard (Kernel : access Kernel_Handle_Record'Class);
+   --  Paste the contents of the clipboard.
+
+   procedure Select_All (Kernel : access Kernel_Handle_Record'Class);
+   --  Set the selection bounds from the begining to the end of the buffer.
 
 end Glide_Kernel.Editor;
