@@ -212,12 +212,13 @@ package body GVD.Explorer is
       Initialize (Explorer, Columns => 1);
 
       --  ??? This is a tweak to avoid a bug that scrolls to the end
-      --  of the list under windows when moving the mouse with the
+      --  of the list under NT/2000 when moving the mouse with the
       --  right button pressed in the explorer.
+      --  To be removed when Gtk+ under windows fixes this bug.
+
       Gtkada.Handlers.Return_Callback.Connect
         (Explorer, "motion_notify_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Drag_Motion'Access));
+         Gtkada.Handlers.Return_Callback.To_Marshaller (Drag_Motion'Access));
 
       Explorer.Code_Editor := Gtk_Widget (Code_Editor);
 
@@ -497,8 +498,7 @@ package body GVD.Explorer is
 
    function Drag_Motion
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event) return Boolean
-   is
+      Event  : Gdk.Event.Gdk_Event) return Boolean is
    begin
       Emit_Stop_By_Name (Widget, "motion_notify_event");
       return False;
@@ -898,7 +898,7 @@ package body GVD.Explorer is
       Gtk_New (Tips);
       Ref (Tips);
 
-      --  ???  Currently use a standard item, since it is not possible to
+      --  ??? Currently use a standard item, since it is not possible to
       --  hide nodes of the tree, only to remove them. Thus showing again the
       --  system files would require to reparse and recreate the list of
       --  files.
