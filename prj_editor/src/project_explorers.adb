@@ -182,6 +182,9 @@ package body Project_Explorers is
    type Explorer_Search_Context is new Search_Context with record
       Current : Gtk_Ctree_Node;
       Include_Entities : Boolean;
+      Include_Projects : Boolean;
+      Include_Directories : Boolean;
+      Include_Files : Boolean;
 
       Matches : String_Status_Hash.String_Hash_Table.HTable;
       --  The search is performed on the internal Ada structures first, and for
@@ -195,7 +198,10 @@ package body Project_Explorers is
    --  Free the memory allocated for Context
 
    type Explorer_Search_Extra_Record is new Gtk_Frame_Record with record
-      Include_Entities : Gtk_Check_Button;
+      Include_Entities    : Gtk_Check_Button;
+      Include_Projects    : Gtk_Check_Button;
+      Include_Directories : Gtk_Check_Button;
+      Include_Files       : Gtk_Check_Button;
    end record;
    type Explorer_Search_Extra is access all Explorer_Search_Extra_Record'Class;
 
@@ -205,6 +211,14 @@ package body Project_Explorers is
       Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Create a new search context for the explorer
+
+   function Explorer_Search_Factory
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Include_Projects  : Boolean;
+      Include_Files     : Boolean)
+      return Search_Context_Access;
+   --  Create a new search context for the explorer. Only one occurence is
+   --  searched, and only in Projects or Files, depending on the parameters.
 
    function Search
      (Context         : access Explorer_Search_Context;
@@ -422,7 +436,15 @@ package body Project_Explorers is
      (Widget  : access Glib.Object.GObject_Record'Class;
       Context : Glide_Kernel.Selection_Context_Access);
    --  Callback suitable for a contextual menu item. If the file name is not
-   --  the empty string, then it is looked up in the project view explorer.
+   --  the empty string, then it is looked up in the project view explorer, as
+   --  a file.
+
+   procedure Locate_Project
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access);
+   --  Callback suitable for a contextual menu item. If the file name is not
+   --  the empty string, then it is looked up in the project view explorer, as
+   --  a project.
 
    procedure Explorer_Contextual
      (Object    : access GObject_Record'Class;
@@ -2447,14 +2469,54 @@ package body Project_Explorers is
       Context : Explorer_Search_Context_Access;
 
    begin
+      Assert (Me, Extra_Information /= null,
+              "No extra information widget specified");
+
       Context := new Explorer_Search_Context;
 
-      if Extra_Information = null then
-         Context.Include_Entities := False;
-      else
-         Context.Include_Entities := Get_Active
-           (Explorer_Search_Extra (Extra_Information).Include_Entities);
+      Context.Include_Projects := Get_Active
+        (Explorer_Search_Extra (Extra_Information).Include_Projects);
+      Context.Include_Directories := Get_Active
+        (Explorer_Search_Extra (Extra_Information).Include_Directories);
+      Context.Include_Files := Get_Active
+        (Explorer_Search_Extra (Extra_Information).Include_Files);
+      Context.Include_Entities := Get_Active
+        (Explorer_Search_Extra (Extra_Information).Include_Entities);
+
+      --  If we have no context, nothing to do
+      if not (Context.Include_Projects
+              or else Context.Include_Directories
+              or else Context.Include_Files
+              or else Context.Include_Entities)
+      then
+         Free (Search_Context_Access (Context));
+         return null;
       end if;
+
+      Reset (Context.Matches);
+      return Search_Context_Access (Context);
+   end Explorer_Search_Factory;
+
+   -----------------------------
+   -- Explorer_Search_Factory --
+   -----------------------------
+
+   function Explorer_Search_Factory
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Include_Projects  : Boolean;
+      Include_Files     : Boolean)
+      return Search_Context_Access
+   is
+      pragma Unreferenced (Kernel);
+      Context : Explorer_Search_Context_Access;
+
+   begin
+      Context := new Explorer_Search_Context;
+
+      Context.Include_Projects    := Include_Projects;
+      Context.Include_Directories := False;
+      Context.Include_Files       := Include_Files;
+      Context.Include_Entities    := False;
 
       Reset (Context.Matches);
       return Search_Context_Access (Context);
@@ -2484,11 +2546,14 @@ package body Project_Explorers is
       procedure Next_Or_Child
         (Name   : String;
          Start  : Gtk_Ctree_Node;
+         Check_Match : Boolean;
          Result : out Gtk_Ctree_Node;
          Finish : out Boolean);
       pragma Inline (Next_Or_Child);
       --  Move to the next node, starting from a project or directory node by
       --  name Name.
+      --  If Check_Match is false, then this subprogram doesn't test if the
+      --  node matches context.
 
       procedure Next_File_Node
         (Start  : Gtk_Ctree_Node;
@@ -2524,10 +2589,13 @@ package body Project_Explorers is
       procedure Next_Or_Child
         (Name   : String;
          Start  : Gtk_Ctree_Node;
+         Check_Match : Boolean;
          Result : out Gtk_Ctree_Node;
          Finish : out Boolean) is
       begin
-         if Start /= C.Current and then Match (C, Name) /= -1 then
+         if Check_Match
+           and then Start /= C.Current and then Match (C, Name) /= -1
+         then
             Result := Start;
             Finish := True;
 
@@ -2593,7 +2661,7 @@ package body Project_Explorers is
 
          elsif Status /= No_Match then
             --  Do not return the initial node
-            if C.Current /= Start then
+            if Context.Include_Files and then C.Current /= Start then
                Result := Start;
                Finish := True;
                return;
@@ -2624,15 +2692,17 @@ package body Project_Explorers is
                case User.Node_Type is
                   when Project_Node | Extends_Project_Node =>
                      Next_Or_Child
-                       (Get_Name_String (User.Name), Start_Node, Tmp, Finish);
+                       (Get_Name_String (User.Name), Start_Node,
+                        Context.Include_Projects, Tmp, Finish);
                      if Finish then
                         return Tmp;
                      end if;
 
                   when Directory_Node =>
                      Next_Or_Child
-                       (Get_String (User.Directory), Start_Node, Tmp, Finish);
-                     if Finish then
+                       (Get_String (User.Directory), Start_Node,
+                        Context.Include_Directories, Tmp, Finish);
+                     if Finish and then Context.Include_Directories then
                         return Tmp;
                      end if;
 
@@ -2641,7 +2711,7 @@ package body Project_Explorers is
 
                   when File_Node =>
                      Next_File_Node (Start_Node, Tmp, Finish);
-                     if Finish then
+                     if Finish and then Context.Include_Files then
                         return Tmp;
                      end if;
 
@@ -2906,7 +2976,9 @@ package body Project_Explorers is
 
          if Has_File_Information (File_C) then
             C := Explorer_Search_Factory
-              (Kernel, All_Occurences => False, Extra_Information => null);
+              (Kernel,
+               Include_Projects => False,
+               Include_Files    => True);
             Set_Context
               (Context  => C,
                Look_For => File_Information (File_C),
@@ -2924,6 +2996,47 @@ package body Project_Explorers is
          end if;
       end if;
    end Locate_File;
+
+   --------------------
+   -- Locate_Project --
+   --------------------
+
+   procedure Locate_Project
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      File_C   : File_Selection_Context_Access;
+      C        : Search_Context_Access;
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
+         File_C := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_C) then
+            C := Explorer_Search_Factory
+              (Kernel,
+               Include_Projects => True,
+               Include_Files    => False);
+            Set_Context
+              (Context  => C,
+               Look_For => Project_Name (Project_Information (File_C)),
+               Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
+                            Whole_Word     => True,
+                            Regexp         => False));
+
+            if not Search (C, Kernel, Search_Backward => False) then
+               Insert (Kernel,
+                       -"Project not found in the explorer: "
+                       & Project_Name (Project_Information (File_C)));
+            end if;
+
+            Free (C);
+         end if;
+      end if;
+   end Locate_Project;
 
    -------------------------
    -- Explorer_Contextual --
@@ -2950,7 +3063,18 @@ package body Project_Explorers is
               (Item, "activate",
                Context_Callback.To_Marshaller (Locate_File'Access),
                Selection_Context_Access (Context));
+
+         elsif Has_Project_Information (File) then
+            Gtk_New (Item, Label => -"Locate in explorer: "
+                     & Project_Name (Project_Information (File)));
+            Append (Menu, Item);
+
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller (Locate_Project'Access),
+               Selection_Context_Access (Context));
          end if;
+
       end if;
    end Explorer_Contextual;
 
@@ -2965,7 +3089,6 @@ package body Project_Explorers is
       N       : Node_Ptr;
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
-      Widget  : Gtk_Widget;
 
    begin
       Register_Module
@@ -2995,19 +3118,42 @@ package body Project_Explorers is
         (Kernel, Project, -"Project View", "", On_Open_Explorer'Access);
 
       Extra := new Explorer_Search_Extra_Record;
-      Gtk.Frame.Initialize (Extra);
+      Gtk.Frame.Initialize (Extra, -"Scope");
 
       Gtk_New_Vbox (Box, Homogeneous => False);
       Add (Extra, Box);
 
-      Gtk_New (Extra.Include_Entities, -"search entities (might be slow)");
+      Gtk_New (Extra.Include_Projects, -"Projects");
+      Pack_Start (Box, Extra.Include_Projects);
+      Set_Active (Extra.Include_Projects, True);
+      Kernel_Callback.Connect
+        (Extra.Include_Projects, "toggled",
+         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+         Kernel_Handle (Kernel));
+
+      Gtk_New (Extra.Include_Directories, -"Directories");
+      Pack_Start (Box, Extra.Include_Directories);
+      Set_Active (Extra.Include_Directories, True);
+      Kernel_Callback.Connect
+        (Extra.Include_Directories, "toggled",
+         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+         Kernel_Handle (Kernel));
+
+      Gtk_New (Extra.Include_Files, -"Files");
+      Pack_Start (Box, Extra.Include_Files);
+      Set_Active (Extra.Include_Files, True);
+      Kernel_Callback.Connect
+        (Extra.Include_Files, "toggled",
+         Kernel_Callback.To_Marshaller (Reset_Search'Access),
+         Kernel_Handle (Kernel));
+
+      Gtk_New (Extra.Include_Entities, -"Entities (might be slow)");
       Pack_Start (Box, Extra.Include_Entities);
       Set_Active (Extra.Include_Entities, False);
       Kernel_Callback.Connect
         (Extra.Include_Entities, "toggled",
          Kernel_Callback.To_Marshaller (Reset_Search'Access),
          Kernel_Handle (Kernel));
-      Widget := Gtk_Widget (Extra);
 
       declare
          Name : constant String := -"Project explorer";
@@ -3017,7 +3163,7 @@ package body Project_Explorers is
             Data => (Length            => Name'Length,
                      Label             => Name,
                      Factory           => Explorer_Search_Factory'Access,
-                     Extra_Information => Widget,
+                     Extra_Information => Gtk_Widget (Extra),
                      Id                => Explorer_Module_ID,
                      Mask              => All_Options and not Supports_Replace
                      and not Search_Backward and not All_Occurrences));
