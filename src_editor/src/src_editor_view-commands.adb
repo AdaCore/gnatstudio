@@ -181,4 +181,24 @@ package body Src_Editor_View.Commands is
       end if;
    end Execute;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Control_Command;
+      Context : Interactive_Command_Context)
+      return Standard.Commands.Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      View : constant Source_View :=
+        Source_View (Get_Current_Focus_Widget (Command.Kernel));
+   begin
+      case Command.Mode is
+         when As_Is =>
+            View.As_Is_Mode := True;
+      end case;
+      return Success;
+   end Execute;
+
 end Src_Editor_View.Commands;
