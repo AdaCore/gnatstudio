@@ -426,7 +426,6 @@ package body Browsers.Call_Graph is
    is
       Child  : Entity_Item;
    begin
-      Trace (Me, "   Add_Entity_If_Not_Present " & Get_Name (Entity));
       Child := Entity_Item (Find_Entity (Browser, Entity));
       if Child = null then
          Gtk_New (Child, Browser, Entity => Entity);
