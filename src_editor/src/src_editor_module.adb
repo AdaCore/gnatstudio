@@ -44,6 +44,8 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
@@ -105,6 +107,13 @@ package body Src_Editor_Module is
    --  True, then an empty editor is created.
    --  No check is done to make sure that File is not already edited
    --  elsewhere. The resulting editor is not put in the MDI window.
+
+   function Save_Function
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget;
+      Force  : Boolean := False) return Boolean;
+   --  Save the text editor.
+   --  If Force is False, then offer a choice to the user before doing so.
 
    type Location_Idle_Data is record
       Edit : Source_Editor_Box;
@@ -210,6 +219,27 @@ package body Src_Editor_Module is
    function Find_Current_Editor
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
    --  Return the top-most MDI child that is an internal editor
+
+   function Delete_Callback
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues) return Boolean;
+   --  Callback for the "delete_event" signal.
+
+   ---------------------
+   -- Delete_Callback --
+   ---------------------
+
+   function Delete_Callback
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues) return Boolean
+   is
+      pragma Unreferenced (Params);
+   begin
+      return not Save_Function
+        (Get_Kernel (Source_Box (Widget).Editor),
+         Gtk_Widget (Widget),
+         False);
+   end Delete_Callback;
 
    ------------------
    -- Load_Desktop --
@@ -336,10 +366,68 @@ package body Src_Editor_Module is
             Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
          Child := Put (MDI, Box);
+
+         Gtkada.Handlers.Return_Callback.Object_Connect
+           (Box,
+            "delete_event",
+            Delete_Callback'Access,
+            Gtk_Widget (Box),
+            After => False);
+
          --  ??? Should compute the right number.
          Set_Title (Child, Title & " <2>", Base_Name (Title) & " <2>");
       end if;
    end New_View;
+
+   -------------------
+   -- Save_Function --
+   -------------------
+
+   function Save_Function
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget;
+      Force  : Boolean := False) return Boolean
+   is
+      Success        : Boolean;
+      Containing_Box : Source_Box := Source_Box (Child);
+      Box            : Source_Editor_Box := Containing_Box.Editor;
+      Button         : Message_Dialog_Buttons;
+   begin
+      if Force then
+         if Modified (Box) then
+            Save_To_File (Box, Success => Success);
+         end if;
+
+         return True;
+
+      else
+         if Modified (Box) then
+            Button := Message_Dialog
+              (Msg            =>
+                 (-"Do you want to save file ") & Get_Filename (Box) & " ?",
+               Dialog_Type    => Confirmation,
+               Buttons        => Button_Yes or Button_No or Button_Cancel,
+               Default_Button => Button_Cancel,
+               Parent         => Get_Main_Window (Kernel));
+
+            case Button is
+               when Button_Yes =>
+                  Save_To_File (Box, Success => Success);
+                  return True;
+
+               when Button_No =>
+                  return True;
+
+               when others =>
+                  return False;
+
+            end case;
+
+         else
+            return True;
+         end if;
+      end if;
+   end Save_Function;
 
    ------------------------
    -- Create_File_Editor --
@@ -422,6 +510,13 @@ package body Src_Editor_Module is
             Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
          Child := Put (MDI, Box);
+
+         Gtkada.Handlers.Return_Callback.Object_Connect
+           (Box,
+            "delete_event",
+            Delete_Callback'Access,
+            Gtk_Widget (Box),
+            After => False);
 
          if File /= "" then
             Set_Title (Child, File, Short_File);
@@ -1021,7 +1116,8 @@ package body Src_Editor_Module is
          Contextual_Menu_Handler => Source_Editor_Contextual'Access,
          Mime_Handler            => Mime_Action'Access,
          MDI_Child_Tag           => Source_Box_Record'Tag,
-         Default_Context_Factory => Default_Factory'Access);
+         Default_Context_Factory => Default_Factory'Access,
+         Save_Function           => Save_Function'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
 
