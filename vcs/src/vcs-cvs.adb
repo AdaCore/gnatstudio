@@ -81,10 +81,6 @@ package body VCS.CVS is
    --  Executes command Command with arguments Arguments and returns the result
    --  as a string list with one element per line of output.
 
-   function Get_CVSROOT (Filename : String) return String;
-   --  Return the CVSROOT corresponding to a file name.
-   --  Filename must be an absolute file name.
-
    function Get_Path (Filename : String) return String;
    --  Returns the path to Filename.
    --  Filename is an absolute file name.
@@ -139,32 +135,6 @@ package body VCS.CVS is
 
       return "";
    end Get_Path;
-
-   -----------------
-   -- Get_CVSROOT --
-   -----------------
-
-   function Get_CVSROOT (Filename : String) return String is
-      File   : File_Type;
-      Buffer : String (1 .. 1024);
-      Last   : Integer;
-
-   begin
-      Open (File, In_File,
-            Get_Path (Filename)
-            & Directory_Separator & "CVS"
-            & Directory_Separator & "Root");
-      Get_Line (File, Buffer, Last);
-      Close (File);
-
-      return Buffer (1 .. Last);
-
-   exception
-      when Use_Error =>
-         return "";
-      when Name_Error =>
-         return "";
-   end Get_CVSROOT;
 
    --------------------
    -- Atomic_Command --
