@@ -532,7 +532,7 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-        Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Edit_Switches_Callback;
 
    --------------------------------
