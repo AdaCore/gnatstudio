@@ -1874,7 +1874,13 @@ package body GVD.Process is
      (Process : access Visual_Debugger_Record;
       Dialog  : access Gtk.Dialog.Gtk_Dialog_Record'Class) is
    begin
-      pragma Assert (Process.Registered_Dialog = null);
+      if Process.Registered_Dialog /= null then
+         --  Typically happens when the filter used to create a dialog
+         --  is called several times for the same dialog.
+
+         Destroy (Process.Registered_Dialog);
+      end if;
+
       Process.Registered_Dialog := Gtk_Dialog (Dialog);
    end Register_Dialog;
 
