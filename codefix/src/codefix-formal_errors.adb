@@ -305,7 +305,8 @@ package body Codefix.Formal_Errors is
       Set_Location (Word, Get_Line (Message), Get_Column (Message));
       Set_Word (Word, String_Expected, Text_Ascii);
 
-      Initialize (New_Command, Current_Text, Word, Add_Spaces, Position);
+      Initialize (New_Command, Current_Text, Word,
+                  File_Cursor (Word), Add_Spaces, Position);
       Set_Caption
         (New_Command,
          "Add expected string """ & String_Expected & """");
@@ -379,6 +380,7 @@ package body Codefix.Formal_Errors is
       Word          : Word_Cursor;
 
    begin
+      --  ??? Should use "indent" shell command
       if Column_Expected = 0 then
          Column_Chosen := Closest (Get_Column (Message));
       else
@@ -428,7 +430,8 @@ package body Codefix.Formal_Errors is
                 "with " & Missing_Clause & "; use " & Missing_Clause & ";",
                 Text_Ascii);
 
-      Initialize (New_Command, Current_Text, Word_With);
+      Initialize
+        (New_Command, Current_Text, Word_With, File_Cursor (Word_With));
       Set_Caption
         (New_Command,
          "Add with and use clause for package """ & Missing_Clause &
@@ -686,7 +689,7 @@ package body Codefix.Formal_Errors is
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Solution_List
    is
-      Begin_Cursor  : File_Cursor := File_Cursor (Cursor);
+      Begin_Cursor  : File_Cursor;
       New_Command   : Move_Word_Cmd;
       Result        : Solution_List;
       Pragma_Cursor : Word_Cursor;
@@ -694,13 +697,16 @@ package body Codefix.Formal_Errors is
       Set_File (Pragma_Cursor, Get_File (Cursor));
       Set_Location (Pragma_Cursor, Get_Line (Cursor), Get_Column (Cursor));
       Set_Word
-        (Pragma_Cursor, "(pragma[\b]*\([^\)*]\)[\b]*;)", Regular_Expression);
+        (Pragma_Cursor,
+         "(pragma\s+[\w\d_]+\s*(\([^\)]*\))?\s*;)", Regular_Expression);
 
+      Set_File (Begin_Cursor, Get_File (Cursor));
       Set_Location (Begin_Cursor, 0, 1);
 
       Initialize (New_Command, Current_Text, Pragma_Cursor, Begin_Cursor);
       Set_Caption
         (New_Command, "Move the pragma to the beginning of the file");
+      Append (Result, New_Command);
       Free (Pragma_Cursor);
 
       return Result;
@@ -771,7 +777,8 @@ package body Codefix.Formal_Errors is
               (Word, Get_Line (Error_Cursor), Get_Column (Error_Cursor));
             Set_Word (Word, Str_Array (Index_Str).all & ".", Text_Ascii);
 
-            Initialize (New_Command, Current_Text, Word, False);
+            Initialize
+              (New_Command, Current_Text, Word, File_Cursor (Word), False);
             Set_Caption
               (New_Command,
                "Prefix """ & Name & """ by """ &
