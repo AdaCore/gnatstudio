@@ -664,6 +664,36 @@ package Glide_Kernel.Scripts is
    -- Context_Class --
    -------------------
 
+   function Get_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the base class for all context-related classes.
+
+   function Create_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Selection_Context_Access) return Class_Instance;
+   --  Return an instance of one of the classes derived from
+   --  Context_Class, depending on the type of Context
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+                      return Glide_Kernel.Selection_Context_Access;
+   --  Retrieve some context information from instance
+
+   function Get_Area_Context_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the base class for contexts containing file areas
+
+   function Create_Area_Context
+     (Script  : access Scripting_Language_Record'Class;
+      Context : Glide_Kernel.Contexts.File_Area_Context_Access)
+      return Class_Instance;
+   --  Return an instance of an area context
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+                      return Glide_Kernel.Contexts.File_Area_Context_Access;
+   --  Retrieve some context information from instance
+
    function Get_File_Context_Class
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
       return Class_Type;
