@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                        use Glib;
+with Glib.Convert;                use Glib.Convert;
 with Glib.Object;                 use Glib.Object;
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
@@ -37,6 +38,7 @@ with Basic_Types;                 use Basic_Types;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 
+with Gtkada.Types;              use Gtkada.Types;
 with Basic_Types;               use Basic_Types;
 with System;
 
@@ -52,6 +54,7 @@ with Gtk.Enums; use Gtk.Enums;
 
 with Commands;        use Commands;
 with Commands.Editor; use Commands.Editor;
+with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 package body Src_Editor_Buffer.Line_Information is
 
@@ -885,16 +888,13 @@ package body Src_Editor_Buffer.Line_Information is
       Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
       pragma Unreferenced (Text);
+      Command     : Remove_Blank_Lines_Command;
       LFs         : String (1 .. Natural (Number));
       Buffer_Line : Buffer_Line_Type;
       Iter        : Gtk_Text_Iter;
       End_Iter    : Gtk_Text_Iter;
       Success     : Boolean;
       Mark        : Gtk.Text_Mark.Gtk_Text_Mark;
-      Command     : Remove_Blank_Lines_Command;
-      BL : Columns_Config_Access renames Editor.Buffer_Line_Info_Columns;
-      Column      : Integer := -1;
-      Width       : Integer;
    begin
       Buffer_Line := Get_Buffer_Line (Editor, Line);
 
@@ -940,31 +940,54 @@ package body Src_Editor_Buffer.Line_Information is
 
       Get_Iter_At_Line_Offset (Editor, Iter, Gint (Buffer_Line - 1), 0);
 
-      --  Create the line information column.
-
-      Create_Line_Information_Column (Editor, Block_Info_Column, True, False);
-
       --  Create a command to remove the line information at the desired
       --  column.
 
       Mark := Create_Mark (Editor, "", Iter);
 
+      Command := new Remove_Blank_Lines_Command_Type;
+      Command.Buffer := Source_Buffer (Editor);
+      Command.Mark   := Mark;
+      Command.Number := Natural (Number);
+
+      Add_Block_Command (Editor, Buffer_Line, Command_Access (Command),
+                         Remove_Blank_Lines_Pixbuf);
+
+      Side_Column_Changed (Editor);
+
+      return Mark;
+   end Add_Blank_Lines;
+
+   -----------------------
+   -- Add_Block_Command --
+   -----------------------
+
+   procedure Add_Block_Command
+     (Buffer      : access Source_Buffer_Record'Class;
+      Buffer_Line : Buffer_Line_Type;
+      Command     : Command_Access;
+      Image       : Gdk_Pixbuf)
+   is
+      Column  : Natural;
+      Width   : Integer;
+      BL      : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
+   begin
+      --  Create the line information column.
+      --  ??? This should not occur every time.
+
+      Create_Line_Information_Column (Buffer, Block_Info_Column, True, False);
+
       for J in BL.all'Range loop
          if BL.all (J).Identifier.all = Block_Info_Column then
-            Command := new Remove_Blank_Lines_Command_Type;
-            Command.Buffer := Source_Buffer (Editor);
-            Command.Mark   := Mark;
-            Command.Number := Natural (Number);
 
-            Width := Integer (Get_Width (Remove_Blank_Lines_Pixbuf));
+            Width := Integer (Get_Width (Image));
 
-            Unchecked_Free
-              (Editor.Line_Data (Buffer_Line).Side_Info_Data (J).Info);
-            Editor.Line_Data (Buffer_Line).Side_Info_Data (J) :=
+            Free (Buffer.Line_Data (Buffer_Line).Side_Info_Data (J));
+            Buffer.Line_Data (Buffer_Line).Side_Info_Data (J) :=
               (Info => new Line_Information_Record'
                  (Text               => null,
-                  Image              => Remove_Blank_Lines_Pixbuf,
-                  Associated_Command => Command_Access (Command)),
+                  Image              => Image,
+                  Associated_Command => Command),
                Width => Width,
                Set   => True);
 
@@ -973,7 +996,7 @@ package body Src_Editor_Buffer.Line_Information is
          end if;
       end loop;
 
-      if Column /= -1 then
+      if Column /= -1 and then Command /= null then
          BL.all (Column).Width := Width;
 
          for J in Column + 1 .. BL.all'Last loop
@@ -982,14 +1005,10 @@ package body Src_Editor_Buffer.Line_Information is
               + BL.all (J - 1).Width + 1;
          end loop;
 
-         Recalculate_Side_Column_Width (Editor);
-         Side_Column_Configuration_Changed (Editor);
+         Recalculate_Side_Column_Width (Buffer);
+         Side_Column_Configuration_Changed (Buffer);
       end if;
-
-      Side_Column_Changed (Editor);
-
-      return Mark;
-   end Add_Blank_Lines;
+   end Add_Block_Command;
 
    -----------------
    -- Create_Mark --
@@ -1300,5 +1319,192 @@ package body Src_Editor_Buffer.Line_Information is
 
       Side_Column_Configuration_Changed (Buffer);
    end Remove_Blank_Lines;
+
+   ----------------
+   -- Hide_Lines --
+   ----------------
+
+   procedure Hide_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number     : Editable_Line_Type)
+   is
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
+      Start_Iter, End_Iter : Gtk_Text_Iter;
+      Result               : Boolean;
+
+      Buffer_Line : Buffer_Line_Type;
+      Line_Start : Editable_Line_Type;
+      Line_End   : Editable_Line_Type;
+      Iter       : Gtk_Text_Iter;
+
+      Command    : Unhide_Editable_Lines_Command;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Mark);
+
+      Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+      Line_Start := Get_Editable_Line (Buffer, Buffer_Line);
+
+      Line_End := Line_Start + Number;
+
+      --  Remove line by line in order to avoid problems when removing lines
+      --  that are already removed.
+
+      for L in Line_Start .. Line_End loop
+         if L not in Editable_Lines'Range then
+            return;
+         end if;
+
+         if Editable_Lines (L).Where = In_Buffer then
+            --  Get the line of text and store it in the pointer.
+
+            Get_Iter_At_Line
+              (Buffer,
+               Start_Iter,
+               Gint (Buffer_Line - 1));
+
+            Copy (Start_Iter, End_Iter);
+
+            Forward_To_Line_End (End_Iter);
+
+            if Get_Line (Start_Iter) /= Get_Line (End_Iter) then
+               Backward_Char (End_Iter, Result);
+            end if;
+
+            declare
+               Line_Data : Editable_Line_Data :=
+                 (Where          => In_Mark,
+                  Side_Info_Data => Editable_Lines (L).Side_Info_Data,
+                  Mark           => null,
+                  Text           => null);
+            begin
+               declare
+                  Ignore   : Natural;
+                  UTF8     : constant Gtkada.Types.Chars_Ptr :=
+                    Get_Text (Buffer, Start_Iter, End_Iter, True);
+                  Length   : constant Natural := Integer (Strlen (UTF8));
+                  Bytes    : Natural;
+
+               begin
+                  Line_Data.Text := new String (1 .. Length);
+                  Glib.Convert.Convert
+                    (UTF8, Length,
+                     Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
+                     Ignore, Bytes, Result => Line_Data.Text.all);
+                  g_free (UTF8);
+               end;
+
+               Editable_Lines (L) := Line_Data;
+            end;
+
+            --  Remove the line from the screen.
+
+            Forward_Char (End_Iter, Result);
+
+            Buffer.Modifying_Editable_Lines := False;
+            Buffer.Inserting := True;
+            Delete (Buffer, Start_Iter, End_Iter);
+            Buffer.Inserting := False;
+            Buffer.Modifying_Editable_Lines := True;
+         end if;
+      end loop;
+
+      --  Shift up editable lines.
+
+      for J in Line_End + 1 .. Editable_Lines'Last loop
+         if Editable_Lines (J).Where = In_Buffer then
+            Editable_Lines (J).Buffer_Line := Editable_Lines (J).Buffer_Line
+              - Buffer_Line_Type (Number) - 1;
+         end if;
+      end loop;
+
+      --  Add an icon to unhide the lines.
+      --  ???  Where are the marks freed ?
+
+      Command := new Unhide_Editable_Lines_Type;
+      Command.Buffer := Source_Buffer (Buffer);
+      Command.Mark := Mark;
+      Command.First_Line := Line_Start;
+      Command.Last_Line   := Line_End;
+
+      Add_Block_Command
+        (Buffer, Buffer_Line - 1, Command_Access (Command),
+         Unhide_Block_Pixbuf);
+   end Hide_Lines;
+
+   ------------------
+   -- Unhide_Lines --
+   ------------------
+
+   procedure Unhide_Lines
+     (Buffer     : access Source_Buffer_Record'Class;
+      Mark       : Gtk.Text_Mark.Gtk_Text_Mark;
+      First_Line : Editable_Line_Type;
+      Last_Line  : Editable_Line_Type)
+   is
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
+      Iter           : Gtk_Text_Iter;
+      Buffer_Line    : Buffer_Line_Type;
+
+   begin
+      for Line in reverse First_Line .. Last_Line loop
+         --  If the line is already in the buffer, skip.
+
+         if Editable_Lines (Line).Where /= In_Buffer then
+            --  Insert the line.
+
+            Get_Iter_At_Mark (Buffer, Iter, Mark);
+
+            Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
+
+            Buffer.Modifying_Editable_Lines := False;
+            Buffer.Inserting := True;
+            Insert (Buffer, Iter, Editable_Lines (Line).Text.all & ASCII.LF);
+            Buffer.Inserting := False;
+            Buffer.Modifying_Editable_Lines := True;
+
+            --  Modify editable line structure.
+
+            declare
+               Line_Data : constant Editable_Line_Data :=
+                 (Where          => In_Buffer,
+                  Side_Info_Data => Editable_Lines (Line).Side_Info_Data,
+                  Buffer_Line    => Buffer_Line_Type (Get_Line (Iter) + 1));
+            begin
+               Free (Editable_Lines (Line).Text);
+               Editable_Lines (Line) := Line_Data;
+            end;
+
+            --  Set the editable line information.
+            Buffer.Line_Data (Buffer_Line).Editable_Line := Line;
+         end if;
+      end loop;
+
+      for Line in First_Line .. Last_Line loop
+         Editable_Lines (Line).Buffer_Line :=
+           Editable_Lines (First_Line - 1).Buffer_Line
+           + Buffer_Line_Type (Line - First_Line) + 1;
+      end loop;
+
+      for J in Last_Line + 1 .. Editable_Lines'Last loop
+         if Editable_Lines (J).Where = In_Buffer then
+            Editable_Lines (J).Buffer_Line := Editable_Lines (J).Buffer_Line
+              + Buffer_Line_Type (Last_Line - First_Line) + 1;
+         end if;
+      end loop;
+
+      --  Redraw the side column.
+
+      Side_Column_Configuration_Changed (Buffer);
+
+      --  Remove the command that unhides the lines.
+
+      Add_Block_Command
+        (Buffer, Get_Buffer_Line (Buffer, First_Line - 1), null,
+         Null_Pixbuf);
+   end Unhide_Lines;
 
 end Src_Editor_Buffer.Line_Information;
