@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.0
 
+- D603-010 Can't evaluate nested python commands
+  Problem:    When you enter interactively a command in the python console,
+              nested blocks (a if inside a while for instance), the command
+              is never executed properly and results in an error
+  Workaround: write the command in a file, and execute that file instead
+
 - D602-016 Duplicate Build menu entries with extending projects
   Problem:    If you are using extending projects, the Build->Make menu
               will contain apparently duplicate entries.
