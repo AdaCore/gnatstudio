@@ -517,6 +517,7 @@ package body Project_Explorers is
 
       Init_Graphics;
       Gtk_New (Explorer.Tree, Columns_Types);
+      Set_Headers_Visible (Explorer.Tree, False);
       Add (Scrolled, Explorer.Tree);
 
       Set_Column_Types (Gtk_Tree_View (Explorer.Tree));
