@@ -784,10 +784,34 @@ package body Language is
 
    procedure Skip_To_Current_Comment_Block_Start
      (Context : Language_Context;
-      Buffer : String;
-      Index  : in out Natural)
+      Buffer  : String;
+      Index   : in out Natural)
    is
-      Tmp : Integer;
+      Tmp     : Integer;
+
+      function Only_Blanks_Before
+        (Buffer : String;
+         Index  : Natural)
+         return Boolean;
+      --  Return True if there are only blanks characters fore the one pointed
+      --  by Index in Buffer.
+      --  Return False otherwise.
+
+      ------------------------
+      -- Only_Blanks_Before --
+      ------------------------
+
+      function Only_Blanks_Before
+        (Buffer : String;
+         Index  : Natural)
+         return Boolean
+      is
+         Tmp : Natural := Index - 1;
+      begin
+         Skip_Blanks (Buffer, Tmp, -1);
+         return Buffer'First = Tmp + 1;
+      end Only_Blanks_Before;
+
    begin
       --  Are we in a multi-line comment ?
       if Context.Comment_End_Length /= 0 then
@@ -813,7 +837,7 @@ package body Language is
       Tmp := Index;
       loop
          while Tmp <= Buffer'Last
-           and then (Buffer (Tmp) = ' ' or Buffer (Tmp) = ASCII.HT)
+           and then (Buffer (Tmp) = ' ' or else Buffer (Tmp) = ASCII.HT)
          loop
             Tmp := Tmp + 1;
          end loop;
@@ -822,6 +846,9 @@ package body Language is
            No_Comment;
 
          Index := Tmp;
+
+         exit when Only_Blanks_Before (Buffer, Tmp);
+
          Skip_Lines (Buffer, -1, Tmp);
       end loop;
    end Skip_To_Current_Comment_Block_Start;
