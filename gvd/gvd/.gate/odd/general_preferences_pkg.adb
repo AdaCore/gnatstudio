@@ -17,6 +17,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Odd_Preferences : access Odd_Preferences_Record'Class) is
+   pragma Suppress (All_Checks);
    File_Name_Bg_Combo_Items : String_List.Glist;
    Comment_Color_Combo_Items : String_List.Glist;
    String_Color_Combo_Items : String_List.Glist;

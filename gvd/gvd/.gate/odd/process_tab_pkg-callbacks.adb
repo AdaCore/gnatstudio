@@ -12,6 +12,21 @@ package body Process_Tab_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
+   ------------------------------
+   -- On_Stack_List_Select_Row --
+   ------------------------------
+
+   procedure On_Stack_List_Select_Row
+     (Object : access Gtk_Clist_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Arg1 : Gint := To_Gint (Params, 1);
+      Arg2 : Gint := To_Gint (Params, 2);
+      Arg3 : Gdk_Event := To_Event (Params, 3);
+   begin
+      null;
+   end On_Stack_List_Select_Row;
+
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --
    ----------------------------------

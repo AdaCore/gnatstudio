@@ -17,6 +17,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class) is
+   pragma Suppress (All_Checks);
    The_Accel_Group : Gtk_Accel_Group;
 
 begin
@@ -48,7 +49,7 @@ begin
    Gtk_New (The_Accel_Group);
    Add_Accel_Group (Main_Debug_Window, The_Accel_Group);
    Add_Accelerator (Main_Debug_Window.Open_Program1, "activate",
-     The_Accel_Group, GDK_O, Gdk.Types.Control_Mask, Accel_Visible);
+     The_Accel_Group, GDK_F3, 0, Accel_Visible);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Program1, "activate",
       Widget_Callback.To_Marshaller (On_Open_Program1_Activate'Access), Main_Debug_Window);
@@ -326,7 +327,7 @@ begin
 
    Gtk_New (Main_Debug_Window.Finish1, -"Finish");
    Add_Accelerator (Main_Debug_Window.Finish1, "activate",
-     The_Accel_Group, GDK_F8, 0, Accel_Visible);
+     The_Accel_Group, GDK_F7, 0, Accel_Visible);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Finish1, "activate",
       Widget_Callback.To_Marshaller (On_Finish1_Activate'Access), Main_Debug_Window);
@@ -339,7 +340,7 @@ begin
 
    Gtk_New (Main_Debug_Window.Continue1, -"Continue");
    Add_Accelerator (Main_Debug_Window.Continue1, "activate",
-     The_Accel_Group, GDK_F9, 0, Accel_Visible);
+     The_Accel_Group, GDK_F8, 0, Accel_Visible);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Continue1, "activate",
       Widget_Callback.To_Marshaller (On_Continue1_Activate'Access), Main_Debug_Window);
@@ -349,7 +350,7 @@ begin
    Gtk_New (Main_Debug_Window.Continue_Without_Signal1, -"Continue without Signal");
    Set_Sensitive (Main_Debug_Window.Continue_Without_Signal1, False);
    Add_Accelerator (Main_Debug_Window.Continue_Without_Signal1, "activate",
-     The_Accel_Group, GDK_F9, Gdk.Types.Shift_Mask, Accel_Visible);
+     The_Accel_Group, GDK_F8, Gdk.Types.Shift_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Continue_Without_Signal1, "activate",
       Widget_Callback.To_Marshaller (On_Continue_Without_Signal1_Activate'Access), Main_Debug_Window);
@@ -362,8 +363,6 @@ begin
 
    Gtk_New (Main_Debug_Window.Kill1, -"Kill");
    Set_Sensitive (Main_Debug_Window.Kill1, False);
-   Add_Accelerator (Main_Debug_Window.Kill1, "activate",
-     The_Accel_Group, GDK_F4, 0, Accel_Visible);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Kill1, "activate",
       Widget_Callback.To_Marshaller (On_Kill1_Activate'Access), Main_Debug_Window);
@@ -436,13 +435,6 @@ begin
 
    Gtk_New (Main_Debug_Window.Data1_Menu);
    Set_Submenu (Main_Debug_Window.Data1, Main_Debug_Window.Data1_Menu);
-
-   Gtk_New (Main_Debug_Window.Backtrace1, -"Call Stack...");
-   Widget_Callback.Object_Connect
-     (Main_Debug_Window.Backtrace1, "activate",
-      Widget_Callback.To_Marshaller (On_Backtrace1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Backtrace1);
-   Set_Right_Justify (Main_Debug_Window.Backtrace1, False);
 
    Gtk_New (Main_Debug_Window.Threads1, -"Threads...");
    Widget_Callback.Object_Connect
@@ -713,7 +705,7 @@ begin
    Add (Main_Debug_Window.Frame7, Main_Debug_Window.Process_Notebook);
    Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
    Set_Show_Border (Main_Debug_Window.Process_Notebook, True);
-   Set_Show_Tabs (Main_Debug_Window.Process_Notebook, True);
+   Set_Show_Tabs (Main_Debug_Window.Process_Notebook, False);
    Set_Tab_Hborder (Main_Debug_Window.Process_Notebook, 2);
    Set_Tab_Vborder (Main_Debug_Window.Process_Notebook, 2);
    Set_Tab_Pos (Main_Debug_Window.Process_Notebook, Pos_Top);

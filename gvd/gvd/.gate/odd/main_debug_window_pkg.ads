@@ -76,7 +76,6 @@ package Main_Debug_Window_Pkg is
       Edit_Buttons1 : Gtk_Menu_Item;
       Data1 : Gtk_Menu_Item;
       Data1_Menu : Gtk_Menu;
-      Backtrace1 : Gtk_Menu_Item;
       Threads1 : Gtk_Menu_Item;
       Processes1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;

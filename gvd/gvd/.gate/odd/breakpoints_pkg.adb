@@ -17,6 +17,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
+   pragma Suppress (All_Checks);
    Vbox15_Group : Widget_SList.GSList;
    File_Combo_Items : String_List.Glist;
    Line_Spin_Adj : Gtk_Adjustment;

@@ -114,9 +114,6 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Edit_Buttons1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Backtrace1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Threads1_Activate
      (Object : access Gtk_Widget_Record'Class);
 

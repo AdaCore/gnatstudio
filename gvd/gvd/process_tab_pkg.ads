@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -21,6 +21,8 @@
 with Gtk.Window; use Gtk.Window;
 with Gtk.Paned; use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Clist; use Gtk.Clist;
+with Gtk.Label; use Gtk.Label;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Handlers;
 with Odd.Canvas; use Odd.Canvas;
@@ -33,7 +35,11 @@ package Process_Tab_Pkg is
       Delete_Text_Handler_Id : Gtk.Handlers.Handler_Id;
       Process_Paned : Gtk_Vpaned;
       Vpaned6 : Gtk_Vpaned;
-      Scrolledwindow9 : Gtk_Scrolled_Window;
+      Hpaned1 : Gtk_Hpaned;
+      Scrolledwindow13 : Gtk_Scrolled_Window;
+      Stack_List : Gtk_Clist;
+      Label101 : Gtk_Label;
+      Scrolledwindow12 : Gtk_Scrolled_Window;
       Data_Canvas : Odd_Canvas;
       Editor_Text : Code_Editor;
       Scrolledwindow7 : Gtk_Scrolled_Window;

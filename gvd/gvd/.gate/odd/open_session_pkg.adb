@@ -17,6 +17,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Open_Session : access Open_Session_Record'Class) is
+   pragma Suppress (All_Checks);
 begin
    Gtk.Window.Initialize (Open_Session, Window_Toplevel);
    Set_Title (Open_Session, -"Open Session");

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -21,6 +21,7 @@
 with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
+with Callbacks_Odd;   use Callbacks_Odd;
 
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
@@ -33,10 +34,6 @@ package body Process_Tab_Pkg is
      (1 => New_String ("executable_changed"));
    Class_Record : System.Address := System.Null_Address;
 
-pragma Suppress (All_Checks);
---  Checks are expensive (in code size) in this unit, and not needed,
---  since the following code is generated automatically.
-
 procedure Gtk_New (Process_Tab : out Process_Tab_Access) is
 begin
    Process_Tab := new Process_Tab_Record;
@@ -44,6 +41,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
+   pragma Suppress (All_Checks);
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
    Initialize_Class_Record (Process_Tab, Signals, Class_Record);
@@ -65,12 +63,39 @@ begin
    Set_Gutter_Size (Process_Tab.Vpaned6, 6);
    Set_Position (Process_Tab.Vpaned6, 200);
 
-   Gtk_New (Process_Tab.Scrolledwindow9);
-   Add (Process_Tab.Vpaned6, Process_Tab.Scrolledwindow9);
-   Set_Policy (Process_Tab.Scrolledwindow9, Policy_Automatic, Policy_Automatic);
+   Gtk_New_Hpaned (Process_Tab.Hpaned1);
+   Add (Process_Tab.Vpaned6, Process_Tab.Hpaned1);
+   Set_Handle_Size (Process_Tab.Hpaned1, 10);
+   Set_Gutter_Size (Process_Tab.Hpaned1, 6);
+   Set_Position (Process_Tab.Hpaned1, 200);
+
+   Gtk_New (Process_Tab.Scrolledwindow13);
+   Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow13);
+   Set_Policy (Process_Tab.Scrolledwindow13, Policy_Automatic, Policy_Automatic);
+
+   Gtk_New (Process_Tab.Stack_List, 1);
+   C_List_Callback.Connect
+     (Process_Tab.Stack_List, "select_row", On_Stack_List_Select_Row'Access);
+   Add (Process_Tab.Scrolledwindow13, Process_Tab.Stack_List);
+   Set_Selection_Mode (Process_Tab.Stack_List, Selection_Single);
+   Set_Shadow_Type (Process_Tab.Stack_List, Shadow_In);
+   Set_Show_Titles (Process_Tab.Stack_List, False);
+   Set_Column_Width (Process_Tab.Stack_List, 0, 80);
+   Set_Column_Auto_Resize (Process_Tab.Stack_List, 0, True);
+
+   Gtk_New (Process_Tab.Label101);
+   Set_Alignment (Process_Tab.Label101, 0.5, 0.5);
+   Set_Padding (Process_Tab.Label101, 0, 0);
+   Set_Justify (Process_Tab.Label101, Justify_Center);
+   Set_Line_Wrap (Process_Tab.Label101, False);
+   Set_Column_Widget (Process_Tab.Stack_List, 0, Process_Tab.Label101);
+
+   Gtk_New (Process_Tab.Scrolledwindow12);
+   Add (Process_Tab.Hpaned1, Process_Tab.Scrolledwindow12);
+   Set_Policy (Process_Tab.Scrolledwindow12, Policy_Automatic, Policy_Automatic);
 
    Gtk_New (Process_Tab.Data_Canvas);
-   Add (Process_Tab.Scrolledwindow9, Process_Tab.Data_Canvas);
+   Add (Process_Tab.Scrolledwindow12, Process_Tab.Data_Canvas);
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
 
    Gtk_New_Hbox (Process_Tab.Editor_Text, Process_Tab);

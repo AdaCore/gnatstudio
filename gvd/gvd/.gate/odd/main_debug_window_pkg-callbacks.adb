@@ -421,17 +421,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Edit_Buttons1_Activate;
 
-   ----------------------------
-   -- On_Backtrace1_Activate --
-   ----------------------------
-
-   procedure On_Backtrace1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Backtrace1_Activate;
-
    --------------------------
    -- On_Threads1_Activate --
    --------------------------

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -67,7 +67,6 @@ package Main_Debug_Window_Pkg is
       Open_Session        : Open_Session_Access;
       History_Dialog      : History_Dialog_Access;
       Task_Dialog         : Task_Dialog_Access;
-      Backtrace_Dialog    : Backtrace_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
       Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
@@ -150,7 +149,6 @@ package Main_Debug_Window_Pkg is
       Edit_Buttons1 : Gtk_Menu_Item;
       Data1 : Gtk_Menu_Item;
       Data1_Menu : Gtk_Menu;
-      Backtrace1 : Gtk_Menu_Item;
       Threads1 : Gtk_Menu_Item;
       Processes1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;

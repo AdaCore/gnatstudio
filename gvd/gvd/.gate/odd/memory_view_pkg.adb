@@ -17,6 +17,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Memory_View : access Memory_View_Record'Class) is
+   pragma Suppress (All_Checks);
    Size_Items : String_List.Glist;
    Format_Items : String_List.Glist;
    Value_Adj : Gtk_Adjustment;

@@ -17,6 +17,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Open_Program : access Open_Program_Record'Class) is
+   pragma Suppress (All_Checks);
    Table7_Group : Widget_SList.GSList;
    Program_Combo_Items : String_List.Glist;
    Host_Combo_Items : String_List.Glist;

@@ -17,6 +17,7 @@ begin
 end Gtk_New;
 
 procedure Initialize (Advanced_Breakpoint : access Advanced_Breakpoint_Record'Class) is
+   pragma Suppress (All_Checks);
    Condition_Combo_Items : String_List.Glist;
    Ignore_Count_Combo_Adj : Gtk_Adjustment;
 
