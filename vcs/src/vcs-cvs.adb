@@ -416,6 +416,13 @@ package body VCS.CVS is
          File_Status_List.Append (Result, Current_Status);
       end if;
 
+      if not File_Status_List.Is_Empty (Result) then
+         Insert (Kernel,
+                 -"CVS: Status obtained.",
+                 Highlight_Sloc => False,
+                 Mode => Verbose);
+      end if;
+
       Display_File_Status (Kernel, Result, True);
       File_Status_List.Free (Result);
 
@@ -451,8 +458,18 @@ package body VCS.CVS is
       if Data (Files) = Dir_Name (Data (Files)) then
          Append (Args, "status");
          Append (Args, "-l");
+
+         Insert (Rep.Kernel,
+                 -"CVS: Querying status for " & Dir_Name (Data (Files)) & ".",
+                 Highlight_Sloc => False,
+                 Mode => Verbose);
       else
          Append (Args, "status");
+
+         Insert (Rep.Kernel,
+                 -"CVS: Querying status.",
+                 Highlight_Sloc => False,
+                 Mode => Verbose);
 
          while Files /= Null_Node loop
             Append (Args, Base_Name (Data (Files)));
