@@ -1227,7 +1227,7 @@ package body Builder_Module is
                   Args := Argument_String_To_List (Arguments);
                   Launch
                     (Full_Name (Data.File),
-                     Args.all, -"Run: " & Full_Name (Data.File)
+                     Args.all, -"Run: " & Base_Name (Data.File)
                      & ' ' & Arguments);
                end if;
 
