@@ -609,7 +609,7 @@ package body Aliases_Module is
    procedure Load_Aliases (Kernel : access Kernel_Handle_Record'Class) is
       Filename : constant String := Get_Home_Dir (Kernel) & "aliases";
       Sys_Dir  : constant String :=
-        Get_System_Dir (Kernel) & "share/gps/aliases/";
+        Normalize_Pathname (Get_System_Dir (Kernel) & "share/gps/aliases/");
       File     : String (1 .. 1024);
       Last     : Natural;
       Dir      : Dir_Type;
