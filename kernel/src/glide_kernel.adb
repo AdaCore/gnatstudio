@@ -1475,8 +1475,11 @@ package body Glide_Kernel is
          Final : Gint := -1);
       pragma Import (C, Set, "gtk_tree_store_set");
 
+      pragma Warnings (Off);
+      --  This UC is safe aliasing-wise, so kill warning
       function Convert is new Ada.Unchecked_Conversion
         (System.Address, Entity_Information);
+      pragma Warnings (On);
 
       Column_Types : constant GType_Array :=
         (0 => GType_String,

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2004                     --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -74,8 +74,12 @@ package body Glide_Kernel.Scripts is
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
+   pragma Warnings (Off);
+   --  This UC is safe aliasing-wise, so kill warning
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Entity_Information);
+   pragma Warnings (On);
+
    procedure On_Destroy_Entity (Value : System.Address);
    pragma Convention (C, On_Destroy_Entity);
 
