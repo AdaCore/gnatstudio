@@ -708,6 +708,8 @@ package body Interactive_Consoles is
       Gtk_New (Console.View, Console.Buffer);
       Set_Wrap_Mode (Console.View, Wrap_Mode);
 
+      Set_Left_Margin (Console.View, 4);
+
       --  The buffer should be destroyed when the view is destroyed
       --  ??? Perhaps we should store it in the module_id, and always reuse it
       --  when the console is created. This allows the user to destroy the
