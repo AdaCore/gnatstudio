@@ -18,8 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
--- ??? Must add support for "show print vtbl"
-
+--  ??? Must add support for "show print vtbl"
 
 with Language.Debugger; use Language.Debugger;
 
@@ -318,7 +317,8 @@ package body Debugger.Gdb.Cpp is
       Tmp := Index;
       Ancestor_Start := Tmp;
       Visibility := Tmp;
-      while Ancestor <= Num_Ancestors Loop
+
+      while Ancestor <= Num_Ancestors loop
          if Type_Str (Tmp) = ',' or else Type_Str (Tmp) = '{' then
             declare
                Ancestor_Name : constant String :=
