@@ -182,6 +182,7 @@ Customizing and Extending GPS
 * Adding support for new tools::
 * Customization examples::
 * Scripting GPS::
+* Adding support for new Version Control Systems::
 
 Customizing through XML files
 * Defining Actions::
@@ -196,6 +197,8 @@ Customizing through XML files
 * Defining new search patterns::
 * Adding support for new languages::
 * Defining text aliases::
+
+Adding support for new Version Control Systems
 
 Adding support for new tools
 * Defining supported languages::
@@ -2408,7 +2411,7 @@ If the preference is enabled, the saving is performed automatically.
 @end ifhtml
 
 You can conveniently select or unselect all the files at once by clicking on
-the title of the first column (labelled @i{Select}). This will toggle
+the title of the first column (labeled @i{Select}). This will toggle
 the selection status of the first line, and have the same status for all other
 editors.
 
@@ -2866,7 +2869,7 @@ graphical tools such as the project wizard (@ref{The Project Wizard})
 and the properties editor(@ref{The Project Properties Editor}) are
 provided.
 
-@c The english of the following paragraph is unclear
+@c The English of the following paragraph is unclear
 @c
 @cindex normalization of projects
 GPS doesn't preserve the layout of whole content of manually created
@@ -4087,7 +4090,7 @@ Tree.
    If no main unit is specified in your project, build all files defined
    in your project and subprojects recursively.
    For a library project file, compile sources and recreate the library
-   when needeed.
+   when needed.
 
    @item <current file>
    Consider the currently selected file as a main file, and build it.
@@ -4821,7 +4824,7 @@ Up button
 Down button
 
 @item Interrupt
-Menu @code{Debug->Interrupt} (@key{Control-Blackslash})
+Menu @code{Debug->Interrupt} (@key{Control-Backslash})
 @end table
 
 @subsection Key Short Cuts
@@ -5592,6 +5595,7 @@ machine, you can specify the name of this machine by setting the
 * Adding support for new tools::
 * Customization examples::
 * Scripting GPS::
+* Adding support for new Version Control Systems::
 @end menu
 
 @noindent
@@ -6402,6 +6406,7 @@ items yet.
 * Adding support for new languages::
 * Defining text aliases::
 * Adding casing exceptions::
+* Adding stock icons::
 @end menu
 
 @noindent
@@ -6504,6 +6509,8 @@ described in later sections. It includes:
   (@pxref{Adding contextual menus})
 @item <case_exceptions>
   (@pxref{Adding casing exceptions})
+@item <stock>
+  (@pxref{Adding stock icons})
 @end table
 
 @c -----------------------------------------------------------------------
@@ -7909,6 +7916,41 @@ Unchanged). @pxref{The Preferences Dialog}.
 @end smallexample
 
 @c --------------------------------------------------------------------------
+@node Adding stock icons
+@subsection Adding stock icons
+@cindex stock_icons
+@cindex <stock_icons>
+@c --------------------------------------------------------------------------
+
+@noindent
+XML files can be used to define ``stock icons''. Stock icons are pictures
+that are identified by their label, and which are used through GPS in various
+places, such as buttons, menus, toolbars, and so on.
+
+The stock icons must be declared using the tag @code{<icon>}, within the global
+tag @code{<stock>}. The attribute @code{id} indicates the label used to identify
+the stock icon, and the attribute @code{file} points to the file which contains
+the actual picture, either in absolute format, or relative to the directory which
+contains the XML file
+
+For a better rendering, icons that are to be used in menus and buttons should
+have a size of 24x24 pixels, whereas icons used in toolbars should be 48x48 pixels.
+
+Here is an example:
+@smallexample
+<?xml version="1.0"?>
+<my_visual_preferences>
+  <stock>
+    <icon id="gps-my-picture" file="icons/my-picture.png" />
+  </stock>
+</my_visual_preferences>
+@end smallexample
+
+Note: as shown in the example above, it is a good practice to prefix the label by
+@code{gps-}, in order to make sure that predefined stock icons will not get
+overridden by your icons.
+
+@c --------------------------------------------------------------------------
 @node Adding support for new tools
 @section Adding support for new tools
 @cindex external tool
@@ -8071,7 +8113,7 @@ properties page.
 @item separator (default value is "")
 This attribute specifies the default character that should go between a switch
 and its value, to distinguishes cases like "-a 1", "-a1" and "-a=1". This can
-be overriden separately for each switch.
+be overridden separately for each switch.
 @end table
 
 This @code{<switches>} tag can have any number of child tag, among the
@@ -9438,6 +9480,313 @@ GPS> Hook "my_custom_hook"
 GPS> run %1 1 2
 GPS> run %2 "arg1" "arg2" "arg3"
 @end ifclear
+
+
+@c --------------------------------------------------------------------
+@node Adding support for new Version Control Systems
+@section Adding support for new Version Control Systems
+@cindex generic_vcs
+@c --------------------------------------------------------------------
+
+@menu
+* Custom VCS interfaces::
+* Describing a VCS::
+* Implementing VCS actions::
+@end menu
+
+@node Custom VCS interfaces
+@subsection Custom VCS interfaces
+
+The Version Control interface in GPS can be customized, either to
+refine the behavior of the existing system and adapt it to specific
+needs, or to add support for other Version Control systems. 
+
+Custom VCS interfaces are defined entirely through XML files. Those
+files are read in the same location as all the other XML
+customizations that GPS offers. See @ref{Customizing through XML
+files} for a complete description. 
+
+There are two steps to follow when creating a custom VCS
+interface. The first step is to describe the VCS itself, and the
+second step is to implement actions corresponding to all the
+operations that this VCS can perform. The following two sections
+(@ref{Describing a VCS} and @ref{Implementing VCS actions}) describe
+those steps.
+
+GPS is distributed with XML files describing the interfaces to
+ClearCase and CVS. These XML files are located in the directory
+@code{share/customize} in the GPS installation, and can be used as a
+reference for implementing new custom VCS interfaces.
+
+@node Describing a VCS
+@subsection Describing a VCS
+
+@menu
+* The VCS node::
+* Associating actions to operations::
+* Defining status::
+* Output parsers::
+@end menu
+
+@node The VCS node
+@subsubsection The VCS node
+
+The @code{vcs} node is the toplevel node which contains the
+description of the general behavior expected from the VCS. It has two
+attributes.
+
+The attribute @code{name} indicates the identifier of the VCS. The
+casing of this name is important, and the same casing must be used in
+the project files.
+
+The attribute @code{absolute_name} indicates the behavior of the
+VCS relative to file names, and can take the values @code{TRUE} or
+@code{FALSE}. If it is set to @code{TRUE}, it means that in all
+commands in the VCS will work on absolute file names. If it set to
+@code{FALSE}, it means that all actions work on base file names, and
+that GPS will move to the appropriate directory before executing an
+action. 
+
+Here is an example, adapted to the use of CVS:
+
+@smallexample
+   <vcs name="Custom CVS" absolute_names="FALSE">
+        
+      (... description of action associations ...)
+      (... description of supported status ...)
+      (... description of output parsers ...)
+
+   </vcs>  
+@end smallexample
+
+@node Associating actions to operations
+@subsubsection Associating actions to operations
+
+GPS knows about a certain set of predefined ``operations'' that a VCS
+can perform. The user can decide to implement some of them - not
+necessarily all of them - in this section.
+
+The following node is used to associate a predefined operation to an
+action:
+
+@smallexample
+   <OPERATION  action="ACTION_LABEL" label="NAME OF OPERATION" />
+@end smallexample 
+
+Where:
+@table @samp
+   @item OPERATION
+is the name of the predefined action. The list of predefined actions
+is described in @ref{Implementing VCS actions},
+
+   @item ACTION_LABEL
+is the name of the corresponding gps Action that will be launched when
+GPS wants to ask the VCS to perform OPERATION,
+
+   @item NAME OF OPERATION
+is the name that will appear in the GPS menus when working on a file
+under the control of the defined VCS.
+@end table
+
+@node Defining status
+@subsubsection Defining status
+
+All VCS have the notion of ``status'' or ``state'' to describe the
+relationship between the local file and the repository. The XML node
+@code{status} is used to describe the status that are known to a
+custom VCS, and the icons associated to it:
+
+@smallexample
+  <status label="STATUS_LABEL" stock="STOCK_LABEL" />
+@end smallexample
+
+Where:
+@table @samp
+   @item STATUS_LABEL
+is the name of the status, for example ``Up to date'' or ``Needs
+update'' in the context of CVS.
+   @item STOCK_LABEL
+is the stock identifier of the icon associated to this status, that
+will be used, for example, in the VCS Explorer. See section
+@ref{Adding stock icons} for more details on how to define stock
+icons.
+@end table
+
+Note that the order in which status are defined in the XML file is
+important: the first status to be displayed must correspond to the
+status ``Up-to-date'' or equivalent.
+
+@node Output parsers
+@subsubsection Output parsers
+
+There are cases in which GPS needs to parse the output of the VCS
+commands: when querying the status, or when ``annotating'' a
+file. Three parsers can be implemented in the @code{vcs} node: these
+correspond to the nodes @code{status_parser} and
+@code{local_status_parser}, which parse the output of the status
+command (see next section for more information), and the node
+@code{annotations_parser}, which parses annotations.
+
+Each node corresponding to a parser must contain a node @code{regexp},
+the value of which is a standard system V regular expression used to
+parse the output. 
+
+In this regular expression, parenthezised subexpressions can be
+indicated, identifying the file name, the status, the local revision,
+and the repository revision. The indexes of these subexpressions are
+indicated, respectively, in the values of nodes @code{file_index},
+@code{status_index}, @code{local_revision_index}, and
+@code{repository_revision_index}.
+
+The nodes @code{status_parser} and @code{local_status_parser} may also
+contain nodes containing a regular expression used to identify the
+status. These nodes have the tag @code{status_matcher}, and a
+compulsory attribute @code{label}, which contains the label
+identifying the status (see @ref{Defining status}).
+
+In the case of the @code{annotations_parser}, the @code{file_index}
+indicates the part of the file in the annotations line, and the
+@code{repository_revision_index} indicates the revision, if any,
+indicated by the annotations.
+
+@node Implementing VCS actions
+@subsection Implementing VCS actions
+
+A number of ``standard'' VCS operations are known to GPS. Each of
+these operations can be implemented, using Actions. See @ref{Defining
+Actions}) for a complete description of how to implement actions. 
+
+Here is a list of all the defined VCS operations, and their
+parameters:
+
+@table @code
+
+@item status_files
+  @table @code
+     @item $1  = whether the log files should be cleared when obtaining up-to-date status
+     @item $2- = the list of files to query status for.
+  @end table
+  Query the status for a list of files. This should perform a complete
+  VCS query and return results as complete as possible.
+
+@item status_dir
+  @table @code    
+    @item $1 = the directory.
+  @end table
+  Same as above, but works on all the files in one directory.
+
+
+@item local_status_files
+  @table @code
+    @item $* = list of files
+  @end table
+  Query the local status for specified files. This query should be as
+  fast as possible, not connecting to any remote VCS. The results need
+  not be complete, but it is not useful to implement this command if
+  the output does not contain at least the working revision.
+
+@item open
+  @table @code
+    @item $* = list of files
+  @end table
+  Open files or directories for editing. This command should be
+  implemented on any VCS that require an explicit check-out/open/edit
+  action before being able to edit a file.
+
+@item update
+  @table @code
+    @item $* = list of files
+  @end table
+  Bring the specified files in sync with the latest repository revision.
+
+@item update_dir
+  @table @code
+    @item $* = directory
+  @end table
+  Update the contents of one directory.
+
+@item commit
+  @table @code
+    @item $1  = log file
+    @item $2- = list of files
+  @end table
+  Commit/submit/check-in files or directories with provided log. The log is
+  passed in a file.
+
+@item commit_dir
+  @table @code
+    @item $1  = log
+    @item $2  = directory
+  @end table
+  Commit/submit one directory with provided log. The log is passed in
+  a file.
+
+@item history
+  @table @code
+    @item $1 = revision
+    @item $2 = file
+  @end table
+  Query the history for corresponding revision of the specified file.
+
+@item annotate
+  @table @code
+    @item $1 = file
+  @end table
+  Query the annotations for a file.
+
+@item add
+  @table @code
+    @item $1 = log
+    @item $2 = file or dir
+  @end table
+  Add file/dir to the repository, with the provided revision log.
+
+@item remove
+  @table @code
+    @item $1 = log
+    @item $2 = file or dir
+  @end table
+  Remove file/dir from the repository, with the provided revision log.
+
+@item revert
+  @table @code
+    @item $* = files
+  @end table
+  Revert the local file to repository revision, cancelling all local
+  changes, and close the file for editing if it was open.
+
+@item diff_head
+  @table @code
+    @item $1 = file
+  @end table
+  Display a visual comparison between the local file and the latest
+  repository revision.
+
+@item diff_working
+  @table @code
+    @item $1 = file
+  @end table
+  Display a visual comparison between the local file and the revision
+  from which it was obtained.
+
+@item diff
+  @table @code
+    @item $1 = rev
+    @item $2 = file
+  @end table
+  Display a visual comparison between the local file and the specified
+  revision.
+
+@item diff2
+  @table @code
+    @item $1 = revision 1
+    @item $2 = revision 2
+    @item $3 = file
+  @end table
+  Display a visual comparison between the two specified revisions of
+  the file.
+
+@end table
 
 
 @c --------------------------------------------------------------------
