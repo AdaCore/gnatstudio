@@ -561,6 +561,8 @@ package body Builder_Module is
          return;
       end if;
 
+      Prj := Project;
+
       --  If no file was specified in data, simply compile the current file.
 
       if File = VFS.No_File and then Project = No_Project then
@@ -650,7 +652,7 @@ package body Builder_Module is
       case Syntax is
          when GNAT_Syntax =>
             Cmd := new String'(Get_Attribute_Value
-              (Project, Compiler_Command_Attribute,
+              (Prj, Compiler_Command_Attribute,
                Default => "gnatmake", Index => "ada"));
 
          when Make_Syntax =>
@@ -666,7 +668,7 @@ package body Builder_Module is
         (Kernel,
          Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
          Remote_Host      =>
-           Get_Attribute_Value (Project, Remote_Host_Attribute),
+           Get_Attribute_Value (Prj, Remote_Host_Attribute),
          Command          => Cmd.all,
          Arguments        => Args.all,
          Fd               => Fd);
