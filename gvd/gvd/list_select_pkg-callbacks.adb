@@ -2,7 +2,7 @@
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                      Copyright (C) 2000-2001                      --
---                              ACT-Europe                           --
+--                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,66 +18,94 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Label; use Gtk.Label;
-with Gtk.List; use Gtk.List;
-with Gtk.Container; use Gtk.Container;
-with Gtk.Object; use Gtk.Object;
-with Gtk.Widget; use Gtk.Widget;
+with System;          use System;
+
+with Glib;            use Glib;
+
+with Gdk.Event;       use Gdk.Event;
+with Gdk.Types;       use Gdk.Types;
+
+with Gtk.Accel_Group; use Gtk.Accel_Group;
+with Gtk.Object;      use Gtk.Object;
+with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Style;       use Gtk.Style;
+with Gtk.Widget;      use Gtk.Widget;
+with Gtk.Main;        use Gtk.Main;
+
+with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
 package body List_Select_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   --------------------------
-   -- On_List_Select_Child --
-   --------------------------
+   -------------------------
+   -- On_Clist_Select_Row --
+   -------------------------
 
-   procedure On_List_Select_Child
-     (Object : access Gtk_List_Record'Class;
+   procedure On_Clist_Select_Row
+     (Object : access Gtk_Clist_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Open : List_Select_Access :=
-        List_Select_Access (Get_Toplevel (Object));
-      Arg1 : Gtk_Widget := Gtk_Widget (To_Object (Params, 1));
-
-      use Widget_List;
-
-      Text : constant String :=
-        Get (Gtk_Label (Get_Data (Children (Gtk_Container (Arg1)))));
-
+      List_Select : List_Select_Access
+        := List_Select_Access (Get_Toplevel (Object));
+      Arg1 : Gint := To_Gint (Params, 1);
+      Arg2 : Gint := To_Gint (Params, 2);
+      Arg3 : Gdk_Event := To_Event (Params, 3);
    begin
-      Set_Text (Open.The_Entry, Text);
-   end On_List_Select_Child;
+      Set_Text (List_Select.The_Entry,
+                Get_Text (Object, Arg1, 0));
+   end On_Clist_Select_Row;
 
-   --------------------------------
-   -- On_List_Button_Press_Event --
-   --------------------------------
+   ---------------------------
+   -- On_The_Entry_Activate --
+   ---------------------------
 
-   function On_List_Button_Press_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   procedure On_The_Entry_Activate
+     (Object : access Gtk_Entry_Record'Class)
    is
-      --  Arg1 : Gdk_Event := To_Event (Params, 1);
    begin
-      return False;
-   end On_List_Button_Press_Event;
+      Gtk.Main.Main_Quit;
+   end On_The_Entry_Activate;
+
+   -------------------
+   -- On_Ok_Clicked --
+   -------------------
+
+   procedure On_Ok_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+   begin
+      Gtk.Main.Main_Quit;
+   end On_Ok_Clicked;
 
    -----------------------
    -- On_Cancel_Clicked --
    -----------------------
 
-   procedure On_Cancel_Clicked (Object : access Gtk_Button_Record'Class) is
+   procedure On_Cancel_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      List_Select : List_Select_Access
+        := List_Select_Access (Get_Toplevel (Object));
    begin
-      null;
+      Set_Text (List_Select.The_Entry, "");
+      Gtk.Main.Main_Quit;
    end On_Cancel_Clicked;
 
    ---------------------
    -- On_Help_Clicked --
    ---------------------
 
-   procedure On_Help_Clicked (Object : access Gtk_Button_Record'Class) is
+   procedure On_Help_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      Dummy       : Message_Dialog_Buttons;
+      List_Select : List_Select_Access
+        := List_Select_Access (Get_Toplevel (Object));
    begin
-      null;
+      Dummy := Message_Dialog
+        (List_Select.Help_Text.all,
+         Buttons => Button_OK);
    end On_Help_Clicked;
 
 end List_Select_Pkg.Callbacks;

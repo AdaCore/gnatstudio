@@ -18,25 +18,65 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Window; use Gtk.Window;
-with Gtk.Box; use Gtk.Box;
+with Gtk.Window;          use Gtk.Window;
+with Gtk.Box;             use Gtk.Box;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Viewport; use Gtk.Viewport;
-with Gtk.List; use Gtk.List;
-with Gtk.Label; use Gtk.Label;
-with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Button; use Gtk.Button;
+with Gtk.CList;           use Gtk.CList;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.GEntry;          use Gtk.GEntry;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+with Gtk.Button;          use Gtk.Button;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 package List_Select_Pkg is
 
+   --  This package provides a simple selectable list dialog.
+   --
+   --  Typical usage consists in calling Gtk_New,
+   --  then using Add_Item as many times as required to fill the dialog,
+   --  then calling Show to effectively display the dialog.
+   --
+   --  See gvd-main_debug_window_pkg-callbacks.adb for an example.
+
+   type List_Select_Access is private;
+
+   procedure Gtk_New
+     (List_Select : out List_Select_Access;
+      Title         : String := "";
+      Help_Message  : String := "";
+      Item_Label    : String := "";
+      Comment_Label : String := "");
+   --  Create a new List_Select dialog.
+   --  Title is the title of the window.
+   --  Help_Message is the text that will be displayed when pressing Help
+   --  (if Help_Message is left to "", then the Help button is not displayed.)
+   --  Item_Label is the label on top of the first column in the list.
+
+   procedure Add_Item
+     (List_Select : List_Select_Access;
+      Label       : String;
+      Comment     : String);
+   --  Add an item to the list with the specified label.
+
+   procedure Remove_All_Items (List_Select : List_Select_Access);
+   --  Removes all the items in the list.
+
+   function Show
+     (List_Select : List_Select_Access) return String;
+   --  Displays the list until OK or Cancel is pressed.
+   --  Upon exit, returns the contents of the entry.
+
+private
    type List_Select_Record is new Gtk_Window_Record with record
+      Help_Text      : String_Access;
+
       Vbox           : Gtk_Vbox;
-      Scrolledwindow : Gtk_Scrolled_Window;
-      Viewport       : Gtk_Viewport;
-      List           : Gtk_List;
       Hbox           : Gtk_Hbox;
-      Label          : Gtk_Label;
+      Scrolledwindow : Gtk_Scrolled_Window;
+      List           : Gtk_Clist;
+      Label1         : Gtk_Label;
+      Label2         : Gtk_Label;
+      Hbox2          : Gtk_Hbox;
       The_Entry      : Gtk_Entry;
       Hbuttonbox     : Gtk_Hbutton_Box;
       Ok             : Gtk_Button;
@@ -44,30 +84,5 @@ package List_Select_Pkg is
       Help           : Gtk_Button;
    end record;
    type List_Select_Access is access all List_Select_Record'Class;
-
-   procedure Gtk_New (List_Select : out List_Select_Access);
-   procedure Initialize (List_Select : access List_Select_Record'Class);
-
-   procedure Change_Title
-     (List_Select : List_Select_Access;
-      Title       : String);
-   --  Change the title of the window.
-
-   procedure Add_Item
-     (List_Select : List_Select_Access;
-      Label       : String);
-   --  Add an item to the list with the specified label.
-
-   procedure Remove_All_Items (List_Select : List_Select_Access);
-   --  Removes all the items in the list.
-
-   function Get_Item_In_Entry
-     (List_Select : List_Select_Access) return String;
-   --  Return the label in the entry.
-
-   procedure Set_Label
-     (List_Select : List_Select_Access;
-      Label       : String);
-   --  Set the entry label.
 
 end List_Select_Pkg;
