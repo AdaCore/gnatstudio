@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 3.0.0
 
+- E308-006 Removing main files from project doesn't update Executables attribute
+  Problem:    If you remove some main units from your project through the
+              Project Properties dialog, the attribute Executables is not updated
+              at the same time.
+  Workaround: Even if the attribute is still set, this doesn't impact the loading
+              of your project, and the unit is no longer part of the main units
+
 - Files duplicates in the "Open From Project" dialog
   Problem:    If source directories are specified both in the projects and
               through ADA_INCLUDE_PATH, the dialog contains duplicate entries.
