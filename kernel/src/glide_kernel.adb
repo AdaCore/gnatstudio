@@ -176,6 +176,56 @@ package body Glide_Kernel is
       end if;
    end Get_Predefined_Object_Path;
 
+   ---------------------------
+   -- Save_All_MDI_Children --
+   ---------------------------
+
+   function Save_All_MDI_Children
+     (Handle : access Kernel_Handle_Record) return Boolean
+   is
+      MDI   : MDI_Window := Get_MDI (Handle);
+      Iter  : Child_Iterator;
+      Child : MDI_Child;
+
+      use type Module_List.List_Node;
+      Module : Module_List.List_Node;
+
+   begin
+      Iter := First_Child (MDI);
+      Child := Get (Iter);
+
+      --  Browse through all MDI children.
+
+      while Child /= null loop
+         --  Find the module associated to Child.
+         Module := Module_List.First (Handle.Modules_List);
+
+         while Module /= Module_List.Null_Node loop
+            if Module_List.Data (Module).Child_Tag =
+              Get_Widget (Child)'Tag
+            then
+               if Module_List.Data (Module).Save_Function /= null
+                 and then not Module_List.Data (Module).Save_Function
+                                (Handle,
+                                 Get_Widget (Child),
+                                 False)
+               then
+                  return False;
+               end if;
+
+               exit;
+            end if;
+
+            Module := Module_List.Next (Module);
+         end loop;
+
+         Next (Iter);
+         Child := Get (Iter);
+      end loop;
+
+      return True;
+   end Save_All_MDI_Children;
+
    -------------------------------------
    -- Locate_From_Source_And_Complete --
    -------------------------------------
