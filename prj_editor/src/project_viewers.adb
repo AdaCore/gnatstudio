@@ -1219,9 +1219,6 @@ package body Project_Viewers is
          File_Context := File_Selection_Context_Access (Context);
 
          if Has_Project_Information (File_Context) then
-            Gtk_New (Item, Label => "");
-            Append (Menu, Item);
-
             Gtk_New (Item, Label => -"Save the project "
                      & Project_Name (Project_Information (File_Context)));
             Append (Menu, Item);
