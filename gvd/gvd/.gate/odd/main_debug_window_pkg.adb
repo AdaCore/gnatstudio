@@ -545,9 +545,9 @@ begin
    Gtk_New (Main_Debug_Window.Refresh1, -"Refresh");
    Add_Accelerator (Main_Debug_Window.Refresh1, "activate",
      The_Accel_Group, GDK_L, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Refresh1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Refresh1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Refresh1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Refresh1);
    Set_Right_Justify (Main_Debug_Window.Refresh1, False);
 
@@ -709,6 +709,8 @@ begin
    Set_Shadow_Type (Main_Debug_Window.Frame7, Shadow_Etched_In);
 
    Gtk_New (Main_Debug_Window.Process_Notebook);
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Process_Notebook, "switch_page", On_Process_Notebook_Switch_Page'Access, Main_Debug_Window);
    Add (Main_Debug_Window.Frame7, Main_Debug_Window.Process_Notebook);
    Set_Scrollable (Main_Debug_Window.Process_Notebook, True);
    Set_Show_Border (Main_Debug_Window.Process_Notebook, True);

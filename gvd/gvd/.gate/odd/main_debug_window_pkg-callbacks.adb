@@ -558,7 +558,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --------------------------
 
    procedure On_Refresh1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -654,5 +654,19 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Down1_Activate;
+
+   -------------------------------------
+   -- On_Process_Notebook_Switch_Page --
+   -------------------------------------
+
+   procedure On_Process_Notebook_Switch_Page
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Arg1 : Address := To_Address (Params, 1);
+      Arg2 : Guint := To_Guint (Params, 2);
+   begin
+      null;
+   end On_Process_Notebook_Switch_Page;
 
 end Main_Debug_Window_Pkg.Callbacks;

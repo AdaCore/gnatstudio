@@ -963,6 +963,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_refresh1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:45:53 GMT</last_modification_time>
 	    </signal>
 	    <label>Refresh</label>
@@ -1266,6 +1267,12 @@
 	<class>GtkNotebook</class>
 	<name>process_notebook</name>
 	<can_focus>True</can_focus>
+	<signal>
+	  <name>switch_page</name>
+	  <handler>on_process_notebook_switch_page</handler>
+	  <object>Main_Debug_Window</object>
+	  <last_modification_time>Tue, 05 Sep 2000 04:59:06 GMT</last_modification_time>
+	</signal>
 	<show_tabs>True</show_tabs>
 	<show_border>True</show_border>
 	<tab_pos>GTK_POS_TOP</tab_pos>
