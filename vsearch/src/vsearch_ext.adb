@@ -627,7 +627,11 @@ package body Vsearch_Ext is
          end if;
       end if;
 
+      --  If the dialog is not docked and the option to auto-close the dialog
+      --  is set, close the dialog.
+
       if Realized_Is_Set (Vsearch)
+        and then Get_Child_Visible (Vsearch.Auto_Hide_Check)
         and then Get_History
           (Get_History (Vsearch.Kernel).all, Auto_Hide_Hist_Key)
       then
