@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -162,8 +162,8 @@ package Codefix.Errors_Parser is
    type Error_Parser
      (Category : GNAT.OS_Lib.String_Access; Nb_Parsers : Natural)
    is abstract tagged record
-       Matcher    : Arr_Matcher (1 .. Nb_Parsers);
        Current_It : Ptr_Natural := new Natural;
+       Matcher    : Arr_Matcher (1 .. Nb_Parsers);
    end record;
    --  The Error_Parser is used to parse a message and call the rigth
    --  funtions in the formal_errors package
