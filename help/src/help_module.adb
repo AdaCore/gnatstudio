@@ -52,7 +52,8 @@ with String_Utils;                 use String_Utils;
 with Gtk.Clipboard;                use Gtk.Clipboard;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;        use Ada.Strings.Unbounded;
+with Histories;                    use Histories;
 
 package body Help_Module is
 
@@ -60,6 +61,8 @@ package body Help_Module is
 
    Template_Index : constant String := "help_index.html";
    Index_File     : constant String := "gps_index.xml";
+
+   Help_History_Key : constant History_Key := "help-recent-files";
 
    Font_Adjust : Integer;
    pragma Import (C, Font_Adjust, "_gdk_font_adjust");
@@ -218,6 +221,24 @@ package body Help_Module is
 
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class);
    --  Parse all the index files in the path
+
+   type On_Recent is new Menu_Callback_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   procedure Activate (Callback : access On_Recent; Item : String);
+
+   --------------
+   -- Activate --
+   --------------
+
+   procedure Activate (Callback : access On_Recent; Item : String) is
+   begin
+      Open_Html (Callback.Kernel, Item);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Activate;
 
    ----------
    -- Free --
@@ -379,6 +400,8 @@ package body Help_Module is
          Insert (Kernel, File & (-": File not found"), Mode => Error);
          return False;
       end if;
+
+      Add_To_History (Kernel, Help_History_Key, File);
 
       Push_State (Kernel_Handle (Kernel), Busy);
       Buffer := Read_File (File);
@@ -1131,6 +1154,7 @@ package body Help_Module is
       Help  : constant String := "/_" & (-"Help") & '/';
       Name  : constant String := -"Help";
       Mitem : Gtk_Menu_Item;
+      Recent_Menu_Item : Gtk_Menu_Item;
 
    begin
       Help_Module_ID := new Help_Module_ID_Record;
@@ -1167,6 +1191,18 @@ package body Help_Module is
 
       Register_Menu
         (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
+
+      --  Create_New_Key_If_Necessary
+      --    (Get_History (Kernel).all, Help_History_Key, Strings);
+      Recent_Menu_Item :=
+        Register_Menu (Kernel, Help, -"_Recent", "", null,
+                       Ref_Item   => -"Open HTML File...",
+                       Add_Before => False);
+      Associate (Get_History (Kernel).all,
+                 Help_History_Key,
+                 Recent_Menu_Item,
+                 new On_Recent'(Menu_Callback_Record with
+                                Kernel => Kernel_Handle (Kernel)));
 
       declare
          Item : String_Menu_Item;
