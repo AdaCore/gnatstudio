@@ -580,6 +580,8 @@ package body Src_Info.CPP is
       pragma Unreferenced (Root_Project);
       pragma Unreferenced (Handler);
       pragma Unreferenced (Full_Filename);
+
+      HI     : CPP_LI_Handler_Iterator;
       DB_Dir : constant String := Get_DB_Dir (File_Project);
 
    begin
