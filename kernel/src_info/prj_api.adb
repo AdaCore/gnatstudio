@@ -177,6 +177,10 @@ package body Prj_API is
       pragma Suppress (All_Checks);
       R : String (1 .. Natural (String_Length (Str)));
    begin
+      if Str = No_String then
+         return "";
+      end if;
+
       for J in R'Range loop
          R (J) := Get_Character (Get_String_Char (Str, Int (J)));
       end loop;
@@ -186,6 +190,10 @@ package body Prj_API is
 
    function Get_String (Id : Types.Name_Id) return String is
    begin
+      if Id = No_Name then
+         return "";
+      end if;
+
       return Get_Name_String (Id);
 
    exception
