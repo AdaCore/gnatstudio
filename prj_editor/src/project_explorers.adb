@@ -1753,7 +1753,6 @@ package body Project_Explorers is
                 and then Directory_Contains_Files (Prj, Str))
               or else
                 (Node_Type = Project_Node and then Has_Imported_Projects (Prj))
-              or else Direct_Sources_Count (Prj) /= 0
             then
                Set_Node_Type (Explorer.Tree.Model, Node, Node_Type, False);
                Set (Explorer.Tree.Model, Node, Project_Column,
