@@ -499,6 +499,7 @@ package body Src_Info.ALI is
       Prj_Unit  : Prj.Com.Unit_Id;
       Filename  : File_Name_Type;
       Dir       : String_Access;
+      Part      : Unit_Part;
    begin
       --  Note that the search algorigthm in this procedure is documented
       --  inside Get_Source_File. Any change to this algorithm should be
@@ -531,10 +532,16 @@ package body Src_Info.ALI is
 
          --  Not found. Search the project units list
          Prj_Unit := Prj.Com.Units_Htable.Get (Get_Unit_Name (Spec_Id));
-         if Get_Body_Filename (Prj_Unit) /= No_Name then
+         Filename := Get_Body_Filename (Prj_Unit);
+         if Filename /= No_Name then
+            if Source_Filename = Filename then
+               Part := Unit_Body;
+            else
+               Part := Unit_Spec;
+            end if;
             Get_Unit_Source_File
-              (List, Source_Filename, Get_Body_Filename (Prj_Unit), Unit_Body,
-               Project, Source_Path, File);
+              (List, Source_Filename, Filename,
+               Part, Project, Source_Path, File);
             return;
          end if;
 
@@ -543,8 +550,13 @@ package body Src_Info.ALI is
          Dir := Locate_Regular_File (Get_Name_String (Filename), Source_Path);
          if Dir /= null then
             Free (Dir);
+            if Source_Filename = Filename then
+               Part := Unit_Body;
+            else
+               Part := Unit_Spec;
+            end if;
             Get_Unit_Source_File
-              (List, Source_Filename, Filename, Unit_Body,
+              (List, Source_Filename, Filename, Part,
                Project, Source_Path, File);
             return;
          end if;
@@ -587,10 +599,17 @@ package body Src_Info.ALI is
 
             --  Search the project units list
             Prj_Unit := Prj.Com.Units_Htable.Get (Unit_Name);
+            Filename := Get_Body_Filename (Prj_Unit);
+
             if Get_Body_Filename (Prj_Unit) /= No_Name then
+               if Filename = Source_Filename then
+                  Part := Unit_Body;
+               else
+                  Part := Unit_Spec;
+               end if;
                Get_Unit_Source_File
-                  (List, Source_Filename, Get_Body_Filename (Prj_Unit),
-                   Unit_Body, Project, Source_Path, File);
+                  (List, Source_Filename, Filename,
+                   Part, Project, Source_Path, File);
                return;
             end if;
 
@@ -599,9 +618,15 @@ package body Src_Info.ALI is
             Dir :=
               Locate_Regular_File (Get_Name_String (Filename), Source_Path);
             if Dir /= null then
+               if Filename = Source_Filename then
+                  Part := Unit_Body;
+               else
+                  Part := Unit_Spec;
+               end if;
+
                Free (Dir);
                Get_Unit_Source_File
-                 (List, Source_Filename, Filename, Unit_Body,
+                 (List, Source_Filename, Filename, Part,
                   Project, Source_Path, File);
                return;
             end if;
@@ -641,7 +666,7 @@ package body Src_Info.ALI is
       if File.LI = null then
          File.LI := new LI_File_Constrained'
            (LI => (Parsed        => False,
-                   LI_Filename   => new String'(ALI_Filename),
+                   LI_Filename   => new String'(Base_File_Name (ALI_Filename)),
                    Spec_Info     => null,
                    Body_Info     => null,
                    Separate_Info => null));
@@ -811,7 +836,7 @@ package body Src_Info.ALI is
       if File.LI = null then
          File.LI := new LI_File_Constrained'
            (LI => (Parsed        => False,
-                   LI_Filename   => new String'(ALI_Filename),
+                   LI_Filename   => new String'(Base_File_Name (ALI_Filename)),
                    Spec_Info     => null,
                    Body_Info     => null,
                    Separate_Info => null));
@@ -1096,6 +1121,9 @@ package body Src_Info.ALI is
          Dep_Info          => (Depends_From_Spec => False,
                                Depends_From_Body => False),
          Declarations      => null);
+      pragma Assert
+        (Get_Source_Filename (Sfile) = Get_Name_String (Dep.Sfile));
+
       New_LI_File.LI.Dependencies_Info :=
         new Dependency_File_Info_Node'
           (Value => New_Dep, Next => New_LI_File.LI.Dependencies_Info);
@@ -1435,7 +1463,7 @@ package body Src_Info.ALI is
       Success              : Boolean;
 
    begin
-      Tmp := Get (List.Table, Base_File_Name (ALI_Filename));
+      Tmp := Get (List.Table, ALI_Filename);
       LI_File_Is_New := Tmp = null;
       if LI_File_Is_New then
          Tmp := new LI_File_Constrained'
@@ -1461,6 +1489,7 @@ package body Src_Info.ALI is
       Tmp.LI.Compilation_Errors_Found := New_ALI.Compile_Errors;
 
       --  Build the rest of the structure
+
       Process_Units (Tmp, New_ALI);
       Process_Sdeps (Tmp, New_ALI, Project, Source_Path, Sfiles, List);
       Process_Withs (Tmp, New_ALI, Project);
