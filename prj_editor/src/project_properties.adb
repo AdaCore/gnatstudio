@@ -361,9 +361,7 @@ package body Project_Properties is
          Set_Active (Check, False);
 
          for PL in Project_Languages'Range loop
-            if To_Lower (Project_Languages (PL).all) =
-              To_Lower (Languages (L).all)
-            then
+            if Project_Languages (PL).all = To_Lower (Languages (L).all) then
                Set_Active (Check, True);
             end if;
          end loop;
