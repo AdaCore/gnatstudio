@@ -56,48 +56,50 @@ package body Commands.Debugger is
    begin
       case Command.BMode is
          when Set =>
-            Command.BP := Break_Source (Command.Debugger,
-                                        Command.File.all,
-                                        Command.Line,
-                                        Mode => Visible);
-
-            Create (Other_Command,
-                    Command.Kernel,
-                    Command.Debugger,
-                    Unset,
-                    Command.File.all,
-                    Command.Line);
-
+            Command.BP := Break_Source
+              (Command.Debugger,
+               Command.File.all,
+               Command.Line,
+               Mode => Visible);
+            Create
+              (Other_Command,
+               Command.Kernel,
+               Command.Debugger,
+               Unset,
+               Command.File.all,
+               Command.Line);
             Other_Command.BP := Command.BP;
 
             A (1).Line := Command.Line;
             A (1).Image := Line_Has_Breakpoint_Pixbuf;
             A (1).Associated_Command := Command_Access (Other_Command);
-            Add_Line_Information (Command.Kernel,
-                                  Command.File.all,
-                                  GVD_Module_Name & "/Line Information",
-                                  new Line_Information_Array' (A));
+            Add_Line_Information
+              (Command.Kernel,
+               Command.File.all,
+               GVD_Module_Name & "/Line Information",
+               new Line_Information_Array' (A));
 
          when Unset =>
-            Remove_Breakpoint (Command.Debugger,
-                               Command.BP,
-                               Mode => Visible);
-
-            Create (Other_Command,
-                    Command.Kernel,
-                    Command.Debugger,
-                    Set,
-                    Command.File.all,
-                    Command.Line);
+            Remove_Breakpoint
+              (Command.Debugger,
+               Command.BP,
+               Mode => Visible);
+            Create
+              (Other_Command,
+               Command.Kernel,
+               Command.Debugger,
+               Set,
+               Command.File.all,
+               Command.Line);
 
             A (1).Line := Command.Line;
             A (1).Image := Line_Has_Code_Pixbuf;
             A (1).Associated_Command := Command_Access (Other_Command);
-            Add_Line_Information (Command.Kernel,
-                                  Command.File.all,
-                                  GVD_Module_Name & "/Line Information",
-                                  new Line_Information_Array' (A));
-
+            Add_Line_Information
+              (Command.Kernel,
+               Command.File.all,
+               GVD_Module_Name & "/Line Information",
+               new Line_Information_Array' (A));
       end case;
 
       Command_Finished (Command, True);
