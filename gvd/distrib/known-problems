@@ -1,4 +1,4 @@
-Known Problems fixed in GVD 1.3.0
+Known Problems fixed in GVD 2.0.0
 
 - Tab key does not work properly for non trivial commands
   Problem:    When using the tab key in the debugger console to complete
