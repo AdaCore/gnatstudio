@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2004                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -137,6 +137,8 @@ package body Ada_Analyzer is
       Tok_Task,            -- TASK         Eterm, Sterm, Declk, Deckn, After_SM
       Tok_Type,            -- TYPE         Eterm, Sterm, Declk, Deckn, After_SM
       Tok_Subtype,         -- SUBTYPE      Eterm, Sterm, Declk, Deckn, After_SM
+      Tok_Overriding,      -- OVERRIDING   Eterm, Sterm, Declk, Declk, After_SM
+      Tok_Synchronized,    -- SYNCHRONIZED Eterm, Sterm, Declk, Deckn, After_SM
       Tok_Use,             -- USE          Eterm, Sterm, Declk, Deckn, After_SM
 
       Tok_Generic,         -- GENERIC      Eterm, Sterm, Cunit, Declk, After_SM
@@ -147,6 +149,7 @@ package body Ada_Analyzer is
 
       Tok_Do,              -- DO           Eterm, Sterm
       Tok_Is,              -- IS           Eterm, Sterm
+      Tok_Interface,       -- INTERFACE    Eterm, Sterm
       Tok_Record,          -- RECORD       Eterm, Sterm
       Tok_Then,            -- THEN         Eterm, Sterm
 
@@ -287,9 +290,12 @@ package body Ada_Analyzer is
    -- Local procedures --
    ----------------------
 
-   function Get_Token (Str : String) return Token_Type;
+   function Get_Token
+     (Str : String; Prev_Token : Token_Type) return Token_Type;
    --  Return a token_Type given a string.
    --  For efficiency, S is assumed to start at index 1.
+   --  Prev_Token is the previous token scanned, if any. This is needed
+   --  to e.g. differenciate pragma Interface vs interface keyword.
 
    function Is_Library_Level (Stack : Token_Stack.Simple_Stack) return Boolean;
    --  Return True if the current scope in Stack is a library level package.
@@ -298,7 +304,9 @@ package body Ada_Analyzer is
    -- Get_Token --
    ---------------
 
-   function Get_Token (Str : String) return Token_Type is
+   function Get_Token
+     (Str : String; Prev_Token : Token_Type) return Token_Type
+  is
       S : String (Str'Range);
    begin
       --  First convert Str to lower case for the token parser below
@@ -428,6 +436,13 @@ package body Ada_Analyzer is
                return Tok_If;
             elsif S (2 .. S'Last) = "n" then
                return Tok_In;
+            elsif S (2 .. S'Last) = "nterface" then
+               if Prev_Token = Tok_Pragma then
+                  return Tok_Identifier;
+               else
+                  return Tok_Interface;
+               end if;
+
             elsif S (2 .. S'Last) = "s" then
                return Tok_Is;
             end if;
@@ -462,6 +477,8 @@ package body Ada_Analyzer is
                return Tok_Of;
             elsif S (2 .. S'Last) = "r" then
                return Tok_Or;
+            elsif S (2 .. S'Last) = "verriding" then
+               return Tok_Overriding;
             end if;
 
          when 'p' =>
@@ -511,6 +528,8 @@ package body Ada_Analyzer is
                return Tok_Separate;
             elsif S (2 .. S'Last) = "ubtype" then
                return Tok_Subtype;
+            elsif S (2 .. S'Last) = "ynchronized" then
+               return Tok_Synchronized;
             end if;
 
          when 't' =>
@@ -1597,7 +1616,9 @@ package body Ada_Analyzer is
                Num_Parens      := 0;
             end if;
 
-            if Top_Token.Token = Tok_Type then
+            if Top_Token.Token = Tok_Type
+              or else Prev_Token = Tok_Access
+            then
                null;
 
             elsif not In_Generic then
@@ -2952,7 +2973,7 @@ package body Ada_Analyzer is
 
          Str (1 .. Str_Len) := Buffer (Prec .. Current);
 
-         Token := Get_Token (Str (1 .. Str_Len));
+         Token := Get_Token (Str (1 .. Str_Len), Prev_Token);
 
          if Token = Tok_Identifier then
             --  Handle dotted names, e.g Foo.Bar.X
