@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# From configure.in Revision: 1.9 
+# From configure.in Revision: 1.10 
 #############################################################
 #
 #  Checking for Gnat
@@ -1557,8 +1557,10 @@ opsysfile="'\"system/${opsys}.h\"'"
 
 # On AIX machines, we must use -mminimal-toc or we won't be able to link
 TARGET_CFLAGS=""
+TARGET_LFLAGS=""
 case "${host}" in
-   *aix*) TARGET_CFLAGS="-mminimal-toc";;          
+   *aix*) TARGET_CFLAGS=""
+          TARGET_LFLAGS="-Wl,-bbigtoc";;
    *)  TARGET_CFLAGS="";;
 esac
 
@@ -1566,7 +1568,7 @@ esac
   # Extract the first word of "gtkada-config", so it can be a program name with args.
 set dummy gtkada-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:1570: checking for $ac_word" >&5
+echo "configure:1572: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1601,7 +1603,7 @@ fi
 
   min_gtk_version=1.2.9
   echo $ac_n "checking for GtkAda - version >= $min_gtk_version""... $ac_c" 1>&6
-echo "configure:1605: checking for GtkAda - version >= $min_gtk_version" >&5
+echo "configure:1607: checking for GtkAda - version >= $min_gtk_version" >&5
   no_gtk=""
   if test "$GTK_CONFIG" = "no" ; then
     no_gtk=yes
@@ -1620,7 +1622,7 @@ echo "configure:1605: checking for GtkAda - version >= $min_gtk_version" >&5
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 1624 "configure"
+#line 1626 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -1664,7 +1666,7 @@ main ()
 }
 
 EOF
-if { (eval echo configure:1668: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:1670: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
 then
   :
 else
@@ -1707,6 +1709,7 @@ fi
 
 
 # Set the version number of Odd
+
 
 
 
@@ -1888,6 +1891,7 @@ s%@GTK_CFLAGS@%$GTK_CFLAGS%g
 s%@GTK_LIBS@%$GTK_LIBS%g
 s%@ODD_VERSION@%$ODD_VERSION%g
 s%@TARGET_CFLAGS@%$TARGET_CFLAGS%g
+s%@TARGET_LFLAGS@%$TARGET_LFLAGS%g
 s%@EXEC_PREFIX@%$EXEC_PREFIX%g
 
 CEOF
