@@ -46,8 +46,6 @@ package body Projects.Editor is
    procedure Free is new Ada.Unchecked_Deallocation
      (Project_Node_Array, Project_Node_Array_Access);
 
-
-
    --------------
    -- Projects --
    --------------
