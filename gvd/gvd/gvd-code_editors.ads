@@ -42,12 +42,12 @@ with Gtk.Scrolled_Window;
 with Gtk.Widget;
 with Gtkada.Types;
 with Language;
-with Odd.Asm_Editors;
+with GVD.Asm_Editors;
 with Odd.Explorer;
 with Odd.Source_Editors;
 with GVD.Types;
 
-package Odd.Code_Editors is
+package GVD.Code_Editors is
 
    type Code_Editor_Record is new Gtk.Paned.Gtk_Paned_Record with private;
    type Code_Editor is access all Code_Editor_Record'Class;
@@ -128,7 +128,7 @@ package Odd.Code_Editors is
 
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
-      return Odd.Asm_Editors.Asm_Editor;
+      return GVD.Asm_Editors.Asm_Editor;
    --  Return the widget used to display the asm code
 
    function Get_Current_File
@@ -162,7 +162,7 @@ private
 
    type Code_Editor_Record is new Gtk.Paned.Gtk_Paned_Record with record
       Source  : Odd.Source_Editors.Source_Editor;
-      Asm     : Odd.Asm_Editors.Asm_Editor;
+      Asm     : GVD.Asm_Editors.Asm_Editor;
       Pane    : Gtk.Paned.Gtk_Paned;
 
       Mode    : View_Mode := Source_Only;
@@ -177,4 +177,4 @@ private
       Explorer_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
    end record;
 
-end Odd.Code_Editors;
+end GVD.Code_Editors;

@@ -28,7 +28,7 @@ with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 
-with Odd.Asm_Editors;     use Odd.Asm_Editors;
+with GVD.Asm_Editors;     use GVD.Asm_Editors;
 with Odd.Explorer;        use Odd.Explorer;
 with GVD.Preferences;     use GVD.Preferences;
 with Odd.Source_Editors;  use Odd.Source_Editors;
@@ -40,7 +40,7 @@ with Process_Proxies;     use Process_Proxies;
 with Odd.Process;         use Odd.Process;
 with Debugger;            use Debugger;
 
-package body Odd.Code_Editors is
+package body GVD.Code_Editors is
 
    use Odd;
 
@@ -185,7 +185,7 @@ package body Odd.Code_Editors is
 
    function Get_Asm
      (Editor : access Code_Editor_Record'Class)
-     return Odd.Asm_Editors.Asm_Editor is
+     return GVD.Asm_Editors.Asm_Editor is
    begin
       return Editor.Asm;
    end Get_Asm;
@@ -406,8 +406,8 @@ package body Odd.Code_Editors is
       --  Always clear the cache for the assembly editor, even if it is not
       --  displayed.
       if Edit.Asm /= null then
-         Odd.Asm_Editors.On_Executable_Changed (Edit.Asm);
+         GVD.Asm_Editors.On_Executable_Changed (Edit.Asm);
       end if;
    end On_Executable_Changed;
 
-end Odd.Code_Editors;
+end GVD.Code_Editors;

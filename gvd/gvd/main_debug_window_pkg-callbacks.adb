@@ -39,13 +39,13 @@ with Ada.Text_IO;         use Ada.Text_IO;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Display_Items;       use Display_Items;
 with Gtkada.Canvas;       use Gtkada.Canvas;
-with Odd.Canvas;          use Odd.Canvas;
+with GVD.Canvas;          use GVD.Canvas;
 with Odd.Dialogs;         use Odd.Dialogs;
 with Gtkada.Types;        use Gtkada.Types;
 with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
 with GVD.Preferences;
-with Odd.Code_Editors;    use Odd.Code_Editors;
+with GVD.Code_Editors;    use GVD.Code_Editors;
 with Odd.Memory_View;     use Odd.Memory_View;
 with Unchecked_Deallocation;
 
@@ -954,7 +954,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       is
       begin
          Display_Items.Update
-           (Odd_Canvas (Canvas),
+           (GVD_Canvas (Canvas),
             Display_Item (Item),
             Redisplay_Canvas => False);
          return True;
@@ -963,7 +963,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Odd.Canvas.For_Each_Item
+         GVD.Canvas.For_Each_Item
            (Tab.Data_Canvas, Internal_Update_Item'Unrestricted_Access);
          Refresh_Canvas (Tab.Data_Canvas);
       end if;

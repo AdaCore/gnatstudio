@@ -21,17 +21,17 @@
 with Gtkada.Canvas;   use Gtkada.Canvas;
 with Gtk.Handlers;    use Gtk.Handlers;
 
-package body Odd.Canvas is
+package body GVD.Canvas is
 
    package Canvas_Handler is new Gtk.Handlers.Callback
-     (Odd_Canvas_Record);
+     (GVD_Canvas_Record);
 
    ------------------------
    -- Get_Detect_Aliases --
    ------------------------
 
    function Get_Detect_Aliases
-     (Canvas : access Odd_Canvas_Record'Class) return Boolean is
+     (Canvas : access GVD_Canvas_Record'Class) return Boolean is
    begin
       return Canvas.Detect_Aliases;
    end Get_Detect_Aliases;
@@ -41,7 +41,7 @@ package body Odd.Canvas is
    ------------------------
 
    procedure Set_Detect_Aliases
-     (Canvas   : access Odd_Canvas_Record'Class;
+     (Canvas   : access GVD_Canvas_Record'Class;
       Activate : Boolean) is
    begin
       --  ??? We should modify the items displayed so as to remove currently
@@ -54,9 +54,9 @@ package body Odd.Canvas is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Canvas : out Odd_Canvas) is
+   procedure Gtk_New (Canvas : out GVD_Canvas) is
    begin
-      Canvas := new Odd_Canvas_Record;
+      Canvas := new GVD_Canvas_Record;
       Initialize (Canvas);
    end Gtk_New;
 
@@ -65,7 +65,7 @@ package body Odd.Canvas is
    -----------------------
 
    function Get_Next_Item_Num
-     (Canvas : access Odd_Canvas_Record'Class) return Integer is
+     (Canvas : access GVD_Canvas_Record'Class) return Integer is
    begin
       Canvas.Item_Num := Canvas.Item_Num + 1;
       return Canvas.Item_Num;
@@ -76,7 +76,7 @@ package body Odd.Canvas is
    -----------------
 
    procedure Set_Process
-     (Canvas  : access Odd_Canvas_Record;
+     (Canvas  : access GVD_Canvas_Record;
       Process : access Gtk.Window.Gtk_Window_Record'Class) is
    begin
       Canvas.Process := Gtk.Window.Gtk_Window (Process);
@@ -86,10 +86,10 @@ package body Odd.Canvas is
    -- Get_Process --
    -----------------
 
-   function Get_Process (Canvas : access Odd_Canvas_Record)
+   function Get_Process (Canvas : access GVD_Canvas_Record)
       return Gtk.Window.Gtk_Window is
    begin
       return Canvas.Process;
    end Get_Process;
 
-end Odd.Canvas;
+end GVD.Canvas;

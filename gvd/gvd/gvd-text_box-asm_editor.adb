@@ -34,7 +34,7 @@ with Gtkada.Types;     use Gtkada.Types;
 with Debugger;         use Debugger;
 
 with Odd.Process;      use Odd.Process;
-with Odd.Code_Editors; use Odd.Code_Editors;
+with GVD.Code_Editors; use GVD.Code_Editors;
 with GVD.Preferences;  use GVD.Preferences;
 with GVD.Strings;      use GVD.Strings;
 with Odd.Text_Boxes;   use Odd.Text_Boxes;
@@ -44,7 +44,7 @@ with Odd_Intl;         use Odd_Intl;
 with GNAT.Regpat;      use GNAT.Regpat;
 with Ada.Text_IO; use Ada.Text_IO;
 
-package body Odd.Asm_Editors is
+package body GVD.Asm_Editors is
 
    Getting_Assembly_Msg : constant String_Access :=
      new String' (-"Getting assembly code...");
@@ -589,4 +589,4 @@ package body Odd.Asm_Editors is
       Set_Line (Editor, Get_Line (Editor), Set_Current => True);
    end Show_Current_Line_Menu;
 
-end Odd.Asm_Editors;
+end GVD.Asm_Editors;

@@ -58,12 +58,12 @@ with Items.Simples;             use Items.Simples;
 with Main_Debug_Window_Pkg;     use Main_Debug_Window_Pkg;
 with Breakpoints_Pkg;           use Breakpoints_Pkg;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
-with Odd.Canvas;                use Odd.Canvas;
+with GVD.Canvas;                use GVD.Canvas;
 with Odd.Dialogs;               use Odd.Dialogs;
 with GVD.Pixmaps;               use GVD.Pixmaps;
 with GVD.Strings;               use GVD.Strings;
 with GVD.Types;                 use GVD.Types;
-with Odd.Code_Editors;          use Odd.Code_Editors;
+with GVD.Code_Editors;          use GVD.Code_Editors;
 with Odd.Menus;                 use Odd.Menus;
 with GVD.Preferences;           use GVD.Preferences;
 with Odd.Status_Bar;            use Odd.Status_Bar;
@@ -230,7 +230,7 @@ package body Odd.Process is
    -------------
 
    function Convert
-     (Text : access Odd.Code_Editors.Code_Editor_Record'Class)
+     (Text : access GVD.Code_Editors.Code_Editor_Record'Class)
       return Debugger_Process_Tab is
    begin
       return Process_User_Data.Get (Text, Process_User_Data_Name);
@@ -527,7 +527,7 @@ package body Odd.Process is
         (Process,
          "executable_changed",
          Widget_Callback.To_Marshaller
-           (Odd.Code_Editors.On_Executable_Changed'Access),
+           (GVD.Code_Editors.On_Executable_Changed'Access),
          Process.Editor_Text);
 
       Widget_Callback.Connect

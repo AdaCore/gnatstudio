@@ -20,7 +20,7 @@
 
 with Glib;
 with Gtk.Widget;
-with Odd.Canvas;
+with GVD.Canvas;
 with Gdk.Window;
 with Items;
 with Odd.Process;
@@ -81,7 +81,7 @@ package Display_Items is
    --  aliases of Item are also removed.
 
    function Find_Item
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
       Num    : Integer)
      return Display_Item;
    --  Return the item whose identifier is Num, or null if there is none
@@ -101,7 +101,7 @@ package Display_Items is
    --  if necessary.
 
    procedure On_Background_Click
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
       Event  : Gdk.Event.Gdk_Event);
    --  Called for clicks in the background of the canvas.
 
@@ -111,7 +111,7 @@ package Display_Items is
    --  stops to update the display items.
 
    procedure Recompute_All_Aliases
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
       Recompute_Values : Boolean := True);
    --  Recompute all the aliases, and reparse the values for all the
    --  displayed items if Recompute_Values is True
@@ -127,7 +127,7 @@ package Display_Items is
    --  This does not redraw the canvas or the item on the canvas.
 
    procedure Update
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
       Item   : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False);
    --  Unconditionally update the value of Item after parsing the new value.

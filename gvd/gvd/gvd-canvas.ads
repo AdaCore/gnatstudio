@@ -22,46 +22,46 @@ with Gtkada.Canvas;
 with GVD.Preferences;
 with Gtk.Window;
 
-package Odd.Canvas is
+package GVD.Canvas is
 
    ----------------
-   -- Odd_Canvas --
+   -- GVD_Canvas --
    ----------------
 
-   type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record
+   type GVD_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record
      with private;
-   type Odd_Canvas is access all Odd_Canvas_Record'Class;
+   type GVD_Canvas is access all GVD_Canvas_Record'Class;
 
-   procedure Gtk_New (Canvas : out Odd_Canvas);
+   procedure Gtk_New (Canvas : out GVD_Canvas);
    --  Create a new canvas.
 
    function Get_Detect_Aliases
-     (Canvas : access Odd_Canvas_Record'Class) return Boolean;
+     (Canvas : access GVD_Canvas_Record'Class) return Boolean;
    --  Return True if aliases detection has been activated.
 
    procedure Set_Detect_Aliases
-     (Canvas   : access Odd_Canvas_Record'Class;
+     (Canvas   : access GVD_Canvas_Record'Class;
       Activate : Boolean);
    --  Change the status of aliases detection in the canvas
 
    function Get_Next_Item_Num
-     (Canvas : access Odd_Canvas_Record'Class) return Integer;
+     (Canvas : access GVD_Canvas_Record'Class) return Integer;
    --  Return the number that should be used for the next item inserted into
    --  the canvas.
    --  Two successive calls to that function will not return the same value.
 
    procedure Set_Process
-     (Canvas  : access Odd_Canvas_Record;
+     (Canvas  : access GVD_Canvas_Record;
       Process : access Gtk.Window.Gtk_Window_Record'Class);
    --  Set the process associated with the canvas.
 
-   function Get_Process (Canvas : access Odd_Canvas_Record)
+   function Get_Process (Canvas : access GVD_Canvas_Record)
      return Gtk.Window.Gtk_Window;
    --  Return the process tab that contains the canvas.
 
 private
 
-   type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
+   type GVD_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
    record
       Detect_Aliases : Boolean := GVD.Preferences.Default_Detect_Aliases;
       Item_Num       : Integer := 0;
@@ -69,4 +69,4 @@ private
       Process        : Gtk.Window.Gtk_Window;
       --  The process tab that contains the canvas
    end record;
-end Odd.Canvas;
+end GVD.Canvas;

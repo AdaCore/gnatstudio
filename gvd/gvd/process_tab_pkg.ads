@@ -25,8 +25,8 @@ with Gtk.Clist; use Gtk.Clist;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Text; use Gtk.Text;
 with Gtk.Handlers;
-with Odd.Canvas; use Odd.Canvas;
-with Odd.Code_Editors; use Odd.Code_Editors;
+with GVD.Canvas; use GVD.Canvas;
+with GVD.Code_Editors; use GVD.Code_Editors;
 
 package Process_Tab_Pkg is
 
@@ -40,7 +40,7 @@ package Process_Tab_Pkg is
       Stack_List : Gtk_Clist;
       Label101 : Gtk_Label;
       Scrolledwindow12 : Gtk_Scrolled_Window;
-      Data_Canvas : Odd_Canvas;
+      Data_Canvas : GVD_Canvas;
       Editor_Text : Code_Editor;
       Scrolledwindow7 : Gtk_Scrolled_Window;
       Debugger_Text : Gtk_Text;

@@ -26,7 +26,7 @@
 --  </description>
 
 with Gtk.Menu;
-with Odd.Canvas;
+with GVD.Canvas;
 with Gtk.Object;
 
 with Display_Items;
@@ -38,13 +38,13 @@ package Odd.Menus is
    package Menu_User_Data is new Gtk.Object.User_Data (Gtk.Menu.Gtk_Menu);
 
    function Contextual_Background_Menu
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class)
+     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class)
       return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used when the user
    --  clicks in the background of the canvas.
 
    function Item_Contextual_Menu
-     (Canvas         : access Odd.Canvas.Odd_Canvas_Record'Class;
+     (Canvas         : access GVD.Canvas.GVD_Canvas_Record'Class;
       Item           : access Display_Items.Display_Item_Record'Class;
       Component      : Items.Generic_Type_Access;
       Component_Name : String) return Gtk.Menu.Gtk_Menu;

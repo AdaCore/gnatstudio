@@ -42,7 +42,7 @@ with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Language;              use Language;
 with Debugger;              use Debugger;
 
-with Odd.Code_Editors;      use Odd.Code_Editors;
+with GVD.Code_Editors;      use GVD.Code_Editors;
 with Odd.Menus;             use Odd.Menus;
 with GVD.Pixmaps;           use GVD.Pixmaps;
 with GVD.Preferences;       use GVD.Preferences;

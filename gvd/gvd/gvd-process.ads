@@ -32,21 +32,21 @@ with Gtk.Dialog;
 with Gtk.Handlers;
 with Gtk.Window;
 with Gtk.Widget;
-with Odd.Canvas;
+with GVD.Canvas;
 with Gtkada.Canvas;
 
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
 with Items;
-with Odd.Code_Editors;
+with GVD.Code_Editors;
 with GVD.Types;
 with GVD.Types;
 
 package Odd.Process is
 
    package Canvas_Handler is new Gtk.Handlers.Callback
-     (Odd.Canvas.Odd_Canvas_Record);
+     (GVD.Canvas.GVD_Canvas_Record);
 
    package Standard_Input_Package is new Gdk.Input.Input_Add
      (Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class);
@@ -197,7 +197,7 @@ package Odd.Process is
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
    function Convert
-     (Text : access Odd.Code_Editors.Code_Editor_Record'Class)
+     (Text : access GVD.Code_Editors.Code_Editor_Record'Class)
      return Debugger_Process_Tab;
    --  Conversion function, from the code editor to the process tab.
    --  Note that there is a single such editor per process, even if there are

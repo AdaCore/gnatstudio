@@ -31,7 +31,7 @@ with Gtkada.Types;
 with Odd.Text_Boxes;
 with GVD.Types;
 
-package Odd.Asm_Editors is
+package GVD.Asm_Editors is
 
    type Asm_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with
      private;
@@ -123,4 +123,4 @@ private
       Current_Range  : Cache_Data_Access;
    end record;
 
-end Odd.Asm_Editors;
+end GVD.Asm_Editors;

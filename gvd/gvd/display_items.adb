@@ -38,7 +38,7 @@ with Language;         use Language;
 with Items;            use Items;
 with Items.Simples;    use Items.Simples;
 
-with Odd.Canvas;       use Odd.Canvas;
+with GVD.Canvas;       use GVD.Canvas;
 with Odd.Menus;        use Odd.Menus;
 with GVD.Pixmaps;      use GVD.Pixmaps;
 with GVD.Preferences;  use GVD.Preferences;
@@ -184,7 +184,7 @@ package body Display_Items is
    --  that is being derefenced.
 
    function Search_Item
-     (Canvas : access Odd_Canvas_Record'Class;
+     (Canvas : access GVD_Canvas_Record'Class;
       Id     : String;
       Name   : String := "")
      return Display_Item;
@@ -496,7 +496,7 @@ package body Display_Items is
    ---------------
 
    function Find_Item
-     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
+     (Canvas : access GVD.Canvas.GVD_Canvas_Record'Class;
       Num    : Integer) return Display_Item
    is
       Found : Display_Item := null;
@@ -731,7 +731,7 @@ package body Display_Items is
    -----------------
 
    function Search_Item
-     (Canvas    : access Odd_Canvas_Record'Class;
+     (Canvas    : access GVD_Canvas_Record'Class;
       Id        : String;
       Name      : String := "")
      return Display_Item
@@ -801,7 +801,7 @@ package body Display_Items is
       if Display_Item (Item).Auto_Refresh
         and then Display_Item (Item).Is_Alias_Of = null
       then
-         Update (Odd_Canvas (Canvas), Display_Item (Item));
+         Update (GVD_Canvas (Canvas), Display_Item (Item));
       end if;
 
       return True;
@@ -812,7 +812,7 @@ package body Display_Items is
    ------------
 
    procedure Update
-     (Canvas : access Odd_Canvas_Record'Class;
+     (Canvas : access GVD_Canvas_Record'Class;
       Item   : access Display_Item_Record'Class;
       Redisplay_Canvas : Boolean := False)
    is
@@ -1327,7 +1327,7 @@ package body Display_Items is
          return True;
       end Free_Alias;
 
-      Canvas : Odd_Canvas := Item.Debugger.Data_Canvas;
+      Canvas : GVD_Canvas := Item.Debugger.Data_Canvas;
 
    begin
       if Item.Debugger.Selected_Item = Canvas_Item (Item) then
@@ -1358,7 +1358,7 @@ package body Display_Items is
    -------------------------
 
    procedure On_Background_Click
-     (Canvas : access Odd_Canvas_Record'Class;
+     (Canvas : access GVD_Canvas_Record'Class;
       Event  : Gdk.Event.Gdk_Event)
    is
       --  This is slightly complicated since we need to get a valid item
@@ -1599,7 +1599,7 @@ package body Display_Items is
    procedure On_Canvas_Process_Stopped
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Canvas : Odd_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
+      Canvas : GVD_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
    begin
       Recompute_All_Aliases (Canvas);
       Refresh_Canvas (Canvas);
@@ -1610,7 +1610,7 @@ package body Display_Items is
    ---------------------------
 
    procedure Recompute_All_Aliases
-     (Canvas           : access Odd.Canvas.Odd_Canvas_Record'Class;
+     (Canvas           : access GVD.Canvas.GVD_Canvas_Record'Class;
       Recompute_Values : Boolean := True)
    is
       function Recompute_Sizes

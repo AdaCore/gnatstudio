@@ -18,24 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Gdk.Window;      use Gdk.Window;
+with Glib;             use Glib;
+with Gdk.Window;       use Gdk.Window;
 with Gtk; use Gtk;
-with Gtk.Adjustment;  use Gtk.Adjustment;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Enums;       use Gtk.Enums;
+with Gtk.Adjustment;   use Gtk.Adjustment;
+with Gtk.Widget;       use Gtk.Widget;
+with Gtk.Enums;        use Gtk.Enums;
 with Odd_Intl; use Odd_Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
-with Gdk.Color;       use Gdk.Color;
-with Gdk.Pixmap;      use Gdk.Pixmap;
-with GVD.Pixmaps;     use GVD.Pixmaps;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtk.Style;       use Gtk.Style;
-with Odd.Code_Editors; use Odd.Code_Editors;
-with GVD.Strings;     use GVD.Strings;
-with Gdk.Color;       use Gdk.Color;
-with Gtk.List;        use Gtk.List;
-with GVD.Utils;       use GVD.Utils;
+with Gdk.Color;        use Gdk.Color;
+with Gdk.Pixmap;       use Gdk.Pixmap;
+with GVD.Pixmaps;      use GVD.Pixmaps;
+with Gtkada.Handlers;  use Gtkada.Handlers;
+with Gtk.Style;        use Gtk.Style;
+with GVD.Code_Editors; use GVD.Code_Editors;
+with GVD.Strings;      use GVD.Strings;
+with Gdk.Color;        use Gdk.Color;
+with Gtk.List;         use Gtk.List;
+with GVD.Utils;        use GVD.Utils;
 
 package body Breakpoints_Pkg is
 

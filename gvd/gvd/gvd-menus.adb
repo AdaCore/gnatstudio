@@ -24,7 +24,7 @@ with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtkada.Types;        use Gtkada.Types;
-with Odd.Canvas;          use Odd.Canvas;
+with GVD.Canvas;          use GVD.Canvas;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Widget;          use Gtk.Widget;
@@ -63,7 +63,7 @@ package body Odd.Menus is
    -----------------
 
    type Item_Record (Name_Length : Natural) is record
-      Canvas         : Odd_Canvas;
+      Canvas         : GVD_Canvas;
       Item           : Display_Item;
       Component      : Items.Generic_Type_Access;
       Component_Name : String (1 .. Name_Length);
@@ -78,11 +78,11 @@ package body Odd.Menus is
    --------------------
 
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Check_Menu_Item_Record, Odd_Canvas);
+     (Gtk_Check_Menu_Item_Record, GVD_Canvas);
    package Item_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Item_Record);
    package Item_Canvas_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Menu_Item_Record, Odd_Canvas);
+     (Gtk_Menu_Item_Record, GVD_Canvas);
 
    ----------------------
    -- local procedures --
@@ -90,17 +90,17 @@ package body Odd.Menus is
 
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Odd_Canvas);
+      Canvas : GVD_Canvas);
    --  Callback for the "align on grid" contextual menu item.
 
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Odd_Canvas);
+      Canvas : GVD_Canvas);
    --  Callback for the "detect aliases" contextual menu item.
 
    procedure Display_Expression
      (Item   : access Gtk_Menu_Item_Record'Class;
-      Canvas : Odd_Canvas);
+      Canvas : GVD_Canvas);
    --  Popup a dialog to display any expression in the canvas
 
    procedure Update_Variable
@@ -140,7 +140,7 @@ package body Odd.Menus is
 
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Odd_Canvas) is
+      Canvas : GVD_Canvas) is
    begin
       Align_On_Grid (Canvas, Get_Active (Item));
    end Change_Align_On_Grid;
@@ -151,7 +151,7 @@ package body Odd.Menus is
 
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Odd_Canvas) is
+      Canvas : GVD_Canvas) is
    begin
       Set_Detect_Aliases (Canvas, not Get_Detect_Aliases (Canvas));
 
@@ -167,7 +167,7 @@ package body Odd.Menus is
 
    procedure Display_Expression
      (Item   : access Gtk_Menu_Item_Record'Class;
-      Canvas : Odd_Canvas)
+      Canvas : GVD_Canvas)
    is
       Process : Debugger_Process_Tab :=
         Debugger_Process_Tab (Get_Process (Canvas));
@@ -296,7 +296,7 @@ package body Odd.Menus is
    --------------------------------
 
    function Contextual_Background_Menu
-     (Canvas : access Odd_Canvas_Record'Class) return Gtk.Menu.Gtk_Menu
+     (Canvas : access GVD_Canvas_Record'Class) return Gtk.Menu.Gtk_Menu
    is
       Check : Gtk_Check_Menu_Item;
       Mitem : Gtk_Menu_Item;
@@ -317,7 +317,7 @@ package body Odd.Menus is
          Item_Canvas_Handler.Connect
            (Mitem, "activate",
             Item_Canvas_Handler.To_Marshaller (Display_Expression'Access),
-            Odd_Canvas (Canvas));
+            GVD_Canvas (Canvas));
 
          Gtk_New (Mitem);
          Append (Menu, Mitem);
@@ -329,7 +329,7 @@ package body Odd.Menus is
          Check_Canvas_Handler.Connect
            (Check, "activate",
             Check_Canvas_Handler.To_Marshaller (Change_Align_On_Grid'Access),
-            Odd_Canvas (Canvas));
+            GVD_Canvas (Canvas));
 
          Gtk_New (Check, Label => -"Detect Aliases");
          Set_Always_Show_Toggle (Check, True);
@@ -338,7 +338,7 @@ package body Odd.Menus is
          Check_Canvas_Handler.Connect
            (Check, "activate",
             Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
-            Odd_Canvas (Canvas));
+            GVD_Canvas (Canvas));
 
          Show_All (Menu);
          Menu_User_Data.Set (Canvas, Menu, Contextual_Background_Menu_Name);
@@ -350,7 +350,7 @@ package body Odd.Menus is
    --------------------------
 
    function Item_Contextual_Menu
-     (Canvas         : access Odd_Canvas_Record'Class;
+     (Canvas         : access GVD_Canvas_Record'Class;
       Item           : access Display_Items.Display_Item_Record'Class;
       Component      : Items.Generic_Type_Access;
       Component_Name : String) return Gtk.Menu.Gtk_Menu
@@ -376,7 +376,7 @@ package body Odd.Menus is
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Hide_All'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,
@@ -388,7 +388,7 @@ package body Odd.Menus is
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Show_All'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,
@@ -409,7 +409,7 @@ package body Odd.Menus is
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Clone_Component'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,
@@ -425,7 +425,7 @@ package body Odd.Menus is
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Set_Value'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,
@@ -438,7 +438,7 @@ package body Odd.Menus is
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Update_Variable'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,
@@ -455,7 +455,7 @@ package body Odd.Menus is
         (Radio, "activate",
          Item_Handler.To_Marshaller (Change_Display_Mode'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,
@@ -469,7 +469,7 @@ package body Odd.Menus is
         (Radio, "activate",
          Item_Handler.To_Marshaller (Change_Display_Mode'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,
@@ -483,7 +483,7 @@ package body Odd.Menus is
         (Radio, "activate",
          Item_Handler.To_Marshaller (Change_Display_Mode'Access),
          Item_Record'(Name_Length    => Component_Name'Length,
-                      Canvas         => Odd_Canvas (Canvas),
+                      Canvas         => GVD_Canvas (Canvas),
                       Item           => Display_Item (Item),
                       Component      => Component,
                       Component_Name => Component_Name,

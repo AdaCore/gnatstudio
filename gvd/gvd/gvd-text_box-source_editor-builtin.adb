@@ -45,7 +45,7 @@ with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Process_Proxies;       use Process_Proxies;
 
-with Odd.Code_Editors;      use Odd.Code_Editors;
+with GVD.Code_Editors;      use GVD.Code_Editors;
 with Odd.Explorer;          use Odd.Explorer;
 with Odd.Menus;             use Odd.Menus;
 with GVD.Preferences;       use GVD.Preferences;
