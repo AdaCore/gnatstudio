@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This is the general Ada (non debugger specific) support package.
+--  See language.ads and language-debugger.ads for a complete spec.
+
 package Language.Debugger.Ada is
 
    type Ada_Language is abstract new Language_Debugger with private;
