@@ -1,8 +1,31 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2001-2003                    --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Diff_Utils;           use Diff_Utils;
-with Basic_Types;
+with Basic_Types;          use Basic_Types;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with Diff_Utils;                use Diff_Utils;
+with Vdiff2_Utils;              use Vdiff2_Utils;
+
 package body Vdiff2_Command is
    use Diff_Occurrence_List;
    procedure Goto_Difference (Kernel : Kernel_Handle;
@@ -37,7 +60,7 @@ package body Vdiff2_Command is
       CurrNode : Diff_Occurrence_List.List_Node :=
         First (Command.List_Diff.all);
       Diff : Diff_Head_Access := new Diff_List_Head;
-      Selected_File : String_Access;
+      Selected_File : GNAT.OS_Lib.String_Access;
 
    begin
       if Has_File_Information (File_Selection_Context_Access (Context))
@@ -57,7 +80,13 @@ package body Vdiff2_Command is
          end loop;
          if CurrNode /= Null_Node then
             Command.Action (Command.Kernel, Diff);
-            Set_Data (CurrNode, Diff.all);
+            if Diff /= null then
+               Set_Data (CurrNode, Diff.all);
+            else
+               Remove_Nodes (Command.List_Diff.all,
+                             Prev (Command.List_Diff.all, CurrNode),
+                             CurrNode);
+            end if;
             Free (Selected_File);
             Free (Diff);
          end if;
@@ -142,6 +171,52 @@ package body Vdiff2_Command is
          Goto_Difference (Kernel, Diff.Current_Diff);
       end if;
    end Last_Difference;
+
+   -----------------------
+   -- Reload_Difference --
+   -----------------------
+
+   procedure Reload_Difference (Kernel : Kernel_Handle;
+                                Diff   : in out Diff_Head_Access) is
+   begin
+      Hide_Differences (Kernel, Diff.List, Diff.File1.all,
+                        Diff.File2.all, Diff.File3.all);
+      Free (Diff.List);
+      Diff.List := Diff_Utils.Diff (Kernel, Diff.File1.all, Diff.File2.all);
+      --  ???  for 2 file only for the moment
+      Diff.Current_Diff := Diff.List;
+      Show_Differences (Kernel, Diff.List, Diff.File1.all,
+                        Diff.File2.all, Diff.File3.all);
+   end Reload_Difference;
+
+
+   ----------------------
+   -- Close_Difference --
+   ----------------------
+
+   procedure Close_Difference (Kernel : Kernel_Handle;
+                               Diff   : in out Diff_Head_Access)
+                               is
+      Args : Argument_List := (1 => new String'(Diff.File1.all));
+   begin
+      Execute_GPS_Shell_Command (Kernel, "close", Args);
+      Free (Args (1));
+      Args := (1 => new String'(Diff.File2.all));
+      Execute_GPS_Shell_Command (Kernel, "close", Args);
+      Free (Diff);
+      Free (Args);
+   end Close_Difference;
+
+   ----------------------------
+   -- Unhighlight_Difference --
+   ----------------------------
+
+   procedure Unhighlight_Difference (Kernel : Kernel_Handle;
+                                     Diff   : in out Diff_Head_Access)is
+   begin
+      Hide_Differences (Kernel, Diff.List, Diff.File1.all,
+                        Diff.File2.all, Diff.File3.all);
+   end Unhighlight_Difference;
 
    --------------------
    -- Goto_Diference --
