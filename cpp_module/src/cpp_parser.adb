@@ -2246,8 +2246,9 @@ package body CPP_Parser is
    procedure On_Project_View_Changed
      (Handler : access Entities.LI_Handler_Record'Class) is
    begin
-      Close_DB_Files (CPP_Handler (Handler));
-      Open_DB_Files (CPP_Handler (Handler));
+      if Is_Open (CPP_Handler (Handler).SN_Table (FIL)) then
+         Close_DB_Files (CPP_Handler (Handler));
+      end if;
    end On_Project_View_Changed;
 
    ------------------------------
