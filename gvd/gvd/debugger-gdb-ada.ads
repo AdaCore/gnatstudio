@@ -34,6 +34,8 @@ package Debugger.Gdb.Ada is
    type Gdb_Ada_Language is new
      Language.Debugger.Language_Debugger with private;
 
+   function Is_Case_Sensitive (Lang : access Gdb_Ada_Language) return Boolean;
+
    --------------------
    -- Simple Parsing --
    --------------------

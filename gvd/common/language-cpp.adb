@@ -119,4 +119,14 @@ package body Language.Cpp is
               Constant_Character            => ''');
    end Get_Language_Context;
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Cpp_Language) return Boolean is
+      pragma Unreferenced (Lang);
+   begin
+      return True;
+   end Is_Case_Sensitive;
+
 end Language.Cpp;

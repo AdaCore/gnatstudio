@@ -28,6 +28,8 @@ package Language.Ada is
    Ada_Lang : constant Language_Access;
    --  Class constant for the Ada language.
 
+   function Is_Case_Sensitive (Lang : access Ada_Language) return Boolean;
+
    -------------
    -- Parsing --
    -------------

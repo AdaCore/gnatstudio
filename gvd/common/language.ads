@@ -31,6 +31,10 @@ package Language is
    procedure Free (Lang : in out Language_Access);
    --  Free the memory pointed to by Lang and set it to null.
 
+   function Is_Case_Sensitive (Lang : access Language_Root) return Boolean
+      is abstract;
+   --  Return true if the language is case sensitive
+
    ------------------------
    -- Types manipulation --
    ------------------------

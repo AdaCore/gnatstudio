@@ -30,6 +30,8 @@ package Language.Cpp is
    Cpp_Lang : constant Language_Access;
    --  Class constant for the C++ language.
 
+   function Is_Case_Sensitive (Lang : access Cpp_Language) return Boolean;
+
    ------------------
    -- Highlighting --
    ------------------

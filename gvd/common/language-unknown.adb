@@ -138,4 +138,16 @@ package body Language.Unknown is
       Next_Indent := 0;
    end Next_Indentation;
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Unknown_Language)
+      return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return True;
+   end Is_Case_Sensitive;
+
 end Language.Unknown;

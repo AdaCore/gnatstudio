@@ -36,6 +36,18 @@ package body Debugger.Gdb.Ada is
    Variant_Name : constant String := "<variant>";
    --  Name used for fields with a variant part
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Gdb_Ada_Language)
+      return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Is_Case_Sensitive (Ada_Lang);
+   end Is_Case_Sensitive;
+
    --------------------
    -- Is_Simple_Type --
    --------------------

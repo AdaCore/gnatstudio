@@ -469,6 +469,16 @@ package body Language.Ada is
          Prev_Indent      => Indent);
    end Next_Indentation;
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Ada_Language) return Boolean is
+      pragma Unreferenced (Lang);
+   begin
+      return False;
+   end Is_Case_Sensitive;
+
 begin
    Compile (Keywords_List,
             "^(a(b(ort|s(tract)?)|cce(pt|ss)|l(iased|l)|nd|rray|t)|b"

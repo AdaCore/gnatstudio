@@ -26,6 +26,8 @@ package Language.Unknown is
    Unknown_Lang : constant Language_Access;
    --  Class constant for the Unknown language.
 
+   function Is_Case_Sensitive (Lang : access Unknown_Language) return Boolean;
+
    function Is_Simple_Type
      (Lang : access Unknown_Language;
       Str : String) return Boolean;

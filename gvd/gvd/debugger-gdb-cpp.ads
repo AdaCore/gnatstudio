@@ -33,6 +33,8 @@ package Debugger.Gdb.Cpp is
    type Gdb_Cpp_Language is new
      Language.Debugger.Language_Debugger with private;
 
+   function Is_Case_Sensitive (Lang : access Gdb_Cpp_Language) return Boolean;
+
    --------------------
    -- Simple Parsing --
    --------------------

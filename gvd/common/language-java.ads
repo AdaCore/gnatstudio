@@ -27,6 +27,8 @@ package Language.Java is
    Java_Lang : constant Language_Access;
    --  Class constant for the Java language.
 
+   function Is_Case_Sensitive (Lang : access Java_Language) return Boolean;
+
    function Is_Simple_Type
      (Lang : access Java_Language;
       Str : String) return Boolean;

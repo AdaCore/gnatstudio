@@ -31,6 +31,18 @@ package body Debugger.Gdb.C is
 
    use Language;
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Gdb_C_Language)
+      return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Is_Case_Sensitive (C_Lang);
+   end Is_Case_Sensitive;
+
    --------------------
    -- Is_Simple_Type --
    --------------------

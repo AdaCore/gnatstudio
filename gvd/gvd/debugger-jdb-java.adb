@@ -26,6 +26,18 @@ package body Debugger.Jdb.Java is
 
    use Language;
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Jdb_Java_Language)
+      return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Is_Case_Sensitive (Java_Lang);
+   end Is_Case_Sensitive;
+
    --------------------
    -- Is_Simple_Type --
    --------------------

@@ -108,4 +108,14 @@ package body Language.Java is
               Constant_Character            => ''');
    end Get_Language_Context;
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Java_Language) return Boolean is
+      pragma Unreferenced (Lang);
+   begin
+      return True;
+   end Is_Case_Sensitive;
+
 end Language.Java;

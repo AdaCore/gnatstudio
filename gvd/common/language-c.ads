@@ -28,6 +28,8 @@ package Language.C is
    C_Lang : constant Language_Access;
    --  Class constant for the C language.
 
+   function Is_Case_Sensitive (Lang : access C_Language) return Boolean;
+
    -------------
    -- Parsing --
    -------------

@@ -34,6 +34,8 @@ package Debugger.Jdb.Java is
      Language.Debugger.Language_Debugger with private;
    type Jdb_Java_Language_Access is access all Jdb_Java_Language'Class;
 
+   function Is_Case_Sensitive (Lang : access Jdb_Java_Language) return Boolean;
+
    --------------------
    -- Simple Parsing --
    --------------------

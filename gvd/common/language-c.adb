@@ -657,4 +657,14 @@ package body Language.C is
       end if;
    end Next_Indentation;
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access C_Language) return Boolean is
+      pragma Unreferenced (Lang);
+   begin
+      return True;
+   end Is_Case_Sensitive;
+
 end Language.C;

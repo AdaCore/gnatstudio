@@ -70,6 +70,18 @@ package body Debugger.Gdb.Cpp is
    --  Parse the contents of a class/union in C++ (ie the part after '{'
    --  Index should point to the character after '{'
 
+   -----------------------
+   -- Is_Case_Sensitive --
+   -----------------------
+
+   function Is_Case_Sensitive (Lang : access Gdb_Cpp_Language)
+      return Boolean
+   is
+      pragma Unreferenced (Lang);
+   begin
+      return Is_Case_Sensitive (Cpp_Lang);
+   end Is_Case_Sensitive;
+
    --------------------
    -- Is_Simple_Type --
    --------------------
