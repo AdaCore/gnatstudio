@@ -28,7 +28,9 @@ with Gdk.Event;         use Gdk.Event;
 with Glib;              use Glib;
 with Glib.Object;       use Glib.Object;
 with Glib.Values;       use Glib.Values;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Main_Window; use Glide_Main_Window;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
 with Gtk.Accel_Group;   use Gtk.Accel_Group;
 with Gtk.Enums;         use Gtk.Enums;
@@ -763,7 +765,14 @@ package body Glide_Kernel.Modules is
       Value : GValue_Array (1 .. 4);
    begin
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Filename);
+
+      if Is_Absolute_Path (Filename) then
+         Set_String (Value (1), Filename);
+      else
+         Set_String
+           (Value (1),
+            Find_Source_File (Kernel, Base_Name (Filename), True));
+      end if;
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), Gint (Line));
