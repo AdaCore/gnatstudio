@@ -84,6 +84,11 @@ package body Display_Items is
    --  If True, then the links are attached to the middle of the actual
    --  component that was dereferenced, not to the middle of the item.
 
+   Typed_Aliases : constant Boolean := True;
+   --  If True, then two items are aliases only if they have the same address
+   --  *and* they are structurally equivalent. If False, only the addresses
+   --  are checked.
+
    --  Aliases detection
    --  ==================
    --
@@ -287,7 +292,9 @@ package body Display_Items is
            Search_Item (Debugger.Data_Canvas, Id.all, Variable_Name);
 
          if Alias_Item /= null
-           and then Structurally_Equivalent (Alias_Item.Entity, Entity)
+           and then
+           (not Typed_Aliases
+            or else Structurally_Equivalent (Alias_Item.Entity, Entity))
          then
             Select_Item (Alias_Item, Alias_Item.Entity);
             Show_Item (Debugger.Data_Canvas, Alias_Item);
@@ -1431,7 +1438,8 @@ package body Display_Items is
          if It.Id /= null
            and then It2.Is_Alias_Of = null
            and then Is_Alias_Of (It2, It.Id.all, It.Name.all, It_Deref_Name)
-           and then Structurally_Equivalent (It2.Entity, It.Entity)
+           and then (not Typed_Aliases
+                     or else Structurally_Equivalent (It2.Entity, It.Entity))
          then
             --  Keep only one of them:
             --   - if none are the result of a dereference, keep them both
