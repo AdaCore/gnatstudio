@@ -139,7 +139,7 @@ package body Projects.Editor is
    function Find_Last_Declaration_Of
      (Parent     : Project_Node_Id;
       Attr_Name  : Types.Name_Id;
-      Attr_Index : String := "") return Project_Node_Id;
+      Attr_Index : Types.Name_Id := No_Name) return Project_Node_Id;
    --  Find the last declaration for the attribute Attr_Name, in the
    --  declarative list contained in Parent.
    --  The returned value is the last such declaration, or Empty_Node if there
@@ -149,7 +149,7 @@ package body Projects.Editor is
    procedure Remove_Attribute_Declarations
      (Parent          : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String);
+      Attribute_Index : Name_Id);
    --  Remove all declarations for Attribute_Name in the declarative item list
    --  of Parent.
    --  If Attribute_Index is Any_Attribute, no matching is done on the index.
@@ -157,7 +157,7 @@ package body Projects.Editor is
    function Attribute_Matches
      (Node            : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String) return Boolean;
+      Attribute_Index : Name_Id) return Boolean;
    --  Return True if Node is an attribute declaration matching Attribute_Name
    --  and Attribute_Index.
    --  If Attribute_Index is Any_Attribute, no matching is done on the index.
@@ -238,7 +238,7 @@ package body Projects.Editor is
       Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
       Attribute_Name     : Types.Name_Id;
-      Attribute_Index    : String := "");
+      Attribute_Index    : Types.Name_Id := No_Name);
    --  Move any declaration for the attribute from the common part of the
    --  project into each branch of the nested case construct. Nothing is done
    --  if there is no such declaration.
@@ -755,6 +755,7 @@ package body Projects.Editor is
       Attribute_Name  : constant String :=
         String (Attribute (Sep + 1 .. Attribute'Last));
       Case_Construct  : Project_Node_Id;
+      Index           : Name_Id := No_Name;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -768,7 +769,7 @@ package body Projects.Editor is
          Previous_Decl, Decl, Expr : Project_Node_Id;
       begin
          Previous_Decl := Find_Last_Declaration_Of
-           (Case_Item, Attribute_N, Attribute_Index);
+           (Case_Item, Attribute_N, Index);
 
          --  Do we already have some declarations for this attribute ?
          --  If we found a previous declaration, update it
@@ -819,6 +820,10 @@ package body Projects.Editor is
    begin
       Attribute_N := Get_String (Attribute_Name);
 
+      if Attribute_Index /= "" then
+         Index := Get_String (Attribute_Index);
+      end if;
+
       if Pkg_Name /= "" then
          Pkg := Get_Or_Create_Package (Project, Pkg_Name);
 
@@ -836,7 +841,7 @@ package body Projects.Editor is
       Case_Construct := Find_Or_Create_Case_Statement (Rename_Prj, Pkg);
       Move_From_Common_To_Case_Construct
         (Rename_Prj, Pkg_Name, Case_Construct, Scenario_Variables, Attribute_N,
-         Attribute_Index);
+         Index);
 
       --  Create the string list for the new values.
       --  This can be prepended later on to the existing list of values.
@@ -902,6 +907,7 @@ package body Projects.Editor is
       Pkg_Name       : constant String :=
         String (Attribute (Attribute'First .. Sep - 1));
       Case_Construct : Project_Node_Id;
+      Index       : Name_Id := No_Name;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -915,7 +921,7 @@ package body Projects.Editor is
          Previous_Decl, Decl : Project_Node_Id;
       begin
          Previous_Decl := Find_Last_Declaration_Of
-           (Case_Item, Attribute_N, Attribute_Index);
+           (Case_Item, Attribute_N, Index);
 
          --  If we found a previous declaration, update it
 
@@ -935,6 +941,10 @@ package body Projects.Editor is
    begin
       Attribute_N := Get_String (Attribute_Name);
 
+      if Attribute_Index /= "" then
+         Index := Get_String (Attribute_Index);
+      end if;
+
       if Pkg_Name /= "" then
          Pkg := Get_Or_Create_Package (Project, Pkg_Name);
 
@@ -952,7 +962,7 @@ package body Projects.Editor is
       Case_Construct := Find_Or_Create_Case_Statement (Rename_Prj, Pkg);
       Move_From_Common_To_Case_Construct
         (Rename_Prj, Pkg_Name, Case_Construct, Scenario_Variables,
-         Attribute_N, Attribute_Index);
+         Attribute_N, Index);
 
       --  Create the node for the new value
 
@@ -970,7 +980,7 @@ package body Projects.Editor is
    function Find_Last_Declaration_Of
      (Parent     : Project_Node_Id;
       Attr_Name  : Name_Id;
-      Attr_Index : String := "") return Project_Node_Id
+      Attr_Index : Name_Id := No_Name) return Project_Node_Id
    is
       Decl, Expr : Project_Node_Id;
       Result     : Project_Node_Id := Empty_Node;
@@ -999,7 +1009,7 @@ package body Projects.Editor is
       Case_Construct     : in out Project_Node_Id;
       Scenario_Variables : Scenario_Variable_Array;
       Attribute_Name     : Types.Name_Id;
-      Attribute_Index    : String := "")
+      Attribute_Index    : Types.Name_Id := No_Name)
    is
       Parent          : Project_Node_Id;
       Pkg             : Project_Node_Id := Empty_Node;
@@ -1077,7 +1087,7 @@ package body Projects.Editor is
    procedure Remove_Attribute_Declarations
      (Parent          : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String)
+      Attribute_Index : Name_Id)
    is
       Decl : Project_Node_Id := First_Declarative_Item_Of (Parent);
       Previous : Project_Node_Id := Empty_Node;
@@ -1129,18 +1139,18 @@ package body Projects.Editor is
    function Attribute_Matches
      (Node            : Project_Node_Id;
       Attribute_Name  : Name_Id;
-      Attribute_Index : String) return Boolean is
+      Attribute_Index : Name_Id) return Boolean is
    begin
       return Kind_Of (Node) = N_Attribute_Declaration
         and then Prj.Tree.Name_Of (Node) = Attribute_Name
         and then
-        (Attribute_Index = Any_Attribute
-         or else (Attribute_Index = ""
+        (Attribute_Index = Any_Attribute_Name
+         or else (Attribute_Index = No_Name
           and then Associative_Array_Index_Of (Node) = No_Name)
-         or else (Attribute_Index /= ""
+         or else (Attribute_Index /= No_Name
                   and then Associative_Array_Index_Of (Node) /= No_Name
-                  and then Is_Equal (Associative_Array_Index_Of (Node),
-                                     Attribute_Index)));
+                  and then Associative_Array_Index_Of (Node) =
+                     Attribute_Index));
    end Attribute_Matches;
 
    ----------------------
@@ -1163,6 +1173,7 @@ package body Projects.Editor is
       Pkg_Prj : constant Project_Type :=
         Find_Project_Of_Package (Project, Pkg_Name);
       Case_Construct : Project_Node_Id;
+      Index : Name_Id := No_Name;
 
       procedure Delete_Attr (Case_Item : Project_Node_Id);
       --  Remove all definitions for the attribute in the case item
@@ -1174,7 +1185,7 @@ package body Projects.Editor is
       procedure Delete_Attr (Case_Item : Project_Node_Id) is
       begin
          Remove_Attribute_Declarations
-           (Case_Item, Attribute_N, Attribute_Index);
+           (Case_Item, Attribute_N, Index);
       end Delete_Attr;
 
    begin
@@ -1192,10 +1203,14 @@ package body Projects.Editor is
          Pkg := Empty_Node;
       end if;
 
+      if Attribute_Index /= "" then
+         Index := Get_String (Attribute_Index);
+      end if;
+
       Case_Construct := Find_Or_Create_Case_Statement (Pkg_Prj.Node, Pkg);
       Move_From_Common_To_Case_Construct
         (Pkg_Prj.Node, Pkg_Name, Case_Construct, Scenario_Variables,
-         Attribute_N, Attribute_Index);
+         Attribute_N, Index);
 
       For_Each_Scenario_Case_Item
         (Pkg_Prj.Node, Pkg, Case_Construct, Scenario_Variables,

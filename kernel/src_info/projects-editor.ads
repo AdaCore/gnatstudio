@@ -42,6 +42,7 @@ package Projects.Editor is
    --  the exception message is set to the internationalized text of the error.
 
    Any_Attribute : constant String := "@@";
+   Any_Attribute_Name : Types.Name_Id;
    --  Special value for all the subprograms that take an Attribute_Index
    --  parameter. When this is used, no matching is done on the indexes.
 
