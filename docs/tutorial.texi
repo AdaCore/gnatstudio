@@ -191,8 +191,7 @@ you can either click on the left mouse button and select the area while
 holding the button, or using the keyboard by pressing the @key{Shift} key
 and moving the cursor using the @key{Up} or @key{Down} keys.
 
-Press the @key{F4} key to build again. You will be asked to save the file
-@file{sdc.adb} before the build starts. Confirm by clicking on @code{Yes}.
+Press the @key{F4} key to build again.
 If you look at the progress bar, you will see that while the build is in
 progress the state of the compilation is displayed, giving you
 the current number of files compiled, and the number of remaining files.
@@ -355,7 +354,7 @@ dereferenced by a double-click (double click on @code{T.val}); red for fields
 that have been modified since last step.
 
 In the contextual menu that pops up when you hold the mouse over @code{T}.
-select @code{View memory at address of T}: a memory view is opened.
+select @code{Debug->View memory at address of T}: a memory view is opened.
 Use the @code{up} and @code{down} arrows on the right to visit memory.
 
 Click in the memory dump, and modify it by typing numbers. Notice the
@@ -387,7 +386,7 @@ Close the execution window.
 @noindent
 Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 @i{sdc} at line 8, select the contextual menu
-@code{References->Sdc calls...}: this will open a new window titled
+@code{References->Sdc calls}: this will open a new window titled
 @i{Call graph browser}.
 
 Click on the right arrow of @code{Process} (one of the first items on
@@ -427,9 +426,9 @@ From @i{view}, select the contextual menu @code{Go to spec};
 then from the source editor (file @file{stack.ads}), select the contextual
 menu @code{References->Find all references to View}: this highlights the
 @code{Locations} tree which now contains all the references for @code{view},
-ordered by files (@file{stack.ads} and @file{stack.adb}).
+grouped by files (@file{stack.ads} and @file{stack.adb}).
 
-The first location is highlited automatically: this is the spec of the
+The first location is highlighted automatically: this is the spec of the
 procedure @code{View}. Now click in the tree on @file{stack.adb}: two locations
 are listed, at line 90 and 97. Click on each of these locations: they correspond
 to the procedure body.
@@ -600,10 +599,11 @@ Now, let's take a look at the switches set in the project.
 @section Switch editor
 @noindent
 
-Click on the @code{sdc} project in the project explorer, then
-select the menu item @code{Project->Edit switches}: a global
+Select the menu item @code{Project->Edit switches}: a global
 switch editor is displayed in the working area.
-This editor lists the switches associated with each file and
+
+Now click on the @code{sdc} project in the project explorer:
+tthe editor now lists the switches associated with each file in the project and
 the gray area shows the default (global) switches; you will also notice
 that @file{screen_output.adb} has specific switches, which are highlighted
 using a different font.
@@ -645,6 +645,9 @@ GPS can also display the graph of dependencies between projects: on @i{sdc}
 project, use the contextual menu
 @code{Examine projects imported by sdc}: this will open a project hierarchy
 browser.
+
+On the @code{sdc.gpr} project, select the contextual menu
+@code{Examine recursive dependencies for sdc}.
 
 In the browser, you can move the project items, and select them to highlight
 the dependencies.
