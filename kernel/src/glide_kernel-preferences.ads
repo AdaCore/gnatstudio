@@ -144,6 +144,7 @@ package Glide_Kernel.Preferences is
 
    Indentation_Key           : Param_Spec_Key;
    Completion_Key            : Param_Spec_Key;
+   Delimiters_Jump_Key       : Param_Spec_Key;
 
    -- MDI --
    MDI_Opaque            : Param_Spec_Boolean;
