@@ -60,6 +60,13 @@ package body Prj_API is
    Default_Switches_Attribute : constant String := "default_switches";
    --  Name of the attribute used for default switches.
 
+   Full_Naming_Scheme_Handling : constant Boolean := False;
+   --  <preference> Should be set to True if different naming schemes can be
+   --  seen in various subprojects (ie naming_scheme1 for project A and a
+   --  different naming_scheme2 for project B).
+   --  This must be synchronized with the matching constant in Src_Info.ALI,
+   --  and src_info.prj_utils
+
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
    --  Set Var as the expression to use for the value of Var. This
@@ -1094,14 +1101,17 @@ package body Prj_API is
       Result : Project_Id := No_Project;
 
    begin
-      For_All_Projects (Root_Project_View, Result);
+      if Full_Naming_Scheme_Handling then
+         For_All_Projects (Root_Project_View, Result);
 
-      if Result = No_Project then
-         --  Trace (Me, "Project not found for " & Source_Filename);
-         Result := Root_Project_View;
+         if Result = No_Project then
+            --  Trace (Me, "Project not found for " & Source_Filename);
+            Result := Root_Project_View;
+         end if;
+         return Result;
+      else
+         return Root_Project_View;
       end if;
-
-      return Result;
    end Get_Project_From_File;
 
    -------------------------------
