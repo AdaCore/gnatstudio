@@ -530,6 +530,9 @@ package body Default_Preferences is
       Free (Manager.Preferences, Destroy_Cache'Access);
       if Is_Regular_File (File_Name) then
          Manager.Preferences := Parse (File_Name);
+      else
+         Manager.Preferences := new XML_Font.Node;
+         Manager.Preferences.Tag := new String' ("Preferences");
       end if;
    end Load_Preferences;
 
