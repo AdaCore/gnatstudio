@@ -297,11 +297,6 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Version  : out Natural);
 
-   function Line_Contains_Code
-     (Debugger : access Jdb_Debugger;
-      File     : VFS.Virtual_File;
-      Line     : Positive) return Line_Kind;
-
    function List_Breakpoints
      (Debugger  : access Jdb_Debugger)
      return GVD.Types.Breakpoint_Array;

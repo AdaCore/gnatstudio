@@ -938,20 +938,6 @@ package body Debugger.Jdb is
       return Highlight_Pattern;
    end Highlighting_Pattern;
 
-   ------------------------
-   -- Line_Contains_Code --
-   ------------------------
-
-   function Line_Contains_Code
-     (Debugger : access Jdb_Debugger;
-      File     : VFS.Virtual_File;
-      Line     : Positive) return Line_Kind
-   is
-      pragma Unreferenced (Debugger, File, Line);
-   begin
-      return No_More_Code;
-   end Line_Contains_Code;
-
    --------------------
    -- Display_Prompt --
    --------------------
