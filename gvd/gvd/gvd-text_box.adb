@@ -208,8 +208,8 @@ package body Odd.Text_Boxes is
       --  already equal, do nothing to prevent loops.
       --
       --  To work around a bug in gtk+ (when adjusting the value of the
-      --  adjustment when we are resizing the code editor beyond the last line),
-      --  we first hide it, and then show it again.
+      --  adjustment when we are resizing the code editor beyond the last
+      --  line), we first hide it, and then show it again.
 
       if Get_Value (Get_Vadjustment (Box.Buttons)) /=
         Get_Value (Get_Vadj (Box.Child))
@@ -484,8 +484,8 @@ package body Odd.Text_Boxes is
                         end loop;
 
                         --  Use the selection...
-                     Menu := Child_Contextual_Menu
-                       (Box, Line, Get_Chars (Box.Child, Min, Max));
+                        Menu := Child_Contextual_Menu
+                          (Box, Line, Get_Chars (Box.Child, Min, Max));
                      end;
                   else
                      if Index < 0 or Index > Box.Buffer'Last then

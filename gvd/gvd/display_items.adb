@@ -947,7 +947,7 @@ package body Display_Items is
          else
             Add_Link (Canvas, L, Automatic);
          end if;
-     end if;
+      end if;
    end Create_Link;
 
    ----------------------

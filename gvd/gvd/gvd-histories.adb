@@ -56,7 +56,7 @@ package body Odd.Histories is
                      Data    : Data_Type) is
    begin
       if History.List = Null_List then
-          Hlist.Append (History.List,
+         Hlist.Append (History.List,
                        new Data_Record' (Data => new Data_Type' (Data),
                                          Num_Repeats => 1));
 
