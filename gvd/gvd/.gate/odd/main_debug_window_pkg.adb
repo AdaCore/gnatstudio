@@ -563,7 +563,7 @@ begin
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Show1);
 
    Gtk_New (Main_Debug_Window.Help1, -"Help");
-   Set_Right_Justify (Main_Debug_Window.Help1, True);
+   Set_Right_Justify (Main_Debug_Window.Help1, False);
    Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Help1);
 
    Gtk_New (Main_Debug_Window.Help1_Menu);
