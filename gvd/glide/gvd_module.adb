@@ -54,8 +54,6 @@ with Ada.Exceptions;          use Ada.Exceptions;
 
 package body GVD_Module is
 
-   GVD_Module_ID : Module_ID;
-
    Me : Debug_Handle := Create ("Debugger");
 
    procedure Initialize_Module
@@ -144,12 +142,12 @@ package body GVD_Module is
      Generic_Debug_Command (GVD.Menu.On_Kill);
    --  Debug->Debug->Kill
 
-   procedure On_Session_Open is new
-     Generic_Debug_Command (GVD.Menu.On_Open_Session);
+   --  ??? procedure On_Session_Open is new
+   --    Generic_Debug_Command (GVD.Menu.On_Open_Session);
    --  Debug->Session->Open
 
-   procedure On_Session_Save is new
-     Generic_Debug_Command (GVD.Menu.On_Save_Session_As);
+   --  ??? procedure On_Session_Save is new
+   --    Generic_Debug_Command (GVD.Menu.On_Save_Session_As);
    --  Debug->Session->Save As
 
    procedure On_Command_History is new
@@ -436,10 +434,12 @@ package body GVD_Module is
         (Kernel, Debug_Sub & (-"Debug Core File...")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Debug_Sub & (-"Kill")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Session_Sub & (-"Open...")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Session_Sub & (-"Save As...")), Sensitive);
+
+      --  ??? Set_Sensitive (Find_Menu_Item
+      --    (Kernel, Session_Sub & (-"Open...")), Sensitive);
+      --  ??? Set_Sensitive (Find_Menu_Item
+      --    (Kernel, Session_Sub & (-"Save As...")), Sensitive);
+
       Set_Sensitive (Find_Menu_Item
         (Kernel, Session_Sub & (-"Command History")), Sensitive);
       Set_Sensitive (Find_Menu_Item
@@ -775,9 +775,9 @@ package body GVD_Module is
                      On_Kill'Access, Sensitive => False);
 
       Register_Menu (Kernel, Session_Sub, -"Open...", Stock_Open,
-                     On_Session_Open'Access, Sensitive => False);
+                     null, Sensitive => False);
       Register_Menu (Kernel, Session_Sub, -"Save As...", Stock_Save_As,
-                     On_Session_Save'Access, Sensitive => False);
+                     null, Sensitive => False);
       Register_Menu (Kernel, Session_Sub, -"Command History", Stock_Index,
                      On_Command_History'Access, Sensitive => False);
 
@@ -889,10 +889,12 @@ package body GVD_Module is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       GVD_Module_ID := Register_Module
-        (Module_Name             => GVD_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => GVD_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => GVD_Contextual'Access);
