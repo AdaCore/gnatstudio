@@ -60,6 +60,15 @@ package Display_Items is
       Event  : Gdk.Event.Gdk_Event);
    --  Called for clicks in the background of the canvas.
 
+   function Update
+     (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Item   : access Gtkada.Canvas.Canvas_Item_Record'Class)
+     return Boolean;
+   --  Update the value of a specific item in the canvas. The new value is
+   --  read from the debugger, parsed, and redisplayed.
+   --  The general prototype for this function must be compatible with
+   --  Gtkada.Canvas.Item_Processor.
+
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record

@@ -501,6 +501,36 @@ package body Display_Items is
       return Alias_Item;
    end Search_Item;
 
+   ------------
+   -- Update --
+   ------------
+
+   function Update
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class)
+     return Boolean
+   is
+      Value_Found : Boolean;
+      Entity      : Display_Item := Display_Item (Item);
+   begin
+      Parse_Value (Entity.Debugger.Debugger, Entity.Name.all,
+                   Entity.Entity, Value_Found);
+      if not Value_Found then
+         Set_Valid (Entity.Entity, False);
+      end if;
+
+      Item_Resized (Canvas, Item);
+
+      return True;
+
+      --  If we got an exception while parsing the value, we register the new
+      --  value as being incorrect.
+   exception
+      when Language.Unexpected_Type | Constraint_Error =>
+         Set_Valid (Entity.Entity, False);
+         return True;
+   end Update;
+
    -----------------
    -- Create_Link --
    -----------------
