@@ -720,7 +720,7 @@ package body GVD.Process is
       Widget := Get_Widget (Window.Factory, -"/Data/Call Stack");
 
       if Widget = null then
-         Widget := Get_Widget (Window.Factory, -"/Run/Data/Call Stack");
+         Widget := Get_Widget (Window.Factory, -"/Debug/Data/Call Stack");
       end if;
 
       Call_Stack := Gtk_Check_Menu_Item (Widget);
