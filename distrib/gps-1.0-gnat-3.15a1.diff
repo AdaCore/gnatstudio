@@ -8,7 +8,7 @@ Index: common/src/stubs.c
 + 
 + const int __gnat_vmsp = 0;
 + 
-+ int get_gcc_version () {}
++ int get_gcc_version () { return 2; }
 *** gps-1.0.0/gvd/gvd_common.gpr	Tue Apr 16 12:10:06 2002
 --- gvd/gvd_common.gpr	Fri May 31 18:02:42 2002
 ***************
