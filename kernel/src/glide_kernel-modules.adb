@@ -41,6 +41,7 @@ with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
 with Gtk.Widget;        use Gtk.Widget;
 with Language;          use Language;
 with Prj;               use Prj;
+with Prj_API;           use Prj_API;
 with Src_Info;          use Src_Info;
 with Src_Info.Queries;  use Src_Info.Queries;
 with String_Utils;      use String_Utils;
@@ -148,14 +149,16 @@ package body Glide_Kernel.Modules is
       return ID.Name;
    end Module_Name;
 
-   -------------------------------
-   -- Set_File_Name_Information --
-   -------------------------------
+   --------------------------
+   -- Set_File_Information --
+   --------------------------
 
-   procedure Set_File_Name_Information
-     (Context : access File_Name_Selection_Context;
+   procedure Set_File_Information
+     (Context : access File_Selection_Context;
       Directory : String := "";
-      File_Name : String := "") is
+      File_Name : String := "";
+      Project_View      : Prj.Project_Id := Prj.No_Project;
+      Importing_Project : Prj.Project_Id := Prj.No_Project) is
    begin
       Free (Context.Directory);
       Free (Context.File_Name);
@@ -167,17 +170,8 @@ package body Glide_Kernel.Modules is
       if File_Name /= "" then
          Context.File_Name := new String' (File_Name);
       end if;
-   end Set_File_Name_Information;
 
-   --------------------------
-   -- Set_File_Information --
-   --------------------------
-
-   procedure Set_File_Information
-     (Context           : access File_Selection_Context;
-      Project_View      : Prj.Project_Id := Prj.No_Project;
-      Importing_Project : Prj.Project_Id := Prj.No_Project) is
-   begin
+      Context.Creator_Provided_Project := Project_View /= No_Project;
       Context.Project_View := Project_View;
       Context.Importing_Project := Importing_Project;
    end Set_File_Information;
@@ -186,10 +180,10 @@ package body Glide_Kernel.Modules is
    -- Has_Project_Information --
    -----------------------------
 
-   function Has_Project_Information (Context : access File_Selection_Context)
-      return Boolean is
+   function Has_Project_Information
+     (Context : access File_Selection_Context) return Boolean is
    begin
-      return Context.Project_View /= No_Project;
+      return Context.Creator_Provided_Project;
    end Has_Project_Information;
 
    -------------------------
@@ -199,6 +193,13 @@ package body Glide_Kernel.Modules is
    function Project_Information (Context : access File_Selection_Context)
       return Prj.Project_Id is
    begin
+      if Context.Project_View = No_Project
+        and then Has_File_Information (Context)
+      then
+         Context.Project_View := Get_Project_From_File
+           (Get_Project_View (Get_Kernel (Context)),
+            File_Information (Context));
+      end if;
       return Context.Project_View;
    end Project_Information;
 
@@ -207,7 +208,7 @@ package body Glide_Kernel.Modules is
    -------------------------------
 
    function Has_Directory_Information
-     (Context : access File_Name_Selection_Context) return Boolean is
+     (Context : access File_Selection_Context) return Boolean is
    begin
       return Context.Directory /= null;
    end Has_Directory_Information;
@@ -217,7 +218,7 @@ package body Glide_Kernel.Modules is
    ---------------------------
 
    function Directory_Information
-     (Context : access File_Name_Selection_Context) return String is
+     (Context : access File_Selection_Context) return String is
    begin
       if Context.Directory = null then
          return "";
@@ -231,7 +232,7 @@ package body Glide_Kernel.Modules is
    --------------------------
 
    function Has_File_Information
-     (Context : access File_Name_Selection_Context) return Boolean is
+     (Context : access File_Selection_Context) return Boolean is
    begin
       return Context.File_Name /= null;
    end Has_File_Information;
@@ -241,7 +242,7 @@ package body Glide_Kernel.Modules is
    ----------------------
 
    function File_Information
-     (Context : access File_Name_Selection_Context) return String is
+     (Context : access File_Selection_Context) return String is
    begin
       if Context.File_Name = null then
          return "";
@@ -380,7 +381,7 @@ package body Glide_Kernel.Modules is
    -- Destroy --
    -------------
 
-   procedure Destroy (Context : in out File_Name_Selection_Context) is
+   procedure Destroy (Context : in out File_Selection_Context) is
    begin
       Free (Context.Directory);
       Free (Context.File_Name);
@@ -941,7 +942,7 @@ package body Glide_Kernel.Modules is
 
    procedure Destroy (Context : in out Entity_Selection_Context) is
    begin
-      Destroy (File_Name_Selection_Context (Context));
+      Destroy (File_Selection_Context (Context));
       Destroy (Context.Entity);
       Free (Context.Entity_Name);
    end Destroy;

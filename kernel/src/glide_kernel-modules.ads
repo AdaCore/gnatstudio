@@ -304,62 +304,47 @@ package Glide_Kernel.Modules is
    -- File_Name contexts --
    ------------------------
 
-   type File_Name_Selection_Context is new Selection_Context with private;
-   type File_Name_Selection_Context_Access is access all
-     File_Name_Selection_Context'Class;
+   type File_Selection_Context is new Selection_Context with private;
+   type File_Selection_Context_Access is access all
+     File_Selection_Context'Class;
 
-   procedure Set_File_Name_Information
-     (Context : access File_Name_Selection_Context;
-      Directory : String := "";
-      File_Name : String := "");
+   procedure Set_File_Information
+     (Context           : access File_Selection_Context;
+      Directory         : String := "";
+      File_Name         : String := "";
+      Project_View      : Prj.Project_Id := Prj.No_Project;
+      Importing_Project : Prj.Project_Id := Prj.No_Project);
    --  Set the information in this context.
 
    function Has_Directory_Information
-     (Context : access File_Name_Selection_Context) return Boolean;
+     (Context : access File_Selection_Context) return Boolean;
    --  True if the context has information about a selected directory.
 
    function Directory_Information
-     (Context : access File_Name_Selection_Context) return String;
+     (Context : access File_Selection_Context) return String;
    --  Return the information about the selected project. This is only relevant
    --  if Has_Directory_Information is True.
    --  This directory name always ends with a '/'
 
    function Has_File_Information
-     (Context : access File_Name_Selection_Context) return Boolean;
+     (Context : access File_Selection_Context) return Boolean;
    --  True if the context has information about a selected file.
 
    function File_Information
-     (Context : access File_Name_Selection_Context) return String;
+     (Context : access File_Selection_Context) return String;
    --  Return the information about the selected project. This is only relevant
    --  if Has_File_Information is True.
    --  This is the base file name for the file
 
-   procedure Destroy (Context : in out File_Name_Selection_Context);
-   --  Free the memory associated with the context
-
-   -------------------
-   -- File Contexts --
-   -------------------
-
-   type File_Selection_Context is new File_Name_Selection_Context with private;
-   type File_Selection_Context_Access is access all File_Selection_Context;
-
-   procedure Set_File_Information
-     (Context           : access File_Selection_Context;
-      Project_View      : Prj.Project_Id := Prj.No_Project;
-      Importing_Project : Prj.Project_Id := Prj.No_Project);
-   --  Set the information in Context.
-   --  File_Name should always be the base file name (no directory
-   --  information), and Directory should always end with a path separator.
-
    function Has_Project_Information
      (Context : access File_Selection_Context) return Boolean;
-   --  True if the context has information about a selected project.
+   --  True if the creator of the context provided information about the
+   --  project.
 
    function Project_Information
      (Context : access File_Selection_Context) return Prj.Project_Id;
-   --  Return the id of the selected project. This can be No_Project is there
-   --  wasn't any information about a specific project
+   --  Return the id of the project to which the file belongs. Note that this
+   --  is computed automatically and cached otherwise.
 
    function Has_Importing_Project_Information
      (Context : access File_Selection_Context) return Boolean;
@@ -369,12 +354,17 @@ package Glide_Kernel.Modules is
    function Importing_Project_Information
      (Context : access File_Selection_Context) return Prj.Project_Id;
    --  Return the project that imports the one returned by Project_Information.
+   --  This is never computed automatically, and unless provided by the creator
+   --  of the project, this will be left empty.
+
+   procedure Destroy (Context : in out File_Selection_Context);
+   --  Free the memory associated with the context
 
    ---------------------
    -- Entity Contexts --
    ---------------------
 
-   type Entity_Selection_Context is new File_Name_Selection_Context
+   type Entity_Selection_Context is new File_Selection_Context
      with private;
    type Entity_Selection_Context_Access is access all Entity_Selection_Context;
 
@@ -427,17 +417,18 @@ package Glide_Kernel.Modules is
 
 private
 
-   type File_Name_Selection_Context is new Selection_Context with record
-      Directory : GNAT.OS_Lib.String_Access := null;
-      File_Name : GNAT.OS_Lib.String_Access := null;
+   type File_Selection_Context is new Selection_Context with record
+      Directory         : GNAT.OS_Lib.String_Access := null;
+      File_Name         : GNAT.OS_Lib.String_Access := null;
+      Project_View      : Prj.Project_Id            := Prj.No_Project;
+      Importing_Project : Prj.Project_Id            := Prj.No_Project;
+
+      Creator_Provided_Project : Boolean := False;
+      --  Set to True if the project_view was given by the creator, instead of
+      --  being computed automatically
    end record;
 
-   type File_Selection_Context is new File_Name_Selection_Context with record
-      Project_View : Prj.Project_Id            := Prj.No_Project;
-      Importing_Project : Prj.Project_Id       := Prj.No_Project;
-   end record;
-
-   type Entity_Selection_Context is new File_Name_Selection_Context with record
+   type Entity_Selection_Context is new File_Selection_Context with record
       Category      : Language.Language_Category := Language.Cat_Unknown;
       Entity_Name   : GNAT.OS_Lib.String_Access := null;
       Line, Column  : Integer := 0;
