@@ -1952,6 +1952,209 @@ package body Src_Info.CPP is
       null;
    end Parse_All_LI_Information;
 
+   ---------------------------
+   -- Parse_File_Constructs --
+   ---------------------------
+
+   procedure Parse_File_Constructs
+     (Handler      : access CPP_LI_Handler_Record;
+      Root_Project : Projects.Project_Type;
+      Languages    : access Language_Handlers.Language_Handler_Record'Class;
+      File_Name    : String;
+      Result       : out Language.Construct_List)
+   is
+      pragma Unreferenced (Languages);
+
+      Constructs      : Language.Construct_List;
+      Iterator        : CPP_LI_Handler_Iterator;
+      P               : Pair_Ptr;
+      Module_Typedefs : Src_Info.Type_Utils.Module_Typedefs_List;
+      Project         : constant Project_Type :=
+        Get_Project_From_File
+          (Project_Registry'Class
+             (Get_Registry (Root_Project)), File_Name);
+      DB_Dir          : constant String := Get_DB_Dir (Project);
+      Files           : String_List_Access;
+      Success         : Boolean;
+
+   begin
+      --  Create/update sn databases
+      --  The call is blocking
+
+      Iterator := CPP_LI_Handler_Iterator
+        (Generate_LI_For_Source
+          (Handler,
+           Root_Project,
+           Project,
+           File_Name));
+
+      --  Open the databases if not yet open
+
+      if not Is_Open (Handler.SN_Table (FIL)) then
+         Files := new String_List (1 .. 1);
+         Files (1) := new String'
+           (DB_Dir & Browse.DB_File_Name & Table_Extension (FIL));
+         DB_API.Open (Handler.SN_Table (FIL), Files, Success);
+         Free (Files (1));
+
+         if not Success then
+            return;
+         end if;
+      end if;
+
+      --  Iterate through all symbols of File_Name
+      --  using the FIL table
+
+      Init (Module_Typedefs);
+      Set_Cursor
+        (Handler.SN_Table (FIL),
+         Position    => By_Key,
+         Key         => File_Name & Field_Sep,
+         Exact_Match => False);
+
+      loop
+         P := Get_Pair (Handler.SN_Table (FIL), Next_By_Key);
+         exit when P = null;
+
+         declare
+            Sym  : FIL_Table;
+            Info : Construct_Access;
+            C    : Construct_Access;
+
+         begin
+            Parse_Pair (P.all, Sym);
+
+            --  Build the next construct
+
+            case Sym.Symbol is
+               when CL | CON | E | IU | T | TA | UN | GV | IV | LV
+                    | FD | FU | MA | MD | MI =>
+                  --  Build the constructs
+                  --  Use subtype instead ???
+
+                  Info := Constructs.Current;
+                  Constructs.Current := new Construct_Information;
+                  C := Constructs.Current;
+                  C.Is_Declaration := False;
+
+                  --  Link
+
+                  if Constructs.First = null then
+                     Constructs.First := Constructs.Current;
+                  else
+                     Constructs.Current.Prev := Info;
+                     Constructs.Current.Next := Info.Next;
+                     Info.Next               := Constructs.Current;
+                  end if;
+
+                  --  Set name and location, common to all categories
+
+                  C.Name := new String'
+                    (To_String (Sym.Buffer, Sym.Identifier));
+
+                  --  ??? For now, do not set the third field (absolute source
+                  --  location), since the explorer does not use it and
+                  --  computing it is not simple.
+
+                  C.Sloc_Start := (Sym.Start_Position.Line,
+                                   Sym.Start_Position.Column,
+                                   0);
+                  C.Sloc_End := (Sym.End_Position.Line,
+                                 Sym.End_Position.Column,
+                                 0);
+                  C.Sloc_Entity := (Sym.Start_Position.Line,
+                                    Sym.Start_Position.Column,
+                                    0);
+               when others =>
+                  null;
+            end case;
+
+            --  Set the category
+
+            case Sym.Symbol is
+               when CL | TA =>
+                  --  ??? make the distinction between struct and classes
+                  --  which category for templates ???
+
+                  C.Category := Cat_Structure;
+               when CON | GV =>
+                  C.Category := Cat_Variable;
+               when IV | LV =>
+                  C.Category := Cat_Local_Variable;
+               when E | T =>
+                  C.Category := Cat_Type;
+               when IU =>
+                  C.Category := Cat_Include;
+               when UN =>
+                  C.Category := Cat_Union;
+               when FD =>
+                  C.Category := Cat_Function;
+                  C.Is_Declaration := True;
+               when FU =>
+                  C.Category := Cat_Function;
+               when MA =>
+                  --  Macros can either be "constants" (#define a 0)
+                  --  or "functions" (#define f(a) ((a) == 0))
+                  --  For now, only consider macros with arguments as
+                  --  pseudo functions.
+
+                  if Length (Sym.Types_Of_Arguments) > 0 then
+                     C.Category := Cat_Function;
+                  else
+                     C.Category := Cat_Unknown;
+                  end if;
+
+               when MD =>
+                  C.Category := Cat_Method;
+                  C.Is_Declaration := True;
+               when MI =>
+                  C.Category := Cat_Method;
+               when others =>
+                  null;
+            end case;
+
+            --  For functions and methods, get the profile
+
+            case Sym.Symbol is
+               when FD | FU | MA | MD | MI =>
+                  --  Generate the profile
+
+                  if Length (Sym.Types_Of_Arguments) > 0 then
+                     C.Profile := new String'
+                       ('(' &
+                          Sym.Buffer (Sym.Types_Of_Arguments.First ..
+                                      Sym.Types_Of_Arguments.Last) &
+                          ')');
+                  end if;
+
+               when others =>
+                  null;
+            end case;
+
+            Free (Sym);
+
+         exception
+            when others =>
+               --  Free Constructs.Current ???
+               Free (Sym);
+               raise;
+         end;
+
+         Free (P);
+      end loop;
+
+      Result := Constructs;
+      Release_Cursor (Handler.SN_Table (FIL));
+      Free (Module_Typedefs);
+
+   exception
+      when E : others   =>
+         Trace (Info_Stream,
+                "Unexpected exception: " & Exception_Information (E));
+         Free (P);
+         Free (Module_Typedefs);
+   end Parse_File_Constructs;
+
    ----------------------------------
    -- Case_Insensitive_Identifiers --
    ----------------------------------
