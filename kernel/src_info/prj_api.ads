@@ -162,7 +162,7 @@ package Prj_API is
    --  i.e. not those found in subprojects, unless Recursive is True.
    --  It is the caller's responsability to free the list.
    --  If Full_Path is true, then the file names will also include the
-   --  directory.
+   --  directory. The directory names are normalized.
 
    function Get_Source_Files
      (Project_View : Prj.Project_Id;

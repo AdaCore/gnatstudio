@@ -3449,14 +3449,21 @@ package body Prj_API is
          View := Current (Iter);
          declare
             Path : constant String := Include_Path (View, False);
+            S : GNAT.OS_Lib.String_Access;
          begin
             Src := Projects.Table (View).Sources;
 
             while Src /= Nil_String loop
+               --  ??? We could avoid calls to Normalize_Pathname here if
+               --  ??? Include_Path included normalized directory names
                if Full_Path then
-                  Sources (Index) := Basic_Types.String_Access
-                    (Locate_Regular_File
-                     (Get_String (String_Elements.Table (Src).Value), Path));
+                  S := Locate_Regular_File
+                    (Get_String (String_Elements.Table (Src).Value), Path);
+                  if S /= null then
+                     Sources (Index) := new String'
+                       (Normalize_Pathname (S.all));
+                     Free (S);
+                  end if;
                else
                   Sources (Index) := new String'
                     (Get_String (String_Elements.Table (Src).Value));
