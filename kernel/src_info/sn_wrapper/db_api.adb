@@ -90,7 +90,7 @@ package body DB_API is
       C_P_P_Char   : array (File_Names'Range) of System.Address; -- char **
    begin
       for I in File_Names'Range loop
-         C_File_Names (I) := new String' (File_Names (I).all & ASCII.NUL);
+         C_File_Names (I) := new String'(File_Names (I).all & ASCII.NUL);
          C_P_P_Char (I) := C_File_Names (I).all'Address;
       end loop;
 
@@ -172,7 +172,7 @@ package body DB_API is
         (DB          : DB_File;
          Pos         : Cursor_Position;
          Key         : System.Address;
-         Exact_Match : Boolean);
+         Exact_Match : Integer);
       pragma Import (C, I_Set_Cursor, "ada_db_set_cursor");
 
       I_Key : constant String := Key & ASCII.NUL;
@@ -183,10 +183,13 @@ package body DB_API is
            E_Init_Failed);
       else
          if Position = By_Key then
-            I_Set_Cursor (DB, Position, I_Key'Address, Exact_Match);
+            I_Set_Cursor
+              (DB, Position, I_Key'Address, Boolean'Pos (Exact_Match));
          else
-            I_Set_Cursor (DB, Position, System.Null_Address, Exact_Match);
+            I_Set_Cursor
+              (DB, Position, System.Null_Address, Boolean'Pos (Exact_Match));
          end if;
+
          if Last_ErrNo (DB) /= 0 then
             Raise_Exception (DB_Error'Identity,
               Error_Message (DB));
