@@ -57,6 +57,7 @@ with Welcome;                   use Welcome;
 
 --  Modules registered by GPS.
 with Ada_Module;
+with Aliases_Module;
 with Aunit_Module;
 with Browsers.Dependency_Items;
 with Browsers.Projects;
@@ -69,6 +70,7 @@ with Metrics_Module;
 with Project_Explorers;
 with Project_Explorers_Files;
 with Project_Viewers;
+with Shell;
 with Src_Editor_Module;
 with VCS_Module;
 with VCS.CVS;
@@ -414,6 +416,7 @@ procedure GPS is
 
       --  Register all modules
 
+      Shell.Register_Module (GPS.Kernel);
       Vsearch_Ext.Register_Module (GPS.Kernel);
       Help_Module.Register_Module (GPS.Kernel);
 
@@ -437,6 +440,7 @@ procedure GPS is
       Aunit_Module.Register_Module (GPS.Kernel);
       VFS_Module.Register_Module (GPS.Kernel);
       Codefix_Module.Register_Module (GPS.Kernel);
+      Aliases_Module.Register_Module (GPS.Kernel);
 
       Custom_Module.Register_Module (GPS.Kernel);
 
