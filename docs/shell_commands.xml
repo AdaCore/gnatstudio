@@ -1975,11 +1975,26 @@ The regular expression specifies how locations are recognized. By default, it ma
     ###################################################################-->
 
   <shell_doc name="GPS.Preference">
-     <description>Interface to the GPS preferences, as set in the Edit/Preferences dialog</description>
+     <description>Interface to the GPS preferences, as set in the Edit/Preferences dialog. New preferences are created through XML customization files (or calls to GPS.parse_xml(), see the GPS documentation</description>
+     <example lang="python">
+        GPS.parse_xml ("""
+           &lt;preference name="custom-adb-file-color"
+               label="Background color for .adb files"
+               page="Editor:Fonts &amp;amp; Colors"
+               default="yellow"
+               type="color" /&gt;""")
+        print "color is " + GPS.Preference ("custom-adb-file-color").get()
+     </example>
   </shell_doc>
 
-  <shell_doc name="GPS.get" real_name="GPS.Preference.get">
-     <param name="preference">A string</param>
+  <shell_doc name="GPS.Preference.__init__">
+     <param name="self">The instance of GPS.Preference</param>
+     <param name="name">A string</param>
+     <description>Initializes an instance of the GPS.Preference class, associating it with the preference given in parameter</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Preference.get">
+     <param name="self">The instance of GPS.Preference</param>
      <return>A string or an integer</return>
      <description>Get value for the given preference. The exact returned type depends on the type of the preference. Note that boolean values are returned as integers, for compatibility with older versions of Pythons</description>
      <example lang="python">
@@ -1988,8 +2003,8 @@ The regular expression specifies how locations are recognized. By default, it ma
      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.set" real_name="GPS.Preference.set">
-     <param name="preference">A string</param>
+  <shell_doc name="GPS.Preference.set">
+     <param name="self">The instance of GPS.Preference</param>
      <param name="value">A string</param>
      <description>Set value for the given preference</description>
   </shell_doc>
