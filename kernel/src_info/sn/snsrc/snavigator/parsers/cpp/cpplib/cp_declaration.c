@@ -1009,7 +1009,7 @@ extern void f_DeclarationStrcat( char *pc, Declaration_t Declaration )
       }
       else
       {
-         f_Strcat( pc, "anonymous" );
+         f_Strcat( pc, "@anonymous@" );
          bType = True;
       }
    }
@@ -1022,7 +1022,7 @@ extern void f_DeclarationStrcat( char *pc, Declaration_t Declaration )
       }
       else
       {
-         f_Strcat( pc, "anonymous" );
+         f_Strcat( pc, "@anonymous@" );
          bType = True;
       }
    }

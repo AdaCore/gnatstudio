@@ -52,7 +52,7 @@ MA 02111-1307, USA.
 
 #define Return( x ) { retval = x; goto return_label; }
 
-#define ANONYM "anonymous"
+#define ANONYM "@anonymous@"
 
 #ifndef FUNCTION_MACRO
    #define step(i) (iva+=(i))
