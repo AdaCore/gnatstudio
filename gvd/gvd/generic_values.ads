@@ -53,6 +53,30 @@ package Generic_Values is
    --  Set the pixmap used when the value of an item is unknown.
    --  This must be called.
 
+   ---------------------
+   -- Drawing Context --
+   ---------------------
+
+   type Drawing_Context is record
+      GC          : Gdk.GC.Gdk_GC;
+      Xref_Gc     : Gdk.GC.Gdk_GC;
+      Modified_Gc : Gdk.GC.Gdk_GC;
+      Font        : Gdk.Font.Gdk_Font;
+      Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
+   end record;
+   --  This structure contains all the information needed to draw items on
+   --  the canvas.
+   --  GC is the standard graphic context used to draw text and boxes.
+   --  Xref_GC is used for fields that can be clicked on by the user to display
+   --  new items (such as access types).
+   --  Modified_GC is the graphic context used to highlight the items whose
+   --  value has changed since the last update.
+   --  Font is the default font to use.
+   --  Pixmap is the pixmap to draw to.
+   --
+   --  All the contexts should be reset to their initial settings on exit of
+   --  the Paint subprograms.
+
    ------------------
    -- Generic_Type --
    ------------------
@@ -81,10 +105,7 @@ package Generic_Values is
    --  Null.
 
    procedure Paint (Item    : in out Generic_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0)
       is abstract;
    --  Paint the item on the pixmap, that will be used to show the item in the
@@ -183,6 +204,10 @@ package Generic_Values is
    --  fact match the value, and should be dynamically changed.
    --  Replace_With is returned; null is returned if Current did not belong to
    --  Parent, or if nothing could be done.
+
+   procedure Reset_Recursive (Item : access Generic_Type) is abstract;
+   --  Reset the boolean that indicates whether the item has changed since the
+   --  last update. All the children of Item are reset as well.
 
    -----------------
    -- Simple_Type --
@@ -322,7 +347,12 @@ package Generic_Values is
      (Item       : Array_Type;
       Elem_Index : Long_Integer) return Generic_Type_Access;
    --  Read a value in the array at a specific Index.
-   --  Elem_Index
+   --  If that index is covered by a Repeat_Type, a clone of the value is
+   --  returned.
+   --  Otherwise, the value is deleted from the array.
+   --  Thus, the returned value can be simply modified, and then put back in
+   --  the array.
+   --  null is returned if there is no such item in the array.
 
    procedure Shrink_Values (Item : in out Array_Type);
    --  Shrink the sparse table used to store the values of the array to its
@@ -487,16 +517,16 @@ private
    type Simple_Type is new Generic_Type with record
       Value : String_Access := null;
       --  The value, as displayed by the debugger
+
+      Has_Changed : Boolean := False;
+      --  Whether the value of the item has changed.
    end record;
    procedure Print (Value : Simple_Type; Indent : Natural := 0);
    procedure Free (Item : access Simple_Type;
                    Only_Value : Boolean := False);
    function Clone (Value : Simple_Type) return Generic_Type_Access;
    procedure Paint (Item    : in out Simple_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Simple_Type;
@@ -515,6 +545,7 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
+   procedure Reset_Recursive (Item : access Simple_Type);
 
 
 
@@ -539,10 +570,7 @@ private
    function Clone (Value : Access_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
    procedure Paint (Item    : in out Access_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
 
 
@@ -595,10 +623,7 @@ private
                    Only_Value : Boolean := False);
    function Clone (Value : Array_Type) return Generic_Type_Access;
    procedure Paint (Item    : in out Array_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Array_Type;
@@ -617,6 +642,8 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
+   procedure Reset_Recursive (Item : access Array_Type);
+
 
 
    ------------
@@ -637,10 +664,7 @@ private
    function Clone (Value : Repeat_Type) return Generic_Type_Access;
 
    procedure Paint (Item    : in out Repeat_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
 
    procedure Size_Request
@@ -660,6 +684,8 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
+   procedure Reset_Recursive (Item : access Repeat_Type);
+
 
    -----------------
    -- Record Type --
@@ -701,10 +727,7 @@ private
                    Only_Value : Boolean := False);
    function Clone (Value : Record_Type) return Generic_Type_Access;
    procedure Paint (Item    : in out Record_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Record_Type;
@@ -723,6 +746,8 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
+   procedure Reset_Recursive (Item : access Record_Type);
+
 
 
    type Union_Type (Num_Fields : Natural) is new Record_Type (Num_Fields)
@@ -744,10 +769,7 @@ private
                    Only_Value : Boolean := False);
    function Clone (Value : Class_Type) return Generic_Type_Access;
    procedure Paint (Item    : in out Class_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Class_Type;
@@ -766,5 +788,6 @@ private
       Current      : access Generic_Type'Class;
       Replace_With : access Generic_Type'Class)
      return Generic_Type_Access;
+   procedure Reset_Recursive (Item : access Class_Type);
 
 end Generic_Values;
