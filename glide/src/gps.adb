@@ -35,6 +35,7 @@ with Gtkada.Dialogs;       use Gtkada.Dialogs;
 with GVD.Types;
 with OS_Utils;             use OS_Utils;
 with Ada.Command_Line; use Ada.Command_Line;
+with Prj;                  use Prj;
 
 --  Just force the loading of the modules
 --  Removing any of the line below will not load the module in Glide, and thus
@@ -187,7 +188,7 @@ begin
    Initialize_All_Modules (Glide.Kernel);
 
    for J in 1 .. Argument_Count loop
-      if File_Extension (Argument (J)) = ".gpr" then
+      if File_Extension (Argument (J)) = Project_File_Extension then
          Load_Project (Glide.Kernel, Argument (J));
          Project_Loaded := True;
       else
@@ -206,7 +207,7 @@ begin
 
          exit when Last = 0;
 
-         if File_Extension (Str (1 .. Last)) = ".gpr" then
+         if File_Extension (Str (1 .. Last)) = Project_File_Extension then
             Load_Project (Glide.Kernel, Str (1 .. Last));
             exit;
          end if;
