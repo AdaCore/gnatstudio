@@ -20,7 +20,7 @@ current_dir=`/bin/pwd`
 ## Sets the variable  $basedir
 ask_basedir() {
    clear
-   default_base_dir=`type gnatmake | cut -d' ' -f3`
+   default_base_dir=`type gnatmake | cut -d' ' -f5 2>/dev/null`
    if [ "$default_base_dir " != " " ]; then
       default_base_dir=`cd \`dirname $default_base_dir\`/..; pwd`
       cat <<EOF
