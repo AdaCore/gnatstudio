@@ -25,6 +25,7 @@ fresh from CVS) should look like:
 
 aunit/
 browsers/
+builder
 common/
 gbuilder/
 glide/
@@ -32,13 +33,15 @@ gnat/
 gnat_src -> /home/my_account/gnat/src/ada
 gtkada -> /home/my_account/gtk/GtkAda
 gvd/
-hypergrep/
 kernel/
+metrics/
 prj_editor/
 src_editor/
 syntax/
 vcs/
 vdiff/
+vsearch/
+widgets/
 
 Building Glide 2
 =================
