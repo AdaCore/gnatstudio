@@ -27,9 +27,10 @@ package Glide_Kernel.Timeout is
 
    type Process_Data;
 
-   type Process_Callback is access procedure (Data : Process_Data);
-   --  Callback called when data is received from an underlying process
-   --  launched by Launch_Process.
+   type Output_Callback is
+     access procedure (Data : Process_Data; Output : String);
+   --  This callback is called whenever some output is read from the file
+   --  descriptor.
 
    type Exit_Callback is
      access procedure (Data : Process_Data; Status : Integer);
@@ -40,8 +41,9 @@ package Glide_Kernel.Timeout is
       Kernel     : Kernel_Handle;
       Descriptor : GNAT.Expect.Process_Descriptor_Access;
       Name       : GNAT.OS_Lib.String_Access;
-      Callback   : Process_Callback;
+      Callback   : Output_Callback;
       Exit_Cb    : Exit_Callback;
+      Callback_Data : System.Address;
    end record;
 
    procedure Free is new Ada.Unchecked_Deallocation
@@ -55,15 +57,17 @@ package Glide_Kernel.Timeout is
       Command     : String;
       Arguments   : GNAT.OS_Lib.Argument_List;
       Title       : String := "";
-      Callback    : Process_Callback := null;
+      Callback    : Output_Callback := null;
       Exit_Cb     : Exit_Callback := null;
       Name        : String;
       Success     : out Boolean;
-      Interactive : Boolean := False);
+      Interactive : Boolean := False;
+      Callback_Data : System.Address := System.Null_Address);
    --  Launch a given command with arguments.
    --  Set Success to True if the command could be spawned.
    --  Title is a short title used for the MDI window.
-   --  Callback will be called asynchronousely when the process has terminated.
+   --  Callback will be called asynchronousely when some new data is
+   --  available from the process.
    --  Name is the string to set in Process_Data when calling Callback.
    --  Exit_Callback will be called when the underlying process dies.
    --  If Interactive is True, the process will be launched in its own

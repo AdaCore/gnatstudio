@@ -109,9 +109,7 @@ package body Glide_Kernel.Timeout is
       Free (Fd);
       Free (Name);
 
-      if Data.Callback /= null then
-         Pop_State (Data.Kernel);
-      end if;
+      Pop_State (Data.Kernel);
    end Cleanup;
 
    ----------------
@@ -131,10 +129,17 @@ package body Glide_Kernel.Timeout is
       Expect (Fd.all, Result, ".+", Timeout => 1);
 
       if Result /= Expect_Timeout then
-         Insert
-           (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
-         Highlight_Child
-           (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+         declare
+            Output : constant String := Strip_CR (Expect_Out (Fd.all));
+         begin
+            Insert (Data.Console, Output, Add_LF => False);
+            Highlight_Child
+              (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+
+            if Data.D.Callback /= null then
+               Data.D.Callback (Data.D, Output);
+            end if;
+         end;
       end if;
 
       return True;
@@ -145,10 +150,6 @@ package body Glide_Kernel.Timeout is
            (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
          Highlight_Child
            (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
-
-         if Data.D.Callback /= null then
-            Data.D.Callback (Data.D);
-         end if;
 
          Data.Died := True;
          Cleanup (Data.D);
@@ -201,11 +202,12 @@ package body Glide_Kernel.Timeout is
       Command     : String;
       Arguments   : GNAT.OS_Lib.Argument_List;
       Title       : String := "";
-      Callback    : Process_Callback := null;
+      Callback    : Output_Callback := null;
       Exit_Cb     : Exit_Callback := null;
       Name        : String;
       Success     : out Boolean;
-      Interactive : Boolean := False)
+      Interactive : Boolean := False;
+      Callback_Data : System.Address := System.Null_Address)
    is
       Timeout : constant Guint32 := 50;
       Fd      : Process_Descriptor_Access;
@@ -281,7 +283,8 @@ package body Glide_Kernel.Timeout is
             Allow_Duplicates
               (Get_History (Kernel).all, "external_process", True, True);
 
-            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
+            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb,
+                       Callback_Data);
 
             Object_Return_Callback.Object_Connect
               (Console, "delete_event",
@@ -297,7 +300,8 @@ package body Glide_Kernel.Timeout is
 
          else
             Console := Get_Console (Kernel);
-            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
+            Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb,
+                       Callback_Data);
          end if;
 
          Data.Console := Console;
@@ -307,13 +311,9 @@ package body Glide_Kernel.Timeout is
            (Timeout,
             Process_Cb'Access,
             Data);
-
-         if Callback = null then
-            Pop_State (Kernel);
-         end if;
-      else
-         Pop_State (Kernel);
       end if;
+
+      Pop_State (Kernel);
 
    exception
       when E : others =>
