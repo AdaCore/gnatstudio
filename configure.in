@@ -259,4 +259,4 @@ echo "       xmlada: $XMLADA_GPR"
 echo "           uses ADA_PROJECT_PATH to find xmlada.gpr"
 echo ""
 
-AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/common/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr gvd/gvd_common.gpr:gvd/gvd_common_${XMLADA_GPR}.gpr.in)
+AC_OUTPUT(Makefile Makefile.common gnat/sdefault/sdefault.adb docs/Makefile po/Makefile common/Makefile.common common/config.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr common/common.gpr:common/common_${XMLADA_GPR}.gpr.in)
