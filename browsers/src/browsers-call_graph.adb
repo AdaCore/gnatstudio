@@ -1622,6 +1622,7 @@ package body Browsers.Call_Graph is
         (Cb     : Examine_Callback;
          Entity : Entity_Information;
          Is_Renaming : Boolean);
+      --  ???
 
       procedure Add_To_List
         (Cb     : Examine_Callback;
