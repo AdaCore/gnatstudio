@@ -338,7 +338,7 @@ package body Browsers.Dependency_Items is
       if Lib_Info = No_LI_File then
          Trace (Me,
                 "Examine_Dependencies: Couldn't find LI file for " & File);
-         Insert (Kernel, -"Couldn't find LI file for " & File,
+         Insert (Kernel, -"Couldn't find dependency information for " & File,
                  Mode => Glide_Kernel.Console.Error);
          Pop_State (Kernel_Handle (Kernel));
          return;
