@@ -739,7 +739,7 @@ package body Glide_Main_Window is
          Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
       Register_Command
-        (Main_Window.Kernel, "raise",
+        (Main_Window.Kernel, "raise_window",
          Class         => MDI_Window_Class,
          Handler       => Default_Window_Command_Handler'Access);
       Register_Command
@@ -856,7 +856,7 @@ package body Glide_Main_Window is
             Single_Window (Get_MDI (Kernel));
          end if;
 
-      elsif Command = "raise" then
+      elsif Command = "raise_window" then
          Raise_Child (Child, Give_Focus => True);
 
       elsif Command = "name" then
