@@ -204,7 +204,7 @@ package body Vdiff2_Module is
         (Kernel, -"Next difference",
          Command_Access
            (VDiff2_Module (Vdiff_Module_ID).Command_Next),
-         Image, -"Go to next difference");
+         Image, -"Go to the next difference");
 
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
@@ -212,7 +212,7 @@ package body Vdiff2_Module is
       Register_Button
         (Kernel, -"Previous difference",
          Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
-         Image, -"Go to previous difference");
+         Image, -"Go to the previous difference");
 
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, last_diff_xpm);
@@ -230,20 +230,20 @@ package body Vdiff2_Module is
         (Kernel, -"First difference",
          Command_Access
            (VDiff2_Module (Vdiff_Module_ID).Command_First),
-         Image, -"Go to the First difference");
+         Image, -"Go to the first difference");
 
       Register_Action
         (Kernel,
          "First difference",
          Interactive_Command_Access
            (VDiff2_Module (Vdiff_Module_ID).Command_First),
-         -"Go to the First difference");
+         -"Go to the first difference");
       Register_Action
         (Kernel,
          "Last difference",
          Interactive_Command_Access
            (VDiff2_Module (Vdiff_Module_ID).Command_Last),
-         -"Go to the Last difference");
+         -"Go to the last difference");
       Register_Action
         (Kernel,
          "Prev difference",
@@ -322,14 +322,13 @@ package body Vdiff2_Module is
    is
       pragma Unreferenced (Object);
 
-      File    : File_Selection_Context_Access;
-      Submenu : Gtk_Menu;
-      Mitem   : Gtk_Menu_Item;
-      Dummy   : Diff_Head_List.List_Node;
+      File          : File_Selection_Context_Access;
+      Submenu       : Gtk_Menu;
+      Mitem         : Gtk_Menu_Item;
+      Dummy         : Diff_Head_List.List_Node;
       Selected_File : Virtual_File;
 
    begin
-
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
 
@@ -348,7 +347,7 @@ package body Vdiff2_Module is
                Set_Submenu (Mitem, Gtk_Widget (Submenu));
                Append (Menu, Mitem);
 
-               Gtk_New (Mitem, -"Change Refference File");
+               Gtk_New (Mitem, -"Change Reference File");
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
