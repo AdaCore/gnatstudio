@@ -58,15 +58,15 @@ with Glide_Main_Window;         use Glide_Main_Window;
 with Default_Preferences;       use Default_Preferences;
 with Glide_Kernel.Custom;       use Glide_Kernel.Custom;
 with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Main_Window;           use GVD.Main_Window;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
-with Interfaces.C;              use Interfaces.C;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with Src_Info;                  use Src_Info;
@@ -95,20 +95,6 @@ with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
 package body Glide_Kernel is
-
-   Signals : constant chars_ptr_array :=
-     (1  => New_String (Context_Changed_Signal),
-      2  => New_String (Source_Lines_Revealed_Signal),
-
-      3  => New_String (File_Edited_Signal),
-      4  => New_String (File_Saved_Signal),
-      5  => New_String (File_Closed_Signal),
-      6  => New_String (File_Changed_On_Disk_Signal),
-      7  => New_String (Compilation_Finished_Signal));
-   --  The list of signals defined for this object
-
-   Kernel_Class : GObject_Class := Uninitialized_Class;
-   --  The class structure for this object
 
    Me : constant Debug_Handle := Create ("glide_kernel");
 
@@ -182,17 +168,12 @@ package body Glide_Kernel is
       Main_Window : Gtk.Window.Gtk_Window;
       Home_Dir    : String)
    is
-      Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2        => (1 => GType_Pointer),
-         3 .. 7        => (1 => GType_String));
       Handler : Glide_Language_Handler;
       Dir     : constant String := Name_As_Directory (Home_Dir);
 
    begin
       Handle := new Kernel_Handle_Record;
       Glib.Object.Initialize (Handle);
-      Initialize_Class_Record
-        (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
 
       Handle.Main_Window  := Main_Window;
       Handle.Home_Dir     := new String'(Dir);
@@ -684,18 +665,12 @@ package body Glide_Kernel is
      (Handle  : access Kernel_Handle_Record;
       Context : access Selection_Context'Class)
    is
-      procedure Internal
-        (Handle  : System.Address;
-         Signal  : String;
-         Context : Selection_Context_Access);
-      pragma Import (C, Internal, "g_signal_emit_by_name");
-
+      C : Selection_Context_Access := Selection_Context_Access (Context);
    begin
-      --  ??? code duplication from Context_Changed, see below.
-      Internal
-        (Get_Object (Handle),
-         Source_Lines_Revealed_Signal & ASCII.NUL,
-         Selection_Context_Access (Context));
+      Ref (C);
+      Run_Hook (Handle, Source_Lines_Revealed_Hook,
+                Context_Hooks_Args'(Hooks_Data with Context => C));
+      Unref (C);
    end Source_Lines_Revealed;
 
    -----------------
@@ -706,19 +681,10 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record;
       File   : VFS.Virtual_File)
    is
-      procedure Internal
-        (Handle : System.Address;
-         Signal : String;
-         File   : String);
-      pragma Import (C, Internal, "g_signal_emit_by_name");
-
       Files : File_Array_Access := Handle.Open_Files;
-
    begin
-      Internal
-        (Get_Object (Handle),
-         File_Edited_Signal & ASCII.NUL,
-         Full_Name (File).all & ASCII.NUL);
+      Run_Hook (Handle, File_Edited_Hook,
+                File_Hooks_Args'(Hooks_Data with File => File));
 
       if not Is_Open (Handle, File) then
          if Files = null then
@@ -740,19 +706,10 @@ package body Glide_Kernel is
 
    procedure File_Saved
      (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File)
-   is
-      procedure Internal
-        (Handle : System.Address;
-         Signal : String;
-         File   : String);
-      pragma Import (C, Internal, "g_signal_emit_by_name");
-
+      File    : VFS.Virtual_File) is
    begin
-      Internal
-        (Get_Object (Handle),
-         File_Saved_Signal & ASCII.NUL,
-         Full_Name (File).all & ASCII.NUL);
+      Run_Hook (Handle, File_Saved_Hook,
+                File_Hooks_Args'(Hooks_Data with File => File));
    end File_Saved;
 
    -----------------
@@ -763,19 +720,10 @@ package body Glide_Kernel is
      (Handle  : access Kernel_Handle_Record;
       File    : VFS.Virtual_File)
    is
-      procedure Internal
-        (Handle : System.Address;
-         Signal : String;
-         File   : String);
-      pragma Import (C, Internal, "g_signal_emit_by_name");
-
       Files : File_Array_Access := Handle.Open_Files;
-
    begin
-      Internal
-        (Get_Object (Handle),
-         File_Closed_Signal & ASCII.NUL,
-         Full_Name (File).all & ASCII.NUL);
+      Run_Hook (Handle, File_Closed_Hook,
+                File_Hooks_Args'(Hooks_Data with File => File));
 
       if Files /= null then
          for F in Files'Range loop
@@ -799,18 +747,10 @@ package body Glide_Kernel is
 
    procedure File_Changed_On_Disk
      (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File)
-   is
-      procedure Internal
-        (Handle : System.Address;
-         Signal : String;
-         File   : String);
-      pragma Import (C, Internal, "g_signal_emit_by_name");
+      File    : VFS.Virtual_File) is
    begin
-      Internal
-        (Get_Object (Handle),
-         File_Changed_On_Disk_Signal & ASCII.NUL,
-         Full_Name (File).all & ASCII.NUL);
+      Run_Hook (Handle, File_Changed_On_Disk_Hook,
+                File_Hooks_Args'(Hooks_Data with File => File));
    end File_Changed_On_Disk;
 
    --------------------------
@@ -819,19 +759,10 @@ package body Glide_Kernel is
 
    procedure Compilation_Finished
      (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File)
-   is
-      procedure Internal
-        (Handle : System.Address;
-         Signal : String;
-         File   : String);
-      pragma Import (C, Internal, "g_signal_emit_by_name");
-
+      File    : VFS.Virtual_File) is
    begin
-      Internal
-        (Get_Object (Handle),
-         Compilation_Finished_Signal & ASCII.NUL,
-         Full_Name (File).all & ASCII.NUL);
+      Run_Hook (Handle, Compilation_Finished_Hook,
+                File_Hooks_Args'(Hooks_Data with File => File));
    end Compilation_Finished;
 
    -------------
@@ -875,16 +806,11 @@ package body Glide_Kernel is
      (Handle  : access Kernel_Handle_Record;
       Context : access Selection_Context'Class)
    is
-      procedure Internal
-        (Handle  : System.Address;
-         Signal  : String;
-         Context : Selection_Context_Access);
-      pragma Import (C, Internal, "g_signal_emit_by_name");
-
       C : Selection_Context_Access := Selection_Context_Access (Context);
    begin
       Ref (C);
-      Internal (Get_Object (Handle), Context_Changed_Signal & ASCII.NUL, C);
+      Run_Hook (Handle, Context_Changed_Hook,
+                Context_Hooks_Args'(Hooks_Data with Context => C));
       Unref (C);
    end Context_Changed;
 
@@ -1375,6 +1301,10 @@ package body Glide_Kernel is
 
       Window := Glide_Window (Handle.Main_Window);
 
+      if Gtk.Object.In_Destruction_Is_Set (Window) then
+         return;
+      end if;
+
       if State = Busy then
          Set_Busy_Cursor (Get_Window (Window), True, True);
          Window.Busy_Level := Window.Busy_Level + 1;
@@ -1405,6 +1335,10 @@ package body Glide_Kernel is
       end if;
 
       Window := Glide_Window (Handle.Main_Window);
+
+      if Gtk.Object.In_Destruction_Is_Set (Window) then
+         return;
+      end if;
 
       if Window.State_Level > 0 then
          Window.State_Level := Window.State_Level - 1;
