@@ -36,17 +36,14 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Process;         use GVD.Process;
 with GVD.Types;           use GVD.Types;
-with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
-with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
-with GVD.Text_Box.Source_Editor.Builtin;
-with GVD.Text_Box.Source_Editor.Socket;
-with GVD.Text_Box.Source_Editor.Glide;
 with Odd_Intl;            use Odd_Intl;
 with Basic_Types;         use Basic_Types;
 
 package body GVD.Code_Editors is
 
    use GVD;
+   use GVD.Text_Box.Asm_Editor;
+   use GVD.Text_Box.Source_Editor;
 
    ---------------------
    -- Local constants --
@@ -318,6 +315,7 @@ package body GVD.Code_Editors is
 
    procedure Configure
      (Editor            : access Code_Editor_Record;
+      Source            : GVD.Text_Box.Source_Editor.Source_Editor;
       Ps_Font_Name      : String;
       Font_Size         : Glib.Gint;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
@@ -325,38 +323,14 @@ package body GVD.Code_Editors is
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color    : Gdk.Color.Gdk_Color;
       Strings_Color     : Gdk.Color.Gdk_Color;
-      Keywords_Color    : Gdk.Color.Gdk_Color;
-      TTY_Mode          : Boolean;
-      External_XID      : Guint32)
-   is
-      Builtin_Source  : Builtin.Builtin;
-      External_Source : Socket.Socket;
-      Glide_Editor    : Glide.GEdit;
-      Main            : constant GVD_Main_Window :=
-        Debugger_Process_Tab (Editor.Process).Window;
-
+      Keywords_Color    : Gdk.Color.Gdk_Color) is
    begin
-      Configure (Editor.Asm, Ps_Font_Name, Font_Size, Current_Line_Icon,
-                 Stop_Icon, Strings_Color, Keywords_Color);
+      Configure
+        (Editor.Asm, Ps_Font_Name, Font_Size, Current_Line_Icon,
+         Stop_Icon, Strings_Color, Keywords_Color);
 
       pragma Assert (Editor.Source = null);
-
-      if not Main.Standalone then
-         Glide.Gtk_New (Glide_Editor, Main);
-         Editor.Source := Source_Editor (Glide_Editor);
-
-      elsif External_XID = 0 then
-         Builtin.Gtk_New
-           (Builtin_Source, Editor.Process, TTY_Mode, Ps_Font_Name,
-            Font_Size, Default_Icon, Current_Line_Icon, Stop_Icon,
-            Comments_Color, Strings_Color, Keywords_Color);
-         Editor.Source := Source_Editor (Builtin_Source);
-
-      else
-         Socket.Gtk_New (External_Source, External_XID, TTY_Mode);
-         Editor.Source := Source_Editor (External_Source);
-      end if;
-
+      Editor.Source := Source;
       Attach (Editor.Source, Editor);
    end Configure;
 

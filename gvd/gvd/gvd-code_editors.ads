@@ -114,6 +114,7 @@ package GVD.Code_Editors is
 
    procedure Configure
      (Editor            : access Code_Editor_Record;
+      Source            : GVD.Text_Box.Source_Editor.Source_Editor;
       Ps_Font_Name      : String;
       Font_Size         : Glib.Gint;
       Default_Icon      : Gtkada.Types.Chars_Ptr_Array;
@@ -121,10 +122,9 @@ package GVD.Code_Editors is
       Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
       Comments_Color    : Gdk.Color.Gdk_Color;
       Strings_Color     : Gdk.Color.Gdk_Color;
-      Keywords_Color    : Gdk.Color.Gdk_Color;
-      TTY_Mode          : Boolean;
-      External_XID      : Glib.Guint32);
+      Keywords_Color    : Gdk.Color.Gdk_Color);
    --  Set the various settings of an editor.
+   --  Source is the source editor associated with Editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
    --  source code.
@@ -132,9 +132,6 @@ package GVD.Code_Editors is
    --  each line.
    --  Current_Line_Icon is displayed on the left of the line currently
    --  "active" (using the procedure Set_Line below).
-   --  TTY_Mode is true when GVD has been lauched with TTY emulation.
-   --  External_XID is the X Window ID of the external (e.g Emacs) editor that
-   --  should be used as the source window. Zero means no external editor.
 
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
