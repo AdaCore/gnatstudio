@@ -261,7 +261,7 @@ package body Src_Info.ALI is
    --  is left unconnected to the LI_File_List.
 
    function Locate_Load_And_Scan_ALI
-     (ALI_Filename           : String;
+     (Short_ALI_Filename     : String;
       Project                : Prj.Project_Id;
       Predefined_Object_Path : String) return ALI_Id;
    --  Try to locate ALI_Filename inside the Project object path, then
@@ -270,7 +270,7 @@ package body Src_Info.ALI is
 
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
-      ALI_Filename           : String;
+      Short_ALI_Filename     : String;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String;
@@ -754,6 +754,7 @@ package body Src_Info.ALI is
            (LI => (Handler       => LI_Handler (Handler),
                    Parsed        => False,
                    LI_Filename   => new String'(Base_Name (ALI_Filename)),
+                   LI_Timestamp  => 0,
                    Spec_Info     => null,
                    Body_Info     => null,
                    Separate_Info => null));
@@ -938,6 +939,7 @@ package body Src_Info.ALI is
            (LI => (Handler       => LI_Handler (Handler),
                    Parsed        => False,
                    LI_Filename   => new String'(Base_Name (ALI_Filename)),
+                   LI_Timestamp  => 0,
                    Spec_Info     => null,
                    Body_Info     => null,
                    Separate_Info => null));
@@ -1199,7 +1201,6 @@ package body Src_Info.ALI is
          Project, Source_Path, Sfile);
       New_Dep :=
         (File              => Sfile,
-         File_Timestamp    => To_Timestamp (Dep.Stamp),
          Dep_Info          => (Depends_From_Spec => False,
                                Depends_From_Body => False),
          Declarations      => null);
@@ -1591,6 +1592,7 @@ package body Src_Info.ALI is
                    Handler                  => LI_Handler (Handler),
                    LI_Filename              => new String'
                      (Base_Name (Get_Name_String (New_ALI.Afile))),
+                   LI_Timestamp             => 0,
                    Spec_Info                => null,
                    Body_Info                => null,
                    Separate_Info            => null,
@@ -1621,6 +1623,7 @@ package body Src_Info.ALI is
             Spec_Info                => null,
             Body_Info                => null,
             Separate_Info            => null,
+            LI_Timestamp             => 0,
             Compilation_Errors_Found => New_ALI.Compile_Errors,
             Dependencies_Info        => null);
       end if;
@@ -1653,6 +1656,7 @@ package body Src_Info.ALI is
             Tmp.LI := (Handler                  => LI_Handler (Handler),
                        Parsed                   => False,
                        LI_Filename              => Tmp.LI.LI_Filename,
+                       LI_Timestamp             => Tmp.LI.LI_Timestamp,
                        Spec_Info                => null,
                        Body_Info                => null,
                        Separate_Info            => null);
@@ -1670,30 +1674,54 @@ package body Src_Info.ALI is
    ------------------------------
 
    function Locate_Load_And_Scan_ALI
-     (ALI_Filename           : String;
+     (Short_ALI_Filename     : String;
       Project                : Prj.Project_Id;
       Predefined_Object_Path : String) return ALI_Id
    is
       Current_Dir_Name   : constant Character := '.';
-      Short_ALI_Filename : constant String := Base_Name (ALI_Filename);
       Dir                : String_Access;
       Result             : ALI_Id;
+      Extension : constant String := File_Extension (Short_ALI_Filename);
+      Last      : Integer := Short_ALI_Filename'Last - Extension'Length;
+      Dot_Replacement : constant String :=
+        Get_Name_String (Projects.Table (Project).Naming.Dot_Replacement);
 
    begin
       --  Compute the search path. If the objects path of the project is
       --  not null, then prepend it to the total search path.
+      while Last >= Short_ALI_Filename'First loop
+         if Prj.Env.Ada_Objects_Path (Project) /= null then
+            Dir := Locate_Regular_File
+              (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+               & Extension,
+               Prj.Env.Ada_Objects_Path (Project).all & Path_Separator &
+                 Predefined_Object_Path & Path_Separator & Current_Dir_Name);
 
-      if  Prj.Env.Ada_Objects_Path (Project) /= null then
-         Dir := Locate_Regular_File
-           (Short_ALI_Filename,
-            Prj.Env.Ada_Objects_Path (Project).all & Path_Separator &
-            Predefined_Object_Path & Path_Separator & Current_Dir_Name);
+         else
+            Dir := Locate_Regular_File
+              (Short_ALI_Filename (Short_ALI_Filename'First .. Last)
+               & Extension,
+               Predefined_Object_Path & Path_Separator & Current_Dir_Name);
+         end if;
 
-      else
-         Dir := Locate_Regular_File
-           (Short_ALI_Filename,
-            Predefined_Object_Path & Path_Separator & Current_Dir_Name);
-      end if;
+         exit when Dir /= null;
+
+         --  Search the next candidate: it might be the parent if we have a
+         --  separate unit.
+         while Last > Short_ALI_Filename'First loop
+            Last := Last - 1;
+            exit when
+              (Last + Dot_Replacement'Length - 1 <= Short_ALI_Filename'Last
+               and then Short_ALI_Filename
+                 (Last .. Last + Dot_Replacement'Length - 1) = Dot_Replacement)
+
+               --  Special case when there might be a confusion with the GNAT
+               --  runtime files.
+              or else (Dot_Replacement = "-"
+                       and then Short_ALI_Filename (Last) = '~');
+         end loop;
+         Last := Last - 1;
+      end loop;
 
       --  Abort if we did not find the ALI file.
 
@@ -1701,6 +1729,10 @@ package body Src_Info.ALI is
          Trace (Me, "Could not locate ALI file: " & Short_ALI_Filename);
          return No_ALI_Id;
       end if;
+
+      --  ??? Should check that the ALI file we have found indeed matches the
+      --  unit name we were looking for (since we were looking for the parent
+      --  ALI file possibly)
 
       --  Scan the ALI file and return the result. Add a trace if we failed
       --  to scan it.
@@ -1722,7 +1754,7 @@ package body Src_Info.ALI is
 
    procedure Parse_ALI_File
      (Handler                : ALI_Handler;
-      ALI_Filename           : String;
+      Short_ALI_Filename     : String;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String;
@@ -1730,22 +1762,25 @@ package body Src_Info.ALI is
       Unit                   : out LI_File_Ptr;
       Success                : out Boolean)
    is
-      New_ALI_Id    : constant ALI_Id :=
-        Locate_Load_And_Scan_ALI
-          (ALI_Filename, Project, Predefined_Object_Path);
+      New_ALI_Id    : constant ALI_Id := Locate_Load_And_Scan_ALI
+        (Short_ALI_Filename, Project, Predefined_Object_Path);
 
    begin
       if New_ALI_Id = No_ALI_Id then
          Unit    := null;
          Success := False;
-         Trace (Me, "Parse_ALI_File: couldn't locate and load file");
+         Trace (Me, "Parse_ALI_File: couldn't locate and load file "
+                & Short_ALI_Filename);
          return;
       end if;
 
+      Trace (Me, "Parse_ALI_File: parsing " & Short_ALI_Filename);
       Create_New_ALI
         (Handler, Unit, ALIs.Table (New_ALI_Id), Project,
          Predefined_Source_Path, List);
       Success := True;
+      Unit.LI.LI_Timestamp := To_Timestamp
+        (File_Time_Stamp (Unit.LI.LI_Filename.all));
 
    exception
       when ALI_Internal_Error =>
@@ -1989,28 +2024,76 @@ package body Src_Info.ALI is
       Predefined_Source_Path : String;
       Predefined_Object_Path : String)
    is
-      Success  : Boolean;
+      Success : Boolean := True;
+      F       : File_Info_Ptr_List;
    begin
-      if File = No_LI_File or else Is_Incomplete (File) then
+      if File = No_LI_File then
          declare
             Ali_File : constant String := LI_Filename_From_Source
               (Handler, Source_Filename, Project, Predefined_Source_Path);
-            Full_File : constant String := Find_File
-              (Ali_File,
-               Ada_Objects_Path (Project).all,
-               Predefined_Object_Path);
-
          begin
             Parse_ALI_File
-              (ALI_Handler (Handler), Full_File, Project,
+              (ALI_Handler (Handler), Ali_File, Project,
                Predefined_Source_Path, Predefined_Object_Path,
                List, File, Success);
 
             if not Success then
-               Trace (Me, "Couldn't parse LI file " & Full_File);
+               Trace (Me, "Couldn't parse LI file " & Ali_File);
                File := No_LI_File;
             end if;
          end;
+
+      else
+         declare
+            Full_File : constant String := Find_File
+              (File.LI.LI_Filename.all, Ada_Objects_Path (Project).all,
+               Predefined_Object_Path);
+         begin
+            if Is_Incomplete (File)
+              or else To_Timestamp (File_Time_Stamp (Full_File)) >
+              File.LI.LI_Timestamp
+            then
+               Parse_ALI_File
+                 (ALI_Handler (Handler), File.LI.LI_Filename.all, Project,
+                  Predefined_Source_Path, Predefined_Object_Path,
+                  List, File, Success);
+
+               if not Success then
+                  Trace (Me, "Couldn't parse LI file " & Full_File);
+                  File := No_LI_File;
+               end if;
+            end if;
+         end;
+      end if;
+
+      --  Make sure that the LI file we just parsed does contain the
+      --  information for the initial source file name. Since for separate
+      --  units we might have been looking for the parent ALI file (see
+      --  Locate_Load_And_Scan_ALI), we now have to make sure we found the
+      --  correct LI file.
+
+      if File /= No_LI_File then
+         if (File.LI.Spec_Info /= null
+             and then File.LI.Spec_Info.Source_Filename.all = Source_Filename)
+           or else (File.LI.Body_Info /= null
+             and then File.LI.Body_Info.Source_Filename.all = Source_Filename)
+         then
+            return;
+         end if;
+
+         F := File.LI.Separate_Info;
+         while F /= null loop
+            if F.Value /= null
+              and then F.Value.Source_Filename.all = Source_Filename
+            then
+               return;
+            end if;
+            F := F.Next;
+         end loop;
+
+         Trace (Me, "Parsed LI file didn't contain the info for "
+                  & Source_Filename);
+         File := No_LI_File;
       end if;
    end Create_Or_Complete_LI;
 
