@@ -18,24 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;             use Glib;
-with Gdk.Window;       use Gdk.Window;
 with Gtk; use Gtk;
 with Gtk.Adjustment;   use Gtk.Adjustment;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Enums;        use Gtk.Enums;
 with Odd_Intl; use Odd_Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
-with Gdk.Color;        use Gdk.Color;
-with Gdk.Pixmap;       use Gdk.Pixmap;
-with Pixmaps_IDE;      use Pixmaps_IDE;
 with Gtkada.Handlers;  use Gtkada.Handlers;
-with Gtk.Style;        use Gtk.Style;
-with GVD.Code_Editors; use GVD.Code_Editors;
-with String_Utils;     use String_Utils;
-with Gdk.Color;        use Gdk.Color;
-with Gtk.List;         use Gtk.List;
-with GVD.Utils;        use GVD.Utils;
 
 package body Breakpoints_Pkg is
 
@@ -548,95 +537,6 @@ begin
      (Breakpoints.Ok_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Ok_Bp_Clicked'Access), Breakpoints);
    Add (Breakpoints.Hbuttonbox4, Breakpoints.Ok_Button);
-
-   Realize (Breakpoints);
-   Create_From_Xpm_D
-     (Breakpoints.Enabled_Pixmap,
-      Get_Window (Breakpoints),
-      Breakpoints.Enabled_Mask,
-      White (Get_System),
-      break_xpm);
-
-   --  Grey background when the combo boxes are insensitive
-   declare
-      Style : Gtk_Style;
-   begin
-      Gtk_New (Style);
-      Set_Base
-        (Style, State_Insensitive,
-         Gdk_Color'(Get_Background (Get_Style (Breakpoints), State_Normal)));
-      Set_Style (Get_Entry (Breakpoints.File_Combo), Style);
-      Set_Style (Get_Entry (Breakpoints.Address_Combo), Style);
-      Set_Style (Get_Entry (Breakpoints.Subprogram_Combo), Style);
-      Set_Style (Get_Entry (Breakpoints.Regexp_Combo), Style);
-   end;
-
-   --  Return in the combo boxes should activate them
-
-   Disable_Activate (Breakpoints.File_Combo);
-   Widget_Callback.Object_Connect
-     (Get_Entry (Breakpoints.File_Combo), "activate",
-      Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-      Breakpoints);
-   Disable_Activate (Breakpoints.Address_Combo);
-   Widget_Callback.Object_Connect
-     (Get_Entry (Breakpoints.Address_Combo), "activate",
-      Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-      Breakpoints);
-   Disable_Activate (Breakpoints.Subprogram_Combo);
-   Widget_Callback.Object_Connect
-     (Get_Entry (Breakpoints.Subprogram_Combo), "activate",
-      Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-      Breakpoints);
-   Disable_Activate (Breakpoints.Regexp_Combo);
-   Widget_Callback.Object_Connect
-     (Get_Entry (Breakpoints.Regexp_Combo), "activate",
-      Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access),
-      Breakpoints);
-
-   --  ??? Temporary
-   Set_Sensitive (Breakpoints.Hbox3, False);
 end Initialize;
-
-procedure Breakpoint_Editor
-  (Editor     : in out Breakpoints_Access;
-   Process    : access GVD.Process.Debugger_Process_Tab_Record'Class)
-is
-begin
-   if Editor = null then
-      Gtk_New (Editor);
-   end if;
-
-   Set_Page (Editor.Notebook1, 0);
-   Set_Process (Editor, Process);
-
-   Gdk_Raise (Get_Window (Editor));
-   Show_All (Editor);
-end Breakpoint_Editor;
-
------------------
--- Set_Process --
------------------
-
-procedure Set_Process
-  (Editor  : access Breakpoints_Record;
-   Process : access GVD.Process.Debugger_Process_Tab_Record'Class) is
-begin
-   Editor.Process := GVD.Process.Debugger_Process_Tab (Process);
-   Update_Breakpoint_List (Editor);
-
-   --  Reinitialize the contents of the file combo boxes
-   Set_Text
-     (Get_Entry (Editor.File_Combo),
-      Base_File_Name (Get_Current_File (Process.Editor_Text)));
-
-   --  Clear the contents of the exceptions combo (its contents is in fact
-   --  cached in gdb, so it is fast enough to call "info exceptions" again)
-   Clear_Items (Get_List (Editor.Exception_Name), 0, -1);
-   Add_Unique_Combo_Entry
-     (Editor.Exception_Name, -"All exceptions");
-   Add_Unique_Combo_Entry
-     (Editor.Exception_Name, -"All assertions");
-end Set_Process;
 
 end Breakpoints_Pkg;

@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Pixmap;
-with Gdk.Bitmap;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -38,19 +36,9 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with GVD.Process;
-with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
 package Breakpoints_Pkg is
 
    type Breakpoints_Record is new Gtk_Window_Record with record
-      -----------------------
-      -- Additional fields --
-      -----------------------
-
-      Advanced_Breakpoints_Location    : Advanced_Breakpoint_Access;
-      Advanced_Breakpoints_Watchpoints : Advanced_Breakpoint_Access;
-      Advanced_Breakpoints_Exceptions  : Advanced_Breakpoint_Access;
-
       Main_Box : Gtk_Hbox;
       Vbox1 : Gtk_Vbox;
       Notebook1 : Gtk_Notebook;
@@ -128,32 +116,8 @@ package Breakpoints_Pkg is
       View : Gtk_Button;
       Hbuttonbox4 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
-
-      Process        : GVD.Process.Debugger_Process_Tab;
-      Enabled_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Enabled_Mask   : Gdk.Bitmap.Gdk_Bitmap;
    end record;
    type Breakpoints_Access is access all Breakpoints_Record'Class;
-
-   procedure Breakpoint_Editor
-     (Editor     : in out Breakpoints_Access;
-      Process    : access GVD.Process.Debugger_Process_Tab_Record'Class);
-   --  Open a breakpoint editor and launch a main loop until the ok or cancel
-   --  button has been pressed.
-   --  Editor if null is set to the created window, that is hidden on return.
-   --  If non null, Breakpoint_Editor will show it instead of creating a new
-   --  one.
-   --  Return the breakpoint descriptor.
-   --  Note that this is your responsibility to free the memory associated with
-   --  Descriptor, using Free below.
-
-   procedure Set_Process
-     (Editor  : access Breakpoints_Record;
-      Process : access GVD.Process.Debugger_Process_Tab_Record'Class);
-   --  Change the process on which the dialogs applies.
-   --  The list of breakpoints is automatically updated for the new process.
-
-private
 
    procedure Gtk_New (Breakpoints : out Breakpoints_Access);
    procedure Initialize (Breakpoints : access Breakpoints_Record'Class);
