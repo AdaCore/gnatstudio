@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -226,9 +226,11 @@ package body GVD.Text_Box.Source_Editor.Glide is
             Editor.Debugger_Current_File := File_Name;
          end if;
 
-         Open_File_Editor
-           (Kernel, File_Name, New_File => False,
-            Enable_Navigation => False);
+         if File_Name /= VFS.No_File then
+            Open_File_Editor
+              (Kernel, File_Name, New_File => False,
+               Enable_Navigation           => False);
+         end if;
       end if;
    end Load_File;
 
@@ -264,12 +266,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Tab     : constant Visual_Debugger := Visual_Debugger (Process);
 
       Prev_Current_Line : constant Integer := Get_Current_Source_Line (Tab);
-      Prev_File       : constant Virtual_File := Get_Current_Source_File (Tab);
-   begin
-      if Editor.Current_File = VFS.No_File then
-         return;
-      end if;
+      Prev_File         : constant Virtual_File :=
+        Get_Current_Source_File (Tab);
 
+   begin
       if Set_Current
         and then Prev_Current_Line /= 0
       then
@@ -283,6 +283,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
                  (Text  => null,
                   Image => Gdk.Pixbuf.Null_Pixbuf,
                   Associated_Command => null)));
+      end if;
+
+      if Editor.Current_File = VFS.No_File then
+         return;
       end if;
 
       Editor.Line := Line;
