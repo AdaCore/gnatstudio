@@ -1461,6 +1461,8 @@ package body Codefix.Errors_Parser is
          Get_Message (Message)
            (Matches (1).First .. Matches (1).Last));
 
+      Free (Cursor_List);
+
       if Length (Solutions) = 0 then
          raise Uncorrectable_Message;
       end if;
