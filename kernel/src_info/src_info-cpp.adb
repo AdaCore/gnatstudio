@@ -67,6 +67,7 @@ package body Src_Info.CPP is
    -- Global_CPP_Handler --
    ------------------------
 
+   --  ??? Should reuse the one registered in the GPS kernel...
    Global_CPP_Handler : constant CPP_LI_Handler :=
      new CPP_LI_Handler_Record;
 
@@ -870,6 +871,8 @@ package body Src_Info.CPP is
                Location           => CL_Tab.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -1146,6 +1149,8 @@ package body Src_Info.CPP is
                Location           => Class_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -1174,6 +1179,8 @@ package body Src_Info.CPP is
                Location           => Class_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -1299,7 +1306,9 @@ package body Src_Info.CPP is
                     Name_As_Directory (Env.DB_Dir.all)
                     & Xref_Filename_For (Var.Buffer
                       (Var.File_Name.First .. Var.File_Name.Last),
-                       Env.DB_Dir.all, Env.Xrefs).all,
+                    Env.DB_Dir.all, Env.Xrefs).all,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -1325,10 +1334,9 @@ package body Src_Info.CPP is
                       (Var.File_Name.First .. Var.File_Name.Last),
                        Env.DB_Dir.all, Env.Xrefs).all,
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Xref_Filename_For
-                    (Desc.Parent_Filename.all,
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
+                  Parent_Filename   => Desc.Parent_Filename.all,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -1423,6 +1431,8 @@ package body Src_Info.CPP is
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Type,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -1450,6 +1460,8 @@ package body Src_Info.CPP is
                Location           => Enum_Def.Start_Position,
                Kind               => Enumeration_Type,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -1509,6 +1521,8 @@ package body Src_Info.CPP is
                Location          => Enum_Const.Start_Position,
                Kind              => Enumeration_Literal,
                Scope             => Global_Scope,
+               DB_Directory      => Env.DB_Dir.all,
+               Xrefs             => Env.Xrefs,
                Declaration_Info  => Decl_Info);
          end if;
 
@@ -1540,6 +1554,8 @@ package body Src_Info.CPP is
                  Xref_Filename_For (Enum_Const.Buffer
                     (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
                      Env.DB_Dir.all, Env.Xrefs).all,
+               DB_Directory      => Env.DB_Dir.all,
+               Xrefs             => Env.Xrefs,
                Declaration_Info  => Decl_Info);
          end if;
       end if;
@@ -1726,6 +1742,8 @@ package body Src_Info.CPP is
                   Location           => Ref.Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
+                  DB_Directory       => Env.DB_Dir.all,
+                  Xrefs              => Env.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
          else
@@ -1759,6 +1777,8 @@ package body Src_Info.CPP is
                     (Buffer (Filename.First .. Filename.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
+                  DB_Directory       => Env.DB_Dir.all,
+                  Xrefs              => Env.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
          end if;
@@ -1909,6 +1929,8 @@ package body Src_Info.CPP is
                        (Var.File_Name.First .. Var.File_Name.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -1935,10 +1957,9 @@ package body Src_Info.CPP is
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
                   Parent_Location   => Desc.Parent_Point,
-                  Parent_Filename   => Xref_Filename_For
-                    (Desc.Parent_Filename.all,
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
+                  Parent_Filename   => Desc.Parent_Filename.all,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -2014,6 +2035,8 @@ package body Src_Info.CPP is
                Location           => Macro.Start_Position,
                Kind               => Unresolved_Entity,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -2050,6 +2073,8 @@ package body Src_Info.CPP is
                     (Macro.File_Name.First .. Macro.File_Name.Last),
                   Env.DB_Dir.all,
                   Env.Xrefs).all,
+               DB_Directory      => Env.DB_Dir.all,
+               Xrefs             => Env.Xrefs,
                Declaration_Info  => Decl_Info);
          end if;
       end if;
@@ -2274,6 +2299,8 @@ package body Src_Info.CPP is
                   Location           => Ref.Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
+                  DB_Directory       => Env.DB_Dir.all,
+                  Xrefs              => Env.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
 
@@ -2318,6 +2345,8 @@ package body Src_Info.CPP is
                     (Filename_Buf (Filename.First .. Filename.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
+                  DB_Directory       => Env.DB_Dir.all,
+                  Xrefs              => Env.Xrefs,
                   Declaration_Info   => Decl_Info);
             end if;
          end if;
@@ -2451,6 +2480,8 @@ package body Src_Info.CPP is
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builin type
@@ -2470,6 +2501,8 @@ package body Src_Info.CPP is
                   Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                --  parent type found
@@ -2487,12 +2520,11 @@ package body Src_Info.CPP is
                     (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
-                  Parent_Filename   => Xref_Filename_For
-                    (Desc.Ancestor_Filename.all,
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
+                  Parent_Filename   => Desc.Ancestor_Filename.all,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
          end if;
@@ -2546,6 +2578,8 @@ package body Src_Info.CPP is
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builtin type
@@ -2572,6 +2606,8 @@ package body Src_Info.CPP is
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             else
                --  parent type found
@@ -2587,10 +2623,7 @@ package body Src_Info.CPP is
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
                   Parent_Location   => Desc.Ancestor_Point,
-                  Parent_Filename   => Xref_Filename_For
-                    (Desc.Ancestor_Filename.all,
-                     Env.DB_Dir.all,
-                     Env.Xrefs).all,
+                  Parent_Filename   => Desc.Ancestor_Filename.all,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
                   Referred_Filename => Typedef.Buffer
@@ -2602,6 +2635,8 @@ package body Src_Info.CPP is
                        (Typedef.File_Name.First .. Typedef.File_Name.Last),
                      Env.DB_Dir.all,
                      Env.Xrefs).all,
+                  DB_Directory      => Env.DB_Dir.all,
+                  Xrefs             => Env.Xrefs,
                   Declaration_Info  => Decl_Info);
             end if;
          end if;
@@ -2690,6 +2725,8 @@ package body Src_Info.CPP is
                Location           => Union_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -2718,6 +2755,8 @@ package body Src_Info.CPP is
                Location           => Union_Def.Start_Position,
                Kind               => Record_Type,
                Scope              => Global_Scope,
+               DB_Directory       => Env.DB_Dir.all,
+               Xrefs              => Env.Xrefs,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -2787,6 +2826,8 @@ package body Src_Info.CPP is
          Kind                  => Record_Type,
          Scope                 => Global_Scope,
          End_Of_Scope_Location => Class_Def.End_Position,
+         DB_Directory          => Env.DB_Dir.all,
+         Xrefs                 => Env.Xrefs,
          Declaration_Info      => Decl_Info);
 
       --  Adjust EOS reference kind
@@ -2818,13 +2859,13 @@ package body Src_Info.CPP is
          if Success then -- if found, add it to parent list
             Add_Parent
               (Decl_Info,
-               Env.List_Of_Files,
-               Xref_Filename_For
-                  (Super_Def.Buffer
-                     (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
-                      Env.DB_Dir.all,
-                      Env.Xrefs).all,
-               Super_Def.Start_Position);
+               Handler => LI_Handler (Global_CPP_Handler),
+               DB_Directory => Env.DB_Dir.all,
+               Xrefs => Env.Xrefs,
+               List => Env.List_Of_Files,
+               Parent_Filename => Super_Def.Buffer
+                 (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
+               Parent_Location => Super_Def.Start_Position);
             Free (Super_Desc);
             Free (Super_Def);
          end if;
@@ -2903,6 +2944,8 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs,
             Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
@@ -2922,8 +2965,9 @@ package body Src_Info.CPP is
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Xref_Filename_For
-                  (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
+            Parent_Filename   => Desc.Parent_Filename.all,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs,
             Declaration_Info  => Decl_Info);
 
             --  add reference to the type of this variable
@@ -3005,8 +3049,9 @@ package body Src_Info.CPP is
          Location          => Sym.Start_Position,
          Kind              => Enumeration_Type,
          Scope             => Global_Scope,
+         DB_Directory      => Env.DB_Dir.all,
+         Xrefs             => Env.Xrefs,
          Declaration_Info  => Decl_Info);
-
    end Sym_E_Handler;
 
    --------------------
@@ -3062,9 +3107,10 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Xref_Filename_For
-               (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
+            Parent_Filename   => Desc.Parent_Filename.all,
             Scope             => Global_Scope,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs,
             Declaration_Info  => Decl_Info);
       else
          Fail ("could not find enum for '" & Ec_Id & "'");
@@ -3082,6 +3128,8 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Enumeration_Literal,
             Scope             => Global_Scope,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs,
             Declaration_Info  => Decl_Info);
       end if;
 
@@ -3183,6 +3231,8 @@ package body Src_Info.CPP is
          Location          => First_FD_Pos,
          Kind              => Target_Kind,
          Scope             => Global_Scope,
+         DB_Directory      => Env.DB_Dir.all,
+         Xrefs             => Env.Xrefs,
          Declaration_Info  => Decl_Info);
 
       --  for all subsequent declarations, add reference to the first decl
@@ -3382,6 +3432,8 @@ package body Src_Info.CPP is
             Kind                  => Target_Kind,
             Scope                 => Global_Scope,
             End_Of_Scope_Location => End_Position,
+            DB_Directory          => Env.DB_Dir.all,
+            Xrefs                 => Env.Xrefs,
             Declaration_Info      => Decl_Info);
       else
          Set_End_Of_Scope (Decl_Info, End_Position);
@@ -3524,6 +3576,8 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs,
             Declaration_Info  => Decl_Info);
       else
          Insert_Declaration
@@ -3543,8 +3597,9 @@ package body Src_Info.CPP is
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Xref_Filename_For
-               (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
+            Parent_Filename   => Desc.Parent_Filename.all,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs,
             Declaration_Info  => Decl_Info);
 
          --  add reference to the type of this variable
@@ -3671,7 +3726,9 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
-            Declaration_Info  => Decl_Info);
+            Declaration_Info  => Decl_Info,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs);
       else
          Insert_Declaration
            (Handler           => LI_Handler (Global_CPP_Handler),
@@ -3689,8 +3746,9 @@ package body Src_Info.CPP is
             Kind              => Desc.Kind,
             Scope             => Local_Scope,
             Parent_Location   => Desc.Parent_Point,
-            Parent_Filename   => Xref_Filename_For
-                  (Desc.Parent_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
+            Parent_Filename   => Desc.Parent_Filename.all,
+            DB_Directory      => Env.DB_Dir.all,
+            Xrefs             => Env.Xrefs,
             Declaration_Info  => Decl_Info);
 
             --  add reference to the type of this field
@@ -3739,6 +3797,8 @@ package body Src_Info.CPP is
          Location          => Sym.Start_Position,
          Kind              => Unresolved_Entity,
          Scope             => Global_Scope,
+         DB_Directory      => Env.DB_Dir.all,
+         Xrefs             => Env.Xrefs,
          Declaration_Info  => tmp_ptr);
    end Sym_MA_Handler;
 
@@ -3869,6 +3929,8 @@ package body Src_Info.CPP is
          Location          => First_MD_Pos,
          Kind              => Target_Kind,
          Scope             => Global_Scope,
+         DB_Directory      => Env.DB_Dir.all,
+         Xrefs             => Env.Xrefs,
          Declaration_Info  => Decl_Info);
 
       --  for all subsequent declarations, add reference to the first decl
@@ -3936,6 +3998,8 @@ package body Src_Info.CPP is
                Location          => Sym.Start_Position,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
+               DB_Directory      => Env.DB_Dir.all,
+               Xrefs             => Env.Xrefs,
                Declaration_Info  => Decl_Info);
 
          elsif Desc.Ancestor_Point = Predefined_Point then
@@ -3958,6 +4022,8 @@ package body Src_Info.CPP is
                Parent_Location   => Predefined_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
+               DB_Directory      => Env.DB_Dir.all,
+               Xrefs             => Env.Xrefs,
                Declaration_Info  => Decl_Info);
 
          else
@@ -3974,20 +4040,19 @@ package body Src_Info.CPP is
                Source_Filename   =>
                  Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Location          => Sym.Start_Position,
-               Parent_Filename   => Xref_Filename_For
-                  (Desc.Ancestor_Filename.all, Env.DB_Dir.all, Env.Xrefs).all,
+               Parent_Filename   => Desc.Ancestor_Filename.all,
                Parent_Location   => Desc.Ancestor_Point,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
+               DB_Directory      => Env.DB_Dir.all,
+               Xrefs             => Env.Xrefs,
                Declaration_Info  => Decl_Info);
 
          end if;
 
       else
-
          --  could not get E_Kind for the original type
          Fail ("unable to find type for typedef " & Identifier);
-
       end if;
 
       Free (Desc);
@@ -4035,6 +4100,8 @@ package body Src_Info.CPP is
             Kind                  => Record_Type,
             Scope                 => Global_Scope,
             End_Of_Scope_Location => Union_Def.End_Position,
+            DB_Directory          => Env.DB_Dir.all,
+            Xrefs                 => Env.Xrefs,
             Declaration_Info      => Decl_Info);
 
          Insert_Reference
