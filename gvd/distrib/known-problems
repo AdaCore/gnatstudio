@@ -1,5 +1,12 @@
 Known Problems in GVD 1.0.1
 
+- Highligthing misspelled in the Preferences dialog
+  Problem:
+     Color Highlighting is mispelled in the preferences dialog.
+  Workaround:
+     None, this is a minor inconvenience with no consequences.
+  Status: Fixed in GVD 1.0.2
+
 - Command line arguments --version and --help do not work under Windows.
   Problem:
      When using the --version or --help command line option under windows
