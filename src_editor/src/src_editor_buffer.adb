@@ -22,8 +22,8 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with GNAT.Regpat;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
 
@@ -66,7 +66,6 @@ with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Casing_Exceptions;         use Casing_Exceptions;
-with Case_Handling;             use Case_Handling;
 
 with Pango.Font;                use Pango.Font;
 
@@ -267,20 +266,6 @@ package body Src_Editor_Buffer is
      (Hook   : Preferences_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
-
-   type Word_Added_Hook_Record is new Hook_Args_Record with record
-      Buffer : Source_Buffer;
-   end record;
-   type Word_Added_Hook is access all Word_Added_Hook_Record'Class;
-   --  Note that this record contains the Buffer object even if it is also
-   --  possible to get it via the kernel object. This is to achieve better
-   --  performance.
-
-   procedure Execute
-     (Hook   : Word_Added_Hook_Record;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class);
-   --  Called when a word has been added
 
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever the cursor moves
@@ -2164,7 +2149,6 @@ package body Src_Editor_Buffer is
       Tags    : Gtk_Text_Tag_Table;
       Command : Check_Modified_State;
       P_Hook  : Preferences_Hook;
-      W_Hook  : Word_Added_Hook;
    begin
       Gtk.Text_Buffer.Initialize (Buffer);
 
@@ -2187,12 +2171,6 @@ package body Src_Editor_Buffer is
       Add_Hook
         (Kernel, Preferences_Changed_Hook, P_Hook, Watch => GObject (Buffer));
       Execute (P_Hook.all, Kernel);
-
-      W_Hook := new Word_Added_Hook_Record'
-        (Hook_Args_Record with Buffer => Source_Buffer (Buffer));
-      Add_Hook
-        (Kernel, Hooks.Word_Added_Hook,
-         W_Hook, Watch => GObject (Source_Buffer (Buffer)));
 
       for Entity_Kind in Standout_Language_Entity'Range loop
          Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
@@ -2260,6 +2238,45 @@ package body Src_Editor_Buffer is
       Buffer.Buffer_Line_Info_Columns   := new Line_Info_Display_Array_Access'
         (null);
    end Initialize;
+
+   -------------------
+   -- Is_In_Comment --
+   -------------------
+
+   function Is_In_Comment
+     (Buffer : Source_Buffer;
+      Iter   : Gtk_Text_Iter)
+      return Boolean
+   is
+      Lang         : constant Language_Access := Buffer.Lang;
+      Lang_Context : constant Language_Context_Access :=
+                       Get_Language_Context (Lang);
+      Line         : Editable_Line_Type;
+      Column       : Positive;
+   begin
+      --  ??? We do not support all languages here. It needs to be expanded to
+      --  have a proper support in every context.
+      Traces.Assert
+        (Me,
+         not Lang_Context.Case_Sensitive
+         and then
+           (Lang_Context.Comment_Start_Length = 0
+            or else Lang_Context.Comment_Start_Length = 0
+            or else Lang_Context.New_Line_Comment_Start /= null),
+         "Is_In_Comment not supported for multi-line comments");
+
+      Get_Cursor_Position (Buffer, Iter, Line, Column);
+
+      declare
+         S_Line : constant String :=
+                    Get_Text (Buffer, Line, 1, Line, Column);
+      begin
+         --  We really need to get the full line here as New_Line_Comment_Start
+         --  is a regular expression.
+         return GNAT.Regpat.Match
+           (Lang_Context.New_Line_Comment_Start.all, S_Line);
+      end;
+   end Is_In_Comment;
 
    -------------
    -- Execute --
@@ -2340,104 +2357,6 @@ package body Src_Editor_Buffer is
       B.Auto_Syntax_Check    := Get_Pref (Kernel, Automatic_Syntax_Check);
       B.Highlight_Delimiters := Get_Pref (Kernel, Highlight_Delimiters);
       B.Tab_Width            := Get_Pref (Kernel, Tab_Width);
-   end Execute;
-
-   procedure Execute
-     (Hook   : Word_Added_Hook_Record;
-      Kernel : access Kernel_Handle_Record'Class;
-      Data   : Hooks_Data'Class)
-   is
-      use Ada.Strings;
-      pragma Unreferenced (Data);
-
-      procedure Replace_Text
-        (Ln, F, L : Natural;
-         Replace  : String);
-      --  Replace text callback. Note that we do not use Ln, F, L here as
-      --  these are values from the parsed buffer which is a single word here.
-      --  We use insted the Line, First and Last variable below which represent
-      --  the real word position on the line.
-
-      Buffer  : constant Source_Buffer := Hook.Buffer;
-      Context : constant File_Selection_Context_Access :=
-                  File_Selection_Context_Access (Get_Current_Context (Kernel));
-      Lang    : constant Language_Access := Buffer.Lang;
-      Line    : Editable_Line_Type;
-      Column  : Positive;
-      First   : Natural;
-      Last    : Natural;
-
-      ------------------
-      -- Replace_Text --
-      ------------------
-
-      procedure Replace_Text
-        (Ln, F, L : Natural;
-         Replace  : String)
-      is
-         pragma Unreferenced (Ln, F, L);
-      begin
-         if Replace'Length > 0 then
-            Replace_Slice
-              (Buffer, Replace, Line, First,
-               Before => 0, After => Replace'Length);
-         end if;
-      end Replace_Text;
-
-   begin
-      if Lang = null
-        or else Get_Language_Context (Lang).Case_Sensitive
-        or else (Has_File_Information (Context)
-                 and then File_Information (Context) /= Buffer.Filename)
-      then
-         --  No language information or the language is case sensitive, in
-         --  those case there is nothing to do. We also make sure we run
-         --  this hook on the current edited buffer only.
-         return;
-      end if;
-
-      Get_Cursor_Position (Buffer, Line, Column);
-
-      declare
-         S_Line : constant String :=
-                    Get_Text (Buffer, Line, 1, Line, Column);
-      begin
-         if S_Line'Length = 0 then
-            --  Nothing to do, return now
-            return;
-         end if;
-
-         First := Index
-           (S_Line, Word_Character_Set (Lang),
-            Test => Outside, Going => Backward);
-         Last  := S_Line'Last;
-
-         if First = 0 then
-            First := S_Line'First;
-         else
-            First := First + 1;
-         end if;
-
-         if First <= Last then
-            --  We have a word, set casing
-            declare
-               Indent_Params : Indent_Parameters;
-               Indent_Kind   : Indentation_Kind;
-               C             : constant Case_Handling.Casing_Exceptions :=
-                                 Get_Case_Exceptions;
-            begin
-               Get_Indentation_Parameters
-                 (Lang, Indent_Params, Indent_Kind);
-
-               Format_Buffer
-                 (Lang,
-                  S_Line (First .. Last),
-                  Replace         => Replace_Text'Unrestricted_Access,
-                  Indent_Params   => Indent_Params,
-                  Case_Exceptions => C);
-            end;
-         end if;
-      end;
    end Execute;
 
    ---------------
@@ -2632,17 +2551,21 @@ package body Src_Editor_Buffer is
       Internal : Boolean;
       Success  : out Boolean)
    is
-      FD              : Writable_File;
-      Terminator      : Line_Terminator_Style := Buffer.Line_Terminator;
-      Buffer_Line     : Buffer_Line_Type;
-      Force_Write     : Boolean := False;
+      FD          : Writable_File;
+      Terminator  : Line_Terminator_Style := Buffer.Line_Terminator;
+      Buffer_Line : Buffer_Line_Type;
+      Force_Write : Boolean := False;
       --  Whether the file mode has been forced to writable.
 
       procedure New_Line (FD : in out Writable_File);
       --  Write a new line on FD.
 
+      --------------
+      -- New_Line --
+      --------------
+
       procedure New_Line (FD : in out Writable_File) is
-         NL            : aliased constant String := ASCII.CR & ASCII.LF;
+         NL : aliased constant String := ASCII.CR & ASCII.LF;
       begin
          case Terminator is
             when CR_LF        => Write (FD, NL (1 .. 2));
@@ -2936,9 +2859,9 @@ package body Src_Editor_Buffer is
    -------------------------
 
    procedure Set_Cursor_Position
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint)
+     (Buffer : access Source_Buffer_Record;
+      Line   : Gint;
+      Column : Gint)
    is
       Iter : Gtk_Text_Iter;
    begin
@@ -2959,9 +2882,9 @@ package body Src_Editor_Buffer is
    end Set_Cursor_Position;
 
    procedure Set_Cursor_Position
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Editable_Line_Type;
-      Column  : Natural)
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Natural)
    is
       Buffer_Line : Buffer_Line_Type :=
         Get_Buffer_Line (Buffer, Line);
@@ -3098,19 +3021,13 @@ package body Src_Editor_Buffer is
       Column := Get_Line_Offset (Iter);
    end Get_Cursor_Position;
 
-   -------------------------
-   -- Get_Cursor_Position --
-   -------------------------
-
    procedure Get_Cursor_Position
-     (Buffer : access Source_Buffer_Record;
+     (Buffer : Source_Buffer;
+      Iter   : Gtk_Text_Iter;
       Line   : out Editable_Line_Type;
-      Column : out Positive)
-   is
-      Iter : Gtk_Text_Iter;
+      Column : out Positive) is
    begin
-      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
-      Line   := Get_Editable_Line
+      Line := Get_Editable_Line
         (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
 
       --  Default the Line to 1.
@@ -3122,6 +3039,24 @@ package body Src_Editor_Buffer is
       Column := Positive (Get_Line_Offset (Iter) + 1);
    end Get_Cursor_Position;
 
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter) is
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+   end Get_Cursor_Position;
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : out Editable_Line_Type;
+      Column : out Positive)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Cursor_Position (Buffer, Iter);
+      Get_Cursor_Position (Source_Buffer (Buffer), Iter, Line, Column);
+   end Get_Cursor_Position;
+
    -------------------------
    -- Select_Current_Word --
    -------------------------
@@ -3129,6 +3064,10 @@ package body Src_Editor_Buffer is
    procedure Select_Current_Word (Buffer : access Source_Buffer_Record) is
       function Ends_Word (Iter : Gtk_Text_Iter) return Boolean;
       function Starts_Word (Iter : Gtk_Text_Iter) return Boolean;
+
+      ---------------
+      -- Ends_Word --
+      ---------------
 
       function Ends_Word (Iter : Gtk_Text_Iter) return Boolean is
          Next : Gtk_Text_Iter;
@@ -3150,6 +3089,10 @@ package body Src_Editor_Buffer is
             return True;
          end if;
       end Ends_Word;
+
+      -----------------
+      -- Starts_Word --
+      -----------------
 
       function Starts_Word (Iter : Gtk_Text_Iter) return Boolean is
          Prev : Gtk_Text_Iter;
@@ -4004,8 +3947,7 @@ package body Src_Editor_Buffer is
 
    function Get_Total_Ref_Count
      (Buffer : access Source_Buffer_Record)
-      return Integer
-   is
+      return Integer is
    begin
       return Buffer.Total_References;
    end Get_Total_Ref_Count;
