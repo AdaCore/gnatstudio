@@ -32,11 +32,12 @@ package body Test_Lib is
    begin
 
       Current_Solution := First (Solutions);
+
       if Visible then
          Put_Line ("Message: ");
          Put_Line (Get_Message (Message));
          Put_Line ("Old text: ");
-         Put_Line (Get_Old_Text (Data (Current_Solution), Current_Text));
+         Put_Line (Get_Old_Text (Data (Current_Solution), Current_Text, 3, 3));
       end if;
 
       Num_Sol := 0;
@@ -45,7 +46,8 @@ package body Test_Lib is
          Num_Sol := Num_Sol + 1;
          if Visible then
             Put_Line ("Proposition" & Integer'Image (Num_Sol) & " : ");
-            Put_Line (Get_New_Text (Data (Current_Solution)));
+            Put_Line (Get_New_Text (Data (Current_Solution),
+                                    Current_Text, 2, 2));
          end if;
          Current_Solution := Next (Current_Solution);
       end loop;
@@ -96,13 +98,14 @@ package body Test_Lib is
 
    procedure Ambiguity
      (Alternative_1, Alternative_2 : Extract;
+      Current_Text                 : Text_Navigator_Abstr'Class;
       Delete_Choice                : out Alternative_Choice) is
    begin
       if Visible then
          Put_Line ("Problem beetween");
-         Put_Line (Get_New_Text (Alternative_1));
+         Put_Line (Get_New_Text (Alternative_1, Current_Text));
          Put_Line ("  and");
-         Put_Line (Get_New_Text (Alternative_2));
+         Put_Line (Get_New_Text (Alternative_2, Current_Text));
       end if;
       Delete_Choice := 0;
    end Ambiguity;
