@@ -210,7 +210,20 @@ package body Debugger.Gdb.C is
          return;
       end if;
 
-      raise Unexpected_Type;
+      --  Else ask for more information
+
+      Index := Tmp;
+      Skip_Word (Type_Str, Index);
+
+      declare
+         T : String :=
+           Type_Of (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+         J : Natural := T'First;
+      begin
+         Parse_Type
+           (Lang, T, Type_Str (Tmp .. Index - 1), J, Result);
+         Index := Type_Str'Last;
+      end;
    end Parse_Type;
 
    -----------------
@@ -338,7 +351,7 @@ package body Debugger.Gdb.C is
          --  Get the field name (last word before ;)
          --  There is a small exception here for access-to-subprograms fields,
          --  which look like "void (*field1[2])();"
-         --  ??? gdb seems to ignore all the parameters to the function, so
+         --  gdb seems to ignore all the parameters to the function, so
          --  we take the simplest way and consider there is always '()' for
          --  the parameter list.
 
@@ -354,16 +367,25 @@ package body Debugger.Gdb.C is
             End_Of_Name := Index + 2;
             Skip_Word (Type_Str, End_Of_Name);
          else
+
+            --  The size of the field can optionally be indicated between the
+            --  name and the semicolon, as in "__time_t tv_sec : 32;".
+            --  We simply ignore the size.
+
             End_Of_Name := Save;
             Skip_Word (Type_Str, Index, Step => -1);
+            if Type_Str (Index - 1) = ':' then
+               Index := Index - 3;
+               End_Of_Name := Index + 1;
+               Skip_Word (Type_Str, Index, Step => -1);
+            end if;
          end if;
 
          --  Create the field now that we have all the information.
-
          Set_Field_Name (R.all, Field, Type_Str (Index + 1 .. End_Of_Name - 1),
                          Variant_Parts => 0);
          Parse_Type
-           (Lang, Type_Str (Tmp .. Save),
+           (Lang, Type_Str (Tmp .. End_Of_Name - 1),
             Record_Field_Name
               (Lang, Entity, Type_Str (Index + 1 .. End_Of_Name - 1)),
             Tmp,

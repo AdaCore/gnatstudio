@@ -72,6 +72,7 @@ package body Language.Debugger.C is
         or else Odd.Strings.Looking_At (Str, Str'First, "float")
         or else Odd.Strings.Looking_At (Str, Str'First, "long")
         or else Odd.Strings.Looking_At (Str, Str'First, "short int")
+        or else Odd.Strings.Looking_At (Str, Str'First, "long int")
         or else Odd.Strings.Looking_At (Str, Str'First, "void");
    end Is_Simple_Type;
 
