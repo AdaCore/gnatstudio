@@ -24,6 +24,10 @@ with Glib.Object;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Expect; use GNAT.Expect;
+pragma Warnings (Off);
+with GNAT.Expect.TTY;
+with GNAT.TTY;
+pragma Warnings (On);
 
 with Gdk.Color;
 with Gtk.Menu;
@@ -40,7 +44,6 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 with Pango.Font;
 
 with Process_Proxies;     use Process_Proxies;
-with Dock_Paned;          use Dock_Paned;
 with Debugger;            use Debugger;
 with GVD.Main_Window;
 with Items;
@@ -125,7 +128,6 @@ package GVD.Process is
       Stack_List_Select_Id    : Gtk.Handlers.Handler_Id;
       Destroy_Id              : Gtk.Handlers.Handler_Id;
 
-      Data_Paned              : Dock_Hpaned;
       Stack_Scrolledwindow    : Gtk_Scrolled_Window;
       Stack_List              : Gtk_Clist;
       Data_Scrolledwindow     : Gtk_Scrolled_Window;
@@ -136,6 +138,11 @@ package GVD.Process is
       Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
 
       Debuggee_Console        : Interactive_Console;
+      --  Separate console for debugged programs, if debugger supports ttys
+
+      Debuggee_TTY            : GNAT.TTY.TTY_Handle;
+      Debuggee_Descriptor     : GNAT.Expect.TTY.TTY_Process_Descriptor;
+      Debuggee_Id             : Gtk.Main.Timeout_Handler_Id := 0;
 
       History                 : Histories.History;
       --  See Glide_Kernel.Get_History. This points to the same one as the GPS
@@ -288,11 +295,14 @@ package GVD.Process is
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
 
+   procedure Create_Call_Stack (Process : access Visual_Debugger_Record'Class);
+   --  Create the call stack widget associated with Process.
+
    function Call_Stack_Contextual_Menu
      (Process : access Visual_Debugger_Record'Class)
       return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used in the
-   --  debugger command window.
+   --  debugger call stack window.
 
    procedure Final_Post_Process
      (Process : access Visual_Debugger_Record'Class;
