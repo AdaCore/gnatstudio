@@ -1,0 +1,4 @@
+project Child3 is
+   for Source_Dirs use ("child2_sources");
+   for Source_Files use ("child2_src.adb");
+end Child3;
