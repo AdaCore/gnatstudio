@@ -26,6 +26,7 @@ with Prj.Ext;     use Prj.Ext;
 with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
 with Namet;       use Namet;
+with Snames;      use Snames;
 with Stringt;     use Stringt;
 with Types;       use Types;
 with Output;      use Output;
@@ -99,7 +100,7 @@ package body Glide_Kernel.Project is
          return "";
       else
          return Get_Name_String (Directory_Of (Kernel.Project))
-           & Get_Name_String (Name_Of (Kernel.Project));
+           & Get_Name_String (Prj.Tree.Name_Of (Kernel.Project));
       end if;
    end Get_Project_File_Name;
 
@@ -235,6 +236,33 @@ package body Glide_Kernel.Project is
          Report_Error'Unrestricted_Access);
       pragma Assert (Handle.Project_View /= No_Project);
 
+      --  Parse the list of source files for languages other than Ada.
+
+      declare
+         Iter : Imported_Project_Iterator := Start (Handle.Project, True);
+         Naming_Pkg : Package_Id;
+      begin
+         while Current (Iter) /= No_Project loop
+
+            --  ??? Temporary workaround until this is implemented directly by
+            --  ??? the Prj parser.
+            Naming_Pkg := Value_Of
+              (Name_Naming, Projects.Table (Current (Iter)).Decl.Packages);
+            if Naming_Pkg /= No_Package then
+               Projects.Table (Current (Iter)).Naming.Implementation_Exceptions
+                 := Value_Of (Name_Implementation_Exceptions,
+                              Packages.Table (Naming_Pkg).Decl.Arrays);
+               Projects.Table (Current (Iter)).Naming.Specification_Exceptions
+                 := Value_Of (Name_Specification_Exceptions,
+                              Packages.Table (Naming_Pkg).Decl.Arrays);
+            end if;
+
+
+            Add_Foreign_Source_Files (Current (Iter));
+            Next (Iter);
+         end loop;
+      end;
+
       --  Check that all the environment variables have values defined through
       --  Prj.Ext. If this is not the case, then their default value should be
       --  put there.
@@ -253,7 +281,7 @@ package body Glide_Kernel.Project is
          begin
             if Prj.Ext.Value_Of (Name_Find) = No_String then
                Value := Prj.Util.Value_Of
-                 (Variable_Name => Name_Of (Scenario_Vars (J)),
+                 (Variable_Name => Prj.Tree.Name_Of (Scenario_Vars (J)),
                   In_Variables => Projects.Table
                     (Handle.Project_View).Decl.Variables);
                pragma Assert
