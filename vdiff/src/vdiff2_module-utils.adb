@@ -25,6 +25,7 @@ with Glide_Kernel.Modules;              use Glide_Kernel.Modules;
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
+with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
 with Vdiff2_Command;                    use Vdiff2_Command;
 with Vdiff2_Command_Line;               use Vdiff2_Command_Line;
 with Pixmaps_Vdiff2;                    use Pixmaps_Vdiff2;
@@ -36,7 +37,6 @@ with Traces;                            use Traces;
 with Ada.Exceptions;                    use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with Commands;                          use Commands;
-
 
 package body Vdiff2_Module.Utils is
 
@@ -144,6 +144,10 @@ package body Vdiff2_Module.Utils is
             Put_Button
               (Kernel, Info, Conflict, J,
                VRange, VFile, VStyle, Move_On_Ref_File'Access);
+         elsif J /= Ref then
+            Put_Button
+              (Kernel, Info, Conflict, J,
+               VRange, VFile, VStyle, Delete_From_Ref_File'Access);
          end if;
 
          Highlight_Line
@@ -164,6 +168,7 @@ package body Vdiff2_Module.Utils is
             if Tmp /= null then
                VRange (J).Mark := new String'(Tmp.all);
             end if;
+
          elsif J = Ref then
 
             if VRange (Other).Action = Append or
@@ -201,9 +206,9 @@ package body Vdiff2_Module.Utils is
         (Current_Line_Dest, Current_Line_Source);
       Curr_Node : Diff_Chunk_List.List_Node := First (Hor_List);
       Diff      : Diff_Chunk;
-      First     : Natural;
-      Last      : Natural;
-
+      First     : Natural := 0;
+      Last      : Natural := 0;
+      Nb_Hghlt_Chr : Natural := 0;
    begin
 
       while Curr_Node /= Diff_Chunk_List.Null_Node
@@ -222,9 +227,23 @@ package body Vdiff2_Module.Utils is
             First := 1;
          end if;
 
-         Highlight_Range (Kernel, File, Fine_Change_Style, Line, First, Last);
+         if First < Last then
+            Nb_Hghlt_Chr := Nb_Hghlt_Chr + (Last - First);
+         else
+            Nb_Hghlt_Chr := Nb_Hghlt_Chr + (First - Last);
+         end if;
+
+         Highlight_Range
+           (Kernel, File, Fine_Change_Style, Line, First, Last);
+
          Curr_Node := Next (Curr_Node);
       end loop;
+
+      if Current_Line_Dest'Length > 10 and then
+        Nb_Hghlt_Chr > Natural (Current_Line_Dest'Length * 0.40)
+      then
+         Highlight_Range (Kernel, File, Fine_Change_Style, Line);
+      end if;
 
    end Fine_Highlight_Line;
 
@@ -263,11 +282,11 @@ package body Vdiff2_Module.Utils is
          for J in 1 .. Offset_Min loop
 
             Current_Line_Dest := new String'
-              (Get_Chars
-                 (Kernel, Dest_File, Line, 1));
+              (Get_Line
+                 (Kernel, Dest_File, Line));
             Current_Line_Source := new String'
-              (Get_Chars
-                 (Kernel, Source_File, Source_Range.First + J - 1, 1));
+              (Get_Line
+                 (Kernel, Source_File, Source_Range.First + J - 1));
             Fine_Highlight_Line
               (Kernel,
                Current_Line_Source.all,
@@ -413,89 +432,6 @@ package body Vdiff2_Module.Utils is
       end loop;
    end Move_Mark;
 
-   ------------------
-   --  Move_Block  --
-   ------------------
-
-   procedure Move_Block
-     (Kernel       : Kernel_Handle;
-      Source_File  : Virtual_File;
-      Dest_File    : Virtual_File;
-      Source_Range : in out Diff_Range;
-      Dest_Range   : in out Diff_Range)
-   is
-      Offset_Dest       : constant Natural :=
-        Dest_Range.Last - Dest_Range.First;
-      Offset_Source     : constant Natural :=
-        Source_Range.Last - Source_Range.First;
-      Offset_Min        : Natural := Offset_Source;
-      First_Dest        : constant Natural :=
-        Get_Line_Number (Kernel, Dest_Range.Mark.all);
-      First_Source      : constant Natural :=
-        Get_Line_Number (Kernel, Source_Range.Mark.all);
-      Current_Line      : String_Access;
-
-   begin
-      if Offset_Source > Offset_Dest then
-         Offset_Min := Offset_Dest;
-      end if;
-
-      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines);
-
-      if Offset_Source > 0 and Offset_Dest > 0 then
-
-         for J in 1 .. Offset_Min loop
-            Current_Line := new String'
-              (Get_Chars (Kernel, Source_File, (First_Source + J - 1), 1));
-
-            Replace_Text (Kernel, Dest_File, (First_Dest + J - 1), 1,
-                          Current_Line.all, -1, -1);
-         end loop;
-
-         if Offset_Source /= Offset_Min then
-
-            for J in Offset_Source .. Offset_Dest loop
-               Replace_Text (Kernel, Dest_File, First_Dest + J - 1, 1,
-                             "", -1, -1);
-            end loop;
-         end if;
-
-         if Offset_Dest /= Offset_Min then
-
-            for J in Offset_Min .. Offset_Source loop
-               Current_Line := new String'
-                 (Get_Chars
-                    (Kernel, Source_File,
-                     First_Source + J,
-                     1, 0, 0));
-               Replace_Text
-                 (Kernel, Dest_File,
-                  First_Dest + J,
-                  1, Current_Line.all, -1, -1);
-            end loop;
-         end if;
-
-         Replace_Text
-           (Kernel, Dest_File,
-            First_Dest + Offset_Source, 1,
-            (1 => ASCII.LF), -1, -1);
-
-      elsif Offset_Dest <= 0 then
-         for J in 1 .. Offset_Source loop
-            Current_Line := new String'
-              (Get_Chars
-                 (Kernel, Source_File,
-                  First_Source + J,
-                  1, 0, 0));
-            Replace_Text
-              (Kernel, Dest_File,
-               First_Dest + J,
-               1, Current_Line.all, -1, -1);
-         end loop;
-      end if;
-
-   end Move_Block;
-
    -------------------------
    --  Modify_Differences --
    -------------------------
@@ -590,13 +526,13 @@ package body Vdiff2_Module.Utils is
             Action);
 
          if not Conflict then
-            Info (Pos)(VRange (Pos).First).Image := Green_Button_Pixbuf;
+            Info (Pos)(VRange (Pos).First - 1).Image := Green_Button_Pixbuf;
          else
-            Info (Pos)(VRange (Pos).First).Image := Red_Button_Pixbuf;
+            Info (Pos)(VRange (Pos).First - 1).Image := Red_Button_Pixbuf;
          end if;
 
          Info (Pos)
-          (VRange (Pos).First).Associated_Command := Command_Access (Cmd);
+          (VRange (Pos).First - 1).Associated_Command := Command_Access (Cmd);
       end if;
    end Put_Button;
 
