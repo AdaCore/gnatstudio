@@ -3826,12 +3826,10 @@ package body Src_Editor_Buffer is
    begin
       case Get_Status (Buffer) is
          when Unmodified | Saved =>
-            Buffer.Last_Saved_Position := Get_Position (Buffer.Queue);
             return False;
 
          when Modified =>
             if Buffer.Last_Saved_Position /= Get_Position (Buffer.Queue) then
-               Buffer.Last_Saved_Position := Get_Position (Buffer.Queue);
                return True;
 
             else
