@@ -1221,7 +1221,7 @@ package body Src_Contexts is
             Context.Begin_Column,
             Context.End_Line,
             Context.End_Column,
-            False);
+            Expand_Tabs => True);
          Center_Cursor (Get_View (Editor));
 
          return True;
