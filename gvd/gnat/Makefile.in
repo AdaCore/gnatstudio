@@ -2,7 +2,7 @@ CC = @CC@
 CFLAGS = -g -O2
 ALL_CFLAGS=$(CFLAGS) @DEFS@ -DSYSTEM_INCLUDE=@opsysfile@
 
-all: gexpect_tty.o g-exptty.o
+all: gexpect_tty.o g-exptty.o g-tty.o
 static: all
 
 g-exptty.o: g-exptty.adb g-exptty.ads
@@ -10,6 +10,8 @@ g-exptty.o: g-exptty.adb g-exptty.ads
 
 gexpect_tty.o: gexpect_tty.c systty.h Makefile
 	$(CC) -c $(ALL_CFLAGS) $<
+g-tty.o: g-tty.adb
+	${CC} -c ${ALL_CFLAGS} $<
 
 install:
 
