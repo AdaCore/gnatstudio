@@ -1,16 +1,15 @@
-LARGS = -aO../../gvd/gnat -largs sn/lib/db_capi.o -Lsn/snsrc/db/PORT -ldb ../../gvd/gnat/gexpect_tty.o
+GNATMAKE_FLAGS=
+LARGS = -aO../../gvd/gnat -largs sn/lib/db_capi.o -Lsn/snsrc/db/PORT -ldb ../../gvd/common/obj/gexpect_tty.o
 
 build:
 	cd standalone_obj; gcc -c ../common/a-file_utils.c
-	#cd standalone_obj; gcc -c ../gvd/gexpect_tty.c
-	#cd standalone_obj; gnatmake -c -a -u ../gvd/g-exptty.adb
-	gnatmake -Pstandalone read_ali $(LARGS)
-	gnatmake -Pstandalone read_many_ali $(LARGS)
-	gnatmake -Pstandalone read_ali_twice $(LARGS)
-	gnatmake -Pstandalone read_scope_tree $(LARGS)
-	gnatmake -Pstandalone find_ref $(LARGS)
-	gnatmake -Pstandalone find_dep $(LARGS)
-	gnatmake -Pstandalone generate_db $(LARGS)
+	gnatmake ${GNATMAKE_FLAGS} -Pstandalone read_ali $(LARGS)
+	gnatmake ${GNATMAKE_FLAGS} -Pstandalone read_many_ali $(LARGS)
+	gnatmake ${GNATMAKE_FLAGS} -Pstandalone read_ali_twice $(LARGS)
+	gnatmake ${GNATMAKE_FLAGS} -Pstandalone read_scope_tree $(LARGS)
+	gnatmake ${GNATMAKE_FLAGS} -Pstandalone find_ref $(LARGS)
+	gnatmake ${GNATMAKE_FLAGS} -Pstandalone find_dep $(LARGS)
+	gnatmake ${GNATMAKE_FLAGS} -Pstandalone generate_db $(LARGS)
 
 distrib:
 	@-mkdir gvd gnat > /dev/null 2>&1
