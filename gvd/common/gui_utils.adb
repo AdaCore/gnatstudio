@@ -543,6 +543,7 @@ package body GUI_Utils is
       Height   : out Glib.Gint;
       Wrap_Width : Glib.Gint := -1)
    is
+      Margin : constant := 2;
       GC : Gdk_GC;
       Layout : Pango_Layout;
    begin
@@ -558,8 +559,11 @@ package body GUI_Utils is
       end if;
 
       Get_Pixel_Size (Layout, Width, Height);
+      Width := Width + Margin * 2;
+      Height := Height + Margin * 2;
 
-      Gdk.Pixmap.Gdk_New (Pixmap, Get_Window (Widget), Width, Height);
+      Gdk.Pixmap.Gdk_New
+        (Pixmap, Get_Window (Widget), Width, Height);
       Draw_Rectangle
         (Pixmap,
          GC,
@@ -579,7 +583,7 @@ package body GUI_Utils is
          Width  => Width - 1,
          Height => Height - 1);
 
-      Draw_Layout (Pixmap, GC, 0, 0, Layout);
+      Draw_Layout (Pixmap, GC, Margin, Margin, Layout);
 
       Unref (Layout);
       Unref (GC);
