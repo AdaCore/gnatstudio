@@ -25,7 +25,9 @@ package body Src_Info.Dummy is
    ----------------------------------
 
    function Case_Insensitive_Identifiers
-     (Handler : access Dummy_LI_Handler_Record) return Boolean is
+     (Handler : access Dummy_LI_Handler_Record) return Boolean
+   is
+      pragma Unreferenced (Handler);
    begin
       return False;
    end Case_Insensitive_Identifiers;
@@ -41,6 +43,7 @@ package body Src_Info.Dummy is
       List            : LI_File_List;
       Project         : Projects.Project_Type)
    is
+      pragma Unreferenced (Handler, File, Source_Filename, List, Project);
    begin
       null;
    end Create_Or_Complete_LI;

@@ -119,6 +119,58 @@ package body Commands.Custom is
          end;
       end Command_To_String;
 
+      --  function Replace (Substr : String) return String is
+      --  begin
+      --     case Substr (Substr'First) is
+      --        when 'f' =>
+      --           if Context /= null
+      --             and then Context.all in File_Selection_Context'Class
+      --           then
+      --              File := File_Selection_Context_Access (Context);
+
+      --              if Has_File_Information (File) then
+      --                 return File_Information (File)
+      --              end if;
+      --           end if;
+
+      --        when 'F' =>
+      --           if Context /= null
+      --             and then Context.all in File_Selection_Context'Class
+      --           then
+      --              File := File_Selection_Context_Access (Context);
+
+      --              if Has_File_Information (File) then
+      --                 return Directory_Information (File)
+      --                   & File_Information (File);
+      --              end if;
+      --           end if;
+
+      --        when 'd' =>
+      --           if Context /= null
+      --             and then Context.all in File_Selection_Context'Class
+      --             and then Has_Directory_Information
+      --               (File_Selection_Context_Access (Context))
+      --           then
+      --              return Directory_Information (File);
+      --           end if;
+
+      --            when 'p' | 'P' =>
+
+      --        when others =>
+      --           return Substr;
+      --     end case;
+
+      --     raise No_Replacement;
+      --  end Replace;
+
+--  Substrings : Substitution_Array :=
+--    (1 => (Name => new String'("f"), Func => Replace'Unrestricted_Access),
+--     2 => (Name => new String'("F"), Func => Replace'Unrestricted_Access),
+--     3 => (Name => new String'("d"), Func => Replace'Unrestricted_Access),
+--     4 => (Name => new String'("p"), Func => Replace'Unrestricted_Access),
+--     5 => (Name => new String'("p"), Func => Replace'Unrestricted_Access),
+--  ??? Handling of %prdf %Ps %prs
+
    begin
       --  Perform arguments substitutions for the command.
 
