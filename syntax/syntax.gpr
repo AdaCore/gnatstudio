@@ -1,4 +1,5 @@
 with "../shared";
+with "../common/common";
 
 project Syntax is
 
