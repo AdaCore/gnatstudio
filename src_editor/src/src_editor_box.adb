@@ -1173,7 +1173,9 @@ package body Src_Editor_Box is
       B : constant Source_Editor_Box := Source_Editor_Box (Box);
    begin
       if B.Timestamp_Mode = Check_At_Modify then
-         if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
+         if not Check_Timestamp_And_Reload
+           (B.Source_Buffer, Interactive => True, Always_Reload => False)
+         then
             --  Do not propagate the key press event
             return True;
          end if;
@@ -1229,7 +1231,9 @@ package body Src_Editor_Box is
       if B.Timestamp_Mode = Check_At_Focus then
          B.Timestamp_Mode := Checking;
 
-         if not Check_Timestamp (B.Source_Buffer, Ask_User => True) then
+         if not Check_Timestamp_And_Reload
+           (B.Source_Buffer, Interactive => True, Always_Reload => False)
+         then
             --  We'll ask again next time the user wants to modify the file.
             B.Timestamp_Mode := Check_At_Modify;
             return False;
@@ -1262,29 +1266,6 @@ package body Src_Editor_Box is
    begin
       return Get_Ref_Count (Editor.Source_Buffer);
    end Get_Ref_Count;
-
-   ---------------------
-   -- Check_Timestamp --
-   ---------------------
-
-   procedure Check_Timestamp
-     (Editor : access Source_Editor_Box_Record;
-      Force  : Boolean := False)
-   is
-      B : Boolean;
-      pragma Unreferenced (B);
-
-   begin
-      Editor.Timestamp_Mode := Check_At_Modify;
-
-      if Get_Status (Editor.Source_Buffer) /= Modified then
-         B := Check_Timestamp
-           (Editor.Source_Buffer, Ask_User => False, Force => Force);
-      else
-         B := Check_Timestamp (Editor.Source_Buffer, Ask_User => True,
-                               Force => Force);
-      end if;
-   end Check_Timestamp;
 
    --------------
    -- Focus_In --
@@ -2045,7 +2026,7 @@ package body Src_Editor_Box is
                end if;
             end;
          else
-            if not Check_Timestamp (Editor.Source_Buffer, Ask_User => False)
+            if not Check_Timestamp (Editor.Source_Buffer)
               and then Message_Dialog
                 (Msg => Base_Name (File)
                         & (-" changed on disk. Do you want to overwrite ?"),
