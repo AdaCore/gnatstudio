@@ -3,6 +3,7 @@ with "../gtkada/gtkada";
 with "../kernel/kernel";
 with "../gvd/gvd_common";
 with "../vsearch/vsearch";
+with "../widgets/widgets";
 with "../shared";
 
 project Src_Editor is
