@@ -365,7 +365,8 @@ package body Src_Editor_Buffer is
                begin
                   Slice (Slice_Length) := ASCII.LF;
                   Next_Indentation
-                    (Buffer.Lang, C_Str, Slice_Length, Indent, Next_Indent);
+                    (Buffer.Lang, Slice (1 .. Slice_Length),
+                     Indent, Next_Indent);
 
                   --  Stop propagation of this signal, since we will completely
                   --  replace the current line in the call to Replace_Slice
@@ -496,12 +497,12 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter)
    is
-      Last_Entity  : Language_Entity;
-      Entity_Start : Gtk_Text_Iter;
-      Entity_End   : Gtk_Text_Iter;
-      Tags         : Highlighting_Tags renames Buffer.Syntax_Tags;
-      Slice_Offset : Gint;
-      Result       : Boolean;
+      Highlight_Complete : Boolean := False;
+      Entity_Start       : Gtk_Text_Iter;
+      Entity_End         : Gtk_Text_Iter;
+      Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
+      Slice_Offset       : Gint;
+      Result             : Boolean;
 
       function Highlight_Cb
         (Entity         : Language_Entity;
@@ -537,7 +538,7 @@ package body Src_Editor_Buffer is
            (Buffer, Entity_End, Gint (Sloc_End.Index) + Slice_Offset);
 
          if Partial_Entity then
-            Last_Entity := Entity;
+            Highlight_Complete := False;
          end if;
 
          if Entity in Standout_Language_Entity then
@@ -552,10 +553,14 @@ package body Src_Editor_Buffer is
       ---------------------
 
       procedure Local_Highlight is
-         Slice : constant Interfaces.C.Strings.chars_ptr :=
+         C_Str : constant Interfaces.C.Strings.chars_ptr :=
            Get_Slice (Entity_Start, Entity_End);
+         Len   : Natural := Natural (Strlen (C_Str));
+         Slice : Unchecked_String_Access := To_Unchecked_String (C_Str);
+         pragma Suppress (Access_Check, Slice);
+
       begin
-         Last_Entity := Normal_Text;
+         Highlight_Complete := True;
          Slice_Offset := Get_Offset (Entity_Start);
 
          --  First, un-apply all the style tags...
@@ -565,10 +570,9 @@ package body Src_Editor_Buffer is
 
          Parse_Entities
            (Buffer.Lang,
-            Slice,
-            Natural (Strlen (Slice)),
+            Slice (1 .. Len),
             Highlight_Cb'Unrestricted_Access);
-         g_free (Slice);
+         g_free (C_Str);
       end Local_Highlight;
 
    begin
@@ -581,7 +585,7 @@ package body Src_Editor_Buffer is
       Forward_Line (Entity_End, Result);
       Local_Highlight;
 
-      if Last_Entity /= Normal_Text then
+      if not Highlight_Complete then
          --  In this case, we are in the middle of e.g a multi-line comment,
          --  and we re-highlight the whole buffer since we do not know where
          --  the comment started.
