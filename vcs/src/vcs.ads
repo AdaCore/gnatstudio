@@ -225,7 +225,7 @@ package VCS is
      (Rep     : access VCS_Record;
       Func    : Idle_Function;
       Timeout : Integer := 100) is abstract;
-   -- ???
+   --  ???
 
    type Error_Function is access
      procedure (Error_Message : String;
