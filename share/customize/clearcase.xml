@@ -11,7 +11,7 @@
    <action name="clearcase_describe" show-command="true" output="none">
       <shell output="">echo "Describing $2-"</shell>
       <external>cleartool describe -fmt "%En\\n%Xn\\n%f\\n%m %Rf\\n" "$2-"</external>
-      <shell>VCS.status_parse "Custom ClearCase" "%1" $1 FALSE</shell>
+      <shell>VCS.status_parse "ClearCase Native" "%1" $1 FALSE</shell>
    </action>
 
    <!------------------------>
@@ -21,7 +21,7 @@
    <action name="clearcase_annotate" show-command="true" output="none">
       <shell output="">echo "Querying annotations for $1"</shell>
       <external>cleartool annotate -nheader -force -fmt "%Sd\\040%-16.16u\\040%-40.39Vn:" -out - "$1"</external>
-      <shell>VCS.annotations_parse "Custom ClearCase" "$1" "%1"</shell>
+      <shell>VCS.annotations_parse "ClearCase Native" "$1" "%1"</shell>
    </action>
 
    <!---------------------------->
@@ -30,7 +30,7 @@
 
    <action name="clearcase_local_status" show-command="true" output="none">
       <external>cleartool ls -short "$2-"</external>
-      <shell>VCS.status_parse "Custom ClearCase" "%1" FALSE TRUE</shell>
+      <shell>VCS.status_parse "ClearCase Native" "%1" FALSE TRUE</shell>
    </action>
 
    <!----------------------->
@@ -182,7 +182,7 @@
    <!-- ClearCase -->
    <!--------------->
 
-   <vcs name="Custom ClearCase" absolute_names="FALSE">
+   <vcs name="ClearCase Native" absolute_names="FALSE">
       <status_files     action="clearcase_describe"       label="Describe"/>
       <local_status_files action="clearcase_local_status" label="ls"/>
       <open             action="clearcase_checkout"       label="Check out"/>
