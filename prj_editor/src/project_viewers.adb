@@ -64,7 +64,6 @@ with System;
 with Basic_Types;              use Basic_Types;
 with String_Utils;
 with Prj;
-with Shell;                    use Shell;
 with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
 with Creation_Wizard;          use Creation_Wizard;
@@ -72,6 +71,7 @@ with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Switches_Editors;         use Switches_Editors;
@@ -304,10 +304,8 @@ package body Project_Viewers is
    --  properly handle the case where a project with the same name as
    --  Imported_Project_Path already exists in the project hierarchy
 
-   function Project_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+   procedure Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handle the interactive commands related to the project editor
 
    procedure Update_Contents
@@ -2362,22 +2360,29 @@ package body Project_Viewers is
    -- Project_Command_Handler --
    -----------------------------
 
-   function Project_Command_Handler
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String is
+   procedure Project_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Instance   : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_Project_Class (Kernel));
+      Project    : constant Project_Type := Get_Data (Instance);
+      Args       : Argument_List (1 .. Number_Of_Arguments (Data) - 1);
    begin
-      if Command = "prj_add_main_unit" then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Get_Project (Kernel),
-            Scenario_Variables => Scenario_Variables (Kernel),
-            Attribute          => Main_Attribute,
-            Values             => Args,
-            Prepend            => True);
-         Recompute_View (Kernel);
-      end if;
+      for Index in 2 .. Number_Of_Arguments (Data) loop
+         Args (Index - 1) := new String'(Nth_Arg (Data, Index));
+      end loop;
 
-      return "";
+      Update_Attribute_Value_In_Scenario
+        (Project            => Project,
+         Scenario_Variables => Scenario_Variables (Kernel),
+         Attribute          => Main_Attribute,
+         Values             => Args,
+         Prepend            => True);
+      Recompute_View (Kernel);
+
+      Free (Args);
    end Project_Command_Handler;
 
    ------------------------
@@ -2769,13 +2774,14 @@ package body Project_Viewers is
 
       Register_Command
         (Kernel,
-         Command      => "prj_add_main_unit",
-         Usage        => "prj_add_main_unit main1 [main2 ...]",
+         Command      => "add_main_unit",
+         Usage        => "add_main_unit (main1, [main2 ...]) -> None",
          Description  =>
            -("Add some main units to the current project, and for the"
              & " current scenario. The project is not saved automatically."),
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
+         Class        => Get_Project_Class (Kernel),
          Handler      => Project_Command_Handler'Access);
    end Register_Module;
 
