@@ -156,3 +156,8 @@ Known Problems fixed in GPS 2.1.0
               the computation is not stopped when encountering a blank line.
   Workaround: Indent manually when needed.
 
+- CC24-001 Font dialog incorrectly initialized in preferences dialog
+  Problem:    When editing fonts through the Edit->Preferences dialog, the
+              font dialog that pops up always has "sans 10" selected initially,
+              instead of the current font
+  Workaround: Select manually the font you want to use
