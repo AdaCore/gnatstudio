@@ -886,7 +886,6 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator25, False);
 
    Gtk_New (Main_Debug_Window.Detect_Aliases1, -"Detect Aliases");
-   Set_Sensitive (Main_Debug_Window.Detect_Aliases1, False);
    Add_Accelerator (Main_Debug_Window.Detect_Aliases1, "activate",
      The_Accel_Group, GDK_A, Gdk.Types.Mod1_Mask, Accel_Visible);
    Check_Menu_Item_Callback.Connect
@@ -901,7 +900,6 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator26, False);
 
    Gtk_New (Main_Debug_Window.Display_Local_Variables1, -"Display Local Variables");
-   Set_Sensitive (Main_Debug_Window.Display_Local_Variables1, False);
    Add_Accelerator (Main_Debug_Window.Display_Local_Variables1, "activate",
      The_Accel_Group, GDK_L, Gdk.Types.Mod1_Mask, Accel_Visible);
    Check_Menu_Item_Callback.Connect
@@ -912,7 +910,6 @@ begin
    Set_Always_Show_Toggle (Main_Debug_Window.Display_Local_Variables1, False);
 
    Gtk_New (Main_Debug_Window.Display_Arguments1, -"Display Arguments");
-   Set_Sensitive (Main_Debug_Window.Display_Arguments1, False);
    Add_Accelerator (Main_Debug_Window.Display_Arguments1, "activate",
      The_Accel_Group, GDK_U, Gdk.Types.Mod1_Mask, Accel_Visible);
    Menu_Item_Callback.Connect
@@ -934,7 +931,6 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator27, False);
 
    Gtk_New (Main_Debug_Window.Align_On_Grid1, -"Align on Grid");
-   Set_Sensitive (Main_Debug_Window.Align_On_Grid1, False);
    Add_Accelerator (Main_Debug_Window.Align_On_Grid1, "activate",
      The_Accel_Group, GDK_G, Gdk.Types.Mod1_Mask, Accel_Visible);
    Menu_Item_Callback.Connect

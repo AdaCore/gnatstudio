@@ -1546,7 +1546,6 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>detect_aliases1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_A</key>
@@ -1571,7 +1570,6 @@
 	  <widget>
 	    <class>GtkCheckMenuItem</class>
 	    <name>display_local_variables1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_L</key>
@@ -1590,7 +1588,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>display_arguments1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_U</key>
@@ -1627,7 +1624,6 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>align_on_grid1</name>
-	    <sensitive>False</sensitive>
 	    <accelerator>
 	      <modifiers>GDK_MOD1_MASK</modifiers>
 	      <key>GDK_G</key>
