@@ -170,6 +170,13 @@ package Src_Info.Type_Utils is
       Strict                 : Boolean := False)
       return Boolean;
    --  Checks to see if argument types are the same.
+   --  Strict controls how arguments with ellipsis are compared:
+   --  If Strict is True then this function returns True if Args_A and Args_B
+   --    have equal number of elements and for every position in Args_A
+   --    argument type name is literally equal to argument type name in Args_B
+   --    in the same position, and False otherwise.
+   --  If Strict is False then ellipsis ('...') matches any number of arguments
+   --  with arbitrary types starting from position of ellipsis.
 
    function Cmp_Prototypes
      (Buffer_A, Buffer_B     : GNAT.OS_Lib.String_Access;
@@ -178,6 +185,8 @@ package Src_Info.Type_Utils is
       Strict                 : Boolean := False)
       return Boolean;
    --  Checks to see if function prototypes are the same.
+   --  Strict controls how arguments with ellipsis are compared
+   --  (see Cmp_Arg_Types).
 
 private
 

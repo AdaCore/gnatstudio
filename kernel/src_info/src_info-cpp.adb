@@ -430,6 +430,8 @@ package body Src_Info.CPP is
       Strict       : Boolean := False);
    --  Attempts to find/create the first forward declaration
    --  for the method. Returns null if not found
+   --  Strict controls how arguments for functions and methods
+   --  are compared (see Cmp_Arg_Types).
 
    procedure Find_First_Forward_Declaration
      (Buffer       : in String_Access;
@@ -444,6 +446,8 @@ package body Src_Info.CPP is
       Strict       : Boolean := False);
    --  Attempts to find/create the first forward declaration
    --  for the function. Returns null if not found
+   --  Strict controls how arguments for functions and methods
+   --  are compared (see Cmp_Arg_Types).
 
    ----------------------------
    -- Generate_LI_For_Source --
