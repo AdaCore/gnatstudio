@@ -174,6 +174,11 @@ package Projects.Registry is
       Source_Filename   : VFS.Virtual_File;
       Root_If_Not_Found : Boolean := True)
       return Project_Type;
+   function Get_Project_From_File
+     (Registry          : Project_Registry;
+      Base_Name         : String;
+      Root_If_Not_Found : Boolean := True)
+      return Project_Type;
    --  Select a project by one of its source files. If no project was found and
    --  Root_If_Not_Found is true, the root project is returned instead.
    --  Source_Filename can either be the full pathname or the base name.

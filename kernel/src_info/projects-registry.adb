@@ -1137,7 +1137,26 @@ package body Projects.Registry is
       return Project_Type
    is
       P : constant Project_Type :=
-        Get (Registry.Data.Sources, Base_Name (Source_Filename)).Project;
+        Get (Registry.Data.Sources, Base_Name (Source_Filename).all).Project;
+   begin
+      if P = No_Project and then Root_If_Not_Found then
+         return Registry.Data.Root;
+      end if;
+      return P;
+   end Get_Project_From_File;
+
+   ---------------------------
+   -- Get_Project_From_File --
+   ---------------------------
+
+   function Get_Project_From_File
+     (Registry          : Project_Registry;
+      Base_Name         : String;
+      Root_If_Not_Found : Boolean := True)
+      return Project_Type
+   is
+      P : constant Project_Type :=
+        Get (Registry.Data.Sources, Base_Name).Project;
    begin
       if P = No_Project and then Root_If_Not_Found then
          return Registry.Data.Root;
@@ -1154,7 +1173,7 @@ package body Projects.Registry is
       return Types.Name_Id
    is
       S : constant Source_File_Data := Get
-        (Registry.Data.Sources, Base_Name (Source_Filename));
+        (Registry.Data.Sources, Base_Name (Source_Filename).all);
       Part : Unit_Part;
       Unit, Lang : Name_Id;
    begin
@@ -1166,7 +1185,7 @@ package body Projects.Registry is
 
          declare
             Ext : constant String := File_Extension
-              (Base_Name (Source_Filename));
+              (Base_Name (Source_Filename).all);
          begin
             if Ext = ".ads" or else Ext = ".adb" then
                return Name_Ada;
@@ -1181,7 +1200,7 @@ package body Projects.Registry is
                --  naming scheme
 
                Get_Unit_Part_And_Name_From_Filename
-                 (Filename  => Base_Name (Source_Filename),
+                 (Filename  => Base_Name (Source_Filename).all,
                   Project   => Get_Root_Project (Registry),
                   Part      => Part,
                   Unit_Name => Unit,
