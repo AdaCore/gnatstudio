@@ -33,6 +33,10 @@ package body Commands is
    procedure Execute_Next_Action (Queue : Command_Queue);
    --  Execute the next action in the queue, or do nothing if there is none.
 
+   function Default_Execute_Command
+     (Command : Command_Access) return Command_Return_Type;
+   --  Internal subprogram for the implementation of Launch_Synchronous
+
    ---------------
    -- New_Queue --
    ---------------
@@ -493,11 +497,11 @@ package body Commands is
       end if;
    end Free_Alternate_Actions;
 
-   ------------------------
-   -- Launch_Synchronous --
-   ------------------------
+   --------------------------------
+   -- Launch_Synchronous_Generic --
+   --------------------------------
 
-   procedure Launch_Synchronous
+   procedure Launch_Synchronous_Generic
      (Command : Command_Access;
       Wait    : Duration := 0.0)
    is
@@ -505,7 +509,7 @@ package body Commands is
       Result       : Command_Return_Type;
    begin
       loop
-         Result := Execute (Command);
+         Result := Execute_Command (Command);
 
          exit when Result = Success or else Result = Failure;
 
@@ -522,9 +526,33 @@ package body Commands is
       end if;
 
       while Next_Actions /= Null_Node loop
-         Launch_Synchronous (Data (Next_Actions), Wait);
+         Launch_Synchronous_Generic (Data (Next_Actions), Wait);
          Next_Actions := Next (Next_Actions);
       end loop;
+   end Launch_Synchronous_Generic;
+
+   -----------------------------
+   -- Default_Execute_Command --
+   -----------------------------
+
+   function Default_Execute_Command
+     (Command : Command_Access) return Command_Return_Type is
+   begin
+      return Execute (Command);
+   end Default_Execute_Command;
+
+   ------------------------
+   -- Launch_Synchronous --
+   ------------------------
+
+   procedure Launch_Synchronous
+     (Command : Command_Access;
+      Wait    : Duration := 0.0)
+   is
+      procedure Internal is new Launch_Synchronous_Generic
+        (Default_Execute_Command);
+   begin
+      Internal (Command, Wait);
    end Launch_Synchronous;
 
    ----------

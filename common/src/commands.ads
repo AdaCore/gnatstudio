@@ -177,6 +177,20 @@ package Commands is
    --  you can execute the same command multiple times through calls to
    --  Launch_Synchronous.
 
+   generic
+      with function Execute_Command
+        (Command : Command_Access) return Command_Return_Type;
+   procedure Launch_Synchronous_Generic
+     (Command : Command_Access;
+      Wait    : Duration := 0.0);
+   --  Same above, but you can specify exactly how a command should be
+   --  executed.
+   --  The procedure above behaves as if Execute_Command was just calling
+   --  the primitive operation Execute.
+   --  This subprogram can be used if other parameters need to be passed to
+   --  the command, or if you need to analyse the output of each command
+   --  executed in the set.
+
    -------------------
    -- Command_Queue --
    -------------------
