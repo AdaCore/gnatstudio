@@ -144,6 +144,7 @@ package Gtkada.MDI is
 
    procedure Raise_Child (Child : access MDI_Child_Record'Class);
    --  Put Child in the foreground.
+   --  Note that this does not give the focus to this child.
 
    procedure Minimize_Child
      (Child : access MDI_Child_Record'Class; Minimize : Boolean);
