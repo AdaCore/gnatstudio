@@ -182,11 +182,19 @@ package body Vdiff2_Module.Utils is
                                    VRange (J).First));
             end if;
          else
-            VRange (J).Mark := new String'
-              (Mark_Diff_Block (Kernel, VFile (J),
-                                VRange (J).First));
-
+            if (VRange (Other).Action = Append and then J /= Other) or
+              (VRange (Other2).Action = Append and then J /= Other2)
+            then
+               if Tmp /= null then
+                  VRange (J).Mark := new String'(Tmp.all);
+               end if;
+            else
+               VRange (J).Mark := new String'
+                 (Mark_Diff_Block (Kernel, VFile (J),
+                                   VRange (J).First));
+            end if;
          end if;
+
          Free (Tmp);
       end loop;
    end Append;
