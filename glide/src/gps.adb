@@ -46,7 +46,8 @@ pragma Warnings (Off);
 with Project_Viewers;
 with Project_Explorers;
 with Aunit_Module;
-with Browsers.Module;
+with Browsers.Dependency_Items;
+with Browsers.Projects;
 with VCS_Module;
 with GVD_Module;
 with Metrics_Module;
@@ -158,13 +159,14 @@ procedure Glide2 is
    end Init_Settings;
 
 begin
-   Project_Viewers.Register_Module;
-   Project_Explorers.Register_Module;
    Aunit_Module.Register_Module;
-   Browsers.Module.Register_Module;
    VCS_Module.Register_Module;
    GVD_Module.Register_Module;
    Metrics_Module.Register_Module;
+   Browsers.Dependency_Items.Register_Module;
+   Browsers.Projects.Register_Module;
+   Project_Viewers.Register_Module;
+   Project_Explorers.Register_Module;
 
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
