@@ -885,8 +885,8 @@ procedure GPS is
       Project_Viewers.Register_Module (GPS.Kernel);
       Aliases_Module.Register_Module (GPS.Kernel);
       Src_Editor_Module.Register_Module (GPS.Kernel);
-      Project_Explorers_Files.Register_Module (GPS.Kernel);
       Project_Explorers.Register_Module (GPS.Kernel);
+      Project_Explorers_Files.Register_Module (GPS.Kernel);
       External_Editor_Module.Register_Module (GPS.Kernel);
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
