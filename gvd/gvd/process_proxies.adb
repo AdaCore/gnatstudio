@@ -22,7 +22,6 @@ pragma Warnings (Off);
 with GNAT.Expect;           use GNAT.Expect;
 pragma Warnings (On);
 
-with Gdk.Event; use Gdk.Event;
 with Gtk.Main;              use Gtk.Main;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.IO;               use GNAT.IO;
@@ -203,11 +202,12 @@ package body Process_Proxies is
       Matched : out GNAT.Regpat.Match_Array;
       Timeout : Integer := 20)
    is
-      Event      : Gdk_Event;
       Num        : Integer := 1;
       Num_Events : Positive;
       Max_Events : constant := 30;
       --  Limit the number of events to process in one iteration
+
+      No_Main_Loop : Boolean;
 
    begin
       --  Reset the interrupted flag before processing.
@@ -253,30 +253,30 @@ package body Process_Proxies is
                exit;
 
             when Expect_Timeout =>
-               --  Process the X events, and loop again.
-               --  We do not use Gtk.Main.Main_Iteration since this would also
-               --  process Gdk_Input events, and thus would recurse (since
-               --  Main_Iteration would detect input, which would call Wait,..)
+               --  Process any graphical event, and loop again.
 
-               --  Instead, we handle the events ourselves.
-               --  Note that we simply drop the input events, since we are
-               --  already processing the input anyway.
-               --  We limit the number of events processed so as to preserve
-               --  efficiency.
+               --  If we are already waiting, that means that one of the events
+               --  that we processed in this loop led to a Wait command,
+               --  and so that event must be simply discarded, since we want
+               --  to process only graphical events here.
 
                Num_Events := 1;
-               while Gtk.Main.Events_Pending
-                 and then Num_Events <= Max_Events
-               loop
-                  Get (Event);
-                  if Event /= null then
-                     Do_Event (Event);
-                  end if;
-                  Num_Events := Num_Events + 1;
-               end loop;
 
-               exit when Timeout = 0 or else Num = Timeout;
-               Num := Num + 1;
+               if not Proxy.Waiting then
+                  Proxy.Waiting := True;
+
+                  while Gtk.Main.Events_Pending
+                    and then Num_Events <= Max_Events
+                  loop
+                     No_Main_Loop := Gtk.Main.Main_Iteration;
+                     Num_Events := Num_Events + 1;
+                  end loop;
+
+                  Proxy.Waiting := False;
+
+                  exit when Timeout = 0 or else Num = Timeout;
+                  Num := Num + 1;
+               end if;
 
             when others =>
                --  It matched, we can simply return.

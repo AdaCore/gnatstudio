@@ -190,6 +190,9 @@ private
 
       Interrupted        : Boolean := False;
       --  Whether the process has been interrupted
+
+      Waiting            : Boolean := False;
+      --  Whether we are already polling the output of the process.
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
