@@ -81,6 +81,8 @@ package body Glide_Result_View is
 
    Result_View_Module_Id : Module_ID;
 
+   package View_Idle is new Gtk.Main.Timeout (Result_View);
+
    ---------------------
    -- Local constants --
    ---------------------
@@ -110,6 +112,8 @@ package body Glide_Result_View is
    Action_Column        : constant := 12;
    Highlight_Column     : constant := 13;
    Highlight_Category_Column : constant := 14;
+   Number_Of_Items_Column : constant := 15;
+   Total_Column           : constant := 16;
 
    Output_Cst        : aliased constant String := "output";
    Category_Cst      : aliased constant String := "category";
@@ -290,6 +294,72 @@ package body Glide_Result_View is
      (Data : in out Callback_Data'Class; Command : String);
    --  Interactive shell command handler.
 
+   procedure Redraw_Totals
+     (View : access Result_View_Record'Class);
+   --  Reset the columns corresponding to the "total" items.
+
+   function Idle_Redraw (View : Result_View) return Boolean;
+   --  Redraw the "total" items.
+
+   -----------------
+   -- Idle_Redraw --
+   -----------------
+
+   function Idle_Redraw (View : Result_View) return Boolean is
+      Category_Iter : Gtk_Tree_Iter;
+      File_Iter     : Gtk_Tree_Iter;
+   begin
+      Category_Iter := Get_Iter_First (View.Tree.Model);
+
+      while Category_Iter /= Null_Iter loop
+         File_Iter := Children (View.Tree.Model, Category_Iter);
+
+         while File_Iter /= Null_Iter loop
+            Set
+              (View.Tree.Model, File_Iter, Total_Column,
+               " ("
+               & Image
+                 (Integer
+                    (Get_Int
+                       (View.Tree.Model, File_Iter, Number_Of_Items_Column)))
+               & (-" items") & ")");
+
+            Next (View.Tree.Model, File_Iter);
+         end loop;
+
+         Set
+           (View.Tree.Model, Category_Iter, Total_Column,
+            " ("
+            & Image
+              (Integer
+                 (Get_Int
+                    (View.Tree.Model, Category_Iter, Number_Of_Items_Column)))
+               & (-" items") & ")");
+
+         Next (View.Tree.Model, Category_Iter);
+      end loop;
+
+      View.Idle_Registered := False;
+
+      return False;
+   end Idle_Redraw;
+
+   -------------------
+   -- Redraw_Totals --
+   -------------------
+
+   procedure Redraw_Totals
+     (View : access Result_View_Record'Class) is
+   begin
+      if View.Idle_Registered then
+         return;
+      end if;
+
+      View.Idle_Handler := View_Idle.Add
+        (500, Idle_Redraw'Access, Result_View (View));
+      View.Idle_Registered := True;
+   end Redraw_Totals;
+
    -----------------
    -- Create_Mark --
    -----------------
@@ -413,9 +483,9 @@ package body Glide_Result_View is
       Iter : in out Gtk_Tree_Iter)
    is
       File_Iter : Gtk_Tree_Iter;
+      Parent    : Gtk_Tree_Iter;
       File_Path : Gtk_Tree_Path;
       Loc_Iter  : Gtk_Tree_Iter;
-      Category  : GNAT.OS_Lib.String_Access;
 
       Removing_Category : Boolean := False;
       --  Indicates whether we are removing a whole category or just a file.
@@ -435,17 +505,10 @@ package body Glide_Result_View is
       File_Path := Get_Path (View.Tree.Model, File_Iter);
 
       if Get_Depth (File_Path) = 1 then
-         Category  := new String'
-           (Get_String (View.Tree.Model, File_Iter, Base_Name_Column));
          File_Iter := Children (View.Tree.Model, File_Iter);
          Removing_Category := True;
-      elsif Get_Depth (File_Path) = 2 then
-         Category := new String'
-           (Get_String
-              (View.Tree.Model,
-               Parent (View.Tree.Model, File_Iter),
-               Base_Name_Column));
-      else
+
+      elsif Get_Depth (File_Path) /= 2 then
          Path_Free (File_Path);
          return;
       end if;
@@ -479,7 +542,6 @@ package body Glide_Result_View is
          end loop;
 
          while not Is_Empty (Categories) loop
-            Trace (Me, "cat: " & Head (Categories));
             Highlight_Line
               (View.Kernel,
                Create
@@ -496,7 +558,16 @@ package body Glide_Result_View is
          Next (View.Tree.Model, File_Iter);
       end loop;
 
-      GNAT.OS_Lib.Free (Category);
+      if not Removing_Category then
+         Parent := Gtk.Tree_Store.Parent (View.Tree.Model, Iter);
+
+         Set (View.Tree.Model, Parent, Number_Of_Items_Column,
+              Get_Int (View.Tree.Model, Parent, Number_Of_Items_Column)
+              - Get_Int (View.Tree.Model, Iter, Number_Of_Items_Column));
+
+         Redraw_Totals (View);
+      end if;
+
       Remove (View.Tree.Model, Iter);
    end Remove_Category_Or_File_Iter;
 
@@ -554,6 +625,7 @@ package body Glide_Result_View is
       Set (Model, Iter, Icon_Column, C_Proxy (Pixbuf));
       Set (Model, Iter, Highlight_Column, Highlighting);
       Set (Model, Iter, Highlight_Category_Column, Highlight_Category);
+      Set (Model, Iter, Number_Of_Items_Column, 0);
 
       if Line = 0 then
          Set (Model, Iter, Weight_Column, 400);
@@ -793,6 +865,14 @@ package body Glide_Result_View is
 
       Append (View.Tree.Model, Iter, File_Iter);
 
+      Set (View.Tree.Model, File_Iter, Number_Of_Items_Column,
+           Get_Int (View.Tree.Model, File_Iter, Number_Of_Items_Column) + 1);
+      Set
+        (View.Tree.Model, Category_Iter, Number_Of_Items_Column,
+         Get_Int (View.Tree.Model, Category_Iter, Number_Of_Items_Column) + 1);
+
+      Redraw_Totals (View);
+
       if Highlight then
          Highlight_Line
            (View.Kernel, File, Line, Column, Length, Highlight_Category);
@@ -873,11 +953,16 @@ package body Glide_Result_View is
 
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
-      Pack_Start (Col, Text_Rend, True);
+      Pack_Start (Col, Text_Rend, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Icon_Column);
       Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
       Add_Attribute (Col, Text_Rend, "weight", Weight_Column);
       Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
+
+      Gtk_New (Text_Rend);
+      Pack_Start (Col, Text_Rend, False);
+      Add_Attribute (Col, Text_Rend, "text", Total_Column);
+
       Dummy := Append_Column (Tree, Col);
       Set_Expander_Column (Tree, Col);
 
@@ -909,7 +994,9 @@ package body Glide_Result_View is
          Button_Column             => Gdk.Pixbuf.Get_Type,
          Action_Column             => GType_Pointer,
          Highlight_Column          => GType_Boolean,
-         Highlight_Category_Column => GType_String);
+         Highlight_Category_Column => GType_String,
+         Number_Of_Items_Column    => GType_Int,
+         Total_Column              => GType_String);
    end Columns_Types;
 
    ----------------
@@ -931,6 +1018,11 @@ package body Glide_Result_View is
 
       Unref (V.Category_Pixbuf);
       Unref (V.File_Pixbuf);
+
+      if V.Idle_Registered then
+         Timeout_Remove (V.Idle_Handler);
+         V.Idle_Registered := False;
+      end if;
    end On_Destroy;
 
    -------------
