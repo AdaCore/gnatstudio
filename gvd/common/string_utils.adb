@@ -104,7 +104,7 @@ package body Odd.Strings is
                         Index    : in out Natural;
                         Result   : out Long_Integer)
    is
-      I : constant Natural := Index;
+      Tmp_Index : constant Natural := Index;
    begin
 
       --  Recognize negative numbers as well
@@ -121,8 +121,8 @@ package body Odd.Strings is
 
       --  If at least one valid character was found, we have a number.
 
-      if Index > I then
-         Result := Long_Integer'Value (Type_Str (I .. Index - 1));
+      if Index > Tmp_Index then
+         Result := Long_Integer'Value (Type_Str (Tmp_Index .. Index - 1));
       else
          Result := 0;
       end if;
