@@ -77,6 +77,19 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
+	    <name>open_debugger1</name>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_open_debugger1_activate</handler>
+	      <object>main_debug_window</object>
+	      <last_modification_time>Tue, 28 Mar 2000 02:13:50 GMT</last_modification_time>
+	    </signal>
+	    <label>Open Debugger...</label>
+	    <right_justify>False</right_justify>
+	  </widget>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
 	    <name>open_recent1</name>
 	    <sensitive>False</sensitive>
 	    <label>Open Recent</label>
@@ -1064,48 +1077,6 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>previous1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>0</modifiers>
-	      <key>GDK_Up</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_previous1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:35:23 GMT</last_modification_time>
-	    </signal>
-	    <label>Previous</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>next2</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>0</modifiers>
-	      <key>GDK_Down</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_next2_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:35:37 GMT</last_modification_time>
-	    </signal>
-	    <label>Next</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator15</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
 	    <name>find_backward1</name>
 	    <sensitive>False</sensitive>
 	    <accelerator>
@@ -1142,67 +1113,7 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>quit_search1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>0</modifiers>
-	      <key>GDK_Escape</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_quit_search1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:36:21 GMT</last_modification_time>
-	    </signal>
-	    <label>Quit Search</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator16</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>complete1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>0</modifiers>
-	      <key>GDK_Tab</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_complete1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:36:37 GMT</last_modification_time>
-	    </signal>
-	    <label>Complete</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>apply1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>0</modifiers>
-	      <key>GDK_Return</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_apply1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:36:57 GMT</last_modification_time>
-	    </signal>
-	    <label>Apply</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator17</name>
+	    <name>separator15</name>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1244,7 +1155,7 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>separator18</name>
+	    <name>separator16</name>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1278,13 +1189,13 @@
 
       <widget>
 	<class>GtkMenuItem</class>
-	<name>status1</name>
-	<label>Status</label>
+	<name>data1</name>
+	<label>Data</label>
 	<right_justify>False</right_justify>
 
 	<widget>
 	  <class>GtkMenu</class>
-	  <name>status1_menu</name>
+	  <name>data1_menu</name>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
@@ -1295,7 +1206,7 @@
 	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:38:07 GMT</last_modification_time>
 	    </signal>
-	    <label>Backtrace...</label>
+	    <label>Call Stack...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1339,18 +1250,12 @@
 	    <label>Signals...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
-	</widget>
-      </widget>
 
-      <widget>
-	<class>GtkMenuItem</class>
-	<name>data1</name>
-	<label>Data</label>
-	<right_justify>False</right_justify>
-
-	<widget>
-	  <class>GtkMenu</class>
-	  <name>data1_menu</name>
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>separator17</name>
+	    <right_justify>False</right_justify>
+	  </widget>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
@@ -5178,13 +5083,8 @@
 
       <widget>
 	<class>GtkNotebook</class>
-	<name>thread_notebook</name>
+	<name>file_notebook</name>
 	<can_focus>True</can_focus>
-	<signal>
-	  <name>switch_page</name>
-	  <handler>on_thread_notebook_switch_page</handler>
-	  <last_modification_time>Wed, 07 Jun 2000 02:50:46 GMT</last_modification_time>
-	</signal>
 	<show_tabs>True</show_tabs>
 	<show_border>True</show_border>
 	<tab_pos>GTK_POS_TOP</tab_pos>
@@ -6550,7 +6450,7 @@ Assert failure
 <widget>
   <class>GtkWindow</class>
   <name>open_program</name>
-  <title>Open Program</title>
+  <title>Open Program in a New Debugger</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_CENTER</position>
   <modal>True</modal>
@@ -6933,58 +6833,8 @@ Assert failure
 	</widget>
 
 	<widget>
-	  <class>GtkLabel</class>
-	  <name>label58</name>
-	  <label>Launch</label>
-	  <justify>GTK_JUSTIFY_CENTER</justify>
-	  <wrap>False</wrap>
-	  <xalign>7.45058e-09</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
-	  <child>
-	    <left_attach>0</left_attach>
-	    <right_attach>1</right_attach>
-	    <top_attach>4</top_attach>
-	    <bottom_attach>5</bottom_attach>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	    <xexpand>False</xexpand>
-	    <yexpand>False</yexpand>
-	    <xshrink>False</xshrink>
-	    <yshrink>False</yshrink>
-	    <xfill>True</xfill>
-	    <yfill>False</yfill>
-	  </child>
-	</widget>
-
-	<widget>
-	  <class>GtkOptionMenu</class>
-	  <name>launch_menu</name>
-	  <can_focus>True</can_focus>
-	  <items>in the current debugger session
-in a new debugger session
-</items>
-	  <initial_choice>0</initial_choice>
-	  <child>
-	    <left_attach>1</left_attach>
-	    <right_attach>6</right_attach>
-	    <top_attach>4</top_attach>
-	    <bottom_attach>5</bottom_attach>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	    <xexpand>False</xexpand>
-	    <yexpand>False</yexpand>
-	    <xshrink>False</xshrink>
-	    <yshrink>False</yshrink>
-	    <xfill>True</xfill>
-	    <yfill>False</yfill>
-	  </child>
-	</widget>
-
-	<widget>
 	  <class>GtkCombo</class>
-	  <name>combo8</name>
+	  <name>protocol_combo</name>
 	  <value_in_list>False</value_in_list>
 	  <ok_if_empty>True</ok_if_empty>
 	  <case_sensitive>False</case_sensitive>
@@ -7049,7 +6899,7 @@ remote
 
 	<widget>
 	  <class>GtkCombo</class>
-	  <name>combo7</name>
+	  <name>program_host_combo</name>
 	  <value_in_list>False</value_in_list>
 	  <ok_if_empty>True</ok_if_empty>
 	  <case_sensitive>False</case_sensitive>
@@ -7107,6 +6957,68 @@ remote
 	    <xfill>True</xfill>
 	    <yfill>False</yfill>
 	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label73</name>
+	  <label>Debugger Name</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>0</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>4</top_attach>
+	    <bottom_attach>5</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCombo</class>
+	  <name>debugger_combo</name>
+	  <value_in_list>False</value_in_list>
+	  <ok_if_empty>True</ok_if_empty>
+	  <case_sensitive>False</case_sensitive>
+	  <use_arrows>True</use_arrows>
+	  <use_arrows_always>False</use_arrows_always>
+	  <items></items>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>6</right_attach>
+	    <top_attach>4</top_attach>
+	    <bottom_attach>5</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+
+	  <widget>
+	    <class>GtkEntry</class>
+	    <child_name>GtkCombo:entry</child_name>
+	    <name>debugger_entry</name>
+	    <can_focus>True</can_focus>
+	    <editable>True</editable>
+	    <text_visible>True</text_visible>
+	    <text_max_length>0</text_max_length>
+	    <text></text>
+	  </widget>
 	</widget>
       </widget>
     </widget>
