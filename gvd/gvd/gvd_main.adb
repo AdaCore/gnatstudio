@@ -108,7 +108,11 @@ procedure GVD_Main is
 
       if Prefix.all = "" then
          Free (Prefix);
-         Prefix := new String' (GVD.Prefix);
+         Prefix := Getenv ("GNAT_ROOT");
+
+         if Prefix.all = "" then
+            Prefix := new String' (GVD.Prefix);
+         end if;
       end if;
 
       Bind_Text_Domain ("gvd", Prefix.all & Directory_Separator & "share" &
