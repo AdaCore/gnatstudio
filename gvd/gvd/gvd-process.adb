@@ -148,6 +148,9 @@ package body GVD.Process is
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
 
+   Regexp_Any : constant Pattern_Matcher := Compile (".+", Multiple_Lines);
+   --  Any non empty string, as long as possible.
+
    -----------------------
    -- Local Subprograms --
    -----------------------
@@ -269,9 +272,9 @@ package body GVD.Process is
    ------------
 
    function TTY_Cb (Data : Visual_Debugger) return Boolean is
-      Match : Expect_Match;
+      Match  : Expect_Match;
    begin
-      Expect (Data.Debuggee_Descriptor, Match, ".+", Timeout => 1);
+      Expect (Data.Debuggee_Descriptor, Match, Regexp_Any, Timeout => 1);
 
       if Match /= Expect_Timeout then
          Insert (Data.Debuggee_Console,
@@ -290,7 +293,10 @@ package body GVD.Process is
                  Add_LF => False);
          Highlight_Child
            (Find_MDI_Child (Data.Window.Process_Mdi, Data.Debuggee_Console));
-         GNAT.TTY.Reset_TTY (Data.Debuggee_TTY);
+         Close_TTY (Data.Debuggee_TTY);
+         Allocate_TTY (Data.Debuggee_TTY);
+         Set_TTY (Data.Debugger, TTY_Name (Data.Debuggee_TTY));
+
          return True;
    end TTY_Cb;
 
