@@ -48,20 +48,36 @@ Index: common/src/stubs.c
     gnatvsn.ads \
     hostparm.ads \
     krunch.ads \
-*** gps-1.0.1/glide/gps.gpr	Wed Apr 24 11:15:52 2002
---- glide/gps.gpr	2 Aug 2002 12:07:49 -0000
+*** gps-1.0.2/glide/gps.gpr	Tue Sep  3 11:08:17 2002
+--- glide/gps.gpr	Tue Sep  3 11:09:20 2002
 ***************
-*** 35,46 ****
+*** 29,35 ****
+     OS : OS_Type := External ("OS", "unix");  --  Fail if no default value
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Debug");
+  
+     package Builder is
+        case Build is
+--- 29,35 ----
+     OS : OS_Type := External ("OS", "unix");  --  Fail if no default value
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Production");
+  
+     package Builder is
+        case Build is
+***************
+*** 37,47 ****
              for Default_Switches ("Ada") use
-               ("-m", "-a", "-g", "-gnata", "-gnatVa", "-gnatQ", 
+               ("-m", "-a", "-g", "-gnata", "-gnatVa", "-gnatQ",
                 "-gnatwk", "-gnatwr");
 -            for Global_Configuration_Pragmas use "gnat_debug.adc";
   
            when "Production" =>
-             for Default_Switches ("Ada") use
-               ("-m", "-a", "-g", "-gnatQ", "-gnatwk", "-gnatwr");
+             for Default_Switches ("Ada") use ("-m", "-a");
 -            for Global_Configuration_Pragmas use "gnat.adc";
         end case;
      end Builder;
   
---- 35,44 ----
+--- 37,45 ----
