@@ -484,7 +484,6 @@ package body Display_Items is
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
       W, H : Gint;
-      Shadow : Gtk_Shadow_Type;
 
       use Gdk;
 
@@ -514,18 +513,12 @@ package body Display_Items is
 
       Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Border_Spacing);
 
-      --  3D Look ? If yes, keep some space for the shadow.
+      --  Keep some space for the shadow (3d look).
 
-      if Get_Pref (Look_3d) then
-         Set_Screen_Size_And_Pixmap
-           (Item,
-            Get_Window (Item.Debugger.Data_Canvas),
-            Alloc_Width + 1, Alloc_Height + 1);
-      else
-         Set_Screen_Size_And_Pixmap
-           (Item, Get_Window (Item.Debugger.Data_Canvas),
-            Alloc_Width, Alloc_Height);
-      end if;
+      Set_Screen_Size_And_Pixmap
+        (Item,
+         Get_Window (Item.Debugger.Data_Canvas),
+         Alloc_Width + 1, Alloc_Height + 1);
 
       if Item.Auto_Refresh then
          Draw_Rectangle
@@ -557,17 +550,11 @@ package body Display_Items is
          Width  => Alloc_Width - 1,
          Height => Title_Height);
 
-      if Get_Pref (Look_3d) then
-         Shadow := Shadow_Out;
-      else
-         Shadow := Shadow_Etched_Out;
-      end if;
-
       Draw_Shadow
         (Style       => Get_Style (Item.Debugger.Data_Canvas),
          Window      => Pixmap (Item),
          State_Type  => State_Normal,
-         Shadow_Type => Shadow,
+         Shadow_Type => Shadow_Out,
          X           => 0,
          Y           => 0,
          Width       => Alloc_Width + 1,
@@ -1583,6 +1570,7 @@ package body Display_Items is
       Item   : access Canvas_Item_Record'Class) return Boolean
    is
       pragma Unreferenced (Canvas);
+
       It : Display_Item := Display_Item (Item);
    begin
       It.Was_Alias := It.Is_Alias_Of /= null;
