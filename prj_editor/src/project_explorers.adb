@@ -2614,6 +2614,10 @@ package body Project_Explorers is
       function Imported_Projects (Prj : Project_Id) return Project_Id_Array;
       --  Return the list of imported projects, as an array
 
+      function Is_Same_Directory (Dir1, Dir2 : String_Id) return Boolean;
+      --  Compare the two directories. The first one is first normalized, the
+      --  second one is assumed to be normalized already
+
       -----------------------
       -- Imported_Projects --
       -----------------------
@@ -2640,6 +2644,19 @@ package body Project_Explorers is
             return Imported;
          end;
       end Imported_Projects;
+
+      -----------------------
+      -- Is_Same_Directory --
+      -----------------------
+
+      function Is_Same_Directory (Dir1, Dir2 : String_Id) return Boolean is
+         D1 : constant String := Name_As_Directory
+           (Normalize_Pathname (Get_String (Dir1), Resolve_Links => False));
+         D2 : constant String := Get_String (Dir2);
+      begin
+         return D1 = D2;
+      end Is_Same_Directory;
+
 
       Index : Natural;
       N, N2, Tmp : Gtk_Ctree_Node;
@@ -2669,7 +2686,8 @@ package body Project_Explorers is
                   Index := Sources'First;
                   while Index <= Sources'Last loop
                      if Sources (Index) /= No_String
-                       and then String_Equal (Sources (Index), User.Directory)
+                       and then Is_Same_Directory
+                         (Sources (Index), User.Directory)
                      then
                         Sources (Index) := No_String;
                         exit;
@@ -2782,6 +2800,7 @@ package body Project_Explorers is
 
       type Boolean_Array is array (Files_In_Project'Range) of Boolean;
       New_File : Boolean_Array := (others => True);
+      Expanded : constant Boolean := Row_Get_Expanded (Node_Get_Row (Node));
 
    begin
       --  The goal here is to keep the files and subdirectories if their
@@ -2819,7 +2838,7 @@ package body Project_Explorers is
          N := N2;
       end loop;
 
-      --  Then add all the new directories
+      --  Then add all the new files
 
       for J in Files_In_Project'Range loop
          if New_File (J)
@@ -2831,6 +2850,14 @@ package body Project_Explorers is
                Parent_Node      => Node);
          end if;
       end loop;
+
+      --  In case we have first deleted all sources files before adding the
+      --  others, the expansion status might have changed, so we need to
+      --  restore it.
+
+      if Expanded then
+         Gtk.Ctree.Expand (Explorer.Tree, Node);
+      end if;
    end Update_Directory_Node;
 
    -----------------
