@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;           use Ada.Text_IO;
-
 with Glib;                  use Glib;
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
@@ -1468,36 +1467,30 @@ package body GVD.Source_Editors is
    procedure Preferences_Changed
      (Editor : access Source_Editor_Record'Class)
    is
-      Changed : Boolean := False;
-      File : String_Access := Editor.Current_File;
+      --  Save the currently displayed line
+      Value : constant Gfloat :=
+        Get_Value (Get_Vadj (Get_Child (Editor)));
 
    begin
---        if Get_Pref (Editor_Font)
---        Configure (Editor, Ps_Font_Name, Font_Size, Current_Line_Icon);
+      Editor.Colors (Comment_Text) := Get_Pref (Comments_Color);
+      Editor.Colors (String_Text) := Get_Pref (Strings_Color);
+      Editor.Colors (Keyword_Text) := Get_Pref (Keywords_Color);
+      Editor.Show_Line_Nums := Get_Pref (Editor_Show_Line_Nums);
+      Set_Font (Editor, Get_Pref (Editor_Font), Get_Pref (Editor_Font_Size));
 
-      if Get_Pref (Comments_Color) /= Editor.Colors (Comment_Text) then
-         Changed := True;
-         Editor.Colors (Comment_Text) := Get_Pref (Comments_Color);
-      else
-         Put_Line ("Comments color is the same");
-      end if;
+      --  Pretend we have changed the contents of the buffer. This removes
+      --  all highlighting of the current line, and reset any marker we
+      --  might have
+      Set_Buffer (Editor, Get_Buffer (Editor), Clear_Previous => False);
+      Update_Child (Editor);
+      Update_Buttons (Editor);
+      Set_Value (Get_Vadj (Get_Child (Editor)), Value);
+      Set_Line (Editor, Get_Line (Editor));
+      Highlight_Current_Line (Editor);
 
-      if Get_Pref (Strings_Color) /= Editor.Colors (String_Text) then
-         Changed := True;
-         Editor.Colors (String_Text) := Get_Pref (Strings_Color);
-      end if;
-
-      if Get_Pref (Keywords_Color) /= Editor.Colors (Keyword_Text) then
-         Changed := True;
-         Editor.Colors (Keyword_Text) := Get_Pref (Keywords_Color);
-      end if;
-
-      if Changed then
-         Editor.Current_File := null;
-         Load_File (Editor, File.all);
-         Set_Line (Editor, Get_Line (Editor));
-         Free (File);
-      end if;
+      --  Hide or display the lines with code. This needs to be done after we
+      --  have redisplayed the editor
+      Set_Show_Lines_With_Code (Editor, Get_Pref (Editor_Show_Line_With_Code));
    end Preferences_Changed;
 
 end GVD.Source_Editors;
