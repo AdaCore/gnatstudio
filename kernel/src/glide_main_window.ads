@@ -82,8 +82,11 @@ package Glide_Main_Window is
    procedure Load_Desktop (Window : access Glide_Window_Record'Class);
    --  Load a saved desktop, if any, and create the console if needed.
 
-   procedure Reset_Title (Window : access Glide_Window_Record);
-   --  Reset the title of the main window. This includes extra information,
-   --  like the name of the root project.
+   procedure Reset_Title
+     (Window : access Glide_Window_Record;
+      Info   : String := "");
+   --  Reset the title of the main window.
+   --  Info is This extra information to be displayed. By default, the name
+   --  of the root project is displayed.
 
 end Glide_Main_Window;

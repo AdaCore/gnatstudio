@@ -348,10 +348,17 @@ package body Glide_Main_Window is
    -- Reset_Title --
    -----------------
 
-   procedure Reset_Title (Window : access Glide_Window_Record) is
+   procedure Reset_Title
+     (Window : access Glide_Window_Record;
+      Info   : String := "") is
    begin
-      Set_Title (Window, -"GPS - the GNAT Programming System (project: "
-                 & Project_Name (Get_Project (Window.Kernel)) & ')');
+      if Info = "" then
+         Set_Title (Window, -"GPS - the GNAT Programming System (project: "
+                    & Project_Name (Get_Project (Window.Kernel)) & ')');
+      else
+         Set_Title (Window, -"GPS - the GNAT Programming System ("
+                    & Info & ")");
+      end if;
    end Reset_Title;
 
 end Glide_Main_Window;
