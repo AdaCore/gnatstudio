@@ -2191,14 +2191,21 @@ package body Python_Module is
    function Nth_Arg
      (Data : Python_Callback_Data; N : Positive) return Subprogram_Type
    is
-      Item : constant PyObject := Get_Param (Data, N);
+      Item : PyObject := Get_Param (Data, N);
    begin
-      if Item = null or else not PyFunction_Check (Item) then
-         raise Invalid_Parameter;
-      else
+      if Item /= null and then PyFunction_Check (Item) then
          Py_INCREF (Item);
          return new Python_Subprogram_Record'
            (Subprogram_Record with Subprogram => Item);
+
+      elsif Item /= null and then PyMethod_Check (Item) then
+         Item := PyMethod_Function (Item);
+         Py_INCREF (Item);
+         return new Python_Subprogram_Record'
+           (Subprogram_Record with Subprogram => Item);
+
+      else
+         raise Invalid_Parameter;
       end if;
    end Nth_Arg;
 
