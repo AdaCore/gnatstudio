@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -991,19 +991,31 @@ package body Browsers.Dependency_Items is
       Item : access File_Item_Record'Class) return Project_Id
    is
       File_Name : constant String := Get_Source_Filename (Get_Source (Item));
+      P : Project_Id;
    begin
       if Item.Project_Name = No_Name then
-         declare
-            P : Project_Id := Get_Project_From_File
-              (Get_Project_View (Kernel), File_Name);
-            P_Name : constant String := Project_Name (P);
-         begin
-            Name_Len := P_Name'Length;
-            Name_Buffer (1 .. Name_Len) := P_Name;
-            Item.Project_Name := Name_Find;
-         end;
+         P := Get_Project_From_File (Get_Project_View (Kernel), File_Name);
+
+         if P /= No_Project then
+            declare
+               P_Name : constant String := Project_Name (P);
+            begin
+               Name_Len := P_Name'Length;
+               Name_Buffer (1 .. Name_Len) := P_Name;
+               Item.Project_Name := Name_Find;
+            end;
+         else
+            --  ??? Eventually useless when we have a real project file for the
+            --  runtime
+            Item.Project_Name := No_Name;
+         end if;
       end if;
-      return Get_Project_View_From_Name (Item.Project_Name);
+
+      if Item.Project_Name = No_Name then
+         return No_Project;
+      else
+         return Get_Project_View_From_Name (Item.Project_Name);
+      end if;
    end Project_Of;
 
    ---------------------------
