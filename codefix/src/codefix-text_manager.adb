@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Text_IO;    use Ada.Text_IO;
 
 with GNAT.Regpat;    use GNAT.Regpat;
 with Basic_Types;    use Basic_Types;
@@ -177,9 +176,36 @@ package body Codefix.Text_Manager is
       Iterator    : Text_List.List_Node := First (This.Files.all);
       New_Text    : Ptr_Text;
       New_Buffer  : Extended_Line_Buffer;
-      Indent      : Natural;
-      Next_Indent : Natural;
+      Ignore      : Natural;
       Buffer      : Dynamic_String;
+
+      procedure Display_Constructs;
+      --  Debug procedure used to display the contents of New_Text
+
+      procedure Display_Constructs is
+         Current : Construct_Access := New_Text.Tokens_List.First;
+      begin
+         while Current /= null loop
+            if Current.Name /= null then
+               Put (Current.Name.all & ": ");
+            end if;
+
+            Put (Current.Category'Img);
+            Put (", " & Current.Sloc_End.Line'Img & ", ");
+            Put (Current.Sloc_End.Column'Img);
+            Put (" (");
+
+            if Current.Is_Declaration then
+               Put ("spec");
+            else
+               Put ("body");
+            end if;
+
+            Put (")");
+            New_Line;
+            Current := Current.Next;
+         end loop;
+      end Display_Constructs;
 
    begin
       while Iterator /= Text_List.Null_Node loop
@@ -207,31 +233,11 @@ package body Codefix.Text_Manager is
          Format_Operators => False,
          Indent => False,
          Constructs => New_Text.Tokens_List,
-         Current_Indent => Next_Indent,
-         Prev_Indent => Indent,
+         Current_Indent => Ignore,
+         Prev_Indent => Ignore,
          Callback => null);
 
---      declare
---         Current : Construct_Access := New_Text.Tokens_List.First;
---      begin
---         while Current /= null loop
---            if Current.Name /= null then
---               Put (Current.Name.all & ": ");
---            end if;
---            Put (Current.Category'Img);
---            Put (", " & Current.Sloc_End.Line'Img & ", ");
---            Put (Current.Sloc_End.Column'Img);
---            Put (" (");
---            if Current.Is_Declaration then
---               Put ("spec");
---            else
---               Put ("body");
---            end if;
---            Put (")");
---            New_Line;
---            Current := Current.Next;
---         end loop;
---      end;
+      pragma Debug (Display_Constructs);
 
       Free (Buffer);
 
@@ -905,8 +911,9 @@ package body Codefix.Text_Manager is
       Cursor   : File_Cursor'Class;
       Searched : String;
       Step     : Step_Way := Normal_Step;
-      Jump_String  : Boolean := True)
-   return File_Cursor'Class is
+      Jump_String  : Boolean := True) return File_Cursor'Class
+   is
+      pragma Unreferenced (Jump_String);
 
       Result : File_Cursor := File_Cursor (Cursor);
 
@@ -917,10 +924,7 @@ package body Codefix.Text_Manager is
 
       case Step is
          when Normal_Step =>
-
-            for J in Result.Col .. This.Content'Last - Searched'Last + 1
-            loop
-
+            for J in Result.Col .. This.Content'Last - Searched'Last + 1 loop
                if This.Content (J .. J + Searched'Last - 1) = Searched then
                   Result.Col := J;
                   return Result;
@@ -928,20 +932,17 @@ package body Codefix.Text_Manager is
             end loop;
 
          when Reverse_Step =>
-
             for J in reverse This.Content'First ..
-              Result.Col - Searched'Last + 1 loop
-
+              Result.Col - Searched'Last + 1
+            loop
                if This.Content (J .. J + Searched'Last - 1) = Searched then
                   Result.Col := J;
                   return Result;
                end if;
             end loop;
-
       end case;
 
       return Null_File_Cursor;
-
    end Search_String;
 
    ---------
@@ -996,15 +997,12 @@ package body Codefix.Text_Manager is
    -- Get_New_Text --
    ------------------
 
-   function Get_New_Text (This : Extract_Line; Detail : Boolean := True)
-     return String is
-
-      Buffer : constant String := This.Content.all;
-
+   function Get_New_Text
+     (This : Extract_Line; Detail : Boolean := True) return String
+   is
+      pragma Unreferenced (Detail);
    begin
-
-      return Buffer;
-
+      return This.Content.all;
    end Get_New_Text;
 
    ------------------
