@@ -4797,12 +4797,6 @@ package body Src_Info.CPP is
          Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Tab => FD_Tab);
 
-      if FD_Tab = Null_FD then
-         Fail ("unable to find function " &
-               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
-         return;
-      end if;
-
       Is_Static  := (FD_Tab.Attributes and SN_STATIC) = SN_STATIC;
 
       Set_Cursor
