@@ -2088,7 +2088,8 @@ package body Projects is
 
    function View_Is_Complete (Project : Project_Type) return Boolean is
    begin
-      return Project.Data.View_Is_Complete;
+      return Project.Data.Is_Default
+        or else Project.Data.View_Is_Complete;
    end View_Is_Complete;
 
 end Projects;

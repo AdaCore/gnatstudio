@@ -471,7 +471,10 @@ package Projects is
    --  Return True if the view was correctly computed for this project.
    --  Return False if the view couldn't be computed correctly because the
    --  project contained invalid references. Such a project can only partially
-   --  be used, and it isn't safe to edit it
+   --  be used, and it isn't safe to edit it.
+   --  Note: the view of the unmodified default project is never considered as
+   --  incomplete, since the user doesn't really have control over the contents
+   --  of this project.
 
 private
    type Project_Type_Data;
