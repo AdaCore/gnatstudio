@@ -368,6 +368,15 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Current_Line_Color),
            -"Editor:Fonts & Colors");
 
+      Current_Block_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Current-Block-Color",
+         Default => "white",
+         Blurb   => -"Color for highlighting the current block",
+         Nick    => -"Current block color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Current_Block_Color),
+           -"Editor:Fonts & Colors");
+
       Default_HL_Line_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Highlight-Line-Color",
          Default => "cyan",
