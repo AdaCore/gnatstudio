@@ -284,8 +284,18 @@ package body Glide_Kernel.Project is
    --------------------------
 
    procedure Load_Default_Project
-     (Kernel : access Kernel_Handle_Record'Class; Directory : String) is
+     (Kernel : access Kernel_Handle_Record'Class; Directory : String)
+   is
+      Had_Project_Desktop : Boolean;
+      pragma Unreferenced (Had_Project_Desktop);
    begin
+      --  Save all open children, and close everything. A new desktop will be
+      --  open in the end anway
+
+      if not Save_All_MDI_Children (Kernel, Force => False) then
+         return;
+      end if;
+
       Kernel.Project := Create_Default_Project
         ("default", Normalize_Pathname (Directory, Resolve_Links => False));
       Kernel.Project_Is_Default := True;
@@ -293,6 +303,11 @@ package body Glide_Kernel.Project is
       Project_Changed (Kernel);
       Recompute_View (Kernel);
       Reset_Normalized_Flag (Kernel.Project);
+
+      --  Reload the default desktop
+
+      Close_All_Children (Kernel);
+      Had_Project_Desktop := Load_Desktop (Kernel);
    end Load_Default_Project;
 
    ------------------
@@ -315,12 +330,26 @@ package body Glide_Kernel.Project is
       end Report_Error;
 
       New_Project : Project_Node_Id;
+      Had_Project_Desktop : Boolean;
+      pragma Unreferenced (Had_Project_Desktop);
 
    begin
       if not Is_Regular_File (Project) then
          Console.Insert (Kernel, Project & (-" is not a regular file"),
                          Mode => Console.Error);
          Recompute_View (Kernel);
+         return;
+      end if;
+
+      if Project = Get_Project_File_Name (Kernel) then
+         --  nothing to do
+         return;
+      end if;
+
+      --  Save all open children, and close everything. A new desktop will be
+      --  open in the end anway
+
+      if not Save_All_MDI_Children (Kernel, Force => False) then
          return;
       end if;
 
@@ -354,6 +383,11 @@ package body Glide_Kernel.Project is
       --  Modified fields to False, since this is the default. Entries will be
       --  created on demand.
       Reset (Kernel.Projects_Data);
+
+      --  Reload the desktop, in case there is a project-specific setup already
+
+      Close_All_Children (Kernel);
+      Had_Project_Desktop := Load_Desktop (Kernel);
 
    exception
       when others =>
