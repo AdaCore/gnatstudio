@@ -29,6 +29,7 @@ package Codefix_Window_Pkg is
       Accept_All_Corrections : Gtk_Button;
       Undo : Gtk_Button;
       Refresh : Gtk_Button;
+      Previous : Gtk_Button;
       Vbuttonbox2 : Gtk_Vbutton_Box;
       Cancel_Changes : Gtk_Button;
    end record;

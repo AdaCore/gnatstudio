@@ -27,6 +27,9 @@ package Codefix_Window_Pkg.Callbacks is
    procedure On_Refresh_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
+   procedure On_Previous_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
    procedure On_Cancel_Changes_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
