@@ -247,14 +247,26 @@ package body GNAT.Expect is
       Descriptor.Pid := To_Pid (Pid);
    end Close;
 
+   -----------------
+   -- Send_Signal --
+   -----------------
+
+   procedure Send_Signal
+     (Descriptor : Process_Descriptor;
+      Signal     : Integer) is
+   begin
+      Kill (Descriptor.Pid, Signal);
+      --  ??? Need to check process status here.
+   end Send_Signal;
+
    ---------------
    -- Interrupt --
    ---------------
 
-   procedure Interrupt (Descriptor : in out Process_Descriptor) is
+   procedure Interrupt (Descriptor : Process_Descriptor) is
+      SIGINT : constant := 2;
    begin
-      Kill (Descriptor.Pid, 2);
-      --  ??? Need to check process status here.
+      Send_Signal (Descriptor, SIGINT);
    end Interrupt;
 
    ---------------------
@@ -912,7 +924,8 @@ package body GNAT.Expect is
 
       while Current /= null loop
          Current.Filter
-           (Descriptor, Full_Str (Full_Str'First .. Last), Current.User_Data);
+           (Descriptor, Full_Str (Full_Str'First .. Last),
+            Current.User_Data);
          Current := Current.Next;
       end loop;
 

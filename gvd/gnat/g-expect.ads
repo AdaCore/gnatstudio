@@ -122,7 +122,12 @@ package GNAT.Expect is
    --  process table).
    --  This also frees the buffer associated with the process id.
 
-   procedure Interrupt (Descriptor : in out Process_Descriptor);
+   procedure Send_Signal
+     (Descriptor : Process_Descriptor;
+      Signal     : Integer);
+   --  Send a given signal to the process.
+
+   procedure Interrupt (Descriptor : Process_Descriptor);
    --  Interrupt the process (the equivalent of Ctrl-C on unix and windows)
    --  and call close if the process dies.
 
