@@ -103,16 +103,16 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Command_History1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Clear_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Define_Command1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Edit_Buttons1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Backtrace1_Activate
      (Object : access Gtk_Widget_Record'Class);

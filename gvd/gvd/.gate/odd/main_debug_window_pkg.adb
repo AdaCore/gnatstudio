@@ -397,16 +397,16 @@ begin
    Set_Submenu (Main_Debug_Window.Command1, Main_Debug_Window.Command1_Menu);
 
    Gtk_New (Main_Debug_Window.Command_History1, -"Command History...");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Command_History1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Command_History1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Command_History1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Command_History1);
    Set_Right_Justify (Main_Debug_Window.Command_History1, False);
 
    Gtk_New (Main_Debug_Window.Clear_Window1, -"Clear Window");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Clear_Window1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Clear_Window1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Clear_Window1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Clear_Window1);
    Set_Right_Justify (Main_Debug_Window.Clear_Window1, False);
 
@@ -416,17 +416,17 @@ begin
 
    Gtk_New (Main_Debug_Window.Define_Command1, -"Define Command...");
    Set_Sensitive (Main_Debug_Window.Define_Command1, False);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Define_Command1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Define_Command1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Define_Command1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Define_Command1);
    Set_Right_Justify (Main_Debug_Window.Define_Command1, False);
 
    Gtk_New (Main_Debug_Window.Edit_Buttons1, -"Edit Buttons...");
    Set_Sensitive (Main_Debug_Window.Edit_Buttons1, False);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Edit_Buttons1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Edit_Buttons1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Edit_Buttons1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Command1_Menu, Main_Debug_Window.Edit_Buttons1);
    Set_Right_Justify (Main_Debug_Window.Edit_Buttons1, False);
 
