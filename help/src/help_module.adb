@@ -217,7 +217,9 @@ package body Help_Module is
       Shell_Lang : String := "";
       Descr      : String;
       Category   : String;
-      Menu_Path  : String);
+      Menu_Path  : String;
+      Menu_Before : String := "";
+      Menu_After  : String := "");
    --  Register the menu in the GPS menubar.
    --  The name of the HTML file is either hard-coded in HTML_File or
    --  read from the result of a shell_cmd
@@ -708,7 +710,9 @@ package body Help_Module is
       Shell_Lang : String := "";
       Descr      : String;
       Category   : String;
-      Menu_Path  : String)
+      Menu_Path  : String;
+      Menu_Before : String := "";
+      Menu_After  : String := "")
    is
       Item : String_Menu_Item;
       Node : Help_Category_List.List_Node;
@@ -726,10 +730,26 @@ package body Help_Module is
             Item.Shell_Lang := new String'(Shell_Lang);
          end if;
 
-         Register_Menu
-           (Kernel      => Kernel,
-            Parent_Path => Dir_Name (Menu_Path),
-            Item        => Gtk_Menu_Item (Item));
+         if Menu_Before /= "" then
+            Register_Menu
+              (Kernel      => Kernel,
+               Parent_Path => Dir_Name (Menu_Path),
+               Item        => Gtk_Menu_Item (Item),
+               Ref_Item    => Menu_Before,
+               Add_Before  => True);
+         elsif Menu_After /= "" then
+            Register_Menu
+              (Kernel      => Kernel,
+               Parent_Path => Dir_Name (Menu_Path),
+               Item        => Gtk_Menu_Item (Item),
+               Ref_Item    => Menu_After,
+               Add_Before  => False);
+         else
+            Register_Menu
+              (Kernel      => Kernel,
+               Parent_Path => Dir_Name (Menu_Path),
+               Item        => Gtk_Menu_Item (Item));
+         end if;
 
          Kernel_Callback.Connect
            (Item, "activate",
@@ -1570,14 +1590,20 @@ package body Help_Module is
             Field := Field.Next;
          end loop;
 
-         if Name /= null then
+         if Menu = null then
+            Insert (Kernel,
+                    -"<documentation_file> must have a <menu> child",
+                    Mode => Error);
+         elsif Name /= null then
             Trace (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
             Register_Help
               (Kernel,
-               HTML_File  => Create_Html (Name.Value.all, Kernel),
-               Descr      => Descr.Value.all,
-               Category   => Cat.Value.all,
-               Menu_Path  => Menu.Value.all);
+               HTML_File   => Create_Html (Name.Value.all, Kernel),
+               Descr       => Descr.Value.all,
+               Category    => Cat.Value.all,
+               Menu_Before => Get_Attribute (Menu, "before", ""),
+               Menu_After  => Get_Attribute (Menu, "after", ""),
+               Menu_Path   => Menu.Value.all);
          else
             if Shell = null then
                Insert
@@ -1588,12 +1614,14 @@ package body Help_Module is
             else
                Register_Help
                  (Kernel,
-                  HTML_File  => VFS.No_File,
-                  Shell_Cmd  => Shell.all,
-                  Shell_Lang => Shell_Lang.all,
-                  Descr      => Descr.Value.all,
-                  Category   => Cat.Value.all,
-                  Menu_Path  => Menu.Value.all);
+                  HTML_File   => VFS.No_File,
+                  Shell_Cmd   => Shell.all,
+                  Shell_Lang  => Shell_Lang.all,
+                  Descr       => Descr.Value.all,
+                  Category    => Cat.Value.all,
+                  Menu_Before => Get_Attribute (Menu, "before", ""),
+                  Menu_After  => Get_Attribute (Menu, "after", ""),
+                  Menu_Path   => Menu.Value.all);
             end if;
          end if;
 
