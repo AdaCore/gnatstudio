@@ -148,7 +148,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    procedure Set_Subprogram_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record);
-   --  Set a breakpoint at the begining of a specified subprogram.
+   --  Set a breakpoint at the beginning of a specified subprogram.
 
    procedure Till_Breakpoint
      (Widget : access Gtk_Widget_Record'Class;
