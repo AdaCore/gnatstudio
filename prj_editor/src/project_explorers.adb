@@ -1354,16 +1354,17 @@ package body Project_Explorers is
          Get_Node_Type (T.Tree.Model, Node),
          True);
 
-
-      Path2 := Get_Path (T.Tree.Model, Children (T.Tree.Model, Node));
-      Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
-      if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
-         Scroll_To_Cell
-           (T.Tree,
-            Path, null, True,
-            0.1, 0.1);
+      if Realized_Is_Set (T.Tree) then
+         Path2 := Get_Path (T.Tree.Model, Children (T.Tree.Model, Node));
+         Get_Cell_Area (T.Tree, Path2, Get_Column (T.Tree, 0), Area_Rect);
+         if Area_Rect.Y > Get_Allocation_Height (T.Tree) - Margin then
+            Scroll_To_Cell
+              (T.Tree,
+               Path, null, True,
+               0.1, 0.1);
+         end if;
+         Path_Free (Path2);
       end if;
-      Path_Free (Path2);
 
       T.Expanding := False;
 
@@ -1857,6 +1858,8 @@ package body Project_Explorers is
 
          if not Found then
             Remove (Explorer.Tree.Model, Iter2);
+         else
+            Update_Node (Explorer, Iter2, null);
          end if;
 
          Next (Explorer.Tree.Model, Iter2);
