@@ -66,6 +66,13 @@ package body Entities is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Entity_Information_Record'Class, Entity_Information);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Entity_Information_List, Entity_Information_List_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Entity_Informations_Record, Entity_Informations);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Unshared_Entity_Informations_Record,
+      Unshared_Entity_Informations);
 
    function String_Hash is new HTables.Hash (HTable_Header);
 
@@ -384,9 +391,8 @@ package body Entities is
    -------------
 
    procedure Destroy (D : in out Unshared_Entity_Informations) is
-      pragma Unreferenced (D);
    begin
-      null;
+      Unchecked_Free (D);
    end Destroy;
 
    ---------
@@ -743,6 +749,7 @@ package body Entities is
             end loop;
 
             Get_Next (File.All_Entities, Iter);
+            Unchecked_Free (UEI.List);
          end loop;
          Reset (File.All_Entities);
       end;
@@ -951,15 +958,9 @@ package body Entities is
          EL := EIS.List;
          if Length (EL.all) = 1 then
             if EL.Table (Entity_Information_Arrays.First) = E then
+               Unchecked_Free (EIS.List);
                Remove (D, E.Shared_Name);
 
-               if Active (Ref_Me) then
-                  Trace (Ref_Me, "Freeing shared name " & EIS.Name.all);
-               end if;
-               if not Active (Debug_Me) then
-                  E.Shared_Name := null;
-                  Free (EIS.Name);
-               end if;
             end if;
          else
             Remove (EL.all, E);
@@ -1627,9 +1628,14 @@ package body Entities is
    -------------
 
    procedure Destroy (D : in out Entity_Informations) is
-      pragma Unreferenced (D);
    begin
-      null;
+      if Active (Ref_Me) then
+         Trace (Ref_Me, "Freeing shared name " & D.Name.all);
+      end if;
+      if not Active (Debug_Me) then
+         Free (D.Name);
+      end if;
+      Unchecked_Free (D);
    end Destroy;
 
    --------------
