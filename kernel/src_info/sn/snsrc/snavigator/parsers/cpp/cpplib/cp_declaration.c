@@ -1911,7 +1911,7 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
          ckfree( (char*)name_prev[j] );
          name_prev[j] = 0;
       }
-      name_prev[j] = name;
+      name_prev[j] = SN_StrDup (name);
       j++;
 
       if( paf_type != PAF_REF_TO_TYPEDEF )
