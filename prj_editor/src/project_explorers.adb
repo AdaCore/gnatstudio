@@ -3122,8 +3122,9 @@ package body Project_Explorers is
    is
       Project : constant String := '/' & (-"Project");
    begin
-      Explorer_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Explorer_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Explorer_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null,

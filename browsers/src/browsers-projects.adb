@@ -360,8 +360,9 @@ package body Browsers.Projects is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      Project_Browser_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Project_Browser_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Project_Browser_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,

@@ -787,8 +787,9 @@ package body External_Editor_Module is
       Select_Client (Kernel, Current_Client.all);
 
       if Current_Client.Client /= None then
-         External_Editor_Module_Id := Register_Module
-           (Kernel                  => Kernel,
+         Register_Module
+           (Module                  => External_Editor_Module_Id,
+            Kernel                  => Kernel,
             Module_Name             => External_Editor_Module_Name,
             Priority                => Priority,
             Contextual_Menu_Handler => External_Editor_Contextual'Access,

@@ -1183,8 +1183,9 @@ package body VCS.CVS is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_VCS_Identifier (Identify_VCS'Access);
-      VCS_CVS_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => VCS_CVS_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => VCS_CVS_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null);

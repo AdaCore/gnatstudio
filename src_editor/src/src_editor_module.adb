@@ -1370,8 +1370,9 @@ package body Src_Editor_Module is
       Reopen_Data : Reopen_Record;
 
    begin
-      Src_Editor_Module_Id := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Src_Editor_Module_Id,
+         Kernel                  => Kernel,
          Module_Name             => Src_Editor_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Source_Editor_Contextual'Access,

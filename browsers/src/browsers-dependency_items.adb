@@ -789,8 +789,9 @@ package body Browsers.Dependency_Items is
    is
       Tools : constant String := '/' & (-"Tools");
    begin
-      Dependency_Browser_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Dependency_Browser_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Dependency_Browser_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,

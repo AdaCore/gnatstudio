@@ -159,8 +159,9 @@ package body VCS_Module is
       VCS       : constant String := '/' & VCS_Root;
 
    begin
-      VCS_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => VCS_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => VCS_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => VCS_Contextual_Menu'Access);

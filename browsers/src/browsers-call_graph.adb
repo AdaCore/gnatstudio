@@ -1210,8 +1210,9 @@ package body Browsers.Call_Graph is
    is
       Tools : constant String := '/' & (-"Tools");
    begin
-      Call_Graph_Module_Id := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Call_Graph_Module_Id,
+         Kernel                  => Kernel,
          Module_Name             => Call_Graph_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Call_Graph_Contextual_Menu'Access,

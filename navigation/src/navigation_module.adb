@@ -293,8 +293,9 @@ package body Navigation_Module is
       Navigate      : constant String := "/" & Navigate_Root;
       Menu_Item     : Gtk_Menu_Item;
    begin
-      Navigation_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Navigation_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Navigation_Module_Name,
          Priority                => High_Priority,
          Contextual_Menu_Handler => Navigation_Contextual_Menu'Access,

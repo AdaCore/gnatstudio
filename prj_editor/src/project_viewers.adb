@@ -1351,8 +1351,9 @@ package body Project_Viewers is
    is
       Project : constant String := '/' & (-"Project");
    begin
-      Prj_Editor_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Prj_Editor_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Project_Editor_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Project_Editor_Contextual'Access);

@@ -42,8 +42,9 @@ package body Metrics_Module is
       Packages  : constant String := '/' & (-"Packages");
       Lines     : constant String := '/' & (-"Lines");
    begin
-      Metrics_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Metrics_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Metrics_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null);

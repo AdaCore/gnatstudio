@@ -163,8 +163,9 @@ package body Aunit_Module is
       Edit         : constant String := '/' & (-"Edit") & '/';
       Unit_Testing : constant String := -"Unit Testing";
    begin
-      Aunit_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Aunit_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Aunit_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null);
