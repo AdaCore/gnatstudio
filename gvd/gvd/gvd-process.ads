@@ -96,12 +96,15 @@ package Odd.Process is
    --  are not transmitted to the debugger.
 
    procedure Text_Output_Handler
-     (Process : Debugger_Process_Tab;
-      Str     : String);
+     (Process    : Debugger_Process_Tab;
+      Str        : String;
+      Is_Command : Boolean := False);
    --  Insert Str in the debugger window.
    --  Note that this function does not change the Edit_Pos for the record,
    --  so this should be used only for temporary output.
    --  This also does some highlighting if the debugger has been defined to
    --  support highlighting.
+   --  If Is_Command is True, then the string is displayed in the highlighting
+   --  color, used for user commands.
 
 end Odd.Process;

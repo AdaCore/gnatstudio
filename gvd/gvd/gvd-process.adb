@@ -27,6 +27,8 @@ with Gtk.Main;     use Gtk.Main;
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
+with Gdk.Cursor;   use Gdk.Cursor;
+with Gdk.Window;   use Gdk.Window;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
@@ -34,7 +36,6 @@ with Process_Tab_Pkg; use Process_Tab_Pkg;
 with Gtkada.Canvas;   use Gtkada.Canvas;
 with Odd.Pixmaps;     use Odd.Pixmaps;
 with Display_Items;   use Display_Items;
-with Generic_Values;  use Generic_Values;
 with Debugger.Gdb;    use Debugger.Gdb;
 with Debugger.Jdb;    use Debugger.Jdb;
 with Odd.Strings;     use Odd.Strings;
@@ -143,7 +144,8 @@ package body Odd.Process is
 
    procedure Text_Output_Handler
      (Process : Debugger_Process_Tab;
-      Str     : String)
+      Str     : String;
+      Is_Command : Boolean := False)
    is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
       Start   : Positive := Str'First;
@@ -151,34 +153,47 @@ package body Odd.Process is
       Freeze (Process.Debugger_Text);
       Set_Point (Process.Debugger_Text, Get_Length (Process.Debugger_Text));
 
-      while Start <= Str'Last loop
-         Match (Highlighting_Pattern (Process.Debugger),
-                Str (Start .. Str'Last),
-                Matched);
-         if Matched (0) /= No_Match then
-            if Matched (0).First - 1 >= Start then
+      --  Should all the string be highlighted ?
+
+      if Is_Command then
+         Insert (Process.Debugger_Text,
+                 Process.Debugger_Text_Font,
+                 Process.Debugger_Text_Highlight_Color,
+                 Null_Color,
+                 Str);
+
+      --  If not, highlight only parts of it
+
+      else
+         while Start <= Str'Last loop
+            Match (Highlighting_Pattern (Process.Debugger),
+                   Str (Start .. Str'Last),
+                   Matched);
+            if Matched (0) /= No_Match then
+               if Matched (0).First - 1 >= Start then
+                  Insert (Process.Debugger_Text,
+                          Process.Debugger_Text_Font,
+                          Black (Get_System),
+                          Null_Color,
+                          Str (Start .. Matched (0).First - 1));
+               end if;
+
+               Insert (Process.Debugger_Text,
+                       Process.Debugger_Text_Font,
+                       Process.Debugger_Text_Highlight_Color,
+                       Null_Color,
+                       Str (Matched (0).First .. Matched (0).Last));
+               Start := Matched (0).Last + 1;
+            else
                Insert (Process.Debugger_Text,
                        Process.Debugger_Text_Font,
                        Black (Get_System),
                        Null_Color,
-                       Str (Start .. Matched (0).First - 1));
+                       Str (Start .. Str'Last));
+               Start := Str'Last + 1;
             end if;
-
-            Insert (Process.Debugger_Text,
-                    Process.Debugger_Text_Font,
-                    Process.Debugger_Text_Highlight_Color,
-                    Null_Color,
-                    Str (Matched (0).First .. Matched (0).Last));
-            Start := Matched (0).Last + 1;
-         else
-            Insert (Process.Debugger_Text,
-                    Process.Debugger_Text_Font,
-                    Black (Get_System),
-                    Null_Color,
-                    Str (Start .. Str'Last));
-            Start := Str'Last + 1;
-         end if;
-      end loop;
+         end loop;
+      end if;
 
       Thaw (Process.Debugger_Text);
    end Text_Output_Handler;
@@ -192,7 +207,9 @@ package body Odd.Process is
       Str        : String)
    is
       Process : Debugger_Process_Tab := Convert (Descriptor);
-      Matched : Match_Array (0 .. 2);
+      File_First : Natural;
+      File_Last  : Positive;
+      Line       : Natural;
       Initial_Internal_Command : Boolean := True;
    begin
       --  Do not show the output if we have an internal command
@@ -203,20 +220,16 @@ package body Odd.Process is
          Initial_Internal_Command := False;
       end if;
 
-      --  ??? This is specific to gdb...
+      Found_File_Name (Process.Debugger, Str, File_First, File_Last, Line);
 
-      Match (Compile (ASCII.SUB & ASCII.SUB
-                      & "([^:]+):(\d+):\d+:beg:", Multiple_Lines),
-             Str, Matched);
+      --  Do we have a file name ?
 
-      --  End of gdb specific section
+      if File_First /= 0 then
 
-      if Matched (0) /= No_Match then
          --  Get everything in the buffer (since the following command
          --  needs to interact with the debugger, and we want to hide its
          --  output).
 
-         --  Empty_Buffer (Get_Process (Process.Debugger));
          Wait_Prompt (Process.Debugger);
 
          --  Override the language currently defined in the editor.
@@ -226,15 +239,10 @@ package body Odd.Process is
                                Get_Language (Process.Debugger));
 
          --  Display the file
-         --  ??? Should also display the correct line
 
          Set_Internal_Command (Get_Process (Process.Debugger), True);
-         Load_File (Process.Editor_Text,
-                    Str (Matched (1).First .. Matched (1).Last),
+         Load_File (Process.Editor_Text, Str (File_First .. File_Last),
                     Process.Debugger);
-         Set_Line (Process.Editor_Text,
-                   Natural'Value
-                   (Str (Matched (2).First .. Matched (2).Last)));
 
          --  Restore the initial status of the process. We can not force it to
          --  False, since, at least with gdb, the "info line" command used in
@@ -242,6 +250,10 @@ package body Odd.Process is
          --  recursive call to Text_Output_Handler.
          Set_Internal_Command (Get_Process (Process.Debugger),
                                Initial_Internal_Command);
+      end if;
+
+      if Line /= 0 then
+         Set_Line (Process.Editor_Text, Line);
       end if;
    end Text_Output_Handler;
 
@@ -367,11 +379,15 @@ package body Odd.Process is
    procedure Process_User_Command (Debugger : Debugger_Process_Tab;
                                    Command  : String)
    is
-      The_Type : Generic_Type_Access;
       Item     : Display_Item;
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
+      Cursor   : Gdk_Cursor;
    begin
+
+      Gdk_New (Cursor, Gdk.Types.Watch);
+      Set_Cursor (Get_Window (Main_Debug_Window), Cursor);
+      Destroy (Cursor);
 
       --  ??? Should forbid commands that modify the configuration of the
       --  debugger, like "set annotate" for gdb, otherwise we can't be sure
@@ -391,42 +407,35 @@ package body Odd.Process is
       if First + 12 <= Command2'Last
         and then Command2 (First .. First + 12) = "graph display"
       then
-         declare
-            Var : String := Command (First + 14 .. Command2'Last);
-         begin
-            Set_Internal_Command (Get_Process (Debugger.Debugger), True);
-            The_Type := Parse_Type (Debugger.Debugger, Var);
-
-            if The_Type /= null then
-               Parse_Value (Debugger.Debugger, Var, The_Type);
-
-               Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
-                        Var, The_Type, Auto_Refresh => True);
-               Put (Debugger.Data_Canvas, Item);
-            end if;
-            Set_Internal_Command (Get_Process (Debugger.Debugger), False);
-            --  ??? Problem: this hides the end prompt...
-         end;
+         Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
+                  Variable_Name => Command (First + 14 .. Command2'Last),
+                  Debugger      => Debugger,
+                  Auto_Refresh  => True);
+         Put (Debugger.Data_Canvas, Item);
+         Display_Prompt (Debugger.Debugger);
 
       elsif First + 10 <= Command2'Length
         and then Command2 (First .. First + 10) = "graph print"
       then
-         declare
-            Var : String := Command (First + 12 .. Command2'Last);
-         begin
-            Set_Internal_Command (Get_Process (Debugger.Debugger), True);
-            The_Type := Parse_Type (Debugger.Debugger, Var);
+         Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
+                  Variable_Name => Command (First + 12 .. Command2'Last),
+                  Debugger      => Debugger,
+                  Auto_Refresh  => False);
+         Put (Debugger.Data_Canvas, Item);
+         Display_Prompt (Debugger.Debugger);
 
-            if The_Type /= null then
-               Parse_Value (Debugger.Debugger, Var, The_Type);
-
-               Gtk_New (Item, Get_Window (Debugger.Data_Canvas),
-                        Var, The_Type, Auto_Refresh => False);
-               Put (Debugger.Data_Canvas, Item);
-            end if;
-            Set_Internal_Command (Get_Process (Debugger.Debugger), False);
-            --  ??? Problem: this hides the end prompt...
-         end;
+      --  ??? An internal debugging macro, to be deleted
+      elsif First + 3 <= Command2'Length
+        and then Command2 (First .. First + 3) = "play"
+      then
+         Send (Get_Process (Debugger.Debugger), "break exception");
+         Wait_Prompt (Debugger.Debugger);
+         Send (Get_Process (Debugger.Debugger), "run");
+         Wait_Prompt (Debugger.Debugger);
+         Process_User_Command (Debugger, "graph print A");
+         Process_User_Command (Debugger, "graph print S");
+         Process_User_Command (Debugger, "graph print V");
+         Process_User_Command (Debugger, "graph print Act");
 
       elsif Command2 = "quit" then
          Main_Quit;
@@ -439,6 +448,12 @@ package body Odd.Process is
       end if;
 
       Set_Internal_Command (Get_Process (Debugger.Debugger), True);
+
+      --  Put back the standard cursor
+
+      Gdk_New (Cursor, Gdk.Types.Left_Ptr);
+      Set_Cursor (Get_Window (Main_Debug_Window), Cursor);
+      Destroy (Cursor);
    end Process_User_Command;
 
 end Odd.Process;
