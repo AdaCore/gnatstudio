@@ -813,9 +813,9 @@ package body External_Editor_Module is
         and then Mime_Type = Mime_Source_File
       then
          declare
-            File   : constant String  := Get_String (Data (Data'First));
-            Line   : constant Gint    := Get_Int (Data (Data'First + 1));
-            Column : constant Gint    := Get_Int (Data (Data'First + 2));
+            File   : constant String := Get_String (Data (Data'First));
+            Line   : constant Gint   := Get_Int (Data (Data'First + 1));
+            Column : constant Gint   := Get_Int (Data (Data'First + 2));
 
          begin
             if Is_Regular_File (File) then

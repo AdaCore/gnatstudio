@@ -1071,7 +1071,7 @@ package body Src_Info.ALI is
 
       Withed_File_Name : constant String :=
         Get_Source_Filename (W.Uname, Project);
-      Krunched_Name    : constant String := Krunch (Withed_File_Name);
+      Krunch_Name      : constant String := Krunch (Withed_File_Name);
       Current_Sep      : File_Info_Ptr_List;
       Current_Dep      : Dependency_File_Info_List;
       Finfo            : File_Info_Ptr;
@@ -1085,16 +1085,16 @@ package body Src_Info.ALI is
 
       if New_LI_File.LI.Spec_Info /= null
         and then
-        (New_LI_File.LI.Spec_Info.Source_Filename.all = Withed_File_Name
-         or else New_LI_File.LI.Spec_Info.Source_Filename.all = Krunched_Name)
+          (New_LI_File.LI.Spec_Info.Source_Filename.all = Withed_File_Name
+           or else New_LI_File.LI.Spec_Info.Source_Filename.all = Krunch_Name)
       then
          return;
       end if;
 
       if New_LI_File.LI.Body_Info /= null
         and then
-        (New_LI_File.LI.Body_Info.Source_Filename.all = Withed_File_Name
-         or else New_LI_File.LI.Body_Info.Source_Filename.all = Krunched_Name)
+          (New_LI_File.LI.Body_Info.Source_Filename.all = Withed_File_Name
+           or else New_LI_File.LI.Body_Info.Source_Filename.all = Krunch_Name)
       then
          return;
       end if;
@@ -1105,6 +1105,7 @@ package body Src_Info.ALI is
          if Current_Sep.Value.Source_Filename.all = Withed_File_Name then
             return;
          end if;
+
          Current_Sep := Current_Sep.Next;
       end loop;
 
@@ -1118,7 +1119,7 @@ package body Src_Info.ALI is
          Finfo := Get_File_Info (Current_Dep.Value.File);
 
          if Finfo.Source_Filename.all = Withed_File_Name
-           or else Finfo.Source_Filename.all = Krunched_Name
+           or else Finfo.Source_Filename.all = Krunch_Name
          then
             --  Update the unit name if not present
 
@@ -1146,7 +1147,7 @@ package body Src_Info.ALI is
       --  raise the ALI_Internal_Error exception to signal the error.
 
       Trace (Me, "Process_With: unexpected end " & Withed_File_Name
-             & " " & Krunched_Name & " in project "
+             & " " & Krunch_Name & " in project "
              & Get_String (Projects.Table (Project).Name));
       raise ALI_Internal_Error;
    end Process_With;
