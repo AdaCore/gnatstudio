@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;         use Gdk.Color;
-with Gdk.Font;          use Gdk.Font;
 with Glib;              use Glib;
 with Glib.Properties;   use Glib.Properties;
 with Gint_Xml;          use Gint_Xml;

@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;
-with Gdk.Font;
 with Glib.Properties;
 with Glib;
 with Pango.Font;
