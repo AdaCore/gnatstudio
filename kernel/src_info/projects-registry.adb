@@ -1404,11 +1404,11 @@ package body Projects.Registry is
       Use_Source_Path : Boolean;
       Use_Object_Path : Boolean)
    is
-      Locale : constant String := Locale_From_UTF8 (Filename);
-      Project : Project_Type;
-      Path : GNAT.OS_Lib.String_Access;
+      Locale   : constant String := Locale_From_UTF8 (Filename);
+      Project  : Project_Type;
+      Path     : GNAT.OS_Lib.String_Access;
       Iterator : Imported_Project_Iterator;
-      Info : Source_File_Data;
+      Info     : Source_File_Data;
 
    begin
       if Is_Absolute_Path (Filename) then
@@ -1424,11 +1424,13 @@ package body Projects.Registry is
       else
          --  First check the cache
 
-         Info := Get (Registry.Data.Sources, Filename);
+         if Use_Source_Path then
+            Info := Get (Registry.Data.Sources, Filename);
 
-         if Info.Directory /= No_Name then
-            Get_Name_String (Info.Directory);
-            return;
+            if Info.Directory /= No_Name then
+               Get_Name_String (Info.Directory);
+               return;
+            end if;
          end if;
 
          --  If we are editing a project file, check in the loaded tree first
