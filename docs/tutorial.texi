@@ -553,13 +553,12 @@ Select @code{Recompile if switches changed}, @code{Debug information}.
 
 Click on @code{Ada} page.
 
-Select @code{Style checks} and @code{Warning=Error}.
+Select @code{Full errors} and @code{Overflow checking}.
 The boxes and the command line (the text entry at the
 bottom of the page) are fully synchronized, e.g if you click on the
-command line, and change @code{-gnatwe} to @code{-gnatw}, the
-@code{Warning=Error} check box is unselected; now type @code{u} to get
-@code{-gnatwu}, and notice that @code{Unused vars warning} is now selected.
-Unselect it, and select @code{Warning=Error} again.
+command line, and change @code{-gnatf} to @code{-gnat}, the
+@code{Full errors} check box is unselected; now type @code{a} to get
+@code{-gnata}, and notice that @code{Enable assertions} is now selected.
 
 Click on @code{Forward}: voila, we've created a project similar to the one
 used in this tutorial.
