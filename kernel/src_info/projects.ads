@@ -109,6 +109,10 @@ package Projects is
    --  Return the project that Project is extending, or No_Project is there are
    --  none.
 
+   function Extending_Project (Project : Project_Type) return Project_Type;
+   --  Return the project that extends Project, or No_Project if Project is not
+   --  extended within the hierarchy
+
    -----------------
    -- Directories --
    -----------------
@@ -354,10 +358,11 @@ package Projects is
    --  If Recursive is False, then the only project ever returned is
    --  Root_Project. This is provided only to simplify the caller's code
    --
+   --  In all cases, Root_Project itself is returned first by the iterator. The
+   --  project extended by Root_Project, if any, is also returned.
+   --
    --  If Direct_Only is True and Recursive is True, then only the projects
    --  that are imported directly by Root_Project are returned.
-   --
-   --  ??? Should also process modified projects
 
    function Current
      (Iterator : Imported_Project_Iterator) return Project_Type;

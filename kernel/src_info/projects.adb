@@ -1168,7 +1168,9 @@ package body Projects is
      (Root_Project : Project_Type;
       Recursive    : Boolean := True;
       Direct_Only  : Boolean := False)
-      return Imported_Project_Iterator is
+      return Imported_Project_Iterator
+   is
+      Iter : Imported_Project_Iterator;
    begin
       Assert (Me, Root_Project.Data /= null,
               "Start: Uninitialized project passed as argument");
@@ -1178,21 +1180,23 @@ package body Projects is
            (Topological_Sort (Root_Project.Node));
          Trace (Me, "Start: recomputing dependencies for "
                 & Project_Name (Root_Project));
+
+         --  Trace (Me, "Start: " & Project_Name (Root_Project));
+         --  for N in Root_Project.Data.Imported_Projects'Range loop
+         --     Trace (Me, "    => "
+         --            & Get_String (Root_Project.Data.Imported_Projects (N)));
+         --  end loop;
       end if;
 
-      --  Trace (Me, "Start: " & Project_Name (Root_Project));
-      --  for N in Root_Project.Data.Imported_Projects'Range loop
-      --     Trace (Me, "    => "
-      --            & Get_String (Root_Project.Data.Imported_Projects (N)));
-      --  end loop;
-
       if Recursive then
-         return Imported_Project_Iterator'
+         Iter := Imported_Project_Iterator'
            (Root          => Root_Project,
             Direct_Only   => Direct_Only,
             Importing     => False,
             Current_Cache => No_Project,
-            Current       => Root_Project.Data.Imported_Projects'Last);
+            Current       => Root_Project.Data.Imported_Projects'Last + 1);
+         Next (Iter);
+         return Iter;
       else
          return Imported_Project_Iterator'
            (Root          => Root_Project,
@@ -1211,19 +1215,29 @@ package body Projects is
      (Parent : Project_Type; Child : Project_Type) return Boolean
    is
       With_Clause : Project_Node_Id;
+      Extended    : Project_Node_Id;
    begin
-      if Parent = No_Project or else Child = No_Project then
+      Assert (Me, Child /= No_Project, "Project_Imports: no child provided");
+
+      if Parent = No_Project then
          return True;
       end if;
 
       With_Clause := First_With_Clause_Of (Parent.Node);
       while With_Clause /= Empty_Node loop
-         if Prj.Tree.Name_Of (With_Clause) = Prj.Tree.Name_Of (Child.Node) then
+         if Project_Node_Of (With_Clause) = Child.Node then
             return True;
          end if;
 
          With_Clause := Next_With_Clause_Of (With_Clause);
       end loop;
+
+      --  Handling for extending projects ?
+
+      Extended := Extended_Project_Of (Project_Declaration_Of (Parent.Node));
+      if Extended = Child.Node then
+         return True;
+      end if;
 
       return False;
    end Project_Imports;
@@ -1382,15 +1396,17 @@ package body Projects is
 
       if Iterator.Direct_Only then
          if Iterator.Importing then
-            while not
-              Project_Imports (Current (Iterator), Iterator.Root)
+            while Iterator.Current >=
+              Iterator.Root.Data.Importing_Projects'First
+              and then not Project_Imports (Current (Iterator), Iterator.Root)
             loop
                Iterator.Current := Iterator.Current - 1;
             end loop;
 
          else
-            while not
-              Project_Imports (Iterator.Root, Current (Iterator))
+            while Iterator.Current >=
+              Iterator.Root.Data.Imported_Projects'First
+              and then not Project_Imports (Iterator.Root, Current (Iterator))
             loop
                Iterator.Current := Iterator.Current - 1;
             end loop;
@@ -1993,14 +2009,14 @@ package body Projects is
    --------------------
 
    function Parent_Project (Project : Project_Type) return Project_Type is
-      Extend : constant Project_Id :=
-        Prj.Projects.Table (Get_View (Project)).Extends;
+      Extend : constant Project_Node_Id := Extended_Project_Of
+        (Project_Declaration_Of (Project.Node));
    begin
-      if Extend = Prj.No_Project then
+      if Extend = Empty_Node then
          return No_Project;
       else
          return Get_Project_From_Name
-           (Project.Data.Registry.all, Prj.Projects.Table (Extend).Name);
+           (Project.Data.Registry.all, Prj.Tree.Name_Of (Extend));
       end if;
    end Parent_Project;
 
@@ -2036,5 +2052,21 @@ package body Projects is
    begin
       Prj.Ext.Add (External_Reference_Of (Var), Value);
    end Set_Value;
+
+   -----------------------
+   -- Extending_Project --
+   -----------------------
+
+   function Extending_Project (Project : Project_Type) return Project_Type is
+      Extend : constant Project_Node_Id := Extending_Project_Of
+        (Project_Declaration_Of (Project.Node));
+   begin
+      if Extend = Empty_Node then
+         return No_Project;
+      else
+         return Get_Project_From_Name
+           (Project.Data.Registry.all, Prj.Tree.Name_Of (Extend));
+      end if;
+   end Extending_Project;
 
 end Projects;
