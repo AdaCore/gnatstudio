@@ -51,8 +51,9 @@ with Gtkada.Intl;     use Gtkada.Intl;
 with GUI_Utils; use GUI_Utils;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+--  with Unchecked_Deallocation;
 
 package body Gtkada.File_Selector is
 
@@ -146,6 +147,10 @@ package body Gtkada.File_Selector is
      (Object : access Gtk_Widget_Record'Class);
    --  ???
 
+   procedure On_Destroy
+     (Object : access Gtk_Widget_Record'Class);
+   --  ???
+
    function On_File_List_Key_Press_Event
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
@@ -209,6 +214,10 @@ package body Gtkada.File_Selector is
       return Select_File (File_Selector_Window);
    end Select_File;
 
+   -----------------
+   -- Select_File --
+   -----------------
+
    function Select_File
      (File_Selector : access File_Selector_Window_Record) return String
    is
@@ -232,8 +241,6 @@ package body Gtkada.File_Selector is
          File : constant String := Get_Selection (File_Selector);
       begin
          Destroy (File_Selector);
-         Destroy (Filter_A);
-         --  ??? Free (Filter_A);
          return File;
       end;
    end Select_File;
@@ -378,6 +385,17 @@ package body Gtkada.File_Selector is
       Append (Win.Filters, File_Filter (Filter));
       Add_Unique_Combo_Entry (Win.Filter_Combo, Filter.Label.all);
    end Register_Filter;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Filter : access Filter_Show_All)
+   is
+      Label : String_Access := Filter.Label;
+   begin
+      Free (Label);
+   end Destroy;
 
    ---------------------
    -- Use_File_Filter --
@@ -755,6 +773,23 @@ package body Gtkada.File_Selector is
 
       Main_Quit;
    end On_Cancel_Button_Clicked;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Win : constant File_Selector_Window_Access :=
+        File_Selector_Window_Access (Get_Toplevel (Object));
+   begin
+      Free (Win.Current_Directory);
+      Free (Win.Current_Directory_Id);
+      Free (Win.Filters);
+      Free (Win.Files);
+      Free (Win.Remaining_Files);
+   end On_Destroy;
 
    ----------------------------------
    -- On_File_List_Key_Press_Event --
@@ -1224,12 +1259,9 @@ package body Gtkada.File_Selector is
             Get_Window (File_Selector_Window));
       end if;
 
-      --  ??? temporarily commented out: If this is left, then Select_File
-      --  won't work, since on exit it destroys the dialog, and thus exists
-      --  a second main loop
-      --  Widget_Callback.Connect
-      --    (File_Selector_Window, "destroy",
-      --     Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
+      Widget_Callback.Connect
+        (File_Selector_Window, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
    end Initialize;
 
    -------------

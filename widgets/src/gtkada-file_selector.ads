@@ -80,6 +80,8 @@ with Generic_List;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
+with Unchecked_Deallocation;
+
 package Gtkada.File_Selector is
 
    function Select_File
@@ -167,12 +169,6 @@ package Gtkada.File_Selector is
    --  The first filter registered will be the default one in the file
    --  selector.
 
-   type Filter_Show_All is new File_Filter_Record (new String'("All files"))
-     with null record;
-   type Filter_Show_All_Access is access all Filter_Show_All'Class;
-   --  This provides a basic filter that shows all files.
-   --  ??? Missing Destroy/Free functions.
-
    procedure Gtk_New
      (File_Selector_Window : out File_Selector_Window_Access;
       Root                 : String;
@@ -192,6 +188,14 @@ package Gtkada.File_Selector is
       Dialog_Title         : String);
    --  Internal initialization function.
 
+   type Filter_Show_All is new File_Filter_Record (new String'("All files"))
+     with null record;
+   type Filter_Show_All_Access is access all Filter_Show_All;
+   --  This provides a basic filter that shows all files.
+
+   procedure Destroy (Filter : access Filter_Show_All);
+   --  Free memory associated with a Filter_Show_All.
+
 private
 
    procedure Free (S : in out String);
@@ -209,6 +213,10 @@ private
    package String_Stack is new Generic_Stack (String_Access);
    use String_Stack;
 
+   type Dir_Type_Access is access Dir_Type;
+   procedure Free is new Unchecked_Deallocation
+     (Dir_Type, Dir_Type_Access);
+
    procedure Use_File_Filter
      (Filter    : access Filter_Show_All;
       Win       : access File_Selector_Window_Record'Class;
@@ -220,8 +228,6 @@ private
       Text      : out String_Access);
    --  Implementation of the Use_File_Filter procedure for
    --  the Filter_Show_All filter.
-
-   type Dir_Type_Access is access Dir_Type;
 
    type File_Selector_Window_Record is new Gtk_Window_Record with record
       Current_Directory    : String_Access := new String' ("");

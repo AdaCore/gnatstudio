@@ -341,6 +341,11 @@ package body Generic_List is
       else
          First := L;
          L := L.Next;
+
+         if First.Element /= null then
+            Free (First.Element.all);
+         end if;
+
          Free_Element (First.Element);
          Free_Node (First);
       end if;
