@@ -373,7 +373,7 @@ package Docgen.Backend is
    --  Those 2 parameters are used to associate identifiers returned by
    --  parse_entities in format_file (see docgen.adb) with a reference
    --  contained in the list made in Process_One_File
-   --  (see docgen-work_on_File.adb).
+   --  (see docgen-work_on_file.adb).
 
    procedure Format_Code
      (B                : access Backend'Class;
@@ -491,10 +491,10 @@ package Docgen.Backend is
       Process_Body     : Boolean;
       Level            : Natural;
       Indent           : Natural);
-   --  This procedure is used by formats of documentation like html to
+   --  This procedure is used by formats of documentation like HTML to
    --  create links for each entity of the file File_Name on their
    --  own declaration. It's called by the method Format_Identifier of
-   --  a child instance of a Backend object (eg. Backend_HTML).
+   --  a child instance of a Backend object.
    --  This process is done in Docgen because for each entity we must search
    --  for its declaration in all concerned files: this work is
    --  independant of the choosen format of documentation.
