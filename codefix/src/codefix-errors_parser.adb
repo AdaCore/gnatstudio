@@ -198,7 +198,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Matches, Errors_List);
    begin
-      Append (Solutions, Should_Be (Current_Text, Message, "=>", "="));
+      Concat (Solutions, Should_Be (Current_Text, Message, "=>", "="));
    end Fix;
 
    -----------------------
@@ -221,7 +221,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Should_Be
            (Current_Text,
@@ -249,14 +249,14 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Should_Be
            (Current_Text,
             Message,
             Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
 
-      Append
+      Concat
         (Solutions,
          Should_Be
            (Current_Text,
@@ -285,7 +285,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append
+      Concat
         (Solutions,
          Should_Be
            (Current_Text, Message, "goto", "(go[\s]+to)", Regular_Expression));
@@ -325,7 +325,7 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Append
+      Concat
         (Solutions,
          Should_Be
            (Current_Text,
@@ -359,7 +359,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Should_Be
            (Current_Text,
@@ -389,7 +389,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append
+      Concat
         (Solutions, Should_Be (Current_Text, Message, ";", ".", Text_Ascii));
    end Fix;
 
@@ -414,7 +414,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, Should_Be (Current_Text, Message, "and", "&"));
+      Concat (Solutions, Should_Be (Current_Text, Message, "and", "&"));
    end Fix;
 
    --------------
@@ -437,7 +437,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append (Solutions, Should_Be (Current_Text, Message, "or", "\|"));
+      Concat (Solutions, Should_Be (Current_Text, Message, "or", "\|"));
    end Fix;
 
    ----------------------------
@@ -460,7 +460,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append
+      Concat
         (Solutions,
          Should_Be (Current_Text,
                     Message,
@@ -497,7 +497,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Wrong_Order
            (Current_Text,
@@ -527,9 +527,9 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, Expected (Current_Text, Message, "function"));
-      Append (Solutions, Expected (Current_Text, Message, "procedure"));
-      Append (Solutions, Expected (Current_Text, Message, "package"));
+      Concat (Solutions, Expected (Current_Text, Message, "function"));
+      Concat (Solutions, Expected (Current_Text, Message, "procedure"));
+      Concat (Solutions, Expected (Current_Text, Message, "package"));
    end Fix;
 
    --------------------
@@ -553,8 +553,8 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, Expected (Current_Text, Message, "function"));
-      Append (Solutions, Expected (Current_Text, Message, "procedure"));
+      Concat (Solutions, Expected (Current_Text, Message, "function"));
+      Concat (Solutions, Expected (Current_Text, Message, "procedure"));
    end Fix;
 
    ------------------
@@ -577,7 +577,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Expected
            (Current_Text,
@@ -619,7 +619,7 @@ package body Codefix.Errors_Parser is
       end if;
 
 
-      Append
+      Concat
         (Solutions,
          Expected
            (Current_Text,
@@ -663,7 +663,7 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Append
+      Concat
         (Solutions,
          Expected
            (Current_Text,
@@ -735,7 +735,7 @@ package body Codefix.Errors_Parser is
 
       Declaration_Cursor.Col := Col_Matches (1).Last + 1;
 
-      Append (Solutions, Expected (Current_Text, Declaration_Cursor, "all"));
+      Concat (Solutions, Expected (Current_Text, Declaration_Cursor, "all"));
 
       Free (Declaration_Cursor);
       Free (Line_Red);
@@ -761,7 +761,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append
+      Concat
         (Solutions,
          Expected
            (Current_Text, Message, "null;", Position => Before));
@@ -787,7 +787,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, Expected (Current_Text, Message, " ", False));
+      Concat (Solutions, Expected (Current_Text, Message, " ", False));
    end Fix;
 
 
@@ -835,7 +835,7 @@ package body Codefix.Errors_Parser is
              Col_Matches);
       New_Message.Col := Col_Matches (1).Last + 1;
 
-      Append
+      Concat
         (Solutions,
          Expected
            (Current_Text,
@@ -863,7 +863,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Unexpected
            (Current_Text,
@@ -892,7 +892,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, Unexpected (Current_Text, Message, ")"));
+      Concat (Solutions, Unexpected (Current_Text, Message, ")"));
    end Fix;
 
    -----------------------
@@ -921,9 +921,9 @@ package body Codefix.Errors_Parser is
                    (Matches (1).First .. Matches (1).Last));
 
       if Str_Red.all = "colon" then
-         Append (Solutions, Unexpected (Current_Text, Message, ":"));
+         Concat (Solutions, Unexpected (Current_Text, Message, ":"));
       elsif Str_Red.all = """then""" then
-         Append (Solutions, Unexpected (Current_Text, Message, "then"));
+         Concat (Solutions, Unexpected (Current_Text, Message, "then"));
       else
          Free (Str_Red);
          raise Uncorrectable_Message;
@@ -953,7 +953,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Unexpected
            (Current_Text,
@@ -990,9 +990,9 @@ package body Codefix.Errors_Parser is
                                  (Matches (2).First .. Matches (2).Last));
 
       if Str_Red_1.all = "semicolon" and then Str_Red_2.all = "ignored" then
-         Append (Solutions, Unexpected (Current_Text, Message, ";"));
+         Concat (Solutions, Unexpected (Current_Text, Message, ";"));
       elsif Str_Red_1.all = "right" and then Str_Red_2.all = "parenthesis" then
-         Append (Solutions, Unexpected (Current_Text, Message, ")"));
+         Concat (Solutions, Unexpected (Current_Text, Message, ")"));
       else
          Free (Str_Red_1);
          Free (Str_Red_2);
@@ -1027,7 +1027,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Unexpected
            (Current_Text,
@@ -1085,7 +1085,7 @@ package body Codefix.Errors_Parser is
          Format_Str := Text_Ascii;
       end if;
 
-      Append
+      Concat
         (Solutions,
          Unexpected
            (Current_Text,
@@ -1117,7 +1117,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Wrong_Column
            (Current_Text,
@@ -1149,7 +1149,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, Wrong_Column (Current_Text, Message));
+      Concat (Solutions, Wrong_Column (Current_Text, Message));
    end Fix;
 
    -----------------------
@@ -1177,7 +1177,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          With_Clause_Missing
            (Current_Text,
@@ -1209,7 +1209,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, Bad_Casing (Current_Text, Message));
+      Concat (Solutions, Bad_Casing (Current_Text, Message));
    end Fix;
 
    -------------------------
@@ -1232,7 +1232,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append
+      Concat
         (Solutions,
          Bad_Casing
            (Current_Text,
@@ -1261,7 +1261,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append
+      Concat
         (Solutions,
          Bad_Casing (Current_Text, Message, "", Lower));
    end Fix;
@@ -1378,7 +1378,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Append (Solutions, First_Line_Pragma (Current_Text, Message));
+      Concat (Solutions, First_Line_Pragma (Current_Text, Message));
    end Fix;
 
    -----------------------
@@ -1401,7 +1401,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append (Solutions, Not_Modified
+      Concat (Solutions, Not_Modified
                 (Current_Text,
                  Message,
                  Get_Message (Message)
@@ -1611,7 +1611,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Append (Solutions, Remove_Conversion
+      Concat (Solutions, Remove_Conversion
                 (Current_Text,
                  Message,
                  Get_Message (Message)
@@ -1641,51 +1641,51 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Append (Solutions, Move_With_To_Body (Current_Text, Message));
+      Concat (Solutions, Move_With_To_Body (Current_Text, Message));
    end Fix;
 begin
-
-   Add_Parser (new Agregate_Misspelling);
-   Add_Parser (new Double_Misspelling);
+   null;
+   --  Add_Parser (new Agregate_Misspelling);
+   --  Add_Parser (new Double_Misspelling);
    Add_Parser (new Ligth_Misspelling);
-   Add_Parser (new Goto_Misspelling);
-   Add_Parser (new Library_Misspelling);
-   Add_Parser (new Sth_Should_Be_Sth);
-   Add_Parser (new Should_Be_Semicolon);
-   Add_Parser (new And_Meant);
-   Add_Parser (new Or_Meant);
-   Add_Parser (new Unqualified_Expression);
-   Add_Parser (new Goes_Before);
-   Add_Parser (new Sth_Expected_3);
-   Add_Parser (new Sth_Expected_2);
-   Add_Parser (new Sth_Expected);
-   Add_Parser (new Missing_Kw);
-   Add_Parser (new Missing_Sep);
-   Add_Parser (new Missing_All);
-   Add_Parser (new Statement_Missing);
-   Add_Parser (new Space_Missing);
-   Add_Parser (new Name_Missing);
-   Add_Parser (new Double_Keyword);
-   Add_Parser (new Extra_Paren);
-   Add_Parser (new Redundant_Keyword);
-   Add_Parser (new Unexpected_Sep);
-   Add_Parser (new Unexpected_Word);
-   Add_Parser (new Kw_Not_Allowed);
-   Add_Parser (new Sep_Not_Allowed);
-   Add_Parser (new Should_Be_In);
-   Add_Parser (new Bad_Column);
-   Add_Parser (new Main_With_Missing);
-   Add_Parser (new Bad_Casing_Standard);
-   Add_Parser (new Bad_Casing_Declared);
-   Add_Parser (new Bad_Casing_Keyword);
-   Add_Parser (new Object_Not_Referenced);
-   Add_Parser (new Pkg_Not_Referenced);
-   Add_Parser (new Pragma_Missplaced);
-   Add_Parser (new Constant_Expected);
-   Add_Parser (new Possible_Interpretation);
-   Add_Parser (new Hidden_Declaration);
-   Add_Parser (new Redundant_Conversion);
-   Add_Parser (new Missplaced_With);
+   --  Add_Parser (new Goto_Misspelling);
+   --  Add_Parser (new Library_Misspelling);
+   --  Add_Parser (new Sth_Should_Be_Sth);
+   --  Add_Parser (new Should_Be_Semicolon);
+   --  Add_Parser (new And_Meant);
+   --  Add_Parser (new Or_Meant);
+   --  Add_Parser (new Unqualified_Expression);
+   --  Add_Parser (new Goes_Before);
+   --  Add_Parser (new Sth_Expected_3);
+   --  Add_Parser (new Sth_Expected_2);
+   --  Add_Parser (new Sth_Expected);
+   --  Add_Parser (new Missing_Kw);
+   --  Add_Parser (new Missing_Sep);
+   --  Add_Parser (new Missing_All);
+   --  Add_Parser (new Statement_Missing);
+   --  Add_Parser (new Space_Missing);
+   --  Add_Parser (new Name_Missing);
+   --  Add_Parser (new Double_Keyword);
+   --  Add_Parser (new Extra_Paren);
+   --  Add_Parser (new Redundant_Keyword);
+   --  Add_Parser (new Unexpected_Sep);
+   --  Add_Parser (new Unexpected_Word);
+   --  Add_Parser (new Kw_Not_Allowed);
+   --  Add_Parser (new Sep_Not_Allowed);
+--   Add_Parser (new Should_Be_In);
+--   Add_Parser (new Bad_Column);
+--   Add_Parser (new Main_With_Missing);
+--   Add_Parser (new Bad_Casing_Standard);
+--   Add_Parser (new Bad_Casing_Declared);
+--   Add_Parser (new Bad_Casing_Keyword);
+--   Add_Parser (new Object_Not_Referenced);
+   --  Add_Parser (new Pkg_Not_Referenced);
+--   Add_Parser (new Pragma_Missplaced);
+--   Add_Parser (new Constant_Expected);
+--   Add_Parser (new Possible_Interpretation);
+--   Add_Parser (new Hidden_Declaration);
+--   Add_Parser (new Redundant_Conversion);
+--   Add_Parser (new Missplaced_With);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
