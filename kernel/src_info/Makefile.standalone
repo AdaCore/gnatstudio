@@ -9,8 +9,8 @@ endif
 
 STANDALONE_BASE_DIR := $(BASE_DIR)
 
-BASE_DIR=$(STANDALONE_BASE_DIR)/../../gvd
-include $(BASE_DIR)/Makefile.gvd_glide
+BASE_DIR=$(STANDALONE_BASE_DIR)/..
+include $(BASE_DIR)/Makefile.kernel
 
 STANDALONE_SRC_DIRS = $(STANDALONE_BASE_DIR)/../src $(STANDALONE_BASE_DIR)/tests $(STANDALONE_BASE_DIR)/pixmaps
 SRC_DIRS += $(STANDALONE_SRC_DIRS)
