@@ -122,6 +122,39 @@ static int Vprocess_connection_type = 1;
 #define HAVE_NTGUI
 #define MAXPATHLEN 1024
 
+/* The major and minor versions of NT.  */
+static int w32_major_version;
+static int w32_minor_version;
+
+/* Distinguish between Windows NT and Windows 95.  */
+static enum {OS_UNKNOWN, OS_WIN95, OS_NT} os_subtype = OS_UNKNOWN;
+
+/* Cache information describing the NT system for later use.  */
+static void
+cache_system_info (void)
+{
+  union
+    {
+      struct info
+        {
+          char  major;
+          char  minor;
+          short platform;
+        } info;
+      DWORD data;
+    } version;
+
+  /* Cache the version of the operating system.  */
+  version.data = GetVersion ();
+  w32_major_version = version.info.major;
+  w32_minor_version = version.info.minor;
+
+  if (version.info.platform & 0x8000)
+    os_subtype = OS_WIN95;
+  else
+    os_subtype = OS_NT;
+}
+
 /* Control whether create_child causes the process to inherit GVD'
    console window, or be given a new one of its own.  The default is
    0, meaning that there is no console created for the child process. Having
@@ -160,6 +193,9 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
   int do_quoting = 0;
   char escape_char;
   int arglen;
+
+  if (os_subtype == OS_UNKNOWN)
+    cache_system_info ();
 
   /* we have to do some conjuring here to put argv and envp into the
      form CreateProcess wants...  argv needs to be a space separated/null
@@ -332,7 +368,7 @@ nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 
   flags = (!NILP (Vw32_start_process_share_console)
 	   ? CREATE_NEW_PROCESS_GROUP
-	   : CREATE_NO_WINDOW);
+	   : (os_subtype == OS_WIN95) ? CREATE_NEW_CONSOLE : CREATE_NO_WINDOW);
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
   if (!CreateProcess (exe, cmdline, &sec_attrs, NULL, TRUE,
@@ -1822,39 +1858,6 @@ typedef struct _child_process
   HWND                  hwnd;
   PROCESS_INFORMATION   *procinfo;
 } child_process;
-
-/* The major and minor versions of NT.  */
-static int w32_major_version;
-static int w32_minor_version;
-
-/* Distinguish between Windows NT and Windows 95.  */
-static enum {OS_UNKNOWN, OS_WIN95, OS_NT} os_subtype = OS_UNKNOWN;
-
-/* Cache information describing the NT system for later use.  */
-static void
-cache_system_info (void)
-{
-  union
-    {
-      struct info
-        {
-          char  major;
-          char  minor;
-          short platform;
-        } info;
-      DWORD data;
-    } version;
-
-  /* Cache the version of the operating system.  */
-  version.data = GetVersion ();
-  w32_major_version = version.info.major;
-  w32_minor_version = version.info.minor;
-
-  if (version.info.platform & 0x8000)
-    os_subtype = OS_WIN95;
-  else
-    os_subtype = OS_NT;
-}
 
 static BOOL CALLBACK
 find_child_console (HWND hwnd, child_process * cp)
