@@ -760,4 +760,30 @@ package body Codefix.Formal_Errors is
       return New_Extract;
    end Not_Modified;
 
+   -----------------------
+   -- Resolve_Ambiguity --
+   -----------------------
+
+   function Resolve_Ambiguity
+     (Current_Text    : Text_Navigator_Abstr'Class;
+      Error_Cursor    : File_Cursor'Class;
+      Solution_Cursor : File_Cursor'Class;
+      Name            : String) return Extract
+   is
+      New_Extract  : Extract;
+      Error_Line   : File_Cursor := File_Cursor (Error_Cursor);
+      Pkg_Info     : Construct_Information;
+   begin
+      Pkg_Info := Get_Unit (Current_Text, Solution_Cursor, After);
+
+      Error_Line.Col := 1;
+      Get_Line (Current_Text, Error_Line, New_Extract);
+      Add_Word (New_Extract, Error_Cursor, Pkg_Info.Name.all & ".");
+      Set_Caption
+        (New_Extract,
+         "Prefix """ & Name & """ by """ & Pkg_Info.Name.all & """");
+
+      return New_Extract;
+   end Resolve_Ambiguity;
+
 end Codefix.Formal_Errors;
