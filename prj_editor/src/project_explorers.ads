@@ -27,6 +27,7 @@
 with Glide_Kernel;
 with Scenario_Views;
 with Vsearch_Ext;
+with Gtk.Main;
 with Gtk.Ctree;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
@@ -36,6 +37,8 @@ with Gtk.Box;
 with Gtk.Notebook;
 with Gtk.Tree_View;
 with Gtk.Tree_Store;
+
+with Generic_List;
 
 package Project_Explorers is
 
@@ -82,6 +85,17 @@ private
    type Mask_Array   is array (Node_Types) of Gdk.Bitmap.Gdk_Bitmap;
    type Pixbuf_Array is array (Node_Types) of Gdk.Pixbuf.Gdk_Pixbuf;
 
+   type Append_Directory_Idle_Data;
+   type Append_Directory_Idle_Data_Access is access Append_Directory_Idle_Data;
+   --  Custom data for the asynchronous fill function.
+
+   package File_Append_Directory_Idle is
+      new Gtk.Main.Timeout (Append_Directory_Idle_Data_Access);
+
+   procedure Free (D : in out Gtk.Main.Timeout_Handler_Id);
+
+   package Timeout_Id_List is new Generic_List (Gtk.Main.Timeout_Handler_Id);
+
    type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
       Scenario      : Scenario_Views.Scenario_View;
       Tree          : Gtk.Ctree.Gtk_Ctree;
@@ -109,5 +123,10 @@ private
       File_Tree     : Gtk.Tree_View.Gtk_Tree_View;
       File_Model    : Gtk.Tree_Store.Gtk_Tree_Store;
       Expanding     : Boolean := False;
+
+      Fill_Timeout_Ids : Timeout_Id_List.List;
+      --  ??? This is implemented as a list of handlers instead of just one
+      --  handler, in case the fill function should call itself recursively :
+      --  to be investigated.
    end record;
 end Project_Explorers;
