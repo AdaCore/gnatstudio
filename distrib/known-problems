@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.1
 
+- C312-004 Under Windows, docking the Search dialog causes undesired resizing.
+  Problem:    Under Windows only, when the Search dialog is docked and the
+              main GPS window is maximized, pressing CTRL-F causes the GPS
+              window to be un-maximized.
+  Workaround: Do not maximize the GPS main window, make it manually as big
+              as the desktop.
+
 - C425-015 Tooltip flashing under Windows
   Problem:    Under Windows only, when you move the mouse on the menu
               Project->Recompute Project, a tooltip is displayed and
