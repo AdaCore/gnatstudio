@@ -657,8 +657,10 @@ package Src_Editor_Buffer is
       Offset_Start      : Integer := 0;
       --  The indentation offset of the first line of the block, in characters.
 
-      Offset_End        : Integer := 0;
-      --  The indentation offset of the last line of the block, in characters.
+      Stored_Offset     : Integer := 0;
+      --  Stores the last calculated offset of this block. Mainly used to be
+      --  able to draw the blocks almost correctly even as we are editing the
+      --  text.
 
       First_Line        : Editable_Line_Type := 0;
       Last_Line         : Editable_Line_Type := 0;
