@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,7 +23,7 @@ with Docgen;
 
 package Docgen_Module is
 
-   Docgen_Module_ID   : Glide_Kernel.Module_ID;
+   Docgen_Module_Id   : Glide_Kernel.Module_ID;
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
