@@ -55,9 +55,6 @@ with Prj_API;
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
 
-with Gps_Gtkada_Support;
-pragma Unreferenced (Gps_Gtkada_Support);
-
 --  Modules registered by GPS.
 with Ada_Module;
 with Aunit_Module;
