@@ -235,8 +235,8 @@ procedure GPS is
       use ASCII;
    begin
       if GVD.Can_Output then
-         Put_Line ("GPS " & GVD.Version &
-                   (-", A complete application development system."));
+         Put_Line ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
+                   (-", the GNAT Programming System."));
          Put_Line (-"Usage:");
          Put_Line (-"   gps [-p project-file] [source1] [source2] ...");
          Put_Line (-"Options:");
@@ -248,8 +248,8 @@ procedure GPS is
 
       else
          Button := Message_Dialog
-           ("GPS " & GVD.Version &
-            (-", A complete application development system.") & LF &
+           ("GPS " & GVD.Version & " (" & GVD.Source_Date & ")" &
+            (-", the GNAT Programming System.") & LF &
             (-"Usage:") & LF &
             (-"   gps [-p project-file] [source1] [source2] ...") & LF &
             (-"Options:") & LF &
@@ -470,12 +470,12 @@ begin
                -- --version --
                when 'v' =>
                   if GVD.Can_Output then
-                     Put_Line ("GPS version " & GVD.Version &
-                       " hosted on " & GVD.Target);
+                     Put_Line ("GPS version " & GVD.Version & " (" &
+                       GVD.Source_Date & ") hosted on " & GVD.Target);
                   else
                      Button := Message_Dialog
-                       ("GPS version " & GVD.Version &
-                        " hosted on " & GVD.Target,
+                       ("GPS version " & GVD.Version & " (" &
+                        GVD.Source_Date & ") hosted on " & GVD.Target,
                         Information, Button_OK,
                         Title => -"Version",
                         Justification => Justify_Left);
