@@ -31,6 +31,7 @@ with Interfaces.C.Strings;
 with GVD.Types;             use GVD.Types;
 with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
+with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Main;              use Gtk.Main;
@@ -289,16 +290,17 @@ package body GVD.Dialogs is
       Row      : Gint;
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
-      Process  : constant Process_Proxy_Access :=
-        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
-      List     : Gtk_Clist := Debugger_Process_Tab (Debugger).Stack_List;
+      Tab      : constant Debugger_Process_Tab :=
+        Debugger_Process_Tab (Debugger);
+      Process  : constant Process_Proxy_Access := Get_Process (Tab.Debugger);
+      List     : Gtk_Clist := Tab.Stack_List;
       Columns  : Gint;
       Index    : Integer;
       Subp     : String_Access;
 
    begin
       --  Do nothing if the stack list has been hidden
-      if not Visible_Is_Set (List) then
+      if not Get_Active (Tab.Window.Call_Stack) then
          return;
       end if;
 
@@ -316,7 +318,7 @@ package body GVD.Dialogs is
 
       --  Parse the information from the debugger
 
-      Backtrace (Debugger_Process_Tab (Debugger).Debugger, Bt, Len);
+      Backtrace (Tab.Debugger, Bt, Len);
 
       --  Update the contents of the window
 
