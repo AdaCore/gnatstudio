@@ -1094,6 +1094,7 @@ package body Gtkada.File_Selector is
       if Win.File_List /= null then
          for J in 0 .. Get_Rows (Win.File_List) - 1 loop
             exit when Found;
+
             declare
                T : String := Get_Text (Win.File_List, J, 1);
                S : String := Get_Text (Win.Selection_Entry) & G;
