@@ -58,7 +58,7 @@ gprcmd as 'gpr2make', without distinguishing which file does actually what.
 
 In the document below, we give hints about default values and default behavior.
 These should be taken as guidelines, and not as strong requirements.
-for example, when we mention calling 'gnat bind', we mean 'as if we were
+For example, when we mention calling 'gnat bind', we mean 'as if we were
 calling gnat bind, following the same semantics'. Having an equivalent built-in
 implementation, or calling another tool with equivalent semantics is also
 possible of course.
@@ -69,6 +69,10 @@ This document is a good opportunity to fix these.
 
 Although the behavior of the tool will be similar, the design and
 implementation is expected to be different.
+
+A long term goal with gprmake is to make the 'gnat' and 'gprmake' tools the
+two main tools in the GNAT technology, and have gnatmake become less visible
+(therefore possibly moving some functionalities form gnatmake to gprmake).
 
 Related tools: gnatmake, gcc, make, ant
 
@@ -154,7 +158,7 @@ Input needed from gprmake
   designated language.
 
   That being said, having gprmake read ali files directly *and* being
-  compatible with most GNAT versions is a desirable long term goal that
+  compatible with most GNAT versions is a desirable long term goal that should
   be kept in mind.
 
 Setting of default values for existing project attributes
@@ -365,18 +369,14 @@ Handling of dependencies
 
   - for simplicity, gprmake will, at least in a first step, only understand
     Makefile fragments for handling dependencies.
-    In the future, it would probably make sense to handle other formats
+
+    In the future, it will make sense to handle other formats
     directly, in particular ALI files, so that compilation of Ada files can be
     handled without using gnatmake, and have Ada be handled very much
     like C or C++ (instead of calling gnatmake).
     -> This means that the handling of depencies should be properly isolated
-    so that it can easily be adapted to supporting multiple dependency formats
+    so that it can easily be adapted to support multiple dependency formats
     in the future.
-
-    Note: another alternative would be to use gnatmake -c -u <file> and set the
-    appropriate ADA_INLCUDE_PATH, ADA_OBJECTS_PATH, as well as appropriate
-    extra options (such as -gnatec). Not clear how to specify all the work
-    needed in a general way though.
 
     makefile syntax recognized:
 
@@ -404,7 +404,7 @@ Handling of dependencies
     handling above ? It's not clear how one could specify other dep formats in
     a project file without having to modify gprmake, except by providing
     a shared lib that would contain a dependency handler, following a
-    documented API...
+    documented API... For now, only consider .d and .ali
 
     Note: if some compiler (e.g. proprietary Ada compiler) does not provide
     the capabilities of generating a Makefile, the idea would be to provide a
