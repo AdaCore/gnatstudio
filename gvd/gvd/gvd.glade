@@ -1808,18 +1808,6 @@
       </child>
 
       <widget>
-	<class>GtkLabel</class>
-	<name>label53</name>
-	<label> ( ): </label>
-	<justify>GTK_JUSTIFY_CENTER</justify>
-	<wrap>False</wrap>
-	<xalign>0.5</xalign>
-	<yalign>0.5</yalign>
-	<xpad>0</xpad>
-	<ypad>0</ypad>
-      </widget>
-
-      <widget>
 	<class>GtkCombo</class>
 	<name>combo6</name>
 	<value_in_list>False</value_in_list>
@@ -1845,7 +1833,8 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button62</name>
-	<tooltip>Lookup () in the source</tooltip>
+	<sensitive>False</sensitive>
+	<tooltip>Lookup selection in the source</tooltip>
 	<label></label>
 	<icon>lookup_xpm</icon>
       </widget>
@@ -1854,6 +1843,8 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button63</name>
+	<sensitive>False</sensitive>
+	<tooltip>Find selection in the source</tooltip>
 	<label></label>
 	<icon>findfwd_xpm</icon>
       </widget>
@@ -1862,7 +1853,8 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button64</name>
-	<tooltip>Set/Delete breakpoint at ()</tooltip>
+	<sensitive>False</sensitive>
+	<tooltip>Set/Delete breakpoint at selection</tooltip>
 	<label></label>
 	<icon>breakat_xpm</icon>
       </widget>
@@ -1871,7 +1863,8 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button65</name>
-	<tooltip>Stop whenever () changes</tooltip>
+	<sensitive>False</sensitive>
+	<tooltip>Stop whenever selection changes</tooltip>
 	<label></label>
 	<icon>watch_xpm</icon>
       </widget>
@@ -1880,7 +1873,7 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button66</name>
-	<tooltip>Print ()</tooltip>
+	<tooltip>Print Dialog</tooltip>
 	<signal>
 	  <name>clicked</name>
 	  <handler>on_print1_clicked</handler>
@@ -1895,7 +1888,7 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button67</name>
-	<tooltip>Display ()</tooltip>
+	<tooltip>Display Dialog</tooltip>
 	<signal>
 	  <name>clicked</name>
 	  <handler>on_display1_clicked</handler>
@@ -1910,7 +1903,8 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button68</name>
-	<tooltip>Plot ()</tooltip>
+	<sensitive>False</sensitive>
+	<tooltip>Plot selection</tooltip>
 	<label></label>
 	<icon>plot_xpm</icon>
       </widget>
@@ -1919,7 +1913,8 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button71</name>
-	<tooltip>Set the value of ()</tooltip>
+	<sensitive>False</sensitive>
+	<tooltip>Set the value of selection</tooltip>
 	<label></label>
 	<icon>set_xpm</icon>
       </widget>
@@ -2049,57 +2044,12 @@
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
 	<name>button58</name>
-	<tooltip>Continue program being debugged, after signal or breakpoint</tooltip>
+	<tooltip>Execute until selected stack frame returns</tooltip>
 	<signal>
 	  <name>clicked</name>
 	  <handler>on_continue1_activate</handler>
 	  <object>main_debug_window</object>
 	  <last_modification_time>Sun, 28 May 2000 22:25:44 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>cont_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button60</name>
-	<tooltip>Select and print stack frame that called this one</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_up1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Wed, 31 May 2000 13:07:23 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>up_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button61</name>
-	<tooltip>Select and print stack frame called by this one</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_down1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Wed, 31 May 2000 13:07:33 GMT</last_modification_time>
-	</signal>
-	<label></label>
-	<icon>down_xpm</icon>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<child_name>Toolbar:button</child_name>
-	<name>button57</name>
-	<tooltip>Execute until selected stack frame returns</tooltip>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_finish1_activate</handler>
-	  <object>main_debug_window</object>
-	  <last_modification_time>Mon, 29 May 2000 14:01:54 GMT</last_modification_time>
 	</signal>
 	<label></label>
 	<icon>finish_xpm</icon>
@@ -2108,8 +2058,53 @@
       <widget>
 	<class>GtkButton</class>
 	<child_name>Toolbar:button</child_name>
-	<name>button51</name>
+	<name>button60</name>
+	<tooltip>Continue program being debugged, after signal or breakpoint</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_up1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Wed, 31 May 2000 13:07:23 GMT</last_modification_time>
+	</signal>
+	<label></label>
+	<icon>cont_xpm</icon>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button61</name>
 	<tooltip>Interrupt debugged program</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_down1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Wed, 31 May 2000 13:07:33 GMT</last_modification_time>
+	</signal>
+	<label></label>
+	<icon>interrupt_xpm</icon>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button57</name>
+	<tooltip>Select and print stack frame that called this one</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_finish1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Mon, 29 May 2000 14:01:54 GMT</last_modification_time>
+	</signal>
+	<label></label>
+	<icon>up_xpm</icon>
+      </widget>
+
+      <widget>
+	<class>GtkButton</class>
+	<child_name>Toolbar:button</child_name>
+	<name>button51</name>
+	<tooltip>Select and print stack frame called by this one</tooltip>
 	<signal>
 	  <name>clicked</name>
 	  <handler>on_interrupt1_activate</handler>
@@ -2117,7 +2112,7 @@
 	  <last_modification_time>Mon, 29 May 2000 13:59:38 GMT</last_modification_time>
 	</signal>
 	<label></label>
-	<icon>interrupt_xpm</icon>
+	<icon>down_xpm</icon>
       </widget>
     </widget>
 
@@ -7000,7 +6995,7 @@ Assert failure
 	<widget>
 	  <class>GtkLabel</class>
 	  <name>label56</name>
-	  <label>Remote Host</label>
+	  <label>Debugger Host</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>
 	  <xalign>7.45058e-09</xalign>
@@ -7069,32 +7064,6 @@ in a new debugger
 	    <xshrink>False</xshrink>
 	    <yshrink>False</yshrink>
 	    <xfill>True</xfill>
-	    <yfill>False</yfill>
-	  </child>
-	</widget>
-
-	<widget>
-	  <class>GtkLabel</class>
-	  <name>label59</name>
-	  <label>Remote Target</label>
-	  <justify>GTK_JUSTIFY_CENTER</justify>
-	  <wrap>False</wrap>
-	  <xalign>7.45058e-09</xalign>
-	  <yalign>0.5</yalign>
-	  <xpad>0</xpad>
-	  <ypad>0</ypad>
-	  <child>
-	    <left_attach>0</left_attach>
-	    <right_attach>1</right_attach>
-	    <top_attach>2</top_attach>
-	    <bottom_attach>3</bottom_attach>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	    <xexpand>False</xexpand>
-	    <yexpand>False</yexpand>
-	    <xshrink>False</xshrink>
-	    <yshrink>True</yshrink>
-	    <xfill>False</xfill>
 	    <yfill>False</yfill>
 	  </child>
 	</widget>
@@ -7198,6 +7167,32 @@ remote
 	    <text_max_length>0</text_max_length>
 	    <text></text>
 	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkLabel</class>
+	  <name>label59</name>
+	  <label>Program Host</label>
+	  <justify>GTK_JUSTIFY_CENTER</justify>
+	  <wrap>False</wrap>
+	  <xalign>7.45058e-09</xalign>
+	  <yalign>0.5</yalign>
+	  <xpad>0</xpad>
+	  <ypad>0</ypad>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
 	</widget>
       </widget>
     </widget>

@@ -193,7 +193,7 @@ begin
    Set_Justify (Open_Program.Label55, Justify_Center);
    Set_Line_Wrap (Open_Program.Label55, False);
 
-   Gtk_New (Open_Program.Label56, -("Remote Host"));
+   Gtk_New (Open_Program.Label56, -("Debugger Host"));
    Attach (Open_Program.Table7, Open_Program.Label56, 0, 1, 1, 2,
      Fill, 0,
      0, 0);
@@ -223,15 +223,6 @@ begin
    Option_Menu.Set_Menu
      (Gtk_Option_Menu (Open_Program.Launch_Menu),
       Launch_Menu_Menu);
-
-   Gtk_New (Open_Program.Label59, -("Remote Target"));
-   Attach (Open_Program.Table7, Open_Program.Label59, 0, 1, 2, 3,
-     0, Shrink,
-     0, 0);
-   Set_Alignment (Open_Program.Label59, 7.45058e-09, 0.5);
-   Set_Padding (Open_Program.Label59, 0, 0);
-   Set_Justify (Open_Program.Label59, Justify_Center);
-   Set_Line_Wrap (Open_Program.Label59, False);
 
    Gtk_New (Open_Program.Combo8);
    Attach (Open_Program.Table7, Open_Program.Combo8, 4, 6, 2, 3,
@@ -277,6 +268,15 @@ begin
    Set_Max_Length (Open_Program.Target_Entry, 0);
    Set_Text (Open_Program.Target_Entry, -"");
    Set_Visibility (Open_Program.Target_Entry, True);
+
+   Gtk_New (Open_Program.Label59, -("Program Host"));
+   Attach (Open_Program.Table7, Open_Program.Label59, 0, 1, 2, 3,
+     Fill, 0,
+     0, 0);
+   Set_Alignment (Open_Program.Label59, 7.45058e-09, 0.5);
+   Set_Padding (Open_Program.Label59, 0, 0);
+   Set_Justify (Open_Program.Label59, Justify_Center);
+   Set_Line_Wrap (Open_Program.Label59, False);
 
    Gtk_New (Open_Program.Hbuttonbox7);
    Pack_Start (Open_Program.Vbox13, Open_Program.Hbuttonbox7, False, True, 0);
