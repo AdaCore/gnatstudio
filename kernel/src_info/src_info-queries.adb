@@ -1784,8 +1784,7 @@ package body Src_Info.Queries is
          end if;
 
          Iterator.Source_Files := Get_Source_Files
-           (Get_Project_From_View
-              (Iterator.Importing (Iterator.Current_Project)),
+           (Iterator.Importing (Iterator.Current_Project),
             Recursive => False,
             Full_Path => False);
          Iterator.Current_File := Iterator.Source_Files'First - 1;
@@ -1847,8 +1846,7 @@ package body Src_Info.Queries is
         (Find_All_Projects_Importing (Root_Project, Iterator_Decl_Project));
       Iterator.Current_Project := Iterator.Importing'First;
       Iterator.Source_Files := Get_Source_Files
-        (Get_Project_From_View (Iterator.Importing
-                                (Iterator.Current_Project)),
+        (Iterator.Importing (Iterator.Current_Project),
          Recursive => False,
          Full_Path => False);
       Iterator.Current_File := Iterator.Source_Files'First - 1;
