@@ -2050,14 +2050,14 @@ package body Aliases_Module is
    is
       pragma Unreferenced (Kernel);
    begin
-      Assert (Me, Aliases_Module_Id /= null,
-              "Register_Special_Alias_Entity: module not initialized");
-      Aliases_Module_Id.Module_Funcs (Entity) :=
-        new Expansion_Function_Record'
-          (Length => Description'Length,
-           Descr  => Description,
-           Func   => Func,
-           Next   => Aliases_Module_Id.Module_Funcs (Entity));
+      if Aliases_Module_Id /= null then
+         Aliases_Module_Id.Module_Funcs (Entity) :=
+           new Expansion_Function_Record'
+             (Length => Description'Length,
+              Descr  => Description,
+              Func   => Func,
+              Next   => Aliases_Module_Id.Module_Funcs (Entity));
+      end if;
    end Register_Special_Alias_Entity;
 
    ----------------------
