@@ -185,13 +185,16 @@ procedure GVD_Main is
 
    procedure Bug_Dialog (E : Exception_Occurrence) is
    begin
-      Put_Line (Standard_Error, -"Bug detected in GVD");
-      Put_Line (Standard_Error,
-                (-"Please report with the contents of the file ") &
-                Dir.all & Directory_Separator & "log");
-      Put_Line (Standard_Error, -"and the following information:");
-      Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
-      Put_Line (Standard_Error, Exception_Information (E));
+      if GVD.Can_Output then
+         Put_Line (Standard_Error, -"Bug detected in GVD");
+         Put_Line (Standard_Error,
+                   (-"Please report with the contents of the file ") &
+                   Dir.all & Directory_Separator & "log");
+         Put_Line (Standard_Error, -"and the following information:");
+         Put_Line (Standard_Error, (-"Version: ") & GVD.Version);
+         Put_Line (Standard_Error, Exception_Information (E));
+      end if;
+
       Button := Message_Dialog
         ((-"Please report with the contents of the file ") &
          Dir.all & Directory_Separator & "log" & ASCII.LF &
@@ -204,23 +207,49 @@ procedure GVD_Main is
    end Bug_Dialog;
 
    procedure Help is
+     use ASCII;
    begin
-      Put_Line ("GVD " & GVD.Version & ", the GNU Visual Debugger.");
-      Put_Line (-"Usage:");
-      Put_Line (-"   gvd [options...] executable-file");
-      Put_Line (-"Options:");
-      Put_Line (-"   --debugger DEBUG  use DEBUG as the underlying debugger.");
-      Put_Line (-"   --jdb             assume a java debugger.");
-      Put_Line (-"   --host HOST       Run inferior debugger on HOST.");
-      Put_Line (-"   --no-explorer     Do not display explorer window.");
-      Put_Line (-("   --target TARG:PRO " &
-                  "Load program on machine TARG using protocol PRO."));
-      Put_Line (-"   --log-level [0-4] Set level of logging (Default is 3).");
-      Put_Line (-("   --tty             Use controlling tty as additional " &
-                  "debugger console."));
-      Put_Line (-"   --version         Show the GVD version and exit.");
-      New_Line;
-      Put_Line (-"Other arguments are passed to the underlying debugger.");
+      if GVD.Can_Output then
+         Put_Line ("GVD " & GVD.Version & ", the GNU Visual Debugger.");
+         Put_Line (-"Usage:");
+         Put_Line (-"   gvd [options...] executable-file");
+         Put_Line (-"Options:");
+         Put_Line
+           (-"   --debugger DEBUG  use DEBUG as the underlying debugger.");
+         Put_Line (-"   --jdb             assume a java debugger.");
+         Put_Line (-"   --host HOST       Run inferior debugger on HOST.");
+         Put_Line (-"   --no-explorer     Do not display explorer window.");
+         Put_Line (-("   --target TARG:PRO " &
+                     "Load program on machine TARG using protocol PRO."));
+         Put_Line
+           (-"   --log-level [0-4] Set level of logging (Default is 3).");
+         Put_Line
+           (-("   --tty             Use controlling tty as additional " &
+              "debugger console."));
+         Put_Line (-"   --version         Show the GVD version and exit.");
+         New_Line;
+         Put_Line (-"Other arguments are passed to the underlying debugger.");
+
+      else
+         Button := Message_Dialog
+           ("GVD " & GVD.Version & LF &
+            "This is a beta release of GVD, the GNU Visual Debugger." & LF &
+            "Usage:" & LF &
+            "   gvd [options...] executable-file" & LF &
+            "Options:" & LF &
+            "   --debugger DEBUG  use DEBUG as the underlying debugger." & LF &
+            "   --jdb             assume a java debugger." & LF &
+            "   --host HOST       Run inferior debugger on HOST." & LF &
+            "   --no-explorer     Do not display explorer window." & LF &
+            "   --target TARG:PRO " &
+            "Load program on machine TARG using protocol PRO." & LF &
+            "   --log-level [0-4] Set level of logging (Default is 3)." & LF &
+            "   --version         Show the GVD version and exit." & LF & LF &
+            "Other arguments are passed to the underlying debugger.",
+            Information, Button_OK,
+            Title => -"Help",
+            Justification => Justify_Left);
+      end if;
    end Help;
 
    ---------------------
@@ -291,7 +320,10 @@ begin
                      Level := Integer'Value (Clean_Parameter);
                   exception
                      when Constraint_Error =>
-                        Put_Line ("Invalid parameter to --log-level");
+                        if GVD.Can_Output then
+                           Put_Line ("Invalid parameter to --log-level");
+                        end if;
+
                         Help;
                         OS_Exit (-1);
                   end;
@@ -346,7 +378,16 @@ begin
 
                -- --version --
                when 'v' =>
-                  Put_Line ("GVD Version " & GVD.Version);
+                  if GVD.Can_Output then
+                     Put_Line ("GVD Version " & GVD.Version);
+                  else
+                     Button := Message_Dialog
+                       ("GVD Version " & GVD.Version,
+                        Information, Button_OK,
+                        Title => -"Version",
+                        Justification => Justify_Left);
+                  end if;
+
                   OS_Exit (0);
 
                when 'h' =>
@@ -446,10 +487,15 @@ begin
 
 exception
    when Process_Died =>
-      Put_Line ("The underlying debugger died prematurely. Exiting...");
+      if GVD.Can_Output then
+         Put_Line ("The underlying debugger died prematurely. Exiting...");
+      end if;
 
    when Invalid_Switch =>
-      Put_Line ("Invalid command line");
+      if GVD.Can_Output then
+         Put_Line ("Invalid command line");
+      end if;
+
       Help;
 
    when E : others =>
