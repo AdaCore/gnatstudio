@@ -35,9 +35,10 @@ package Vdiff2_Command is
       --  Is an access for the action executed by an Diff_Command
 
    type Diff_Command is new Interactive_Command with record
-      Kernel    : Kernel_Handle;
-      List_Diff : Diff_Head_List_Access;
-      Action    : Handler_Action;
+      Kernel           : Kernel_Handle;
+      List_Diff        : Diff_Head_List_Access;
+      Action           : Handler_Action;
+      Last_Active_Diff : Diff_Head := Null_Head;
    end record;
 
    type Diff_Command_Access is access all Diff_Command;
