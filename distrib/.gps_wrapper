@@ -15,7 +15,11 @@ GTK_IM_MODULE_FILE=$root/etc/gps/gtk.immodules
 GTK_DATA_PREFIX=$root
 MAKE_ROOT=$root
 
-GPS_DOC_PATH=$GPS_DOC_PATH:$root/doc/gnat/html:$root/doc/gps/html
+if [ x"$GPS_DOC_PATH" = x ]; then
+   GPS_DOC_PATH=$root/doc/gnat/html:$root/doc/gps/html
+else
+   GPS_DOC_PATH=$GPS_DOC_PATH:$root/doc/gnat/html:$root/doc/gps/html
+fi
 export GPS_DOC_PATH
 
 export LD_LIBRARY_PATH PANGO_RC_FILE GTK_DATA_PREFIX
