@@ -3366,7 +3366,7 @@ package body Prj_API is
                Path (Index .. Index + Name_Len - 1) :=
                  Name_Buffer (1 .. Name_Len);
                Index := Index + Name_Len + 1;
-               Path (Index - 1) := ':';
+               Path (Index - 1) := Path_Separator;
                Current := Dir.Next;
             end loop;
             return Path;
