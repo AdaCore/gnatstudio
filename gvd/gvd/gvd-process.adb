@@ -1713,11 +1713,17 @@ package body GVD.Process is
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Debugger), "debugger_closed");
 
+      Debugger.Exiting := True;
+
       if not Debugger.Window.Standalone then
+         Free (Debugger.Current_File);
+         Free (Debugger.Breakpoints);
+
+         Close (Debugger.Debugger);
+         Destroy (Debugger);
+
          return;
       end if;
-
-      Debugger.Exiting := True;
 
       --  Switch to another page before removing the debugger.
       --  Otherwise, "switch_page" would be emitted after the debugger is dead,
