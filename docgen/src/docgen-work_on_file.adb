@@ -87,7 +87,7 @@ package body Docgen.Work_On_File is
       Unused                : List_Reference_In_File.List;
 
       Doc_Directory_Root : constant String :=
-           Get_Doc_Directory (B, Kernel_Handle (Kernel));
+        Get_Doc_Directory (B, Kernel_Handle (Kernel));
 
       function Find_Next_Package
         (Package_Nr : Natural) return String;
@@ -208,20 +208,22 @@ package body Docgen.Work_On_File is
          end;
       end loop;
 
-      --  sort the type index list and the subprogram index list first
+      --  Sort the type index list and the subprogram index list first
+
       Sort_List_Name (Subprogram_Index_List);
       Sort_List_Name (Type_Index_List);
 
-      --  create the index doc files for the packages
-         Process_Unit_Index
-          (B, Kernel, Source_File_List, Unused, Options, Converter,
-           Doc_Directory_Root, Doc_Suffix);
-         Process_Subprogram_Index
-          (B, Kernel, Subprogram_Index_List, Unused, Options, Converter,
-           Doc_Directory_Root, Doc_Suffix);
-         Process_Type_Index
-          (B, Kernel, Type_Index_List, Unused,  Options, Converter,
-          Doc_Directory_Root, Doc_Suffix);
+      --  Create the index doc files for the packages
+
+      Process_Unit_Index
+        (B, Kernel, Source_File_List, Unused, Options, Converter,
+         Doc_Directory_Root, Doc_Suffix);
+      Process_Subprogram_Index
+        (B, Kernel, Subprogram_Index_List, Unused, Options, Converter,
+         Doc_Directory_Root, Doc_Suffix);
+      Process_Type_Index
+        (B, Kernel, Type_Index_List, Unused,  Options, Converter,
+         Doc_Directory_Root, Doc_Suffix);
 
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
@@ -248,18 +250,17 @@ package body Docgen.Work_On_File is
       Doc_Directory      : String;
       Doc_Suffix         : String)
    is
-      LI_Unit        : LI_File_Ptr;
-      Tree        : Scope_Tree;
-      Entity_Iter : Local_Entities_Iterator;
-      Ref_In_File : E_Reference;
-      Info        : Entity_Information;
-      Entity_Node : Entity_List_Information;
-      Entity_List : Type_Entity_List.List;
-      List_Ref_In_File   : List_Reference_In_File.List;
-      List_Ent_In_File   : List_Entity_In_File.List;
-      Ent_Handle        : Entity_Handle := null;
-
-      Status : Find_Decl_Or_Body_Query_Status;
+      LI_Unit          : LI_File_Ptr;
+      Tree             : Scope_Tree;
+      Entity_Iter      : Local_Entities_Iterator;
+      Ref_In_File      : E_Reference;
+      Info             : Entity_Information;
+      Entity_Node      : Entity_List_Information;
+      Entity_List      : Type_Entity_List.List;
+      List_Ref_In_File : List_Reference_In_File.List;
+      List_Ent_In_File : List_Entity_In_File.List;
+      Ent_Handle       : Entity_Handle := null;
+      Status           : Find_Decl_Or_Body_Query_Status;
 
       procedure Process_Subprogram
         (Source_Filename : Virtual_File;
@@ -419,8 +420,8 @@ package body Docgen.Work_On_File is
                Entity_Node.Line_In_Body := Null_File_Location;
             else
                Trace (Me,
-                      " Retour Find Next Body = "
-                      & Positive'Image (Get_Line (Entity_Node.Line_In_Body)));
+                      "Find Next Body returned" &
+                      Natural'Image (Get_Line (Entity_Node.Line_In_Body)));
             end if;
 
             Find_All_References
@@ -448,8 +449,7 @@ package body Docgen.Work_On_File is
 
                Decl_Found := Source_File_In_List
                  (Source_File_List,
-                  Get_File (Get_Location
-                              (Get (Reference_Iter))));
+                  Get_File (Get_Location (Get (Reference_Iter))));
 
                --  For the rest use the scope tree
                Reference_Scope_Tree :=
@@ -461,6 +461,7 @@ package body Docgen.Work_On_File is
 
                Find_Next_Body
                  (Kernel, LI_Unit, Info, Entity_Node.Line_In_Body, Status);
+
                if Status /= Success then
                   Entity_Node.Line_In_Body := Null_File_Location;
                end if;
@@ -499,7 +500,8 @@ package body Docgen.Work_On_File is
       begin
          Entity_Node.Kind := Type_Entity;
 
-         --  if defined in a spec file => add to the Type_Index_List
+         --  If defined in a spec file => add to the Type_Index_List
+
          if Is_Spec_File (Kernel, Source_Filename)
            and then Source_Filename = Entity_File
          then
@@ -512,25 +514,32 @@ package body Docgen.Work_On_File is
 
       --  All references of the current file are put in a list.
       --  In the case of a spec file, we used references which are also
-      --     declarations. Before those changes, declarations were found by
-      --     Find_All_Possible_Declaration().
+      --  declarations. Before those changes, declarations were found by
+      --  Find_All_Possible_Declaration.
       --  For spec and body files, we can use this list after during the
-      --     linkage process instead of calling a subprogram.
+      --  linkage process instead of calling a subprogram.
 
       if not Is_Spec_File (Kernel, Source_Filename) then
          if LI_Unit /= No_LI_File then
             Entity_Iter :=
               Find_All_References_In_File (LI_Unit, Source_Filename);
+
             loop
                Ref_In_File := Get (Entity_Iter);
+
                if Ref_In_File = No_Reference then
                   --  New entity
+
                   Info := Get (Entity_Iter);
+
                   exit when Info = No_Entity_Information;
+
                   Ent_Handle := new Entity_Information'(Info);
                   List_Entity_In_File.Append (List_Ent_In_File, Info);
+
                else
                   --  New reference on the current entity
+
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Name   =>
@@ -539,9 +548,12 @@ package body Docgen.Work_On_File is
                       Column => Get_Column (Get_Location (Ref_In_File)),
                       Entity => Ent_Handle));
                end if;
+
                --  Get next entity (or reference) in this file
+
                Next (Entity_Iter);
             end loop;
+
             Sort_List_By_Line_And_Column (List_Ref_In_File);
 
             Process_Source
@@ -566,12 +578,11 @@ package body Docgen.Work_On_File is
             Trace (Me, "LI file not found");  --  later Exception?
          end if;
 
-         --  now free the list
          TEL.Free (Entity_List);
 
-         --  but if a spec file, you have to look in the ALI files
       else
-         --         Trace (Me, "Find all possible declarations");
+         --  If a spec file, you have to look in the ALI files
+
          if LI_Unit /= No_LI_File then
             Entity_Iter :=
               Find_All_References_In_File (LI_Unit, Source_Filename);
@@ -579,10 +590,14 @@ package body Docgen.Work_On_File is
 
             loop
                Ref_In_File := Get (Entity_Iter);
+
                if Ref_In_File = No_Reference then
                   --  New entity
+
                   Info := Get (Entity_Iter);
+
                   exit when Info = No_Entity_Information;
+
                   Ent_Handle := new Entity_Information'(Info);
                   List_Entity_In_File.Append (List_Ent_In_File, Info);
 
@@ -591,11 +606,12 @@ package body Docgen.Work_On_File is
                   Find_Next_Body
                     (Kernel, LI_Unit,
                      Info, Entity_Node.Line_In_Body, Status);
+
                   --  Check if the declaration of the entity is in one of the
-                  --     files which are in list, if false => no need for
-                  --     creating links.
+                  --  files which are in list, if false => no need for
+                  --  creating links.
                   --  Also check if it's a private entity and whether they
-                  --     should be processed.
+                  --  should be processed.
 
                   if Source_File_In_List
                     (Source_File_List, Get_Declaration_File_Of (Info))
@@ -603,12 +619,14 @@ package body Docgen.Work_On_File is
                               or else not Entity_Node.Is_Private)
                   then
                      --  Get the parameters needed by all entities
-                     Entity_Node.Name   :=
+
+                     Entity_Node.Name :=
                        new String'(Get_Full_Name (Info, LI_Unit, ".", Tree));
                      Entity_Node.Entity := Copy (Info);
 
                      --  For all entities which are not subprograms the ref
-                     --     lists must be set to null
+                     --  lists must be set to null
+
                      if Get_Kind (Info).Kind /= Function_Or_Operator
                        and then Get_Kind (Info).Kind /= Procedure_Kind
                      then
@@ -618,9 +636,9 @@ package body Docgen.Work_On_File is
 
                      --  Get the entity specific parameters.
                      --  These are the last parameters to gather, after the
-                     --     CASE no more changes are allowed, because the
-                     --     index lists are created in the subprograms used
-                     --     here, so all info must be avaiable.
+                     --  CASE no more changes are allowed, because the
+                     --  index lists are created in the subprograms used
+                     --  here, so all info must be avaiable.
 
                      case Get_Kind (Info).Kind is
                         when Procedure_Kind | Function_Or_Operator =>
@@ -629,21 +647,25 @@ package body Docgen.Work_On_File is
                              (Source_Filename,
                               Get_Declaration_File_Of (Info),
                               Info);
+
                         when Record_Kind | Enumeration_Kind |
-                          Access_Kind | Array_Kind |
+                             Access_Kind | Array_Kind |
                              Boolean_Kind | String_Kind | Class_Wide |
                              Decimal_Fixed_Point |
                              Floating_Point | Modular_Integer |
                              Ordinary_Fixed_Point |
                              Private_Type | Protected_Kind |
-                             Signed_Integer =>
+                             Signed_Integer
+                        =>
                            if Get_Kind (Info).Is_Type then
                               Process_Type
                                 (Source_Filename,
                                  Get_Declaration_File_Of (Info));
+
                            else
                               Entity_Node.Kind := Var_Entity;
                            end if;
+
                         when Exception_Entity =>
                            Entity_Node.Kind := Exception_Entity;
                         when Task_Kind =>
@@ -660,6 +682,7 @@ package body Docgen.Work_On_File is
                   end if;
                else
                   --  New reference on the current entity
+
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Name   =>
@@ -668,14 +691,17 @@ package body Docgen.Work_On_File is
                       Column => Get_Column (Get_Location (Ref_In_File)),
                       Entity => Ent_Handle));
                end if;
+
                --  Get next entity (or reference) in this file
+
                Next (Entity_Iter);
             end loop;
-            Sort_List_By_Line_And_Column (List_Ref_In_File);
 
+            Sort_List_By_Line_And_Column (List_Ref_In_File);
             Free (Tree);
 
             --  Process the documentation of this file
+
             Process_Source
               (B,
                Kernel,
@@ -693,11 +719,14 @@ package body Docgen.Work_On_File is
                Converter,
                Doc_Directory,
                Doc_Suffix);
+
          else
             Trace (Me, "LI file not found -- File :: "
                    & Base_Name (Source_Filename));  --  later Exception?
          end if;
+
          --  If body files are not being processed, free directly here
+
          if not Options.Process_Body_Files then
             TEL.Free (Entity_List);
          end if;
