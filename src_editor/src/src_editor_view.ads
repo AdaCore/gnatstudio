@@ -25,6 +25,7 @@
 
 with Glib; use Glib;
 with Gdk.GC;
+with Gdk.Color;
 with Gdk.Event;
 with Gdk.Pixmap;
 
@@ -198,6 +199,12 @@ private
       Scroll_Timeout       : Gtk.Main.Timeout_Handler_Id := 0;
       Scroll_To_Value      : Gdouble := 0.0;
       Scroll_Requested     : Boolean := False;
+
+      Background_Color     : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      --  The editor background color.
+
+      Text_Color           : Gdk.Color.Gdk_Color := Gdk.Color.Null_Color;
+      --  The editor text color.
    end record;
 
 end Src_Editor_View;
