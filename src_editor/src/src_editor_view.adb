@@ -166,6 +166,11 @@ package body Src_Editor_View is
       Event : Gdk_Event) return Boolean;
    --  Callback for the "delete_event" signal.
 
+   function On_Button_Press
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean;
+   --  Callback for the "button_press_event"
+
    procedure Save_Cursor_Position
      (View : access Source_View_Record'Class);
    --  Save the cursor position.
@@ -322,6 +327,28 @@ package body Src_Editor_View is
          Idle_Remove (View.Connect_Expose_Id);
       end if;
    end Delete;
+
+   ---------------------
+   -- On_Button_Press --
+   ---------------------
+
+   function On_Button_Press
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+      Src_View : constant Source_View := Source_View (View);
+   begin
+      if Src_View.Highlight_Blocks then
+         Clear_Text_Window (Src_View);
+      end if;
+
+      return False;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end On_Button_Press;
 
    ---------------
    -- On_Delete --
@@ -945,6 +972,18 @@ package body Src_Editor_View is
         (View,
          "delete_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller (On_Delete'Access),
+         View,
+         After => False);
+
+      --  ??? Under Windows, a click does not refresh the entire area as it
+      --  does under X. We need it to properly redraw current line and
+      --  current block, therefore we do it manually.
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (View,
+         "button_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (On_Button_Press'Access),
          View,
          After => False);
 
