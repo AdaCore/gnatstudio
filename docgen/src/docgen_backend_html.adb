@@ -435,6 +435,7 @@ package body Docgen_Backend_HTML is
          (1 .. Level * Get_Indent (B.all) => ' ');
 
       procedure Output_Entity (Entity : Entity_Information);
+      --  Output HTML info related to Entity.
 
       procedure Output_Entity (Entity : Entity_Information) is
          F : constant Source_File := Get_File (Get_Declaration_Of (Entity));
