@@ -21,7 +21,7 @@
 --  ??? Missing high level description of this package
 --  ??? The comments of each function can simply be moved to the
 --  definition of Backend itself, the duplication is only needed if the
---  HTML back end has a special behavior 
+--  HTML back end has a special behavior
 
 with Docgen;            use Docgen;
 with VFS;               use VFS;
