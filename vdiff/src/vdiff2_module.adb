@@ -258,19 +258,19 @@ package body Vdiff2_Module is
          -"Go to the next difference");
 
       Bind_Default_Key
-        (Handler     => Get_Key_Handler (Kernel),
+        (Kernel      => Kernel,
          Action      => "Next difference",
          Default_Key => "control-2");
       Bind_Default_Key
-        (Handler     => Get_Key_Handler (Kernel),
+        (Kernel      => Kernel,
          Action      => "Prev difference",
          Default_Key => "control-1");
       Bind_Default_Key
-        (Handler     => Get_Key_Handler (Kernel),
+        (Kernel      => Kernel,
          Action      => "First difference",
          Default_Key => "control-4");
       Bind_Default_Key
-        (Handler     => Get_Key_Handler (Kernel),
+        (Kernel      => Kernel,
          Action      => "Last difference",
          Default_Key => "control-3");
 
