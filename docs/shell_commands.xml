@@ -1220,8 +1220,8 @@ If the line and column are not specified, then the current selection is returned
       <description>Display the annotations for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.remote_annotations"
-             real_name="GPS.VCS.remote_annotations">
+  <shell_doc name="GPS.remove_annotations"
+             real_name="GPS.VCS.remove_annotations">
       <param name="file">A string</param>
       <description>Remove the annotations for file</description>
   </shell_doc>
