@@ -59,7 +59,7 @@ unmodified in any copy.
 * Source Browsing::
 * Debugging::
 * Version Control System::
-* Working in a cross environment::
+* Working in a Cross Environment::
 * Customization::
 * Environment::
 
@@ -102,10 +102,10 @@ Source Navigation
 
 
 Project Handling
-* Description of the projects::
-* Scenarios and configuration variables::
-* The project wizard::
-* The project properties editor::
+* Description of the Projects::
+* Scenarios and Configuration Variables::
+* The Project Wizard::
+* The Project Properties Editor::
 
 Searching and Replacing
 
@@ -139,15 +139,15 @@ Version Control System
 * The Version Control Contextual Menu::
 
 
-Working in a cross environment
-* Customizing your projects::
-* Debugger issues::
+Working in a Cross Environment
+* Customizing your Projects::
+* Debugger Issues::
 
 
 Customization
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
-* Changing Colors Fonts and Key Bindings::
+* Defining New Styles and Key Bindings::
 
 
 Environment
@@ -225,6 +225,16 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 @cindex welcome dialog
 @c --------------------------------------------------------------------
 
+@iftex
+@cindex screen shot
+@image{welcome, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{welcome}
+@end ifhtml
+
 @noindent
 When starting GPS, a welcome dialog is displayed by default, giving the
 following choices:
@@ -253,7 +263,7 @@ default internal project with the following properties:
 Selecting this option and clicking on the @code{OK} button will start a
 wizard allowing you to specify most of the properties for a new project. Once
 the project is created, GPS will save it and load it automatically.
-See @ref{The project wizard} for more details on the project wizard.
+See @ref{The Project Wizard} for more details on the project wizard.
 
 @item Open existing project
 @cindex project
@@ -352,17 +362,17 @@ initially displayed on the left side of the GPS window. Their goal is to
 show a full view of the various components of your projects. These
 various components are presented below.
 
-The following snapshot displays the two pages side-by-side: on the
+The following screenshot displays the two pages side-by-side: on the
 left, the @code{Project View}, and on the right the @code{File View}.
 
 @iftex
 @cindex screen shot
-@image{explorer-views, 12.7cm}
+@image{explorer-views, 10.7cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
-@image{explorer-views, 12.7cm}
+@image{explorer-views}
 @end ifhtml
 
 The various components that are displayed in these explorers are the
@@ -501,6 +511,16 @@ The Messages window is used by GPS to display information and feedback
 about operations, such as build output, information about processes
 launched, error messages.
 
+@iftex
+@cindex screen shot
+@image{messages, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{messages}
+@end ifhtml
+
 This is a read-only window, which means that only output is available,
 no input is possible.
 
@@ -524,6 +544,16 @@ For an input/output window, see @ref{The Execution Window} and also
 This window gives access to a shell specific to GPS, that allows you to
 type commands such as editing a file, compiling without using the menu
 items or the mouse.
+
+@iftex
+@cindex screen shot
+@image{shell-window, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{shell-window}
+@end ifhtml
 
 The Shell Window is a work in progress so only a few commands are currently
 available. To get the full list of currently available commands, simply
@@ -712,12 +742,12 @@ this button will close the window
 
 @iftex
 @cindex screen shot
-@image{mdi-title-bar, 12.7cm}
+@image{mdi-title-bar, 10.7cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
-@image{mdi-title-bar, 12.7cm}
+@image{mdi-title-bar}
 @end ifhtml
 
 Alternatively, you can also select the window by clicking anywhere in
@@ -756,7 +786,7 @@ remaining tabs.
 
 @ifhtml
 @cindex screen shot
-@image{mdi-scroll-tabs, 12.7cm}
+@image{mdi-scroll-tabs}
 @end ifhtml
 
 @cindex menu
@@ -800,7 +830,7 @@ by side, from left to right. No window will overlap any other.
 
 @iftex
 @cindex screen shot
-@image{mdi-tile-horizontal}
+@image{mdi-tile-horizontal, 10.7cm}
 @end iftex
 
 @ifhtml
@@ -815,7 +845,7 @@ by side, from top to bottom. No window will overlap any other.
 
 @iftex
 @cindex screen shot
-@image{mdi-tile-vertical}
+@image{mdi-tile-vertical, 10.7cm}
 @end iftex
 
 @ifhtml
@@ -842,12 +872,12 @@ before it was iconified.
 
 @iftex
 @cindex screen shot
-@image{mdi-icons, 12.7cm}
+@image{mdi-icons, 10.7cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
-@image{mdi-icons, 12.7cm}
+@image{mdi-icons}
 @end ifhtml
 
 @end table
@@ -871,7 +901,7 @@ them is visible at any given time, and you select the one you want to
 see by clicking on its name in the tabs area.
 
 GPS includes four such areas, one on each side of the main area. Some
-widgets will initially be displayed in one of these docking areas
+visual objects will initially be displayed in one of these docking areas
 instead of in the central one, like the project explorer, the message
 window,@dots{} Although you can not control this initial position, it is
 possible to change it later on (@ref{Moving Windows}).
@@ -975,7 +1005,7 @@ A third possibility can be used for maximized or docked windows: click
 with the left mouse button in the notebook tab that contains their
 name. This third option is not available under Windows systems.
 
-It is important to note that some widgets in GPS have their own
+It is important to note that some visual objects in GPS have their own
 drag-and-drop support, and will not react when you drop a window on
 them. For instance, editors use drag-and-drop for copy-paste
 operations. Therefore, dropping a window on them will result in a
@@ -1052,6 +1082,16 @@ Source editing is one of the central parts of GPS, giving in turn access
 to many other functionalities, including extended source navigation and
 source analyzing tools.
 
+@iftex
+@cindex screen shot
+@image{source-editor, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{source-editor}
+@end ifhtml
+
 The integrated source editor provides all the usual capabilities found in
 integrated environments, including:
 
@@ -1071,11 +1111,16 @@ file.
 
 @item A status bar
 Giving information about the file.
-The first box on the left shows the writable state of the file.
+If the file is maintained under version control, and version control is
+supported and enabled in GPS, the first box on the left will show VCS
+information on the file: the VCS kind (e.g. @i{CVS}), followed by the revision
+number, and if available, the status of the file.
+
+The second box shows the writable state of the file.
 You can change this state by clicking on the label directly: this will
 switch between @i{writable} and @i{read-only}.
 
-The second box shows whether the file has been modified since the last
+The third box shows whether the file has been modified since the last
 save. The three possible states are:
 
 @table @i
@@ -1092,7 +1137,7 @@ The file has been saved and not modified since.
 
 @end table
 
-The third box displays the position of the cursor in the file by a line and
+The fourth box displays the position of the cursor in the file by a line and
 a column number.
 
 @item A contextual menu
@@ -1382,14 +1427,13 @@ project.
 
 @iftex
 @cindex screen shot
-@image{open-from-project}
+@image{open-from-project, 7cm}
 @end iftex
 
 @ifhtml
 @cindex screen shot
 @image{open-from-project}
 @end ifhtml
-
 
 The first text area allows you to type a file name. You can start the beginning
 of a file name, and use the @key{Tab} key to complete the file name. If there
@@ -1513,6 +1557,7 @@ Cut the current selection and store it in the clipboard.
 
 @item Copy
 @cindex copy
+@cindex yank
 Copy the current selection to the clipboard.
 
 @item Paste
@@ -1585,12 +1630,12 @@ Give access to the preferences dialog. @xref{The Preferences Dialog}.
 
 @noindent
 GPS is fully integrated with a number of external editors, in
-particular @file{Emacs} and @file{vi}. The choice of the default
+particular @code{Emacs} and @code{vi}. The choice of the default
 external editor is done in the preferences. @xref{The Preferences Dialog}.
 @cindex preferences
 The following values are recognized:
 
-@table @file
+@table @code
 @item gnuclient
 @cindex gnuclient
 This is the recommended client. It is based on Emacs, but needs an
@@ -1611,7 +1656,6 @@ is reused every time:
 @cindex url
 See @url{http://www.hpl.hp.co.uk/people/ange/gnuserv/} for more information.
 
-
 @item emacsclient
 @cindex emacsclient
 This is a program that is always available if you have installed
@@ -1622,15 +1666,15 @@ existing Emacs session. It is then extremely fast to open a file.
 @item emacs
 @cindex emacs
 This client will start a new Emacs session every time a file needs to
-be opened. You should use @file{emacsclient} instead, since it is much
+be opened. You should use @code{emacsclient} instead, since it is much
 faster, and makes it easier to copy and paste between multiple
 files. Basically, the only reason to use this external editor is if
-your system doesn't support @file{emacsclient}.
+your system doesn't support @code{emacsclient}.
 
 
 @item vim
 @cindex vim
-@file{Vim} is a vi-like editor that provides a number of enhancements,
+@code{Vim} is a vi-like editor that provides a number of enhancements,
 for instance syntax highlighting for all the languages supported by
 GPS. Selecting this external editor will start an xterm (or command
 window, depending on your system) with a running vim process editing
@@ -1647,8 +1691,8 @@ and thus is not currently supported on Windows systems.
 
 @item vi
 @cindex vi
-This editor works exactly like vim, but uses the standard @file{vi}
-command instead of @file{vim}.
+This editor works exactly like vim, but uses the standard @code{vi}
+command instead of @code{vim}.
 
 
 @item none
@@ -1685,6 +1729,7 @@ menu to open the external editor.
 @cindex clipboard
 @cindex cut
 @cindex copy
+@cindex yank
 @cindex paste
 @cindex X-Window
 @c --------------------------------------------------------------------------
@@ -1734,9 +1779,8 @@ each of the supported languages.
 @cindex GNAT
 The GNAT compiler itself is used to generate the cross-references
 information. This means that you need to compile your application to
-get access to this feature or the various graphs. GPS doesn't provide
-automatic recompilation at the moment, although this is a planned
-feature. If your sources have been modified, you should recompile the
+get access to this feature or the various graphs.
+If your sources have been modified, you should recompile the
 modified files.
 
 @cindex -gnatQ
@@ -1762,7 +1806,7 @@ directories that contain the @file{ALI files}.
 @cindex separate unit
 In addition, one special case can not be handled automatically. This
 is for separate units, whose file names have been crunched through the
-@file{gnatkr} command. To handle this, you should force GPS to parse
+@command{gnatkr} command. To handle this, you should force GPS to parse
 all the @file{ALI files} in the appropriate object directory. This is
 done by right-clicking on the object directory in the explorer
 (left-side panel on the main window), and selecting the menu "Parse
@@ -1960,10 +2004,409 @@ See @ref{Find All References} for more details.
 
 
 @c --------------------------------------------------------------------
-@c Project Handling
+@node Project Handling
+@chapter Project Handling
+@cindex project
 @c --------------------------------------------------------------------
 
-@include projects.texi
+@noindent
+@cindex project explorer
+The section on the project explorer (@ref{The Project Explorer}) has
+already given a brief overview of what the projects are, and the
+information they contain.
+
+This chapter provides more in-depth information, and describes
+how such projects can be created and maintained.
+
+@menu
+* Description of the Projects::
+* Scenarios and Configuration Variables::
+* The Project Wizard::
+* The Project Properties Editor::
+@end menu
+
+@c -------------------------------------------------------------------
+@node Description of the Projects
+@section Description of the Projects
+@cindex project description
+@c -------------------------------------------------------------------
+
+@subsection Project files and GNAT tools
+@cindex project file
+@cindex GNAT
+
+@noindent
+This section describes what the projects are, and what information
+they contain.
+
+The most important thing to note is that the projects used by GPS are
+the same as the ones used by GNAT itself. These are text files
+(using the extension @file{.gpr}) which can be edited either manually, with
+any text editor, or through the more advanced GPS interface.
+
+@cindex url
+The exact syntax of the project files is fully described in the GNAT
+User's Guide (@url{gnat_ug.html}) and GNAT Reference Manual
+(@url{gnat_rm.html}). This is a recommended reading in any case if you
+want to use the more advanced capabilities of the project files, which
+are not necessarily all supported by the graphical interface yet.
+
+GPS cannot edit graphically all the aspects of the project files
+(variables for instance are not editable as such, since the GUI makes
+their use less necessary). However, it can load any project file, even
+those that you have edited manually. On the other hand, you can manually edit
+the project files created by GPS.
+
+You will usually not need to edit the project files manually, since several
+graphical tools are provided such as the project wizard
+(@ref{The Project Wizard}) and the properties editor(@ref{The
+Project Properties Editor}).
+
+@cindex GNAT
+All the non graphical GNAT tools are project aware, meaning that the notion
+of project goes well beyond GPS' user interface, and most capabilities of
+the project file can be accessed without using GPS itself, making the
+project files very attractive.
+
+@cindex Ada
+@cindex gpr2make
+If you are using programming languages other than Ada, the project
+files can automatically generate Makefiles through the @file{gpr2make}
+tool provided with GNAT. Round trip editing is not available though,
+and any change you make to the generated Makefiles will be lost the
+next time the tool is run.
+
+
+@subsection Contents of project files
+@cindex project file
+
+@noindent
+The project files contain all the information that describe the
+organization of your source files, object files and executables.
+
+@cindex sub project
+Generally, one project file will not be enough to describe complex
+organization. In this case, you will create and use a project hierarchy,
+with a root project importing other sub projects. Each of the projects
+and sub projects is responsible for its own set of sources (recompile
+them with the appropriate switches, put the resulting files in the
+right directories, ...).
+
+@cindex GNAT
+Each project contains the following information, among other things
+(see the GNAT user's guide for a full list)
+
+@itemize @bullet
+@item @b{List of imported projects}:
+@cindex imported project
+   When you are compiling some sources from this project, the compiler
+   (either through GNAT or the automatically generated Makefiles) will
+   first make sure that all the imported projects have been correctly
+   recompiled and are up-to-date. This way, dependencies between
+   source files are properly handled.
+
+   If one of the source files of project A depends on some source
+   files from project B, then B must be imported by A. If this isn't
+   the case, the compiler will complain that some of the source files
+   cannot be found.
+
+   One important rule is that each source file name must be unique in
+   the project hierarchy (i.e. a file can not be under control of two
+   different projects. This ensures that the same file will be found
+   no matter what project is managing the source file that uses
+
+@item @b{List of source directories}:
+@cindex source directory
+   All the sources managed by a project are found in one or more
+   source directories. Each project can have multiple source
+   directories, and a given source directory might be shared by
+   multiple projects.
+
+@item @b{Object directory}:
+@cindex object directory
+   When the sources of the project are compiled, the resulting object
+   files are put into this object directory. There exist exactly one object
+   directory for each project. If you need to split the object files
+   among multiple object directories, you need to create multiple
+   projects importing one another as appropriate.
+
+   When sources from imported sub projects are recompiled, the
+   resulting object files are put in the sub project's own object
+   directory, and will never pollute the parent's object directory.
+
+@item @b{Exec directory}:
+@cindex exec directory
+   When a set of object files is linked into an executable, this executable
+   is put in the exec directory of the project file. If this attribute
+   is unspecified, the object directory is used.
+
+@item @b{List of source files}:
+@cindex source file
+   The project is responsible for managing a set of source
+   files. These files can be written in any programming
+   languages. Currently, the graphical interface supports Ada, C and C++.
+
+   The default to find this set of source files is to take all the
+   files in the source directories that follow the naming scheme (see
+   below) for each language. In addition if you edit the
+   project file manually, it is possible to provide an explicit list of source
+   files.
+
+   This attribute cannot be modified graphically yet.
+
+@item @b{List of main units}:
+@cindex main unit
+   The main units of a project (or main files in some languages) are
+   the units that contain the main subprogram of the application, and
+   that can be used to link the rest of the application.
+
+   The name of the file is generally related to the name of the
+   executable.
+
+   A given project file hierarchy can be used to compile and link
+   several executables. GPS will automatically update the Compile, Run
+   and Debug menu with the list of executables, based on this list.
+   
+@item @b{Naming schemes}:
+@cindex naming scheme
+   The naming scheme refer to the way files are named for each
+   languages of the project. This is used by GPS to choose the language
+   support to use when a source file is opened. This is also used to
+   know what tools should be used to compile or otherwise work with a
+   source file.
+
+@item @b{Embedded targets and Cross-environments}:
+@cindex cross environment
+   GPS fully supports cross-environment work: GPS itself can run on a
+   machine but start all the compilation, run and debugger on a remote
+   host.
+
+@cindex VxWorks
+   It also support embedded targets (VxWorks,...) by specifying alternate
+   names for the build and debug tools.
+
+   The project file contains the information required to log on the
+   remote host.
+   
+@item @b{Tools}:
+@cindex tools
+   The project files provide a simply way to change the compiler that
+   should be used to compile the source files, as well as the
+   underlying debugger to use.
+
+@item @b{Switches}:
+@cindex switches
+   Each tool that is used by GPS (compiler, pretty-printer,
+   debugger,...) has its own set of switches. Moreover, these switches
+   may depend on what specific file is manipulated, and on its language.
+
+@end itemize
+
+
+@c -------------------------------------------------------------------
+@node Scenarios and Configuration Variables
+@section Scenarios and Configuration Variables
+@cindex configuration variable
+@cindex project variable
+@cindex variable
+@c -------------------------------------------------------------------
+
+@noindent
+The behavior of projects can be further tailored by the use of
+scenarios.
+
+@cindex project attribute
+All the attributes of a project, except its list of imported projects,
+can be chosen based on the value of external variables, whose value is
+generally coming from the environment, or directly set in GPS (using
+the small area on top of the project explorer (@ref{The Project
+Explorer}).
+
+@cindex compile
+@cindex debug
+This can for instance be used to compile all the sources either in
+debug mode (so that the executables can be run in the debugger), or in
+optimized mode (to reduce the space and increase the speed when delivering).
+In this case, all the attributes (source directories, tools,...) remain the
+same, except the switches. It would
+be more difficult to maintain a completely separate hierarchy of
+project, and it is much more efficient to create a new configuration
+variable and edit the switches for the appropriate scenario (@ref{The
+Project Properties Editor}).
+
+
+@subsection Creating new configuration variables
+@cindex creating configuration variable
+
+@noindent
+Creating a new scenario variable is done through the contextual menu
+(right-click) in the project explorer. Select the menu @code{Add
+Configuration Variable}. This opens the following dialog:
+
+@iftex
+@cindex screen shot
+@image{scenarios, 10cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{scenarios}
+@end ifhtml
+
+There are two main areas in this dialog: in the top line, you specify
+the name of the variable. This name is used for two purposes:
+
+@itemize @bullet
+@item It is displayed in the project explorer
+@cindex project explorer
+
+@item This is the name of the environment variable from which the
+initial value is read. When GPS is started, all configuration
+variables are initialized from the environment, although you can of
+course change them as many times as you want later on.
+
+@end itemize
+
+If you click on the arrow on the right of this name area, GPS will
+display the list of all the environment variables that are currently
+defined. However, you don't need to pick the name of an existing
+variable, neither must the variable exist when GPS is started.
+
+The second part of this dialog is the list of authorized value for
+this variable. Any other value will generate an error reported by
+GPS, and the project won't be loaded as a result.
+
+One of these values is the default value (the one whose button in the
+Default column is selected). This means that if the environment
+variable doesn't exist when GPS is started, GPS will behave as if it
+did exist with this default value.
+
+The list of possible values can be edited through the @code{Remove},
+@code{Add} and @code{Rename} buttons, although you can also simply
+click on the value itself to change it.
+
+
+@subsection Editing existing configuration variables
+@cindex editing configuration variable
+
+@noindent
+If at least one configuration variable is defined in your project, the
+area on top of the project explorer will contain something similar to:
+
+@iftex
+@cindex screen shot
+@image{explorer-scenario, 8.5cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{explorer-scenario}
+@end ifhtml
+
+@cindex Unix
+This screen shot shows two configuration variables, named @code{Build}
+and @code{OS}, with their current value (resp. @code{Debug} and
+@code{Unix}).
+
+You can easily change the current value of any of these variables by
+clicking on the arrow on the right of the value. This will display a
+pop-up window with the list of possible values, from which you select
+the one you wish to use.
+
+@cindex project explorer
+As soon as a new value is selected, GPS will recompute the project
+explorer (in case the source directories, object directories or list
+of source files has changed). A number of things will also be updated
+(like the list of executables in the @code{Compile}, @code{Run} and
+@code{Debug} menus).
+
+@cindex browsers
+@cindex call graph
+Currently, GPS will not recompute the contents of the various browsers
+(call graph, dependencies,...) for this new project. This would be too
+expensive to do every time the value changes, and therefore you need
+to explicitly request an update.
+
+@c ??? Need to explain how to force an update, once this is
+@c implemented
+
+You can change the list of possible values for a configuration
+variable at any time by clicking on the button to the far left of the
+variable's name. This will pop up the same dialog that is used to create
+new variables
+
+@cindex removing variable
+Removing a variable is done by clicking on the button immediately to
+the left of the variable's name. GPS will then display a confirmation
+dialog.
+
+If you confirm that you want to delete the variable, GPS will simply
+remove the variable, and from now on act as if the variable always had
+the value it had when it was deleted.
+
+
+@c -------------------------------------------------------------------
+@node The Project Wizard
+@section The Project Wizard
+@cindex project wizard
+@c -------------------------------------------------------------------
+
+@c ??? incomplete
+@noindent
+@i{This section is incomplete}
+
+@noindent
+The project wizard allows you to create in a few steps a new project file:
+
+@itemize @bullet
+@item Project Naming
+@item VCS Selection
+@item Source Selection
+@item Build Directory
+@item Naming Scheme
+@item Main Units
+@item Switches
+@end itemize
+
+It is accessible through the menu @code{Project->New...}
+
+@iftex
+@cindex screen shot
+@image{project-wizard, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{project-wizard}
+@end ifhtml
+
+
+@c -------------------------------------------------------------------
+@node The Project Properties Editor
+@section The Project Properties Editor
+@cindex project properties editor
+@c -------------------------------------------------------------------
+
+@c ??? incomplete
+@noindent
+@i{This section is incomplete}
+
+@noindent
+The project properties editor gives you access at any time to the properties
+of your projects. It is accessible through the menu
+@code{Project->Edit Properties}, and through the contextual menu
+@code{Edit project properties} on any project item, e.g. from the Project
+View or the Project Browser.
+
+@iftex
+@cindex screen shot
+@image{project-properties, 12.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{project-properties}
+@end ifhtml
 
 @c --------------------------------------------------------------------
 @node Searching and Replacing
@@ -1994,7 +2437,7 @@ screen, similar to the following:
 
 @iftex
 @cindex screen shot
-@image{search-hide}
+@image{search-hide, 7cm}
 @end iftex
 
 @ifhtml
@@ -2049,8 +2492,7 @@ comments, and ignore the code.
 @cindex search context
 GPS will automatically select the most appropriate context when you
 open the search dialog, depending on which component currently has the
-focus. However, you can of course change the context to the one you
-prefer.
+focus. You can of course change the context to another one if needed.
 
 @end table
 
@@ -2060,7 +2502,7 @@ it is taking too long, or to display the options.
 
 @iftex
 @cindex screen shot
-@image{search-options}
+@image{search-options, 7cm}
 @end iftex
 
 @ifhtml
@@ -2246,7 +2688,6 @@ ifneq ($(FOO_ROOT),True)
 endif
 
 endif
-
 @end smallexample
 
 @c --------------------------------------------------------------------
@@ -2273,16 +2714,53 @@ endif
 @section Call Graph
 @cindex call graph
 @noindent
+The call graph shows graphically the relationship between subprogram callers
+and callees.
+
+@iftex
+@cindex screen shot
+@image{call-graph, 11.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{call-graph}
+@end ifhtml
+
 
 @node Dependency Browser
 @section Dependency Browser
 @cindex dependency browser
 @noindent
+The dependency browser shows the dependencies between source files.
+
+@iftex
+@cindex screen shot
+@image{dependency-browser, 10.1cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{dependency-browser}
+@end ifhtml
+
 
 @node Entity Browser
 @section Entity Browser
 @cindex entity browser
 @noindent
+The entity browser displays static information about any source entity.
+
+@iftex
+@cindex screen shot
+@image{entity-browser, 10.1cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{entity-browser}
+@end ifhtml
+
 
 @c --------------------------------------------------------------------
 @node Debugging
@@ -2292,6 +2770,17 @@ endif
 @c --------------------------------------------------------------------
 
 @noindent
+GPS is also a graphical front-end for text-based debuggers such as GDB.
+A knowledge of the basics of the underlying debugger used by GPS will help
+understanding how GPS works and what kind of functionalities it provides.
+
+Please refer to the debugger-specific documentation -
+e.g. the GDB documentation
+@ifhtml
+(@url{gdb.html})
+@end ifhtml
+- for more details.
+
 Debugging is tightly integrated with the other components of GPS. For
 example, it is possible to edit files and navigate through your sources
 while debugging.
@@ -2344,7 +2833,7 @@ When you want to quit the debugger without quitting GPS, go to the menu
 GPS offers the possibility for multiple developers to work on the same project,
 through the integration of version control systems (VCS). Each project can be
 associated to a VCS, through the @code{VCS} tab in the Project property
-editor. @xref{The project properties editor}.
+editor. @xref{The Project Properties Editor}.
 
 The systems that are currently supported in GPS are CVS and ClearCase.
 It is recommended that you first get familiar with the version control
@@ -2375,8 +2864,8 @@ The VCS Explorer provides an overview of source files and their status.
 @end ifhtml
 
 The easiest way to bring up the VCS Explorer is through the menu
-@file{VCS->Explorer}. The Explorer can also be brought up using the
-contextual menu @file{Version Control->Query Status} on files,
+@code{VCS->Explorer}. The Explorer can also be brought up using the
+contextual menu @code{Version Control->Query Status} on files,
 directories and projects in the file and project views, and on file
 editors. @xref{The Version Control Contextual Menu}.
 
@@ -2387,7 +2876,7 @@ The VCS Explorer contains the following columns:
 Shows the status of the file. This column can be sorted by clicking on
 the header. The different possible status for files are the following:
   
-@table @file
+@table @code
 @item Unknown
 The status is not yet determined or the VCS repository is not able to
 give this information (for example if it is unavailable, or locked).
@@ -2432,9 +2921,9 @@ Indicates the most recent version of the file in the repository.
 
 The VCS Explorer supports multiple selections. To select a single
 line, simply left-click on it. To select a range of lines, select the
-first line in the range, then hold down the @file{Shift} key and select the
+first line in the range, then hold down the @key{Shift} key and select the
 last line in the range. To add or remove single columns from the
-selection, hold down the @file{Control} key and left-click on the
+selection, hold down the @key{Control} key and left-click on the
 columns that you want to select/unselect.
 
 The VCS contextual menu can be brought up from the VCS explorer by
@@ -2515,16 +3004,16 @@ Submits the changes made to the file to the repository, and queries
 the status for the file once the change is made.
 
 It is possible to tell GPS to check the file before the actual commit
-happens. This is done by specifying a @file{File checker} in the
-@file{VCS} tab of the project properties dialog. This @file{File
+happens. This is done by specifying a @code{File checker} in the
+@code{VCS} tab of the project properties dialog. This @code{File
 checker} is in fact a script or executable that takes an absolute file
 name as argument, and displays any error message on the standard
 output. The VCS commit operation will actually occur only if nothing
 was written on the standard output.
 
 It is also possible to check the changelog of a file before commit, by
-specifying a @file{Log checker} in the project properties dialog. This
-works on changelog files in the same way as the @file{File checker} works on
+specifying a @code{Log checker} in the project properties dialog. This
+works on changelog files in the same way as the @code{File checker} works on
 source files.
 
 @c @item Revert
@@ -2654,28 +3143,77 @@ server is temporarily unavailable).
 @end table
 
 @c --------------------------------------------------------------------
-@node Working in a cross environment
-@chapter Working in a cross environment
+@node Working in a Cross Environment
+@chapter Working in a Cross Environment
 @cindex cross environment
 @c --------------------------------------------------------------------
 
-@i{This chapter is incomplete}
-@c ??? incomplete
-
 @menu
-* Customizing your projects::
-* Debugger issues::
+* Customizing your Projects::
+* Debugger Issues::
 @end menu
 
-@node Customizing your projects
-@section Customizing your projects
+@noindent
+This chapter explains how to adapt your project and configure GPS when working
+in a cross environment.
+
+@node Customizing your Projects
+@section Customizing your Projects
 @cindex project
 @noindent
+@i{This section is incomplete}
+@c ??? incomplete
 
-@node Debugger issues
-@section Debugger issues
+@c Project properties:
+@c @table @b
+@c @item Tools
+@c @item Cross environment
+@c @end table
+
+@c Creating scenario variables for you configurations:
+@c @table @b
+@c @item Target
+@c    Native, Embedded
+@c @item Target
+@c    Native, PowerPC, M68K
+@c @end table
+
+@c Change the tools names: Ada compiler, Gnatls, Debugger
+
+@c Board
+@c Board1, Board2, Board3
+@c   change the program host and the protocol
+
+@node Debugger Issues
+@section Debugger Issues
 @cindex debugger
 @noindent
+This section describes some debugger issues that are specific to cross
+environments. You will find more information on debugging by reading the
+@ref{Debugging}.
+
+To connect automatically to the right remote debug agent when
+starting a debugging session (using the menu @code{Debug->Initialize}),
+be sure to specify the @code{Program host} amd @code{Protocol} project
+properties, as described in the previous section.
+
+For example, if you are using the @i{Tornado} environment, with a target
+server called @code{target_ppc}, set the @code{Protocol} to @code{wtx} and
+the @code{Program host} to @code{target_ppc}.
+
+Once the debugger is initialized, you can also connect to a remote agent
+by using the menu @code{Debug->Debug->Connect to Board...}. This will open
+a dialog where you can specify the target name (e.g. the name of your
+@cindex board
+board or debug agent) and the communication protocol.
+
+In order to load a new module on the target, you can select the menu
+@code{Debug->Debug->Load File...}.
+
+If a module has been loaded on the target and is not known
+to the current debug session, use the menu
+@code{Debug->Debug->Add Symbols...} to load the symbol tables in the current
+debugger.
 
 @c --------------------------------------------------------------------
 @node Customization
@@ -2686,7 +3224,7 @@ server is temporarily unavailable).
 @menu
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
-* Changing Colors Fonts and Key Bindings::
+* Defining New Styles and Key Bindings::
 @end menu
 
 @node The Preferences Dialog
@@ -2700,6 +3238,16 @@ To enable the new preferences, you simply need to confirm by pressing
 the @code{OK} button. To test your changes, you can use the @code{Apply}
 button. Pressing the @code{Cancel} button will undo all your changes.
 
+@iftex
+@cindex screen shot
+@image{preferences-general, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{preferences-general}
+@end ifhtml
+
 Each preference is composed of a label displaying the name of the
 preference, and an editing area to modify its value. If you leave to mouse
 over the label, a tool tip will be displayed giving an on-line help on the
@@ -2707,11 +3255,11 @@ preference.
 
 The preferences dialog is composed of eight areas, accessible through the
 tabs at the left of the dialog, labeled @i{General}, @i{Editor}, @i{Debugger},
-@i{Helpers}, @i{Browsers}, @i{Visual Diff}, @i{Messages}, @i{Project}.
+@i{Helpers}, @i{Browsers}, @i{Visual Diff}, @i{Messages} and @i{Project}.
 Each page corresponds to a section of preferences.
 
-@table @b
-@item General
+@itemize @bullet
+@item @b{General}
 
 The general preferences are composed of two pages available at the top of the
 right area: @i{General} and @i{Windows}
@@ -2728,7 +3276,7 @@ The default font used in GPS
 @cindex key theme
 @cindex emacs
 Name of key theme to use. The key themes determines the key bindings used by
-the various widgets, in particular the source editor.
+the various visual objects, in particular the source editor.
 Values currently supported are @code{Emacs} and @code{Default}
 
 @item Character set
@@ -2800,7 +3348,7 @@ Color to use for the title bar of selected items.
 
 @end table
 
-@item Editor
+@item @b{Editor}
 @cindex editor
 @table @i
 @item General
@@ -2983,7 +3531,7 @@ Delimiters include parentheses, brackets, and braces.
 
 @end table
 
-@item Debugger
+@item @b{Debugger}
 @cindex debugger
 @table @i
 @item General
@@ -3083,7 +3631,7 @@ Color used for selected items.
 
 @end table
 
-@item Helpers
+@item @b{Helpers}
 @cindex helper
 @table @i
 @item List processes
@@ -3110,7 +3658,7 @@ Program used to print files.
 
 @end table
 
-@item Browsers
+@item @b{Browsers}
 @cindex browsers
 @table @i
 @item General
@@ -3170,7 +3718,7 @@ Otherwise, all dependencies, even implicit, are displayed.
 
 @end table
 
-@item Visual diff
+@item @b{Visual diff}
 @cindex visual diff
 @cindex file comparison
 @table @i
@@ -3209,17 +3757,17 @@ Ignore white space when comparing lines.
 Command used to apply a patch. Arguments can also be specified.
 @end table
 
-@item Messages
+@item @b{Messages}
 @cindex messages
 @table @i
 @item Color highlighting
 @cindex color
-Color used to highlight text in the messages window
+Color used to highlight text in the messages window.
 
 @item Show build progress
 @cindex build
 @cindex build progress
-Whether the progress bar should show progress during builds
+Whether the progress bar should show progress during builds.
 
 @item File pattern
 @cindex file pattern
@@ -3233,19 +3781,19 @@ column patterns.
 
 @item File index
 @cindex file index
-Index of filename in the file pattern
+Index of filename in the file pattern.
 
 @item Line index
 @cindex line index
-Index of the line number in the file pattern
+Index of the line number in the file pattern.
 
 @item Column index
 @cindex column index
-Index of the column number in the file pattern
+Index of the column number in the file pattern.
 
 @end table
 
-@item Project
+@item @b{Project}
 @cindex project
 @table @i
 @item Relative paths
@@ -3259,7 +3807,7 @@ should be displayed as a hierarchy of projects, or a simple sorted list.
 
 @end table
 
-@end table
+@end itemize
 
 @node Customizing the Menu Bar and the Tool Bar
 @section Customizing the Menu Bar and the Tool Bar
@@ -3284,30 +3832,26 @@ the @key{Backspace} key.
 Your changes will be saved when GPS exits, in a file called
 @file{$HOME/.gps/custom_keys}.
 
-@subsection Adding menu and button items
+@subsection Adding menu items
 @cindex menu
-@cindex tool bar
 @noindent
 The GPS menu bar can be customized through an XML file called
 @file{custom} in the gps home directory (@file{$HOME/.gps} on Unix
 systems, @file{%HOME%\.gps} on Windows systems).
 @cindex Unix
 @cindex Windows
-
 Here is an example for such a file:
 
 @cindex example
 @smallexample
+
 <?xml version="1.0"?>
-
 <Custom>
-
   <Submenu>
     <Title>custom menu</Title>
-
     <Menu_Item>
     <Title>item 1</Title>
-      <Action>shell command 1</Action>
+      <Action>external-command 1</Action>
     </Menu_Item>
 
     <Submenu>
@@ -3321,111 +3865,117 @@ Here is an example for such a file:
       </Submenu>
     </Submenu>
   </Submenu>
-
-  <Submenu>
-    <Title>custom menu number 2</Title>
-    (...)
-  </Submenu>
-
 </Custom>
+
 @end smallexample
 
-The example above creates two top-level menus, named @file{custom menu}
-and @file{custom menu number 2}. The first one contains a menu item named
-@file{item 1}, which is associated to the shell command @file{shell command
-1}, and a sub menu named @file{other menu}, and so on.
+The example above creates a top-level menu named @code{custom menu}.
+This menu contains a menu item named @code{item 1}, which is associated to the
+shell command @code{external-command 1}, a sub menu named @code{other menu},
+etc...
 
-Note for Windows users: like under UNIX, dos scripts can be called
+Note for Windows users: like under UNIX, scripts can be called
 from custom menu. In order to do that, you must write your script in a
-@file{.bat} or @file{.cmd} file, and call this file using @file{cmd /c}.
-Thus, the @file{Action} tag would look like:
+@file{.bat} or @file{.cmd} file, and call this file using @code{cmd /c}.
+Thus, the @code{Action} tag would look like:
 
 @smallexample
-<Action>cmd /c c:\.gps\my_scripts\my_command.bat</Action>
+
+<Action>cmd /c c:\.gps\my_scripts\my_command.cmd</Action>
+
 @end smallexample
 
 @cindex shell
 @cindex interactive command
-As well as shell commands, you can use custom menu items to invoke GPS
-commands. The following example shows how to create menus to
-invoke the @file{help} interactive command and to open the file
-@file{main.c}.
+As well as external commands, you can use custom menu items to invoke GPS
+commands using the @code{GPS_Action} tag. The following example shows how to
+create menus to invoke the @code{help} interactive command and to open the
+file @file{main.c}.
 
 @cindex example
 @smallexample
+
 <Submenu>
-   <Title>Edit</Title>
-     <Menu_Item>
-           <Title>List GPS commands</Title>
-           <GPS_Action>help</GPS_Action>
-     </Menu_Item>
-     <Menu_Item>
-           <Title>Edit main.c</Title>
-           <GPS_Action>edit main.c</GPS_Action>
-     </Menu_Item>
+  <Title>Edit</Title>
+  <Menu_Item>
+    <Title>List GPS commands</Title>
+    <GPS_Action>help</GPS_Action>
+  </Menu_Item>
+  <Menu_Item>
+    <Title>Edit main.c</Title>
+    <GPS_Action>edit main.c</GPS_Action>
+  </Menu_Item>
 </Submenu>
+
 @end smallexample
 
 You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
-a menu named @file{File}, set its title as @file{_File}.
+a menu named @code{File}, set its title as @code{_File}.
 
 You can add items or sub menus to existing menus, using titles for
 menus that already exist. For example, this adds an item named
-@file{Robert} to the @file{Edit} menu.
+@code{Robert} to the @code{Edit} menu.
 
 @cindex example
 @smallexample
+
 <Submenu>
   <Title>Edit</Title>
   <Menu_Item>
     <Title>Robert</Title>
   </Menu_Item>
 </Submenu>
+
 @end smallexample
 
-Use the @file{/} separator to identify the sub menu in a menu. For
-example, this adds a sub menu named @file{Olga} containing an item named
-@file{Item} to the @file{Edit} menu.
+Use the @code{/} separator to identify the sub menu in a menu. For
+example, this adds a sub menu named @code{Olga} containing an item named
+@code{Item} to the @code{Edit} menu.
 
 @cindex example
 @smallexample
+
 <Submenu>
   <Title>Edit/Olga</Title>
   <Menu_Item>
     <Title>Item</Title>
   </Menu_Item>
 </Submenu>
+
 @end smallexample
 
 Adding an item with an empty title or no title at all inserts a
 menu separator.
 
+@subsection Adding tool bar buttons
+@cindex tool bar
+@noindent
 As an alternative to creating new menu items, you can create new
 buttons on the tool bar, with exactly the same syntax, by using
-the @file{<Toolbar_Item>} tag in place of the @file{<Menu_Item>} tag.
+the @code{<Toolbar_Item>} tag in place of the @code{<Menu_Item>} tag.
 @cindex jpeg
 @cindex png
 @cindex gif
 @cindex xpm
-Within this tag, the tag @file{<Pixmap>} can be used to indicate
-the location of an image file (of the type @file{jpeg}, @file{png}, @file{gif}
-or @file{xpm}) to be used as icon for the button. An empty @file{<Toolbar_Item>}
-tag indicates a separator in the tool bar.
+Within this tag, the tag @code{<Pixmap>} can be used to indicate
+the location of an image file (of the type @code{jpeg, png, gif}
+or @code{xpm}) to be used as icon for the button. An empty
+@code{<Toolbar_Item>} tag indicates a separator in the tool bar.
 
 @cindex example
 @smallexample
+
 <Submenu>
    <Title>Toolbar Items</Title>
-
    <Toolbar_Item></Toolbar_Item>
-
    <Toolbar_Item>
      <Title>Custom Button</Title>
      <Pixmap>/my_pixmaps/button.jpg</Pixmap>
      <GPS_Action>my gps command</GPS_Action>
    </Toolbar_Item>
 </Submenu>
+
 @end smallexample
 
 You can use macro arguments to pass to your shell
@@ -3433,7 +3983,7 @@ commands. Macro arguments are special parameters that are transformed
 every time that the command is about to be executed. The following
 macro arguments exist in GPS:
 
-@table @file
+@table @code
 @item %f
 Base name of the currently opened file.
 
@@ -3447,29 +3997,36 @@ The current project. This is the name of the project, not the project file.
 The root project. This is the name of the project, not the project file.
 
 @item %(p|P)[r](d|s)[f]
-Substituted by the contents of a project :
+Substituted by the list of sources or directories of a given project:
 
-P : the project is the root project
+@table @code
+@item P
+the root project.
 
-p : the project is the current project
+@item p
+the selected project, or the root project if there is no project selected.
 
-r : indicates that the listing should be project-recursive, i.e. that
-sub-projects should be listed as well, and their sub projects, and so
-on.
+@item r
+recurse through the projects: sub projects will be listed as well as their
+sub projects, etc...
 
-d : list the source directories
+@item d
+list the source directories.
 
-s : list the source files
+@item s
+list the source files.
 
-f : output the list into a file and substitute the parameter with the
+@item f
+output the list into a file and substitute the parameter with the
 name of that file.
+@end table
+
 @end table
 
 @cindex example
 Examples:
 
-@table @file
-
+@table @code
 @item %Ps
 Replaced by a list of source files in the root project.
 
@@ -3483,57 +4040,472 @@ directories in the current project, and all imported sub projects,
 recursively.
 @end table
 
-@node Changing Colors Fonts and Key Bindings
-@section Changing Colors Fonts and Key Bindings
+@node Defining New Styles and Key Bindings
+@section Defining New Styles and Key Bindings
 
 @cindex Gtk+
 @cindex gtkrc
+@cindex resource file
 @cindex Unix
 @noindent
 In addition to the preferences dialog, GPS can be configured through the
-Gtk+ mechanism of @file{rc files}. You can create a text file called
+Gtk+ mechanism of @file{RC files}. You can create a text file called
 @file{gtkrc} in the gps home directory (@file{~/.gps} on Unix systems), or as
-a global change, in the directory etc/gps in the GPS installation. This file
-contains the usual configuration description, following the gtk resource
-files syntax.
+a global change, in the directory etc/gps in the GPS installation.
 
-Special effects can be achieved this way. For instance, the following
-code will change the background color of any button, when it is
-pressed. It will also set a background pixmap when it is not pressed.
-The style also inherits from the one above, so that the buttons also
+This file follows the Gtk+ resource file syntax and gives the possibility in
+particular to define a number of styles and key bindings and attach them to
+particular visual objects such as text editors, menu items, ...
+
+For example, you can set @key{Ctrl-v} in the source editors to scroll forward
+one page. The following code defines this new key binding:
+
+@cindex example
+@smallexample
+
+# Create new key bindings for text editors
+binding "custom-text-key"
+@{
+   # define Ctrl-v to scroll forward one page
+   bind "<ctrl>v" @{ "move-cursor" (pages, 1, 0) @}
+@}
+
+# Associate the new binding created above with text editors
+class "GtkTextView" binding "custom-text-key"
+
+@end smallexample
+
+@subsection Toplevel declarations
+@noindent
+An RC file is a text file which is composed of a sequence of declarations.
+All the literals are case sensitive;
+@code{#} characters delimit comments and the portion of a line after a
+@code{#} is ignored when parsing an RC file.
+The syntax of the toplevel declarations is described below.
+Opening/closing brackets on the same line (@{ ... @}) are used to represent
+a sequence of 0 or more elements.
+
+@smallexample
+toplevel-declarations ::=
+   @{ declaration @}
+
+declaration ::=
+   include-file | pixmap-path | style-definition | binding-definition |
+   enable-resource
+
+include-file ::=
+   @b{include} string_literal
+
+pixmap-path ::=
+   @b{pixmap_path} string_literal
+
+style-definition ::=
+   @b{style} resource-name [ = parent ]
+   @{
+      sequence-of-style
+   @}
+
+binding-definition ::=
+   @b{binding} resource-name
+   @{
+      sequence-of-binding
+   @}
+
+enable-resource ::=
+   @b{class} "widget-name" (@b{binding} | @b{style}) resource-name
+
+resource-name ::=
+   string_literal
+
+@end smallexample
+
+@noindent
+The table below describes the meaning of each of these toplevel declarations:
+
+@table @command
+@item include @i{filename}
+Parses another file at this point. If filename is not an absolute filename, it
+is searched in the directories of the currently open RC file.
+
+@item pixmap_path @i{path}
+Sets a path (a list of directories separated by colons) that will be searched
+for pixmaps referenced in RC files.
+
+@item style @i{name} [ = @i{parent} ] @{ ... @}
+Declares a style. If @i{parent} is specified, @i{name} inherits its
+default attributes from @i{parent}. You can specify @i{"default"} to designate
+the default style, e.g:
+
+@smallexample
+style "my-style" = "default" @{ ... @}
+@end smallexample
+
+See @ref{Defining new styles} for more details.
+
+@item binding name @{ ... @}
+Declares a binding set.
+See @ref{Defining new key bindings} for more details.
+
+@item class @i{widget-name} (binding | style) @i{name}
+Specifies a binding or style set for a particular set of visual objects.
+
+@item resource-name
+An arbitrary user defined name.
+
+@end table
+
+@subsection Defining new styles
+@anchor{Defining new styles}
+@noindent
+A RC style is specified by a style declaration in a RC file, and then bound to
+visual objects with a class declaration.
+Within each type of declaration, later declarations override earlier ones.
+
+For example, the following code will change the background color of any button,
+when it is pressed. It will also set a background pixmap when it is not
+pressed. The style also inherits from the one above, so that the buttons also
 use the default font.
 
 @cindex example
 @smallexample
-pixmap_path "<directory_that_contains_the_pixmap>"
-style "button" = "default" @{
-  bg_pixmap[NORMAL]="<pixmap_name>"
+
+pixmap_path "@i{directory_that_contains_the_pixmap}"
+style "custom-button" = "default"
+@{
+  bg_pixmap[NORMAL]="@i{pixmap_file}"
   bg[ACTIVE]="blue"
 @}
-class "*GtkButton*" style "button"
+class "GtkButton" style "custom-button"
+
 @end smallexample
 
-Similarly, you can configure the key bindings to suit your habits. In
-the editor, you can for instance set @key{Ctrl-V} to scroll forward
-one page, as usual under the Emacs editor. The following code takes
-care of that. Configuring keys is trickier than the above, since you
-need to know the signals that the widgets can receive. Basically, the
-most useful will probably be @option{move_cursor}. The first
-parameter should be one of @option{pages}, @option{paragraphs},
-@option{words}, @option{display-lines} or
-@option{logical-positions}. The second parameter is the number of
-such units to skip
+@noindent
+Here is the syntax for defining styles:
 
-@cindex example
 @smallexample
-binding "custombind" @{
-   bind "<ctrl>v" @{ "move_cursor" (pages, 1, 0) @}
-@}
-class "*GtkTextView*" binding : highest "custombind"
+
+sequence-of-style ::=
+   @{ style @}
+
+style ::=
+   style-name[state] = string_literal
+
+style-name ::=
+   @i{bg | fg | base | text | bg_pixmap | font_name}
+
+state ::=
+   @i{NORMAL | ACTIVE | PRELIGHT | SELECTED | INSENSITIVE}
+
 @end smallexample
 
-Enabling key bindings similar to the popular Emacs editor is even
-easier, since you can specify it directly in the preferences dialog.
+@noindent
+The table below describes the meaning of each of these elements:
+
+@table @command
+@item bg[@i{state}] = @i{color}
+Sets the color used for the background of most visual objects.
+
+@item fg[@i{state}] = @i{color}
+Sets the color used for the foreground of most visual objects.
+
+@item base[@i{state}] = @i{color}
+Sets the color used for the background of visual objects displaying editable
+text.
+
+@item text[@i{state}] = @i{color}
+Sets the color used for foreground of visual objects using base for the
+background color.
+
+@item bg_pixmap[@i{state}] = @i{pixmap}
+Sets a background pixmap to be used in place of the bg color. The special
+value @i{"<parent>"} may be used to indicate that the visual object should use
+the same background pixmap as its parent. The special value @i{"<none>"} may be
+used to indicate no background pixmap.
+
+@item font_name = @i{font}
+Sets the font for a visual object.
+Font is a font name as listed in the font selector in the preferences dialog,
+e.g. @i{"Sans Italic 10"}.
+@end table
+
+@noindent
+The colors and background pixmaps are specified as a function of the state of
+the visual object. The states are:
+
+@table @command
+@item NORMAL
+A color used for a visual object in its normal state.
+
+@item ACTIVE
+A variant of the NORMAL color used when the visual object is in the active
+state, and also for the trough of a ScrollBar, tabs of a
+NoteBook other than the current tab and similar areas. Frequently, this should
+be a darker variant of the NORMAL color.
+
+@item PRELIGHT
+A color used for visual objects in the PRELIGHT state. This state is
+used for Buttons and MenuItems that have the mouse cursor over them, and for
+their children.
+
+@item SELECTED
+A color used to highlight data selected by the user. For instance, the
+selected items in a list object, and the selection in an editable object.
+
+@item INSENSITIVE
+A color used for the background of visual objects that have been set
+insensitive.
+@end table
+
+Colors can be specified as a string containing a color name (under Unix
+systems, GTK+ knows all names from the X color database /usr/lib/X11/rgb.txt),
+in one of the hexadecimal forms @code{#rrrrggggbbbb}, @code{#rrrgggbbb},
+@code{#rrggbb}, or @code{#rgb}, where r, g and b
+are hex digits, or they can be specified as a triplet @code{@{r, g, b@}}, where
+r, g and b are either integers in the range 0-65535 or floats in the range
+0.0-1.0.
+
+@subsection Defining new key bindings
+@anchor{Defining new key bindings}
+@noindent
+Key bindings allow you to specify actions to be taken on a given key
+press. The syntax to define new key bindings is described below.
+
+@smallexample
+
+sequence-of-binding ::=
+   @{ binding @}
+
+binding ::=
+   @b{bind} "key-name"
+   @{
+      sequence-of-commands
+   @}
+
+sequence-of-commands ::=
+   @{ command @}
+
+command ::=
+   "command-kind" (parameters)
+
+parameters ::=
+   [first-parameter @{, number@}]
+
+widget-name ::=
+   @i{GtkButton | GtkDialog | GtkEntry | GtkMenuItem |}
+   @i{GtkMenuShell | GtkTextView | GtkTreeView}
+
+command-kind ::=
+   @i{move-cursor | page-horizontally | set-anchor | insert-at-cursor |}
+   @i{delete-from-cursor | cut-clipboard | copy-clipboard | paste-clipboard |}
+   @i{toggle-overwrite | move-focus | activate | select-all | unselect-all |}
+   @i{select-cursor-row | toggle-cursor-row | expand-collapse-cursor-row |}
+   @i{select-cursor-parent | start-interactive-search | clicked | close |}
+   @i{move-current}
+
+first-parameter ::=
+   @i{movement-step | count | extend-selection | delete-type | start-editing |}
+   @i{logical | expand | expand-all | menu-direction |} string_litteral
+
+number ::=
+   [-|+]digit@{digit@}
+
+key-name ::=
+   @{modifier@}key
+
+modifier ::=
+   <ctrl> | <alt> | <shift>
+
+key ::=
+   letter | digit |
+   @i{BackSpace | Tab | Return | Pause | Scroll_Lock | Sys_Req | Escape |}
+   @i{Delete | Home | Left | Up | Right | Down | Page_Up | Page_Down | End |}
+   @i{Insert | Break | Num_Lock |}
+   @i{F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 |}
+   @i{Caps_Lock | space | exclam | quotedbl | numbersign | dollar | percent |}
+   @i{ampersand | apostrophe | quoteright | parenleft | parenright | asterisk |}
+   @i{plus | comma | minus | period | slash | colon | semicolon | less |}
+   @i{equal | greater | question | at | bracketleft | backslash |}
+   @i{bracketright | underscore | grave | quoteleft | braceleft | bar |}
+   @i{braceright} | ...
+
+@end smallexample
+
+@noindent
+See the file gdk/gdkkeysyms.h from the Gtk+ sources for a complete list of
+possible values for @code{key}.
+
+@noindent
+The list of valid @command{command-kind} values and their parameters depend on
+the widget name:
+
+@table @command
+@item GtkButton
+   Applies to buttons.
+   @table @command
+   @item clicked ()
+      Generate a button click event.
+   @end table
+
+@item GtkDialog
+   Applies to dialog windows.
+   @table @command
+   @item close ()
+      Close the current dialog box.
+   @end table
+
+@item GtkEntry
+   Applies to single line text entries.
+   @table @command
+   @item activate ()
+      Activate the text entry.
+   @item move-cursor (movement-step, count, extend-selection)
+      Move insertion point by count steps. If extend-selection is true,
+      create or extend the selection.
+   @item insert-at-cursor (string)
+      Insert a given text string at the cursor.
+   @item delete-from-cursor (delete-type, count)
+      Delete count units from the cursor.
+   @item cut-clipboard ()
+      Cut the current selection to the clipboard.
+   @item copy-clipboard ()
+      Copy the current selection to the clipboard.
+   @item paste-clipboard ()
+      Paste the contents of the clipboard.
+   @item toggle-overwrite ()
+      Toggle the current overwrite mode.
+   @end table
+
+@item GtkMenuItem
+   Applies to menu items.
+   @table @command
+   @item activate ()
+      Activate the menu item.
+   @end table
+
+@item GtkMenuShell
+   Applies to menus.
+   @table @command
+   @item move-current (menu-direction)
+      Move the current menu entry to the given direction.
+   @end table
+
+@item GtkTextView
+   Applies to source and text editors.
+   @table @command
+   @item move-cursor (movement-step, count, extend-selection)
+      Move insertion point by count steps. If extend-selection is true,
+      create or extend the selection.
+   @item page-horizontally (count, extend-selection)
+      Move cursor to the beginning (count=-1) or the end (count=1) of the
+      current line.
+   @item set-anchor ()
+      Move the anchor to the cursor position.
+   @item insert-at-cursor (string)
+      Insert a given text string at the cursor.
+   @item delete-from-cursor (delete-type, count)
+      Delete count units from the cursor.
+   @item cut-clipboard ()
+      Cut the current selection to the clipboard.
+   @item copy-clipboard ()
+      Copy the current selection to the clipboard.
+   @item paste-clipboard ()
+      Paste the contents of the clipboard.
+   @item toggle-overwrite ()
+      Toggle the current overwrite mode.
+   @end table
+
+@item GtkTreeView
+   Applies to tree and list objects, in particular the Location Tree, the
+   Project View, the File View and the VCS Explorer.
+   @table @command
+   @item move-cursor (movement-step, count)
+      Move insertion point.
+   @item select-all ()
+      Select all rows.
+   @item unselect-all ()
+      Unselect all rows.
+   @item select-cursor-row (start-editing)
+      Select or unselect the current row.
+   @item toggle-cursor-row ()
+      Toggle the selection of the current row.
+   @item expand-collapse-cursor-row (logical, expand, expand-all)
+      Expand (expand=1) or collapse (expand=0) the current row.
+      If expand-all=1, also expand all children recursively.
+      Parameter logical currently ignored.
+   @item select-cursor-parent ()
+      Select the parent row of the current selection.
+   @item start-interactive-search ()
+      Start interactive search on the tree view. This will open a small window
+      at the bottom of the tree view where you can interactively type names.
+      The first matching name in the tree will be selected while you type it.
+      You can then also use the @key{up} and @key{down} keys to navigate through
+      all the items matching the current text.
+   @end table
+@end table
+
+@noindent
+The possible values of the parameters listed above are:
+
+@table @command
+@item count
+   Signed integer value.
+
+@item string
+   Quoted string, e.g @i{"text"}.
+
+@item extend-selection, start-editing, logical, expand, expand-all:
+   Boolean value. 0 means false, 1 means true.
+
+@item delete-type
+   @table @command
+   @item chars
+      Delete a given amount of characters.
+   @item word-ends
+      Delete only the portion of the word to the left/right of cursor if we're
+      in the middle of a word.
+   @item paragraph-ends
+      Delete between cursor and the end (count=1) or beginning (count=-1) of
+      current line.
+   @item paragraphs
+      Delete whole line.
+   @item whitespace
+      Delete all white spaces around the cursor.
+   @end table
+
+@item menu-direction
+   @table @command
+   @item parent
+      Select the parent menu item.
+   @item child
+      Select the first child menu item.
+   @item next
+      Select the next (sibling) menu item.
+   @item prev
+      Select the previous (sibling) menu item.
+   @end table
+
+@item movement-step
+   @table @command
+   @item logical-positions
+      Move by forward/back graphemes.
+   @item visual-positions
+      Move by left/right graphemes.
+   @item words
+      Move by forward/back words.
+   @item display-lines
+      Move up/down lines (wrapped lines).
+   @item display-line-ends
+      Move to either end of a line (wrapped lines).
+   @item paragraphs
+      Move up/down paragraphs (newline-ended lines).
+   @item paragraph-ends
+      Move to either end of a paragraph.
+   @item pages
+      Move by pages.
+   @item buffer-ends
+      Move to the end (count=1) or to the beginning (count=-1) of the file.
+   @end table
+@end table
 
 @c --------------------------------------------------------------------
 @node Environment
@@ -3563,7 +4535,6 @@ Options:
    --version           Show the GPS version and exit.
 
 Source files are searched everywhere on the project's source path
-
 @end smallexample
 
 @c --------------------------------------------------------------------
@@ -3666,7 +4637,7 @@ Contains all the histories for the combo boxes and the @code{File->Reopen} and
 @cindex gtkrc
 The theme used by the gtk+ library on which gps is based. It allows you
 to configure the colors and fonts used in your
-application. @xref{Changing Colors Fonts and Key Bindings}.
+application. @xref{Defining New Styles and Key Bindings}.
 See also @file{<prefix>/etc/gps/gtkrc}.
 
    @item $HOME/.gps/sessions/@i{session}
@@ -3708,8 +4679,10 @@ This directory contains source code examples.
 
    @item @i{prefix}/doc/gps/examples/tutorial
 @cindex url
-This directory contains the sources used by the GPS tutorial
-(@url{gps-tutorial.html}).
+This directory contains the sources used by the GPS tutorial.
+@ifhtml
+See @url{gps-tutorial.html}.
+@end ifhtml
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
