@@ -1,0 +1,224 @@
+The purpose of this component is to build automatically a multi-language
+application.
+
+Requirements:
+- Be easily extensible to new programming languages
+- Handle the dependencies automatically
+- Handle different compilers for different languages
+- Handle source dependencies automatically
+- Provide language-specific compilation/link options
+- Provide file-specific compilation options
+- Provide conditional sections based on configurable variables
+- ??? Handle building and use of libraries
+
+Process:
+
+- The builder will take a GNAT multi-language project file as its input,
+  and generate a Makefile for each project file.
+
+- The Ada dependencies and compilations are handled by gnatmake
+
+- The list of non Ada objects is computed automatically based on language
+  extensions:
+
+ifeq ($(strip $(filter c,$(LANGUAGES))),c)
+   ifndef C_SRCS
+      C_SRCS := \
+        $(foreach name,$(SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+   endif
+
+   OBJECTS += $(C_SRCS:$(C_EXT)=$(OBJ_EXT))
+endif
+
+ifeq ($(strip $(filter c++,$(LANGUAGES))),c++)
+   ifndef CXX_SRCS
+      CXX_SRCS := \
+        $(foreach name,$(SRC_DIRS),$(notdir $(wildcard $(name)/*$(CXX_EXT))))
+   endif
+
+   OBJECTS += $(CXX_SRCS:$(CXX_EXT)=$(OBJ_EXT))
+endif
+
+OBJ_FILES := $(foreach name,$(OBJECTS),$(OBJ_DIR)/$(name))
+
+- The initial idea to handle C/C++ dependencies was to use makedepend
+  by adding a special rule in the Makefile:
+
+    SRCS = file1.c file2.c ...
+    CFLAGS = -O -DHACK -I../foobar -xyz
+    depend:
+        makedepend -- $(CFLAGS) -- $(SRCS)
+
+  but makedepend does not know about the compiler specific include directories
+  and does not seem to handle all C files properly, so the approach taken
+  is to use the output of $(CC) -M (also note the handling of object files):
+
+SRCS = file1.c file2.c ...
+ALL_CFLAGS = -O -DHACK -I../foobar -xyz
+OBJ_DIR = obj
+
+ifeq ($(CC),gcc)
+   DEP_FLAGS := -MM
+else
+   DEP_FLAGS := -M
+endif
+
+DEP_FILES := $(OBJ_FILES:$(OBJ_EXT)=.d)
+
+ifeq ($(strip $(filter-out %sh,$(SHELL))),)
+$(OBJ_DIR)/%.d: %.c
+	@$(SHELL) -ec '$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
+		| sed '\''s/\($*\)\.o[ :]*/\1.o $(notdir $@) : /g'\'' > $@; \
+		[ -s $@ ] || rm -f $@'
+else
+$(OBJ_DIR)/%.d: %.c
+	@$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
+		| sed 's/\($*\)\.o[ :]*/\1.o $(notdir $@) : /g' > $@
+endif
+
+-include $(DEP_FILES)
+
+- The directory/source search is handled using the vpath make pattern:
+
+vpath %.c $(C_SRC_DIRS)
+vpath %.o $(OBJ_DIR)
+
+- Static linking is handled by special make rule:
+
+foo : foo.c -lcurses
+        $(CC) $^ -o $@
+
+will generate:
+
+$(CC) foo.c /usr/lib/libcurses.a -o foo
+
+- Phony commands will be used for reliability and efficiency instead of the
+  "force" rule:
+
+.PHONY : clean all
+
+clean:
+	$(RM) $(OBJ_FILES)
+
+distclean: clean
+	$(RM) $(DEP_FILES)
+
+- Automatic rules are used to handle default compilation:
+
+.SUFFIXES: .c
+
+%.o : %.c
+	$(CC) -c $(ALL_CFLAGS) $< -o $(OBJ_DIR)/$@
+
+- Specific rules are used to handle file specific compilation:
+
+file.o:
+	$(CC) -c -g -O $< -o $(OBJ_DIR)/$@
+
+- The non-Ada conditional sections (case statements in the project file) are
+  handled by rules in a Makefile using GNU make syntax:
+
+for Switches ("C") use ("-O");
+
+case Build is
+   when Debug =>
+      for Switches ("C") use Switches ("C") & "-g";
+
+   when Production =>
+      for Switches ("C") use Switches ("C") & "-O2";
+end case;
+
+will be converted into:
+
+CFLAGS = -O
+
+ifeq ($(BUILD),Debug)
+   CFLAGS += -g
+else
+   ifeq ($(BUILD),Production)
+      CFLAGS += -O2
+   endif
+endif
+
+- A variable LANGUAGES will contain the list of languages for the project:
+
+LANGUAGES = c ada c++
+
+- A variable MAIN will specify the language of the main program:
+
+MAIN = c++
+
+- A variable LINKER is computed automatically as the C/C++ linker command, based
+  on the languages:
+
+# Set C/C++ linker command & target
+
+ifeq ($(filter c++,$(LANGUAGES)),c++)
+   LINKER = $(CXX)
+
+   ifeq ($(filter ada,$(LANGUAGES)),ada)
+      # C++ and Ada mixed
+      LINKER = $(OBJ_DIR)/c++linker
+      LARGS = --LINK=$(LINKER)
+
+      ifeq ($(strip $(filter-out %gcc %g++ %c++,$(CXX))),)
+         # Case of GNU C++ and GNAT
+
+$(LINKER): Makefile
+	@echo \#!/bin/sh > $(LINKER)
+	@echo unset BINUTILS_ROOT >> $(LINKER)
+	@echo unset GCC_ROOT >> $(LINKER)
+	@echo $(CXX) $$\* >> $(LINKER)
+	@chmod +x $(LINKER)
+
+      else
+$(LINKER): Makefile
+	@echo \#!/bin/sh > $(LINKER)
+	@echo $(CXX) $$\* $(shell gcc -print-libgcc-file-name) >> $(LINKER)
+	@chmod +x $(LINKER)
+      endif
+   endif
+else
+   ifeq ($(strip $(LANGUAGES)),c)
+      # Case of C only
+      LINKER = $(CC)
+   endif
+endif
+
+- Linking is handled is a generic manner, based on the value of LANGUAGES,
+  MAIN and LINKER:
+
+ifeq ($(strip $(filter-out c c++,$(LANGUAGES))),)
+# link with C/C++
+link: $(OBJ_DIR)/$(EXEC)
+$(OBJ_DIR)/$(EXEC): $(OBJ_FILES)
+	$(LINKER) $(OBJ_FILES) -o $(OBJ_DIR)/$(EXEC) $(LDFLAGS)
+
+else
+ifeq ($(strip $(filter-out c c++ ada,$(LANGUAGES))),)
+# link with Ada/C/C++
+
+ifeq ($(MAIN),ada)
+# Ada main
+link: $(LINKER) force
+	$(GNATMAKE) -P$(PROJECT_FILE) $(ADA_SOURCES) \
+		    -largs $(OBJ_FILES) $(LARGS)
+else
+# C/C++ main
+# The trick here is to force gnatmake to bind/link, even if there is no
+# Ada main program. To achieve this effect, we use the -z switch, which is
+# close enough to our needs, and the usual -n gnatbind switch and --LINK=
+# gnatlink switch
+link: $(LINKER) force
+	$(GNATMAKE) -o $(OBJ_DIR)/$(EXEC) -z -P$(PROJECT_FILE) $(ADA_SOURCES) \
+		-bargs -n -largs $(LARGS) \
+		$(OBJ_FILES)
+endif
+
+else
+# unknown set of languages, fail
+link:   
+        @echo do not know how to link with the following languages: $(LANGUAGES)        exit 1
+endif
+endif
+
