@@ -1799,6 +1799,7 @@ package body Src_Editor_Buffer is
    begin
       if Buffer.Filename /= null
         and then Buffer.Filename.all /= ""
+        and then Is_Regular_File (Buffer.Filename.all)
       then
          New_Timestamp := To_Timestamp (File_Time_Stamp (Buffer.Filename.all));
 
