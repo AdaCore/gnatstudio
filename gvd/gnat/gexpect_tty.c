@@ -2015,6 +2015,7 @@ gvd_new_tty ()
   handle->tty_fd = allocate_pty ();
   strcpy (handle->tty_name, pty_name);
   child_setup_tty (handle->tty_fd);
+
   return handle;
 
 #else
