@@ -603,7 +603,7 @@ Select the menu item @code{Project->Edit switches}: a global
 switch editor is displayed in the working area.
 
 Now click on the @code{sdc} project in the project explorer:
-tthe editor now lists the switches associated with each file in the project and
+the editor now lists the switches associated with each file in the project and
 the gray area shows the default (global) switches; you will also notice
 that @file{screen_output.adb} has specific switches, which are highlighted
 using a different font.
