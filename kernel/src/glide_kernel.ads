@@ -369,6 +369,12 @@ package Glide_Kernel is
    --  This function is mostly intended to be called for the callbacks in the
    --  menu bar.
 
+   function Get_Context_For_Child
+     (Kernel : access Kernel_Handle_Record;
+      Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access;
+   --  Return the context associated with Child.
+   --  The user should free the returned value.
+
    function Get_Current_Focus_Widget
      (Kernel : access Kernel_Handle_Record) return Gtk.Widget.Gtk_Widget;
    --  Return the widget which currently has the keyboard focus. null is
@@ -529,7 +535,7 @@ package Glide_Kernel is
    --  particular order).
 
    procedure Next
-     (Kernel : access Kernel_Handle_record'Class;
+     (Kernel : access Kernel_Handle_Record'Class;
       Iter   : in out Action_Context_Iterator);
    --  Move to the next action
 

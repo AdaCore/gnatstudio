@@ -928,6 +928,31 @@ package body Glide_Kernel is
       return Kernel.Current_Context;
    end Get_Current_Context;
 
+   ---------------------------
+   -- Get_Context_For_Child --
+   ---------------------------
+
+   function Get_Context_For_Child
+     (Kernel : access Kernel_Handle_Record;
+      Child  : Gtkada.MDI.MDI_Child) return Selection_Context_Access
+   is
+      Module : Module_ID;
+   begin
+      if Child = null then
+         return null;
+      end if;
+
+      Module := Get_Module_From_Child (Child);
+
+      if Module /= null
+        and then Module.Info.Default_Factory /= null
+      then
+         return Module.Info.Default_Factory (Kernel, Get_Widget (Child));
+      else
+         return null;
+      end if;
+   end Get_Context_For_Child;
+
    ------------------
    -- Save_Desktop --
    ------------------
