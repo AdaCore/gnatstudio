@@ -16,12 +16,12 @@ project Glide is
   type OS_Type is ("linux", "windows");
   OS : OS_Type := External ("OS", "linux");  --  Fail if no default value
 
-  type Debug_Type is ("False", "True");
-  Debug : Debug_Type := External ("DEBUG", "False");
+  type Build_Type is ("Debug", "Production");
+  Build : Build_Type := External ("Build", "Debug");
 
   package Compiler is
-     case Debug is
-        when "True" => 
+     case Build is
+        when "Debug" => 
           for Switches use ("-g");
         when others =>
           for Switches use ("-O2");
