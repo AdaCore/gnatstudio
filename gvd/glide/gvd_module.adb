@@ -1872,17 +1872,9 @@ package body GVD_Module is
          begin
             for M in Mains'Range loop
                declare
-                  --  The heuristics here might be a little light:
-                  --  we compute the name of the main executables from the
-                  --  base names of the main files plus the system
-                  --  debuggable suffix.
-
-                  Exec : constant String :=
-                    Base_Name
-                      (Mains (M).all,
-                       GNAT.Directory_Operations.File_Extension
-                         (Mains (M).all))
-                    & Debuggable_Suffix.all;
+                  Full : constant String := Base_Name (Mains (M).all);
+                  Exec : constant String := Full
+                    (Full'First .. Delete_File_Suffix (Full, Current (Iter)));
                begin
                   Gtk_New (Mitem, Exec);
                   Append (Menu, Mitem);
