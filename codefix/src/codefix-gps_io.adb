@@ -20,6 +20,7 @@
 
 with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 with Glide_Kernel.Project;  use Glide_Kernel.Project;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with String_Utils; use String_Utils;
 
@@ -223,7 +224,7 @@ package body Codefix.GPS_Io is
       Cursor      : Text_Cursor'Class;
       New_Line    : String)
    is
-      Line_Str        : Dynamic_String;
+      Line_Str        : String_Access;
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
       This.File_Modified.all := True;
@@ -284,7 +285,7 @@ package body Codefix.GPS_Io is
    -- Read_File --
    ---------------
 
-   function Read_File (This : Console_Interface) return Dynamic_String is
+   function Read_File (This : Console_Interface) return String_Access is
    begin
       return new String'
         (Interpret_Command
@@ -318,10 +319,10 @@ package body Codefix.GPS_Io is
    ------------
 
    procedure Update (This : Console_Interface) is
-      File          : Dynamic_String;
+      File          : String_Access;
       Current_Index : Natural := 0;
       Old_Index     : Natural := 0;
-      Last_Line     : Dynamic_String;
+      Last_Line     : String_Access;
    begin
       if not This.File_Modified.all then
          return;

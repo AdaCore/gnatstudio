@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Generic_List;
+with GNAT.OS_Lib;
 
 package Codefix.Text_Manager.Ada_Extracts is
 
@@ -73,7 +74,7 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      New_Instr   : out Dynamic_String;
+      New_Instr   : out GNAT.OS_Lib.String_Access;
       First       : Natural;
       Last        : Natural := 0);
    --  Remove elements from the list and write in the string a new list with
@@ -82,7 +83,7 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      New_Instr   : out Dynamic_String;
+      New_Instr   : out GNAT.OS_Lib.String_Access;
       First       : String;
       Last        : String := "");
    --  Remove elements from the list and write in the string a new list with
@@ -122,7 +123,7 @@ private
    type Token_Record is record
       Line                : Ptr_Extract_Line;
       First_Col, Last_Col : Natural := 0;
-      Content             : Dynamic_String;
+      Content             : GNAT.OS_Lib.String_Access;
       Is_Separator        : Boolean;
    end record;
 
@@ -140,7 +141,7 @@ private
 
    type Ada_List is new Ada_Instruction with record
       Elements_List : Tokens_List.List;
-      Back          : Dynamic_String;
+      Back          : GNAT.OS_Lib.String_Access;
    end record;
 
    function Is_Alone (This : Token_Record)

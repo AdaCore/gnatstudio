@@ -22,6 +22,7 @@ with Ada.Exceptions;                    use Ada.Exceptions;
 
 with GNAT.Regpat;                       use GNAT.Regpat;
 with GNAT.Directory_Operations;         use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
 with Language;                          use Language;
 
@@ -687,7 +688,7 @@ package body Codefix.Formal_Errors is
       Solution_Cursors : Cursor_Lists.List;
       Name             : String) return Solution_List
    is
-      Str_Array   : array (1 .. Length (Solution_Cursors)) of Dynamic_String;
+      Str_Array   : array (1 .. Length (Solution_Cursors)) of String_Access;
       Cursor_Node : Cursor_Lists.List_Node;
       Index_Str   : Positive := 1;
       Word        : Word_Cursor;
@@ -777,11 +778,16 @@ package body Codefix.Formal_Errors is
       Result      : Solution_List;
       New_Command : Remove_Pkg_Clauses_Cmd;
       With_Cursor : Word_Cursor;
-      Body_Name   : Dynamic_String;
-   begin
+      Body_Name   : String_Access;
 
-      Assign
-        (Body_Name, Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
+   begin
+      Put_Line ("Moving with clause to file from "
+                & Cursor.File_Name.all
+                & " to "
+                & Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
+
+      Assign (Body_Name,
+              Get_Body_Or_Spec (Current_Text, Cursor.File_Name.all));
 
       With_Cursor :=
         (Clone (File_Cursor (Cursor)) with

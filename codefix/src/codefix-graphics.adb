@@ -35,6 +35,7 @@ with Glide_Intl;             use Glide_Intl;
 with Diff_Utils;             use Diff_Utils;
 with Vdiff_Pkg;              use Vdiff_Pkg;
 with Vdiff_Utils;            use Vdiff_Utils;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 with Traces;                 use Traces;
 
@@ -264,7 +265,7 @@ package body Codefix.Graphics is
       Current_Nb_Tabs  : Integer;
       Current_Vdiff    : Vdiff_Lists.List_Node;
       Extended_Extract : Extract;
-      New_Popdown_Str  : String_List.Glist;
+      New_Popdown_Str  : Gtk.Enums.String_List.Glist;
 
       -----------------
       -- Display_Sol --
@@ -274,7 +275,7 @@ package body Codefix.Graphics is
          Current_Line      : Ptr_Extract_Line;
          First_Iterator    : Text_Iterator_Access;
          Current_Iterator  : Text_Iterator_Access;
-         Previous_File     : Dynamic_String := new String'("");
+         Previous_File     : String_Access := new String'("");
          Total_Nb_Files    : constant Natural :=
            Get_Nb_Files (Extended_Extract);
       begin
@@ -435,7 +436,7 @@ package body Codefix.Graphics is
          end if;
 
          Current_Nb_Tabs := Current_Nb_Tabs + 1;
-         String_List.Append
+         Gtk.Enums.String_List.Append
            (New_Popdown_Str, Get_Caption (Data (Current_Sol)));
 
          Free (Extended_Extract);

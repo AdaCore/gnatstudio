@@ -22,6 +22,7 @@
 --  errors and commands.
 
 with Generic_List;
+with GNAT.OS_Lib;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 
@@ -62,7 +63,7 @@ private
 
    type Use_Type is record
       Position : File_Cursor;
-      Name     : Dynamic_String;
+      Name     : GNAT.OS_Lib.String_Access;
       Nb_Ref   : Natural := 0;
    end record;
 
@@ -72,10 +73,11 @@ private
 
    type Arr_Use is array (Natural range <>) of Ptr_Use;
 
-   type Arr_Str is array (Natural range <>) of Dynamic_String;
+   type Arr_Str is array (Natural range <>) of GNAT.OS_Lib.String_Access;
+   --  ??? Should use subprogram in basic_types.ads
 
    type With_Type (Nb_Elems : Natural) is record
-      Name_Str : Dynamic_String;
+      Name_Str : GNAT.OS_Lib.String_Access;
       Name     : Arr_Str (1 .. Nb_Elems);
       Clauses  : Arr_Use (1 .. Nb_Elems);
    end record;

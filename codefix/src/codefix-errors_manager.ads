@@ -23,6 +23,9 @@ with Generic_List;
 with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
+with GNAT.OS_Lib;
+
+with Ada.Unchecked_Deallocation;
 
 package Codefix.Errors_Manager is
 
@@ -189,7 +192,7 @@ private
    type Error_Id_Record is record
       Message         : Error_Message := Invalid_Error_Message;
       Solutions       : Solution_List := Command_List.Null_List;
-      Category        : Dynamic_String;
+      Category        : GNAT.OS_Lib.String_Access;
       Fixed           : Ptr_Boolean := new Boolean'(False);
       Solution_Chosen : Ptr_Extract := new Extract;
    end record;
@@ -218,7 +221,7 @@ private
       New_Error : out Error_Id);
 
    type State_Node is record
-      Error : Dynamic_String;
+      Error : GNAT.OS_Lib.String_Access;
       State : Error_State := Unknown;
    end record;
 

@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Unchecked_Deallocation;
+with GNAT.OS_Lib;
 
 with Ada_Analyzer; use Ada_Analyzer;
 with Language;     use Language;
@@ -67,7 +68,7 @@ package Codefix.Text_Manager is
    --  Return True when Left is after or in the same position than Right.
 
    type File_Cursor is new Text_Cursor with record
-      File_Name : Dynamic_String;
+      File_Name : GNAT.OS_Lib.String_Access;
    end record;
 
    Null_File_Cursor : constant File_Cursor;
@@ -187,8 +188,8 @@ package Codefix.Text_Manager is
    --  Returns le length of a line from the position of the cursor.
 
    function Read_File
-     (This : Text_Interface) return Dynamic_String is abstract;
-   --  Get the entire file in a Dynamic_String.
+     (This : Text_Interface) return GNAT.OS_Lib.String_Access is abstract;
+   --  Get the entire file in a String_Access.
 
    function Get_File_Name (This : Text_Interface) return String;
    --  Return the name of the file.
@@ -238,7 +239,7 @@ package Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Interface'Class;
       Cursor : in out Text_Cursor'Class;
-      Word   : out Dynamic_String);
+      Word   : out GNAT.OS_Lib.String_Access);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
 
@@ -266,14 +267,16 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Ptr_Text_Navigator);
 
+   function Get_Body_Or_Spec
+     (Text : Text_Navigator_Abstr; File_Name : String) return String
+      is abstract;
+   --  When File_Name is a spec file, this function returns the body
+   --  corresponding, otherwise it returns the spec.
+   --  This function must return the absolute path name
+
    function New_Text_Interface (This : Text_Navigator_Abstr)
      return Ptr_Text is abstract;
    --  Create and initialise a new Text_Interface used by the text navigator.
-
-   function Get_Body_Or_Spec (This : Text_Navigator_Abstr; File_Name : String)
-     return String is abstract;
-   --  When File_Name is a spec file, this function returns the body
-   --  corresponding, otherwise it retun the spec.
 
    procedure Initialize
      (This : Text_Navigator_Abstr;
@@ -329,8 +332,8 @@ package Codefix.Text_Manager is
 
    function Read_File
      (This      : Text_Navigator_Abstr;
-      File_Name : String) return Dynamic_String;
-   --  Get the entire file File_Name in a Dynamic_String.
+      File_Name : String) return GNAT.OS_Lib.String_Access;
+   --  Get the entire file File_Name.
 
    procedure Replace
      (This      : in out Text_Navigator_Abstr;
@@ -409,7 +412,7 @@ package Codefix.Text_Manager is
    procedure Next_Word
      (This   : Text_Navigator_Abstr'Class;
       Cursor : in out File_Cursor'Class;
-      Word   : out Dynamic_String);
+      Word   : out GNAT.OS_Lib.String_Access);
    --  Put Cursor after the next word, and set 'Word' to this value, knowing
    --  that a word is a succession of non-blanks characters.
 
@@ -875,7 +878,7 @@ package Codefix.Text_Manager is
    ----------------------------------------------------------------------------
 
    type Word_Cursor is new File_Cursor with record
-      String_Match : Dynamic_String;
+      String_Match : GNAT.OS_Lib.String_Access;
       Mode         : String_Mode := Text_Ascii;
    end record;
    --  Word_cursor is an object that descibes a specific word in the text. In
@@ -884,7 +887,7 @@ package Codefix.Text_Manager is
 
    type Word_Mark is record
       Mark_Id      : Ptr_Mark;
-      String_Match : Dynamic_String;
+      String_Match : GNAT.OS_Lib.String_Access;
       Mode         : String_Mode := Text_Ascii;
    end record;
 
@@ -1121,7 +1124,7 @@ private
 
    type Mark_Abstr is abstract tagged record
       Is_First_Line : Boolean := False;
-      File_Name     : Dynamic_String;
+      File_Name     : GNAT.OS_Lib.String_Access;
    end record;
 
    ----------------------------------------------------------------------------
@@ -1136,7 +1139,7 @@ private
 
    type Text_Interface is abstract tagged record
       Structure            : Construct_List_Access := new Construct_List;
-      File_Name            : Dynamic_String;
+      File_Name            : GNAT.OS_Lib.String_Access;
       Structure_Up_To_Date : Ptr_Boolean := new Boolean'(False);
    end record;
 
@@ -1206,7 +1209,7 @@ private
    ----------------------------------------------------------------------------
 
    type Text_Command is abstract tagged record
-      Caption      : Dynamic_String;
+      Caption      : GNAT.OS_Lib.String_Access;
    end record;
 
    type Remove_Word_Cmd is new Text_Command with record
@@ -1226,7 +1229,7 @@ private
 
    type Replace_Word_Cmd is new Text_Command with record
       Mark         : Word_Mark;
-      Str_Expected : Dynamic_String;
+      Str_Expected : GNAT.OS_Lib.String_Access;
    end record;
 
    type Invert_Words_Cmd is new Text_Command with record
@@ -1235,7 +1238,7 @@ private
    end record;
 
    type Add_Line_Cmd is new Text_Command with record
-      Line     : Dynamic_String;
+      Line     : GNAT.OS_Lib.String_Access;
       Position : Ptr_Mark;
    end record;
 

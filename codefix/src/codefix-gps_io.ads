@@ -19,8 +19,10 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel;           use Glide_Kernel;
+with GNAT.OS_Lib;
 
 with Generic_List;
+with Ada.Unchecked_Deallocation;
 
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
@@ -98,8 +100,9 @@ package Codefix.GPS_Io is
       Path : String);
    --  Initialize the structure of the Console_Interface. Actually do noting.
 
-   function Read_File (This : Console_Interface) return Dynamic_String;
-   --  Get the entire file in a Dynamic_String.
+   function Read_File (This : Console_Interface)
+      return GNAT.OS_Lib.String_Access;
+   --  Get the entire file
 
    procedure Commit (This : Console_Interface);
    --  Save the file.
@@ -135,8 +138,9 @@ package Codefix.GPS_Io is
 
 private
 
-   package String_List is new Generic_List (Dynamic_String);
+   package String_List is new Generic_List (GNAT.OS_Lib.String_Access);
    use String_List;
+   --  ??? Should use standard string list
 
    type Ptr_Boolean is access all Boolean;
    type Ptr_String_List is access all String_List.List;
@@ -159,11 +163,11 @@ private
    --  changes appened.
 
    type GPS_Mark is new Mark_Abstr with record
-      Id : Dynamic_String;
+      Id : GNAT.OS_Lib.String_Access;
    end record;
 
    type Compilation_Output is new Errors_Interface with record
-      Errors_Buffer : Dynamic_String := null;
+      Errors_Buffer : GNAT.OS_Lib.String_Access := null;
       Current_Index : Natural := 1;
       Kernel        : Kernel_Handle;
    end record;

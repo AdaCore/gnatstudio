@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
 
 package Codefix.Text_Manager.Ada_Commands is
 
@@ -265,7 +266,7 @@ private
 
    type Recase_Word_Cmd is new Text_Command with record
       Cursor       : Ptr_Mark;
-      Correct_Word : Dynamic_String;
+      Correct_Word : GNAT.OS_Lib.String_Access;
       Word_Case    : Case_Type;
    end record;
 
@@ -277,8 +278,9 @@ private
       Remove_List : Mark_List.List;
    end record;
 
-   package String_List is new Generic_List (Dynamic_String);
+   package String_List is new Generic_List (GNAT.OS_Lib.String_Access);
    use String_List;
+   --  ??? Should use standard string list
 
    type Remove_Pkg_Clauses_Cmd is new Text_Command with record
       Instantiation_Pkg : Remove_Instruction_Cmd;
@@ -295,12 +297,12 @@ private
 
    type Add_Pragma_Cmd is new Text_Command with record
       Position       : Ptr_Mark;
-      Name, Argument : Dynamic_String;
+      Name, Argument : GNAT.OS_Lib.String_Access;
    end record;
 
    type Make_Constant_Cmd is new Text_Command with record
       Position : Ptr_Mark;
-      Name     : Dynamic_String;
+      Name     : GNAT.OS_Lib.String_Access;
    end record;
 
    type Remove_Parenthesis_Cmd is new Text_Command with record

@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with String_Utils; use String_Utils;
+with GNAT.OS_Lib;  use GNAT.OS_Lib;
+with Ada.Unchecked_Deallocation;
 
 with Language;     use Language;
 with Ada_Analyzer; use Ada_Analyzer;

@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils; use String_Utils;
-
+with String_Utils;          use String_Utils;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
+with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 package body Codefix.Errors_Manager is
 
@@ -67,7 +67,7 @@ package body Codefix.Errors_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       Current      : out Error_Message)
    is
-      Current_Line        : Dynamic_String;
+      Current_Line        : String_Access;
       Cursor_Line         : File_Cursor;
       File_Pos, Logic_Pos : Natural;
 
@@ -252,7 +252,7 @@ package body Codefix.Errors_Manager is
       Current_Message : Error_Message;
       Solutions       : Solution_List;
       New_Error       : Error_Id;
-      Category        : Dynamic_String;
+      Category        : String_Access;
    begin
       while not No_More_Messages (Errors_List) loop
          Get_Message (Errors_List, Source_Text, Current_Message);

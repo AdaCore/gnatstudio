@@ -20,6 +20,7 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Regpat; use GNAT.Regpat;
 
 with String_Utils; use String_Utils;
@@ -85,8 +86,8 @@ package body Codefix.Text_Manager.Ada_Commands is
       Cursor       : File_Cursor;
       Matches      : Match_Array (0 .. 1);
       Size         : Integer;
-      Line         : Dynamic_String;
-      Word_Chosen  : Dynamic_String;
+      Line         : GNAT.OS_Lib.String_Access;
+      Word_Chosen  : GNAT.OS_Lib.String_Access;
 
    begin
       Cursor := File_Cursor'
@@ -557,7 +558,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Position      : File_Cursor;
       Pragma_Cursor : File_Cursor;
       Line_Cursor   : File_Cursor;
-      Next_Str      : Dynamic_String;
+      Next_Str      : GNAT.OS_Lib.String_Access;
    begin
       Position := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
@@ -626,7 +627,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Cursor        : File_Cursor;
       Work_Extract  : Ada_List;
-      New_Instr     : Dynamic_String;
+      New_Instr     : GNAT.OS_Lib.String_Access;
       Col_Decl      : Natural;
    begin
       Cursor := File_Cursor
@@ -774,7 +775,7 @@ package body Codefix.Text_Manager.Ada_Commands is
          Begin_Cursor, End_Cursor : out File_Cursor)
       is
          Garbage_Cursor : File_Cursor;
-         Next_Word_End  : Dynamic_String;
+         Next_Word_End  : GNAT.OS_Lib.String_Access;
       begin
          Begin_Cursor := File_Cursor
            (Search_String
@@ -901,8 +902,8 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Result      : Get_Visible_Declaration_Cmd;
       With_Cursor : File_Cursor;
-      Pkg_Name    : Dynamic_String;
-      Clauses_Str : Dynamic_String := new String'("");
+      Pkg_Name    : GNAT.OS_Lib.String_Access;
+      Clauses_Str : GNAT.OS_Lib.String_Access := new String'("");
 
    begin
       Assign
@@ -943,7 +944,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Result      : Get_Visible_Declaration_Cmd;
       Word        : Word_Cursor;
       With_Cursor : File_Cursor;
-      Pkg_Name    : Dynamic_String;
+      Pkg_Name    : GNAT.OS_Lib.String_Access;
 
    begin
       Assign

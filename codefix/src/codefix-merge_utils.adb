@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib; use GNAT.OS_Lib;
+
 package body Codefix.Merge_Utils is
 
    -------------------
@@ -245,7 +247,7 @@ package body Codefix.Merge_Utils is
    is
       Insertion_Array : constant Merge_Array (Value'Range) :=
         (others => Unit_Created);
-      New_Str         : Dynamic_String;
+      New_Str         : String_Access;
       New_Infos       : Ptr_Merge_Array;
       Position        : constant Natural := Get_Array_Position (This, Start);
    begin
@@ -515,7 +517,7 @@ package body Codefix.Merge_Utils is
    ------------
 
    procedure Append (This : in out Mergable_String; Object : String_Char) is
-      Garbage_Str   : Dynamic_String := This.Str;
+      Garbage_Str   : String_Access := This.Str;
       Garbage_Infos : Ptr_Merge_Array := This.Infos;
    begin
       if This.Str = null then
@@ -589,8 +591,8 @@ package body Codefix.Merge_Utils is
    -- Delete_Char --
    -----------------
 
-   procedure Delete_Char (This : in out Dynamic_String; Position : Natural) is
-      Garbage : Dynamic_String := This;
+   procedure Delete_Char (This : in out String_Access; Position : Natural) is
+      Garbage : String_Access := This;
    begin
       if Position < This'Last then
          This := new String'(This (This'First .. Position - 1) &

@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Regpat; use GNAT.Regpat;
 with Language;    use Language;
 
@@ -31,7 +32,7 @@ package body Codefix.Errors_Parser is
      (Current_Text : Text_Navigator_Abstr'Class;
       Errors_List  : in out Errors_Interface'Class;
       Message      : Error_Message;
-      Category     : out Dynamic_String;
+      Category     : out String_Access;
       Solutions    : out Solution_List)
    is
       Current_Node : Parser_List.List_Node;
@@ -610,7 +611,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Str_Red         : Dynamic_String;
+      Str_Red         : String_Access;
    begin
 
       Assign
@@ -703,7 +704,7 @@ package body Codefix.Errors_Parser is
 
       Col_Matches        : Match_Array (0 .. 1);
       Declaration_Line   : Positive;
-      Line_Red           : Dynamic_String;
+      Line_Red           : String_Access;
       Declaration_Cursor : File_Cursor;
 
    begin
@@ -907,7 +908,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Str_Red : Dynamic_String;
+      Str_Red : String_Access;
    begin
       Str_Red := new String'(Get_Message (Message)
                    (Matches (1).First .. Matches (1).Last));
@@ -971,7 +972,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Str_Red_1, Str_Red_2 : Dynamic_String;
+      Str_Red_1, Str_Red_2 : String_Access;
    begin
       Str_Red_1 := new String'(Get_Message (Message)
                                  (Matches (1).First .. Matches (1).Last));
@@ -1051,8 +1052,8 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
 
-      Word_Read            : Dynamic_String;
-      Unallowed_Characters : Dynamic_String;
+      Word_Read            : String_Access;
+      Unallowed_Characters : String_Access;
       Format_Str           : String_Mode;
    begin
       Assign

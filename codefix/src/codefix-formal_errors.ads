@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Generic_List;
+with GNAT.OS_Lib;
 with Language; use Language;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
@@ -183,7 +184,7 @@ package Codefix.Formal_Errors is
 private
 
    type Error_Message is new File_Cursor with record
-      Message : Dynamic_String;
+      Message : GNAT.OS_Lib.String_Access;
    end record;
 
    procedure Parse_Head (Message : String; This : out Error_Message);

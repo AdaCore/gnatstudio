@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 with String_Utils; use String_Utils;
 
@@ -456,7 +457,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      New_Instr   : out Dynamic_String;
+      New_Instr   : out GNAT.OS_Lib.String_Access;
       First       : Natural;
       Last        : Natural := 0) is
 
@@ -502,7 +503,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    procedure Cut_Off_Elements
      (This        : in out Ada_List;
-      New_Instr   : out Dynamic_String;
+      New_Instr   : out GNAT.OS_Lib.String_Access;
       First       : String;
       Last        : String := "") is
    begin
