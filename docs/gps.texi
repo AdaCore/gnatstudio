@@ -305,7 +305,7 @@ The third area is the one that provides the most flexibility:
 @item maximized windows
 The windows in this area are initially maximized. This means that if
 you have several windows, a notebook will be created, and only one
-window is be visible at any given time. You select the window you want
+window will be visible at any given time. You select the window you want
 to see by clicking on the appropriate tab.
 
 Note that if there are a lot of windows, two small arrows will appear
@@ -332,8 +332,8 @@ In this mode, the windows can be resized freely by clicking on the
 border of any side or in one of their four corners, as usual on
 windowing systems.
 
-They can also of course be moved around. As a result, you can choose
-for instance to display several windows side by side, or one on top of
+They can also be moved around. As a result, you can choose for
+instance to display several windows side by side, or one on top of
 the others.
 
 To make it easier to get to these standard organizations, GPS provides
@@ -394,7 +394,7 @@ before it was iconified.
 
 @noindent
 
-As mentionned before, the GPS workspace is initially split into three
+As mentioned before, the GPS workspace is initially split into three
 windows. The one on the left and the one at the bottom are called
 @b{docking area}.
 
@@ -422,7 +422,7 @@ release the mouse. You can set up a preference (menu
 @code{Edit->Preferences}) to indicate that you want the resizing to be
 opaque, which might give more intuitive results.
 
-Note that when a window is @b{docked} (ie put in a docking area), some
+Note that when a window is @b{docked} (i.e. put in a docking area), some
 of the buttons in its title bar are greyed out and inactive.
 
 A simple way to dock a window is to select it, and then select the
@@ -682,7 +682,7 @@ This section concerns X-Window users who are used to cutting and
 pasting with the middle mouse button. In the GPS text editor, as in
 many recent X applications, the @i{GPS clipboard} is set by explicit
 cut/copy/paste actions, either through menu items or keyboard
-shorcuts, and the @i{primary clipboard} (ie the ``middle button''
+shorcuts, and the @i{primary clipboard} (i.e. the ``middle button''
 clipboard) is set by the current selection.
 
 Therefore, copy/paste between GPS and other X applications using the 
@@ -1038,7 +1038,7 @@ P : the project is the root project
 
 p : the project is the current project
 
-r : indicates that the listing should be project-recursive, ie that
+r : indicates that the listing should be project-recursive, i.e. that
 sub-projects should be listed as well, and their subprojects, and so
 on. 
 
